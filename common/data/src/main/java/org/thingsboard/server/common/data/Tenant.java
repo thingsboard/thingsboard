@@ -31,7 +31,6 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
     @Length(fieldName = "title")
     @NoXss
     private String title;
-    @Length(fieldName = "region")
     @NoXss
     private String region;
     private TenantProfileId tenantProfileId;

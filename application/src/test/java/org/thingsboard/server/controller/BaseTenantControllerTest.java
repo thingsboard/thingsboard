@@ -52,6 +52,19 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         doDelete("/api/tenant/"+savedTenant.getId().getId().toString())
         .andExpect(status().isOk());
     }
+
+    @Test
+    public void testSaveTenantWithViolationOfValidation() throws Exception {
+        loginSysAdmin();
+        Tenant tenant = new Tenant();
+        tenant.setTitle(RandomStringUtils.randomAlphanumeric(300));
+        doPost("/api/tenant", tenant).andExpect(statusReason(containsString("length of title should be equals or less than 255")));
+    }
+
+    public static void main(String[] args) {
+        String temp = RandomStringUtils.randomAlphanumeric(300);
+        System.err.println(temp);
+    }
     
     @Test
     public void testFindTenantById() throws Exception {

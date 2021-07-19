@@ -47,6 +47,7 @@ import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.nullValue;
@@ -109,6 +110,18 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
 
         Edge foundEdge = doGet("/api/edge/" + savedEdge.getId().getId().toString(), Edge.class);
         Assert.assertEquals(foundEdge.getName(), savedEdge.getName());
+    }
+
+    @Test
+    public void testSaveEdgeWithViolationOfLengthValidation() throws Exception {
+        Edge edge = constructEdge(RandomStringUtils.randomAlphabetic(300), "default");
+        doPost("/api/edge", edge).andExpect(statusReason(containsString("length of name should be equals or less than 255")));
+        edge.setName("normal name");
+        edge.setType(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/edge", edge).andExpect(statusReason(containsString("length of type should be equals or less than 255")));
+        edge.setType("normal type");
+        edge.setLabel(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/edge", edge).andExpect(statusReason(containsString("length of label should be equals or less than 255")));
     }
 
     @Test

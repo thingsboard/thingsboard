@@ -100,6 +100,20 @@ public abstract class BaseAssetControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testSaveAssetWithViolationOfLengthValidation() throws Exception {
+        Asset asset = new Asset();
+        asset.setName(RandomStringUtils.randomAlphabetic(300));
+        asset.setType("default");
+        doPost("/api/asset", asset).andExpect(statusReason(containsString("length of name should be equals or less than 255")));
+        asset.setName("Normal name");
+        asset.setType(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/asset", asset).andExpect(statusReason(containsString("length of type should be equals or less than 255")));
+        asset.setType("default");
+        asset.setLabel(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/asset", asset).andExpect(statusReason(containsString("length of label should be equals or less than 255")));
+    }
+
+    @Test
     public void testUpdateAssetFromDifferentTenant() throws Exception {
         Asset asset = new Asset();
         asset.setName("My asset");
