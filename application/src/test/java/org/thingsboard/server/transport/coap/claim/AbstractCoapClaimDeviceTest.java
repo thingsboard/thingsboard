@@ -116,8 +116,8 @@ public abstract class AbstractCoapClaimDeviceTest extends AbstractCoapIntegratio
 
         ClaimResponse claimResponse = doExecuteWithRetriesAndInterval(
                 () -> doPostClaimAsync("/api/customer/device/" + savedDevice.getName() + "/claim", claimRequest, ClaimResponse.class, status().isBadRequest()),
-                20,
-                100
+                100,
+                200
         );
 
         assertEquals(claimResponse, ClaimResponse.FAILURE);
@@ -126,8 +126,8 @@ public abstract class AbstractCoapClaimDeviceTest extends AbstractCoapIntegratio
 
         ClaimResult claimResult = doExecuteWithRetriesAndInterval(
                 () -> doPostClaimAsync("/api/customer/device/" + savedDevice.getName() + "/claim", claimRequest, ClaimResult.class, status().isOk()),
-                20,
-                100
+                100,
+                200
         );
         assertEquals(claimResult.getResponse(), ClaimResponse.SUCCESS);
         Device claimedDevice = claimResult.getDevice();
