@@ -41,7 +41,7 @@ public class ActorSystemTest {
 
     public static final String ROOT_DISPATCHER = "root-dispatcher";
     private static final int _100K = 100 * 1024;
-    public static final int TIMEOUT_AWAIT_MAX_SEC = 10;
+    public static final int TIMEOUT_AWAIT_MAX_SEC = 100;
 
     private volatile TbActorSystem actorSystem;
     private volatile ExecutorService submitPool;
