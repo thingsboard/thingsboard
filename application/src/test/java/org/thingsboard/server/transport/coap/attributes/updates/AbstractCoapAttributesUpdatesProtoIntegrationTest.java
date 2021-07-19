@@ -62,7 +62,7 @@ public abstract class AbstractCoapAttributesUpdatesProtoIntegrationTest extends 
     protected void validateCurrentStateAttributesResponse(TestCoapCallback callback) throws InvalidProtocolBufferException {
         assertNotNull(callback.getPayloadBytes());
         assertNotNull(callback.getObserve());
-        assertEquals(callback.getResponseCode(), CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
+        assertEquals(CoAP.ResponseCode.CONTENT, callback.getResponseCode());
         assertEquals(0, callback.getObserve().intValue());
         TransportProtos.AttributeUpdateNotificationMsg.Builder expectedCurrentStateNotificationMsgBuilder = TransportProtos.AttributeUpdateNotificationMsg.newBuilder();
         TransportProtos.TsKvProto tsKvProtoAttribute1 = getTsKvProto("attribute1", "value", TransportProtos.KeyValueType.STRING_V);
@@ -90,14 +90,14 @@ public abstract class AbstractCoapAttributesUpdatesProtoIntegrationTest extends 
     protected void validateEmptyCurrentStateAttributesResponse(TestCoapCallback callback) throws InvalidProtocolBufferException {
         assertNull(callback.getPayloadBytes());
         assertNotNull(callback.getObserve());
-        assertEquals(callback.getResponseCode(), CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
+        assertEquals(CoAP.ResponseCode.CONTENT, callback.getResponseCode());
         assertEquals(0, callback.getObserve().intValue());
     }
 
     protected void validateUpdateAttributesResponse(TestCoapCallback callback) throws InvalidProtocolBufferException {
         assertNotNull(callback.getPayloadBytes());
         assertNotNull(callback.getObserve());
-        assertEquals(callback.getResponseCode(), CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
+        assertEquals(CoAP.ResponseCode.CONTENT, callback.getResponseCode());
         assertEquals(1, callback.getObserve().intValue());
         TransportProtos.AttributeUpdateNotificationMsg.Builder attributeUpdateNotificationMsgBuilder = TransportProtos.AttributeUpdateNotificationMsg.newBuilder();
         List<TransportProtos.TsKvProto> tsKvProtoList = getTsKvProtoList();
@@ -117,7 +117,7 @@ public abstract class AbstractCoapAttributesUpdatesProtoIntegrationTest extends 
     protected void validateDeleteAttributesResponse(TestCoapCallback callback) throws InvalidProtocolBufferException {
         assertNotNull(callback.getPayloadBytes());
         assertNotNull(callback.getObserve());
-        assertEquals(callback.getResponseCode(), CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
+        assertEquals(CoAP.ResponseCode.CONTENT, callback.getResponseCode());
         assertEquals(2, callback.getObserve().intValue());
         TransportProtos.AttributeUpdateNotificationMsg.Builder attributeUpdateNotificationMsgBuilder = TransportProtos.AttributeUpdateNotificationMsg.newBuilder();
         attributeUpdateNotificationMsgBuilder.addSharedDeleted("attribute5");

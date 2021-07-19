@@ -72,18 +72,4 @@ public abstract class AbstractCoapTransportResource extends CoapResource {
                 .build(), TransportServiceCallback.EMPTY);
     }
 
-    protected void reportActivity(TransportProtos.SessionInfoProto sessionInfo) {
-        transportService.reportActivity(sessionInfo);
-    }
-
-    protected static TransportProtos.SessionEventMsg getSessionEventMsg(TransportProtos.SessionEvent event) {
-        return TransportProtos.SessionEventMsg.newBuilder()
-                .setSessionType(TransportProtos.SessionType.ASYNC)
-                .setEvent(event).build();
-    }
-
-    protected int getNextMsgId() {
-        return ThreadLocalRandom.current().nextInt(NONE, MAX_MID + 1);
-    }
-
 }
