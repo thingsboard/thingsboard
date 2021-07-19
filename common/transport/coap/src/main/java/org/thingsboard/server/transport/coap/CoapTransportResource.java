@@ -311,7 +311,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                                 , sessionInfo, getTokenFromRequest(request));
                         transportService.process(sessionInfo,
                                 TransportProtos.SubscribeToRPCMsg.getDefaultInstance(),
-                                 new CoapOkCallback(exchange, CoAP.ResponseCode.VALID, CoAP.ResponseCode.INTERNAL_SERVER_ERROR)
+                                new CoapOkCallback(exchange, CoAP.ResponseCode.VALID, CoAP.ResponseCode.INTERNAL_SERVER_ERROR)
                         );
                     }
                     break;
@@ -492,11 +492,13 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         @Override
         public void onToDeviceRpcRequest(UUID sessionId, TransportProtos.ToDeviceRpcRequestMsg msg) {
             log.trace("[{}] Received RPC command to device", sessionId);
+            boolean sent = false;
             try {
                 Response response = coapTransportAdaptor.convertToPublish(isConRequest(), msg, rpcRequestDynamicMessageBuilder);
                 int requestId = getNextMsgId();
                 response.setMID(requestId);
-                if (msg.getPersisted()) {
+
+                if (msg.getPersisted() && isConRequest()) {
                     transportContext.getRpcAwaitingAck().put(requestId, msg);
                     transportContext.getScheduler().schedule(() -> {
                         TransportProtos.ToDeviceRpcRequestMsg awaitingAckMsg = transportContext.getRpcAwaitingAck().remove(requestId);
@@ -504,18 +506,23 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                             transportService.process(sessionInfo, msg, true, TransportServiceCallback.EMPTY);
                         }
                     }, Math.max(0, msg.getExpirationTime() - System.currentTimeMillis()), TimeUnit.MILLISECONDS);
+                    response.addMessageObserver(new TbCoapMessageObserver(requestId, id -> {
+                        TransportProtos.ToDeviceRpcRequestMsg rpcRequestMsg = transportContext.getRpcAwaitingAck().remove(id);
+                        if (rpcRequestMsg != null) {
+                            transportService.process(sessionInfo, rpcRequestMsg, false, TransportServiceCallback.EMPTY);
+                        }
+                    }));
                 }
-                response.addMessageObserver(new TbCoapMessageObserver(requestId, id -> {
-                    TransportProtos.ToDeviceRpcRequestMsg rpcRequestMsg = transportContext.getRpcAwaitingAck().remove(id);
-                    if (rpcRequestMsg != null) {
-                        transportService.process(sessionInfo, rpcRequestMsg, false, TransportServiceCallback.EMPTY);
-                    }
-                }));
                 exchange.respond(response);
+                sent = true;
             } catch (AdaptorException e) {
                 log.trace("Failed to reply due to error", e);
                 closeObserveRelationAndNotify(sessionId, CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
                 closeAndDeregister();
+            } finally {
+                if (msg.getPersisted() && !isConRequest()) {
+                    transportService.process(sessionInfo, msg, sent, TransportServiceCallback.EMPTY);
+                }
             }
         }
 

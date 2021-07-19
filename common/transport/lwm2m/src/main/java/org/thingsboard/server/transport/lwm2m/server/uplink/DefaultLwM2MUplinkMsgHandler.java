@@ -422,6 +422,7 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
     private void sendReadRequests(LwM2mClient lwM2MClient, Lwm2mDeviceProfileTransportConfiguration profile, Set<String> supportedObjects) {
         Set<String> targetIds = new HashSet<>(profile.getObserveAttr().getAttribute());
         targetIds.addAll(profile.getObserveAttr().getTelemetry());
+        targetIds = diffSets(profile.getObserveAttr().getObserve(), targetIds);
         targetIds = targetIds.stream().filter(target -> isSupportedTargetId(supportedObjects, target)).collect(Collectors.toSet());
 
         CountDownLatch latch = new CountDownLatch(targetIds.size());

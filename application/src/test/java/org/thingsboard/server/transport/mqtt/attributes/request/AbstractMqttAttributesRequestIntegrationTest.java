@@ -66,7 +66,7 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
 
         postAttributesAndSubscribeToTopic(savedDevice, client);
 
-        Thread.sleep(1000);
+        Thread.sleep(2000);
 
         TestMqttCallback callback = getTestMqttCallback();
         client.setCallback(callback);
@@ -86,13 +86,13 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
 
         assertNotNull(savedDevice);
 
-        Thread.sleep(1000);
+        Thread.sleep(2000);
 
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
 
-        Thread.sleep(1000);
+        Thread.sleep(2000);
 
-        client.subscribe(MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC, MqttQoS.AT_LEAST_ONCE.value());
+        client.subscribe(MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC, MqttQoS.AT_LEAST_ONCE.value()).waitForCompletion(TimeUnit.MINUTES.toMillis(1));
 
         TestMqttCallback clientAttributesCallback = getTestMqttCallback();
         client.setCallback(clientAttributesCallback);
@@ -105,13 +105,13 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
 
     protected void postAttributesAndSubscribeToTopic(Device savedDevice, MqttAsyncClient client) throws Exception {
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
-        client.publish(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, new MqttMessage(POST_ATTRIBUTES_PAYLOAD.getBytes()));
-        client.subscribe(MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC, MqttQoS.AT_MOST_ONCE.value());
+        client.publish(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, new MqttMessage(POST_ATTRIBUTES_PAYLOAD.getBytes())).waitForCompletion(TimeUnit.MINUTES.toMillis(1));
+        client.subscribe(MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC, MqttQoS.AT_MOST_ONCE.value()).waitForCompletion(TimeUnit.MINUTES.toMillis(1));
     }
 
     protected void postGatewayDeviceClientAttributes(MqttAsyncClient client) throws Exception {
         String postClientAttributes = "{\"" + "Gateway Device Request Attributes" + "\":{\"attribute1\":\"value1\",\"attribute2\":true,\"attribute3\":42.0,\"attribute4\":73,\"attribute5\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}}}";
-        client.publish(MqttTopics.GATEWAY_ATTRIBUTES_TOPIC, new MqttMessage(postClientAttributes.getBytes()));
+        client.publish(MqttTopics.GATEWAY_ATTRIBUTES_TOPIC, new MqttMessage(postClientAttributes.getBytes())).waitForCompletion(TimeUnit.MINUTES.toMillis(1));
     }
 
     protected void validateResponse(MqttAsyncClient client, CountDownLatch latch, TestMqttCallback callback) throws MqttException, InterruptedException, InvalidProtocolBufferException {
@@ -119,8 +119,8 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
         String payloadStr = "{\"clientKeys\":\"" + keys + "\", \"sharedKeys\":\"" + keys + "\"}";
         MqttMessage mqttMessage = new MqttMessage();
         mqttMessage.setPayload(payloadStr.getBytes());
-        client.publish(MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX + "1", mqttMessage);
-        latch.await(3, TimeUnit.SECONDS);
+        client.publish(MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX + "1", mqttMessage).waitForCompletion(TimeUnit.MINUTES.toMillis(1));
+        latch.await(1, TimeUnit.MINUTES);
         assertEquals(MqttQoS.AT_MOST_ONCE.value(), callback.getQoS());
         String expectedRequestPayload = "{\"client\":{\"attribute1\":\"value1\",\"attribute2\":true,\"attribute3\":42.0,\"attribute4\":73,\"attribute5\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}},\"shared\":{\"attribute1\":\"value1\",\"attribute2\":true,\"attribute3\":42.0,\"attribute4\":73,\"attribute5\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}}}";
         assertEquals(JacksonUtil.toJsonNode(expectedRequestPayload), JacksonUtil.toJsonNode(new String(callback.getPayloadBytes(), StandardCharsets.UTF_8)));
@@ -130,8 +130,8 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
         String payloadStr = "{\"id\": 1, \"device\": \"" + "Gateway Device Request Attributes" + "\", \"client\": true, \"keys\": [\"attribute1\", \"attribute2\", \"attribute3\", \"attribute4\", \"attribute5\"]}";
         MqttMessage mqttMessage = new MqttMessage();
         mqttMessage.setPayload(payloadStr.getBytes());
-        client.publish(MqttTopics.GATEWAY_ATTRIBUTES_REQUEST_TOPIC, mqttMessage);
-        callback.getLatch().await(3, TimeUnit.SECONDS);
+        client.publish(MqttTopics.GATEWAY_ATTRIBUTES_REQUEST_TOPIC, mqttMessage).waitForCompletion(TimeUnit.MINUTES.toMillis(1));
+        callback.getLatch().await(1, TimeUnit.MINUTES);
         assertEquals(MqttQoS.AT_LEAST_ONCE.value(), callback.getQoS());
         String expectedRequestPayload = "{\"id\":1,\"device\":\"" + "Gateway Device Request Attributes" + "\",\"values\":{\"attribute1\":\"value1\",\"attribute2\":true,\"attribute3\":42.0,\"attribute4\":73,\"attribute5\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}}}";
         assertEquals(JacksonUtil.toJsonNode(expectedRequestPayload), JacksonUtil.toJsonNode(new String(callback.getPayloadBytes(), StandardCharsets.UTF_8)));
@@ -141,8 +141,8 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
         String payloadStr = "{\"id\": 1, \"device\": \"" + "Gateway Device Request Attributes" + "\", \"client\": false, \"keys\": [\"attribute1\", \"attribute2\", \"attribute3\", \"attribute4\", \"attribute5\"]}";
         MqttMessage mqttMessage = new MqttMessage();
         mqttMessage.setPayload(payloadStr.getBytes());
-        client.publish(MqttTopics.GATEWAY_ATTRIBUTES_REQUEST_TOPIC, mqttMessage);
-        callback.getLatch().await(3, TimeUnit.SECONDS);
+        client.publish(MqttTopics.GATEWAY_ATTRIBUTES_REQUEST_TOPIC, mqttMessage).waitForCompletion(TimeUnit.MINUTES.toMillis(1));
+        callback.getLatch().await(1, TimeUnit.MINUTES);
         assertEquals(MqttQoS.AT_LEAST_ONCE.value(), callback.getQoS());
         String expectedRequestPayload = "{\"id\":1,\"device\":\"" + "Gateway Device Request Attributes" + "\",\"values\":{\"attribute1\":\"value1\",\"attribute2\":true,\"attribute3\":42.0,\"attribute4\":73,\"attribute5\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}}}";
         assertEquals(JacksonUtil.toJsonNode(expectedRequestPayload), JacksonUtil.toJsonNode(new String(callback.getPayloadBytes(), StandardCharsets.UTF_8)));
