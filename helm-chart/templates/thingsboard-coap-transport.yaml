@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "thingsboard.fullname" . }}-coap-transport
+  labels:
+    {{- include "thingsboardCoapTransport.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "thingsboardCoapTransport.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "thingsboardCoapTransport.labels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: server
+          imagePullPolicy: {{ .Values.coapTransport.image.pullPolicy }}
+          image: {{ .Values.coapTransport.image.repository }}:{{ .Values.coapTransport.image.tag }}
+          ports:
+            - containerPort: 5683
+              name: coap
+              protocol: UDP
+          env:
+            - name: TB_SERVICE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: TB_QUEUE_TYPE
+              value: "kafka"
+            - name: COAP_BIND_ADDRESS
+              value: "0.0.0.0"
+            - name: COAP_BIND_PORT
+              value: "5683"
+            - name: COAP_TIMEOUT
+              value: "10000"
+            - name: TB_KAFKA_SERVERS
+              value: "{{ include "thingsboard.kafka.localHostname" . }}"
+            {{- range $key, $value := .Values.coapTransport.serverEnvConfigs }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          volumeMounts:
+            - mountPath: /config
+              name: tb-coap-transport-config
+      volumes:
+        - name: tb-coap-transport-config
+          configMap:
+            name: {{ include "thingsboard.fullname" . }}-coap-transport-config
+            items:
+              - key: conf
+                path:  tb-coap-transport.conf
+              - key: logback
+                path:  logback.xml
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "thingsboard.fullname" . }}-coap-transport
+spec:
+  type: {{ .Values.coapTransport.service.type }}
+  ports:
+    - port: {{ .Values.coapTransport.service.port }}
+      name: coap
+      protocol: UDP
+  selector:
+    {{- include "thingsboardCoapTransport.selectorLabels" . | nindent 4 }}

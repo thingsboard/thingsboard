@@ -1,0 +1,15 @@
+apiVersion: v2
+name: thingsboard
+description: Thingsboard Helm chart for Kubernetes
+type: application
+appVersion: "3.2.2"
+dependencies:
+- name: cassandra
+  repository: https://charts.bitnami.com/bitnami
+  version: 7.6.3
+  condition: cassandra.enabled
+- name: kafka
+  repository: https://charts.bitnami.com/bitnami
+  version: 13.0.3
+  condition: kafka.enabled
+version: 0.1.0

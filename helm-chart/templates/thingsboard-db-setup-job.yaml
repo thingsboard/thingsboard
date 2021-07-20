@@ -3,17 +3,22 @@ kind: Job
 metadata:
   name: {{ include "thingsboard.fullname" . }}-db-setup
   labels:
-  {{- include "thingsboard.labels" . | nindent 4 }}
+    job: init-thingsboard-db
+    {{- include "thingsboard.labels" . | nindent 4 }}
   annotations:
-    "helm.sh/hook-weight": "-2"
+    helm.sh/hook: post-install,post-upgrade
     # Delete the resource after the hook is successfully executed
-    "helm.sh/hook-delete-policy": hook-succeeded
+    "helm.sh/hook-delete-policy": before-hook-creation
 spec:
+{{- if .Capabilities.APIVersions.Has "batch/v1alpha1" }}
+  # Alpha feature since k8s 1.12
+  #ttlSecondsAfterFinished: 0
+{{- end }}
   template:
     metadata:
       name: {{ include "thingsboard.fullname" . }}-pre-install
       labels:
-    {{- include "thingsboard.labels" . | nindent 8 }}
+        {{- include "thingsboard.labels" . | nindent 8 }}
     spec:
       restartPolicy: Never
       containers:
@@ -39,17 +44,14 @@ spec:
             - configMapRef:
                 name: {{ include "thingsboard.fullname" . }}-node-db-config
           env:
-            {{- if .Release.IsInstall }}
             - name: INSTALL_TB
-              value: "true"
+              value: "{{ if .Release.IsInstall }}true{{ else }}false{{ end }}"
             - name: LOAD_DEMO
               value: "{{ .Values.thingsboard.loadDemoData }}"
-            {{- else if .Release.IsUpgrade }}
             - name: UPGRADE_TB
-              value: "true"
+              value: "{{ if .Release.IsUpgrade }}true{{ else }}false{{ end }}"
             - name: FROM_VERSION
               value: "{{ .Values.thingsboard.previousVersionHack }}"
-            {{- end }}
           volumeMounts:
             - name: tb-node-config
               mountPath: /config

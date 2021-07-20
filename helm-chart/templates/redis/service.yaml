@@ -1,0 +1,23 @@
+{{- if .Values.redis.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "thingsboard.fullname" . }}-redis
+  labels:
+    {{- include "redis.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook-weight": "-1"
+spec:
+  type: {{ .Values.redis.service.type }}
+  ports:
+    - name: redis-port
+      port: {{ .Values.redis.service.port }}
+      targetPort: client
+    {{- if .Values.redis.highAvailabilityDeploy }}
+    - port: 16379
+      targetPort: 16379
+      name: gossip
+    {{- end }}
+  selector:
+    {{- include "redis.selectorLabels" . | nindent 4 }}
+{{- end }}

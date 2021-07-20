@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "thingsboard.fullname" . }}-mqtt-transport
+  labels:
+    {{- include "thingsboardMqttTransport.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.mqttTransport.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "thingsboardMqttTransport.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "thingsboardMqttTransport.labels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: server
+          imagePullPolicy: {{ .Values.mqttTransport.image.pullPolicy }}
+          image: {{ .Values.mqttTransport.image.repository }}:{{ .Values.mqttTransport.image.tag }}
+          ports:
+            - containerPort: 1883
+              name: mqtt
+          env:
+            - name: TB_SERVICE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: TB_QUEUE_TYPE
+              value: "kafka"
+            - name: MQTT_BIND_ADDRESS
+              value: "0.0.0.0"
+            - name: MQTT_BIND_PORT
+              value: "1883"
+            - name: MQTT_TIMEOUT
+              value: "10000"
+            - name: TB_KAFKA_SERVERS
+              value: "{{ include "thingsboard.kafka.localHostname" . }}"
+            {{- range $key, $value := .Values.mqttTransport.serverEnvConfigs }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          volumeMounts:
+            - mountPath: /config
+              name: tb-mqtt-transport-config
+          readinessProbe:
+            periodSeconds: 20
+            tcpSocket:
+              port: 1883
+          livenessProbe:
+            initialDelaySeconds: 120
+            periodSeconds: 20
+            tcpSocket:
+              port: 1883
+      volumes:
+        - name: tb-mqtt-transport-config
+          configMap:
+            name: {{ include "thingsboard.fullname" . }}-mqtt-transport-config
+            items:
+              - key: conf
+                path:  tb-mqtt-transport.conf
+              - key: logback
+                path:  logback.xml
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "thingsboard.fullname" . }}-mqtt-transport
+spec:
+  type: {{ .Values.mqttTransport.service.type }}
+  ports:
+    - port: {{ .Values.mqttTransport.service.port }}
+      targetPort: 1883
+      name: mqtt
+  selector:
+    {{- include "thingsboardMqttTransport.selectorLabels" . | nindent 4 }}

@@ -1,0 +1,56 @@
+{{- if and .Values.redis.enabled .Values.redis.highAvailabilityDeploy }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "thingsboard.fullname" . }}-redis
+  labels:
+    {{- include "redis.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook-weight": "-1"
+spec:
+  serviceName: server
+  replicas: 3
+  selector:
+    matchLabels:
+      {{- include "redis.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "redis.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: redis
+          imagePullPolicy: {{ .Values.redis.image.pullPolicy }}
+          image: {{ .Values.redis.image.repository }}:{{ .Values.redis.image.tag }}
+          ports:
+            - containerPort: 6379
+              name: client
+            - containerPort: 16379
+              name: gossip
+          command: ["/conf/update-node.sh", "redis-server", "/conf/redis.conf"]
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          volumeMounts:
+            - name: conf
+              mountPath: /conf
+              readOnly: false
+            - name: data
+              mountPath: /data
+              readOnly: false
+      volumes:
+        - name: conf
+          configMap:
+            name: {{ include "thingsboard.fullname" . }}-redis
+            defaultMode: 0755
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 100Mi
+{{- end }}

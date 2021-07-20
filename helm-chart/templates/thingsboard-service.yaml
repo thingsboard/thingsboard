@@ -12,4 +12,4 @@ spec:
       protocol: TCP
       name: http
   selector:
-    {{- include "thingsboard.selectorLabels" . | nindent 6 }}-node
+    {{- include "thingsboard.selectorLabels" . | nindent 4 }}-node

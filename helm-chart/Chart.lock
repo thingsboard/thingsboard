@@ -1,0 +1,9 @@
+dependencies:
+- name: cassandra
+  repository: https://charts.bitnami.com/bitnami
+  version: 7.6.3
+- name: kafka
+  repository: https://charts.bitnami.com/bitnami
+  version: 13.0.3
+digest: sha256:c211cee74a6e7962a77f2d567980ccc511078f08d8e3323280b7d218fd0a6f77
+generated: "2021-07-19T23:15:50.797263+03:00"

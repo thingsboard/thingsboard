@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "thingsboard.fullname" . }}-js-executor
+  labels:
+    {{- include "thingsboardJSExecutor.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.javascriptExecutor.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "thingsboardJSExecutor.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "thingsboardJSExecutor.labels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: server
+          imagePullPolicy: {{ .Values.javascriptExecutor.image.pullPolicy }}
+          image: {{ .Values.javascriptExecutor.image.repository }}:{{ .Values.javascriptExecutor.image.tag }}
+          env:
+            {{- range $key, $value := .Values.javascriptExecutor.serverEnvConfigs }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            - name: DOCKER_MODE
+              value: "true"
+            - name: TB_KAFKA_SERVERS
+              value: {{ include "thingsboard.kafka.localHostname" . }}
+      restartPolicy: Always

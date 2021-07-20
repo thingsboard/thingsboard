@@ -1,0 +1,11 @@
+{{- if .Values.cassandra.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: thingsboard-cassandra-init
+  labels:
+    {{- include "thingsboard.labels" . | nindent 4 }}
+data:
+  cassandra.cql: |
+    CREATE KEYSPACE IF NOT EXISTS thingsboard WITH replication = {'class' : 'SimpleStrategy', 'replication_factor' : 1};
+{{- end }}

@@ -1,8 +1,5 @@
 
 global:
-  ## must be one of two choices: ["basic", "ha"]
-  deploymentType: "basic"
-
   nameOverride: ""
   fullnameOverride: ""
 
@@ -52,17 +49,46 @@ cassandra:
   enabled: false
 
   image:
-    repository: cassandra
+    repository: bitnami/cassandra
     pullPolicy: IfNotPresent
-    tag: 3.11.3
+    tag: 3.11.10-debian-10-r125
 
-  resources:
-    limits:
-      cpu: "1000m"
-      memory: 2Gi
-    requests:
-      cpu: "1000m"
-      memory: 2Gi
+  commonAnnotations:
+    "helm.sh/hook-weight": "-4"
+
+  dbUser:
+    user: "cassandra"
+    password: "cassandra"
+
+  ## do NOT change below value, this is a hardcoded configmap name passed to cassandra chart
+  initDBConfigMap: thingsboard-cassandra-init
+
+  cluster:
+    name: "Thingsboard Cluster"
+    seedCount: 1
+    numTokens: 256
+    datacenter: datacenter1
+    rack: "Rack-Thingsboard-Cluster"
+    enableRPC: false
+    endpointSnitch: GossipingPropertyFileSnitch
+    internodeEncryption: none
+    clientEncryption: false
+  jvm:
+    maxHeapSize: "1024M"
+    newHeapSize: "256M"
+
+  persistence:
+    enabled: true
+
+externalCassandra:
+  enabled: false
+  ## NOTE external cassandra database will be used only when cassandra.enabled is false
+  ## this set up is strongly recommended for production
+
+  hostName: "cassandra.example.com"
+  port: 9042
+  username: "cassandra"
+  password: "cassandra"
 
 thingsboard:
   replicaCount: 1
@@ -71,7 +97,7 @@ thingsboard:
     repository: thingsboard/tb-node
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
-    tag: "latest"
+    tag: "3.2.2"
 
   imagePullSecrets: []
 
@@ -92,17 +118,20 @@ thingsboard:
     port: 80
 
   ingress:
-    enabled: false
-    annotations: {}
-    # kubernetes.io/ingress.class: nginx
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
     hosts:
       - host: thingsboard.localhost
-        paths:
-          - path: /
-            backend:
-              serviceName: thingsboard
-              servicePort: 80
+        eXtraPaths: []
+        #  - path: /
+        #    backend:
+        #      service:
+        #        name: thingsboard
+        #        port:
+        #          number: 8080
+        #    pathType: Prefix
     tls: []
     #  - secretName: thingsboard-tls
     #    hosts:
@@ -146,7 +175,7 @@ thingsboard:
 
   affinity: {}
 
-  previousVersionHack: ""
+  previousVersionHack: "3.2.1"
 
   nodeConfigmap:
     ## by adding key: value with multiline string, will add to node-config map
@@ -197,3 +226,173 @@ thingsboard:
           </root>
 
       </configuration>
+
+javascriptExecutor:
+  replicaCount: 1
+
+  image:
+    repository: thingsboard/tb-js-executor
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "3.2.2"
+
+  ## Set relevant configurations for javascript executor as defined here: https://thingsboard.io/docs/user-guide/install/config/
+  ## list of key value,
+  serverEnvConfigs:
+    REMOTE_JS_EVAL_REQUEST_TOPIC: "js_eval.requests"
+    LOGGER_LEVEL: "info"
+    LOG_FOLDER: "logs"
+    LOGGER_FILENAME: "tb-js-executor-%DATE%.log"
+    DOCKER_MODE: "true"
+    SCRIPT_BODY_TRACE_FREQUENCY: "1000"
+
+mqttTransport:
+  replicaCount: 1
+
+  image:
+    repository: thingsboard/tb-mqtt-transport
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "3.2.2"
+
+  ## Set relevant configurations for javascript executor as defined here: https://thingsboard.io/docs/user-guide/install/config/
+  ## list of key value,
+  serverEnvConfigs: {}
+
+  service:
+    type: LoadBalancer
+    port: 1883
+
+httpTransport:
+  replicaCount: 1
+
+  image:
+    repository: thingsboard/tb-http-transport
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "3.2.2"
+
+  ## Set relevant configurations for javascript executor as defined here: https://thingsboard.io/docs/user-guide/install/config/
+  ## list of key value,
+  serverEnvConfigs: {}
+
+  service:
+    type: ClusterIP
+    port: 8080
+
+coapTransport:
+  replicaCount: 1
+
+  image:
+    repository: thingsboard/tb-coap-transport
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "3.2.2"
+
+  ## Set relevant configurations for javascript executor as defined here: https://thingsboard.io/docs/user-guide/install/config/
+  ## list of key value,
+  serverEnvConfigs: {}
+
+  service:
+    type: LoadBalancer
+    port: 5683
+
+webUi:
+  replicaCount: 1
+
+  image:
+    repository: thingsboard/tb-web-ui
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "3.2.2"
+
+  ## Set relevant configurations for javascript executor as defined here: https://thingsboard.io/docs/user-guide/install/config/
+  ## list of key value,
+  serverEnvConfigs: {}
+
+  service:
+    type: ClusterIP
+    port: 8080
+
+kafka:
+  enabled: true
+
+  image:
+    registry: docker.io
+    repository: bitnami/kafka
+    tag: 2.8.0-debian-10-r43
+    pullPolicy: IfNotPresent
+
+  #listeners:
+  #  - INSIDE://:9093
+  #  - OUTSIDE://:9092
+  #advertisedListeners:
+  #  - INSIDE://:9093
+  #  - OUTSIDE://tb-kafka:9092
+  #listenerSecurityProtocolMap: INTERNAL:PLAINTEXT,OUTSIDE:PLAINTEXT
+  #interBrokerListenerName: INSIDE
+  autoCreateTopicsEnable: false
+  logRetentionBytes: _1073741824
+  logSegmentBytes: _268435456
+  logRetentionCheckIntervalMs: "300000"
+
+  persistence:
+    enabled: false
+
+  service:
+    port: 9092
+
+  provisioning:
+    enabled: true
+    topics:
+      # https://kafka.apache.org/documentation/#topicconfigs
+      - name: js_eval.requests
+        partitions: 100
+        replicationFactor: 1
+        config:
+          cleanup.policy: delete
+          retention.ms: "60000"
+          segment.bytes: "26214400"
+          retention.bytes: "104857600"
+      - name: tb_transport.api.requests
+        partitions: 30
+        replicationFactor: 1
+        config:
+          cleanup.policy: delete
+          retention.ms: "60000"
+          segment.bytes: "26214400"
+          retention.bytes: "104857600"
+      - name: tb_rule_engine
+        partitions: 30
+        replicationFactor: 1
+        config:
+          cleanup.policy: delete
+          retention.ms: "60000"
+          segment.bytes: "26214400"
+          retention.bytes: "104857600"
+
+externalKafka:
+  ## NOTE external kafka will be used only when kafka.enabled is false
+  ## this set up is strongly recommended for production
+  hostname: "kafka.host.name"
+  port: 9092
+
+  # update external zookeeper uri for thingsboard-node
+  zookeeper:
+    hostname: "zookeeper.host.name"
+    port: 2181
+
+redis:
+  enabled: true
+
+  highAvailabilityDeploy: false
+
+  image:
+    repository: redis
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "6.2.4"
+
+  service:
+    type: ClusterIP
+    port: 6379

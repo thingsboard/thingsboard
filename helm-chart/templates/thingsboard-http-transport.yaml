@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "thingsboard.fullname" . }}-http-transport
+  labels:
+    {{- include "thingsboardHttpTransport.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.httpTransport.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "thingsboardHttpTransport.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "thingsboardHttpTransport.labels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: server
+          imagePullPolicy: {{ .Values.httpTransport.image.pullPolicy }}
+          image: {{ .Values.httpTransport.image.repository }}:{{ .Values.httpTransport.image.tag }}
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: TB_SERVICE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: TB_QUEUE_TYPE
+              value: "kafka"
+            - name: HTTP_BIND_ADDRESS
+              value: "0.0.0.0"
+            - name: HTTP_BIND_PORT
+              value: "8080"
+            - name: HTTP_REQUEST_TIMEOUT
+              value: "60000"
+            - name: TB_KAFKA_SERVERS
+              value: "{{ include "thingsboard.kafka.localHostname" . }}"
+            {{- range $key, $value := .Values.httpTransport.serverEnvConfigs }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          volumeMounts:
+            - mountPath: /config
+              name: tb-http-transport-config
+          readinessProbe:
+            periodSeconds: 20
+            tcpSocket:
+              port: 8080
+          livenessProbe:
+            initialDelaySeconds: 120
+            periodSeconds: 20
+            tcpSocket:
+              port: 8080
+      volumes:
+        - name: tb-http-transport-config
+          configMap:
+            name: {{ include "thingsboard.fullname" . }}-http-transport-config
+            items:
+              - key: conf
+                path:  tb-http-transport.conf
+              - key: logback
+                path:  logback.xml
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "thingsboard.fullname" . }}-http-transport
+spec:
+  type: {{ .Values.httpTransport.service.type }}
+  ports:
+    - port: {{ .Values.httpTransport.service.port }}
+      name: http
+  selector:
+    {{- include "thingsboardHttpTransport.selectorLabels" . | nindent 4 }}

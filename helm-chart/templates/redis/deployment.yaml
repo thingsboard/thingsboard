@@ -1,0 +1,41 @@
+{{- if and .Values.redis.enabled (not .Values.redis.highAvailabilityDeploy)}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "thingsboard.fullname" . }}-redis
+  labels:
+    {{- include "redis.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook-weight": "-1"
+spec:
+  selector:
+    matchLabels:
+      {{- include "redis.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "redis.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: redis
+          imagePullPolicy: {{ .Values.redis.image.pullPolicy }}
+          image: {{ .Values.redis.image.repository }}:{{ .Values.redis.image.tag }}
+          ports:
+            - containerPort: 6379
+              name: client
+          readinessProbe:
+            periodSeconds: 5
+            tcpSocket:
+              port: 6379
+          livenessProbe:
+            periodSeconds: 5
+            tcpSocket:
+              port: 6379
+          volumeMounts:
+            - mountPath: /data
+              name: redis-data
+      volumes:
+        - name: redis-data
+          emptyDir: {}
+      restartPolicy: Always
+{{- end }}

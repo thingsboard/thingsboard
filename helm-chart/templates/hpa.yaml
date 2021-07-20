@@ -1,0 +1,28 @@
+{{- if .Values.thingsboard.autoscaling.enabled }}
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "thingsboard.fullname" . }}
+  labels:
+    {{- include "thingsboard.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "thingsboard.fullname" . }}
+  minReplicas: {{ .Values.thingsboard.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.thingsboard.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.thingsboard.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        targetAverageUtilization: {{ .Values.thingsboard.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.thingsboard.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        targetAverageUtilization: {{ .Values.thingsboard.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}

@@ -1,0 +1,113 @@
+{{- if .Values.thingsboard.ingress.enabled -}}
+{{- $fullName := include "thingsboard.fullname" . -}}
+{{- $thingsboardSvcPort := .Values.thingsboard.service.port -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "thingsboard.labels" . | nindent 4 }}
+  {{- with .Values.thingsboard.ingress.annotations }}
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.thingsboard.ingress.tls }}
+  tls:
+    {{- range .Values.thingsboard.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.thingsboard.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          - path: /api/v1/.*
+            backend:
+              service:
+                name: {{ $fullName }}-http-transport
+                port:
+                  number: 8080
+            pathType: Prefix
+          - path: /api/.*
+            backend:
+              service:
+                name: {{ $fullName }}-node
+                port:
+                  number: {{ $thingsboardSvcPort }}
+            pathType: Prefix
+          - path: /swagger.*
+            backend:
+              service:
+                name: {{ $fullName }}-node
+                port:
+                  number: {{ $thingsboardSvcPort }}
+            pathType: Prefix
+          - path: /webjars.*
+            backend:
+              service:
+                name: {{ $fullName }}-node
+                port:
+                  number: {{ $thingsboardSvcPort }}
+            pathType: Prefix
+          - path: /v2/.*
+            backend:
+              service:
+                name: {{ $fullName }}-node
+                port:
+                  number: {{ $thingsboardSvcPort }}
+            pathType: Prefix
+          - path: /static/rulenode/.*
+            backend:
+              service:
+                name: {{ $fullName }}-node
+                port:
+                  number: {{ $thingsboardSvcPort }}
+            pathType: Prefix
+          - path: /oauth2/.*
+            backend:
+              service:
+                name: {{ $fullName }}-node
+                port:
+                  number: {{ $thingsboardSvcPort }}
+            pathType: Prefix
+          - path: /login/oauth2/.*
+            backend:
+              service:
+                name: {{ $fullName }}-node
+                port:
+                  number: {{ $thingsboardSvcPort }}
+            pathType: Prefix
+          - path: /
+            backend:
+              service:
+                name: {{ $fullName }}-web-ui
+                port:
+                  number: 8080
+            pathType: Prefix
+          - path: /.*
+            backend:
+              service:
+                name: {{ $fullName }}-web-ui
+                port:
+                  number: 8080
+            pathType: Prefix
+          {{- range .eXtraPaths }}
+          - path: {{ .path }}
+            backend:
+              service:
+                name: {{ .backend.service.name }}
+                port:
+                  number: {{ .backend.service.port }}
+            pathType: {{ .pathType }}
+          {{- end }}
+    {{- end }}
+  {{- end }}

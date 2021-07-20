@@ -1,5 +1,5 @@
 
-### Install
+### Install / Upgrade
 ```shell
 helm upgrade thingsboard \
   --install . \

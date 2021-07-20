@@ -1,9 +1,10 @@
+{{ $fullname :=  include "thingsboard.fullname" . }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "thingsboard.fullname" . }}-node
   labels:
-    {{- include "thingsboard.labels" . | nindent 4 }}-node
+    {{- include "thingsboard.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.thingsboard.autoscaling.enabled }}
   replicas: {{ .Values.thingsboard.replicaCount }}
@@ -52,9 +53,9 @@ spec:
             - name: ZOOKEEPER_ENABLED
               value: "true"
             - name: ZOOKEEPER_URL
-              value: "zookeeper:2181"
+              value: "{{ include "thingsboard.zookeeper.localHostname" . }}"
             - name: TB_KAFKA_SERVERS
-              value: "tb-kafka:9092"
+              value: "{{ include "thingsboard.kafka.localHostname" . }}"
             - name: JS_EVALUATOR
               value: "remote"
             - name: TRANSPORT_TYPE
@@ -65,14 +66,14 @@ spec:
             # cache - redis
             - name: CACHE_TYPE
               value: "redis"
-            {{- if eq .Values.global.deploymentType "basic" }}
-            - name: REDIS_HOST
-              value: "redis"
-            {{- else if eq .Values.global.deploymentType "ha" }}
+            {{- if .Values.redis.highAvailabilityDeploy }}
             - name: REDIS_CONNECTION_TYPE
               value: "cluster"
             - name: REDIS_NODES
-              value: "tb-redis:6379"
+              value: "{{ $fullname }}-redis.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.redis.service.port }}"
+            {{- else }}
+            - name: REDIS_HOST
+              value: "{{ $fullname }}-redis.{{ .Release.Namespace }}.svc.cluster.local"
             {{- end }}
           envFrom:
             ## db - postgres

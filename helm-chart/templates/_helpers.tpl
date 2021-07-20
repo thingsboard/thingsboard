@@ -42,6 +42,51 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
+{{- define "thingsboardJSExecutor.labels" -}}
+helm.sh/chart: {{ include "thingsboard.chart" . }}
+{{ include "thingsboardJSExecutor.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{- define "thingsboardMqttTransport.labels" -}}
+helm.sh/chart: {{ include "thingsboard.chart" . }}
+{{ include "thingsboardMqttTransport.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{- define "thingsboardHttpTransport.labels" -}}
+helm.sh/chart: {{ include "thingsboard.chart" . }}
+{{ include "thingsboardHttpTransport.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{- define "thingsboardCoapTransport.labels" -}}
+helm.sh/chart: {{ include "thingsboard.chart" . }}
+{{ include "thingsboardCoapTransport.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{- define "thingsboardWebUI.labels" -}}
+helm.sh/chart: {{ include "thingsboard.chart" . }}
+{{ include "thingsboardWebUI.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
 {{- define "postgres.labels" -}}
 helm.sh/chart: {{ include "thingsboard.chart" . }}
 {{ include "postgres.selectorLabels" . }}
@@ -60,11 +105,45 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
+{{- define "redis.labels" -}}
+helm.sh/chart: {{ include "thingsboard.chart" . }}
+{{ include "redis.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
 {{/*
 Selector labels
 */}}
 {{- define "thingsboard.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "thingsboard.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{- define "thingsboardJSExecutor.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "thingsboard.name" . }}-js-executor
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{- define "thingsboardMqttTransport.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "thingsboard.name" . }}-mqtt-transport
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{- define "thingsboardHttpTransport.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "thingsboard.name" . }}-http-transport
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{- define "thingsboardCoapTransport.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "thingsboard.name" . }}-coap-transport
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{- define "thingsboardWebUI.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "thingsboard.name" . }}-web-ui
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
@@ -78,6 +157,11 @@ app.kubernetes.io/name: cassandra
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
+{{- define "redis.selectorLabels" -}}
+app.kubernetes.io/name: redis
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
 {{/*
 Create the name of the service account to use
 */}}
@@ -88,3 +172,22 @@ Create the name of the service account to use
 {{- default "default" .Values.thingsboard.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{- define "thingsboard.kafka.localHostname" -}}
+{{- if .Values.kafka.enabled -}}
+{{- $port := .Values.kafka.service.port | toString }}
+{{- printf "%s-%s.%s.svc.cluster.local:%s" (include "thingsboard.fullname" .) "kafka" .Release.Namespace $port -}}
+{{- else if .Values.externalKafka.hostname }}
+{{- $port := .Values.externalKafka.port | toString }}
+{{- printf "%s:%s" .Values.externalKafka.hostname $port -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "thingsboard.zookeeper.localHostname" -}}
+{{- if .Values.kafka.enabled -}}
+{{- printf "%s-%s.%s.svc.cluster.local:%s" (include "thingsboard.fullname" .) "zookeeper" .Release.Namespace "2181" -}}
+{{- else if .Values.externalKafka.zookeeper.hostname }}
+{{- $port := .Values.externalKafka.zookeeper.port | toString }}
+{{- printf "%s:%s" .Values.externalKafka.zookeeper.hostname $port -}}
+{{- end -}}
+{{- end -}}

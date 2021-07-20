@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "thingsboard.fullname" . }}-web-ui
+  labels:
+    {{- include "thingsboardWebUI.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.webUi.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "thingsboardWebUI.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "thingsboardWebUI.labels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: server
+          imagePullPolicy: {{ .Values.webUi.image.pullPolicy }}
+          image: {{ .Values.webUi.image.repository }}:{{ .Values.webUi.image.tag }}
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: HTTP_BIND_ADDRESS
+              value: "0.0.0.0"
+            - name: HTTP_BIND_PORT
+              value: "8080"
+            - name: TB_ENABLE_PROXY
+              value: "false"
+            - name: LOGGER_LEVEL
+              value: "info"
+            - name: LOG_FOLDER
+              value: "logs"
+            - name: LOGGER_FILENAME
+              value: "tb-web-ui-%DATE%.log"
+            - name: DOCKER_MODE
+              value: "true"
+            {{- range $key, $value := .Values.webUi.serverEnvConfigs }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /index.html
+              port: http
+            initialDelaySeconds: 120
+            timeoutSeconds: 10
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "thingsboard.fullname" . }}-web-ui
+spec:
+  type: {{ .Values.webUi.service.type }}
+  ports:
+    - port: {{ .Values.webUi.service.port }}
+      name: http
+  selector:
+    {{- include "thingsboardWebUI.selectorLabels" . | nindent 4 }}
