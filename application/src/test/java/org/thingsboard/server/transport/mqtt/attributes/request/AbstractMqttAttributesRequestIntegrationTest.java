@@ -66,7 +66,7 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
 
         postAttributesAndSubscribeToTopic(savedDevice, client);
 
-        Thread.sleep(2000);
+        Thread.sleep(5000);
 
         TestMqttCallback callback = getTestMqttCallback();
         client.setCallback(callback);
@@ -90,7 +90,7 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
 
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
 
-        Thread.sleep(2000);
+        Thread.sleep(5000);
 
         client.subscribe(MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC, MqttQoS.AT_LEAST_ONCE.value()).waitForCompletion(TimeUnit.MINUTES.toMillis(1));
 
