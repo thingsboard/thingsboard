@@ -547,13 +547,9 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     }
 
     @Transactional
-    @Caching(evict= {
-            @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.name}"),
-            @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.id}")
-    })
     @Override
-    public Device assignDeviceToTenant(TenantId tenantId, Device device) {
-        log.trace("Executing assignDeviceToTenant [{}][{}]", tenantId, device);
+    public Device assignDeviceToTenant(TenantId newTenantId, Device device) {
+        log.trace("Executing assignDeviceToTenant [{}][{}]", newTenantId, device);
 
         try {
             List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityIdAsync(device.getTenantId(), device.getId()).get();
@@ -569,7 +565,12 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
         relationService.removeRelations(device.getTenantId(), device.getId());
 
-        device.setTenantId(tenantId);
+        // explicitly remove device with previous tenant id from cache
+        // result device object will have different tenant id and will not remove entity from cache
+        removeDeviceFromCacheByName(device.getTenantId(), device.getName());
+        removeDeviceFromCacheById(device.getTenantId(), device.getId());
+
+        device.setTenantId(newTenantId);
         device.setCustomerId(null);
         return doSaveDevice(device, null, true);
     }
