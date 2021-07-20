@@ -23,8 +23,6 @@ import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.coap.client.TbCoapClientState;
 
-import java.util.UUID;
-
 @Slf4j
 public class ToServerRpcSyncSessionCallback extends AbstractSyncSessionCallback {
 

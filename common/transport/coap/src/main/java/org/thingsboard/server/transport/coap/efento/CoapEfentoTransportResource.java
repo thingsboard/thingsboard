@@ -36,9 +36,9 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos;
 import org.thingsboard.server.gen.transport.coap.MeasurementsProtos;
 import org.thingsboard.server.transport.coap.AbstractCoapTransportResource;
+import org.thingsboard.server.transport.coap.CoapTransportContext;
 import org.thingsboard.server.transport.coap.callback.CoapDeviceAuthCallback;
 import org.thingsboard.server.transport.coap.callback.CoapOkCallback;
-import org.thingsboard.server.transport.coap.CoapTransportContext;
 import org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils;
 
 import java.util.ArrayList;
