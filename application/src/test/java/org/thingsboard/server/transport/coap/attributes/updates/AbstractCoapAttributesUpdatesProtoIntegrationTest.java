@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.coap.attributes.updates;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
+import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,9 +26,7 @@ import org.thingsboard.server.common.data.CoapDeviceType;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -55,8 +54,18 @@ public abstract class AbstractCoapAttributesUpdatesProtoIntegrationTest extends 
     }
 
     @Test
+    public void testSubscribeToAttributesUpdatesFromTheServerWithContentFormat() throws Exception {
+        processTestSubscribeToAttributesUpdates(false, MediaTypeRegistry.TEXT_PLAIN);
+    }
+
+    @Test
     public void testSubscribeToAttributesUpdatesFromTheServerWithEmptyCurrentStateNotification() throws Exception {
         processTestSubscribeToAttributesUpdates(true);
+    }
+
+    @Test
+    public void testSubscribeToAttributesUpdatesFromTheServerWithEmptyCurrentStateNotificationWithContentFormat() throws Exception {
+        processTestSubscribeToAttributesUpdates(true, MediaTypeRegistry.TEXT_PLAIN);
     }
 
     protected void validateCurrentStateAttributesResponse(TestCoapCallback callback) throws InvalidProtocolBufferException {

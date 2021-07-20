@@ -94,22 +94,22 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
     }
 
     @Override
-    public Response convertToPublish(boolean isConfirmable, TransportProtos.AttributeUpdateNotificationMsg msg) throws AdaptorException {
-        return getObserveNotification(isConfirmable, JsonConverter.toJson(msg));
+    public Response convertToPublish(boolean isConfirmable, TransportProtos.AttributeUpdateNotificationMsg msg, int contentFormat) throws AdaptorException {
+        return getObserveNotification(isConfirmable, JsonConverter.toJson(msg), contentFormat);
     }
 
     @Override
-    public Response convertToPublish(boolean isConfirmable, TransportProtos.ToDeviceRpcRequestMsg msg, DynamicMessage.Builder rpcRequestDynamicMessageBuilder) throws AdaptorException {
-        return getObserveNotification(isConfirmable, JsonConverter.toJson(msg, true));
+    public Response convertToPublish(boolean isConfirmable, TransportProtos.ToDeviceRpcRequestMsg msg, DynamicMessage.Builder rpcRequestDynamicMessageBuilder, int contentFormat) throws AdaptorException {
+        return getObserveNotification(isConfirmable, JsonConverter.toJson(msg, true), contentFormat);
     }
 
     @Override
-    public Response convertToPublish(boolean isConfirmable, TransportProtos.ToServerRpcResponseMsg msg) throws AdaptorException {
+    public Response convertToPublish(boolean isConfirmable, TransportProtos.ToServerRpcResponseMsg msg, int contentFormat) throws AdaptorException {
         Response response = new Response(CoAP.ResponseCode.CONTENT);
         JsonElement result = JsonConverter.toJson(msg);
         response.setPayload(result.toString());
         response.setAcknowledged(isConfirmable);
-        response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_JSON);
+        setResponseContentFormat(response, contentFormat);
         return response;
     }
 
@@ -124,7 +124,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
     }
 
     @Override
-    public Response convertToPublish(boolean isConfirmable, TransportProtos.GetAttributeResponseMsg msg) throws AdaptorException {
+    public Response convertToPublish(boolean isConfirmable, TransportProtos.GetAttributeResponseMsg msg, int contentFormat) throws AdaptorException {
         if (msg.getSharedStateMsg()) {
             if (StringUtils.isEmpty(msg.getError())) {
                 Response response = new Response(CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
@@ -132,7 +132,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
                 TransportProtos.AttributeUpdateNotificationMsg notificationMsg = TransportProtos.AttributeUpdateNotificationMsg.newBuilder().addAllSharedUpdated(msg.getSharedAttributeListList()).build();
                 JsonObject result = JsonConverter.toJson(notificationMsg);
                 response.setPayload(result.toString());
-                response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_JSON);
+                setResponseContentFormat(response, contentFormat);
                 return response;
             } else {
                 return new Response(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
@@ -145,17 +145,17 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
                 response.setAcknowledged(isConfirmable);
                 JsonObject result = JsonConverter.toJson(msg);
                 response.setPayload(result.toString());
-                response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_JSON);
+                setResponseContentFormat(response, contentFormat);
                 return response;
             }
         }
     }
 
-    private Response getObserveNotification(boolean confirmable, JsonElement json) {
+    private Response getObserveNotification(boolean confirmable, JsonElement json, int contentFormat) {
         Response response = new Response(CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
         response.setPayload(json.toString());
         response.setConfirmable(confirmable);
-        response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_JSON);
+        setResponseContentFormat(response, contentFormat);
         return response;
     }
 
@@ -168,6 +168,10 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
             }
         }
         return payload;
+    }
+
+    public void setResponseContentFormat(Response response, int contentFormat) {
+        response.getOptions().setContentFormat(contentFormat == MediaTypeRegistry.UNDEFINED ? MediaTypeRegistry.APPLICATION_JSON : contentFormat);
     }
 
 }

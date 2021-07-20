@@ -22,6 +22,7 @@ import org.eclipse.californium.core.CoapHandler;
 import org.eclipse.californium.core.CoapObserveRelation;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.CoAP;
+import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.core.coap.Request;
 import org.junit.After;
 import org.junit.Before;
@@ -68,6 +69,10 @@ public abstract class AbstractCoapAttributesUpdatesIntegrationTest extends Abstr
     }
 
     protected void processTestSubscribeToAttributesUpdates(boolean emptyCurrentStateNotification) throws Exception {
+        this.processTestSubscribeToAttributesUpdates(emptyCurrentStateNotification, MediaTypeRegistry.UNDEFINED);
+    }
+
+    protected void processTestSubscribeToAttributesUpdates(boolean emptyCurrentStateNotification, int contentFormat) throws Exception {
         if (!emptyCurrentStateNotification) {
             doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD_ON_CURRENT_STATE_NOTIFICATION, String.class, status().isOk());
         }
@@ -78,6 +83,7 @@ public abstract class AbstractCoapAttributesUpdatesIntegrationTest extends Abstr
 
         Request request = Request.newGet().setObserve();
         request.setType(CoAP.Type.CON);
+        request.getOptions().setContentFormat(contentFormat);
         CoapObserveRelation observeRelation = client.observe(request, callback);
 
         latch.await(3, TimeUnit.SECONDS);
@@ -86,6 +92,14 @@ public abstract class AbstractCoapAttributesUpdatesIntegrationTest extends Abstr
             validateEmptyCurrentStateAttributesResponse(callback);
         } else {
             validateCurrentStateAttributesResponse(callback);
+        }
+
+        if(contentFormat == -1) {
+            assertTrue(
+                    (callback.getContentFormat() == MediaTypeRegistry.APPLICATION_JSON)
+                    || (callback.getContentFormat() == MediaTypeRegistry.APPLICATION_OCTET_STREAM));
+        } else {
+            assertEquals(contentFormat, callback.getContentFormat());
         }
 
         latch = new CountDownLatch(1);
@@ -149,6 +163,7 @@ public abstract class AbstractCoapAttributesUpdatesIntegrationTest extends Abstr
         private Integer observe;
         private byte[] payloadBytes;
         private CoAP.ResponseCode responseCode;
+        private int contentFormat;
 
         public Integer getObserve() {
             return observe;
@@ -162,6 +177,10 @@ public abstract class AbstractCoapAttributesUpdatesIntegrationTest extends Abstr
             return responseCode;
         }
 
+        public int getContentFormat() {
+            return this.contentFormat;
+        }
+
         private TestCoapCallback(CountDownLatch latch) {
             this.latch = latch;
         }
@@ -171,6 +190,7 @@ public abstract class AbstractCoapAttributesUpdatesIntegrationTest extends Abstr
             observe = response.getOptions().getObserve();
             payloadBytes = response.getPayload();
             responseCode = response.getCode();
+            contentFormat = response.getOptions().getContentFormat();
             latch.countDown();
         }
 

@@ -110,33 +110,33 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
     }
 
     @Override
-    public Response convertToPublish(boolean isConfirmable, TransportProtos.AttributeUpdateNotificationMsg msg) throws AdaptorException {
-        return getObserveNotification(isConfirmable, msg.toByteArray());
+    public Response convertToPublish(boolean isConfirmable, TransportProtos.AttributeUpdateNotificationMsg msg, int contentFormat) throws AdaptorException {
+        return getObserveNotification(isConfirmable, msg.toByteArray(), contentFormat);
     }
 
     @Override
-    public Response convertToPublish(boolean isConfirmable, TransportProtos.ToDeviceRpcRequestMsg rpcRequest, DynamicMessage.Builder rpcRequestDynamicMessageBuilder) throws AdaptorException {
-        return getObserveNotification(isConfirmable, ProtoConverter.convertToRpcRequest(rpcRequest, rpcRequestDynamicMessageBuilder));
+    public Response convertToPublish(boolean isConfirmable, TransportProtos.ToDeviceRpcRequestMsg rpcRequest, DynamicMessage.Builder rpcRequestDynamicMessageBuilder, int contentFormat) throws AdaptorException {
+        return getObserveNotification(isConfirmable, ProtoConverter.convertToRpcRequest(rpcRequest, rpcRequestDynamicMessageBuilder), contentFormat);
     }
 
     @Override
-    public Response convertToPublish(boolean isConfirmable, TransportProtos.ToServerRpcResponseMsg msg) throws AdaptorException {
+    public Response convertToPublish(boolean isConfirmable, TransportProtos.ToServerRpcResponseMsg msg, int contentFormat) throws AdaptorException {
         Response response = new Response(CoAP.ResponseCode.CONTENT);
         response.setConfirmable(isConfirmable);
         response.setPayload(msg.toByteArray());
-        response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_OCTET_STREAM);
+        setResponseContentFormat(response, contentFormat);
         return response;
     }
 
     @Override
-    public Response convertToPublish(boolean isConfirmable, TransportProtos.GetAttributeResponseMsg msg) throws AdaptorException {
+    public Response convertToPublish(boolean isConfirmable, TransportProtos.GetAttributeResponseMsg msg, int contentFormat) throws AdaptorException {
         if (msg.getSharedStateMsg()) {
             if (StringUtils.isEmpty(msg.getError())) {
                 Response response = new Response(CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
                 response.setAcknowledged(isConfirmable);
                 TransportProtos.AttributeUpdateNotificationMsg notificationMsg = TransportProtos.AttributeUpdateNotificationMsg.newBuilder().addAllSharedUpdated(msg.getSharedAttributeListList()).build();
                 response.setPayload(notificationMsg.toByteArray());
-                response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_OCTET_STREAM);
+                setResponseContentFormat(response, contentFormat);
                 return response;
             } else {
                 return new Response(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
@@ -148,23 +148,27 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
                 Response response = new Response(CoAP.ResponseCode.CONTENT);
                 response.setAcknowledged(isConfirmable);
                 response.setPayload(msg.toByteArray());
-                response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_OCTET_STREAM);
+                setResponseContentFormat(response, contentFormat);
                 return response;
             }
         }
     }
 
-    private Response getObserveNotification(boolean confirmable, byte[] notification) {
+    private Response getObserveNotification(boolean confirmable, byte[] notification, int contentFormat) {
         Response response = new Response(CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
         response.setPayload(notification);
         response.setAcknowledged(confirmable);
-        response.getOptions().setContentFormat(MediaTypeRegistry.APPLICATION_OCTET_STREAM);
+        setResponseContentFormat(response, contentFormat);
         return response;
     }
 
     private String dynamicMsgToJson(byte[] bytes, Descriptors.Descriptor descriptor) throws InvalidProtocolBufferException {
         DynamicMessage dynamicMessage = DynamicMessage.parseFrom(descriptor, bytes);
         return JsonFormat.printer().includingDefaultValueFields().print(dynamicMessage);
+    }
+
+    public void setResponseContentFormat(Response response, int contentFormat) {
+        response.getOptions().setContentFormat(contentFormat == MediaTypeRegistry.UNDEFINED ? MediaTypeRegistry.APPLICATION_OCTET_STREAM : contentFormat);
     }
 
 }

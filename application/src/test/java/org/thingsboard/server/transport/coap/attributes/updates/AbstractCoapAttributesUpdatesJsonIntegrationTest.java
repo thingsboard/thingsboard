@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.coap.attributes.updates;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,5 +44,15 @@ public abstract class AbstractCoapAttributesUpdatesJsonIntegrationTest extends A
     @Test
     public void testSubscribeToAttributesUpdatesFromTheServerWithEmptyCurrentStateNotification() throws Exception {
         super.testSubscribeToAttributesUpdatesFromTheServerWithEmptyCurrentStateNotification();
+    }
+
+    @Test
+    public void testSubscribeToAttributesUpdatesFromTheServerWithContentFormat() throws Exception {
+        super.processTestSubscribeToAttributesUpdates(false, MediaTypeRegistry.TEXT_PLAIN);
+    }
+
+    @Test
+    public void testSubscribeToAttributesUpdatesFromTheServerWithEmptyCurrentStateNotificationWithContentFormat() throws Exception {
+        super.processTestSubscribeToAttributesUpdates(true, MediaTypeRegistry.APPLICATION_XML);
     }
 }
