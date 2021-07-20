@@ -19,14 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
-import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
-import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.transport.coap.AbstractCoapTransportResource;
 
-import java.util.UUID;
 import java.util.function.BiConsumer;
 
 @Slf4j

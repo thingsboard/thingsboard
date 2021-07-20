@@ -82,11 +82,6 @@ public class DefaultCoapClientContext implements CoapClientContext {
     }
 
     @Override
-    public void onUplink(TransportProtos.SessionInfoProto sessionInfo) {
-        getClientState(toDeviceId(sessionInfo)).updateLastUplinkTime();
-    }
-
-    @Override
     public AtomicInteger getNotificationCounterByToken(String token) {
         TbCoapClientState state = clientsByToken.get(token);
         if (state == null) {
@@ -423,7 +418,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
 
         @Override
         public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg msg) {
-
+            log.trace("[{}] Received server rpc response in the wrong session.", state.getSession());
         }
 
         private void cancelObserveRelation(TbCoapObservationState attrs) {
@@ -449,6 +444,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
                 transportService.process(state.getSession(), getSessionEventMsg(TransportProtos.SessionEvent.CLOSED), null);
                 transportService.deregisterSession(state.getSession());
                 state.setSession(null);
+                //TODO: need to delete the client from context as well.
             }
         }
     }
@@ -465,6 +461,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
                 transportService.process(state.getSession(), getSessionEventMsg(TransportProtos.SessionEvent.CLOSED), null);
                 transportService.deregisterSession(state.getSession());
                 state.setSession(null);
+                //TODO: need to delete the client from context as well.
             }
         }
     }

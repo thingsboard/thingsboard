@@ -18,22 +18,15 @@ package org.thingsboard.server.transport.coap.client;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import org.eclipse.californium.core.network.Exchange;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.coap.TransportConfigurationContainer;
 import org.thingsboard.server.transport.coap.adaptors.CoapTransportAdaptor;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Data
 public class TbCoapClientState {

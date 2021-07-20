@@ -15,28 +15,12 @@
  */
 package org.thingsboard.server.transport.coap;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapResource;
-import org.eclipse.californium.core.coap.CoAP;
-import org.eclipse.californium.core.coap.MessageObserver;
-import org.eclipse.californium.core.coap.Response;
 import org.eclipse.californium.core.server.resources.CoapExchange;
-import org.eclipse.californium.elements.EndpointContext;
-import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
-import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
-import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
-
-import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.BiConsumer;
-
-import static org.eclipse.californium.core.coap.Message.MAX_MID;
-import static org.eclipse.californium.core.coap.Message.NONE;
 
 @Slf4j
 public abstract class AbstractCoapTransportResource extends CoapResource {

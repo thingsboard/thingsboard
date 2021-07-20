@@ -31,8 +31,6 @@ public interface CoapClientContext {
 
     boolean registerRpcObservation(TbCoapClientState clientState, String token, CoapExchange exchange);
 
-    void onUplink(TransportProtos.SessionInfoProto sessionInfo);
-
     AtomicInteger getNotificationCounterByToken(String token);
 
     TbCoapClientState getOrCreateClient(SessionMsgType type, ValidateDeviceCredentialsResponse deviceCredentials, DeviceProfile deviceProfile) throws AdaptorException;
