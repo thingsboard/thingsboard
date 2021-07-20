@@ -117,6 +117,8 @@ message DeviceInfoProto {
   int64 customerIdLSB = 11;
   string powerMode = 12;
   int64 edrxCycle = 13;
+  int64 psmActivityTimer = 14;
+  int64 pagingTransmissionWindow = 15;
 }
 
 /**

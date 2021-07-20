@@ -126,4 +126,6 @@ public interface TransportService {
     SessionMetaData reportActivity(SessionInfoProto sessionInfo);
 
     void deregisterSession(SessionInfoProto sessionInfo);
+
+    void log(SessionInfoProto sessionInfo, String msg);
 }

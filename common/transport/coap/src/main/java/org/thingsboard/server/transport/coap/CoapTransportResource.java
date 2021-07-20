@@ -234,7 +234,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         TbCoapClientState clientState = null;
         try {
             clientState = clients.getOrCreateClient(type, deviceCredentials, deviceProfile);
-            clientState.updateLastUplinkTime();
+            clients.awake(clientState);
             switch (type) {
                 case POST_ATTRIBUTES_REQUEST:
                     handlePostAttributesRequest(clientState, exchange, request);
