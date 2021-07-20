@@ -40,6 +40,9 @@ public class WidgetsBundleMsgConstructor {
         if (widgetsBundle.getImage() != null) {
             builder.setImage(ByteString.copyFrom(widgetsBundle.getImage().getBytes(StandardCharsets.UTF_8)));
         }
+        if (widgetsBundle.getDescription() != null) {
+            builder.setDescription(widgetsBundle.getDescription());
+        }
         if (widgetsBundle.getTenantId().equals(TenantId.SYS_TENANT_ID)) {
             builder.setIsSystem(true);
         }
