@@ -25,6 +25,8 @@ import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import java.nio.charset.StandardCharsets;
+
 @Component
 @TbCoreComponent
 public class DeviceProfileMsgConstructor {
@@ -60,6 +62,9 @@ public class DeviceProfileMsgConstructor {
         }
         if (deviceProfile.getProvisionDeviceKey() != null) {
             builder.setProvisionDeviceKey(deviceProfile.getProvisionDeviceKey());
+        }
+        if (deviceProfile.getImage() != null) {
+            builder.setImage(ByteString.copyFrom(deviceProfile.getImage().getBytes(StandardCharsets.UTF_8)));
         }
         return builder.build();
     }

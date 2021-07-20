@@ -210,6 +210,7 @@ message DeviceProfileUpdateMsg {
   string defaultQueueName = 12;
   bytes profileDataBytes = 13;
   string provisionDeviceKey = 14;
+  bytes image = 15;
 }
 
 message DeviceCredentialsUpdateMsg {
@@ -312,6 +313,7 @@ message WidgetsBundleUpdateMsg {
   string alias = 5;
   bytes image = 6;
   bool isSystem = 7;
+  string description = 8;
 }
 
 message WidgetTypeUpdateMsg {
