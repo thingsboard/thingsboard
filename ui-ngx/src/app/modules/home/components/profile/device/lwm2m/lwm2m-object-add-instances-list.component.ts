@@ -14,37 +14,76 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
-import { INSTANCES_ID_VALUE_MAX, INSTANCES_ID_VALUE_MIN, KEY_REGEXP_NUMBER } from './lwm2m-profile-config.models';
+import { Component, ElementRef, forwardRef, Input, ViewChild } from '@angular/core';
+import {
+  ControlValueAccessor,
+  FormBuilder,
+  FormGroup,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR, ValidationErrors, Validator,
+  Validators
+} from '@angular/forms';
+import { INSTANCES_ID_VALUE_MAX, INSTANCES_ID_VALUE_MIN } from './lwm2m-profile-config.models';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
+import { MatChipInputEvent } from '@angular/material/chips';
 
 @Component({
   selector: 'tb-profile-lwm2m-object-add-instances-list',
   templateUrl: './lwm2m-object-add-instances-list.component.html',
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => Lwm2mObjectAddInstancesListComponent),
-    multi: true
-  }]
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => Lwm2mObjectAddInstancesListComponent),
+      multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => Lwm2mObjectAddInstancesListComponent),
+      multi: true
+    }]
 })
-export class Lwm2mObjectAddInstancesListComponent implements ControlValueAccessor {
+export class Lwm2mObjectAddInstancesListComponent implements ControlValueAccessor, Validator {
 
-  private disabled = false;
-  private dirty = false;
+  private requiredValue: boolean;
+
+  @Input()
+  disabled: boolean;
+
+  get required(): boolean {
+    return this.requiredValue;
+  }
+
+  @Input()
+  set required(value: boolean) {
+    this.requiredValue = coerceBooleanProperty(value);
+    this.updateValidators();
+  }
+
+  @ViewChild('instanceId') instanceId: ElementRef<HTMLInputElement>;
 
   instancesListFormGroup: FormGroup;
   instancesId = new Set<number>();
-  instanceIdValueMin = INSTANCES_ID_VALUE_MIN;
+  separatorKeysCodes = [ENTER, COMMA, SEMICOLON];
   instanceIdValueMax = INSTANCES_ID_VALUE_MAX;
 
   private propagateChange = (v: any) => { };
 
   constructor(private fb: FormBuilder) {
     this.instancesListFormGroup = this.fb.group({
-      instanceIdInput: [null, [
-        Validators.min(this.instanceIdValueMin),
-        Validators.max(this.instanceIdValueMax),
-        Validators.pattern(KEY_REGEXP_NUMBER)]]
+      instanceList: [null],
+      instanceId: [null, [
+        Validators.min(INSTANCES_ID_VALUE_MIN),
+        Validators.max(INSTANCES_ID_VALUE_MAX),
+        Validators.pattern('[0-9]*')]]
+    });
+    this.instancesListFormGroup.get('instanceId').statusChanges.subscribe((value) => {
+      if (value === 'INVALID') {
+        const errors = this.instancesListFormGroup.get('instanceId').errors;
+        this.instancesListFormGroup.get('instanceList').setErrors(errors);
+      } else {
+        this.instancesListFormGroup.get('instanceList').updateValueAndValidity({onlySelf: true});
+      }
     });
   }
 
@@ -67,26 +106,41 @@ export class Lwm2mObjectAddInstancesListComponent implements ControlValueAccesso
   writeValue(value: Set<number>): void {
     if (value && value.size) {
       this.instancesId = value;
+      this.instancesListFormGroup.patchValue({instanceList: Array.from(this.instancesId)}, {emitEvent: false});
     }
-    this.dirty = false;
   }
 
-  add = (): void => {
-    if (this.instancesListFormGroup.get('instanceIdInput').valid &&  Number.isFinite(Number(this.instanceId))) {
-      this.instancesId.add(Number(this.instanceId));
-      this.instancesListFormGroup.get('instanceIdInput').setValue(null);
+  validate(): ValidationErrors | null {
+    return this.instancesListFormGroup.valid ? null : {
+      instancesListForm: false
+    };
+  }
+
+  add = (event: MatChipInputEvent): void => {
+    const value = event.value;
+    if (this.instancesListFormGroup.get('instanceId').valid && value !== '' && Number.isFinite(Number(value))) {
+      this.instancesId.add(Number(value));
+      this.instancesListFormGroup.patchValue({instanceList: Array.from(this.instancesId)}, {emitEvent: false});
+      this.instancesListFormGroup.get('instanceId').setValue(null, {emitEvent: false});
       this.propagateChange(this.instancesId);
-      this.dirty = true;
     }
   }
 
   remove = (object: number): void => {
     this.instancesId.delete(object);
+    this.instancesListFormGroup.patchValue({instanceList: Array.from(this.instancesId)}, {emitEvent: false});
     this.propagateChange(this.instancesId);
-    this.dirty = true;
   }
 
-  get instanceId(): number {
-    return this.instancesListFormGroup.get('instanceIdInput').value;
+  onFocus() {
+    setTimeout(() => {
+      this.instanceId.nativeElement.blur();
+      this.instanceId.nativeElement.focus();
+    }, 0);
+  }
+
+  private updateValidators() {
+    this.instancesListFormGroup.get('instanceList').setValidators(this.required ? [Validators.required] : []);
+    this.instancesListFormGroup.get('instanceList').updateValueAndValidity({emitEvent: false});
   }
 }
