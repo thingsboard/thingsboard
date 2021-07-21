@@ -141,7 +141,7 @@ import { DashboardImageDialogComponent } from '@home/components/dashboard-page/d
 import { WidgetContainerComponent } from '@home/components/widget/widget-container.component';
 import { SnmpDeviceProfileTransportModule } from '@home/components/profile/device/snpm/snmp-device-profile-transport.module';
 import { DeviceCredentialsModule } from '@home/components/device/device-credentials.module';
-import { PowerModeSettingComponent } from '@home/components/profile/device/common/power-mode-setting.component';
+import { DeviceProfileCommonModule } from '@home/components/profile/device/common/device-profile-common.module';
 
 @NgModule({
   declarations:
@@ -260,8 +260,7 @@ import { PowerModeSettingComponent } from '@home/components/profile/device/commo
       DashboardStateDialogComponent,
       DashboardImageDialogComponent,
       EmbedDashboardDialogComponent,
-      DisplayWidgetTypesPanelComponent,
-      PowerModeSettingComponent
+      DisplayWidgetTypesPanelComponent
     ],
   imports: [
     CommonModule,
@@ -270,7 +269,8 @@ import { PowerModeSettingComponent } from '@home/components/profile/device/commo
     Lwm2mProfileComponentsModule,
     SnmpDeviceProfileTransportModule,
     StatesControllerModule,
-    DeviceCredentialsModule
+    DeviceCredentialsModule,
+    DeviceProfileCommonModule
   ],
   exports: [
     EntitiesTableComponent,
@@ -371,8 +371,7 @@ import { PowerModeSettingComponent } from '@home/components/profile/device/commo
     DashboardStateDialogComponent,
     DashboardImageDialogComponent,
     EmbedDashboardDialogComponent,
-    DisplayWidgetTypesPanelComponent,
-    PowerModeSettingComponent
+    DisplayWidgetTypesPanelComponent
   ],
   providers: [
     WidgetComponentService,
