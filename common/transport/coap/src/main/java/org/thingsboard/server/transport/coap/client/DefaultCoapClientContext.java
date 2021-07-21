@@ -166,13 +166,12 @@ public class DefaultCoapClientContext implements CoapClientContext {
             var clientProfile = getProfile(client.getProfileId());
             if (clientProfile.isPresent()) {
                 profileSettings = clientProfile.get().getClientSettings();
-                powerMode = profileSettings.getPowerMode();
-                if (powerMode == null) {
-                    powerMode = PowerMode.DRX;
+                if (profileSettings != null) {
+                    powerMode = profileSettings.getPowerMode();
                 }
             }
         }
-        if (PowerMode.DRX.equals(powerMode)) {
+        if (powerMode == null || PowerMode.DRX.equals(powerMode)) {
             client.updateLastUplinkTime();
             return;
         }
@@ -598,13 +597,12 @@ public class DefaultCoapClientContext implements CoapClientContext {
             var clientProfile = getProfile(client.getProfileId());
             if (clientProfile.isPresent()) {
                 profileSettings = clientProfile.get().getClientSettings();
-                powerMode = profileSettings.getPowerMode();
-                if (powerMode == null) {
-                    powerMode = PowerMode.DRX;
+                if (profileSettings != null) {
+                    powerMode = profileSettings.getPowerMode();
                 }
             }
         }
-        if (PowerMode.DRX.equals(powerMode)) {
+        if (powerMode == null || PowerMode.DRX.equals(powerMode)) {
             return true;
         }
         client.lock();
@@ -679,10 +677,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
                     TransportProtos.SubscribeToRPCMsg.newBuilder().setUnsubscribe(true).build(),
                     new CoapOkCallback(exchange, CoAP.ResponseCode.DELETED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
             if (state.getAttrs() == null) {
-                transportService.process(state.getSession(), getSessionEventMsg(TransportProtos.SessionEvent.CLOSED), null);
-                transportService.deregisterSession(state.getSession());
-                state.setSession(null);
-                //TODO: need to delete the client from context as well.
+                closeAndCleanup(state);
             }
         }
     }
@@ -696,11 +691,18 @@ public class DefaultCoapClientContext implements CoapClientContext {
                     TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().setUnsubscribe(true).build(),
                     new CoapOkCallback(exchange, CoAP.ResponseCode.DELETED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
             if (state.getRpc() == null) {
-                transportService.process(state.getSession(), getSessionEventMsg(TransportProtos.SessionEvent.CLOSED), null);
-                transportService.deregisterSession(state.getSession());
-                state.setSession(null);
-                //TODO: need to delete the client from context as well.
+                closeAndCleanup(state);
             }
         }
+    }
+
+    private void closeAndCleanup(TbCoapClientState state) {
+        transportService.process(state.getSession(), getSessionEventMsg(TransportProtos.SessionEvent.CLOSED), null);
+        transportService.deregisterSession(state.getSession());
+        state.setSession(null);
+        state.setConfiguration(null);
+        state.setCredentials(null);
+        state.setAdaptor(null);
+        //TODO: add optimistic lock check that the client was already deleted and cleanup "clients" map.
     }
 }
