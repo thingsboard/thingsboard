@@ -84,6 +84,7 @@ public class TbCoapClientState {
     }
 
     public void init(ValidateDeviceCredentialsResponse credentials) {
+        this.credentials = credentials;
         this.profileId = credentials.getDeviceInfo().getDeviceProfileId();
         this.powerMode = credentials.getDeviceInfo().getPowerMode();
         this.edrxCycle = credentials.getDeviceInfo().getEdrxCycle();
