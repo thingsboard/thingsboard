@@ -16,7 +16,15 @@
 
 import { DeviceProfileTransportConfiguration } from '@shared/models/device.models';
 import { Component, forwardRef, Input, OnDestroy } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import {
+  ControlValueAccessor,
+  FormBuilder,
+  FormGroup, NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  ValidationErrors,
+  Validator,
+  Validators
+} from '@angular/forms';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   ATTRIBUTE,
@@ -30,10 +38,7 @@ import {
   DEFAULT_NOTIF_IF_DESIBLED,
   DEFAULT_SW_UPDATE_RESOURCE,
   getDefaultBootstrapServerSecurityConfig,
-  getDefaultBootstrapServersSecurityConfig,
   getDefaultLwM2MServerSecurityConfig,
-  getDefaultProfileClientLwM2mSettingsConfig,
-  getDefaultProfileObserveAttrConfig,
   Instance,
   INSTANCES,
   KEY_NAME,
@@ -41,7 +46,6 @@ import {
   ObjectLwM2M,
   OBSERVE,
   PowerMode,
-  PowerModeTranslationMap,
   RESOURCES,
   ServerSecurityConfig,
   TELEMETRY
@@ -58,13 +62,19 @@ import { takeUntil } from 'rxjs/operators';
   selector: 'tb-profile-lwm2m-device-transport-configuration',
   templateUrl: './lwm2m-device-profile-transport-configuration.component.html',
   styleUrls: ['./lwm2m-device-profile-transport-configuration.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => Lwm2mDeviceProfileTransportConfigurationComponent),
-    multi: true
-  }]
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => Lwm2mDeviceProfileTransportConfigurationComponent),
+      multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => Lwm2mDeviceProfileTransportConfigurationComponent),
+      multi: true
+    }]
 })
-export class Lwm2mDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, Validators, OnDestroy {
+export class Lwm2mDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, Validator, OnDestroy {
 
   private configurationValue: Lwm2mProfileConfigModels;
   private requiredValue: boolean;
@@ -76,10 +86,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   lwm2mDeviceProfileFormGroup: FormGroup;
   lwm2mDeviceConfigFormGroup: FormGroup;
   sortFunction: (key: string, value: object) => object;
-  isFwUpdateStrategy: boolean;
-  isSwUpdateStrategy: boolean;
-  powerMods = Object.values(PowerMode);
-  powerModeTranslationMap = PowerModeTranslationMap;
 
   get required(): boolean {
     return this.requiredValue;
@@ -116,7 +122,9 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         fwUpdateResource: [{value: '', disabled: true}, []],
         swUpdateResource: [{value: '', disabled: true}, []],
         powerMode: [PowerMode.DRX, Validators.required],
-        edrxCycle: [0],
+        edrxCycle: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
+        psmActivityTimer: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
+        pagingTransmissionWindow: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
         compositeOperationsSupport: [false]
       })
     });
@@ -128,42 +136,22 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     ).subscribe((fwStrategy) => {
       if (fwStrategy === 2) {
         this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateResource').enable({emitEvent: false});
-        this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateResource')
-          .patchValue(DEFAULT_FW_UPDATE_RESOURCE, {emitEvent: false});
-        this.isFwUpdateStrategy = true;
       } else {
         this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateResource').disable({emitEvent: false});
-        this.isFwUpdateStrategy = false;
+        this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateResource')
+          .reset(DEFAULT_FW_UPDATE_RESOURCE, {emitEvent: false});
       }
-      this.otaUpdateFwStrategyValidate(true);
     });
     this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateStrategy').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((swStrategy) => {
       if (swStrategy === 2) {
         this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateResource').enable({emitEvent: false});
-        this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateResource')
-          .patchValue(DEFAULT_SW_UPDATE_RESOURCE, {emitEvent: false});
-        this.isSwUpdateStrategy = true;
       } else {
-        this.isSwUpdateStrategy = false;
         this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateResource').disable({emitEvent: false});
+        this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateResource')
+          .reset(DEFAULT_SW_UPDATE_RESOURCE, {emitEvent: false});
       }
-      this.otaUpdateSwStrategyValidate(true);
-    });
-    this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.powerMode').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((powerMode: PowerMode) => {
-      if (powerMode === PowerMode.E_DRX) {
-        this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.edrxCycle').enable({emitEvent: false});
-        this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.edrxCycle').patchValue(0, {emitEvent: false});
-        this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.edrxCycle')
-          .setValidators([Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]);
-      } else {
-        this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.edrxCycle').disable({emitEvent: false});
-        this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.edrxCycle').clearValidators();
-      }
-      this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.edrxCycle').updateValueAndValidity({emitEvent: false});
     });
     this.lwm2mDeviceProfileFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
@@ -198,24 +186,33 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     } else {
       this.lwm2mDeviceProfileFormGroup.enable({emitEvent: false});
       this.lwm2mDeviceConfigFormGroup.enable({emitEvent: false});
+      this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.powerMode').updateValueAndValidity({onlySelf: true});
+      this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateStrategy').updateValueAndValidity({onlySelf: true});
+      this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateStrategy').updateValueAndValidity({onlySelf: true});
     }
   }
 
   async writeValue(value: Lwm2mProfileConfigModels | null) {
-    if (isDefinedAndNotNull(value)) {
-      if (value?.clientLwM2mSettings || value?.observeAttr || value?.bootstrap) {
-        this.configurationValue = value;
-      } else {
-        this.configurationValue = await this.defaultProfileConfig();
-      }
+    if (isDefinedAndNotNull(value) && (value?.clientLwM2mSettings || value?.observeAttr || value?.bootstrap)) {
+      this.configurationValue = value;
+      const defaultFormSettings = !(value.observeAttr.attribute.length && value.observeAttr.telemetry.length);
       this.lwm2mDeviceConfigFormGroup.patchValue({
         configurationJson: this.configurationValue
-      }, {emitEvent: false});
+      }, {emitEvent: defaultFormSettings});
+      if (defaultFormSettings) {
+        await this.defaultProfileConfig();
+      }
       this.initWriteValue();
     }
   }
 
-  private async defaultProfileConfig(): Promise<Lwm2mProfileConfigModels> {
+  validate(): ValidationErrors | null {
+    return this.lwm2mDeviceProfileFormGroup.valid ? null : {
+      lwm2mDeviceProfile: false
+    };
+  }
+
+  private async defaultProfileConfig(): Promise<void> {
     let bootstrap: ServerSecurityConfig;
     let lwm2m: ServerSecurityConfig;
     try {
@@ -227,15 +224,15 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       bootstrap = getDefaultBootstrapServerSecurityConfig();
       lwm2m = getDefaultLwM2MServerSecurityConfig();
     }
-    return {
-      observeAttr: getDefaultProfileObserveAttrConfig(),
-      bootstrap: {
-        servers: getDefaultBootstrapServersSecurityConfig(),
-        bootstrapServer: bootstrap,
-        lwm2mServer: lwm2m
-      },
-      clientLwM2mSettings: getDefaultProfileClientLwM2mSettingsConfig()
-    };
+
+    this.configurationValue.bootstrap.bootstrapServer = bootstrap;
+    this.configurationValue.bootstrap.lwm2mServer = lwm2m;
+    this.lwm2mDeviceConfigFormGroup.patchValue({
+      configurationJson: this.configurationValue
+    }, {emitEvent: false});
+    this.lwm2mDeviceProfileFormGroup.patchValue({
+      bootstrap: this.configurationValue.bootstrap
+    }, {emitEvent: false});
   }
 
   private initWriteValue = (): void => {
@@ -256,10 +253,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   private updateWriteValue = (value: ObjectLwM2M[]): void => {
-    const fwResource = isDefinedAndNotNull(this.configurationValue.clientLwM2mSettings.fwUpdateResource) ?
-      this.configurationValue.clientLwM2mSettings.fwUpdateResource : '';
-    const swResource = isDefinedAndNotNull(this.configurationValue.clientLwM2mSettings.swUpdateResource) ?
-      this.configurationValue.clientLwM2mSettings.swUpdateResource : '';
     this.lwm2mDeviceProfileFormGroup.patchValue({
         objectIds: value,
         observeAttrTelemetry: this.getObserveAttrTelemetryObjects(value),
@@ -268,22 +261,19 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
           clientOnlyObserveAfterConnect: this.configurationValue.clientLwM2mSettings.clientOnlyObserveAfterConnect,
           fwUpdateStrategy: this.configurationValue.clientLwM2mSettings.fwUpdateStrategy || 1,
           swUpdateStrategy: this.configurationValue.clientLwM2mSettings.swUpdateStrategy || 1,
-          fwUpdateResource: fwResource,
-          swUpdateResource: swResource,
+          fwUpdateResource: this.configurationValue.clientLwM2mSettings.fwUpdateResource || '',
+          swUpdateResource: this.configurationValue.clientLwM2mSettings.swUpdateResource || '',
           powerMode: this.configurationValue.clientLwM2mSettings.powerMode || PowerMode.DRX,
           edrxCycle: this.configurationValue.clientLwM2mSettings.edrxCycle || 0,
           compositeOperationsSupport: this.configurationValue.clientLwM2mSettings.compositeOperationsSupport || false
         }
       },
       {emitEvent: false});
-    this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.powerMode')
-      .patchValue(this.configurationValue.clientLwM2mSettings.powerMode || PowerMode.DRX, {emitEvent: false, onlySelf: true});
-    this.configurationValue.clientLwM2mSettings.fwUpdateResource = fwResource;
-    this.configurationValue.clientLwM2mSettings.swUpdateResource = swResource;
-    this.isFwUpdateStrategy = this.configurationValue.clientLwM2mSettings.fwUpdateStrategy === 2;
-    this.isSwUpdateStrategy = this.configurationValue.clientLwM2mSettings.swUpdateStrategy === 2;
-    this.otaUpdateSwStrategyValidate();
-    this.otaUpdateFwStrategyValidate();
+    if (!this.disabled) {
+      this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.powerMode').updateValueAndValidity({onlySelf: true});
+      this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateStrategy').updateValueAndValidity({onlySelf: true});
+      this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateStrategy').updateValueAndValidity({onlySelf: true});
+    }
   }
 
   private updateModel = (): void => {
@@ -576,22 +566,8 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     });
   }
 
-  private otaUpdateFwStrategyValidate(updated = false): void {
-    if (this.isFwUpdateStrategy) {
-      this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateResource').setValidators([Validators.required]);
-    } else {
-      this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateResource').clearValidators();
-    }
-    this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateResource').updateValueAndValidity({emitEvent: updated});
-  }
-
-  private otaUpdateSwStrategyValidate(updated = false): void {
-    if (this.isSwUpdateStrategy) {
-      this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateResource').setValidators([Validators.required]);
-    } else {
-      this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateResource').clearValidators();
-    }
-    this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateResource').updateValueAndValidity({emitEvent: updated});
+  get clientSettingsFormGroup(): FormGroup {
+    return this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings') as FormGroup;
   }
 
 }
