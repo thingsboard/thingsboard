@@ -137,17 +137,17 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
         );
         UUID currentId = UUID.fromString(idStr);
         Response response = new Response(CoAP.ResponseCode.CONTENT);
-        byte[] fwData = this.getOtaData(currentId);
-        log.debug("Read softWare data (length): [{}]", fwData.length);
-        if (fwData != null && fwData.length > 0) {
-            response.setPayload(fwData);
+        byte[] otaData = this.getOtaData(currentId);
+        log.debug("Read ota data (length): [{}]", otaData.length);
+        if (otaData.length > 0) {
+            response.setPayload(otaData);
             if (exchange.getRequestOptions().getBlock2() != null) {
                 int chunkSize = exchange.getRequestOptions().getBlock2().getSzx();
-                boolean lastFlag = fwData.length <= chunkSize;
+                boolean lastFlag = otaData.length <= chunkSize;
                 response.getOptions().setBlock2(chunkSize, lastFlag, 0);
-                log.trace("With block2 Send currentId: [{}], length: [{}], chunkSize [{}], moreFlag [{}]", currentId.toString(), fwData.length, chunkSize, lastFlag);
+                log.trace("With block2 Send currentId: [{}], length: [{}], chunkSize [{}], moreFlag [{}]", currentId.toString(), otaData.length, chunkSize, lastFlag);
             } else {
-                log.trace("With block1 Send currentId: [{}], length: [{}], ", currentId.toString(), fwData.length);
+                log.trace("With block1 Send currentId: [{}], length: [{}], ", currentId.toString(), otaData.length);
             }
             exchange.respond(response);
         }

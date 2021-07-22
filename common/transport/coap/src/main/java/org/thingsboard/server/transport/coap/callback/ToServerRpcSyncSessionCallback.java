@@ -33,7 +33,7 @@ public class ToServerRpcSyncSessionCallback extends AbstractSyncSessionCallback 
     @Override
     public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg toServerResponse) {
         try {
-            exchange.respond(state.getAdaptor().convertToPublish(isConRequest(state.getRpc()), toServerResponse));
+            respond(state.getAdaptor().convertToPublish(isConRequest(state.getRpc()), toServerResponse));
         } catch (AdaptorException e) {
             log.trace("Failed to reply due to error", e);
             exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
