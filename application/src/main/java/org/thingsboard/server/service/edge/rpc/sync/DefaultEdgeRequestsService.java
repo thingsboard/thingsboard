@@ -383,11 +383,11 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
     }
 
     private void saveEdgeEvent(TenantId tenantId,
-                                                      EdgeId edgeId,
-                                                      EdgeEventType type,
-                                                      EdgeEventActionType action,
-                                                      EntityId entityId,
-                                                      JsonNode body) {
+                               EdgeId edgeId,
+                               EdgeEventType type,
+                               EdgeEventActionType action,
+                               EntityId entityId,
+                               JsonNode body) {
         log.trace("Pushing edge event to edge queue. tenantId [{}], edgeId [{}], type [{}], action[{}], entityId [{}], body [{}]",
                 tenantId, edgeId, type, action, entityId, body);
 

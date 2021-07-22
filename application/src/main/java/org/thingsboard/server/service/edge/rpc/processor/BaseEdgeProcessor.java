@@ -175,11 +175,11 @@ public abstract class BaseEdgeProcessor {
     protected DbCallbackExecutorService dbCallbackExecutorService;
 
     protected void saveEdgeEvent(TenantId tenantId,
-                                                        EdgeId edgeId,
-                                                        EdgeEventType type,
-                                                        EdgeEventActionType action,
-                                                        EntityId entityId,
-                                                        JsonNode body) {
+                                 EdgeId edgeId,
+                                 EdgeEventType type,
+                                 EdgeEventActionType action,
+                                 EntityId entityId,
+                                 JsonNode body) {
         log.debug("Pushing event to edge queue. tenantId [{}], edgeId [{}], type[{}], " +
                         "action [{}], entityId [{}], body [{}]",
                 tenantId, edgeId, type, action, entityId, body);
