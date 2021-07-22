@@ -17,7 +17,9 @@ package org.thingsboard.server.transport.coap.callback;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.core.coap.Request;
+import org.eclipse.californium.core.coap.Response;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -69,6 +71,13 @@ public abstract class AbstractSyncSessionCallback implements SessionMsgListener 
         } else {
             return false;
         }
+    }
+
+    protected void respond(Response response) {
+        int contentFormat = exchange.getRequestOptions().getContentFormat();
+        contentFormat = contentFormat != MediaTypeRegistry.UNDEFINED ? contentFormat : state.getContentFormat();
+        response.getOptions().setContentFormat(contentFormat);
+        exchange.respond(response);
     }
 
 }

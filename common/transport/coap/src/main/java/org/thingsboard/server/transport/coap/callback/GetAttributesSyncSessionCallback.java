@@ -34,7 +34,7 @@ public class GetAttributesSyncSessionCallback extends AbstractSyncSessionCallbac
     @Override
     public void onGetAttributesResponse(TransportProtos.GetAttributeResponseMsg msg) {
         try {
-            exchange.respond(state.getAdaptor().convertToPublish(AbstractSyncSessionCallback.isConRequest(state.getAttrs()), msg));
+            respond(state.getAdaptor().convertToPublish(isConRequest(state.getAttrs()), msg));
         } catch (AdaptorException e) {
             log.trace("[{}] Failed to reply due to error", state.getDeviceId(), e);
             exchange.respond(new Response(CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
