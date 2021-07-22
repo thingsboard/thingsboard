@@ -62,6 +62,7 @@ public class OtaPackageInfo extends SearchTextBasedWithAdditionalInfo<OtaPackage
         this.type = otaPackageInfo.getType();
         this.title = otaPackageInfo.getTitle();
         this.version = otaPackageInfo.getVersion();
+        this.tag = otaPackageInfo.getTag();
         this.url = otaPackageInfo.getUrl();
         this.hasData = otaPackageInfo.isHasData();
         this.fileName = otaPackageInfo.getFileName();

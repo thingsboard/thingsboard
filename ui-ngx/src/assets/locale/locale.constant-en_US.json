@@ -2342,8 +2342,12 @@
         "firmware": "Firmware",
         "software": "Software"
       },
+      "upload-binary-file": "Upload binary file",
+      "use-external-url": "Use external URL",
       "version": "Version",
       "version-required": "Version is required.",
+      "version-tag": "Version Tag",
+      "version-tag-hint": "Custom tag should match the package version reported by your device.",
       "warning-after-save-no-edit": "Once the package is uploaded, you will not be able to modify title, version, device profile and package type."
     },
     "position": {
