@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.coap.callback;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
+import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.core.coap.Request;
 import org.eclipse.californium.core.coap.Response;
 import org.eclipse.californium.core.server.resources.CoapExchange;
@@ -34,7 +35,11 @@ public class GetAttributesSyncSessionCallback extends AbstractSyncSessionCallbac
     @Override
     public void onGetAttributesResponse(TransportProtos.GetAttributeResponseMsg msg) {
         try {
-            exchange.respond(state.getAdaptor().convertToPublish(AbstractSyncSessionCallback.isConRequest(state.getAttrs()), msg));
+            int contentFormat = exchange.getRequestOptions().getContentFormat();
+            contentFormat = contentFormat != MediaTypeRegistry.UNDEFINED ? contentFormat : state.getContentFormat();
+            var response = state.getAdaptor().convertToPublish(AbstractSyncSessionCallback.isConRequest(state.getAttrs()), msg);
+            response.getOptions().setContentFormat(contentFormat);
+            exchange.respond(response);
         } catch (AdaptorException e) {
             log.trace("[{}] Failed to reply due to error", state.getDeviceId(), e);
             exchange.respond(new Response(CoAP.ResponseCode.INTERNAL_SERVER_ERROR));

@@ -18,26 +18,21 @@ package org.thingsboard.server.transport.coap.client;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.data.CoapDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.coap.TransportConfigurationContainer;
 import org.thingsboard.server.transport.coap.adaptors.CoapTransportAdaptor;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -55,6 +50,8 @@ public class TbCoapClientState {
     private volatile DefaultCoapClientContext.CoapSessionListener listener;
     private volatile TbCoapObservationState attrs;
     private volatile TbCoapObservationState rpc;
+    private volatile int contentFormat;
+
     private TransportProtos.AttributeUpdateNotificationMsg missedAttributeUpdates;
 
     private DeviceProfileId profileId;

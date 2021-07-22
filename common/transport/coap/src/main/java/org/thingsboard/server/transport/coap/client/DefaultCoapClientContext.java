@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.coap.client;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
+import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.core.coap.Response;
 import org.eclipse.californium.core.observe.ObserveRelation;
 import org.eclipse.californium.core.server.resources.CoapExchange;
@@ -330,6 +331,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
             if (state.getConfiguration() == null || state.getAdaptor() == null) {
                 state.setConfiguration(getTransportConfigurationContainer(deviceProfile));
                 state.setAdaptor(getCoapTransportAdaptor(state.getConfiguration().isJsonPayload()));
+                state.setContentFormat(state.getAdaptor().getContentFormat());
             }
             if (state.getCredentials() == null) {
                 state.init(deviceCredentials);
@@ -409,7 +411,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
                 try {
                     boolean conRequest = AbstractSyncSessionCallback.isConRequest(state.getAttrs());
                     Response response = state.getAdaptor().convertToPublish(conRequest, msg);
-                    attrs.getExchange().respond(response);
+                    respond(attrs.getExchange(), response, state.getContentFormat());
                 } catch (AdaptorException e) {
                     log.trace("Failed to reply due to error", e);
                     cancelObserveRelation(attrs);
@@ -440,10 +442,10 @@ public class DefaultCoapClientContext implements CoapClientContext {
                     int requestId = getNextMsgId();
                     Response response = state.getAdaptor().convertToPublish(conRequest, msg);
                     response.setMID(requestId);
-                    attrs.getExchange().respond(response);
                     if (conRequest) {
                         response.addMessageObserver(new TbCoapMessageObserver(requestId, id -> awake(state), id -> asleep(state)));
                     }
+                    respond(attrs.getExchange(), response, state.getContentFormat());
                 } catch (AdaptorException e) {
                     log.trace("[{}] Failed to reply due to error", state.getDeviceId(), e);
                     cancelObserveRelation(attrs);
@@ -503,7 +505,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
                 if (conRequest) {
                     response.addMessageObserver(new TbCoapMessageObserver(requestId, id -> awake(state), id -> asleep(state)));
                 }
-                state.getRpc().getExchange().respond(response);
+                respond(state.getRpc().getExchange(), response, state.getContentFormat());
                 sent = true;
             } catch (AdaptorException e) {
                 log.trace("Failed to reply due to error", e);
@@ -704,5 +706,12 @@ public class DefaultCoapClientContext implements CoapClientContext {
         state.setCredentials(null);
         state.setAdaptor(null);
         //TODO: add optimistic lock check that the client was already deleted and cleanup "clients" map.
+    }
+
+    private void respond(CoapExchange exchange, Response response, int defContentFormat) {
+        int contentFormat = exchange.getRequestOptions().getContentFormat();
+        contentFormat = contentFormat != MediaTypeRegistry.UNDEFINED ? contentFormat : defContentFormat;
+        response.getOptions().setContentFormat(contentFormat);
+        exchange.respond(response);
     }
 }

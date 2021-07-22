@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.coap.callback;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
+import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.core.coap.Request;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
@@ -33,7 +34,11 @@ public class ToServerRpcSyncSessionCallback extends AbstractSyncSessionCallback 
     @Override
     public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg toServerResponse) {
         try {
-            exchange.respond(state.getAdaptor().convertToPublish(isConRequest(state.getRpc()), toServerResponse));
+            int contentFormat = exchange.getRequestOptions().getContentFormat();
+            contentFormat = contentFormat != MediaTypeRegistry.UNDEFINED ? contentFormat : state.getContentFormat();
+            var response = state.getAdaptor().convertToPublish(isConRequest(state.getRpc()), toServerResponse);
+            response.getOptions().setContentFormat(contentFormat);
+            exchange.respond(response);
         } catch (AdaptorException e) {
             log.trace("Failed to reply due to error", e);
             exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
