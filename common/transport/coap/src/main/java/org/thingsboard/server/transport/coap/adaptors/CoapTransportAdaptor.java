@@ -49,4 +49,5 @@ public interface CoapTransportAdaptor {
 
     ProvisionDeviceRequestMsg convertToProvisionRequestMsg(UUID sessionId, Request inbound) throws AdaptorException;
 
+    int getContentFormat();
 }
