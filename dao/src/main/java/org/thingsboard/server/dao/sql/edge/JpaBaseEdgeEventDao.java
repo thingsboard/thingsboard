@@ -41,6 +41,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
@@ -49,6 +53,8 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntity, EdgeEvent> implements EdgeEventDao {
 
     private final UUID systemTenantId = NULL_UUID;
+
+    private final ConcurrentMap<EdgeId, Lock> readWriteLocks = new ConcurrentHashMap<>();
 
     @Autowired
     private EdgeEventRepository edgeEventRepository;
@@ -64,47 +70,59 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
     }
 
     @Override
-    public ListenableFuture<EdgeEvent> saveAsync(EdgeEvent edgeEvent) {
-        log.debug("Save edge event [{}] ", edgeEvent);
-        if (edgeEvent.getId() == null) {
-            UUID timeBased = Uuids.timeBased();
-            edgeEvent.setId(new EdgeEventId(timeBased));
-            edgeEvent.setCreatedTime(Uuids.unixTimestamp(timeBased));
-        } else if (edgeEvent.getCreatedTime() == 0L) {
-            UUID eventId = edgeEvent.getId().getId();
-            if (eventId.version() == 1) {
-                edgeEvent.setCreatedTime(Uuids.unixTimestamp(eventId));
-            } else {
-                edgeEvent.setCreatedTime(System.currentTimeMillis());
+    public EdgeEvent save(EdgeEvent edgeEvent) {
+        final Lock readWriteLock = readWriteLocks.computeIfAbsent(edgeEvent.getEdgeId(), id -> new ReentrantLock());
+        readWriteLock.lock();
+        try {
+            log.debug("Save edge event [{}] ", edgeEvent);
+            if (edgeEvent.getId() == null) {
+                UUID timeBased = Uuids.timeBased();
+                edgeEvent.setId(new EdgeEventId(timeBased));
+                edgeEvent.setCreatedTime(Uuids.unixTimestamp(timeBased));
+            } else if (edgeEvent.getCreatedTime() == 0L) {
+                UUID eventId = edgeEvent.getId().getId();
+                if (eventId.version() == 1) {
+                    edgeEvent.setCreatedTime(Uuids.unixTimestamp(eventId));
+                } else {
+                    edgeEvent.setCreatedTime(System.currentTimeMillis());
+                }
             }
+            if (StringUtils.isEmpty(edgeEvent.getUid())) {
+                edgeEvent.setUid(edgeEvent.getId().toString());
+            }
+            return save(new EdgeEventEntity(edgeEvent)).orElse(null);
+        } finally {
+            readWriteLock.unlock();
         }
-        if (StringUtils.isEmpty(edgeEvent.getUid())) {
-            edgeEvent.setUid(edgeEvent.getId().toString());
-        }
-        return service.submit(() -> save(new EdgeEventEntity(edgeEvent)).orElse(null));
     }
 
     @Override
     public PageData<EdgeEvent> findEdgeEvents(UUID tenantId, EdgeId edgeId, TimePageLink pageLink, boolean withTsUpdate) {
-        if (withTsUpdate) {
-            return DaoUtil.toPageData(
-                    edgeEventRepository
-                            .findEdgeEventsByTenantIdAndEdgeId(
-                                    tenantId,
-                                    edgeId.getId(),
-                                    pageLink.getStartTime(),
-                                    pageLink.getEndTime(),
-                                    DaoUtil.toPageable(pageLink)));
-        } else {
-            return DaoUtil.toPageData(
-                    edgeEventRepository
-                            .findEdgeEventsByTenantIdAndEdgeIdWithoutTimeseriesUpdated(
-                                    tenantId,
-                                    edgeId.getId(),
-                                    pageLink.getStartTime(),
-                                    pageLink.getEndTime(),
-                                    DaoUtil.toPageable(pageLink)));
+        final Lock readWriteLock = readWriteLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
+        readWriteLock.lock();
+        try {
+            if (withTsUpdate) {
+                return DaoUtil.toPageData(
+                        edgeEventRepository
+                                .findEdgeEventsByTenantIdAndEdgeId(
+                                        tenantId,
+                                        edgeId.getId(),
+                                        pageLink.getStartTime(),
+                                        pageLink.getEndTime(),
+                                        DaoUtil.toPageable(pageLink)));
+            } else {
+                return DaoUtil.toPageData(
+                        edgeEventRepository
+                                .findEdgeEventsByTenantIdAndEdgeIdWithoutTimeseriesUpdated(
+                                        tenantId,
+                                        edgeId.getId(),
+                                        pageLink.getStartTime(),
+                                        pageLink.getEndTime(),
+                                        DaoUtil.toPageable(pageLink)));
 
+            }
+        } finally {
+            readWriteLock.unlock();
         }
     }
 
