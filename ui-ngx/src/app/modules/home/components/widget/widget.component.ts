@@ -907,7 +907,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         warnOnPageDataOverflow: this.typeParameters.warnOnPageDataOverflow,
         ignoreDataUpdateOnIntervalTick: this.typeParameters.ignoreDataUpdateOnIntervalTick,
         comparisonEnabled: comparisonSettings.comparisonEnabled,
-        timeForComparison: comparisonSettings.timeForComparison
+        timeForComparison: comparisonSettings.timeForComparison,
+        comparisonCustomIntervalValue: comparisonSettings.comparisonCustomIntervalValue
       };
       if (this.widget.type === widgetType.alarm) {
         options.alarmSource = deepClone(this.widget.config.alarmSource);

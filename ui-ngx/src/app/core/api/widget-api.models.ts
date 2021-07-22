@@ -238,6 +238,7 @@ export interface WidgetSubscriptionOptions {
   legendConfig?: LegendConfig;
   comparisonEnabled?: boolean;
   timeForComparison?: moment_.unitOfTime.DurationConstructor;
+  comparisonCustomIntervalValue?: number;
   decimals?: number;
   units?: string;
   callbacks?: WidgetSubscriptionCallbacks;
