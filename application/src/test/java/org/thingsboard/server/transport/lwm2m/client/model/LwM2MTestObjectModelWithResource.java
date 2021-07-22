@@ -28,63 +28,75 @@ public class LwM2MTestObjectModelWithResource {
     public static final int INTEGER_RESOURCE_ID = 2;
     public static final int FLOAT_RESOURCE_ID = 3;
     public static final int TIME_RESOURCE_ID = 4;
-    public static final int OPAQUE_RESOURCE_ID = 5;
-    public static final int OBJLNK_MULTI_INSTANCE_RESOURCE_ID = 6;
-    public static final int OBJLNK_SINGLE_INSTANCE_RESOURCE_ID = 7;
+    public static final int OBJLNK_RESOURCE_ID = 5;
+    public static final int OPAQUE_RESOURCE_ID = 6;
+    public static final int UNSIGNED_INTEGER_RESOURCE_ID = 7;
     public static final int INTEGER_MANDATORY_RESOURCE_ID = 8;
     public static final int STRING_MANDATORY_RESOURCE_ID = 9;
-    public static final int STRING_RESOURCE_INSTANCE_ID = 65010;
-    public static final int UNSIGNED_INTEGER_RESOURCE_ID = 11;
-    public static final int OPAQUE_MULTI_INSTANCE_RESOURCE_ID = 12;
+    public static final int STRING_MULTI_INSTANCE_RESOURCE_ID = 10;
+    public static final int OBJLNK_MULTI_INSTANCE_RESOURCE_ID = 11;
+    public static final int OPAQUE_MULTI_INSTANCE_RESOURCE_ID = 65010;
 
-    private final ResourceModel stringfield;
-    private final ResourceModel booleanfield;
-    private final ResourceModel integerfield ;
-    private final ResourceModel floatfield ;
-    private final ResourceModel timefield ;
-    private final ResourceModel opaquefield;
-    private final ResourceModel objlnkfield;
-    private final ResourceModel objlnkSinglefield ;
-    private final ResourceModel integermandatoryfield;
-    private final ResourceModel stringmandatoryfield ;
-    private final ResourceModel multiInstance;
-    private final ResourceModel unsignedintegerfield ;
-    private final ResourceModel opaqueMultiField ;
-
+    private final ResourceModel stringField;
+    public static final String stringNamePrefix = "string_res";
+    private final ResourceModel booleanField;
+    public static final String booleanNamePrefix = "boolean_res";
+    private final ResourceModel integerField;
+    public static final String integerNamePrefix = "integer_res";
+    private final ResourceModel floatField;
+    public static final String floatNamePrefix = "float_res";
+    private final ResourceModel timeField;
+    public static final String timeNamePrefix = "time_res";
+    private final ResourceModel opaqueField;
+    public static final String opaqueNamePrefix = "opaque_res";
+    private final ResourceModel objlnkField;
+    public static final String objlnkNamePrefix = "objlnk_res";
+    private final ResourceModel unsignedIntegerField;
+    public static final String unsignedIntegerNamePrefix = "unsigned";
+    private final ResourceModel integerMandatoryField;
+    public static final String integerMandatoryPrefix = "integer_mandatory";
+    private final ResourceModel stringMandatoryField;
+    public static final String stringMandatoryPrefix = "string_mandatory";
+    private final ResourceModel stringMultiField;
+    public static final String stringMultiNamePrefix = "string_multi";
+    private final ResourceModel objlnkMultiField;
+    public static final String  objlnkMultiNamePrefix = "objlnk_multi";
+    private final ResourceModel opaqueMultiField;
+    public static final String opaqueMultiNamePrefix = "opaque_multi";
 
     public LwM2MTestObjectModelWithResource(Operations operationsType, String resourceNameSuffix) {
-        this.stringfield = new ResourceModel(STRING_RESOURCE_ID, "stringres" + resourceNameSuffix, operationsType, false, false,
+        this.stringField = new ResourceModel(STRING_RESOURCE_ID, stringNamePrefix + resourceNameSuffix, operationsType, false, false,
                 Type.STRING, null, null, null);
-        this.booleanfield = new ResourceModel(BOOLEAN_RESOURCE_ID, "booleanres" + resourceNameSuffix, operationsType, false, false,
+        this.booleanField = new ResourceModel(BOOLEAN_RESOURCE_ID, booleanNamePrefix + resourceNameSuffix, operationsType, false, false,
                 Type.BOOLEAN, null, null, null);
-        this.integerfield = new ResourceModel(INTEGER_RESOURCE_ID, "integerres" + resourceNameSuffix, operationsType, false, false,
+        this.integerField = new ResourceModel(INTEGER_RESOURCE_ID, integerNamePrefix + resourceNameSuffix, operationsType, false, false,
                 Type.INTEGER, null, null, null);
-        this.floatfield = new ResourceModel(FLOAT_RESOURCE_ID, "floatres" + resourceNameSuffix, operationsType, false, false,
+        this.floatField = new ResourceModel(FLOAT_RESOURCE_ID, floatNamePrefix + resourceNameSuffix, operationsType, false, false,
                 Type.FLOAT, null, null, null);
-        this.timefield = new ResourceModel(TIME_RESOURCE_ID, "timeres" + resourceNameSuffix, operationsType, false, false, Type.TIME,
+        this.timeField = new ResourceModel(TIME_RESOURCE_ID, timeNamePrefix + resourceNameSuffix, operationsType, false, false, Type.TIME,
                 null, null, null);
-        this.opaquefield = new ResourceModel(OPAQUE_RESOURCE_ID, "opaque" + resourceNameSuffix, operationsType, false, false,
+        this.opaqueField = new ResourceModel(OPAQUE_RESOURCE_ID, opaqueNamePrefix + resourceNameSuffix, operationsType, false, false,
                 Type.OPAQUE, null, null, null);
-        this.objlnkfield = new ResourceModel(OBJLNK_MULTI_INSTANCE_RESOURCE_ID, "objlnk" + resourceNameSuffix, operationsType, true,
-                false, Type.OBJLNK, null, null, null);
-        this.objlnkSinglefield = new ResourceModel(OBJLNK_SINGLE_INSTANCE_RESOURCE_ID, "objlnk" + resourceNameSuffix, operationsType,
+        this.objlnkField = new ResourceModel(OBJLNK_RESOURCE_ID, objlnkNamePrefix + resourceNameSuffix, operationsType,
                 false, false, Type.OBJLNK, null, null, null);
-        this.integermandatoryfield = new ResourceModel(INTEGER_MANDATORY_RESOURCE_ID, "integermandatory",
-                operationsType, false, true, Type.INTEGER, null, null, null);
-        this.stringmandatoryfield = new ResourceModel(STRING_MANDATORY_RESOURCE_ID, "stringmandatory",
-                operationsType, false, true, Type.STRING, null, null, null);
-        this.multiInstance = new ResourceModel(STRING_RESOURCE_INSTANCE_ID, "multiinstance" + resourceNameSuffix, operationsType,
-                true, false, Type.STRING, null, null, null);
-        this.unsignedintegerfield = new ResourceModel(UNSIGNED_INTEGER_RESOURCE_ID, "unsigned" + resourceNameSuffix, operationsType,
+        this.unsignedIntegerField = new ResourceModel(UNSIGNED_INTEGER_RESOURCE_ID, unsignedIntegerNamePrefix + resourceNameSuffix, operationsType,
                 false, false, Type.UNSIGNED_INTEGER, null, null, null);
-        this.opaqueMultiField = new ResourceModel(OPAQUE_MULTI_INSTANCE_RESOURCE_ID, "opaque_multi",
+        this.integerMandatoryField = new ResourceModel(INTEGER_MANDATORY_RESOURCE_ID, integerMandatoryPrefix,
+                operationsType, false, true, Type.INTEGER, null, null, null);
+        this.stringMandatoryField = new ResourceModel(STRING_MANDATORY_RESOURCE_ID, stringMandatoryPrefix,
+                operationsType, false, true, Type.STRING, null, null, null);
+        this.stringMultiField = new ResourceModel(STRING_MULTI_INSTANCE_RESOURCE_ID, stringMultiNamePrefix + resourceNameSuffix, operationsType,
+                true, false, Type.STRING, null, null, null);
+        this.objlnkMultiField = new ResourceModel(OBJLNK_MULTI_INSTANCE_RESOURCE_ID, objlnkMultiNamePrefix + resourceNameSuffix, operationsType, true,
+                false, Type.OBJLNK, null, null, null);
+        this.opaqueMultiField = new ResourceModel(OPAQUE_MULTI_INSTANCE_RESOURCE_ID, opaqueMultiNamePrefix,
                 operationsType, true, false, Type.OPAQUE, null, null, null);
 
     }
     public ObjectModel getObjectModel(int ObjectId, String objectName, String objectVersion, boolean isMultiple) {
         return new ObjectModel(ObjectId, objectName, null, objectVersion, isMultiple, false,
-                stringfield, booleanfield, integerfield, floatfield, timefield, opaquefield, objlnkfield,
-                objlnkSinglefield, integermandatoryfield, stringmandatoryfield, multiInstance, unsignedintegerfield,
+                stringField, booleanField, integerField, floatField, timeField, opaqueField, objlnkMultiField,
+                objlnkField, integerMandatoryField, stringMandatoryField, stringMultiField, unsignedIntegerField,
                 opaqueMultiField);
     }
 }
