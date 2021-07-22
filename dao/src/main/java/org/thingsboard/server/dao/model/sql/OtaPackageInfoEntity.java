@@ -145,6 +145,7 @@ public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> implemen
         this.type = type;
         this.title = title;
         this.version = version;
+        this.tag = tag;
         this.url = url;
         this.fileName = fileName;
         this.contentType = contentType;
