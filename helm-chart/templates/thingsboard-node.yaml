@@ -21,7 +21,7 @@ spec:
       labels:
         {{- include "thingsboard.selectorLabels" . | nindent 8 }}-node
     spec:
-      {{- with .Values.thingsboard.imagePullSecrets }}
+      {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -32,8 +32,8 @@ spec:
         - name: server
           securityContext:
             {{- toYaml .Values.thingsboard.securityContext | nindent 12 }}
-          image: "{{ .Values.thingsboard.image.repository }}:{{ .Values.thingsboard.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.thingsboard.image.pullPolicy }}
+          image: "{{ .Values.thingsboard.image.repository }}:{{ .Values.thingsboard.image.tag | default .Values.global.image.tag }}"
+          imagePullPolicy: {{ .Values.thingsboard.image.imagePullPolicy | default .Values.global.image.imagePullPolicy }}
           ports:
             - containerPort: 8080
               name: http

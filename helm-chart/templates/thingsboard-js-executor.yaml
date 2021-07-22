@@ -14,10 +14,14 @@ spec:
       labels:
         {{- include "thingsboardJSExecutor.labels" . | nindent 8 }}
     spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: server
-          imagePullPolicy: {{ .Values.javascriptExecutor.image.pullPolicy }}
-          image: {{ .Values.javascriptExecutor.image.repository }}:{{ .Values.javascriptExecutor.image.tag }}
+          imagePullPolicy: {{ .Values.javascriptExecutor.image.imagePullPolicy | default .Values.global.image.imagePullPolicy }}
+          image: {{ .Values.javascriptExecutor.image.repository }}:{{ .Values.javascriptExecutor.image.tag | default .Values.global.image.tag }}
           env:
             {{- range $key, $value := .Values.javascriptExecutor.serverEnvConfigs }}
             - name: {{ $key }}

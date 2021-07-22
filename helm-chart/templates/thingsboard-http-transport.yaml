@@ -14,10 +14,14 @@ spec:
       labels:
         {{- include "thingsboardHttpTransport.labels" . | nindent 8 }}
     spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: server
-          imagePullPolicy: {{ .Values.httpTransport.image.pullPolicy }}
-          image: {{ .Values.httpTransport.image.repository }}:{{ .Values.httpTransport.image.tag }}
+          imagePullPolicy: {{ .Values.httpTransport.image.imagePullPolicy | default .Values.global.image.imagePullPolicy }}
+          image: {{ .Values.httpTransport.image.repository }}:{{ .Values.httpTransport.image.tag | default .Values.global.image.tag }}
           ports:
             - containerPort: 8080
               name: http

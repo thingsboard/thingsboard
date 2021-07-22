@@ -14,10 +14,14 @@ spec:
       labels:
         {{- include "thingsboardCoapTransport.labels" . | nindent 8 }}
     spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: server
-          imagePullPolicy: {{ .Values.coapTransport.image.pullPolicy }}
-          image: {{ .Values.coapTransport.image.repository }}:{{ .Values.coapTransport.image.tag }}
+          imagePullPolicy: {{ .Values.coapTransport.image.imagePullPolicy | default .Values.global.image.imagePullPolicy }}
+          image: {{ .Values.coapTransport.image.repository }}:{{ .Values.coapTransport.image.tag | default .Values.global.image.tag }}
           ports:
             - containerPort: 5683
               name: coap
