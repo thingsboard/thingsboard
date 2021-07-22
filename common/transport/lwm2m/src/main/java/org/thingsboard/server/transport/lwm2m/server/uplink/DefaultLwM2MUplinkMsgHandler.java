@@ -317,7 +317,6 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
                     this.updateResourcesValue(lwM2MClient, lwM2mResource, path);
                 }
             }
-            clientContext.update(lwM2MClient);
             if (clientContext.awake(lwM2MClient)) {
                 // clientContext.awake calls clientContext.update
                 log.debug("[{}] Device is awake", lwM2MClient.getEndpoint());

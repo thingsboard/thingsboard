@@ -67,8 +67,6 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
     private static final int REQUEST_ID_POSITION_CERTIFICATE_REQUEST = 4;
     private static final String DTLS_SESSION_ID_KEY = "DTLS_SESSION_ID";
 
-    private final ConcurrentMap<TbCoapClientState, ObserveRelation> sessionInfoToObserveRelationMap = new ConcurrentHashMap<>();
-
     private final ConcurrentMap<String, TbCoapDtlsSessionInfo> dtlsSessionIdMap;
     private final long timeout;
     private final CoapClientContext clients;
