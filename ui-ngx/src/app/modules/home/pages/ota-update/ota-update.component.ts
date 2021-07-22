@@ -73,16 +73,13 @@ export class OtaUpdateComponent extends EntityComponent<OtaPackage> implements O
         }
       });
       combineLatest([
-        this.entityForm.get('title').valueChanges.pipe(startWith(''), takeUntil(this.destroy$)),
-        this.entityForm.get('version').valueChanges.pipe(startWith(''), takeUntil(this.destroy$))
+        this.entityForm.get('title').valueChanges.pipe(startWith('')),
+        this.entityForm.get('version').valueChanges.pipe(startWith(''))
       ]).pipe(
         filter(() => this.entityForm.get('tag').pristine),
         takeUntil(this.destroy$)
       ).subscribe(([title, version]) => {
-        let tag = `${title} ${version}`.trim();
-        if (tag === '') {
-          tag = '';
-        }
+        const tag = (`${title} ${version}`).trim();
         this.entityForm.get('tag').patchValue(tag);
       });
     }
