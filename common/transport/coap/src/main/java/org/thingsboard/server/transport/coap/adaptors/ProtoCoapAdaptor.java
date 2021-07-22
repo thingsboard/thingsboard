@@ -23,6 +23,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
+import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.core.coap.Request;
 import org.eclipse.californium.core.coap.Response;
 import org.springframework.stereotype.Component;
@@ -162,4 +163,8 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
         return JsonFormat.printer().includingDefaultValueFields().print(dynamicMessage);
     }
 
+    @Override
+    public int getContentFormat() {
+        return MediaTypeRegistry.APPLICATION_OCTET_STREAM;
+    }
 }
