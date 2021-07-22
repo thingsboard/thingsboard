@@ -169,4 +169,5 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
     public int getContentFormat() {
         return MediaTypeRegistry.APPLICATION_JSON;
     }
+
 }

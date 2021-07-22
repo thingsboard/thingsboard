@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public abstract class DaoUtil {
 
@@ -55,6 +56,14 @@ public abstract class DaoUtil {
         return PageRequest.of(pageLink.getPage(), pageLink.getPageSize(), toSort(pageLink.getSortOrder(), columnMap));
     }
 
+    public static Pageable toPageable(PageLink pageLink, List<SortOrder> sortOrders) {
+        return toPageable(pageLink, Collections.emptyMap(), sortOrders);
+    }
+
+    public static Pageable toPageable(PageLink pageLink, Map<String,String> columnMap, List<SortOrder> sortOrders) {
+        return PageRequest.of(pageLink.getPage(), pageLink.getPageSize(), toSort(sortOrders, columnMap));
+    }
+
     public static Sort toSort(SortOrder sortOrder) {
         return toSort(sortOrder, Collections.emptyMap());
     }
@@ -69,6 +78,26 @@ public abstract class DaoUtil {
             }
             return Sort.by(Sort.Direction.fromString(sortOrder.getDirection().name()), property);
         }
+    }
+
+    public static Sort toSort(List<SortOrder> sortOrders) {
+        return toSort(sortOrders, Collections.emptyMap());
+    }
+
+    public static Sort toSort(List<SortOrder> sortOrders, Map<String,String> columnMap) {
+        return toSort(sortOrders, columnMap, Sort.NullHandling.NULLS_LAST);
+    }
+
+    public static Sort toSort(List<SortOrder> sortOrders, Map<String,String> columnMap, Sort.NullHandling nullHandlingHint) {
+        return Sort.by(sortOrders.stream().map(s -> toSortOrder(s, columnMap, nullHandlingHint)).collect(Collectors.toList()));
+    }
+
+    public static Sort.Order toSortOrder(SortOrder sortOrder, Map<String,String> columnMap, Sort.NullHandling nullHandlingHint) {
+        String property = sortOrder.getProperty();
+        if (columnMap.containsKey(property)) {
+            property = columnMap.get(property);
+        }
+        return new Sort.Order(Sort.Direction.fromString(sortOrder.getDirection().name()), property, nullHandlingHint);
     }
 
     public static <T> List<T> convertDataList(Collection<? extends ToData<T>> toDataList) {
