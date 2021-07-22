@@ -329,9 +329,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
         state.lock();
         try {
             if (state.getConfiguration() == null || state.getAdaptor() == null) {
-                state.setConfiguration(getTransportConfigurationContainer(deviceProfile));
-                state.setAdaptor(getCoapTransportAdaptor(state.getConfiguration().isJsonPayload()));
-                state.setContentFormat(state.getAdaptor().getContentFormat());
+                initStateAdaptor(deviceProfile, state);
             }
             if (state.getCredentials() == null) {
                 state.init(deviceCredentials);
@@ -393,6 +391,12 @@ public class DefaultCoapClientContext implements CoapClientContext {
         } else {
             throw new AdaptorException("Invalid DeviceProfileTransportConfiguration type" + transportConfiguration.getClass().getSimpleName() + "!");
         }
+    }
+
+    private void initStateAdaptor(DeviceProfile deviceProfile, TbCoapClientState state) throws AdaptorException {
+        state.setConfiguration(getTransportConfigurationContainer(deviceProfile));
+        state.setAdaptor(getCoapTransportAdaptor(state.getConfiguration().isJsonPayload()));
+        state.setContentFormat(state.getAdaptor().getContentFormat());
     }
 
     private CoapTransportAdaptor getCoapTransportAdaptor(boolean jsonPayloadType) {
@@ -457,7 +461,23 @@ public class DefaultCoapClientContext implements CoapClientContext {
         }
 
         @Override
+        public void onDeviceProfileUpdate(TransportProtos.SessionInfoProto newSessionInfo, DeviceProfile deviceProfile) {
+            try {
+                initStateAdaptor(deviceProfile, state);
+            } catch (AdaptorException e) {
+                log.warn("[{}] Failed to update device profile: ", deviceProfile.getId(), e);
+            }
+        }
+
+        @Override
         public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
+            if (deviceProfileOpt.isPresent()) {
+                try {
+                    initStateAdaptor(deviceProfileOpt.get(), state);
+                } catch (AdaptorException e) {
+                    log.warn("[{}] Failed to update device: ", device.getId(), e);
+                }
+            }
             state.onDeviceUpdate(device);
         }
 
@@ -709,9 +729,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
     }
 
     private void respond(CoapExchange exchange, Response response, int defContentFormat) {
-        int contentFormat = exchange.getRequestOptions().getContentFormat();
-        contentFormat = contentFormat != MediaTypeRegistry.UNDEFINED ? contentFormat : defContentFormat;
-        response.getOptions().setContentFormat(contentFormat);
+        response.getOptions().setContentFormat(TbCoapContentFormatUtil.getContentFormat(exchange.getRequestOptions().getContentFormat(), defContentFormat));
         exchange.respond(response);
     }
 }

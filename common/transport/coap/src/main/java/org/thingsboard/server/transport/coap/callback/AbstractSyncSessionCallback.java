@@ -24,6 +24,7 @@ import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.coap.client.TbCoapClientState;
+import org.thingsboard.server.transport.coap.client.TbCoapContentFormatUtil;
 import org.thingsboard.server.transport.coap.client.TbCoapObservationState;
 
 import java.util.UUID;
@@ -74,9 +75,7 @@ public abstract class AbstractSyncSessionCallback implements SessionMsgListener 
     }
 
     protected void respond(Response response) {
-        int contentFormat = exchange.getRequestOptions().getContentFormat();
-        contentFormat = contentFormat != MediaTypeRegistry.UNDEFINED ? contentFormat : state.getContentFormat();
-        response.getOptions().setContentFormat(contentFormat);
+        response.getOptions().setContentFormat(TbCoapContentFormatUtil.getContentFormat(exchange.getRequestOptions().getContentFormat(), state.getContentFormat()));
         exchange.respond(response);
     }
 
