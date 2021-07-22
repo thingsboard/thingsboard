@@ -245,7 +245,7 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
             Integer order1 = o1.getMobileOrder();
             Integer order2 = o2.getMobileOrder();
             if (order1 == null && order2 == null) {
-                return o1.getId().getId().compareTo(o2.getId().getId());
+                return (int)(o1.getCreatedTime() - o2.getCreatedTime());
             } else if (order1 == null && order2 != null) {
                 return 1;
             }  else if (order2 == null) {
