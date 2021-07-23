@@ -3123,7 +3123,8 @@
             "update-attribute": "Update attribute",
             "update-timeseries": "Update timeseries",
             "value": "Value"
-        }
+        },
+        "invalid-qr-code-text": "Invalid input text for QR code. Input should have a string type"
     },
     "icon": {
         "icon": "Icon",
