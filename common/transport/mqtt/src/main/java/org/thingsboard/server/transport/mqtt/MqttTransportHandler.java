@@ -130,10 +130,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private final ConcurrentHashMap<String, Integer> chunkSizes;
     private final ConcurrentMap<Integer, TransportProtos.ToDeviceRpcRequestMsg> rpcAwaitingAck;
 
-    private volatile TopicType attrSubTopicType;
-    private volatile TopicType rpcSubTopicType;
-    private volatile TopicType attrReqTopicType;
-    private volatile TopicType toServerRpcSubTopicType;
+    private TopicType attrSubTopicType;
+    private TopicType rpcSubTopicType;
+    private TopicType attrReqTopicType;
+    private TopicType toServerRpcSubTopicType;
 
     MqttTransportHandler(MqttTransportContext context, SslHandler sslHandler) {
         this.sessionId = UUID.randomUUID();
