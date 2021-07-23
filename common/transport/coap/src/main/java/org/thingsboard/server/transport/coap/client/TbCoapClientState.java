@@ -97,9 +97,11 @@ public class TbCoapClientState {
         lock.unlock();
     }
 
-    public long updateLastUplinkTime() {
-        this.lastUplinkTime = System.currentTimeMillis();
-        this.firstEdrxDownlink = true;
+    public long updateLastUplinkTime(long ts) {
+        if (ts > lastUplinkTime) {
+            this.lastUplinkTime = ts;
+            this.firstEdrxDownlink = true;
+        }
         return lastUplinkTime;
     }
 

@@ -341,6 +341,10 @@ message ToDeviceRpcResponseMsg {
   string payload = 2;
 }
 
+message UplinkNotificationMsg {
+  int64 uplinkTs = 1;
+}
+
 message ToDevicePersistedRpcResponseMsg {
   int32 requestId = 1;
   int64 requestIdMSB = 2;
@@ -453,6 +457,7 @@ message TransportToDeviceActorMsg {
   ProvisionDeviceRequestMsg provisionDevice = 9;
   ToDevicePersistedRpcResponseMsg persistedRpcResponseMsg = 10;
   SendPendingRPCMsg sendPendingRPC = 11;
+  UplinkNotificationMsg uplinkNotificationMsg = 12;
 }
 
 message TransportToRuleEngineMsg {
@@ -713,6 +718,7 @@ message ToTransportMsg {
   ToTransportUpdateCredentialsProto toTransportUpdateCredentialsNotification = 11;
   ResourceUpdateMsg resourceUpdateMsg = 12;
   ResourceDeleteMsg resourceDeleteMsg = 13;
+  UplinkNotificationMsg uplinkNotificationMsg = 14;
 }
 
 message UsageStatsKVProto{
