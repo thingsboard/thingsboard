@@ -209,7 +209,6 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    @Ignore
     public void testFindMobileDashboardsByTenantId() {
         Tenant tenant = new Tenant();
         tenant.setTitle("Test tenant");
