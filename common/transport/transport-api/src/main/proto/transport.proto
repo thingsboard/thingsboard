@@ -31,6 +31,12 @@ message AttributesRequest {
   string sharedKeys = 2;
 }
 
+message GetAttributeResponseMsg {
+  int32 requestId = 1;
+  repeated transport.TsKvProto clientAttributeList = 2;
+  repeated transport.TsKvProto sharedAttributeList = 3;
+}
+
 message RpcRequest {
   string method = 1;
   string params = 2;
