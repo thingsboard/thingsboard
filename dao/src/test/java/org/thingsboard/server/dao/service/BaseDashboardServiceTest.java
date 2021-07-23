@@ -20,6 +20,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -208,6 +209,7 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    @Ignore
     public void testFindMobileDashboardsByTenantId() {
         Tenant tenant = new Tenant();
         tenant.setTitle("Test tenant");
