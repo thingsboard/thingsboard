@@ -18,14 +18,13 @@ package org.thingsboard.server.transport.coap.client;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
-import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.core.coap.Response;
 import org.eclipse.californium.core.observe.ObserveRelation;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.coapserver.CoapServerContext;
-import org.thingsboard.server.coapserver.TbCoapServerComponent;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
@@ -51,6 +50,7 @@ import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.transport.coap.CoapTransportContext;
 import org.thingsboard.server.transport.coap.TbCoapMessageObserver;
 import org.thingsboard.server.transport.coap.TransportConfigurationContainer;
@@ -81,6 +81,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
     private final CoapTransportContext transportContext;
     private final TransportService transportService;
     private final TransportDeviceProfileCache profileCache;
+    private final PartitionService partitionService;
     private final ConcurrentMap<DeviceId, TbCoapClientState> clients = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TbCoapClientState> clientsByToken = new ConcurrentHashMap<>();
 
@@ -161,7 +162,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
         }
     }
 
-    private void onUplink(TbCoapClientState client) {
+    private void onUplink(TbCoapClientState client, boolean notifyOtherServers, long uplinkTs) {
         PowerMode powerMode = client.getPowerMode();
         PowerSavingConfiguration profileSettings = null;
         if (powerMode == null) {
@@ -174,12 +175,12 @@ public class DefaultCoapClientContext implements CoapClientContext {
             }
         }
         if (powerMode == null || PowerMode.DRX.equals(powerMode)) {
-            client.updateLastUplinkTime();
+            client.updateLastUplinkTime(uplinkTs);
             return;
         }
         client.lock();
         try {
-            long uplinkTime = client.updateLastUplinkTime();
+            long uplinkTime = client.updateLastUplinkTime(uplinkTs);
             long timeout;
             if (PowerMode.PSM.equals(powerMode)) {
                 Long psmActivityTimer = client.getPsmActivityTimer();
@@ -214,6 +215,9 @@ public class DefaultCoapClientContext implements CoapClientContext {
                 return null;
             }, timeout, TimeUnit.MILLISECONDS);
             client.setSleepTask(task);
+            if (notifyOtherServers && partitionService.countTransportsByType(DataConstants.COAP_TRANSPORT_NAME) > 1) {
+                transportService.notifyAboutUplink(getNewSyncSession(client), TransportProtos.UplinkNotificationMsg.newBuilder().setUplinkTs(uplinkTime).build(), TransportServiceCallback.EMPTY);
+            }
         } finally {
             client.unlock();
         }
@@ -544,6 +548,11 @@ public class DefaultCoapClientContext implements CoapClientContext {
             log.trace("[{}] Received server rpc response in the wrong session.", state.getSession());
         }
 
+        @Override
+        public void onUplinkNotification(TransportProtos.UplinkNotificationMsg notificationMsg) {
+            awake(state, false, notificationMsg.getUplinkTs());
+        }
+
         private void cancelObserveRelation(TbCoapObservationState attrs) {
             if (attrs.getObserveRelation() != null) {
                 attrs.getObserveRelation().cancel();
@@ -562,7 +571,11 @@ public class DefaultCoapClientContext implements CoapClientContext {
 
     @Override
     public boolean awake(TbCoapClientState client) {
-        onUplink(client);
+        return awake(client, true, System.currentTimeMillis());
+    }
+
+    private boolean awake(TbCoapClientState client, boolean notifyOtherServers, long uplinkTs) {
+        onUplink(client, notifyOtherServers, uplinkTs);
         boolean changed = compareAndSetSleepFlag(client, false);
         if (changed) {
             log.debug("[{}] client is awake", client.getDeviceId());

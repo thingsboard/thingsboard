@@ -1273,7 +1273,6 @@
             "view-attribute": "View attribute",
             "remove-attribute": "Remove attribute",
             "mode": "Security config mode",
-            "pattern_hex_dec": "{ count, plural, 0 {must be hex decimal format} other {must be # characters} }",
             "servers": "Servers",
             "short-id": "Short ID",
             "short-id-required": "Short ID is required.",
@@ -1323,8 +1322,8 @@
             "others-tab": "Other settings",
             "client-strategy": "Client strategy when connecting",
             "client-strategy-label": "Strategy",
-            "client-strategy-connect": "{ count, plural, 1 {1: Only Observe Request to the client after the initial connection} other {2: Read All Resources & Observe Request to the client after registration} }",
-            "client-strategy-tip": "{ count, plural, 1 {Strategy 1: After the initial connection of the LWM2M Client, the server sends Observe resources Request to the client, those resources that are marked as observation in the Device profile and which exist on the LWM2M client.} other {Strategy  2: After the registration, request the client to read all the resource values for all objects that the LWM2M client has,\n then execute:  the server sends Observe resources Request to the client, those resources that are marked as observation in the Device profile and which exist on the LWM2M client.} }",
+            "client-strategy-only-observe": "Only Observe Request to the client after the initial connection",
+            "client-strategy-read-all": "Read All Resources & Observe Request to the client after registration",
             "fw-update": "Firmware update",
             "fw-update-strategy": "Firmware update strategy",
             "fw-update-strategy-data": "Push firmware update as binary file using Object 19 and Resource 0 (Data)",
@@ -2342,8 +2341,12 @@
         "firmware": "Firmware",
         "software": "Software"
       },
+      "upload-binary-file": "Upload binary file",
+      "use-external-url": "Use external URL",
       "version": "Version",
       "version-required": "Version is required.",
+      "version-tag": "Version Tag",
+      "version-tag-hint": "Custom tag should match the package version reported by your device.",
       "warning-after-save-no-edit": "Once the package is uploaded, you will not be able to modify title, version, device profile and package type."
     },
     "position": {
