@@ -369,7 +369,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
 
     private void startFirmwareUpdateIfNeeded(LwM2mClient client, LwM2MClientFwOtaInfo fwInfo) {
         try {
-            if (!fwInfo.isSupported()) {
+            if (!fwInfo.isSupported() && fwInfo.isAssigned()) {
                 log.debug("[{}] Fw update is not supported: {}", client.getEndpoint(), fwInfo);
                 sendStateUpdateToTelemetry(client, fwInfo, OtaPackageUpdateStatus.FAILED, "Client does not support firmware update or profile misconfiguration!");
             } else if (fwInfo.isUpdateRequired()) {
@@ -389,7 +389,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
 
     private void startSoftwareUpdateIfNeeded(LwM2mClient client, LwM2MClientSwOtaInfo swInfo) {
         try {
-            if (!swInfo.isSupported()) {
+            if (!swInfo.isSupported() && swInfo.isAssigned()) {
                 log.debug("[{}] Sw update is not supported: {}", client.getEndpoint(), swInfo);
                 sendStateUpdateToTelemetry(client, swInfo, OtaPackageUpdateStatus.FAILED, "Client does not support software update or profile misconfiguration!");
             } else if (swInfo.isUpdateRequired()) {
