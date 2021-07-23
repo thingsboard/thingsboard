@@ -19,7 +19,6 @@ import { PageComponent } from '@shared/components/page.component';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import QRCode from 'qrcode';
 import {
   fillPattern,
   parseData,
@@ -30,6 +29,7 @@ import {
 import { FormattedData } from '@home/components/widget/lib/maps/map-models';
 import { DatasourceData } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { isString } from '@core/utils';
 
 interface QrCodeWidgetSettings {
   qrCodeTextPattern: string;
@@ -53,6 +53,7 @@ export class QrCodeWidgetComponent extends PageComponent implements OnInit, Afte
   ctx: WidgetContext;
 
   qrCodeText: string;
+  invalidQrCodeText = false;
 
   private viewInited: boolean;
   private scheduleUpdateCanvas: boolean;
@@ -109,8 +110,14 @@ export class QrCodeWidgetComponent extends PageComponent implements OnInit, Afte
   private updateQrCodeText(newQrCodeText: string): void {
     if (this.qrCodeText !== newQrCodeText) {
       this.qrCodeText = newQrCodeText;
-      if (this.qrCodeText) {
-        this.updateCanvas();
+      if (isString(newQrCodeText)) {
+        this.invalidQrCodeText = false;
+        if (this.qrCodeText) {
+          this.updateCanvas();
+        }
+        this.cd.detectChanges();
+      } else {
+        this.invalidQrCodeText = true;
       }
       this.cd.detectChanges();
     }
@@ -118,9 +125,11 @@ export class QrCodeWidgetComponent extends PageComponent implements OnInit, Afte
 
   private updateCanvas() {
     if (this.viewInited) {
-      QRCode.toCanvas(this.canvasRef.nativeElement, this.qrCodeText);
-      this.canvasRef.nativeElement.style.width = 'auto';
-      this.canvasRef.nativeElement.style.height = 'auto';
+      import('qrcode').then((QRCode) => {
+        QRCode.toCanvas(this.canvasRef.nativeElement, this.qrCodeText);
+        this.canvasRef.nativeElement.style.width = 'auto';
+        this.canvasRef.nativeElement.style.height = 'auto';
+      });
     } else {
       this.scheduleUpdateCanvas = true;
     }
