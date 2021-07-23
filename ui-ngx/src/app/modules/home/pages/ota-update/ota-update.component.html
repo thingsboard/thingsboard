@@ -74,6 +74,11 @@
           </mat-error>
         </mat-form-field>
       </div>
+      <mat-form-field class="mat-block" fxFlex style="margin-bottom: 8px">
+        <mat-label translate>ota-update.version-tag</mat-label>
+        <input matInput formControlName="tag" type="text" [readonly]="!isAdd">
+        <mat-hint *ngIf="isAdd" translate>ota-update.version-tag-hint</mat-hint>
+      </mat-form-field>
       <tb-device-profile-autocomplete
         formControlName="deviceProfileId"
         required
@@ -94,8 +99,8 @@
       <section *ngIf="isAdd">
         <div class="mat-caption" style="margin: -8px 0 8px;" translate>ota-update.warning-after-save-no-edit</div>
         <mat-radio-group formControlName="isURL" fxLayoutGap="16px">
-          <mat-radio-button [value]="false">Upload binary file</mat-radio-button>
-          <mat-radio-button [value]="true">Use external URL</mat-radio-button>
+          <mat-radio-button [value]="false">{{ "ota-update.upload-binary-file" | translate }}</mat-radio-button>
+          <mat-radio-button [value]="true">{{ "ota-update.use-external-url" | translate }}</mat-radio-button>
         </mat-radio-group>
       </section>
       <section *ngIf="!entityForm.get('isURL').value">

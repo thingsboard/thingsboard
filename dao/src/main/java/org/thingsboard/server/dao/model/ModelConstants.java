@@ -499,6 +499,7 @@ public class ModelConstants {
     public static final String OTA_PACKAGE_TYPE_COLUMN = "type";
     public static final String OTA_PACKAGE_TILE_COLUMN = TITLE_PROPERTY;
     public static final String OTA_PACKAGE_VERSION_COLUMN = "version";
+    public static final String OTA_PACKAGE_TAG_COLUMN = "tag";
     public static final String OTA_PACKAGE_URL_COLUMN = "url";
     public static final String OTA_PACKAGE_FILE_NAME_COLUMN = "file_name";
     public static final String OTA_PACKAGE_CONTENT_TYPE_COLUMN = "content_type";
