@@ -36,6 +36,12 @@ public class DataConstants {
     public static final String ALARM_CONDITION_REPEATS = "alarmConditionRepeats";
     public static final String ALARM_CONDITION_DURATION = "alarmConditionDuration";
     public static final String PERSISTENT = "persistent";
+    public static final String COAP_TRANSPORT_NAME = "COAP";
+    public static final String LWM2M_TRANSPORT_NAME = "LWM2M";
+    public static final String MQTT_TRANSPORT_NAME = "MQTT";
+    public static final String HTTP_TRANSPORT_NAME = "HTTP";
+    public static final String SNMP_TRANSPORT_NAME = "SNMP";
+
 
     public static final String[] allScopes() {
         return new String[]{CLIENT_SCOPE, SHARED_SCOPE, SERVER_SCOPE};

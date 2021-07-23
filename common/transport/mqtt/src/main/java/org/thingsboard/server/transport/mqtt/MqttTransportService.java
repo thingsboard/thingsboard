@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.TbTransportService;
 
 import javax.annotation.PostConstruct;
@@ -114,6 +115,6 @@ public class MqttTransportService implements TbTransportService {
 
     @Override
     public String getName() {
-        return "MQTT";
+        return DataConstants.MQTT_TRANSPORT_NAME;
     }
 }

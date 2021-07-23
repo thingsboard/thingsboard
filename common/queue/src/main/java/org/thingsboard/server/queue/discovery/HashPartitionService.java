@@ -73,6 +73,7 @@ public class HashPartitionService implements PartitionService {
 
     private Map<String, TopicPartitionInfo> tbCoreNotificationTopics = new HashMap<>();
     private Map<String, TopicPartitionInfo> tbRuleEngineNotificationTopics = new HashMap<>();
+    private Map<String, List<ServiceInfo>> tbTransportServicesByType = new HashMap<>();
     private List<ServiceInfo> currentOtherServices;
 
     private HashFunction hashFunction;
@@ -127,6 +128,7 @@ public class HashPartitionService implements PartitionService {
 
     @Override
     public synchronized void recalculatePartitions(ServiceInfo currentService, List<ServiceInfo> otherServices) {
+        tbTransportServicesByType.clear();
         logServiceInfo(currentService);
         otherServices.forEach(this::logServiceInfo);
         Map<ServiceQueueKey, List<ServiceInfo>> queueServicesMap = new HashMap<>();
@@ -227,6 +229,12 @@ public class HashPartitionService implements PartitionService {
                 .putLong(entityId.getMostSignificantBits())
                 .putLong(entityId.getLeastSignificantBits()).hash().asInt();
         return Math.abs(hash % partitions);
+    }
+
+    @Override
+    public int countTransportsByType(String type) {
+        var list = tbTransportServicesByType.get(type);
+        return list == null ? 0 : list.size();
     }
 
     private Map<ServiceQueueKey, List<ServiceInfo>> getServiceKeyListMap(List<ServiceInfo> services) {
@@ -331,6 +339,9 @@ public class HashPartitionService implements PartitionService {
                 ServiceQueueKey serviceQueueKey = new ServiceQueueKey(new ServiceQueue(serviceType), tenantId);
                 queueServiceList.computeIfAbsent(serviceQueueKey, key -> new ArrayList<>()).add(instance);
             }
+        }
+        for (String transportType : instance.getTransportsList()) {
+            tbTransportServicesByType.computeIfAbsent(transportType, t -> new ArrayList<>()).add(instance);
         }
     }
 
