@@ -243,19 +243,26 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(mobileDashboards, (o1, o2) -> {
+        Comparator<DashboardInfo> dashboardInfoComparator = (o1, o2) -> {
             Integer order1 = o1.getMobileOrder();
             Integer order2 = o2.getMobileOrder();
             if (order1 == null && order2 == null) {
-                return (int)(o1.getCreatedTime() - o2.getCreatedTime());
+                if (o1.getCreatedTime() == o2.getCreatedTime()) {
+                    return o1.getUuidId().compareTo(o2.getUuidId());
+                } else {
+                    return (int) (o1.getCreatedTime() - o2.getCreatedTime());
+                }
             } else if (order1 == null && order2 != null) {
                 return 1;
-            }  else if (order2 == null) {
+            } else if (order2 == null) {
                 return -1;
             } else {
                 return order1 - order2;
             }
-        });
+        };
+
+        Collections.sort(mobileDashboards, dashboardInfoComparator);
+        Collections.sort(loadedMobileDashboards, dashboardInfoComparator);
 
         Assert.assertEquals(mobileDashboards, loadedMobileDashboards);
 
