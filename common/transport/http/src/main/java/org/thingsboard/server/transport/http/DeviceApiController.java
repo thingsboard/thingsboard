@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.TbTransportService;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -436,7 +437,7 @@ public class DeviceApiController implements TbTransportService {
 
     @Override
     public String getName() {
-        return "HTTP";
+        return DataConstants.HTTP_TRANSPORT_NAME;
     }
 
 }

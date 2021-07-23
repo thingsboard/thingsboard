@@ -59,6 +59,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.common.msg.timeout.DeviceActorServerSideRpcTimeoutMsg;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceSessionsCacheEntry;
@@ -200,7 +201,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                     syncSessionSet.add(key);
                 }
             });
-            log.trace("46) Rpc syncSessionSet [{}] subscription after sent [{}]", syncSessionSet, rpcSubscriptions);
+            log.trace("Rpc syncSessionSet [{}] subscription after sent [{}]", syncSessionSet, rpcSubscriptions);
             syncSessionSet.forEach(rpcSubscriptions::remove);
         }
 
@@ -316,7 +317,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                     .setOneway(request.isOneway())
                     .setPersisted(request.isPersisted())
                     .build();
-
             sendToTransport(rpcRequest, sessionId, nodeId);
         };
     }
@@ -353,7 +353,24 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         if (msg.hasPersistedRpcResponseMsg()) {
             processPersistedRpcResponses(context, sessionInfo, msg.getPersistedRpcResponseMsg());
         }
+        if (msg.hasUplinkNotificationMsg()) {
+            processUplinkNotificationMsg(context, sessionInfo, msg.getUplinkNotificationMsg());
+        }
         callback.onSuccess();
+    }
+
+    private void processUplinkNotificationMsg(TbActorCtx context, SessionInfoProto sessionInfo, TransportProtos.UplinkNotificationMsg uplinkNotificationMsg) {
+        String nodeId = sessionInfo.getNodeId();
+        sessions.entrySet().stream()
+                .filter(kv -> kv.getValue().getSessionInfo().getNodeId().equals(nodeId) && (kv.getValue().isSubscribedToAttributes() || kv.getValue().isSubscribedToRPC()))
+                .forEach(kv -> {
+                    ToTransportMsg msg = ToTransportMsg.newBuilder()
+                            .setSessionIdMSB(kv.getKey().getMostSignificantBits())
+                            .setSessionIdLSB(kv.getKey().getLeastSignificantBits())
+                            .setUplinkNotificationMsg(uplinkNotificationMsg)
+                            .build();
+                    systemContext.getTbCoreToTransportService().process(kv.getValue().getSessionInfo().getNodeId(), msg);
+                });
     }
 
     private void handleClaimDeviceMsg(TbActorCtx context, SessionInfoProto sessionInfo, ClaimDeviceMsg msg) {
@@ -597,7 +614,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
     void processCredentialsUpdate(TbActorMsg msg) {
         if (((DeviceCredentialsUpdateNotificationMsg) msg).getDeviceCredentials().getCredentialsType() == DeviceCredentialsType.LWM2M_CREDENTIALS) {
-            log.info("1) LwM2Mtype: ");
             sessions.forEach((k, v) -> {
                 notifyTransportAboutProfileUpdate(k, v, ((DeviceCredentialsUpdateNotificationMsg) msg).getDeviceCredentials());
             });
@@ -614,7 +630,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         notifyTransportAboutClosedSession(sessionId, sessionMd, "max concurrent sessions limit reached per device!");
     }
 
-
     private void notifyTransportAboutClosedSession(UUID sessionId, SessionInfoMetaData sessionMd, String message) {
         SessionCloseNotificationProto sessionCloseNotificationProto = SessionCloseNotificationProto
                 .newBuilder()
@@ -628,7 +643,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     void notifyTransportAboutProfileUpdate(UUID sessionId, SessionInfoMetaData sessionMd, DeviceCredentials deviceCredentials) {
-        log.info("2) LwM2Mtype: ");
         ToTransportUpdateCredentialsProto.Builder notification = ToTransportUpdateCredentialsProto.newBuilder();
         notification.addCredentialsId(deviceCredentials.getCredentialsId());
         notification.addCredentialsValue(deviceCredentials.getCredentialsValue());
