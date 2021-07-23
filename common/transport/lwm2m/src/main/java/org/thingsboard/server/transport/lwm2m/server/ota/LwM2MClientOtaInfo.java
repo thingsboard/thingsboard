@@ -91,6 +91,11 @@ public abstract class LwM2MClientOtaInfo<Strategy, State, Result> {
         return StringUtils.isNotEmpty(currentName) || StringUtils.isNotEmpty(currentVersion) || StringUtils.isNotEmpty(currentVersion3);
     }
 
+    @JsonIgnore
+    public boolean isAssigned() {
+        return StringUtils.isNotEmpty(targetName) && StringUtils.isNotEmpty(targetVersion);
+    }
+
     public abstract void update(Result result);
 
     protected static String getPackageId(String name, String version) {
