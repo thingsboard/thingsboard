@@ -233,7 +233,7 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
         }
 
         List<DashboardInfo> loadedMobileDashboards = new ArrayList<>();
-        PageLink pageLink = new PageLink(16, 0, null, new SortOrder("createdTime", SortOrder.Direction.ASC));
+        PageLink pageLink = new PageLink(16, 0, null, new SortOrder("title", SortOrder.Direction.ASC));
         PageData<DashboardInfo> pageData = null;
         do {
             pageData = dashboardService.findMobileDashboardsByTenantId(tenantId, pageLink);
@@ -243,15 +243,11 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
             }
         } while (pageData.hasNext());
 
-        Comparator<DashboardInfo> dashboardInfoComparator = (o1, o2) -> {
+        Collections.sort(mobileDashboards, (o1, o2) -> {
             Integer order1 = o1.getMobileOrder();
             Integer order2 = o2.getMobileOrder();
             if (order1 == null && order2 == null) {
-                if (o1.getCreatedTime() == o2.getCreatedTime()) {
-                    return o1.getUuidId().compareTo(o2.getUuidId());
-                } else {
-                    return (int) (o1.getCreatedTime() - o2.getCreatedTime());
-                }
+                return o1.getTitle().compareTo(o2.getTitle());
             } else if (order1 == null && order2 != null) {
                 return 1;
             } else if (order2 == null) {
@@ -259,10 +255,7 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
             } else {
                 return order1 - order2;
             }
-        };
-
-        Collections.sort(mobileDashboards, dashboardInfoComparator);
-        Collections.sort(loadedMobileDashboards, dashboardInfoComparator);
+        });
 
         Assert.assertEquals(mobileDashboards, loadedMobileDashboards);
 
