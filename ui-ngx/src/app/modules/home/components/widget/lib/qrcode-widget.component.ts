@@ -29,7 +29,7 @@ import {
 import { FormattedData } from '@home/components/widget/lib/maps/map-models';
 import { DatasourceData } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { isString } from '@core/utils';
+import { isNumber, isObject } from '@core/utils';
 
 interface QrCodeWidgetSettings {
   qrCodeTextPattern: string;
@@ -110,12 +110,11 @@ export class QrCodeWidgetComponent extends PageComponent implements OnInit, Afte
   private updateQrCodeText(newQrCodeText: string): void {
     if (this.qrCodeText !== newQrCodeText) {
       this.qrCodeText = newQrCodeText;
-      if (isString(newQrCodeText)) {
+      if (!(isObject(newQrCodeText) || isNumber(newQrCodeText))) {
         this.invalidQrCodeText = false;
         if (this.qrCodeText) {
           this.updateCanvas();
         }
-        this.cd.detectChanges();
       } else {
         this.invalidQrCodeText = true;
       }
