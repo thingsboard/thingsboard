@@ -265,7 +265,8 @@ public class ActorSystemContext {
     @Getter
     private SmsSenderFactory smsSenderFactory;
 
-    @Autowired
+    @Lazy
+    @Autowired(required = false)
     @Getter
     private ClaimDevicesService claimDevicesService;
 
