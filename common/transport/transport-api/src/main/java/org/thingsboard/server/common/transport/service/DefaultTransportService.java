@@ -119,6 +119,12 @@ public class DefaultTransportService implements TransportService {
 
     public static final String OVERWRITE_ACTIVITY_TIME = "overwriteActivityTime";
 
+    private final AtomicInteger atomicTs = new AtomicInteger(0);
+
+    @Value("${transport.log.enabled:true}")
+    private boolean logEnabled;
+    @Value("${transport.log.max_length:1024}")
+    private int logMaxLength;
     @Value("${transport.sessions.inactivity_timeout}")
     private long sessionInactivityTimeout;
     @Value("${transport.sessions.report_timeout}")
@@ -444,6 +450,8 @@ public class DefaultTransportService implements TransportService {
         if (StringUtils.isNotEmpty(di.getPowerMode())) {
             tdi.setPowerMode(PowerMode.valueOf(di.getPowerMode()));
             tdi.setEdrxCycle(di.getEdrxCycle());
+            tdi.setPsmActivityTimer(di.getPsmActivityTimer());
+            tdi.setPagingTransmissionWindow(di.getPagingTransmissionWindow());
         }
         return tdi;
     }
@@ -560,6 +568,14 @@ public class DefaultTransportService implements TransportService {
             reportActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setToDeviceRPCCallResponse(msg).build(),
                     new ApiStatsProxyCallback<>(getTenantId(sessionInfo), getCustomerId(sessionInfo), 1, callback));
+        }
+    }
+
+    @Override
+    public void notifyAboutUplink(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.UplinkNotificationMsg msg, TransportServiceCallback<Void> callback) {
+        if (checkLimits(sessionInfo, msg, callback)) {
+            reportActivityInternal(sessionInfo);
+            sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setUplinkNotificationMsg(msg).build(), callback);
         }
     }
 
@@ -743,6 +759,26 @@ public class DefaultTransportService implements TransportService {
             currentSession.getScheduledFuture().cancel(false);
         }
         sessions.remove(toSessionId(sessionInfo));
+    }
+
+    @Override
+    public void log(TransportProtos.SessionInfoProto sessionInfo, String msg) {
+        if (!logEnabled || sessionInfo == null || StringUtils.isEmpty(msg)) {
+            return;
+        }
+        if (msg.length() > logMaxLength) {
+            msg = msg.substring(0, logMaxLength);
+        }
+        TransportProtos.PostTelemetryMsg.Builder request = TransportProtos.PostTelemetryMsg.newBuilder();
+        TransportProtos.TsKvListProto.Builder builder = TransportProtos.TsKvListProto.newBuilder();
+        builder.setTs(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) * 1000L + (atomicTs.getAndIncrement() % 1000));
+        builder.addKv(TransportProtos.KeyValueProto.newBuilder()
+                .setKey("transportLog")
+                .setType(TransportProtos.KeyValueType.STRING_V)
+                .setStringV(msg).build());
+        request.addTsKvList(builder.build());
+        TransportProtos.PostTelemetryMsg postTelemetryMsg = request.build();
+        process(sessionInfo, postTelemetryMsg, TransportServiceCallback.EMPTY);
     }
 
     private boolean checkLimits(TransportProtos.SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<?> callback) {

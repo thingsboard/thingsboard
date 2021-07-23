@@ -30,7 +30,14 @@ import { AbstractControl, ValidationErrors } from '@angular/forms';
 import { OtaPackageId } from '@shared/models/id/ota-package-id';
 import { DashboardId } from '@shared/models/id/dashboard-id';
 import { DataType } from '@shared/models/constants';
-import { PowerMode } from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
+import {
+  getDefaultBootstrapServerSecurityConfig,
+  getDefaultBootstrapServersSecurityConfig,
+  getDefaultLwM2MServerSecurityConfig,
+  getDefaultProfileClientLwM2mSettingsConfig,
+  getDefaultProfileObserveAttrConfig,
+  PowerMode
+} from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
 
 export enum DeviceProfileType {
   DEFAULT = 'DEFAULT',
@@ -208,7 +215,7 @@ export const deviceTransportTypeConfigurationInfoMap = new Map<DeviceTransportTy
       DeviceTransportType.COAP,
       {
         hasProfileConfiguration: true,
-        hasDeviceConfiguration: false,
+        hasDeviceConfiguration: true,
       }
     ],
     [
@@ -244,6 +251,13 @@ export interface MqttDeviceProfileTransportConfiguration {
   [key: string]: any;
 }
 
+export interface CoapClientSetting {
+  powerMode?: PowerMode | null;
+  edrxCycle?: number;
+  pagingTransmissionWindow?: number;
+  psmActivityTimer?: number;
+}
+
 export interface CoapDeviceProfileTransportConfiguration {
   coapDeviceTypeConfiguration?: {
     coapDeviceType?: CoapTransportDeviceType;
@@ -252,6 +266,7 @@ export interface CoapDeviceProfileTransportConfiguration {
       [key: string]: any;
     };
   };
+  clientSettings?: CoapClientSetting;
 }
 
 export interface Lwm2mDeviceProfileTransportConfiguration {
@@ -353,12 +368,23 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
           coapDeviceTypeConfiguration: {
             coapDeviceType: CoapTransportDeviceType.DEFAULT,
             transportPayloadTypeConfiguration: {transportPayloadType: TransportPayloadType.JSON}
+          },
+          clientSettings: {
+            powerMode: PowerMode.DRX
           }
         };
         transportConfiguration = {...coapTransportConfiguration, type: DeviceTransportType.COAP};
         break;
       case DeviceTransportType.LWM2M:
-        const lwm2mTransportConfiguration: Lwm2mDeviceProfileTransportConfiguration = {};
+        const lwm2mTransportConfiguration: Lwm2mDeviceProfileTransportConfiguration = {
+          observeAttr: getDefaultProfileObserveAttrConfig(),
+          bootstrap: {
+            servers: getDefaultBootstrapServersSecurityConfig(),
+            bootstrapServer: getDefaultBootstrapServerSecurityConfig(),
+            lwm2mServer: getDefaultLwM2MServerSecurityConfig()
+          },
+          clientLwM2mSettings: getDefaultProfileClientLwM2mSettingsConfig()
+        };
         transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};
         break;
       case DeviceTransportType.SNMP:
@@ -387,11 +413,15 @@ export function createDeviceTransportConfiguration(type: DeviceTransportType): D
         transportConfiguration = {...mqttTransportConfiguration, type: DeviceTransportType.MQTT};
         break;
       case DeviceTransportType.COAP:
-        const coapTransportConfiguration: CoapDeviceTransportConfiguration = {};
+        const coapTransportConfiguration: CoapDeviceTransportConfiguration = {
+          powerMode: null
+        };
         transportConfiguration = {...coapTransportConfiguration, type: DeviceTransportType.COAP};
         break;
       case DeviceTransportType.LWM2M:
-        const lwm2mTransportConfiguration: Lwm2mDeviceTransportConfiguration = {};
+        const lwm2mTransportConfiguration: Lwm2mDeviceTransportConfiguration = {
+          powerMode: null
+        };
         transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};
         break;
       case DeviceTransportType.SNMP:
@@ -570,13 +600,17 @@ export interface MqttDeviceTransportConfiguration {
 }
 
 export interface CoapDeviceTransportConfiguration {
-  [key: string]: any;
+  powerMode?: PowerMode | null;
+  edrxCycle?: number;
+  pagingTransmissionWindow?: number;
+  psmActivityTimer?: number;
 }
 
 export interface Lwm2mDeviceTransportConfiguration {
   powerMode?: PowerMode | null;
   edrxCycle?: number;
-  [key: string]: any;
+  pagingTransmissionWindow?: number;
+  psmActivityTimer?: number;
 }
 
 export enum SnmpDeviceProtocolVersion {

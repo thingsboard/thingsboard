@@ -141,6 +141,7 @@ import { DashboardImageDialogComponent } from '@home/components/dashboard-page/d
 import { WidgetContainerComponent } from '@home/components/widget/widget-container.component';
 import { SnmpDeviceProfileTransportModule } from '@home/components/profile/device/snpm/snmp-device-profile-transport.module';
 import { DeviceCredentialsModule } from '@home/components/device/device-credentials.module';
+import { DeviceProfileCommonModule } from '@home/components/profile/device/common/device-profile-common.module';
 
 @NgModule({
   declarations:
@@ -268,7 +269,8 @@ import { DeviceCredentialsModule } from '@home/components/device/device-credenti
     Lwm2mProfileComponentsModule,
     SnmpDeviceProfileTransportModule,
     StatesControllerModule,
-    DeviceCredentialsModule
+    DeviceCredentialsModule,
+    DeviceProfileCommonModule
   ],
   exports: [
     EntitiesTableComponent,

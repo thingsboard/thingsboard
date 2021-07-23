@@ -32,6 +32,7 @@ public abstract class LwM2MClientOtaInfo<Strategy, State, Result> {
 
     protected String targetName;
     protected String targetVersion;
+    protected String targetTag;
     protected String targetUrl;
 
     //TODO: use value from device if applicable;
@@ -52,10 +53,11 @@ public abstract class LwM2MClientOtaInfo<Strategy, State, Result> {
         this.strategy = strategy;
     }
 
-    public void updateTarget(String targetName, String targetVersion, Optional<String> newTargetUrl) {
+    public void updateTarget(String targetName, String targetVersion, Optional<String> newTargetUrl, Optional<String> newTargetTag) {
         this.targetName = targetName;
         this.targetVersion = targetVersion;
         this.targetUrl = newTargetUrl.orElse(null);
+        this.targetTag = newTargetTag.orElse(null);
     }
 
     @JsonIgnore
@@ -64,13 +66,18 @@ public abstract class LwM2MClientOtaInfo<Strategy, State, Result> {
             return false;
         } else {
             String targetPackageId = getPackageId(targetName, targetVersion);
-            String currentPackageIdUsingObject5 = getPackageId(currentName, currentVersion);
+            String currentPackageId = getPackageId(currentName, currentVersion);
             if (StringUtils.isNotEmpty(failedPackageId) && failedPackageId.equals(targetPackageId)) {
                 return false;
             } else {
-                if (targetPackageId.equals(currentPackageIdUsingObject5)) {
+                if (targetPackageId.equals(currentPackageId)) {
+                    return false;
+                } else if (StringUtils.isNotEmpty(targetTag) && targetTag.equals(currentPackageId)) {
                     return false;
                 } else if (StringUtils.isNotEmpty(currentVersion3)) {
+                    if (StringUtils.isNotEmpty(targetTag) && currentVersion3.contains(targetTag)) {
+                        return false;
+                    }
                     return !currentVersion3.contains(targetPackageId);
                 } else {
                     return true;

@@ -34,7 +34,6 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.dir>${basedir}/../..</main.dir>
-        <blackBoxTests.skip>true</blackBoxTests.skip>
         <testcontainers.version>1.11.4</testcontainers.version>
         <zeroturnaround.version>1.10</zeroturnaround.version>
         <httpclient.version>4.5.13</httpclient.version>
@@ -92,8 +91,47 @@
             <groupId>org.thingsboard</groupId>
             <artifactId>rest-client</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.thingsboard.msa</groupId>
+            <artifactId>js-executor</artifactId>
+            <type>docker-info</type>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.msa</groupId>
+            <artifactId>web-ui</artifactId>
+            <type>docker-info</type>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.msa</groupId>
+            <artifactId>tb-node</artifactId>
+            <type>docker-info</type>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.msa.transport</groupId>
+            <artifactId>coap</artifactId>
+            <type>docker-info</type>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.msa.transport</groupId>
+            <artifactId>http</artifactId>
+            <type>docker-info</type>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.msa.transport</groupId>
+            <artifactId>mqtt</artifactId>
+            <type>docker-info</type>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.msa.transport</groupId>
+            <artifactId>lwm2m</artifactId>
+            <type>docker-info</type>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.msa.transport</groupId>
+            <artifactId>snmp</artifactId>
+            <type>docker-info</type>
+        </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>

@@ -24,9 +24,13 @@ import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.security.DeviceTokenCredentials;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
+import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
+import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.coap.callback.CoapDeviceAuthCallback;
 
@@ -68,19 +72,21 @@ public class OtaPackageTransportResource extends AbstractCoapTransportResource {
             return;
         }
         transportService.process(DeviceTransportType.COAP, TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(credentials.get().getCredentialsId()).build(),
-                new CoapDeviceAuthCallback(transportContext, exchange, (sessionInfo, deviceProfile) -> {
-                    getOtaPackageCallback(sessionInfo, exchange, otaPackageType);
+                new CoapDeviceAuthCallback(exchange, (msg, deviceProfile) -> {
+                    getOtaPackageCallback(msg, exchange, otaPackageType);
                 }));
     }
 
-    private void getOtaPackageCallback(TransportProtos.SessionInfoProto sessionInfo, CoapExchange exchange, OtaPackageType firmwareType) {
+    private void getOtaPackageCallback(ValidateDeviceCredentialsResponse msg, CoapExchange exchange, OtaPackageType firmwareType) {
+        TenantId tenantId = msg.getDeviceInfo().getTenantId();
+        DeviceId deviceId = msg.getDeviceInfo().getDeviceId();
         TransportProtos.GetOtaPackageRequestMsg requestMsg = TransportProtos.GetOtaPackageRequestMsg.newBuilder()
-                .setTenantIdMSB(sessionInfo.getTenantIdMSB())
-                .setTenantIdLSB(sessionInfo.getTenantIdLSB())
-                .setDeviceIdMSB(sessionInfo.getDeviceIdMSB())
-                .setDeviceIdLSB(sessionInfo.getDeviceIdLSB())
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
                 .setType(firmwareType.name()).build();
-        transportContext.getTransportService().process(sessionInfo, requestMsg, new OtaPackageCallback(exchange));
+        transportContext.getTransportService().process(SessionInfoCreator.create(msg, transportContext, UUID.randomUUID()), requestMsg, new OtaPackageCallback(exchange));
     }
 
     private Optional<DeviceTokenCredentials> decodeCredentials(Request request) {
