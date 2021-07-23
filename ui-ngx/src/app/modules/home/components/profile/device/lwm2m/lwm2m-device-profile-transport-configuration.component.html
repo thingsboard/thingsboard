@@ -174,14 +174,9 @@
 <!--                  <div fxLayout="column">-->
 <!--                    <mat-form-field class="mat-block">-->
 <!--                      <mat-label>{{ 'device-profile.lwm2m.client-strategy-label' | translate }}</mat-label>-->
-<!--                      <mat-select formControlName="clientOnlyObserveAfterConnect"-->
-<!--                                  matTooltip="{{ 'device-profile.lwm2m.client-strategy-tip' | translate:-->
-<!--                                  { count: +lwm2mDeviceProfileFormGroup.get('clientOnlyObserveAfterConnect').value } }}"-->
-<!--                                  matTooltipPosition="above">-->
-<!--                        <mat-option value=1>{{ 'device-profile.lwm2m.client-strategy-connect' | translate:-->
-<!--                          {count: 1} }}</mat-option>-->
-<!--                        <mat-option value=2>{{ 'device-profile.lwm2m.client-strategy-connect' | translate:-->
-<!--                          {count: 2} }}</mat-option>-->
+<!--                      <mat-select formControlName="clientOnlyObserveAfterConnect">-->
+<!--                        <mat-option value=1>{{ 'device-profile.lwm2m.client-strategy-only-observe' | translate }}</mat-option>-->
+<!--                        <mat-option value=2>{{ 'device-profile.lwm2m.client-strategy-read-all' | translate }}</mat-option>-->
 <!--                      </mat-select>-->
 <!--                    </mat-form-field>-->
 <!--                  </div>-->
@@ -194,13 +189,12 @@
     </mat-tab>
     <mat-tab label="{{ 'device-profile.lwm2m.config-json-tab' | translate }}">
       <ng-template matTabContent>
-        <section [formGroup]="lwm2mDeviceConfigFormGroup" style="padding: 8px 0">
+        <section style="padding: 8px 0">
           <tb-json-object-edit
             readonly
-            [required]="required"
             [sort]="sortFunction"
             label="{{ 'device-profile.transport-type-lwm2m' | translate }}"
-            formControlName="configurationJson">
+            [ngModel]="configurationValue">
           </tb-json-object-edit>
         </section>
       </ng-template>
