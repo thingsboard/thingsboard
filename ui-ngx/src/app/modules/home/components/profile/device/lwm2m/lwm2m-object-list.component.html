@@ -16,7 +16,8 @@
 
 -->
 <mat-form-field appearance="standard" [formGroup]="lwm2mListFormGroup" class="mat-block">
-  <mat-chip-list #chipList formControlName="objectsList">
+  <mat-label translate>device-profile.lwm2m.object-list</mat-label>
+  <mat-chip-list #chipList formControlName="objectsList" [required]="required">
     <mat-chip
       *ngFor="let objectLwm2m of objectsList"
       [selectable]="!disabled"
@@ -25,7 +26,7 @@
       {{objectLwm2m.name}} #{{objectLwm2m.keyId}}
       <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
     </mat-chip>
-    <input matInput type="text" placeholder="{{ !disabled ? ('device-profile.lwm2m.object-list' | translate) : '' }}"
+    <input matInput type="text"
            style="max-width: 200px;"
            #objectInput
            (focusin)="onFocus()"
@@ -40,7 +41,7 @@
                     class="tb-autocomplete"
                     [displayWith]="displayObjectLwm2mFn">
     <mat-option *ngFor="let objectLwm2m of filteredObjectsList | async" [value]="objectLwm2m">
-      <span [innerHTML]="objectLwm2m.keyId + ': ' + objectLwm2m.name  | highlight:searchText"></span>
+      <span [innerHTML]="objectLwm2m.keyId + ': ' + (objectLwm2m.name  | highlight: searchText)"></span>
     </mat-option>
     <mat-option *ngIf="!(filteredObjectsList | async)?.length" [value]="null">
       <span>

@@ -17,6 +17,7 @@
 -->
 <mat-sidenav-container>
   <mat-sidenav #sidenav class="tb-site-sidenav mat-elevation-z2"
+               [disableClose]="sidenavOpened"
                (click)="sidenavClicked()"
                [mode]="sidenavMode"
                [opened]="sidenavOpened && !forceFullscreen">

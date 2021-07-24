@@ -25,9 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Data
-public class Lwm2mDeviceTransportConfiguration implements DeviceTransportConfiguration {
-
-    private PowerMode powerMode;
+public class Lwm2mDeviceTransportConfiguration extends PowerSavingConfiguration implements DeviceTransportConfiguration {
 
     @JsonIgnore
     private Map<String, Object> properties = new HashMap<>();

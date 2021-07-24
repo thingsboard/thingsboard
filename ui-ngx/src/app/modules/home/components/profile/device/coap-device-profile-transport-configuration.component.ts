@@ -35,6 +35,7 @@ import {
 import { isDefinedAndNotNull } from '@core/utils';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { PowerMode } from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
 
 @Component({
   selector: 'tb-coap-device-profile-transport-configuration',
@@ -48,15 +49,13 @@ import { takeUntil } from 'rxjs/operators';
 })
 export class CoapDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit, OnDestroy {
 
-  coapTransportDeviceTypes = Object.keys(CoapTransportDeviceType);
-
+  coapTransportDeviceTypes = Object.values(CoapTransportDeviceType);
   coapTransportDeviceTypeTranslations = coapDeviceTypeTranslationMap;
 
-  transportPayloadTypes = Object.keys(TransportPayloadType);
-
+  transportPayloadTypes = Object.values(TransportPayloadType);
   transportPayloadTypeTranslations = transportPayloadTypeTranslationMap;
 
-  coapDeviceProfileTransportConfigurationFormGroup: FormGroup;
+  coapTransportConfigurationFormGroup: FormGroup;
 
   private destroy$ = new Subject();
   private requiredValue: boolean;
@@ -95,19 +94,24 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
   }
 
   ngOnInit() {
-    this.coapDeviceProfileTransportConfigurationFormGroup = this.fb.group({
+    this.coapTransportConfigurationFormGroup = this.fb.group({
       coapDeviceTypeConfiguration: this.fb.group({
-          coapDeviceType: [CoapTransportDeviceType.DEFAULT, Validators.required],
-          transportPayloadTypeConfiguration: this.transportPayloadTypeConfiguration
-        })
-      }
+        coapDeviceType: [CoapTransportDeviceType.DEFAULT, Validators.required],
+        transportPayloadTypeConfiguration: this.transportPayloadTypeConfiguration,
+      }),
+      clientSettings: this.fb.group({
+        powerMode: [PowerMode.DRX, Validators.required],
+        edrxCycle: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
+        psmActivityTimer: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
+        pagingTransmissionWindow: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]]
+      })}
     );
-    this.coapDeviceProfileTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.coapDeviceType').valueChanges.pipe(
+    this.coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.coapDeviceType').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(coapDeviceType => {
       this.updateCoapDeviceTypeBasedControls(coapDeviceType, true);
     });
-    this.coapDeviceProfileTransportConfigurationFormGroup.valueChanges.pipe(
+    this.coapTransportConfigurationFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(() => {
       this.updateModel();
@@ -120,19 +124,22 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
   }
 
   get coapDeviceTypeDefault(): boolean {
-    const coapDeviceType = this.coapDeviceProfileTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.coapDeviceType').value;
+    const coapDeviceType = this.coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.coapDeviceType').value;
     return coapDeviceType === CoapTransportDeviceType.DEFAULT;
   }
 
   get protoPayloadType(): boolean {
     const transportPayloadTypePath = 'coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.transportPayloadType';
-    const transportPayloadType = this.coapDeviceProfileTransportConfigurationFormGroup.get(transportPayloadTypePath).value;
+    const transportPayloadType = this.coapTransportConfigurationFormGroup.get(transportPayloadTypePath).value;
     return transportPayloadType === TransportPayloadType.PROTOBUF;
   }
 
+  get clientSettingsFormGroup(): FormGroup {
+    return this.coapTransportConfigurationFormGroup.get('clientSettings') as FormGroup;
+  }
 
   private updateCoapDeviceTypeBasedControls(type: CoapTransportDeviceType, forceUpdated = false) {
-    const coapDeviceTypeConfigurationFormGroup = this.coapDeviceProfileTransportConfigurationFormGroup
+    const coapDeviceTypeConfigurationFormGroup = this.coapTransportConfigurationFormGroup
       .get('coapDeviceTypeConfiguration') as FormGroup;
     if (forceUpdated) {
       coapDeviceTypeConfigurationFormGroup.patchValue({
@@ -149,26 +156,34 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
-      this.coapDeviceProfileTransportConfigurationFormGroup.disable({emitEvent: false});
+      this.coapTransportConfigurationFormGroup.disable({emitEvent: false});
     } else {
-      this.coapDeviceProfileTransportConfigurationFormGroup.enable({emitEvent: false});
+      this.coapTransportConfigurationFormGroup.enable({emitEvent: false});
+      this.coapTransportConfigurationFormGroup.get('clientSettings.powerMode').updateValueAndValidity({onlySelf: true});
     }
   }
 
   writeValue(value: CoapDeviceProfileTransportConfiguration | null): void {
     if (isDefinedAndNotNull(value)) {
-      this.coapDeviceProfileTransportConfigurationFormGroup.patchValue(value, {emitEvent: false});
+      if (!value.clientSettings) {
+        value.clientSettings = {
+          powerMode: PowerMode.DRX
+        };
+      }
+      this.coapTransportConfigurationFormGroup.patchValue(value, {emitEvent: false});
+      if (!this.disabled) {
+        this.coapTransportConfigurationFormGroup.get('clientSettings.powerMode').updateValueAndValidity({onlySelf: true});
+      }
       this.updateCoapDeviceTypeBasedControls(value.coapDeviceTypeConfiguration?.coapDeviceType);
     }
   }
 
   private updateModel() {
     let configuration: DeviceProfileTransportConfiguration = null;
-    if (this.coapDeviceProfileTransportConfigurationFormGroup.valid) {
-      configuration = this.coapDeviceProfileTransportConfigurationFormGroup.value;
+    if (this.coapTransportConfigurationFormGroup.valid) {
+      configuration = this.coapTransportConfigurationFormGroup.value;
       configuration.type = DeviceTransportType.COAP;
     }
     this.propagateChange(configuration);
   }
-
 }

@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.transport.coap.AbstractCoapIntegrationTest;
 
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -195,7 +196,7 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
         assertTrue(StringUtils.isEmpty(result));
         assertNotNull(callback.getPayloadBytes());
         assertNotNull(callback.getObserve());
-        assertEquals(callback.getResponseCode(), CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
+        assertEquals(CoAP.ResponseCode.CONTENT, callback.getResponseCode());
         assertEquals(1, callback.getObserve().intValue());
     }
 
@@ -203,7 +204,7 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
         assertEquals(expectedResult, actualResult);
         assertNotNull(callback.getPayloadBytes());
         assertNotNull(callback.getObserve());
-        assertEquals(callback.getResponseCode(), CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
+        assertEquals(CoAP.ResponseCode.CONTENT, callback.getResponseCode());
         assertEquals(expectedObserveNumber, callback.getObserve().intValue());
     }
 

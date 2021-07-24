@@ -63,7 +63,7 @@ public class TbRpcService {
 
     private void pushRpcMsgToRuleEngine(TenantId tenantId, Rpc rpc) {
         TbMsg msg = TbMsg.newMsg("RPC_" + rpc.getStatus().name(), rpc.getDeviceId(), TbMsgMetaData.EMPTY, JacksonUtil.toString(rpc));
-        tbClusterService.pushMsgToRuleEngine(tenantId, rpc.getId(), msg, null);
+        tbClusterService.pushMsgToRuleEngine(tenantId, rpc.getDeviceId(), msg, null);
     }
 
     public Rpc findRpcById(TenantId tenantId, RpcId rpcId) {

@@ -213,7 +213,8 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
                     log.info("[{}] Closing old session: {}", registration.getEndpoint(), new UUID(oldSessionInfo.get().getSessionIdMSB(), oldSessionInfo.get().getSessionIdLSB()));
                     sessionManager.deregister(oldSessionInfo.get());
                 }
-                logService.log(lwM2MClient, LOG_LWM2M_INFO + ": Client registered with registration id: " + registration.getId());
+                logService.log(lwM2MClient, LOG_LWM2M_INFO + ": Client registered with registration id: " + registration.getId() + " version: "
+                        + registration.getLwM2mVersion() + " and modes: " + registration.getQueueMode() + ", " + registration.getBindingMode());
                 sessionManager.register(lwM2MClient.getSession());
                 this.initClientTelemetry(lwM2MClient);
                 this.initAttributes(lwM2MClient);
@@ -288,9 +289,8 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
 
     @Override
     public void onSleepingDev(Registration registration) {
-        log.info("[{}] [{}] Received endpoint Sleeping version event", registration.getId(), registration.getEndpoint());
-        logService.log(clientContext.getClientByEndpoint(registration.getEndpoint()), LOG_LWM2M_INFO + ": Client is sleeping!");
-        //TODO: associate endpointId with device information.
+        log.debug("[{}] [{}] Received endpoint sleeping event", registration.getId(), registration.getEndpoint());
+        clientContext.asleep(clientContext.getClientByEndpoint(registration.getEndpoint()));
     }
 
     /**
@@ -317,7 +317,12 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
                     this.updateResourcesValue(lwM2MClient, lwM2mResource, path);
                 }
             }
-            clientContext.update(lwM2MClient);
+            if (clientContext.awake(lwM2MClient)) {
+                // clientContext.awake calls clientContext.update
+                log.debug("[{}] Device is awake", lwM2MClient.getEndpoint());
+            } else {
+                clientContext.update(lwM2MClient);
+            }
         }
     }
 
@@ -336,6 +341,13 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
                     }
                 }
             });
+            clientContext.update(lwM2MClient);
+            if (clientContext.awake(lwM2MClient)) {
+                // clientContext.awake calls clientContext.update
+                log.debug("[{}] Device is awake", lwM2MClient.getEndpoint());
+            } else {
+                clientContext.update(lwM2MClient);
+            }
         }
     }
 
@@ -390,10 +402,8 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
      */
     @Override
     public void onAwakeDev(Registration registration) {
-        log.trace("[{}] [{}] Received endpoint Awake version event", registration.getId(), registration.getEndpoint());
-        LwM2mClient client = this.clientContext.getClientByEndpoint(registration.getEndpoint());
-        logService.log(client, LOG_LWM2M_INFO + ": Client is awake!");
-        clientContext.sendMsgsAfterSleeping(client);
+        log.debug("[{}] [{}] Received endpoint awake event", registration.getId(), registration.getEndpoint());
+        clientContext.awake(clientContext.getClientByEndpoint(registration.getEndpoint()));
     }
 
     /**
@@ -420,40 +430,51 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
     }
 
     private void sendReadRequests(LwM2mClient lwM2MClient, Lwm2mDeviceProfileTransportConfiguration profile, Set<String> supportedObjects) {
-        Set<String> targetIds = new HashSet<>(profile.getObserveAttr().getAttribute());
-        targetIds.addAll(profile.getObserveAttr().getTelemetry());
-        targetIds = targetIds.stream().filter(target -> isSupportedTargetId(supportedObjects, target)).collect(Collectors.toSet());
-
-        CountDownLatch latch = new CountDownLatch(targetIds.size());
-        targetIds.forEach(versionedId -> sendReadRequest(lwM2MClient, versionedId,
-                new TbLwM2MLatchCallback<>(latch, new TbLwM2MReadCallback(this, logService, lwM2MClient, versionedId))));
         try {
+            Set<String> targetIds = new HashSet<>(profile.getObserveAttr().getAttribute());
+            targetIds.addAll(profile.getObserveAttr().getTelemetry());
+            targetIds = diffSets(profile.getObserveAttr().getObserve(), targetIds);
+            targetIds = targetIds.stream().filter(target -> isSupportedTargetId(supportedObjects, target)).collect(Collectors.toSet());
+
+            CountDownLatch latch = new CountDownLatch(targetIds.size());
+            targetIds.forEach(versionedId -> sendReadRequest(lwM2MClient, versionedId,
+                    new TbLwM2MLatchCallback<>(latch, new TbLwM2MReadCallback(this, logService, lwM2MClient, versionedId))));
             latch.await();
         } catch (InterruptedException e) {
             log.error("[{}] Failed to await Read requests!", lwM2MClient.getEndpoint());
+        } catch (Exception e) {
+            log.error("[{}] Failed to process read requests!", lwM2MClient.getEndpoint(), e);
+            logService.log(lwM2MClient, "Failed to process read requests. Possible profile misconfiguration.");
         }
     }
 
     private void sendObserveRequests(LwM2mClient lwM2MClient, Lwm2mDeviceProfileTransportConfiguration profile, Set<String> supportedObjects) {
-        Set<String> targetIds = profile.getObserveAttr().getObserve();
-        targetIds = targetIds.stream().filter(target -> isSupportedTargetId(supportedObjects, target)).collect(Collectors.toSet());
-
-        CountDownLatch latch = new CountDownLatch(targetIds.size());
-        targetIds.forEach(targetId -> sendObserveRequest(lwM2MClient, targetId,
-                new TbLwM2MLatchCallback<>(latch, new TbLwM2MObserveCallback(this, logService, lwM2MClient, targetId))));
         try {
+            Set<String> targetIds = profile.getObserveAttr().getObserve();
+            targetIds = targetIds.stream().filter(target -> isSupportedTargetId(supportedObjects, target)).collect(Collectors.toSet());
+
+            CountDownLatch latch = new CountDownLatch(targetIds.size());
+            targetIds.forEach(targetId -> sendObserveRequest(lwM2MClient, targetId,
+                    new TbLwM2MLatchCallback<>(latch, new TbLwM2MObserveCallback(this, logService, lwM2MClient, targetId))));
+
             latch.await();
         } catch (InterruptedException e) {
             log.error("[{}] Failed to await Observe requests!", lwM2MClient.getEndpoint());
+        } catch (Exception e) {
+            log.error("[{}] Failed to process observe requests!", lwM2MClient.getEndpoint(), e);
+            logService.log(lwM2MClient, "Failed to process observe requests. Possible profile misconfiguration.");
         }
     }
 
     private void sendWriteAttributeRequests(LwM2mClient lwM2MClient, Lwm2mDeviceProfileTransportConfiguration profile, Set<String> supportedObjects) {
-        Map<String, ObjectAttributes> attributesMap = profile.getObserveAttr().getAttributeLwm2m();
-        attributesMap = attributesMap.entrySet().stream().filter(target -> isSupportedTargetId(supportedObjects, target.getKey())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-//        TODO: why do we need to put observe into pending read requests?
-//        lwM2MClient.getPendingReadRequests().addAll(targetIds);
-        attributesMap.forEach((targetId, params) -> sendWriteAttributesRequest(lwM2MClient, targetId, params));
+        try {
+            Map<String, ObjectAttributes> attributesMap = profile.getObserveAttr().getAttributeLwm2m();
+            attributesMap = attributesMap.entrySet().stream().filter(target -> isSupportedTargetId(supportedObjects, target.getKey())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            attributesMap.forEach((targetId, params) -> sendWriteAttributesRequest(lwM2MClient, targetId, params));
+        } catch (Exception e) {
+            log.error("[{}] Failed to process write attribute requests!", lwM2MClient.getEndpoint(), e);
+            logService.log(lwM2MClient, "Failed to process write attribute requests. Possible profile misconfiguration.");
+        }
     }
 
     private void sendDiscoverRequest(LwM2mClient lwM2MClient, String targetId) {

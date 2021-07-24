@@ -112,15 +112,15 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
   ngOnInit() {
     this.filteredObjectsList = this.lwm2mListFormGroup.get('objectLwm2m').valueChanges
       .pipe(
-        distinctUntilChanged(),
         tap((value) => {
-          if (value && typeof value !== 'string') {
+          if (value && !isString(value)) {
             this.add(value);
           } else if (value === null) {
-            this.clear();
+            this.clear(this.objectInput.nativeElement.value);
           }
         }),
         filter(searchText => isString(searchText)),
+        distinctUntilChanged(),
         mergeMap(searchText => this.fetchListObjects(searchText)),
         share()
       );
@@ -131,7 +131,7 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
     if (isDisabled) {
       this.lwm2mListFormGroup.disable({emitEvent: false});
       if (isDefined(this.objectInput)) {
-        this.clear();
+        this.clear('', false);
       }
     } else {
       this.lwm2mListFormGroup.enable({emitEvent: false});
@@ -176,8 +176,8 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
     }
   }
 
-  displayObjectLwm2mFn = (object?: ObjectLwM2M): string | undefined => {
-    return object ? object.name : undefined;
+  displayObjectLwm2mFn = (object?: ObjectLwM2M): string => {
+    return object ? object.name : '';
   }
 
   private fetchListObjects = (searchText: string): Observable<Array<ObjectLwM2M>> =>  {
@@ -196,12 +196,14 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
     }
   }
 
-  private clear() {
-    this.searchText = '';
-    this.lwm2mListFormGroup.get('objectLwm2m').patchValue(null, {emitEvent: false});
-    setTimeout(() => {
-      this.objectInput.nativeElement.blur();
-      this.objectInput.nativeElement.focus();
-    }, 0);
+  private clear(value = '', emitEvent = true) {
+    this.objectInput.nativeElement.value = value;
+    this.lwm2mListFormGroup.get('objectLwm2m').patchValue(value, {emitEvent});
+    if (emitEvent) {
+      setTimeout(() => {
+        this.objectInput.nativeElement.blur();
+        this.objectInput.nativeElement.focus();
+      }, 0);
+    }
   }
 }
