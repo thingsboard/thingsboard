@@ -11,6 +11,10 @@ spec:
       {{- include "thingsboardMqttTransport.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      {{- with .Values.mqttTransport.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       labels:
         {{- include "thingsboardMqttTransport.labels" . | nindent 8 }}
     spec:

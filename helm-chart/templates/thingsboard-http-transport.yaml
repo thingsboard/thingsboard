@@ -11,6 +11,10 @@ spec:
       {{- include "thingsboardHttpTransport.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      {{- with .Values.httpTransport.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       labels:
         {{- include "thingsboardHttpTransport.labels" . | nindent 8 }}
     spec:

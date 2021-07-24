@@ -1,16 +1,18 @@
 
 global:
   nameOverride: ""
+  # -- fully override release name
   fullnameOverride: ""
 
   image:
+    # -- global thingsboard container image to use
     tag: 3.2.2
     imagePullPolicy: IfNotPresent
 
   imagePullSecrets: []
 
 postgres:
-  ## NOTE if postgres.enabled is true, helm will install local postgres database
+  # -- if postgres.enabled is true, helm will install local postgres database
   ## using local postgres installation is recommended ONLY for development environments
   enabled: true
 
@@ -23,7 +25,9 @@ postgres:
     type: ClusterIP
     port: 5432
 
+  # -- default postgres username
   username: "postgres"
+  # -- default postgres password
   password: "postgres"
 
   ## Existing secrets can be provided, this provides a convenient way providing secrets from tools like Vault Injector, ExternalSecrets etc.
@@ -234,6 +238,8 @@ javascriptExecutor:
     tag: # defaults to global.image.tag
     imagePullPolicy: # defaults to global.imagePullPolicy
 
+  podAnnotations: {}
+
   ## Set relevant configurations for javascript executor as defined here: https://thingsboard.io/docs/user-guide/install/config/
   ## list of key value,
   serverEnvConfigs:
@@ -252,6 +258,8 @@ mqttTransport:
     tag: # defaults to global.image.tag
     imagePullPolicy: # defaults to global.imagePullPolicy
 
+  podAnnotations: {}
+
   ## Set relevant configurations for javascript executor as defined here: https://thingsboard.io/docs/user-guide/install/config/
   ## list of key value,
   serverEnvConfigs: {}
@@ -267,6 +275,8 @@ httpTransport:
     repository: thingsboard/tb-http-transport
     tag: # defaults to global.image.tag
     imagePullPolicy: # defaults to global.imagePullPolicy
+
+  podAnnotations: {}
 
   ## Set relevant configurations for javascript executor as defined here: https://thingsboard.io/docs/user-guide/install/config/
   ## list of key value,
@@ -284,6 +294,8 @@ coapTransport:
     tag: # defaults to global.image.tag
     imagePullPolicy: # defaults to global.imagePullPolicy
 
+  podAnnotations: {}
+
   ## Set relevant configurations for javascript executor as defined here: https://thingsboard.io/docs/user-guide/install/config/
   ## list of key value,
   serverEnvConfigs: {}
@@ -299,6 +311,8 @@ webUi:
     repository: thingsboard/tb-web-ui
     tag: # defaults to global.image.tag
     imagePullPolicy: # defaults to global.imagePullPolicy
+
+  podAnnotations: {}
 
   ## Set relevant configurations for javascript executor as defined here: https://thingsboard.io/docs/user-guide/install/config/
   ## list of key value,

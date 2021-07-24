@@ -11,6 +11,10 @@ spec:
       {{- include "thingsboardWebUI.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      {{- with .Values.webUi.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       labels:
         {{- include "thingsboardWebUI.labels" . | nindent 8 }}
     spec:

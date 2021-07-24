@@ -11,6 +11,10 @@ spec:
       {{- include "thingsboardJSExecutor.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      {{- with .Values.javascriptExecutor.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       labels:
         {{- include "thingsboardJSExecutor.labels" . | nindent 8 }}
     spec:
