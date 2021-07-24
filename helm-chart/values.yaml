@@ -56,6 +56,7 @@ externalPostgres:
   existingSecretName: ""
 
 cassandra:
+  # -- if true cassandra will be deployed, currently this is NOT supported
   enabled: false
 
   image:
@@ -280,6 +281,7 @@ webUi:
     port: 8080
 
 kafka:
+  # -- if true local kafka will be deployed
   enabled: true
 
   image:
@@ -308,6 +310,7 @@ kafka:
     port: 9092
 
   provisioning:
+    # -- provision kafka cluster
     enabled: true
     topics:
       # https://kafka.apache.org/documentation/#topicconfigs
@@ -343,8 +346,8 @@ kafka:
       size: 8Gi
 
 externalKafka:
-  ## NOTE external kafka will be used only when kafka.enabled is false
   ## this set up is strongly recommended for production
+  # -- external kafka will be used only when kafka.enabled is false
   hostname: "kafka.host.name"
   port: 9092
 
@@ -354,6 +357,7 @@ externalKafka:
     port: 2181
 
 redis:
+  # -- if true redis will be deployed, currently this is mandatory
   enabled: true
 
   highAvailabilityDeploy: false
@@ -361,7 +365,7 @@ redis:
   image:
     repository: redis
     pullPolicy: IfNotPresent
-    # Overrides the image tag whose default is the chart appVersion.
+    # -- redis version to deploy
     tag: "6.2.4"
 
   service:
