@@ -177,9 +177,7 @@ public abstract class AbstractOAuth2ClientMapper {
             tenant.setTitle(tenantName);
             tenant = tenantService.saveTenant(tenant);
             installScripts.createDefaultRuleChains(tenant.getId());
-            if (edgesEnabled) {
-                installScripts.createDefaultEdgeRuleChains(tenant.getId());
-            }
+            installScripts.createDefaultEdgeRuleChains(tenant.getId());
             tenantProfileCache.evict(tenant.getId());
             tbClusterService.onTenantChange(tenant, null);
             tbClusterService.onEntityStateChange(tenant.getId(), tenant.getId(),

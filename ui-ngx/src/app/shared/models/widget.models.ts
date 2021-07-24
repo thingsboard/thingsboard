@@ -484,6 +484,7 @@ export interface WidgetConfig {
   showLegend?: boolean;
   legendConfig?: LegendConfig;
   timewindow?: Timewindow;
+  mobileHide?: boolean;
   mobileHeight?: number;
   mobileOrder?: number;
   color?: string;

@@ -22,12 +22,15 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.dashboard.DashboardInfoDao;
 import org.thingsboard.server.dao.model.sql.DashboardInfoEntity;
 import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -40,9 +43,6 @@ public class JpaDashboardInfoDao extends JpaAbstractSearchTextDao<DashboardInfoE
 
     @Autowired
     private DashboardInfoRepository dashboardInfoRepository;
-
-    @Autowired
-    private RelationDao relationDao;
 
     @Override
     protected Class<DashboardInfoEntity> getEntityClass() {
@@ -64,6 +64,20 @@ public class JpaDashboardInfoDao extends JpaAbstractSearchTextDao<DashboardInfoE
     }
 
     @Override
+    public PageData<DashboardInfo> findMobileDashboardsByTenantId(UUID tenantId, PageLink pageLink) {
+        List<SortOrder> sortOrders = new ArrayList<>();
+        sortOrders.add(new SortOrder("mobileOrder", SortOrder.Direction.ASC));
+        if (pageLink.getSortOrder() != null) {
+            sortOrders.add(pageLink.getSortOrder());
+        }
+        return DaoUtil.toPageData(dashboardInfoRepository
+                .findMobileByTenantId(
+                        tenantId,
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        DaoUtil.toPageable(pageLink, sortOrders)));
+    }
+
+    @Override
     public PageData<DashboardInfo> findDashboardsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, PageLink pageLink) {
         return DaoUtil.toPageData(dashboardInfoRepository
                 .findByTenantIdAndCustomerId(
@@ -71,6 +85,21 @@ public class JpaDashboardInfoDao extends JpaAbstractSearchTextDao<DashboardInfoE
                         customerId,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<DashboardInfo> findMobileDashboardsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, PageLink pageLink) {
+        List<SortOrder> sortOrders = new ArrayList<>();
+        sortOrders.add(new SortOrder("mobileOrder", SortOrder.Direction.ASC));
+        if (pageLink.getSortOrder() != null) {
+            sortOrders.add(pageLink.getSortOrder());
+        }
+        return DaoUtil.toPageData(dashboardInfoRepository
+                .findMobileByTenantIdAndCustomerId(
+                        tenantId,
+                        customerId,
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        DaoUtil.toPageable(pageLink, sortOrders)));
     }
 
     @Override

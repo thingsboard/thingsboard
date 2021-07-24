@@ -434,7 +434,7 @@ public class AssetController extends BaseController {
             Edge edge = checkEdgeId(edgeId, Operation.READ);
 
             AssetId assetId = new AssetId(toUUID(strAssetId));
-            checkAssetId(assetId, Operation.ASSIGN_TO_EDGE);
+            checkAssetId(assetId, Operation.READ);
 
             Asset savedAsset = checkNotNull(assetService.assignAssetToEdge(getTenantId(), assetId, edgeId));
 
@@ -467,7 +467,7 @@ public class AssetController extends BaseController {
             Edge edge = checkEdgeId(edgeId, Operation.READ);
 
             AssetId assetId = new AssetId(toUUID(strAssetId));
-            Asset asset = checkAssetId(assetId, Operation.UNASSIGN_FROM_EDGE);
+            Asset asset = checkAssetId(assetId, Operation.READ);
 
             Asset savedAsset = checkNotNull(assetService.unassignAssetFromEdge(getTenantId(), assetId, edgeId));
 

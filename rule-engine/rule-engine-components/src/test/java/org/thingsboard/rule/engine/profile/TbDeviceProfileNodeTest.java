@@ -775,6 +775,7 @@ public class TbDeviceProfileNodeTest {
 
         verify(ctx, Mockito.never()).tellNext(theMsg, "Alarm Created");
 
+        data.put("temperature", 151);
         TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, mapper.writeValueAsString(data), null, null);
 
@@ -890,6 +891,7 @@ public class TbDeviceProfileNodeTest {
 
         verify(ctx, Mockito.never()).tellNext(theMsg, "Alarm Created");
 
+        data.put("temperature", 151);
         TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, mapper.writeValueAsString(data), null, null);
 

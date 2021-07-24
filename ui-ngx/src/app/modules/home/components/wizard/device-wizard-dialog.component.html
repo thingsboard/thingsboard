@@ -19,6 +19,7 @@
   <mat-toolbar color="primary">
     <h2 translate>device.add-device-text</h2>
     <span fxFlex></span>
+    <div [tb-help]="'devices'"></div>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -64,7 +65,8 @@
                   [ngClass]="{invisible: deviceWizardFormGroup.get('addProfileType').value !== 0}"
                   [addNewProfile]="false"
                   [selectDefaultProfile]="true"
-                  [editProfileEnabled]="false">
+                  [editProfileEnabled]="false"
+                  (deviceProfileChanged)="deviceProfileChanged($event)">
                 </tb-device-profile-autocomplete>
                 <mat-form-field fxFlex class="mat-block"
                                 [ngClass]="{invisible: deviceWizardFormGroup.get('addProfileType').value !== 1}">
@@ -154,6 +156,7 @@
           <mat-checkbox style="padding-bottom: 16px;" formControlName="setCredential">{{ 'device.wizard.add-credentials' | translate }}</mat-checkbox>
           <tb-device-credentials
             [fxShow]="credentialsFormGroup.get('setCredential').value"
+            [deviceTransportType]="deviceTransportType"
             formControlName="credential">
           </tb-device-credentials>
         </form>

@@ -64,6 +64,7 @@ import static org.thingsboard.server.common.data.ota.OtaPackageKey.CHECKSUM;
 import static org.thingsboard.server.common.data.ota.OtaPackageKey.CHECKSUM_ALGORITHM;
 import static org.thingsboard.server.common.data.ota.OtaPackageKey.SIZE;
 import static org.thingsboard.server.common.data.ota.OtaPackageKey.STATE;
+import static org.thingsboard.server.common.data.ota.OtaPackageKey.TAG;
 import static org.thingsboard.server.common.data.ota.OtaPackageKey.TITLE;
 import static org.thingsboard.server.common.data.ota.OtaPackageKey.TS;
 import static org.thingsboard.server.common.data.ota.OtaPackageKey.URL;
@@ -246,6 +247,11 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
         List<TsKvEntry> telemetry = new ArrayList<>();
         telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(getTargetTelemetryKey(firmware.getType(), TITLE), firmware.getTitle())));
         telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(getTargetTelemetryKey(firmware.getType(), VERSION), firmware.getVersion())));
+
+        if (StringUtils.isNotEmpty(firmware.getTag())) {
+            telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(getTargetTelemetryKey(firmware.getType(), TAG), firmware.getTag())));
+        }
+
         telemetry.add(new BasicTsKvEntry(ts, new LongDataEntry(getTargetTelemetryKey(firmware.getType(), TS), ts)));
         telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(getTelemetryKey(firmware.getType(), STATE), OtaPackageUpdateStatus.QUEUED.name())));
 
@@ -273,18 +279,25 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
         telemetryService.saveAndNotify(tenantId, deviceId, Collections.singletonList(status), new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable Void tmp) {
-                log.trace("[{}] Success save telemetry with target firmware for device!", deviceId);
+                log.trace("[{}] Success save telemetry with target {} for device!", deviceId, otaPackage);
+                updateAttributes(device, otaPackage, ts, tenantId, deviceId, otaPackageType);
             }
 
             @Override
             public void onFailure(Throwable t) {
-                log.error("[{}] Failed to save telemetry with target firmware for device!", deviceId, t);
+                log.error("[{}] Failed to save telemetry with target {} for device!", deviceId, otaPackage, t);
+                updateAttributes(device, otaPackage, ts, tenantId, deviceId, otaPackageType);
             }
         });
+    }
 
+    private void updateAttributes(Device device, OtaPackageInfo otaPackage, long ts, TenantId tenantId, DeviceId deviceId, OtaPackageType otaPackageType) {
         List<AttributeKvEntry> attributes = new ArrayList<>();
         attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, TITLE), otaPackage.getTitle())));
         attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, VERSION), otaPackage.getVersion())));
+        if (StringUtils.isNotEmpty(otaPackage.getTag())) {
+            attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, TAG), otaPackage.getTag())));
+        }
         if (otaPackage.hasUrl()) {
             attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, URL), otaPackage.getUrl())));
             List<String> attrToRemove = new ArrayList<>();

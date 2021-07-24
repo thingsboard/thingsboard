@@ -626,7 +626,7 @@ public class EntityViewController extends BaseController {
             Edge edge = checkEdgeId(edgeId, Operation.READ);
 
             EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
-            checkEntityViewId(entityViewId, Operation.ASSIGN_TO_EDGE);
+            checkEntityViewId(entityViewId, Operation.READ);
 
             EntityView savedEntityView = checkNotNull(entityViewService.assignEntityViewToEdge(getTenantId(), entityViewId, edgeId));
             logEntityAction(entityViewId, savedEntityView,
@@ -656,7 +656,7 @@ public class EntityViewController extends BaseController {
             Edge edge = checkEdgeId(edgeId, Operation.READ);
 
             EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
-            EntityView entityView = checkEntityViewId(entityViewId, Operation.UNASSIGN_FROM_EDGE);
+            EntityView entityView = checkEntityViewId(entityViewId, Operation.READ);
 
             EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromEdge(getTenantId(), entityViewId, edgeId));
             logEntityAction(entityViewId, entityView,

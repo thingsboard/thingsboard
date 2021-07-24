@@ -51,6 +51,7 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.thingsboard.server.common.data.CacheConstants.OTA_PACKAGE_CACHE;
@@ -77,8 +78,11 @@ public class BaseOtaPackageService implements OtaPackageService {
     private TbTenantProfileCache tenantProfileCache;
 
     @Override
-    public OtaPackageInfo saveOtaPackageInfo(OtaPackageInfo otaPackageInfo) {
+    public OtaPackageInfo saveOtaPackageInfo(OtaPackageInfo otaPackageInfo, boolean isUrl) {
         log.trace("Executing saveOtaPackageInfo [{}]", otaPackageInfo);
+        if(isUrl && (StringUtils.isEmpty(otaPackageInfo.getUrl()) || otaPackageInfo.getUrl().trim().length() == 0)) {
+            throw new DataValidationException("Ota package URL should be specified!");
+        }
         otaPackageInfoValidator.validate(otaPackageInfo, OtaPackageInfo::getTenantId);
         try {
             OtaPackageId otaPackageId = otaPackageInfo.getId();
@@ -277,7 +281,9 @@ public class BaseOtaPackageService implements OtaPackageService {
                     throw new DataValidationException("Wrong otaPackage file!");
                 }
             } else {
-                //TODO: validate url
+                if(otaPackage.getData() != null) {
+                    throw new DataValidationException("File can't be saved if URL present!");
+                }
             }
         }
 
@@ -313,6 +319,10 @@ public class BaseOtaPackageService implements OtaPackageService {
             throw new DataValidationException("Updating otaPackage version is prohibited!");
         }
 
+        if (!Objects.equals(otaPackage.getTag(), otaPackageOld.getTag())) {
+            throw new DataValidationException("Updating otaPackage tag is prohibited!");
+        }
+
         if (!otaPackageOld.getDeviceProfileId().equals(otaPackage.getDeviceProfileId())) {
             throw new DataValidationException("Updating otaPackage deviceProfile is prohibited!");
         }
@@ -335,6 +345,10 @@ public class BaseOtaPackageService implements OtaPackageService {
 
         if (otaPackageOld.getDataSize() != null && !otaPackageOld.getDataSize().equals(otaPackage.getDataSize())) {
             throw new DataValidationException("Updating otaPackage data size is prohibited!");
+        }
+
+        if(otaPackageOld.getUrl() != null && !otaPackageOld.getUrl().equals(otaPackage.getUrl())) {
+            throw new DataValidationException("Updating otaPackage URL is prohibited!");
         }
     }
 
@@ -366,6 +380,15 @@ public class BaseOtaPackageService implements OtaPackageService {
         if (StringUtils.isEmpty(otaPackageInfo.getVersion())) {
             throw new DataValidationException("OtaPackage version should be specified!");
         }
+
+        if(otaPackageInfo.getTitle().length() > 255) {
+            throw new DataValidationException("The length of title should be equal or shorter than 255");
+        }
+
+        if(otaPackageInfo.getVersion().length() > 255) {
+            throw new DataValidationException("The length of version should be equal or shorter than 255");
+        }
+
     }
 
     private PaginatedRemover<TenantId, OtaPackageInfo> tenantOtaPackageRemover =
