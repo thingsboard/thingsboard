@@ -50,7 +50,7 @@ import {
   TELEMETRY
 } from './lwm2m-profile-config.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
-import { deepClone, isDefinedAndNotNull, isEmpty } from '@core/utils';
+import { deepClone, isDefinedAndNotNull, isEmpty, isUndefined } from '@core/utils';
 import { JsonArray, JsonObject } from '@angular/compiler-cli/ngcc/src/packages/entry_point';
 import { Direction } from '@shared/models/page/sort-order';
 import _ from 'lodash';
@@ -100,8 +100,8 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   constructor(private fb: FormBuilder,
               private deviceProfileService: DeviceProfileService) {
     this.lwm2mDeviceProfileFormGroup = this.fb.group({
-      objectIds: [null, Validators.required],
-      observeAttrTelemetry: [null, Validators.required],
+      objectIds: [null],
+      observeAttrTelemetry: [null],
       bootstrap: this.fb.group({
         servers: this.fb.group({
           binding: [DEFAULT_BINDING],
@@ -183,7 +183,8 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   async writeValue(value: Lwm2mProfileConfigModels | null) {
     if (isDefinedAndNotNull(value) && (value?.clientLwM2mSettings || value?.observeAttr || value?.bootstrap)) {
       this.configurationValue = value;
-      const defaultFormSettings = !(value.observeAttr.attribute.length && value.observeAttr.telemetry.length);
+      const defaultFormSettings = value.clientLwM2mSettings.fwUpdateStrategy === 1 &&
+        isUndefined(value.clientLwM2mSettings.fwUpdateResource);
       if (defaultFormSettings) {
         await this.defaultProfileConfig();
       }

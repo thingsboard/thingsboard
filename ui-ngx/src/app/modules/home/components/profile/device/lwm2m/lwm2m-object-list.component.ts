@@ -33,6 +33,7 @@ import { DeviceProfileService } from '@core/http/device-profile.service';
 import { Direction } from '@shared/models/page/sort-order';
 import { isDefined, isDefinedAndNotNull, isString } from '@core/utils';
 import { PageLink } from '@shared/models/page/page-link';
+import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 
 @Component({
   selector: 'tb-profile-lwm2m-object-list',
@@ -82,7 +83,8 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
   private propagateChange = (v: any) => {
   }
 
-  constructor(private deviceProfileService: DeviceProfileService,
+  constructor(public truncate: TruncatePipe,
+              private deviceProfileService: DeviceProfileService,
               private fb: FormBuilder) {
     this.lwm2mListFormGroup = this.fb.group({
       objectsList: [this.objectsList],
@@ -194,6 +196,10 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
       this.lwm2mListFormGroup.get('objectLwm2m').updateValueAndValidity({onlySelf: true, emitEvent: true});
       this.dirty = true;
     }
+  }
+
+  textIsNotEmpty(text: string): boolean {
+    return (text && text.length > 0);
   }
 
   private clear(value = '', emitEvent = true) {

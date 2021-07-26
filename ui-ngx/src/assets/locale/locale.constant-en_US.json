@@ -1244,6 +1244,7 @@
         "lwm2m": {
             "object-list": "Object list",
             "object-list-empty": "No objects selected.",
+            "no-objects-found": "No objects found.",
             "no-objects-matching": "No objects matching '{{object}}' were found.",
             "model-tab": "LWM2M Model",
             "add-new-instances": "Add new instances",
