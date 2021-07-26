@@ -23,11 +23,9 @@
           <tb-profile-lwm2m-object-list
             (addList)="addObjectsList($event)"
             (removeList)="removeObjectsList($event)"
-            [required]="required"
             formControlName="objectIds">
           </tb-profile-lwm2m-object-list>
           <tb-profile-lwm2m-observe-attr-telemetry
-            [required]="required"
             formControlName="observeAttrTelemetry">
           </tb-profile-lwm2m-observe-attr-telemetry>
         </section>

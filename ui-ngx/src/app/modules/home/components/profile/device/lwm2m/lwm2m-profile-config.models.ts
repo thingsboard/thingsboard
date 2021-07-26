@@ -164,8 +164,8 @@ export interface ClientLwM2mSettings {
   clientOnlyObserveAfterConnect: number;
   fwUpdateStrategy: number;
   swUpdateStrategy: number;
-  fwUpdateResource: string;
-  swUpdateResource: string;
+  fwUpdateResource?: string;
+  swUpdateResource?: string;
   powerMode: PowerMode;
   edrxCycle?: number;
   pagingTransmissionWindow?: number;
@@ -178,7 +178,7 @@ export interface ObservableAttributes {
   attribute: string[];
   telemetry: string[];
   keyName: {};
-  attributeLwm2m?: AttributesNameValueMap[];
+  attributeLwm2m: AttributesNameValueMap;
 }
 
 export function getDefaultBootstrapServersSecurityConfig(): BootstrapServersSecurityConfig {
@@ -193,13 +193,13 @@ export function getDefaultBootstrapServersSecurityConfig(): BootstrapServersSecu
 
 export function getDefaultBootstrapServerSecurityConfig(): ServerSecurityConfig {
   return {
+    bootstrapServerAccountTimeout: DEFAULT_BOOTSTRAP_SERVER_ACCOUNT_TIME_OUT,
+    clientHoldOffTime: DEFAULT_CLIENT_HOLD_OFF_TIME,
     host: DEFAULT_LOCAL_HOST_NAME,
     port: DEFAULT_PORT_BOOTSTRAP_NO_SEC,
     securityMode: securityConfigMode.NO_SEC,
-    serverPublicKey: '',
-    clientHoldOffTime: DEFAULT_CLIENT_HOLD_OFF_TIME,
     serverId: DEFAULT_ID_BOOTSTRAP,
-    bootstrapServerAccountTimeout: DEFAULT_BOOTSTRAP_SERVER_ACCOUNT_TIME_OUT
+    serverPublicKey: ''
   };
 }
 
@@ -216,7 +216,7 @@ export function getDefaultProfileObserveAttrConfig(): ObservableAttributes {
     attribute: [],
     telemetry: [],
     keyName: {},
-    attributeLwm2m: []
+    attributeLwm2m: {}
   };
 }
 
@@ -225,8 +225,6 @@ export function getDefaultProfileClientLwM2mSettingsConfig(): ClientLwM2mSetting
     clientOnlyObserveAfterConnect: 1,
     fwUpdateStrategy: 1,
     swUpdateStrategy: 1,
-    fwUpdateResource: DEFAULT_FW_UPDATE_RESOURCE,
-    swUpdateResource: DEFAULT_SW_UPDATE_RESOURCE,
     powerMode: PowerMode.DRX,
     compositeOperationsSupport: false
   };
