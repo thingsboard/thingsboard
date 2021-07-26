@@ -16,11 +16,15 @@
 package org.thingsboard.server.transport.lwm2m.server.rpc;
 
 import org.eclipse.leshan.core.ResponseCode;
+import org.eclipse.leshan.core.request.exception.ClientSleepingException;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.downlink.DownlinkRequestCallback;
+
+import java.util.concurrent.TimeoutException;
 
 public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkRequestCallback<R, T> {
 
@@ -39,6 +43,7 @@ public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkR
 
     @Override
     public void onSuccess(R request, T response) {
+        transportService.process(client.getSession(), this.request, false, TransportServiceCallback.EMPTY);
         sendRpcReplyOnSuccess(response);
         if (callback != null) {
             callback.onSuccess(request, response);
@@ -55,16 +60,23 @@ public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkR
 
     @Override
     public void onError(String params, Exception e) {
-        sendRpcReplyOnError(e);
+        if (!(e instanceof TimeoutException || e instanceof ClientSleepingException)) {
+            sendRpcReplyOnError(e);
+        }
         if (callback != null) {
             callback.onError(params, e);
         }
     }
 
     protected void reply(LwM2MRpcResponseBody response) {
+        reply(response, false);
+    }
+
+    protected void reply(LwM2MRpcResponseBody response, boolean failed) {
         TransportProtos.ToDeviceRpcResponseMsg msg = TransportProtos.ToDeviceRpcResponseMsg.newBuilder()
                 .setPayload(JacksonUtil.toString(response))
                 .setRequestId(request.getRequestId())
+                .setFailed(failed)
                 .build();
         transportService.process(client.getSession(), msg, null);
     }
@@ -72,11 +84,11 @@ public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkR
     abstract protected void sendRpcReplyOnSuccess(T response);
 
     protected void sendRpcReplyOnValidationError(String msg) {
-        reply(LwM2MRpcResponseBody.builder().result(ResponseCode.BAD_REQUEST.getName()).error(msg).build());
+        reply(LwM2MRpcResponseBody.builder().result(ResponseCode.BAD_REQUEST.getName()).error(msg).build(), true);
     }
 
     protected void sendRpcReplyOnError(Exception e) {
-        reply(LwM2MRpcResponseBody.builder().result(ResponseCode.INTERNAL_SERVER_ERROR.getName()).error(e.getMessage()).build());
+        reply(LwM2MRpcResponseBody.builder().result(ResponseCode.INTERNAL_SERVER_ERROR.getName()).error(e.getMessage()).build(), true);
     }
 
 }

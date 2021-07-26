@@ -515,7 +515,8 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             systemContext.getTbCoreDeviceRpcService().processRpcResponseFromDeviceActor(new FromDeviceRpcResponse(requestMd.getMsg().getMsg().getId(),
                     responseMsg.getPayload(), null));
             if (requestMd.getMsg().getMsg().isPersisted()) {
-                systemContext.getTbRpcService().save(tenantId, new RpcId(requestMd.getMsg().getMsg().getId()), RpcStatus.SUCCESSFUL, JacksonUtil.toJsonNode(responseMsg.getPayload()));
+                RpcStatus status = responseMsg.getFailed() ? RpcStatus.FAILED : RpcStatus.SUCCESSFUL;
+                systemContext.getTbRpcService().save(tenantId, new RpcId(requestMd.getMsg().getMsg().getId()), status, JacksonUtil.toJsonNode(responseMsg.getPayload()));
             }
         } else {
             log.debug("[{}] Rpc command response [{}] is stale!", deviceId, responseMsg.getRequestId());
