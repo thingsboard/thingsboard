@@ -304,6 +304,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             }
         } catch (RuntimeException | AdaptorException e) {
             log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
+            ctx.close();
         }
     }
 
