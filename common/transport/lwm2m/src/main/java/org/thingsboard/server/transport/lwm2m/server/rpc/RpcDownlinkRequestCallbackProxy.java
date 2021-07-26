@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.lwm2m.server.rpc;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.request.exception.ClientSleepingException;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -43,7 +44,7 @@ public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkR
 
     @Override
     public void onSuccess(R request, T response) {
-        transportService.process(client.getSession(), this.request, false, TransportServiceCallback.EMPTY);
+        transportService.process(client.getSession(), this.request, TransportServiceCallback.EMPTY);
         sendRpcReplyOnSuccess(response);
         if (callback != null) {
             callback.onSuccess(request, response);
@@ -69,26 +70,24 @@ public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkR
     }
 
     protected void reply(LwM2MRpcResponseBody response) {
-        reply(response, false);
-    }
-
-    protected void reply(LwM2MRpcResponseBody response, boolean failed) {
-        TransportProtos.ToDeviceRpcResponseMsg msg = TransportProtos.ToDeviceRpcResponseMsg.newBuilder()
-                .setPayload(JacksonUtil.toString(response))
-                .setRequestId(request.getRequestId())
-                .setFailed(failed)
-                .build();
-        transportService.process(client.getSession(), msg, null);
+        TransportProtos.ToDeviceRpcResponseMsg.Builder msg = TransportProtos.ToDeviceRpcResponseMsg.newBuilder().setRequestId(request.getRequestId());
+        String responseAsString = JacksonUtil.toString(response);
+        if (StringUtils.isEmpty(response.getError())) {
+            msg.setPayload(responseAsString);
+        } else {
+            msg.setError(responseAsString);
+        }
+        transportService.process(client.getSession(), msg.build(), null);
     }
 
     abstract protected void sendRpcReplyOnSuccess(T response);
 
     protected void sendRpcReplyOnValidationError(String msg) {
-        reply(LwM2MRpcResponseBody.builder().result(ResponseCode.BAD_REQUEST.getName()).error(msg).build(), true);
+        reply(LwM2MRpcResponseBody.builder().result(ResponseCode.BAD_REQUEST.getName()).error(msg).build());
     }
 
     protected void sendRpcReplyOnError(Exception e) {
-        reply(LwM2MRpcResponseBody.builder().result(ResponseCode.INTERNAL_SERVER_ERROR.getName()).error(e.getMessage()).build(), true);
+        reply(LwM2MRpcResponseBody.builder().result(ResponseCode.INTERNAL_SERVER_ERROR.getName()).error(e.getMessage()).build());
     }
 
 }

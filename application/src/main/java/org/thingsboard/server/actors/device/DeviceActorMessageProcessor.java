@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.actors.device;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -35,6 +36,7 @@ import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
@@ -512,11 +514,20 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         ToDeviceRpcRequestMetadata requestMd = toDeviceRpcPendingMap.remove(responseMsg.getRequestId());
         boolean success = requestMd != null;
         if (success) {
-            systemContext.getTbCoreDeviceRpcService().processRpcResponseFromDeviceActor(new FromDeviceRpcResponse(requestMd.getMsg().getMsg().getId(),
-                    responseMsg.getPayload(), null));
+            boolean hasError = StringUtils.isNotEmpty(responseMsg.getError());
+            String payload = hasError ? responseMsg.getError() : responseMsg.getPayload();
+            systemContext.getTbCoreDeviceRpcService().processRpcResponseFromDeviceActor(
+                    new FromDeviceRpcResponse(requestMd.getMsg().getMsg().getId(),
+                            payload, hasError ? RpcError.INTERNAL : null));
             if (requestMd.getMsg().getMsg().isPersisted()) {
-                RpcStatus status = responseMsg.getFailed() ? RpcStatus.FAILED : RpcStatus.SUCCESSFUL;
-                systemContext.getTbRpcService().save(tenantId, new RpcId(requestMd.getMsg().getMsg().getId()), status, JacksonUtil.toJsonNode(responseMsg.getPayload()));
+                RpcStatus status = hasError ? RpcStatus.FAILED : RpcStatus.SUCCESSFUL;
+                JsonNode response;
+                try {
+                    response = JacksonUtil.toJsonNode(payload);
+                } catch (IllegalArgumentException e) {
+                    response = JacksonUtil.newObjectNode().put("error", payload);
+                }
+                systemContext.getTbRpcService().save(tenantId, new RpcId(requestMd.getMsg().getMsg().getId()), status, response);
             }
         } else {
             log.debug("[{}] Rpc command response [{}] is stale!", deviceId, responseMsg.getRequestId());

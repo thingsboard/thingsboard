@@ -249,7 +249,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 int msgId = ((MqttPubAckMessage) msg).variableHeader().messageId();
                 TransportProtos.ToDeviceRpcRequestMsg rpcRequest = rpcAwaitingAck.remove(msgId);
                 if (rpcRequest != null) {
-                    transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, false, TransportServiceCallback.EMPTY);
+                    transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, TransportServiceCallback.EMPTY);
                 }
                 break;
             default:
@@ -829,18 +829,22 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 if (rpcRequest.getPersisted() && isAckExpected(payload)) {
                     rpcAwaitingAck.put(msgId, rpcRequest);
                     context.getScheduler().schedule(() -> {
-                        TransportProtos.ToDeviceRpcRequestMsg awaitingAckMsg = rpcAwaitingAck.remove(msgId);
-                        if (awaitingAckMsg != null) {
-                            transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, true, TransportServiceCallback.EMPTY);
-                        }
+                        rpcAwaitingAck.remove(msgId);
                     }, Math.max(0, rpcRequest.getExpirationTime() - System.currentTimeMillis()), TimeUnit.MILLISECONDS);
                 }
                 var cf = publish(payload, deviceSessionCtx);
                 if (rpcRequest.getPersisted() && !isAckExpected(payload)) {
-                    cf.addListener(result -> transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, result.cause() != null, TransportServiceCallback.EMPTY));
+                    cf.addListener(result -> {
+                        if (result.cause() == null) {
+                            transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, TransportServiceCallback.EMPTY);
+                        }
+                    });
                 }
             });
         } catch (Exception e) {
+            transportService.process(deviceSessionCtx.getSessionInfo(),
+                    TransportProtos.ToDeviceRpcResponseMsg.newBuilder()
+                            .setRequestId(rpcRequest.getRequestId()).setError("Failed to convert device RPC command to MQTT msg").build(), TransportServiceCallback.EMPTY);
             log.trace("[{}] Failed to convert device RPC command to MQTT msg", sessionId, e);
         }
     }

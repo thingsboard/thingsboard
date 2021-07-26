@@ -409,7 +409,7 @@ public class DeviceApiController implements TbTransportService {
         public void onToDeviceRpcRequest(UUID sessionId, ToDeviceRpcRequestMsg msg) {
             log.trace("[{}] Received RPC command to device", sessionId);
             responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg, true).toString(), HttpStatus.OK));
-            transportService.process(sessionInfo, msg, false, TransportServiceCallback.EMPTY);
+            transportService.process(sessionInfo, msg, TransportServiceCallback.EMPTY);
         }
 
         @Override
