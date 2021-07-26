@@ -49,6 +49,7 @@
         <json-path.version>2.2.0</json-path.version>
         <junit.version>4.12</junit.version>
         <jupiter.version>5.7.1</jupiter.version>
+        <awaitility.version>4.1.0</awaitility.version>
         <hamcrest.version>2.2</hamcrest.version>
         <slf4j.version>1.7.7</slf4j.version>
         <logback.version>1.2.3</logback.version>
@@ -1435,6 +1436,12 @@
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
                 <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.awaitility</groupId>
+                <artifactId>awaitility</artifactId>
+                <version>${awaitility.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
