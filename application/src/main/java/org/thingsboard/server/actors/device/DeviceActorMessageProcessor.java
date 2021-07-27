@@ -518,7 +518,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             String payload = hasError ? responseMsg.getError() : responseMsg.getPayload();
             systemContext.getTbCoreDeviceRpcService().processRpcResponseFromDeviceActor(
                     new FromDeviceRpcResponse(requestMd.getMsg().getMsg().getId(),
-                            payload, hasError ? RpcError.INTERNAL : null));
+                            payload, null));
             if (requestMd.getMsg().getMsg().isPersisted()) {
                 RpcStatus status = hasError ? RpcStatus.FAILED : RpcStatus.SUCCESSFUL;
                 JsonNode response;
