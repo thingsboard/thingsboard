@@ -495,8 +495,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
       const serverAttributes: AttributeData[] = [];
       const sharedAttributes: AttributeData[] = [];
       const telemetry: AttributeData[] = [];
-      for (const key of this.visibleKeys(toSave)) {
-        const currentValue = this.multipleInputFormGroup.get(key.formId).value;
+      for (const key of toSave.keys) {
+        const currentValue = key.settings.dataKeyHidden ? key.value : this.multipleInputFormGroup.get(key.formId).value;
         if (!isEqual(currentValue, key.value) || this.settings.updateAllValues) {
           const attribute: AttributeData = {
             key: key.name,
