@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -79,7 +79,7 @@ public abstract class AbstractRpcController extends BaseController {
     @Value("${server.rest.server_side_rpc.default_timeout:10000}")
     protected long defaultTimeout;
 
-    protected DeferredResult<ResponseEntity> handleDeviceRPCRequest(boolean oneWay, DeviceId deviceId, String requestBody, HttpStatus timeoutStatus) throws ThingsboardException {
+    protected DeferredResult<ResponseEntity> handleDeviceRPCRequest(boolean oneWay, DeviceId deviceId, String requestBody, HttpStatus timeoutStatus, HttpStatus noActiveConnectionStatus) throws ThingsboardException {
         try {
             JsonNode rpcRequestBody = JacksonUtil.toJsonNode(requestBody);
             ToDeviceRpcRequestBody body = new ToDeviceRpcRequestBody(rpcRequestBody.get("method").asText(), JacksonUtil.toString(rpcRequestBody.get("params")));
@@ -101,7 +101,7 @@ public abstract class AbstractRpcController extends BaseController {
                             body,
                             persisted
                     );
-                    deviceRpcService.processRestApiRpcRequest(rpcRequest, fromDeviceRpcResponse -> reply(new LocalRequestMetaData(rpcRequest, currentUser, result), fromDeviceRpcResponse, timeoutStatus), currentUser);
+                    deviceRpcService.processRestApiRpcRequest(rpcRequest, fromDeviceRpcResponse -> reply(new LocalRequestMetaData(rpcRequest, currentUser, result), fromDeviceRpcResponse, timeoutStatus, noActiveConnectionStatus), currentUser);
                 }
 
                 @Override
@@ -122,7 +122,7 @@ public abstract class AbstractRpcController extends BaseController {
         }
     }
 
-    public void reply(LocalRequestMetaData rpcRequest, FromDeviceRpcResponse response, HttpStatus timeoutStatus) {
+    public void reply(LocalRequestMetaData rpcRequest, FromDeviceRpcResponse response, HttpStatus timeoutStatus, HttpStatus noActiveConnectionStatus) {
         Optional<RpcError> rpcError = response.getError();
         DeferredResult<ResponseEntity> responseWriter = rpcRequest.getResponseWriter();
         if (rpcError.isPresent()) {
@@ -133,7 +133,7 @@ public abstract class AbstractRpcController extends BaseController {
                     responseWriter.setResult(new ResponseEntity<>(timeoutStatus));
                     break;
                 case NO_ACTIVE_CONNECTION:
-                    responseWriter.setResult(new ResponseEntity<>(HttpStatus.CONFLICT));
+                    responseWriter.setResult(new ResponseEntity<>(noActiveConnectionStatus));
                     break;
                 default:
                     responseWriter.setResult(new ResponseEntity<>(timeoutStatus));
