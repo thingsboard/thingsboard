@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-export const LEN_MAX_PSK = 32;
+export const LEN_MAX_PSK = 128;
 export const LEN_MAX_PRIVATE_KEY = 134;
 export const LEN_MAX_PUBLIC_KEY_RPK = 182;
 export const LEN_MAX_PUBLIC_KEY_X509 = 3000;
