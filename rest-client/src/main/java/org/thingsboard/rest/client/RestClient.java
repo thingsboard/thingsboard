@@ -2034,7 +2034,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         params.put("useStrictDataTypes", Boolean.toString(useStrictDataTypes));
 
         StringBuilder urlBuilder = new StringBuilder(baseURL);
-        urlBuilder.append("/api/plugins/telemetry/{entityType}/{entityId}/values/timeseries?keys={keys}&interval={interval}&agg={agg}&useStrictDataTypes={useStrictDataTypes}&orderBy={orderBy}");
+        urlBuilder.append("/api/plugins/telemetry/{entityType}/{entityId}/values/timeseries?keys={keys}&interval={interval}&limit={limit}&agg={agg}&useStrictDataTypes={useStrictDataTypes}&orderBy={orderBy}");
 
         if (startTime != null) {
             urlBuilder.append("&startTs={startTs}");
