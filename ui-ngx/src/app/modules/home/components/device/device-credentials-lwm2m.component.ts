@@ -16,6 +16,7 @@
 
 import { Component, forwardRef, OnDestroy } from '@angular/core';
 import {
+  AbstractControl,
   ControlValueAccessor,
   FormBuilder,
   FormGroup,
@@ -64,6 +65,7 @@ export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Va
   securityConfigLwM2MTypes = Object.keys(Lwm2mSecurityType);
   credentialTypeLwM2MNamesMap = Lwm2mSecurityTypeTranslationMap;
   lenMaxKeyClient = LEN_MAX_PSK;
+  allowLengthKey: number[];
 
   private destroy$ = new Subject();
   private propagateChange = (v: any) => {};
@@ -119,7 +121,7 @@ export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Va
         config.key = this.lwm2mConfigFormGroup.get('client.key').value;
         break;
     }
-    this.lwm2mConfigFormGroup.get('client').patchValue(config, {emitEvent: false});
+    this.lwm2mConfigFormGroup.get('client').reset(config, {emitEvent: false});
     this.securityConfigClientUpdateValidators(type);
   }
 
@@ -135,11 +137,13 @@ export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Va
         break;
       case Lwm2mSecurityType.PSK:
         this.lenMaxKeyClient = LEN_MAX_PSK;
+        this.allowLengthKey = [32, 64, LEN_MAX_PSK];
         this.setValidatorsPskRpk(mode);
         this.lwm2mConfigFormGroup.get('client.identity').enable({emitEvent: false});
         break;
       case Lwm2mSecurityType.RPK:
         this.lenMaxKeyClient = LEN_MAX_PUBLIC_KEY_RPK;
+        this.allowLengthKey = [LEN_MAX_PUBLIC_KEY_RPK];
         this.setValidatorsPskRpk(mode);
         this.lwm2mConfigFormGroup.get('client.identity').disable({emitEvent: false});
         break;
@@ -164,11 +168,20 @@ export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Va
     this.lwm2mConfigFormGroup.get('client.key').setValidators([
         Validators.required,
         Validators.pattern(KEY_REGEXP_HEX_DEC),
-        Validators.maxLength(this.lenMaxKeyClient),
-        Validators.minLength(this.lenMaxKeyClient)
+        this.maxLength(this.allowLengthKey)
       ]);
     this.lwm2mConfigFormGroup.get('client.key').enable({emitEvent: false});
     this.lwm2mConfigFormGroup.get('client.cert').disable({emitEvent: false});
+  }
+
+  private maxLength(keyLengths: number[]) {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value;
+      if (keyLengths.some(len => value.length === len)) {
+        return null;
+      }
+      return {length: true};
+    };
   }
 
   private initLwm2mConfigForm = (): FormGroup => {
