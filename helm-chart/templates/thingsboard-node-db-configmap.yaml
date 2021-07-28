@@ -12,12 +12,15 @@ data:
   DATABASE_TS_TYPE: cassandra
   CASSANDRA_SOCKET_READ_TIMEOUT: "60000"
 
-  {{- if .Values.cassandra.enabled }}
+  {{- if or .Values.cassandra.enabled .Values.externalCassandra.enabled }}
+  CASSANDRA_USE_CREDENTIALS: true
+    {{- if .Values.cassandra.enabled }}
   CASSANDRA_URL: {{ include "thingsboard.fullname" . }}-cassandra.{{ .Release.Namespace }}.svc.cluster.local:9042
   CASSANDRA_USERNAME: {{ .Values.cassandra.dbUser.user }}
   CASSANDRA_PASSWORD: {{ .Values.cassandra.dbUser.password }}
-  {{- else if .Values.externalCassandra.enabled }}
+    {{- else if .Values.externalCassandra.enabled }}
   CASSANDRA_URL: {{ .Values.externalCassandra.hostName }}:{{ .Values.externalCassandra.port }}
+    {{- end }}
   {{- end }}
 
   {{- else }}

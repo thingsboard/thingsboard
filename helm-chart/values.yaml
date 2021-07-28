@@ -56,7 +56,7 @@ externalPostgres:
   existingSecretName: ""
 
 cassandra:
-  # -- if true cassandra will be deployed, currently this is NOT supported
+  # -- if true cassandra will be deployed
   enabled: false
 
   image:
