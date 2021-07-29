@@ -177,7 +177,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         } else if (deviceSessionCtx.isProvisionOnly()) {
             processProvisionSessionMsg(ctx, msg);
         } else {
-            processRegularSessionMsg(ctx, msg);
+            enqueueRegularSessionMsg(ctx, msg);
         }
     }
 
@@ -220,6 +220,41 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     processDisconnect(ctx);
                 }
                 break;
+        }
+    }
+
+    private void enqueueRegularSessionMsg(ChannelHandlerContext ctx, MqttMessage msg) {
+        final int queueSize = deviceSessionCtx.getMsgQueueSize().incrementAndGet();
+        if (queueSize >= context.getMessageQueueSizePerDeviceLimit()) {
+            log.warn("Closing current session because msq queue size for device {} exceed limit {} with msgQueueSize counter {} and actual queue size {}",
+                    deviceSessionCtx.getDeviceId(), context.getMessageQueueSizePerDeviceLimit(), queueSize, deviceSessionCtx.getMsgQueue().size());
+            ctx.close();
+            return;
+        }
+
+        deviceSessionCtx.getMsgQueue().add(msg);
+        processMsgQueue(ctx); //Under the normal conditions the msg queue will contain 0 messages. Many messages will be processed on device connect event in separate thread pool
+    }
+
+    private void processMsgQueue(ChannelHandlerContext ctx) {
+        if (!deviceSessionCtx.isConnected()) {
+            log.trace("[{}][{}] Postpone processing msg due to device is not connected. Msg queue size is {}", sessionId, deviceSessionCtx.getDeviceId(), deviceSessionCtx.getMsgQueue().size());
+            return;
+        }
+        while (!deviceSessionCtx.getMsgQueue().isEmpty()) {
+            if (deviceSessionCtx.getMsgQueueProcessorLock().tryLock()) {
+                try {
+                    MqttMessage msg;
+                    while ((msg = deviceSessionCtx.getMsgQueue().poll()) != null) {
+                        deviceSessionCtx.getMsgQueueSize().decrementAndGet();
+                        processRegularSessionMsg(ctx, msg);
+                    }
+                } finally {
+                    deviceSessionCtx.getMsgQueueProcessorLock().unlock();
+                }
+            } else {
+                return;
+            }
         }
     }
 
@@ -762,6 +797,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             }
             deviceSessionCtx.setDisconnected();
         }
+
+        if (!deviceSessionCtx.getMsgQueue().isEmpty()) {
+            log.warn("doDisconnect for device {} but unprocessed messages {} left in the msg queue", deviceSessionCtx.getDeviceId(), deviceSessionCtx.getMsgQueue().size());
+            deviceSessionCtx.getMsgQueue().clear();
+        }
     }
 
 
@@ -779,7 +819,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     SessionMetaData sessionMetaData = transportService.registerAsyncSession(deviceSessionCtx.getSessionInfo(), MqttTransportHandler.this);
                     checkGatewaySession(sessionMetaData);
                     ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED, connectMessage));
+                    deviceSessionCtx.setConnected(true);
                     log.info("[{}] Client connected!", sessionId);
+                    context.getMsqProcessorExecutor().execute(()->processMsgQueue(ctx));
                 }
 
                 @Override

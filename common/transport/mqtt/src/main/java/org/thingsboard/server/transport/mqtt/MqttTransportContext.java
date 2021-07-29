@@ -23,9 +23,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
+
+import javax.annotation.PostConstruct;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Created by ashvayka on 04.10.18.
@@ -58,5 +62,12 @@ public class MqttTransportContext extends TransportContext {
     @Getter
     @Setter
     private SslHandler sslHandler;
+
+    @Getter
+    @Value("${transport.mqtt.msg_queue_size_per_device_limit:10000}")
+    private int messageQueueSizePerDeviceLimit;
+
+    @Getter
+    private final ExecutorService msqProcessorExecutor = ThingsBoardExecutors.newWorkStealingPool(Runtime.getRuntime().availableProcessors() + 1, getClass());
 
 }
