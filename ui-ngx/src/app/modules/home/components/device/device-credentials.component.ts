@@ -168,7 +168,7 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
     const credentialsType = this.deviceCredentialsFormGroup.get('credentialsType').value as DeviceCredentialsType;
     switch (credentialsType) {
       case DeviceCredentialsType.ACCESS_TOKEN:
-        this.deviceCredentialsFormGroup.get('credentialsId').setValidators([Validators.required, Validators.pattern(/^.{1,20}$/)]);
+        this.deviceCredentialsFormGroup.get('credentialsId').setValidators([Validators.required, Validators.pattern(/^.{1,32}$/)]);
         this.deviceCredentialsFormGroup.get('credentialsId').updateValueAndValidity({emitEvent: false});
         this.deviceCredentialsFormGroup.get('credentialsValue').setValidators([]);
         this.deviceCredentialsFormGroup.get('credentialsValue').updateValueAndValidity({emitEvent: false});
