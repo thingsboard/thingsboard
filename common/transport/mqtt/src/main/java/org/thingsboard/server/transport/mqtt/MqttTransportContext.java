@@ -68,6 +68,6 @@ public class MqttTransportContext extends TransportContext {
     private int messageQueueSizePerDeviceLimit;
 
     @Getter
-    private final ExecutorService msqProcessorExecutor = ThingsBoardExecutors.newWorkStealingPool(Runtime.getRuntime().availableProcessors() + 1, getClass());
+    private final ExecutorService msqProcessorExecutor = ThingsBoardExecutors.newWorkStealingPool(Runtime.getRuntime().availableProcessors() + 1, "msg-processor-on-device-connect");
 
 }
