@@ -893,7 +893,7 @@
         "credentials-type": "Tipo de credencial",
         "access-token": "Tóken de acceso",
         "access-token-required": "Access token requerido.",
-        "access-token-invalid": "Access token debe tener entre 1 a 20 caracteres.",
+        "access-token-invalid": "Access token debe tener entre 1 a 32 caracteres.",
         "rsa-key": "Clave pública RSA",
         "rsa-key-required": "Clave pública RSA requerida.",
         "client-id": "ID Cliente",

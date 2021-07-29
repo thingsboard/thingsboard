@@ -869,7 +869,7 @@
         "credentials-type": "크리덴셜 타입",
         "access-token": "억세스 토큰",
         "access-token-required": "액세스 토큰을 입력하세요.",
-        "access-token-invalid": "액세스 토큰 길이는 1 - 20 자 여야합니다.",
+        "access-token-invalid": "액세스 토큰 길이는 1 - 32 자 여야합니다.",
         "rsa-key": "RSA public key",
         "rsa-key-required": "RSA public key 를 입력하세요.",
         "client-id": "클라이언트 ID",
