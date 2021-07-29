@@ -21,15 +21,16 @@ import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType;
 
+import java.util.Optional;
+
 public class TbLwM2MReadRequest extends AbstractTbLwM2MTargetedDownlinkRequest<ReadResponse> implements HasContentFormat {
 
-    @Getter
-    private final ContentFormat requestContentFormat;
+    private final Optional<ContentFormat> requestContentFormatOpt;
 
     @Builder
     private TbLwM2MReadRequest(String versionedId, long timeout, ContentFormat requestContentFormat) {
         super(versionedId, timeout);
-        this.requestContentFormat = requestContentFormat;
+        this.requestContentFormatOpt = Optional.ofNullable(requestContentFormat);
     }
 
     @Override
@@ -38,5 +39,8 @@ public class TbLwM2MReadRequest extends AbstractTbLwM2MTargetedDownlinkRequest<R
     }
 
 
-
+    @Override
+    public Optional<ContentFormat> getRequestContentFormat() {
+        return this.requestContentFormatOpt;
+    }
 }

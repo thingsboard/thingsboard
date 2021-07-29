@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.lwm2m.server.downlink;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.Link;
+import org.eclipse.leshan.core.LwM2m;
 import org.eclipse.leshan.core.attributes.Attribute;
 import org.eclipse.leshan.core.attributes.AttributeSet;
 import org.eclipse.leshan.core.model.ResourceModel;
@@ -52,6 +53,7 @@ import org.eclipse.leshan.core.response.WriteAttributesResponse;
 import org.eclipse.leshan.core.response.WriteCompositeResponse;
 import org.eclipse.leshan.core.response.WriteResponse;
 import org.eclipse.leshan.core.util.Hex;
+import org.eclipse.leshan.server.Version;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.stereotype.Service;
@@ -77,6 +79,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -482,15 +485,10 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     }
 
     private static ContentFormat getReadRequestContentFormat(LwM2mClient client, HasContentFormat request, LwM2mModelProvider modelProvider) {
-        if (request.getRequestContentFormat() != null) {
-            return request.getRequestContentFormat();
+        if (request.getRequestContentFormat().isPresent()) {
+            return request.getRequestContentFormat().get();
         } else {
-            String versionedId = null;
-            if (request instanceof TbLwM2MReadRequest) {
-                versionedId = ((TbLwM2MReadRequest) request).getVersionedId();
-            } else if (request instanceof TbLwM2MObserveRequest) {
-                return ContentFormat.JSON;
-            }
+            String versionedId = ((AbstractTbLwM2MTargetedDownlinkRequest) request).getVersionedId();
             return getRequestContentFormat(client, versionedId, modelProvider);
         }
     }
@@ -512,27 +510,38 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     }
 
     private static ContentFormat getRequestContentFormat(LwM2mClient client, String versionedId, LwM2mModelProvider modelProvider) {
-        if (versionedId == null) {
-            return client.getDefaultContentFormat().equals(ContentFormat.TEXT) ? ContentFormat.JSON : client.getDefaultContentFormat();
-        }
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(versionedId));
         if (pathIds.isResource() || pathIds.isResourceInstance()) {
             ResourceModel resourceModel = client.getResourceModel(versionedId, modelProvider);
             if (resourceModel != null) {
-                if ((resourceModel.multiple) || !pathIds.isResourceInstance()) {
-                    return client.getDefaultContentFormat().equals(ContentFormat.TEXT) ? ContentFormat.JSON : client.getDefaultContentFormat();
-                } else if (OBJLNK.equals(resourceModel.type)) {
-                    return ContentFormat.LINK;
-                } else if (OPAQUE.equals(resourceModel.type)) {
-                    return ContentFormat.OPAQUE;
+                if (!resourceModel.multiple || pathIds.isResourceInstance()) {
+                    if (OBJLNK.equals(resourceModel.type)) {
+                        return ContentFormat.LINK;
+                    } else if (OPAQUE.equals(resourceModel.type)) {
+                        return ContentFormat.OPAQUE;
+                    } else {
+                        return client.getClientSupportContentFormats().contains(ContentFormat.CBOR) ? ContentFormat.CBOR :
+                                client.getDefaultContentFormat();
+                    }
                 } else {
-                    return client.getDefaultContentFormat();
+                    return getRequestContentFormatLwm2mVersion(client);
                 }
             } else {
-                return client.getDefaultContentFormat().equals(ContentFormat.TEXT) ? ContentFormat.JSON : client.getDefaultContentFormat();
+                return getRequestContentFormatLwm2mVersion(client);
             }
         }
-        return client.getDefaultContentFormat().equals(ContentFormat.TEXT) ? ContentFormat.JSON : client.getDefaultContentFormat();
+        return getRequestContentFormatLwm2mVersion(client);
+    }
+
+    private static ContentFormat getRequestContentFormatLwm2mVersion(LwM2mClient client) {
+        ContentFormat resultFormat = client.getDefaultContentFormat();
+        if (LwM2m.Version.V1_1.equals(client.getRegistration().getLwM2mVersion())) {
+            Set <ContentFormat> contentFormats = client.getClientSupportContentFormats();
+            contentFormats.remove(ContentFormat.TEXT);
+            Optional<ContentFormat> firstFormat = contentFormats.stream().findFirst();
+            resultFormat = firstFormat.isPresent() ? firstFormat.get() : resultFormat;
+        }
+        return resultFormat;
     }
 
     private <R> String toString(R request) {
