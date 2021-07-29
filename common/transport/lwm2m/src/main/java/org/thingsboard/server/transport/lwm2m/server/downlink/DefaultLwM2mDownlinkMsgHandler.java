@@ -496,6 +496,9 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     }
 
     private static ContentFormat getRequestContentFormat(LwM2mClient client, String versionedId, LwM2mModelProvider modelProvider) {
+        if (versionedId == null) {
+            return client.getDefaultContentFormat().equals(ContentFormat.TEXT) ? ContentFormat.JSON : client.getDefaultContentFormat();
+        }
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(versionedId));
         if (pathIds.isResource() || pathIds.isResourceInstance()) {
             ResourceModel resourceModel = client.getResourceModel(versionedId, modelProvider);
@@ -507,6 +510,8 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                 } else if (OPAQUE.equals(resourceModel.type)) {
                     return ContentFormat.OPAQUE;
                 }
+            } else {
+                return client.getDefaultContentFormat().equals(ContentFormat.TEXT) ? ContentFormat.JSON : client.getDefaultContentFormat();
             }
         }
         return client.getDefaultContentFormat().equals(ContentFormat.TEXT) ? ContentFormat.JSON : client.getDefaultContentFormat();
