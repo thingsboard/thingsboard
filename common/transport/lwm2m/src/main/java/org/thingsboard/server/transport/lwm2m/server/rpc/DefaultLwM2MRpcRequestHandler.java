@@ -18,6 +18,9 @@ package org.thingsboard.server.transport.lwm2m.server.rpc;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.ResponseCode;
+import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.LwM2mPath;
+import org.eclipse.leshan.core.request.ContentFormat;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
@@ -59,11 +62,15 @@ import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcReadRespon
 import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcWriteCompositeRequest;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertMultiResourceValuesFromRpcBody;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
 
 @Slf4j
 @Service
@@ -93,7 +100,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         }
         try {
             if (operationType.isHasObjectId()) {
-                String objectId = getIdFromParameters(client, rpcRequest);
+                String objectId = getIdFromParameters(client, rpcRequest, false);
                 switch (operationType) {
                     case READ:
                         sendReadRequest(client, rpcRequest, objectId);
@@ -126,13 +133,14 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
                         throw new IllegalArgumentException("Unsupported operation: " + operationType.name());
                 }
             } else if (operationType.isComposite()) {
-                if (clientContext.isComposite(client)) {
+                ContentFormat contentFormatComposite = clientContext.getContentFormatComposite(client);
+                if (contentFormatComposite != null) {
                     switch (operationType) {
                         case READ_COMPOSITE:
-                            sendReadCompositeRequest(client, rpcRequest);
+                            sendReadCompositeRequest(client, rpcRequest, contentFormatComposite);
                             break;
                         case WRITE_COMPOSITE:
-                            sendWriteCompositeRequest(client, rpcRequest);
+                            sendWriteCompositeRequest(client, rpcRequest, contentFormatComposite);
                             break;
                         default:
                             throw new IllegalArgumentException("Unsupported operation: " + operationType.name());
@@ -170,12 +178,12 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         downlinkHandler.sendReadRequest(client, request, rpcCallback);
     }
 
-    private void sendReadCompositeRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
-        String[] versionedIds = getIdsFromParameters(client, requestMsg);
+    private void sendReadCompositeRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, ContentFormat contentFormatComposite) {
+        String[] versionedIds = getIdsFromParameters(client, requestMsg, true);
         TbLwM2MReadCompositeRequest request = TbLwM2MReadCompositeRequest.builder().versionedIds(versionedIds).timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MReadCompositeCallback(uplinkHandler, logService, client, versionedIds);
         var rpcCallback = new RpcReadResponseCompositeCallback(transportService, client, requestMsg, mainCallback);
-        downlinkHandler.sendReadCompositeRequest(client, request, rpcCallback);
+        downlinkHandler.sendReadCompositeRequest(client, request, rpcCallback, contentFormatComposite);
     }
 
     private void sendObserveRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
@@ -230,6 +238,14 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
 
     private void sendWriteReplaceRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
         RpcWriteReplaceRequest requestBody = JacksonUtil.fromString(requestMsg.getParams(), RpcWriteReplaceRequest.class);
+        LwM2mPath path = new LwM2mPath(fromVersionedIdToObjectId(versionedId));
+        if (path.isResource() && requestBody.getValue() instanceof LinkedHashMap) {
+            ResourceModel resourceModel = client.getResourceModel(versionedId, this.config.getModelProvider());
+            if (resourceModel != null && resourceModel.multiple) {
+                Map value = convertMultiResourceValuesFromRpcBody((LinkedHashMap) requestBody.getValue(), resourceModel.type, versionedId);
+                requestBody.setValue(value);
+            }
+        }
         TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(versionedId)
                 .value(requestBody.getValue())
                 .timeout(clientContext.getRequestTimeout(client)).build();
@@ -246,11 +262,40 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
      * nodes.put("/1/0/2", 100);
      * nodes.put("/5/0/1", "coap://localhost:5685");
      */
-    private void sendWriteCompositeRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
+    private void sendWriteCompositeRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, ContentFormat contentFormatComposite) {
         RpcWriteCompositeRequest rpcWriteCompositeRequest = JacksonUtil.fromString(requestMsg.getParams(), RpcWriteCompositeRequest.class);
-        var mainCallback = new TbLwM2MWriteResponseCompositeCallback(uplinkHandler, logService, client, null);
-        var rpcCallback = new RpcEmptyResponseCallback<>(transportService, client, requestMsg, mainCallback);
-        downlinkHandler.sendWriteCompositeRequest(client, rpcWriteCompositeRequest, rpcCallback);
+        Map validNodes = validateNodes(client, rpcWriteCompositeRequest.getNodes());
+        if (validNodes.size() > 0) {
+            rpcWriteCompositeRequest.setNodes(validNodes);
+            var mainCallback = new TbLwM2MWriteResponseCompositeCallback(uplinkHandler, logService, client, null);
+            var rpcCallback = new RpcEmptyResponseCallback<>(transportService, client, requestMsg, mainCallback);
+            downlinkHandler.sendWriteCompositeRequest(client, rpcWriteCompositeRequest, rpcCallback, contentFormatComposite);
+        }
+        else {
+            throw new IllegalArgumentException(String.format("nodes: %s is not validate value", rpcWriteCompositeRequest.getNodes().toString()));
+        }
+    }
+
+    private Map validateNodes (LwM2mClient client, Map nodes) {
+        Map newNodes = new LinkedHashMap();
+        nodes.forEach((key, value) -> {
+            String versionedId;
+            try {
+                // validate key.toString()
+                new LwM2mPath(fromVersionedIdToObjectId(key.toString()));
+                versionedId = key.toString();
+            } catch (Exception e){
+                versionedId = clientContext.getObjectIdByKeyNameFromProfile(client, key.toString(), true);
+            }
+            // validate value. Must be only primitive, not Json
+            if (value instanceof LinkedHashMap) {
+                throw new IllegalArgumentException("nodes is not validate value. " +
+                        "The WriteComposite operation is only used for SingleResources or/and ResourceInstance.");
+            }
+            else {
+                newNodes.put(fromVersionedIdToObjectId(versionedId), value);
+            }        });
+        return newNodes;
     }
 
     private void sendCancelObserveRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
@@ -274,11 +319,11 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         downlinkHandler.sendCancelAllRequest(client, downlink, rpcCallback);
     }
 
-    private String getIdFromParameters(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg rpcRequst) {
+    private String getIdFromParameters(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg rpcRequst, boolean isCompositeOperation) {
         IdOrKeyRequest requestParams = JacksonUtil.fromString(rpcRequst.getParams(), IdOrKeyRequest.class);
         String targetId;
         if (StringUtils.isNotEmpty(requestParams.getKey())) {
-            targetId = clientContext.getObjectIdByKeyNameFromProfile(client, requestParams.getKey());
+            targetId = clientContext.getObjectIdByKeyNameFromProfile(client, requestParams.getKey(), isCompositeOperation);
         } else if (StringUtils.isNotEmpty(requestParams.getId())) {
             targetId = requestParams.getId();
         } else {
@@ -287,12 +332,12 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         return targetId;
     }
 
-    private String[] getIdsFromParameters(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg rpcRequst) {
+    private String[] getIdsFromParameters(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg rpcRequst, boolean isCompositeOperation) {
         RpcReadCompositeRequest requestParams = JacksonUtil.fromString(rpcRequst.getParams(), RpcReadCompositeRequest.class);
         if (requestParams.getKeys() != null && requestParams.getKeys().length > 0) {
             Set targetIds = ConcurrentHashMap.newKeySet();
             for (String key : requestParams.getKeys()) {
-                String targetId = clientContext.getObjectIdByKeyNameFromProfile(client, key);
+                String targetId = clientContext.getObjectIdByKeyNameFromProfile(client, key, isCompositeOperation);
                 if (targetId != null) {
                     targetIds.add(targetId);
                 }

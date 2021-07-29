@@ -178,12 +178,11 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
             attributesToFetch.add(SOFTWARE_TAG);
             attributesToFetch.add(SOFTWARE_URL);
         }
-        
-        var clientSettings = clientContext.getProfile(client.getProfileId()).getClientLwM2mSettings();
 
+        var clientSettings = clientContext.getProfile(client.getProfileId()).getClientLwM2mSettings();
         onFirmwareStrategyUpdate(client, clientSettings);
         onCurrentSoftwareStrategyUpdate(client, clientSettings);
-
+        
         if (!attributesToFetch.isEmpty()) {
             var future = attributesService.getSharedAttributes(client, attributesToFetch);
             DonAsynchron.withCallback(future, attrs -> {

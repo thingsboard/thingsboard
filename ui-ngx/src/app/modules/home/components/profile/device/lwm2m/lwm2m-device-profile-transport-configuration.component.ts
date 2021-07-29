@@ -122,8 +122,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         powerMode: [PowerMode.DRX, Validators.required],
         edrxCycle: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
         psmActivityTimer: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
-        pagingTransmissionWindow: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
-        compositeOperationsSupport: [false]
+        pagingTransmissionWindow: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]]
       })
     });
     this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateStrategy').valueChanges.pipe(
@@ -249,8 +248,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
           powerMode: this.configurationValue.clientLwM2mSettings.powerMode || PowerMode.DRX,
           edrxCycle: this.configurationValue.clientLwM2mSettings.edrxCycle || 0,
           pagingTransmissionWindow: this.configurationValue.clientLwM2mSettings.pagingTransmissionWindow || 0,
-          psmActivityTimer: this.configurationValue.clientLwM2mSettings.psmActivityTimer || 0,
-          compositeOperationsSupport: this.configurationValue.clientLwM2mSettings.compositeOperationsSupport || false
+          psmActivityTimer: this.configurationValue.clientLwM2mSettings.psmActivityTimer || 0
         }
       },
       {emitEvent: false});

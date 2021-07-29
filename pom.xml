@@ -70,7 +70,7 @@
         <jackson-core.version>2.12.1</jackson-core.version>
         <json-schema-validator.version>2.2.6</json-schema-validator.version>
         <californium.version>2.6.1</californium.version>
-        <leshan.version>2.0.0-M3</leshan.version>
+        <leshan.version>2.0.0-M4</leshan.version>
         <gson.version>2.6.2</gson.version>
         <freemarker.version>2.3.30</freemarker.version>
         <mail.version>1.6.2</mail.version>
