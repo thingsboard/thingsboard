@@ -98,11 +98,11 @@ public class LwM2mClient implements Serializable {
     @Getter
     private Long psmActivityTimer;
     @Getter
-    private Long edrxCycle;
-    @Getter
     private Long pagingTransmissionWindow;
     @Getter
     @Setter
+    private Long edrxCycle;
+    @Getter
     private Registration registration;
     @Getter
     @Setter

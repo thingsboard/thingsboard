@@ -23,8 +23,6 @@ import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCr
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;
-import org.thingsboard.server.common.data.query.EntityKey;
-import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
 
 import java.util.Arrays;
@@ -139,7 +137,7 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
             Device device = createDevice(clientCredentials);
 
             client = new LwM2MTestClient(executor, ENDPOINT);
-            client.init(SECURITY, COAP_CONFIG);
+            client.init(SECURITY, COAP_CONFIG, 11001);
 
             Thread.sleep(1000);
 
@@ -177,7 +175,7 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
             Thread.sleep(1000);
 
             client = new LwM2MTestClient(executor, "OTA_" + ENDPOINT);
-            client.init(SECURITY, COAP_CONFIG);
+            client.init(SECURITY, COAP_CONFIG, 11002);
 
             Thread.sleep(3000);
 
@@ -211,7 +209,7 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
             Thread.sleep(1000);
 
             client = new LwM2MTestClient(executor, "OTA_" + ENDPOINT);
-            client.init(SECURITY, COAP_CONFIG);
+            client.init(SECURITY, COAP_CONFIG, 11003);
 
             Thread.sleep(3000);
 

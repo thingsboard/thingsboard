@@ -71,12 +71,14 @@ import static org.eclipse.leshan.core.attributes.Attribute.MINIMUM_PERIOD;
 import static org.eclipse.leshan.core.attributes.Attribute.OBJECT_VERSION;
 import static org.eclipse.leshan.core.attributes.Attribute.STEP;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.BOOLEAN;
+import static org.eclipse.leshan.core.model.ResourceModel.Type.CORELINK;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.FLOAT;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.INTEGER;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OBJLNK;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.STRING;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.TIME;
+import static org.eclipse.leshan.core.model.ResourceModel.Type.UNSIGNED_INTEGER;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_KEY;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_RESULT_ID;
@@ -312,6 +314,12 @@ public class LwM2mTransportUtil {
         return attributeLists.toArray(Attribute[]::new);
     }
 
+    /**
+     *  "UNSIGNED_INTEGER":  // Number -> Integer Example:
+     *  Alarm Timestamp [32-bit unsigned integer]
+     *  Short Server ID, Object ID, Object Instance ID, Resource ID, Resource Instance ID
+     * "CORELINK": // String used in Attribute
+     */
     public static ResourceModel.Type equalsResourceTypeGetSimpleName(Object value) {
         switch (value.getClass().getSimpleName()) {
             case "Double":
