@@ -46,7 +46,7 @@ public abstract class AbstractMqttServerSideRpcDefaultIntegrationTest extends Ab
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"24\",\"value\": 1},\"timeout\": 6000}";
         String deviceId = savedDevice.getId().getId().toString();
 
-        doPostAsync("/api/plugins/rpc/oneway/" + deviceId, setGpioRequest, String.class, status().is(409),
+        doPostAsync("/api/rpc/oneway/" + deviceId, setGpioRequest, String.class, status().is(504),
                 asyncContextTimeoutToUseRpcPlugin);
     }
 
@@ -55,7 +55,7 @@ public abstract class AbstractMqttServerSideRpcDefaultIntegrationTest extends Ab
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"25\",\"value\": 1}}";
         String nonExistentDeviceId = Uuids.timeBased().toString();
 
-        String result = doPostAsync("/api/plugins/rpc/oneway/" + nonExistentDeviceId, setGpioRequest, String.class,
+        String result = doPostAsync("/api/rpc/oneway/" + nonExistentDeviceId, setGpioRequest, String.class,
                 status().isNotFound());
         Assert.assertEquals(AccessValidator.DEVICE_WITH_REQUESTED_ID_NOT_FOUND, result);
     }
@@ -65,7 +65,7 @@ public abstract class AbstractMqttServerSideRpcDefaultIntegrationTest extends Ab
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"27\",\"value\": 1},\"timeout\": 6000}";
         String deviceId = savedDevice.getId().getId().toString();
 
-        doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().is(409),
+        doPostAsync("/api/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().is(504),
                 asyncContextTimeoutToUseRpcPlugin);
     }
 
@@ -74,7 +74,7 @@ public abstract class AbstractMqttServerSideRpcDefaultIntegrationTest extends Ab
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"28\",\"value\": 1}}";
         String nonExistentDeviceId = Uuids.timeBased().toString();
 
-        String result = doPostAsync("/api/plugins/rpc/twoway/" + nonExistentDeviceId, setGpioRequest, String.class,
+        String result = doPostAsync("/api/rpc/twoway/" + nonExistentDeviceId, setGpioRequest, String.class,
                 status().isNotFound());
         Assert.assertEquals(AccessValidator.DEVICE_WITH_REQUESTED_ID_NOT_FOUND, result);
     }

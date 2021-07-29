@@ -663,7 +663,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     if (!this.rpcEnabled) {
       return throwError(new Error('Rpc disabled!'));
     } else {
-      if (this.rpcRejection && this.rpcRejection.status !== 408) {
+      if (this.rpcRejection && this.rpcRejection.status !== 504) {
         this.rpcRejection = null;
         this.rpcErrorText = null;
         this.callbacks.onRpcErrorCleared(this);
@@ -715,12 +715,10 @@ export class WidgetSubscription implements IWidgetSubscription {
           }
           this.executingRpcRequest = this.executingSubjects.length > 0;
           this.callbacks.rpcStateChanged(this);
-          if (!this.executingRpcRequest || rejection.status === 408) {
+          if (!this.executingRpcRequest || rejection.status === 504) {
             this.rpcRejection = rejection;
-            if (rejection.status === 408) {
+            if (rejection.status === 504) {
               this.rpcErrorText = 'Request Timeout.';
-            } else if (rejection.status === 409) {
-              this.rpcErrorText = 'Device is offline.';
             } else {
               this.rpcErrorText =  'Error : ' + rejection.status + ' - ' + rejection.statusText;
               const error = this.extractRejectionErrorText(rejection);
