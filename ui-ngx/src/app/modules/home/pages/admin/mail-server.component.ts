@@ -25,7 +25,7 @@ import { AdminService } from '@core/http/admin.service';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
-import { isString } from '@core/utils';
+import { deepClone, isString } from '@core/utils';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -148,9 +148,10 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     this.adminService.saveAdminSettings(this.adminSettings).subscribe(
       (adminSettings) => {
         adminSettings.jsonValue.password = this.mailSettings.value.password;
-        adminSettings.jsonValue.changePassword = this.mailSettings.value.changePassword;
         this.adminSettings = adminSettings;
-        this.mailSettings.reset(this.adminSettings.jsonValue);
+        const formSettings = deepClone(this.adminSettings.jsonValue);
+        formSettings.changePassword = this.mailSettings.get('changePassword').value || this.isDemo;
+        this.mailSettings.reset(formSettings, {emitEvent: false});
       }
     );
   }
