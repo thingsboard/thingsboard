@@ -323,7 +323,9 @@ public class LwM2mTransportUtil {
     public static ResourceModel.Type equalsResourceTypeGetSimpleName(Object value) {
         switch (value.getClass().getSimpleName()) {
             case "Double":
+            case "Float":
                 return FLOAT;
+            case "Long":
             case "Integer":
                 return INTEGER;
             case "String":

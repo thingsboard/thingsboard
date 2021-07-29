@@ -322,7 +322,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         }
     }
 
-     @Override
+    @Override
     public void sendWriteUpdateRequest(LwM2mClient client, TbLwM2MWriteUpdateRequest request, DownlinkRequestCallback<WriteRequest, WriteResponse> callback) {
         try {
             validateVersionedId(client, request);
@@ -341,8 +341,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                 } else {
                     callback.onValidationError(JacksonUtil.toString(request), "No resources to update!");
                 }
-            }
-            else if (resultIds.isResource()) {
+            } else if (resultIds.isResource()) {
                 ResourceModel resourceModelWrite = client.getResourceModel(request.getVersionedId(), this.config.getModelProvider());
                 if (resourceModelWrite.multiple) {
                     if (request.getValue() instanceof Map && ((Map) request.getValue()).size() > 0) {
@@ -472,8 +471,6 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             String versionedId = null;
             if (request instanceof TbLwM2MReadRequest) {
                 versionedId = ((TbLwM2MReadRequest) request).getVersionedId();
-            } else if (request instanceof TbLwM2MObserveRequest) {
-                return ContentFormat.JSON;
             }
             return getRequestContentFormat(client, versionedId, modelProvider);
         }
@@ -496,6 +493,9 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     }
 
     private static ContentFormat getRequestContentFormat(LwM2mClient client, String versionedId, LwM2mModelProvider modelProvider) {
+        if (versionedId == null) {
+           return client.getDefaultContentFormat().equals(ContentFormat.TEXT) ? ContentFormat.JSON : client.getDefaultContentFormat();
+        }
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(versionedId));
         if (pathIds.isResource() || pathIds.isResourceInstance()) {
             ResourceModel resourceModel = client.getResourceModel(versionedId, modelProvider);
@@ -507,6 +507,8 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                 } else if (OPAQUE.equals(resourceModel.type)) {
                     return ContentFormat.OPAQUE;
                 }
+            } else {
+                return client.getDefaultContentFormat().equals(ContentFormat.TEXT) ? ContentFormat.JSON : client.getDefaultContentFormat();
             }
         }
         return client.getDefaultContentFormat().equals(ContentFormat.TEXT) ? ContentFormat.JSON : client.getDefaultContentFormat();

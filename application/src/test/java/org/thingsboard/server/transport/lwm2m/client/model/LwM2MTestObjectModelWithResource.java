@@ -35,6 +35,7 @@ public class LwM2MTestObjectModelWithResource {
     public static final int STRING_MANDATORY_RESOURCE_ID = 9;
     public static final int STRING_MULTI_INSTANCE_RESOURCE_ID = 10;
     public static final int OBJLNK_MULTI_INSTANCE_RESOURCE_ID = 11;
+//    public static final int UNSIGNED_MULTI_INSTANCE_RESOURCE_ID = 12;
     public static final int OPAQUE_MULTI_INSTANCE_RESOURCE_ID = 65010;
 
     private final ResourceModel stringField;
@@ -60,7 +61,9 @@ public class LwM2MTestObjectModelWithResource {
     private final ResourceModel stringMultiField;
     public static final String stringMultiNamePrefix = "string_multi";
     private final ResourceModel objlnkMultiField;
-    public static final String  objlnkMultiNamePrefix = "objlnk_multi";
+    public static final String objlnkMultiNamePrefix = "objlnk_multi";
+//    private final ResourceModel unsignedMultiField;
+//    public static final String unsignedMultiNamePrefix = "unsigned_multi";
     private final ResourceModel opaqueMultiField;
     public static final String opaqueMultiNamePrefix = "opaque_multi";
 
@@ -89,14 +92,17 @@ public class LwM2MTestObjectModelWithResource {
                 true, false, Type.STRING, null, null, null);
         this.objlnkMultiField = new ResourceModel(OBJLNK_MULTI_INSTANCE_RESOURCE_ID, objlnkMultiNamePrefix + resourceNameSuffix, operationsType, true,
                 false, Type.OBJLNK, null, null, null);
-        this.opaqueMultiField = new ResourceModel(OPAQUE_MULTI_INSTANCE_RESOURCE_ID, opaqueMultiNamePrefix,
+//        this.unsignedMultiField = new ResourceModel(UNSIGNED_MULTI_INSTANCE_RESOURCE_ID, unsignedMultiNamePrefix + resourceNameSuffix, operationsType, true,
+//                false, Type.UNSIGNED_INTEGER, null, null, null);
+        this.opaqueMultiField = new ResourceModel(OPAQUE_MULTI_INSTANCE_RESOURCE_ID, opaqueMultiNamePrefix + resourceNameSuffix,
                 operationsType, true, false, Type.OPAQUE, null, null, null);
-
     }
+
     public ObjectModel getObjectModel(int ObjectId, String objectName, String objectVersion, boolean isMultiple) {
         return new ObjectModel(ObjectId, objectName, null, objectVersion, isMultiple, false,
                 stringField, booleanField, integerField, floatField, timeField, opaqueField, objlnkMultiField,
                 objlnkField, integerMandatoryField, stringMandatoryField, stringMultiField, unsignedIntegerField,
+//                unsignedMultiField,
                 opaqueMultiField);
     }
 }

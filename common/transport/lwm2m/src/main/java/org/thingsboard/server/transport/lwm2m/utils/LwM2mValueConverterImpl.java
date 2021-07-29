@@ -27,6 +27,7 @@ import org.eclipse.leshan.core.util.StringUtils;
 
 import java.math.BigInteger;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -62,6 +63,7 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
 
         switch (expectedType) {
             case INTEGER:
+            case UNSIGNED_INTEGER:
                 switch (currentType) {
                     case FLOAT:
                         log.debug("Trying to convert float value [{}] to Integer", value);
@@ -79,7 +81,8 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
             case FLOAT:
                 switch (currentType) {
                     case INTEGER:
-                        log.debug("Trying to convert integer value [{}] to float", value);
+                    case UNSIGNED_INTEGER:
+                        log.debug("Trying to convert integer/unsignedInteger value [{}] to float", value);
                         Double floatValue = ((Long) value).doubleValue();
                         if ((long) value == floatValue.longValue()) {
                             return floatValue;
@@ -131,9 +134,14 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                             return cal.toGregorianCalendar().getTime();
                              **/
                         } catch (IllegalArgumentException e) {
-                            log.debug("Unable to convert string to date", e);
-                            throw new CodecException("Unable to convert string (%s) to date for resource %s", value,
-                                    resourcePath);
+                            try {
+                                SimpleDateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzzz yyyy");
+                                return format.parse((String) value);
+                            } catch (IllegalArgumentException | ParseException e1) {
+                                log.debug("Unable to convert string to date", e1);
+                                throw new CodecException("Unable to convert string (%s) to date for resource %s", value,
+                                        resourcePath);
+                            }
                         }
                     default:
                         break;
@@ -143,6 +151,7 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                 switch (currentType) {
                     case BOOLEAN:
                     case INTEGER:
+                    case UNSIGNED_INTEGER:
                     case FLOAT:
                         return String.valueOf(value);
                     case TIME:
@@ -182,7 +191,7 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                 break;
             case OBJLNK:
                 if (currentType == Type.STRING) {
-                    return ObjectLink.fromPath(value.toString());
+                    return ObjectLink.decodeFromString(value.toString());
                 }
             default:
         }
