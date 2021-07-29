@@ -27,7 +27,7 @@ export interface AdminSettings<T> {
 export declare type SmtpProtocol = 'smtp' | 'smtps';
 
 export interface MailServerSettings {
-  isAdd: boolean;
+  isDemo: boolean;
   mailFrom: string;
   smtpProtocol: SmtpProtocol;
   smtpHost: string;

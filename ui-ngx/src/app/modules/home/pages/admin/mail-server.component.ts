@@ -39,7 +39,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
   mailSettings: FormGroup;
   adminSettings: AdminSettings<MailServerSettings>;
   smtpProtocols = ['smtp', 'smtps'];
-  isAdd = true;
+  isDemo = true;
 
   tlsVersions = ['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'];
 
@@ -61,10 +61,10 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
         if (this.adminSettings.jsonValue && isString(this.adminSettings.jsonValue.enableTls)) {
           this.adminSettings.jsonValue.enableTls = (this.adminSettings.jsonValue.enableTls as any) === 'true';
         }
-        this.isAdd = this.adminSettings.jsonValue.isAdd;
-        delete this.adminSettings.jsonValue.isAdd;
+        this.isDemo = this.adminSettings.jsonValue.isDemo;
+        delete this.adminSettings.jsonValue.isDemo;
         this.mailSettings.reset(this.adminSettings.jsonValue);
-        this.enableMailPassword(this.isAdd);
+        this.enableMailPassword(this.isDemo);
         this.enableProxyChanged();
       }
     );
