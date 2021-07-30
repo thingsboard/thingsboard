@@ -215,7 +215,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         node.put("password", "");
         node.put("tlsVersion", "TLSv1.2");//NOSONAR, key used to identify password field (not password value itself)
         node.put("enableProxy", false);
-        node.put("isDemo", true);
+        node.put("showChangePassword", false);
         mailSettings.setJsonValue(node);
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, mailSettings);
     }

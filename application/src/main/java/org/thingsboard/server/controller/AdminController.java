@@ -126,6 +126,10 @@ public class AdminController extends BaseController {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
             adminSettings = checkNotNull(adminSettings);
             if (adminSettings.getKey().equals("mail")) {
+                if(!adminSettings.getJsonValue().has("password")) {
+                    AdminSettings mailSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail"));
+                    ((ObjectNode) adminSettings.getJsonValue()).put("password", mailSettings.getJsonValue().get("password").asText());
+                }
                 String email = getCurrentUser().getEmail();
                 mailService.sendTestMail(adminSettings.getJsonValue(), email);
             }

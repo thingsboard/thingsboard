@@ -25,7 +25,7 @@ import { AdminService } from '@core/http/admin.service';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
-import { deepClone, isString } from '@core/utils';
+import { isDefinedAndNotNull, isString } from '@core/utils';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -39,7 +39,7 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
   mailSettings: FormGroup;
   adminSettings: AdminSettings<MailServerSettings>;
   smtpProtocols = ['smtp', 'smtps'];
-  isDemo = true;
+  showChangePassword = false;
 
   tlsVersions = ['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'];
 
@@ -61,10 +61,11 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
         if (this.adminSettings.jsonValue && isString(this.adminSettings.jsonValue.enableTls)) {
           this.adminSettings.jsonValue.enableTls = (this.adminSettings.jsonValue.enableTls as any) === 'true';
         }
-        this.isDemo = this.adminSettings.jsonValue.isDemo;
-        delete this.adminSettings.jsonValue.isDemo;
+        this.showChangePassword =
+          isDefinedAndNotNull(this.adminSettings.jsonValue.showChangePassword) ? this.adminSettings.jsonValue.showChangePassword : true ;
+        delete this.adminSettings.jsonValue.showChangePassword;
         this.mailSettings.reset(this.adminSettings.jsonValue);
-        this.enableMailPassword(this.isDemo);
+        this.enableMailPassword(!this.showChangePassword);
         this.enableProxyChanged();
       }
     );
@@ -147,11 +148,9 @@ export class MailServerComponent extends PageComponent implements OnInit, OnDest
     this.adminSettings.jsonValue = {...this.adminSettings.jsonValue, ...this.mailSettingsFormValue};
     this.adminService.saveAdminSettings(this.adminSettings).subscribe(
       (adminSettings) => {
-        adminSettings.jsonValue.password = this.mailSettings.value.password;
         this.adminSettings = adminSettings;
-        const formSettings = deepClone(this.adminSettings.jsonValue);
-        formSettings.changePassword = this.mailSettings.get('changePassword').value || this.isDemo;
-        this.mailSettings.reset(formSettings, {emitEvent: false});
+        this.showChangePassword = true;
+        this.mailSettings.reset(this.adminSettings.jsonValue);
       }
     );
   }
