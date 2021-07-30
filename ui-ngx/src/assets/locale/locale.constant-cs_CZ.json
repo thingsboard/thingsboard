@@ -1229,7 +1229,7 @@
             "drx": "Přerušovaný přenos (DRX)",
             "edrx": "Rozšířený přerušovaný přenos (eDRX)"
         },
-        "edrx-cycle": "eDRX cyklus v milisekudnách",
+        "edrx-cycle": "eDRX cyklus",
         "edrx-cycle-required": "eDRX cyklus je povinný.",
         "edrx-cycle-pattern": "eDRX cyklus musí být kladné číslo.",
         "lwm2m": {
