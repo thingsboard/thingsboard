@@ -29,6 +29,7 @@ import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -68,6 +69,22 @@ public class MqttTransportContext extends TransportContext {
     private int messageQueueSizePerDeviceLimit;
 
     @Getter
-    private final ExecutorService msqProcessorExecutor = ThingsBoardExecutors.newWorkStealingPool(Runtime.getRuntime().availableProcessors() + 1, "msg-processor-on-device-connect");
+    private ExecutorService msqProcessorExecutor;
+
+    @Override
+    @PostConstruct
+    public void init() {
+        super.init();
+        msqProcessorExecutor = ThingsBoardExecutors.newWorkStealingPool(Runtime.getRuntime().availableProcessors() + 1, "msg-processor-on-device-connect");
+    }
+
+    @Override
+    @PreDestroy
+    public void stop() {
+        super.stop();
+        if (msqProcessorExecutor != null) {
+            msqProcessorExecutor.shutdownNow();
+        }
+    }
 
 }
