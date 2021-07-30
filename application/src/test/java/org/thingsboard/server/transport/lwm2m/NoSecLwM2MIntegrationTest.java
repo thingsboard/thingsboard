@@ -23,16 +23,17 @@ import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCr
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;
-import org.thingsboard.server.common.data.query.EntityKey;
-import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.awaitility.Awaitility.await;
+import static org.hamcrest.Matchers.is;
 import static org.thingsboard.rest.client.utils.RestJsonConverter.toTimeseries;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWNLOADED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWNLOADING;
@@ -203,24 +204,29 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
             createDeviceProfile(OTA_TRANSPORT_CONFIGURATION);
             NoSecClientCredentials clientCredentials = new NoSecClientCredentials();
             clientCredentials.setEndpoint("OTA_" + ENDPOINT);
-            Device device = createDevice(clientCredentials);
-
+            final Device device = createDevice(clientCredentials);
             device.setSoftwareId(createSoftware().getId());
-            device = doPost("/api/device", device, Device.class);
 
-            Thread.sleep(1000);
+            final Device savedDevice = doPost("/api/device", device, Device.class);
+            Assert.assertNotNull(savedDevice);
+
+            await()
+                    .atMost(30, TimeUnit.SECONDS)
+                    .until(()->doGet("/api/device/" + device.getId().getId(), Device.class), is(savedDevice));
 
             client = new LwM2MTestClient(executor, "OTA_" + ENDPOINT);
             client.init(SECURITY, COAP_CONFIG);
 
-            Thread.sleep(3000);
+            List<OtaPackageUpdateStatus> expectedStatuses = Arrays.asList(QUEUED, INITIATED, DOWNLOADING, DOWNLOADING, DOWNLOADING, DOWNLOADED, VERIFIED, UPDATED);
 
-            List<TsKvEntry> ts = toTimeseries(doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + device.getId().getId() + "/values/timeseries?orderBy=ASC&keys=sw_state&startTs=0&endTs=" + System.currentTimeMillis(), new TypeReference<>() {
-            }));
+            await()
+                    .atMost(30, TimeUnit.SECONDS)
+                    .until(() -> toTimeseries(doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + device.getId().getId() + "/values/timeseries?orderBy=ASC&keys=sw_state&startTs=0&endTs=" + System.currentTimeMillis(), new TypeReference<>() {}))
+                            .size(), is(expectedStatuses.size()));
+
+            List<TsKvEntry> ts = toTimeseries(doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + device.getId().getId() + "/values/timeseries?orderBy=ASC&keys=sw_state&startTs=0&endTs=" + System.currentTimeMillis(), new TypeReference<>() {}));
 
             List<OtaPackageUpdateStatus> statuses = ts.stream().sorted(Comparator.comparingLong(TsKvEntry::getTs)).map(KvEntry::getValueAsString).map(OtaPackageUpdateStatus::valueOf).collect(Collectors.toList());
-
-            List<OtaPackageUpdateStatus> expectedStatuses = Arrays.asList(QUEUED, INITIATED, DOWNLOADING, DOWNLOADING, DOWNLOADING, DOWNLOADED, VERIFIED, UPDATED);
 
             Assert.assertEquals(expectedStatuses, statuses);
         } finally {
