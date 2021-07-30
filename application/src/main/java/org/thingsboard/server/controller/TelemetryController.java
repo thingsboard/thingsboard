@@ -446,9 +446,12 @@ public class TelemetryController extends BaseController {
         SecurityUser user = getCurrentUser();
         return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.WRITE_TELEMETRY, entityIdSrc, (result, tenantId, entityId) -> {
             long tenantTtl = ttl;
-            if (!TenantId.SYS_TENANT_ID.equals(tenantId) && tenantTtl == 0) {
+            if (!TenantId.SYS_TENANT_ID.equals(tenantId)) {
                 TenantProfile tenantProfile = tenantProfileCache.get(tenantId);
-                tenantTtl = TimeUnit.DAYS.toSeconds(((DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration()).getDefaultStorageTtlDays());
+                long tenantProfileTtl = TimeUnit.DAYS.toSeconds(((DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration()).getDefaultStorageTtlDays());
+                if (tenantProfileTtl > 0 && (tenantTtl > tenantProfileTtl || tenantTtl == 0)) {
+                    tenantTtl = tenantProfileTtl;
+                }
             }
             tsSubService.saveAndNotify(tenantId, user.getCustomerId(), entityId, entries, tenantTtl, new FutureCallback<Void>() {
                 @Override
