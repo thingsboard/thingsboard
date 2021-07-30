@@ -1232,15 +1232,18 @@
             "drx": "Discontinuous Reception (DRX)",
             "edrx": "Extended Discontinuous Reception (eDRX)"
         },
-        "edrx-cycle": "eDRX cycle in milliseconds",
+        "edrx-cycle": "eDRX cycle",
         "edrx-cycle-required": "eDRX cycle is required.",
         "edrx-cycle-pattern": "eDRX cycle must be a positive integer.",
-        "paging-transmission-window": "Paging Transmission Window in milliseconds",
+        "edrx-cycle-min": "Minimum number of eDRX cycle is {{ min }} seconds.",
+        "paging-transmission-window": "Paging Transmission Window",
         "paging-transmission-window-required": "Paging transmission window is required.",
         "paging-transmission-window-pattern": "Paging transmission window must be a positive integer.",
-        "psm-activity-timer": "PSM Activity Timer in milliseconds",
+        "paging-transmission-window-min": "Minimum number ofpPaging transmission window is {{ min }} seconds.",
+        "psm-activity-timer": "PSM Activity Timer",
         "psm-activity-timer-required": "PSM activity timer is required.",
         "psm-activity-timer-pattern": "PSM activity timer must be a positive integer.",
+        "psm-activity-timer-min": "Minimum number of PSM activity timer is {{ min }} seconds.",
         "lwm2m": {
             "object-list": "Object list",
             "object-list-empty": "No objects selected.",
@@ -2736,6 +2739,7 @@
         }
     },
     "timeunit": {
+        "milliseconds": "Milliseconds",
         "seconds": "Seconds",
         "minutes": "Minutes",
         "hours": "Hours",

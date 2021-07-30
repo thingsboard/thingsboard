@@ -101,9 +101,9 @@ export class CoapDeviceProfileTransportConfigurationComponent implements Control
       }),
       clientSettings: this.fb.group({
         powerMode: [PowerMode.DRX, Validators.required],
-        edrxCycle: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
-        psmActivityTimer: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
-        pagingTransmissionWindow: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]]
+        edrxCycle: [{disabled: true, value: 0}, Validators.required],
+        psmActivityTimer: [{disabled: true, value: 0}, Validators.required],
+        pagingTransmissionWindow: [{disabled: true, value: 0}, Validators.required]
       })}
     );
     this.coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.coapDeviceType').valueChanges.pipe(

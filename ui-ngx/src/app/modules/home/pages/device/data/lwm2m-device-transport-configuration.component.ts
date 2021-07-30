@@ -71,9 +71,9 @@ export class Lwm2mDeviceTransportConfigurationComponent implements ControlValueA
   ngOnInit() {
     this.lwm2mDeviceTransportConfigurationFormGroup = this.fb.group({
       powerMode: [null],
-      edrxCycle: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
-      psmActivityTimer: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
-      pagingTransmissionWindow: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]]
+      edrxCycle: [{disabled: true, value: 0}, Validators.required],
+      psmActivityTimer: [{disabled: true, value: 0}, Validators.required],
+      pagingTransmissionWindow: [{disabled: true, value: 0}, Validators.required]
     });
     this.lwm2mDeviceTransportConfigurationFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
