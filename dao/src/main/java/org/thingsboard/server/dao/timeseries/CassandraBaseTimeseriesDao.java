@@ -181,11 +181,14 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     }
 
     @Override
-    public ListenableFuture<Integer> savePartition(TenantId tenantId, EntityId entityId, long tsKvEntryTs, String key, long ttl) {
+    public ListenableFuture<Integer> savePartition(TenantId tenantId, EntityId entityId, long tsKvEntryTs, String key) {
         if (isFixedPartitioning()) {
             return Futures.immediateFuture(null);
         }
-        ttl = computeTtl(ttl);
+        // DO NOT apply custom to partition, otherwise short TTL will remove partition too early
+        // partitions must remain in the DB forever or be removed only by systemTtl
+        // removal of empty partition is too expensive (we need to scan all data keys for this partitions with ALLOW FILTERING)
+        long ttl = computeTtl(0);
         long partition = toPartitionTs(tsKvEntryTs);
         if (cassandraTsPartitionsCache == null) {
             return doSavePartition(tenantId, entityId, key, ttl, partition);
