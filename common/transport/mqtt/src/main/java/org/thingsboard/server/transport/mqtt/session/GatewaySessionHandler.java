@@ -98,7 +98,7 @@ public class GatewaySessionHandler {
         this.sessionId = sessionId;
         this.devices = new ConcurrentHashMap<>();
         this.deviceFutures = new ConcurrentHashMap<>();
-        this.deviceCreationLockMap = new ConcurrentHashMap<>();
+        this.deviceCreationLockMap = createWeakMap();
         this.mqttQoSMap = deviceSessionCtx.getMqttQoSMap();
         this.channel = deviceSessionCtx.getChannel();
     }
