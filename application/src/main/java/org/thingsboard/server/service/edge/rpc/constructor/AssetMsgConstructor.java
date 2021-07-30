@@ -24,6 +24,9 @@ import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import static org.thingsboard.server.service.edge.rpc.EdgeProtoUtils.getInt64Value;
+import static org.thingsboard.server.service.edge.rpc.EdgeProtoUtils.getStringValue;
+
 @Component
 @TbCoreComponent
 public class AssetMsgConstructor {
@@ -35,16 +38,12 @@ public class AssetMsgConstructor {
                 .setIdLSB(asset.getId().getId().getLeastSignificantBits())
                 .setName(asset.getName())
                 .setType(asset.getType());
-        if (asset.getLabel() != null) {
-            builder.setLabel(asset.getLabel());
-        }
+        builder.setLabel(getStringValue(asset.getLabel()));
         if (customerId != null) {
-            builder.setCustomerIdMSB(customerId.getId().getMostSignificantBits());
-            builder.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
+            builder.setCustomerIdMSB(getInt64Value(customerId.getId().getMostSignificantBits()));
+            builder.setCustomerIdLSB(getInt64Value(customerId.getId().getLeastSignificantBits()));
         }
-        if (asset.getAdditionalInfo() != null) {
-            builder.setAdditionalInfo(JacksonUtil.toString(asset.getAdditionalInfo()));
-        }
+        builder.setAdditionalInfo(getStringValue(JacksonUtil.toString(asset.getAdditionalInfo())));
         return builder.build();
     }
 

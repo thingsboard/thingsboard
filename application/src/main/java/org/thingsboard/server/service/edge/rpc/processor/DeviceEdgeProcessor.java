@@ -162,11 +162,16 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
         if (device != null) {
             device.setName(deviceUpdateMsg.getName());
             device.setType(deviceUpdateMsg.getType());
-            device.setLabel(deviceUpdateMsg.getLabel());
-            device.setAdditionalInfo(JacksonUtil.toJsonNode(deviceUpdateMsg.getAdditionalInfo()));
-            if (deviceUpdateMsg.getDeviceProfileIdMSB() != 0 && deviceUpdateMsg.getDeviceProfileIdLSB() != 0) {
+            if (deviceUpdateMsg.hasLabel()) {
+                device.setLabel(deviceUpdateMsg.getLabel().getValue());
+            }
+            if (deviceUpdateMsg.hasAdditionalInfo()) {
+                device.setAdditionalInfo(JacksonUtil.toJsonNode(deviceUpdateMsg.getAdditionalInfo().getValue()));
+            }
+            if (deviceUpdateMsg.hasDeviceProfileIdMSB() && deviceUpdateMsg.hasDeviceProfileIdLSB()) {
                 DeviceProfileId deviceProfileId = new DeviceProfileId(
-                        new UUID(deviceUpdateMsg.getDeviceProfileIdMSB(), deviceUpdateMsg.getDeviceProfileIdLSB()));
+                        new UUID(deviceUpdateMsg.getDeviceProfileIdMSB().getValue(),
+                                deviceUpdateMsg.getDeviceProfileIdLSB().getValue()));
                 device.setDeviceProfileId(deviceProfileId);
             }
             deviceService.saveDevice(device);
@@ -195,11 +200,16 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
             device.setCustomerId(getCustomerId(edge));
             device.setName(deviceName);
             device.setType(deviceUpdateMsg.getType());
-            device.setLabel(deviceUpdateMsg.getLabel());
-            device.setAdditionalInfo(JacksonUtil.toJsonNode(deviceUpdateMsg.getAdditionalInfo()));
-            if (deviceUpdateMsg.getDeviceProfileIdMSB() != 0 && deviceUpdateMsg.getDeviceProfileIdLSB() != 0) {
+            if (deviceUpdateMsg.hasLabel()) {
+                device.setLabel(deviceUpdateMsg.getLabel().getValue());
+            }
+            if (deviceUpdateMsg.hasAdditionalInfo()) {
+                device.setAdditionalInfo(JacksonUtil.toJsonNode(deviceUpdateMsg.getAdditionalInfo().getValue()));
+            }
+            if (deviceUpdateMsg.hasDeviceProfileIdMSB() && deviceUpdateMsg.hasDeviceProfileIdLSB()) {
                 DeviceProfileId deviceProfileId = new DeviceProfileId(
-                        new UUID(deviceUpdateMsg.getDeviceProfileIdMSB(), deviceUpdateMsg.getDeviceProfileIdLSB()));
+                        new UUID(deviceUpdateMsg.getDeviceProfileIdMSB().getValue(),
+                                deviceUpdateMsg.getDeviceProfileIdLSB().getValue()));
                 device.setDeviceProfileId(deviceProfileId);
             }
             Device savedDevice = deviceService.saveDevice(device, false);

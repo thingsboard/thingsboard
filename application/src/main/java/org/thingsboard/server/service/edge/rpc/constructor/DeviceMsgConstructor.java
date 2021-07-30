@@ -32,6 +32,9 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.UUID;
 
+import static org.thingsboard.server.service.edge.rpc.EdgeProtoUtils.getInt64Value;
+import static org.thingsboard.server.service.edge.rpc.EdgeProtoUtils.getStringValue;
+
 @Component
 @TbCoreComponent
 public class DeviceMsgConstructor {
@@ -45,23 +48,17 @@ public class DeviceMsgConstructor {
                 .setIdLSB(device.getId().getId().getLeastSignificantBits())
                 .setName(device.getName())
                 .setType(device.getType());
-        if (device.getLabel() != null) {
-            builder.setLabel(device.getLabel());
-        }
+        builder.setLabel(getStringValue(device.getLabel()));
         if (customerId != null) {
-            builder.setCustomerIdMSB(customerId.getId().getMostSignificantBits());
-            builder.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
+            builder.setCustomerIdMSB(getInt64Value(customerId.getId().getMostSignificantBits()));
+            builder.setCustomerIdLSB(getInt64Value(customerId.getId().getLeastSignificantBits()));
         }
         if (device.getDeviceProfileId() != null) {
-            builder.setDeviceProfileIdMSB(device.getDeviceProfileId().getId().getMostSignificantBits());
-            builder.setDeviceProfileIdLSB(device.getDeviceProfileId().getId().getLeastSignificantBits());
+            builder.setDeviceProfileIdMSB(getInt64Value(device.getDeviceProfileId().getId().getMostSignificantBits()));
+            builder.setDeviceProfileIdLSB(getInt64Value(device.getDeviceProfileId().getId().getLeastSignificantBits()));
         }
-        if (device.getAdditionalInfo() != null) {
-            builder.setAdditionalInfo(JacksonUtil.toString(device.getAdditionalInfo()));
-        }
-        if (conflictName != null) {
-            builder.setConflictName(conflictName);
-        }
+        builder.setAdditionalInfo(getStringValue(JacksonUtil.toString(device.getAdditionalInfo())));
+        builder.setConflictName(getStringValue(conflictName));
         return builder.build();
     }
 

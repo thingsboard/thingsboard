@@ -37,6 +37,8 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.thingsboard.server.service.edge.rpc.EdgeProtoUtils.getInt64Value;
+
 @Component
 @Slf4j
 @TbCoreComponent
@@ -54,8 +56,8 @@ public class RuleChainMsgConstructor {
                 .setDebugMode(ruleChain.isDebugMode())
                 .setConfiguration(JacksonUtil.toString(ruleChain.getConfiguration()));
         if (ruleChain.getFirstRuleNodeId() != null) {
-            builder.setFirstRuleNodeIdMSB(ruleChain.getFirstRuleNodeId().getId().getMostSignificantBits())
-                    .setFirstRuleNodeIdLSB(ruleChain.getFirstRuleNodeId().getId().getLeastSignificantBits());
+            builder.setFirstRuleNodeIdMSB(getInt64Value(ruleChain.getFirstRuleNodeId().getId().getMostSignificantBits()))
+                    .setFirstRuleNodeIdLSB(getInt64Value(ruleChain.getFirstRuleNodeId().getId().getLeastSignificantBits()));
         }
         return builder.build();
     }

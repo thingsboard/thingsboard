@@ -114,6 +114,7 @@ import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetTypeUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.service.edge.rpc.EdgeProtoUtils;
 import org.thingsboard.server.service.queue.TbClusterService;
 
 import java.util.ArrayList;
@@ -126,6 +127,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.service.edge.rpc.EdgeProtoUtils.getStringValue;
 
 @Slf4j
 abstract public class BaseEdgeTest extends AbstractControllerTest {
@@ -902,7 +904,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(widgetTypeUpdateMsg.getIdLSB(), savedWidgetType.getUuidId().getLeastSignificantBits());
         Assert.assertEquals(widgetTypeUpdateMsg.getAlias(), savedWidgetType.getAlias());
         Assert.assertEquals(widgetTypeUpdateMsg.getName(), savedWidgetType.getName());
-        Assert.assertEquals(JacksonUtil.toJsonNode(widgetTypeUpdateMsg.getDescriptorJson()), savedWidgetType.getDescriptor());
+        Assert.assertEquals(JacksonUtil.toJsonNode(widgetTypeUpdateMsg.getDescriptorJson().getValue()), savedWidgetType.getDescriptor());
 
         // 3
         edgeImitator.expectMessageAmount(1);
@@ -1381,7 +1383,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
         RelationUpdateMsg.Builder relationUpdateMsgBuilder = RelationUpdateMsg.newBuilder();
         relationUpdateMsgBuilder.setType("test");
-        relationUpdateMsgBuilder.setTypeGroup(RelationTypeGroup.COMMON.name());
+        relationUpdateMsgBuilder.setTypeGroup(getStringValue(RelationTypeGroup.COMMON.name()));
         relationUpdateMsgBuilder.setToIdMSB(device1.getId().getId().getMostSignificantBits());
         relationUpdateMsgBuilder.setToIdLSB(device1.getId().getId().getLeastSignificantBits());
         relationUpdateMsgBuilder.setToEntityType(device1.getId().getEntityType().name());
