@@ -248,7 +248,7 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
                 return o1.getTitle().compareTo(o2.getTitle());
             } else if (order1 == null && order2 != null) {
                 return 1;
-            } else if (order2 == null) {
+            }  else if (order2 == null) {
                 return -1;
             } else {
                 return order1 - order2;
