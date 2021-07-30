@@ -185,9 +185,9 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         if (isFixedPartitioning()) {
             return Futures.immediateFuture(null);
         }
-        // DO NOT apply custom to partition, otherwise short TTL will remove partition too early
+        // DO NOT apply custom to partition, otherwise, short TTL will remove partition too early
         // partitions must remain in the DB forever or be removed only by systemTtl
-        // removal of empty partition is too expensive (we need to scan all data keys for this partitions with ALLOW FILTERING)
+        // removal of empty partition is too expensive (we need to scan all data keys for these partitions with ALLOW FILTERING)
         long ttl = computeTtl(0);
         long partition = toPartitionTs(tsKvEntryTs);
         if (cassandraTsPartitionsCache == null) {
