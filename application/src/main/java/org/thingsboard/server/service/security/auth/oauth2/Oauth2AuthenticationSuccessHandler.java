@@ -101,7 +101,7 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             clearAuthenticationAttributes(request, response);
             getRedirectStrategy().sendRedirect(request, response, baseUrl + "/?accessToken=" + accessToken.getToken() + "&refreshToken=" + refreshToken.getToken());
         } catch (Exception e) {
-            log.error("Error occurred during processing authentication success result. " +
+            log.debug("Error occurred during processing authentication success result. " +
                     "request [{}], response [{}], authentication [{}]", request, response, authentication, e);
             clearAuthenticationAttributes(request, response);
             String errorPrefix;
