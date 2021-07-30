@@ -352,6 +352,7 @@ public class GatewaySessionHandler {
                                     processPostTelemetryMsg(deviceCtx, postTelemetryMsg, deviceName, msgId);
                                 } catch (Throwable e) {
                                     log.warn("[{}][{}] Failed to convert telemetry: {}", gateway.getDeviceId(), deviceName, deviceEntry.getValue(), e);
+                                    channel.close();
                                 }
                             }
 
@@ -383,6 +384,7 @@ public class GatewaySessionHandler {
                                         processPostTelemetryMsg(deviceCtx, postTelemetryMsg, deviceName, msgId);
                                     } catch (Throwable e) {
                                         log.warn("[{}][{}] Failed to convert telemetry: {}", gateway.getDeviceId(), deviceName, msg, e);
+                                        channel.close();
                                     }
                                 }
 
