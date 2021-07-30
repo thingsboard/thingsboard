@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.edge;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -24,7 +23,7 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 
 public interface EdgeEventService {
 
-    ListenableFuture<EdgeEvent> saveAsync(EdgeEvent edgeEvent);
+    EdgeEvent save(EdgeEvent edgeEvent);
 
     PageData<EdgeEvent> findEdgeEvents(TenantId tenantId, EdgeId edgeId, TimePageLink pageLink, boolean withTsUpdate);
 

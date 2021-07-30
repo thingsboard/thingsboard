@@ -149,20 +149,9 @@ public class TbMsgPushToEdgeNode implements TbNode {
 
     private void notifyEdge(TbContext ctx, TbMsg msg, EdgeEvent edgeEvent, EdgeId edgeId) {
         edgeEvent.setEdgeId(edgeId);
-        ListenableFuture<EdgeEvent> saveFuture = ctx.getEdgeEventService().saveAsync(edgeEvent);
-        Futures.addCallback(saveFuture, new FutureCallback<EdgeEvent>() {
-            @Override
-            public void onSuccess(@Nullable EdgeEvent event) {
-                ctx.tellNext(msg, SUCCESS);
-                ctx.onEdgeEventUpdate(ctx.getTenantId(), edgeId);
-            }
-
-            @Override
-            public void onFailure(Throwable th) {
-                log.warn("[{}] Can't save edge event [{}] for edge [{}]", ctx.getTenantId().getId(), edgeEvent, edgeId.getId(), th);
-                ctx.tellFailure(msg, th);
-            }
-        }, ctx.getDbCallbackExecutor());
+        ctx.getEdgeEventService().save(edgeEvent);
+        ctx.tellNext(msg, SUCCESS);
+        ctx.onEdgeEventUpdate(ctx.getTenantId(), edgeId);
     }
 
     private EdgeEvent buildEdgeEvent(TbMsg msg, TbContext ctx) {

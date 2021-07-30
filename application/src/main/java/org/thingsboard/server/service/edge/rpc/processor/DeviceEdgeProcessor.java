@@ -105,19 +105,8 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                             Device newDevice = createDevice(tenantId, edge, deviceUpdateMsg, newDeviceName);
                             ObjectNode body = mapper.createObjectNode();
                             body.put("conflictName", deviceName);
-                            ListenableFuture<EdgeEvent> future =
-                                    saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.ENTITY_MERGE_REQUEST, newDevice.getId(), body);
-                            Futures.addCallback(future, new FutureCallback<>() {
-                                @Override
-                                public void onSuccess(EdgeEvent edgeEvent) {
-                                    saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.CREDENTIALS_REQUEST, newDevice.getId(), null);
-                                }
-
-                                @Override
-                                public void onFailure(Throwable t) {
-                                    log.error("[{}] Failed to save ENTITY_MERGE_REQUEST edge event [{}][{}]", tenantId, deviceUpdateMsg, edge.getId(), t);
-                                }
-                            }, dbCallbackExecutorService);
+                            saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.ENTITY_MERGE_REQUEST, newDevice.getId(), body);
+                            saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.CREDENTIALS_REQUEST, newDevice.getId(), null);
                         }
                     } while (pageData != null && pageData.hasNext());
                 } else {

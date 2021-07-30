@@ -97,11 +97,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -729,18 +727,8 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         edgeEvent.setBody(body);
 
         edgeEvent.setEdgeId(edgeId);
-        ListenableFuture<EdgeEvent> future = systemContext.getEdgeEventService().saveAsync(edgeEvent);
-        Futures.addCallback(future, new FutureCallback<EdgeEvent>() {
-            @Override
-            public void onSuccess(EdgeEvent result) {
-                systemContext.getClusterService().onEdgeEventUpdate(tenantId, edgeId);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                log.warn("[{}] Can't save edge event [{}] for edge [{}]", tenantId.getId(), edgeEvent, edgeId.getId(), t);
-            }
-        }, systemContext.getDbCallbackExecutor());
+        systemContext.getEdgeEventService().save(edgeEvent);
+        systemContext.getClusterService().onEdgeEventUpdate(tenantId, edgeId);
     }
 
     private List<TsKvProto> toTsKvProtos(@Nullable List<AttributeKvEntry> result) {
