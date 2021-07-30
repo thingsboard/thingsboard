@@ -23,6 +23,10 @@ import org.thingsboard.common.util.JacksonUtil;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.TEST_OBJECT_MULTI_WITH_RESOURCE_RW_ID;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.TEST_OBJECT_MULTI_WITH_RESOURCE_R_ID;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.TEST_OBJECT_SINGLE_WITH_RESOURCE_RW_ID;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.TEST_OBJECT_SINGLE_WITH_RESOURCE_R_ID;
 
 public class RpcLwm2mIntegrationDiscoverTest extends RpcAbstractLwM2MIntegrationTest {
 
@@ -48,8 +52,21 @@ public class RpcLwm2mIntegrationDiscoverTest extends RpcAbstractLwM2MIntegration
      */
     @Test
     public void testDiscoverObject_Return_CONTENT() throws Exception {
-        String actualResult = sendDiscover("/2000");
+        String expected = "/" + TEST_OBJECT_SINGLE_WITH_RESOURCE_RW_ID;
+        String actualResult = sendDiscover(expected);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
+        expected = "/" + TEST_OBJECT_MULTI_WITH_RESOURCE_RW_ID + "_1.1";
+        actualResult = sendDiscover(expected);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
+        expected = "/" + TEST_OBJECT_SINGLE_WITH_RESOURCE_R_ID;
+        actualResult = sendDiscover(expected);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
+        expected = "/" + TEST_OBJECT_MULTI_WITH_RESOURCE_R_ID + "_1.1";
+        actualResult = sendDiscover(expected);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
     }
 

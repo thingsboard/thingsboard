@@ -75,6 +75,8 @@ public class RpcLwm2mIntegrationReadTest extends RpcAbstractLwM2MIntegrationTest
         assertTrue(rpcActualResult.get("value").asText().contains("LwM2mObjectInstance"));
     }
 
+    // String ObjLnt - multi
+
     /**
      * Read {"id":"/2003/1/12"}
      *
@@ -138,6 +140,9 @@ public class RpcLwm2mIntegrationReadTest extends RpcAbstractLwM2MIntegrationTest
         assertTrue(rpcActualResult.get("value").asText().contains("LwM2mSingleResource"));
         isValueTypeResource_Ok(rpcActualResult.get("value").asText(), expectedValue, expectedType, resourcePath);
     }
+    // time, integer single
+
+    //
 
     /**
      * Read {"id":"/2003/1/12/0"}

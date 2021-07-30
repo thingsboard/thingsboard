@@ -27,6 +27,7 @@ import org.eclipse.leshan.core.util.StringUtils;
 
 import java.math.BigInteger;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -62,6 +63,7 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
 
         switch (expectedType) {
             case INTEGER:
+            case UNSIGNED_INTEGER:
                 switch (currentType) {
                     case FLOAT:
                         log.debug("Trying to convert float value [{}] to Integer", value);
@@ -131,9 +133,14 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                             return cal.toGregorianCalendar().getTime();
                              **/
                         } catch (IllegalArgumentException e) {
-                            log.debug("Unable to convert string to date", e);
-                            throw new CodecException("Unable to convert string (%s) to date for resource %s", value,
-                                    resourcePath);
+                            try {
+                                SimpleDateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzzz yyyy");
+                                return format.parse((String) value);
+                            } catch (ParseException e1) {
+                                log.debug("Unable to convert string to date", e1);
+                                throw new CodecException("Unable to convert string (%s) to date for resource %s", value,
+                                        resourcePath);
+                            }
                         }
                     default:
                         break;
@@ -143,10 +150,11 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                 switch (currentType) {
                     case BOOLEAN:
                     case INTEGER:
+                    case UNSIGNED_INTEGER:
                     case FLOAT:
                         return String.valueOf(value);
                     case TIME:
-                        String DATE_FORMAT = "MMM d, yyyy HH:mm a";
+                        String DATE_FORMAT = "EEE MMM dd HH:mm:ss zzzz yyyy";
                         Long timeValue;
                         try {
                             timeValue = ((Date) value).getTime();
@@ -154,8 +162,8 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                         catch (Exception e){
                            timeValue = new BigInteger((byte [])value).longValue();
                         }
-                        DateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
-                        return formatter.format(new Date(timeValue));
+                        SimpleDateFormat formatDate = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzzz yyyy");
+                        return formatDate.format(new Date(timeValue));
                     case OPAQUE:
                         return Hex.encodeHexString((byte[])value);
                     case OBJLNK:

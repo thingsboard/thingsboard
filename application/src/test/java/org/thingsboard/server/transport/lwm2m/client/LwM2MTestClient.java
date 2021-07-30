@@ -48,6 +48,7 @@ import org.eclipse.leshan.core.request.RegisterRequest;
 import org.eclipse.leshan.core.request.UpdateRequest;
 import org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper;
 import org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.TestDummyInstanceEnabler;
+import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -89,13 +90,15 @@ public class LwM2MTestClient {
         initializer.setInstancesForObject(FIRMWARE, new FwLwM2MDevice());
         initializer.setInstancesForObject(SOFTWARE_MANAGEMENT, new SwLwM2MDevice());
         initializer.setClassForObject(LwM2mId.ACCESS_CONTROL, DummyInstanceEnabler.class);
-        initializer.setInstancesForObject(TEST_OBJECT_SINGLE_WITH_RESOURCE_RW_ID, new DummyInstanceEnabler());
+        initializer.setInstancesForObject(TEST_OBJECT_SINGLE_WITH_RESOURCE_RW_ID, new TestDummyInstanceEnabler());
         initializer.setClassForObject(TEST_OBJECT_SINGLE_WITH_RESOURCE_R_ID, TestDummyInstanceEnabler.class);
         initializer.setClassForObject(TEST_OBJECT_MULTI_WITH_RESOURCE_RW_ID, TestDummyInstanceEnabler.class);
-        initializer.setInstancesForObject(TEST_OBJECT_MULTI_WITH_RESOURCE_RW_ID, new LwM2mInstanceEnabler[] {new TestDummyInstanceEnabler(executor, 0),
+        initializer.setInstancesForObject(TEST_OBJECT_MULTI_WITH_RESOURCE_RW_ID, new LwM2mInstanceEnabler[] {
+                new TestDummyInstanceEnabler(executor, 0),
                 new TestDummyInstanceEnabler(executor, 1)});
         initializer.setClassForObject(TEST_OBJECT_MULTI_WITH_RESOURCE_R_ID, DummyInstanceEnabler.class);
-        initializer.setInstancesForObject(TEST_OBJECT_MULTI_WITH_RESOURCE_R_ID, new LwM2mInstanceEnabler [] {new TestDummyInstanceEnabler(executor, 0),
+        initializer.setInstancesForObject(TEST_OBJECT_MULTI_WITH_RESOURCE_R_ID, new LwM2mInstanceEnabler [] {
+                new TestDummyInstanceEnabler(executor, 0),
                 new TestDummyInstanceEnabler(executor, 1)});
 
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
@@ -147,8 +150,9 @@ public class LwM2MTestClient {
         builder.setRegistrationEngineFactory(engineFactory);
         builder.setEndpointFactory(endpointFactory);
         builder.setSharedExecutor(executor);
-        builder.setDecoder(new DefaultLwM2mDecoder(true));
-        builder.setEncoder(new DefaultLwM2mEncoder(true));
+        builder.setDecoder(new DefaultLwM2mDecoder(false));
+
+        builder.setEncoder(new DefaultLwM2mEncoder(new LwM2mValueConverterImpl(), false));
         client = builder.build();
 
         LwM2mClientObserver observer = new LwM2mClientObserver() {
@@ -245,7 +249,9 @@ public class LwM2MTestClient {
     }
 
     public void destroy() {
-        client.destroy(true);
+        if (client != null) {
+            client.destroy(true);
+        }
     }
 
 }

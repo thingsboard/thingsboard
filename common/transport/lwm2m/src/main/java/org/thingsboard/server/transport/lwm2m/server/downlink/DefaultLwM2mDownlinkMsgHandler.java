@@ -92,6 +92,9 @@ import static org.eclipse.leshan.core.attributes.Attribute.MINIMUM_PERIOD;
 import static org.eclipse.leshan.core.attributes.Attribute.STEP;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OBJLNK;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
+import static org.eclipse.leshan.core.request.ContentFormat.CBOR;
+import static org.eclipse.leshan.core.request.ContentFormat.SENML_CBOR;
+import static org.eclipse.leshan.core.request.ContentFormat.SENML_JSON;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertMultiResourceValuesFromRpcBody;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.validateVersionedId;
@@ -520,28 +523,16 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                     } else if (OPAQUE.equals(resourceModel.type)) {
                         return ContentFormat.OPAQUE;
                     } else {
-                        return client.getClientSupportContentFormats().contains(ContentFormat.CBOR) ? ContentFormat.CBOR :
-                                client.getDefaultContentFormat();
+                        return ContentFormat.JSON;
                     }
                 } else {
-                    return getRequestContentFormatLwm2mVersion(client);
+                    return ContentFormat.JSON;
                 }
             } else {
-                return getRequestContentFormatLwm2mVersion(client);
+                return ContentFormat.JSON;
             }
         }
-        return getRequestContentFormatLwm2mVersion(client);
-    }
-
-    private static ContentFormat getRequestContentFormatLwm2mVersion(LwM2mClient client) {
-        ContentFormat resultFormat = client.getDefaultContentFormat();
-        if (LwM2m.Version.V1_1.equals(client.getRegistration().getLwM2mVersion())) {
-            Set <ContentFormat> contentFormats = client.getClientSupportContentFormats();
-            contentFormats.remove(ContentFormat.TEXT);
-            Optional<ContentFormat> firstFormat = contentFormats.stream().findFirst();
-            resultFormat = firstFormat.isPresent() ? firstFormat.get() : resultFormat;
-        }
-        return resultFormat;
+        return ContentFormat.JSON;
     }
 
     private <R> String toString(R request) {

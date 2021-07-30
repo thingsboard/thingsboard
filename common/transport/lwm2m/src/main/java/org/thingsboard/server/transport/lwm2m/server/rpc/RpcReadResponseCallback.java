@@ -34,6 +34,8 @@ public class RpcReadResponseCallback<R extends LwM2mRequest<T>, T extends ReadRe
 
     @Override
     protected Optional<String> serializeSuccessfulResponse(T response) {
-        return contentToString(response.getContent());
+        Object content = response.getContent();
+        Optional<String> val = contentToString(content);
+        return val;
     }
 }
