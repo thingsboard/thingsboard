@@ -1354,7 +1354,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
         Awaitility.await()
                 .atMost(2, TimeUnit.SECONDS)
-                .until(() -> isTimeseriesAlreadyAvailable(device, timeseriesKey));
+                .until(() -> loadDeviceTimeseries(device, timeseriesKey).containsKey(timeseriesKey));
 
         Map<String, List<Map<String, String>>> timeseries = loadDeviceTimeseries(device, timeseriesKey);
         Assert.assertTrue(timeseries.containsKey(timeseriesKey));
@@ -1365,11 +1365,6 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(1, attributes.size());
         Assert.assertEquals(attributes.get(0).get("key"), attributesKey);
         Assert.assertEquals(attributes.get(0).get("value"), attributesValue);
-
-    }
-
-    private boolean isTimeseriesAlreadyAvailable(Device device, String timeseriesKey) throws Exception {
-        return loadDeviceTimeseries(device, timeseriesKey).containsKey(timeseriesKey);
     }
 
     private Map<String, List<Map<String, String>>> loadDeviceTimeseries(Device device, String timeseriesKey) throws Exception {
