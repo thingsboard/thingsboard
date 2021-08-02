@@ -821,7 +821,7 @@
         "rulechain-templates": "Modèles de chaîne de règles",
         "rulechains": "Chaînes de règles de la bordure",
         "search": "Rechercher les bords",
-        "selected-edges": "{count, plural, 1 {1 edge} other {# bords} } sélectionné",
+        "selected-edges": "{count, plural, 1 {1 bordure} other {# bords} } sélectionné",
         "any-edge": "Tout bord",
         "no-edge-types-matching": "Aucun type d'arête correspondant à \"{{entitySubtype}}\" n'a été trouvé.",
         "edge-type-list-empty": "Aucun type d'arête sélectionné.",

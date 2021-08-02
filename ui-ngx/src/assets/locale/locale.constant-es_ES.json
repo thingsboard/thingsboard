@@ -1189,7 +1189,7 @@
         "rulechain-templates": "Plantillas, de cadena de reglas",
         "rulechains": "Cadenas de regla de borde",
         "search": "Bordes de búsqueda",
-        "selected-edges": "{count, plural, 1 {1 borde} other {# bordes} } seleccionados",
+        "selected-edges": "{count, plural, 1 {1 borde} other {# bordes} } seleccionadas",
         "any-edge": "Cualquier bordee",
         "no-edge-types-matching": "No se encontraron tipos de aristas que coincidan con '{{entitySubtype}}'.",
         "edge-type-list-empty": "No se seleccionó ningún tipo de borde.",
