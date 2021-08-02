@@ -84,6 +84,12 @@ public class TbSendRPCRequestNode implements TbNode {
             tmp = msg.getMetaData().getValue(DataConstants.PERSISTENT);
             boolean persisted = !StringUtils.isEmpty(tmp) && Boolean.parseBoolean(tmp);
 
+            tmp = msg.getMetaData().getValue(DataConstants.PERSISTED_RPC_TELEMETRY);
+            boolean persistedRpcTelemetry = !StringUtils.isEmpty(tmp) && Boolean.parseBoolean(tmp);
+
+            tmp = msg.getMetaData().getValue(DataConstants.RETRY_FAILED);
+            boolean retryFailed = !StringUtils.isEmpty(tmp) && Boolean.parseBoolean(tmp);
+
             tmp = msg.getMetaData().getValue("requestUUID");
             UUID requestUUID = !StringUtils.isEmpty(tmp) ? UUID.fromString(tmp) : Uuids.timeBased();
             tmp = msg.getMetaData().getValue("originServiceId");
@@ -91,6 +97,9 @@ public class TbSendRPCRequestNode implements TbNode {
 
             tmp = msg.getMetaData().getValue("expirationTime");
             long expirationTime = !StringUtils.isEmpty(tmp) ? Long.parseLong(tmp) : (System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(config.getTimeoutInSeconds()));
+
+            tmp = msg.getMetaData().getValue("timeout");
+            long timeout = !StringUtils.isEmpty(tmp) ? Long.parseLong(tmp) : TimeUnit.SECONDS.toMillis(config.getTimeoutInSeconds());
 
             String params;
             JsonElement paramsEl = json.get("params");
@@ -112,6 +121,9 @@ public class TbSendRPCRequestNode implements TbNode {
                     .expirationTime(expirationTime)
                     .restApiCall(restApiCall)
                     .persisted(persisted)
+                    .persistedRpcTelemetry(persistedRpcTelemetry)
+                    .retryFailed(retryFailed)
+                    .timeout(timeout)
                     .build();
 
             ctx.getRpcService().sendRpcRequestToDevice(request, ruleEngineDeviceRpcResponse -> {

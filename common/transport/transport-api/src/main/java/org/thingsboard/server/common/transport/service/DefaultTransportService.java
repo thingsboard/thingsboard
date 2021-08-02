@@ -589,6 +589,7 @@ public class DefaultTransportService implements TransportService {
                     .setRequestIdLSB(msg.getRequestIdLSB())
                     .setRequestIdMSB(msg.getRequestIdMSB())
                     .setStatus(status.name())
+                    .setPersistedRpcTelemetry(msg.getPersistedRpcTelemetry())
                     .build();
 
             if (checkLimits(sessionInfo, responseMsg, callback)) {

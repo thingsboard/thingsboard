@@ -36,6 +36,9 @@ public final class RuleEngineDeviceRpcRequest {
     private final String originServiceId;
     private final boolean oneway;
     private final boolean persisted;
+    private final boolean persistedRpcTelemetry;
+    private final boolean retryFailed;
+    private final long timeout;
     private final String method;
     private final String body;
     private final long expirationTime;

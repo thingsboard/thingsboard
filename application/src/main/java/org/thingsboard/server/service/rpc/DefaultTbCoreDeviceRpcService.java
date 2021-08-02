@@ -158,6 +158,9 @@ public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
         metaData.putValue("expirationTime", Long.toString(msg.getExpirationTime()));
         metaData.putValue("oneway", Boolean.toString(msg.isOneway()));
         metaData.putValue(DataConstants.PERSISTENT, Boolean.toString(msg.isPersisted()));
+        metaData.putValue(DataConstants.PERSISTED_RPC_TELEMETRY, Boolean.toString(msg.isPersistedRpcTelemetry()));
+        metaData.putValue(DataConstants.RETRY_FAILED, Boolean.toString(msg.isRetryFailed()));
+        metaData.putValue(DataConstants.TIMEOUT, Long.toString(msg.getTimeout()));
 
         Device device = deviceService.findDeviceById(msg.getTenantId(), msg.getDeviceId());
         if (device != null) {
