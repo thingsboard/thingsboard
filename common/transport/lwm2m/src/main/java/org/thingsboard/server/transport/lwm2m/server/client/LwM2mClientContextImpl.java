@@ -93,7 +93,12 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         log.debug("Fetched clients from store: {}", fetchedClients);
         fetchedClients.forEach(client -> {
             lwM2mClientsByEndpoint.put(client.getEndpoint(), client);
-            updateFetchedClient(nodeId, client);
+            try {
+                client.lock();
+                updateFetchedClient(nodeId, client);
+            } finally {
+                client.unlock();
+            }
         });
     }
 
