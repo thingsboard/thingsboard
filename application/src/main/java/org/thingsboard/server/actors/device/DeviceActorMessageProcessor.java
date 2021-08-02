@@ -575,7 +575,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             sessionMD.setSubscribedToRPC(true);
             log.debug("[{}] Registering rpc subscription for session [{}]", deviceId, sessionId);
             rpcSubscriptions.put(sessionId, sessionMD.getSessionInfo());
-            sendPendingRequests(context, sessionId, sessionInfo);
             List<Rpc> rpcToRetry = new ArrayList<>();
             rpcToRetry.addAll(findAllRpcToRetryByDeviceIdAndStatus(RpcStatus.TIMEOUT));
             rpcToRetry.addAll(findAllRpcToRetryByDeviceIdAndStatus(RpcStatus.FAILED));
@@ -596,6 +595,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 systemContext.getTbRpcService().save(tenantId, rpc.getId(), request);
                 registerPendingRpcRequest(context, new ToDeviceRpcRequestActorMsg(systemContext.getServiceId(), request), false, creteToDeviceRpcRequestMsg(request), timeout);
             });
+            sendPendingRequests(context, sessionId, sessionInfo);
             dumpSessions();
         }
     }
