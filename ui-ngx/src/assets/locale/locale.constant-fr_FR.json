@@ -1499,8 +1499,8 @@
         "search": "Rechercher des chaînes de règles",
         "selected-rulechains": "{count, plural, 1 {1 rule chain} other {# rule chains} } sélectionné",
         "open-rulechain": "Chaîne de règles ouverte",
-        "assign-to-edge": "Attribuer à Edge",
-        "edge-rulechain": "Chaîne de règles Edge",
+        "assign-to-edge": "Attribuer à Bordure",
+        "edge-rulechain": "Chaîne de règles Bordure",
         "unassign-rulechains-from-edge-title": "Voulez-vous vraiment annuler l'attribution de {count, plural, 1 {1 rulechain} other {# rulechains} }?"
     },
     "rulenode": {

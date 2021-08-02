@@ -1356,7 +1356,7 @@
         "type-api-usage-state": "Estado de uso de la API",
         "type-edge": "Borde",
         "type-edges": "Bordes",
-        "list-of-edges": "{cuenta, plural, 1 {Un borde} other {Lista de # bordes} }",
+        "list-of-edges": "{count, plural, 1 {Un borde} other {Lista de # bordes} }",
         "edge-name-starts-with": "Bordes cuyos nombres comienzan con '{{prefijo}}'"
     },
     "entity-field": {
