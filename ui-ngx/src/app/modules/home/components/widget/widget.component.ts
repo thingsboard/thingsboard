@@ -284,7 +284,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       getActionDescriptors: this.getActionDescriptors.bind(this),
       handleWidgetAction: this.handleWidgetAction.bind(this),
       elementClick: this.elementClick.bind(this),
-      getActiveEntityInfo: this.getActiveEntityInfo.bind(this)
+      getActiveEntityInfo: this.getActiveEntityInfo.bind(this),
+      openDashboardStateInSeparateDialog: this.openDashboardStateInSeparateDialog.bind(this)
     };
 
     this.widgetContext.customHeaderActions = [];
@@ -1025,7 +1026,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         this.updateEntityParams(params, targetEntityParamName, targetEntityId, entityName, entityLabel);
         if (type === WidgetActionType.openDashboardState) {
           if (descriptor.openInSeparateDialog) {
-            this.openDashboardStateInDialog(descriptor, entityId, entityName, additionalParams, entityLabel);
+            this.openDashboardStateInSeparateDialog(descriptor.targetDashboardStateId, params, descriptor.dialogTitle,
+              descriptor.dialogHideDashboardToolbar, descriptor.dialogWidth, descriptor.dialogHeight);
           } else {
             this.widgetContext.stateController.openState(targetDashboardStateId, params, descriptor.openRightLayout);
           }
@@ -1276,22 +1278,15 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     }
   }
 
-  private openDashboardStateInDialog(descriptor: WidgetActionDescriptor,
-                                     entityId?: EntityId, entityName?: string, additionalParams?: any, entityLabel?: string) {
+  private openDashboardStateInSeparateDialog(targetDashboardStateId: string, params?: StateParams, dialogTitle?: string,
+                                             hideDashboardToolbar = true, dialogWidth?: number, dialogHeight?: number) {
     const dashboard = deepClone(this.widgetContext.stateController.dashboardCtrl.dashboardCtx.getDashboard());
     const stateObject: StateObject = {};
-    stateObject.params = {};
-    const targetEntityParamName = descriptor.stateEntityParamName;
-    const targetDashboardStateId = descriptor.targetDashboardStateId;
-    let targetEntityId: EntityId;
-    if (descriptor.setEntityId) {
-      targetEntityId = entityId;
-    }
-    this.updateEntityParams(stateObject.params, targetEntityParamName, targetEntityId, entityName, entityLabel);
+    stateObject.params = params;
     if (targetDashboardStateId) {
       stateObject.id = targetDashboardStateId;
     }
-    let title = descriptor.dialogTitle;
+    let title = dialogTitle;
     if (!title) {
       if (targetDashboardStateId && dashboard.configuration.states) {
         const dashboardState = dashboard.configuration.states[targetDashboardStateId];
@@ -1304,7 +1299,6 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       title = dashboard.title;
     }
     title = this.utils.customTranslation(title, title);
-    const params = stateObject.params;
     const paramsEntityName = params && params.entityName ? params.entityName : '';
     const paramsEntityLabel = params && params.entityLabel ? params.entityLabel : '';
     title = insertVariable(title, 'entityName', paramsEntityName);
@@ -1324,9 +1318,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         dashboard,
         state: objToBase64([ stateObject ]),
         title,
-        hideToolbar: descriptor.dialogHideDashboardToolbar,
-        width: descriptor.dialogWidth,
-        height: descriptor.dialogHeight
+        hideToolbar: hideDashboardToolbar,
+        width: dialogWidth,
+        height: dialogHeight
       }
     });
   }
