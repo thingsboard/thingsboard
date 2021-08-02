@@ -119,6 +119,7 @@
             <mat-form-field class="mat-block">
               <mat-label translate>admin.proxy-password</mat-label>
               <input matInput type="password" formControlName="proxyPassword" autocomplete="new-proxy-password">
+              <tb-toggle-password matSuffix></tb-toggle-password>
             </mat-form-field>
           </div>
           <mat-form-field class="mat-block">
@@ -130,6 +131,7 @@
             <mat-label translate>common.password</mat-label>
             <input matInput formControlName="password" type="password"
                    placeholder="{{ 'common.enter-password' | translate }}" autocomplete="new-password"/>
+            <tb-toggle-password matSuffix></tb-toggle-password>
           </mat-form-field>
           <div fxLayout="row" fxLayoutAlign="end center" fxLayout.xs="column" fxLayoutAlign.xs="end" fxLayoutGap="16px">
             <button mat-raised-button type="button"
