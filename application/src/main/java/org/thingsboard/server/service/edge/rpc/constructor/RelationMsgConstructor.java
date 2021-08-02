@@ -37,8 +37,10 @@ public class RelationMsgConstructor {
                 .setToIdMSB(entityRelation.getTo().getId().getMostSignificantBits())
                 .setToIdLSB(entityRelation.getTo().getId().getLeastSignificantBits())
                 .setToEntityType(entityRelation.getTo().getEntityType().name())
-                .setType(entityRelation.getType())
-                .setAdditionalInfo(JacksonUtil.toString(entityRelation.getAdditionalInfo()));
+                .setType(entityRelation.getType());
+        if (entityRelation.getAdditionalInfo() != null) {
+            builder.setAdditionalInfo(JacksonUtil.toString(entityRelation.getAdditionalInfo()));
+        }
         if (entityRelation.getTypeGroup() != null) {
             builder.setTypeGroup(getStringValue(entityRelation.getTypeGroup().name()));
         }
