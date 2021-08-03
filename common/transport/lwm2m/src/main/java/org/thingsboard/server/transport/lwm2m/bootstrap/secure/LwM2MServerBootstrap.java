@@ -39,8 +39,7 @@ public class LwM2MServerBootstrap {
     Integer serverId = 123;
     boolean bootstrapServerIs = false;
 
-    public LwM2MServerBootstrap() {
-    }
+    public LwM2MServerBootstrap(){};
 
     public LwM2MServerBootstrap(LwM2MServerBootstrap bootstrapFromCredential, LwM2MServerBootstrap profileServerBootstrap) {
         this.clientPublicKeyOrId = bootstrapFromCredential.getClientPublicKeyOrId();
