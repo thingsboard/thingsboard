@@ -1332,20 +1332,19 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   private elementClick($event: Event) {
-    const e = ($event.target || $event.srcElement) as Element;
-    if (e.id) {
-      const descriptors = this.getActionDescriptors('elementClick');
-      if (descriptors.length) {
-        descriptors.forEach((descriptor) => {
-          if (descriptor.name === e.id) {
-            $event.stopPropagation();
-            const entityInfo = this.getActiveEntityInfo();
-            const entityId = entityInfo ? entityInfo.entityId : null;
-            const entityName = entityInfo ? entityInfo.entityName : null;
-            const entityLabel = entityInfo && entityInfo.entityLabel ? entityInfo.entityLabel : null;
-            this.handleWidgetAction($event, descriptor, entityId, entityName, null, entityLabel);
-          }
-        });
+    const elementClicked = ($event.target || $event.srcElement) as Element;
+    const descriptors = this.getActionDescriptors('elementClick');
+    if (descriptors.length) {
+      const idsList = descriptors.map(descriptor => `#${descriptor.name}`).join(',');
+      const targetElement = $(elementClicked).closest(idsList, this.widgetContext.$container[0]);
+      if (targetElement.length && targetElement[0].id) {
+        $event.stopPropagation();
+        const descriptor = descriptors.find(descriptorInfo => descriptorInfo.name === targetElement[0].id);
+        const entityInfo = this.getActiveEntityInfo();
+        const entityId = entityInfo ? entityInfo.entityId : null;
+        const entityName = entityInfo ? entityInfo.entityName : null;
+        const entityLabel = entityInfo && entityInfo.entityLabel ? entityInfo.entityLabel : null;
+        this.handleWidgetAction($event, descriptor, entityId, entityName, null, entityLabel);
       }
     }
   }
