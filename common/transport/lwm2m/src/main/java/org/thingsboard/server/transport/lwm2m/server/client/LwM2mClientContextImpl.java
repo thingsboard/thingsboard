@@ -166,7 +166,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
             this.lwM2mClientsByRegistrationId.put(registration.getId(), client);
             client.setState(LwM2MClientState.REGISTERED);
             onUplink(client);
-            if(!compareAndSetSleepFlag(client, false)){
+            if (!compareAndSetSleepFlag(client, false)) {
                 clientStore.put(client);
             }
         } finally {
@@ -316,7 +316,11 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     public void update(LwM2mClient client) {
         client.lock();
         try {
-            clientStore.put(client);
+            if (client.getState().equals(LwM2MClientState.REGISTERED)) {
+                clientStore.put(client);
+            } else {
+                log.error("[{}] Client is in invalid state: {}!", client.getEndpoint(), client.getState());
+            }
         } finally {
             client.unlock();
         }
