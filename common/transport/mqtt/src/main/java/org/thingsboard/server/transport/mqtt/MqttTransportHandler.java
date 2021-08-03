@@ -824,7 +824,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED, connectMessage));
                     deviceSessionCtx.setConnected(true);
                     log.info("[{}] Client connected!", sessionId);
-                    processMsgQueue(ctx);
+                    transportService.getCallbackExecutor().execute(() -> processMsgQueue(ctx)); //this callback will execute in Producer worker thread and hard or blocking work have to be submitted to the separate thread.
                 }
 
                 @Override
