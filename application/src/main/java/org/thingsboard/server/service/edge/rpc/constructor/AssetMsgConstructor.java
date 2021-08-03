@@ -38,12 +38,16 @@ public class AssetMsgConstructor {
                 .setIdLSB(asset.getId().getId().getLeastSignificantBits())
                 .setName(asset.getName())
                 .setType(asset.getType());
-        builder.setLabel(getStringValue(asset.getLabel()));
+        if (asset.getLabel() != null) {
+            builder.setLabel(getStringValue(asset.getLabel()));
+        }
         if (customerId != null) {
             builder.setCustomerIdMSB(getInt64Value(customerId.getId().getMostSignificantBits()));
             builder.setCustomerIdLSB(getInt64Value(customerId.getId().getLeastSignificantBits()));
         }
-        builder.setAdditionalInfo(getStringValue(JacksonUtil.toString(asset.getAdditionalInfo())));
+        if (asset.getAdditionalInfo() != null) {
+            builder.setAdditionalInfo(getStringValue(JacksonUtil.toString(asset.getAdditionalInfo())));
+        }
         return builder.build();
     }
 

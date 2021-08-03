@@ -54,7 +54,9 @@ public class DeviceProfileMsgConstructor {
 //        if (deviceProfile.getDefaultQueueName() != null) {
 //            builder.setDefaultQueueName(deviceProfile.getDefaultQueueName());
 //        }
-        builder.setDescription(getStringValue(deviceProfile.getDescription()));
+        if (deviceProfile.getDescription() != null) {
+            builder.setDescription(getStringValue(deviceProfile.getDescription()));
+        }
         if (deviceProfile.getTransportType() != null) {
             builder.setTransportType(getStringValue(deviceProfile.getTransportType().name()));
         }

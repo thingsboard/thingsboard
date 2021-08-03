@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,33 +28,25 @@ public class EdgeProtoUtils {
 
     public static BoolValue getBoolValue(Boolean value) {
         BoolValue.Builder builder = BoolValue.newBuilder();
-        if (value != null) {
-            builder.setValue(value);
-        }
+        builder.setValue(value);
         return builder.build();
     }
 
     public static StringValue getStringValue(String value) {
         StringValue.Builder builder = StringValue.newBuilder();
-        if (value != null) {
-            builder.setValue(value);
-        }
+        builder.setValue(value);
         return builder.build();
     }
 
     public static Int64Value getInt64Value(Long value) {
         Int64Value.Builder builder = Int64Value.newBuilder();
-        if (value != null) {
-            builder.setValue(value);
-        }
+        builder.setValue(value);
         return builder.build();
     }
 
     public static BytesValue getBytesValue(ByteString value) {
         BytesValue.Builder builder = BytesValue.newBuilder();
-        if (value != null) {
-            builder.setValue(value);
-        }
+        builder.setValue(value);
         return builder.build();
     }
 }

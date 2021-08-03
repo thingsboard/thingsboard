@@ -35,15 +35,33 @@ public class CustomerMsgConstructor {
                 .setIdMSB(customer.getId().getId().getMostSignificantBits())
                 .setIdLSB(customer.getId().getId().getLeastSignificantBits())
                 .setTitle(customer.getTitle());
-        builder.setCountry(getStringValue(customer.getCountry()));
-        builder.setState(getStringValue(customer.getState()));
-        builder.setCity(getStringValue(customer.getCity()));
-        builder.setAddress(getStringValue(customer.getAddress()));
-        builder.setAddress2(getStringValue(customer.getAddress2()));
-        builder.setZip(getStringValue(customer.getZip()));
-        builder.setPhone(getStringValue(customer.getPhone()));
-        builder.setEmail(getStringValue(customer.getEmail()));
-        builder.setAdditionalInfo(getStringValue(JacksonUtil.toString(customer.getAdditionalInfo())));
+        if (customer.getCountry() != null) {
+            builder.setCountry(getStringValue(customer.getCountry()));
+        }
+        if (customer.getState() != null) {
+            builder.setState(getStringValue(customer.getState()));
+        }
+        if (customer.getCity() != null) {
+            builder.setCity(getStringValue(customer.getCity()));
+        }
+        if (customer.getAddress() != null) {
+            builder.setAddress(getStringValue(customer.getAddress()));
+        }
+        if (customer.getAddress2() != null) {
+            builder.setAddress2(getStringValue(customer.getAddress2()));
+        }
+        if (customer.getZip() != null) {
+            builder.setZip(getStringValue(customer.getZip()));
+        }
+        if (customer.getPhone() != null) {
+            builder.setPhone(getStringValue(customer.getPhone()));
+        }
+        if (customer.getEmail() != null) {
+            builder.setEmail(getStringValue(customer.getEmail()));
+        }
+        if (customer.getAdditionalInfo() != null) {
+            builder.setAdditionalInfo(getStringValue(JacksonUtil.toString(customer.getAdditionalInfo())));
+        }
         return builder.build();
     }
 

@@ -35,10 +35,18 @@ public class WidgetTypeMsgConstructor {
                 .setMsgType(msgType)
                 .setIdMSB(widgetType.getId().getId().getMostSignificantBits())
                 .setIdLSB(widgetType.getId().getId().getLeastSignificantBits());
-        builder.setBundleAlias(getStringValue(widgetType.getBundleAlias()));
-        builder.setAlias(getStringValue(widgetType.getAlias()));
-        builder.setName(getStringValue(widgetType.getName()));
-        builder.setDescriptorJson(getStringValue(JacksonUtil.toString(widgetType.getDescriptor())));
+        if (widgetType.getBundleAlias() != null) {
+            builder.setBundleAlias(getStringValue(widgetType.getBundleAlias()));
+        }
+        if (widgetType.getAlias() != null) {
+            builder.setAlias(getStringValue(widgetType.getAlias()));
+        }
+        if (widgetType.getName() != null) {
+            builder.setName(getStringValue(widgetType.getName()));
+        }
+        if (widgetType.getDescriptor() != null) {
+            builder.setDescriptorJson(getStringValue(JacksonUtil.toString(widgetType.getDescriptor())));
+        }
         if (widgetType.getTenantId().equals(TenantId.SYS_TENANT_ID)) {
             builder.setIsSystem(true);
         }
