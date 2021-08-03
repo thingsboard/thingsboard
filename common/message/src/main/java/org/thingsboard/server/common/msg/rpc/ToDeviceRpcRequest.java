@@ -35,8 +35,7 @@ public class ToDeviceRpcRequest implements Serializable {
     private final long expirationTime;
     private final ToDeviceRpcRequestBody body;
     private final boolean persisted;
-    private final boolean persistedRpcTelemetry;
-    private final boolean retryFailed;
+    private final boolean retryOnFailureOrTimeout;
     private final long timeout;
 }
 

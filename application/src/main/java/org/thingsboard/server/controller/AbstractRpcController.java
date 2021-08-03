@@ -79,8 +79,7 @@ public abstract class AbstractRpcController extends BaseController {
             long expTime = System.currentTimeMillis() + Math.max(minTimeout, timeout);
             UUID rpcRequestUUID = rpcRequestBody.has("requestUUID") ? UUID.fromString(rpcRequestBody.get("requestUUID").asText()) : UUID.randomUUID();
             boolean persisted = rpcRequestBody.has(DataConstants.PERSISTENT) && rpcRequestBody.get(DataConstants.PERSISTENT).asBoolean();
-            boolean persistedRpcTelemetry = rpcRequestBody.has(DataConstants.PERSISTED_RPC_TELEMETRY) && rpcRequestBody.get(DataConstants.PERSISTED_RPC_TELEMETRY).asBoolean();
-            boolean retryFailed = rpcRequestBody.has(DataConstants.RETRY_FAILED) && rpcRequestBody.get(DataConstants.RETRY_FAILED).asBoolean();
+            boolean retryOnFailureOrTimeout = rpcRequestBody.has(DataConstants.RETRY_ON_FAILURE_OR_TIMEOUT) && rpcRequestBody.get(DataConstants.RETRY_ON_FAILURE_OR_TIMEOUT).asBoolean();
             accessValidator.validate(currentUser, Operation.RPC_CALL, deviceId, new HttpValidationCallback(response, new FutureCallback<>() {
                 @Override
                 public void onSuccess(@Nullable DeferredResult<ResponseEntity> result) {
@@ -91,8 +90,7 @@ public abstract class AbstractRpcController extends BaseController {
                             expTime,
                             body,
                             persisted,
-                            persistedRpcTelemetry,
-                            retryFailed,
+                            retryOnFailureOrTimeout,
                             timeout
                     );
                     deviceRpcService.processRestApiRpcRequest(rpcRequest, fromDeviceRpcResponse -> reply(new LocalRequestMetaData(rpcRequest, currentUser, result), fromDeviceRpcResponse, timeoutStatus, noActiveConnectionStatus), currentUser);

@@ -334,7 +334,6 @@ message ToDeviceRpcRequestMsg {
   int64 requestIdLSB = 6;
   bool oneway = 7;
   bool persisted = 8;
-  bool persistedRpcTelemetry = 9;
 }
 
 message ToDeviceRpcResponseMsg {
@@ -352,7 +351,6 @@ message ToDevicePersistedRpcResponseMsg {
   int64 requestIdMSB = 2;
   int64 requestIdLSB = 3;
   string status = 4;
-  bool persistedRpcTelemetry = 9;
 }
 
 message ToServerRpcRequestMsg {

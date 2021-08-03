@@ -84,11 +84,8 @@ public class TbSendRPCRequestNode implements TbNode {
             tmp = msg.getMetaData().getValue(DataConstants.PERSISTENT);
             boolean persisted = !StringUtils.isEmpty(tmp) && Boolean.parseBoolean(tmp);
 
-            tmp = msg.getMetaData().getValue(DataConstants.PERSISTED_RPC_TELEMETRY);
-            boolean persistedRpcTelemetry = !StringUtils.isEmpty(tmp) && Boolean.parseBoolean(tmp);
-
-            tmp = msg.getMetaData().getValue(DataConstants.RETRY_FAILED);
-            boolean retryFailed = !StringUtils.isEmpty(tmp) && Boolean.parseBoolean(tmp);
+            tmp = msg.getMetaData().getValue(DataConstants.RETRY_ON_FAILURE_OR_TIMEOUT);
+            boolean retryOnFailureOrTimeout = !StringUtils.isEmpty(tmp) && Boolean.parseBoolean(tmp);
 
             tmp = msg.getMetaData().getValue("requestUUID");
             UUID requestUUID = !StringUtils.isEmpty(tmp) ? UUID.fromString(tmp) : Uuids.timeBased();
@@ -121,8 +118,7 @@ public class TbSendRPCRequestNode implements TbNode {
                     .expirationTime(expirationTime)
                     .restApiCall(restApiCall)
                     .persisted(persisted)
-                    .persistedRpcTelemetry(persistedRpcTelemetry)
-                    .retryFailed(retryFailed)
+                    .retryOnFailureOrTimeout(retryOnFailureOrTimeout)
                     .timeout(timeout)
                     .build();
 

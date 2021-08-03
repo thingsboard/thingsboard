@@ -16,8 +16,6 @@
 package org.thingsboard.server.service.rpc;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.util.concurrent.FutureCallback;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,8 +23,6 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rpc.Rpc;
@@ -37,10 +33,6 @@ import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.dao.rpc.RpcService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.queue.TbClusterService;
-import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
-
-import javax.annotation.Nullable;
-import java.util.Collections;
 
 @TbCoreComponent
 @Service
@@ -49,18 +41,14 @@ import java.util.Collections;
 public class TbRpcService {
     private final RpcService rpcService;
     private final TbClusterService tbClusterService;
-    private final TelemetrySubscriptionService tsSubService;
 
-    public Rpc save(TenantId tenantId, Rpc rpc, boolean persistedRpcTelemetry) {
+    public Rpc save(TenantId tenantId, Rpc rpc) {
         Rpc saved = rpcService.save(rpc);
         pushRpcMsgToRuleEngine(tenantId, saved);
-        if (persistedRpcTelemetry) {
-            saveRpcToTelemetry(tenantId, saved);
-        }
         return saved;
     }
 
-    public void save(TenantId tenantId, RpcId rpcId, RpcStatus newStatus, JsonNode response, boolean persistedRpcTelemetry) {
+    public void save(TenantId tenantId, RpcId rpcId, RpcStatus newStatus, JsonNode response) {
         Rpc foundRpc = findRpcById(tenantId, rpcId);
         if (foundRpc != null) {
             foundRpc.setStatus(newStatus);
@@ -69,9 +57,6 @@ public class TbRpcService {
             }
             Rpc saved = rpcService.save(foundRpc);
             pushRpcMsgToRuleEngine(tenantId, saved);
-            if (persistedRpcTelemetry) {
-                saveRpcToTelemetry(tenantId, saved);
-            }
         } else {
             log.warn("[{}] Failed to update RPC status because RPC was already deleted", rpcId);
         }
@@ -86,34 +71,9 @@ public class TbRpcService {
             foundRpc.setRequest(JacksonUtil.valueToTree(newRequest));
             Rpc saved = rpcService.save(foundRpc);
             pushRpcMsgToRuleEngine(tenantId, saved);
-            if (newRequest.isPersistedRpcTelemetry()) {
-                saveRpcToTelemetry(tenantId, saved);
-            }
         } else {
             log.warn("[{}] Failed to update RPC status because RPC was already deleted", rpcId);
         }
-    }
-
-    private void saveRpcToTelemetry(TenantId tenantId, Rpc savedRpc) {
-        // TODO: 7/30/21 consider to add prefix for telemetry key: rpc_
-        ObjectNode rpcTelemetryData = JacksonUtil.newObjectNode();
-        rpcTelemetryData.put("status", savedRpc.getStatus().name());
-        rpcTelemetryData.set("request", savedRpc.getRequest());
-        rpcTelemetryData.set("response", savedRpc.getResponse());
-        RpcId rpcId = savedRpc.getId();
-        DeviceId deviceId = savedRpc.getDeviceId();
-        JsonDataEntry kv = new JsonDataEntry(rpcId.toString(), JacksonUtil.toString(rpcTelemetryData));
-        tsSubService.saveAndNotify(tenantId, deviceId, Collections.singletonList(new BasicTsKvEntry(savedRpc.getCreatedTime(), kv)), new FutureCallback<>() {
-            @Override
-            public void onSuccess(@Nullable Void result) {
-                log.trace("[{}] Successfully saved rpc telemetry [{}] to device [{}]", tenantId, rpcId, deviceId);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                log.error("[{}] Failed to save rpc telemetry [{}] to device [{}]", tenantId, rpcId, deviceId, t);
-            }
-        });
     }
 
     private void pushRpcMsgToRuleEngine(TenantId tenantId, Rpc rpc) {
