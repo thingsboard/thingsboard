@@ -452,6 +452,9 @@ spring.mvc.cors:
       #Set whether credentials are supported. When not set, credentials are not supported.
       allow-credentials: "true"
 
+# async request timeout in milliseconds
+spring.mvc.async.request-timeout: "${SPRING_MVC_ASYNC_REQUEST_TIMEOUT:}"
+
 # spring serve gzip compressed static resources
 spring.resources.chain:
   compressed: "true"
