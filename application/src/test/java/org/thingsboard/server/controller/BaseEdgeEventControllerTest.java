@@ -113,7 +113,7 @@ public class BaseEdgeEventControllerTest extends AbstractControllerTest {
     private List<EdgeEvent> findEdgeEvents(EdgeId edgeId) throws Exception {
         return doGetTypedWithTimePageLink("/api/edge/" + edgeId.toString() + "/events?",
                 new TypeReference<PageData<EdgeEvent>>() {
-                }, new TimePageLink(4)).getData();
+                }, new TimePageLink(10)).getData();
     }
 
     private Device constructDevice(String name, String type) {
