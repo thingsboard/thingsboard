@@ -34,6 +34,8 @@ import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2mDefaultBoots
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportBootstrapConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.DefaultLwM2mTransportService;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mServerListener;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -57,6 +59,7 @@ public class LwM2MTransportBootstrapService {
     private final LwM2MTransportBootstrapConfig bootstrapConfig;
     private final LwM2MBootstrapSecurityStore lwM2MBootstrapSecurityStore;
     private final LwM2MInMemoryBootstrapConfigStore lwM2MInMemoryBootstrapConfigStore;
+    private final LwM2mTransportServerHelper helper;
 
     private LeshanBootstrapServer server;
 
@@ -106,7 +109,7 @@ public class LwM2MTransportBootstrapService {
         /* Set DTLS Config */
         builder.setDtlsConfig(dtlsConfig);
 
-        BootstrapSessionManager sessionManager = new LwM2mDefaultBootstrapSessionManager(lwM2MBootstrapSecurityStore);
+        BootstrapSessionManager sessionManager = new LwM2mDefaultBootstrapSessionManager(lwM2MBootstrapSecurityStore, helper);
         builder.setSessionManager(sessionManager);
 
         /* Create BootstrapServer */

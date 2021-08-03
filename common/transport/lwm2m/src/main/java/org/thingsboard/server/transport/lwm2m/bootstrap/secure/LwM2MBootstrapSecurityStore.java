@@ -34,12 +34,15 @@ import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mSessionMsgListener;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContextImpl;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_ERROR;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_INFO;
@@ -53,17 +56,21 @@ import static org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServ
 public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
 
     private final EditableBootstrapConfigStore bootstrapConfigStore;
-
     private final LwM2mCredentialsSecurityInfoValidator lwM2MCredentialsSecurityInfoValidator;
-
     private final LwM2mTransportContext context;
     private final LwM2mTransportServerHelper helper;
+    private final LwM2mClientContextImpl clientContext;
+    private final Map<String /* endpoint */, TransportProtos.SessionInfoProto> bsSessions = new ConcurrentHashMap<>();
 
-    public LwM2MBootstrapSecurityStore(EditableBootstrapConfigStore bootstrapConfigStore, LwM2mCredentialsSecurityInfoValidator lwM2MCredentialsSecurityInfoValidator, LwM2mTransportContext context, LwM2mTransportServerHelper helper) {
+    public LwM2MBootstrapSecurityStore(EditableBootstrapConfigStore bootstrapConfigStore,
+                                       LwM2mCredentialsSecurityInfoValidator lwM2MCredentialsSecurityInfoValidator,
+                                       LwM2mTransportContext context, LwM2mTransportServerHelper helper,
+                                       LwM2mClientContextImpl clientContext) {
         this.bootstrapConfigStore = bootstrapConfigStore;
         this.lwM2MCredentialsSecurityInfoValidator = lwM2MCredentialsSecurityInfoValidator;
         this.context = context;
         this.helper = helper;
+        this.clientContext = clientContext;
     }
 
     @Override
@@ -155,6 +162,8 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
             LwM2MServerBootstrap profileLwm2mServer = JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getLwm2mServer()), LwM2MServerBootstrap.class);
             UUID sessionUUiD = UUID.randomUUID();
             TransportProtos.SessionInfoProto sessionInfo = helper.getValidateSessionInfo(store.getMsg(), sessionUUiD.getMostSignificantBits(), sessionUUiD.getLeastSignificantBits());
+            bsSessions.put(store.getEndpoint(), sessionInfo);
+            clientContext.profileUpdate(store.getDeviceProfile());
             context.getTransportService().registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(null, null, null, sessionInfo, context.getTransportService()));
             if (this.getValidatedSecurityMode(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap, lwM2MBootstrapConfig.lwm2mServer, profileLwm2mServer)) {
                 lwM2MBootstrapConfig.bootstrapServer = new LwM2MServerBootstrap(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap);
@@ -188,5 +197,13 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
     private boolean getValidatedSecurityMode(LwM2MServerBootstrap bootstrapFromCredential, LwM2MServerBootstrap profileServerBootstrap, LwM2MServerBootstrap lwm2mFromCredential, LwM2MServerBootstrap profileLwm2mServer) {
         return (bootstrapFromCredential.getSecurityMode().equals(profileServerBootstrap.getSecurityMode()) &&
                 lwm2mFromCredential.getSecurityMode().equals(profileLwm2mServer.getSecurityMode()));
+    }
+
+    public TransportProtos.SessionInfoProto getSessionByEndpoint(String endPoint) {
+        return bsSessions.get(endPoint);
+    }
+
+    public TransportProtos.SessionInfoProto removeSessionByEndpoint(String endPoint) {
+        return bsSessions.remove(endPoint);
     }
 }
