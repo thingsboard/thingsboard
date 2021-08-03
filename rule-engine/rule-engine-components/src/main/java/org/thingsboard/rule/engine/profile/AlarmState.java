@@ -188,7 +188,7 @@ class AlarmState {
         setAlarmConditionMetadata(ruleState, metaData);
         TbMsg newMsg = ctx.newMsg(lastMsgQueueName != null ? lastMsgQueueName : ServiceQueue.MAIN, "ALARM",
                 originator, msg != null ? msg.getCustomerId() : null, metaData, data);
-        ctx.tellNext(newMsg, relationType);
+        ctx.enqueueForTellNext(newMsg, relationType);
     }
 
     protected void setAlarmConditionMetadata(AlarmRuleState ruleState, TbMsgMetaData metaData) {
