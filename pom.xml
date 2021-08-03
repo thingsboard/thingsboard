@@ -1383,6 +1383,12 @@
                 <groupId>io.grpc</groupId>
                 <artifactId>grpc-netty</artifactId>
                 <version>${grpc.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>io.grpc</groupId>
@@ -1587,6 +1593,12 @@
                 <groupId>com.microsoft.azure</groupId>
                 <artifactId>azure-servicebus</artifactId>
                 <version>${azure-servicebus.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>io.netty</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.passay</groupId>
