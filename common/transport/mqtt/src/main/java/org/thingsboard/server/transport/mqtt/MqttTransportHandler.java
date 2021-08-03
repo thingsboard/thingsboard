@@ -123,9 +123,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private final SslHandler sslHandler;
     private final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
 
-    private final DeviceSessionCtx deviceSessionCtx;
-    private volatile InetSocketAddress address;
-    private volatile GatewaySessionHandler gatewaySessionHandler;
+    final DeviceSessionCtx deviceSessionCtx;
+    volatile InetSocketAddress address;
+    volatile GatewaySessionHandler gatewaySessionHandler;
 
     private final ConcurrentHashMap<String, String> otaPackSessions;
     private final ConcurrentHashMap<String, Integer> chunkSizes;
@@ -227,7 +227,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    private void enqueueRegularSessionMsg(ChannelHandlerContext ctx, MqttMessage msg) {
+    void enqueueRegularSessionMsg(ChannelHandlerContext ctx, MqttMessage msg) {
         final int queueSize = deviceSessionCtx.getMsgQueueSize().incrementAndGet();
         if (queueSize > context.getMessageQueueSizePerDeviceLimit()) {
             log.warn("Closing current session because msq queue size for device {} exceed limit {} with msgQueueSize counter {} and actual queue size {}",
@@ -262,7 +262,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    private void processRegularSessionMsg(ChannelHandlerContext ctx, MqttMessage msg) {
+    void processRegularSessionMsg(ChannelHandlerContext ctx, MqttMessage msg) {
         switch (msg.fixedHeader().messageType()) {
             case PUBLISH:
                 processPublish(ctx, (MqttPublishMessage) msg);
@@ -627,7 +627,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         return new MqttMessage(mqttFixedHeader, mqttMessageIdVariableHeader);
     }
 
-    private void processConnect(ChannelHandlerContext ctx, MqttConnectMessage msg) {
+    void processConnect(ChannelHandlerContext ctx, MqttConnectMessage msg) {
         log.info("[{}] Processing connect msg for client: {}!", sessionId, msg.payload().clientIdentifier());
         String userName = msg.payload().userName();
         String clientId = msg.payload().clientIdentifier();
@@ -713,7 +713,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         return null;
     }
 
-    private void processDisconnect(ChannelHandlerContext ctx) {
+    void processDisconnect(ChannelHandlerContext ctx) {
         ctx.close();
         log.info("[{}] Client disconnected!", sessionId);
         doDisconnect();
