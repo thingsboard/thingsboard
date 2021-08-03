@@ -164,8 +164,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    private void processMqttMsg(ChannelHandlerContext ctx, MqttMessage msg) {
-        address = (InetSocketAddress) ctx.channel().remoteAddress();
+    void processMqttMsg(ChannelHandlerContext ctx, MqttMessage msg) {
+        address = getAddress(ctx);
         if (msg.fixedHeader() == null) {
             log.info("[{}:{}] Invalid message received", address.getHostName(), address.getPort());
             processDisconnect(ctx);
@@ -179,6 +179,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         } else {
             enqueueRegularSessionMsg(ctx, msg);
         }
+    }
+
+    InetSocketAddress getAddress(ChannelHandlerContext ctx) {
+        return (InetSocketAddress) ctx.channel().remoteAddress();
     }
 
     private void processProvisionSessionMsg(ChannelHandlerContext ctx, MqttMessage msg) {
@@ -236,7 +240,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         processMsgQueue(ctx); //Under the normal conditions the msg queue will contain 0 messages. Many messages will be processed on device connect event in separate thread pool
     }
 
-    private void processMsgQueue(ChannelHandlerContext ctx) {
+    void processMsgQueue(ChannelHandlerContext ctx) {
         if (!deviceSessionCtx.isConnected()) {
             log.trace("[{}][{}] Postpone processing msg due to device is not connected. Msg queue size is {}", sessionId, deviceSessionCtx.getDeviceId(), deviceSessionCtx.getMsgQueue().size());
             return;
@@ -820,7 +824,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED, connectMessage));
                     deviceSessionCtx.setConnected(true);
                     log.info("[{}] Client connected!", sessionId);
-                    context.getMsqProcessorExecutor().execute(()->processMsgQueue(ctx));
+                    processMsgQueue(ctx);
                 }
 
                 @Override
