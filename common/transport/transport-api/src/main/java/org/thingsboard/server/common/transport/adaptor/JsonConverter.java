@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.transport.adaptor;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -575,6 +576,14 @@ public class JsonConverter {
 
     public static String toJson(JsonElement element) {
         return GSON.toJson(element);
+    }
+
+    public static JsonObject toJsonObject(Object o) {
+        return (JsonObject) GSON.toJsonTree(o);
+    }
+
+    public static <T> T fromJson(JsonElement element, Class<T> type) {
+        return GSON.fromJson(element, type);
     }
 
     public static void setTypeCastEnabled(boolean enabled) {

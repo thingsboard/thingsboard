@@ -19,10 +19,13 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -68,6 +71,9 @@ import org.thingsboard.server.dao.device.claim.ReclaimResult;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.device.DeviceBulkImportService;
+import org.thingsboard.server.service.importing.BulkImportRequest;
+import org.thingsboard.server.service.importing.BulkImportResult;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -84,7 +90,10 @@ import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
+@RequiredArgsConstructor
+@Slf4j
 public class DeviceController extends BaseController {
+    private final DeviceBulkImportService deviceBulkImportService;
 
     private static final String DEVICE_ID = "deviceId";
     private static final String DEVICE_NAME = "deviceName";
@@ -136,24 +145,7 @@ public class DeviceController extends BaseController {
 
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
 
-            tbClusterService.onDeviceChange(savedDevice, null);
-            tbClusterService.pushMsgToCore(new DeviceNameOrTypeUpdateMsg(savedDevice.getTenantId(),
-                    savedDevice.getId(), savedDevice.getName(), savedDevice.getType()), null);
-            tbClusterService.onEntityStateChange(savedDevice.getTenantId(), savedDevice.getId(), created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
-
-            if (!created) {
-                sendEntityNotificationMsg(savedDevice.getTenantId(), savedDevice.getId(), EdgeEventActionType.UPDATED);
-            }
-
-            logEntityAction(savedDevice.getId(), savedDevice,
-                    savedDevice.getCustomerId(),
-                    created ? ActionType.ADDED : ActionType.UPDATED, null);
-
-            if (device.getId() == null) {
-                deviceStateService.onDeviceAdded(savedDevice);
-            } else {
-                deviceStateService.onDeviceUpdated(savedDevice);
-            }
+            onDeviceCreatedOrUpdated(savedDevice, !created);
 
             otaPackageStateService.update(savedDevice, oldDevice);
 
@@ -164,6 +156,31 @@ public class DeviceController extends BaseController {
             throw handleException(e);
         }
 
+    }
+
+    private void onDeviceCreatedOrUpdated(Device device, boolean updated) {
+        tbClusterService.onDeviceChange(device, null);
+        tbClusterService.pushMsgToCore(new DeviceNameOrTypeUpdateMsg(device.getTenantId(),
+                device.getId(), device.getName(), device.getType()), null);
+        tbClusterService.onEntityStateChange(device.getTenantId(), device.getId(), updated ? ComponentLifecycleEvent.UPDATED : ComponentLifecycleEvent.CREATED);
+
+        if (updated) {
+            sendEntityNotificationMsg(device.getTenantId(), device.getId(), EdgeEventActionType.UPDATED);
+        }
+
+        try {
+            logEntityAction(device.getId(), device,
+                    device.getCustomerId(),
+                    updated ? ActionType.UPDATED : ActionType.ADDED, null);
+        } catch (ThingsboardException e) {
+            log.error("Failed to log entity action", e);
+        }
+
+        if (updated) {
+            deviceStateService.onDeviceUpdated(device);
+        } else {
+            deviceStateService.onDeviceAdded(device);
+        }
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
@@ -797,4 +814,14 @@ public class DeviceController extends BaseController {
             throw handleException(e);
         }
     }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @PostMapping("/device/bulk_import")
+    public BulkImportResult<Device> processDevicesBulkImport(@RequestBody BulkImportRequest request) throws Exception {
+        return deviceBulkImportService.processBulkImport(request, getCurrentUser(), importedDeviceInfo -> {
+            onDeviceCreatedOrUpdated(importedDeviceInfo.getEntity(), importedDeviceInfo.isUpdated());
+            otaPackageStateService.update(importedDeviceInfo.getEntity(), importedDeviceInfo.getOldEntity());
+        });
+    }
+
 }

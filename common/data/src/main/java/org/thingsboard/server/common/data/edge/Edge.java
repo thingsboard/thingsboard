@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.edge;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -58,6 +57,19 @@ public class Edge extends SearchTextBasedWithAdditionalInfo<EdgeId> implements H
 
     public Edge(Edge edge) {
         super(edge);
+        this.tenantId = edge.getTenantId();
+        this.customerId = edge.getCustomerId();
+        this.rootRuleChainId = edge.getRootRuleChainId();
+        this.type = edge.getType();
+        this.label = edge.getLabel();
+        this.name = edge.getName();
+        this.routingKey = edge.getRoutingKey();
+        this.secret = edge.getSecret();
+        this.edgeLicenseKey = edge.getEdgeLicenseKey();
+        this.cloudEndpoint = edge.getCloudEndpoint();
+    }
+
+    public void update(Edge edge) {
         this.tenantId = edge.getTenantId();
         this.customerId = edge.getCustomerId();
         this.rootRuleChainId = edge.getRootRuleChainId();

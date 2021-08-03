@@ -26,7 +26,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = NoSecClientCredentials.class, name = "NO_SEC"),
         @JsonSubTypes.Type(value = PSKClientCredentials.class, name = "PSK"),
         @JsonSubTypes.Type(value = RPKClientCredentials.class, name = "RPK"),
-        @JsonSubTypes.Type(value = X509ClientCredentials.class, name = "X509")})
+        @JsonSubTypes.Type(value = X509ClientCredentials.class, name = "X509")
+})
 public interface LwM2MClientCredentials {
 
     @JsonIgnore
