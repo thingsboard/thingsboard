@@ -30,6 +30,7 @@ import org.eclipse.leshan.server.bootstrap.DefaultBootstrapSessionManager;
 import org.eclipse.leshan.server.security.BootstrapSecurityStore;
 import org.eclipse.leshan.server.security.SecurityChecker;
 import org.eclipse.leshan.server.security.SecurityInfo;
+import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
 
 import java.util.Collections;
@@ -43,7 +44,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
 
     private BootstrapSecurityStore bsSecurityStore;
     private SecurityChecker securityChecker;
-    private LwM2mTransportServerHelper helper;
+    private TransportService transportService;
 
     /**
      * Create a {@link DefaultBootstrapSessionManager} using a default {@link SecurityChecker} to accept or refuse new
@@ -51,9 +52,9 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
      *
      * @param bsSecurityStore the {@link BootstrapSecurityStore} used by default {@link SecurityChecker}.
      */
-    public LwM2mDefaultBootstrapSessionManager(BootstrapSecurityStore bsSecurityStore, LwM2mTransportServerHelper helper) {
+    public LwM2mDefaultBootstrapSessionManager(BootstrapSecurityStore bsSecurityStore, TransportService transportService) {
         this(bsSecurityStore, new SecurityChecker());
-        this.helper = helper;
+        this.transportService = transportService;
     }
 
     public LwM2mDefaultBootstrapSessionManager(BootstrapSecurityStore bsSecurityStore, SecurityChecker securityChecker) {
@@ -80,8 +81,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
             logMsg = String.format("%s: Bootstrap session started securityInfos: %s, session: %s ", LOG_LWM2M_INFO, securityInfosStr,
                     session.toString());
             log.trace(logMsg);
-            helper.sendParametersOnThingsboardTelemetry(helper.getKvStringtoThingsboard(LOG_LWM2M_TELEMETRY, logMsg),
-                    ((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(request.getEndpointName()));
+            transportService.log(((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(request.getEndpointName()), logMsg);
         }
         return session;
     }
@@ -91,16 +91,14 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
     public void end(BootstrapSession bsSession) {
         String logMsg = String.format("%s: Bootstrap session finished session: %s ", LOG_LWM2M_INFO, bsSession.toString());
         log.warn(logMsg);
-        helper.sendParametersOnThingsboardTelemetry(helper.getKvStringtoThingsboard(LOG_LWM2M_TELEMETRY, logMsg),
-                ((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(bsSession.getEndpoint()));
+        transportService.log(((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(bsSession.getEndpoint()), logMsg);
     }
 
     @Override
     public void failed(BootstrapSession bsSession, BootstrapFailureCause cause) {
         String logMsg = String.format("%s: Bootstrap session failed by  %s: %s ", LOG_LWM2M_INFO, cause.toString(), bsSession.toString());
         log.warn(logMsg);
-        helper.sendParametersOnThingsboardTelemetry(helper.getKvStringtoThingsboard(LOG_LWM2M_TELEMETRY, logMsg),
-                ((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(bsSession.getEndpoint()));
+        transportService.log(((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(bsSession.getEndpoint()), logMsg);
     }
 
     @Override
@@ -120,8 +118,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
                     request.getPath().toString(), bsSession.toString(), request.toString());
         }
         log.warn(logMsg);
-        helper.sendParametersOnThingsboardTelemetry(helper.getKvStringtoThingsboard(LOG_LWM2M_TELEMETRY, logMsg),
-                ((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(bsSession.getEndpoint()));
+        transportService.log(((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(bsSession.getEndpoint()), logMsg);
     }
 
     @Override
@@ -130,12 +127,10 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
         String logMsg = String.format("%s: %s %s  receives error response %s for %s : %s", LOG_LWM2M_INFO,request.getClass().getSimpleName(),
                 request.getPath().toString(), response.toString(), bsSession.toString(), request.toString());
         log.warn(logMsg);
-        helper.sendParametersOnThingsboardTelemetry(helper.getKvStringtoThingsboard(LOG_LWM2M_TELEMETRY, logMsg),
-                ((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(bsSession.getEndpoint()));
+        transportService.log(((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(bsSession.getEndpoint()), logMsg);
         if (request instanceof BootstrapFinishRequest) {
             logMsg = String.format("%s: Bootstrap session stopped: %s", LOG_LWM2M_INFO, bsSession.toString());
-            helper.sendParametersOnThingsboardTelemetry(helper.getKvStringtoThingsboard(LOG_LWM2M_TELEMETRY, logMsg),
-                    ((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(bsSession.getEndpoint()));
+            transportService.log(((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(bsSession.getEndpoint()), logMsg);
             ((LwM2MBootstrapSecurityStore) bsSecurityStore).removeSessionByEndpoint(request.getPath().toString());
             return BootstrapPolicy.STOP;
         }
@@ -149,8 +144,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
                 request.getClass().getSimpleName(), request.getPath().toString(), cause.toString(), bsSession.toString(),
                 request.toString());
         log.warn(logMsg);
-        helper.sendParametersOnThingsboardTelemetry(helper.getKvStringtoThingsboard(LOG_LWM2M_TELEMETRY, logMsg),
-                ((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(bsSession.getEndpoint()));
+        transportService.log(((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(bsSession.getEndpoint()), logMsg);
         ((LwM2MBootstrapSecurityStore) bsSecurityStore).removeSessionByEndpoint(request.getPath().toString());
         return BootstrapPolicy.STOP;
     }
