@@ -229,7 +229,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private void enqueueRegularSessionMsg(ChannelHandlerContext ctx, MqttMessage msg) {
         final int queueSize = deviceSessionCtx.getMsgQueueSize().incrementAndGet();
-        if (queueSize >= context.getMessageQueueSizePerDeviceLimit()) {
+        if (queueSize > context.getMessageQueueSizePerDeviceLimit()) {
             log.warn("Closing current session because msq queue size for device {} exceed limit {} with msgQueueSize counter {} and actual queue size {}",
                     deviceSessionCtx.getDeviceId(), context.getMessageQueueSizePerDeviceLimit(), queueSize, deviceSessionCtx.getMsgQueue().size());
             ctx.close();
