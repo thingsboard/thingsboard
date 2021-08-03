@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.device.data.PowerSavingConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
@@ -507,6 +508,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
                 return;
             }
             boolean sent = false;
+            String error = null;
             boolean conRequest = AbstractSyncSessionCallback.isConRequest(state.getRpc());
             try {
                 Response response = state.getAdaptor().convertToPublish(conRequest, msg, state.getConfiguration().getRpcRequestDynamicMessageBuilder());
@@ -515,15 +517,12 @@ public class DefaultCoapClientContext implements CoapClientContext {
                 if (msg.getPersisted() && conRequest) {
                     transportContext.getRpcAwaitingAck().put(requestId, msg);
                     transportContext.getScheduler().schedule(() -> {
-                        TransportProtos.ToDeviceRpcRequestMsg awaitingAckMsg = transportContext.getRpcAwaitingAck().remove(requestId);
-                        if (awaitingAckMsg != null) {
-                            transportService.process(state.getSession(), msg, true, TransportServiceCallback.EMPTY);
-                        }
+                        transportContext.getRpcAwaitingAck().remove(requestId);
                     }, Math.max(0, msg.getExpirationTime() - System.currentTimeMillis()), TimeUnit.MILLISECONDS);
                     response.addMessageObserver(new TbCoapMessageObserver(requestId, id -> {
                         TransportProtos.ToDeviceRpcRequestMsg rpcRequestMsg = transportContext.getRpcAwaitingAck().remove(id);
                         if (rpcRequestMsg != null) {
-                            transportService.process(state.getSession(), rpcRequestMsg, false, TransportServiceCallback.EMPTY);
+                            transportService.process(state.getSession(), rpcRequestMsg, TransportServiceCallback.EMPTY);
                         }
                     }, null));
                 }
@@ -536,9 +535,16 @@ public class DefaultCoapClientContext implements CoapClientContext {
                 log.trace("Failed to reply due to error", e);
                 cancelObserveRelation(state.getRpc());
                 cancelRpcSubscription(state);
+                error = "Failed to convert device RPC command to CoAP msg";
+            } catch (Exception e) {
+                error = "Internal error: " + e.getMessage();
             } finally {
-                if (msg.getPersisted() && !conRequest) {
-                    transportService.process(state.getSession(), msg, sent, TransportServiceCallback.EMPTY);
+                if (StringUtils.isNotEmpty(error)) {
+                    transportService.process(state.getSession(),
+                            TransportProtos.ToDeviceRpcResponseMsg.newBuilder()
+                                    .setRequestId(msg.getRequestId()).setError(error).build(), TransportServiceCallback.EMPTY);
+                } else if (msg.getPersisted() && !conRequest && sent) {
+                    transportService.process(state.getSession(), msg, TransportServiceCallback.EMPTY);
                 }
             }
         }

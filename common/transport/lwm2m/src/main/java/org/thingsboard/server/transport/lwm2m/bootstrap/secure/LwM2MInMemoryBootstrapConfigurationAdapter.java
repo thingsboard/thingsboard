@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.controller;
+package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 
-/**
- * Created by ashvayka on 17.05.18.
- */
-public class TbUrlConstants {
-    public static final String TELEMETRY_URL_PREFIX = "/api/plugins/telemetry";
-    public static final String RPC_V1_URL_PREFIX = "/api/plugins/rpc";
-    public static final String RPC_V2_URL_PREFIX = "/api/rpc";
+import org.eclipse.leshan.server.bootstrap.BootstrapConfigStore;
+import org.eclipse.leshan.server.bootstrap.BootstrapConfigurationStoreAdapter;
+
+public class LwM2MInMemoryBootstrapConfigurationAdapter extends BootstrapConfigurationStoreAdapter {
+
+    public LwM2MInMemoryBootstrapConfigurationAdapter(BootstrapConfigStore store) {
+        super(store);
+    }
+
 }

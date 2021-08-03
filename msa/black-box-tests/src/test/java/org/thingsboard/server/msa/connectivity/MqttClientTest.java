@@ -267,7 +267,7 @@ public class MqttClientTest extends AbstractContainerTest {
         ListenableFuture<ResponseEntity> future = service.submit(() -> {
             try {
                 return restClient.getRestTemplate()
-                        .postForEntity(HTTPS_URL + "/api/plugins/rpc/twoway/{deviceId}",
+                        .postForEntity(HTTPS_URL + "/api/rpc/twoway/{deviceId}",
                                 mapper.readTree(serverRpcPayload.toString()), String.class,
                                 device.getId());
             } catch (IOException e) {

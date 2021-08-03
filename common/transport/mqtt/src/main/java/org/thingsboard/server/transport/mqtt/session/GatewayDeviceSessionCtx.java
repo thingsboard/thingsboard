@@ -101,13 +101,18 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
                     payload -> {
                         ChannelFuture channelFuture = parent.writeAndFlush(payload);
                         if (request.getPersisted()) {
-                            channelFuture.addListener(future ->
-                                    transportService.process(getSessionInfo(), request, future.cause() != null, TransportServiceCallback.EMPTY)
-                            );
+                            channelFuture.addListener(future -> {
+                                if (future.cause() == null) {
+                                    transportService.process(getSessionInfo(), request, TransportServiceCallback.EMPTY);
+                                }
+                            });
                         }
                     }
             );
         } catch (Exception e) {
+            transportService.process(getSessionInfo(),
+                    TransportProtos.ToDeviceRpcResponseMsg.newBuilder()
+                            .setRequestId(request.getRequestId()).setError("Failed to convert device RPC command to MQTT msg").build(), TransportServiceCallback.EMPTY);
             log.trace("[{}] Failed to convert device attributes response to MQTT msg", sessionId, e);
         }
     }

@@ -639,7 +639,7 @@
     },
     "device": {
         "access-token": "Jeton d'accès",
-        "access-token-invalid": "La longueur du jeton d'accès doit être comprise entre 1 et 20 caractéres.",
+        "access-token-invalid": "La longueur du jeton d'accès doit être comprise entre 1 et 32 caractéres.",
         "access-token-required": "Le jeton d'accès est requis.",
         "accessTokenCopiedMessage": "Le jeton d'accès au dispositif a été copié dans le presse-papier",
         "add": "Ajouter un dispositif",

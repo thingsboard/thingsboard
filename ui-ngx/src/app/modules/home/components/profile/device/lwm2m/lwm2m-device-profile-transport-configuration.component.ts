@@ -18,7 +18,8 @@ import { Component, forwardRef, Input, OnDestroy } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
-  FormGroup, NG_VALIDATORS,
+  FormGroup,
+  NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   ValidationErrors,
   Validator,
@@ -30,11 +31,14 @@ import {
   BingingMode,
   BingingModeTranslationsMap,
   DEFAULT_BINDING,
+  DEFAULT_EDRX_CYCLE,
   DEFAULT_FW_UPDATE_RESOURCE,
   DEFAULT_ID_SERVER,
   DEFAULT_LIFE_TIME,
   DEFAULT_MIN_PERIOD,
   DEFAULT_NOTIF_IF_DESIBLED,
+  DEFAULT_PAGING_TRANSMISSION_WINDOW,
+  DEFAULT_PSM_ACTIVITY_TIMER,
   DEFAULT_SW_UPDATE_RESOURCE,
   getDefaultBootstrapServerSecurityConfig,
   getDefaultLwM2MServerSecurityConfig,
@@ -50,7 +54,7 @@ import {
   TELEMETRY
 } from './lwm2m-profile-config.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
-import { deepClone, isDefinedAndNotNull, isEmpty } from '@core/utils';
+import { deepClone, isDefinedAndNotNull, isEmpty, isUndefined } from '@core/utils';
 import { JsonArray, JsonObject } from '@angular/compiler-cli/ngcc/src/packages/entry_point';
 import { Direction } from '@shared/models/page/sort-order';
 import _ from 'lodash';
@@ -100,8 +104,8 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   constructor(private fb: FormBuilder,
               private deviceProfileService: DeviceProfileService) {
     this.lwm2mDeviceProfileFormGroup = this.fb.group({
-      objectIds: [null, Validators.required],
-      observeAttrTelemetry: [null, Validators.required],
+      objectIds: [null],
+      observeAttrTelemetry: [null],
       bootstrap: this.fb.group({
         servers: this.fb.group({
           binding: [DEFAULT_BINDING],
@@ -120,9 +124,9 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         fwUpdateResource: [{value: '', disabled: true}, []],
         swUpdateResource: [{value: '', disabled: true}, []],
         powerMode: [PowerMode.DRX, Validators.required],
-        edrxCycle: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
-        psmActivityTimer: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
-        pagingTransmissionWindow: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
+        edrxCycle: [{disabled: true, value: 0}, Validators.required],
+        psmActivityTimer: [{disabled: true, value: 0}, Validators.required],
+        pagingTransmissionWindow: [{disabled: true, value: 0}, Validators.required],
         compositeOperationsSupport: [false]
       })
     });
@@ -183,7 +187,8 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   async writeValue(value: Lwm2mProfileConfigModels | null) {
     if (isDefinedAndNotNull(value) && (value?.clientLwM2mSettings || value?.observeAttr || value?.bootstrap)) {
       this.configurationValue = value;
-      const defaultFormSettings = !(value.observeAttr.attribute.length && value.observeAttr.telemetry.length);
+      const defaultFormSettings = value.clientLwM2mSettings.fwUpdateStrategy === 1 &&
+        isUndefined(value.clientLwM2mSettings.fwUpdateResource);
       if (defaultFormSettings) {
         await this.defaultProfileConfig();
       }
@@ -246,9 +251,10 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
           fwUpdateResource: this.configurationValue.clientLwM2mSettings.fwUpdateResource || '',
           swUpdateResource: this.configurationValue.clientLwM2mSettings.swUpdateResource || '',
           powerMode: this.configurationValue.clientLwM2mSettings.powerMode || PowerMode.DRX,
-          edrxCycle: this.configurationValue.clientLwM2mSettings.edrxCycle || 0,
-          pagingTransmissionWindow: this.configurationValue.clientLwM2mSettings.pagingTransmissionWindow || 0,
-          psmActivityTimer: this.configurationValue.clientLwM2mSettings.psmActivityTimer || 0,
+          edrxCycle: this.configurationValue.clientLwM2mSettings.edrxCycle || DEFAULT_EDRX_CYCLE,
+          pagingTransmissionWindow:
+            this.configurationValue.clientLwM2mSettings.pagingTransmissionWindow || DEFAULT_PAGING_TRANSMISSION_WINDOW,
+          psmActivityTimer: this.configurationValue.clientLwM2mSettings.psmActivityTimer || DEFAULT_PSM_ACTIVITY_TIMER,
           compositeOperationsSupport: this.configurationValue.clientLwM2mSettings.compositeOperationsSupport || false
         }
       },

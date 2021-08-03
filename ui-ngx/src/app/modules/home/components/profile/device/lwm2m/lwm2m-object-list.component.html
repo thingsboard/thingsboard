@@ -44,9 +44,14 @@
       <span [innerHTML]="objectLwm2m.keyId + ': ' + (objectLwm2m.name  | highlight: searchText)"></span>
     </mat-option>
     <mat-option *ngIf="!(filteredObjectsList | async)?.length" [value]="null">
-      <span>
-          {{ 'device-profile.lwm2m.no-objects-matching' | translate: {object: searchText} }}
-      </span>
+      <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
+        <span translate>device-profile.lwm2m.no-objects-found</span>
+      </div>
+      <ng-template #searchNotEmpty>
+        <span>
+            {{ 'device-profile.lwm2m.no-objects-matching' | translate:{object: truncate.transform(searchText, true, 6, &apos;...&apos;)} }}
+        </span>
+      </ng-template>
     </mat-option>
   </mat-autocomplete>
   <mat-error *ngIf="lwm2mListFormGroup.get('objectsList').hasError('required')">

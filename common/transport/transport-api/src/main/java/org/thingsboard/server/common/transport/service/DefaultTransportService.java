@@ -580,17 +580,9 @@ public class DefaultTransportService implements TransportService {
     }
 
     @Override
-    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToDeviceRpcRequestMsg msg, boolean isFailedRpc, TransportServiceCallback<Void> callback) {
+    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToDeviceRpcRequestMsg msg, TransportServiceCallback<Void> callback) {
         if (msg.getPersisted()) {
-            RpcStatus status;
-
-            if (isFailedRpc) {
-                status = RpcStatus.FAILED;
-            } else if (msg.getOneway()) {
-                status = RpcStatus.SUCCESSFUL;
-            } else {
-                status = RpcStatus.DELIVERED;
-            }
+            RpcStatus status = msg.getOneway() ? RpcStatus.SUCCESSFUL : RpcStatus.DELIVERED;
 
             TransportProtos.ToDevicePersistedRpcResponseMsg responseMsg = TransportProtos.ToDevicePersistedRpcResponseMsg.newBuilder()
                     .setRequestId(msg.getRequestId())

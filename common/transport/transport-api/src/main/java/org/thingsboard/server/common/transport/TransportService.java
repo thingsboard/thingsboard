@@ -110,7 +110,7 @@ public interface TransportService {
 
     void process(SessionInfoProto sessionInfo, ToServerRpcRequestMsg msg, TransportServiceCallback<Void> callback);
 
-    void process(SessionInfoProto sessionInfo, ToDeviceRpcRequestMsg msg, boolean isFailedRpc, TransportServiceCallback<Void> callback);
+    void process(SessionInfoProto sessionInfo, ToDeviceRpcRequestMsg msg, TransportServiceCallback<Void> callback);
 
     void process(SessionInfoProto sessionInfo, SubscriptionInfoProto msg, TransportServiceCallback<Void> callback);
 
