@@ -45,6 +45,7 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -398,7 +399,7 @@ public class LwM2mClient implements Serializable {
     }
 
     private Set<ContentFormat> clientSupportContentFormat(Registration registration) {
-        Set<ContentFormat> contentFormats = ConcurrentHashMap.newKeySet();
+        Set<ContentFormat> contentFormats = new HashSet<>();
         if (registration == null) {
             contentFormats.add(ContentFormat.DEFAULT);
         } else {
