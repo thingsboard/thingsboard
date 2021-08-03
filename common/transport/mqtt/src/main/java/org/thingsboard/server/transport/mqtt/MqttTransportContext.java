@@ -68,23 +68,4 @@ public class MqttTransportContext extends TransportContext {
     @Value("${transport.mqtt.msg_queue_size_per_device_limit:100}")
     private int messageQueueSizePerDeviceLimit;
 
-    @Getter
-    private ExecutorService msqProcessorExecutor;
-
-    @Override
-    @PostConstruct
-    public void init() {
-        super.init();
-        msqProcessorExecutor = ThingsBoardExecutors.newWorkStealingPool(Runtime.getRuntime().availableProcessors() + 1, "msg-processor-on-device-connect");
-    }
-
-    @Override
-    @PreDestroy
-    public void stop() {
-        super.stop();
-        if (msqProcessorExecutor != null) {
-            msqProcessorExecutor.shutdownNow();
-        }
-    }
-
 }
