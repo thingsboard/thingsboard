@@ -52,6 +52,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -116,6 +117,9 @@ public class LwM2mClient implements Serializable {
     private boolean firstEdrxDownlink = true;
 
     @Getter
+    private final AtomicInteger retryAttempts;
+
+    @Getter
     Set<ContentFormat> clientSupportContentFormats;
     @Getter
     ContentFormat defaultContentFormat;
@@ -132,6 +136,7 @@ public class LwM2mClient implements Serializable {
         this.resources = new ConcurrentHashMap<>();
         this.state = LwM2MClientState.CREATED;
         this.lock = new ReentrantLock();
+        this.retryAttempts = new AtomicInteger(0);
     }
 
     public void init(ValidateDeviceCredentialsResponse credentials, UUID sessionId) {
