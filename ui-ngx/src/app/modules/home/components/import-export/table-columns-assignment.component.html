@@ -31,10 +31,15 @@
   <ng-container matColumnDef="type">
     <mat-header-cell *matHeaderCellDef style="flex: 0 0 40%" class="mat-column-type"> {{ 'import.column-type.column-type' | translate }} </mat-header-cell>
     <mat-cell *matCellDef="let column">
-      <mat-select matInput [(ngModel)]="column.type" (ngModelChange)="columnsUpdated()">
+      <mat-select [(ngModel)]="column.type" (ngModelChange)="columnsUpdated()">
         <mat-option *ngFor="let type of columnTypes" [value]="type.value" [disabled]="type.disabled">
           {{ columnTypesTranslations.get(type.value) | translate }}
         </mat-option>
+        <mat-optgroup label="{{ 'import.credentials' | translate }}" *ngIf="entityType === entityTypeDevice">
+          <mat-option *ngFor="let credential of columnDeviceCredentials" [value]="credential.value" [disabled]="credential.disabled">
+            {{ columnTypesTranslations.get(credential.value) | translate }}
+          </mat-option>
+        </mat-optgroup>
       </mat-select>
     </mat-cell>
   </ng-container>

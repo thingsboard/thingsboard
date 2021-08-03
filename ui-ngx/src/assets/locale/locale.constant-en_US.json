@@ -2184,9 +2184,11 @@
         "column-title": "Title",
         "column-example": "Example value data",
         "column-key": "Attribute/telemetry key",
+        "credentials": "Credentials",
         "csv-delimiter": "CSV delimiter",
         "csv-first-line-header": "First line contains column names",
         "csv-update-data": "Update attributes/telemetry",
+        "details": "Details",
         "import-csv-number-columns-error": "A file should contain at least two columns",
         "import-csv-invalid-format-error": "Invalid file format. Line: '{{line}}'",
         "column-type": {
@@ -2200,6 +2202,25 @@
             "timeseries": "Timeseries",
             "entity-field": "Entity field",
             "access-token": "Access token",
+            "x509": "X.509",
+            "mqtt": {
+              "client-id": "MQTT client ID",
+              "user-name": "MQTT user name",
+              "password": "MQTT password"
+            },
+            "lwm2m": {
+              "client-endpoint": "LwM2M endpoint client name",
+              "security-config-mode": "LwM2M security config mode",
+              "client-identity": "LwM2M client identity",
+              "client-key": "LwM2M client key",
+              "client-cert": "LwM2M client public key",
+              "bootstrap-server-security-mode": "LwM2M bootstrap server security mode",
+              "bootstrap-server-secret-key": "LwM2M bootstrap server secret key",
+              "bootstrap-server-public-key-id": "LwM2M bootstrap server public key or id",
+              "lwm2m-server-security-mode": "LwM2M server security mode",
+              "lwm2m-server-secret-key": "LwM2M server secret key",
+              "lwm2m-server-public-key-id": "LwM2M server public key or id"
+            },
             "isgateway": "Is Gateway",
             "activity-time-from-gateway-device": "Activity time from gateway device",
             "description": "Description",
