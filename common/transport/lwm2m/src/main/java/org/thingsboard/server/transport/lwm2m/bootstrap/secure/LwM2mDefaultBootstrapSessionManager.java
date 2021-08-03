@@ -108,15 +108,15 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
                                   BootstrapDownlinkRequest<? extends LwM2mResponse> request) {
         String logMsg = "";
         if (request instanceof BootstrapFinishRequest) {
-            logMsg = String.format("%s: %s receives success response  session : %s", LOG_LWM2M_INFO,
+            logMsg = String.format("%s: %s receives success response  session: %s", LOG_LWM2M_INFO,
                     request.getClass().getSimpleName(), bsSession.toString());
         }
         else if(request instanceof BootstrapDeleteRequest) {
-            logMsg = String.format("%s: %s %s receives success response for %s : %s", LOG_LWM2M_INFO, request.getClass().getSimpleName(),
+            logMsg = String.format("%s: %s %s receives success response for %s: %s", LOG_LWM2M_INFO, request.getClass().getSimpleName(),
                     request.getPath().toString(), bsSession.toString(), request.toString());
         }
         else if(request instanceof BootstrapWriteRequest) {
-            logMsg = String.format("%s: %s %s receives success response for %s : %s", LOG_LWM2M_INFO, request.getClass().getSimpleName(),
+            logMsg = String.format("%s: %s %s receives success response for %s: %s", LOG_LWM2M_INFO, request.getClass().getSimpleName(),
                     request.getPath().toString(), bsSession.toString(), request.toString());
         }
         log.warn(logMsg);
@@ -145,7 +145,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
     @Override
     public BootstrapPolicy onRequestFailure(BootstrapSession bsSession,
                                             BootstrapDownlinkRequest<? extends LwM2mResponse> request, Throwable cause) {
-        String logMsg = String.format("%s: {} {} failed because of {} for {} : {}", LOG_LWM2M_INFO,
+        String logMsg = String.format("%s: %s %s failed because of %s for %s: %s", LOG_LWM2M_INFO,
                 request.getClass().getSimpleName(), request.getPath().toString(), cause.toString(), bsSession.toString(),
                 request.toString());
         log.warn(logMsg);
