@@ -250,18 +250,20 @@ message EntityViewUpdateMsg {
 
 message AlarmUpdateMsg {
   UpdateMsgType msgType = 1;
-  string name = 2;
-  string type = 3;
-  string originatorType = 4;
-  string originatorName = 5;
-  string severity = 6;
-  string status = 7;
-  int64 startTs = 8;
-  int64 endTs = 9;
-  int64 ackTs = 10;
-  int64 clearTs = 11;
-  string details = 12;
-  bool propagate = 13;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string name = 4;
+  string type = 5;
+  string originatorType = 6;
+  string originatorName = 7;
+  string severity = 8;
+  string status = 9;
+  int64 startTs = 10;
+  int64 endTs = 11;
+  int64 ackTs = 12;
+  int64 clearTs = 13;
+  string details = 14;
+  bool propagate = 15;
 }
 
 message CustomerUpdateMsg {

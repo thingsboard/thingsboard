@@ -54,6 +54,7 @@ public class AlarmEdgeProcessor extends BaseEdgeProcessor {
         EntityId originatorId = getAlarmOriginator(tenantId, alarmUpdateMsg.getOriginatorName(),
                 EntityType.valueOf(alarmUpdateMsg.getOriginatorType()));
         if (originatorId == null) {
+            log.warn("Originator not found for the alarm msg {}", alarmUpdateMsg);
             return Futures.immediateFuture(null);
         }
         try {
