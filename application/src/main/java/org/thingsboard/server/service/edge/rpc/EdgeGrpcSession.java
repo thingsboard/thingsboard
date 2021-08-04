@@ -527,7 +527,7 @@ public final class EdgeGrpcSession implements Closeable {
             case RULE_CHAIN_METADATA:
                 return ctx.getRuleChainProcessor().processRuleChainMetadataToEdge(edgeEvent, msgType);
             case ALARM:
-                return ctx.getAlarmProcessor().processAlarmToEdge(edge, edgeEvent, msgType);
+                return ctx.getAlarmProcessor().processAlarmToEdge(edge, edgeEvent, msgType, action);
             case USER:
                 return ctx.getUserProcessor().processUserToEdge(edge, edgeEvent, msgType, action);
             case RELATION:
