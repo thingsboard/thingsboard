@@ -56,10 +56,10 @@ public class LwM2MInMemoryBootstrapConfigStore extends InMemoryBootstrapConfigSt
     }
 
     @Override
-    public BootstrapConfig remove(String enpoint) {
+    public BootstrapConfig remove(String endpoint) {
         writeLock.lock();
         try {
-            return super.remove(enpoint);
+            return super.remove(endpoint);
         } finally {
             writeLock.unlock();
         }
