@@ -734,7 +734,15 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         edgeImitator.expectMessageAmount(1);
         doDelete("/api/alarm/" + savedAlarm.getId().getId().toString())
                 .andExpect(status().isOk());
-        Assert.assertFalse(edgeImitator.waitForMessages(1));
+        Assert.assertTrue(edgeImitator.waitForMessages(1));
+        latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof AlarmUpdateMsg);
+        alarmUpdateMsg = (AlarmUpdateMsg) latestMessage;
+        Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, alarmUpdateMsg.getMsgType());
+        Assert.assertEquals(alarmUpdateMsg.getType(), savedAlarm.getType());
+        Assert.assertEquals(alarmUpdateMsg.getName(), savedAlarm.getName());
+        Assert.assertEquals(alarmUpdateMsg.getOriginatorName(), device.getName());
+        Assert.assertEquals(alarmUpdateMsg.getStatus(), AlarmStatus.CLEARED_ACK.name());
 
         log.info("Alarms tested successfully");
     }
