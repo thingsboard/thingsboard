@@ -54,10 +54,10 @@ export class AttributeService {
     const keys = timeseries.map(attribute => encodeURI(attribute.key)).join(',');
     let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/timeseries/delete` +
       `?keys=${keys}&deleteAllDataForKeys=${deleteAllDataForKeys}`;
-    if (startTs) {
+    if (isDefinedAndNotNull(startTs)) {
       url += `&startTs=${startTs}`;
     }
-    if (endTs) {
+    if (isDefinedAndNotNull(endTs)) {
       url += `&endTs=${endTs}`;
     }
     return this.http.delete(url, defaultHttpOptionsFromConfig(config));
