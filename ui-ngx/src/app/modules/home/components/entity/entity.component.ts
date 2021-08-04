@@ -50,6 +50,7 @@ export abstract class EntityComponent<T extends BaseData<HasId>,
   @Input()
   set isEdit(isEdit: boolean) {
     this.isEditValue = isEdit;
+    this.cd.markForCheck();
     this.updateFormState();
   }
 
@@ -107,7 +108,6 @@ export abstract class EntityComponent<T extends BaseData<HasId>,
       } else {
         this.entityForm.disable({emitEvent: false});
       }
-      this.cd.markForCheck();
     }
   }
 
