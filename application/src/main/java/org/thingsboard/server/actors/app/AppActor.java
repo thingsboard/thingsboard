@@ -55,7 +55,7 @@ public class AppActor extends ContextAwareActor {
     private final TbTenantProfileCache tenantProfileCache;
     private final TenantService tenantService;
     private final Set<TenantId> deletedTenants;
-    private boolean ruleChainsInitialized;
+    private volatile boolean ruleChainsInitialized;
 
     private AppActor(ActorSystemContext systemContext) {
         super(systemContext);
@@ -69,7 +69,7 @@ public class AppActor extends ContextAwareActor {
         if (!ruleChainsInitialized) {
             initTenantActors();
             ruleChainsInitialized = true;
-            if (msg.getMsgType() != MsgType.APP_INIT_MSG) {
+            if (msg.getMsgType() != MsgType.APP_INIT_MSG && msg.getMsgType() != MsgType.PARTITION_CHANGE_MSG) {
                 log.warn("Rule Chains initialized by unexpected message: {}", msg);
             }
         }
