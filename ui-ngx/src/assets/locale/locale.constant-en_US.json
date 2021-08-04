@@ -104,6 +104,7 @@
         "proxy-port-range": "Proxy port should be in a range from 1 to 65535.",
         "proxy-user": "Proxy user",
         "proxy-password": "Proxy password",
+        "change-password": "Change password",
         "send-test-mail": "Send test mail",
         "sms-provider": "SMS provider",
         "sms-provider-settings": "SMS provider settings",

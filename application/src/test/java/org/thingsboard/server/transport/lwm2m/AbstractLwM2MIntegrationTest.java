@@ -27,6 +27,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
@@ -261,7 +262,7 @@ public class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
 
     @Before
     public void beforeTest() throws Exception {
-        executor = Executors.newScheduledThreadPool(10);
+        executor = Executors.newScheduledThreadPool(10, ThingsBoardThreadFactory.forName("test-lwm2m-scheduled"));
         loginTenantAdmin();
 
         String[] resources = new String[]{"1.xml", "2.xml", "3.xml", "5.xml", "9.xml"};

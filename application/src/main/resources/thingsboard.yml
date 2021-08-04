@@ -588,6 +588,7 @@ transport:
     bind_address: "${MQTT_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${MQTT_BIND_PORT:1883}"
     timeout: "${MQTT_TIMEOUT:10000}"
+    msg_queue_size_per_device_limit: "${MQTT_MSG_QUEUE_SIZE_PER_DEVICE_LIMIT:100}" # messages await in the queue before device connected state. This limit works on low level before TenantProfileLimits mechanism
     netty:
       leak_detector_level: "${NETTY_LEAK_DETECTOR_LVL:DISABLED}"
       boss_group_thread_count: "${NETTY_BOSS_GROUP_THREADS:1}"
