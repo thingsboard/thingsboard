@@ -42,7 +42,7 @@
         <spring-boot.version>2.3.12.RELEASE</spring-boot.version>
         <spring.version>5.2.16.RELEASE</spring.version>
         <spring-redis.version>5.2.11.RELEASE</spring-redis.version>
-        <spring-security.version>5.4.1</spring-security.version>
+        <spring-security.version>5.4.4</spring-security.version>
         <spring-data-redis.version>2.4.3</spring-data-redis.version>
         <jedis.version>3.3.0</jedis.version>
         <jjwt.version>0.7.0</jjwt.version>
