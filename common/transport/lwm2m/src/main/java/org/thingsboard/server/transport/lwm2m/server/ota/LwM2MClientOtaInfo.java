@@ -106,6 +106,7 @@ public abstract class LwM2MClientOtaInfo<Strategy, State, Result> {
 
     public abstract OtaPackageType getType();
 
+    @JsonIgnore
     public String getTargetPackageId() {
         return getPackageId(targetName, targetVersion);
     }
