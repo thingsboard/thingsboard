@@ -90,6 +90,7 @@ public abstract class AbstractRpcController extends BaseController {
             long expTime = System.currentTimeMillis() + Math.max(minTimeout, timeout);
             UUID rpcRequestUUID = rpcRequestBody.has("requestUUID") ? UUID.fromString(rpcRequestBody.get("requestUUID").asText()) : UUID.randomUUID();
             boolean persisted = rpcRequestBody.has(DataConstants.PERSISTENT) && rpcRequestBody.get(DataConstants.PERSISTENT).asBoolean();
+            String additionalInfo =  JacksonUtil.toString(rpcRequestBody.get(DataConstants.ADDITIONAL_INFO));
             accessValidator.validate(currentUser, Operation.RPC_CALL, deviceId, new HttpValidationCallback(response, new FutureCallback<>() {
                 @Override
                 public void onSuccess(@Nullable DeferredResult<ResponseEntity> result) {
@@ -99,7 +100,8 @@ public abstract class AbstractRpcController extends BaseController {
                             oneWay,
                             expTime,
                             body,
-                            persisted
+                            persisted,
+                            additionalInfo
                     );
                     deviceRpcService.processRestApiRpcRequest(rpcRequest, fromDeviceRpcResponse -> reply(new LocalRequestMetaData(rpcRequest, currentUser, result), fromDeviceRpcResponse, timeoutStatus, noActiveConnectionStatus), currentUser);
                 }

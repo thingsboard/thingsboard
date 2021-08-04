@@ -234,6 +234,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         rpc.setExpirationTime(request.getExpirationTime());
         rpc.setRequest(JacksonUtil.valueToTree(request));
         rpc.setStatus(status);
+        rpc.setAdditionalInfo(JacksonUtil.valueToTree(request.getAdditionalInfo()));
         return systemContext.getTbRpcService().save(tenantId, rpc);
     }
 
