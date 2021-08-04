@@ -100,6 +100,8 @@ public class TbSendRPCRequestNode implements TbNode {
                 params = gson.toJson(paramsEl);
             }
 
+            String additionalInfo = gson.toJson(json.get(DataConstants.ADDITIONAL_INFO));
+
             RuleEngineDeviceRpcRequest request = RuleEngineDeviceRpcRequest.builder()
                     .oneway(oneway)
                     .method(json.get("method").getAsString())
@@ -112,6 +114,7 @@ public class TbSendRPCRequestNode implements TbNode {
                     .expirationTime(expirationTime)
                     .restApiCall(restApiCall)
                     .persisted(persisted)
+                    .additionalInfo(additionalInfo)
                     .build();
 
             ctx.getRpcService().sendRpcRequestToDevice(request, ruleEngineDeviceRpcResponse -> {

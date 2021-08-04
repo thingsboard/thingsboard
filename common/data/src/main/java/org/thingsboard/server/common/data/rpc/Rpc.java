@@ -33,6 +33,7 @@ public class Rpc extends BaseData<RpcId> implements HasTenantId {
     private JsonNode request;
     private JsonNode response;
     private RpcStatus status;
+    private JsonNode additionalInfo;
 
     public Rpc() {
         super();
@@ -50,5 +51,6 @@ public class Rpc extends BaseData<RpcId> implements HasTenantId {
         this.request = rpc.getRequest();
         this.response = rpc.getResponse();
         this.status = rpc.getStatus();
+        this.additionalInfo = rpc.getAdditionalInfo();
     }
 }
