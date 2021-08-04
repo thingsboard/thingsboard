@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.request.BootstrapRequest;
 import org.eclipse.leshan.core.request.Identity;
+import org.eclipse.leshan.server.bootstrap.BootstrapConfigStore;
 import org.eclipse.leshan.server.bootstrap.BootstrapSession;
 import org.eclipse.leshan.server.bootstrap.DefaultBootstrapSession;
 import org.eclipse.leshan.server.bootstrap.DefaultBootstrapSessionManager;
@@ -40,12 +41,13 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
      *
      * @param bsSecurityStore the {@link BootstrapSecurityStore} used by default {@link SecurityChecker}.
      */
-    public LwM2mDefaultBootstrapSessionManager(BootstrapSecurityStore bsSecurityStore) {
-        this(bsSecurityStore, new SecurityChecker());
+    public LwM2mDefaultBootstrapSessionManager(BootstrapSecurityStore bsSecurityStore, BootstrapConfigStore configStore) {
+        this(bsSecurityStore, new SecurityChecker(), configStore);
     }
 
-    public LwM2mDefaultBootstrapSessionManager(BootstrapSecurityStore bsSecurityStore, SecurityChecker securityChecker) {
-        super(bsSecurityStore);
+    public LwM2mDefaultBootstrapSessionManager(BootstrapSecurityStore bsSecurityStore, SecurityChecker securityChecker,
+                                               BootstrapConfigStore configStore) {
+        super(bsSecurityStore, configStore);
         this.bsSecurityStore = bsSecurityStore;
         this.securityChecker = securityChecker;
     }
@@ -56,13 +58,13 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
         if (bsSecurityStore != null) {
             Iterator<SecurityInfo> securityInfos = (clientIdentity.getPskIdentity() != null && !clientIdentity.getPskIdentity().isEmpty()) ?
                     Collections.singletonList(bsSecurityStore.getByIdentity(clientIdentity.getPskIdentity())).iterator() : bsSecurityStore.getAllByEndpoint(request.getEndpointName());
-            log.info("Bootstrap session started securityInfos: [{}]", securityInfos);
             authorized = securityChecker.checkSecurityInfos(request.getEndpointName(), clientIdentity, securityInfos);
+//            log.info("Bootstrap session started securityInfos: [{}]", securityInfos.next());
         } else {
             authorized = true;
         }
         DefaultBootstrapSession session = new DefaultBootstrapSession(request, clientIdentity, authorized);
-        log.info("Bootstrap session started : {}", session);
+        log.info("Bootstrap session started : [{}]", session);
         return session;
     }
 }

@@ -48,7 +48,7 @@ public enum LwM2mVersion {
         throw new IllegalArgumentException(String.format("Unsupported typeLwM2mVersion type : %s", version));
     }
 
-    public static LwM2mVersion fromVersionStr(String versionStr) {
+    public static LwM2mVersion fromVersionStr(Version versionStr) {
         for (LwM2mVersion to : LwM2mVersion.values()) {
             if (to.version.toString().equals(versionStr)) {
                 return to;

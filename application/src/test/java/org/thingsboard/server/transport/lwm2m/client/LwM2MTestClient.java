@@ -39,12 +39,13 @@ import org.eclipse.leshan.core.model.LwM2mModel;
 import org.eclipse.leshan.core.model.ObjectLoader;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.StaticModel;
-import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeDecoder;
-import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeEncoder;
+import org.eclipse.leshan.core.node.codec.DefaultLwM2mDecoder;
+import org.eclipse.leshan.core.node.codec.DefaultLwM2mEncoder;
 import org.eclipse.leshan.core.request.BootstrapRequest;
 import org.eclipse.leshan.core.request.DeregisterRequest;
 import org.eclipse.leshan.core.request.RegisterRequest;
 import org.eclipse.leshan.core.request.UpdateRequest;
+import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -130,8 +131,9 @@ public class LwM2MTestClient {
         builder.setRegistrationEngineFactory(engineFactory);
         builder.setEndpointFactory(endpointFactory);
         builder.setSharedExecutor(executor);
-        builder.setDecoder(new DefaultLwM2mNodeDecoder(true));
-        builder.setEncoder(new DefaultLwM2mNodeEncoder(true));
+        builder.setDecoder(new DefaultLwM2mDecoder());
+        /* Use a magic converter to support bad type send by the UI. */
+        builder.setEncoder(new DefaultLwM2mEncoder(LwM2mValueConverterImpl.getInstance()));
         client = builder.build();
 
         LwM2mClientObserver observer = new LwM2mClientObserver() {

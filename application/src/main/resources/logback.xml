@@ -34,8 +34,8 @@
 
 <!--    <logger name="org.thingsboard.server.service.subscription" level="TRACE"/>-->
 <!--    <logger name="org.thingsboard.server.service.telemetry" level="TRACE"/>-->
-<!--    <logger name="org.eclipse.californium.scandium.DTLSConnector" level="TRACE" />-->
-<!--    <logger name="org.eclipse.californium.scandium.dtls.Handshaker" level="DEBUG" />-->
+    <logger name="org.eclipse.californium.scandium.DTLSConnector" level="TRACE" />
+    <logger name="org.eclipse.californium.scandium.dtls.Handshaker" level="DEBUG" />
 
     <!-- Top Rule Nodes by max execution time -->
 <!--    <logger name="org.thingsboard.server.service.queue.TbMsgPackProcessingContext" level="DEBUG" /> -->
