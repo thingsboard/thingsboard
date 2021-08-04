@@ -26,18 +26,18 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { MatVerticalStepper } from '@angular/material/stepper';
 import {
+  BulkImportRequest,
+  BulkImportResult,
+  ColumnMapping,
   convertCSVToJson,
   CsvColumnParam,
+  CSVDelimiter,
   CsvToJsonConfig,
   CsvToJsonResult,
   ImportEntityColumnType
 } from '@home/components/import-export/import-export.models';
-import { EdgeImportEntityData, ImportEntitiesResultInfo, ImportEntityData } from '@app/shared/models/entity.models';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
 import { TableColumnsAssignmentComponent } from '@home/components/import-export/table-columns-assignment.component';
-import { getDeviceCredentialMQTTDefault } from '@shared/models/device.models';
-import { isDefinedAndNotNull } from '@core/utils';
-import { getLwm2mSecurityConfigModelsDefault } from '@shared/models/lwm2m-security-config.models';
 import { Ace } from 'ace-builds';
 import { getAce } from '@shared/models/ace/ace.models';
 
@@ -68,7 +68,7 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
   importTitle: string;
   importFileLabel: string;
 
-  delimiters: { key: string, value: string }[] = [{
+  delimiters: { key: CSVDelimiter, value: string }[] = [{
     key: ',',
     value: ','
   }, {
@@ -89,8 +89,7 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
   columnTypesFormGroup: FormGroup;
 
   isImportData = false;
-  progressCreate = 0;
-  statistical: ImportEntitiesResultInfo;
+  statistical: BulkImportResult;
 
   private allowAssignColumn: ImportEntityColumnType[];
   private initEditorComponent = false;
@@ -215,169 +214,16 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
 
 
   private addEntities() {
-    const importData = this.parseData;
-    const isHeader: boolean = this.importParametersFormGroup.get('isHeader').value;
-    const parameterColumns: CsvColumnParam[] = this.columnTypesFormGroup.get('columnsParam').value;
-    const entitiesData: ImportEntityData[] = [];
-    let sentDataLength = 0;
-    const startLineNumber = isHeader ? 2 : 1;
-    for (let row = 0; row < importData.rows.length; row++) {
-      const entityData: ImportEntityData = this.constructDraftImportEntityData();
-      const i = row;
-      entityData.lineNumber = startLineNumber + i;
-      for (let j = 0; j < parameterColumns.length; j++) {
-        if (!isDefinedAndNotNull(importData.rows[i][j]) || importData.rows[i][j] === '') {
-          continue;
-        }
-        switch (parameterColumns[j].type) {
-          case ImportEntityColumnType.serverAttribute:
-            entityData.attributes.server.push({
-              key: parameterColumns[j].key,
-              value: importData.rows[i][j]
-            });
-            break;
-          case ImportEntityColumnType.timeseries:
-            entityData.timeseries.push({
-              key: parameterColumns[j].key,
-              value: importData.rows[i][j]
-            });
-            break;
-          case ImportEntityColumnType.sharedAttribute:
-            entityData.attributes.shared.push({
-              key: parameterColumns[j].key,
-              value: importData.rows[i][j]
-            });
-            break;
-          case ImportEntityColumnType.name:
-            entityData.name = importData.rows[i][j];
-            break;
-          case ImportEntityColumnType.type:
-            entityData.type = importData.rows[i][j];
-            break;
-          case ImportEntityColumnType.label:
-            entityData.label = importData.rows[i][j];
-            break;
-          case ImportEntityColumnType.isGateway:
-            entityData.gateway = importData.rows[i][j];
-            break;
-          case ImportEntityColumnType.description:
-            entityData.description = importData.rows[i][j];
-            break;
-          case ImportEntityColumnType.accessToken:
-            entityData.credential.accessToken = importData.rows[i][j];
-            break;
-          case ImportEntityColumnType.x509:
-            entityData.credential.x509 = importData.rows[i][j];
-            break;
-          case ImportEntityColumnType.mqttClientId:
-            if (!entityData.credential.mqtt) {
-              entityData.credential.mqtt = getDeviceCredentialMQTTDefault();
-            }
-            entityData.credential.mqtt.clientId = importData.rows[i][j];
-            break;
-          case ImportEntityColumnType.mqttUserName:
-            if (!entityData.credential.mqtt) {
-              entityData.credential.mqtt = getDeviceCredentialMQTTDefault();
-            }
-            entityData.credential.mqtt.userName = importData.rows[i][j];
-            break;
-          case ImportEntityColumnType.mqttPassword:
-            if (!entityData.credential.mqtt) {
-              entityData.credential.mqtt = getDeviceCredentialMQTTDefault();
-            }
-            entityData.credential.mqtt.password = importData.rows[i][j];
-            break;
-          case ImportEntityColumnType.lwm2mClientEndpoint:
-            if (!entityData.credential.lwm2m) {
-              entityData.credential.lwm2m = getLwm2mSecurityConfigModelsDefault();
-            }
-            entityData.credential.lwm2m.client.endpoint = importData.rows[i][j];
-            break;
-          case ImportEntityColumnType.lwm2mClientSecurityConfigMode:
-            if (!entityData.credential.lwm2m) {
-              entityData.credential.lwm2m = getLwm2mSecurityConfigModelsDefault();
-            }
-            entityData.credential.lwm2m.client.securityConfigClientMode = importData.rows[i][j];
-            break;
-          case ImportEntityColumnType.lwm2mClientIdentity:
-            if (!entityData.credential.lwm2m) {
-              entityData.credential.lwm2m = getLwm2mSecurityConfigModelsDefault();
-            }
-            entityData.credential.lwm2m.client.identity = importData.rows[i][j];
-            break;
-          case ImportEntityColumnType.lwm2mClientKey:
-            if (!entityData.credential.lwm2m) {
-              entityData.credential.lwm2m = getLwm2mSecurityConfigModelsDefault();
-            }
-            entityData.credential.lwm2m.client.key = importData.rows[i][j];
-            break;
-          case ImportEntityColumnType.lwm2mClientCert:
-            if (!entityData.credential.lwm2m) {
-              entityData.credential.lwm2m = getLwm2mSecurityConfigModelsDefault();
-            }
-            entityData.credential.lwm2m.client.cert = importData.rows[i][j];
-            break;
-          case ImportEntityColumnType.lwm2mBootstrapServerSecurityMode:
-            if (!entityData.credential.lwm2m) {
-              entityData.credential.lwm2m = getLwm2mSecurityConfigModelsDefault();
-            }
-            entityData.credential.lwm2m.bootstrap.bootstrapServer.securityMode = importData.rows[i][j];
-            break;
-          case ImportEntityColumnType.lwm2mBootstrapServerClientPublicKeyOrId:
-            if (!entityData.credential.lwm2m) {
-              entityData.credential.lwm2m = getLwm2mSecurityConfigModelsDefault();
-            }
-            entityData.credential.lwm2m.bootstrap.bootstrapServer.clientPublicKeyOrId = importData.rows[i][j];
-            break;
-          case ImportEntityColumnType.lwm2mBootstrapServerClientSecretKey:
-            if (!entityData.credential.lwm2m) {
-              entityData.credential.lwm2m = getLwm2mSecurityConfigModelsDefault();
-            }
-            entityData.credential.lwm2m.bootstrap.bootstrapServer.clientSecretKey = importData.rows[i][j];
-            break;
-          case ImportEntityColumnType.lwm2mServerSecurityMode:
-            if (!entityData.credential.lwm2m) {
-              entityData.credential.lwm2m = getLwm2mSecurityConfigModelsDefault();
-            }
-            entityData.credential.lwm2m.bootstrap.lwm2mServer.securityMode = importData.rows[i][j];
-            break;
-          case ImportEntityColumnType.lwm2mServerClientPublicKeyOrId:
-            if (!entityData.credential.lwm2m) {
-              entityData.credential.lwm2m = getLwm2mSecurityConfigModelsDefault();
-            }
-            entityData.credential.lwm2m.bootstrap.lwm2mServer.clientPublicKeyOrId = importData.rows[i][j];
-            break;
-          case ImportEntityColumnType.lwm2mServerClientSecretKey:
-            if (!entityData.credential.lwm2m) {
-              entityData.credential.lwm2m = getLwm2mSecurityConfigModelsDefault();
-            }
-            entityData.credential.lwm2m.bootstrap.lwm2mServer.clientSecretKey = importData.rows[i][j];
-            break;
-          case ImportEntityColumnType.edgeLicenseKey:
-            (entityData as EdgeImportEntityData).edgeLicenseKey = importData.rows[i][j];
-            break;
-          case ImportEntityColumnType.cloudEndpoint:
-            (entityData as EdgeImportEntityData).cloudEndpoint = importData.rows[i][j];
-            break;
-          case ImportEntityColumnType.routingKey:
-            (entityData as EdgeImportEntityData).routingKey = importData.rows[i][j];
-            break;
-          case ImportEntityColumnType.secret:
-            (entityData as EdgeImportEntityData).secret = importData.rows[i][j];
-            break;
-        }
+    const entitiesData: BulkImportRequest = {
+      file: this.selectFileFormGroup.get('importData').value,
+      mapping: {
+        columns: this.processingColumnsParams(),
+        delimiter: this.importParametersFormGroup.get('delim').value,
+        header: this.importParametersFormGroup.get('isHeader').value,
+        update: this.importParametersFormGroup.get('isUpdate').value
       }
-      entitiesData.push(entityData);
-    }
-    const createImportEntityCompleted = () => {
-      sentDataLength++;
-      this.progressCreate = Math.round((sentDataLength / importData.rows.length) * 100);
     };
-
-    const isUpdate: boolean = this.importParametersFormGroup.get('isUpdate').value;
-
-    this.importExport.importEntities(entitiesData, this.entityType, isUpdate,
-      createImportEntityCompleted, {ignoreErrors: true, resendRequest: true}).subscribe(
+    this.importExport.bulkImportEntities(entitiesData, this.entityType, {ignoreErrors: true}).subscribe(
       (result) => {
         this.statistical = result;
         this.isImportData = false;
@@ -386,36 +232,22 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
     );
   }
 
-  private constructDraftImportEntityData(): ImportEntityData {
-    const entityData: ImportEntityData = {
-      lineNumber: 1,
-      name: '',
-      type: '',
-      description: '',
-      gateway: null,
-      label: '',
-      attributes: {
-        server: [],
-        shared: []
-      },
-      credential: {},
-      timeseries: []
-    };
-    if (this.entityType === EntityType.EDGE) {
-      const edgeEntityData: EdgeImportEntityData = entityData as EdgeImportEntityData;
-      edgeEntityData.edgeLicenseKey = '';
-      edgeEntityData.cloudEndpoint = '';
-      edgeEntityData.routingKey = '';
-      edgeEntityData.secret = '';
-      return edgeEntityData;
-    } else {
-      return entityData;
-    }
+  private processingColumnsParams(): Array<ColumnMapping> {
+    const parameterColumns: CsvColumnParam[] = this.columnTypesFormGroup.get('columnsParam').value;
+    const allowKeyForTypeColumns: ImportEntityColumnType[] = [
+      ImportEntityColumnType.serverAttribute,
+      ImportEntityColumnType.timeseries,
+      ImportEntityColumnType.sharedAttribute
+    ];
+    return parameterColumns.map(column => ({
+      type: column.type,
+      key: allowKeyForTypeColumns.some(type => type === column.type) ? column.key : undefined
+    }));
   }
 
   initEditor() {
     if (!this.initEditorComponent) {
-      this.createEditor(this.failureDetailsEditorElmRef, this.statistical.error.errors);
+      this.createEditor(this.failureDetailsEditorElmRef, this.statistical.errorsList.join('\n'));
     }
   }
 

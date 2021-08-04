@@ -38,6 +38,8 @@ export interface CsvToJsonResult {
   rows?: any[][];
 }
 
+export type CSVDelimiter = ',' | ';' | '|' | '\t';
+
 export enum ImportEntityColumnType {
   name = 'NAME',
   type = 'TYPE',
@@ -111,6 +113,28 @@ export interface CsvColumnParam {
   type: ImportEntityColumnType;
   key: string;
   sampleData: any;
+}
+
+export interface ColumnMapping {
+  type: ImportEntityColumnType;
+  key?: string;
+}
+
+export interface BulkImportRequest {
+  file: string;
+  mapping: {
+    columns: Array<ColumnMapping>;
+    delimiter: CSVDelimiter;
+    header: boolean;
+    update: boolean;
+  };
+}
+
+export interface BulkImportResult {
+  created: number;
+  updated: number;
+  errors: number;
+  errorsList: Array<string>;
 }
 
 export interface FileType {

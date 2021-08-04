@@ -44,7 +44,15 @@ import {
   EntityAliasesDialogData
 } from '@home/components/alias/entity-aliases-dialog.component';
 import { ItemBufferService, WidgetItem } from '@core/services/item-buffer.service';
-import { FileType, ImportWidgetResult, JSON_TYPE, WidgetsBundleItem, ZIP_TYPE } from './import-export.models';
+import {
+  BulkImportRequest,
+  BulkImportResult,
+  FileType,
+  ImportWidgetResult,
+  JSON_TYPE,
+  WidgetsBundleItem,
+  ZIP_TYPE
+} from './import-export.models';
 import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetService } from '@core/http/widget.service';
@@ -59,6 +67,9 @@ import { DeviceProfileService } from '@core/http/device-profile.service';
 import { DeviceProfile } from '@shared/models/device.models';
 import { TenantProfile } from '@shared/models/tenant.model';
 import { TenantProfileService } from '@core/http/tenant-profile.service';
+import { DeviceService } from '@core/http/device.service';
+import { AssetService } from '@core/http/asset.service';
+import { EdgeService } from '@core/http/edge.service';
 
 // @dynamic
 @Injectable()
@@ -75,6 +86,9 @@ export class ImportExportService {
               private tenantProfileService: TenantProfileService,
               private entityService: EntityService,
               private ruleChainService: RuleChainService,
+              private deviceService: DeviceService,
+              private assetService: AssetService,
+              private edgeService: EdgeService,
               private utils: UtilsService,
               private itembuffer: ItemBufferService,
               private dialog: MatDialog) {
@@ -340,6 +354,17 @@ export class ImportExportService {
         return of(null);
       })
     );
+  }
+
+  public bulkImportEntities(entitiesData: BulkImportRequest, entityType: EntityType, config?: RequestConfig): Observable<BulkImportResult> {
+    switch (entityType) {
+      case EntityType.DEVICE:
+        return this.deviceService.bulkImportDevices(entitiesData, config);
+      case EntityType.ASSET:
+        return this.assetService.bulkImportAssets(entitiesData, config);
+      case EntityType.EDGE:
+        return this.edgeService.bulkImportEdges(entitiesData, config);
+    }
   }
 
   public importEntities(entitiesData: ImportEntityData[], entityType: EntityType, updateData: boolean,
