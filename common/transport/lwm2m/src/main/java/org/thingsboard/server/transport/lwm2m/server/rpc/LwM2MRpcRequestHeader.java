@@ -20,8 +20,9 @@ import lombok.Data;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class IdOrKeyRequest {
+public class LwM2MRpcRequestHeader {
 
     private String key;
     private String id;
+    private String contentFormat;
 }

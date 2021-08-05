@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -62,12 +62,11 @@ import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcReadRespon
 import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcWriteCompositeRequest;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertMultiResourceValuesFromRpcBody;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
@@ -100,7 +99,12 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         }
         try {
             if (operationType.isHasObjectId()) {
-                String objectId = getIdFromParameters(client, rpcRequest, false);
+                LwM2MRpcRequestHeader header = JacksonUtil.fromString(rpcRequest.getParams(), LwM2MRpcRequestHeader.class);
+                String objectId = getIdFromParameters(client, header);
+                ContentFormat contentFormat = null;
+                if (StringUtils.isNotEmpty(header.getContentFormat())) {
+                    contentFormat = ContentFormat.fromName(header.getContentFormat());
+                }
                 switch (operationType) {
                     case READ:
                         sendReadRequest(client, rpcRequest, objectId);
@@ -179,7 +183,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
     }
 
     private void sendReadCompositeRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, ContentFormat contentFormatComposite) {
-        String[] versionedIds = getIdsFromParameters(client, requestMsg, true);
+        String[] versionedIds = getIdsFromParameters(client, requestMsg);
         TbLwM2MReadCompositeRequest request = TbLwM2MReadCompositeRequest.builder().versionedIds(versionedIds).timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MReadCompositeCallback(uplinkHandler, logService, client, versionedIds);
         var rpcCallback = new RpcReadResponseCompositeCallback(transportService, client, requestMsg, mainCallback);
@@ -318,30 +322,29 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         downlinkHandler.sendCancelAllRequest(client, downlink, rpcCallback);
     }
 
-    private String getIdFromParameters(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg rpcRequst, boolean isCompositeOperation) {
-        IdOrKeyRequest requestParams = JacksonUtil.fromString(rpcRequst.getParams(), IdOrKeyRequest.class);
+    private String getIdFromParameters(LwM2mClient client, LwM2MRpcRequestHeader header) {
         String targetId;
-        if (StringUtils.isNotEmpty(requestParams.getKey())) {
-            targetId = clientContext.getObjectIdByKeyNameFromProfile(client, requestParams.getKey(), isCompositeOperation);
-        } else if (StringUtils.isNotEmpty(requestParams.getId())) {
-            targetId = requestParams.getId();
+        if (StringUtils.isNotEmpty(header.getKey())) {
+            targetId = clientContext.getObjectIdByKeyNameFromProfile(client, header.getKey(), false);
+        } else if (StringUtils.isNotEmpty(header.getId())) {
+            targetId = header.getId();
         } else {
             throw new IllegalArgumentException("Can't find 'key' or 'id' in the requestParams parameters!");
         }
         return targetId;
     }
 
-    private String[] getIdsFromParameters(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg rpcRequst, boolean isCompositeOperation) {
+    private String[] getIdsFromParameters(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg rpcRequst) {
         RpcReadCompositeRequest requestParams = JacksonUtil.fromString(rpcRequst.getParams(), RpcReadCompositeRequest.class);
         if (requestParams.getKeys() != null && requestParams.getKeys().length > 0) {
-            Set targetIds = ConcurrentHashMap.newKeySet();
+            Set<String> targetIds = new HashSet<>();
             for (String key : requestParams.getKeys()) {
-                String targetId = clientContext.getObjectIdByKeyNameFromProfile(client, key, isCompositeOperation);
+                String targetId = clientContext.getObjectIdByKeyNameFromProfile(client, key, true);
                 if (targetId != null) {
                     targetIds.add(targetId);
                 }
             }
-            return (String[]) targetIds.toArray(String[]::new);
+            return targetIds.toArray(String[]::new);
         } else if (requestParams.getIds() != null && requestParams.getIds().length > 0) {
             return requestParams.getIds();
         } else {

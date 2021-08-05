@@ -284,12 +284,12 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     }
 
     @Override
-    public String getObjectIdByKeyNameFromProfile(LwM2mClient client, String keyName, boolean isComposiateOperation) {
+    public String getObjectIdByKeyNameFromProfile(LwM2mClient client, String keyName, boolean isCompositeOperation) {
         Lwm2mDeviceProfileTransportConfiguration profile = getProfile(client.getProfileId());
         Set<String> msgException = ConcurrentHashMap.newKeySet();
         msgException.add("");
         return profile.getObserveAttr().getKeyName().entrySet().stream()
-                .filter(e -> e.getValue().equals(keyName) && (isComposiateOperation || !msgException.add(client.isValidObjectVersion(e.getKey())))).findFirst().orElseThrow(
+                .filter(e -> e.getValue().equals(keyName) && (isCompositeOperation || !msgException.add(client.isValidObjectVersion(e.getKey())))).findFirst().orElseThrow(
                         () -> new IllegalArgumentException(getMsgException (keyName, msgException))
                 ).getKey();
     }

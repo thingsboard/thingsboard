@@ -22,7 +22,7 @@ import lombok.Data;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RpcReadCompositeRequest {
 
-    private String [] keys;
-    private String [] ids;
+    private String[] keys;
+    private String[] ids;
 
 }
