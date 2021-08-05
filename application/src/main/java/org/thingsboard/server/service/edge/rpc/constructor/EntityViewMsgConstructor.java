@@ -25,6 +25,9 @@ import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import static org.thingsboard.server.service.edge.rpc.EdgeProtoUtils.getInt64Value;
+import static org.thingsboard.server.service.edge.rpc.EdgeProtoUtils.getStringValue;
+
 @Component
 @TbCoreComponent
 public class EntityViewMsgConstructor {
@@ -51,11 +54,11 @@ public class EntityViewMsgConstructor {
                 .setEntityIdLSB(entityView.getEntityId().getId().getLeastSignificantBits())
                 .setEntityType(entityType);
         if (customerId != null) {
-            builder.setCustomerIdMSB(customerId.getId().getMostSignificantBits());
-            builder.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
+            builder.setCustomerIdMSB(getInt64Value(customerId.getId().getMostSignificantBits()));
+            builder.setCustomerIdLSB(getInt64Value(customerId.getId().getLeastSignificantBits()));
         }
         if (entityView.getAdditionalInfo() != null) {
-            builder.setAdditionalInfo(JacksonUtil.toString(entityView.getAdditionalInfo()));
+            builder.setAdditionalInfo(getStringValue(JacksonUtil.toString(entityView.getAdditionalInfo())));
         }
         return builder.build();
     }

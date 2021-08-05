@@ -22,6 +22,8 @@ import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import static org.thingsboard.server.service.edge.rpc.EdgeProtoUtils.getStringValue;
+
 @Component
 @TbCoreComponent
 public class RelationMsgConstructor {
@@ -35,10 +37,12 @@ public class RelationMsgConstructor {
                 .setToIdMSB(entityRelation.getTo().getId().getMostSignificantBits())
                 .setToIdLSB(entityRelation.getTo().getId().getLeastSignificantBits())
                 .setToEntityType(entityRelation.getTo().getEntityType().name())
-                .setType(entityRelation.getType())
-                .setAdditionalInfo(JacksonUtil.toString(entityRelation.getAdditionalInfo()));
+                .setType(entityRelation.getType());
+        if (entityRelation.getAdditionalInfo() != null) {
+            builder.setAdditionalInfo(JacksonUtil.toString(entityRelation.getAdditionalInfo()));
+        }
         if (entityRelation.getTypeGroup() != null) {
-            builder.setTypeGroup(entityRelation.getTypeGroup().name());
+            builder.setTypeGroup(getStringValue(entityRelation.getTypeGroup().name()));
         }
         return builder.build();
     }
