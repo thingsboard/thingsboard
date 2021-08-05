@@ -28,7 +28,6 @@ import com.google.protobuf.MessageLite;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.awaitility.Awaitility;
-import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -116,7 +115,6 @@ import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetTypeUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.service.edge.rpc.EdgeProtoUtils;
 import org.thingsboard.server.service.queue.TbClusterService;
 
 import java.util.ArrayList;
@@ -129,7 +127,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.thingsboard.server.service.edge.rpc.EdgeProtoUtils.getStringValue;
 
 @Slf4j
 abstract public class BaseEdgeTest extends AbstractControllerTest {
@@ -652,7 +649,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(relationUpdateMsg.getFromIdMSB(), relation.getFrom().getId().getMostSignificantBits());
         Assert.assertEquals(relationUpdateMsg.getToIdLSB(), relation.getTo().getId().getLeastSignificantBits());
         Assert.assertEquals(relationUpdateMsg.getToEntityType(), relation.getTo().getEntityType().name());
-        Assert.assertEquals(relationUpdateMsg.getTypeGroup().getValue(), relation.getTypeGroup().name());
+        Assert.assertEquals(relationUpdateMsg.getTypeGroup(), relation.getTypeGroup().name());
 
         // 2
         edgeImitator.expectMessageAmount(1);
@@ -676,7 +673,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(relationUpdateMsg.getFromIdMSB(), relation.getFrom().getId().getMostSignificantBits());
         Assert.assertEquals(relationUpdateMsg.getToIdLSB(), relation.getTo().getId().getLeastSignificantBits());
         Assert.assertEquals(relationUpdateMsg.getToEntityType(), relation.getTo().getEntityType().name());
-        Assert.assertEquals(relationUpdateMsg.getTypeGroup().getValue(), relation.getTypeGroup().name());
+        Assert.assertEquals(relationUpdateMsg.getTypeGroup(), relation.getTypeGroup().name());
 
         log.info("Relations tested successfully");
     }
@@ -912,9 +909,9 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, widgetTypeUpdateMsg.getMsgType());
         Assert.assertEquals(widgetTypeUpdateMsg.getIdMSB(), savedWidgetType.getUuidId().getMostSignificantBits());
         Assert.assertEquals(widgetTypeUpdateMsg.getIdLSB(), savedWidgetType.getUuidId().getLeastSignificantBits());
-        Assert.assertEquals(widgetTypeUpdateMsg.getAlias().getValue(), savedWidgetType.getAlias());
-        Assert.assertEquals(widgetTypeUpdateMsg.getName().getValue(), savedWidgetType.getName());
-        Assert.assertEquals(JacksonUtil.toJsonNode(widgetTypeUpdateMsg.getDescriptorJson().getValue()), savedWidgetType.getDescriptor());
+        Assert.assertEquals(widgetTypeUpdateMsg.getAlias(), savedWidgetType.getAlias());
+        Assert.assertEquals(widgetTypeUpdateMsg.getName(), savedWidgetType.getName());
+        Assert.assertEquals(JacksonUtil.toJsonNode(widgetTypeUpdateMsg.getDescriptorJson()), savedWidgetType.getDescriptor());
 
         // 3
         edgeImitator.expectMessageAmount(1);
@@ -1214,7 +1211,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertTrue(latestMessage instanceof DeviceUpdateMsg);
         DeviceUpdateMsg latestDeviceUpdateMsg = (DeviceUpdateMsg) latestMessage;
         Assert.assertNotEquals(deviceOnCloudName, latestDeviceUpdateMsg.getName());
-        Assert.assertEquals(deviceOnCloudName, latestDeviceUpdateMsg.getConflictName().getValue());
+        Assert.assertEquals(deviceOnCloudName, latestDeviceUpdateMsg.getConflictName());
 
         UUID newDeviceId = new UUID(latestDeviceUpdateMsg.getIdMSB(), latestDeviceUpdateMsg.getIdLSB());
 
@@ -1281,7 +1278,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         EntityId toEntityId = EntityIdFactory.getByTypeAndUuid(relationUpdateMsg.getToEntityType(), toUUID);
         Assert.assertEquals(relation.getTo(), toEntityId);
 
-        Assert.assertEquals(relation.getTypeGroup().name(), relationUpdateMsg.getTypeGroup().getValue());
+        Assert.assertEquals(relation.getTypeGroup().name(), relationUpdateMsg.getTypeGroup());
     }
 
     private void sendAlarm() throws Exception {
@@ -1393,7 +1390,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
         RelationUpdateMsg.Builder relationUpdateMsgBuilder = RelationUpdateMsg.newBuilder();
         relationUpdateMsgBuilder.setType("test");
-        relationUpdateMsgBuilder.setTypeGroup(getStringValue(RelationTypeGroup.COMMON.name()));
+        relationUpdateMsgBuilder.setTypeGroup(RelationTypeGroup.COMMON.name());
         relationUpdateMsgBuilder.setToIdMSB(device1.getId().getId().getMostSignificantBits());
         relationUpdateMsgBuilder.setToIdLSB(device1.getId().getId().getLeastSignificantBits());
         relationUpdateMsgBuilder.setToEntityType(device1.getId().getEntityType().name());

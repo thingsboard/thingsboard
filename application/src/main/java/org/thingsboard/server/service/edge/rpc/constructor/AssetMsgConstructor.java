@@ -16,16 +16,13 @@
 package org.thingsboard.server.service.edge.rpc.constructor;
 
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-
-import static org.thingsboard.server.service.edge.rpc.EdgeProtoUtils.getInt64Value;
-import static org.thingsboard.server.service.edge.rpc.EdgeProtoUtils.getStringValue;
 
 @Component
 @TbCoreComponent
@@ -39,14 +36,14 @@ public class AssetMsgConstructor {
                 .setName(asset.getName())
                 .setType(asset.getType());
         if (asset.getLabel() != null) {
-            builder.setLabel(getStringValue(asset.getLabel()));
+            builder.setLabel(asset.getLabel());
         }
         if (customerId != null) {
-            builder.setCustomerIdMSB(getInt64Value(customerId.getId().getMostSignificantBits()));
-            builder.setCustomerIdLSB(getInt64Value(customerId.getId().getLeastSignificantBits()));
+            builder.setCustomerIdMSB(customerId.getId().getMostSignificantBits());
+            builder.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
         }
         if (asset.getAdditionalInfo() != null) {
-            builder.setAdditionalInfo(getStringValue(JacksonUtil.toString(asset.getAdditionalInfo())));
+            builder.setAdditionalInfo(JacksonUtil.toString(asset.getAdditionalInfo()));
         }
         return builder.build();
     }

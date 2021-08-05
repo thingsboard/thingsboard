@@ -26,9 +26,6 @@ import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
-import static org.thingsboard.server.service.edge.rpc.EdgeProtoUtils.getInt64Value;
-import static org.thingsboard.server.service.edge.rpc.EdgeProtoUtils.getStringValue;
-
 @Component
 @TbCoreComponent
 public class UserMsgConstructor {
@@ -41,17 +38,17 @@ public class UserMsgConstructor {
                 .setEmail(user.getEmail())
                 .setAuthority(user.getAuthority().name());
         if (customerId != null) {
-            builder.setCustomerIdMSB(getInt64Value(customerId.getId().getMostSignificantBits()));
-            builder.setCustomerIdLSB(getInt64Value(customerId.getId().getLeastSignificantBits()));
+            builder.setCustomerIdMSB(customerId.getId().getMostSignificantBits());
+            builder.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
         }
         if (user.getFirstName() != null) {
-            builder.setFirstName(getStringValue(user.getFirstName()));
+            builder.setFirstName(user.getFirstName());
         }
         if (user.getLastName() != null) {
-            builder.setLastName(getStringValue(user.getLastName()));
+            builder.setLastName(user.getLastName());
         }
         if (user.getAdditionalInfo() != null) {
-            builder.setAdditionalInfo(getStringValue(JacksonUtil.toString(user.getAdditionalInfo())));
+            builder.setAdditionalInfo(JacksonUtil.toString(user.getAdditionalInfo()));
         }
         return builder.build();
     }
