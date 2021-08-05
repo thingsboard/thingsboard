@@ -112,18 +112,6 @@ public class MqttTransportHandlerTest {
     }
 
     @Test
-    public void givenMessageWithoutFixedHeader_whenProcessMqttMsg_thenProcessDisconnect() {
-        MqttFixedHeader mqttFixedHeader = null;
-        MqttMessage msg = new MqttMessage(mqttFixedHeader);
-        willDoNothing().given(handler).processDisconnect(ctx);
-
-        handler.processMqttMsg(ctx, msg);
-
-        assertThat(handler.address, is(IP_ADDR));
-        verify(handler, times(1)).processDisconnect(ctx);
-    }
-
-    @Test
     public void givenMqttConnectMessage_whenProcessMqttMsg_thenProcessConnect() {
         MqttConnectMessage msg = getMqttConnectMessage();
         willDoNothing().given(handler).processConnect(ctx, msg);
@@ -132,7 +120,7 @@ public class MqttTransportHandlerTest {
 
         assertThat(handler.address, is(IP_ADDR));
         assertThat(handler.deviceSessionCtx.getChannel(), is(ctx));
-        verify(handler, never()).processDisconnect(any());
+        verify(handler, never()).doDisconnect();
         verify(handler, times(1)).processConnect(ctx, msg);
     }
 
@@ -140,8 +128,8 @@ public class MqttTransportHandlerTest {
     public void givenQueueLimit_whenEnqueueRegularSessionMsgOverLimit_thenOK() {
         List<MqttPublishMessage> messages = Stream.generate(this::getMqttPublishMessage).limit(MSG_QUEUE_LIMIT).collect(Collectors.toList());
         messages.forEach(msg -> handler.enqueueRegularSessionMsg(ctx, msg));
-        assertThat(handler.deviceSessionCtx.getMsgQueueSize().get(), is(MSG_QUEUE_LIMIT));
-        assertThat(handler.deviceSessionCtx.getMsgQueue(), contains(messages.toArray()));
+        assertThat(handler.deviceSessionCtx.getMsgQueueSize(), is(MSG_QUEUE_LIMIT));
+        assertThat(handler.deviceSessionCtx.getMsgQueueSnapshot(), contains(messages.toArray()));
     }
 
     @Test
@@ -152,7 +140,7 @@ public class MqttTransportHandlerTest {
 
         messages.forEach((msg) -> handler.enqueueRegularSessionMsg(ctx, msg));
 
-        assertThat(handler.deviceSessionCtx.getMsgQueueSize().get(), is(limit));
+        assertThat(handler.deviceSessionCtx.getMsgQueueSize(), is(MSG_QUEUE_LIMIT));
         verify(handler, times(limit)).enqueueRegularSessionMsg(any(), any());
         verify(handler, times(MSG_QUEUE_LIMIT)).processMsgQueue(any());
         verify(ctx, times(1)).close();
@@ -169,9 +157,9 @@ public class MqttTransportHandlerTest {
         assertThat(handler.address, is(IP_ADDR));
         assertThat(handler.deviceSessionCtx.getChannel(), is(ctx));
         assertThat(handler.deviceSessionCtx.isConnected(), is(false));
-        assertThat(handler.deviceSessionCtx.getMsgQueueSize().get(), is(MSG_QUEUE_LIMIT));
-        assertThat(handler.deviceSessionCtx.getMsgQueue(), contains(messages.toArray()));
-        verify(handler, never()).processDisconnect(any());
+        assertThat(handler.deviceSessionCtx.getMsgQueueSize(), is(MSG_QUEUE_LIMIT));
+        assertThat(handler.deviceSessionCtx.getMsgQueueSnapshot(), contains(messages.toArray()));
+        verify(handler, never()).doDisconnect();
         verify(handler, times(1)).processConnect(any(), any());
         verify(handler, times(MSG_QUEUE_LIMIT)).enqueueRegularSessionMsg(any(), any());
         verify(handler, never()).processRegularSessionMsg(any(), any());
@@ -212,8 +200,8 @@ public class MqttTransportHandlerTest {
         assertThat(finishLatch.await(TIMEOUT, TimeUnit.SECONDS), is(true));
 
         //then
-        assertThat(handler.deviceSessionCtx.getMsgQueueSize().get(), is(0));
-        assertThat(handler.deviceSessionCtx.getMsgQueue(), empty());
+        assertThat(handler.deviceSessionCtx.getMsgQueueSize(), is(0));
+        assertThat(handler.deviceSessionCtx.getMsgQueueSnapshot(), empty());
         verify(handler, times(MSG_QUEUE_LIMIT)).processRegularSessionMsg(any(), any());
         messages.forEach((msg) -> verify(handler, times(1)).processRegularSessionMsg(ctx, msg));
     }
