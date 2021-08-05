@@ -53,7 +53,6 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
     private BootstrapTaskProvider tasksProvider;
     private LwM2mBootstrapModelProvider modelProvider;
     private TransportService transportService;
-    private String logMsg;
 
     /**
      * Create a {@link DefaultBootstrapSessionManager} using a default {@link SecurityChecker} to accept or refuse new
@@ -98,10 +97,9 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
         }
         DefaultBootstrapSession session = new DefaultBootstrapSession(request, clientIdentity, authorized);
         if (authorized) {
-            logMsg = String.format("%s: Bootstrap session started endpoint: %s, session: %s ", LOG_LWM2M_INFO, request.getEndpointName(),
-                    session.toString());
-            log.info(logMsg);
-            transportService.log(((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(request.getEndpointName()), logMsg);
+            this.sendLogs (request.getEndpointName(),
+                    String.format("%s: Bootstrap session started endpoint: %s, session: %s ", LOG_LWM2M_INFO, request.getEndpointName(),
+                            session.toString()));
         }
         return session;
     }
@@ -165,18 +163,16 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
             // store response
             DefaultBootstrapSession session = (DefaultBootstrapSession) bsSession;
             session.getResponses().add(response);
-            logMsg = String.format("%s: %s %s receives success response %s for %s : %s", LOG_LWM2M_INFO,
-                    request.getClass().getSimpleName(), request.getPath().toString(), response.toString(), bsSession.toString(), request.toString());
-            log.info(logMsg);
-            transportService.log(((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(bsSession.getEndpoint()), logMsg);
+            this.sendLogs (bsSession.getEndpoint(),
+                    String.format("%s: %s %s receives success response %s for %s : %s", LOG_LWM2M_INFO,
+                            request.getClass().getSimpleName(), request.getPath().toString(), response.toString(), bsSession.toString(), request.toString()));
             // on success for NOT bootstrap finish request we send next request
             return BootstrapPolicy.continueWith(nextRequest(bsSession));
         } else {
             // on success for bootstrap finish request we stop the session
-            logMsg = String.format("%s: %s receives success response for bootstrap finish request and stop the session: %s", LOG_LWM2M_INFO,
-                    request.getClass().getSimpleName(), bsSession.toString());
-            log.info(logMsg);
-            transportService.log(((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(bsSession.getEndpoint()), logMsg);
+            this.sendLogs (bsSession.getEndpoint(),
+                    String.format("%s: %s receives success response for bootstrap finish request and stop the session: %s", LOG_LWM2M_INFO,
+                            request.getClass().getSimpleName(), bsSession.toString()));
             return BootstrapPolicy.finished();
         }
     }
@@ -188,19 +184,18 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
             // store response
             DefaultBootstrapSession session = (DefaultBootstrapSession) bsSession;
             session.getResponses().add(response);
-            logMsg = String.format("%s: %s %s receives error response %s for %s : %s", LOG_LWM2M_INFO,
-                    request.getClass().getSimpleName(),
-                    request.getPath().toString(), response.toString(), bsSession.toString(), request.toString());
-            log.info(logMsg);
-            transportService.log(((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(bsSession.getEndpoint()), logMsg);
+            this.sendLogs (bsSession.getEndpoint(),
+                    String.format("%s: %s %s receives error response %s for %s : %s", LOG_LWM2M_INFO,
+                            request.getClass().getSimpleName(),
+                            request.getPath().toString(), response.toString(), bsSession.toString(), request.toString()));
             // on response error for NOT bootstrap finish request we continue any sending next request
             return BootstrapPolicy.continueWith(nextRequest(bsSession));
         } else {
             // on response error for bootstrap finish request we stop the session
-            logMsg = String.format("%s: %s %s error response %s for request %s bootstrap finish. Stop the session: %s", LOG_LWM2M_INFO,
-                    request.getClass().getSimpleName(),
-                    request.getPath().toString(), response.toString(), request.toString(), bsSession.toString());
-            log.info(logMsg);
+            this.sendLogs (bsSession.getEndpoint(),
+                    String.format("%s: %s %s error response %s for request %s bootstrap finish. Stop the session: %s", LOG_LWM2M_INFO,
+                            request.getClass().getSimpleName(),
+                            request.getPath().toString(), response.toString(), request.toString(), bsSession.toString()));
             return BootstrapPolicy.failed();
         }
     }
@@ -208,24 +203,26 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
     @Override
     public BootstrapPolicy onRequestFailure(BootstrapSession bsSession,
                                             BootstrapDownlinkRequest<? extends LwM2mResponse> request, Throwable cause) {
-        logMsg = String.format("%s: %s %s failed because of %s for %s : %s", LOG_LWM2M_INFO,
-                request.getClass().getSimpleName(), request.getPath().toString(), cause.toString(), bsSession.toString(), request.toString());
-        log.info(logMsg);
-        transportService.log(((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(bsSession.getEndpoint()), logMsg);
+        this.sendLogs (bsSession.getEndpoint(),
+                String.format("%s: %s %s failed because of %s for %s : %s", LOG_LWM2M_INFO,
+                        request.getClass().getSimpleName(), request.getPath().toString(), cause.toString(), bsSession.toString(), request.toString()));
         return BootstrapPolicy.failed();
     }
 
     @Override
     public void end(BootstrapSession bsSession) {
-        logMsg = String.format("%s: Bootstrap session finished : %s", LOG_LWM2M_INFO, bsSession.toString());
-        log.info(logMsg);
-        transportService.log(((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(bsSession.getEndpoint()), logMsg);
+        this.sendLogs (bsSession.getEndpoint(),
+                String.format("%s: Bootstrap session finished : %s", LOG_LWM2M_INFO, bsSession.toString()));
     }
 
     @Override
     public void failed(BootstrapSession bsSession, BootstrapFailureCause cause) {
-        logMsg = String.format("%s: Bootstrap session failed by %s: %s", LOG_LWM2M_INFO, cause.toString(), bsSession.toString());
-        log.info(logMsg);
-        transportService.log(((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(bsSession.getEndpoint()), logMsg);
+        this.sendLogs (bsSession.getEndpoint(),
+                String.format("%s: Bootstrap session failed by %s: %s", LOG_LWM2M_INFO, cause.toString(), bsSession.toString()));
+    }
+
+    private void sendLogs (String endpointName, String logMsg) {
+        log.trace(logMsg);
+        transportService.log(((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(endpointName), logMsg);
     }
 }
