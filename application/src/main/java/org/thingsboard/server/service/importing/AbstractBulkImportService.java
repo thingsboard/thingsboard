@@ -80,6 +80,10 @@ public abstract class AbstractBulkImportService<E extends BaseData<? extends Ent
 
                 saveKvs(user, entity, entityData);
 
+                if (importedEntityInfo.getRelatedError() != null) {
+                    throw new RuntimeException(importedEntityInfo.getRelatedError());
+                }
+
                 if (importedEntityInfo.isUpdated()) {
                     result.setUpdated(result.getUpdated() + 1);
                 } else {

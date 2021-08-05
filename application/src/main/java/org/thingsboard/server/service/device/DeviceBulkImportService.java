@@ -18,8 +18,6 @@ package org.thingsboard.server.service.device;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import lombok.SneakyThrows;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
@@ -39,10 +37,10 @@ import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTrans
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
-import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.action.EntityActionService;
@@ -62,8 +60,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service
 @TbCoreComponent
@@ -104,7 +100,18 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
             if (deviceCredentials.getCredentialsType() == DeviceCredentialsType.LWM2M_CREDENTIALS) {
                 setUpLwM2mDeviceProfile(user.getTenantId(), device);
             }
-            device = deviceService.saveDeviceWithCredentials(device, deviceCredentials);
+            try {
+                device = deviceService.saveDeviceWithCredentials(device, deviceCredentials);
+            } catch (DeviceCredentialsValidationException e) {
+                if (deviceCredentials.getId() == null) {
+                    device.setId(deviceCredentials.getDeviceId());
+                    importedEntityInfo.setRelatedError("Failed to create " + deviceCredentials.getCredentialsType() + " credentials: "
+                            + e.getMessage() + ". Falling back to access token creds");
+                    deviceService.createAccessTokenCredentials(device, null);
+                } else {
+                    importedEntityInfo.setRelatedError("Failed to update credentials: " + e.getMessage());
+                }
+            }
         } else {
             device = deviceService.saveDevice(device);
         }

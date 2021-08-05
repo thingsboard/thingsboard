@@ -230,13 +230,18 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     private Device doSaveDevice(Device device, String accessToken, boolean doValidate) {
         Device savedDevice = this.saveDeviceWithoutCredentials(device, doValidate);
         if (device.getId() == null) {
-            DeviceCredentials deviceCredentials = new DeviceCredentials();
-            deviceCredentials.setDeviceId(new DeviceId(savedDevice.getUuidId()));
-            deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
-            deviceCredentials.setCredentialsId(!StringUtils.isEmpty(accessToken) ? accessToken : RandomStringUtils.randomAlphanumeric(20));
-            deviceCredentialsService.createDeviceCredentials(device.getTenantId(), deviceCredentials);
+            createAccessTokenCredentials(savedDevice, accessToken);
         }
         return savedDevice;
+    }
+
+    @Override
+    public void createAccessTokenCredentials(Device device, String accessToken) {
+        DeviceCredentials deviceCredentials = new DeviceCredentials();
+        deviceCredentials.setDeviceId(new DeviceId(device.getUuidId()));
+        deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
+        deviceCredentials.setCredentialsId(!StringUtils.isEmpty(accessToken) ? accessToken : RandomStringUtils.randomAlphanumeric(20));
+        deviceCredentialsService.createDeviceCredentials(device.getTenantId(), deviceCredentials);
     }
 
     private Device saveDeviceWithoutCredentials(Device device, boolean doValidate) {

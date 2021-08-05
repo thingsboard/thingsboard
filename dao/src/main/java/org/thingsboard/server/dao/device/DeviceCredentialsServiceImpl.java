@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_CREDENTIALS_CACHE;
@@ -117,10 +118,10 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 throw new IllegalArgumentException();
             }
         } catch (IllegalArgumentException e) {
-            throw new DataValidationException("Invalid credentials body for simple mqtt credentials!");
+            throw new DeviceCredentialsValidationException("Invalid credentials body for simple mqtt credentials!");
         }
         if (StringUtils.isEmpty(mqttCredentials.getClientId()) && StringUtils.isEmpty(mqttCredentials.getUserName())) {
-            throw new DataValidationException("Both mqtt client id and user name are empty!");
+            throw new DeviceCredentialsValidationException("Both mqtt client id and user name are empty!");
         }
         if (StringUtils.isEmpty(mqttCredentials.getClientId())) {
             deviceCredentials.setCredentialsId(mqttCredentials.getUserName());
@@ -155,7 +156,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 throw new IllegalArgumentException();
             }
         } catch (IllegalArgumentException e) {
-            throw new DataValidationException("Invalid credentials body for LwM2M credentials!");
+            throw new DeviceCredentialsValidationException("Invalid credentials body for LwM2M credentials!");
         }
 
         String credentialsId = null;
@@ -183,7 +184,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 break;
         }
         if (credentialsId == null) {
-            throw new DataValidationException("Invalid credentials body for LwM2M credentials!");
+            throw new DeviceCredentialsValidationException("Invalid credentials body for LwM2M credentials!");
         }
         deviceCredentials.setCredentialsId(credentialsId);
     }
@@ -201,38 +202,38 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 @Override
                 protected void validateCreate(TenantId tenantId, DeviceCredentials deviceCredentials) {
                     if (deviceCredentialsDao.findByDeviceId(tenantId, deviceCredentials.getDeviceId().getId()) != null) {
-                        throw new DataValidationException("Credentials for this device are already specified!");
+                        throw new DeviceCredentialsValidationException("Credentials for this device are already specified!");
                     }
                     if (deviceCredentialsDao.findByCredentialsId(tenantId, deviceCredentials.getCredentialsId()) != null) {
-                        throw new DataValidationException("Device credentials are already assigned to another device!");
+                        throw new DeviceCredentialsValidationException("Device credentials are already assigned to another device!");
                     }
                 }
 
                 @Override
                 protected void validateUpdate(TenantId tenantId, DeviceCredentials deviceCredentials) {
                     if (deviceCredentialsDao.findById(tenantId, deviceCredentials.getUuidId()) == null) {
-                        throw new DataValidationException("Unable to update non-existent device credentials!");
+                        throw new DeviceCredentialsValidationException("Unable to update non-existent device credentials!");
                     }
                     DeviceCredentials existingCredentials = deviceCredentialsDao.findByCredentialsId(tenantId, deviceCredentials.getCredentialsId());
                     if (existingCredentials != null && !existingCredentials.getId().equals(deviceCredentials.getId())) {
-                        throw new DataValidationException("Device credentials are already assigned to another device!");
+                        throw new DeviceCredentialsValidationException("Device credentials are already assigned to another device!");
                     }
                 }
 
                 @Override
                 protected void validateDataImpl(TenantId tenantId, DeviceCredentials deviceCredentials) {
                     if (deviceCredentials.getDeviceId() == null) {
-                        throw new DataValidationException("Device credentials should be assigned to device!");
+                        throw new DeviceCredentialsValidationException("Device credentials should be assigned to device!");
                     }
                     if (deviceCredentials.getCredentialsType() == null) {
-                        throw new DataValidationException("Device credentials type should be specified!");
+                        throw new DeviceCredentialsValidationException("Device credentials type should be specified!");
                     }
                     if (StringUtils.isEmpty(deviceCredentials.getCredentialsId())) {
-                        throw new DataValidationException("Device credentials id should be specified!");
+                        throw new DeviceCredentialsValidationException("Device credentials id should be specified!");
                     }
                     Device device = deviceService.findDeviceById(tenantId, deviceCredentials.getDeviceId());
                     if (device == null) {
-                        throw new DataValidationException("Can't assign device credentials to non-existent device!");
+                        throw new DeviceCredentialsValidationException("Can't assign device credentials to non-existent device!");
                     }
                 }
             };

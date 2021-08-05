@@ -13,14 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.importing;
+package org.thingsboard.server.dao.exception;
 
-import lombok.Data;
-
-@Data
-public class ImportedEntityInfo<E> {
-    private E entity;
-    private boolean isUpdated;
-    private E oldEntity;
-    private String relatedError;
+public class DeviceCredentialsValidationException extends DataValidationException {
+    public DeviceCredentialsValidationException(String message) {
+        super(message);
+    }
 }

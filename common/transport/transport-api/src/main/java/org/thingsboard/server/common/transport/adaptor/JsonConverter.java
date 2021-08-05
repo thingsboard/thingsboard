@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.transport.adaptor;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
