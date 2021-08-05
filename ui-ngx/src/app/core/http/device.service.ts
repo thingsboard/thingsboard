@@ -17,7 +17,7 @@
 import { Injectable } from '@angular/core';
 import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable, ReplaySubject } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import {
@@ -30,6 +30,7 @@ import {
 } from '@app/shared/models/device.models';
 import { EntitySubtype } from '@app/shared/models/entity-type.models';
 import { AuthService } from '@core/auth/auth.service';
+import { PersistentRpc } from '@shared/models/rpc.models';
 
 @Injectable({
   providedIn: 'root'
@@ -137,6 +138,14 @@ export class DeviceService {
     return this.http.post<Device>(`/api/rpc/twoway/${deviceId}`, requestBody, defaultHttpOptionsFromConfig(config));
   }
 
+  public getPersistedRpc(rpcId: string, fullResponse = false,
+                         config?: RequestConfig): Observable<PersistentRpc | HttpResponse<PersistentRpc>> {
+    return this.http.get<PersistentRpc>(`/api/rpc/persistent/${rpcId}`, {
+      ...defaultHttpOptionsFromConfig(config),
+      observe: fullResponse ? 'response' : undefined
+    });
+  }
+
   public findByQuery(query: DeviceSearchQuery,
                      config?: RequestConfig): Observable<Array<Device>> {
     return this.http.post<Array<Device>>('/api/devices', query, defaultHttpOptionsFromConfig(config));
@@ -170,7 +179,7 @@ export class DeviceService {
   public getEdgeDevices(edgeId: string, pageLink: PageLink, type: string = '',
                         config?: RequestConfig): Observable<PageData<DeviceInfo>> {
     return this.http.get<PageData<DeviceInfo>>(`/api/edge/${edgeId}/devices${pageLink.toQuery()}&type=${type}`,
-      defaultHttpOptionsFromConfig(config))
+      defaultHttpOptionsFromConfig(config));
   }
 
 }

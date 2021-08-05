@@ -63,11 +63,27 @@ public class RpcV2Controller extends AbstractRpcController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/persistent/{rpcId}", method = RequestMethod.GET)
     @ResponseBody
-    public Rpc getPersistedRpc(@PathVariable("rpcId") String strRpc) throws ThingsboardException {
+    public ResponseEntity<Rpc> getPersistedRpc(@PathVariable("rpcId") String strRpc) throws ThingsboardException {
         checkParameter("RpcId", strRpc);
         try {
             RpcId rpcId = new RpcId(UUID.fromString(strRpc));
-            return checkRpcId(rpcId, Operation.READ);
+            Rpc rpc = checkRpcId(rpcId, Operation.READ);
+            HttpStatus status;
+            switch (rpc.getStatus()) {
+                case FAILED:
+                    status = HttpStatus.BAD_GATEWAY;
+                    break;
+                case TIMEOUT:
+                    status = HttpStatus.GATEWAY_TIMEOUT;
+                    break;
+                case QUEUED:
+                case DELIVERED:
+                    status = HttpStatus.ACCEPTED;
+                    break;
+                default:
+                    status = HttpStatus.OK;
+            }
+            return new ResponseEntity<>(rpc, status);
         } catch (Exception e) {
             throw handleException(e);
         }
