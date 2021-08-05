@@ -86,7 +86,10 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
                     }
                     bootstrapConfigStore.add(endPoint, bsConfigNew);
                 } catch (InvalidConfigurationException e) {
-                    if (!(e.getMessage().contains("Psk identity") && e.getMessage().contains("already used for this bootstrap server"))) {
+                    if (e.getMessage().contains("Psk identity") && e.getMessage().contains("already used for this bootstrap server")) {
+                        log.trace("", e);
+                    }
+                    else {
                         log.error("", e);
                     }
                 }
