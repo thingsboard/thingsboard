@@ -219,7 +219,7 @@ message DeviceCredentialsUpdateMsg {
   int64 deviceIdLSB = 2;
   string credentialsType = 3;
   string credentialsId = 4;
-  string credentialsValue = 5;
+  google.protobuf.StringValue credentialsValue = 5;
 }
 
 message AssetUpdateMsg {

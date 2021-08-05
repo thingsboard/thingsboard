@@ -144,7 +144,9 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                     DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, device.getId());
                     deviceCredentials.setCredentialsType(DeviceCredentialsType.valueOf(deviceCredentialsUpdateMsg.getCredentialsType()));
                     deviceCredentials.setCredentialsId(deviceCredentialsUpdateMsg.getCredentialsId());
-                    deviceCredentials.setCredentialsValue(deviceCredentialsUpdateMsg.getCredentialsValue());
+                    if (deviceCredentialsUpdateMsg.hasCredentialsValue()) {
+                        deviceCredentials.setCredentialsValue(deviceCredentialsUpdateMsg.getCredentialsValue().getValue());
+                    }
                     deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
                 } catch (Exception e) {
                     log.error("Can't update device credentials for device [{}], deviceCredentialsUpdateMsg [{}]", device.getName(), deviceCredentialsUpdateMsg, e);
