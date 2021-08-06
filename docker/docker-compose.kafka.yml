@@ -18,6 +18,7 @@ version: '2.2'
 
 services:
   kafka:
+    container_name: kafka
     restart: always
     image: "wurstmeister/kafka:2.13-2.6.0"
     ports:
