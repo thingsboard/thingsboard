@@ -2809,7 +2809,9 @@
         "disable-account": "Disable User Account",
         "enable-account": "Enable User Account",
         "enable-account-message": "User account was successfully enabled!",
-        "disable-account-message": "User account was successfully disabled!"
+        "disable-account-message": "User account was successfully disabled!",
+        "copyId": "Copy user Id",
+        "idCopiedMessage": "User Id has been copied to clipboard"
     },
     "value": {
         "type": "Value type",

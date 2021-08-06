@@ -53,6 +53,17 @@
           [fxShow]="!hideDelete() && !isEdit">
     {{'user.delete' | translate }}
   </button>
+  <div fxLayout="row" fxLayout.xs="column">
+    <button mat-raised-button
+            ngxClipboard
+            (cbOnSuccess)="onUserCopiedId($event)"
+            [cbContent]="entity?.id?.id"
+            [disabled]="(isLoading$ | async)"
+            [fxShow]="!isEdit">
+      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+      <span translate>user.copyId</span>
+    </button>
+  </div>
 </div>
 <div class="mat-padding" fxLayout="column">
   <form [formGroup]="entityForm">

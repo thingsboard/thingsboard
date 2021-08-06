@@ -25,6 +25,8 @@ import { map } from 'rxjs/operators';
 import { Authority } from '@shared/models/authority.enum';
 import { isDefinedAndNotNull, isUndefined } from '@core/utils';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
+import { ActionNotificationShow } from '@app/core/notification/notification.actions';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-user',
@@ -44,7 +46,8 @@ export class UserComponent extends EntityComponent<User> {
               @Optional() @Inject('entity') protected entityValue: User,
               @Optional() @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<User>,
               public fb: FormBuilder,
-              protected cd: ChangeDetectorRef) {
+              protected cd: ChangeDetectorRef,
+              protected translate: TranslateService) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
 
@@ -98,6 +101,18 @@ export class UserComponent extends EntityComponent<User> {
     this.entityForm.patchValue({additionalInfo:
         {homeDashboardHideToolbar: entity.additionalInfo &&
           isDefinedAndNotNull(entity.additionalInfo.homeDashboardHideToolbar) ? entity.additionalInfo.homeDashboardHideToolbar : true}});
+  }
+
+  onUserCopiedId($event) {
+    this.store.dispatch(new ActionNotificationShow(
+      {
+        message: this.translate.instant('user.idCopiedMessage'),
+        type: 'success',
+        duration: 750,
+        verticalPosition: 'bottom',
+        horizontalPosition: 'right'
+      }
+    ))
   }
 
 }
