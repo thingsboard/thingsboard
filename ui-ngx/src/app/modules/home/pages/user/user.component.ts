@@ -103,7 +103,7 @@ export class UserComponent extends EntityComponent<User> {
           isDefinedAndNotNull(entity.additionalInfo.homeDashboardHideToolbar) ? entity.additionalInfo.homeDashboardHideToolbar : true}});
   }
 
-  onUserCopiedId($event) {
+  onUserIdCopied($event) {
     this.store.dispatch(new ActionNotificationShow(
       {
         message: this.translate.instant('user.idCopiedMessage'),

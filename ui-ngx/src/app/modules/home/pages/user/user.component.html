@@ -56,7 +56,7 @@
   <div fxLayout="row" fxLayout.xs="column">
     <button mat-raised-button
             ngxClipboard
-            (cbOnSuccess)="onUserCopiedId($event)"
+            (cbOnSuccess)="onUserIdCopied($event)"
             [cbContent]="entity?.id?.id"
             [disabled]="(isLoading$ | async)"
             [fxShow]="!isEdit">
