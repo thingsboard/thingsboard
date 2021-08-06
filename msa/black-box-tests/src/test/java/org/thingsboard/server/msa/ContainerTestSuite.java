@@ -17,7 +17,6 @@ package org.thingsboard.server.msa;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.extensions.cpsuite.ClasspathSuite;
 import org.junit.runner.RunWith;
@@ -27,19 +26,23 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Duration;
+import java.util.UUID;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.fail;
 
 @RunWith(ClasspathSuite.class)
 @ClasspathSuite.ClassnameFilters({"org.thingsboard.server.msa.*Test"})
 @Slf4j
 public class ContainerTestSuite {
+
+    private static final String SOURCE_DIR = "./../../docker/";
+    private static final String TB_CORE_LOG_REGEXP = ".*Starting polling for events.*";
+    private static final String TRANSPORTS_LOG_REGEXP = ".*Going to recalculate partitions.*";
 
     private static DockerComposeContainer<?> testContainer;
 
@@ -51,32 +54,55 @@ public class ContainerTestSuite {
         if (testContainer == null) {
             boolean skipTailChildContainers = Boolean.valueOf(System.getProperty("blackBoxTests.skipTailChildContainers"));
             try {
-                String tbCoreLogRegexp = ".*Starting polling for events.*";
-                String transportsLogRegexp = ".*Going to recalculate partitions.*";
+                final String targetDir = FileUtils.getTempDirectoryPath() + "/" + "ContainerTestSuite-" + UUID.randomUUID() + "/";
+                log.info("targetDir {}", targetDir);
+                FileUtils.copyDirectory(new File(SOURCE_DIR), new File(targetDir));
+                replaceInFile(targetDir + "docker-compose.yml", "    container_name: \"${LOAD_BALANCER_NAME}\"", "", "container_name");
 
-                testContainer = new DockerComposeContainer<>(
-                        new File(removeContainerName("./../../docker/docker-compose.yml")),
-                        new File("./../../docker/docker-compose.postgres.yml"),
-                        new File("./../../docker/docker-compose.postgres.volumes.yml"),
-                        new File("./../../docker/docker-compose.kafka.yml"))
+                class DockerComposeContainerImpl<SELF extends DockerComposeContainer<SELF>> extends DockerComposeContainer<SELF> {
+                    public DockerComposeContainerImpl(File... composeFiles) {
+                        super(composeFiles);
+                    }
+
+                    @Override
+                    public void stop() {
+                        super.stop();
+                        tryDeleteDir(targetDir);
+                    }
+                }
+
+                testContainer = new DockerComposeContainerImpl<>(
+                        new File(targetDir + "docker-compose.yml"),
+                        new File(targetDir + "docker-compose.postgres.yml"),
+                        new File(targetDir + "docker-compose.postgres.volumes.yml"),
+                        new File(targetDir + "docker-compose.kafka.yml"))
                         .withPull(false)
                         .withLocalCompose(true)
                         .withTailChildContainers(!skipTailChildContainers)
                         .withEnv(installTb.getEnv())
                         .withEnv("LOAD_BALANCER_NAME", "")
                         .withExposedService("haproxy", 80, Wait.forHttp("/swagger-ui.html").withStartupTimeout(Duration.ofSeconds(400)))
-                        .waitingFor("tb-core1", Wait.forLogMessage(tbCoreLogRegexp, 1).withStartupTimeout(Duration.ofSeconds(400)))
-                        .waitingFor("tb-core2", Wait.forLogMessage(tbCoreLogRegexp, 1).withStartupTimeout(Duration.ofSeconds(400)))
-                        .waitingFor("tb-http-transport1", Wait.forLogMessage(transportsLogRegexp, 1).withStartupTimeout(Duration.ofSeconds(400)))
-                        .waitingFor("tb-http-transport2", Wait.forLogMessage(transportsLogRegexp, 1).withStartupTimeout(Duration.ofSeconds(400)))
-                        .waitingFor("tb-mqtt-transport1", Wait.forLogMessage(transportsLogRegexp, 1).withStartupTimeout(Duration.ofSeconds(400)))
-                        .waitingFor("tb-mqtt-transport2", Wait.forLogMessage(transportsLogRegexp, 1).withStartupTimeout(Duration.ofSeconds(400)));
+                        .waitingFor("tb-core1", Wait.forLogMessage(TB_CORE_LOG_REGEXP, 1).withStartupTimeout(Duration.ofSeconds(400)))
+                        .waitingFor("tb-core2", Wait.forLogMessage(TB_CORE_LOG_REGEXP, 1).withStartupTimeout(Duration.ofSeconds(400)))
+                        .waitingFor("tb-http-transport1", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(Duration.ofSeconds(400)))
+                        .waitingFor("tb-http-transport2", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(Duration.ofSeconds(400)))
+                        .waitingFor("tb-mqtt-transport1", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(Duration.ofSeconds(400)))
+                        .waitingFor("tb-mqtt-transport2", Wait.forLogMessage(TRANSPORTS_LOG_REGEXP, 1).withStartupTimeout(Duration.ofSeconds(400)));
             } catch (Exception e) {
                 log.error("Failed to create test container", e);
-                throw e;
+                fail("Failed to create test container");
             }
         }
         return testContainer;
+    }
+
+    private static void tryDeleteDir(String targetDir) {
+        try {
+            log.info("Trying to delete temp dir {}", targetDir);
+            FileUtils.deleteDirectory(new File(targetDir));
+        } catch (IOException e) {
+            log.error("Can't delete temp directory " + targetDir, e);
+        }
     }
 
     /**
@@ -86,23 +112,20 @@ public class ContainerTestSuite {
      * This has been introduced in #1151 as a quick fix for unintuitive feedback. https://github.com/testcontainers/testcontainers-java/issues/1151
      * Using the latest testcontainers and waiting for the fix...
      * */
-    private static String removeContainerName(String sourceFilename) {
-        String outputFilename = null;
+    private static void replaceInFile(String sourceFilename, String target, String replacement, String verifyPhrase) {
         try {
-            String sourceContent = FileUtils.readFileToString(new File(sourceFilename), StandardCharsets.UTF_8);
-            String outputContent = sourceContent.replace("container_name: \"${LOAD_BALANCER_NAME}\"", "");
-            assertThat(outputContent, (not(containsString("container_name"))));
+            File file = new File(sourceFilename);
+            String sourceContent = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
 
-            Path tempFile = Files.createTempFile("docker-compose", ".yml"); // the file looks like /tmp/docker-compose713972234379430232.yml
-            log.info("tempFile is {}", tempFile.toFile().getAbsolutePath());
+            String outputContent = sourceContent.replace(target, replacement);
+            assertThat(outputContent, (not(containsString(target))));
+            assertThat(outputContent, (not(containsString(verifyPhrase))));
 
-            FileUtils.writeStringToFile(tempFile.toFile(), outputContent, StandardCharsets.UTF_8);
-            outputFilename = tempFile.toFile().getAbsolutePath();
-            assertThat(FileUtils.readFileToString(new File(outputFilename), StandardCharsets.UTF_8), is(outputContent));
-
+            FileUtils.writeStringToFile(file, outputContent, StandardCharsets.UTF_8);
+            assertThat(FileUtils.readFileToString(file, StandardCharsets.UTF_8), is(outputContent));
         } catch (IOException e) {
-            Assert.fail("failed to create tmp file " + e.getMessage());
+            log.error("failed to update file " + sourceFilename, e);
+            fail("failed to update file");
         }
-        return outputFilename;
     }
 }
