@@ -126,11 +126,11 @@ public class DeviceController extends BaseController {
 
             checkEntity(device.getId(), device, Resource.DEVICE);
 
-            Device oldDevice;
+            Device oldDevice = null;
             if (!created) {
-                oldDevice = deviceService.findDeviceById(getTenantId(), device.getId());
+                oldDevice = checkDeviceId(device.getId(), Operation.WRITE);
             } else {
-                oldDevice = null;
+                checkEntity(null, device, Resource.DEVICE);
             }
 
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
