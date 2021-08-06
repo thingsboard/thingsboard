@@ -111,6 +111,7 @@
         <javax.validation-api.version>2.0.1.Final</javax.validation-api.version>
         <antisamy.version>1.6.2</antisamy.version>
         <snmp4j.version>2.8.5</snmp4j.version>
+        <httpclient.version>4.5.13</httpclient.version>
         <!--         TEST SCOPE         -->
         <awaitility.version>4.1.0</awaitility.version>
         <cassandra-unit.version>4.3.1.0</cassandra-unit.version>
@@ -124,7 +125,6 @@
         <!--      BLACKBOX TEST SCOPE     -->
         <testcontainers.version>1.16.0</testcontainers.version>
         <zeroturnaround.version>1.12</zeroturnaround.version>
-        <httpclient.version>4.5.13</httpclient.version>
     </properties>
 
     <modules>
@@ -1742,7 +1742,6 @@
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpclient</artifactId>
                 <version>${httpclient.version}</version>
-                <scope>test</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
