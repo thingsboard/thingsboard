@@ -273,6 +273,7 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
                         md.putValue("deviceName", device.getName());
                         md.putValue("deviceType", device.getType());
                         stateData.setMetaData(md);
+                        callback.onSuccess();
                     }
                 } else {
                     //Device was probably deleted while message was in queue;
