@@ -88,6 +88,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceAct
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponseActorMsg;
+import org.thingsboard.server.service.rpc.RemoveRpcActorMsg;
 import org.thingsboard.server.service.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
@@ -260,6 +261,21 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             systemContext.getTbCoreDeviceRpcService().processRpcResponseFromDeviceActor(responseMsg.getMsg());
         } else {
             log.debug("[{}] Rpc command response [{}] is stale!", deviceId, responseMsg.getRequestId());
+        }
+    }
+
+    void processRemoveRpc(TbActorCtx context, RemoveRpcActorMsg msg) {
+        log.debug("[{}] Processing remove rpc command", msg.getRequestId());
+        Integer requestId = null;
+        for (Map.Entry<Integer, ToDeviceRpcRequestMetadata> entry : toDeviceRpcPendingMap.entrySet()) {
+            if (entry.getValue().getMsg().getMsg().getId().equals(msg.getRequestId())) {
+                requestId = entry.getKey();
+                break;
+            }
+        }
+
+        if (requestId != null) {
+            toDeviceRpcPendingMap.remove(requestId);
         }
     }
 

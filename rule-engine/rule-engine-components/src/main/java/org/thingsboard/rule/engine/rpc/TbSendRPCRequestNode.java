@@ -118,7 +118,7 @@ public class TbSendRPCRequestNode implements TbNode {
                     .build();
 
             ctx.getRpcService().sendRpcRequestToDevice(request, ruleEngineDeviceRpcResponse -> {
-                if (!ruleEngineDeviceRpcResponse.getError().isPresent()) {
+                if (ruleEngineDeviceRpcResponse.getError().isEmpty()) {
                     TbMsg next = ctx.newMsg(msg.getQueueName(), msg.getType(), msg.getOriginator(), msg.getCustomerId(), msg.getMetaData(), ruleEngineDeviceRpcResponse.getResponse().orElse("{}"));
                     ctx.enqueueForTellNext(next, TbRelationTypes.SUCCESS);
                 } else {
