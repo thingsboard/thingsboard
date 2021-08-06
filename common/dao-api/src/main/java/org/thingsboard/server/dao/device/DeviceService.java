@@ -54,6 +54,8 @@ public interface DeviceService {
 
     Device saveDeviceWithCredentials(Device device, DeviceCredentials deviceCredentials);
 
+    Device saveDevice(ProvisionRequest provisionRequest, DeviceProfile profile);
+
     Device assignDeviceToCustomer(TenantId tenantId, DeviceId deviceId, CustomerId customerId);
 
     Device unassignDeviceFromCustomer(TenantId tenantId, DeviceId deviceId);
@@ -97,8 +99,6 @@ public interface DeviceService {
     ListenableFuture<List<EntitySubtype>> findDeviceTypesByTenantId(TenantId tenantId);
 
     Device assignDeviceToTenant(TenantId tenantId, Device device);
-
-    Device saveDevice(ProvisionRequest provisionRequest, DeviceProfile profile);
 
     PageData<UUID> findDevicesIdsByDeviceProfileTransportType(DeviceTransportType transportType, PageLink pageLink);
 

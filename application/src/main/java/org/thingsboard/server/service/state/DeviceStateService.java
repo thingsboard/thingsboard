@@ -28,12 +28,6 @@ import org.thingsboard.server.common.msg.queue.TbCallback;
  */
 public interface DeviceStateService extends ApplicationListener<PartitionChangeEvent> {
 
-    void onDeviceAdded(Device device);
-
-    void onDeviceUpdated(Device device);
-
-    void onDeviceDeleted(Device device);
-
     void onDeviceConnect(TenantId tenantId, DeviceId deviceId);
 
     void onDeviceActivity(TenantId tenantId, DeviceId deviceId, long lastReportedActivityTime);

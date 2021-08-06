@@ -99,7 +99,7 @@ public class TenantController extends BaseController {
             }
             tenantProfileCache.evict(tenant.getId());
             tbClusterService.onTenantChange(tenant, null);
-            tbClusterService.onEntityStateChange(tenant.getId(), tenant.getId(),
+            tbClusterService.broadcastEntityStateChangeEvent(tenant.getId(), tenant.getId(),
                     newTenant ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
             return tenant;
         } catch (Exception e) {
@@ -118,7 +118,7 @@ public class TenantController extends BaseController {
             tenantService.deleteTenant(tenantId);
             tenantProfileCache.evict(tenantId);
             tbClusterService.onTenantDelete(tenant, null);
-            tbClusterService.onEntityStateChange(tenantId, tenantId, ComponentLifecycleEvent.DELETED);
+            tbClusterService.broadcastEntityStateChangeEvent(tenantId, tenantId, ComponentLifecycleEvent.DELETED);
         } catch (Exception e) {
             throw handleException(e);
         }

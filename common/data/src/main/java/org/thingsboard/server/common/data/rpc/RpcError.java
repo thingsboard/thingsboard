@@ -13,20 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.rpc;
-
-import org.thingsboard.rule.engine.api.RuleEngineRpcService;
-import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
+package org.thingsboard.server.common.data.rpc;
 
 /**
- * Created by ashvayka on 16.04.18.
+ * @author Andrew Shvayka
  */
-public interface TbRuleEngineDeviceRpcService extends RuleEngineRpcService {
-
-    /**
-     * Handles the RPC response from the Device Actor (Transport).
-     *
-     * @param response the RPC response
-     */
-    void processRpcResponseFromDevice(FromDeviceRpcResponse response);
+public enum RpcError {
+    NOT_FOUND, FORBIDDEN, NO_ACTIVE_CONNECTION, TIMEOUT, INTERNAL;
 }
