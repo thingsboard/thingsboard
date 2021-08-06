@@ -247,6 +247,7 @@ public class TbMsgPushToEdgeNode implements TbNode {
                 || SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msgType)
                 || DataConstants.ATTRIBUTES_UPDATED.equals(msgType)
                 || DataConstants.ATTRIBUTES_DELETED.equals(msgType)
+                || DataConstants.TIMESERIES_UPDATED.equals(msgType)
                 || DataConstants.ALARM.equals(msgType);
     }
 
