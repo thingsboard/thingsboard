@@ -171,13 +171,13 @@ public class TbMsgPushToEdgeNode implements TbNode {
                 case ATTRIBUTES_UPDATED:
                 case POST_ATTRIBUTES:
                     entityBody.put("kv", dataJson);
-                    entityBody.put(SCOPE, config.getScope());
+                    entityBody.put(SCOPE, getScope(metadata));
                     break;
                 case ATTRIBUTES_DELETED:
                     List<String> keys = JacksonUtil.convertValue(dataJson.get("attributes"), new TypeReference<>() {
                     });
                     entityBody.put("keys", keys);
-                    entityBody.put(SCOPE, config.getScope());
+                    entityBody.put(SCOPE, getScope(metadata));
                     break;
                 case TIMESERIES_UPDATED:
                     entityBody.put("data", dataJson);
