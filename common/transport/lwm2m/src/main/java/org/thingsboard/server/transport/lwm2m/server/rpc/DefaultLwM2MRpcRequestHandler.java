@@ -36,6 +36,8 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelAllOb
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelAllRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelObserveCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelObserveRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCreateRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCreateResponseCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MDeleteCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MDeleteRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MDiscoverAllRequest;
@@ -128,6 +130,9 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
                         break;
                     case WRITE_REPLACE:
                         sendWriteReplaceRequest(client, rpcRequest, objectId);
+                        break;
+                    case CREATE:
+                        sendCreateRequest(client, rpcRequest, objectId);
                         break;
                     default:
                         throw new IllegalArgumentException("Unsupported operation: " + operationType.name());
@@ -234,6 +239,15 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         var mainCallback = new TbLwM2MWriteResponseCallback(uplinkHandler, logService, client, versionedId);
         var rpcCallback = new RpcEmptyResponseCallback<>(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendWriteUpdateRequest(client, builder.build(), rpcCallback);
+    }
+
+    private void sendCreateRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
+        RpcWriteUpdateRequest requestBody = JacksonUtil.fromString(requestMsg.getParams(), RpcWriteUpdateRequest.class);
+        TbLwM2MCreateRequest.TbLwM2MCreateRequestBuilder builder = TbLwM2MCreateRequest.builder().versionedId(versionedId);
+        builder.value(requestBody.getValue()).timeout(clientContext.getRequestTimeout(client));
+        var mainCallback = new TbLwM2MCreateResponseCallback(uplinkHandler, logService, client, versionedId);
+        var rpcCallback = new RpcEmptyResponseCallback<>(transportService, client, requestMsg, mainCallback);
+        downlinkHandler.sendCreateRequest(client, builder.build(), rpcCallback);
     }
 
     private void sendWriteReplaceRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {

@@ -56,7 +56,8 @@ public enum LwM2mOperationType {
     //        FW_READ_INFO(18, "FirmwareReadInfo", false),
     SW_UPDATE(19, "SoftwareUpdate", false),
     //        SW_READ_INFO(20, "SoftwareReadInfo", false),
-    SW_UNINSTALL(21, "SoftwareUninstall", false);
+    SW_UNINSTALL(21, "SoftwareUninstall", false),
+    CREATE(11, "Create", true);
 
 
 

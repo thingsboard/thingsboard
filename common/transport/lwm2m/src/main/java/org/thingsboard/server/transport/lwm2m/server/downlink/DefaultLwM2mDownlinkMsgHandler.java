@@ -21,13 +21,16 @@ import org.eclipse.leshan.core.Link;
 import org.eclipse.leshan.core.LwM2m;
 import org.eclipse.leshan.core.attributes.Attribute;
 import org.eclipse.leshan.core.attributes.AttributeSet;
+import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.ObjectLink;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.request.CompositeDownlinkRequest;
 import org.eclipse.leshan.core.request.ContentFormat;
+import org.eclipse.leshan.core.request.CreateRequest;
 import org.eclipse.leshan.core.request.DeleteRequest;
 import org.eclipse.leshan.core.request.DiscoverRequest;
 import org.eclipse.leshan.core.request.DownlinkRequest;
@@ -42,6 +45,7 @@ import org.eclipse.leshan.core.request.WriteRequest;
 import org.eclipse.leshan.core.request.exception.ClientSleepingException;
 import org.eclipse.leshan.core.request.exception.InvalidRequestException;
 import org.eclipse.leshan.core.request.exception.TimeoutException;
+import org.eclipse.leshan.core.response.CreateResponse;
 import org.eclipse.leshan.core.response.DeleteResponse;
 import org.eclipse.leshan.core.response.DiscoverResponse;
 import org.eclipse.leshan.core.response.ExecuteResponse;
@@ -361,6 +365,38 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         }
     }
 
+    public void sendCreateRequest(LwM2mClient client, TbLwM2MCreateRequest request, DownlinkRequestCallback<CreateRequest, CreateResponse> callback) {
+        validateVersionedId(client, request);
+        CreateRequest downlink = null;
+        LwM2mPath resultIds = new LwM2mPath(request.getObjectId());
+        ObjectModel objectModel = client.getObjectModel(request.getObjectId(), this.config.getModelProvider());
+        // POST /{Object ID}/{Object Instance ID} && Resources is Mandatory
+        if (objectModel.multiple) {
+            // LwM2M CBOR, SenML CBOR, SenML JSON, or TLV (see [LwM2M-CORE])
+            ContentFormat contentFormat = getWriteRequestContentFormat(client, request, this.config.getModelProvider());
+            if (resultIds.isObject() || resultIds.isObjectInstance()) {
+                Collection<LwM2mResource> resources = client.getNewResourcesForInstance(request.getVersionedId(), request.getValue(), this.config.getModelProvider(), this.converter);
+                if (resultIds.isObject()) {
+                    downlink = new CreateRequest(contentFormat, resultIds.getObjectId(), resources);
+                }
+                else {
+                    LwM2mObjectInstance instance = new LwM2mObjectInstance(resultIds.getObjectInstanceId(), resources);
+                    downlink = new CreateRequest(contentFormat, resultIds.getObjectId(), instance);
+                }
+            }
+            if (downlink != null) {
+                sendSimpleRequest(client, downlink, request.getTimeout(), callback);
+            } else {
+                callback.onValidationError(toString(request), "Path " + request.getVersionedId() +
+                        ". This operation can only be used for created new ObjectInstance !");
+            }
+        }
+        else {
+            throw new IllegalArgumentException("Path " + request.getVersionedId() +
+                    ". Object must be Multiple !");
+        }
+    }
+
     private <R extends SimpleDownlinkRequest<T>, T extends LwM2mResponse> void sendSimpleRequest(LwM2mClient client, R request, long timeoutInMs, DownlinkRequestCallback<R, T> callback) {
         sendRequest(client, request, timeoutInMs, callback, r -> request.getPath().toString());
     }
@@ -497,6 +533,8 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                 versionedId = ((TbLwM2MWriteReplaceRequest) request).getVersionedId();
             } else if (request instanceof TbLwM2MWriteUpdateRequest) {
                 versionedId = ((TbLwM2MWriteUpdateRequest) request).getVersionedId();
+            } else if (request instanceof TbLwM2MCreateRequest) {
+                versionedId = ((TbLwM2MCreateRequest) request).getVersionedId();
             }
             return getRequestContentFormat(client, versionedId, modelProvider);
         }
