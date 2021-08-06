@@ -54,6 +54,7 @@ public final class TbActorMailbox implements TbActorCtx {
     private volatile TbActorStopReason stopReason;
 
     public void initActor() {
+        log.trace("Schedule to init actor selfId=" + selfId /*, new RuntimeException("stacktrace")*/);
         dispatcher.getExecutor().execute(() -> tryInit(1));
     }
 

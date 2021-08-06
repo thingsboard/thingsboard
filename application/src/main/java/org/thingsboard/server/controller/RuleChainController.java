@@ -140,6 +140,7 @@ public class RuleChainController extends BaseController {
     @RequestMapping(value = "/ruleChain", method = RequestMethod.POST)
     @ResponseBody
     public RuleChain saveRuleChain(@RequestBody RuleChain ruleChain) throws ThingsboardException {
+        log.trace("saveRuleChain {}", ruleChain);
         try {
             boolean created = ruleChain.getId() == null;
             ruleChain.setTenantId(getCurrentUser().getTenantId());
@@ -239,6 +240,7 @@ public class RuleChainController extends BaseController {
     @RequestMapping(value = "/ruleChain/metadata", method = RequestMethod.POST)
     @ResponseBody
     public RuleChainMetaData saveRuleChainMetaData(@RequestBody RuleChainMetaData ruleChainMetaData) throws ThingsboardException {
+        log.trace("saveRuleChainMetaData {}", ruleChainMetaData);
         try {
             TenantId tenantId = getTenantId();
             if (debugPerTenantEnabled) {

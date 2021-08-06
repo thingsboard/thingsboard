@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Event;
@@ -35,11 +36,17 @@ import java.util.function.Predicate;
 /**
  * Created by ashvayka on 20.03.18.
  */
+@Slf4j
 public class AbstractRuleEngineControllerTest extends AbstractControllerTest {
 
+    public static final int TIMEOUT = 30;
     @Autowired
     protected RuleChainService ruleChainService;
 
+    /**
+     * Save rule chain *synchronous*.
+     * Status 200 means that entity already persisted in database
+     * */
     protected RuleChain saveRuleChain(RuleChain ruleChain) throws Exception {
         return doPost("/api/ruleChain", ruleChain, RuleChain.class);
     }
@@ -48,6 +55,10 @@ public class AbstractRuleEngineControllerTest extends AbstractControllerTest {
         return doGet("/api/ruleChain/" + ruleChainId.getId().toString(), RuleChain.class);
     }
 
+    /**
+     * Save rule chain metadata *synchronous*.
+     * Status 200 means that entity already persisted in database
+     * */
     protected RuleChainMetaData saveRuleChainMetaData(RuleChainMetaData ruleChainMD) throws Exception {
         return doPost("/api/ruleChain/metadata", ruleChainMD, RuleChainMetaData.class);
     }
@@ -56,6 +67,11 @@ public class AbstractRuleEngineControllerTest extends AbstractControllerTest {
         return doGet("/api/ruleChain/metadata/" + ruleChainId.getId().toString(), RuleChainMetaData.class);
     }
 
+    /**
+     * Get debug events.
+     * CAUTION: events persistence is async, so you have to be sure that the event already persisted before read.
+     * TIP: use await.atMost(TIMEOUT, SECONDS).until(() -> getDebugEvents(tId, eId, PAGE_LIMIT), hasSize(expectedSize))
+     * */
     protected PageData<Event> getDebugEvents(TenantId tenantId, EntityId entityId, int limit) throws Exception {
         TimePageLink pageLink = new TimePageLink(limit);
         return doGetTypedWithTimePageLink("/api/events/{entityType}/{entityId}/{eventType}?tenantId={tenantId}&",

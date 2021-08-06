@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonParseException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -50,6 +51,7 @@ import static org.thingsboard.server.common.data.DataConstants.LATEST_TS;
 import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 
+@Slf4j
 public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeConfiguration, T extends EntityId> implements TbNode {
 
     private static ObjectMapper mapper = new ObjectMapper();
@@ -61,6 +63,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
+        log.trace("init " + configuration, new RuntimeException("stacktrace"));
         this.config = loadGetAttributesNodeConfig(configuration);
         mapper.configure(JsonWriteFeature.QUOTE_FIELD_NAMES.mappedFeature(), false);
         mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
@@ -70,12 +73,14 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
+        log.trace("onMsg {}", msg);
         try {
             withCallback(
                     findEntityIdAsync(ctx, msg),
                     entityId -> safePutAttributes(ctx, msg, entityId),
                     t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
         } catch (Throwable th) {
+            log.trace("onFailure " + msg, th);
             ctx.tellFailure(msg, th);
         }
     }

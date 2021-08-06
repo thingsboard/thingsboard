@@ -13,11 +13,21 @@
     <logger name="org.springframework" level="WARN"/>
     <logger name="org.springframework.boot.test" level="WARN"/>
     <logger name="org.apache.cassandra" level="WARN"/>
+    <logger name="com.datastax" level="WARN"/>
+    <logger name="springfox" level="WARN"/>
+    <logger name="org.owasp" level="WARN"/>
+    <logger name="com.zaxxer.hikari" level="WARN"/>
+    <logger name="org.hibernate" level="WARN"/>
+    <logger name="org.hsqldb" level="WARN"/>
+    <logger name="org.eclipse" level="WARN"/>
     <logger name="org.cassandraunit" level="INFO"/>
-    <logger name="org.eclipse.leshan" level="INFO"/>
 
+    <logger name="org.thingsboard.rule.engine" level="TRACE"/>
+    <logger name="org.thingsboard.server.controller.RuleChainController" level="TRACE"/>
+    <logger name="org.thingsboard.server.service.queue.DefaultTbClusterService" level="TRACE"/>
+    <logger name="org.thingsboard.server.actors.TbActorMailbox" level="TRACE"/>
 
-    <root level="WARN">
+    <root level="INFO">
         <appender-ref ref="console"/>
     </root>
 
