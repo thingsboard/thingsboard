@@ -57,7 +57,7 @@ import java.util.UUID;
 public abstract class AbstractRpcController extends BaseController {
 
     @Autowired
-    private TbCoreDeviceRpcService deviceRpcService;
+    protected TbCoreDeviceRpcService deviceRpcService;
 
     @Autowired
     private AccessValidator accessValidator;

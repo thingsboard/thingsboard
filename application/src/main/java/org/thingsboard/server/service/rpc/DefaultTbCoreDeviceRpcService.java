@@ -139,6 +139,12 @@ public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
         }
     }
 
+    @Override
+    public void processRemoveRpc(RemoveRpcActorMsg removeRpcMsg) {
+        log.trace("[{}][{}] Processing remove RPC [{}]", removeRpcMsg.getTenantId(), removeRpcMsg.getRequestId(), removeRpcMsg.getDeviceId());
+        actorContext.tellWithHighPriority(removeRpcMsg);
+    }
+
     private void sendRpcResponseToTbRuleEngine(String originServiceId, FromDeviceRpcResponse response) {
         if (serviceId.equals(originServiceId)) {
             if (tbRuleEngineRpcService.isPresent()) {

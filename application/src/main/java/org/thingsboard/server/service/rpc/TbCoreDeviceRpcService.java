@@ -56,4 +56,6 @@ public interface TbCoreDeviceRpcService {
      */
     void processRpcResponseFromDeviceActor(FromDeviceRpcResponse response);
 
+    void processRemoveRpc(RemoveRpcActorMsg removeRpcMsg);
+
 }
