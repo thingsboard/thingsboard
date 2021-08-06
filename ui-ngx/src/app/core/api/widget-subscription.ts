@@ -35,7 +35,7 @@ import {
   LegendKeyData,
   widgetType
 } from '@app/shared/models/widget.models';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   calculateIntervalStartEndTime,
   calculateTsOffset,
@@ -69,7 +69,7 @@ import {
 } from '@shared/models/query/query.models';
 import { filter, map, switchMap, takeUntil } from 'rxjs/operators';
 import { AlarmDataListener } from '@core/api/alarm-data.service';
-import { PersistentRpc } from '@shared/models/rpc.models';
+import { RpcStatus } from '@shared/models/rpc.models';
 
 const moment = moment_;
 
@@ -710,8 +710,17 @@ export class WidgetSubscription implements IWidgetSubscription {
               if (persistent && persistentPollingInterval > 0) {
                 return timer(persistentPollingInterval / 2, persistentPollingInterval).pipe(
                   switchMap(() => this.ctx.deviceService.getPersistedRpc(response.rpcId, true)),
-                  filter((persistentResponse: HttpResponse<PersistentRpc>) => persistentResponse.status !== 202),
-                  map(persistentResponse => persistentResponse.body.response),
+                  filter(persistentRespons =>
+                    persistentRespons.status !== RpcStatus.DELIVERED && persistentRespons.status !== RpcStatus.QUEUED),
+                  switchMap(persistentResponse => {
+                    if (persistentResponse.status === RpcStatus.TIMEOUT) {
+                      return throwError({status: 504});
+                    } else if (persistentResponse.status === RpcStatus.FAILED) {
+                      return throwError({status: 502, statusText: persistentResponse.response.error});
+                    } else {
+                      return of(persistentResponse.response);
+                    }
+                  }),
                   takeUntil(rpcSubject)
                 );
               }

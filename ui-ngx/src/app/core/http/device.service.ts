@@ -17,7 +17,7 @@
 import { Injectable } from '@angular/core';
 import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable, ReplaySubject } from 'rxjs';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import {
@@ -138,12 +138,8 @@ export class DeviceService {
     return this.http.post<Device>(`/api/rpc/twoway/${deviceId}`, requestBody, defaultHttpOptionsFromConfig(config));
   }
 
-  public getPersistedRpc(rpcId: string, fullResponse = false,
-                         config?: RequestConfig): Observable<PersistentRpc | HttpResponse<PersistentRpc>> {
-    return this.http.get<PersistentRpc>(`/api/rpc/persistent/${rpcId}`, {
-      ...defaultHttpOptionsFromConfig(config),
-      observe: fullResponse ? 'response' : undefined
-    });
+  public getPersistedRpc(rpcId: string, fullResponse = false, config?: RequestConfig): Observable<PersistentRpc> {
+    return this.http.get<PersistentRpc>(`/api/rpc/persistent/${rpcId}`, defaultHttpOptionsFromConfig(config));
   }
 
   public findByQuery(query: DeviceSearchQuery,
