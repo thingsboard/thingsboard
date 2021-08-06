@@ -16,20 +16,25 @@
 package org.thingsboard.server.msa;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.extensions.cpsuite.ClasspathSuite;
-import org.junit.rules.ExternalResource;
 import org.junit.runner.RunWith;
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.utility.Base58;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(ClasspathSuite.class)
 @ClasspathSuite.ClassnameFilters({"org.thingsboard.server.msa.*Test"})
@@ -50,7 +55,7 @@ public class ContainerTestSuite {
                 String transportsLogRegexp = ".*Going to recalculate partitions.*";
 
                 testContainer = new DockerComposeContainer<>(
-                        new File("./../../docker/docker-compose.yml"),
+                        new File(removeContainerName("./../../docker/docker-compose.yml")),
                         new File("./../../docker/docker-compose.postgres.yml"),
                         new File("./../../docker/docker-compose.postgres.volumes.yml"),
                         new File("./../../docker/docker-compose.kafka.yml"))
@@ -72,5 +77,32 @@ public class ContainerTestSuite {
             }
         }
         return testContainer;
+    }
+
+    /**
+     * This workaround is actual until issue will be resolved:
+     * Support container_name in docker-compose file #2472 https://github.com/testcontainers/testcontainers-java/issues/2472
+     * docker-compose files which contain container_name are not supported and the creation of DockerComposeContainer fails due to IllegalStateException.
+     * This has been introduced in #1151 as a quick fix for unintuitive feedback. https://github.com/testcontainers/testcontainers-java/issues/1151
+     * Using the latest testcontainers and waiting for the fix...
+     * */
+    private static String removeContainerName(String sourceFilename) {
+        String outputFilename = null;
+        try {
+            String sourceContent = FileUtils.readFileToString(new File(sourceFilename), StandardCharsets.UTF_8);
+            String outputContent = sourceContent.replace("container_name: \"${LOAD_BALANCER_NAME}\"", "");
+            assertThat(outputContent, (not(containsString("container_name"))));
+
+            Path tempFile = Files.createTempFile("docker-compose", ".yml"); // the file looks like /tmp/docker-compose713972234379430232.yml
+            log.info("tempFile is {}", tempFile.toFile().getAbsolutePath());
+
+            FileUtils.writeStringToFile(tempFile.toFile(), outputContent, StandardCharsets.UTF_8);
+            outputFilename = tempFile.toFile().getAbsolutePath();
+            assertThat(FileUtils.readFileToString(new File(outputFilename), StandardCharsets.UTF_8), is(outputContent));
+
+        } catch (IOException e) {
+            Assert.fail("failed to create tmp file " + e.getMessage());
+        }
+        return outputFilename;
     }
 }
