@@ -214,7 +214,8 @@ public class TbMsgPushToEdgeNode implements TbNode {
 
     private EdgeEventActionType getEdgeEventActionTypeByMsgType(String msgType) {
         EdgeEventActionType actionType;
-        if (SessionMsgType.POST_TELEMETRY_REQUEST.name().equals(msgType)) {
+        if (SessionMsgType.POST_TELEMETRY_REQUEST.name().equals(msgType)
+                || DataConstants.TIMESERIES_UPDATED.equals(msgType)) {
             actionType = EdgeEventActionType.TIMESERIES_UPDATED;
         } else if (DataConstants.ATTRIBUTES_UPDATED.equals(msgType)) {
             actionType = EdgeEventActionType.ATTRIBUTES_UPDATED;
