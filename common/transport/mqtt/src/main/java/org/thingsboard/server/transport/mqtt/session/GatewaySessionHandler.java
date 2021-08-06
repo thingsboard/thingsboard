@@ -341,7 +341,7 @@ public class GatewaySessionHandler {
             for (Map.Entry<String, JsonElement> deviceEntry : jsonObj.entrySet()) {
                 String deviceName = deviceEntry.getKey();
                 Futures.addCallback(checkDeviceConnected(deviceName),
-                        new FutureCallback<GatewayDeviceSessionCtx>() {
+                        new FutureCallback<>() {
                             @Override
                             public void onSuccess(@Nullable GatewayDeviceSessionCtx deviceCtx) {
                                 if (!deviceEntry.getValue().isJsonArray()) {

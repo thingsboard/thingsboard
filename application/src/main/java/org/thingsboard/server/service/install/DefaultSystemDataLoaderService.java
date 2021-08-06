@@ -481,6 +481,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
             device.setAdditionalInfo(additionalInfo);
         }
         device = deviceService.saveDevice(device);
+        //TODO: No access to cluster service, so we should manually update the status of device.
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(TenantId.SYS_TENANT_ID, device.getId());
         deviceCredentials.setCredentialsId(accessToken);
         deviceCredentialsService.updateDeviceCredentials(TenantId.SYS_TENANT_ID, deviceCredentials);

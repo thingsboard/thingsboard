@@ -66,6 +66,10 @@
             <artifactId>rule-engine-api</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.thingsboard.common</groupId>
+            <artifactId>cluster-api</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.thingsboard.rule-engine</groupId>
             <artifactId>rule-engine-components</artifactId>
         </dependency>
