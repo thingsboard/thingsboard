@@ -377,6 +377,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             if (resultIds.isObject() || resultIds.isObjectInstance()) {
                 Collection<LwM2mResource> resources = client.getNewResourcesForInstance(request.getVersionedId(), request.getValue(), this.config.getModelProvider(), this.converter);
                 if (resultIds.isObject()) {
+                    contentFormat = ContentFormat.TLV;
                     downlink = new CreateRequest(contentFormat, resultIds.getObjectId(), resources);
                 }
                 else {
@@ -404,6 +405,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     private <R extends CompositeDownlinkRequest<T>, T extends LwM2mResponse> void sendCompositeRequest(LwM2mClient client, R request, long timeoutInMs, DownlinkRequestCallback<R, T> callback) {
         sendRequest(client, request, timeoutInMs, callback, r -> request.getPaths().toString());
     }
+
 
     private <R extends DownlinkRequest<T>, T extends LwM2mResponse> void sendRequest(LwM2mClient client, R request, long timeoutInMs, DownlinkRequestCallback<R, T> callback, Function<R, String> pathToStringFunction) {
         if (!clientContext.isDownlinkAllowed(client)) {

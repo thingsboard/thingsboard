@@ -310,30 +310,45 @@ public class LwM2mClient implements Serializable {
         return resources;
     }
 
+    /**
+     * The instance must have all the resources that have the property
+     * <Mandatory>Mandatory</Mandatory>
+     */
     public Collection<LwM2mResource> getNewResourcesForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
                                                                 LwM2mValueConverter converter) {
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRezIdVer));
         Collection<LwM2mResource> resources = ConcurrentHashMap.newKeySet();
         Map<Integer, ResourceModel> resourceModels = modelProvider.getObjectModel(registration)
                 .getObjectModel(pathIds.getObjectId()).resources;
-        resourceModels.forEach((resourceId, resourceModel) -> {
-            if (((Map) params).containsKey(String.valueOf(resourceId))) {
-                Object value = ((Map) params).get((String.valueOf(resourceId)));
-                LwM2mResource resource = null;
-                if (resourceModel.multiple) {
-                    if (value instanceof LinkedHashMap) {
-                        Map values = convertMultiResourceValuesFromRpcBody((LinkedHashMap) value, resourceModel.type, pathRezIdVer);
-                        resource = LwM2mMultipleResource.newResource(resourceId, (Map<Integer, ?>) values, resourceModel.type);
+        if (params != null) {
+            resourceModels.forEach((resourceId, resourceModel) -> {
+                if (((Map) params).containsKey(String.valueOf(resourceId))) {
+                    Object value = ((Map) params).get((String.valueOf(resourceId)));
+                    LwM2mResource resource = null;
+                    if (resourceModel.multiple) {
+                        if (value instanceof LinkedHashMap) {
+                            Map values = convertMultiResourceValuesFromRpcBody((LinkedHashMap) value, resourceModel.type, pathRezIdVer);
+                            resource = LwM2mMultipleResource.newResource(resourceId, (Map<Integer, ?>) values, resourceModel.type);
+                        }
+                    } else {
+                        Object valueRez = value.getClass().getSimpleName().equals("Integer") ? ((Integer) value).longValue() : value;
+                        resource = LwM2mSingleResource.newResource(resourceId,
+                                converter.convertValue(valueRez, equalsResourceTypeGetSimpleName(value), resourceModel.type, pathIds), resourceModel.type);
                     }
-                } else {
-                    resource = LwM2mSingleResource.newResource(resourceId,
-                            converter.convertValue(value, equalsResourceTypeGetSimpleName(value), resourceModel.type, pathIds), resourceModel.type);
+                    if (resource != null) {
+                        resources.add(resource);
+                    } else if (resourceModel.mandatory) {
+                        throw new IllegalArgumentException("Resource id=" + resourceId + " is mandatory. The value of this resource must not be null.");
+                    }
                 }
-                if (resource != null) {
-                    resources.add(resource);
+                else if (resourceModel.mandatory) {
+                    throw new IllegalArgumentException("Resource id=" + resourceId + " is mandatory. The value of this resource must not be null.");
                 }
-            }
-        });
+            });
+        }
+        else {
+            throw new IllegalArgumentException("The value of this resource must not be null.");
+        }
         return resources;
     }
 
