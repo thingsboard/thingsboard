@@ -1367,9 +1367,9 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(timeseriesValue, timeseries.get(timeseriesKey).get(0).get("value"));
 
         List<Map<String, String>> attributes = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/attributes/" + DataConstants.SERVER_SCOPE, new TypeReference<>() {});
-        Assert.assertEquals(1, attributes.size());
-        Assert.assertEquals(attributes.get(0).get("key"), attributesKey);
-        Assert.assertEquals(attributes.get(0).get("value"), attributesValue);
+        Assert.assertEquals(2, attributes.size());
+        var result = attributes.stream().filter(kv -> kv.get("key").equals(attributesKey)).filter(kv -> kv.get("value").equals(attributesValue)).findFirst();
+        Assert.assertTrue(result.isPresent());
     }
 
     private Map<String, List<Map<String, String>>> loadDeviceTimeseries(Device device, String timeseriesKey) throws Exception {

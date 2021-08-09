@@ -215,7 +215,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                 device.setDeviceProfileId(deviceProfileId);
             }
             Device savedDevice = deviceService.saveDevice(device, false);
-            tbClusterService.onDeviceUpdated(savedDevice, device, false);
+            tbClusterService.onDeviceUpdated(savedDevice, created ? null : device, false);
             if (created) {
                 DeviceCredentials deviceCredentials = new DeviceCredentials();
                 deviceCredentials.setDeviceId(new DeviceId(savedDevice.getUuidId()));
