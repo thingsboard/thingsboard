@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.common.data.security;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
@@ -85,6 +88,11 @@ public class DeviceCredentials extends BaseData<DeviceCredentialsId> implements 
         return "DeviceCredentials [deviceId=" + deviceId + ", credentialsType=" + credentialsType + ", credentialsId="
                 + credentialsId + ", credentialsValue=" + credentialsValue + ", createdTime=" + createdTime + ", id="
                 + id + "]";
+    }
+
+    public ObjectNode getNodeCredentialsValue () throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        return (ObjectNode) mapper.readTree(this.credentialsValue);
     }
 
 }
