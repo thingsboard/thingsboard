@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
@@ -27,7 +28,6 @@ import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.importing.AbstractBulkImportService;
 import org.thingsboard.server.service.importing.BulkImportRequest;
 import org.thingsboard.server.service.importing.ImportedEntityInfo;
-import org.thingsboard.server.service.queue.TbClusterService;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
@@ -35,7 +35,6 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.util.Map;
 import java.util.Optional;
-
 
 @Service
 @TbCoreComponent
