@@ -23,6 +23,8 @@ import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import static org.thingsboard.server.service.edge.rpc.EdgeProtoUtils.getStringValue;
+
 @Component
 @TbCoreComponent
 public class CustomerMsgConstructor {
@@ -34,31 +36,31 @@ public class CustomerMsgConstructor {
                 .setIdLSB(customer.getId().getId().getLeastSignificantBits())
                 .setTitle(customer.getTitle());
         if (customer.getCountry() != null) {
-            builder.setCountry(customer.getCountry());
+            builder.setCountry(getStringValue(customer.getCountry()));
         }
         if (customer.getState() != null) {
-            builder.setState(customer.getState());
+            builder.setState(getStringValue(customer.getState()));
         }
         if (customer.getCity() != null) {
-            builder.setCity(customer.getCity());
+            builder.setCity(getStringValue(customer.getCity()));
         }
         if (customer.getAddress() != null) {
-            builder.setAddress(customer.getAddress());
+            builder.setAddress(getStringValue(customer.getAddress()));
         }
         if (customer.getAddress2() != null) {
-            builder.setAddress2(customer.getAddress2());
+            builder.setAddress2(getStringValue(customer.getAddress2()));
         }
         if (customer.getZip() != null) {
-            builder.setZip(customer.getZip());
+            builder.setZip(getStringValue(customer.getZip()));
         }
         if (customer.getPhone() != null) {
-            builder.setPhone(customer.getPhone());
+            builder.setPhone(getStringValue(customer.getPhone()));
         }
         if (customer.getEmail() != null) {
-            builder.setEmail(customer.getEmail());
+            builder.setEmail(getStringValue(customer.getEmail()));
         }
         if (customer.getAdditionalInfo() != null) {
-            builder.setAdditionalInfo(JacksonUtil.toString(customer.getAdditionalInfo()));
+            builder.setAdditionalInfo(getStringValue(JacksonUtil.toString(customer.getAdditionalInfo())));
         }
         return builder.build();
     }

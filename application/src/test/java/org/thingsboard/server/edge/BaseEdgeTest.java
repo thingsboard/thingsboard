@@ -27,6 +27,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageLite;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -114,7 +115,7 @@ import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetTypeUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.cluster.TbClusterService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -126,6 +127,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.service.edge.rpc.EdgeProtoUtils.getStringValue;
 
 @Slf4j
 abstract public class BaseEdgeTest extends AbstractControllerTest {
@@ -648,7 +650,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(relationUpdateMsg.getFromIdMSB(), relation.getFrom().getId().getMostSignificantBits());
         Assert.assertEquals(relationUpdateMsg.getToIdLSB(), relation.getTo().getId().getLeastSignificantBits());
         Assert.assertEquals(relationUpdateMsg.getToEntityType(), relation.getTo().getEntityType().name());
-        Assert.assertEquals(relationUpdateMsg.getTypeGroup(), relation.getTypeGroup().name());
+        Assert.assertEquals(relationUpdateMsg.getTypeGroup().getValue(), relation.getTypeGroup().name());
 
         // 2
         edgeImitator.expectMessageAmount(1);
@@ -672,7 +674,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(relationUpdateMsg.getFromIdMSB(), relation.getFrom().getId().getMostSignificantBits());
         Assert.assertEquals(relationUpdateMsg.getToIdLSB(), relation.getTo().getId().getLeastSignificantBits());
         Assert.assertEquals(relationUpdateMsg.getToEntityType(), relation.getTo().getEntityType().name());
-        Assert.assertEquals(relationUpdateMsg.getTypeGroup(), relation.getTypeGroup().name());
+        Assert.assertEquals(relationUpdateMsg.getTypeGroup().getValue(), relation.getTypeGroup().name());
 
         log.info("Relations tested successfully");
     }
@@ -730,7 +732,15 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         edgeImitator.expectMessageAmount(1);
         doDelete("/api/alarm/" + savedAlarm.getId().getId().toString())
                 .andExpect(status().isOk());
-        Assert.assertFalse(edgeImitator.waitForMessages(1));
+        Assert.assertTrue(edgeImitator.waitForMessages(1));
+        latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof AlarmUpdateMsg);
+        alarmUpdateMsg = (AlarmUpdateMsg) latestMessage;
+        Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, alarmUpdateMsg.getMsgType());
+        Assert.assertEquals(alarmUpdateMsg.getType(), savedAlarm.getType());
+        Assert.assertEquals(alarmUpdateMsg.getName(), savedAlarm.getName());
+        Assert.assertEquals(alarmUpdateMsg.getOriginatorName(), device.getName());
+        Assert.assertEquals(alarmUpdateMsg.getStatus(), AlarmStatus.CLEARED_ACK.name());
 
         log.info("Alarms tested successfully");
     }
@@ -900,9 +910,9 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, widgetTypeUpdateMsg.getMsgType());
         Assert.assertEquals(widgetTypeUpdateMsg.getIdMSB(), savedWidgetType.getUuidId().getMostSignificantBits());
         Assert.assertEquals(widgetTypeUpdateMsg.getIdLSB(), savedWidgetType.getUuidId().getLeastSignificantBits());
-        Assert.assertEquals(widgetTypeUpdateMsg.getAlias(), savedWidgetType.getAlias());
-        Assert.assertEquals(widgetTypeUpdateMsg.getName(), savedWidgetType.getName());
-        Assert.assertEquals(JacksonUtil.toJsonNode(widgetTypeUpdateMsg.getDescriptorJson()), savedWidgetType.getDescriptor());
+        Assert.assertEquals(widgetTypeUpdateMsg.getAlias().getValue(), savedWidgetType.getAlias());
+        Assert.assertEquals(widgetTypeUpdateMsg.getName().getValue(), savedWidgetType.getName());
+        Assert.assertEquals(JacksonUtil.toJsonNode(widgetTypeUpdateMsg.getDescriptorJson().getValue()), savedWidgetType.getDescriptor());
 
         // 3
         edgeImitator.expectMessageAmount(1);
@@ -939,7 +949,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         String timeseriesData = "{\"data\":{\"temperature\":25},\"ts\":" + System.currentTimeMillis() + "}";
         JsonNode timeseriesEntityData = mapper.readTree(timeseriesData);
         EdgeEvent edgeEvent = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.TIMESERIES_UPDATED, device.getId().getId(), EdgeEventType.DEVICE, timeseriesEntityData);
-        edgeEventService.saveAsync(edgeEvent);
+        edgeEventService.save(edgeEvent);
         clusterService.onEdgeEventUpdate(tenantId, edge.getId());
         Assert.assertTrue(edgeImitator.waitForMessages());
 
@@ -978,7 +988,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         JsonNode attributesEntityData = mapper.readTree(attributesData);
         EdgeEvent edgeEvent1 = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.ATTRIBUTES_UPDATED, device.getId().getId(), EdgeEventType.DEVICE, attributesEntityData);
         edgeImitator.expectMessageAmount(1);
-        edgeEventService.saveAsync(edgeEvent1);
+        edgeEventService.save(edgeEvent1);
         clusterService.onEdgeEventUpdate(tenantId, edge.getId());
         Assert.assertTrue(edgeImitator.waitForMessages());
 
@@ -1003,7 +1013,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         JsonNode postAttributesEntityData = mapper.readTree(postAttributesData);
         EdgeEvent edgeEvent = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.POST_ATTRIBUTES, device.getId().getId(), EdgeEventType.DEVICE, postAttributesEntityData);
         edgeImitator.expectMessageAmount(1);
-        edgeEventService.saveAsync(edgeEvent);
+        edgeEventService.save(edgeEvent);
         clusterService.onEdgeEventUpdate(tenantId, edge.getId());
         Assert.assertTrue(edgeImitator.waitForMessages());
 
@@ -1028,7 +1038,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         JsonNode deleteAttributesEntityData = mapper.readTree(deleteAttributesData);
         EdgeEvent edgeEvent = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.ATTRIBUTES_DELETED, device.getId().getId(), EdgeEventType.DEVICE, deleteAttributesEntityData);
         edgeImitator.expectMessageAmount(1);
-        edgeEventService.saveAsync(edgeEvent);
+        edgeEventService.save(edgeEvent);
         clusterService.onEdgeEventUpdate(tenantId, edge.getId());
         Assert.assertTrue(edgeImitator.waitForMessages());
 
@@ -1062,7 +1072,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
         EdgeEvent edgeEvent = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.RPC_CALL, device.getId().getId(), EdgeEventType.DEVICE, body);
         edgeImitator.expectMessageAmount(1);
-        edgeEventService.saveAsync(edgeEvent);
+        edgeEventService.save(edgeEvent);
         clusterService.onEdgeEventUpdate(tenantId, edge.getId());
         Assert.assertTrue(edgeImitator.waitForMessages());
 
@@ -1088,7 +1098,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
             JsonNode timeseriesEntityData = mapper.readTree(timeseriesData);
             EdgeEvent edgeEvent = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.TIMESERIES_UPDATED,
                     device.getId().getId(), EdgeEventType.DEVICE, timeseriesEntityData);
-            edgeEventService.saveAsync(edgeEvent);
+            edgeEventService.save(edgeEvent);
             clusterService.onEdgeEventUpdate(tenantId, edge.getId());
         }
 
@@ -1202,7 +1212,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertTrue(latestMessage instanceof DeviceUpdateMsg);
         DeviceUpdateMsg latestDeviceUpdateMsg = (DeviceUpdateMsg) latestMessage;
         Assert.assertNotEquals(deviceOnCloudName, latestDeviceUpdateMsg.getName());
-        Assert.assertEquals(deviceOnCloudName, latestDeviceUpdateMsg.getConflictName());
+        Assert.assertEquals(deviceOnCloudName, latestDeviceUpdateMsg.getConflictName().getValue());
 
         UUID newDeviceId = new UUID(latestDeviceUpdateMsg.getIdMSB(), latestDeviceUpdateMsg.getIdLSB());
 
@@ -1269,7 +1279,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         EntityId toEntityId = EntityIdFactory.getByTypeAndUuid(relationUpdateMsg.getToEntityType(), toUUID);
         Assert.assertEquals(relation.getTo(), toEntityId);
 
-        Assert.assertEquals(relation.getTypeGroup().name(), relationUpdateMsg.getTypeGroup());
+        Assert.assertEquals(relation.getTypeGroup().name(), relationUpdateMsg.getTypeGroup().getValue());
     }
 
     private void sendAlarm() throws Exception {
@@ -1348,15 +1358,11 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         edgeImitator.sendUplinkMsg(uplinkMsgBuilder2.build());
         Assert.assertTrue(edgeImitator.waitForResponses());
 
-        int attempt = 0;
-        Map<String, List<Map<String, String>>> timeseries;
-        do {
-            timeseries = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/values/timeseries?keys=" + timeseriesKey,
-                    new TypeReference<>() {});
-            // Wait before device attributes saved to database before requesting them from controller
-            Thread.sleep(100);
-            attempt++;
-        } while (!timeseries.containsKey(timeseriesKey) || attempt < 10);
+        Awaitility.await()
+                .atMost(2, TimeUnit.SECONDS)
+                .until(() -> loadDeviceTimeseries(device, timeseriesKey).containsKey(timeseriesKey));
+
+        Map<String, List<Map<String, String>>> timeseries = loadDeviceTimeseries(device, timeseriesKey);
         Assert.assertTrue(timeseries.containsKey(timeseriesKey));
         Assert.assertEquals(1, timeseries.get(timeseriesKey).size());
         Assert.assertEquals(timeseriesValue, timeseries.get(timeseriesKey).get(0).get("value"));
@@ -1365,7 +1371,11 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(1, attributes.size());
         Assert.assertEquals(attributes.get(0).get("key"), attributesKey);
         Assert.assertEquals(attributes.get(0).get("value"), attributesValue);
+    }
 
+    private Map<String, List<Map<String, String>>> loadDeviceTimeseries(Device device, String timeseriesKey) throws Exception {
+        return doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/values/timeseries?keys=" + timeseriesKey,
+                new TypeReference<>() {});
     }
 
     private void sendRelation() throws Exception {
@@ -1381,7 +1391,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
         RelationUpdateMsg.Builder relationUpdateMsgBuilder = RelationUpdateMsg.newBuilder();
         relationUpdateMsgBuilder.setType("test");
-        relationUpdateMsgBuilder.setTypeGroup(RelationTypeGroup.COMMON.name());
+        relationUpdateMsgBuilder.setTypeGroup(getStringValue(RelationTypeGroup.COMMON.name()));
         relationUpdateMsgBuilder.setToIdMSB(device1.getId().getId().getMostSignificantBits());
         relationUpdateMsgBuilder.setToIdLSB(device1.getId().getId().getLeastSignificantBits());
         relationUpdateMsgBuilder.setToEntityType(device1.getId().getEntityType().name());
@@ -1447,7 +1457,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         edgeImitator.expectMessageAmount(1);
         edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
         Assert.assertTrue(edgeImitator.waitForResponses());
-        Assert.assertTrue(edgeImitator.waitForMessages());;
+        Assert.assertTrue(edgeImitator.waitForMessages());
 
         AbstractMessage latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof RuleChainMetadataUpdateMsg);

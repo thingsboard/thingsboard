@@ -100,6 +100,8 @@ public class TbSendRPCRequestNode implements TbNode {
                 params = gson.toJson(paramsEl);
             }
 
+            String additionalInfo = gson.toJson(json.get(DataConstants.ADDITIONAL_INFO));
+
             RuleEngineDeviceRpcRequest request = RuleEngineDeviceRpcRequest.builder()
                     .oneway(oneway)
                     .method(json.get("method").getAsString())
@@ -112,15 +114,16 @@ public class TbSendRPCRequestNode implements TbNode {
                     .expirationTime(expirationTime)
                     .restApiCall(restApiCall)
                     .persisted(persisted)
+                    .additionalInfo(additionalInfo)
                     .build();
 
             ctx.getRpcService().sendRpcRequestToDevice(request, ruleEngineDeviceRpcResponse -> {
-                if (!ruleEngineDeviceRpcResponse.getError().isPresent()) {
+                if (ruleEngineDeviceRpcResponse.getError().isEmpty()) {
                     TbMsg next = ctx.newMsg(msg.getQueueName(), msg.getType(), msg.getOriginator(), msg.getCustomerId(), msg.getMetaData(), ruleEngineDeviceRpcResponse.getResponse().orElse("{}"));
                     ctx.enqueueForTellNext(next, TbRelationTypes.SUCCESS);
                 } else {
                     TbMsg next = ctx.newMsg(msg.getQueueName(), msg.getType(), msg.getOriginator(), msg.getCustomerId(), msg.getMetaData(), wrap("error", ruleEngineDeviceRpcResponse.getError().get().name()));
-                    ctx.tellFailure(next, new RuntimeException(ruleEngineDeviceRpcResponse.getError().get().name()));
+                    ctx.enqueueForTellFailure(next, ruleEngineDeviceRpcResponse.getError().get().name());
                 }
             });
             ctx.ack(msg);

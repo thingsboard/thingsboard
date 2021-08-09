@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.api;
 import io.netty.channel.EventLoopGroup;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -187,6 +188,8 @@ public interface TbContext {
     AssetService getAssetService();
 
     DeviceService getDeviceService();
+
+    TbClusterService getClusterService();
 
     DashboardService getDashboardService();
 

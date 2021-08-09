@@ -144,6 +144,7 @@ import { QuickTimeIntervalComponent } from '@shared/components/time/quick-time-i
 import { OtaPackageAutocompleteComponent } from '@shared/components/ota-package/ota-package-autocomplete.component';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { CopyButtonComponent } from '@shared/components/button/copy-button.component';
+import { TogglePasswordComponent } from '@shared/components/button/toggle-password.component';
 
 @NgModule({
   providers: [
@@ -242,7 +243,8 @@ import { CopyButtonComponent } from '@shared/components/button/copy-button.compo
     ContactComponent,
     OtaPackageAutocompleteComponent,
     WidgetsBundleSearchComponent,
-    CopyButtonComponent
+    CopyButtonComponent,
+    TogglePasswordComponent
   ],
   imports: [
     CommonModule,
@@ -415,7 +417,8 @@ import { CopyButtonComponent } from '@shared/components/button/copy-button.compo
     ContactComponent,
     OtaPackageAutocompleteComponent,
     WidgetsBundleSearchComponent,
-    CopyButtonComponent
+    CopyButtonComponent,
+    TogglePasswordComponent
   ]
 })
 export class SharedModule { }

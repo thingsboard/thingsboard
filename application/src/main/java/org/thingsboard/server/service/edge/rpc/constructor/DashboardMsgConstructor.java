@@ -24,6 +24,8 @@ import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import static org.thingsboard.server.service.edge.rpc.EdgeProtoUtils.getInt64Value;
+
 @Component
 @TbCoreComponent
 public class DashboardMsgConstructor {
@@ -36,8 +38,8 @@ public class DashboardMsgConstructor {
                 .setTitle(dashboard.getTitle())
                 .setConfiguration(JacksonUtil.toString(dashboard.getConfiguration()));
         if (customerId != null) {
-            builder.setCustomerIdMSB(customerId.getId().getMostSignificantBits());
-            builder.setCustomerIdLSB(customerId.getId().getLeastSignificantBits());
+            builder.setCustomerIdMSB(getInt64Value(customerId.getId().getMostSignificantBits()));
+            builder.setCustomerIdLSB(getInt64Value(customerId.getId().getLeastSignificantBits()));
         }
         return builder.build();
     }

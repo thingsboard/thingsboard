@@ -33,7 +33,6 @@ import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
@@ -118,7 +117,6 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -129,7 +127,7 @@ import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
 import org.thingsboard.server.service.lwm2m.LwM2MServerSecurityInfoRepository;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.service.resource.TbResourceService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
@@ -846,10 +844,22 @@ public abstract class BaseController {
     }
 
     protected void sendDeleteNotificationMsg(TenantId tenantId, EntityId entityId, List<EdgeId> edgeIds) {
+        sendDeleteNotificationMsg(tenantId, entityId, edgeIds, null);
+    }
+
+    protected void sendDeleteNotificationMsg(TenantId tenantId, EntityId entityId, List<EdgeId> edgeIds, String body) {
         if (edgeIds != null && !edgeIds.isEmpty()) {
             for (EdgeId edgeId : edgeIds) {
-                sendNotificationMsgToEdgeService(tenantId, edgeId, entityId, null, null, EdgeEventActionType.DELETED);
+                sendNotificationMsgToEdgeService(tenantId, edgeId, entityId, body, null, EdgeEventActionType.DELETED);
             }
+        }
+    }
+
+    protected void sendAlarmDeleteNotificationMsg(TenantId tenantId, EntityId entityId, List<EdgeId> edgeIds, Alarm alarm) {
+        try {
+            sendDeleteNotificationMsg(tenantId, entityId, edgeIds, json.writeValueAsString(alarm));
+        } catch (Exception e) {
+            log.warn("Failed to push delete alarm msg to core: {}", alarm, e);
         }
     }
 
@@ -870,42 +880,7 @@ public abstract class BaseController {
     }
 
     private void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action) {
-        if (!edgesEnabled) {
-            return;
-        }
-        if (type == null) {
-            if (entityId != null) {
-                type = EdgeUtils.getEdgeEventTypeByEntityType(entityId.getEntityType());
-            } else {
-                log.trace("[{}] entity id and type are null. Ignoring this notification", tenantId);
-                return;
-            }
-            if (type == null) {
-                log.trace("[{}] edge event type is null. Ignoring this notification [{}]", tenantId, entityId);
-                return;
-            }
-        }
-        TransportProtos.EdgeNotificationMsgProto.Builder builder = TransportProtos.EdgeNotificationMsgProto.newBuilder();
-        builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
-        builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
-        builder.setType(type.name());
-        builder.setAction(action.name());
-        if (entityId != null) {
-            builder.setEntityIdMSB(entityId.getId().getMostSignificantBits());
-            builder.setEntityIdLSB(entityId.getId().getLeastSignificantBits());
-            builder.setEntityType(entityId.getEntityType().name());
-        }
-        if (edgeId != null) {
-            builder.setEdgeIdMSB(edgeId.getId().getMostSignificantBits());
-            builder.setEdgeIdLSB(edgeId.getId().getLeastSignificantBits());
-        }
-        if (body != null) {
-            builder.setBody(body);
-        }
-        TransportProtos.EdgeNotificationMsgProto msg = builder.build();
-        log.trace("[{}] sending notification to edge service {}", tenantId.getId(), msg);
-        tbClusterService.pushMsgToCore(tenantId, entityId != null ? entityId : tenantId,
-                TransportProtos.ToCoreMsg.newBuilder().setEdgeNotificationMsg(msg).build(), null);
+        tbClusterService.sendNotificationMsgToEdgeService(tenantId, edgeId, entityId, body, type, action);
     }
 
     protected List<EdgeId> findRelatedEdgeIds(TenantId tenantId, EntityId entityId) {

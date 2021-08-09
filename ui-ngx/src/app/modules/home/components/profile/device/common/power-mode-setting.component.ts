@@ -16,7 +16,12 @@
 
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { PowerMode, PowerModeTranslationMap } from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
+import {
+  DEFAULT_EDRX_CYCLE,
+  DEFAULT_PAGING_TRANSMISSION_WINDOW, DEFAULT_PSM_ACTIVITY_TIMER,
+  PowerMode,
+  PowerModeTranslationMap
+} from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 
@@ -63,13 +68,13 @@ export class PowerModeSettingComponent implements OnInit, OnDestroy {
 
   private disablePSKMode() {
     this.parentForm.get('psmActivityTimer').disable({emitEvent: false});
-    this.parentForm.get('psmActivityTimer').reset(0, {emitEvent: false});
+    this.parentForm.get('psmActivityTimer').reset(DEFAULT_PSM_ACTIVITY_TIMER, {emitEvent: false});
   }
 
   private disableEdrxMode() {
     this.parentForm.get('edrxCycle').disable({emitEvent: false});
-    this.parentForm.get('edrxCycle').reset(0, {emitEvent: false});
+    this.parentForm.get('edrxCycle').reset(DEFAULT_EDRX_CYCLE, {emitEvent: false});
     this.parentForm.get('pagingTransmissionWindow').disable({emitEvent: false});
-    this.parentForm.get('pagingTransmissionWindow').reset(0, {emitEvent: false});
+    this.parentForm.get('pagingTransmissionWindow').reset(DEFAULT_PAGING_TRANSMISSION_WINDOW, {emitEvent: false});
   }
 }

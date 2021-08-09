@@ -22,18 +22,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.rule.engine.api.RpcError;
+import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import javax.annotation.PostConstruct;
@@ -138,6 +139,12 @@ public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
         }
     }
 
+    @Override
+    public void processRemoveRpc(RemoveRpcActorMsg removeRpcMsg) {
+        log.trace("[{}][{}] Processing remove RPC [{}]", removeRpcMsg.getTenantId(), removeRpcMsg.getRequestId(), removeRpcMsg.getDeviceId());
+        actorContext.tellWithHighPriority(removeRpcMsg);
+    }
+
     private void sendRpcResponseToTbRuleEngine(String originServiceId, FromDeviceRpcResponse response) {
         if (serviceId.equals(originServiceId)) {
             if (tbRuleEngineRpcService.isPresent()) {
@@ -167,6 +174,8 @@ public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
 
         entityNode.put("method", msg.getBody().getMethod());
         entityNode.put("params", msg.getBody().getParams());
+
+        entityNode.put(DataConstants.ADDITIONAL_INFO, msg.getAdditionalInfo());
 
         try {
             TbMsg tbMsg = TbMsg.newMsg(DataConstants.RPC_CALL_FROM_SERVER_TO_DEVICE, msg.getDeviceId(), currentUser.getCustomerId(), metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));

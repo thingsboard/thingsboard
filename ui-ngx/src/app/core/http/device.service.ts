@@ -31,6 +31,7 @@ import {
 import { EntitySubtype } from '@app/shared/models/entity-type.models';
 import { AuthService } from '@core/auth/auth.service';
 import { BulkImportRequest, BulkImportResult } from '@home/components/import-export/import-export.models';
+import { PersistentRpc } from '@shared/models/rpc.models';
 
 @Injectable({
   providedIn: 'root'
@@ -131,11 +132,15 @@ export class DeviceService {
   }
 
   public sendOneWayRpcCommand(deviceId: string, requestBody: any, config?: RequestConfig): Observable<any> {
-    return this.http.post<Device>(`/api/plugins/rpc/oneway/${deviceId}`, requestBody, defaultHttpOptionsFromConfig(config));
+    return this.http.post<Device>(`/api/rpc/oneway/${deviceId}`, requestBody, defaultHttpOptionsFromConfig(config));
   }
 
   public sendTwoWayRpcCommand(deviceId: string, requestBody: any, config?: RequestConfig): Observable<any> {
-    return this.http.post<Device>(`/api/plugins/rpc/twoway/${deviceId}`, requestBody, defaultHttpOptionsFromConfig(config));
+    return this.http.post<Device>(`/api/rpc/twoway/${deviceId}`, requestBody, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getPersistedRpc(rpcId: string, fullResponse = false, config?: RequestConfig): Observable<PersistentRpc> {
+    return this.http.get<PersistentRpc>(`/api/rpc/persistent/${rpcId}`, defaultHttpOptionsFromConfig(config));
   }
 
   public findByQuery(query: DeviceSearchQuery,

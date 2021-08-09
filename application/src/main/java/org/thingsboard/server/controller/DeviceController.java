@@ -36,7 +36,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.rule.engine.api.msg.DeviceCredentialsUpdateNotificationMsg;
 import org.thingsboard.rule.engine.api.msg.DeviceEdgeUpdateMsg;
-import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.common.data.ClaimRequest;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
@@ -60,7 +59,6 @@ import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
@@ -134,20 +132,16 @@ public class DeviceController extends BaseController {
         try {
             device.setTenantId(getCurrentUser().getTenantId());
 
-            checkEntity(device.getId(), device, Resource.DEVICE);
-
-            Device oldDevice;
+            Device oldDevice = null;
             if (!created) {
-                oldDevice = deviceService.findDeviceById(getTenantId(), device.getId());
+                oldDevice = checkDeviceId(device.getId(), Operation.WRITE);
             } else {
-                oldDevice = null;
+                checkEntity(null, device, Resource.DEVICE);
             }
 
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
 
-            onDeviceCreatedOrUpdated(savedDevice, !created);
-
-            otaPackageStateService.update(savedDevice, oldDevice);
+            onDeviceCreatedOrUpdated(savedDevice, oldDevice, !created);
 
             return savedDevice;
         } catch (Exception e) {
@@ -158,28 +152,15 @@ public class DeviceController extends BaseController {
 
     }
 
-    private void onDeviceCreatedOrUpdated(Device device, boolean updated) {
-        tbClusterService.onDeviceChange(device, null);
-        tbClusterService.pushMsgToCore(new DeviceNameOrTypeUpdateMsg(device.getTenantId(),
-                device.getId(), device.getName(), device.getType()), null);
-        tbClusterService.onEntityStateChange(device.getTenantId(), device.getId(), updated ? ComponentLifecycleEvent.UPDATED : ComponentLifecycleEvent.CREATED);
-
-        if (updated) {
-            sendEntityNotificationMsg(device.getTenantId(), device.getId(), EdgeEventActionType.UPDATED);
-        }
+    private void onDeviceCreatedOrUpdated(Device savedDevice, Device oldDevice, boolean updated) {
+        tbClusterService.onDeviceUpdated(savedDevice, oldDevice);
 
         try {
-            logEntityAction(device.getId(), device,
-                    device.getCustomerId(),
+            logEntityAction(savedDevice.getId(), savedDevice,
+                    savedDevice.getCustomerId(),
                     updated ? ActionType.UPDATED : ActionType.ADDED, null);
         } catch (ThingsboardException e) {
             log.error("Failed to log entity action", e);
-        }
-
-        if (updated) {
-            deviceStateService.onDeviceUpdated(device);
-        } else {
-            deviceStateService.onDeviceAdded(device);
         }
     }
 
@@ -197,15 +178,12 @@ public class DeviceController extends BaseController {
             deviceService.deleteDevice(getCurrentUser().getTenantId(), deviceId);
 
             tbClusterService.onDeviceDeleted(device, null);
-            tbClusterService.onEntityStateChange(device.getTenantId(), deviceId, ComponentLifecycleEvent.DELETED);
 
             logEntityAction(deviceId, device,
                     device.getCustomerId(),
                     ActionType.DELETED, null, strDeviceId);
 
             sendDeleteNotificationMsg(getTenantId(), deviceId, relatedEdgeIds);
-
-            deviceStateService.onDeviceDeleted(device);
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.DEVICE),
                     null,
@@ -819,8 +797,7 @@ public class DeviceController extends BaseController {
     @PostMapping("/device/bulk_import")
     public BulkImportResult<Device> processDevicesBulkImport(@RequestBody BulkImportRequest request) throws Exception {
         return deviceBulkImportService.processBulkImport(request, getCurrentUser(), importedDeviceInfo -> {
-            onDeviceCreatedOrUpdated(importedDeviceInfo.getEntity(), importedDeviceInfo.isUpdated());
-            otaPackageStateService.update(importedDeviceInfo.getEntity(), importedDeviceInfo.getOldEntity());
+            onDeviceCreatedOrUpdated(importedDeviceInfo.getEntity(), importedDeviceInfo.getOldEntity(), importedDeviceInfo.isUpdated());
         });
     }
 

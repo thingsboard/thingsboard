@@ -153,7 +153,7 @@ public class EdgeController extends BaseController {
             edgeService.assignDefaultRuleChainsToEdge(tenantId, edge.getId());
         }
 
-        tbClusterService.onEntityStateChange(edge.getTenantId(), edge.getId(),
+        tbClusterService.broadcastEntityStateChangeEvent(edge.getTenantId(), edge.getId(),
                 updated ? ComponentLifecycleEvent.UPDATED : ComponentLifecycleEvent.CREATED);
 
         logEntityAction(edge.getId(), edge, null, updated ? ActionType.UPDATED : ActionType.ADDED, null);
@@ -169,7 +169,7 @@ public class EdgeController extends BaseController {
             Edge edge = checkEdgeId(edgeId, Operation.DELETE);
             edgeService.deleteEdge(getTenantId(), edgeId);
 
-            tbClusterService.onEntityStateChange(getTenantId(), edgeId,
+            tbClusterService.broadcastEntityStateChangeEvent(getTenantId(), edgeId,
                     ComponentLifecycleEvent.DELETED);
 
             logEntityAction(edgeId, edge,
@@ -220,7 +220,7 @@ public class EdgeController extends BaseController {
 
             Edge savedEdge = checkNotNull(edgeService.assignEdgeToCustomer(getCurrentUser().getTenantId(), edgeId, customerId));
 
-            tbClusterService.onEntityStateChange(getTenantId(), edgeId,
+            tbClusterService.broadcastEntityStateChangeEvent(getTenantId(), edgeId,
                     ComponentLifecycleEvent.UPDATED);
 
             logEntityAction(edgeId, savedEdge,
@@ -254,7 +254,7 @@ public class EdgeController extends BaseController {
 
             Edge savedEdge = checkNotNull(edgeService.unassignEdgeFromCustomer(getCurrentUser().getTenantId(), edgeId));
 
-            tbClusterService.onEntityStateChange(getTenantId(), edgeId,
+            tbClusterService.broadcastEntityStateChangeEvent(getTenantId(), edgeId,
                     ComponentLifecycleEvent.UPDATED);
 
             logEntityAction(edgeId, edge,
@@ -284,7 +284,7 @@ public class EdgeController extends BaseController {
             Customer publicCustomer = customerService.findOrCreatePublicCustomer(edge.getTenantId());
             Edge savedEdge = checkNotNull(edgeService.assignEdgeToCustomer(getCurrentUser().getTenantId(), edgeId, publicCustomer.getId()));
 
-            tbClusterService.onEntityStateChange(getTenantId(), edgeId,
+            tbClusterService.broadcastEntityStateChangeEvent(getTenantId(), edgeId,
                     ComponentLifecycleEvent.UPDATED);
 
             logEntityAction(edgeId, savedEdge,
@@ -376,7 +376,7 @@ public class EdgeController extends BaseController {
 
             Edge updatedEdge = edgeNotificationService.setEdgeRootRuleChain(getTenantId(), edge, ruleChainId);
 
-            tbClusterService.onEntityStateChange(updatedEdge.getTenantId(), updatedEdge.getId(), ComponentLifecycleEvent.UPDATED);
+            tbClusterService.broadcastEntityStateChangeEvent(updatedEdge.getTenantId(), updatedEdge.getId(), ComponentLifecycleEvent.UPDATED);
 
             logEntityAction(updatedEdge.getId(), updatedEdge, null, ActionType.UPDATED, null);
 

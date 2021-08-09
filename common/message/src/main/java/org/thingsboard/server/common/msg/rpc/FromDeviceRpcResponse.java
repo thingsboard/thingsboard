@@ -13,17 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api.msg;
+package org.thingsboard.server.common.msg.rpc;
 
-import org.thingsboard.server.common.msg.TbActorMsg;
-import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
-import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+import org.thingsboard.server.common.data.rpc.RpcError;
 
 import java.io.Serializable;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * @author Andrew Shvayka
  */
-public interface ToDeviceActorNotificationMsg extends TbActorMsg, TenantAwareMsg, DeviceAwareMsg, Serializable {
+@RequiredArgsConstructor
+@ToString
+public class FromDeviceRpcResponse implements Serializable {
+    @Getter
+    private final UUID id;
+    private final String response;
+    private final RpcError error;
+
+    public Optional<String> getResponse() {
+        return Optional.ofNullable(response);
+    }
+
+    public Optional<RpcError> getError() {
+        return Optional.ofNullable(error);
+    }
 
 }

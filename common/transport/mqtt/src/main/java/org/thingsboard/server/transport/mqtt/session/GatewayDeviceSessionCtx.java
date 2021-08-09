@@ -60,6 +60,7 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
                 .setDeviceProfileIdLSB(deviceInfo.getDeviceProfileId().getId().getLeastSignificantBits())
                 .build());
         setDeviceInfo(deviceInfo);
+        setConnected(true);
         setDeviceProfile(deviceProfile);
         this.transportService = transportService;
     }
