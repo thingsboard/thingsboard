@@ -157,7 +157,7 @@ public class DeviceProfileController extends BaseController {
                     isSoftwareChanged = true;
                 }
             }
-
+            lwM2MServerSecurityInfoRepository.verifySecurityKeyDeviceProfile(deviceProfile);
             DeviceProfile savedDeviceProfile = checkNotNull(deviceProfileService.saveDeviceProfile(deviceProfile));
 
             tbClusterService.onDeviceProfileChange(savedDeviceProfile, null);
