@@ -26,6 +26,8 @@ import org.eclipse.leshan.core.util.SecurityUtil;
 import org.eclipse.leshan.server.bootstrap.InvalidConfigurationException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MSecureServerConfig;
@@ -39,6 +41,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -80,23 +83,27 @@ public class LwM2MServerSecurityInfoRepository {
         return "";
     }
 
-    public void verifySecurityKeyDevice(DeviceCredentials result) throws InvalidConfigurationException, JsonProcessingException {
-        ObjectNode node = result.getNodeCredentialsValue();
-        checkClientKey ((ObjectNode) node.get("client"));
-        checkServerKey ((ObjectNode) node.get("bootstrap").get("bootstrapServer"), "Client`s  by bootstrapServer");
-        checkServerKey ((ObjectNode) node.get("bootstrap").get("lwm2mServer"), "Client`s by lwm2mServer");
+    public void verifySecurityKeyDevice(DeviceCredentials deviceCredentials) throws InvalidConfigurationException, JsonProcessingException {
+        ObjectNode nodeCredentialsValue = deviceCredentials.getNodeCredentialsValue();
+        checkClientKey ((ObjectNode) nodeCredentialsValue.get("client"));
+        checkServerKey ((ObjectNode) nodeCredentialsValue.get("bootstrap").get("bootstrapServer"), "Client`s  by bootstrapServer");
+        checkServerKey ((ObjectNode) nodeCredentialsValue.get("bootstrap").get("lwm2mServer"), "Client`s by lwm2mServer");
     }
 
     private void checkClientKey (ObjectNode node) throws InvalidConfigurationException {
         String modeName = node.get("securityConfigClientMode").asText();
         // checks security config
-        String value = node.get("key").textValue();
+
         if (SecurityMode.RPK.name().equals(modeName)) {
+            String value = node.get("key").textValue();
             assertIf(decodeRfc7250PublicKey(Hex.decodeHex(((String) value).toCharArray())) == null,
                     "raw-public-key mode, Client`s public key or id must be RFC7250 encoded public key");
         } else if (SecurityMode.X509.name().equals(modeName)) {
-            assertIf(decodeCertificate(Hex.decodeHex(((String) value).toCharArray())) == null,
-                    "x509 mode, Client`s public key must be DER encoded X.509 certificate");
+            String value = node.get("cert").textValue();
+            if (value != null && !value.isEmpty()) {
+                assertIf(decodeCertificate(Hex.decodeHex(((String) value).toCharArray())) == null,
+                        "x509 mode, Client`s public key must be DER encoded X.509 certificate");
+            }
         }
 
     }
@@ -107,28 +114,47 @@ public class LwM2MServerSecurityInfoRepository {
         if (SecurityMode.RPK.name().equals(modeName)) {
             checkRPKServer(node, serverType);
         } else if (SecurityMode.X509.name().equals(modeName)) {
-            checkX509Server(node);
+            checkX509Server(node, serverType);
         }
-
     }
 
     protected void checkRPKServer(ObjectNode node, String serverType) throws InvalidConfigurationException {
         String value = node.get("clientSecretKey").textValue();
-        assertIf(decodeRfc5958PrivateKey(Hex.decodeHex(((String) value).toCharArray())) == null,
+        assertIf(decodeRfc5958PrivateKey(Hex.decodeHex(value.toCharArray())) == null,
                 "raw-public-key mode, " + serverType + " secret key must be RFC5958 encoded private key");
         value = node.get("clientPublicKeyOrId").textValue();
-        assertIf(decodeRfc7250PublicKey(Hex.decodeHex(((String) value).toCharArray())) == null,
+        assertIf(decodeRfc7250PublicKey(Hex.decodeHex(value.toCharArray())) == null,
                 "raw-public-key mode, " + serverType + " public key or id must be RFC7250 encoded public key");
     }
 
-    protected void checkX509Server(ObjectNode node) throws InvalidConfigurationException {
-        String value = node.get("clientSecretKey").textValue();;
-        assertIf(decodeRfc5958PrivateKey(Hex.decodeHex(((String) value).toCharArray())) == null,
-                "x509 mode, secret key must be RFC5958 encoded private key");
+    protected void checkX509Server(ObjectNode node, String serverType) throws InvalidConfigurationException {
+        String value = node.get("clientSecretKey").textValue();
+        assertIf(decodeRfc5958PrivateKey(Hex.decodeHex(value.toCharArray())) == null,
+                "x509 mode " + serverType + " secret key must be RFC5958 encoded private key");
         value = node.get("clientPublicKeyOrId").textValue();
-        assertIf(decodeCertificate(Hex.decodeHex(((String) value).toCharArray())) == null,
-                "x509 mode, server public key must be DER encoded X.509 certificate");
+        assertIf(decodeCertificate(Hex.decodeHex(value.toCharArray())) == null,
+                "x509 mode " + serverType + " public key must be DER encoded X.509 certificate");
 
+    }
+
+    public void verifySecurityKeyDeviceProfile(DeviceProfile deviceProfile) throws InvalidConfigurationException, JsonProcessingException {
+        Map serverBs = ((Lwm2mDeviceProfileTransportConfiguration)deviceProfile.getProfileData().getTransportConfiguration()).getBootstrap().getBootstrapServer();
+        checkDeviceProfileServer (serverBs, "Servers: BootstrapServer`s");
+        Map serverLwm2m = ((Lwm2mDeviceProfileTransportConfiguration)deviceProfile.getProfileData().getTransportConfiguration()).getBootstrap().getLwm2mServer();
+        checkDeviceProfileServer (serverLwm2m, "Servers: Lwm2mServer`s");
+
+    }
+
+    protected void checkDeviceProfileServer (Map server, String serverType) throws InvalidConfigurationException{
+        // checks security config
+        String value = (String) server.get("serverPublicKey");
+        if (SecurityMode.RPK.name().equals(server.get("securityMode"))) {
+            assertIf(decodeRfc7250PublicKey(Hex.decodeHex(value.toCharArray())) == null,
+                    "raw-public-key mode, " + serverType + " public key or id must be RFC7250 encoded public key");
+        } else if (SecurityMode.X509.name().equals(server.get("securityMode"))) {
+            assertIf(decodeCertificate(Hex.decodeHex(value.toCharArray())) == null,
+                    "x509 mode, " + serverType + " public key must be DER encoded X.509 certificate");
+        }
     }
 
     protected PrivateKey decodeRfc5958PrivateKey(byte[] encodedKey) throws InvalidConfigurationException {
