@@ -75,6 +75,8 @@ public interface TbClusterService {
 
     void onDeviceUpdated(Device device, Device old);
 
+    void onDeviceUpdated(Device device, Device old, boolean notifyEdge);
+
     void onDeviceDeleted(Device device, TbQueueCallback callback);
 
     void onResourceChange(TbResource resource, TbQueueCallback callback);

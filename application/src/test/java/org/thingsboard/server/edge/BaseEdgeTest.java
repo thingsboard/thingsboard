@@ -1568,11 +1568,14 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
     private void sendAttributesRequest() throws Exception {
         Device device = findDeviceByName("Edge Device 1");
-        sendAttributesRequest(device, DataConstants.SERVER_SCOPE, "{\"key1\":\"value1\"}", "key1", "value1");
-        sendAttributesRequest(device, DataConstants.SHARED_SCOPE, "{\"key2\":\"value2\"}", "key2", "value2");
+        sendAttributesRequest(device, DataConstants.SERVER_SCOPE, "{\"key1\":\"value1\"}",
+                "key1", "value1", 2);
+        sendAttributesRequest(device, DataConstants.SHARED_SCOPE, "{\"key2\":\"value2\"}",
+                "key2", "value2", 1);
     }
 
-    private void sendAttributesRequest(Device device, String scope, String attributesDataStr, String expectedKey, String expectedValue) throws Exception {
+    private void sendAttributesRequest(Device device, String scope, String attributesDataStr, String expectedKey,
+                                       String expectedValue, int expectedSize) throws Exception {
         JsonNode attributesData = mapper.readTree(attributesDataStr);
 
         doPost("/api/plugins/telemetry/DEVICE/" + device.getId().getId().toString() + "/attributes/" + scope,
@@ -1608,10 +1611,13 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Assert.assertTrue(latestEntityDataMsg.hasAttributesUpdatedMsg());
 
         TransportProtos.PostAttributeMsg attributesUpdatedMsg = latestEntityDataMsg.getAttributesUpdatedMsg();
-        Assert.assertEquals(1, attributesUpdatedMsg.getKvCount());
-        TransportProtos.KeyValueProto keyValueProto = attributesUpdatedMsg.getKv(0);
-        Assert.assertEquals(expectedKey, keyValueProto.getKey());
-        Assert.assertEquals(expectedValue, keyValueProto.getStringV());
+        Assert.assertEquals(expectedSize, attributesUpdatedMsg.getKvList().size());
+        for (TransportProtos.KeyValueProto keyValueProto : attributesUpdatedMsg.getKvList()) {
+            if (keyValueProto.getKey().equals(expectedKey)) {
+                Assert.assertEquals(expectedKey, keyValueProto.getKey());
+                Assert.assertEquals(expectedValue, keyValueProto.getStringV());
+            }
+        }
     }
 
     // Utility methods
