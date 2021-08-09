@@ -144,7 +144,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                     deviceCredentials.setCredentialsType(DeviceCredentialsType.valueOf(deviceCredentialsUpdateMsg.getCredentialsType()));
                     deviceCredentials.setCredentialsId(deviceCredentialsUpdateMsg.getCredentialsId());
                     if (deviceCredentialsUpdateMsg.hasCredentialsValue()) {
-                        deviceCredentials.setCredentialsValue(deviceCredentialsUpdateMsg.getCredentialsValue().getValue());
+                        deviceCredentials.setCredentialsValue(deviceCredentialsUpdateMsg.getCredentialsValue());
                     }
                     deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
                 } catch (Exception e) {
@@ -164,15 +164,15 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
             device.setName(deviceUpdateMsg.getName());
             device.setType(deviceUpdateMsg.getType());
             if (deviceUpdateMsg.hasLabel()) {
-                device.setLabel(deviceUpdateMsg.getLabel().getValue());
+                device.setLabel(deviceUpdateMsg.getLabel());
             }
             if (deviceUpdateMsg.hasAdditionalInfo()) {
-                device.setAdditionalInfo(JacksonUtil.toJsonNode(deviceUpdateMsg.getAdditionalInfo().getValue()));
+                device.setAdditionalInfo(JacksonUtil.toJsonNode(deviceUpdateMsg.getAdditionalInfo()));
             }
             if (deviceUpdateMsg.hasDeviceProfileIdMSB() && deviceUpdateMsg.hasDeviceProfileIdLSB()) {
                 DeviceProfileId deviceProfileId = new DeviceProfileId(
-                        new UUID(deviceUpdateMsg.getDeviceProfileIdMSB().getValue(),
-                                deviceUpdateMsg.getDeviceProfileIdLSB().getValue()));
+                        new UUID(deviceUpdateMsg.getDeviceProfileIdMSB(),
+                                deviceUpdateMsg.getDeviceProfileIdLSB()));
                 device.setDeviceProfileId(deviceProfileId);
             }
             Device savedDevice = deviceService.saveDevice(device);
@@ -203,15 +203,15 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
             device.setName(deviceName);
             device.setType(deviceUpdateMsg.getType());
             if (deviceUpdateMsg.hasLabel()) {
-                device.setLabel(deviceUpdateMsg.getLabel().getValue());
+                device.setLabel(deviceUpdateMsg.getLabel());
             }
             if (deviceUpdateMsg.hasAdditionalInfo()) {
-                device.setAdditionalInfo(JacksonUtil.toJsonNode(deviceUpdateMsg.getAdditionalInfo().getValue()));
+                device.setAdditionalInfo(JacksonUtil.toJsonNode(deviceUpdateMsg.getAdditionalInfo()));
             }
             if (deviceUpdateMsg.hasDeviceProfileIdMSB() && deviceUpdateMsg.hasDeviceProfileIdLSB()) {
                 DeviceProfileId deviceProfileId = new DeviceProfileId(
-                        new UUID(deviceUpdateMsg.getDeviceProfileIdMSB().getValue(),
-                                deviceUpdateMsg.getDeviceProfileIdLSB().getValue()));
+                        new UUID(deviceUpdateMsg.getDeviceProfileIdMSB(),
+                                deviceUpdateMsg.getDeviceProfileIdLSB()));
                 device.setDeviceProfileId(deviceProfileId);
             }
             Device savedDevice = deviceService.saveDevice(device, false);

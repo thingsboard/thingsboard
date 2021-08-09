@@ -26,9 +26,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.nio.charset.StandardCharsets;
 
-import static org.thingsboard.server.service.edge.rpc.EdgeProtoUtils.getBytesValue;
-import static org.thingsboard.server.service.edge.rpc.EdgeProtoUtils.getStringValue;
-
 @Component
 @TbCoreComponent
 public class WidgetsBundleMsgConstructor {
@@ -41,10 +38,10 @@ public class WidgetsBundleMsgConstructor {
                 .setTitle(widgetsBundle.getTitle())
                 .setAlias(widgetsBundle.getAlias());
         if (widgetsBundle.getImage() != null) {
-            builder.setImage(getBytesValue(ByteString.copyFrom(widgetsBundle.getImage().getBytes(StandardCharsets.UTF_8))));
+            builder.setImage(ByteString.copyFrom(widgetsBundle.getImage().getBytes(StandardCharsets.UTF_8)));
         }
         if (widgetsBundle.getDescription() != null) {
-            builder.setDescription(getStringValue(widgetsBundle.getDescription()));
+            builder.setDescription(widgetsBundle.getDescription());
         }
         if (widgetsBundle.getTenantId().equals(TenantId.SYS_TENANT_ID)) {
             builder.setIsSystem(true);

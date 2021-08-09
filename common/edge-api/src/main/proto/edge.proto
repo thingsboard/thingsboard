@@ -20,7 +20,6 @@ option java_multiple_files = true;
 option java_outer_classname = "EdgeProtos";
 
 import "queue.proto";
-import "google/protobuf/wrappers.proto";
 
 package edge;
 
@@ -130,8 +129,8 @@ message RuleChainUpdateMsg {
   int64 idMSB = 2;
   int64 idLSB = 3;
   string name = 4;
-  google.protobuf.Int64Value firstRuleNodeIdMSB = 5;
-  google.protobuf.Int64Value firstRuleNodeIdLSB = 6;
+  optional int64 firstRuleNodeIdMSB = 5;
+  optional int64 firstRuleNodeIdLSB = 6;
   bool root = 7;
   bool debugMode = 8;
   string configuration = 9;
@@ -175,8 +174,8 @@ message DashboardUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  google.protobuf.Int64Value customerIdMSB = 4;
-  google.protobuf.Int64Value customerIdLSB = 5;
+  optional int64 customerIdMSB = 4;
+  optional int64 customerIdLSB = 5;
   string title = 6;
   string configuration = 7;
 }
@@ -185,15 +184,15 @@ message DeviceUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  google.protobuf.Int64Value customerIdMSB = 4;
-  google.protobuf.Int64Value customerIdLSB = 5;
-  google.protobuf.Int64Value deviceProfileIdMSB = 6;
-  google.protobuf.Int64Value deviceProfileIdLSB = 7;
+  optional int64 customerIdMSB = 4;
+  optional int64 customerIdLSB = 5;
+  optional int64 deviceProfileIdMSB = 6;
+  optional int64 deviceProfileIdLSB = 7;
   string name = 8;
   string type = 9;
-  google.protobuf.StringValue label = 10;
-  google.protobuf.StringValue additionalInfo = 11;
-  google.protobuf.StringValue conflictName = 12;
+  optional string label = 10;
+  optional string additionalInfo = 11;
+  optional string conflictName = 12;
 }
 
 message DeviceProfileUpdateMsg {
@@ -201,17 +200,17 @@ message DeviceProfileUpdateMsg {
   int64 idMSB = 2;
   int64 idLSB = 3;
   string name = 4;
-  google.protobuf.StringValue description = 5;
+  optional string description = 5;
   bool default = 6;
   string type = 7;
-  google.protobuf.StringValue transportType = 8;
-  google.protobuf.StringValue provisionType = 9;
+  optional string transportType = 8;
+  optional string provisionType = 9;
   int64 defaultRuleChainIdMSB = 10;
   int64 defaultRuleChainIdLSB = 11;
   string defaultQueueName = 12;
   bytes profileDataBytes = 13;
-  google.protobuf.StringValue provisionDeviceKey = 14;
-  google.protobuf.BytesValue image = 15;
+  optional string provisionDeviceKey = 14;
+  optional bytes image = 15;
 }
 
 message DeviceCredentialsUpdateMsg {
@@ -219,33 +218,33 @@ message DeviceCredentialsUpdateMsg {
   int64 deviceIdLSB = 2;
   string credentialsType = 3;
   string credentialsId = 4;
-  google.protobuf.StringValue credentialsValue = 5;
+  optional string credentialsValue = 5;
 }
 
 message AssetUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  google.protobuf.Int64Value customerIdMSB = 4;
-  google.protobuf.Int64Value customerIdLSB = 5;
+  optional int64 customerIdMSB = 4;
+  optional int64 customerIdLSB = 5;
   string name = 6;
   string type = 7;
-  google.protobuf.StringValue label = 8;
-  google.protobuf.StringValue additionalInfo = 9;
+  optional string label = 8;
+  optional string additionalInfo = 9;
 }
 
 message EntityViewUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  google.protobuf.Int64Value customerIdMSB = 4;
-  google.protobuf.Int64Value customerIdLSB = 5;
+  optional int64 customerIdMSB = 4;
+  optional int64 customerIdLSB = 5;
   string name = 6;
   string type = 7;
   int64 entityIdMSB = 8;
   int64 entityIdLSB = 9;
   EdgeEntityType entityType = 10;
-  google.protobuf.StringValue additionalInfo = 11;
+  optional string additionalInfo = 11;
 }
 
 message AlarmUpdateMsg {
@@ -271,15 +270,15 @@ message CustomerUpdateMsg {
   int64 idMSB = 2;
   int64 idLSB = 3;
   string title = 4;
-  google.protobuf.StringValue country = 5;
-  google.protobuf.StringValue state = 6;
-  google.protobuf.StringValue city = 7;
-  google.protobuf.StringValue address = 8;
-  google.protobuf.StringValue address2 = 9;
-  google.protobuf.StringValue zip = 10;
-  google.protobuf.StringValue phone = 11;
-  google.protobuf.StringValue email = 12;
-  google.protobuf.StringValue additionalInfo = 13;
+  optional string country = 5;
+  optional string state = 6;
+  optional string city = 7;
+  optional string address = 8;
+  optional string address2 = 9;
+  optional string zip = 10;
+  optional string phone = 11;
+  optional string email = 12;
+  optional string additionalInfo = 13;
 }
 
 message RelationUpdateMsg {
@@ -291,7 +290,7 @@ message RelationUpdateMsg {
   int64 toIdLSB = 6;
   string toEntityType = 7;
   string type = 8;
-  google.protobuf.StringValue typeGroup = 9;
+  optional string typeGroup = 9;
   string additionalInfo = 10;
 }
 
@@ -299,13 +298,13 @@ message UserUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  google.protobuf.Int64Value customerIdMSB = 4;
-  google.protobuf.Int64Value customerIdLSB = 5;
+  optional int64 customerIdMSB = 4;
+  optional int64 customerIdLSB = 5;
   string email = 6;
   string authority = 7;
-  google.protobuf.StringValue firstName = 8;
-  google.protobuf.StringValue lastName = 9;
-  google.protobuf.StringValue additionalInfo = 10;
+  optional string firstName = 8;
+  optional string lastName = 9;
+  optional string additionalInfo = 10;
 }
 
 message WidgetsBundleUpdateMsg {
@@ -314,19 +313,19 @@ message WidgetsBundleUpdateMsg {
   int64 idLSB = 3;
   string title = 4;
   string alias = 5;
-  google.protobuf.BytesValue image = 6;
+  optional bytes image = 6;
   bool isSystem = 7;
-  google.protobuf.StringValue description = 8;
+  optional string description = 8;
 }
 
 message WidgetTypeUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  google.protobuf.StringValue bundleAlias = 4;
-  google.protobuf.StringValue alias = 5;
-  google.protobuf.StringValue name = 6;
-  google.protobuf.StringValue descriptorJson = 7;
+  optional string bundleAlias = 4;
+  optional string alias = 5;
+  optional string name = 6;
+  optional string descriptorJson = 7;
   bool isSystem = 8;
 }
 
