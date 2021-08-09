@@ -348,9 +348,11 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
 
             initPartitions(addedPartitions);
 
-            log.info("Managing following partitions:");
-            partitionedDevices.forEach((tpi, devices) -> {
-                log.info("[{}]: {} devices", tpi.getFullTopicName(), devices.size());
+            scheduledExecutor.submit(() -> {
+                log.info("Managing following partitions:");
+                partitionedDevices.forEach((tpi, devices) -> {
+                    log.info("[{}]: {} devices", tpi.getFullTopicName(), devices.size());
+                });
             });
         } catch (Throwable t) {
             log.warn("Failed to init device states from DB", t);
