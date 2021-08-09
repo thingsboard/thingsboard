@@ -16,33 +16,29 @@
 package org.thingsboard.server.service.lwm2m;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.util.Hex;
+import org.eclipse.leshan.core.util.SecurityUtil;
+import org.eclipse.leshan.server.bootstrap.InvalidConfigurationException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MSecureServerConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportBootstrapConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 
-import java.math.BigInteger;
-import java.security.AlgorithmParameters;
+import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.security.KeyFactory;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateEncodingException;
+import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import java.security.spec.ECGenParameterSpec;
-import java.security.spec.ECParameterSpec;
-import java.security.spec.ECPoint;
-import java.security.spec.ECPublicKeySpec;
-import java.security.spec.KeySpec;
 
 @Slf4j
 @Service
@@ -83,6 +79,92 @@ public class LwM2MServerSecurityInfoRepository {
         }
         return "";
     }
+
+    public void verifySecurityKeyDevice(DeviceCredentials result) throws InvalidConfigurationException, JsonProcessingException {
+        ObjectNode node = result.getNodeCredentialsValue();
+        checkClientKey ((ObjectNode) node.get("client"));
+        checkServerKey ((ObjectNode) node.get("bootstrap").get("bootstrapServer"), "Client`s  by bootstrapServer");
+        checkServerKey ((ObjectNode) node.get("bootstrap").get("lwm2mServer"), "Client`s by lwm2mServer");
+    }
+
+    private void checkClientKey (ObjectNode node) throws InvalidConfigurationException {
+        String modeName = node.get("securityConfigClientMode").asText();
+        // checks security config
+        String value = node.get("key").textValue();
+        if (SecurityMode.RPK.name().equals(modeName)) {
+            assertIf(decodeRfc7250PublicKey(Hex.decodeHex(((String) value).toCharArray())) == null,
+                    "raw-public-key mode, Client`s public key or id must be RFC7250 encoded public key");
+        } else if (SecurityMode.X509.name().equals(modeName)) {
+            assertIf(decodeCertificate(Hex.decodeHex(((String) value).toCharArray())) == null,
+                    "x509 mode, Client`s public key must be DER encoded X.509 certificate");
+        }
+
+    }
+
+    private void checkServerKey (ObjectNode node, String serverType) throws InvalidConfigurationException {
+        String modeName = node.get("securityMode").asText();
+        // checks security config
+        if (SecurityMode.RPK.name().equals(modeName)) {
+            checkRPKServer(node, serverType);
+        } else if (SecurityMode.X509.name().equals(modeName)) {
+            checkX509Server(node);
+        }
+
+    }
+
+    protected void checkRPKServer(ObjectNode node, String serverType) throws InvalidConfigurationException {
+        String value = node.get("clientSecretKey").textValue();
+        assertIf(decodeRfc5958PrivateKey(Hex.decodeHex(((String) value).toCharArray())) == null,
+                "raw-public-key mode, " + serverType + " secret key must be RFC5958 encoded private key");
+        value = node.get("clientPublicKeyOrId").textValue();
+        assertIf(decodeRfc7250PublicKey(Hex.decodeHex(((String) value).toCharArray())) == null,
+                "raw-public-key mode, " + serverType + " public key or id must be RFC7250 encoded public key");
+    }
+
+    protected void checkX509Server(ObjectNode node) throws InvalidConfigurationException {
+        String value = node.get("clientSecretKey").textValue();;
+        assertIf(decodeRfc5958PrivateKey(Hex.decodeHex(((String) value).toCharArray())) == null,
+                "x509 mode, secret key must be RFC5958 encoded private key");
+        value = node.get("clientPublicKeyOrId").textValue();
+        assertIf(decodeCertificate(Hex.decodeHex(((String) value).toCharArray())) == null,
+                "x509 mode, server public key must be DER encoded X.509 certificate");
+
+    }
+
+    protected PrivateKey decodeRfc5958PrivateKey(byte[] encodedKey) throws InvalidConfigurationException {
+        try {
+            return SecurityUtil.privateKey.decode(encodedKey);
+        } catch (IOException | GeneralSecurityException e) {
+            return null;
+        }
+    }
+
+    protected PublicKey decodeRfc7250PublicKey(byte[] encodedKey) throws InvalidConfigurationException {
+        try {
+            return SecurityUtil.publicKey.decode(encodedKey);
+        } catch (IOException | GeneralSecurityException e) {
+            return null;
+        }
+    }
+
+    protected Certificate decodeCertificate(byte[] encodedCert) throws InvalidConfigurationException {
+        try {
+            return SecurityUtil.certificate.decode(encodedCert);
+        } catch (IOException | GeneralSecurityException e) {
+            return null;
+        }
+    }
+
+    protected static void assertIf(boolean condition, String message) throws InvalidConfigurationException {
+        if (condition) {
+            throw new InvalidConfigurationException(message);
+        }
+    }
+
+    protected static boolean isEmpty(byte[] array) {
+        return array == null || array.length == 0;
+    }
+
 
 }
 
