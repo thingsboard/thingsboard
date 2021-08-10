@@ -17,7 +17,7 @@ package org.thingsboard.server.service.lwm2m;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.SecurityMode;
@@ -84,13 +84,13 @@ public class LwM2MServerSecurityInfoRepository {
     }
 
     public void verifySecurityKeyDevice(DeviceCredentials deviceCredentials) throws InvalidConfigurationException, JsonProcessingException {
-        ObjectNode nodeCredentialsValue = deviceCredentials.getNodeCredentialsValue();
-        checkClientKey ((ObjectNode) nodeCredentialsValue.get("client"));
-        checkServerKey ((ObjectNode) nodeCredentialsValue.get("bootstrap").get("bootstrapServer"), "Client`s  by bootstrapServer");
-        checkServerKey ((ObjectNode) nodeCredentialsValue.get("bootstrap").get("lwm2mServer"), "Client`s by lwm2mServer");
+        JsonNode nodeCredentialsValue = deviceCredentials.getNodeCredentialsValue();
+        checkClientKey (nodeCredentialsValue.get("client"));
+        checkServerKey (nodeCredentialsValue.get("bootstrap").get("bootstrapServer"), "Client`s  by bootstrapServer");
+        checkServerKey (nodeCredentialsValue.get("bootstrap").get("lwm2mServer"), "Client`s by lwm2mServer");
     }
 
-    private void checkClientKey (ObjectNode node) throws InvalidConfigurationException {
+    private void checkClientKey (JsonNode node) throws InvalidConfigurationException {
         String modeName = node.get("securityConfigClientMode").asText();
         // checks security config
 
@@ -108,7 +108,7 @@ public class LwM2MServerSecurityInfoRepository {
 
     }
 
-    private void checkServerKey (ObjectNode node, String serverType) throws InvalidConfigurationException {
+    private void checkServerKey (JsonNode node, String serverType) throws InvalidConfigurationException {
         String modeName = node.get("securityMode").asText();
         // checks security config
         if (SecurityMode.RPK.name().equals(modeName)) {
@@ -118,7 +118,7 @@ public class LwM2MServerSecurityInfoRepository {
         }
     }
 
-    protected void checkRPKServer(ObjectNode node, String serverType) throws InvalidConfigurationException {
+    protected void checkRPKServer(JsonNode node, String serverType) throws InvalidConfigurationException {
         String value = node.get("clientSecretKey").textValue();
         assertIf(decodeRfc5958PrivateKey(Hex.decodeHex(value.toCharArray())) == null,
                 "raw-public-key mode, " + serverType + " secret key must be RFC5958 encoded private key");
@@ -127,7 +127,7 @@ public class LwM2MServerSecurityInfoRepository {
                 "raw-public-key mode, " + serverType + " public key or id must be RFC7250 encoded public key");
     }
 
-    protected void checkX509Server(ObjectNode node, String serverType) throws InvalidConfigurationException {
+    protected void checkX509Server(JsonNode node, String serverType) throws InvalidConfigurationException {
         String value = node.get("clientSecretKey").textValue();
         assertIf(decodeRfc5958PrivateKey(Hex.decodeHex(value.toCharArray())) == null,
                 "x509 mode " + serverType + " secret key must be RFC5958 encoded private key");
