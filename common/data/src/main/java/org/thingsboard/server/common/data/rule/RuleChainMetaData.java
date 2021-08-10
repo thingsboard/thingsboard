@@ -16,7 +16,9 @@
 package org.thingsboard.server.common.data.rule;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.id.RuleChainId;
 
 import java.util.ArrayList;
@@ -25,7 +27,9 @@ import java.util.List;
 /**
  * Created by igor on 3/13/18.
  */
+@Builder
 @Data
+@NoArgsConstructor
 public class RuleChainMetaData {
 
     private RuleChainId ruleChainId;
@@ -38,7 +42,7 @@ public class RuleChainMetaData {
 
     private List<RuleChainConnectionInfo> ruleChainConnections;
 
-    public void addConnectionInfo(int fromIndex, int toIndex, String type) {
+    public RuleChainMetaData addConnectionInfo(int fromIndex, int toIndex, String type) {
         NodeConnectionInfo connectionInfo = new NodeConnectionInfo();
         connectionInfo.setFromIndex(fromIndex);
         connectionInfo.setToIndex(toIndex);
@@ -47,8 +51,9 @@ public class RuleChainMetaData {
             connections = new ArrayList<>();
         }
         connections.add(connectionInfo);
+        return this;
     }
-    public void addRuleChainConnectionInfo(int fromIndex, RuleChainId targetRuleChainId, String type, JsonNode additionalInfo) {
+    public RuleChainMetaData addRuleChainConnectionInfo(int fromIndex, RuleChainId targetRuleChainId, String type, JsonNode additionalInfo) {
         RuleChainConnectionInfo connectionInfo = new RuleChainConnectionInfo();
         connectionInfo.setFromIndex(fromIndex);
         connectionInfo.setTargetRuleChainId(targetRuleChainId);
@@ -58,5 +63,6 @@ public class RuleChainMetaData {
             ruleChainConnections = new ArrayList<>();
         }
         ruleChainConnections.add(connectionInfo);
+        return this;
     }
 }
