@@ -255,7 +255,7 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
                                     save(deviceId, ACTIVITY_STATE, false);
                                     callback.onSuccess();
                                 } else {
-                                    log.warn("[{}][{}] Device belongs to external partition. Probably rebalancing is in progress. Topic: {}"
+                                    log.debug("[{}][{}] Device belongs to external partition. Probably rebalancing is in progress. Topic: {}"
                                             , tenantId, deviceId, tpi.getFullTopicName());
                                     callback.onFailure(new RuntimeException("Device belongs to external partition " + tpi.getFullTopicName() + "!"));
                                 }
@@ -440,7 +440,7 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
             deviceIds.add(state.getDeviceId());
             deviceStates.put(state.getDeviceId(), state);
         } else {
-            log.warn("Device belongs to external partition {}" + tpi.getFullTopicName());
+            log.debug("[{}] Device belongs to external partition {}", state.getDeviceId(), tpi.getFullTopicName());
             throw new RuntimeException("Device belongs to external partition " + tpi.getFullTopicName() + "!");
         }
     }
