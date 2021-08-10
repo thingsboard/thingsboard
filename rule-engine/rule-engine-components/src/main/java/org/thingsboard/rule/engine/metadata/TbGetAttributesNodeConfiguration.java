@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,9 +27,10 @@ import java.util.List;
 /**
  * Created by ashvayka on 19.01.18.
  */
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
 @Data
-@NoArgsConstructor
 public class TbGetAttributesNodeConfiguration implements NodeConfiguration<TbGetAttributesNodeConfiguration> {
 
     private List<String> clientAttributeNames;

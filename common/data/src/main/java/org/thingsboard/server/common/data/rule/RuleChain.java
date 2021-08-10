@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data.rule;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -29,6 +30,7 @@ import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.NoXss;
 
+@AllArgsConstructor
 @Builder
 @Data
 @EqualsAndHashCode(callSuper = true)

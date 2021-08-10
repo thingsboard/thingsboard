@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
+@AllArgsConstructor
 @Builder
 @EqualsAndHashCode(callSuper = true)
 @Slf4j

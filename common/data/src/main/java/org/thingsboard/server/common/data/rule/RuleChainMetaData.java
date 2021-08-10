@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.rule;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,12 +25,14 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import java.util.ArrayList;
 import java.util.List;
 
+
 /**
  * Created by igor on 3/13/18.
  */
-@Builder
-@Data
+@AllArgsConstructor
 @NoArgsConstructor
+@Data
+@Builder
 public class RuleChainMetaData {
 
     private RuleChainId ruleChainId;
