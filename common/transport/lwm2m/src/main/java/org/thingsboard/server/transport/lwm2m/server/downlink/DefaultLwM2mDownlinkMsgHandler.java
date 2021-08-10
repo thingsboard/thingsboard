@@ -40,8 +40,8 @@ import org.eclipse.leshan.core.request.WriteAttributesRequest;
 import org.eclipse.leshan.core.request.WriteCompositeRequest;
 import org.eclipse.leshan.core.request.WriteRequest;
 import org.eclipse.leshan.core.request.exception.ClientSleepingException;
-import org.eclipse.leshan.core.request.exception.TimeoutException;
 import org.eclipse.leshan.core.request.exception.InvalidRequestException;
+import org.eclipse.leshan.core.request.exception.TimeoutException;
 import org.eclipse.leshan.core.response.DeleteResponse;
 import org.eclipse.leshan.core.response.DiscoverResponse;
 import org.eclipse.leshan.core.response.ExecuteResponse;
@@ -53,11 +53,9 @@ import org.eclipse.leshan.core.response.WriteAttributesResponse;
 import org.eclipse.leshan.core.response.WriteCompositeResponse;
 import org.eclipse.leshan.core.response.WriteResponse;
 import org.eclipse.leshan.core.util.Hex;
-import org.eclipse.leshan.server.Version;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.device.data.lwm2m.ObjectAttributes;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
@@ -79,7 +77,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -148,10 +145,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     public void sendReadCompositeRequest(LwM2mClient client, TbLwM2MReadCompositeRequest request,
                                          DownlinkRequestCallback<ReadCompositeRequest, ReadCompositeResponse> callback, ContentFormat contentFormatComposite) {
         try {
-            ContentFormat requestContentFormat = contentFormatComposite;
-            ContentFormat responseContentFormat = contentFormatComposite;
-
-            ReadCompositeRequest downlink = new ReadCompositeRequest(requestContentFormat, responseContentFormat, request.getObjectIds());
+            ReadCompositeRequest downlink = new ReadCompositeRequest(contentFormatComposite, contentFormatComposite, request.getObjectIds());
             sendCompositeRequest(client, downlink, this.config.getTimeout(), callback);
         } catch (InvalidRequestException e) {
             callback.onValidationError(request.toString(), e.getMessage());
@@ -487,12 +481,11 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         }
     }
 
-    private static ContentFormat getReadRequestContentFormat(LwM2mClient client, HasContentFormat request, LwM2mModelProvider modelProvider) {
+    private static <T extends HasContentFormat & HasVersionedId> ContentFormat getReadRequestContentFormat(LwM2mClient client, T request, LwM2mModelProvider modelProvider) {
         if (request.getRequestContentFormat().isPresent()) {
             return request.getRequestContentFormat().get();
         } else {
-            String versionedId = ((AbstractTbLwM2MTargetedDownlinkRequest) request).getVersionedId();
-            return getRequestContentFormat(client, versionedId, modelProvider);
+            return getRequestContentFormat(client, request.getVersionedId(), modelProvider);
         }
     }
 
@@ -533,6 +526,30 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             }
         }
         return ContentFormat.JSON;
+    }
+
+    private static ContentFormat getContentFormatForComplex(LwM2mClient client) {
+        if (LwM2m.Version.V1_0.equals(client.getRegistration().getLwM2mVersion())) {
+            return ContentFormat.TLV;
+        } else if (LwM2m.Version.V1_1.equals(client.getRegistration().getLwM2mVersion())) {
+            ContentFormat result = findFirst(client.getClientSupportContentFormats(), null, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON, ContentFormat.TLV, ContentFormat.JSON);
+            if (result != null) {
+                return result;
+            } else {
+                throw new RuntimeException("The client does not support any of SenML CBOR, SenML JSON, TLV or JSON formats. Can't send complex requests. Try using singe-instance requests.");
+            }
+        } else {
+            throw new RuntimeException("The version " + client.getRegistration().getLwM2mVersion() + " is not supported!");
+        }
+    }
+
+    private static ContentFormat findFirst(Set<ContentFormat> supported, ContentFormat defaultValue, ContentFormat... desiredFormats) {
+        for (ContentFormat contentFormat : desiredFormats) {
+            if (supported.contains(contentFormat)) {
+                return contentFormat;
+            }
+        }
+        return defaultValue;
     }
 
     private <R> String toString(R request) {

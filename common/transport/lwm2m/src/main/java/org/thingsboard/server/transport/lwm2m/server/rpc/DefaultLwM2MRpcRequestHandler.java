@@ -270,13 +270,12 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
             var mainCallback = new TbLwM2MWriteResponseCompositeCallback(uplinkHandler, logService, client, null);
             var rpcCallback = new RpcEmptyResponseCallback<>(transportService, client, requestMsg, mainCallback);
             downlinkHandler.sendWriteCompositeRequest(client, rpcWriteCompositeRequest, rpcCallback, contentFormatComposite);
-        }
-        else {
+        } else {
             throw new IllegalArgumentException(String.format("nodes: %s is not validate value", rpcWriteCompositeRequest.getNodes().toString()));
         }
     }
 
-    private Map validateNodes (LwM2mClient client, Map nodes) {
+    private Map validateNodes(LwM2mClient client, Map nodes) {
         Map newNodes = new LinkedHashMap();
         nodes.forEach((key, value) -> {
             String versionedId;
@@ -284,17 +283,17 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
                 // validate key.toString()
                 new LwM2mPath(fromVersionedIdToObjectId(key.toString()));
                 versionedId = key.toString();
-            } catch (Exception e){
+            } catch (Exception e) {
                 versionedId = clientContext.getObjectIdByKeyNameFromProfile(client, key.toString(), true);
             }
             // validate value. Must be only primitive, not Json
             if (value instanceof LinkedHashMap) {
                 throw new IllegalArgumentException("nodes is not validate value. " +
                         "The WriteComposite operation is only used for SingleResources or/and ResourceInstance.");
-            }
-            else {
+            } else {
                 newNodes.put(fromVersionedIdToObjectId(versionedId), value);
-            }        });
+            }
+        });
         return newNodes;
     }
 
