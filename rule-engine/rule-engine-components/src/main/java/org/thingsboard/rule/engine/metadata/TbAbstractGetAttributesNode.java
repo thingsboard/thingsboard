@@ -63,7 +63,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        log.trace("init " + configuration, new RuntimeException("stacktrace"));
+        log.trace("init {}", configuration);
         this.config = loadGetAttributesNodeConfig(configuration);
         mapper.configure(JsonWriteFeature.QUOTE_FIELD_NAMES.mappedFeature(), false);
         mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
