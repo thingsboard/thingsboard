@@ -76,6 +76,7 @@ import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -545,6 +546,7 @@ public abstract class AbstractWebTest {
     @SuppressWarnings("unchecked")
     protected <T> T readResponse(ResultActions result, Class<T> responseClass) throws Exception {
         byte[] content = result.andReturn().getResponse().getContentAsByteArray();
+        log.trace("readResponse: {}", new String(content, StandardCharsets.UTF_8));
         MockHttpInputMessage mockHttpInputMessage = new MockHttpInputMessage(content);
         HttpMessageConverter converter = responseClass.equals(String.class) ? stringHttpMessageConverter : mappingJackson2HttpMessageConverter;
         return (T) converter.read(responseClass, mockHttpInputMessage);
