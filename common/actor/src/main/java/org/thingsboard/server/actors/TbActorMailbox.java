@@ -140,7 +140,8 @@ public final class TbActorMailbox implements TbActorCtx {
                 try {
                     log.debug("[{}] Going to process message: {}", selfId, msg);
                     actor.process(msg);
-                } catch (TbRuleNodeUpdateException updateException){
+                } catch (TbRuleNodeUpdateException updateException) {
+                    log.debug("[{}]processMailbox: updateException {}, msg {}", selfId, updateException.getMessage(), msg);
                     stopReason = TbActorStopReason.INIT_FAILED;
                     destroy();
                 } catch (Throwable t) {
