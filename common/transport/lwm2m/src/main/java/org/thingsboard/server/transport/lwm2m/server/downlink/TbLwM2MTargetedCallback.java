@@ -16,6 +16,9 @@
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.node.LwM2mSingleResource;
+import org.eclipse.leshan.core.response.ReadResponse;
+import org.eclipse.leshan.core.util.Hex;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 
@@ -45,8 +48,28 @@ public abstract class TbLwM2MTargetedCallback<R, T> extends AbstractTbLwM2MReque
     public void onSuccess(R request, T response) {
         //TODO convert camelCase to "camel case" using .split("(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")
         String requestName = request.getClass().getSimpleName();
-        log.trace("[{}] {} [{}] successful: {}", client.getEndpoint(), requestName, versionedId != null ? versionedId : versionedIds, response);
-        logService.log(client, String.format("[%s]: %s [%s] successful. Result: [%s]", LOG_LWM2M_INFO, requestName, versionedId != null ? versionedId : Arrays.toString(versionedIds), response));
+        String responseStr =  response.toString();
+        if (response instanceof ReadResponse) {
+            responseStr = responseToString ((ReadResponse) response);
+        }
+        log.trace("[{}] {} [{}] successful: {}", client.getEndpoint(), requestName, versionedId != null ? versionedId : versionedIds, responseStr);
+        logService.log(client, String.format("[%s]: %s [%s] successful. Result: [%s]", LOG_LWM2M_INFO, requestName, versionedId != null ? versionedId : Arrays.toString(versionedIds), responseStr));
     }
 
+    private String responseToString (ReadResponse response) {
+        if (response.getContent() instanceof LwM2mSingleResource) {
+            if (((LwM2mSingleResource) response.getContent()).getType().name().equals("OPAQUE")) {
+                if (((byte[])((LwM2mSingleResource) response.getContent()).getValue()).length > 0) {
+                    int len = ((byte[])((LwM2mSingleResource) response.getContent()).getValue()).length;
+                    String valueReplace = len + "Bytes";
+                    String valueStr = Hex.encodeHexString((byte[]) (((LwM2mSingleResource) response.getContent()).getValue()));
+                    return response.toString().replace(valueReplace, valueStr);
+                }
+            }
+            return response.toString();
+        }
+        else {
+           return response.toString();
+        }
+    }
 }

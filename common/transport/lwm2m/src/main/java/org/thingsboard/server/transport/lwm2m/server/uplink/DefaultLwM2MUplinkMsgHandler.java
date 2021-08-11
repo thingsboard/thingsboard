@@ -217,7 +217,7 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
                         + registration.getLwM2mVersion() + " and modes: " + registration.getQueueMode() + ", " + registration.getBindingMode());
                 sessionManager.register(lwM2MClient.getSession());
                 this.initClientTelemetry(lwM2MClient);
-                this.initAttributes(lwM2MClient);
+                this.initAttributes(lwM2MClient, true);
                 otaService.init(lwM2MClient);
                 lwM2MClient.getRetryAttempts().set(0);
             } catch (LwM2MClientStateException stateException) {
@@ -928,14 +928,14 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
      *
      * @param lwM2MClient - LwM2M Client
      */
-    public void initAttributes(LwM2mClient lwM2MClient) {
+    public void initAttributes(LwM2mClient lwM2MClient, boolean isUpdateAlways) {
         Map<String, String> keyNamesMap = this.getNamesFromProfileForSharedAttributes(lwM2MClient);
         if (!keyNamesMap.isEmpty()) {
             Set<String> keysToFetch = new HashSet<>(keyNamesMap.values());
             keysToFetch.removeAll(OtaPackageUtil.ALL_FW_ATTRIBUTE_KEYS);
             keysToFetch.removeAll(OtaPackageUtil.ALL_SW_ATTRIBUTE_KEYS);
             DonAsynchron.withCallback(attributesService.getSharedAttributes(lwM2MClient, keysToFetch),
-                    v -> attributesService.onAttributesUpdate(lwM2MClient, v),
+                    v -> attributesService.onAttributesUpdate(lwM2MClient, v, isUpdateAlways),
                     t -> log.error("[{}] Failed to get attributes", lwM2MClient.getEndpoint(), t),
                     executor);
         }

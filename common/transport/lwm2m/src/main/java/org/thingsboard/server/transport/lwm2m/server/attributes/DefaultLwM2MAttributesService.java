@@ -51,6 +51,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper.getValueFromKvProto;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_ERROR;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_INFO;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
 
 @Slf4j
@@ -156,7 +157,7 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
                 otaUpdateService.onTargetSoftwareUpdate(lwM2MClient, newSoftwareTitle, newSoftwareVersion, Optional.ofNullable(newSoftwareUrl), Optional.ofNullable(newSoftwareTag));
             }
             if (!otherAttributes.isEmpty()) {
-                onAttributesUpdate(lwM2MClient, otherAttributes);
+                onAttributesUpdate(lwM2MClient, otherAttributes, true);
             }
         } else if (lwM2MClient == null) {
             log.error("OnAttributeUpdate, lwM2MClient is null");
@@ -172,7 +173,7 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
      *
      */
     @Override
-    public void onAttributesUpdate(LwM2mClient lwM2MClient, List<TransportProtos.TsKvProto> tsKvProtos) {
+    public void onAttributesUpdate(LwM2mClient lwM2MClient, List<TransportProtos.TsKvProto> tsKvProtos, boolean isUpdateAlways) {
         log.trace("[{}] onAttributesUpdate [{}]", lwM2MClient.getEndpoint(), tsKvProtos);
         tsKvProtos.forEach(tsKvProto -> {
             String pathIdVer = clientContext.getObjectIdByKeyNameFromProfile(lwM2MClient, tsKvProto.getKv().getKey());
@@ -191,20 +192,29 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
         // #2.1
         lwM2MClient.getSharedAttributes().forEach((pathIdVer, tsKvProto) -> {
             this.pushUpdateToClientIfNeeded(lwM2MClient, this.getResourceValueFormatKv(lwM2MClient, pathIdVer),
-                    getValueFromKvProto(tsKvProto.getKv()), pathIdVer);
+                    getValueFromKvProto(tsKvProto.getKv()), pathIdVer, isUpdateAlways);
         });
     }
 
-    private void pushUpdateToClientIfNeeded(LwM2mClient lwM2MClient, Object valueOld, Object newValue, String versionedId) {
-        if (newValue != null && (valueOld == null || !newValue.toString().equals(valueOld.toString()))) {
+    private void pushUpdateToClientIfNeeded(LwM2mClient lwM2MClient, Object valueOld, Object newValue,
+                                            String versionedId, boolean isUpdateAlways) {
+        if (newValue == null) {
+            String logMsg = String.format("%s: Failed update resource versionedId - %s value - %s. New value is  bad",
+                    LOG_LWM2M_ERROR, versionedId, "null");
+            logService.log(lwM2MClient, logMsg);
+            log.error("Failed update resource [{}] [{}]", versionedId, newValue);
+        }
+        else if ((valueOld != null && newValue.toString().equals(valueOld.toString()))){
+            if (isUpdateAlways) {
+                String logMsg = String.format("%s: Failed update resource versionedId - %s value - %s. Value is not changed",
+                        LOG_LWM2M_INFO, versionedId, newValue);
+                logService.log(lwM2MClient, logMsg);
+                log.info("Failed update resource [{}] [{}]. Value is not changed", versionedId, newValue);
+            }
+        }
+        else {
             TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(versionedId).value(newValue).timeout(clientContext.getRequestTimeout(lwM2MClient)).build();
             downlinkHandler.sendWriteReplaceRequest(lwM2MClient, request, new TbLwM2MWriteResponseCallback(uplinkHandler, logService, lwM2MClient, versionedId));
-        } else {
-            log.error("Failed update resource [{}] [{}]", versionedId, newValue);
-            String logMsg = String.format("%s: Failed update resource versionedId - %s value - %s. Value is not changed or bad",
-                    LOG_LWM2M_ERROR, versionedId, newValue);
-            logService.log(lwM2MClient, logMsg);
-            log.info("Failed update resource [{}] [{}]", versionedId, newValue);
         }
     }
 
