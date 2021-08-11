@@ -21,6 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
@@ -34,6 +35,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @Builder
 @Data
 @EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @Slf4j
 public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> implements HasName, HasTenantId {
 
