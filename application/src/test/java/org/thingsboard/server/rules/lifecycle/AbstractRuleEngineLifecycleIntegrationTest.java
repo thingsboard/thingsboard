@@ -43,10 +43,14 @@ import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.controller.AbstractRuleEngineControllerTest;
 import org.thingsboard.server.dao.attributes.AttributesService;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -55,6 +59,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Slf4j
 public abstract class AbstractRuleEngineLifecycleIntegrationTest extends AbstractRuleEngineControllerTest {
 
+    public static final int PAGE_LIMIT = 1000;
     protected Tenant savedTenant;
     protected User tenantAdmin;
 
@@ -95,67 +100,67 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
     @Test
     public void testRuleChainWithOneRule() throws Exception {
         // Creating Rule Chain
-        RuleChain ruleChain = new RuleChain();
-        ruleChain.setName("Simple Rule Chain");
-        ruleChain.setTenantId(savedTenant.getId());
-        ruleChain.setRoot(true);
-        ruleChain.setDebugMode(true);
-        ruleChain = saveRuleChain(ruleChain);
-        Assert.assertNull(ruleChain.getFirstRuleNodeId());
+        final RuleChain ruleChainInitial = saveRuleChain(RuleChain.builder()
+                .name("Simple Rule Chain")
+                .tenantId(savedTenant.getId())
+                .root(true)
+                .debugMode(true)
+                .build());
+        assertThat(ruleChainInitial).isNotNull();
+        assertThat(ruleChainInitial.getFirstRuleNodeId()).isNull();
 
-        RuleChainMetaData metaData = new RuleChainMetaData();
-        metaData.setRuleChainId(ruleChain.getId());
+        final RuleNode ruleNode = RuleNode.builder()
+                .name("Simple Rule Node")
+                .type(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName())
+                .debugMode(true)
+                .configuration(mapper.valueToTree(TbGetAttributesNodeConfiguration.builder()
+                        .serverAttributeNames(List.of("serverAttributeKey")).build()))
+                .build();
 
-        RuleNode ruleNode = new RuleNode();
-        ruleNode.setName("Simple Rule Node");
-        ruleNode.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
-        ruleNode.setDebugMode(true);
-        TbGetAttributesNodeConfiguration configuration = new TbGetAttributesNodeConfiguration();
-        configuration.setServerAttributeNames(Collections.singletonList("serverAttributeKey"));
-        ruleNode.setConfiguration(mapper.valueToTree(configuration));
+        final RuleChainMetaData metaData = saveRuleChainMetaData(RuleChainMetaData.builder()
+                .ruleChainId(ruleChainInitial.getId())
+                .nodes(List.of(ruleNode))
+                .firstNodeIndex(0)
+                .build());
+        assertThat(metaData).isNotNull();
 
-        metaData.setNodes(Collections.singletonList(ruleNode));
-        metaData.setFirstNodeIndex(0);
-
-        metaData = saveRuleChainMetaData(metaData);
-        Assert.assertNotNull(metaData);
-
-        ruleChain = getRuleChain(ruleChain.getId());
-        Assert.assertNotNull(ruleChain.getFirstRuleNodeId());
+        final RuleChain ruleChain = getRuleChain(ruleChainInitial.getId());
+        assertThat(ruleChain.getFirstRuleNodeId()).isNotNull();
 
         // Saving the device
-        Device device = new Device();
-        device.setName("My device");
-        device.setType("default");
-        device = doPost("/api/device", device, Device.class);
+        final Device device = doPost("/api/device", Device.builder().name("My device").type("default").build(), Device.class);
 
         attributesService.save(device.getTenantId(), device.getId(), DataConstants.SERVER_SCOPE,
-                Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey", "serverAttributeValue"), System.currentTimeMillis())));
-
-        Thread.sleep(1000);
+                        List.of(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey", "serverAttributeValue"), System.currentTimeMillis())))
+                .get(TIMEOUT, TimeUnit.SECONDS);
 
         TbMsgCallback tbMsgCallback = Mockito.mock(TbMsgCallback.class);
         TbMsg tbMsg = TbMsg.newMsg("CUSTOM", device.getId(), new TbMsgMetaData(), "{}", tbMsgCallback);
         QueueToRuleEngineMsg qMsg = new QueueToRuleEngineMsg(savedTenant.getId(), tbMsg, null, null);
+
         // Pushing Message to the system
         actorSystem.tell(qMsg);
-        Mockito.verify(tbMsgCallback, Mockito.timeout(3000)).onSuccess();
+        Mockito.verify(tbMsgCallback, Mockito.timeout(TimeUnit.SECONDS.toMillis(TIMEOUT))).onSuccess();
 
 
-        PageData<Event> eventsPage = getDebugEvents(savedTenant.getId(), ruleChain.getFirstRuleNodeId(), 1000);
-        List<Event> events = eventsPage.getData().stream().filter(filterByCustomEvent()).collect(Collectors.toList());
+        final List<Event> events = await("Fetching events for the first rule node")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> {
+                    PageData<Event> eventsPage = getDebugEvents(savedTenant.getId(), ruleChain.getFirstRuleNodeId(), PAGE_LIMIT);
+                    return eventsPage.getData().stream().filter(filterByCustomEvent()).collect(Collectors.toList());
+                }, hasSize(2));
 
-        Assert.assertEquals(2, events.size());
+        final Event inEvent = events.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.IN)).findFirst()
+                .orElseThrow(() -> new NoSuchElementException("No event with type IN for the first rule node"));
+        assertThat(inEvent.getEntityId()).isEqualTo(ruleChain.getFirstRuleNodeId());
+        assertThat(inEvent.getBody().get("entityId").asText()).isEqualTo(device.getId().getId().toString());
 
-        Event inEvent = events.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.IN)).findFirst().get();
-        Assert.assertEquals(ruleChain.getFirstRuleNodeId(), inEvent.getEntityId());
-        Assert.assertEquals(device.getId().getId().toString(), inEvent.getBody().get("entityId").asText());
+        final Event outEvent = events.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.OUT)).findFirst()
+                .orElseThrow(() -> new NoSuchElementException("No event with type OUT for the first rule node"));
+        assertThat(ruleChain.getFirstRuleNodeId()).isEqualTo(outEvent.getEntityId());
+        assertThat(outEvent.getBody().get("entityId").asText()).isEqualTo(device.getId().getId().toString());
 
-        Event outEvent = events.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.OUT)).findFirst().get();
-        Assert.assertEquals(ruleChain.getFirstRuleNodeId(), outEvent.getEntityId());
-        Assert.assertEquals(device.getId().getId().toString(), outEvent.getBody().get("entityId").asText());
-
-        Assert.assertEquals("serverAttributeValue", getMetadata(outEvent).get("ss_serverAttributeKey").asText());
+        assertThat(getMetadata(outEvent).get("ss_serverAttributeKey").asText()).isEqualTo("serverAttributeValue");
     }
 
 }
