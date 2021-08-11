@@ -7,9 +7,6 @@
         </encoder>
     </appender>
 
-<!--    <logger name="org.thingsboard.server.service.subscription" level="TRACE"/>-->
-    <logger name="org.thingsboard.server.controller.TbTestWebSocketClient" level="INFO"/>
-<!--    <logger name="org.thingsboard.server" level="WARN"/>-->
     <logger name="org.springframework" level="WARN"/>
     <logger name="org.springframework.boot.test" level="WARN"/>
     <logger name="org.apache.cassandra" level="WARN"/>
@@ -22,16 +19,8 @@
     <logger name="org.eclipse" level="WARN"/>
     <logger name="org.cassandraunit" level="INFO"/>
 
-    <logger name="org.thingsboard.rule.engine" level="TRACE"/>
-    <logger name="org.thingsboard.server.controller.RuleChainController" level="TRACE"/>
-    <logger name="org.thingsboard.server.controller" level="TRACE"/>
-    <logger name="org.thingsboard.server.dao.rule.BaseRuleChainService" level="TRACE"/>
-    <logger name="org.thingsboard.server.dao.relation" level="DEBUG"/>
-
-    <logger name="org.thingsboard.server.cache" level="TRACE"/>
-
-    <logger name="org.thingsboard.server.service.queue.DefaultTbClusterService" level="TRACE"/>
-    <logger name="org.thingsboard.server.actors.TbActorMailbox" level="INFO"/>
+    <logger name="org.thingsboard.server.service.component" level="WARN"/>
+    <logger name="org.thingsboard.server.queue.environment" level="WARN"/>
 
     <root level="INFO">
         <appender-ref ref="console"/>
