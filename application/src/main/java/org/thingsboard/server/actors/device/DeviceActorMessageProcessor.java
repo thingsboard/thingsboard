@@ -563,7 +563,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         if (md != null) {
             systemContext.getTbRpcService().save(tenantId, new RpcId(rpcId), status, null);
         } else {
-            log.debug("[{}] Rpc has already removed from pending map.", rpcId);
+            log.info("[{}][{}] Rpc has already removed from pending map.", deviceId, rpcId);
         }
     }
 
