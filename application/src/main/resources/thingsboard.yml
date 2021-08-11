@@ -465,6 +465,9 @@ spring.servlet.multipart.max-request-size: "50MB"
 spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: "true"
 spring.jpa.properties.hibernate.order_by.default_null_ordering: "last"
 
+# The default timeout for asynchronous requests in milliseconds
+spring.mvc.async.request-timeout: "${SPRING_MVC_ASYNC_REQUEST_TIMEOUT:30000}"
+
 # SQL DAO Configuration
 spring:
   data:
