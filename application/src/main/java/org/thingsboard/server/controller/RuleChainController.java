@@ -270,7 +270,7 @@ public class RuleChainController extends BaseController {
 
             return savedRuleChainMetaData;
         } catch (Exception e) {
-
+            log.warn("saveRuleChainMetaData exception " + ruleChainMetaData, e);
             logEntityAction(emptyId(EntityType.RULE_CHAIN), null,
                     null, ActionType.UPDATED, e, ruleChainMetaData);
 
