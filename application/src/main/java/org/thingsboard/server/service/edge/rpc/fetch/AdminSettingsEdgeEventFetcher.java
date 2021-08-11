@@ -57,15 +57,18 @@ public class AdminSettingsEdgeEventFetcher implements EdgeEventFetcher {
     private static Pattern startPattern = Pattern.compile("<div class=\"content\".*?>");
     private static Pattern endPattern = Pattern.compile("<div class=\"footer\".*?>");
 
-    private static List<String> templatesNames = Arrays.asList("account.activated.ftl",
+    private static List<String> templatesNames = Arrays.asList(
+            "account.activated.ftl",
             "account.lockout.ftl",
             "activation.ftl",
             "password.was.reset.ftl",
             "reset.password.ftl",
-            "state.disabled.ftl",
-            "state.enabled.ftl",
-            "state.warning.ftl",
             "test.ftl");
+
+    // TODO: fix format of next templates
+    // "state.disabled.ftl",
+    // "state.enabled.ftl",
+    // "state.warning.ftl",
 
     @Override
     public PageLink getPageLink(int pageSize) {
