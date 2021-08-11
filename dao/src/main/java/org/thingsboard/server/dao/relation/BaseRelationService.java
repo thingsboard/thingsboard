@@ -79,6 +79,7 @@ public class BaseRelationService implements RelationService {
     @Cacheable(cacheNames = RELATIONS_CACHE, key = "{#from, #to, #relationType, #typeGroup}")
     @Override
     public EntityRelation getRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
+        log.trace("getRelations [{}][{}][{}][{}]", from, to, relationType, typeGroup);
         try {
             return getRelationAsync(tenantId, from, to, relationType, typeGroup).get();
         } catch (InterruptedException | ExecutionException e) {
@@ -243,6 +244,7 @@ public class BaseRelationService implements RelationService {
     }
 
     private List<ListenableFuture<Boolean>> deleteRelationGroupsAsync(TenantId tenantId, List<List<EntityRelation>> relations, Cache cache, boolean deleteFromDb) {
+        log.trace("deleteRelationGroupsAsync");
         List<ListenableFuture<Boolean>> results = new ArrayList<>();
         for (List<EntityRelation> relationList : relations) {
             relationList.forEach(relation -> results.add(deleteAsync(tenantId, cache, relation, deleteFromDb)));
@@ -251,6 +253,7 @@ public class BaseRelationService implements RelationService {
     }
 
     private ListenableFuture<Boolean> deleteAsync(TenantId tenantId, Cache cache, EntityRelation relation, boolean deleteFromDb) {
+        log.trace("deleteAsync relation {} deleteFromDb {}", relation, deleteFromDb);
         cacheEviction(relation, cache);
         if (deleteFromDb) {
             return relationDao.deleteRelationAsync(tenantId, relation);
@@ -269,6 +272,7 @@ public class BaseRelationService implements RelationService {
     }
 
     private void cacheEviction(EntityRelation relation, Cache cache) {
+        log.trace("cacheEviction {}", relation);
         List<Object> fromToTypeAndTypeGroup = new ArrayList<>();
         fromToTypeAndTypeGroup.add(relation.getFrom());
         fromToTypeAndTypeGroup.add(relation.getTo());
@@ -306,6 +310,7 @@ public class BaseRelationService implements RelationService {
     @Cacheable(cacheNames = RELATIONS_CACHE, key = "{#from, #typeGroup, 'FROM'}")
     @Override
     public List<EntityRelation> findByFrom(TenantId tenantId, EntityId from, RelationTypeGroup typeGroup) {
+        log.trace("findByFrom [{}][{}]", from, typeGroup);
         validate(from);
         validateTypeGroup(typeGroup);
         try {
@@ -337,6 +342,7 @@ public class BaseRelationService implements RelationService {
                     new FutureCallback<List<EntityRelation>>() {
                         @Override
                         public void onSuccess(@Nullable List<EntityRelation> result) {
+                            log.trace("findByFromAsync put if absent [{}][{}][{}]", from, typeGroup, result);
                             cache.putIfAbsent(fromAndTypeGroup, result);
                         }
 
@@ -369,6 +375,7 @@ public class BaseRelationService implements RelationService {
     @Cacheable(cacheNames = RELATIONS_CACHE, key = "{#from, #relationType, #typeGroup, 'FROM'}")
     @Override
     public List<EntityRelation> findByFromAndType(TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup) {
+        log.trace("findByFromAndType [{}][{}][{}][{}]", tenantId, from, relationType, typeGroup);
         try {
             return findByFromAndTypeAsync(tenantId, from, relationType, typeGroup).get();
         } catch (InterruptedException | ExecutionException e) {
@@ -388,6 +395,7 @@ public class BaseRelationService implements RelationService {
     @Cacheable(cacheNames = RELATIONS_CACHE, key = "{#to, #typeGroup, 'TO'}")
     @Override
     public List<EntityRelation> findByTo(TenantId tenantId, EntityId to, RelationTypeGroup typeGroup) {
+        log.trace("findByTo [{}][{}]", to, typeGroup);
         validate(to);
         validateTypeGroup(typeGroup);
         try {
@@ -419,6 +427,7 @@ public class BaseRelationService implements RelationService {
                     new FutureCallback<List<EntityRelation>>() {
                         @Override
                         public void onSuccess(@Nullable List<EntityRelation> result) {
+                            log.trace("findByToAsync put if absent [{}][{}][{}]", to, typeGroup, result);
                             cache.putIfAbsent(toAndTypeGroup, result);
                         }
 
@@ -451,6 +460,7 @@ public class BaseRelationService implements RelationService {
     private ListenableFuture<EntityRelationInfo> fetchRelationInfoAsync(TenantId tenantId, EntityRelation relation,
                                                                         Function<EntityRelation, EntityId> entityIdGetter,
                                                                         BiConsumer<EntityRelationInfo, String> entityNameSetter) {
+        log.trace("fetchRelationInfoAsync [{}]", relation);
         ListenableFuture<String> entityName = entityService.fetchEntityNameAsync(tenantId, entityIdGetter.apply(relation));
         return Futures.transform(entityName, entityName1 -> {
             EntityRelationInfo entityRelationInfo1 = new EntityRelationInfo(relation);
@@ -462,6 +472,7 @@ public class BaseRelationService implements RelationService {
     @Cacheable(cacheNames = RELATIONS_CACHE, key = "{#to, #relationType, #typeGroup, 'TO'}")
     @Override
     public List<EntityRelation> findByToAndType(TenantId tenantId, EntityId to, String relationType, RelationTypeGroup typeGroup) {
+        log.trace("findByToAndType [{}][{}][{}]", to, relationType, typeGroup);
         try {
             return findByToAndTypeAsync(tenantId, to, relationType, typeGroup).get();
         } catch (InterruptedException | ExecutionException e) {
@@ -536,6 +547,7 @@ public class BaseRelationService implements RelationService {
 
     @Override
     public void removeRelations(TenantId tenantId, EntityId entityId) {
+        log.trace("removeRelations [{}]", entityId);
         Cache cache = cacheManager.getCache(RELATIONS_CACHE);
 
         List<EntityRelation> relations = new ArrayList<>();
@@ -626,6 +638,7 @@ public class BaseRelationService implements RelationService {
     private ListenableFuture<Set<EntityRelation>> findRelationsRecursively(final TenantId tenantId, final EntityId rootId, final EntitySearchDirection direction,
                                                                            RelationTypeGroup relationTypeGroup, int lvl, boolean fetchLastLevelOnly,
                                                                            final ConcurrentHashMap<EntityId, Boolean> uniqueMap) throws Exception {
+        log.trace("findRelationsRecursively [{}]", rootId);
         if (lvl == 0) {
             return Futures.immediateFuture(Collections.emptySet());
         }
@@ -662,6 +675,7 @@ public class BaseRelationService implements RelationService {
     }
 
     private ListenableFuture<List<EntityRelation>> findRelations(final TenantId tenantId, final EntityId rootId, final EntitySearchDirection direction, RelationTypeGroup relationTypeGroup) {
+        log.trace("findRelations [{}][{}][{}]", rootId, direction, relationTypeGroup);
         ListenableFuture<List<EntityRelation>> relations;
         if (relationTypeGroup == null) {
             relationTypeGroup = RelationTypeGroup.COMMON;

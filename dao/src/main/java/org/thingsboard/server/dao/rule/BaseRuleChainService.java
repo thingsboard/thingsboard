@@ -239,6 +239,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         Validator.validateId(ruleChainId, "Incorrect rule chain id.");
         RuleChain ruleChain = findRuleChainById(tenantId, ruleChainId);
         if (ruleChain == null) {
+            log.trace("loadRuleChainMetaData not found for tenantId {}, ruleChainId {}", tenantId, ruleChainId);
             return null;
         }
         RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
@@ -301,6 +302,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
+    @Transactional //until deleteRelation in place
     public List<RuleNode> getRuleChainNodes(TenantId tenantId, RuleChainId ruleChainId) {
         Validator.validateId(ruleChainId, "Incorrect rule chain id for search request.");
         List<EntityRelation> relations = getRuleChainToNodeRelations(tenantId, ruleChainId);
@@ -310,6 +312,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             if (ruleNode != null) {
                 ruleNodes.add(ruleNode);
             } else {
+                log.trace("getRuleChainNodes: delete relation for not existing node [{}][{}]", tenantId, relation);
                 relationService.deleteRelation(tenantId, relation);
             }
         }
