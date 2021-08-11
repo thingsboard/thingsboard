@@ -63,6 +63,9 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
     public static final int PAGE_LIMIT = 1000;
     public static final String SERVER_ATTRIBUTE_KEY_ONE = "serverAttributeKey1";
     public static final String SERVER_ATTRIBUTE_KEY_TWO = "serverAttributeKey2";
+    public static final String SERVER_ATTRIBUTE_VALUE_ONE = "serverAttributeValue1";
+    public static final String SERVER_ATTRIBUTE_VALUE_TWO = "serverAttributeValue2";
+    public static final String SERVER_SCOPE_PREFIX = "ss_";
     protected Tenant savedTenant;
     protected User tenantAdmin;
 
@@ -135,6 +138,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
                 .build()
                 .addConnectionInfo(0, 1, "Success"));
         assertThat(metaData).isNotNull();
+        assertThat(metaData.getNodes()).hasSize(2);
 
         final RuleChain ruleChain = getRuleChain(ruleChainSaved.getId());
         assertThat(ruleChain).isNotNull();
@@ -144,10 +148,10 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         final Device device = doPost("/api/device", Device.builder().name("My device").type("default").build(), Device.class); //sync
 
         attributesService.save(device.getTenantId(), device.getId(), DataConstants.SERVER_SCOPE,
-                        List.of(new BaseAttributeKvEntry(new StringDataEntry(SERVER_ATTRIBUTE_KEY_ONE, "serverAttributeValue1"), System.currentTimeMillis())))
+                        List.of(new BaseAttributeKvEntry(new StringDataEntry(SERVER_ATTRIBUTE_KEY_ONE, SERVER_ATTRIBUTE_VALUE_ONE), System.currentTimeMillis())))
                 .get(TIMEOUT, TimeUnit.SECONDS);
         attributesService.save(device.getTenantId(), device.getId(), DataConstants.SERVER_SCOPE,
-                        List.of(new BaseAttributeKvEntry(new StringDataEntry(SERVER_ATTRIBUTE_KEY_TWO, "serverAttributeValue2"), System.currentTimeMillis())))
+                        List.of(new BaseAttributeKvEntry(new StringDataEntry(SERVER_ATTRIBUTE_KEY_TWO, SERVER_ATTRIBUTE_VALUE_TWO), System.currentTimeMillis())))
                 .get(TIMEOUT, TimeUnit.SECONDS);
 
         TbMsgCallback tbMsgCallback = Mockito.mock(TbMsgCallback.class);
@@ -158,49 +162,53 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         actorSystem.tell(qMsg);
         Mockito.verify(tbMsgCallback, Mockito.timeout(TimeUnit.SECONDS.toMillis(TIMEOUT))).onSuccess();
 
-        List<Event> events = await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> {
-            log.info("Fetching events until condition for first rule node {}", ruleChain.getFirstRuleNodeId());
-            PageData<Event> eventsPage = getDebugEvents(savedTenant.getId(), ruleChain.getFirstRuleNodeId(), PAGE_LIMIT);
-            List<Event> eventList = eventsPage.getData().stream().filter(filterByCustomEvent()).collect(Collectors.toList());
-            log.info("Fetched events [{}] {}", eventList.size(), eventList);
-            return eventList;
-        }, hasSize(2));
+        final List<Event> eventsOne = await("Fetching events for the first rule node")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> {
+                    log.info("Fetching events until condition for first rule node {}", ruleChain.getFirstRuleNodeId());
+                    PageData<Event> eventsPage = getDebugEvents(savedTenant.getId(), ruleChain.getFirstRuleNodeId(), PAGE_LIMIT);
+                    List<Event> eventList = eventsPage.getData().stream().filter(filterByCustomEvent()).collect(Collectors.toList());
+                    log.info("Fetched events [{}] {}", eventList.size(), eventList);
+                    return eventList;
+                }, hasSize(2));
 
-        Event inEvent = events.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.IN)).findFirst()
+        final Event inEventOne = eventsOne.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.IN)).findFirst()
                 .orElseThrow(() -> new NoSuchElementException("No event with type IN for the first rule node"));
-        assertThat(inEvent.getEntityId()).isEqualTo(ruleChain.getFirstRuleNodeId());
-        assertThat(inEvent.getBody().get("entityId").asText()).isEqualTo(device.getId().getId().toString());
+        assertThat(inEventOne.getEntityId()).isEqualTo(ruleChain.getFirstRuleNodeId());
+        assertThat(inEventOne.getBody().get("entityId").asText()).isEqualTo(device.getId().getId().toString());
 
-        Event outEvent = events.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.OUT)).findFirst()
+        final Event outEventOne = eventsOne.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.OUT)).findFirst()
                 .orElseThrow(() -> new NoSuchElementException("No event with type OUT for the first rule node"));
-        assertThat(ruleChain.getFirstRuleNodeId()).isEqualTo(outEvent.getEntityId());
-        assertThat(outEvent.getBody().get("entityId").asText()).isEqualTo(device.getId().getId().toString());
+        assertThat(outEventOne.getEntityId()).isEqualTo(ruleChain.getFirstRuleNodeId());
+        assertThat(outEventOne.getBody().get("entityId").asText()).isEqualTo(device.getId().getId().toString());
 
-        assertThat(getMetadata(outEvent).get("ss_serverAttributeKey1").asText()).isEqualTo("serverAttributeValue1");
+        assertThat(getMetadata(outEventOne).get(SERVER_SCOPE_PREFIX + SERVER_ATTRIBUTE_KEY_ONE).asText()).isEqualTo(SERVER_ATTRIBUTE_VALUE_ONE);
 
-        RuleNode lastRuleNode = metaData.getNodes().stream().filter(node -> !node.getId().equals(ruleChain.getFirstRuleNodeId())).findFirst()
+        final RuleNode lastRuleNode = metaData.getNodes().stream().filter(node -> !node.getId().equals(ruleChain.getFirstRuleNodeId())).findFirst()
                 .orElseThrow(() -> new NoSuchElementException("No value present for the last rule node"));
 
-        events = await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> {
-            log.info("Fetching events until condition for the last rule node {}", lastRuleNode.getId());
-            PageData<Event> eventsPage = getDebugEvents(savedTenant.getId(), lastRuleNode.getId(), PAGE_LIMIT);
-            List<Event> eventList = eventsPage.getData().stream().filter(filterByCustomEvent()).collect(Collectors.toList());
-            log.info("Fetched events [{}] {}", eventList.size(), eventList);
-            return eventList;
-        }, hasSize(2));
+        final List<Event> eventsTwo = await("Fetching events until condition for the last rule node")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> {
+                    log.info("Fetching events until condition for the last rule node {}", lastRuleNode.getId());
+                    PageData<Event> eventsPage = getDebugEvents(savedTenant.getId(), lastRuleNode.getId(), PAGE_LIMIT);
+                    List<Event> eventList = eventsPage.getData().stream().filter(filterByCustomEvent()).collect(Collectors.toList());
+                    log.info("Fetched events [{}] {}", eventList.size(), eventList);
+                    return eventList;
+                }, hasSize(2));
 
-        inEvent = events.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.IN)).findFirst()
+        final Event inEventTwo = eventsTwo.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.IN)).findFirst()
                 .orElseThrow(() -> new NoSuchElementException("No event with type IN for the last rule node"));
-        assertThat(inEvent.getEntityId()).isEqualTo(lastRuleNode.getId());
-        assertThat(inEvent.getBody().get("entityId").asText()).isEqualTo(device.getId().getId().toString());
+        assertThat(inEventTwo.getEntityId()).isEqualTo(lastRuleNode.getId());
+        assertThat(inEventTwo.getBody().get("entityId").asText()).isEqualTo(device.getId().getId().toString());
 
-        outEvent = events.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.OUT)).findFirst()
+        final Event outEventTwo = eventsTwo.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.OUT)).findFirst()
                 .orElseThrow(() -> new NoSuchElementException("No event with type OUT for the last rule node"));
-        assertThat(outEvent.getEntityId()).isEqualTo(lastRuleNode.getId());
-        assertThat(outEvent.getBody().get("entityId").asText()).isEqualTo(device.getId().getId().toString());
+        assertThat(outEventTwo.getEntityId()).isEqualTo(lastRuleNode.getId());
+        assertThat(outEventTwo.getBody().get("entityId").asText()).isEqualTo(device.getId().getId().toString());
 
-        assertThat(getMetadata(outEvent).get("ss_serverAttributeKey1").asText()).isEqualTo("serverAttributeValue1");
-        assertThat(getMetadata(outEvent).get("ss_serverAttributeKey2").asText()).isEqualTo("serverAttributeValue2");
+        assertThat(getMetadata(outEventTwo).get(SERVER_SCOPE_PREFIX + SERVER_ATTRIBUTE_KEY_ONE).asText()).isEqualTo(SERVER_ATTRIBUTE_VALUE_ONE);
+        assertThat(getMetadata(outEventTwo).get(SERVER_SCOPE_PREFIX + SERVER_ATTRIBUTE_KEY_TWO).asText()).isEqualTo(SERVER_ATTRIBUTE_VALUE_TWO);
     }
 
     @Test
@@ -245,6 +253,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
                 .build()
                 .addRuleChainConnectionInfo(0, secondaryRuleChainSaved.getId(), "Success", mapper.createObjectNode()));
         assertThat(rootMetaData).isNotNull();
+        assertThat(rootMetaData.getNodes()).hasSize(1);
 
         final RuleChain rootRuleChain = getRuleChain(rootRuleChainSaved.getId());
         assertThat(rootRuleChain.getFirstRuleNodeId()).isNotNull();
@@ -264,7 +273,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
                 .build());
 
         assertThat(secondaryMetaData).isNotNull();
-        assertThat(secondaryMetaData.getNodes()).hasSize(1);
+        assertThat(secondaryMetaData.getNodes()).hasSize(1); //this will fail randomly if cache is not transaction-aware
 
         // Saving the device. Sync API
         final Device device = doPost("/api/device", Device.builder()
@@ -274,10 +283,10 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         assertThat(device).isNotNull();
 
         attributesService.save(device.getTenantId(), device.getId(), DataConstants.SERVER_SCOPE,
-                        List.of(new BaseAttributeKvEntry(new StringDataEntry(SERVER_ATTRIBUTE_KEY_ONE, "serverAttributeValue1"), System.currentTimeMillis())))
+                        List.of(new BaseAttributeKvEntry(new StringDataEntry(SERVER_ATTRIBUTE_KEY_ONE, SERVER_ATTRIBUTE_VALUE_ONE), System.currentTimeMillis())))
                 .get(TIMEOUT, TimeUnit.SECONDS);
         attributesService.save(device.getTenantId(), device.getId(), DataConstants.SERVER_SCOPE,
-                        List.of(new BaseAttributeKvEntry(new StringDataEntry(SERVER_ATTRIBUTE_KEY_TWO, "serverAttributeValue2"), System.currentTimeMillis())))
+                        List.of(new BaseAttributeKvEntry(new StringDataEntry(SERVER_ATTRIBUTE_KEY_TWO, SERVER_ATTRIBUTE_VALUE_TWO), System.currentTimeMillis())))
                 .get(TIMEOUT, TimeUnit.SECONDS);
 
         TbMsgCallback tbMsgCallback = Mockito.mock(TbMsgCallback.class);
@@ -289,7 +298,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
 
         Mockito.verify(tbMsgCallback, Mockito.timeout(TimeUnit.SECONDS.toMillis(TIMEOUT))).onSuccess();
 
-        List<Event> events = await("Fetching events for the first rule node")
+        final List<Event> eventsOne = await("Fetching events for the first rule node")
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> {
                     log.info("Fetching events for first rule node {}", rootRuleChain.getFirstRuleNodeId());
@@ -299,21 +308,22 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
                     return eventList;
                 }, hasSize(2));
 
-        Event inEvent = events.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.IN)).findFirst()
+        final Event inEventOne = eventsOne.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.IN)).findFirst()
                 .orElseThrow(() -> new NoSuchElementException("No event with type IN for the first rule node"));
-        assertThat(inEvent.getEntityId()).isEqualTo(rootRuleChain.getFirstRuleNodeId());
-        assertThat(inEvent.getBody().get("entityId").asText()).isEqualTo(device.getId().getId().toString());
+        assertThat(inEventOne.getEntityId()).isEqualTo(rootRuleChain.getFirstRuleNodeId());
+        assertThat(inEventOne.getBody().get("entityId").asText()).isEqualTo(device.getId().getId().toString());
 
-        Event outEvent = events.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.OUT)).findFirst()
+        final Event outEventOne = eventsOne.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.OUT)).findFirst()
                 .orElseThrow(() -> new NoSuchElementException("No event with type OUT for the first rule node"));
-        assertThat(outEvent.getEntityId()).isEqualTo(rootRuleChain.getFirstRuleNodeId());
-        assertThat(outEvent.getBody().get("entityId").asText()).isEqualTo(device.getId().getId().toString());
-        assertThat(getMetadata(outEvent).get("ss_serverAttributeKey1").asText()).isEqualTo("serverAttributeValue1");
+        assertThat(outEventOne.getEntityId()).isEqualTo(rootRuleChain.getFirstRuleNodeId());
+        assertThat(outEventOne.getBody().get("entityId").asText()).isEqualTo(device.getId().getId().toString());
 
-        RuleNode lastRuleNode = secondaryMetaData.getNodes().stream().filter(node -> !node.getId().equals(rootRuleChain.getFirstRuleNodeId())).findFirst()
+        assertThat(getMetadata(outEventOne).get(SERVER_SCOPE_PREFIX + SERVER_ATTRIBUTE_KEY_ONE).asText()).isEqualTo(SERVER_ATTRIBUTE_VALUE_ONE);
+
+        final RuleNode lastRuleNode = secondaryMetaData.getNodes().stream().filter(node -> !node.getId().equals(rootRuleChain.getFirstRuleNodeId())).findFirst()
                 .orElseThrow(() -> new NoSuchElementException("No value present for the last rule node"));
 
-        events = await("Fetching events for the last rule node").atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> {
+        final List<Event> eventsTwo = await("Fetching events for the last rule node").atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> {
             log.info("Fetching events for the last rule node {}", lastRuleNode.getId());
             PageData<Event> eventsPage = getDebugEvents(savedTenant.getId(), lastRuleNode.getId(), PAGE_LIMIT);
             List<Event> eventList = eventsPage.getData().stream().filter(filterByCustomEvent()).collect(Collectors.toList());
@@ -321,18 +331,18 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
             return eventList;
         }, hasSize(2));
 
-        inEvent = events.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.IN)).findFirst()
+        final Event inEventTwo = eventsTwo.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.IN)).findFirst()
                 .orElseThrow(() -> new NoSuchElementException("No event with type IN for the last rule node"));
-        assertThat(inEvent.getEntityId()).isEqualTo(lastRuleNode.getId());
-        assertThat(inEvent.getBody().get("entityId").asText()).isEqualTo(device.getId().getId().toString());
+        assertThat(inEventTwo.getEntityId()).isEqualTo(lastRuleNode.getId());
+        assertThat(inEventTwo.getBody().get("entityId").asText()).isEqualTo(device.getId().getId().toString());
 
-        outEvent = events.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.OUT)).findFirst()
+        final Event outEventTwo = eventsTwo.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.OUT)).findFirst()
                 .orElseThrow(() -> new NoSuchElementException("No event with type OUT for the last rule node"));
-        assertThat(outEvent.getEntityId()).isEqualTo(lastRuleNode.getId());
-        assertThat(outEvent.getBody().get("entityId").asText()).isEqualTo(device.getId().getId().toString());
+        assertThat(outEventTwo.getEntityId()).isEqualTo(lastRuleNode.getId());
+        assertThat(outEventTwo.getBody().get("entityId").asText()).isEqualTo(device.getId().getId().toString());
 
-        assertThat(getMetadata(outEvent).get("ss_serverAttributeKey1").asText()).isEqualTo("serverAttributeValue1");
-        assertThat(getMetadata(outEvent).get("ss_serverAttributeKey2").asText()).isEqualTo("serverAttributeValue2");
+        assertThat(getMetadata(outEventTwo).get(SERVER_SCOPE_PREFIX + SERVER_ATTRIBUTE_KEY_ONE).asText()).isEqualTo(SERVER_ATTRIBUTE_VALUE_ONE);
+        assertThat(getMetadata(outEventTwo).get(SERVER_SCOPE_PREFIX + SERVER_ATTRIBUTE_KEY_TWO).asText()).isEqualTo(SERVER_ATTRIBUTE_VALUE_TWO);
     }
 
 }
