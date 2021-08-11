@@ -67,7 +67,7 @@ public class EdgeContextComponent {
     private AdminSettingsService adminSettingsService;
 
     @Autowired
-    private Configuration freemarkerConfig;;
+    private Configuration freemarkerConfig;
 
     @Autowired
     private AssetService assetService;
