@@ -146,8 +146,11 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
         final List<Event> events = await("Fetching events for the first rule node")
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> {
+                    log.info("Fetching events for first rule node {}", ruleChain.getFirstRuleNodeId());
                     PageData<Event> eventsPage = getDebugEvents(savedTenant.getId(), ruleChain.getFirstRuleNodeId(), PAGE_LIMIT);
-                    return eventsPage.getData().stream().filter(filterByCustomEvent()).collect(Collectors.toList());
+                    List<Event> eventList = eventsPage.getData().stream().filter(filterByCustomEvent()).collect(Collectors.toList());
+                    log.info("Fetched events [{}] {}", eventList.size(), eventList);
+                    return eventList;
                 }, hasSize(2));
 
         final Event inEvent = events.stream().filter(e -> e.getBody().get("type").asText().equals(DataConstants.IN)).findFirst()
