@@ -176,11 +176,12 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     public void sendExecuteRequest(LwM2mClient client, TbLwM2MExecuteRequest request, DownlinkRequestCallback<ExecuteRequest, ExecuteResponse> callback) {
         ResourceModel resourceModelExecute = client.getResourceModel(request.getVersionedId(), this.config.getModelProvider());
         if (resourceModelExecute != null) {
+            validateVersionedId(client, request);
             ExecuteRequest downlink;
             if (request.getParams() != null && !resourceModelExecute.multiple) {
-                downlink = new ExecuteRequest(request.getVersionedId(), (String) this.converter.convertValue(request.getParams(), resourceModelExecute.type, ResourceModel.Type.STRING, new LwM2mPath(request.getObjectId())));
+                downlink = new ExecuteRequest(request.getObjectId(), (String) this.converter.convertValue(request.getParams(), resourceModelExecute.type, ResourceModel.Type.STRING, new LwM2mPath(request.getObjectId())));
             } else {
-                downlink = new ExecuteRequest(request.getVersionedId());
+                downlink = new ExecuteRequest(request.getObjectId());
             }
             sendSimpleRequest(client, downlink, request.getTimeout(), callback);
         }
