@@ -19,7 +19,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredentials;
@@ -37,8 +36,9 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.hasSize;
 import static org.thingsboard.rest.client.utils.RestJsonConverter.toTimeseries;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWNLOADED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWNLOADING;
@@ -174,7 +174,7 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
             Assert.assertEquals(expectedStatuses, statuses);
         } finally {
-            if(client != null) {
+            if (client != null) {
                 client.destroy();
             }
         }
@@ -219,11 +219,10 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
      * Check the detailed log output to learn how Awaitility polling the API and when exactly expected result appears
      * */
     @Test
-    @Ignore
     public void testSoftwareUpdateByObject9() throws Exception {
         //given
-        final List<OtaPackageUpdateStatus> expectedStatuses = Collections.unmodifiableList(Arrays.asList(
-                QUEUED, INITIATED, DOWNLOADING, DOWNLOADING, DOWNLOADING, DOWNLOADED, VERIFIED, UPDATED));
+        final List<OtaPackageUpdateStatus> expectedStatuses = List.of(
+                QUEUED, INITIATED, DOWNLOADING, DOWNLOADING, DOWNLOADING, DOWNLOADED, VERIFIED, UPDATED);
 
         createDeviceProfile(OTA_TRANSPORT_CONFIGURATION);
         NoSecClientCredentials clientCredentials = new NoSecClientCredentials();
@@ -231,39 +230,29 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
         final Device device = createDevice(clientCredentials);
         device.setSoftwareId(createSoftware().getId());
 
-        log.warn("Saving by API " + device);
-        final Device savedDevice = doPost("/api/device", device, Device.class);
-        Assert.assertNotNull(savedDevice);
-        log.warn("Device saved by API {}", savedDevice);
-
-        log.warn("AWAIT atMost {} SECONDS on get device by API...", TIMEOUT);
-        await()
-                .atMost(TIMEOUT, TimeUnit.SECONDS)
-                .until(() -> getDeviceFromAPI(device.getId().getId()), is(savedDevice));
-        log.warn("Got device by API.");
+        final Device savedDevice = doPost("/api/device", device, Device.class); //sync call
+        assertThat(savedDevice).as("saved device").isNotNull();
+        assertThat(getDeviceFromAPI(device.getId().getId())).as("fetched device").isEqualTo(savedDevice);
 
         //when
         log.warn("Init the client...");
         client = new LwM2MTestClient(executor, "OTA_" + ENDPOINT);
         client.init(SECURITY, COAP_CONFIG);
-        log.warn("Init done");
 
         log.warn("AWAIT atMost {} SECONDS on timeseries List<TsKvEntry> by API with list size {}...", TIMEOUT, expectedStatuses.size());
-        await()
+        List<TsKvEntry> ts = await("await on timeseries")
                 .atMost(30, TimeUnit.SECONDS)
-                .until(() -> getSwStateTelemetryFromAPI(device.getId().getId())
-                        .size(), is(expectedStatuses.size()));
-        log.warn("Got an expected await condition!");
+                .until(() -> getSwStateTelemetryFromAPI(device.getId().getId()), hasSize(expectedStatuses.size()));
+        log.warn("Got the ts: {}", ts);
 
-        //then
-        log.warn("Fetching ts for the final asserts");
-        List<TsKvEntry> ts = getSwStateTelemetryFromAPI(device.getId().getId());
-        log.warn("Got an ts {}", ts);
+        ts.sort(Comparator.comparingLong(TsKvEntry::getTs));
+        log.warn("Ts ordered: {}", ts);
+        ts.forEach((x) -> log.warn("ts: {} ", x));
 
-        List<OtaPackageUpdateStatus> statuses = ts.stream().sorted(Comparator.comparingLong(TsKvEntry::getTs)).map(KvEntry::getValueAsString).map(OtaPackageUpdateStatus::valueOf).collect(Collectors.toList());
-        log.warn("Converted ts to statuses {}", statuses);
+        List<OtaPackageUpdateStatus> statuses = ts.stream().map(KvEntry::getValueAsString).map(OtaPackageUpdateStatus::valueOf).collect(Collectors.toList());
+        log.warn("Converted ts to statuses: {}", statuses);
 
-        Assert.assertEquals(expectedStatuses, statuses);
+        assertThat(statuses).isEqualTo(expectedStatuses);
     }
 
     private Device getDeviceFromAPI(UUID deviceId) throws Exception {
