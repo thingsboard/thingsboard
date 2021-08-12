@@ -184,6 +184,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
             @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.name}"),
             @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.id}")
     })
+    @Transactional
     @Override
     public Device saveDeviceWithAccessToken(Device device, String accessToken) {
         return doSaveDevice(device, accessToken, true);
@@ -211,6 +212,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
             @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.name}"),
             @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.id}")
     })
+    @Transactional
     @Override
     public Device saveDeviceWithCredentials(Device device, DeviceCredentials deviceCredentials) {
         if (device.getId() == null) {
