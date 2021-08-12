@@ -230,6 +230,7 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
         final Device device = createDevice(clientCredentials);
         device.setSoftwareId(createSoftware().getId());
 
+        log.warn("Saving device...");
         final Device savedDevice = doPost("/api/device", device, Device.class); //sync call
         assertThat(savedDevice).as("saved device").isNotNull();
         assertThat(getDeviceFromAPI(device.getId().getId())).as("fetched device").isEqualTo(savedDevice);

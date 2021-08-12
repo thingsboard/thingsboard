@@ -149,6 +149,9 @@ public class BaseTimeseriesService implements TimeseriesService {
             if (tsKvEntry == null) {
                 throw new IncorrectParameterException("Key value entry can't be null");
             }
+            if (tsKvEntry.getKey().equals("sw_state")) {
+                log.warn("save {}", tsKvEntry); //TODO remove after debug
+            }
             saveAndRegisterFutures(tenantId, futures, entityId, tsKvEntry, ttl);
         }
         return Futures.transform(Futures.allAsList(futures), SUM_ALL_INTEGERS, MoreExecutors.directExecutor());

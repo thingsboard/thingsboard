@@ -16,8 +16,9 @@
     <logger name="org.cassandraunit" level="INFO"/>
     <logger name="org.eclipse.leshan" level="INFO"/>
 
+    <logger name="org.thingsboard.server.queue.DefaultTbCoreConsumerService" level="INFO"/> <!-- //TODO remove after debug -->
 
-    <root level="WARN">
+    <root level="INFO">
         <appender-ref ref="console"/>
     </root>
 
