@@ -344,34 +344,34 @@ caffeine:
   specs:
     relations:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000 # maxSize: 0 means the cache is disabled
     deviceCredentials:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
     devices:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
     sessions:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
     assets:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
     entityViews:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
     claimDevices:
       timeToLiveInMinutes: 1440
       maxSize: 1000
     securitySettings:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
     tenantProfiles:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
     deviceProfiles:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
     attributes:
       timeToLiveInMinutes: 1440
       maxSize: 100000
@@ -386,7 +386,7 @@ caffeine:
       maxSize: 10
     edges:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
 
 redis:
   # standalone or cluster
