@@ -170,7 +170,6 @@ export interface ClientLwM2mSettings {
   edrxCycle?: number;
   pagingTransmissionWindow?: number;
   psmActivityTimer?: number;
-  compositeOperationsSupport: boolean;
 }
 
 export interface ObservableAttributes {
@@ -225,8 +224,7 @@ export function getDefaultProfileClientLwM2mSettingsConfig(): ClientLwM2mSetting
     clientOnlyObserveAfterConnect: 1,
     fwUpdateStrategy: 1,
     swUpdateStrategy: 1,
-    powerMode: PowerMode.DRX,
-    compositeOperationsSupport: false
+    powerMode: PowerMode.DRX
   };
 }
 

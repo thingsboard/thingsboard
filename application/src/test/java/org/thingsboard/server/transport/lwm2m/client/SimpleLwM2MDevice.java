@@ -40,7 +40,7 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
 
 
     private static final Random RANDOM = new Random();
-    private static final List<Integer> supportedResources = Arrays.asList(0, 1, 2, 3
+    private static final List<Integer> supportedResources = Arrays.asList(0, 1, 2, 3, 9
 //            , 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21
     );
 

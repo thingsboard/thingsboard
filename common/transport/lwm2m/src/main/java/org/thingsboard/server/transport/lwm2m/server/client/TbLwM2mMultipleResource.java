@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
+package org.thingsboard.server.transport.lwm2m.server.client;
 
-import org.eclipse.leshan.server.bootstrap.BootstrapConfigStore;
-import org.eclipse.leshan.server.bootstrap.BootstrapConfigurationStoreAdapter;
+import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 
-public class LwM2MInMemoryBootstrapConfigurationAdapter extends BootstrapConfigurationStoreAdapter {
+import java.io.Serializable;
 
-    public LwM2MInMemoryBootstrapConfigurationAdapter(BootstrapConfigStore store) {
-        super(store);
+public class TbLwM2mMultipleResource extends LwM2mMultipleResource implements TbLwM2MResource, Serializable {
+
+    private static final long serialVersionUID = 4658477128628087186L;
+
+    public TbLwM2mMultipleResource(int id, ResourceModel.Type type, TbLwM2MResourceInstance... instances) {
+        super(id, type, instances);
     }
-
 }

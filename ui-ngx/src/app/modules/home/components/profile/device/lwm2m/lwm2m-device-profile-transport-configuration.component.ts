@@ -124,10 +124,9 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         fwUpdateResource: [{value: '', disabled: true}, []],
         swUpdateResource: [{value: '', disabled: true}, []],
         powerMode: [PowerMode.DRX, Validators.required],
-        edrxCycle: [{disabled: true, value: 0}, Validators.required],
-        psmActivityTimer: [{disabled: true, value: 0}, Validators.required],
-        pagingTransmissionWindow: [{disabled: true, value: 0}, Validators.required],
-        compositeOperationsSupport: [false]
+        edrxCycle: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
+        psmActivityTimer: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
+        pagingTransmissionWindow: [{disabled: true, value: 0}, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]]
       })
     });
     this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateStrategy').valueChanges.pipe(
@@ -251,11 +250,9 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
           fwUpdateResource: this.configurationValue.clientLwM2mSettings.fwUpdateResource || '',
           swUpdateResource: this.configurationValue.clientLwM2mSettings.swUpdateResource || '',
           powerMode: this.configurationValue.clientLwM2mSettings.powerMode || PowerMode.DRX,
-          edrxCycle: this.configurationValue.clientLwM2mSettings.edrxCycle || DEFAULT_EDRX_CYCLE,
-          pagingTransmissionWindow:
-            this.configurationValue.clientLwM2mSettings.pagingTransmissionWindow || DEFAULT_PAGING_TRANSMISSION_WINDOW,
-          psmActivityTimer: this.configurationValue.clientLwM2mSettings.psmActivityTimer || DEFAULT_PSM_ACTIVITY_TIMER,
-          compositeOperationsSupport: this.configurationValue.clientLwM2mSettings.compositeOperationsSupport || false
+          edrxCycle: this.configurationValue.clientLwM2mSettings.edrxCycle || 0,
+          pagingTransmissionWindow: this.configurationValue.clientLwM2mSettings.pagingTransmissionWindow || 0,
+          psmActivityTimer: this.configurationValue.clientLwM2mSettings.psmActivityTimer || 0
         }
       },
       {emitEvent: false});

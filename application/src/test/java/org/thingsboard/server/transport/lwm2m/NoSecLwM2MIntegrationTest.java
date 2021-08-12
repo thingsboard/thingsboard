@@ -154,7 +154,7 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
             Device device = createDevice(clientCredentials);
 
             client = new LwM2MTestClient(executor, ENDPOINT);
-            client.init(SECURITY, COAP_CONFIG);
+            client.init(SECURITY, COAP_CONFIG, 11001);
 
             Thread.sleep(1000);
 
@@ -192,7 +192,7 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
             Thread.sleep(1000);
 
             client = new LwM2MTestClient(executor, "OTA_" + ENDPOINT);
-            client.init(SECURITY, COAP_CONFIG);
+            client.init(SECURITY, COAP_CONFIG, 11002);
 
             Thread.sleep(3000);
 
@@ -242,7 +242,7 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
         //when
         log.warn("Init the client...");
         client = new LwM2MTestClient(executor, "OTA_" + ENDPOINT);
-        client.init(SECURITY, COAP_CONFIG);
+        client.init(SECURITY, COAP_CONFIG, 11003);
         log.warn("Init done");
 
         log.warn("AWAIT atMost {} SECONDS on timeseries List<TsKvEntry> by API with list size {}...", TIMEOUT, expectedStatuses.size());
