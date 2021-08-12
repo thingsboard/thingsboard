@@ -17,6 +17,10 @@
     <logger name="org.eclipse.leshan" level="INFO"/>
 
     <logger name="org.thingsboard.server.queue.DefaultTbCoreConsumerService" level="INFO"/> <!-- //TODO remove after debug -->
+    <logger name="org.thingsboard.server.queue.DefaultTbClusterService" level="TRACE"/> <!-- //TODO remove after debug -->
+    <logger name="org.thingsboard.server.queue.memory" level="TRACE"/> <!-- //TODO remove after debug -->
+
+
 
     <root level="INFO">
         <appender-ref ref="console"/>

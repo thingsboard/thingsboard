@@ -72,7 +72,7 @@ public class LwM2mTransportServerHelper {
     private final LwM2mTransportContext context;
     private final AtomicInteger atomicTs = new AtomicInteger(0);
 
-    public long getTS() {
+    public long getTS() { //TODO - fix it. This cause wrong ordering by ts in telemetry
         return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) * 1000L + (atomicTs.getAndIncrement() % 1000);
     }
 

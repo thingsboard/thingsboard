@@ -16,12 +16,14 @@
 package org.thingsboard.server.queue.memory;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 
 @Data
+@Slf4j
 public class InMemoryTbQueueProducer<T extends TbQueueMsg> implements TbQueueProducer<T> {
 
     private final InMemoryStorage storage = InMemoryStorage.getInstance();
@@ -39,6 +41,9 @@ public class InMemoryTbQueueProducer<T extends TbQueueMsg> implements TbQueuePro
 
     @Override
     public void send(TopicPartitionInfo tpi, T msg, TbQueueCallback callback) {
+        if (msg.toString().contains("DOWNLOADING")) {
+            log.trace("send msg: {}", msg); //TODO remove after debug
+        }
         boolean result = storage.put(tpi.getFullTopicName(), msg);
         if (result) {
             if (callback != null) {

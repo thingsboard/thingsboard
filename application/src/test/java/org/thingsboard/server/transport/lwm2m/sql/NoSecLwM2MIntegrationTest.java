@@ -230,14 +230,15 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
         final Device device = createDevice(clientCredentials);
         device.setSoftwareId(createSoftware().getId());
 
-        log.warn("Saving device...");
+        log.warn("Saving device... {}", System.currentTimeMillis());
         final Device savedDevice = doPost("/api/device", device, Device.class); //sync call
         assertThat(savedDevice).as("saved device").isNotNull();
         assertThat(getDeviceFromAPI(device.getId().getId())).as("fetched device").isEqualTo(savedDevice);
 
         //when
-        log.warn("Init the client...");
+        log.warn("Create client... {}", System.currentTimeMillis());
         client = new LwM2MTestClient(executor, "OTA_" + ENDPOINT);
+        log.warn("Init client... {}", System.currentTimeMillis());
         client.init(SECURITY, COAP_CONFIG);
 
         log.warn("AWAIT atMost {} SECONDS on timeseries List<TsKvEntry> by API with list size {}...", TIMEOUT, expectedStatuses.size());
@@ -265,7 +266,7 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
     private List<TsKvEntry> getSwStateTelemetryFromAPI(UUID deviceId) throws Exception {
         final List<TsKvEntry> tsKvEntries = toTimeseries(doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + deviceId + "/values/timeseries?orderBy=ASC&keys=sw_state&startTs=0&endTs=" + System.currentTimeMillis(), new TypeReference<>() {
         }));
-        log.warn("Fetched telemetry by API for deviceId {}, list size {}, tsKvEntries {}", deviceId, tsKvEntries.size(), tsKvEntries);
+        log.warn("Fetched telemetry by API for deviceId {}, list size {}, now {}, tsKvEntries {}", deviceId, tsKvEntries.size(), System.currentTimeMillis(), tsKvEntries);
         return tsKvEntries;
     }
 }
