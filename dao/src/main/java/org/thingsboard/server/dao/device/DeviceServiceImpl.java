@@ -189,7 +189,10 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         return doSaveDevice(device, accessToken, true);
     }
 
-    @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.name}")
+    @Caching(evict= {
+            @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.name}"),
+            @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.id}")
+    })
     @Override
     public Device saveDevice(Device device, boolean doValidate) {
         return doSaveDevice(device, null, doValidate);
@@ -204,7 +207,10 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         return doSaveDevice(device, null, true);
     }
 
-    @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.name}")
+    @Caching(evict= {
+            @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.name}"),
+            @CacheEvict(cacheNames = DEVICE_CACHE, key = "{#device.tenantId, #device.id}")
+    })
     @Override
     public Device saveDeviceWithCredentials(Device device, DeviceCredentials deviceCredentials) {
         if (device.getId() == null) {
@@ -569,6 +575,11 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
         relationService.removeRelations(device.getTenantId(), device.getId());
 
+        // explicitly remove device with previous tenant id from cache
+        // result device object will have different tenant id and will not remove entity from cache
+        removeDeviceFromCacheByName(device.getTenantId(), device.getName());
+        removeDeviceFromCacheById(device.getTenantId(), device.getId());
+
         device.setTenantId(tenantId);
         device.setCustomerId(null);
         return doSaveDevice(device, null, true);
@@ -617,7 +628,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                 throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
             }
         }
-        removeDeviceFromCacheById(savedDevice.getTenantId(), savedDevice.getId());
+        removeDeviceFromCacheById(savedDevice.getTenantId(), savedDevice.getId()); // eviction by name is described as annotation @CacheEvict above
         return savedDevice;
     }
 
@@ -707,6 +718,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                     }
                     if (!old.getName().equals(device.getName())) {
                         removeDeviceFromCacheByName(tenantId, old.getName());
+                        removeDeviceFromCacheById(tenantId, device.getId());
                     }
                 }
 
