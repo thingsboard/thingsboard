@@ -19,8 +19,10 @@
     <logger name="org.eclipse" level="WARN"/>
     <logger name="org.cassandraunit" level="INFO"/>
 
+    <!-- Suppress very chatty classes that has value for tests -->
     <logger name="org.thingsboard.server.service.component" level="WARN"/>
     <logger name="org.thingsboard.server.queue.environment" level="WARN"/>
+    <logger name="org.thingsboard.server.dao.sql.TbSqlBlockingQueue" level="WARN"/>
 
     <root level="INFO">
         <appender-ref ref="console"/>
