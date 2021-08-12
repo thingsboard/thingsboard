@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.resource;
+package org.thingsboard.server.service.resource.sql;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.After;
@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.service.resource.TbResourceService;
 
 import java.util.ArrayList;
 import java.util.Base64;
