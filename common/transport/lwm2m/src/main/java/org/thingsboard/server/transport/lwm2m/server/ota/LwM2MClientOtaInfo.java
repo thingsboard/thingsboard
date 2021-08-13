@@ -18,12 +18,14 @@ package org.thingsboard.server.transport.lwm2m.server.ota;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;
 
 import java.util.Optional;
 
+@Slf4j
 @Data
 @NoArgsConstructor
 public abstract class LwM2MClientOtaInfo<Strategy, State, Result> {
@@ -56,6 +58,9 @@ public abstract class LwM2MClientOtaInfo<Strategy, State, Result> {
     }
 
     public void updateTarget(String targetName, String targetVersion, Optional<String> newTargetUrl, Optional<String> newTargetTag) {
+        if (!org.springframework.util.StringUtils.isEmpty(targetName) && org.springframework.util.StringUtils.isEmpty(this.targetName)) {
+            log.error("Update target called! " + this.hashCode(), new RuntimeException());
+        }
         this.targetName = targetName;
         this.targetVersion = targetVersion;
         this.targetUrl = newTargetUrl.orElse(null);

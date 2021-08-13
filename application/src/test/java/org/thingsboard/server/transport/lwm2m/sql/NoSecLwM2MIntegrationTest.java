@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredentials;
@@ -139,6 +140,7 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
         }
     }
 
+    @Ignore
     @Test
     public void testConnectAndObserveTelemetry() throws Exception {
         NoSecClientCredentials clientCredentials = new NoSecClientCredentials();
@@ -146,6 +148,7 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
         super.basicTestConnectionObserveTelemetry(SECURITY, clientCredentials, COAP_CONFIG, ENDPOINT);
     }
 
+    @Ignore
     @Test
     public void testFirmwareUpdateWithClientWithoutFirmwareInfo() throws Exception {
         LwM2MTestClient client = null;
@@ -180,6 +183,7 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
         }
     }
 
+    @Ignore
     @Test
     public void testFirmwareUpdateByObject5() throws Exception {
         LwM2MTestClient client = null;
@@ -218,6 +222,9 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
      * Test will finish as fast as possible, but will await until TIMEOUT if a build machine is busy or slow
      * Check the detailed log output to learn how Awaitility polling the API and when exactly expected result appears
      * */
+
+    private static int c = 0;
+
     @Test
     public void testSoftwareUpdateByObject9() throws Exception {
         //given
@@ -226,7 +233,8 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
         createDeviceProfile(OTA_TRANSPORT_CONFIGURATION);
         NoSecClientCredentials clientCredentials = new NoSecClientCredentials();
-        clientCredentials.setEndpoint("OTA_" + ENDPOINT);
+        String endpoint = "OTA_" + ENDPOINT + (c++);
+        clientCredentials.setEndpoint(endpoint);
         final Device device = createDevice(clientCredentials);
         device.setSoftwareId(createSoftware().getId());
 
@@ -237,7 +245,7 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
         //when
         log.warn("Create client... {}", System.currentTimeMillis());
-        client = new LwM2MTestClient(executor, "OTA_" + ENDPOINT);
+        client = new LwM2MTestClient(executor, endpoint);
         log.warn("Init client... {}", System.currentTimeMillis());
         client.init(SECURITY, COAP_CONFIG);
 

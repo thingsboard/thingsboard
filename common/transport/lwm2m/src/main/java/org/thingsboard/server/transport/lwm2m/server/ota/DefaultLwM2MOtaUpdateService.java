@@ -172,6 +172,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         }
 
         LwM2MClientSwOtaInfo swInfo = getOrInitSwInfo(client);
+        log.debug("Client init sw info hash: {} ; {} ", swInfo.hashCode(), swInfo);
         if (swInfo.isSupported()) {
             attributesToFetch.add(SOFTWARE_TITLE);
             attributesToFetch.add(SOFTWARE_VERSION);
@@ -202,6 +203,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
                     Optional<String> newSwTag = getAttributeValue(attrs, SOFTWARE_TAG);
                     Optional<String> newSwUrl = getAttributeValue(attrs, SOFTWARE_URL);
                     if (newSwTitle.isPresent() && newSwVersion.isPresent()) {
+                        log.debug("Client init attributes callback software update");
                         onTargetSoftwareUpdate(client, newSwTitle.get(), newSwVersion.get(), newSwUrl, newSwTag);
                     }
                 }
@@ -408,6 +410,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     }
 
     private void startSoftwareUpdateIfNeeded(LwM2mClient client, LwM2MClientSwOtaInfo swInfo) {
+        log.debug("startSoftwareUpdateIfNeeded {}", swInfo);
         try {
             if (!swInfo.isSupported() && swInfo.isAssigned()) {
                 log.debug("[{}] Sw update is not supported: {}", client.getEndpoint(), swInfo);
@@ -433,6 +436,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     }
 
     public void startUpdateUsingBinary(LwM2mClient client, LwM2MClientSwOtaInfo swInfo) {
+        log.debug("startUpdateUsingBinary");
         this.transportService.process(client.getSession(), createOtaPackageRequestMsg(client.getSession(), swInfo.getType().name()),
                 new TransportServiceCallback<>() {
                     @Override
@@ -496,6 +500,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     }
 
     private void doUpdateSoftwareUsingBinary(TransportProtos.GetOtaPackageResponseMsg response, LwM2MClientSwOtaInfo info, LwM2mClient client) {
+        log.debug("doUpdateSoftwareUsingBinary");
         if (TransportProtos.ResponseStatus.SUCCESS.equals(response.getResponseStatus())) {
             UUID otaPackageId = new UUID(response.getOtaPackageIdMSB(), response.getOtaPackageIdLSB());
             LwM2MSoftwareUpdateStrategy strategy = info.getStrategy();
@@ -580,6 +585,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
                 var profile = clientContext.getProfile(client.getProfileId());
                 info = new LwM2MClientSwOtaInfo(endpoint, profile.getClientLwM2mSettings().getSwUpdateResource(),
                         LwM2MSoftwareUpdateStrategy.fromStrategySwByCode(profile.getClientLwM2mSettings().getSwUpdateStrategy()));
+                log.info("getOrInitSwInfo, swInfo hash {} ; {}", info.hashCode(), info);
                 update(info);
             }
             return info;

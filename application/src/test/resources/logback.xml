@@ -9,7 +9,7 @@
 
 <!--    <logger name="org.thingsboard.server.service.subscription" level="TRACE"/>-->
     <logger name="org.thingsboard.server.controller.TbTestWebSocketClient" level="INFO"/>
-    <logger name="org.thingsboard.server" level="WARN"/>
+    <logger name="org.thingsboard.server" level="INFO"/>
     <logger name="org.springframework" level="WARN"/>
     <logger name="org.springframework.boot.test" level="WARN"/>
     <logger name="org.apache.cassandra" level="WARN"/>
@@ -19,6 +19,8 @@
     <logger name="org.thingsboard.server.queue.DefaultTbCoreConsumerService" level="INFO"/> <!-- //TODO remove after debug -->
     <logger name="org.thingsboard.server.queue.DefaultTbClusterService" level="TRACE"/> <!-- //TODO remove after debug -->
     <logger name="org.thingsboard.server.queue.memory" level="TRACE"/> <!-- //TODO remove after debug -->
+    <logger name="org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService" level="DEBUG"/> <!-- //TODO remove after debug -->
+
 
 
 
