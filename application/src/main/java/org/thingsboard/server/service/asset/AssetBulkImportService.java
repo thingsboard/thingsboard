@@ -26,6 +26,7 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.importing.AbstractBulkImportService;
+import org.thingsboard.server.service.importing.BulkImportColumnType;
 import org.thingsboard.server.service.importing.BulkImportRequest;
 import org.thingsboard.server.service.importing.ImportedEntityInfo;
 import org.thingsboard.server.service.security.AccessValidator;
@@ -49,12 +50,12 @@ public class AssetBulkImportService extends AbstractBulkImportService<Asset> {
     }
 
     @Override
-    protected ImportedEntityInfo<Asset> saveEntity(BulkImportRequest importRequest, Map<BulkImportRequest.ColumnMapping, String> entityData, SecurityUser user) {
+    protected ImportedEntityInfo<Asset> saveEntity(BulkImportRequest importRequest, Map<BulkImportColumnType, String> fields, SecurityUser user) {
         ImportedEntityInfo<Asset> importedEntityInfo = new ImportedEntityInfo<>();
 
         Asset asset = new Asset();
         asset.setTenantId(user.getTenantId());
-        setAssetFields(asset, entityData);
+        setAssetFields(asset, fields);
 
         Asset existingAsset = assetService.findAssetByTenantIdAndName(user.getTenantId(), asset.getName());
         if (existingAsset != null && importRequest.getMapping().getUpdate()) {
@@ -69,10 +70,10 @@ public class AssetBulkImportService extends AbstractBulkImportService<Asset> {
         return importedEntityInfo;
     }
 
-    private void setAssetFields(Asset asset, Map<BulkImportRequest.ColumnMapping, String> data) {
+    private void setAssetFields(Asset asset, Map<BulkImportColumnType, String> fields) {
         ObjectNode additionalInfo = (ObjectNode) Optional.ofNullable(asset.getAdditionalInfo()).orElseGet(JacksonUtil::newObjectNode);
-        data.forEach((columnMapping, value) -> {
-            switch (columnMapping.getType()) {
+        fields.forEach((columnType, value) -> {
+            switch (columnType) {
                 case NAME:
                     asset.setName(value);
                     break;

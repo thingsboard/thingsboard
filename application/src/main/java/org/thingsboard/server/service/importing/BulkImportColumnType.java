@@ -18,13 +18,14 @@ package org.thingsboard.server.service.importing;
 import lombok.Getter;
 import org.thingsboard.server.common.data.DataConstants;
 
+@Getter
 public enum BulkImportColumnType {
     NAME,
     TYPE,
     LABEL,
-    SHARED_ATTRIBUTE(DataConstants.SHARED_SCOPE),
-    SERVER_ATTRIBUTE(DataConstants.SERVER_SCOPE),
-    TIMESERIES,
+    SHARED_ATTRIBUTE(DataConstants.SHARED_SCOPE, true),
+    SERVER_ATTRIBUTE(DataConstants.SERVER_SCOPE, true),
+    TIMESERIES(true),
     ACCESS_TOKEN,
     X509,
     MQTT_CLIENT_ID,
@@ -48,13 +49,22 @@ public enum BulkImportColumnType {
     ROUTING_KEY,
     SECRET;
 
-    @Getter
     private String key;
+    private boolean isKv = false;
 
     BulkImportColumnType() {
     }
 
     BulkImportColumnType(String key) {
         this.key = key;
+    }
+
+    BulkImportColumnType(boolean isKv) {
+        this.isKv = isKv;
+    }
+
+    BulkImportColumnType(String key, boolean isKv) {
+        this.key = key;
+        this.isKv = isKv;
     }
 }

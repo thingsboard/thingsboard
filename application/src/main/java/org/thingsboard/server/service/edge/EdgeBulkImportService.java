@@ -26,6 +26,7 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.importing.AbstractBulkImportService;
+import org.thingsboard.server.service.importing.BulkImportColumnType;
 import org.thingsboard.server.service.importing.BulkImportRequest;
 import org.thingsboard.server.service.importing.ImportedEntityInfo;
 import org.thingsboard.server.service.security.AccessValidator;
@@ -49,12 +50,12 @@ public class EdgeBulkImportService extends AbstractBulkImportService<Edge> {
     }
 
     @Override
-    protected ImportedEntityInfo<Edge> saveEntity(BulkImportRequest importRequest, Map<BulkImportRequest.ColumnMapping, String> entityData, SecurityUser user) {
+    protected ImportedEntityInfo<Edge> saveEntity(BulkImportRequest importRequest, Map<BulkImportColumnType, String> fields, SecurityUser user) {
         ImportedEntityInfo<Edge> importedEntityInfo = new ImportedEntityInfo<>();
 
         Edge edge = new Edge();
         edge.setTenantId(user.getTenantId());
-        setEdgeFields(edge, entityData);
+        setEdgeFields(edge, fields);
 
         Edge existingEdge = edgeService.findEdgeByTenantIdAndName(user.getTenantId(), edge.getName());
         if (existingEdge != null && importRequest.getMapping().getUpdate()) {
@@ -69,10 +70,10 @@ public class EdgeBulkImportService extends AbstractBulkImportService<Edge> {
         return importedEntityInfo;
     }
 
-    private void setEdgeFields(Edge edge, Map<BulkImportRequest.ColumnMapping, String> data) {
+    private void setEdgeFields(Edge edge, Map<BulkImportColumnType, String> fields) {
         ObjectNode additionalInfo = (ObjectNode) Optional.ofNullable(edge.getAdditionalInfo()).orElseGet(JacksonUtil::newObjectNode);
-        data.forEach((columnMapping, value) -> {
-            switch (columnMapping.getType()) {
+        fields.forEach((columnType, value) -> {
+            switch (columnType) {
                 case NAME:
                     edge.setName(value);
                     break;

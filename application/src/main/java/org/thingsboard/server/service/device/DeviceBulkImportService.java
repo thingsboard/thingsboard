@@ -58,7 +58,6 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -80,12 +79,12 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
     }
 
     @Override
-    protected ImportedEntityInfo<Device> saveEntity(BulkImportRequest importRequest, Map<BulkImportRequest.ColumnMapping, String> entityData, SecurityUser user) {
+    protected ImportedEntityInfo<Device> saveEntity(BulkImportRequest importRequest, Map<BulkImportColumnType, String> fields, SecurityUser user) {
         ImportedEntityInfo<Device> importedEntityInfo = new ImportedEntityInfo<>();
 
         Device device = new Device();
         device.setTenantId(user.getTenantId());
-        setDeviceFields(device, entityData);
+        setDeviceFields(device, fields);
 
         Device existingDevice = deviceService.findDeviceByTenantIdAndName(user.getTenantId(), device.getName());
         if (existingDevice != null && importRequest.getMapping().getUpdate()) {
@@ -95,7 +94,7 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
             device = existingDevice;
         }
 
-        DeviceCredentials deviceCredentials = createDeviceCredentials(entityData);
+        DeviceCredentials deviceCredentials = createDeviceCredentials(fields);
         if (deviceCredentials.getCredentialsType() != null) {
             if (deviceCredentials.getCredentialsType() == DeviceCredentialsType.LWM2M_CREDENTIALS) {
                 setUpLwM2mDeviceProfile(user.getTenantId(), device);
@@ -121,10 +120,10 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
         return importedEntityInfo;
     }
 
-    private void setDeviceFields(Device device, Map<BulkImportRequest.ColumnMapping, String> data) {
+    private void setDeviceFields(Device device, Map<BulkImportColumnType, String> fields) {
         ObjectNode additionalInfo = (ObjectNode) Optional.ofNullable(device.getAdditionalInfo()).orElseGet(JacksonUtil::newObjectNode);
-        data.forEach((columnMapping, value) -> {
-            switch (columnMapping.getType()) {
+        fields.forEach((columnType, value) -> {
+            switch (columnType) {
                 case NAME:
                     device.setName(value);
                     break;
@@ -146,25 +145,25 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
     }
 
     @SneakyThrows
-    private DeviceCredentials createDeviceCredentials(Map<BulkImportRequest.ColumnMapping, String> data) {
-        Set<BulkImportColumnType> columns = data.keySet().stream().map(BulkImportRequest.ColumnMapping::getType).collect(Collectors.toSet());
+    private DeviceCredentials createDeviceCredentials(Map<BulkImportColumnType, String> fields) {
+        Set<BulkImportColumnType> columns = fields.keySet();
 
         DeviceCredentials credentials = new DeviceCredentials();
 
         if (columns.contains(BulkImportColumnType.ACCESS_TOKEN)) {
             credentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
-            credentials.setCredentialsId(getByColumnType(BulkImportColumnType.ACCESS_TOKEN, data));
+            credentials.setCredentialsId(fields.get(BulkImportColumnType.ACCESS_TOKEN));
         } else if (CollectionUtils.containsAny(columns, EnumSet.of(BulkImportColumnType.MQTT_CLIENT_ID, BulkImportColumnType.MQTT_USER_NAME, BulkImportColumnType.MQTT_PASSWORD))) {
             credentials.setCredentialsType(DeviceCredentialsType.MQTT_BASIC);
 
             BasicMqttCredentials basicMqttCredentials = new BasicMqttCredentials();
-            basicMqttCredentials.setClientId(getByColumnType(BulkImportColumnType.MQTT_CLIENT_ID, data));
-            basicMqttCredentials.setUserName(getByColumnType(BulkImportColumnType.MQTT_USER_NAME, data));
-            basicMqttCredentials.setPassword(getByColumnType(BulkImportColumnType.MQTT_PASSWORD, data));
+            basicMqttCredentials.setClientId(fields.get(BulkImportColumnType.MQTT_CLIENT_ID));
+            basicMqttCredentials.setUserName(fields.get(BulkImportColumnType.MQTT_USER_NAME));
+            basicMqttCredentials.setPassword(fields.get(BulkImportColumnType.MQTT_PASSWORD));
             credentials.setCredentialsValue(JacksonUtil.toString(basicMqttCredentials));
         } else if (columns.contains(BulkImportColumnType.X509)) {
             credentials.setCredentialsType(DeviceCredentialsType.X509_CERTIFICATE);
-            credentials.setCredentialsValue(getByColumnType(BulkImportColumnType.X509, data));
+            credentials.setCredentialsValue(fields.get(BulkImportColumnType.X509));
         } else if (columns.contains(BulkImportColumnType.LWM2M_CLIENT_ENDPOINT)) {
             credentials.setCredentialsType(DeviceCredentialsType.LWM2M_CREDENTIALS);
             ObjectNode lwm2mCredentials = JacksonUtil.newObjectNode();
@@ -173,7 +172,7 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
             Stream.of(BulkImportColumnType.LWM2M_CLIENT_ENDPOINT, BulkImportColumnType.LWM2M_CLIENT_SECURITY_CONFIG_MODE,
                     BulkImportColumnType.LWM2M_CLIENT_IDENTITY, BulkImportColumnType.LWM2M_CLIENT_KEY, BulkImportColumnType.LWM2M_CLIENT_CERT)
                     .forEach(lwm2mClientProperty -> {
-                        String value = getByColumnType(lwm2mClientProperty, data);
+                        String value = fields.get(lwm2mClientProperty);
                         if (value != null) {
                             client.set(lwm2mClientProperty.getKey(), new TextNode(value));
                         }
@@ -187,7 +186,7 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
             Stream.of(BulkImportColumnType.LWM2M_BOOTSTRAP_SERVER_SECURITY_MODE, BulkImportColumnType.LWM2M_BOOTSTRAP_SERVER_PUBLIC_KEY_OR_ID,
                     BulkImportColumnType.LWM2M_BOOTSTRAP_SERVER_SECRET_KEY)
                     .forEach(lwm2mBootstrapServerProperty -> {
-                        String value = getByColumnType(lwm2mBootstrapServerProperty, data);
+                        String value = fields.get(lwm2mBootstrapServerProperty);
                         if (value != null) {
                             bootstrapServer.set(lwm2mBootstrapServerProperty.getKey(), new TextNode(value));
                         }
@@ -197,7 +196,7 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
             Stream.of(BulkImportColumnType.LWM2M_SERVER_SECURITY_MODE, BulkImportColumnType.LWM2M_SERVER_CLIENT_PUBLIC_KEY_OR_ID,
                     BulkImportColumnType.LWM2M_SERVER_CLIENT_SECRET_KEY)
                     .forEach(lwm2mServerProperty -> {
-                        String value = getByColumnType(lwm2mServerProperty, data);
+                        String value = fields.get(lwm2mServerProperty);
                         if (value != null) {
                             lwm2mServer.set(lwm2mServerProperty.getKey(), new TextNode(value));
                         }

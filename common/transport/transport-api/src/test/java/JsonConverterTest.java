@@ -66,12 +66,6 @@ public class JsonConverterTest {
     }
 
     @Test
-    public void testParseAsDoubleWithCommaDecimalSeparatorAndTypeCast() {
-        var result = JsonConverter.convertToTelemetry(JSON_PARSER.parse("{\"meterReadingDelta\": \"-1,1\"}"), 0L);
-        Assert.assertEquals(-1.1, result.get(0L).get(0).getDoubleValue().get(), 0.0);
-    }
-
-    @Test
     public void testParseAsLong() {
         var result = JsonConverter.convertToTelemetry(JSON_PARSER.parse("{\"meterReadingDelta\": 11}"), 0L);
         Assert.assertEquals(11L, result.get(0L).get(0).getLongValue().get().longValue());
