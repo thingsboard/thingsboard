@@ -45,7 +45,7 @@ public class TypeCastUtil {
     }
 
     private static boolean isNumber(String value) {
-        return NumberUtils.isParsable(value.replace(',', '.'));
+        return NumberUtils.isNumber(value.replace(',', '.'));
     }
 
     private static boolean isSimpleDouble(String valueAsString) {
