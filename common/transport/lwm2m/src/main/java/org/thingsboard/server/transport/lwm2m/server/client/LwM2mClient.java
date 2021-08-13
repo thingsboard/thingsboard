@@ -50,8 +50,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -80,6 +82,8 @@ public class LwM2mClient implements Serializable {
     private final Map<String, ResourceValue> resources;
     @Getter
     private final Map<String, TsKvProto> sharedAttributes;
+    @Getter
+    private final ConcurrentMap<String, AtomicLong> keyTsLatestMap;
 
     @Getter
     private TenantId tenantId;
@@ -126,6 +130,7 @@ public class LwM2mClient implements Serializable {
         this.endpoint = endpoint;
         this.sharedAttributes = new ConcurrentHashMap<>();
         this.resources = new ConcurrentHashMap<>();
+        this.keyTsLatestMap = new ConcurrentHashMap<>();
         this.state = LwM2MClientState.CREATED;
         this.lock = new ReentrantLock();
         this.retryAttempts = new AtomicInteger(0);
