@@ -115,7 +115,7 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
     }
 
     private String getManufacturer() {
-        return "Leshan Demo Device";
+        return "Thingsboard Demo Lwm2mDevice";
     }
 
     private String getModelNumber() {
@@ -123,11 +123,11 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
     }
 
     private String getSerialNumber() {
-        return "LT-500-000-0001";
+        return "Nick-500-000-0001";
     }
 
     private String getFirmwareVersion() {
-        return "1.0.0";
+        return "3.3.2";
     }
 
     private long getErrorCode() {

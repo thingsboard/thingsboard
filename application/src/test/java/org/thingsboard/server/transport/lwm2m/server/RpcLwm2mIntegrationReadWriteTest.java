@@ -34,7 +34,7 @@ public class RpcLwm2mIntegrationReadWriteTest extends RpcAbstractLwM2MIntegratio
     public void testReadAllObjectsInClient_Result_CONTENT_Value_IsLwM2mObject_IsInstances() throws Exception {
                 expectedObjectIdVers.forEach(expected -> {
             try {
-                String actualResult  = sendRead((String) expected);
+                String actualResult  = sendRPC((String) expected);
                 String expectedObjectId = objectIdVerToObjectId ((String) expected);
                 LwM2mPath expectedPath = new LwM2mPath(expectedObjectId);
                 ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
@@ -59,7 +59,7 @@ public class RpcLwm2mIntegrationReadWriteTest extends RpcAbstractLwM2MIntegratio
     public void testReadAllInstancesInClient_Result_CONTENT_Value_IsInstances_IsResources() throws Exception{
         expectedObjectIdVerInstances.forEach(expected -> {
             try {
-                String actualResult  = sendRead((String) expected);
+                String actualResult  = sendRPC((String) expected);
                 String expectedObjectId = objectInstanceIdVerToObjectInstanceId ((String) expected);
                 LwM2mPath expectedPath = new LwM2mPath(expectedObjectId);
                 ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
@@ -82,7 +82,7 @@ public class RpcLwm2mIntegrationReadWriteTest extends RpcAbstractLwM2MIntegratio
         String objecIdVer = (String) expectedObjectIdVers.stream().filter(path -> ((String)path).equals("/3") || ((String)path).contains("/3_")).findFirst().get();
          int resourceId = 11;
         String expectedIdVer = objecIdVer + "/0/" + resourceId ;
-        String actualResult = sendRead(expectedIdVer);
+        String actualResult = sendRPC(expectedIdVer);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
         String expected = "LwM2mMultipleResource [id=" + resourceId + ", values={";
@@ -99,29 +99,53 @@ public class RpcLwm2mIntegrationReadWriteTest extends RpcAbstractLwM2MIntegratio
         String objecIdVer = (String) expectedObjectIdVers.stream().filter(path -> ((String)path).equals("/3") || ((String)path).contains("/3_")).findFirst().get();
         int resourceId = 9;
         String expectedIdVer = objecIdVer + "/0/" + resourceId ;
-        String actualResult = sendRead(expectedIdVer);
+        String actualResult = sendRPC(expectedIdVer);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
         String expected = "LwM2mSingleResource [id=9, value=";
         assertTrue(rpcActualResult.get("value").asText().contains(expected));
     }
 
-    private String sendRead(String path) throws Exception {
+    /**
+     * ReadComposite {"ids":["/3_1.0/0/9", "/1_1.2/0/2"]}
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testReadCompositeSingleResource_Result_CONTENT_Value_IsLwM2mSingleResource() throws Exception {
+        String objectIdVer1 = (String) expectedObjectIdVers.stream().filter(path -> ((String)path).equals("/1") || ((String)path).contains("/1_")).findFirst().get();
+        String objectIdVer3 = (String) expectedObjectIdVers.stream().filter(path -> ((String)path).equals("/3") || ((String)path).contains("/3_")).findFirst().get();
+        int resourceId1_1 = 1;
+        int resourceId1_2 = 2;
+        int resourceId3_1 = 1;
+        int resourceId3_11 = 11;
+        String expectedIdVer1_1 = objectIdVer1 + "/0/" + resourceId1_1;
+        String expectedIdVer1_2 = objectIdVer1 + "/0/" + resourceId1_2;
+        String expectedIdVer3_1 = objectIdVer3 + "/0/" + resourceId3_1;
+        String expectedIdVer3_11 = objectIdVer3 + "/0/" + resourceId3_11;
+        String expectedIds = "[\"" + expectedIdVer1_1 + "\", \"" + expectedIdVer3_1 + "\", \"" + expectedIdVer3_11 + "\", \"" + expectedIdVer1_2 + "\"]";
+        String actualResult = sendCompositeRPC(expectedIds);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
+        String expected1_1 = "/1/0/1=LwM2mSingleResource [id=1, value=";
+        String expected1_2 = "/1/0/2=null";
+        String expected3_1 = "/3/0/1=LwM2mSingleResource [id=1, value=";
+        String expected3_11 = "/3/0/11=LwM2mMultipleResource [id=11, values={";
+        String actualValues = rpcActualResult.get("value").asText();
+        assertTrue(actualValues.contains(expected1_1));
+        assertTrue(actualValues.contains(expected1_2));
+        assertTrue(actualValues.contains(expected3_1));
+        assertTrue(actualValues.contains(expected3_11));
+    }
+
+
+    private String sendRPC(String path) throws Exception {
         String setRpcRequest = "{\"method\": \"Read\", \"params\": {\"id\": \"" + path + "\"}}";
         return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
     }
 
-    private String readValue(String contentValueStr) {
-        String searchTextValue = "value=";
-        if (contentValueStr.contains(searchTextValue)) {
-            int startPos = contentValueStr.indexOf(searchTextValue) + searchTextValue.length();
-            int endPos = contentValueStr.indexOf(",", startPos);
-            if (startPos >= 0 && endPos > 0) {
-                return contentValueStr.substring(startPos, endPos);
-            }
-            return null;
-        } else {
-            return null;
-        }
+    private String sendCompositeRPC(String paths) throws Exception {
+        String setRpcRequest = "{\"method\": \"ReadComposite\", \"params\": {\"ids\":" + paths + "}}";
+        return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
     }
 }
