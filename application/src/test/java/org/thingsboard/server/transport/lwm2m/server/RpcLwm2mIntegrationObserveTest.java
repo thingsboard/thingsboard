@@ -21,9 +21,6 @@ import org.eclipse.leshan.core.node.LwM2mPath;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 
-import java.util.HashSet;
-import java.util.stream.Collectors;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;

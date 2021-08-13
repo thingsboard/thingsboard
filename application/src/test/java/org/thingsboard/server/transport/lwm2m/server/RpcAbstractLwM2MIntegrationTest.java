@@ -267,7 +267,7 @@ public class RpcAbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
     }
     protected String objectInstanceIdVerToObjectInstanceId (String objectInstanceIdVer) {
         String [] objectIdVer = objectInstanceIdVer.split("/");
-        return objectIdVer[0].contains("_") ? objectIdVer[0].split("_")[0] + "/" + objectIdVer[1] : objectInstanceIdVer;
+        return objectIdVer[1].contains("_") ? objectIdVer[1].split("_")[0] + "/" + objectIdVer[2] : objectInstanceIdVer;
     }
 
     @After

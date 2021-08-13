@@ -93,13 +93,13 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
 
     @Override
     public ReadResponse read(ServerIdentity identity, int resourceId) {
-        log.warn("Read on Location resource /[{}]/[{}]/[{}]", getModel().id, getId(), resourceId);
+//        log.warn("Read on Location resource /[{}]/[{}]/[{}]", getModel().id, getId(), resourceId);
         try {
             switch (resourceId) {
                 case 0:
-                    log.warn("Read on Location resource /[{}]/[{}]/[{}]", getModel().id, getId(), resourceId);
+//                    log.warn("Read on Location resource /[{}]/[{}]/[{}]", getModel().id, getId(), resourceId);
                     ReadResponse response = ReadResponse.success(resourceId, getData(), ResourceModel.Type.OPAQUE);
-                    log.warn("Response [{}]", response);
+//                    log.warn("Response [{}]", response);
                     return response;
 
                 case 1:

@@ -15,80 +15,62 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.eclipse.leshan.core.ResponseCode;
-import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mPath;
-import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredentials;
-import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;
-import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
-import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
-
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.eclipse.leshan.core.model.ResourceModel.Type.BOOLEAN;
-import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
-import static org.eclipse.leshan.core.model.ResourceModel.Type.STRING;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.thingsboard.rest.client.utils.RestJsonConverter.toTimeseries;
-import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWNLOADED;
-import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWNLOADING;
-import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.INITIATED;
-import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.QUEUED;
-import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATED;
-import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.VERIFIED;
-import static org.thingsboard.server.transport.lwm2m.client.model.LwM2MTestObjectModelWithResource.BOOLEAN_RESOURCE_ID;
-import static org.thingsboard.server.transport.lwm2m.client.model.LwM2MTestObjectModelWithResource.OPAQUE_MULTI_INSTANCE_RESOURCE_ID;
-import static org.thingsboard.server.transport.lwm2m.client.model.LwM2MTestObjectModelWithResource.STRING_RESOURCE_ID;
-import static org.thingsboard.server.transport.lwm2m.client.model.LwM2MTestObjectModelWithResource.booleanNamePrefix;
-import static org.thingsboard.server.transport.lwm2m.client.model.LwM2MTestObjectModelWithResource.opaqueMultiNamePrefix;
-import static org.thingsboard.server.transport.lwm2m.client.model.LwM2MTestObjectModelWithResource.stringNamePrefix;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.equalsResourceTypeGetSimpleName;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceNameSuffixRws;
 
 public class RpcLwm2mIntegrationReadWriteTest extends RpcAbstractLwM2MIntegrationTest {
 
     /**
      * Read {"id":"/3"}
-     *
-     * @throws Exception
+     * Read {"id":"/6"}...
      */
     @Test
-    public void testReadObject_Ok() throws Exception {
-            String actualResult = sendRead("/3");
-            ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
-            assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-            assertTrue(rpcActualResult.get("value").asText().contains("LwM2mObject"));
+    public void testReadAllObjectsInClient_Result_CONTENT_Value_IsLwM2mObject_IsInstances() throws Exception {
+                expectedObjectIdVers.forEach(expected -> {
+            try {
+                String actualResult  = sendRead((String) expected);
+                String expectedObjectId = objectIdVerToObjectId ((String) expected);
+                LwM2mPath expectedPath = new LwM2mPath(expectedObjectId);
+                ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+                assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
+                String expectedObjectInstances = "LwM2mObject [id=" + expectedPath.getObjectId() + ", instances={0=LwM2mObjectInstance [id=0, resources=";
+                if (expectedPath.getObjectId() == 2) {
+                    expectedObjectInstances = "LwM2mObject [id=2, instances={}]";
+                }
+                assertTrue(rpcActualResult.get("value").asText().contains(expectedObjectInstances));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     /**
-     * Read {"id":"/5/0/"}
+     * Read {"id":"/5/0"}
      *
      * @throws Exception
      */
     @Test
-    public void testReadObjectInstance_Ok() throws Exception {
-        String actualResult = sendRead("/5/0");
-        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
-        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-        assertTrue(rpcActualResult.get("value").asText().contains("LwM2mObjectInstance"));
+    public void testReadAllInstancesInClient_Result_CONTENT_Value_IsInstances_IsResources() throws Exception{
+        expectedObjectIdVerInstances.forEach(expected -> {
+            try {
+                String actualResult  = sendRead((String) expected);
+                String expectedObjectId = objectInstanceIdVerToObjectInstanceId ((String) expected);
+                LwM2mPath expectedPath = new LwM2mPath(expectedObjectId);
+                ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+                assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
+                String expectedObjectInstances = "LwM2mObjectInstance [id=" + expectedPath.getObjectInstanceId() + ", resources={";
+                assertTrue(rpcActualResult.get("value").asText().contains(expectedObjectInstances));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
-
-    // String ObjLnt - multi
 
     /**
      * Read {"id":"/19/1/0"}
@@ -96,29 +78,16 @@ public class RpcLwm2mIntegrationReadWriteTest extends RpcAbstractLwM2MIntegratio
      * @throws Exception
      */
     @Test
-    public void testReadOpaqueMultipleResource_Ok() throws Exception {
-        String actualResult = sendRead("/19/1/0");
+    public void testReadMultipleResource_Result_CONTENT_Value_IsLwM2mMultipleResource() throws Exception {
+        String objecIdVer = (String) expectedObjectIdVers.stream().filter(path -> ((String)path).equals("/3") || ((String)path).contains("/3_")).findFirst().get();
+         int resourceId = 11;
+        String expectedIdVer = objecIdVer + "/0/" + resourceId ;
+        String actualResult = sendRead(expectedIdVer);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-        assertTrue(rpcActualResult.get("value").asText().contains("LwM2mMultipleResource"));
+        String expected = "LwM2mMultipleResource [id=" + resourceId + ", values={";
+        assertTrue(rpcActualResult.get("value").asText().contains(expected));
     }
-
-    /**
-     *     Test  SingleResource/ResourceInstance  by type value:
-     *     public static final int STRING_RESOURCE_ID = /5/0/1;
-     *     public static final int BOOLEAN_RESOURCE_ID = /9/0/8;
-     *     public static final int INTEGER_RESOURCE_ID = /9/0/7;
-     *     public static final int FLOAT_RESOURCE_ID = 3;
-     *     public static final int TIME_RESOURCE_ID = /3/0/13;
-     *     public static final int OBJLNK_RESOURCE_ID = /9/0/13;
-     *     public static final int OPAQUE_RESOURCE_ID = 6;
-     *     public static final int UNSIGNED_INTEGER_RESOURCE_ID = 7;
-     *     public static final int INTEGER_MANDATORY_RESOURCE_ID = 8;
-     *     public static final int STRING_MANDATORY_RESOURCE_ID = 9;
-     *     public static final int STRING_MULTI_INSTANCE_RESOURCE_ID = 10;
-     *     public static final int OBJLNK_MULTI_INSTANCE_RESOURCE_ID = 11;
-     *     public static final int OPAQUE_MULTI_INSTANCE_RESOURCE_ID = 19/1/0;
-     */
 
     /**
      * Read {"id":"/3/0/9"}
@@ -126,57 +95,19 @@ public class RpcLwm2mIntegrationReadWriteTest extends RpcAbstractLwM2MIntegratio
      * @throws Exception
      */
     @Test
-    public void testReadStringSingleResource_Ok() throws Exception {
-        String expectedValue = stringNamePrefix + resourceNameSuffixRws;
-        ResourceModel.Type expectedType = STRING;
-        String objectIdVer = ((HashSet)expectedObjectIdVers.stream().filter(path -> ((String)path).contains("/3")).collect(Collectors.toSet())).iterator().next().toString();
-        String resourcePath = objectIdVer + "/0/9" ;
-        String actualResult = sendRead(resourcePath);
+    public void testReadSingleResource_Result_CONTENT_Value_IsLwM2mSingleResource() throws Exception {
+        String objecIdVer = (String) expectedObjectIdVers.stream().filter(path -> ((String)path).equals("/3") || ((String)path).contains("/3_")).findFirst().get();
+        int resourceId = 9;
+        String expectedIdVer = objecIdVer + "/0/" + resourceId ;
+        String actualResult = sendRead(expectedIdVer);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-        assertTrue(rpcActualResult.get("value").asText().contains("LwM2mSingleResource"));
-        isValueTypeResource_Ok(rpcActualResult.get("value").asText(), expectedValue, expectedType, resourcePath);
-    }
-
-    /**
-     * Read {"id":"/2000/0/1"}
-     *
-     * @throws Exception
-     */
-    @Test
-    public void testReadBooleanSingleResource_Ok() throws Exception {
-        String expectedValue = booleanNamePrefix + resourceNameSuffixRws;
-        ResourceModel.Type expectedType = BOOLEAN;
-        String resourcePath = "/2000/0/" + BOOLEAN_RESOURCE_ID;
-        String actualResult = sendRead(resourcePath);
-        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
-        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-        assertTrue(rpcActualResult.get("value").asText().contains("LwM2mSingleResource"));
-        isValueTypeResource_Ok(rpcActualResult.get("value").asText(), expectedValue, expectedType, resourcePath);
-    }
-    // time, integer single
-
-    //
-
-    /**
-     * Read {"id":"/2003/1/12/0"}
-     *
-     * @throws Exception
-     */
-    @Test
-    public void testReadOpaqueResourceInstance_Ok() throws Exception {
-        String expectedValue = "Default " + opaqueMultiNamePrefix;
-        String resourcePath = "/2003_1.1/1/" + OPAQUE_MULTI_INSTANCE_RESOURCE_ID + "/0";
-        String actualResult = sendRead(resourcePath);
-        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
-        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-        assertTrue(rpcActualResult.get("value").asText().contains("LwM2mResourceInstance"));
-        isValueTypeResource_Ok(rpcActualResult.get("value").asText(), expectedValue, OPAQUE, resourcePath);
+        String expected = "LwM2mSingleResource [id=9, value=";
+        assertTrue(rpcActualResult.get("value").asText().contains(expected));
     }
 
     private String sendRead(String path) throws Exception {
-        String method = "Read";
-        String setRpcRequest = "{\"method\": \"" + method + "\", \"params\": {\"id\": \"" + path + "\"}}";
+        String setRpcRequest = "{\"method\": \"Read\", \"params\": {\"id\": \"" + path + "\"}}";
         return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
     }
 
@@ -191,51 +122,6 @@ public class RpcLwm2mIntegrationReadWriteTest extends RpcAbstractLwM2MIntegratio
             return null;
         } else {
             return null;
-        }
-    }
-
-    private String readType(String contentValueStr) {
-        String searchTextType = "type=";
-        if (contentValueStr.contains(searchTextType)) {
-            int startPos = contentValueStr.indexOf(searchTextType) + searchTextType.length();
-            int endPos = contentValueStr.indexOf("]", startPos);
-            if (startPos >= 0 && endPos > 0) {
-                return contentValueStr.substring(startPos, endPos);
-            }
-            return null;
-        } else {
-            return null;
-        }
-    }
-
-    private void isValueTypeResource_Ok(String contentValueStr, String expectedValue, ResourceModel.Type expectedType, String pathIdVer) {
-        String actualType = readType(contentValueStr);
-        if (expectedType.equals(OPAQUE)) {
-            assertEquals(STRING.name(), actualType);
-        } else {
-            assertEquals(expectedType.name(), actualType);
-        }
-        String actualValue = readValue(contentValueStr);
-
-        Object value = LwM2mValueConverterImpl.getInstance().convertValue(actualValue, STRING, expectedType,
-                new LwM2mPath(fromVersionedIdToObjectId(pathIdVer)));
-        ResourceModel.Type valueType = equalsResourceTypeGetSimpleName(value);
-        assertTrue(expectedType.equals(valueType));
-        if (actualValue != null) {
-            switch (expectedType) {
-                case STRING:
-                    assertEquals(expectedValue, actualValue);
-                    break;
-                case OPAQUE:
-                    assertEquals(expectedValue, new String((byte[])value));
-                    break;
-//                case "OBJLNK":
-//                    return OBJLNK;
-//                case "UNSIGNED_INTEGER":
-//                    return OBJLNK;
-
-            }
-
         }
     }
 }
