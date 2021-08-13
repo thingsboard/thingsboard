@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.lwm2m.server;
 
 import org.eclipse.californium.core.network.config.NetworkConfig;
 import org.eclipse.leshan.client.object.Security;
+import org.eclipse.leshan.client.resource.ObjectEnabler;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -47,6 +48,8 @@ import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -108,6 +111,7 @@ public class RpcAbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
     protected DeviceProfile deviceProfile;
     protected ScheduledExecutorService executor;
     protected TbTestWebSocketClient wsClient;
+    protected NoSecClientCredentials clientCredentials;
     protected LwM2MTestClient client;
 
     // client private key used for X509
@@ -140,6 +144,10 @@ public class RpcAbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
     protected static final Security SECURITY = noSec("coap://localhost:" + PORT, 123);
     protected static final NetworkConfig COAP_CONFIG = new NetworkConfig().setString("COAP_PORT", Integer.toString(PORT));
     protected String deviceId;
+    public Set expectedObjects;
+    public Set expectedObjectIdVers;
+    public Set expectedInstances;
+    public Set expectedObjectIdVerInstances;
 
     public RpcAbstractLwM2MIntegrationTest() {
 // create client credentials
@@ -185,12 +193,31 @@ public class RpcAbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
         loginTenantAdmin();
         wsClient = buildAndConnectWebSocketClient();
         createDeviceProfile(RPC_TRANSPORT_CONFIGURATION);
-        NoSecClientCredentials clientCredentials = new NoSecClientCredentials();
-        clientCredentials.setEndpoint("RPC_" + ENDPOINT);
+        clientCredentials = new NoSecClientCredentials();
+        clientCredentials.setEndpoint(ENDPOINT);
         Device device = createDevice(clientCredentials);
         deviceId = device.getId().getId().toString();
-        client = new LwM2MTestClient(executor, "RPC_" + ENDPOINT);
+        client = new LwM2MTestClient(executor, ENDPOINT);
         client.init(SECURITY, COAP_CONFIG, 11004);
+        expectedObjects = ConcurrentHashMap.newKeySet();
+        expectedObjectIdVers = ConcurrentHashMap.newKeySet();
+        expectedInstances = ConcurrentHashMap.newKeySet();
+        expectedObjectIdVerInstances = ConcurrentHashMap.newKeySet();
+        client.getClient().getObjectTree().getObjectEnablers().forEach((key, val) -> {
+            if (key > 0) {
+                String objectVerId = "/" + key;
+                if (!val.getObjectModel().version.equals("1.0")) {
+                    objectVerId += ("_" + val.getObjectModel().version);
+                }
+                expectedObjects.add("/" + key);
+                expectedObjectIdVers.add(objectVerId);
+                String finalObjectVerId = objectVerId;
+                val.getAvailableInstanceIds().forEach(inststanceId -> {
+                    expectedInstances.add( "/" + key + "/" + inststanceId);
+                    expectedObjectIdVerInstances.add(finalObjectVerId + "/" + inststanceId);
+                });
+            }
+        });
     }
 
     protected void createDeviceProfile(String transportConfiguration) throws Exception {
@@ -233,6 +260,14 @@ public class RpcAbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
         deviceCredentials.setCredentialsValue(JacksonUtil.toString(credentials));
         doPost("/api/device/credentials", deviceCredentials).andExpect(status().isOk());
         return device;
+    }
+
+    protected String objectIdVerToObjectId (String objectIdVer) {
+        return objectIdVer.contains("_") ? objectIdVer.split("_")[0] : objectIdVer;
+    }
+    protected String objectInstanceIdVerToObjectInstanceId (String objectInstanceIdVer) {
+        String [] objectIdVer = objectInstanceIdVer.split("/");
+        return objectIdVer[0].contains("_") ? objectIdVer[0].split("_")[0] + "/" + objectIdVer[1] : objectInstanceIdVer;
     }
 
     @After

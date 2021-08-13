@@ -15,22 +15,26 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.eclipse.leshan.core.ResponseCode;
+import org.eclipse.leshan.core.node.LwM2mPath;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.TEST_OBJECT_MULTI_WITH_RESOURCE_RW_ID;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.TEST_OBJECT_MULTI_WITH_RESOURCE_R_ID;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.TEST_OBJECT_SINGLE_WITH_RESOURCE_RW_ID;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.TEST_OBJECT_SINGLE_WITH_RESOURCE_R_ID;
 
 public class RpcLwm2mIntegrationDiscoverTest extends RpcAbstractLwM2MIntegrationTest {
 
-    private final  String method = "Discover";
+    private final String method = "Discover";
 
     /**
      * DiscoverAll
@@ -38,64 +42,113 @@ public class RpcLwm2mIntegrationDiscoverTest extends RpcAbstractLwM2MIntegration
      * @throws Exception
      */
     @Test
-    public void testDiscoverAll() throws Exception {
+    public void testDiscoverAll_Return_CONTENT_LinksAllObjectsAllInstancesOfClient() throws Exception {
         String setRpcRequest = "{\"method\":\"DiscoverAll\"}";
         String actualResult = doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
+        JsonNode rpcActualValue = JacksonUtil.toJsonNode(rpcActualResult.get("value").asText());
+        Set actualObjects = ConcurrentHashMap.newKeySet();
+        Set actualInstances = ConcurrentHashMap.newKeySet();
+        rpcActualValue.forEach(node -> {
+            if (!node.get("url").asText().equals("/")) {
+                LwM2mPath path = new LwM2mPath(node.get("url").asText());
+                actualObjects.add("/" + path.getObjectId());
+                if (path.isObjectInstance()) {
+                    actualInstances.add("/" + path.getObjectId() + "/" + path.getObjectInstanceId());
+                }
+            }
+        });
+        assertEquals(expectedInstances, actualInstances);
+        assertEquals(expectedObjects, actualObjects);
     }
 
     /**
-     * Discover {"id":"2000"}
+     * Discover {"id":"/3"}
      *
      * @throws Exception
      */
     @Test
-    public void testDiscoverObject_Return_CONTENT() throws Exception {
-        String expected = "/" + TEST_OBJECT_SINGLE_WITH_RESOURCE_RW_ID;
+    public void testDiscoverObject_Return_CONTENT_LinksInstancesAndResourcesOnLyExpectedObject() {
+        expectedObjectIdVers.forEach(expected -> {
+            try {
+                String actualResult  = sendDiscover((String) expected);
+                String expectedObjectId = objectIdVerToObjectId ((String) expected);
+                ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+                assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
+                String[] actualValues = rpcActualResult.get("value").asText().split(",");
+                assertTrue(actualValues.length > 0);
+                assertEquals(0, Arrays.stream(actualValues).filter(path -> !path.contains(expectedObjectId)).collect(Collectors.toList()).size());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    /**
+     * Discover {"id":"3/0"}
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testDiscoverInstance_Return_CONTENT_LinksResourcesOnLyExpectedInstance() throws Exception {
+        String expected = (String) expectedObjectIdVerInstances.stream().findAny().get();
         String actualResult = sendDiscover(expected);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-        expected = "/" + TEST_OBJECT_MULTI_WITH_RESOURCE_RW_ID + "_1.1";
-        actualResult = sendDiscover(expected);
-        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
-        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-        expected = "/" + TEST_OBJECT_SINGLE_WITH_RESOURCE_R_ID;
-        actualResult = sendDiscover(expected);
-        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
-        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-        expected = "/" + TEST_OBJECT_MULTI_WITH_RESOURCE_R_ID + "_1.1";
-        actualResult = sendDiscover(expected);
-        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
-        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
+        String expectedObjectInstanceId = objectInstanceIdVerToObjectInstanceId (expected);
+        String[] actualValues = rpcActualResult.get("value").asText().split(",");
+        assertTrue(actualValues.length > 0);
+        assertEquals(0, Arrays.stream(actualValues).filter(path -> !path.contains(expectedObjectInstanceId)).collect(Collectors.toList()).size());
     }
 
     /**
-     * Discover {"id":"2000/0"}
+     * Discover {"id":"3/0/14"}
      *
      * @throws Exception
      */
     @Test
-    public void testDiscoverInstance_Return_CONTENT() throws Exception {
-        String actualResult = sendDiscover("/2000/0");
-        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
-        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-    }
-
-    /**
-     * Discover {"id":"2000/0/1"}
-     *
-     * @throws Exception
-     */
-    @Test
-    public void testDiscoverResource_Return_CONTENT() throws Exception {
-        String expected = "/2000/0/1";
+    public void testDiscoverResource_Return_CONTENT_LinksResourceOnLyExpectedResource() throws Exception {
+        String expectedInstance = (String) expectedInstances.stream().findFirst().get();
+        String expectedObjectInstanceId = objectInstanceIdVerToObjectInstanceId (expectedInstance);
+        LwM2mPath expectedPath = new LwM2mPath(expectedObjectInstanceId);
+        int expectedResource = client.getClient().getObjectTree().getObjectEnablers().get(expectedPath.getObjectId()).getObjectModel().resources.entrySet().stream().findAny().get().getKey();
+        String expected = expectedInstance + "/" + expectedResource;
         String actualResult = sendDiscover(expected);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-        assertTrue(rpcActualResult.get("value").asText().contains(expected));
+        String expectedResourceId = "<" + expectedObjectInstanceId + "/" + expectedResource + ">";
+        String actualValue = rpcActualResult.get("value").asText();
+        assertEquals(expectedResourceId, actualValue );
+
     }
 
+    /**
+     * Discover {"id":"2/0/2"}
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testDiscoverInstanceAbsentInObject_Return_NOT_FOUND() throws Exception {
+        String objectIdVer = (String) expectedObjectIdVers.stream().filter(path -> ((String)path).contains("/2")).findFirst().get();
+        String expected = objectIdVer + "/0";
+        String actualResult = sendDiscover(expected);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.NOT_FOUND.getName(), rpcActualResult.get("result").asText());
+    }
+    /**
+     * Discover {"id":"2/0/2"}
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testDiscoverResourceAbsentInObject_Return_NOT_FOUND() throws Exception {
+        String objectIdVer = ((HashSet)expectedObjectIdVers.stream().filter(path -> ((String)path).contains("/2")).collect(Collectors.toSet())).iterator().next().toString();
+        String expected = objectIdVer + "/0/" + "2";
+        String actualResult = sendDiscover(expected);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.NOT_FOUND.getName(), rpcActualResult.get("result").asText());
+    }
 
     private String sendDiscover(String path) throws Exception {
         String setRpcRequest = "{\"method\": \"" + this.method + "\", \"params\": {\"id\": \"" + path + "\"}}";
