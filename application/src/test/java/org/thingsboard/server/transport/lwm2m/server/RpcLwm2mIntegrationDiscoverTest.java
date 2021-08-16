@@ -23,7 +23,6 @@ import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -31,6 +30,8 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.objectInstanceId_0;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceId_2;
 
 public class RpcLwm2mIntegrationDiscoverTest extends RpcAbstractLwM2MIntegrationTest {
 
@@ -128,8 +129,7 @@ public class RpcLwm2mIntegrationDiscoverTest extends RpcAbstractLwM2MIntegration
      */
     @Test
     public void testDiscoverInstanceAbsentInObject_Return_NOT_FOUND() throws Exception {
-        String objectIdVer = (String) expectedObjectIdVers.stream().filter(path -> ((String)path).contains("/2")).findFirst().get();
-        String expected = objectIdVer + "/0";
+        String expected = objectIdVer_2 + "/" + objectInstanceId_0;
         String actualResult = sendDiscover(expected);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.NOT_FOUND.getName(), rpcActualResult.get("result").asText());
@@ -141,8 +141,7 @@ public class RpcLwm2mIntegrationDiscoverTest extends RpcAbstractLwM2MIntegration
      */
     @Test
     public void testDiscoverResourceAbsentInObject_Return_NOT_FOUND() throws Exception {
-        String objectIdVer = ((HashSet)expectedObjectIdVers.stream().filter(path -> ((String)path).contains("/2")).collect(Collectors.toSet())).iterator().next().toString();
-        String expected = objectIdVer + "/0/" + "2";
+         String expected = objectIdVer_2 + "/" + objectInstanceId_0 + "/" + resourceId_2;
         String actualResult = sendDiscover(expected);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.NOT_FOUND.getName(), rpcActualResult.get("result").asText());

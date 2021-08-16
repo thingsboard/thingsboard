@@ -52,9 +52,21 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Predicate;
 
 import static org.eclipse.leshan.client.object.Security.noSec;
+import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
+import static org.eclipse.leshan.core.LwM2mId.DEVICE;
+import static org.eclipse.leshan.core.LwM2mId.FIRMWARE;
+import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.BINARY_APP_DATA_CONTAINER;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.TEMPERATURE_SENSOR;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.objectInstanceId_0;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceIdName_14;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceIdName_9;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceId_14;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceId_9;
 
 @DaoSqlTest
 public class RpcAbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
@@ -63,13 +75,15 @@ public class RpcAbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
             "  \"type\": \"LWM2M\",\n" +
             "  \"observeAttr\": {\n" +
             "    \"keyName\": {\n" +
-            "      \"/3_1.0/0/9\": \"batteryLevel\"\n" +
+            "      \"" + "/" + DEVICE + "/" + objectInstanceId_0 + "/" + resourceId_9 + "\": \"" + resourceIdName_9 + "\",\n" +
+            "      \"" + "/" + DEVICE + "/" + objectInstanceId_0 + "/" + resourceId_14 + "\": \"" + resourceIdName_14 + "\"\n" +
             "    },\n" +
             "    \"observe\": [],\n" +
             "    \"attribute\": [\n" +
             "    ],\n" +
             "    \"telemetry\": [\n" +
-            "      \"/3_1.0/0/9\"\n" +
+            "      \"" + "/" + DEVICE + "/" + objectInstanceId_0 + "/" + resourceId_9 + "\",\n" +
+            "      \"" + "/" + DEVICE + "/" + objectInstanceId_0 + "/" + resourceId_14 + "\"\n" +
             "    ],\n" +
             "    \"attributeLwm2m\": {}\n" +
             "  },\n" +
@@ -149,6 +163,14 @@ public class RpcAbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
     public Set expectedInstances;
     public Set expectedObjectIdVerInstances;
 
+    protected String objectInstanceIdVer_1;
+    protected String objectIdVer_2;
+    private static final  Predicate predicate_3 = path -> (!((String)path).contains("/" + TEMPERATURE_SENSOR) && ((String)path).contains("/" + DEVICE));
+    protected String objectIdVer_3;
+    protected String objectInstanceIdVer_3;
+    protected String objectInstanceIdVer_5;
+
+
     public RpcAbstractLwM2MIntegrationTest() {
 // create client credentials
         try {
@@ -213,11 +235,16 @@ public class RpcAbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
                 expectedObjectIdVers.add(objectVerId);
                 String finalObjectVerId = objectVerId;
                 val.getAvailableInstanceIds().forEach(inststanceId -> {
-                    expectedInstances.add( "/" + key + "/" + inststanceId);
+                    expectedInstances.add("/" + key + "/" + inststanceId);
                     expectedObjectIdVerInstances.add(finalObjectVerId + "/" + inststanceId);
                 });
             }
         });
+        objectInstanceIdVer_1 = (String) expectedObjectIdVerInstances.stream().filter(path -> (!((String)path).contains("/" + BINARY_APP_DATA_CONTAINER) && ((String)path).contains("/" + SERVER))).findFirst().get();
+        objectIdVer_2 = (String) expectedObjectIdVers.stream().filter(path -> ((String)path).contains("/" + ACCESS_CONTROL)).findFirst().get();
+        objectIdVer_3 = (String) expectedObjects.stream().filter(predicate_3).findFirst().get();
+        objectInstanceIdVer_3 = (String) expectedObjectIdVerInstances.stream().filter(predicate_3).findFirst().get();
+        objectInstanceIdVer_5 = (String) expectedObjectIdVerInstances.stream().filter(path -> ((String)path).contains("/" + FIRMWARE)).findFirst().get();
     }
 
     protected void createDeviceProfile(String transportConfiguration) throws Exception {
@@ -262,11 +289,12 @@ public class RpcAbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
         return device;
     }
 
-    protected String objectIdVerToObjectId (String objectIdVer) {
+    protected String objectIdVerToObjectId(String objectIdVer) {
         return objectIdVer.contains("_") ? objectIdVer.split("_")[0] : objectIdVer;
     }
-    protected String objectInstanceIdVerToObjectInstanceId (String objectInstanceIdVer) {
-        String [] objectIdVer = objectInstanceIdVer.split("/");
+
+    protected String objectInstanceIdVerToObjectInstanceId(String objectInstanceIdVer) {
+        String[] objectIdVer = objectInstanceIdVer.split("/");
         return objectIdVer[1].contains("_") ? objectIdVer[1].split("_")[0] + "/" + objectIdVer[2] : objectInstanceIdVer;
     }
 

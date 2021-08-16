@@ -21,9 +21,15 @@ import org.eclipse.leshan.core.node.LwM2mPath;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 
+import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.BINARY_APP_DATA_CONTAINER;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.objectInstanceId_0;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceId_0;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceId_3;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceId_9;
 
 public class RpcLwm2mIntegrationObserveTest extends RpcAbstractLwM2MIntegrationTest {
 
@@ -48,8 +54,8 @@ public class RpcLwm2mIntegrationObserveTest extends RpcAbstractLwM2MIntegrationT
      */
     @Test
     public void testObserveSingleResource_Result_CONTENT_Value_SingleResource() throws Exception {
-        String expected = "/3/0/9";
-        String actualResult = sendObserve("Observe", expected);
+        String expectedIdVer = objectInstanceIdVer_3 + "/" + resourceId_9;
+        String actualResult = sendObserve("Observe", expectedIdVer);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
         assertTrue(rpcActualResult.get("value").asText().contains("LwM2mSingleResource"));
@@ -79,8 +85,8 @@ public class RpcLwm2mIntegrationObserveTest extends RpcAbstractLwM2MIntegrationT
      */
     @Test
     public void testObserveNoImplementedInstanceOnDevice_Result_NotFound() throws Exception {
-        String objectInstanceIdVer = (String) expectedObjectIdVers.stream().filter(path -> ((String)path).contains("/2")).findFirst().get();
-        String expected = objectInstanceIdVer + "/0";
+        String objectInstanceIdVer = (String) expectedObjectIdVers.stream().filter(path -> ((String)path).contains("/" + ACCESS_CONTROL)).findFirst().get();
+        String expected = objectInstanceIdVer + "/" + objectInstanceId_0;
         String actualResult = sendObserve("Observe", expected);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.NOT_FOUND.getName(), rpcActualResult.get("result").asText());
@@ -93,8 +99,8 @@ public class RpcLwm2mIntegrationObserveTest extends RpcAbstractLwM2MIntegrationT
      */
     @Test
     public void testObserveNoImplementedResourceOnDeviceValueNull_Result_BadRequest() throws Exception {
-        String objectIdVer = (String) expectedObjectIdVers.stream().filter(path -> ((String)path).contains("/19")).findFirst().get();
-        String expected = objectIdVer + "/0/0";
+        String objectIdVer = (String) expectedObjectIdVers.stream().filter(path -> ((String)path).contains("/" + BINARY_APP_DATA_CONTAINER)).findFirst().get();
+        String expected = objectIdVer + "/" + objectInstanceId_0 + "/" + resourceId_0;
         String actualResult = sendObserve("Observe", expected);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         String expectedValue = "values MUST NOT be null";
@@ -109,8 +115,7 @@ public class RpcLwm2mIntegrationObserveTest extends RpcAbstractLwM2MIntegrationT
      */
     @Test
     public void testObserveRSourceNotRead_Result_METHOD_NOT_ALLOWED() throws Exception {
-        String objectInstanceIdVer = (String) expectedObjectIdVerInstances.stream().filter(path -> !((String)path).contains("/2") && !((String)path).contains("/19")).findFirst().get();
-        String expectedId = "/5/0/0";
+        String expectedId = objectInstanceIdVer_5 + "/" + resourceId_0;
         sendObserve("Observe", expectedId);
         String actualResult = sendObserve("Observe", expectedId);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
@@ -124,7 +129,7 @@ public class RpcLwm2mIntegrationObserveTest extends RpcAbstractLwM2MIntegrationT
      */
     @Test
     public void testObserveRepeatedRequestObserveOnDevice_Result_BAD_REQUEST_ErrorMsg_AlreadyRegistered() throws Exception {
-        String expectedId = "/3/0/0";
+        String expectedId = objectInstanceIdVer_3 + "/" + resourceId_0;
         sendObserve("Observe", expectedId);
         String actualResult = sendObserve("Observe", expectedId);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
@@ -140,32 +145,32 @@ public class RpcLwm2mIntegrationObserveTest extends RpcAbstractLwM2MIntegrationT
     @Test
     public void testObserveReadAll_Result_CONTENT_Value_Contains_Paths_Count_ObserveAll() throws Exception {
         sendObserve("ObserveCancelAll", null);
-        String expectedId1 = "/3/0/0";
-        String expectedId2 = "/3/0/9";
-        sendObserve("Observe", expectedId1);
-        sendObserve("Observe", expectedId2);
+        String expectedId_0 = objectInstanceIdVer_3 + "/" + resourceId_0;
+        String expectedId_9 = objectInstanceIdVer_3 + "/" + resourceId_9;
+        sendObserve("Observe", expectedId_0);
+        sendObserve("Observe", expectedId_9);
         String actualResult = sendObserve("ObserveReadAll", null);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
         String actualValues = rpcActualResult.get("value").asText();
-        assertTrue(actualValues.contains(expectedId1));
-        assertTrue(actualValues.contains(expectedId2));
+        assertTrue(actualValues.contains(expectedId_0));
+        assertTrue(actualValues.contains(expectedId_9));
         assertEquals(2, actualValues.split(",").length);
     }
 
 
     /**
-     * ObserveCancel {"id":"/2001_1.1/0/3"}
-     * @throws Exception
+     * ObserveCancel {"id":"/3/0/3"}
+     * ObserveCancel {"id":"/5/0/3"}
      */
     @Test
     public void testObserveCancelOneResource_Result_CONTENT_Value_Count_1() throws Exception {
         sendObserve("ObserveCancelAll", null);
-        String expectedId1 = "/3/0/0";
-        String expectedId2 = "/5/0/3";
-        sendObserve("Observe", expectedId1);
-        sendObserve("Observe", expectedId2);
-        String actualResult = sendObserve("ObserveCancel", expectedId1);
+        String expectedId_0 = objectInstanceIdVer_3 + "/" + resourceId_0;
+        String expectedId_3 = objectInstanceIdVer_5 + "/" + resourceId_3;
+        sendObserve("Observe", expectedId_0);
+        sendObserve("Observe", expectedId_3);
+        String actualResult = sendObserve("ObserveCancel", expectedId_0);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
         assertEquals("1", rpcActualResult.get("value").asText());

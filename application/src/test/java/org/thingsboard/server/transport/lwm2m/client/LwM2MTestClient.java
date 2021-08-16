@@ -46,16 +46,12 @@ import org.eclipse.leshan.core.request.BootstrapRequest;
 import org.eclipse.leshan.core.request.DeregisterRequest;
 import org.eclipse.leshan.core.request.RegisterRequest;
 import org.eclipse.leshan.core.request.UpdateRequest;
-import org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper;
-import org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.TestDummyInstanceEnabler;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 
 import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
@@ -65,6 +61,8 @@ import static org.eclipse.leshan.core.LwM2mId.LOCATION;
 import static org.eclipse.leshan.core.LwM2mId.SECURITY;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.eclipse.leshan.core.LwM2mId.SOFTWARE_MANAGEMENT;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.BINARY_APP_DATA_CONTAINER;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.TEMPERATURE_SENSOR;
 
 @Slf4j
 @Data
@@ -73,8 +71,6 @@ public class LwM2MTestClient {
     private final ScheduledExecutorService executor;
     private final String endpoint;
     private LeshanClient client;
-    private static final int BINARY_APP_DATA_CONTAINER = 19;
-    private static final int TEMPERATURE_SENSOR = 3303;
 
     public void init(Security security, NetworkConfig coapConfig, int port) throws InvalidDDFFileException, IOException {
         String[] resources = new String[]{"0.xml", "1.xml", "2.xml", "3.xml", "5.xml", "6.xml", "9.xml", "19.xml", "3303.xml"};
@@ -82,8 +78,6 @@ public class LwM2MTestClient {
         for (String resourceName : resources) {
             models.addAll(ObjectLoader.loadDdfFile(LwM2MTestClient.class.getClassLoader().getResourceAsStream("lwm2m/" + resourceName), resourceName));
         }
-//        RpcModelsTestHelper testHelper = new RpcModelsTestHelper();
-//        models.addAll(testHelper.createObjectModels());
 
         LwM2mModel model = new StaticModel(models);
         ObjectsInitializer initializer = new ObjectsInitializer(model);
@@ -93,25 +87,12 @@ public class LwM2MTestClient {
         initializer.setInstancesForObject(FIRMWARE, new FwLwM2MDevice());
         initializer.setInstancesForObject(SOFTWARE_MANAGEMENT, new SwLwM2MDevice());
         initializer.setClassForObject(ACCESS_CONTROL, DummyInstanceEnabler.class);
-//        initializer.setClassForObject(BINARY_APP_DATA_CONTAINER, LwM2mBinaryAppDataContainer.class);
         initializer.setInstancesForObject(BINARY_APP_DATA_CONTAINER, new LwM2mBinaryAppDataContainer(executor, 0),
                 new LwM2mBinaryAppDataContainer(executor, 1));
         LwM2MLocationParams locationParams = new LwM2MLocationParams();
         locationParams.getPos();
         initializer.setInstancesForObject(LOCATION, new LwM2mLocation(locationParams.getLatitude(), locationParams.getLongitude(), locationParams.getScaleFactor(), executor, 0));
-//        LwM2mInstanceEnabler[] instances = {new LwM2mTemperatureSensor(executor, 0), new LwM2mTemperatureSensor(executor, 12)};
         initializer.setInstancesForObject(TEMPERATURE_SENSOR, new LwM2mTemperatureSensor(executor, 0), new LwM2mTemperatureSensor(executor, 12));
-
-//        initializer.setInstancesForObject(TEST_OBJECT_SINGLE_WITH_RESOURCE_RW_ID, new TestDummyInstanceEnabler());
-//        initializer.setClassForObject(TEST_OBJECT_SINGLE_WITH_RESOURCE_R_ID, TestDummyInstanceEnabler.class);
-//        initializer.setClassForObject(TEST_OBJECT_MULTI_WITH_RESOURCE_RW_ID, TestDummyInstanceEnabler.class);
-
-//        initializer.setClassForObject(TEST_OBJECT_MULTI_WITH_RESOURCE_R_ID, DummyInstanceEnabler.class);
-//        initializer.setInstancesForObject(TEST_OBJECT_MULTI_WITH_RESOURCE_R_ID, new LwM2mInstanceEnabler [] {
-//                new TestDummyInstanceEnabler(executor, 0),
-//                new TestDummyInstanceEnabler(executor, 1)});
-
-
 
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
         dtlsConfig.setRecommendedCipherSuitesOnly(true);
