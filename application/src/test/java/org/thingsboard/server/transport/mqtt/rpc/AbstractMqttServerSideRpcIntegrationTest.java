@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.mqtt.rpc;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.nimbusds.jose.util.StandardCharset;
 import io.netty.handler.codec.mqtt.MqttQoS;
@@ -33,7 +34,9 @@ import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -98,6 +101,31 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
         String result = doPostAsync("/api/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().isOk());
         String expected = "{\"value1\":\"A\",\"value2\":\"B\"}";
         latch.await(3, TimeUnit.SECONDS);
+        Assert.assertEquals(expected, result);
+    }
+
+    protected void processSequenceTwoWayRpcTest() throws Exception {
+        List<String> expected = new ArrayList<>();
+        List<String> result = new ArrayList<>();
+
+        String deviceId = savedDevice.getId().getId().toString();
+
+        for (int i = 0; i < 10; i++) {
+            ObjectNode request = JacksonUtil.newObjectNode();
+            request.put("method", "test");
+            request.put("params", i);
+            expected.add(JacksonUtil.toString(request));
+            request.put("persistent", true);
+            doPostAsync("/api/rpc/twoway/" + deviceId, JacksonUtil.toString(request), String.class, status().isOk());
+        }
+
+        MqttAsyncClient client = getMqttAsyncClient(accessToken);
+        CountDownLatch latch = new CountDownLatch(10);
+        TestSequenceMqttCallback callback = new TestSequenceMqttCallback(client, latch, result);
+        client.setCallback(callback);
+        client.subscribe(MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC, 1);
+
+        latch.await(30, TimeUnit.SECONDS);
         Assert.assertEquals(expected, result);
     }
 
@@ -202,6 +230,43 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
         @Override
         public void messageArrived(String requestTopic, MqttMessage mqttMessage) throws Exception {
             log.info("Message Arrived: " + Arrays.toString(mqttMessage.getPayload()));
+            String responseTopic = requestTopic.replace("request", "response");
+            qoS = mqttMessage.getQos();
+            client.publish(responseTopic, processMessageArrived(requestTopic, mqttMessage));
+            latch.countDown();
+        }
+
+        @Override
+        public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
+
+        }
+    }
+
+    protected class TestSequenceMqttCallback implements MqttCallback {
+
+        private final MqttAsyncClient client;
+        private final CountDownLatch latch;
+        private final  List<String> expected;
+        private Integer qoS;
+
+        TestSequenceMqttCallback(MqttAsyncClient client, CountDownLatch latch, List<String> expected) {
+            this.client = client;
+            this.latch = latch;
+            this.expected = expected;
+        }
+
+        int getQoS() {
+            return qoS;
+        }
+
+        @Override
+        public void connectionLost(Throwable throwable) {
+        }
+
+        @Override
+        public void messageArrived(String requestTopic, MqttMessage mqttMessage) throws Exception {
+            log.info("Message Arrived: " + Arrays.toString(mqttMessage.getPayload()));
+            expected.add(new String(mqttMessage.getPayload()));
             String responseTopic = requestTopic.replace("request", "response");
             qoS = mqttMessage.getQos();
             client.publish(responseTopic, processMessageArrived(requestTopic, mqttMessage));

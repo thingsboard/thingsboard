@@ -723,7 +723,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
     private void cancelRpcSubscription(TbCoapClientState state) {
         if (state.getRpc() != null) {
             clientsByToken.remove(state.getRpc().getToken());
-            CoapExchange exchange = state.getAttrs().getExchange();
+            CoapExchange exchange = state.getRpc().getExchange();
             state.setRpc(null);
             transportService.process(state.getSession(),
                     TransportProtos.SubscribeToRPCMsg.newBuilder().setUnsubscribe(true).build(),
