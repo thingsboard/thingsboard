@@ -121,6 +121,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     private final Map<UUID, SessionInfo> attributeSubscriptions;
     private final Map<UUID, SessionInfo> rpcSubscriptions;
     private final Map<Integer, ToDeviceRpcRequestMetadata> toDeviceRpcPendingMap;
+    private final boolean rpcSequenceEnabled;
 
     private int rpcSeq = 0;
     private String deviceName;
@@ -132,6 +133,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         super(systemContext);
         this.tenantId = tenantId;
         this.deviceId = deviceId;
+        this.rpcSequenceEnabled = systemContext.isRpcSequenceEnabled();
         this.attributeSubscriptions = new HashMap<>();
         this.rpcSubscriptions = new HashMap<>();
         this.toDeviceRpcPendingMap = new LinkedHashMap<>();
@@ -185,19 +187,19 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         if (timeout <= 0) {
             log.debug("[{}][{}] Ignoring message due to exp time reached, {}", deviceId, request.getId(), request.getExpirationTime());
             if (persisted) {
-                createRpc(request, RpcStatus.TIMEOUT);
+                createRpc(request, RpcStatus.EXPIRED);
             }
             return;
         } else if (persisted) {
             createRpc(request, RpcStatus.QUEUED);
         }
 
-        boolean sent;
+        boolean sent = false;
         if (systemContext.isEdgesEnabled() && edgeId != null) {
             log.debug("[{}][{}] device is related to edge [{}]. Saving RPC request to edge queue", tenantId, deviceId, edgeId.getId());
             saveRpcRequestToEdgeQueue(request, rpcRequest.getRequestId());
             sent = true;
-        } else {
+        } else if (!rpcSequenceEnabled || toDeviceRpcPendingMap.isEmpty()) {
             sent = rpcSubscriptions.size() > 0;
             Set<UUID> syncSessionSet = new HashSet<>();
             rpcSubscriptions.forEach((key, value) -> {
@@ -292,7 +294,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         if (requestMd != null) {
             log.debug("[{}] RPC request [{}] timeout detected!", deviceId, msg.getId());
             if (requestMd.getMsg().getMsg().isPersisted()) {
-                systemContext.getTbRpcService().save(tenantId, new RpcId(requestMd.getMsg().getMsg().getId()), RpcStatus.TIMEOUT, null);
+                systemContext.getTbRpcService().save(tenantId, new RpcId(requestMd.getMsg().getMsg().getId()), RpcStatus.EXPIRED, null);
             }
             systemContext.getTbCoreDeviceRpcService().processRpcResponseFromDeviceActor(new FromDeviceRpcResponse(requestMd.getMsg().getMsg().getId(),
                     null, requestMd.isSent() ? RpcError.TIMEOUT : RpcError.NO_ACTIVE_CONNECTION));
@@ -300,7 +302,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         }
     }
 
-    private void sendPendingRequest(TbActorCtx context, UUID sessionId, String nodeId) {
+    private void sendPendingRequests(TbActorCtx context, UUID sessionId, String nodeId) {
         SessionType sessionType = getSessionType(sessionId);
         if (!toDeviceRpcPendingMap.isEmpty()) {
             log.debug("[{}] Pushing {} pending RPC messages to new async session [{}]", deviceId, toDeviceRpcPendingMap.size(), sessionId);
@@ -312,11 +314,34 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             log.debug("[{}] No pending RPC messages for new async session [{}]", deviceId, sessionId);
         }
         Set<Integer> sentOneWayIds = new HashSet<>();
-        toDeviceRpcPendingMap.entrySet().stream().findFirst().ifPresent(processPendingRpc(context, sessionId, nodeId, sentOneWayIds));
+
+        if (sessionType == SessionType.ASYNC) {
+            if (rpcSequenceEnabled) {
+                List<Map.Entry<Integer, ToDeviceRpcRequestMetadata>> entries = new ArrayList<>();
+                for (Map.Entry<Integer, ToDeviceRpcRequestMetadata> entry : toDeviceRpcPendingMap.entrySet()) {
+                    if (entry.getValue().isDelivered()) {
+                        continue;
+                    }
+                    entries.add(entry);
+                    if (entry.getValue().getMsg().getMsg().isPersisted() || entry.getValue().getMsg().getMsg().isOneway()) {
+                        break;
+                    }
+                }
+                entries.forEach(processPendingRpc(context, sessionId, nodeId, sentOneWayIds));
+            } else {
+                toDeviceRpcPendingMap.entrySet().forEach(processPendingRpc(context, sessionId, nodeId, sentOneWayIds));
+            }
+        } else {
+            toDeviceRpcPendingMap.entrySet().stream().findFirst().ifPresent(processPendingRpc(context, sessionId, nodeId, sentOneWayIds));
+        }
+
+        sentOneWayIds.stream().filter(id -> !toDeviceRpcPendingMap.get(id).getMsg().getMsg().isPersisted()).forEach(toDeviceRpcPendingMap::remove);
     }
 
     private void sendNextPendingRequest(TbActorCtx context) {
-        rpcSubscriptions.forEach((id, s) -> sendPendingRequest(context, id, s.getNodeId()));
+        if (rpcSequenceEnabled) {
+            rpcSubscriptions.forEach((id, s) -> sendPendingRequests(context, id, s.getNodeId()));
+        }
     }
 
     private Consumer<Map.Entry<Integer, ToDeviceRpcRequestMetadata>> processPendingRpc(TbActorCtx context, UUID sessionId, String nodeId, Set<Integer> sentOneWayIds) {
@@ -338,11 +363,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                     .setPersisted(request.isPersisted())
                     .build();
             sendToTransport(rpcRequest, sessionId, nodeId);
-
-            if (SessionType.ASYNC.equals(getSessionType(sessionId)) && request.isOneway() && !request.isPersisted()) {
-                toDeviceRpcPendingMap.remove(entry.getKey());
-                sendPendingRequest(context, sessionId, nodeId);
-            }
         };
     }
 
@@ -361,7 +381,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             processSubscriptionCommands(context, sessionInfo, msg.getSubscribeToRPC());
         }
         if (msg.hasSendPendingRPC()) {
-            sendPendingRequest(context, getSessionId(sessionInfo), sessionInfo.getNodeId());
+            sendPendingRequests(context, getSessionId(sessionInfo), sessionInfo.getNodeId());
         }
         if (msg.hasGetAttributes()) {
             handleGetAttributesRequest(context, sessionInfo, msg.getGetAttributes());
@@ -559,16 +579,28 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     private void processPersistedRpcResponses(TbActorCtx context, SessionInfoProto sessionInfo, ToDevicePersistedRpcResponseMsg responseMsg) {
         UUID rpcId = new UUID(responseMsg.getRequestIdMSB(), responseMsg.getRequestIdLSB());
         RpcStatus status = RpcStatus.valueOf(responseMsg.getStatus());
-
-        ToDeviceRpcRequestMetadata md;
-        if (RpcStatus.DELIVERED.equals(status)) {
-            md = toDeviceRpcPendingMap.get(responseMsg.getRequestId());
-        } else {
-            md = toDeviceRpcPendingMap.remove(responseMsg.getRequestId());
-        }
+        ToDeviceRpcRequestMetadata md = toDeviceRpcPendingMap.get(responseMsg.getRequestId());
 
         if (md != null) {
+            if (status.equals(RpcStatus.DELIVERED)) {
+                if (md.getMsg().getMsg().isOneway()) {
+                    toDeviceRpcPendingMap.remove(responseMsg.getRequestId());
+                } else {
+                    md.setDelivered(true);
+                }
+            } else if (status.equals(RpcStatus.TIMEOUT)) {
+                if (systemContext.getMaxPersistentRpcRetries() <= md.getRetries()) {
+                    toDeviceRpcPendingMap.remove(responseMsg.getRequestId());
+                    status = RpcStatus.FAILED;
+                } else {
+                    md.setRetries(md.getRetries() + 1);
+                }
+            }
+
             systemContext.getTbRpcService().save(tenantId, new RpcId(rpcId), status, null);
+            if (status != RpcStatus.SENT) {
+                sendNextPendingRequest(context);
+            }
         } else {
             log.info("[{}][{}] Rpc has already removed from pending map.", deviceId, rpcId);
         }
@@ -608,7 +640,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             sessionMD.setSubscribedToRPC(true);
             log.debug("[{}] Registering rpc subscription for session [{}]", deviceId, sessionId);
             rpcSubscriptions.put(sessionId, sessionMD.getSessionInfo());
-            sendPendingRequest(context, sessionId, sessionInfo.getNodeId());
+            sendPendingRequests(context, sessionId, sessionInfo.getNodeId());
             dumpSessions();
         }
     }
@@ -884,7 +916,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 ToDeviceRpcRequest msg = JacksonUtil.convertValue(rpc.getRequest(), ToDeviceRpcRequest.class);
                 long timeout = rpc.getExpirationTime() - System.currentTimeMillis();
                 if (timeout <= 0) {
-                    rpc.setStatus(RpcStatus.TIMEOUT);
+                    rpc.setStatus(RpcStatus.EXPIRED);
                     systemContext.getTbRpcService().save(tenantId, rpc);
                 } else {
                     registerPendingRpcRequest(ctx, new ToDeviceRpcRequestActorMsg(systemContext.getServiceId(), msg), false, creteToDeviceRpcRequestMsg(msg), timeout);

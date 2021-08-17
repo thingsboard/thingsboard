@@ -326,6 +326,11 @@ actors:
       queue_size: "${ACTORS_RULE_TRANSACTION_QUEUE_SIZE:15000}"
       # Time in milliseconds for transaction to complete
       duration: "${ACTORS_RULE_TRANSACTION_DURATION:60000}"
+  rpc:
+    persistent:
+      retries: "${ACTORS_RPC_PERSISTENT_RETRIES:5}"
+    sequence:
+      enabled: "${ACTORS_RPC_SEQUENCE_ENABLED:true}"
   statistics:
     # Enable/disable actor statistics
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"
