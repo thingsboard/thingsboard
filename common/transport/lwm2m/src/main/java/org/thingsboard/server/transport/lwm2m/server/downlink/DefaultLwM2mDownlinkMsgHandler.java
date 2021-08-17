@@ -286,7 +286,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                             downlink = new WriteRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(),
                                     (Map<Integer, ?>) request.getValue(), resourceModelWrite.type);
                         } else {
-                            callback.onValidationError(toString(request), "Resource value is: " + request.getValue().getClass().getSimpleName() + ". Value of Multi-Instance Resource must be in Json format!");
+                            callback.onValidationError(request.toString(), "Resource value is: " + request.getValue().getClass().getSimpleName() + ". Value of Multi-Instance Resource must be in Json format!");
                         }
                     } else {
                         downlink = this.getWriteRequestSingleResource(resourceModelWrite.type, contentFormat,
@@ -295,17 +295,17 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                     if (downlink != null) {
                         sendSimpleRequest(client, downlink, request.getTimeout(), callback);
                     } else {
-                        callback.onValidationError(toString(request), "WriteRequest is null.");
+                        callback.onValidationError(request.toString(), "WriteRequest is null.");
                     }
                 } catch (Exception e) {
-                    callback.onError(toString(request), e);
+                    callback.onError(request.toString(), e);
                 }
 
             } else {
-                callback.onValidationError(toString(request), "Resource " + request.getVersionedId() + " is not configured in the device profile!");
+                callback.onValidationError(request.toString(), "Resource " + request.getVersionedId() + " is not configured in the device profile!");
             }
         } else {
-            callback.onValidationError(toString(request), "Resource " + request.getVersionedId() + ". This operation can only be used for Resource or ResourceInstance!");
+            callback.onValidationError(request.toString(), "Resource " + request.getVersionedId() + ". This operation can only be used for Resource or ResourceInstance!");
         }
     }
 

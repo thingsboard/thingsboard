@@ -50,9 +50,11 @@ import static org.eclipse.leshan.core.util.datatype.NumberUtil.numberToULong;
 @Slf4j
 public class RpcModelsTestHelper {
 
+    public static final String[] resources = new String[]{"0.xml", "1.xml", "2.xml", "3.xml", "5.xml", "6.xml", "9.xml", "19.xml", "3303.xml"};
     // Ids
     public static final int BINARY_APP_DATA_CONTAINER = 19;
     public static final int TEMPERATURE_SENSOR = 3303;
+
     protected static final int objectInstanceId_0 = 0;
     protected static final int objectInstanceId_1 = 1;
     protected static final int objectInstanceId_12 = 12;
@@ -61,11 +63,14 @@ public class RpcModelsTestHelper {
     protected static final int resourceId_2 = 2;
     protected static final int resourceId_3 = 3;
     protected static final int resourceId_9 = 9;
-    protected static final String resourceIdName_9 = "batteryLevel";
     protected static final int resourceId_11 = 11;
     protected static final int resourceId_14 = 14;
-    protected static final String resourceIdName_14 = "UtfOffset";
+    protected static final int resourceId_15= 15;
 
+    protected static final String resourceIdName_3_9 = "batteryLevel";
+    protected static final String resourceIdName_3_14 = "UtfOffset";
+    protected static final String resourceIdName_19_0_0 = "dataRead";
+    protected static final String resourceIdName_19_1_0 = "dataWrite";
 }
 
 
