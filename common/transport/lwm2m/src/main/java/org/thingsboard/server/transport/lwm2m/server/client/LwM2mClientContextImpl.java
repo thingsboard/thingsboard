@@ -335,7 +335,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         if (LwM2MClientState.REGISTERED.equals(lwM2MClient.getState())) {
             PowerMode powerMode = getPowerMode(lwM2MClient);
             if (PowerMode.PSM.equals(powerMode) || PowerMode.E_DRX.equals(powerMode)) {
-                defaultLwM2MUplinkMsgHandler.initAttributes(lwM2MClient);
+                defaultLwM2MUplinkMsgHandler.initAttributes(lwM2MClient, false);
                 TransportProtos.TransportToDeviceActorMsg persistentRpcRequestMsg = TransportProtos.TransportToDeviceActorMsg
                         .newBuilder()
                         .setSessionInfo(lwM2MClient.getSession())
