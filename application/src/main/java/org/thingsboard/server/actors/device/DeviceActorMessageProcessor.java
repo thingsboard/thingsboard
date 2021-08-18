@@ -103,6 +103,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -232,15 +233,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     private boolean isSendNewRpcAvailable() {
-        if (rpcSequenceEnabled) {
-            for (ToDeviceRpcRequestMetadata rpc : toDeviceRpcPendingMap.values()) {
-                if (!rpc.isDelivered()) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
+        return !rpcSequenceEnabled || toDeviceRpcPendingMap.values().stream().filter(md -> !md.isDelivered()).findAny().isEmpty();
     }
 
     private Rpc createRpc(ToDeviceRpcRequest request, RpcStatus status) {
@@ -282,16 +275,26 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
     void processRemoveRpc(TbActorCtx context, RemoveRpcActorMsg msg) {
         log.debug("[{}] Processing remove rpc command", msg.getRequestId());
-        Integer requestId = null;
-        for (Map.Entry<Integer, ToDeviceRpcRequestMetadata> entry : toDeviceRpcPendingMap.entrySet()) {
-            if (entry.getValue().getMsg().getMsg().getId().equals(msg.getRequestId())) {
-                requestId = entry.getKey();
+        Map.Entry<Integer, ToDeviceRpcRequestMetadata> entry = null;
+        for (Map.Entry<Integer, ToDeviceRpcRequestMetadata> e : toDeviceRpcPendingMap.entrySet()) {
+            if (e.getValue().getMsg().getMsg().getId().equals(msg.getRequestId())) {
+                entry = e;
                 break;
             }
         }
 
-        if (requestId != null) {
-            toDeviceRpcPendingMap.remove(requestId);
+        if (entry != null) {
+            if (entry.getValue().isDelivered()) {
+                toDeviceRpcPendingMap.remove(entry.getKey());
+            } else {
+                Optional<Map.Entry<Integer, ToDeviceRpcRequestMetadata>> firstRpc = getFirstRpc();
+                if (firstRpc.isPresent() && entry.getKey().equals(firstRpc.get().getKey())) {
+                    toDeviceRpcPendingMap.remove(entry.getKey());
+                    sendNextPendingRequest(context);
+                } else {
+                    toDeviceRpcPendingMap.remove(entry.getKey());
+                }
+            }
         }
     }
 
@@ -330,7 +333,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         Set<Integer> sentOneWayIds = new HashSet<>();
 
         if (rpcSequenceEnabled) {
-            toDeviceRpcPendingMap.entrySet().stream().filter(e -> !e.getValue().isDelivered()).findFirst().ifPresent(processPendingRpc(context, sessionId, nodeId, sentOneWayIds));
+            getFirstRpc().ifPresent(processPendingRpc(context, sessionId, nodeId, sentOneWayIds));
         } else if (sessionType == SessionType.ASYNC) {
             toDeviceRpcPendingMap.entrySet().forEach(processPendingRpc(context, sessionId, nodeId, sentOneWayIds));
         } else {
@@ -338,6 +341,10 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         }
 
         sentOneWayIds.stream().filter(id -> !toDeviceRpcPendingMap.get(id).getMsg().getMsg().isPersisted()).forEach(toDeviceRpcPendingMap::remove);
+    }
+
+    private Optional<Map.Entry<Integer, ToDeviceRpcRequestMetadata>> getFirstRpc() {
+        return toDeviceRpcPendingMap.entrySet().stream().filter(e -> !e.getValue().isDelivered()).findFirst();
     }
 
     private void sendNextPendingRequest(TbActorCtx context) {
@@ -599,7 +606,9 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                     md.setDelivered(true);
                 }
             } else if (status.equals(RpcStatus.TIMEOUT)) {
-                if (systemContext.getMaxPersistentRpcRetries() <= md.getRetries()) {
+                Integer maxRpcRetries = md.getMsg().getMsg().getRetries();
+                maxRpcRetries = maxRpcRetries == null ? systemContext.getMaxRpcRetries() : Math.min(maxRpcRetries, systemContext.getMaxRpcRetries());
+                if (maxRpcRetries <= md.getRetries()) {
                     toDeviceRpcPendingMap.remove(responseMsg.getRequestId());
                     status = RpcStatus.FAILED;
                 } else {
