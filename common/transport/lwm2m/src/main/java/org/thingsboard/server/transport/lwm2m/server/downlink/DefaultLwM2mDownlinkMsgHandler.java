@@ -598,12 +598,12 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     private <R> String toString(R request) {
         try {
             try {
-                return toString(request);
+                return request != null ? request.toString() : "";
             } catch (Exception e) {
-                return request.toString();
+                return "";
             }
         } catch (Exception e) {
-            log.warn("Failed to convert request to string", e);
+            log.trace("Failed to convert request to string", e);
             return request != null ? request.getClass().getSimpleName() : "";
         }
     }
