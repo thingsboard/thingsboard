@@ -387,7 +387,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             handleClaimDeviceMsg(context, sessionInfo, msg.getClaimDevice());
         }
         if (msg.hasRpcResponseStatusMsg()) {
-            processPersistedRpcResponses(context, sessionInfo, msg.getRpcResponseStatusMsg());
+            processRpcResponseStatus(context, sessionInfo, msg.getRpcResponseStatusMsg());
         }
         if (msg.hasUplinkNotificationMsg()) {
             processUplinkNotificationMsg(context, sessionInfo, msg.getUplinkNotificationMsg());
@@ -572,7 +572,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         }
     }
 
-    private void processPersistedRpcResponses(TbActorCtx context, SessionInfoProto sessionInfo, ToDeviceRpcResponseStatusMsg responseMsg) {
+    private void processRpcResponseStatus(TbActorCtx context, SessionInfoProto sessionInfo, ToDeviceRpcResponseStatusMsg responseMsg) {
         UUID rpcId = new UUID(responseMsg.getRequestIdMSB(), responseMsg.getRequestIdLSB());
         RpcStatus status = RpcStatus.valueOf(responseMsg.getStatus());
         ToDeviceRpcRequestMetadata md = toDeviceRpcPendingMap.get(responseMsg.getRequestId());
