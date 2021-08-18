@@ -21,18 +21,23 @@ import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.core.response.CreateResponse;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType;
 
+import java.util.Map;
+
 public class TbLwM2MCreateRequest extends AbstractTbLwM2MTargetedDownlinkRequest<CreateResponse> {
 
     @Getter
     private final Object value;
     @Getter
     private final ContentFormat objectContentFormat;
+    @Getter
+    private final Map<String, Object> nodes;;
 
     @Builder
-    private TbLwM2MCreateRequest(String versionedId, long timeout, Object value, ContentFormat objectContentFormat) {
+    private TbLwM2MCreateRequest(String versionedId, long timeout, Object value, ContentFormat objectContentFormat, Map<String, Object> nodes) {
         super(versionedId, timeout);
         this.value = value;
         this.objectContentFormat = objectContentFormat;
+        this.nodes = nodes;
     }
 
     @Override

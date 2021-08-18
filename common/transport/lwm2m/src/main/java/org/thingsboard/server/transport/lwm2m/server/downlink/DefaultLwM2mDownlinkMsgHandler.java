@@ -74,6 +74,7 @@ import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -82,6 +83,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -245,7 +247,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
      * new Attribute(Attribute.MAXIMUM_PERIOD, 100L));
      * WriteAttributesRequest requestTest = new WriteAttributesRequest(3, 0, 14, attributes);
      * sendSimpleRequest(client, requestTest, request.getTimeout(), callback);
-     *
+     * <p>
      * Example # 2
      * Dimension and Object version are read only attributes.
      * addAttribute(attributes, DIMENSION, params.getDim(), dim -> dim >= 0 && dim <= 255);
@@ -375,12 +377,25 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             // LwM2M CBOR, SenML CBOR, SenML JSON, or TLV (see [LwM2M-CORE])
             ContentFormat contentFormat = getWriteRequestContentFormat(client, request, this.config.getModelProvider());
             if (resultIds.isObject() || resultIds.isObjectInstance()) {
-                Collection<LwM2mResource> resources = client.getNewResourcesForInstance(request.getVersionedId(), request.getValue(), this.config.getModelProvider(), this.converter);
+                Collection<LwM2mResource> resources;
                 if (resultIds.isObject()) {
-                    contentFormat = ContentFormat.TLV;
-                    downlink = new CreateRequest(contentFormat, resultIds.getObjectId(), resources);
-                }
-                else {
+//                    contentFormat = ContentFormat.TLV;
+                    if (request.getValue() != null) {
+                        resources = client.getNewResourcesForInstance(request.getVersionedId(), request.getValue(), this.config.getModelProvider(), this.converter);
+                        downlink = new CreateRequest(contentFormat, resultIds.getObjectId(), resources);
+                    } else if (request.getNodes() != null && request.getNodes().size() > 0) {
+                        Set<LwM2mObjectInstance> instances = ConcurrentHashMap.newKeySet();
+                        request.getNodes().forEach((key, value) -> {
+                            Collection<LwM2mResource> resourcesForInstance = client.getNewResourcesForInstance(request.getVersionedId(), value, this.config.getModelProvider(), this.converter);
+                            LwM2mObjectInstance instance = new LwM2mObjectInstance(Integer.parseInt(key), resourcesForInstance);
+                            instances.add(instance);
+                        });
+                        LwM2mObjectInstance [] instanceArrays = instances.toArray(new LwM2mObjectInstance[instances.size()]);
+                        downlink = new CreateRequest(contentFormat, resultIds.getObjectId(), instanceArrays);
+                    }
+
+                } else {
+                    resources = client.getNewResourcesForInstance(request.getVersionedId(), request.getValue(), this.config.getModelProvider(), this.converter);
                     LwM2mObjectInstance instance = new LwM2mObjectInstance(resultIds.getObjectInstanceId(), resources);
                     downlink = new CreateRequest(contentFormat, resultIds.getObjectId(), instance);
                 }
@@ -391,8 +406,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                 callback.onValidationError(toString(request), "Path " + request.getVersionedId() +
                         ". This operation can only be used for created new ObjectInstance !");
             }
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("Path " + request.getVersionedId() +
                     ". Object must be Multiple !");
         }

@@ -242,11 +242,11 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
     }
 
     private void sendCreateRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
-        RpcWriteUpdateRequest requestBody = JacksonUtil.fromString(requestMsg.getParams(), RpcWriteUpdateRequest.class);
+        RpcCreateRequest requestBody = JacksonUtil.fromString(requestMsg.getParams(), RpcCreateRequest.class);
         TbLwM2MCreateRequest.TbLwM2MCreateRequestBuilder builder = TbLwM2MCreateRequest.builder().versionedId(versionedId);
-        builder.value(requestBody.getValue()).timeout(clientContext.getRequestTimeout(client));
+        builder.value(requestBody.getValue()).nodes(requestBody.getNodes()).timeout(clientContext.getRequestTimeout(client));
         var mainCallback = new TbLwM2MCreateResponseCallback(uplinkHandler, logService, client, versionedId);
-        var rpcCallback = new RpcEmptyResponseCallback<>(transportService, client, requestMsg, mainCallback);
+        var rpcCallback = new RpcCreateResponseCallback<>(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendCreateRequest(client, builder.build(), rpcCallback);
     }
 

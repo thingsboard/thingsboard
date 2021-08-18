@@ -725,9 +725,12 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
     }
     @Override
     public void onCreateResponseOk(LwM2mClient client, String path, CreateRequest request) {
-        if (request.getResources() != null && request.getResources().size() > 0) {
+        if (request.getObjectInstances() != null && request.getObjectInstances().size() > 0) {
+            request.getObjectInstances().forEach( instance ->
+                    instance.getResources()
+            );
 //            this.updateResourcesValue(client, ((LwM2mResource) request.getNode()), path, request.isReplaceRequest() ? Mode.REPLACE : Mode.UPDATE);
-//            clientContext.update(client);
+            clientContext.update(client);
         }
     }
 
