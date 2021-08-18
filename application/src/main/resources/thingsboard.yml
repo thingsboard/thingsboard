@@ -327,10 +327,9 @@ actors:
       # Time in milliseconds for transaction to complete
       duration: "${ACTORS_RULE_TRANSACTION_DURATION:60000}"
   rpc:
-    persistent:
-      retries: "${ACTORS_RPC_PERSISTENT_RETRIES:5}"
+    max_retries: "${ACTORS_RPC_MAX_RETRIES:5}"
     sequence:
-      enabled: "${ACTORS_RPC_SEQUENCE_ENABLED:true}"
+      enabled: "${ACTORS_RPC_SEQUENCE_ENABLED:false}"
   statistics:
     # Enable/disable actor statistics
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"
