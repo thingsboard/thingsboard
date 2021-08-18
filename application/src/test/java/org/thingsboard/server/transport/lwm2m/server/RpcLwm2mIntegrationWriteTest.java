@@ -32,7 +32,7 @@ import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.
 import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceId_15;
 import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceId_9;
 
-public class RpcLwm2mIntegrationWriteCreateTest extends RpcAbstractLwM2MIntegrationTest {
+public class RpcLwm2mIntegrationWriteTest extends RpcAbstractLwM2MIntegrationTest {
 
 
     /**
@@ -242,6 +242,60 @@ public class RpcLwm2mIntegrationWriteCreateTest extends RpcAbstractLwM2MIntegrat
                 "The WriteComposite operation is only used for SingleResources or/and ResourceInstance.", expectedNodes);
         assertEquals(expected, actualValues);
     }
+
+
+    /**
+     * create_2_instances_in_object
+     * new ObjectInstance if Object is Multiple & Resource Single
+     * Create  {"id":"/19/2","value":{"1":2}}
+     * Create  {"id":"/19/3","value":{"0":{"0":"00AC", "1":"ddff12"}}}
+     */
+    @Test
+    public void testCreateObjectInstanceSingleByIdKey_Result_CHANGED() throws Exception {
+        int resourceInstanceId2 = 2;
+        String expectedPath19_1_0_2 = objectIdVer_19 + "/" + objectInstanceId_1 + "/" + resourceId_0 + "/" + resourceInstanceId2;
+        String expectedValue19_1_0_2 = "00001234";
+        String expectedKey3_0_14 = resourceIdName_3_14;
+        String expectedValue3_0_14 = "+04";
+        String expectedPath3_0_15 = objectInstanceIdVer_3 + "/" + resourceId_15;
+        String expectedValue3_0_15 = "Kiyv/Europe";
+        String nodes = "{\"" + expectedPath19_1_0_2 + "\":\"" + expectedValue19_1_0_2 + "\", \"" + expectedKey3_0_14 +
+                "\":\"" + expectedValue3_0_14 + "\", \"" + expectedPath3_0_15 + "\":\"" + expectedValue3_0_15 + "\"}";
+        String actualResult = sendCompositeRPC(nodes);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        actualResult = sendRPCReadById(expectedPath19_1_0_2);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        String actualValues = rpcActualResult.get("value").asText();
+        String expected = "LwM2mResourceInstance [id=" + resourceInstanceId2 + ", value=" + expectedValue19_1_0_2.length()/2 + "Bytes, type=OPAQUE]";
+        assertTrue(actualValues.contains(expected));
+        actualResult = sendRPCReadByKey(expectedKey3_0_14);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        actualValues = rpcActualResult.get("value").asText();
+        expected = "LwM2mSingleResource [id=" + resourceId_14 + ", value=" + expectedValue3_0_14 + ", type=STRING]";
+        assertTrue(actualValues.contains(expected));
+        actualResult = sendRPCReadById(expectedPath3_0_15);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        actualValues = rpcActualResult.get("value").asText();
+        expected = "LwM2mSingleResource [id=" + resourceId_15 + ", value=" + expectedValue3_0_15 + ", type=STRING]";
+        assertTrue(actualValues.contains(expected));
+    }
+
+    /**
+     * failed: cannot_create_mandatory_single_object
+     * Create  {"id":"/3/2","value":{"0":"00AC"}}
+     */
+
+
+    /**
+     * failed:  cannot_create_instance_of_security_object
+     * Create  {"id":"/0/2","value":{"0":"00AC"}}
+     */
+
+    /**
+     * failed: cannot_create_instance_of_absent_object
+     * Create  {"id":"/50/2","value":{"0":"00AC"}}
+     */
 
     private String sendRPCWriteStringById(String method, String path, String value) throws Exception {
         String setRpcRequest = "{\"method\": \"" + method + "\", \"params\": {\"id\": \"" + path + "\", \"value\": \"" + value + "\" }}";
