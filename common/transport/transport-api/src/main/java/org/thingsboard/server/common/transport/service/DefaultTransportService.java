@@ -581,19 +581,17 @@ public class DefaultTransportService implements TransportService {
 
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToDeviceRpcRequestMsg msg, RpcStatus rpcStatus, TransportServiceCallback<Void> callback) {
-        if (msg.getPersisted()) {
-            TransportProtos.ToDevicePersistedRpcResponseMsg responseMsg = TransportProtos.ToDevicePersistedRpcResponseMsg.newBuilder()
-                    .setRequestId(msg.getRequestId())
-                    .setRequestIdLSB(msg.getRequestIdLSB())
-                    .setRequestIdMSB(msg.getRequestIdMSB())
-                    .setStatus(rpcStatus.name())
-                    .build();
+        TransportProtos.ToDeviceRpcResponseStatusMsg responseMsg = TransportProtos.ToDeviceRpcResponseStatusMsg.newBuilder()
+                .setRequestId(msg.getRequestId())
+                .setRequestIdLSB(msg.getRequestIdLSB())
+                .setRequestIdMSB(msg.getRequestIdMSB())
+                .setStatus(rpcStatus.name())
+                .build();
 
-            if (checkLimits(sessionInfo, responseMsg, callback)) {
-                reportActivityInternal(sessionInfo);
-                sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setPersistedRpcResponseMsg(responseMsg).build(),
-                        new ApiStatsProxyCallback<>(getTenantId(sessionInfo), getCustomerId(sessionInfo), 1, TransportServiceCallback.EMPTY));
-            }
+        if (checkLimits(sessionInfo, responseMsg, callback)) {
+            reportActivityInternal(sessionInfo);
+            sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setRpcResponseStatusMsg(responseMsg).build(),
+                    new ApiStatsProxyCallback<>(getTenantId(sessionInfo), getCustomerId(sessionInfo), 1, TransportServiceCallback.EMPTY));
         }
     }
 

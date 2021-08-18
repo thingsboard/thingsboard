@@ -525,17 +525,26 @@ public class DefaultCoapClientContext implements CoapClientContext {
                 Response response = state.getAdaptor().convertToPublish(conRequest, msg, state.getConfiguration().getRpcRequestDynamicMessageBuilder());
                 int requestId = getNextMsgId();
                 response.setMID(requestId);
-                if (msg.getPersisted() && conRequest) {
+                if (conRequest) {
                     transportContext.getRpcAwaitingAck().put(requestId, msg);
                     transportContext.getScheduler().schedule(() -> {
-                        transportContext.getRpcAwaitingAck().remove(requestId);
-                    }, Math.max(0, msg.getExpirationTime() - System.currentTimeMillis()), TimeUnit.MILLISECONDS);
+                        TransportProtos.ToDeviceRpcRequestMsg rpcRequestMsg = transportContext.getRpcAwaitingAck().remove(requestId);
+                        if (rpcRequestMsg != null) {
+                            transportService.process(state.getSession(), msg, RpcStatus.TIMEOUT, TransportServiceCallback.EMPTY);
+                        }
+                    }, Math.max(0, Math.min(msg.getTimeout(), msg.getExpirationTime() - System.currentTimeMillis())), TimeUnit.MILLISECONDS);
+
                     response.addMessageObserver(new TbCoapMessageObserver(requestId, id -> {
                         TransportProtos.ToDeviceRpcRequestMsg rpcRequestMsg = transportContext.getRpcAwaitingAck().remove(id);
                         if (rpcRequestMsg != null) {
                             transportService.process(state.getSession(), rpcRequestMsg, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
                         }
-                    }, null));
+                    }, id -> {
+                        TransportProtos.ToDeviceRpcRequestMsg rpcRequestMsg = transportContext.getRpcAwaitingAck().remove(id);
+                        if (rpcRequestMsg != null) {
+                            transportService.process(state.getSession(), msg, RpcStatus.TIMEOUT, TransportServiceCallback.EMPTY);
+                        }
+                    }));
                 }
                 if (conRequest) {
                     response.addMessageObserver(new TbCoapMessageObserver(requestId, id -> awake(state), id -> asleep(state)));
@@ -554,11 +563,11 @@ public class DefaultCoapClientContext implements CoapClientContext {
                     transportService.process(state.getSession(),
                             TransportProtos.ToDeviceRpcResponseMsg.newBuilder()
                                     .setRequestId(msg.getRequestId()).setError(error).build(), TransportServiceCallback.EMPTY);
-                } else if (msg.getPersisted() && sent) {
-                    if (conRequest) {
-                        transportService.process(state.getSession(), msg, RpcStatus.SENT, TransportServiceCallback.EMPTY);
-                    } else {
+                } else if (sent) {
+                    if (!conRequest) {
                         transportService.process(state.getSession(), msg, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
+                    } else if (msg.getPersisted()) {
+                        transportService.process(state.getSession(), msg, RpcStatus.SENT, TransportServiceCallback.EMPTY);
                     }
                 }
             }

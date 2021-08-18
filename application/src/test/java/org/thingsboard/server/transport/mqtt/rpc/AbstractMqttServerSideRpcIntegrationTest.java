@@ -28,15 +28,16 @@ import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.junit.Assert;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -120,12 +121,13 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
         }
 
         MqttAsyncClient client = getMqttAsyncClient(accessToken);
+        client.setManualAcks(true);
         CountDownLatch latch = new CountDownLatch(10);
         TestSequenceMqttCallback callback = new TestSequenceMqttCallback(client, latch, result);
         client.setCallback(callback);
         client.subscribe(MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC, 1);
 
-        latch.await(30, TimeUnit.SECONDS);
+        latch.await(10, TimeUnit.SECONDS);
         Assert.assertEquals(expected, result);
     }
 
@@ -246,17 +248,12 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
 
         private final MqttAsyncClient client;
         private final CountDownLatch latch;
-        private final  List<String> expected;
-        private Integer qoS;
+        private final List<String> expected;
 
         TestSequenceMqttCallback(MqttAsyncClient client, CountDownLatch latch, List<String> expected) {
             this.client = client;
             this.latch = latch;
             this.expected = expected;
-        }
-
-        int getQoS() {
-            return qoS;
         }
 
         @Override
@@ -268,7 +265,9 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
             log.info("Message Arrived: " + Arrays.toString(mqttMessage.getPayload()));
             expected.add(new String(mqttMessage.getPayload()));
             String responseTopic = requestTopic.replace("request", "response");
-            qoS = mqttMessage.getQos();
+            var qoS = mqttMessage.getQos();
+
+            client.messageArrivedComplete(mqttMessage.getId(), qoS);
             client.publish(responseTopic, processMessageArrived(requestTopic, mqttMessage));
             latch.countDown();
         }

@@ -89,8 +89,11 @@ public class TbSendRPCRequestNode implements TbNode {
             tmp = msg.getMetaData().getValue("originServiceId");
             String originServiceId = !StringUtils.isEmpty(tmp) ? tmp : null;
 
-            tmp = msg.getMetaData().getValue("expirationTime");
+            tmp = msg.getMetaData().getValue(DataConstants.EXPIRATION_TIME);
             long expirationTime = !StringUtils.isEmpty(tmp) ? Long.parseLong(tmp) : (System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(config.getTimeoutInSeconds()));
+
+            tmp = msg.getMetaData().getValue(DataConstants.TIMEOUT);
+            long timeout = !StringUtils.isEmpty(tmp) ? Long.parseLong(tmp) : TimeUnit.SECONDS.toMillis(config.getTimeoutInSeconds());
 
             String params;
             JsonElement paramsEl = json.get("params");
@@ -112,6 +115,7 @@ public class TbSendRPCRequestNode implements TbNode {
                     .requestUUID(requestUUID)
                     .originServiceId(originServiceId)
                     .expirationTime(expirationTime)
+                    .timeout(timeout)
                     .restApiCall(restApiCall)
                     .persisted(persisted)
                     .additionalInfo(additionalInfo)

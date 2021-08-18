@@ -39,6 +39,7 @@ public final class RuleEngineDeviceRpcRequest {
     private final String method;
     private final String body;
     private final long expirationTime;
+    private final long timeout;
     private final boolean restApiCall;
     private final String additionalInfo;
 

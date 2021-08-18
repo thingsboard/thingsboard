@@ -80,9 +80,9 @@ import org.thingsboard.server.gen.transport.TransportProtos.SessionType;
 import org.thingsboard.server.gen.transport.TransportProtos.SubscribeToAttributeUpdatesMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SubscribeToRPCMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SubscriptionInfoProto;
-import org.thingsboard.server.gen.transport.TransportProtos.ToDevicePersistedRpcResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcResponseStatusMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCredentialsProto;
@@ -298,7 +298,9 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             }
             systemContext.getTbCoreDeviceRpcService().processRpcResponseFromDeviceActor(new FromDeviceRpcResponse(requestMd.getMsg().getMsg().getId(),
                     null, requestMd.isSent() ? RpcError.TIMEOUT : RpcError.NO_ACTIVE_CONNECTION));
-            sendNextPendingRequest(context);
+            if (!requestMd.isDelivered()) {
+                sendNextPendingRequest(context);
+            }
         }
     }
 
@@ -315,22 +317,10 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         }
         Set<Integer> sentOneWayIds = new HashSet<>();
 
-        if (sessionType == SessionType.ASYNC) {
-            if (rpcSequenceEnabled) {
-                List<Map.Entry<Integer, ToDeviceRpcRequestMetadata>> entries = new ArrayList<>();
-                for (Map.Entry<Integer, ToDeviceRpcRequestMetadata> entry : toDeviceRpcPendingMap.entrySet()) {
-                    if (entry.getValue().isDelivered()) {
-                        continue;
-                    }
-                    entries.add(entry);
-                    if (entry.getValue().getMsg().getMsg().isPersisted() || entry.getValue().getMsg().getMsg().isOneway()) {
-                        break;
-                    }
-                }
-                entries.forEach(processPendingRpc(context, sessionId, nodeId, sentOneWayIds));
-            } else {
-                toDeviceRpcPendingMap.entrySet().forEach(processPendingRpc(context, sessionId, nodeId, sentOneWayIds));
-            }
+        if (rpcSequenceEnabled) {
+            toDeviceRpcPendingMap.entrySet().stream().filter(e -> !e.getValue().isDelivered()).findFirst().ifPresent(processPendingRpc(context, sessionId, nodeId, sentOneWayIds));
+        } else if (sessionType == SessionType.ASYNC) {
+            toDeviceRpcPendingMap.entrySet().forEach(processPendingRpc(context, sessionId, nodeId, sentOneWayIds));
         } else {
             toDeviceRpcPendingMap.entrySet().stream().findFirst().ifPresent(processPendingRpc(context, sessionId, nodeId, sentOneWayIds));
         }
@@ -348,7 +338,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         return entry -> {
             ToDeviceRpcRequest request = entry.getValue().getMsg().getMsg();
             ToDeviceRpcRequestBody body = request.getBody();
-            if (request.isOneway()) {
+            if (request.isOneway() && !rpcSequenceEnabled) {
                 sentOneWayIds.add(entry.getKey());
                 systemContext.getTbCoreDeviceRpcService().processRpcResponseFromDeviceActor(new FromDeviceRpcResponse(request.getId(), null, null));
             }
@@ -357,6 +347,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                     .setMethodName(body.getMethod())
                     .setParams(body.getParams())
                     .setExpirationTime(request.getExpirationTime())
+                    .setTimeout(request.getTimeout())
                     .setRequestIdMSB(request.getId().getMostSignificantBits())
                     .setRequestIdLSB(request.getId().getLeastSignificantBits())
                     .setOneway(request.isOneway())
@@ -395,8 +386,8 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         if (msg.hasClaimDevice()) {
             handleClaimDeviceMsg(context, sessionInfo, msg.getClaimDevice());
         }
-        if (msg.hasPersistedRpcResponseMsg()) {
-            processPersistedRpcResponses(context, sessionInfo, msg.getPersistedRpcResponseMsg());
+        if (msg.hasRpcResponseStatusMsg()) {
+            processPersistedRpcResponses(context, sessionInfo, msg.getRpcResponseStatusMsg());
         }
         if (msg.hasUplinkNotificationMsg()) {
             processUplinkNotificationMsg(context, sessionInfo, msg.getUplinkNotificationMsg());
@@ -556,27 +547,32 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         boolean success = requestMd != null;
         if (success) {
             boolean hasError = StringUtils.isNotEmpty(responseMsg.getError());
-            String payload = hasError ? responseMsg.getError() : responseMsg.getPayload();
-            systemContext.getTbCoreDeviceRpcService().processRpcResponseFromDeviceActor(
-                    new FromDeviceRpcResponse(requestMd.getMsg().getMsg().getId(),
-                            payload, null));
-            if (requestMd.getMsg().getMsg().isPersisted()) {
-                RpcStatus status = hasError ? RpcStatus.FAILED : RpcStatus.SUCCESSFUL;
-                JsonNode response;
-                try {
-                    response = JacksonUtil.toJsonNode(payload);
-                } catch (IllegalArgumentException e) {
-                    response = JacksonUtil.newObjectNode().put("error", payload);
+            try {
+                String payload = hasError ? responseMsg.getError() : responseMsg.getPayload();
+                systemContext.getTbCoreDeviceRpcService().processRpcResponseFromDeviceActor(
+                        new FromDeviceRpcResponse(requestMd.getMsg().getMsg().getId(),
+                                payload, null));
+                if (requestMd.getMsg().getMsg().isPersisted()) {
+                    RpcStatus status = hasError ? RpcStatus.FAILED : RpcStatus.SUCCESSFUL;
+                    JsonNode response;
+                    try {
+                        response = JacksonUtil.toJsonNode(payload);
+                    } catch (IllegalArgumentException e) {
+                        response = JacksonUtil.newObjectNode().put("error", payload);
+                    }
+                    systemContext.getTbRpcService().save(tenantId, new RpcId(requestMd.getMsg().getMsg().getId()), status, response);
                 }
-                systemContext.getTbRpcService().save(tenantId, new RpcId(requestMd.getMsg().getMsg().getId()), status, response);
+            } finally {
+                if (!requestMd.isDelivered() && hasError) {
+                    sendNextPendingRequest(context);
+                }
             }
-            sendNextPendingRequest(context);
         } else {
             log.debug("[{}] Rpc command response [{}] is stale!", deviceId, responseMsg.getRequestId());
         }
     }
 
-    private void processPersistedRpcResponses(TbActorCtx context, SessionInfoProto sessionInfo, ToDevicePersistedRpcResponseMsg responseMsg) {
+    private void processPersistedRpcResponses(TbActorCtx context, SessionInfoProto sessionInfo, ToDeviceRpcResponseStatusMsg responseMsg) {
         UUID rpcId = new UUID(responseMsg.getRequestIdMSB(), responseMsg.getRequestIdLSB());
         RpcStatus status = RpcStatus.valueOf(responseMsg.getStatus());
         ToDeviceRpcRequestMetadata md = toDeviceRpcPendingMap.get(responseMsg.getRequestId());
@@ -585,6 +581,9 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             if (status.equals(RpcStatus.DELIVERED)) {
                 if (md.getMsg().getMsg().isOneway()) {
                     toDeviceRpcPendingMap.remove(responseMsg.getRequestId());
+                    if (rpcSequenceEnabled) {
+                        systemContext.getTbCoreDeviceRpcService().processRpcResponseFromDeviceActor(new FromDeviceRpcResponse(rpcId, null, null));
+                    }
                 } else {
                     md.setDelivered(true);
                 }
@@ -597,7 +596,9 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 }
             }
 
-            systemContext.getTbRpcService().save(tenantId, new RpcId(rpcId), status, null);
+            if (md.getMsg().getMsg().isPersisted()) {
+                systemContext.getTbRpcService().save(tenantId, new RpcId(rpcId), status, null);
+            }
             if (status != RpcStatus.SENT) {
                 sendNextPendingRequest(context);
             }
