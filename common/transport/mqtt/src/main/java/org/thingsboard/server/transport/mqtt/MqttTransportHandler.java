@@ -857,7 +857,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         if (msg != null) {
                             transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.TIMEOUT, TransportServiceCallback.EMPTY);
                         }
-                    }, Math.max(0, Math.min(rpcRequest.getTimeout(), rpcRequest.getExpirationTime() - System.currentTimeMillis())), TimeUnit.MILLISECONDS);
+                    }, Math.max(0, Math.min(deviceSessionCtx.getContext().getTimeout(), rpcRequest.getExpirationTime() - System.currentTimeMillis())), TimeUnit.MILLISECONDS);
                 }
                 var cf = publish(payload, deviceSessionCtx);
                 cf.addListener(result -> {

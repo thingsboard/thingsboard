@@ -334,7 +334,6 @@ message ToDeviceRpcRequestMsg {
   int64 requestIdLSB = 6;
   bool oneway = 7;
   bool persisted = 8;
-  int64 timeout = 9;
 }
 
 message ToDeviceRpcResponseMsg {

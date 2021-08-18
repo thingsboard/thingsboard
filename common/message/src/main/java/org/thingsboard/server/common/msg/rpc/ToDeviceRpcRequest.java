@@ -34,7 +34,6 @@ public class ToDeviceRpcRequest implements Serializable {
     private final DeviceId deviceId;
     private final boolean oneway;
     private final long expirationTime;
-    private final long timeout;
     private final ToDeviceRpcRequestBody body;
     private final boolean persisted;
     @JsonIgnore

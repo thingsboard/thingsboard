@@ -199,7 +199,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             log.debug("[{}][{}] device is related to edge [{}]. Saving RPC request to edge queue", tenantId, deviceId, edgeId.getId());
             saveRpcRequestToEdgeQueue(request, rpcRequest.getRequestId());
             sent = true;
-        } else if (!rpcSequenceEnabled || toDeviceRpcPendingMap.isEmpty()) {
+        } else if (isSendNewRpcAvailable()) {
             sent = rpcSubscriptions.size() > 0;
             Set<UUID> syncSessionSet = new HashSet<>();
             rpcSubscriptions.forEach((key, value) -> {
@@ -229,6 +229,18 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         } else {
             log.debug("[{}] RPC request {} is NOT sent!", deviceId, request.getId());
         }
+    }
+
+    private boolean isSendNewRpcAvailable() {
+        if (rpcSequenceEnabled) {
+            for (ToDeviceRpcRequestMetadata rpc : toDeviceRpcPendingMap.values()) {
+                if (!rpc.isDelivered()) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     private Rpc createRpc(ToDeviceRpcRequest request, RpcStatus status) {
@@ -347,7 +359,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                     .setMethodName(body.getMethod())
                     .setParams(body.getParams())
                     .setExpirationTime(request.getExpirationTime())
-                    .setTimeout(request.getTimeout())
                     .setRequestIdMSB(request.getId().getMostSignificantBits())
                     .setRequestIdLSB(request.getId().getLeastSignificantBits())
                     .setOneway(request.isOneway())
@@ -563,7 +574,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                     systemContext.getTbRpcService().save(tenantId, new RpcId(requestMd.getMsg().getMsg().getId()), status, response);
                 }
             } finally {
-                if (!requestMd.isDelivered() && hasError) {
+                if (hasError) {
                     sendNextPendingRequest(context);
                 }
             }

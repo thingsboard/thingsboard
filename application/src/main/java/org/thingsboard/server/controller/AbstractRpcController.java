@@ -88,7 +88,6 @@ public abstract class AbstractRpcController extends BaseController {
                             deviceId,
                             oneWay,
                             expTime,
-                            timeout,
                             body,
                             persisted,
                             additionalInfo
