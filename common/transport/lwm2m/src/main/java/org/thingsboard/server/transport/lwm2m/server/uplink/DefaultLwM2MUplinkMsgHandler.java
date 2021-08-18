@@ -31,6 +31,7 @@ import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mResourceInstance;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.observation.Observation;
+import org.eclipse.leshan.core.request.CreateRequest;
 import org.eclipse.leshan.core.request.ObserveRequest;
 import org.eclipse.leshan.core.request.ReadRequest;
 import org.eclipse.leshan.core.request.WriteCompositeRequest;
@@ -724,6 +725,16 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
             ((LwM2mObjectInstance) request.getNode()).getResources().forEach((resId, resource) -> {
                 this.updateResourcesValue(client, resource, path + "/" + resId, request.isReplaceRequest() ? Mode.REPLACE : Mode.UPDATE);
             });
+            clientContext.update(client);
+        }
+    }
+    @Override
+    public void onCreateResponseOk(LwM2mClient client, String path, CreateRequest request) {
+        if (request.getObjectInstances() != null && request.getObjectInstances().size() > 0) {
+            request.getObjectInstances().forEach( instance ->
+                    instance.getResources()
+            );
+//            this.updateResourcesValue(client, ((LwM2mResource) request.getNode()), path, request.isReplaceRequest() ? Mode.REPLACE : Mode.UPDATE);
             clientContext.update(client);
         }
     }

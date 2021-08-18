@@ -21,13 +21,16 @@ import org.eclipse.leshan.core.Link;
 import org.eclipse.leshan.core.LwM2m;
 import org.eclipse.leshan.core.attributes.Attribute;
 import org.eclipse.leshan.core.attributes.AttributeSet;
+import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.ObjectLink;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.request.CompositeDownlinkRequest;
 import org.eclipse.leshan.core.request.ContentFormat;
+import org.eclipse.leshan.core.request.CreateRequest;
 import org.eclipse.leshan.core.request.DeleteRequest;
 import org.eclipse.leshan.core.request.DiscoverRequest;
 import org.eclipse.leshan.core.request.DownlinkRequest;
@@ -42,6 +45,7 @@ import org.eclipse.leshan.core.request.WriteRequest;
 import org.eclipse.leshan.core.request.exception.ClientSleepingException;
 import org.eclipse.leshan.core.request.exception.InvalidRequestException;
 import org.eclipse.leshan.core.request.exception.TimeoutException;
+import org.eclipse.leshan.core.response.CreateResponse;
 import org.eclipse.leshan.core.response.DeleteResponse;
 import org.eclipse.leshan.core.response.DiscoverResponse;
 import org.eclipse.leshan.core.response.ExecuteResponse;
@@ -70,6 +74,7 @@ import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -78,6 +83,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -241,7 +247,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
      * new Attribute(Attribute.MAXIMUM_PERIOD, 100L));
      * WriteAttributesRequest requestTest = new WriteAttributesRequest(3, 0, 14, attributes);
      * sendSimpleRequest(client, requestTest, request.getTimeout(), callback);
-     *
+     * <p>
      * Example # 2
      * Dimension and Object version are read only attributes.
      * addAttribute(attributes, DIMENSION, params.getDim(), dim -> dim >= 0 && dim <= 255);
@@ -361,6 +367,51 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         }
     }
 
+    public void sendCreateRequest(LwM2mClient client, TbLwM2MCreateRequest request, DownlinkRequestCallback<CreateRequest, CreateResponse> callback) {
+        validateVersionedId(client, request);
+        CreateRequest downlink = null;
+        LwM2mPath resultIds = new LwM2mPath(request.getObjectId());
+        ObjectModel objectModel = client.getObjectModel(request.getObjectId(), this.config.getModelProvider());
+        // POST /{Object ID}/{Object Instance ID} && Resources is Mandatory
+        if (objectModel.multiple) {
+            // LwM2M CBOR, SenML CBOR, SenML JSON, or TLV (see [LwM2M-CORE])
+            ContentFormat contentFormat = getWriteRequestContentFormat(client, request, this.config.getModelProvider());
+            if (resultIds.isObject() || resultIds.isObjectInstance()) {
+                Collection<LwM2mResource> resources;
+                if (resultIds.isObject()) {
+//                    contentFormat = ContentFormat.TLV;
+                    if (request.getValue() != null) {
+                        resources = client.getNewResourcesForInstance(request.getVersionedId(), request.getValue(), this.config.getModelProvider(), this.converter);
+                        downlink = new CreateRequest(contentFormat, resultIds.getObjectId(), resources);
+                    } else if (request.getNodes() != null && request.getNodes().size() > 0) {
+                        Set<LwM2mObjectInstance> instances = ConcurrentHashMap.newKeySet();
+                        request.getNodes().forEach((key, value) -> {
+                            Collection<LwM2mResource> resourcesForInstance = client.getNewResourcesForInstance(request.getVersionedId(), value, this.config.getModelProvider(), this.converter);
+                            LwM2mObjectInstance instance = new LwM2mObjectInstance(Integer.parseInt(key), resourcesForInstance);
+                            instances.add(instance);
+                        });
+                        LwM2mObjectInstance [] instanceArrays = instances.toArray(new LwM2mObjectInstance[instances.size()]);
+                        downlink = new CreateRequest(contentFormat, resultIds.getObjectId(), instanceArrays);
+                    }
+
+                } else {
+                    resources = client.getNewResourcesForInstance(request.getVersionedId(), request.getValue(), this.config.getModelProvider(), this.converter);
+                    LwM2mObjectInstance instance = new LwM2mObjectInstance(resultIds.getObjectInstanceId(), resources);
+                    downlink = new CreateRequest(contentFormat, resultIds.getObjectId(), instance);
+                }
+            }
+            if (downlink != null) {
+                sendSimpleRequest(client, downlink, request.getTimeout(), callback);
+            } else {
+                callback.onValidationError(toString(request), "Path " + request.getVersionedId() +
+                        ". This operation can only be used for created new ObjectInstance !");
+            }
+        } else {
+            throw new IllegalArgumentException("Path " + request.getVersionedId() +
+                    ". Object must be Multiple !");
+        }
+    }
+
     private <R extends SimpleDownlinkRequest<T>, T extends LwM2mResponse> void sendSimpleRequest(LwM2mClient client, R request, long timeoutInMs, DownlinkRequestCallback<R, T> callback) {
         sendRequest(client, request, timeoutInMs, callback, r -> request.getPath().toString());
     }
@@ -368,6 +419,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     private <R extends CompositeDownlinkRequest<T>, T extends LwM2mResponse> void sendCompositeRequest(LwM2mClient client, R request, long timeoutInMs, DownlinkRequestCallback<R, T> callback) {
         sendRequest(client, request, timeoutInMs, callback, r -> request.getPaths().toString());
     }
+
 
     private <R extends DownlinkRequest<T>, T extends LwM2mResponse> void sendRequest(LwM2mClient client, R request, long timeoutInMs, DownlinkRequestCallback<R, T> callback, Function<R, String> pathToStringFunction) {
         if (!clientContext.isDownlinkAllowed(client)) {
@@ -497,6 +549,8 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                 versionedId = ((TbLwM2MWriteReplaceRequest) request).getVersionedId();
             } else if (request instanceof TbLwM2MWriteUpdateRequest) {
                 versionedId = ((TbLwM2MWriteUpdateRequest) request).getVersionedId();
+            } else if (request instanceof TbLwM2MCreateRequest) {
+                versionedId = ((TbLwM2MCreateRequest) request).getVersionedId();
             }
             return getRequestContentFormat(client, versionedId, modelProvider);
         }
@@ -558,12 +612,12 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     private <R> String toString(R request) {
         try {
             try {
-                return toString(request);
+                return request != null ? request.toString() : "";
             } catch (Exception e) {
-                return request.toString();
+                return "";
             }
         } catch (Exception e) {
-            log.warn("Failed to convert request to string", e);
+            log.trace("Failed to convert request to string", e);
             return request != null ? request.getClass().getSimpleName() : "";
         }
     }

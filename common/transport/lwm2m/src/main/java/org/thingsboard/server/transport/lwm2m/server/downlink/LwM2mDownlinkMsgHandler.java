@@ -16,7 +16,10 @@
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
 import org.eclipse.leshan.core.Link;
+import org.eclipse.leshan.core.request.AbstractLwM2mRequest;
+import org.eclipse.leshan.core.request.AbstractSimpleDownlinkRequest;
 import org.eclipse.leshan.core.request.ContentFormat;
+import org.eclipse.leshan.core.request.CreateRequest;
 import org.eclipse.leshan.core.request.DeleteRequest;
 import org.eclipse.leshan.core.request.DiscoverRequest;
 import org.eclipse.leshan.core.request.ExecuteRequest;
@@ -26,9 +29,12 @@ import org.eclipse.leshan.core.request.ReadRequest;
 import org.eclipse.leshan.core.request.WriteAttributesRequest;
 import org.eclipse.leshan.core.request.WriteCompositeRequest;
 import org.eclipse.leshan.core.request.WriteRequest;
+import org.eclipse.leshan.core.response.AbstractLwM2mResponse;
+import org.eclipse.leshan.core.response.CreateResponse;
 import org.eclipse.leshan.core.response.DeleteResponse;
 import org.eclipse.leshan.core.response.DiscoverResponse;
 import org.eclipse.leshan.core.response.ExecuteResponse;
+import org.eclipse.leshan.core.response.LwM2mResponse;
 import org.eclipse.leshan.core.response.ObserveResponse;
 import org.eclipse.leshan.core.response.ReadCompositeResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
@@ -72,5 +78,6 @@ public interface LwM2mDownlinkMsgHandler {
 
     void sendWriteUpdateRequest(LwM2mClient client, TbLwM2MWriteUpdateRequest request, DownlinkRequestCallback<WriteRequest, WriteResponse> callback);
 
+    void sendCreateRequest(LwM2mClient client, TbLwM2MCreateRequest request, DownlinkRequestCallback<CreateRequest, CreateResponse> callback);
 
 }
