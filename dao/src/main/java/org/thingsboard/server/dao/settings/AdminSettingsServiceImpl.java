@@ -52,7 +52,7 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
     public AdminSettings saveAdminSettings(TenantId tenantId, AdminSettings adminSettings) {
         log.trace("Executing saveAdminSettings [{}]", adminSettings);
         adminSettingsValidator.validate(adminSettings, data -> tenantId);
-        if (adminSettings.getKey().equals("mail") && "".equals(adminSettings.getJsonValue().get("password").asText())) {
+        if(adminSettings.getKey().equals("mail") && !adminSettings.getJsonValue().has("password")) {
             AdminSettings mailSettings = findAdminSettingsByKey(tenantId, "mail");
             if (mailSettings != null) {
                 ((ObjectNode) adminSettings.getJsonValue()).put("password", mailSettings.getJsonValue().get("password").asText());
@@ -61,7 +61,7 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
 
         return adminSettingsDao.save(tenantId, adminSettings);
     }
-    
+
     private DataValidator<AdminSettings> adminSettingsValidator =
             new DataValidator<AdminSettings>() {
 

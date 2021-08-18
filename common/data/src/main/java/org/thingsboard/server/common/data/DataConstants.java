@@ -36,6 +36,7 @@ public class DataConstants {
     public static final String ALARM_CONDITION_REPEATS = "alarmConditionRepeats";
     public static final String ALARM_CONDITION_DURATION = "alarmConditionDuration";
     public static final String PERSISTENT = "persistent";
+    public static final String ADDITIONAL_INFO = "additionalInfo";
     public static final String COAP_TRANSPORT_NAME = "COAP";
     public static final String LWM2M_TRANSPORT_NAME = "LWM2M";
     public static final String MQTT_TRANSPORT_NAME = "MQTT";
@@ -88,6 +89,7 @@ public class DataConstants {
     public static final String RPC_SUCCESSFUL = "RPC_SUCCESSFUL";
     public static final String RPC_TIMEOUT = "RPC_TIMEOUT";
     public static final String RPC_FAILED = "RPC_FAILED";
+    public static final String RPC_DELETED = "RPC_DELETED";
 
     public static final String DEFAULT_SECRET_KEY = "";
     public static final String SECRET_KEY_FIELD_NAME = "secretKey";

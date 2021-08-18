@@ -30,12 +30,12 @@ import java.util.UUID;
 public interface EdgeEventDao extends Dao<EdgeEvent> {
 
     /**
-     * Save or update edge event object async
+     * Save or update edge event object
      *
      * @param edgeEvent the event object
      * @return saved edge event object future
      */
-    ListenableFuture<EdgeEvent> saveAsync(EdgeEvent edgeEvent);
+    EdgeEvent save(EdgeEvent edgeEvent);
 
 
     /**

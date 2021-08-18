@@ -259,7 +259,7 @@ public final class EdgeGrpcSession implements Closeable {
                 log.error("[{}] Msg processing failed! Error msg: {}", edge.getRoutingKey(), msg.getErrorMsg());
             }
             if (sessionState.getPendingMsgsMap().isEmpty()) {
-                log.debug("[{}] Pending msgs map is empty. Stopping current iteration {}", edge.getRoutingKey(), msg);
+                log.debug("[{}] Pending msgs map is empty. Stopping current iteration", edge.getRoutingKey());
                 if (sessionState.getScheduledSendDownlinkTask() != null) {
                     sessionState.getScheduledSendDownlinkTask().cancel(false);
                 }
@@ -527,7 +527,7 @@ public final class EdgeGrpcSession implements Closeable {
             case RULE_CHAIN_METADATA:
                 return ctx.getRuleChainProcessor().processRuleChainMetadataToEdge(edgeEvent, msgType);
             case ALARM:
-                return ctx.getAlarmProcessor().processAlarmToEdge(edge, edgeEvent, msgType);
+                return ctx.getAlarmProcessor().processAlarmToEdge(edge, edgeEvent, msgType, action);
             case USER:
                 return ctx.getUserProcessor().processUserToEdge(edge, edgeEvent, msgType, action);
             case RELATION:

@@ -812,8 +812,15 @@ export enum TimeUnit {
   DAYS = 'DAYS'
 }
 
-export const timeUnitTranslationMap = new Map<TimeUnit, string>(
+export enum TimeUnitMilli {
+  MILLISECONDS = 'MILLISECONDS'
+}
+
+export type FullTimeUnit = TimeUnit | TimeUnitMilli;
+
+export const timeUnitTranslationMap = new Map<FullTimeUnit, string>(
   [
+    [TimeUnitMilli.MILLISECONDS, 'timeunit.milliseconds'],
     [TimeUnit.SECONDS, 'timeunit.seconds'],
     [TimeUnit.MINUTES, 'timeunit.minutes'],
     [TimeUnit.HOURS, 'timeunit.hours'],

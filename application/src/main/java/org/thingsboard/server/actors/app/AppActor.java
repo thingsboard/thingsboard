@@ -55,7 +55,7 @@ public class AppActor extends ContextAwareActor {
     private final TbTenantProfileCache tenantProfileCache;
     private final TenantService tenantService;
     private final Set<TenantId> deletedTenants;
-    private boolean ruleChainsInitialized;
+    private volatile boolean ruleChainsInitialized;
 
     private AppActor(ActorSystemContext systemContext) {
         super(systemContext);
@@ -69,7 +69,7 @@ public class AppActor extends ContextAwareActor {
         if (!ruleChainsInitialized) {
             initTenantActors();
             ruleChainsInitialized = true;
-            if (msg.getMsgType() != MsgType.APP_INIT_MSG) {
+            if (msg.getMsgType() != MsgType.APP_INIT_MSG && msg.getMsgType() != MsgType.PARTITION_CHANGE_MSG) {
                 log.warn("Rule Chains initialized by unexpected message: {}", msg);
             }
         }
@@ -95,6 +95,7 @@ public class AppActor extends ContextAwareActor {
             case DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG:
             case DEVICE_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
             case SERVER_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
+            case REMOVE_RPC_TO_DEVICE_ACTOR_MSG:
                 onToDeviceActorMsg((TenantAwareMsg) msg, true);
                 break;
             case EDGE_EVENT_UPDATE_TO_EDGE_SESSION_MSG:

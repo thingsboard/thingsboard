@@ -19,12 +19,12 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import freemarker.template.Configuration;
+import freemarker.template.Template;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
-import org.springframework.core.io.DefaultResourceLoader;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -37,9 +37,8 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.service.edge.rpc.EdgeEventUtils;
 
-import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +52,23 @@ public class AdminSettingsEdgeEventFetcher implements EdgeEventFetcher {
     private static final ObjectMapper mapper = new ObjectMapper();
 
     private final AdminSettingsService adminSettingsService;
+    private final Configuration freemarkerConfig;
+
+    private static Pattern startPattern = Pattern.compile("<div class=\"content\".*?>");
+    private static Pattern endPattern = Pattern.compile("<div class=\"footer\".*?>");
+
+    private static List<String> templatesNames = Arrays.asList(
+            "account.activated.ftl",
+            "account.lockout.ftl",
+            "activation.ftl",
+            "password.was.reset.ftl",
+            "reset.password.ftl",
+            "test.ftl");
+
+    // TODO: fix format of next templates
+    // "state.disabled.ftl",
+    // "state.enabled.ftl",
+    // "state.warning.ftl",
 
     @Override
     public PageLink getPageLink(int pageSize) {
@@ -85,23 +101,16 @@ public class AdminSettingsEdgeEventFetcher implements EdgeEventFetcher {
 
     private AdminSettings loadMailTemplates() throws Exception {
         Map<String, Object> mailTemplates = new HashMap<>();
-        Pattern startPattern = Pattern.compile("<div class=\"content\".*?>");
-        Pattern endPattern = Pattern.compile("<div class=\"footer\".*?>");
-        File[] files = new DefaultResourceLoader().getResource("classpath:/templates/").getFile().listFiles();
-        for (File file : files) {
-            Map<String, String> mailTemplate = new HashMap<>();
-            String name = validateName(file.getName());
-            String stringTemplate = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
-            Matcher start = startPattern.matcher(stringTemplate);
-            Matcher end = endPattern.matcher(stringTemplate);
-            if (start.find() && end.find()) {
-                String body = StringUtils.substringBetween(stringTemplate, start.group(), end.group()).replaceAll("\t", "");
-                String subject = StringUtils.substringBetween(body, "<h2>", "</h2>");
-                mailTemplate.put("subject", subject);
-                mailTemplate.put("body", body);
-                mailTemplates.put(name, mailTemplate);
-            } else {
-                log.error("Can't load mail template from file {}", file.getName());
+        for (String templatesName : templatesNames) {
+            Template template = freemarkerConfig.getTemplate(templatesName);
+            if (template != null) {
+                String name = validateName(template.getName());
+                Map<String, String> mailTemplate = getMailTemplateFromFile(template.getRootTreeNode().toString());
+                if (mailTemplate != null) {
+                    mailTemplates.put(name, mailTemplate);
+                } else {
+                    log.error("Can't load mail template from file {}", template.getName());
+                }
             }
         }
         AdminSettings adminSettings = new AdminSettings();
@@ -111,9 +120,24 @@ public class AdminSettingsEdgeEventFetcher implements EdgeEventFetcher {
         return adminSettings;
     }
 
+    private Map<String, String> getMailTemplateFromFile(String stringTemplate) {
+        Map<String, String> mailTemplate = new HashMap<>();
+        Matcher start = startPattern.matcher(stringTemplate);
+        Matcher end = endPattern.matcher(stringTemplate);
+        if (start.find() && end.find()) {
+            String body = StringUtils.substringBetween(stringTemplate, start.group(), end.group()).replaceAll("\t", "");
+            String subject = StringUtils.substringBetween(body, "<h2>", "</h2>");
+            mailTemplate.put("subject", subject);
+            mailTemplate.put("body", body);
+        } else {
+            return null;
+        }
+        return mailTemplate;
+    }
+
     private String validateName(String name) throws Exception {
         StringBuilder nameBuilder = new StringBuilder();
-        name = name.replace(".vm", "");
+        name = name.replace(".ftl", "");
         String[] nameParts = name.split("\\.");
         if (nameParts.length >= 1) {
             nameBuilder.append(nameParts[0]);

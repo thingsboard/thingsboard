@@ -17,6 +17,8 @@ package org.thingsboard.server.service.ota;
 
 import com.google.common.util.concurrent.FutureCallback;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Required;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
@@ -48,14 +50,16 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToOtaPackageStateSer
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
+import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.cluster.TbClusterService;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -77,7 +81,6 @@ import static org.thingsboard.server.common.data.ota.OtaPackageUtil.getTelemetry
 
 @Slf4j
 @Service
-@TbCoreComponent
 public class DefaultOtaPackageStateService implements OtaPackageStateService {
 
     private final TbClusterService tbClusterService;
@@ -87,17 +90,23 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
     private final RuleEngineTelemetryService telemetryService;
     private final TbQueueProducer<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> otaPackageStateMsgProducer;
 
-    public DefaultOtaPackageStateService(TbClusterService tbClusterService, OtaPackageService otaPackageService,
+    public DefaultOtaPackageStateService(@Lazy TbClusterService tbClusterService,
+                                         OtaPackageService otaPackageService,
                                          DeviceService deviceService,
                                          DeviceProfileService deviceProfileService,
-                                         RuleEngineTelemetryService telemetryService,
-                                         TbCoreQueueFactory coreQueueFactory) {
+                                         @Lazy RuleEngineTelemetryService telemetryService,
+                                         Optional<TbCoreQueueFactory> coreQueueFactory,
+                                         Optional<TbRuleEngineQueueFactory> reQueueFactory) {
         this.tbClusterService = tbClusterService;
         this.otaPackageService = otaPackageService;
         this.deviceService = deviceService;
         this.deviceProfileService = deviceProfileService;
         this.telemetryService = telemetryService;
-        this.otaPackageStateMsgProducer = coreQueueFactory.createToOtaPackageStateServiceMsgProducer();
+        if (coreQueueFactory.isPresent()) {
+            this.otaPackageStateMsgProducer = coreQueueFactory.get().createToOtaPackageStateServiceMsgProducer();
+        } else {
+            this.otaPackageStateMsgProducer = reQueueFactory.get().createToOtaPackageStateServiceMsgProducer();
+        }
     }
 
     @Override

@@ -33,6 +33,7 @@ import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorRef;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -454,6 +455,11 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public TbClusterService getClusterService() {
+        return mainCtx.getClusterService();
+    }
+
+    @Override
     public DashboardService getDashboardService() {
         return mainCtx.getDashboardService();
     }
@@ -519,8 +525,8 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public MailService getMailService() {
-        if (mainCtx.isAllowSystemMailService()) {
+    public MailService getMailService(boolean isSystem) {
+        if (!isSystem || mainCtx.isAllowSystemMailService()) {
             return mainCtx.getMailService();
         } else {
             throw new RuntimeException("Access to System Mail Service is forbidden!");

@@ -13,26 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.queue;
+package org.thingsboard.server.cluster;
 
-import org.thingsboard.rule.engine.api.msg.ToDeviceActorNotificationMsg;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
-import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
 
 import java.util.UUID;
 
@@ -54,7 +57,7 @@ public interface TbClusterService {
 
     void pushNotificationToTransport(String targetServiceId, ToTransportMsg response, TbQueueCallback callback);
 
-    void onEntityStateChange(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent state);
+    void broadcastEntityStateChangeEvent(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent state);
 
     void onDeviceProfileChange(DeviceProfile deviceProfile, TbQueueCallback callback);
 
@@ -70,7 +73,9 @@ public interface TbClusterService {
 
     void onApiStateChange(ApiUsageState apiUsageState, TbQueueCallback callback);
 
-    void onDeviceChange(Device device, TbQueueCallback callback);
+    void onDeviceUpdated(Device device, Device old);
+
+    void onDeviceUpdated(Device device, Device old, boolean notifyEdge);
 
     void onDeviceDeleted(Device device, TbQueueCallback callback);
 
@@ -79,4 +84,6 @@ public interface TbClusterService {
     void onResourceDeleted(TbResource resource, TbQueueCallback callback);
 
     void onEdgeEventUpdate(TenantId tenantId, EdgeId edgeId);
+
+    void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action);
 }

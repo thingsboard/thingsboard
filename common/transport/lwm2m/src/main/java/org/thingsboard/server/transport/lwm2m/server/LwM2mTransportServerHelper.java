@@ -14,21 +14,6 @@
  * limitations under the License.
  */
 package org.thingsboard.server.transport.lwm2m.server;
-/**
- * Copyright © 2016-2020 The Thingsboard Authors
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
 import com.google.gson.JsonParser;
 import lombok.RequiredArgsConstructor;
@@ -48,12 +33,14 @@ import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.thingsboard.server.gen.transport.TransportProtos.KeyValueType.BOOLEAN_V;
 
@@ -64,11 +51,6 @@ import static org.thingsboard.server.gen.transport.TransportProtos.KeyValueType.
 public class LwM2mTransportServerHelper {
 
     private final LwM2mTransportContext context;
-    private final AtomicInteger atomicTs = new AtomicInteger(0);
-
-    public long getTS() {
-        return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) * 1000L + (atomicTs.getAndIncrement() % 1000);
-    }
 
     public void sendParametersOnThingsboardAttribute(List<TransportProtos.KeyValueProto> result, SessionInfoProto sessionInfo) {
         PostAttributeMsg.Builder request = PostAttributeMsg.newBuilder();
@@ -77,14 +59,65 @@ public class LwM2mTransportServerHelper {
         context.getTransportService().process(sessionInfo, postAttributeMsg, TransportServiceCallback.EMPTY);
     }
 
-    public void sendParametersOnThingsboardTelemetry(List<TransportProtos.KeyValueProto> result, SessionInfoProto sessionInfo) {
-        PostTelemetryMsg.Builder request = PostTelemetryMsg.newBuilder();
-        TransportProtos.TsKvListProto.Builder builder = TransportProtos.TsKvListProto.newBuilder();
-        builder.setTs(this.getTS());
-        builder.addAllKv(result);
-        request.addTsKvList(builder.build());
-        PostTelemetryMsg postTelemetryMsg = request.build();
+    public void sendParametersOnThingsboardTelemetry(List<TransportProtos.KeyValueProto> kvList, SessionInfoProto sessionInfo) {
+        sendParametersOnThingsboardTelemetry(kvList, sessionInfo, null);
+    }
+
+    public void sendParametersOnThingsboardTelemetry(List<TransportProtos.KeyValueProto> kvList, SessionInfoProto sessionInfo, @Nullable ConcurrentMap<String, AtomicLong> keyTsLatestMap) {
+        TransportProtos.TsKvListProto tsKvList = toTsKvList(kvList, keyTsLatestMap);
+
+        PostTelemetryMsg postTelemetryMsg = PostTelemetryMsg.newBuilder()
+                .addTsKvList(tsKvList)
+                .build();
+
         context.getTransportService().process(sessionInfo, postTelemetryMsg, TransportServiceCallback.EMPTY);
+    }
+
+    TransportProtos.TsKvListProto toTsKvList(List<TransportProtos.KeyValueProto> kvList, ConcurrentMap<String, AtomicLong> keyTsLatestMap) {
+        return TransportProtos.TsKvListProto.newBuilder()
+                .setTs(getTs(kvList, keyTsLatestMap))
+                .addAllKv(kvList)
+                .build();
+    }
+
+    long getTs(List<TransportProtos.KeyValueProto> kvList, ConcurrentMap<String, AtomicLong> keyTsLatestMap) {
+        if (keyTsLatestMap == null || kvList == null || kvList.isEmpty()) {
+            return getCurrentTimeMillis();
+        }
+
+        return getTsByKey(kvList.get(0).getKey(), keyTsLatestMap, getCurrentTimeMillis());
+    }
+
+    long getTsByKey(@Nonnull String key, @Nonnull ConcurrentMap<String, AtomicLong> keyTsLatestMap, final long tsNow) {
+        AtomicLong tsLatestAtomic = keyTsLatestMap.putIfAbsent(key, new AtomicLong(tsNow));
+        if (tsLatestAtomic == null) {
+            return tsNow; // it is a first known timestamp for this key. return as the latest
+        }
+
+        return compareAndSwapOrIncrementTsAtomically(tsLatestAtomic, tsNow);
+    }
+
+    /**
+     * This algorithm is sensitive to wall-clock time shift.
+     * Once time have shifted *backward*, the latest ts never came back.
+     * Ts latest will be incremented until current time overtake the latest ts.
+     * In normal environment without race conditions method will return current ts (wall-clock)
+     * */
+    long compareAndSwapOrIncrementTsAtomically(AtomicLong tsLatestAtomic, final long tsNow) {
+        long tsLatest;
+        while ((tsLatest = tsLatestAtomic.get()) < tsNow) {
+            if (tsLatestAtomic.compareAndSet(tsLatest, tsNow)) {
+                return tsNow; //swap successful
+            }
+        }
+        return tsLatestAtomic.incrementAndGet(); //return next ms
+    }
+
+    /**
+     * For the test ability to mock system timer
+     * */
+    long getCurrentTimeMillis() {
+        return System.currentTimeMillis();
     }
 
     /**

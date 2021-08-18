@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -28,18 +29,19 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.Authority;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
-public class BaseEdgeEventControllerTest extends AbstractControllerTest {
+public abstract class BaseEdgeEventControllerTest extends AbstractControllerTest {
 
     private Tenant savedTenant;
     private User tenantAdmin;
@@ -83,32 +85,35 @@ public class BaseEdgeEventControllerTest extends AbstractControllerTest {
         Device device = constructDevice("TestDevice", "default");
         Device savedDevice = doPost("/api/device", device, Device.class);
 
-        doPost("/api/edge/" + edge.getId().toString() + "/device/" + savedDevice.getId().toString(), Device.class);
+        final EdgeId edgeId = edge.getId();
+        doPost("/api/edge/" + edgeId.toString() + "/device/" + savedDevice.getId().toString(), Device.class);
 
         Asset asset = constructAsset("TestAsset", "default");
         Asset savedAsset = doPost("/api/asset", asset, Asset.class);
 
-        doPost("/api/edge/" + edge.getId().toString() + "/asset/" + savedAsset.getId().toString(), Asset.class);
+        doPost("/api/edge/" + edgeId.toString() + "/asset/" + savedAsset.getId().toString(), Asset.class);
 
         EntityRelation relation = new EntityRelation(savedAsset.getId(), savedDevice.getId(), EntityRelation.CONTAINS_TYPE);
 
         doPost("/api/relation", relation);
 
-        // wait while edge event for the relation entity persisted to DB
-        Thread.sleep(100);
-        List<EdgeEvent> edgeEvents;
-        int attempt = 1;
-        do {
-            edgeEvents = doGetTypedWithTimePageLink("/api/edge/" + edge.getId().toString() + "/events?",
-                            new TypeReference<PageData<EdgeEvent>>() {}, new TimePageLink(4)).getData();
-            attempt++;
-            Thread.sleep(100);
-        } while (edgeEvents.size() != 4 && attempt < 5);
-        Assert.assertEquals(4, edgeEvents.size());
+        Awaitility.await()
+                .atMost(30, TimeUnit.SECONDS)
+                .until(() -> {
+                    List<EdgeEvent> edgeEvents = findEdgeEvents(edgeId);
+                    return edgeEvents.size() == 4;
+                });
+        List<EdgeEvent> edgeEvents = findEdgeEvents(edgeId);
         Assert.assertTrue(edgeEvents.stream().anyMatch(ee -> EdgeEventType.RULE_CHAIN.equals(ee.getType())));
         Assert.assertTrue(edgeEvents.stream().anyMatch(ee -> EdgeEventType.DEVICE.equals(ee.getType())));
         Assert.assertTrue(edgeEvents.stream().anyMatch(ee -> EdgeEventType.ASSET.equals(ee.getType())));
         Assert.assertTrue(edgeEvents.stream().anyMatch(ee -> EdgeEventType.RELATION.equals(ee.getType())));
+    }
+
+    private List<EdgeEvent> findEdgeEvents(EdgeId edgeId) throws Exception {
+        return doGetTypedWithTimePageLink("/api/edge/" + edgeId.toString() + "/events?",
+                new TypeReference<PageData<EdgeEvent>>() {
+                }, new TimePageLink(10)).getData();
     }
 
     private Device constructDevice(String name, String type) {

@@ -202,6 +202,13 @@ export class WidgetContext {
       } else {
         return of(null);
       }
+    },
+    completedCommand: () => {
+      if (this.defaultSubscription) {
+        return this.defaultSubscription.completedCommand();
+      } else {
+        return of(null);
+      }
     }
   };
 

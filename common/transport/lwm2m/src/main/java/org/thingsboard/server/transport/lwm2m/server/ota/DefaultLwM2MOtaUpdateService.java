@@ -45,11 +45,11 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MExecuteRequ
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteReplaceRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteResponseCallback;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
-import org.thingsboard.server.transport.lwm2m.server.ota.firmware.LwM2MClientFwOtaInfo;
-import org.thingsboard.server.transport.lwm2m.server.ota.firmware.LwM2MFirmwareUpdateStrategy;
 import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareDeliveryMethod;
 import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdateResult;
 import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdateState;
+import org.thingsboard.server.transport.lwm2m.server.ota.firmware.LwM2MClientFwOtaInfo;
+import org.thingsboard.server.transport.lwm2m.server.ota.firmware.LwM2MFirmwareUpdateStrategy;
 import org.thingsboard.server.transport.lwm2m.server.ota.software.LwM2MClientSwOtaInfo;
 import org.thingsboard.server.transport.lwm2m.server.ota.software.LwM2MSoftwareUpdateStrategy;
 import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateResult;
@@ -282,8 +282,17 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         }
         fwInfo.setUpdateState(state);
         Optional<OtaPackageUpdateStatus> status = toOtaPackageUpdateStatus(state);
-        status.ifPresent(otaStatus -> sendStateUpdateToTelemetry(client, fwInfo,
-                otaStatus, "Firmware Update State: " + state.name()));
+
+        if (FirmwareUpdateState.IDLE.equals(state) && DOWNLOADING.equals(fwInfo.getStatus())) {
+            fwInfo.setFailedPackageId(fwInfo.getTargetPackageId());
+            status = Optional.of(FAILED);
+        }
+
+        status.ifPresent(otaStatus -> {
+            fwInfo.setStatus(otaStatus);
+            sendStateUpdateToTelemetry(client, fwInfo,
+                    otaStatus, "Firmware Update State: " + state.name());
+        });
         update(fwInfo);
     }
 
@@ -293,8 +302,19 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         LwM2MClientFwOtaInfo fwInfo = getOrInitFwInfo(client);
         FirmwareUpdateResult result = FirmwareUpdateResult.fromUpdateResultFwByCode(code.intValue());
         Optional<OtaPackageUpdateStatus> status = toOtaPackageUpdateStatus(result);
-        status.ifPresent(otaStatus -> sendStateUpdateToTelemetry(client, fwInfo,
-                otaStatus, "Firmware Update Result: " + result.name()));
+
+        if (FirmwareUpdateResult.INITIAL.equals(result) && OtaPackageUpdateStatus.UPDATING.equals(fwInfo.getStatus())) {
+            status = Optional.of(UPDATED);
+            fwInfo.setRetryAttempts(0);
+        }
+
+        status.ifPresent(otaStatus -> {
+                    fwInfo.setStatus(otaStatus);
+                    sendStateUpdateToTelemetry(client, fwInfo,
+                            otaStatus, "Firmware Update Result: " + result.name());
+                }
+        );
+
         if (result.isAgain() && fwInfo.getRetryAttempts() <= 2) {
             fwInfo.setRetryAttempts(fwInfo.getRetryAttempts() + 1);
             startFirmwareUpdateIfNeeded(client, fwInfo);
@@ -581,7 +601,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         kvProto = TransportProtos.KeyValueProto.newBuilder().setKey(LOG_LWM2M_TELEMETRY);
         kvProto.setType(TransportProtos.KeyValueType.STRING_V).setStringV(log);
         result.add(kvProto.build());
-        helper.sendParametersOnThingsboardTelemetry(result, client.getSession());
+        helper.sendParametersOnThingsboardTelemetry(result, client.getSession(), client.getKeyTsLatestMap());
     }
 
     private static Optional<OtaPackageUpdateStatus> toOtaPackageUpdateStatus(FirmwareUpdateResult fwUpdateResult) {

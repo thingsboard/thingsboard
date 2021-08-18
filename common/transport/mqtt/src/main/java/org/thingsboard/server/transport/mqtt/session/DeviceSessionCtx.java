@@ -18,6 +18,8 @@ package org.thingsboard.server.transport.mqtt.session;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.mqtt.MqttMessage;
+import io.netty.util.ReferenceCountUtil;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -34,9 +36,16 @@ import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.util.MqttTopicFilter;
 import org.thingsboard.server.transport.mqtt.util.MqttTopicFilterFactory;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Queue;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 
 /**
  * @author Andrew Shvayka
@@ -45,12 +54,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
 
     @Getter
+    @Setter
     private ChannelHandlerContext channel;
 
     @Getter
-    private MqttTransportContext context;
+    private final MqttTransportContext context;
 
     private final AtomicInteger msgIdSeq = new AtomicInteger(0);
+
+    private final ConcurrentLinkedQueue<MqttMessage> msgQueue = new ConcurrentLinkedQueue<>();
+
+    @Getter
+    private final Lock msgQueueProcessorLock = new ReentrantLock();
+
+    private final AtomicInteger msgQueueSize = new AtomicInteger(0);
 
     @Getter
     @Setter
@@ -71,10 +88,6 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     public DeviceSessionCtx(UUID sessionId, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap, MqttTransportContext context) {
         super(sessionId, mqttQoSMap);
         this.context = context;
-    }
-
-    public void setChannel(ChannelHandlerContext channel) {
-        this.channel = channel;
     }
 
     public int nextMsgId() {
@@ -150,4 +163,49 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
         rpcResponseDynamicMessageDescriptor = protoTransportPayloadConfig.getRpcResponseDynamicMessageDescriptor(protoTransportPayloadConfig.getDeviceRpcResponseProtoSchema());
         rpcRequestDynamicMessageBuilder = protoTransportPayloadConfig.getRpcRequestDynamicMessageBuilder(protoTransportPayloadConfig.getDeviceRpcRequestProtoSchema());
     }
+
+    public void addToQueue(MqttMessage msg) {
+        msgQueueSize.incrementAndGet();
+        ReferenceCountUtil.retain(msg);
+        msgQueue.add(msg);
+    }
+
+    public void tryProcessQueuedMsgs(Consumer<MqttMessage> msgProcessor) {
+        while (!msgQueue.isEmpty()) {
+            if (msgQueueProcessorLock.tryLock()) {
+                try {
+                    MqttMessage msg;
+                    while ((msg = msgQueue.poll()) != null) {
+                        try {
+                            msgQueueSize.decrementAndGet();
+                            msgProcessor.accept(msg);
+                        } finally {
+                            ReferenceCountUtil.safeRelease(msg);
+                        }
+                    }
+                } finally {
+                    msgQueueProcessorLock.unlock();
+                }
+            } else {
+                return;
+            }
+        }
+    }
+
+    public int getMsgQueueSize() {
+        return msgQueueSize.get();
+    }
+
+    public void release() {
+        if (!msgQueue.isEmpty()) {
+            log.warn("doDisconnect for device {} but unprocessed messages {} left in the msg queue", getDeviceId(), msgQueue.size());
+            msgQueue.forEach(ReferenceCountUtil::safeRelease);
+            msgQueue.clear();
+        }
+    }
+
+    public Collection<MqttMessage> getMsgQueueSnapshot(){
+        return Collections.unmodifiableCollection(msgQueue);
+    }
+
 }

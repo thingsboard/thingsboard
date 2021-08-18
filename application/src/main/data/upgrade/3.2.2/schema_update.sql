@@ -209,6 +209,7 @@ CREATE TABLE IF NOT EXISTS rpc (
     expiration_time bigint NOT NULL,
     request varchar(10000000) NOT NULL,
     response varchar(10000000),
+    additional_info varchar(10000000),
     status varchar(255) NOT NULL
 );
 

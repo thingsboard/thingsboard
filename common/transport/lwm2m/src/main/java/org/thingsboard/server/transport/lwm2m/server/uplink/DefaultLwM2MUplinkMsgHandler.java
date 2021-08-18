@@ -223,11 +223,16 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
                 this.initClientTelemetry(lwM2MClient);
                 this.initAttributes(lwM2MClient);
                 otaService.init(lwM2MClient);
+                lwM2MClient.getRetryAttempts().set(0);
             } catch (LwM2MClientStateException stateException) {
                 if (LwM2MClientState.UNREGISTERED.equals(stateException.getState())) {
                     log.info("[{}] retry registration due to race condition: [{}].", registration.getEndpoint(), stateException.getState());
                     // Race condition detected and the client was in progress of unregistration while new registration arrived. Let's try again.
-                    onRegistered(registration, previousObservations);
+                    if (lwM2MClient.getRetryAttempts().incrementAndGet() <= 5) {
+                        context.getScheduler().schedule(() -> onRegistered(registration, previousObservations), 1, TimeUnit.SECONDS);
+                    } else {
+                        logService.log(lwM2MClient, LOG_LWM2M_WARN + ": Client registration failed due to retry attempts: " + lwM2MClient.getRetryAttempts().get());
+                    }
                 } else {
                     logService.log(lwM2MClient, LOG_LWM2M_WARN + ": Client registration failed due to invalid state: " + stateException.getState());
                 }

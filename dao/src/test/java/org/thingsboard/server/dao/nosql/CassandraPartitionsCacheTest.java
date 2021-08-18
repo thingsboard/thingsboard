@@ -100,10 +100,10 @@ public class CassandraPartitionsCacheTest {
         long tsKvEntryTs = System.currentTimeMillis();
 
         for (int i = 0; i < 50000; i++) {
-            cassandraBaseTimeseriesDao.savePartition(tenantId, tenantId, tsKvEntryTs, "test" + i, 0);
+            cassandraBaseTimeseriesDao.savePartition(tenantId, tenantId, tsKvEntryTs, "test" + i);
         }
         for (int i = 0; i < 60000; i++) {
-            cassandraBaseTimeseriesDao.savePartition(tenantId, tenantId, tsKvEntryTs, "test" + i, 0);
+            cassandraBaseTimeseriesDao.savePartition(tenantId, tenantId, tsKvEntryTs, "test" + i);
         }
         verify(cassandraBaseTimeseriesDao, times(60000)).executeAsyncWrite(any(TenantId.class), any(Statement.class));
     }

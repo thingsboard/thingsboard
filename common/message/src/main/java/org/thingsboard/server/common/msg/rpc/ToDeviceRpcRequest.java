@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.msg.rpc;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -35,5 +36,7 @@ public class ToDeviceRpcRequest implements Serializable {
     private final long expirationTime;
     private final ToDeviceRpcRequestBody body;
     private final boolean persisted;
+    @JsonIgnore
+    private final String additionalInfo;
 }
 

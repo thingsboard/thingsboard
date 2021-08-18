@@ -49,7 +49,7 @@ import {
   toHistoryTimewindow,
   WidgetTimewindow
 } from '@app/shared/models/time/time.models';
-import { forkJoin, Observable, of, ReplaySubject, Subject, throwError } from 'rxjs';
+import { forkJoin, Observable, of, ReplaySubject, Subject, throwError, timer } from 'rxjs';
 import { CancelAnimationFrame } from '@core/services/raf.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import { createLabelFromDatasource, deepClone, isDefined, isDefinedAndNotNull, isEqual } from '@core/utils';
@@ -67,8 +67,9 @@ import {
   KeyFilter,
   updateDatasourceFromEntityInfo
 } from '@shared/models/query/query.models';
-import { map } from 'rxjs/operators';
+import { filter, map, switchMap, takeUntil } from 'rxjs/operators';
 import { AlarmDataListener } from '@core/api/alarm-data.service';
+import { RpcStatus } from '@shared/models/rpc.models';
 
 const moment = moment_;
 
@@ -644,12 +645,14 @@ export class WidgetSubscription implements IWidgetSubscription {
     }
   }
 
-  sendOneWayCommand(method: string, params?: any, timeout?: number, persistent?: boolean, requestUUID?: string): Observable<any> {
-    return this.sendCommand(true, method, params, timeout, persistent, requestUUID);
+  sendOneWayCommand(method: string, params?: any, timeout?: number, persistent?: boolean,
+                    persistentPollingInterval?: number, requestUUID?: string): Observable<any> {
+    return this.sendCommand(true, method, params, timeout, persistent, persistentPollingInterval, requestUUID);
   }
 
-  sendTwoWayCommand(method: string, params?: any, timeout?: number, persistent?: boolean, requestUUID?: string): Observable<any> {
-    return this.sendCommand(false, method, params, timeout, persistent, requestUUID);
+  sendTwoWayCommand(method: string, params?: any, timeout?: number, persistent?: boolean,
+                    persistentPollingInterval?: number, requestUUID?: string): Observable<any> {
+    return this.sendCommand(false, method, params, timeout, persistent, persistentPollingInterval, requestUUID);
   }
 
   clearRpcError(): void {
@@ -658,8 +661,15 @@ export class WidgetSubscription implements IWidgetSubscription {
     this.callbacks.onRpcErrorCleared(this);
   }
 
-  sendCommand(oneWayElseTwoWay: boolean, method: string, params?: any,
-              timeout?: number, persistent?: boolean, requestUUID?: string): Observable<any> {
+  completedCommand(): void {
+    this.executingSubjects.forEach(subject => {
+      subject.next();
+      subject.complete();
+    });
+  }
+
+  sendCommand(oneWayElseTwoWay: boolean, method: string, params?: any, timeout?: number,
+              persistent?: boolean, persistentPollingInterval?: number, requestUUID?: string): Observable<any> {
     if (!this.rpcEnabled) {
       return throwError(new Error('Rpc disabled!'));
     } else {
@@ -677,7 +687,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       if (timeout && timeout > 0) {
         requestBody.timeout = timeout;
       }
-      const rpcSubject: Subject<any> = new ReplaySubject<any>();
+      const rpcSubject: Subject<any> = new Subject<any>();
       this.executingRpcRequest = true;
       this.callbacks.rpcStateChanged(this);
       if (this.ctx.utils.widgetEditMode) {
@@ -695,7 +705,28 @@ export class WidgetSubscription implements IWidgetSubscription {
       } else {
         this.executingSubjects.push(rpcSubject);
         (oneWayElseTwoWay ? this.ctx.deviceService.sendOneWayRpcCommand(this.targetDeviceId, requestBody) :
-          this.ctx.deviceService.sendTwoWayRpcCommand(this.targetDeviceId, requestBody))
+          this.ctx.deviceService.sendTwoWayRpcCommand(this.targetDeviceId, requestBody)).pipe(
+            switchMap((response) => {
+              if (persistent && persistentPollingInterval > 0) {
+                return timer(persistentPollingInterval / 2, persistentPollingInterval).pipe(
+                  switchMap(() => this.ctx.deviceService.getPersistedRpc(response.rpcId, true)),
+                  filter(persistentRespons =>
+                    persistentRespons.status !== RpcStatus.DELIVERED && persistentRespons.status !== RpcStatus.QUEUED),
+                  switchMap(persistentResponse => {
+                    if (persistentResponse.status === RpcStatus.TIMEOUT) {
+                      return throwError({status: 504});
+                    } else if (persistentResponse.status === RpcStatus.FAILED) {
+                      return throwError({status: 502, statusText: persistentResponse.response.error});
+                    } else {
+                      return of(persistentResponse.response);
+                    }
+                  }),
+                  takeUntil(rpcSubject)
+                );
+              }
+              return of(response);
+            })
+        )
         .subscribe((responseBody) => {
           this.rpcRejection = null;
           this.rpcErrorText = null;

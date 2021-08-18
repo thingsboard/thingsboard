@@ -17,7 +17,7 @@
 import { BaseData, HasId } from '@shared/models/base-data';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
-import { Directive, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ChangeDetectorRef, Directive, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityAction } from '@home/models/entity/entity-component.models';
@@ -50,6 +50,7 @@ export abstract class EntityComponent<T extends BaseData<HasId>,
   @Input()
   set isEdit(isEdit: boolean) {
     this.isEditValue = isEdit;
+    this.cd.markForCheck();
     this.updateFormState();
   }
 
@@ -80,7 +81,8 @@ export abstract class EntityComponent<T extends BaseData<HasId>,
   protected constructor(protected store: Store<AppState>,
                         protected fb: FormBuilder,
                         protected entityValue: T,
-                        protected entitiesTableConfigValue: C) {
+                        protected entitiesTableConfigValue: C,
+                        protected cd: ChangeDetectorRef) {
     super(store);
     this.entityForm = this.buildForm(this.entityValue);
   }

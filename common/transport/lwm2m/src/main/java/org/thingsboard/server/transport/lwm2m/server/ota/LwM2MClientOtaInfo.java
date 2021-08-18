@@ -20,6 +20,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
+import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;
 
 import java.util.Optional;
 
@@ -39,6 +40,7 @@ public abstract class LwM2MClientOtaInfo<Strategy, State, Result> {
     protected Strategy strategy;
     protected State updateState;
     protected Result result;
+    protected OtaPackageUpdateStatus status;
 
     protected String failedPackageId;
     protected int retryAttempts;
@@ -104,4 +106,8 @@ public abstract class LwM2MClientOtaInfo<Strategy, State, Result> {
 
     public abstract OtaPackageType getType();
 
+    @JsonIgnore
+    public String getTargetPackageId() {
+        return getPackageId(targetName, targetVersion);
+    }
 }
