@@ -48,6 +48,7 @@ import {
   EventFilterPanelData,
   FilterEntityColumn
 } from '@home/components/event/event-filter-panel.component';
+import {historyInterval, MINUTE} from '@shared/models/time/time.models';
 
 export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
@@ -87,6 +88,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     this.loadDataOnInit = false;
     this.tableTitle = '';
     this.useTimePageLink = true;
+    this.defaultTimewindowInterval = historyInterval(MINUTE * 5);
     this.detailsPanelEnabled = false;
     this.selectionEnabled = false;
     this.searchEnabled = false;
