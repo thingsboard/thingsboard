@@ -106,6 +106,10 @@
             <artifactId>mockito-core</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.eclipse.leshan</groupId>
+            <artifactId>leshan-server-cf</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

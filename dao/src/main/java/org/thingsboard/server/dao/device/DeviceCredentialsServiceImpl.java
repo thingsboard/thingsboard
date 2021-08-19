@@ -15,9 +15,13 @@
  */
 package org.thingsboard.server.dao.device;
 
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.eclipse.leshan.core.util.Hex;
+import org.eclipse.leshan.server.bootstrap.InvalidConfigurationException;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.util.SecurityUtil;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -26,13 +30,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredentials;
+import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
@@ -42,6 +49,19 @@ import org.thingsboard.server.dao.service.DataValidator;
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_CREDENTIALS_CACHE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateString;
+import org.eclipse.leshan.core.SecurityMode;
+import org.thingsboard.server.transport.lwm2m.config.LwM2MSecureServerConfig;
+import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportBootstrapConfig;
+import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
+
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -52,6 +72,12 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
 
     @Autowired
     private DeviceService deviceService;
+
+    @Autowired
+    protected LwM2MTransportServerConfig serverConfig;
+
+    @Autowired
+    protected LwM2MTransportBootstrapConfig bootstrapConfig;
 
     @Override
     public DeviceCredentials findDeviceCredentialsByDeviceId(TenantId tenantId, DeviceId deviceId) {
@@ -77,6 +103,51 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
     @Override
     public DeviceCredentials createDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials) {
         return saveOrUpdate(tenantId, deviceCredentials);
+    }
+
+    public void verifySecurityKeyDevice(DeviceCredentials deviceCredentials) throws JsonProcessingException, InvalidConfigurationException {
+        JsonNode nodeCredentialsValue = deviceCredentials.getNodeCredentialsValue();
+        checkClientKey (nodeCredentialsValue.get("client"));
+        checkServerKey (nodeCredentialsValue.get("bootstrap").get("bootstrapServer"), "Client`s  by bootstrapServer");
+        checkServerKey (nodeCredentialsValue.get("bootstrap").get("lwm2mServer"), "Client`s by lwm2mServer");
+    }
+
+    public void verifySecurityKeyDeviceProfile(DeviceProfile deviceProfile) throws InvalidConfigurationException, JsonProcessingException {
+        Map serverBs = ((Lwm2mDeviceProfileTransportConfiguration)deviceProfile.getProfileData().getTransportConfiguration()).getBootstrap().getBootstrapServer();
+        checkDeviceProfileServer (serverBs, "Servers: BootstrapServer`s");
+        Map serverLwm2m = ((Lwm2mDeviceProfileTransportConfiguration)deviceProfile.getProfileData().getTransportConfiguration()).getBootstrap().getLwm2mServer();
+        checkDeviceProfileServer (serverLwm2m, "Servers: Lwm2mServer`s");
+    }
+
+    public ServerSecurityConfig getServerSecurityInfo(boolean bootstrapServer) {
+        ServerSecurityConfig result = getServerSecurityConfig(bootstrapServer ? bootstrapConfig : serverConfig);
+        result.setBootstrapServerIs(bootstrapServer);
+        return result;
+    }
+
+    private ServerSecurityConfig getServerSecurityConfig(LwM2MSecureServerConfig serverConfig) {
+        ServerSecurityConfig bsServ = new ServerSecurityConfig();
+        bsServ.setServerId(serverConfig.getId());
+        bsServ.setHost(serverConfig.getHost());
+        bsServ.setPort(serverConfig.getPort());
+        bsServ.setSecurityHost(serverConfig.getSecureHost());
+        bsServ.setSecurityPort(serverConfig.getSecurePort());
+        bsServ.setServerPublicKey(getPublicKey(serverConfig));
+        return bsServ;
+    }
+
+    private String getPublicKey(LwM2MSecureServerConfig config) {
+        try {
+            KeyStore keyStore = serverConfig.getKeyStoreValue();
+            if (keyStore != null) {
+                X509Certificate serverCertificate = (X509Certificate) serverConfig.getKeyStoreValue().getCertificate(config.getCertificateAlias());
+                return Hex.encodeHexString(serverCertificate.getPublicKey().getEncoded());
+            }
+        } catch (Exception e) {
+            log.trace("Failed to fetch public key from key store!", e);
+
+        }
+        return "";
     }
 
     private DeviceCredentials saveOrUpdate(TenantId tenantId, DeviceCredentials deviceCredentials) {
@@ -236,5 +307,93 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                     }
                 }
             };
+
+    private void checkClientKey (JsonNode node) throws InvalidConfigurationException {
+        String modeName = node.get("securityConfigClientMode").asText();
+        // checks security config
+
+        if (SecurityMode.RPK.name().equals(modeName)) {
+            String value = node.get("key").textValue();
+            assertIf(decodeRfc7250PublicKey(org.eclipse.leshan.core.util.Hex.decodeHex(((String) value).toCharArray())) == null,
+                    "raw-public-key mode, Client`s public key or id must be RFC7250 encoded public key");
+        } else if (SecurityMode.X509.name().equals(modeName)) {
+            String value = node.get("cert").textValue();
+            if (value != null && !value.isEmpty()) {
+                assertIf(decodeCertificate(Hex.decodeHex(((String) value).toCharArray())) == null,
+                        "x509 mode, Client`s public key must be DER encoded X.509 certificate");
+            }
+        }
+    }
+
+    private void checkServerKey (JsonNode node, String serverType) throws InvalidConfigurationException {
+        String modeName = node.get("securityMode").asText();
+        // checks security config
+        if (SecurityMode.RPK.name().equals(modeName)) {
+            checkRPKServer(node, serverType);
+        } else if (SecurityMode.X509.name().equals(modeName)) {
+            checkX509Server(node, serverType);
+        }
+    }
+
+    protected void checkRPKServer(JsonNode node, String serverType) throws org.eclipse.leshan.server.bootstrap.InvalidConfigurationException {
+        String value = node.get("clientSecretKey").textValue();
+        assertIf(decodeRfc5958PrivateKey(org.eclipse.leshan.core.util.Hex.decodeHex(value.toCharArray())) == null,
+                "raw-public-key mode, " + serverType + " secret key must be RFC5958 encoded private key");
+        value = node.get("clientPublicKeyOrId").textValue();
+        assertIf(decodeRfc7250PublicKey(org.eclipse.leshan.core.util.Hex.decodeHex(value.toCharArray())) == null,
+                "raw-public-key mode, " + serverType + " public key or id must be RFC7250 encoded public key");
+    }
+
+    protected void checkX509Server(JsonNode node, String serverType) throws org.eclipse.leshan.server.bootstrap.InvalidConfigurationException {
+        String value = node.get("clientSecretKey").textValue();
+        assertIf(decodeRfc5958PrivateKey(org.eclipse.leshan.core.util.Hex.decodeHex(value.toCharArray())) == null,
+                "x509 mode " + serverType + " secret key must be RFC5958 encoded private key");
+        value = node.get("clientPublicKeyOrId").textValue();
+        assertIf(decodeCertificate(org.eclipse.leshan.core.util.Hex.decodeHex(value.toCharArray())) == null,
+                "x509 mode " + serverType + " public key must be DER encoded X.509 certificate");
+
+    }
+
+    protected void checkDeviceProfileServer (Map server, String serverType) throws org.eclipse.leshan.server.bootstrap.InvalidConfigurationException {
+        // checks security config
+        String value = (String) server.get("serverPublicKey");
+        if (SecurityMode.RPK.name().equals(server.get("securityMode"))) {
+            assertIf(decodeRfc7250PublicKey(org.eclipse.leshan.core.util.Hex.decodeHex(value.toCharArray())) == null,
+                    "raw-public-key mode, " + serverType + " public key or id must be RFC7250 encoded public key");
+        } else if (SecurityMode.X509.name().equals(server.get("securityMode"))) {
+            assertIf(decodeCertificate(org.eclipse.leshan.core.util.Hex.decodeHex(value.toCharArray())) == null,
+                    "x509 mode, " + serverType + " public key must be DER encoded X.509 certificate");
+        }
+    }
+
+    protected PrivateKey decodeRfc5958PrivateKey(byte[] encodedKey) throws org.eclipse.leshan.server.bootstrap.InvalidConfigurationException {
+        try {
+            return SecurityUtil.privateKey.decode(encodedKey);
+        } catch (IOException | GeneralSecurityException e) {
+            return null;
+        }
+    }
+
+    protected PublicKey decodeRfc7250PublicKey(byte[] encodedKey) throws org.eclipse.leshan.server.bootstrap.InvalidConfigurationException {
+        try {
+            return SecurityUtil.publicKey.decode(encodedKey);
+        } catch (IOException | GeneralSecurityException e) {
+            return null;
+        }
+    }
+
+    protected Certificate decodeCertificate(byte[] encodedCert) throws org.eclipse.leshan.server.bootstrap.InvalidConfigurationException {
+        try {
+            return SecurityUtil.certificate.decode(encodedCert);
+        } catch (IOException | GeneralSecurityException e) {
+            return null;
+        }
+    }
+
+    protected static void assertIf(boolean condition, String message) throws org.eclipse.leshan.server.bootstrap.InvalidConfigurationException {
+        if (condition) {
+            throw new org.eclipse.leshan.server.bootstrap.InvalidConfigurationException(message);
+        }
+    }
 
 }
