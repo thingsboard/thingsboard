@@ -13,19 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.rpc;
+package org.thingsboard.server.transport.lwm2m.client;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
 
-import java.util.Map;
-
+@Slf4j
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class RpcCreateRequest extends LwM2MRpcRequestHeader {
+public class LwM2MLocationParams {
 
-    private Object value;
-    private String contentFormat;
-    private Map<String, Object> nodes;
+    private Float latitude;
+    private Float longitude;
+    private Float scaleFactor = 1.0F;
+    private final String locationPos = "50.4501:30.5234";
+    private final Float locationScaleFactor = 1.0F;
+
+
+   protected void getPos() {
+        this.latitude = null;
+        this.longitude = null;
+        int c = locationPos.indexOf(':');
+        this.latitude = Float.valueOf(locationPos.substring(0, c));
+        this.longitude = Float.valueOf(locationPos.substring(c + 1));
+    }
+
 
 }
