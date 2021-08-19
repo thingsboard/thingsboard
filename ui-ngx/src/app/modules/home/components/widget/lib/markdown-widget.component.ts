@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, ElementRef, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { Store } from '@ngrx/store';
@@ -56,8 +56,9 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
 
   markdownText: string;
 
+  markdownClass: string;
+
   constructor(protected store: Store<AppState>,
-              private elementRef: ElementRef,
               private cd: ChangeDetectorRef) {
     super(store);
   }
@@ -66,15 +67,14 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
     this.ctx.$scope.markdownWidget = this;
     this.settings = this.ctx.settings;
     this.markdownTextFunction = this.settings.useMarkdownTextFunction ? parseFunction(this.settings.markdownTextFunction, ['data']) : null;
-
+    this.markdownClass = 'markdown-widget';
     const cssString = this.settings.markdownCss;
     if (isNotEmptyStr(cssString)) {
       const cssParser = new cssjs();
       cssParser.testMode = false;
-      const namespace = 'entities-hierarchy-' + hashCode(cssString);
-      cssParser.cssPreviewNamespace = namespace;
-      cssParser.createStyleElement(namespace, cssString);
-      $(this.elementRef.nativeElement).addClass(namespace);
+      this.markdownClass += '-' + hashCode(cssString);
+      cssParser.cssPreviewNamespace = 'tb-markdown-view.' + this.markdownClass;
+      cssParser.createStyleElement(this.markdownClass, cssString);
     }
   }
 
