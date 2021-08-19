@@ -126,7 +126,7 @@ public interface TransportService {
 
     SessionMetaData registerSyncSession(SessionInfoProto sessionInfo, SessionMsgListener listener, long timeout);
 
-    SessionMetaData reportActivity(SessionInfoProto sessionInfo);
+    void reportActivity(SessionInfoProto sessionInfo);
 
     void deregisterSession(SessionInfoProto sessionInfo);
 
@@ -135,4 +135,6 @@ public interface TransportService {
     void notifyAboutUplink(SessionInfoProto sessionInfo, TransportProtos.UplinkNotificationMsg build, TransportServiceCallback<Void> empty);
 
     ExecutorService getCallbackExecutor();
+
+    boolean hasSession(SessionInfoProto sessionInfo);
 }

@@ -638,20 +638,22 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         UUID sessionId = getSessionId(sessionInfoProto);
         Objects.requireNonNull(sessionId);
 
-        SessionInfoMetaData sessionMD = sessions.computeIfAbsent(sessionId,
-                id -> new SessionInfoMetaData(new SessionInfo(SessionType.ASYNC, sessionInfoProto.getNodeId()), subscriptionInfo.getLastActivityTime()));
-
-        sessionMD.setLastActivityTime(subscriptionInfo.getLastActivityTime());
-        sessionMD.setSubscribedToAttributes(subscriptionInfo.getAttributeSubscription());
-        sessionMD.setSubscribedToRPC(subscriptionInfo.getRpcSubscription());
-        if (subscriptionInfo.getAttributeSubscription()) {
-            attributeSubscriptions.putIfAbsent(sessionId, sessionMD.getSessionInfo());
-        }
-        if (subscriptionInfo.getRpcSubscription()) {
-            rpcSubscriptions.putIfAbsent(sessionId, sessionMD.getSessionInfo());
+        SessionInfoMetaData sessionMD = sessions.get(sessionId);
+        if (sessionMD != null) {
+            sessionMD.setLastActivityTime(subscriptionInfo.getLastActivityTime());
+            sessionMD.setSubscribedToAttributes(subscriptionInfo.getAttributeSubscription());
+            sessionMD.setSubscribedToRPC(subscriptionInfo.getRpcSubscription());
+            if (subscriptionInfo.getAttributeSubscription()) {
+                attributeSubscriptions.putIfAbsent(sessionId, sessionMD.getSessionInfo());
+            }
+            if (subscriptionInfo.getRpcSubscription()) {
+                rpcSubscriptions.putIfAbsent(sessionId, sessionMD.getSessionInfo());
+            }
         }
         systemContext.getDeviceStateService().onDeviceActivity(tenantId, deviceId, subscriptionInfo.getLastActivityTime());
-        dumpSessions();
+        if (sessionMD != null) {
+            dumpSessions();
+        }
     }
 
     void processCredentialsUpdate(TbActorMsg msg) {
