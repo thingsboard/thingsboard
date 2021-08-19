@@ -1791,6 +1791,13 @@
   dependencies:
     "@types/jquery" "*"
 
+"@types/leaflet-editable@^1.2.1":
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@types/leaflet-editable/-/leaflet-editable-1.2.1.tgz#12f1bd1d9af7beafbac256216062e97fe2ee4d55"
+  integrity sha512-7Oms1HgulWiclkI0s1XLmr1yRylNoJX8sVUfAv9+28JzwWbKbLcQ6//vhFEOmoMlBQyL5veogKpUUb5qeF+Qyg==
+  dependencies:
+    "@types/leaflet" "*"
+
 "@types/leaflet-polylinedecorator@^1.6.0":
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/@types/leaflet-polylinedecorator/-/leaflet-polylinedecorator-1.6.0.tgz#1572131ffedb3154c6e18e682d2fb700e203af19"
