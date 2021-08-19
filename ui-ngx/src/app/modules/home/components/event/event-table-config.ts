@@ -178,7 +178,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
   updateColumns(updateTableColumns: boolean = false): void {
     this.columns = [];
     this.columns.push(
-      new DateEntityTableColumn<Event>('createdTime', 'event.event-time', this.datePipe, '120px'),
+      new DateEntityTableColumn<Event>('createdTime', 'event.event-time', this.datePipe, '120px', 'yyyy-MM-dd HH:mm:ss.SSS'),
       new EntityTableColumn<Event>('server', 'event.server', '100px',
         (entity) => entity.body.server, entity => ({}), false));
     switch (this.eventType) {
