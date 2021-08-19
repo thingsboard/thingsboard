@@ -247,11 +247,11 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
 
   initEditor() {
     if (!this.initEditorComponent) {
-      this.createEditor(this.failureDetailsEditorElmRef, this.statistical.errorsList.join('\n'));
+      this.createEditor(this.failureDetailsEditorElmRef, this.statistical.errorsList);
     }
   }
 
-  private createEditor(editorElementRef: ElementRef, content: string): void {
+  private createEditor(editorElementRef: ElementRef, contents: string[]): void {
     const editorElement = editorElementRef.nativeElement;
     let editorOptions: Partial<Ace.EditorOptions> = {
       mode: 'ace/mode/java',
@@ -268,6 +268,7 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
     };
 
     editorOptions = {...editorOptions, ...advancedOptions};
+    const content = contents.map(error => error.replace('\n', '')).join('\n');
     getAce().subscribe(
       (ace) => {
         const editor = ace.edit(editorElement, editorOptions);
