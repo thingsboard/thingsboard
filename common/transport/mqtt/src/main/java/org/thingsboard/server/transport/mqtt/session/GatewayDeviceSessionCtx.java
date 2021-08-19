@@ -16,8 +16,10 @@
 package org.thingsboard.server.transport.mqtt.session;
 
 import io.netty.channel.ChannelFuture;
+import io.netty.handler.codec.mqtt.MqttMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
@@ -102,9 +104,14 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
                     payload -> {
                         ChannelFuture channelFuture = parent.writeAndFlush(payload);
                         if (request.getPersisted()) {
-                            channelFuture.addListener(future -> {
-                                if (future.cause() == null) {
-                                    transportService.process(getSessionInfo(), request, TransportServiceCallback.EMPTY);
+                            channelFuture.addListener(result -> {
+                                if (result.cause() == null) {
+                                    if (!isAckExpected(payload)) {
+                                        transportService.process(getSessionInfo(), request, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
+                                    } else if (request.getPersisted()) {
+                                        transportService.process(getSessionInfo(), request, RpcStatus.SENT, TransportServiceCallback.EMPTY);
+
+                                    }
                                 }
                             });
                         }
@@ -127,6 +134,10 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
     @Override
     public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg toServerResponse) {
         // This feature is not supported in the TB IoT Gateway yet.
+    }
+
+    private boolean isAckExpected(MqttMessage message) {
+        return message.fixedHeader().qosLevel().value() > 0;
     }
 
 }

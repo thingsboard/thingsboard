@@ -400,6 +400,14 @@ public class ActorSystemContext {
     @Getter
     private String debugPerTenantLimitsConfiguration;
 
+    @Value("${actors.rpc.sequence.enabled:false}")
+    @Getter
+    private boolean rpcSequenceEnabled;
+
+    @Value("${actors.rpc.max_retries:5}")
+    @Getter
+    private int maxRpcRetries;
+
     @Getter
     @Setter
     private TbActorSystem actorSystem;
