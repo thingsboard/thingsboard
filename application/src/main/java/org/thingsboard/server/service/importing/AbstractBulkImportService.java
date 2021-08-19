@@ -49,7 +49,7 @@ import org.thingsboard.server.utils.TypeCastUtil;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -212,8 +212,8 @@ public abstract class AbstractBulkImportService<E extends BaseData<? extends Ent
 
     @Data
     protected static class EntityData {
-        private final Map<BulkImportColumnType, String> fields = new HashMap<>();
-        private final Map<ColumnMapping, ParsedValue> kvs = new HashMap<>();
+        private final Map<BulkImportColumnType, String> fields = new LinkedHashMap<>();
+        private final Map<ColumnMapping, ParsedValue> kvs = new LinkedHashMap<>();
     }
 
     @Data
