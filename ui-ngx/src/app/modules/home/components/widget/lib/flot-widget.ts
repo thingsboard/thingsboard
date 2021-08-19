@@ -77,7 +77,7 @@ export class TbFlot {
   private settings: TbFlotSettings;
   private comparisonEnabled: boolean;
 
-  private readonly tooltip: JQuery<any>;
+  private tooltip: JQuery<any>;
 
   private readonly yAxisTickFormatter: TbFlotTicksFormatterFunction;
   private readonly yaxis: TbFlotAxisOptions;
@@ -119,6 +119,7 @@ export class TbFlot {
   private mouseleaveHandler = this.onFlotMouseLeave.bind(this);
   private flotClickHandler = this.onFlotClick.bind(this);
 
+  private readonly enableTooltips: boolean;
   private readonly animatedPie: boolean;
   private pieDataAnimationDuration: number;
   private pieData: DatasourceData[];
@@ -148,8 +149,9 @@ export class TbFlot {
     this.chartType = this.chartType || 'line';
     this.settings = ctx.settings as TbFlotSettings;
     this.utils = this.ctx.$injector.get(UtilsService);
-    this.tooltip = $('#flot-series-tooltip');
-    if (this.tooltip.length === 0) {
+    this.enableTooltips = isDefined(this.settings.enableTooltips) ? this.settings.enableTooltips : false;
+    this.tooltip = this.enableTooltips ? $('#flot-series-tooltip') : null;
+    if (this.tooltip?.length === 0) {
       this.tooltip = this.createTooltipElement();
     }
 
@@ -1169,7 +1171,7 @@ export class TbFlot {
   }
 
   private onFlotHover(e: any, pos: JQueryPlotPoint, item: TbFlotPlotItem) {
-    if (!this.plot) {
+    if (!this.plot || !this.tooltip) {
       return;
     }
     if ((!this.tooltipIndividual || item) && !this.ctx.isEdit) {
