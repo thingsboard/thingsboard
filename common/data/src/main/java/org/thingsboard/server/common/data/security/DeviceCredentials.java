@@ -82,7 +82,8 @@ public class DeviceCredentials extends BaseData<DeviceCredentialsId> implements 
 
     @Override
     public String toString() {
-        return String.format("DeviceCredentials [deviceId=%s , credentialsType=%s, credentialsId=%s, credentialsValue=%s, createdTime=%d, id=%s]",
-                deviceId.toString(), credentialsType.name(), credentialsId, credentialsValue, createdTime, id.toString());
+        return "DeviceCredentials [deviceId=" + deviceId + " , credentialsType=" + credentialsType.name() +
+                        ", credentialsId=" + credentialsId + ", credentialsValue=" + credentialsValue +
+                        ", createdTime=" + createdTime + ", id=" + id + "]";
     }
 }

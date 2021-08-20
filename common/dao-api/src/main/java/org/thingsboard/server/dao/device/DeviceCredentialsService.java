@@ -15,13 +15,11 @@
  */
 package org.thingsboard.server.dao.device;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
-import org.eclipse.leshan.server.bootstrap.InvalidConfigurationException;
 
 public interface DeviceCredentialsService {
 
@@ -35,9 +33,7 @@ public interface DeviceCredentialsService {
 
     void deleteDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials);
 
-    void verifySecurityKeyDevice(DeviceCredentials deviceCredentials) throws JsonProcessingException, InvalidConfigurationException;
+    ServerSecurityConfig getLwm2mServerSecurityInfo(boolean bootstrapServer);
 
-    void verifyLwm2mSecurityKeyDeviceProfile(DeviceProfile deviceProfile) throws InvalidConfigurationException, JsonProcessingException;
-
-    ServerSecurityConfig getServerSecurityInfo(boolean bootstrapServer);
+    void verifyLwm2mSecurityKeyDeviceProfile(Lwm2mDeviceProfileTransportConfiguration transportConfiguration) ;
 }

@@ -179,7 +179,7 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
      * #2.1 if there is not a difference in values between the current resource values and the shared attribute values
      */
     @Override
-    public void onAttributesUpdate(LwM2mClient lwM2MClient, List<TransportProtos.TsKvProto> tsKvProtos, boolean isUpdateAlways) {
+    public void onAttributesUpdate(LwM2mClient lwM2MClient, List<TransportProtos.TsKvProto> tsKvProtos, boolean logFailedUpdateOfNonChangedValue) {
         log.trace("[{}] onAttributesUpdate [{}]", lwM2MClient.getEndpoint(), tsKvProtos);
         Map <String, TransportProtos.TsKvProto> attributesUpdate =  new ConcurrentHashMap<>();
         tsKvProtos.forEach(tsKvProto -> {
@@ -211,7 +211,7 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
             Object newValProto = getValueFromKvProto(tsKvProto.getKv());
             Object oldResourceValue = this.getResourceValueFormatKv(lwM2MClient, pathIdVer);
             if (!resourceModel.multiple || !(newValProto instanceof JsonElement)) {
-                this.pushUpdateToClientIfNeeded(lwM2MClient, oldResourceValue, newValProto, pathIdVer, isUpdateAlways);
+                this.pushUpdateToClientIfNeeded(lwM2MClient, oldResourceValue, newValProto, pathIdVer, logFailedUpdateOfNonChangedValue);
             } else {
                 pushUpdateMultiToClientIfNeeded(lwM2MClient, resourceModel, (JsonElement) newValProto,
                         (Map<Integer, LwM2mResourceInstance>) oldResourceValue, pathIdVer);
@@ -220,14 +220,14 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
     }
 
     private void pushUpdateToClientIfNeeded(LwM2mClient lwM2MClient, Object valueOld, Object newValue,
-                                            String versionedId, boolean isUpdateAlways) {
+                                            String versionedId, boolean logFailedUpdateOfNonChangedValue) {
         if (newValue == null) {
             String logMsg = String.format("%s: Failed update resource versionedId - %s value - %s. New value is  bad",
                     LOG_LWM2M_ERROR, versionedId, "null");
             logService.log(lwM2MClient, logMsg);
             log.error("Failed update resource [{}] [{}]", versionedId, newValue);
         } else if ((valueOld != null && newValue.toString().equals(valueOld.toString()))){
-            if (isUpdateAlways) {
+            if (logFailedUpdateOfNonChangedValue) {
                 String logMsg = String.format("%s: Failed update resource versionedId - %s value - %s. Value is not changed",
                         LOG_LWM2M_INFO, versionedId, newValue);
                 logService.log(lwM2MClient, logMsg);

@@ -26,8 +26,7 @@ import static org.eclipse.leshan.client.object.Security.x509;
 
 public class X509LwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
-    @Ignore // (Registration failed: FORBIDDEN(403))
-    @Test
+   @Test
     public void testConnectAndObserveTelemetry() throws Exception {
         X509ClientCredentials credentials = new X509ClientCredentials();
         credentials.setEndpoint(ENDPOINT);

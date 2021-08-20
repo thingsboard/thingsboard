@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.device.credentials.BasicMqttCredential
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredentials;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -105,21 +106,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
         return saveOrUpdate(tenantId, deviceCredentials);
     }
 
-    public void verifySecurityKeyDevice(DeviceCredentials deviceCredentials) throws JsonProcessingException, InvalidConfigurationException {
-        JsonNode nodeCredentialsValue = JacksonUtil.toJsonNode(deviceCredentials.getCredentialsValue());
-        checkClientKey (nodeCredentialsValue.get("client"));
-        checkServerKey (nodeCredentialsValue.get("bootstrap").get("bootstrapServer"), "Client`s  by bootstrapServer");
-        checkServerKey (nodeCredentialsValue.get("bootstrap").get("lwm2mServer"), "Client`s by lwm2mServer");
-    }
-
-    public void verifyLwm2mSecurityKeyDeviceProfile(DeviceProfile deviceProfile) throws InvalidConfigurationException, JsonProcessingException {
-        Map serverBs = ((Lwm2mDeviceProfileTransportConfiguration)deviceProfile.getProfileData().getTransportConfiguration()).getBootstrap().getBootstrapServer();
-        checkDeviceProfileServer (serverBs, "Servers: BootstrapServer`s");
-        Map serverLwm2m = ((Lwm2mDeviceProfileTransportConfiguration)deviceProfile.getProfileData().getTransportConfiguration()).getBootstrap().getLwm2mServer();
-        checkDeviceProfileServer (serverLwm2m, "Servers: Lwm2mServer`s");
-    }
-
-    public ServerSecurityConfig getServerSecurityInfo(boolean bootstrapServer) {
+    public ServerSecurityConfig getLwm2mServerSecurityInfo(boolean bootstrapServer) {
         ServerSecurityConfig result = getServerSecurityConfig(bootstrapServer ? bootstrapConfig : serverConfig);
         result.setBootstrapServerIs(bootstrapServer);
         return result;
@@ -163,6 +150,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 break;
             case LWM2M_CREDENTIALS:
                 formatSimpleLwm2mCredentials(deviceCredentials);
+                verifySecurityKeyDevice(deviceCredentials);
                 break;
         }
         log.trace("Executing updateDeviceCredentials [{}]", deviceCredentials);
@@ -308,6 +296,32 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 }
             };
 
+
+    private void verifySecurityKeyDevice(DeviceCredentials deviceCredentials) {
+
+        try {
+            JsonNode nodeCredentialsValue = JacksonUtil.toJsonNode(deviceCredentials.getCredentialsValue());
+            checkClientKey (nodeCredentialsValue.get("client"));
+            checkServerKey (nodeCredentialsValue.get("bootstrap").get("bootstrapServer"), "Client`s  by bootstrapServer");
+            checkServerKey (nodeCredentialsValue.get("bootstrap").get("lwm2mServer"), "Client`s by lwm2mServer");
+        } catch (InvalidConfigurationException e) {
+            throw new DataValidationException(e.getMessage());
+        }
+    }
+
+    @Override
+    public void verifyLwm2mSecurityKeyDeviceProfile(Lwm2mDeviceProfileTransportConfiguration transportConfiguration) {
+        try {
+            Map serverBs = transportConfiguration.getBootstrap().getBootstrapServer();
+            checkDeviceProfileServer (serverBs, "Servers: BootstrapServer`s");
+            Map serverLwm2m = transportConfiguration.getBootstrap().getLwm2mServer();
+            checkDeviceProfileServer (serverLwm2m, "Servers: Lwm2mServer`s");
+        } catch (InvalidConfigurationException e) {
+            throw new DataValidationException(e.getMessage());
+
+        }
+    }
+
     private void checkClientKey (JsonNode node) throws InvalidConfigurationException {
         String modeName = node.get("securityConfigClientMode").asText();
         // checks security config
@@ -366,7 +380,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
         }
     }
 
-    protected PrivateKey decodeRfc5958PrivateKey(byte[] encodedKey) throws org.eclipse.leshan.server.bootstrap.InvalidConfigurationException {
+    protected PrivateKey decodeRfc5958PrivateKey(byte[] encodedKey) throws InvalidConfigurationException {
         try {
             return SecurityUtil.privateKey.decode(encodedKey);
         } catch (IOException | GeneralSecurityException e) {
@@ -374,7 +388,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
         }
     }
 
-    protected PublicKey decodeRfc7250PublicKey(byte[] encodedKey) throws org.eclipse.leshan.server.bootstrap.InvalidConfigurationException {
+    protected PublicKey decodeRfc7250PublicKey(byte[] encodedKey) throws InvalidConfigurationException {
         try {
             return SecurityUtil.publicKey.decode(encodedKey);
         } catch (IOException | GeneralSecurityException e) {
@@ -382,7 +396,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
         }
     }
 
-    protected Certificate decodeCertificate(byte[] encodedCert) throws org.eclipse.leshan.server.bootstrap.InvalidConfigurationException {
+    protected Certificate decodeCertificate(byte[] encodedCert) throws InvalidConfigurationException {
         try {
             return SecurityUtil.certificate.decode(encodedCert);
         } catch (IOException | GeneralSecurityException e) {
@@ -390,10 +404,9 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
         }
     }
 
-    protected static void assertIf(boolean condition, String message) throws org.eclipse.leshan.server.bootstrap.InvalidConfigurationException {
+    protected static void assertIf(boolean condition, String message) throws InvalidConfigurationException {
         if (condition) {
-            throw new org.eclipse.leshan.server.bootstrap.InvalidConfigurationException(message);
+            throw new DataValidationException(message);
         }
     }
-
 }

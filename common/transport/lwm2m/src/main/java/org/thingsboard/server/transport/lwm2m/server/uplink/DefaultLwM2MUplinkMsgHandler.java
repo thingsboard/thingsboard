@@ -949,14 +949,14 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
      *
      * @param lwM2MClient - LwM2M Client
      */
-    public void initAttributes(LwM2mClient lwM2MClient, boolean isUpdateAlways) {
+    public void initAttributes(LwM2mClient lwM2MClient, boolean logFailedUpdateOfNonChangedValue) {
         Map<String, String> keyNamesMap = this.getNamesFromProfileForSharedAttributes(lwM2MClient);
         if (!keyNamesMap.isEmpty()) {
             Set<String> keysToFetch = new HashSet<>(keyNamesMap.values());
             keysToFetch.removeAll(OtaPackageUtil.ALL_FW_ATTRIBUTE_KEYS);
             keysToFetch.removeAll(OtaPackageUtil.ALL_SW_ATTRIBUTE_KEYS);
             DonAsynchron.withCallback(attributesService.getSharedAttributes(lwM2MClient, keysToFetch),
-                    v -> attributesService.onAttributesUpdate(lwM2MClient, v, isUpdateAlways),
+                    v -> attributesService.onAttributesUpdate(lwM2MClient, v, logFailedUpdateOfNonChangedValue),
                     t -> log.error("[{}] Failed to get attributes", lwM2MClient.getEndpoint(), t),
                     executor);
         }

@@ -23,7 +23,6 @@ import org.hibernate.validator.cfg.ConstraintMapping;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.validation.NoXss;
 import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.TenantEntityWithDataDao;

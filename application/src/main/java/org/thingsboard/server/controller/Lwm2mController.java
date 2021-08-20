@@ -46,7 +46,7 @@ public class Lwm2mController extends BaseController {
     @ResponseBody
     public ServerSecurityConfig getLwm2mBootstrapSecurityInfo(@PathVariable("isBootstrapServer") boolean bootstrapServer) throws ThingsboardException {
         try {
-            return deviceCredentialsService.getServerSecurityInfo(bootstrapServer);
+            return deviceCredentialsService.getLwm2mServerSecurityInfo(bootstrapServer);
         } catch (Exception e) {
             throw handleException(e);
         }

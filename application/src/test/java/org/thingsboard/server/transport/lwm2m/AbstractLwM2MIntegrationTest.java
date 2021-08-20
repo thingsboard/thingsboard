@@ -177,7 +177,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
     protected static final String HOST = "localhost";
     protected static final String HOST_BS = "localhost";
     protected static final NetworkConfig SECURE_COAP_CONFIG = new NetworkConfig().setString("COAP_SECURE_PORT", Integer.toString(SECURE_PORT));
-    protected static final String ENDPOINT = "deviceEndpoint";
+    protected static final String ENDPOINT = "deviceAEndpoint";
     protected static final String SECURE_URI = "coaps://localhost:" + SECURE_PORT;
 
     protected static final int PORT = 5685;

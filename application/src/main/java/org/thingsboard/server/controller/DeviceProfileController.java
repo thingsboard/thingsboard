@@ -158,9 +158,6 @@ public class DeviceProfileController extends BaseController {
                     isSoftwareChanged = true;
                 }
             }
-            if (deviceProfile.getTransportType().equals(DeviceTransportType.LWM2M)) {
-                deviceCredentialsService.verifyLwm2mSecurityKeyDeviceProfile(deviceProfile);
-            }
             DeviceProfile savedDeviceProfile = checkNotNull(deviceProfileService.saveDeviceProfile(deviceProfile));
 
             tbClusterService.onDeviceProfileChange(savedDeviceProfile, null);

@@ -200,11 +200,11 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
                 lwm2mFromCredential.getSecurityMode().equals(profileLwm2mServer.getSecurityMode()));
     }
 
-    public TransportProtos.SessionInfoProto getSessionByEndpoint(String endPoint) {
-        return bsSessions.get(endPoint);
+    public TransportProtos.SessionInfoProto getSessionByEndpoint(String endpoint) {
+        return bsSessions.get(endpoint);
     }
 
-    public TransportProtos.SessionInfoProto removeSessionByEndpoint(String endPoint) {
-        return bsSessions.remove(endPoint);
+    public TransportProtos.SessionInfoProto removeSessionByEndpoint(String endpoint) {
+        return bsSessions.remove(endpoint);
     }
 }

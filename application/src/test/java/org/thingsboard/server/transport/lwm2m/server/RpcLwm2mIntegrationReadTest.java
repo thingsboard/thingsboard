@@ -88,7 +88,7 @@ public class RpcLwm2mIntegrationReadTest extends RpcAbstractLwM2MIntegrationTest
     }
 
     /**
-     * Read {"id":"/19/1/0"}
+     * Read {"id":"/3/0/11"}
      *
      * @throws Exception
      */

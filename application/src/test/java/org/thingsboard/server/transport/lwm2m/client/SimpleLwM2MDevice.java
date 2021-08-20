@@ -123,11 +123,11 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
     }
 
     private String getSerialNumber() {
-        return "Nick-500-000-0001";
+        return "Thingsboard-500-000-0001";
     }
 
     private String getFirmwareVersion() {
-        return "3.3.2";
+        return "1.0.2";
     }
 
     private long getErrorCode() {
