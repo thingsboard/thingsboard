@@ -170,7 +170,7 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
             List<OtaPackageUpdateStatus> statuses = ts.stream().map(KvEntry::getValueAsString).map(OtaPackageUpdateStatus::valueOf).collect(Collectors.toList());
 
-            List<OtaPackageUpdateStatus> expectedStatuses = Collections.singletonList(FAILED);
+            List<OtaPackageUpdateStatus> expectedStatuses = Collections.singletonList(INITIATED);
 
             Assert.assertEquals(expectedStatuses, statuses);
         } finally {
@@ -186,14 +186,14 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
         try {
             createDeviceProfile(OTA_TRANSPORT_CONFIGURATION);
             NoSecClientCredentials clientCredentials = new NoSecClientCredentials();
-            clientCredentials.setEndpoint("OTA_" + ENDPOINT);
+            clientCredentials.setEndpoint(ENDPOINT);
             Device device = createDevice(clientCredentials);
 
             device.setFirmwareId(createFirmware().getId());
             device = doPost("/api/device", device, Device.class);
             Thread.sleep(1000);
 
-            client = new LwM2MTestClient(executor, "OTA_" + ENDPOINT);
+            client = new LwM2MTestClient(executor, ENDPOINT);
             client.init(SECURITY, COAP_CONFIG, 11002);
 
             Thread.sleep(3000);
@@ -226,7 +226,7 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
         createDeviceProfile(OTA_TRANSPORT_CONFIGURATION);
         NoSecClientCredentials clientCredentials = new NoSecClientCredentials();
-        clientCredentials.setEndpoint("OTA_" + ENDPOINT);
+        clientCredentials.setEndpoint(ENDPOINT);
         final Device device = createDevice(clientCredentials);
         device.setSoftwareId(createSoftware().getId());
 
@@ -236,7 +236,7 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
         //when
         log.warn("Init the client...");
-        client = new LwM2MTestClient(executor, "OTA_" + ENDPOINT);
+        client = new LwM2MTestClient(executor, ENDPOINT);
         client.init(SECURITY, COAP_CONFIG, 11003);
 
         log.warn("AWAIT atMost {} SECONDS on timeseries List<TsKvEntry> by API with list size {}...", TIMEOUT, expectedStatuses.size());
@@ -257,14 +257,14 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
     private Device getDeviceFromAPI(UUID deviceId) throws Exception {
         final Device device = doGet("/api/device/" + deviceId, Device.class);
-        log.warn("Fetched device by API for deviceId {}, device is {}", deviceId, device);
+        log.trace("Fetched device by API for deviceId {}, device is {}", deviceId, device);
         return device;
     }
 
     private List<TsKvEntry> getSwStateTelemetryFromAPI(UUID deviceId) throws Exception {
         final List<TsKvEntry> tsKvEntries = toTimeseries(doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + deviceId + "/values/timeseries?orderBy=ASC&keys=sw_state&startTs=0&endTs=" + System.currentTimeMillis(), new TypeReference<>() {
         }));
-        log.warn("Fetched telemetry by API for deviceId {}, list size {}, tsKvEntries {}", deviceId, tsKvEntries.size(), tsKvEntries);
+        log.trace("Fetched telemetry by API for deviceId {}, list size {}, tsKvEntries {}", deviceId, tsKvEntries.size(), tsKvEntries);
         return tsKvEntries;
     }
 }

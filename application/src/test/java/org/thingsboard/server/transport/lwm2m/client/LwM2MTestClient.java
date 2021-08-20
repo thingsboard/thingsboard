@@ -61,6 +61,9 @@ import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.eclipse.leshan.core.LwM2mId.SOFTWARE_MANAGEMENT;
 import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.BINARY_APP_DATA_CONTAINER;
 import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.TEMPERATURE_SENSOR;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.objectInstanceId_0;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.objectInstanceId_1;
+import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.objectInstanceId_12;
 import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resources;
 
 @Slf4j
@@ -85,12 +88,12 @@ public class LwM2MTestClient {
         initializer.setInstancesForObject(FIRMWARE, new FwLwM2MDevice());
         initializer.setInstancesForObject(SOFTWARE_MANAGEMENT, new SwLwM2MDevice());
         initializer.setClassForObject(ACCESS_CONTROL, DummyInstanceEnabler.class);
-        initializer.setInstancesForObject(BINARY_APP_DATA_CONTAINER, new LwM2mBinaryAppDataContainer(executor, 0),
-                new LwM2mBinaryAppDataContainer(executor, 1));
+        initializer.setInstancesForObject(BINARY_APP_DATA_CONTAINER, new LwM2mBinaryAppDataContainer(executor, objectInstanceId_0),
+                new LwM2mBinaryAppDataContainer(executor, objectInstanceId_1));
         LwM2MLocationParams locationParams = new LwM2MLocationParams();
         locationParams.getPos();
-        initializer.setInstancesForObject(LOCATION, new LwM2mLocation(locationParams.getLatitude(), locationParams.getLongitude(), locationParams.getScaleFactor(), executor, 0));
-        initializer.setInstancesForObject(TEMPERATURE_SENSOR, new LwM2mTemperatureSensor(executor, 0), new LwM2mTemperatureSensor(executor, 12));
+        initializer.setInstancesForObject(LOCATION, new LwM2mLocation(locationParams.getLatitude(), locationParams.getLongitude(), locationParams.getScaleFactor(), executor, objectInstanceId_0));
+        initializer.setInstancesForObject(TEMPERATURE_SENSOR, new LwM2mTemperatureSensor(executor, objectInstanceId_0), new LwM2mTemperatureSensor(executor, objectInstanceId_12));
 
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
         dtlsConfig.setRecommendedCipherSuitesOnly(true);

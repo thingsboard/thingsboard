@@ -106,7 +106,8 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
     }
 
     public void verifySecurityKeyDevice(DeviceCredentials deviceCredentials) throws JsonProcessingException, InvalidConfigurationException {
-        JsonNode nodeCredentialsValue = deviceCredentials.getNodeCredentialsValue();
+//        JsonNode nodeCredentialsValue = deviceCredentials.getNodeCredentialsValue();
+        JsonNode nodeCredentialsValue = JacksonUtil.toJsonNode(deviceCredentials.getCredentialsValue());
         checkClientKey (nodeCredentialsValue.get("client"));
         checkServerKey (nodeCredentialsValue.get("bootstrap").get("bootstrapServer"), "Client`s  by bootstrapServer");
         checkServerKey (nodeCredentialsValue.get("bootstrap").get("lwm2mServer"), "Client`s by lwm2mServer");

@@ -43,7 +43,7 @@ public class RpcLwm2mIntegrationWriteTest extends RpcAbstractLwM2MIntegrationTes
     public void testWriteReplaceValueSingleResourceById_Result_CHANGED() throws Exception {
         String expectedPath = objectInstanceIdVer_3 + "/" + resourceId_14;
         String expectedValue = "+12";
-        String actualResult = sendRPCWriteStringById("WriteReplace", expectedPath, expectedValue);
+        String actualResult = sendRPCWriteValueStringById("WriteReplace", expectedPath, expectedValue);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
         actualResult = sendRPCReadById(expectedPath);
@@ -84,7 +84,7 @@ public class RpcLwm2mIntegrationWriteTest extends RpcAbstractLwM2MIntegrationTes
         String expectedValue0 = "0000ad45675600";
         String expectedValue15 = "1525ad45675600cdef";
         String expectedValue = "{\"" + resourceInstanceId0 + "\":\"" + expectedValue0 + "\", \"" + resourceInstanceId15 + "\":\"" + expectedValue15 + "\"}";
-        String actualResult = sendRPCWriteObjectById("WriteReplace", expectedPath, expectedValue);
+        String actualResult = sendRPCWriteValueObjectById("WriteReplace", expectedPath, expectedValue);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
         String expectedPath0 = expectedPath + "/" + resourceInstanceId0;
@@ -110,7 +110,7 @@ public class RpcLwm2mIntegrationWriteTest extends RpcAbstractLwM2MIntegrationTes
         String objectInstanceIdVer_19 = (String) expectedObjectIdVerInstances.stream().filter(path -> ((String) path).contains("/" + BINARY_APP_DATA_CONTAINER)).findFirst().get();
         String expectedPath = objectInstanceIdVer_19 + "/" + resourceId_0;
         String expectedValue = "0081";
-        String actualResult = sendRPCWriteStringById("WriteReplace", expectedPath, expectedValue);
+        String actualResult = sendRPCWriteValueStringById("WriteReplace", expectedPath, expectedValue);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
         String actualValues = rpcActualResult.get("error").asText();
@@ -128,7 +128,7 @@ public class RpcLwm2mIntegrationWriteTest extends RpcAbstractLwM2MIntegrationTes
     public void testWriteReplaceValueSingleResourceR_ById_Result_CHANGED() throws Exception {
         String expectedPath = objectInstanceIdVer_3 + "/" + resourceId_9;
         Integer expectedValue = 90;
-        String actualResult = sendRPCWriteObjectById("WriteReplace", expectedPath, expectedValue);
+        String actualResult = sendRPCWriteValueObjectById("WriteReplace", expectedPath, expectedValue);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.METHOD_NOT_ALLOWED.getName(), rpcActualResult.get("result").asText());
     }
@@ -144,7 +144,7 @@ public class RpcLwm2mIntegrationWriteTest extends RpcAbstractLwM2MIntegrationTes
         String expectedValue14 = "+5";
         String expectedValue15 = "Kiyv/Europe";
         String expectedValue = "{\"" + resourceId_14 + "\":\"" + expectedValue14 + "\",\"" + resourceId_15 + "\":\"" + expectedValue15 + "\"}";
-        String actualResult = sendRPCWriteObjectById("WriteUpdate", expectedPath, expectedValue);
+        String actualResult = sendRPCWriteValueObjectById("WriteUpdate", expectedPath, expectedValue);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
         String expectedPath14 = objectInstanceIdVer_3 + "/" + resourceId_14;
@@ -173,7 +173,7 @@ public class RpcLwm2mIntegrationWriteTest extends RpcAbstractLwM2MIntegrationTes
         String expectedValue0 = "00ad45675600";
         String expectedValue25 = "25ad45675600cdef";
         String expectedValue = "{\"" + resourceId_0 + "\":{\"" + resourceInstanceId0 + "\":\"" + expectedValue0 + "\", \"" + resourceInstanceId25 + "\":\"" + expectedValue25 + "\"}}";
-        String actualResult = sendRPCWriteObjectById("WriteUpdate", expectedPath, expectedValue);
+        String actualResult = sendRPCWriteValueObjectById("WriteUpdate", expectedPath, expectedValue);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
         String expectedPath0 = expectedPath + "/" + resourceId_0 + "/" + resourceInstanceId0;
@@ -281,28 +281,12 @@ public class RpcLwm2mIntegrationWriteTest extends RpcAbstractLwM2MIntegrationTes
         assertTrue(actualValues.contains(expected));
     }
 
-    /**
-     * failed: cannot_create_mandatory_single_object
-     * Create  {"id":"/3/2","value":{"0":"00AC"}}
-     */
-
-
-    /**
-     * failed:  cannot_create_instance_of_security_object
-     * Create  {"id":"/0/2","value":{"0":"00AC"}}
-     */
-
-    /**
-     * failed: cannot_create_instance_of_absent_object
-     * Create  {"id":"/50/2","value":{"0":"00AC"}}
-     */
-
-    private String sendRPCWriteStringById(String method, String path, String value) throws Exception {
+    private String sendRPCWriteValueStringById(String method, String path, String value) throws Exception {
         String setRpcRequest = "{\"method\": \"" + method + "\", \"params\": {\"id\": \"" + path + "\", \"value\": \"" + value + "\" }}";
         return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
     }
 
-    private String sendRPCWriteObjectById(String method, String path, Object value) throws Exception {
+    private String sendRPCWriteValueObjectById(String method, String path, Object value) throws Exception {
         String setRpcRequest = "{\"method\": \"" + method + "\", \"params\": {\"id\": \"" + path + "\", \"value\": " + value + " }}";
         return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
     }

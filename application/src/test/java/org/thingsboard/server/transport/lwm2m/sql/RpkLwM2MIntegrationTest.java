@@ -31,7 +31,7 @@ public class RpkLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
         rpkClientCredentials.setEndpoint(ENDPOINT);
         rpkClientCredentials.setKey(Hex.encodeHexString(clientPublicKey.getEncoded()));
         Security security = rpk(SECURE_URI,
-                123,
+                SHORT_SERVER_ID,
                 clientPublicKey.getEncoded(),
                 clientPrivateKey.getEncoded(),
                 serverX509Cert.getPublicKey().getEncoded());

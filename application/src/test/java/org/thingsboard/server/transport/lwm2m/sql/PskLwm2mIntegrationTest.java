@@ -36,7 +36,7 @@ public class PskLwm2mIntegrationTest extends AbstractLwM2MIntegrationTest {
         clientCredentials.setKey(pskKey);
         clientCredentials.setIdentity(pskIdentity);
         Security security = psk(SECURE_URI,
-                123,
+                SHORT_SERVER_ID,
                 pskIdentity.getBytes(StandardCharsets.UTF_8),
                 Hex.decodeHex(pskKey.toCharArray()));
         super.basicTestConnectionObserveTelemetry(security, clientCredentials, SECURE_COAP_CONFIG, ENDPOINT);

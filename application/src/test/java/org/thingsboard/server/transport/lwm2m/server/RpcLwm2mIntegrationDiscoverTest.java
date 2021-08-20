@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.node.LwM2mPath;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 
@@ -37,8 +38,6 @@ public class RpcLwm2mIntegrationDiscoverTest extends RpcAbstractLwM2MIntegration
 
     /**
      * DiscoverAll
-     *
-     * @throws Exception
      */
     @Test
     public void testDiscoverAll_Return_CONTENT_LinksAllObjectsAllInstancesOfClient() throws Exception {
@@ -64,8 +63,6 @@ public class RpcLwm2mIntegrationDiscoverTest extends RpcAbstractLwM2MIntegration
 
     /**
      * Discover {"id":"/3"}
-     *
-     * @throws Exception
      */
     @Test
     public void testDiscoverObject_Return_CONTENT_LinksInstancesAndResourcesOnLyExpectedObject() {
@@ -86,8 +83,6 @@ public class RpcLwm2mIntegrationDiscoverTest extends RpcAbstractLwM2MIntegration
 
     /**
      * Discover {"id":"3/0"}
-     *
-     * @throws Exception
      */
     @Test
     public void testDiscoverInstance_Return_CONTENT_LinksResourcesOnLyExpectedInstance() throws Exception {
@@ -103,8 +98,6 @@ public class RpcLwm2mIntegrationDiscoverTest extends RpcAbstractLwM2MIntegration
 
     /**
      * Discover {"id":"3/0/14"}
-     *
-     * @throws Exception
      */
     @Test
     public void testDiscoverResource_Return_CONTENT_LinksResourceOnLyExpectedResource() throws Exception {
@@ -124,8 +117,6 @@ public class RpcLwm2mIntegrationDiscoverTest extends RpcAbstractLwM2MIntegration
 
     /**
      * Discover {"id":"2/0/2"}
-     *
-     * @throws Exception
      */
     @Test
     public void testDiscoverInstanceAbsentInObject_Return_NOT_FOUND() throws Exception {
@@ -136,8 +127,6 @@ public class RpcLwm2mIntegrationDiscoverTest extends RpcAbstractLwM2MIntegration
     }
     /**
      * Discover {"id":"2/0/2"}
-     *
-     * @throws Exception
      */
     @Test
     public void testDiscoverResourceAbsentInObject_Return_NOT_FOUND() throws Exception {

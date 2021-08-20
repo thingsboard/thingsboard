@@ -25,9 +25,9 @@ public class RpcModelsTestHelper {
     public static final int BINARY_APP_DATA_CONTAINER = 19;
     public static final int TEMPERATURE_SENSOR = 3303;
 
-    protected static final int objectInstanceId_0 = 0;
-    protected static final int objectInstanceId_1 = 1;
-    protected static final int objectInstanceId_12 = 12;
+    public static final int objectInstanceId_0 = 0;
+    public static final int objectInstanceId_1 = 1;
+    public static final int objectInstanceId_12 = 12;
     protected static final int resourceId_0 = 0;
     protected static final int resourceId_1 = 1;
     protected static final int resourceId_2 = 2;

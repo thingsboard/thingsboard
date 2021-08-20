@@ -345,11 +345,11 @@ public class LwM2mClient implements Serializable {
                     }
                     if (resource != null) {
                         resources.add(resource);
-                    } else if (resourceModel.mandatory) {
+                    } else if (resourceModel.operations.isWritable() && resourceModel.mandatory) {
                         throw new IllegalArgumentException("Resource id=" + resourceId + " is mandatory. The value of this resource must not be null.");
                     }
                 }
-                else if (resourceModel.mandatory) {
+                else if (resourceModel.operations.isWritable() && resourceModel.mandatory) {
                     throw new IllegalArgumentException("Resource id=" + resourceId + " is mandatory. The value of this resource must not be null.");
                 }
             });

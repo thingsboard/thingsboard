@@ -306,8 +306,8 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
             }
             // validate value. Must be only primitive, not Json
             if (value instanceof LinkedHashMap) {
-                throw new IllegalArgumentException("nodes is not validate value. " +
-                        "The WriteComposite operation is only used for SingleResources or/and ResourceInstance.");
+                throw new IllegalArgumentException(String.format("nodes: %s is not validate value. " +
+                        "The WriteComposite operation is only used for SingleResources or/and ResourceInstance.", nodes.toString()));
             } else {
                 newNodes.put(fromVersionedIdToObjectId(versionedId), value);
             }

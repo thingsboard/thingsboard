@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.common.data.security;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
@@ -85,14 +82,7 @@ public class DeviceCredentials extends BaseData<DeviceCredentialsId> implements 
 
     @Override
     public String toString() {
-        return "DeviceCredentials [deviceId=" + deviceId + ", credentialsType=" + credentialsType + ", credentialsId="
-                + credentialsId + ", credentialsValue=" + credentialsValue + ", createdTime=" + createdTime + ", id="
-                + id + "]";
+        return String.format("DeviceCredentials [deviceId=%s , credentialsType=%s, credentialsId=%s, credentialsValue=%s, createdTime=%d, id=%s]",
+                deviceId.toString(), credentialsType.name(), credentialsId, credentialsValue, createdTime, id.toString());
     }
-
-    public JsonNode getNodeCredentialsValue () throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.readTree(this.credentialsValue);
-    }
-
 }

@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2021 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -390,7 +390,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                             LwM2mObjectInstance instance = new LwM2mObjectInstance(Integer.parseInt(key), resourcesForInstance);
                             instances.add(instance);
                         });
-                        LwM2mObjectInstance [] instanceArrays = instances.toArray(new LwM2mObjectInstance[instances.size()]);
+                        LwM2mObjectInstance[] instanceArrays = instances.toArray(new LwM2mObjectInstance[instances.size()]);
                         downlink = new CreateRequest(contentFormat, resultIds.getObjectId(), instanceArrays);
                     }
 
@@ -611,14 +611,10 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
 
     private <R> String toString(R request) {
         try {
-            try {
-                return request != null ? request.toString() : "";
-            } catch (Exception e) {
-                return "";
-            }
+            return request != null ? request.toString() : "";
         } catch (Exception e) {
             log.trace("Failed to convert request to string", e);
-            return request != null ? request.getClass().getSimpleName() : "";
+            return request.getClass().getSimpleName();
         }
     }
 }
