@@ -119,7 +119,7 @@ export class TbFlot {
   private mouseleaveHandler = this.onFlotMouseLeave.bind(this);
   private flotClickHandler = this.onFlotClick.bind(this);
 
-  private readonly enableTooltips: boolean;
+  private readonly showTooltip: boolean;
   private readonly animatedPie: boolean;
   private pieDataAnimationDuration: number;
   private pieData: DatasourceData[];
@@ -149,8 +149,8 @@ export class TbFlot {
     this.chartType = this.chartType || 'line';
     this.settings = ctx.settings as TbFlotSettings;
     this.utils = this.ctx.$injector.get(UtilsService);
-    this.enableTooltips = isDefined(this.settings.enableTooltips) ? this.settings.enableTooltips : false;
-    this.tooltip = this.enableTooltips ? $('#flot-series-tooltip') : null;
+    this.showTooltip = isDefined(this.settings.showTooltip) ? this.settings.showTooltip : true;
+    this.tooltip = this.showTooltip ? $('#flot-series-tooltip') : null;
     if (this.tooltip?.length === 0) {
       this.tooltip = this.createTooltipElement();
     }

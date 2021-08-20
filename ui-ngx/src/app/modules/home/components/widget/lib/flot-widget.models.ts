@@ -177,12 +177,12 @@ export interface TbFlotPieSettings {
   radius: number;
   innerRadius: number;
   tilt: number;
-  enableTooltips: boolean,
   animatedPie: boolean;
   stroke: {
     color: string;
     width: number;
   };
+  showTooltip: boolean,
   showLabels: boolean;
   fontColor: string;
   fontSize: number;
@@ -312,8 +312,8 @@ export function flotSettingsSchema(chartType: ChartType): JsonSettingsSchema {
     default: false
   };
 
-  properties.enableTooltips = {
-    title: 'Enable tooltips',
+  properties.showTooltip = {
+    title: 'Show tooltip',
     type: 'boolean',
     default: false
   };
@@ -467,7 +467,7 @@ export function flotSettingsSchema(chartType: ChartType): JsonSettingsSchema {
     type: 'javascript'
   });
   schema.form.push('hideZeros');
-  schema.form.push('enableTooltips');
+  schema.form.push('showTooltip');
   schema.form.push({
     key: 'grid',
     items: [
@@ -713,11 +713,6 @@ export const flotPieSettingsSchema: JsonSettingsSchema = {
           type: 'number',
           default: 1
         },
-        enableTooltips: {
-          title: 'Enable tooltips',
-          type: 'boolean',
-          default: false,
-        },
         animatedPie: {
           title: 'Enable pie animation (experimental)',
           type: 'boolean',
@@ -738,6 +733,11 @@ export const flotPieSettingsSchema: JsonSettingsSchema = {
               default: 0
             }
           }
+        },
+        showTooltip: {
+          title: 'Show Tooltip',
+          type: 'boolean',
+          default: true,
         },
         showLabels: {
           title: 'Show labels',
@@ -760,7 +760,6 @@ export const flotPieSettingsSchema: JsonSettingsSchema = {
     form: [
       'radius',
       'innerRadius',
-      'enableTooltips',
       'animatedPie',
       'tilt',
       {
@@ -773,6 +772,7 @@ export const flotPieSettingsSchema: JsonSettingsSchema = {
           'stroke.width'
         ]
       },
+      'showTooltip',
       'showLabels',
       {
         key: 'fontColor',
