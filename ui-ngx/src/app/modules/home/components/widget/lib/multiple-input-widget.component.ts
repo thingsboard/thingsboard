@@ -41,7 +41,7 @@ type FieldAlignment = 'row' | 'column';
 type MultipleInputWidgetDataKeyType = 'server' | 'shared' | 'timeseries';
 type MultipleInputWidgetDataKeyValueType = 'string' | 'double' | 'integer' |
                                            'booleanCheckbox' | 'booleanSwitch' |
-                                           'dateTime' | 'date' | 'time';
+                                           'dateTime' | 'date' | 'time' | 'select';
 type MultipleInputWidgetDataKeyEditableType = 'editable' | 'disabled' | 'readonly';
 
 interface MultipleInputWidgetSettings {
@@ -58,9 +58,15 @@ interface MultipleInputWidgetSettings {
   attributesShared?: boolean;
 }
 
+interface MultipleInputWidgetSelectOption {
+  value: string;
+  label: string;
+}
+
 interface MultipleInputWidgetDataKeySettings {
   dataKeyType: MultipleInputWidgetDataKeyType;
   dataKeyValueType: MultipleInputWidgetDataKeyValueType;
+  selectOptions: MultipleInputWidgetSelectOption[];
   required: boolean;
   isEditable: MultipleInputWidgetDataKeyEditableType;
   disabledOnDataKey: string;
@@ -443,6 +449,10 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
       messageText = '';
     }
     return messageText;
+  }
+
+  public getCustomTranslationText(value): string {
+    return this.utils.customTranslation(value, value);
   }
 
   public visibleKeys(source: MultipleInputWidgetSource): MultipleInputWidgetDataKey[] {
