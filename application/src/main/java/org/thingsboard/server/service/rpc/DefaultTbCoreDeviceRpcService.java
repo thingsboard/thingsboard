@@ -166,6 +166,11 @@ public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
         metaData.putValue("oneway", Boolean.toString(msg.isOneway()));
         metaData.putValue(DataConstants.PERSISTENT, Boolean.toString(msg.isPersisted()));
 
+        if (msg.getRetries() != null) {
+            metaData.putValue(DataConstants.RETRIES, msg.getRetries().toString());
+        }
+
+
         Device device = deviceService.findDeviceById(msg.getTenantId(), msg.getDeviceId());
         if (device != null) {
             metaData.putValue("deviceName", device.getName());

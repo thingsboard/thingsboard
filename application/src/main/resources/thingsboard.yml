@@ -326,6 +326,9 @@ actors:
       queue_size: "${ACTORS_RULE_TRANSACTION_QUEUE_SIZE:15000}"
       # Time in milliseconds for transaction to complete
       duration: "${ACTORS_RULE_TRANSACTION_DURATION:60000}"
+  rpc:
+    max_retries: "${ACTORS_RPC_MAX_RETRIES:5}"
+    sequential: "${ACTORS_RPC_SEQUENTIAL:false}"
   statistics:
     # Enable/disable actor statistics
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"
@@ -699,7 +702,7 @@ transport:
 
 # Edges parameters
 edges:
-  enabled: "${EDGES_ENABLED:false}"
+  enabled: "${EDGES_ENABLED:true}"
   rpc:
     port: "${EDGES_RPC_PORT:7070}"
     client_max_keep_alive_time_sec: "${EDGES_RPC_CLIENT_MAX_KEEP_ALIVE_TIME_SEC:300}"
