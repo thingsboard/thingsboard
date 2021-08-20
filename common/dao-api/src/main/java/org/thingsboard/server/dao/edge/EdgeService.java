@@ -15,16 +15,16 @@
  */
 package org.thingsboard.server.dao.edge;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.springframework.http.ResponseEntity;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -86,9 +86,9 @@ public interface EdgeService {
 
     PageData<EdgeId> findRelatedEdgeIdsByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink);
 
-    Object checkInstance(Object request);
+    ResponseEntity<JsonNode> checkInstance(JsonNode request);
 
-    Object activateInstance(String licenseSecret, String releaseDate);
+    ResponseEntity<JsonNode> activateInstance(String licenseSecret, String releaseDate);
 
     String findMissingToRelatedRuleChains(TenantId tenantId, EdgeId edgeId);
 }
