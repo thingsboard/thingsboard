@@ -1399,6 +1399,11 @@
             "timeout-ms-required": "Timeout is required.",
             "user-name": "User name",
             "user-name-required": "User name is required."
+        },
+        "common-settings": {
+          "rpc-settings": "RPC settings",
+          "send-rpc-rpc-calls-sequentially": "Send RPC calls sequentially",
+          "send-rpc-rpc-calls-sequentially-hint": "When enabled, RPC will be sent sequentially. Be careful, this may introduce delays in RPC delivery. The next RPC will not be sent until the previous RPC call is delivered to the device."
         }
     },
     "dialog": {

@@ -160,6 +160,7 @@
             <tb-power-mode-settings [parentForm]="clientSettingsFormGroup">
             </tb-power-mode-settings>
           </fieldset>
+          <ng-content></ng-content>
           <mat-slide-toggle class="mat-slider"
            formControlName="compositeOperationsSupport">{{ 'device-profile.lwm2m.composite-operations-support' | translate }}</mat-slide-toggle>
 <!--          <mat-accordion multi="true">-->

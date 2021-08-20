@@ -39,6 +39,9 @@
       <tb-profile-lwm2m-device-transport-configuration
         [required]="required"
         formControlName="configuration">
+        <tb-common-transport-configuration
+          formControlName="commonTransportConfiguration"
+        ></tb-common-transport-configuration>
       </tb-profile-lwm2m-device-transport-configuration>
     </ng-template>
     <ng-template [ngSwitchCase]="deviceTransportType.SNMP">
@@ -48,4 +51,8 @@
       </tb-snmp-device-profile-transport-configuration>
     </ng-template>
   </div>
+  <tb-common-transport-configuration
+    *ngIf="transportType !== deviceTransportType.LWM2M"
+    formControlName="commonTransportConfiguration"
+  ></tb-common-transport-configuration>
 </div>

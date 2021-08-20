@@ -19,7 +19,11 @@ import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Valida
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { DeviceProfileTransportConfiguration, DeviceTransportType } from '@shared/models/device.models';
+import {
+  createCommonTransportConfiguration,
+  DeviceProfileTransportConfiguration,
+  DeviceTransportType
+} from '@shared/models/device.models';
 import { deepClone } from '@core/utils';
 
 @Component({
@@ -67,7 +71,8 @@ export class DeviceProfileTransportConfigurationComponent implements ControlValu
 
   ngOnInit() {
     this.deviceProfileTransportConfigurationFormGroup = this.fb.group({
-      configuration: [null, Validators.required]
+      configuration: [null, Validators.required],
+      commonTransportConfiguration: [null]
     });
     this.deviceProfileTransportConfigurationFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
@@ -86,11 +91,16 @@ export class DeviceProfileTransportConfigurationComponent implements ControlValu
   writeValue(value: DeviceProfileTransportConfiguration | null): void {
     this.transportType = value?.type;
     const configuration = deepClone(value);
+    const commonTransportConfiguration = deepClone(value.commonTransportConfiguration);
     if (configuration) {
       delete configuration.type;
+      delete configuration.commonTransportConfiguration;
     }
     setTimeout(() => {
-      this.deviceProfileTransportConfigurationFormGroup.patchValue({configuration}, {emitEvent: false});
+      this.deviceProfileTransportConfigurationFormGroup.patchValue({
+          configuration,
+          commonTransportConfiguration
+        }, {emitEvent: false});
     }, 0);
   }
 
@@ -98,6 +108,8 @@ export class DeviceProfileTransportConfigurationComponent implements ControlValu
     let configuration: DeviceProfileTransportConfiguration = null;
     if (this.deviceProfileTransportConfigurationFormGroup.valid) {
       configuration = this.deviceProfileTransportConfigurationFormGroup.getRawValue().configuration;
+      configuration.commonTransportConfiguration =
+        this.deviceProfileTransportConfigurationFormGroup.getRawValue().commonTransportConfiguration;
       configuration.type = this.transportType;
     }
     this.propagateChange(configuration);
