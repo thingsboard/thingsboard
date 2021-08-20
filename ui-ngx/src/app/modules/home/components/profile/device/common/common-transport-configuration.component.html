@@ -15,6 +15,15 @@
     limitations under the License.
 
 -->
-<form [formGroup]="defaultDeviceProfileConfigurationFormGroup">
-
-</form>
+<section [formGroup]="commonTransportConfigurationFormGroup">
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>device-profile.common-settings.rpc-settings</legend>
+    <div fxLayoutGap="8px" fxLayout="column">
+      <mat-checkbox formControlName="sequentialRpc">
+        {{ 'device-profile.common-settings.send-rpc-rpc-calls-sequentially' | translate }}
+      </mat-checkbox>
+      <div class="tb-hint"
+           innerText="{{ 'device-profile.common-settings.send-rpc-rpc-calls-sequentially-hint' | translate }}"></div>
+    </div>
+  </fieldset>
+</section>

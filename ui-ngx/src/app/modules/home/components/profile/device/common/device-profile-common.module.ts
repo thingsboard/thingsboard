@@ -19,18 +19,21 @@ import { PowerModeSettingComponent } from './power-mode-setting.component';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { TimeUnitSelectComponent } from './time-unit-select.component';
+import { CommonTransportConfigurationComponent } from './common-transport-configuration.component';
 
 @NgModule({
   declarations: [
     PowerModeSettingComponent,
-    TimeUnitSelectComponent
+    TimeUnitSelectComponent,
+    CommonTransportConfigurationComponent
   ],
   imports: [
     CommonModule,
     SharedModule
   ],
   exports: [
-    PowerModeSettingComponent
+    PowerModeSettingComponent,
+    CommonTransportConfigurationComponent
   ]
 })
 export class DeviceProfileCommonModule { }

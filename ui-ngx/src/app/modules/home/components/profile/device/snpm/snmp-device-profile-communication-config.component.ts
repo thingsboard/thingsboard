@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -62,7 +62,8 @@ export class SnmpDeviceProfileCommunicationConfigComponent implements OnInit, On
   private destroy$ = new Subject();
   private propagateChange = (v: any) => { };
 
-  constructor(private fb: FormBuilder) { }
+  constructor(private fb: FormBuilder,
+              private cd: ChangeDetectorRef) { }
 
   ngOnInit(): void {
     this.deviceProfileCommunicationConfig = this.fb.group({
@@ -124,6 +125,7 @@ export class SnmpDeviceProfileCommunicationConfigComponent implements OnInit, On
     if (!this.disabled && !this.deviceProfileCommunicationConfig.valid) {
       this.updateModel();
     }
+    this.cd.markForCheck();
   }
 
   public validate() {

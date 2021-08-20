@@ -311,8 +311,13 @@ export type DeviceProfileTransportConfigurations = DefaultDeviceProfileTransport
                                                    Lwm2mDeviceProfileTransportConfiguration &
                                                    SnmpDeviceProfileTransportConfiguration;
 
+export interface CommonTransportConfiguration {
+  sequentialRpc: boolean;
+}
+
 export interface DeviceProfileTransportConfiguration extends DeviceProfileTransportConfigurations {
   type: DeviceTransportType;
+  commonTransportConfiguration?: CommonTransportConfiguration;
 }
 
 export interface DeviceProvisionConfiguration {
@@ -347,13 +352,20 @@ export function createDeviceConfiguration(type: DeviceProfileType): DeviceConfig
   return configuration;
 }
 
+export function createCommonTransportConfiguration(): CommonTransportConfiguration {
+  return {
+    sequentialRpc: false
+  };
+}
+
 export function createDeviceProfileTransportConfiguration(type: DeviceTransportType): DeviceProfileTransportConfiguration {
   let transportConfiguration: DeviceProfileTransportConfiguration = null;
+  const commonTransportConfiguration = createCommonTransportConfiguration();
   if (type) {
     switch (type) {
       case DeviceTransportType.DEFAULT:
         const defaultTransportConfiguration: DefaultDeviceProfileTransportConfiguration = {};
-        transportConfiguration = {...defaultTransportConfiguration, type: DeviceTransportType.DEFAULT};
+        transportConfiguration = {...defaultTransportConfiguration, commonTransportConfiguration, type: DeviceTransportType.DEFAULT};
         break;
       case DeviceTransportType.MQTT:
         const mqttTransportConfiguration: MqttDeviceProfileTransportConfiguration = {
@@ -361,7 +373,7 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
           deviceAttributesTopic: 'v1/devices/me/attributes',
           transportPayloadTypeConfiguration: {transportPayloadType: TransportPayloadType.JSON}
         };
-        transportConfiguration = {...mqttTransportConfiguration, type: DeviceTransportType.MQTT};
+        transportConfiguration = {...mqttTransportConfiguration, commonTransportConfiguration, type: DeviceTransportType.MQTT};
         break;
       case DeviceTransportType.COAP:
         const coapTransportConfiguration: CoapDeviceProfileTransportConfiguration = {
@@ -373,7 +385,7 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
             powerMode: PowerMode.DRX
           }
         };
-        transportConfiguration = {...coapTransportConfiguration, type: DeviceTransportType.COAP};
+        transportConfiguration = {...coapTransportConfiguration, commonTransportConfiguration, type: DeviceTransportType.COAP};
         break;
       case DeviceTransportType.LWM2M:
         const lwm2mTransportConfiguration: Lwm2mDeviceProfileTransportConfiguration = {
@@ -385,7 +397,7 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
           },
           clientLwM2mSettings: getDefaultProfileClientLwM2mSettingsConfig()
         };
-        transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};
+        transportConfiguration = {...lwm2mTransportConfiguration, commonTransportConfiguration, type: DeviceTransportType.LWM2M};
         break;
       case DeviceTransportType.SNMP:
         const snmpTransportConfiguration: SnmpDeviceProfileTransportConfiguration = {
@@ -393,7 +405,7 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
           retries: 0,
           communicationConfigs: null
         };
-        transportConfiguration = {...snmpTransportConfiguration, type: DeviceTransportType.SNMP};
+        transportConfiguration = {...snmpTransportConfiguration, commonTransportConfiguration, type: DeviceTransportType.SNMP};
         break;
     }
   }
