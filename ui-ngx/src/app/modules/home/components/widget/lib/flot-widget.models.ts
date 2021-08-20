@@ -315,7 +315,7 @@ export function flotSettingsSchema(chartType: ChartType): JsonSettingsSchema {
   properties.showTooltip = {
     title: 'Show tooltip',
     type: 'boolean',
-    default: false
+    default: true
   };
 
   properties.grid = {
