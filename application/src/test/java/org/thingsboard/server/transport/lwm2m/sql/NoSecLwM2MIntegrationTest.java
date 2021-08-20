@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredentials;
@@ -218,6 +219,7 @@ public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
      * Test will finish as fast as possible, but will await until TIMEOUT if a build machine is busy or slow
      * Check the detailed log output to learn how Awaitility polling the API and when exactly expected result appears
      * */
+    @Ignore
     @Test
     public void testSoftwareUpdateByObject9() throws Exception {
         //given

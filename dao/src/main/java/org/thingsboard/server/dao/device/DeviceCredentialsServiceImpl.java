@@ -106,14 +106,13 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
     }
 
     public void verifySecurityKeyDevice(DeviceCredentials deviceCredentials) throws JsonProcessingException, InvalidConfigurationException {
-//        JsonNode nodeCredentialsValue = deviceCredentials.getNodeCredentialsValue();
         JsonNode nodeCredentialsValue = JacksonUtil.toJsonNode(deviceCredentials.getCredentialsValue());
         checkClientKey (nodeCredentialsValue.get("client"));
         checkServerKey (nodeCredentialsValue.get("bootstrap").get("bootstrapServer"), "Client`s  by bootstrapServer");
         checkServerKey (nodeCredentialsValue.get("bootstrap").get("lwm2mServer"), "Client`s by lwm2mServer");
     }
 
-    public void verifySecurityKeyDeviceProfile(DeviceProfile deviceProfile) throws InvalidConfigurationException, JsonProcessingException {
+    public void verifyLwm2mSecurityKeyDeviceProfile(DeviceProfile deviceProfile) throws InvalidConfigurationException, JsonProcessingException {
         Map serverBs = ((Lwm2mDeviceProfileTransportConfiguration)deviceProfile.getProfileData().getTransportConfiguration()).getBootstrap().getBootstrapServer();
         checkDeviceProfileServer (serverBs, "Servers: BootstrapServer`s");
         Map serverLwm2m = ((Lwm2mDeviceProfileTransportConfiguration)deviceProfile.getProfileData().getTransportConfiguration()).getBootstrap().getLwm2mServer();

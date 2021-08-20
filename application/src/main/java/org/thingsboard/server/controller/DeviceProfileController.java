@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -157,7 +158,9 @@ public class DeviceProfileController extends BaseController {
                     isSoftwareChanged = true;
                 }
             }
-            deviceCredentialsService.verifySecurityKeyDeviceProfile(deviceProfile);
+            if (deviceProfile.getTransportType().equals(DeviceTransportType.LWM2M)) {
+                deviceCredentialsService.verifyLwm2mSecurityKeyDeviceProfile(deviceProfile);
+            }
             DeviceProfile savedDeviceProfile = checkNotNull(deviceProfileService.saveDeviceProfile(deviceProfile));
 
             tbClusterService.onDeviceProfileChange(savedDeviceProfile, null);

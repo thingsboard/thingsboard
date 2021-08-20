@@ -37,7 +37,7 @@ public interface DeviceCredentialsService {
 
     void verifySecurityKeyDevice(DeviceCredentials deviceCredentials) throws JsonProcessingException, InvalidConfigurationException;
 
-    void verifySecurityKeyDeviceProfile(DeviceProfile deviceProfile) throws InvalidConfigurationException, JsonProcessingException;
+    void verifyLwm2mSecurityKeyDeviceProfile(DeviceProfile deviceProfile) throws InvalidConfigurationException, JsonProcessingException;
 
     ServerSecurityConfig getServerSecurityInfo(boolean bootstrapServer);
 }
