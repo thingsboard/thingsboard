@@ -17,12 +17,14 @@ package org.thingsboard.server.transport.lwm2m.rpc;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.eclipse.leshan.core.ResponseCode;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.objectInstanceId_0;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.resourceId_0;
 
 public class RpcLwm2mIntegrationCreateTest extends RpcAbstractLwM2MIntegrationTest {
 
@@ -32,17 +34,20 @@ public class RpcLwm2mIntegrationCreateTest extends RpcAbstractLwM2MIntegrationTe
      *
      * create_2_instances_in_object
      * new ObjectInstance if Object is Multiple & Resource Single
-     * Create  {"id":"/19/2","value":{"1":2}}
-     * Create  {"id":"/19/3","value":{"0":{"0":"00AC", "1":"ddff12"}}}
+     * Create  {"id":"/19_1.1/0","value":{"0":{"0":"00AC", "1":1}}}
+     * {"result":"BAD_REQUEST","error":"instance 0 already exists"}
+     *
      */
-    @Ignore // in developing
     @Test
     public void testCreateObjectInstanceWithoutInstanceIdByIdKey_Result_CHANGED_Location() throws Exception {
-        String expectedPath = "/19_1.1";
-        String expectedValue = "{\"0\":{\"0\":\"00AC\"}, \"1\":1}";
+        String expectedPath = objectIdVer_19 + "/" + objectInstanceId_0;
+        String expectedValue = "{\"" + resourceId_0 + "\":{\"0\":\"00AC\"}, \"1\":1}";
         String actualResult = sendRPCreateById(expectedPath, expectedValue);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
-        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
+        String expected = "instance " + objectInstanceId_0 + " already exists";
+        String actual = rpcActualResult.get("error").asText();
+        assertTrue(actual.equals(expected));
     }
 
     /**
