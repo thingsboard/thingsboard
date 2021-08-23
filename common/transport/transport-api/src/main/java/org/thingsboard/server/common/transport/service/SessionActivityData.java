@@ -25,33 +25,18 @@ import java.util.concurrent.ScheduledFuture;
  * Created by ashvayka on 15.10.18.
  */
 @Data
-public class SessionMetaData {
+public class SessionActivityData {
 
     private volatile TransportProtos.SessionInfoProto sessionInfo;
-    private final TransportProtos.SessionType sessionType;
-    private final SessionMsgListener listener;
+    private volatile long lastActivityTime;
+    private volatile long lastReportedActivityTime;
 
-    private volatile ScheduledFuture scheduledFuture;
-    private volatile boolean subscribedToAttributes;
-    private volatile boolean subscribedToRPC;
-    private volatile boolean overwriteActivityTime;
-
-    SessionMetaData(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SessionType sessionType, SessionMsgListener listener) {
+    SessionActivityData(TransportProtos.SessionInfoProto sessionInfo) {
         this.sessionInfo = sessionInfo;
-        this.sessionType = sessionType;
-        this.listener = listener;
-        this.scheduledFuture = null;
     }
 
-    void setScheduledFuture(ScheduledFuture scheduledFuture) {
-        this.scheduledFuture = scheduledFuture;
+    void updateLastActivityTime() {
+        this.lastActivityTime = System.currentTimeMillis();
     }
 
-    public ScheduledFuture getScheduledFuture() {
-        return scheduledFuture;
-    }
-
-    public boolean hasScheduledFuture() {
-        return null != this.scheduledFuture;
-    }
 }

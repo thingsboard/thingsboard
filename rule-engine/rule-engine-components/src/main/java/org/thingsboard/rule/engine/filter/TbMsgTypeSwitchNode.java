@@ -33,7 +33,7 @@ import org.thingsboard.server.common.msg.session.SessionMsgType;
         type = ComponentType.FILTER,
         name = "message type switch",
         configClazz = EmptyNodeConfiguration.class,
-        relationTypes = {"Post attributes", "Post telemetry", "RPC Request from Device", "RPC Request to Device", "RPC Queued", "RPC Delivered", "RPC Successful", "RPC Timeout", "RPC Failed", "RPC Deleted",
+        relationTypes = {"Post attributes", "Post telemetry", "RPC Request from Device", "RPC Request to Device", "RPC Queued", "RPC Sent", "RPC Delivered", "RPC Successful", "RPC Timeout", "RPC Expired", "RPC Failed", "RPC Deleted",
                 "Activity Event", "Inactivity Event", "Connect Event", "Disconnect Event", "Entity Created", "Entity Updated", "Entity Deleted", "Entity Assigned",
                 "Entity Unassigned", "Attributes Updated", "Attributes Deleted", "Alarm Acknowledged", "Alarm Cleared", "Other", "Entity Assigned From Tenant", "Entity Assigned To Tenant",
                 "Timeseries Updated", "Timeseries Deleted"},
@@ -97,12 +97,16 @@ public class TbMsgTypeSwitchNode implements TbNode {
             relationType = "Timeseries Deleted";
         } else if (msg.getType().equals(DataConstants.RPC_QUEUED)) {
             relationType = "RPC Queued";
+        } else if (msg.getType().equals(DataConstants.RPC_SENT)) {
+            relationType = "RPC Sent";
         } else if (msg.getType().equals(DataConstants.RPC_DELIVERED)) {
             relationType = "RPC Delivered";
         } else if (msg.getType().equals(DataConstants.RPC_SUCCESSFUL)) {
             relationType = "RPC Successful";
         } else if (msg.getType().equals(DataConstants.RPC_TIMEOUT)) {
             relationType = "RPC Timeout";
+        } else if (msg.getType().equals(DataConstants.RPC_EXPIRED)) {
+            relationType = "RPC Expired";
         } else if (msg.getType().equals(DataConstants.RPC_FAILED)) {
             relationType = "RPC Failed";
         } else if (msg.getType().equals(DataConstants.RPC_DELETED)) {

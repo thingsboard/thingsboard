@@ -924,7 +924,7 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
      * @param sessionInfo -
      */
     private void reportActivityAndRegister(SessionInfoProto sessionInfo) {
-        if (sessionInfo != null && transportService.reportActivity(sessionInfo) == null) {
+        if (sessionInfo != null && !transportService.hasSession(sessionInfo)) {
             sessionManager.register(sessionInfo);
             this.reportActivitySubscription(sessionInfo);
         }

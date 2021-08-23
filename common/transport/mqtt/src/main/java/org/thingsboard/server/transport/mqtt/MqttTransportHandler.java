@@ -50,6 +50,7 @@ import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.transport.SessionMsgListener;
@@ -272,7 +273,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 int msgId = ((MqttPubAckMessage) msg).variableHeader().messageId();
                 TransportProtos.ToDeviceRpcRequestMsg rpcRequest = rpcAwaitingAck.remove(msgId);
                 if (rpcRequest != null) {
-                    transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, TransportServiceCallback.EMPTY);
+                    transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
                 }
                 break;
             default:
@@ -849,20 +850,27 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         try {
             deviceSessionCtx.getPayloadAdaptor().convertToPublish(deviceSessionCtx, rpcRequest).ifPresent(payload -> {
                 int msgId = ((MqttPublishMessage) payload).variableHeader().packetId();
-                if (rpcRequest.getPersisted() && isAckExpected(payload)) {
+                if (isAckExpected(payload)) {
                     rpcAwaitingAck.put(msgId, rpcRequest);
                     context.getScheduler().schedule(() -> {
-                        rpcAwaitingAck.remove(msgId);
-                    }, Math.max(0, rpcRequest.getExpirationTime() - System.currentTimeMillis()), TimeUnit.MILLISECONDS);
+                        TransportProtos.ToDeviceRpcRequestMsg msg = rpcAwaitingAck.remove(msgId);
+                        if (msg != null) {
+                            transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.TIMEOUT, TransportServiceCallback.EMPTY);
+                        }
+                    }, Math.max(0, Math.min(deviceSessionCtx.getContext().getTimeout(), rpcRequest.getExpirationTime() - System.currentTimeMillis())), TimeUnit.MILLISECONDS);
                 }
                 var cf = publish(payload, deviceSessionCtx);
-                if (rpcRequest.getPersisted() && !isAckExpected(payload)) {
-                    cf.addListener(result -> {
-                        if (result.cause() == null) {
-                            transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, TransportServiceCallback.EMPTY);
+                cf.addListener(result -> {
+                    if (result.cause() == null) {
+                        if (!isAckExpected(payload)) {
+                            transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
+                        } else if (rpcRequest.getPersisted()) {
+                            transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequest, RpcStatus.SENT, TransportServiceCallback.EMPTY);
                         }
-                    });
-                }
+                    } else {
+                        // TODO: send error
+                    }
+                });
             });
         } catch (Exception e) {
             transportService.process(deviceSessionCtx.getSessionInfo(),
