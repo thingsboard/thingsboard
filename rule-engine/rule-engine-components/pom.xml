@@ -35,7 +35,6 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.dir>${basedir}/../..</main.dir>
-        <google.common.protos.version>1.16.0</google.common.protos.version>
     </properties>
 
     <dependencies>
@@ -100,7 +99,6 @@
         <dependency>
             <groupId>com.google.api.grpc</groupId>
             <artifactId>proto-google-common-protos</artifactId>
-            <version>${google.common.protos.version}</version>
         </dependency>
         <dependency>
             <groupId>com.rabbitmq</groupId>
