@@ -18,6 +18,8 @@ package org.thingsboard.server.transport.lwm2m.server;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;

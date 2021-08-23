@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.sql;
+package org.thingsboard.server.transport.lwm2m.security;
 
 import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.core.util.Hex;
@@ -28,14 +28,14 @@ public class RpkLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
     @Test
     public void testConnectWithRPKAndObserveTelemetry() throws Exception {
         RPKClientCredentials rpkClientCredentials = new RPKClientCredentials();
-        rpkClientCredentials.setEndpoint(ENDPOINT);
+        rpkClientCredentials.setEndpoint(ENDPOINT_SECURITY);
         rpkClientCredentials.setKey(Hex.encodeHexString(clientPublicKey.getEncoded()));
         Security security = rpk(SECURE_URI,
                 SHORT_SERVER_ID,
                 clientPublicKey.getEncoded(),
                 clientPrivateKey.getEncoded(),
                 serverX509Cert.getPublicKey().getEncoded());
-        super.basicTestConnectionObserveTelemetry(security, rpkClientCredentials, SECURE_COAP_CONFIG, ENDPOINT);
+        super.basicTestConnectionObserveTelemetry(security, rpkClientCredentials, SECURE_COAP_CONFIG, ENDPOINT_SECURITY);
     }
 
 }

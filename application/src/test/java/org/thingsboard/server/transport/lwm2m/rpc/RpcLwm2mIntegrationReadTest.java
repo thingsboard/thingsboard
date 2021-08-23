@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server;
+package org.thingsboard.server.transport.lwm2m.rpc;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.eclipse.leshan.core.ResponseCode;
@@ -25,19 +25,19 @@ import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.BINARY_APP_DATA_CONTAINER;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.objectInstanceId_0;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.objectInstanceId_1;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceIdName_19_0_0;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceIdName_19_1_0;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceIdName_3_14;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceIdName_3_9;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceId_0;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceId_1;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceId_11;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceId_14;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceId_2;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceId_9;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.BINARY_APP_DATA_CONTAINER;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.objectInstanceId_0;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.objectInstanceId_1;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.resourceIdName_19_0_0;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.resourceIdName_19_1_0;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.resourceIdName_3_14;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.resourceIdName_3_9;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.resourceId_0;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.resourceId_1;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.resourceId_11;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.resourceId_14;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.resourceId_2;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.resourceId_9;
 
 public class RpcLwm2mIntegrationReadTest extends RpcAbstractLwM2MIntegrationTest {
 

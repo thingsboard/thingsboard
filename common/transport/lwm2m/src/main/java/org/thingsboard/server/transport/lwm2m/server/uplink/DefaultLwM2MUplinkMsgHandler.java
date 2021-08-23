@@ -487,11 +487,6 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
         }
     }
 
-    private void sendDiscoverRequest(LwM2mClient lwM2MClient, String targetId) {
-        TbLwM2MDiscoverRequest request = TbLwM2MDiscoverRequest.builder().versionedId(targetId).timeout(clientContext.getRequestTimeout(lwM2MClient)).build();
-        defaultLwM2MDownlinkMsgHandler.sendDiscoverRequest(lwM2MClient, request, new TbLwM2MDiscoverCallback(logService, lwM2MClient, targetId));
-    }
-
     private void sendReadRequest(LwM2mClient lwM2MClient, String versionedId) {
         sendReadRequest(lwM2MClient, versionedId, new TbLwM2MReadCallback(this, logService, lwM2MClient, versionedId));
     }

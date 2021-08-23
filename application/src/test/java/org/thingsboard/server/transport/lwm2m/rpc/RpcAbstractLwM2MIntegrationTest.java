@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server;
+package org.thingsboard.server.transport.lwm2m.rpc;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.io.IOUtils;
-import org.eclipse.californium.core.network.config.NetworkConfig;
-import org.eclipse.leshan.client.object.Security;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -38,8 +36,6 @@ import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfilePr
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
-import org.thingsboard.server.controller.AbstractWebsocketTest;
-import org.thingsboard.server.controller.TbTestWebSocketClient;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapConfig;
@@ -48,38 +44,29 @@ import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MServerBootst
 import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
 import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MCredentials;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.GeneralSecurityException;
-import java.security.KeyStore;
-import java.security.PrivateKey;
-import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Predicate;
 
-import static org.eclipse.leshan.client.object.Security.noSec;
 import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
 import static org.eclipse.leshan.core.LwM2mId.DEVICE;
 import static org.eclipse.leshan.core.LwM2mId.FIRMWARE;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.BINARY_APP_DATA_CONTAINER;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.TEMPERATURE_SENSOR;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.objectInstanceId_0;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.objectInstanceId_1;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceIdName_19_0_0;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceIdName_19_1_0;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceIdName_3_14;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceIdName_3_9;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceId_0;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceId_14;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resourceId_9;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resources;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.BINARY_APP_DATA_CONTAINER;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.TEMPERATURE_SENSOR;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.objectInstanceId_0;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.objectInstanceId_1;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.resourceIdName_19_0_0;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.resourceIdName_19_1_0;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.resourceIdName_3_14;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.resourceIdName_3_9;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.resourceId_0;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.resourceId_14;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.resourceId_9;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.resources;
 
 @DaoSqlTest
 public class RpcAbstractLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
@@ -167,10 +154,10 @@ public class RpcAbstractLwM2MIntegrationTest extends AbstractLwM2MIntegrationTes
         wsClient = buildAndConnectWebSocketClient();
         createDeviceProfile(RPC_TRANSPORT_CONFIGURATION);
         clientCredentials = new NoSecClientCredentials();
-        clientCredentials.setEndpoint(ENDPOINT);
+        clientCredentials.setEndpoint(ENDPOINT_SECURITY);
         Device device = createDevice(clientCredentials);
         deviceId = device.getId().getId().toString();
-        client = new LwM2MTestClient(executor, ENDPOINT);
+        client = new LwM2MTestClient(executor, ENDPOINT_SECURITY);
         client.init(SECURITY, COAP_CONFIG, 11004);
         for (String resourceName : resources) {
             TbResource lwModel = new TbResource();

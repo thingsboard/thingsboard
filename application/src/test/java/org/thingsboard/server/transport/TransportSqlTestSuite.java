@@ -33,8 +33,10 @@ import java.util.Arrays;
         "org.thingsboard.server.transport.*.attributes.request.sql.*Test",
         "org.thingsboard.server.transport.*.claim.sql.*Test",
         "org.thingsboard.server.transport.*.provision.sql.*Test",
-        "org.thingsboard.server.transport.lwm2m.sql.*Test",
-        "org.thingsboard.server.transport.lwm2m.server.*Test"
+        "org.thingsboard.server.transport.lwm2m.security.*Test",
+        "org.thingsboard.server.transport.lwm2m.server.*Test",
+        "org.thingsboard.server.transport.lwm2m.ota.*Test",
+        "org.thingsboard.server.transport.lwm2m.rpc.*Test",
 })
 public class TransportSqlTestSuite {
 

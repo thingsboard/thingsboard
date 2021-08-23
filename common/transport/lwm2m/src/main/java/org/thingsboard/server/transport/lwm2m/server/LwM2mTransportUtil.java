@@ -341,17 +341,15 @@ public class LwM2mTransportUtil {
         }
     }
 
-
     public static void validateVersionedId(LwM2mClient client, HasVersionedId request) {
-        Set<String> msgException = new HashSet<>();
-        msgException.add("");
+        String msgExceptionStr = "";
         if (request.getObjectId() == null) {
-            msgException.add("Specified object id is null!");
+            msgExceptionStr = "Specified object id is null!";
         } else {
-            msgException.add(client.isValidObjectVersion(request.getVersionedId()));
+            msgExceptionStr = client.isValidObjectVersion(request.getVersionedId());
         }
-        if (msgException.size() > 1) {
-            throw new IllegalArgumentException(getMsgException("", msgException));
+        if (!msgExceptionStr.isEmpty() ) {
+            throw new IllegalArgumentException(msgExceptionStr);
         }
     }
 

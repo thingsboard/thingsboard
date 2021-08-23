@@ -59,12 +59,12 @@ import static org.eclipse.leshan.core.LwM2mId.LOCATION;
 import static org.eclipse.leshan.core.LwM2mId.SECURITY;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.eclipse.leshan.core.LwM2mId.SOFTWARE_MANAGEMENT;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.BINARY_APP_DATA_CONTAINER;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.TEMPERATURE_SENSOR;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.objectInstanceId_0;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.objectInstanceId_1;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.objectInstanceId_12;
-import static org.thingsboard.server.transport.lwm2m.server.RpcModelsTestHelper.resources;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.BINARY_APP_DATA_CONTAINER;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.TEMPERATURE_SENSOR;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.objectInstanceId_0;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.objectInstanceId_1;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.objectInstanceId_12;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.resources;
 
 @Slf4j
 @Data
