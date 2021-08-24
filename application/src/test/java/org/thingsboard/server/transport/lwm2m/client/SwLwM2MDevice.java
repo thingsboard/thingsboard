@@ -24,6 +24,7 @@ import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.response.ExecuteResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.core.response.WriteResponse;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 
 import javax.security.auth.Destroyable;
 import java.util.Arrays;
