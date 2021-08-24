@@ -46,6 +46,7 @@ import org.eclipse.leshan.core.request.DeregisterRequest;
 import org.eclipse.leshan.core.request.RegisterRequest;
 import org.eclipse.leshan.core.request.UpdateRequest;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
+import org.junit.Assert;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -66,8 +67,11 @@ public class LwM2MTestClient {
     private final ScheduledExecutorService executor;
     private final String endpoint;
     private LeshanClient client;
+    private FwLwM2MDevice fwLwM2MDevice;
+    private SwLwM2MDevice swLwM2MDevice;
 
     public void init(Security security, NetworkConfig coapConfig) throws InvalidDDFFileException, IOException {
+        Assert.assertNull("client already initialized", client);
         String[] resources = new String[]{"0.xml", "1.xml", "2.xml", "3.xml", "5.xml", "9.xml"};
         List<ObjectModel> models = new ArrayList<>();
         for (String resourceName : resources) {
@@ -78,8 +82,8 @@ public class LwM2MTestClient {
         initializer.setInstancesForObject(SECURITY, security);
         initializer.setInstancesForObject(SERVER, new Server(123, 300));
         initializer.setInstancesForObject(DEVICE, new SimpleLwM2MDevice());
-        initializer.setInstancesForObject(FIRMWARE, new FwLwM2MDevice());
-        initializer.setInstancesForObject(SOFTWARE_MANAGEMENT, new SwLwM2MDevice());
+        initializer.setInstancesForObject(FIRMWARE, fwLwM2MDevice = new FwLwM2MDevice());
+        initializer.setInstancesForObject(SOFTWARE_MANAGEMENT, swLwM2MDevice = new SwLwM2MDevice());
         initializer.setClassForObject(LwM2mId.ACCESS_CONTROL, DummyInstanceEnabler.class);
 
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
@@ -230,6 +234,12 @@ public class LwM2MTestClient {
 
     public void destroy() {
         client.destroy(true);
+        if (fwLwM2MDevice != null) {
+            fwLwM2MDevice.destroy();
+        }
+        if (swLwM2MDevice != null) {
+            swLwM2MDevice.destroy();
+        }
     }
 
 }
