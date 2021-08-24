@@ -38,7 +38,7 @@ public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
 
     private static final List<Integer> supportedResources = Arrays.asList(0, 1, 2, 3, 5, 6, 7, 9);
 
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName(getClass().getSimpleName()));
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName(getClass().getSimpleName() + "-test-scope"));
 
     private final AtomicInteger state = new AtomicInteger(0);
 
