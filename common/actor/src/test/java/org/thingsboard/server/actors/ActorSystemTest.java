@@ -56,7 +56,7 @@ public class ActorSystemTest {
         parallelism = Math.max(2, cores / 2);
         TbActorSystemSettings settings = new TbActorSystemSettings(5, parallelism, 42);
         actorSystem = new DefaultTbActorSystem(settings);
-        submitPool = Executors.newFixedThreadPool(parallelism); //order guaranteed
+        submitPool = Executors.newFixedThreadPool(parallelism, ThingsBoardThreadFactory.forName(getClass().getSimpleName() + "-submit-test-scope")); //order guaranteed
     }
 
     @After
