@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m;
+package org.thingsboard.server.transport.lwm2m.security;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.network.config.NetworkConfig;
 import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.core.util.Hex;
@@ -26,6 +27,7 @@ import org.junit.Before;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.util.SocketUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Device;
@@ -86,6 +88,8 @@ import static org.eclipse.leshan.client.object.Security.noSec;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.COAP_CONFIG;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURITY;
 
 @DaoSqlTest
 public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
@@ -169,14 +173,9 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
     // certificates trustedby the server (should contain rootCA)
     protected final Certificate[] trustedCertificates = new Certificate[1];
 
-    protected static final int SECURE_PORT = 5686;
-    protected static final NetworkConfig SECURE_COAP_CONFIG = new NetworkConfig().setString("COAP_SECURE_PORT", Integer.toString(SECURE_PORT));
     protected static final String ENDPOINT = "deviceAEndpoint";
-    protected static final String SECURE_URI = "coaps://localhost:" + SECURE_PORT;
 
-    protected static final int PORT = 5685;
-    protected static final Security SECURITY = noSec("coap://localhost:" + PORT, 123);
-    protected static final NetworkConfig COAP_CONFIG = new NetworkConfig().setString("COAP_PORT", Integer.toString(PORT));
+    protected CoapClient client;
 
     public AbstractLwM2MIntegrationTest() {
 // create client credentials
@@ -394,8 +393,8 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
 
             wsClient.registerWaitForUpdate();
             client = new LwM2MTestClient(executor, endpoint);
-
-            client.init(security, coapConfig);
+            int clientPort = SocketUtils.findAvailableTcpPort();
+            client.init(security, coapConfig, clientPort);
             String msg = wsClient.waitForUpdate();
 
             EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);

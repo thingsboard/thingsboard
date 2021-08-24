@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.sql;
+package org.thingsboard.server.transport.lwm2m.security.sql;
 
 import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.core.util.Hex;
 import org.junit.Test;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCredentials;
-import org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest;
+import org.thingsboard.server.transport.lwm2m.security.AbstractLwM2MIntegrationTest;
 
 import java.nio.charset.StandardCharsets;
 
 import static org.eclipse.leshan.client.object.Security.psk;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURE_COAP_CONFIG;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURE_URI;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SHORT_SERVER_ID;
 
 public class PskLwm2mIntegrationTest extends AbstractLwM2MIntegrationTest {
 
@@ -36,7 +39,7 @@ public class PskLwm2mIntegrationTest extends AbstractLwM2MIntegrationTest {
         clientCredentials.setKey(pskKey);
         clientCredentials.setIdentity(pskIdentity);
         Security security = psk(SECURE_URI,
-                123,
+                SHORT_SERVER_ID,
                 pskIdentity.getBytes(StandardCharsets.UTF_8),
                 Hex.decodeHex(pskKey.toCharArray()));
         super.basicTestConnectionObserveTelemetry(security, clientCredentials, SECURE_COAP_CONFIG, ENDPOINT);

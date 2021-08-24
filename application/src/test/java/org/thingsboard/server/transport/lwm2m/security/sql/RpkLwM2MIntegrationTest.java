@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.sql;
+package org.thingsboard.server.transport.lwm2m.security.sql;
 
 import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.core.util.Hex;
 import org.junit.Test;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCredentials;
-import org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest;
+import org.thingsboard.server.transport.lwm2m.security.AbstractLwM2MIntegrationTest;
 
 import static org.eclipse.leshan.client.object.Security.rpk;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURE_COAP_CONFIG;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURE_URI;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SHORT_SERVER_ID;
 
 public class RpkLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
@@ -31,7 +34,7 @@ public class RpkLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
         rpkClientCredentials.setEndpoint(ENDPOINT);
         rpkClientCredentials.setKey(Hex.encodeHexString(clientPublicKey.getEncoded()));
         Security security = rpk(SECURE_URI,
-                123,
+                SHORT_SERVER_ID,
                 clientPublicKey.getEncoded(),
                 clientPrivateKey.getEncoded(),
                 serverX509Cert.getPublicKey().getEncoded());

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.transport.lwm2m.client;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.client.resource.BaseInstanceEnabler;
 import org.eclipse.leshan.client.servers.ServerIdentity;
@@ -84,7 +83,7 @@ public class SwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
 
     @Override
     public WriteResponse write(ServerIdentity identity, boolean replace, int resourceId, LwM2mResource value) {
-        log.info("Write on Device resource /{}/{}/{}", getModel().id, getId(), resourceId);
+        log.warn("Write on Device resource /{}/{}/{}", getModel().id, getId(), resourceId);
 
         switch (resourceId) {
             case 2:
