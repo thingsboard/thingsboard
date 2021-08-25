@@ -2263,6 +2263,7 @@
         "total": "total",
         "comparison-time-ago": {
             "previousInterval": "(previous interval)",
+            "customInterval": "(custom interval)",
             "days": "(day ago)",
             "weeks": "(week ago)",
             "months": "(month ago)",
