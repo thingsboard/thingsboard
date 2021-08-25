@@ -7,6 +7,8 @@
     "access-forbidden-text": "Sie haben keine Zugangsberechtigung für diesen Bereich!<br/>Versuchen Sie sich mit einem anderen Benutzer anzumelden um Zugriff auf diesen Bereich zu bekommen.",
     "refresh-token-expired": "Sitzung ist abgelaufen",
     "refresh-token-failed": "Sitzung kann nicht aktualisiert werden"
+    "permission-denied": "Zugriff verweigert",
+    "permission-denied-text": "Sie haben keine Berechtigung, um diesen Vorgang auszuführen!"
   },
   "action": {
     "activate": "Aktivieren",
@@ -21,6 +23,7 @@
     "no": "Nein",
     "update": "Aktualisieren",
     "remove": "Löschen",
+	  "select": "Auswählen",
     "search": "Suche",
     "clear-search": "Suchanfrage löschen",
     "assign": "Zuordnen",
@@ -49,6 +52,12 @@
     "import": "Importieren",
     "export": "Exportieren",
     "share-via": "Teilen mit {{provider}}"
+    "continue": "Fortsetzen",
+    "discard-changes": "Änderungen verwerfen",
+    "download": "Download",
+    "next-with-label": "Nächste: {{label}}",
+    "read-more": "Mehr dazu",
+    "hide": "Verstecken"
   },
   "aggregation": {
     "aggregation": "Aggregation",
@@ -65,12 +74,15 @@
   "admin": {
     "general": "Allgemein",
     "general-settings": "Allgemeine Einstellungen",
+	  "home-settings": "Home Einstellungen",
     "outgoing-mail": "E-Mail Versand",
     "outgoing-mail-settings": "Konfiguration des Postausgangsservers",
     "system-settings": "Systemeinstellungen",
     "test-mail-sent": "Test E-Mail wurde erfolgreich versendet!",
     "base-url": "Basis-URL",
     "base-url-required": "Basis-URL ist erforderlich.",
+  	"prohibit-different-url": "Prohibit to use hostname from the client request headers",
+  	"prohibit-different-url-hint": "This setting should be enabled for production environments. May cause security issues when disabled",
     "mail-from": "E-Mail von",
     "mail-from-required": "E-Mail von ist erforderlich.",
     "smtp-protocol": "SMTP Protokoll",
