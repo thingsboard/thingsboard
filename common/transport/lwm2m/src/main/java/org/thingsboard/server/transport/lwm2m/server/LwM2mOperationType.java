@@ -52,12 +52,15 @@ public enum LwM2mOperationType {
     DELETE(16, "Delete", true),
 
     // only for RPC
-    FW_UPDATE(17, "FirmwareUpdate", false);
+    FW_UPDATE(17, "FirmwareUpdate", false),
+    //        FW_READ_INFO(18, "FirmwareReadInfo", false),
+    SW_UPDATE(19, "SoftwareUpdate", false),
+    //        SW_READ_INFO(20, "SoftwareReadInfo", false),
+    SW_UNINSTALL(21, "SoftwareUninstall", false),
+    CREATE(11, "Create", true);
 
-//        FW_READ_INFO(18, "FirmwareReadInfo"),
-//        SW_READ_INFO(19, "SoftwareReadInfo"),
-//        SW_UPDATE(20, "SoftwareUpdate"),
-//        SW_UNINSTALL(21, "SoftwareUninstall");
+
+
 
     @Getter
     private final int code;
@@ -78,7 +81,7 @@ public enum LwM2mOperationType {
         this.type = type;
         this.hasObjectId = hasObjectId;
         this.composite = composite;
-        if(hasObjectId && composite){
+        if (hasObjectId && composite) {
             throw new IllegalArgumentException("Can't set both Composite and hasObjectId for the same operation!");
         }
     }

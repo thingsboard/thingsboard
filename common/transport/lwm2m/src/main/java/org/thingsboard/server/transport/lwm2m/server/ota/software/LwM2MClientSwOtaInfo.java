@@ -20,12 +20,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MClientOtaInfo;
-import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdateResult;
-import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdateState;
-import org.thingsboard.server.transport.lwm2m.server.ota.firmware.LwM2MFirmwareUpdateStrategy;
 
 @Data
 @EqualsAndHashCode(callSuper = true)

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.utils;
 
+import com.google.api.client.util.Base64;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ResourceModel.Type;
 import org.eclipse.leshan.core.node.LwM2mPath;
@@ -166,13 +167,16 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
             case OPAQUE:
                 if (currentType == Type.STRING) {
                     /** let's assume we received an hexadecimal string */
-                    log.debug("Trying to convert hexadecimal string [{}] to byte array", value);
-                    // TODO check if we shouldn't instead assume that the string contains Base64 encoded data
+                    log.debug("Trying to convert hexadecimal/base64 string [{}] to byte array", value);
                     try {
                         return Hex.decodeHex(((String)value).toCharArray());
                     } catch (IllegalArgumentException e) {
-                        throw new CodecException("Unable to convert hexastring [%s] to byte array for resource %s", value,
-                                resourcePath);
+                        try {
+                            return Base64.decodeBase64(((String) value).getBytes());
+                        } catch (IllegalArgumentException ea) {
+                            throw new CodecException("Unable to convert hexastring or base64 [%s] to byte array for resource %s",
+                                    value, resourcePath);
+                        }
                     }
                 }
                 break;

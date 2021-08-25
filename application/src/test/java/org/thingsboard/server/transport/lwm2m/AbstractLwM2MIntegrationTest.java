@@ -56,6 +56,9 @@ import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmdsWrapper;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
+import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapConfig;
+import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapServers;
+import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MServerBootstrap;
 import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
 import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MCredentials;
 
@@ -170,12 +173,19 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
     protected final Certificate[] trustedCertificates = new Certificate[1];
 
     protected static final int SECURE_PORT = 5686;
+    protected static final int SECURE_PORT_BS = 5688;
+    protected static final String HOST = "localhost";
+    protected static final String HOST_BS = "localhost";
     protected static final NetworkConfig SECURE_COAP_CONFIG = new NetworkConfig().setString("COAP_SECURE_PORT", Integer.toString(SECURE_PORT));
-    protected static final String ENDPOINT = "deviceAEndpoint";
+    protected static final String ENDPOINT_SECURITY = "deviceAEndpoint";
     protected static final String SECURE_URI = "coaps://localhost:" + SECURE_PORT;
 
     protected static final int PORT = 5685;
-    protected static final Security SECURITY = noSec("coap://localhost:" + PORT, 123);
+    protected static final int PORT_BS = 5687;
+    protected static final int SHORT_SERVER_ID = 123;
+    protected static final int SHORT_SERVER_ID_BS = 111;
+
+    protected static final Security SECURITY = noSec("coap://localhost:" + PORT, SHORT_SERVER_ID);
     protected static final NetworkConfig COAP_CONFIG = new NetworkConfig().setString("COAP_PORT", Integer.toString(PORT));
 
     public AbstractLwM2MIntegrationTest() {
@@ -301,6 +311,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         Assert.assertNotNull(deviceProfile);
     }
 
+
     protected Device createDevice(LwM2MClientCredentials clientCredentials) throws Exception {
         Device device = new Device();
         device.setName("Device A");
@@ -308,21 +319,41 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         device.setTenantId(tenantId);
         device = doPost("/api/device", device, Device.class);
         Assert.assertNotNull(device);
-
         DeviceCredentials deviceCredentials =
                 doGet("/api/device/" + device.getId().getId().toString() + "/credentials", DeviceCredentials.class);
         Assert.assertEquals(device.getId(), deviceCredentials.getDeviceId());
         deviceCredentials.setCredentialsType(DeviceCredentialsType.LWM2M_CREDENTIALS);
-
         LwM2MCredentials credentials = new LwM2MCredentials();
-
         credentials.setClient(clientCredentials);
-
+        credentials.setBootstrap(createBootstrapConfig());
         deviceCredentials.setCredentialsValue(JacksonUtil.toString(credentials));
         doPost("/api/device/credentials", deviceCredentials).andExpect(status().isOk());
         return device;
     }
 
+    protected LwM2MBootstrapConfig createBootstrapConfig() {
+        LwM2MBootstrapConfig bootstrap = new LwM2MBootstrapConfig();
+        LwM2MBootstrapServers servers = new LwM2MBootstrapServers();
+        servers.setShortId(SHORT_SERVER_ID);
+        bootstrap.setServers(servers);
+        LwM2MServerBootstrap server = new LwM2MServerBootstrap();
+        server.setHost(HOST);
+        server.setPort(PORT);
+        server.setSecurityHost(HOST);
+        server.setSecurityPort(SECURE_PORT);
+        server.setServerId(servers.getShortId());
+        server.setBootstrapServerIs(false);
+        bootstrap.setLwm2mServer(server);
+        LwM2MServerBootstrap serverBS = new LwM2MServerBootstrap();
+        serverBS.setHost(HOST_BS);
+        serverBS.setPort(PORT_BS);
+        serverBS.setSecurityHost(HOST_BS);
+        serverBS.setSecurityPort(SECURE_PORT_BS);
+        serverBS.setServerId(SHORT_SERVER_ID_BS);
+        serverBS.setBootstrapServerIs(true);
+        bootstrap.setBootstrapServer(serverBS);
+        return bootstrap;
+    }
 
     protected OtaPackageInfo createFirmware() throws Exception {
         String CHECKSUM = "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a";
@@ -337,7 +368,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
 
         MockMultipartFile testData = new MockMultipartFile("file", "filename.txt", "text/plain", new byte[]{1});
 
-        return savaData("/api/otaPackage/" + savedFirmwareInfo.getId().getId().toString() + "?checksum={checksum}&checksumAlgorithm={checksumAlgorithm}", testData, CHECKSUM, "SHA256");
+        return saveData("/api/otaPackage/" + savedFirmwareInfo.getId().getId().toString() + "?checksum={checksum}&checksumAlgorithm={checksumAlgorithm}", testData, CHECKSUM, "SHA256");
     }
 
     protected OtaPackageInfo createSoftware() throws Exception {
@@ -353,10 +384,10 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
 
         MockMultipartFile testData = new MockMultipartFile("file", "filename.txt", "text/plain", new byte[]{1});
 
-        return savaData("/api/otaPackage/" + savedFirmwareInfo.getId().getId().toString() + "?checksum={checksum}&checksumAlgorithm={checksumAlgorithm}", testData, CHECKSUM, "SHA256");
+        return saveData("/api/otaPackage/" + savedFirmwareInfo.getId().getId().toString() + "?checksum={checksum}&checksumAlgorithm={checksumAlgorithm}", testData, CHECKSUM, "SHA256");
     }
 
-    protected OtaPackageInfo savaData(String urlTemplate, MockMultipartFile content, String... params) throws Exception {
+    protected OtaPackageInfo saveData(String urlTemplate, MockMultipartFile content, String... params) throws Exception {
         MockMultipartHttpServletRequestBuilder postRequest = MockMvcRequestBuilders.multipart(urlTemplate, params);
         postRequest.file(content);
         setJwtToken(postRequest);
@@ -395,7 +426,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
             wsClient.registerWaitForUpdate();
             client = new LwM2MTestClient(executor, endpoint);
 
-            client.init(security, coapConfig);
+            client.init(security, coapConfig, 11000);
             String msg = wsClient.waitForUpdate();
 
             EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
@@ -408,7 +439,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
             var tsValue = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("batteryLevel");
             Assert.assertEquals(42, Long.parseLong(tsValue.getValue()));
         } finally {
-            if(client != null) {
+            if (client != null) {
                 client.destroy();
             }
         }

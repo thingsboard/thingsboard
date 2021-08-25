@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.request.BindingMode;
@@ -59,6 +60,7 @@ public class LwM2MBootstrapConfig implements Serializable {
 
     LwM2MServerBootstrap lwm2mServer;
 
+    @JsonIgnore
     public BootstrapConfig getLwM2MBootstrapConfig() {
         BootstrapConfig configBs = new BootstrapConfig();
         /* Delete old security objects */

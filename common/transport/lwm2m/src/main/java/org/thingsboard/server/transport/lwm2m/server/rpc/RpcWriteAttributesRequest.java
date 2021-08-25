@@ -21,7 +21,7 @@ import org.thingsboard.server.common.data.device.data.lwm2m.ObjectAttributes;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class RpcWriteAttributesRequest extends IdOrKeyRequest {
+public class RpcWriteAttributesRequest extends LwM2MRpcRequestHeader {
 
     private ObjectAttributes attributes;
 

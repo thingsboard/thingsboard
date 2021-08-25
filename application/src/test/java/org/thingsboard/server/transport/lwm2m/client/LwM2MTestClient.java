@@ -31,7 +31,6 @@ import org.eclipse.leshan.client.observer.LwM2mClientObserver;
 import org.eclipse.leshan.client.resource.DummyInstanceEnabler;
 import org.eclipse.leshan.client.resource.ObjectsInitializer;
 import org.eclipse.leshan.client.servers.ServerIdentity;
-import org.eclipse.leshan.core.LwM2mId;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.californium.EndpointFactory;
 import org.eclipse.leshan.core.model.InvalidDDFFileException;
@@ -39,12 +38,13 @@ import org.eclipse.leshan.core.model.LwM2mModel;
 import org.eclipse.leshan.core.model.ObjectLoader;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.StaticModel;
-import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeDecoder;
-import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeEncoder;
+import org.eclipse.leshan.core.node.codec.DefaultLwM2mDecoder;
+import org.eclipse.leshan.core.node.codec.DefaultLwM2mEncoder;
 import org.eclipse.leshan.core.request.BootstrapRequest;
 import org.eclipse.leshan.core.request.DeregisterRequest;
 import org.eclipse.leshan.core.request.RegisterRequest;
 import org.eclipse.leshan.core.request.UpdateRequest;
+import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -52,11 +52,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
+import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
 import static org.eclipse.leshan.core.LwM2mId.DEVICE;
 import static org.eclipse.leshan.core.LwM2mId.FIRMWARE;
+import static org.eclipse.leshan.core.LwM2mId.LOCATION;
 import static org.eclipse.leshan.core.LwM2mId.SECURITY;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.eclipse.leshan.core.LwM2mId.SOFTWARE_MANAGEMENT;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.BINARY_APP_DATA_CONTAINER;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.TEMPERATURE_SENSOR;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.objectInstanceId_0;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.objectInstanceId_1;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.objectInstanceId_12;
+import static org.thingsboard.server.transport.lwm2m.rpc.RpcModelsTestHelper.resources;
 
 @Slf4j
 @Data
@@ -66,12 +74,12 @@ public class LwM2MTestClient {
     private final String endpoint;
     private LeshanClient client;
 
-    public void init(Security security, NetworkConfig coapConfig) throws InvalidDDFFileException, IOException {
-        String[] resources = new String[]{"0.xml", "1.xml", "2.xml", "3.xml", "5.xml", "9.xml"};
+    public void init(Security security, NetworkConfig coapConfig, int port) throws InvalidDDFFileException, IOException {
         List<ObjectModel> models = new ArrayList<>();
         for (String resourceName : resources) {
             models.addAll(ObjectLoader.loadDdfFile(LwM2MTestClient.class.getClassLoader().getResourceAsStream("lwm2m/" + resourceName), resourceName));
         }
+
         LwM2mModel model = new StaticModel(models);
         ObjectsInitializer initializer = new ObjectsInitializer(model);
         initializer.setInstancesForObject(SECURITY, security);
@@ -79,7 +87,13 @@ public class LwM2MTestClient {
         initializer.setInstancesForObject(DEVICE, new SimpleLwM2MDevice());
         initializer.setInstancesForObject(FIRMWARE, new FwLwM2MDevice());
         initializer.setInstancesForObject(SOFTWARE_MANAGEMENT, new SwLwM2MDevice());
-        initializer.setClassForObject(LwM2mId.ACCESS_CONTROL, DummyInstanceEnabler.class);
+        initializer.setClassForObject(ACCESS_CONTROL, DummyInstanceEnabler.class);
+        initializer.setInstancesForObject(BINARY_APP_DATA_CONTAINER, new LwM2mBinaryAppDataContainer(executor, objectInstanceId_0),
+                new LwM2mBinaryAppDataContainer(executor, objectInstanceId_1));
+        LwM2MLocationParams locationParams = new LwM2MLocationParams();
+        locationParams.getPos();
+        initializer.setInstancesForObject(LOCATION, new LwM2mLocation(locationParams.getLatitude(), locationParams.getLongitude(), locationParams.getScaleFactor(), executor, objectInstanceId_0));
+        initializer.setInstancesForObject(TEMPERATURE_SENSOR, new LwM2mTemperatureSensor(executor, objectInstanceId_0), new LwM2mTemperatureSensor(executor, objectInstanceId_12));
 
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
         dtlsConfig.setRecommendedCipherSuitesOnly(true);
@@ -123,15 +137,16 @@ public class LwM2MTestClient {
 
 
         LeshanClientBuilder builder = new LeshanClientBuilder(endpoint);
-        builder.setLocalAddress("0.0.0.0", 11000);
+        builder.setLocalAddress("0.0.0.0", port);
         builder.setObjects(initializer.createAll());
         builder.setCoapConfig(coapConfig);
         builder.setDtlsConfig(dtlsConfig);
         builder.setRegistrationEngineFactory(engineFactory);
         builder.setEndpointFactory(endpointFactory);
         builder.setSharedExecutor(executor);
-        builder.setDecoder(new DefaultLwM2mNodeDecoder(true));
-        builder.setEncoder(new DefaultLwM2mNodeEncoder(true));
+        builder.setDecoder(new DefaultLwM2mDecoder(false));
+
+        builder.setEncoder(new DefaultLwM2mEncoder(new LwM2mValueConverterImpl(), false));
         client = builder.build();
 
         LwM2mClientObserver observer = new LwM2mClientObserver() {
@@ -228,7 +243,9 @@ public class LwM2MTestClient {
     }
 
     public void destroy() {
-        client.destroy(true);
+        if (client != null) {
+            client.destroy(true);
+        }
     }
 
 }

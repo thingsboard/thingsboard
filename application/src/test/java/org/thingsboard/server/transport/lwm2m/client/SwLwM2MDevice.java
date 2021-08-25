@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.transport.lwm2m.client;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.client.resource.BaseInstanceEnabler;
 import org.eclipse.leshan.client.servers.ServerIdentity;

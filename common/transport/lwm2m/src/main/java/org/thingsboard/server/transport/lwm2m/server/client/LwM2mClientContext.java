@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.client;
 
+import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
@@ -51,7 +52,7 @@ public interface LwM2mClientContext {
 
     LwM2mClient getClientByDeviceId(UUID deviceId);
 
-    String getObjectIdByKeyNameFromProfile(LwM2mClient lwM2mClient, String keyName);
+    String getObjectIdByKeyNameFromProfile(LwM2mClient lwM2mClient, String keyName, boolean isCompositeOperation);
 
     void registerClient(Registration registration, ValidateDeviceCredentialsResponse credentials);
 
@@ -61,7 +62,7 @@ public interface LwM2mClientContext {
 
     void sendMsgsAfterSleeping(LwM2mClient lwM2MClient);
 
-    boolean isComposite(LwM2mClient client);
+    ContentFormat getContentFormatComposite(LwM2mClient client);
 
     void onUplink(LwM2mClient client);
 
