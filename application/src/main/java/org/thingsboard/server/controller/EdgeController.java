@@ -572,7 +572,7 @@ public class EdgeController extends BaseController {
     public ResponseEntity<JsonNode> checkInstance(@RequestBody JsonNode request) throws ThingsboardException {
         log.debug("Checking instance [{}]", request);
         try {
-            return edgeService.checkInstance(request);
+            return edgeLicenseService.checkInstance(request);
         } catch (Exception e) {
             log.error("Error occurred: [{}]", e.getMessage(), e);
             throw new ThingsboardException(e, ThingsboardErrorCode.SUBSCRIPTION_VIOLATION);
@@ -585,7 +585,7 @@ public class EdgeController extends BaseController {
                                                      @RequestParam String releaseDate) throws ThingsboardException {
         log.debug("Activating instance [{}], [{}]", licenseSecret, releaseDate);
         try {
-            return edgeService.activateInstance(licenseSecret, releaseDate);
+            return edgeLicenseService.activateInstance(licenseSecret, releaseDate);
         } catch (Exception e) {
             log.error("Error occurred: [{}]", e.getMessage(), e);
             throw new ThingsboardException(e, ThingsboardErrorCode.SUBSCRIPTION_VIOLATION);
