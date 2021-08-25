@@ -85,8 +85,8 @@
         <grpc.version>1.38.0</grpc.version>
         <lombok.version>1.18.18</lombok.version>
         <paho.client.version>1.2.4</paho.client.version>
-        <netty.version>4.1.66.Final</netty.version>
-        <netty-tcnative-boringssl-static.version>2.0.41.Final</netty-tcnative-boringssl-static.version>
+        <netty.version>4.1.67.Final</netty.version>
+        <netty-tcnative-boringssl-static.version>2.0.40.Final</netty-tcnative-boringssl-static.version>
         <os-maven-plugin.version>1.7.0</os-maven-plugin.version>
         <rabbitmq.version>4.8.0</rabbitmq.version>
         <surfire.version>2.19.1</surfire.version>
