@@ -59,7 +59,7 @@ export class DeviceCredentialsMqttBasicComponent implements ControlValueAccessor
 
   constructor(public fb: FormBuilder) {
     this.deviceCredentialsMqttFormGroup = this.fb.group({
-      clientId: [null, [Validators.pattern(/^[A-Za-z0-9]+$/)]],
+      clientId: [null],
       userName: [null],
       password: [null]
     }, {validators: this.atLeastOne(Validators.required, ['clientId', 'userName'])});
