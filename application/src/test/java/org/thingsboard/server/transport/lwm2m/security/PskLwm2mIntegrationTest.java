@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.sql;
+package org.thingsboard.server.transport.lwm2m.security;
 
 import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.core.util.Hex;
@@ -32,13 +32,13 @@ public class PskLwm2mIntegrationTest extends AbstractLwM2MIntegrationTest {
         String pskIdentity = "SOME_PSK_ID";
         String pskKey = "73656372657450534b";
         PSKClientCredentials clientCredentials = new PSKClientCredentials();
-        clientCredentials.setEndpoint(ENDPOINT);
+        clientCredentials.setEndpoint(ENDPOINT_SECURITY);
         clientCredentials.setKey(pskKey);
         clientCredentials.setIdentity(pskIdentity);
         Security security = psk(SECURE_URI,
-                123,
+                SHORT_SERVER_ID,
                 pskIdentity.getBytes(StandardCharsets.UTF_8),
                 Hex.decodeHex(pskKey.toCharArray()));
-        super.basicTestConnectionObserveTelemetry(security, clientCredentials, SECURE_COAP_CONFIG, ENDPOINT);
+        super.basicTestConnectionObserveTelemetry(security, clientCredentials, SECURE_COAP_CONFIG, ENDPOINT_SECURITY);
     }
 }
