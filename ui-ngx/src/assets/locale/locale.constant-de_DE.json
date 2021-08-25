@@ -6,7 +6,7 @@
     "access-forbidden": "Keine Zugangsberechtigung",
     "access-forbidden-text": "Sie haben keine Zugangsberechtigung für diesen Bereich!<br/>Versuchen Sie sich mit einem anderen Benutzer anzumelden um Zugriff auf diesen Bereich zu bekommen.",
     "refresh-token-expired": "Sitzung ist abgelaufen",
-    "refresh-token-failed": "Sitzung kann nicht aktualisiert werden"
+    "refresh-token-failed": "Sitzung kann nicht aktualisiert werden",
     "permission-denied": "Zugriff verweigert",
     "permission-denied-text": "Sie haben keine Berechtigung, um diesen Vorgang auszuführen!"
   },
