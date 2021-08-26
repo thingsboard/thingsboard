@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.lwm2m.security;
 
 import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.core.util.Hex;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCredentials;
 import org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest;
@@ -25,17 +26,18 @@ import static org.eclipse.leshan.client.object.Security.rpk;
 
 public class RpkLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
-//    @Test
-//    public void testConnectWithRPKAndObserveTelemetry() throws Exception {
-//        RPKClientCredentials rpkClientCredentials = new RPKClientCredentials();
-//        rpkClientCredentials.setEndpoint(ENDPOINT_SECURITY);
-//        rpkClientCredentials.setKey(Hex.encodeHexString(clientPublicKey.getEncoded()));
-//        Security security = rpk(SECURE_URI,
-//                SHORT_SERVER_ID,
-//                clientPublicKey.getEncoded(),
-//                clientPrivateKey.getEncoded(),
-//                serverX509Cert.getPublicKey().getEncoded());
-//        super.basicTestConnectionObserveTelemetry(security, rpkClientCredentials, SECURE_COAP_CONFIG, ENDPOINT_SECURITY);
-//    }
+    @Ignore
+    @Test
+    public void testConnectWithRPKAndObserveTelemetry() throws Exception {
+        RPKClientCredentials rpkClientCredentials = new RPKClientCredentials();
+        rpkClientCredentials.setEndpoint(ENDPOINT_SECURITY);
+        rpkClientCredentials.setKey(Hex.encodeHexString(clientPublicKey.getEncoded()));
+        Security security = rpk(SECURE_URI,
+                SHORT_SERVER_ID,
+                clientPublicKey.getEncoded(),
+                clientPrivateKey.getEncoded(),
+                serverX509Cert.getPublicKey().getEncoded());
+        super.basicTestConnectionObserveTelemetry(security, rpkClientCredentials, SECURE_COAP_CONFIG, ENDPOINT_SECURITY);
+    }
 
 }

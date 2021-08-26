@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
+import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -39,91 +40,98 @@ import static org.mockito.Mockito.verify;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_TELEMETRY;
 
 class LwM2mTransportServerHelperTest {
-//
-//    public static final String KEY_SW_STATE = "sw_state";
-//    public static final String DOWNLOADING = "DOWNLOADING";
-//
-//    long now;
-//    List<TransportProtos.KeyValueProto> kvList;
-//    ConcurrentMap<String, AtomicLong> keyTsLatestMap;
-//    LwM2mTransportServerHelper helper;
-//    LwM2mTransportContext context;
-//
-//
-//    @BeforeEach
-//    void setUp() {
-//        now = System.currentTimeMillis();
-//        context = mock(LwM2mTransportContext.class);
-//        helper = spy(new LwM2mTransportServerHelper(context));
-//        willReturn(now).given(helper).getCurrentTimeMillis();
-//        kvList = List.of(
-//                TransportProtos.KeyValueProto.newBuilder().setKey(KEY_SW_STATE).setStringV(DOWNLOADING).build(),
-//                TransportProtos.KeyValueProto.newBuilder().setKey(LOG_LWM2M_TELEMETRY).setStringV("Transport log example").build()
-//        );
-//        keyTsLatestMap = new ConcurrentHashMap<>();
-//    }
-//
-//    @Test
-//    void givenKeyAndLatestTsMapAndCurrentTs_whenGetTs_thenVerifyNoGetTsByKeyCall() {
-//        assertThat(helper.getTs(null, null)).isEqualTo(now);
-//        assertThat(helper.getTs(null, keyTsLatestMap)).isEqualTo(now);
-//        assertThat(helper.getTs(emptyList(), null)).isEqualTo(now);
-//        assertThat(helper.getTs(emptyList(), keyTsLatestMap)).isEqualTo(now);
-//        assertThat(helper.getTs(kvList, null)).isEqualTo(now);
-//
-//        verify(helper, never()).getTsByKey(anyString(), any(ConcurrentMap.class), anyLong());
-//        verify(helper, times(5)).getCurrentTimeMillis();
-//    }
-//
-//    @Test
-//    void givenKeyAndLatestTsMapAndCurrentTs_whenGetTs_thenVerifyGetTsByKeyCallByFirstKey() {
-//        assertThat(helper.getTs(kvList, keyTsLatestMap)).isEqualTo(now);
-//
-//        verify(helper, times(1)).getTsByKey(kvList.get(0).getKey(), keyTsLatestMap, now);
-//        verify(helper, times(1)).getTsByKey(anyString(), any(ConcurrentMap.class), anyLong());
-//    }
-//
-//    @Test
-//    void givenKeyAndEmptyLatestTsMap_whenGetTsByKey_thenAddToMapAndReturnNow() {
-//        assertThat(keyTsLatestMap).as("ts latest map before").isEmpty();
-//
-//        assertThat(helper.getTsByKey(KEY_SW_STATE, keyTsLatestMap, now)).as("getTsByKey").isEqualTo(now);
-//
-//        assertThat(keyTsLatestMap).as("ts latest map after").hasSize(1);
-//        assertThat(keyTsLatestMap.get(KEY_SW_STATE)).as("key present").isNotNull();
-//        assertThat(keyTsLatestMap.get(KEY_SW_STATE).get()).as("ts in map by key").isEqualTo(now);
-//    }
-//
-//    @Test
-//    void givenKeyAndLatestTsMapWithExistedKey_whenGetTsByKey_thenCallSwapOrIncrementMethod() {
-//        keyTsLatestMap.put(KEY_SW_STATE, new AtomicLong());
-//        keyTsLatestMap.put("other", new AtomicLong());
-//        assertThat(keyTsLatestMap).as("ts latest map").hasSize(2);
-//        willReturn(now).given(helper).compareAndSwapOrIncrementTsAtomically(any(AtomicLong.class), anyLong());
-//
-//        assertThat(helper.getTsByKey(KEY_SW_STATE, keyTsLatestMap, now)).as("getTsByKey").isEqualTo(now);
-//
-//        verify(helper, times(1)).compareAndSwapOrIncrementTsAtomically(keyTsLatestMap.get(KEY_SW_STATE), now);
-//        verify(helper, times(1)).compareAndSwapOrIncrementTsAtomically(any(AtomicLong.class), anyLong());
-//    }
-//
-//    @Test
-//    void givenMapWithTsValueLessThanNow_whenCompareAndSwapOrIncrementTsAtomically_thenReturnNow() {
-//        keyTsLatestMap.put(KEY_SW_STATE, new AtomicLong(now - 1));
-//        assertThat(helper.compareAndSwapOrIncrementTsAtomically(keyTsLatestMap.get(KEY_SW_STATE), now)).isEqualTo(now);
-//    }
-//
-//    @Test
-//    void givenMapWithTsValueEqualsNow_whenCompareAndSwapOrIncrementTsAtomically_thenReturnNowIncremented() {
-//        keyTsLatestMap.put(KEY_SW_STATE, new AtomicLong(now));
-//        assertThat(helper.compareAndSwapOrIncrementTsAtomically(keyTsLatestMap.get(KEY_SW_STATE), now)).isEqualTo(now + 1);
-//    }
-//
-//    @Test
-//    void givenMapWithTsValueGreaterThanNow_whenCompareAndSwapOrIncrementTsAtomically_thenReturnGreaterThanNowIncremented() {
-//        final long nextHourTs = now + TimeUnit.HOURS.toMillis(1);
-//        keyTsLatestMap.put(KEY_SW_STATE, new AtomicLong(nextHourTs));
-//        assertThat(helper.compareAndSwapOrIncrementTsAtomically(keyTsLatestMap.get(KEY_SW_STATE), now)).isEqualTo(nextHourTs + 1);
-//    }
+
+    public static final String KEY_SW_STATE = "sw_state";
+    public static final String DOWNLOADING = "DOWNLOADING";
+
+    long now;
+    List<TransportProtos.KeyValueProto> kvList;
+    ConcurrentMap<String, AtomicLong> keyTsLatestMap;
+    LwM2mTransportServerHelper helper;
+    LwM2mTransportContext context;
+
+
+    @BeforeEach
+    void setUp() {
+        now = System.currentTimeMillis();
+        context = mock(LwM2mTransportContext.class);
+        helper = spy(new LwM2mTransportServerHelper(context));
+        willReturn(now).given(helper).getCurrentTimeMillis();
+        kvList = List.of(
+                TransportProtos.KeyValueProto.newBuilder().setKey(KEY_SW_STATE).setStringV(DOWNLOADING).build(),
+                TransportProtos.KeyValueProto.newBuilder().setKey(LOG_LWM2M_TELEMETRY).setStringV("Transport log example").build()
+        );
+        keyTsLatestMap = new ConcurrentHashMap<>();
+    }
+
+    @Ignore
+    @Test
+    void givenKeyAndLatestTsMapAndCurrentTs_whenGetTs_thenVerifyNoGetTsByKeyCall() {
+        assertThat(helper.getTs(null, null)).isEqualTo(now);
+        assertThat(helper.getTs(null, keyTsLatestMap)).isEqualTo(now);
+        assertThat(helper.getTs(emptyList(), null)).isEqualTo(now);
+        assertThat(helper.getTs(emptyList(), keyTsLatestMap)).isEqualTo(now);
+        assertThat(helper.getTs(kvList, null)).isEqualTo(now);
+
+        verify(helper, never()).getTsByKey(anyString(), any(ConcurrentMap.class), anyLong());
+        verify(helper, times(5)).getCurrentTimeMillis();
+    }
+
+    @Ignore
+    @Test
+    void givenKeyAndLatestTsMapAndCurrentTs_whenGetTs_thenVerifyGetTsByKeyCallByFirstKey() {
+        assertThat(helper.getTs(kvList, keyTsLatestMap)).isEqualTo(now);
+
+        verify(helper, times(1)).getTsByKey(kvList.get(0).getKey(), keyTsLatestMap, now);
+        verify(helper, times(1)).getTsByKey(anyString(), any(ConcurrentMap.class), anyLong());
+    }
+
+    @Ignore
+    @Test
+    void givenKeyAndEmptyLatestTsMap_whenGetTsByKey_thenAddToMapAndReturnNow() {
+        assertThat(keyTsLatestMap).as("ts latest map before").isEmpty();
+
+        assertThat(helper.getTsByKey(KEY_SW_STATE, keyTsLatestMap, now)).as("getTsByKey").isEqualTo(now);
+
+        assertThat(keyTsLatestMap).as("ts latest map after").hasSize(1);
+        assertThat(keyTsLatestMap.get(KEY_SW_STATE)).as("key present").isNotNull();
+        assertThat(keyTsLatestMap.get(KEY_SW_STATE).get()).as("ts in map by key").isEqualTo(now);
+    }
+
+    @Ignore
+    @Test
+    void givenKeyAndLatestTsMapWithExistedKey_whenGetTsByKey_thenCallSwapOrIncrementMethod() {
+        keyTsLatestMap.put(KEY_SW_STATE, new AtomicLong());
+        keyTsLatestMap.put("other", new AtomicLong());
+        assertThat(keyTsLatestMap).as("ts latest map").hasSize(2);
+        willReturn(now).given(helper).compareAndSwapOrIncrementTsAtomically(any(AtomicLong.class), anyLong());
+
+        assertThat(helper.getTsByKey(KEY_SW_STATE, keyTsLatestMap, now)).as("getTsByKey").isEqualTo(now);
+
+        verify(helper, times(1)).compareAndSwapOrIncrementTsAtomically(keyTsLatestMap.get(KEY_SW_STATE), now);
+        verify(helper, times(1)).compareAndSwapOrIncrementTsAtomically(any(AtomicLong.class), anyLong());
+    }
+
+    @Ignore
+    @Test
+    void givenMapWithTsValueLessThanNow_whenCompareAndSwapOrIncrementTsAtomically_thenReturnNow() {
+        keyTsLatestMap.put(KEY_SW_STATE, new AtomicLong(now - 1));
+        assertThat(helper.compareAndSwapOrIncrementTsAtomically(keyTsLatestMap.get(KEY_SW_STATE), now)).isEqualTo(now);
+    }
+
+    @Ignore
+    @Test
+    void givenMapWithTsValueEqualsNow_whenCompareAndSwapOrIncrementTsAtomically_thenReturnNowIncremented() {
+        keyTsLatestMap.put(KEY_SW_STATE, new AtomicLong(now));
+        assertThat(helper.compareAndSwapOrIncrementTsAtomically(keyTsLatestMap.get(KEY_SW_STATE), now)).isEqualTo(now + 1);
+    }
+
+    @Ignore
+    @Test
+    void givenMapWithTsValueGreaterThanNow_whenCompareAndSwapOrIncrementTsAtomically_thenReturnGreaterThanNowIncremented() {
+        final long nextHourTs = now + TimeUnit.HOURS.toMillis(1);
+        keyTsLatestMap.put(KEY_SW_STATE, new AtomicLong(nextHourTs));
+        assertThat(helper.compareAndSwapOrIncrementTsAtomically(keyTsLatestMap.get(KEY_SW_STATE), now)).isEqualTo(nextHourTs + 1);
+    }
 
 }

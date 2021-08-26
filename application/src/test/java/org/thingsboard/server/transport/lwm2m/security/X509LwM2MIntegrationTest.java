@@ -25,31 +25,32 @@ import org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest;
 import static org.eclipse.leshan.client.object.Security.x509;
 
 public class X509LwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
-//
-//   @Test
-//    public void testConnectAndObserveTelemetry() throws Exception {
-//        X509ClientCredentials credentials = new X509ClientCredentials();
-//        credentials.setEndpoint(ENDPOINT_SECURITY);
-//        Security security = x509(SECURE_URI,
-//                SHORT_SERVER_ID,
-//                clientX509Cert.getEncoded(),
-//                clientPrivateKeyFromCert.getEncoded(),
-//                serverX509Cert.getEncoded());
-//        super.basicTestConnectionObserveTelemetry(security, credentials, SECURE_COAP_CONFIG, ENDPOINT_SECURITY);
-//    }
-//
-//    @Ignore //See LwM2mClientContextImpl.unregister
-//    @Test
-//    public void testConnectWithCertAndObserveTelemetry() throws Exception {
-//        X509ClientCredentials credentials = new X509ClientCredentials();
-//        credentials.setEndpoint(ENDPOINT_SECURITY);
-//        credentials.setCert(SslUtil.getCertificateString(clientX509CertNotTrusted));
-//        Security security = x509(SECURE_URI,
-//                SHORT_SERVER_ID,
-//                clientX509CertNotTrusted.getEncoded(),
-//                clientPrivateKeyFromCert.getEncoded(),
-//                serverX509Cert.getEncoded());
-//        super.basicTestConnectionObserveTelemetry(security, credentials, SECURE_COAP_CONFIG, ENDPOINT_SECURITY);
-//    }
+
+    @Ignore
+   @Test
+    public void testConnectAndObserveTelemetry() throws Exception {
+        X509ClientCredentials credentials = new X509ClientCredentials();
+        credentials.setEndpoint(ENDPOINT_SECURITY);
+        Security security = x509(SECURE_URI,
+                SHORT_SERVER_ID,
+                clientX509Cert.getEncoded(),
+                clientPrivateKeyFromCert.getEncoded(),
+                serverX509Cert.getEncoded());
+        super.basicTestConnectionObserveTelemetry(security, credentials, SECURE_COAP_CONFIG, ENDPOINT_SECURITY);
+    }
+
+    @Ignore //See LwM2mClientContextImpl.unregister
+    @Test
+    public void testConnectWithCertAndObserveTelemetry() throws Exception {
+        X509ClientCredentials credentials = new X509ClientCredentials();
+        credentials.setEndpoint(ENDPOINT_SECURITY);
+        credentials.setCert(SslUtil.getCertificateString(clientX509CertNotTrusted));
+        Security security = x509(SECURE_URI,
+                SHORT_SERVER_ID,
+                clientX509CertNotTrusted.getEncoded(),
+                clientPrivateKeyFromCert.getEncoded(),
+                serverX509Cert.getEncoded());
+        super.basicTestConnectionObserveTelemetry(security, credentials, SECURE_COAP_CONFIG, ENDPOINT_SECURITY);
+    }
 
 }

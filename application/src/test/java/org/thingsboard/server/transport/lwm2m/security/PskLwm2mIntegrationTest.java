@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.lwm2m.security;
 
 import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.core.util.Hex;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCredentials;
 import org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest;
@@ -27,18 +28,19 @@ import static org.eclipse.leshan.client.object.Security.psk;
 
 public class PskLwm2mIntegrationTest extends AbstractLwM2MIntegrationTest {
 
-//    @Test
-//    public void testConnectWithPSKAndObserveTelemetry() throws Exception {
-//        String pskIdentity = "SOME_PSK_ID";
-//        String pskKey = "73656372657450534b";
-//        PSKClientCredentials clientCredentials = new PSKClientCredentials();
-//        clientCredentials.setEndpoint(ENDPOINT_SECURITY);
-//        clientCredentials.setKey(pskKey);
-//        clientCredentials.setIdentity(pskIdentity);
-//        Security security = psk(SECURE_URI,
-//                SHORT_SERVER_ID,
-//                pskIdentity.getBytes(StandardCharsets.UTF_8),
-//                Hex.decodeHex(pskKey.toCharArray()));
-//        super.basicTestConnectionObserveTelemetry(security, clientCredentials, SECURE_COAP_CONFIG, ENDPOINT_SECURITY);
-//    }
+    @Ignore
+    @Test
+    public void testConnectWithPSKAndObserveTelemetry() throws Exception {
+        String pskIdentity = "SOME_PSK_ID";
+        String pskKey = "73656372657450534b";
+        PSKClientCredentials clientCredentials = new PSKClientCredentials();
+        clientCredentials.setEndpoint(ENDPOINT_SECURITY);
+        clientCredentials.setKey(pskKey);
+        clientCredentials.setIdentity(pskIdentity);
+        Security security = psk(SECURE_URI,
+                SHORT_SERVER_ID,
+                pskIdentity.getBytes(StandardCharsets.UTF_8),
+                Hex.decodeHex(pskKey.toCharArray()));
+        super.basicTestConnectionObserveTelemetry(security, clientCredentials, SECURE_COAP_CONFIG, ENDPOINT_SECURITY);
+    }
 }
