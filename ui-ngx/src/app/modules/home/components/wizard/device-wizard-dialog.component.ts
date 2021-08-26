@@ -303,13 +303,14 @@ export class DeviceWizardDialogComponent extends
         deviceProfile.defaultRuleChainId = new RuleChainId(this.deviceWizardFormGroup.get('defaultRuleChainId').value);
       }
       return this.deviceProfileService.saveDeviceProfile(deepTrim(deviceProfile)).pipe(
-        map(profile => profile.id),
-        tap((profileId) => {
+        tap((profile) => {
+          this.currentDeviceProfileTransportType = profile.transportType;
           this.deviceWizardFormGroup.patchValue({
-            deviceProfileId: profileId,
+            deviceProfileId: profile.id,
             addProfileType: 0
           });
-        })
+        }),
+        map(profile => profile.id)
       );
     } else {
       return of(this.deviceWizardFormGroup.get('deviceProfileId').value);
@@ -334,7 +335,12 @@ export class DeviceWizardDialogComponent extends
         id: this.customerFormGroup.get('customerId').value
       };
     }
-    return this.data.entitiesTableConfig.saveEntity(deepTrim(device));
+    return this.data.entitiesTableConfig.saveEntity(deepTrim(device)).pipe(
+      catchError(e => {
+        this.addDeviceWizardStepper.selectedIndex = 0;
+        return throwError(e);
+      })
+    );
   }
 
   private saveCredentials(device: BaseData<HasId>): Observable<boolean> {
@@ -345,6 +351,7 @@ export class DeviceWizardDialogComponent extends
             const deviceCredentialsValue = {...deviceCredentials, ...this.credentialsFormGroup.value.credential};
             return this.deviceService.saveDeviceCredentials(deviceCredentialsValue).pipe(
               catchError(e => {
+                this.addDeviceWizardStepper.selectedIndex = 1;
                 return this.deviceService.deleteDevice(device.id.id).pipe(
                   mergeMap(() => {
                     return throwError(e);

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.edge;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -34,6 +35,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
@@ -543,16 +545,16 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     }
 
     @Override
-    public Object checkInstance(Object request) {
-        return this.restTemplate.postForEntity(EDGE_LICENSE_SERVER_ENDPOINT + "/api/license/checkInstance", request, Object.class, new Object[0]);
+    public ResponseEntity<JsonNode> checkInstance(JsonNode request) {
+        return this.restTemplate.postForEntity(EDGE_LICENSE_SERVER_ENDPOINT + "/api/license/checkInstance", request, JsonNode.class);
     }
 
     @Override
-    public Object activateInstance(String edgeLicenseSecret, String releaseDate) {
+    public ResponseEntity<JsonNode> activateInstance(String edgeLicenseSecret, String releaseDate) {
         Map<String, String> params = new HashMap<>();
         params.put("licenseSecret", edgeLicenseSecret);
         params.put("releaseDate", releaseDate);
-        return this.restTemplate.postForEntity(EDGE_LICENSE_SERVER_ENDPOINT + "/api/license/activateInstance?licenseSecret={licenseSecret}&releaseDate={releaseDate}", (Object) null, Object.class, params);
+        return this.restTemplate.postForEntity(EDGE_LICENSE_SERVER_ENDPOINT + "/api/license/activateInstance?licenseSecret={licenseSecret}&releaseDate={releaseDate}", null, JsonNode.class, params);
     }
 
     @Override

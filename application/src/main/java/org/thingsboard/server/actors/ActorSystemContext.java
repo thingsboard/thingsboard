@@ -81,7 +81,7 @@ import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.executors.SharedEventLoopGroupService;
 import org.thingsboard.server.service.mail.MailExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.rpc.TbRpcService;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
@@ -399,6 +399,14 @@ public class ActorSystemContext {
     @Value("${actors.rule.chain.debug_mode_rate_limits_per_tenant.configuration}")
     @Getter
     private String debugPerTenantLimitsConfiguration;
+
+    @Value("${actors.rpc.sequential:false}")
+    @Getter
+    private boolean rpcSequential;
+
+    @Value("${actors.rpc.max_retries:5}")
+    @Getter
+    private int maxRpcRetries;
 
     @Getter
     @Setter

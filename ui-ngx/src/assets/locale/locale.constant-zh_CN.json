@@ -996,7 +996,7 @@
   },
   "device": {
     "access-token": "访问令牌",
-    "access-token-invalid": "访问令牌长度必须为1到20个字符。",
+    "access-token-invalid": "访问令牌长度必须为1到32个字符。",
     "access-token-required": "访问令牌必填",
     "accessTokenCopiedMessage": "设备访问令牌已复制到剪贴板",
     "add": "添加设备",

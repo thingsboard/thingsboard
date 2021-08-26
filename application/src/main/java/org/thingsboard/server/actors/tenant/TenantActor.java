@@ -165,6 +165,7 @@ public class TenantActor extends RuleChainManagerActor {
             case DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG:
             case DEVICE_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
             case SERVER_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
+            case REMOVE_RPC_TO_DEVICE_ACTOR_MSG:
                 onToDeviceActorMsg((DeviceAwareMsg) msg, true);
                 break;
             case RULE_CHAIN_TO_RULE_CHAIN_MSG:

@@ -26,38 +26,27 @@
     </mat-select>
   </mat-form-field>
   <section class="mat-block" fxFlex *ngIf="parentForm.get('powerMode').value === 'E_DRX'">
-    <mat-form-field class="mat-block" fxFlex>
-      <mat-label>{{ 'device-profile.edrx-cycle' | translate }}</mat-label>
-      <input matInput type="number" min="0" formControlName="edrxCycle" required>
-      <mat-error *ngIf="parentForm.get('edrxCycle').hasError('required')">
-        {{ 'device-profile.edrx-cycle-required' | translate }}
-      </mat-error>
-      <mat-error *ngIf="parentForm.get('edrxCycle').hasError('pattern') ||
-                                        parentForm.get('edrxCycle').hasError('min')">
-        {{ 'device-profile.edrx-cycle-pattern' | translate }}
-      </mat-error>
-    </mat-form-field>
-    <mat-form-field class="mat-block" fxFlex>
-      <mat-label>{{ 'device-profile.paging-transmission-window' | translate }}</mat-label>
-      <input matInput type="number" min="0" formControlName="pagingTransmissionWindow" required>
-      <mat-error *ngIf="parentForm.get('pagingTransmissionWindow').hasError('required')">
-        {{ 'device-profile.paging-transmission-window-required' | translate }}
-      </mat-error>
-      <mat-error *ngIf="parentForm.get('pagingTransmissionWindow').hasError('pattern') ||
-                                        parentForm.get('pagingTransmissionWindow').hasError('min')">
-        {{ 'device-profile.paging-transmission-window-pattern' | translate }}
-      </mat-error>
-    </mat-form-field>
+    <tb-time-unit-select [labelText]="'device-profile.edrx-cycle'"
+                         [requiredText]="'device-profile.edrx-cycle-required'"
+                         [patternText]="'device-profile.edrx-cycle-pattern'"
+                         [minTime]="5120"
+                         [minText]="'device-profile.edrx-cycle-min'"
+                         formControlName="edrxCycle">
+    </tb-time-unit-select>
+    <tb-time-unit-select [labelText]="'device-profile.paging-transmission-window'"
+                         [requiredText]="'device-profile.paging-transmission-window-required'"
+                         [patternText]="'device-profile.paging-transmission-window-pattern'"
+                         [minTime]="1280"
+                         [minText]="'device-profile.paging-transmission-window-min'"
+                         formControlName="pagingTransmissionWindow">
+    </tb-time-unit-select>
   </section>
-  <mat-form-field class="mat-block" fxFlex *ngIf="parentForm.get('powerMode').value === 'PSM'">
-    <mat-label>{{ 'device-profile.psm-activity-timer' | translate }}</mat-label>
-    <input matInput type="number" min="0" formControlName="psmActivityTimer" required>
-    <mat-error *ngIf="parentForm.get('psmActivityTimer').hasError('required')">
-      {{ 'device-profile.psm-activity-timer-required' | translate }}
-    </mat-error>
-    <mat-error *ngIf="parentForm.get('psmActivityTimer').hasError('pattern') ||
-                                        parentForm.get('psmActivityTimer').hasError('min')">
-      {{ 'device-profile.psm-activity-timer-pattern' | translate }}
-    </mat-error>
-  </mat-form-field>
+  <tb-time-unit-select *ngIf="parentForm.get('powerMode').value === 'PSM'"
+                       [labelText]="'device-profile.psm-activity-timer'"
+                       [requiredText]="'device-profile.psm-activity-timer-required'"
+                       [patternText]="'device-profile.psm-activity-timer-pattern'"
+                       [minTime]="1280"
+                       [minText]="'device-profile.psm-activity-timer-min'"
+                       formControlName="psmActivityTimer">
+  </tb-time-unit-select>
 </section>

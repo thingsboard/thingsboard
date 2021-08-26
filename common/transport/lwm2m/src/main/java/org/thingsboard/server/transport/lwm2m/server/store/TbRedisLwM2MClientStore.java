@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.store;
 
+import lombok.extern.slf4j.Slf4j;
 import org.nustaq.serialization.FSTConfiguration;
 import org.springframework.data.redis.connection.RedisClusterConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.ScanOptions;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClientState;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
 import java.util.ArrayList;
@@ -27,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 public class TbRedisLwM2MClientStore implements TbLwM2MClientStore {
 
     private static final String CLIENT_EP = "CLIENT#EP#";
@@ -76,9 +79,13 @@ public class TbRedisLwM2MClientStore implements TbLwM2MClientStore {
 
     @Override
     public void put(LwM2mClient client) {
-        byte[] clientSerialized = serializer.asByteArray(client);
-        try (var connection = connectionFactory.getConnection()) {
-            connection.getSet(getKey(client.getEndpoint()), clientSerialized);
+        if (client.getState().equals(LwM2MClientState.UNREGISTERED)) {
+            log.error("[{}] Client is in invalid state: {}!", client.getEndpoint(), client.getState(), new Exception());
+        } else {
+            byte[] clientSerialized = serializer.asByteArray(client);
+            try (var connection = connectionFactory.getConnection()) {
+                connection.getSet(getKey(client.getEndpoint()), clientSerialized);
+            }
         }
     }
 

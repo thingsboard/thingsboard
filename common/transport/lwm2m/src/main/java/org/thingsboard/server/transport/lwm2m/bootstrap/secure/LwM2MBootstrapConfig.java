@@ -74,15 +74,19 @@ public class LwM2MBootstrapConfig implements Serializable {
         configBs.servers.put(0, server0);
         /* Security Configuration (object 0) as defined in LWM2M 1.0.x TS. Bootstrap instance = 0 */
         this.bootstrapServer.setBootstrapServerIs(true);
-        configBs.security.put(0, setServerSecurity(this.bootstrapServer.getHost(), this.bootstrapServer.getPort(), this.bootstrapServer.isBootstrapServerIs(), this.bootstrapServer.getSecurityMode(), this.bootstrapServer.getClientPublicKeyOrId(), this.bootstrapServer.getServerPublicKey(), this.bootstrapServer.getClientSecretKey(), this.bootstrapServer.getServerId()));
+        configBs.security.put(0, setServerSecurity(this.lwm2mServer.getHost(), this.lwm2mServer.getPort(), this.lwm2mServer.getSecurityHost(), this.lwm2mServer.getSecurityPort(), this.bootstrapServer.isBootstrapServerIs(), this.bootstrapServer.getSecurityMode(), this.bootstrapServer.getClientPublicKeyOrId(), this.bootstrapServer.getServerPublicKey(), this.bootstrapServer.getClientSecretKey(), this.bootstrapServer.getServerId()));
         /* Security Configuration (object 0) as defined in LWM2M 1.0.x TS. Server instance = 1 */
-        configBs.security.put(1, setServerSecurity(this.lwm2mServer.getHost(), this.lwm2mServer.getPort(), this.lwm2mServer.isBootstrapServerIs(), this.lwm2mServer.getSecurityMode(), this.lwm2mServer.getClientPublicKeyOrId(), this.lwm2mServer.getServerPublicKey(), this.lwm2mServer.getClientSecretKey(), this.lwm2mServer.getServerId()));
+        configBs.security.put(1, setServerSecurity(this.lwm2mServer.getHost(), this.lwm2mServer.getPort(), this.lwm2mServer.getSecurityHost(), this.lwm2mServer.getSecurityPort(), this.lwm2mServer.isBootstrapServerIs(), this.lwm2mServer.getSecurityMode(), this.lwm2mServer.getClientPublicKeyOrId(), this.lwm2mServer.getServerPublicKey(), this.lwm2mServer.getClientSecretKey(), this.lwm2mServer.getServerId()));
         return configBs;
     }
 
-    private BootstrapConfig.ServerSecurity setServerSecurity(String host, Integer port, boolean bootstrapServer, SecurityMode securityMode, String clientPublicKey, String serverPublicKey, String secretKey, int serverId) {
+    private BootstrapConfig.ServerSecurity setServerSecurity(String host, Integer port, String securityHost, Integer securityPort, boolean bootstrapServer, SecurityMode securityMode, String clientPublicKey, String serverPublicKey, String secretKey, int serverId) {
         BootstrapConfig.ServerSecurity serverSecurity = new BootstrapConfig.ServerSecurity();
-        serverSecurity.uri = "coaps://" + host + ":" + Integer.toString(port);
+        if (securityMode.equals(SecurityMode.NO_SEC)) {
+            serverSecurity.uri = "coap://" + host + ":" + Integer.toString(port);
+        } else {
+            serverSecurity.uri = "coaps://" + securityHost + ":" + Integer.toString(securityPort);
+        }
         serverSecurity.bootstrapServer = bootstrapServer;
         serverSecurity.securityMode = securityMode;
         serverSecurity.publicKeyOrId = setPublicKeyOrId(clientPublicKey, securityMode);

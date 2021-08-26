@@ -149,7 +149,7 @@ public class CustomerController extends BaseController {
                     ActionType.DELETED, null, strCustomerId);
 
             sendDeleteNotificationMsg(getTenantId(), customerId, relatedEdgeIds);
-            tbClusterService.onEntityStateChange(getTenantId(), customerId, ComponentLifecycleEvent.DELETED);
+            tbClusterService.broadcastEntityStateChangeEvent(getTenantId(), customerId, ComponentLifecycleEvent.DELETED);
         } catch (Exception e) {
 
             logEntityAction(emptyId(EntityType.CUSTOMER),

@@ -54,14 +54,12 @@ export class DeviceCredentialsMqttBasicComponent implements ControlValueAccessor
 
   deviceCredentialsMqttFormGroup: FormGroup;
 
-  hidePassword = true;
-
   private destroy$ = new Subject();
   private propagateChange = (v: any) => {};
 
   constructor(public fb: FormBuilder) {
     this.deviceCredentialsMqttFormGroup = this.fb.group({
-      clientId: [null, [Validators.pattern(/^[A-Za-z0-9]+$/)]],
+      clientId: [null],
       userName: [null],
       password: [null]
     }, {validators: this.atLeastOne(Validators.required, ['clientId', 'userName'])});

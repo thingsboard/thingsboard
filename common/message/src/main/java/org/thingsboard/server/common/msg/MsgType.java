@@ -92,6 +92,8 @@ public enum MsgType {
 
     DEVICE_ACTOR_SERVER_SIDE_RPC_TIMEOUT_MSG,
 
+    REMOVE_RPC_TO_DEVICE_ACTOR_MSG,
+
     /**
      * Message that is sent from the Device Actor to Rule Engine. Requires acknowledgement
      */

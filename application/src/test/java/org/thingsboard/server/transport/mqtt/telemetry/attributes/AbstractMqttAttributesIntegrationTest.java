@@ -204,15 +204,6 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
                 case "key1":
                     assertEquals("", value);
                     break;
-                case "key2":
-                    assertEquals(false, value);
-                    break;
-                case "key3":
-                    assertEquals(0.0, value);
-                    break;
-                case "key4":
-                    assertEquals(0, value);
-                    break;
                 case "key5":
                     assertNotNull(value);
                     assertEquals(2, ((LinkedHashMap) value).size());

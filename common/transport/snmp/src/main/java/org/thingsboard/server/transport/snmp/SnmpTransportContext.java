@@ -188,6 +188,7 @@ public class SnmpTransportContext extends TransportContext {
 
                             deviceSessionContext.setSessionInfo(sessionInfo);
                             deviceSessionContext.setDeviceInfo(msg.getDeviceInfo());
+                            deviceSessionContext.setConnected(true);
                         } else {
                             log.warn("[{}] Failed to process device auth", deviceSessionContext.getDeviceId());
                         }

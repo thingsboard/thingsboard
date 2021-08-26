@@ -50,7 +50,7 @@ public class EdgeSyncCursor {
             fetchers.add(new CustomerEdgeEventFetcher());
             fetchers.add(new CustomerUsersEdgeEventFetcher(ctx.getUserService(), edge.getCustomerId()));
         }
-        fetchers.add(new AdminSettingsEdgeEventFetcher(ctx.getAdminSettingsService()));
+        fetchers.add(new AdminSettingsEdgeEventFetcher(ctx.getAdminSettingsService(), ctx.getFreemarkerConfig()));
         fetchers.add(new AssetsEdgeEventFetcher(ctx.getAssetService()));
         fetchers.add(new DashboardsEdgeEventFetcher(ctx.getDashboardService()));
     }

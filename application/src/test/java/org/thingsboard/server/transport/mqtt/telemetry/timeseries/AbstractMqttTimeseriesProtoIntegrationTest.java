@@ -157,10 +157,9 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
                 .setField(postTelemetryMsgDescriptor.findFieldByName("key1"), "")
                 .setField(postTelemetryMsgDescriptor.findFieldByName("key2"), false)
                 .setField(postTelemetryMsgDescriptor.findFieldByName("key3"), 0.0)
-                .setField(postTelemetryMsgDescriptor.findFieldByName("key4"), 0)
                 .setField(postTelemetryMsgDescriptor.findFieldByName("key5"), jsonObject)
                 .build();
-        processTelemetryTest(POST_DATA_TELEMETRY_TOPIC, Arrays.asList("key1", "key2", "key3", "key4", "key5"), postTelemetryMsg.toByteArray(), false, true);
+        processTelemetryTest(POST_DATA_TELEMETRY_TOPIC, Arrays.asList("key1", "key2", "key3", "key5"), postTelemetryMsg.toByteArray(), false, true);
     }
 
     @Test

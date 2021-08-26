@@ -58,6 +58,8 @@ public class AlarmMsgConstructor {
         }
         AlarmUpdateMsg.Builder builder = AlarmUpdateMsg.newBuilder()
                 .setMsgType(msgType)
+                .setIdMSB(alarm.getId().getId().getMostSignificantBits())
+                .setIdLSB(alarm.getId().getId().getLeastSignificantBits())
                 .setName(alarm.getName())
                 .setType(alarm.getType())
                 .setOriginatorName(entityName)

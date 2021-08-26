@@ -92,7 +92,7 @@ public class EdgeGrpcClient implements EdgeRpcClient {
         channel = builder.build();
         EdgeRpcServiceGrpc.EdgeRpcServiceStub stub = EdgeRpcServiceGrpc.newStub(channel);
         log.info("[{}] Sending a connect request to the TB!", edgeKey);
-        this.inputStream = stub.handleMsgs(initOutputStream(edgeKey, onUplinkResponse, onEdgeUpdate, onDownlink, onError));
+        this.inputStream = stub.withCompression("gzip").handleMsgs(initOutputStream(edgeKey, onUplinkResponse, onEdgeUpdate, onDownlink, onError));
         this.inputStream.onNext(RequestMsg.newBuilder()
                 .setMsgType(RequestMsgType.CONNECT_RPC_MESSAGE)
                 .setConnectRequestMsg(ConnectRequestMsg.newBuilder().setEdgeRoutingKey(edgeKey).setEdgeSecret(edgeSecret).build())

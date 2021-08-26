@@ -50,11 +50,17 @@ export class AttributeService {
   }
 
   public deleteEntityTimeseries(entityId: EntityId, timeseries: Array<AttributeData>, deleteAllDataForKeys = false,
-                                config?: RequestConfig): Observable<any> {
+                                startTs?: number, endTs?: number, config?: RequestConfig): Observable<any> {
     const keys = timeseries.map(attribute => encodeURI(attribute.key)).join(',');
-    return this.http.delete(`/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/timeseries/delete` +
-      `?keys=${keys}&deleteAllDataForKeys=${deleteAllDataForKeys}`,
-      defaultHttpOptionsFromConfig(config));
+    let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/timeseries/delete` +
+      `?keys=${keys}&deleteAllDataForKeys=${deleteAllDataForKeys}`;
+    if (isDefinedAndNotNull(startTs)) {
+      url += `&startTs=${startTs}`;
+    }
+    if (isDefinedAndNotNull(endTs)) {
+      url += `&endTs=${endTs}`;
+    }
+    return this.http.delete(url, defaultHttpOptionsFromConfig(config));
   }
 
   public saveEntityAttributes(entityId: EntityId, attributeScope: AttributeScope, attributes: Array<AttributeData>,
@@ -97,7 +103,7 @@ export class AttributeService {
     });
     let deleteEntityTimeseriesObservable: Observable<any>;
     if (deleteTimeseries.length) {
-      deleteEntityTimeseriesObservable = this.deleteEntityTimeseries(entityId, deleteTimeseries, true, config);
+      deleteEntityTimeseriesObservable = this.deleteEntityTimeseries(entityId, deleteTimeseries, true, null, null, config);
     } else {
       deleteEntityTimeseriesObservable = of(null);
     }

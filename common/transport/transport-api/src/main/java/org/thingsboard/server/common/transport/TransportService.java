@@ -17,6 +17,7 @@ package org.thingsboard.server.common.transport;
 
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.common.transport.service.SessionMetaData;
@@ -55,6 +56,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateBasicMqttCre
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
+
+import java.util.concurrent.ExecutorService;
 
 /**
  * Created by ashvayka on 04.10.18.
@@ -110,7 +113,7 @@ public interface TransportService {
 
     void process(SessionInfoProto sessionInfo, ToServerRpcRequestMsg msg, TransportServiceCallback<Void> callback);
 
-    void process(SessionInfoProto sessionInfo, ToDeviceRpcRequestMsg msg, boolean isFailedRpc, TransportServiceCallback<Void> callback);
+    void process(SessionInfoProto sessionInfo, ToDeviceRpcRequestMsg msg, RpcStatus rpcStatus, TransportServiceCallback<Void> callback);
 
     void process(SessionInfoProto sessionInfo, SubscriptionInfoProto msg, TransportServiceCallback<Void> callback);
 
@@ -124,11 +127,15 @@ public interface TransportService {
 
     SessionMetaData registerSyncSession(SessionInfoProto sessionInfo, SessionMsgListener listener, long timeout);
 
-    SessionMetaData reportActivity(SessionInfoProto sessionInfo);
+    void reportActivity(SessionInfoProto sessionInfo);
 
     void deregisterSession(SessionInfoProto sessionInfo);
 
     void log(SessionInfoProto sessionInfo, String msg);
 
     void notifyAboutUplink(SessionInfoProto sessionInfo, TransportProtos.UplinkNotificationMsg build, TransportServiceCallback<Void> empty);
+
+    ExecutorService getCallbackExecutor();
+
+    boolean hasSession(SessionInfoProto sessionInfo);
 }

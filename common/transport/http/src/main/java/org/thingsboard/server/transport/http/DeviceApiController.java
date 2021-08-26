@@ -115,7 +115,6 @@ public class DeviceApiController implements TbTransportService {
                     TransportService transportService = transportContext.getTransportService();
                     transportService.process(sessionInfo, JsonConverter.convertToAttributesProto(new JsonParser().parse(json)),
                             new HttpOkCallback(responseWriter));
-                    reportActivity(sessionInfo);
                 }));
         return responseWriter;
     }
@@ -129,7 +128,6 @@ public class DeviceApiController implements TbTransportService {
                     TransportService transportService = transportContext.getTransportService();
                     transportService.process(sessionInfo, JsonConverter.convertToTelemetryProto(new JsonParser().parse(json)),
                             new HttpOkCallback(responseWriter));
-                    reportActivity(sessionInfo);
                 }));
         return responseWriter;
     }
@@ -409,7 +407,7 @@ public class DeviceApiController implements TbTransportService {
         public void onToDeviceRpcRequest(UUID sessionId, ToDeviceRpcRequestMsg msg) {
             log.trace("[{}] Received RPC command to device", sessionId);
             responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg, true).toString(), HttpStatus.OK));
-            transportService.process(sessionInfo, msg, false, TransportServiceCallback.EMPTY);
+            transportService.process(sessionInfo, msg, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
         }
 
         @Override
@@ -417,14 +415,6 @@ public class DeviceApiController implements TbTransportService {
             responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg).toString(), HttpStatus.OK));
         }
 
-    }
-
-    private void reportActivity(SessionInfoProto sessionInfo) {
-        transportContext.getTransportService().process(sessionInfo, TransportProtos.SubscriptionInfoProto.newBuilder()
-                .setAttributeSubscription(false)
-                .setRpcSubscription(false)
-                .setLastActivityTime(System.currentTimeMillis())
-                .build(), TransportServiceCallback.EMPTY);
     }
 
     private static MediaType parseMediaType(String contentType) {

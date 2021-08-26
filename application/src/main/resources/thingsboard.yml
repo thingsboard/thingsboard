@@ -326,6 +326,9 @@ actors:
       queue_size: "${ACTORS_RULE_TRANSACTION_QUEUE_SIZE:15000}"
       # Time in milliseconds for transaction to complete
       duration: "${ACTORS_RULE_TRANSACTION_DURATION:60000}"
+  rpc:
+    max_retries: "${ACTORS_RPC_MAX_RETRIES:5}"
+    sequential: "${ACTORS_RPC_SEQUENTIAL:false}"
   statistics:
     # Enable/disable actor statistics
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"
@@ -344,34 +347,34 @@ caffeine:
   specs:
     relations:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000 # maxSize: 0 means the cache is disabled
     deviceCredentials:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
     devices:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
     sessions:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
     assets:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
     entityViews:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
     claimDevices:
       timeToLiveInMinutes: 1440
       maxSize: 1000
     securitySettings:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
     tenantProfiles:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
     deviceProfiles:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
     attributes:
       timeToLiveInMinutes: 1440
       maxSize: 100000
@@ -386,7 +389,7 @@ caffeine:
       maxSize: 10
     edges:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
 
 redis:
   # standalone or cluster
@@ -563,7 +566,7 @@ js:
 transport:
   sessions:
     inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:300000}"
-    report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:30000}"
+    report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:3000}"
   json:
     # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
     type_cast_enabled: "${JSON_TYPE_CAST_ENABLED:true}"
@@ -588,6 +591,7 @@ transport:
     bind_address: "${MQTT_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${MQTT_BIND_PORT:1883}"
     timeout: "${MQTT_TIMEOUT:10000}"
+    msg_queue_size_per_device_limit: "${MQTT_MSG_QUEUE_SIZE_PER_DEVICE_LIMIT:100}" # messages await in the queue before device connected state. This limit works on low level before TenantProfileLimits mechanism
     netty:
       leak_detector_level: "${NETTY_LEAK_DETECTOR_LVL:DISABLED}"
       boss_group_thread_count: "${NETTY_BOSS_GROUP_THREADS:1}"
@@ -698,7 +702,7 @@ transport:
 
 # Edges parameters
 edges:
-  enabled: "${EDGES_ENABLED:false}"
+  enabled: "${EDGES_ENABLED:true}"
   rpc:
     port: "${EDGES_RPC_PORT:7070}"
     client_max_keep_alive_time_sec: "${EDGES_RPC_CLIENT_MAX_KEEP_ALIVE_TIME_SEC:300}"
@@ -747,6 +751,8 @@ queue:
     compression.type: "${TB_KAFKA_COMPRESSION_TYPE:none}" # none or gzip
     batch.size: "${TB_KAFKA_BATCH_SIZE:16384}"
     linger.ms: "${TB_KAFKA_LINGER_MS:1}"
+    max.request.size: "${TB_KAFKA_MAX_REQUEST_SIZE:1048576}"
+    max.in.flight.requests.per.connection: "${TB_KAFKA_MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION:5}"
     buffer.memory: "${TB_BUFFER_MEMORY:33554432}"
     replication_factor: "${TB_QUEUE_KAFKA_REPLICATION_FACTOR:1}"
     max_poll_interval_ms: "${TB_QUEUE_KAFKA_MAX_POLL_INTERVAL_MS:300000}"
@@ -763,7 +769,11 @@ queue:
       tb_ota_package:
         - key: max.poll.records
           value: 10
-    other:
+    other: # In this section you can specify custom parameters for Kafka consumer/producer and expose the env variables to configure outside
+      - key: "request.timeout.ms" # refer to https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html#producerconfigs_request.timeout.ms
+        value: "${TB_QUEUE_KAFKA_REQUEST_TIMEOUT_MS:30000}" # (30 seconds)
+      - key: "session.timeout.ms" # refer to https://docs.confluent.io/platform/current/installation/configuration/consumer-configs.html#consumerconfigs_session.timeout.ms
+        value: "${TB_QUEUE_KAFKA_SESSION_TIMEOUT_MS:10000}" # (10 seconds)
     topic-properties:
       rule-engine: "${TB_QUEUE_KAFKA_RE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
       core: "${TB_QUEUE_KAFKA_CORE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"

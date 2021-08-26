@@ -154,13 +154,25 @@ public abstract class AbstractMqttAttributesProtoIntegrationTest extends Abstrac
         DynamicMessage.Builder postAttributesBuilder = attributesSchema.newMessageBuilder("PostAttributes");
         Descriptors.Descriptor postAttributesMsgDescriptor = postAttributesBuilder.getDescriptorForType();
         assertNotNull(postAttributesMsgDescriptor);
-        return postAttributesBuilder
-                .setField(postAttributesMsgDescriptor.findFieldByName("key1"), "value1")
-                .setField(postAttributesMsgDescriptor.findFieldByName("key2"), true)
-                .setField(postAttributesMsgDescriptor.findFieldByName("key3"), 3.0)
-                .setField(postAttributesMsgDescriptor.findFieldByName("key4"), 4)
+        DynamicMessage postAttributesMsg = postAttributesBuilder
+                .setField(postAttributesMsgDescriptor.findFieldByName("key1"), "")
                 .setField(postAttributesMsgDescriptor.findFieldByName("key5"), jsonObject)
                 .build();
+        processAttributesTest(POST_DATA_ATTRIBUTES_TOPIC, Arrays.asList("key1", "key5"), postAttributesMsg.toByteArray(), true);
+    }
+
+    @Test
+    public void testPushAttributesGateway() throws Exception {
+        super.processBeforeTest("Test Post Attributes device", "Test Post Attributes gateway", TransportPayloadType.PROTOBUF, null, null);
+        TransportApiProtos.GatewayAttributesMsg.Builder gatewayAttributesMsgProtoBuilder = TransportApiProtos.GatewayAttributesMsg.newBuilder();
+        List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
+        String deviceName1 = "Device A";
+        String deviceName2 = "Device B";
+        TransportApiProtos.AttributesMsg firstDeviceAttributesMsgProto = getDeviceAttributesMsgProto(deviceName1, expectedKeys);
+        TransportApiProtos.AttributesMsg secondDeviceAttributesMsgProto = getDeviceAttributesMsgProto(deviceName2, expectedKeys);
+        gatewayAttributesMsgProtoBuilder.addAllMsg(Arrays.asList(firstDeviceAttributesMsgProto, secondDeviceAttributesMsgProto));
+        TransportApiProtos.GatewayAttributesMsg gatewayAttributesMsg = gatewayAttributesMsgProtoBuilder.build();
+        processGatewayAttributesTest(expectedKeys, gatewayAttributesMsg.toByteArray(), deviceName1, deviceName2);
     }
 
     private TransportApiProtos.AttributesMsg getDeviceAttributesMsgProto(String deviceName, List<String> expectedKeys) {

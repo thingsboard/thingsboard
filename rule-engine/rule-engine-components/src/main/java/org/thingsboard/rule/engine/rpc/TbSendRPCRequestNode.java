@@ -89,8 +89,11 @@ public class TbSendRPCRequestNode implements TbNode {
             tmp = msg.getMetaData().getValue("originServiceId");
             String originServiceId = !StringUtils.isEmpty(tmp) ? tmp : null;
 
-            tmp = msg.getMetaData().getValue("expirationTime");
+            tmp = msg.getMetaData().getValue(DataConstants.EXPIRATION_TIME);
             long expirationTime = !StringUtils.isEmpty(tmp) ? Long.parseLong(tmp) : (System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(config.getTimeoutInSeconds()));
+
+            tmp = msg.getMetaData().getValue(DataConstants.RETRIES);
+            Integer retries = !StringUtils.isEmpty(tmp) ? Integer.parseInt(tmp) : null;
 
             String params;
             JsonElement paramsEl = json.get("params");
@@ -99,6 +102,8 @@ public class TbSendRPCRequestNode implements TbNode {
             } else {
                 params = gson.toJson(paramsEl);
             }
+
+            String additionalInfo = gson.toJson(json.get(DataConstants.ADDITIONAL_INFO));
 
             RuleEngineDeviceRpcRequest request = RuleEngineDeviceRpcRequest.builder()
                     .oneway(oneway)
@@ -110,17 +115,19 @@ public class TbSendRPCRequestNode implements TbNode {
                     .requestUUID(requestUUID)
                     .originServiceId(originServiceId)
                     .expirationTime(expirationTime)
+                    .retries(retries)
                     .restApiCall(restApiCall)
                     .persisted(persisted)
+                    .additionalInfo(additionalInfo)
                     .build();
 
             ctx.getRpcService().sendRpcRequestToDevice(request, ruleEngineDeviceRpcResponse -> {
-                if (!ruleEngineDeviceRpcResponse.getError().isPresent()) {
+                if (ruleEngineDeviceRpcResponse.getError().isEmpty()) {
                     TbMsg next = ctx.newMsg(msg.getQueueName(), msg.getType(), msg.getOriginator(), msg.getCustomerId(), msg.getMetaData(), ruleEngineDeviceRpcResponse.getResponse().orElse("{}"));
                     ctx.enqueueForTellNext(next, TbRelationTypes.SUCCESS);
                 } else {
                     TbMsg next = ctx.newMsg(msg.getQueueName(), msg.getType(), msg.getOriginator(), msg.getCustomerId(), msg.getMetaData(), wrap("error", ruleEngineDeviceRpcResponse.getError().get().name()));
-                    ctx.tellFailure(next, new RuntimeException(ruleEngineDeviceRpcResponse.getError().get().name()));
+                    ctx.enqueueForTellFailure(next, ruleEngineDeviceRpcResponse.getError().get().name());
                 }
             });
             ctx.ack(msg);

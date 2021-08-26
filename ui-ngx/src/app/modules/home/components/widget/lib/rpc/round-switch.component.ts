@@ -38,6 +38,8 @@ interface RoundSwitchSettings {
   parseValueFunction: string;
   convertValueFunction: string;
   requestTimeout: number;
+  requestPersistent: boolean;
+  persistentPollingInterval: number;
 }
 
 @Component({
@@ -67,6 +69,8 @@ export class RoundSwitchComponent extends PageComponent implements OnInit, OnDes
 
   private isSimulated: boolean;
   private requestTimeout: number;
+  private requestPersistent: boolean;
+  private persistentPollingInterval: number;
   private retrieveValueMethod: RetrieveValueMethod;
   private valueKey: string;
   private parseValueFunction: (data: any) => boolean;
@@ -125,6 +129,7 @@ export class RoundSwitchComponent extends PageComponent implements OnInit, OnDes
     if (this.switchResize$) {
       this.switchResize$.disconnect();
     }
+    this.ctx.controlApi.completedCommand();
   }
 
   private init() {
@@ -142,6 +147,14 @@ export class RoundSwitchComponent extends PageComponent implements OnInit, OnDes
     this.requestTimeout = 500;
     if (settings.requestTimeout) {
       this.requestTimeout = settings.requestTimeout;
+    }
+    this.requestPersistent = false;
+    if (settings.requestPersistent) {
+      this.requestPersistent = settings.requestPersistent;
+    }
+    this.persistentPollingInterval = 5000;
+    if (settings.persistentPollingInterval) {
+      this.persistentPollingInterval = settings.persistentPollingInterval;
     }
     this.retrieveValueMethod = 'rpc';
     if (settings.retrieveValueMethod && settings.retrieveValueMethod.length) {
@@ -193,7 +206,7 @@ export class RoundSwitchComponent extends PageComponent implements OnInit, OnDes
     const width = this.switchContainer.width();
     const height = this.switchContainer.height();
     const size = Math.min(width, height);
-    const scale = size/260;
+    const scale = size / 260;
     this.switchElement.css({
       '-webkit-transform': `scale(${scale})`,
       '-moz-transform': `scale(${scale})`,
@@ -213,11 +226,11 @@ export class RoundSwitchComponent extends PageComponent implements OnInit, OnDes
       fontSize--;
       textWidth = this.measureTextWidth(text, fontSize);
     }
-    element.css({fontSize: fontSize+'px', lineHeight: fontSize+'px'});
+    element.css({fontSize: fontSize + 'px', lineHeight: fontSize + 'px'});
   }
 
   private measureTextWidth(text: string, fontSize: number): number {
-    this.textMeasure.css({fontSize: fontSize+'px', lineHeight: fontSize+'px'});
+    this.textMeasure.css({fontSize: fontSize + 'px', lineHeight: fontSize + 'px'});
     this.textMeasure.text(text);
     return this.textMeasure.width();
   }
@@ -239,7 +252,8 @@ export class RoundSwitchComponent extends PageComponent implements OnInit, OnDes
 
   private rpcRequestValue() {
     this.error = '';
-    this.ctx.controlApi.sendTwoWayCommand(this.getValueMethod, null, this.requestTimeout).subscribe(
+    this.ctx.controlApi.sendTwoWayCommand(this.getValueMethod, null, this.requestTimeout,
+      this.requestPersistent, this.persistentPollingInterval).subscribe(
       (responseBody) => {
         this.setValue(this.parseValueFunction(responseBody));
       },
@@ -260,7 +274,8 @@ export class RoundSwitchComponent extends PageComponent implements OnInit, OnDes
       this.executingUpdateValue = true;
     }
     this.error = '';
-    this.ctx.controlApi.sendOneWayCommand(this.setValueMethod, this.convertValueFunction(value), this.requestTimeout).subscribe(
+    this.ctx.controlApi.sendOneWayCommand(this.setValueMethod, this.convertValueFunction(value), this.requestTimeout,
+      this.requestPersistent, this.persistentPollingInterval).subscribe(
       () => {
         this.executingUpdateValue = false;
         if (this.scheduledValue != null && this.scheduledValue !== this.rpcValue) {

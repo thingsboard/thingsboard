@@ -37,6 +37,7 @@
   <mat-form-field class="mat-block">
     <mat-label translate>admin.twilio-account-token</mat-label>
     <input required type="password" autocomplete="new-password" matInput formControlName="accountToken">
+    <tb-toggle-password matSuffix></tb-toggle-password>
     <mat-error *ngIf="twilioSmsProviderConfigurationFormGroup.get('accountToken').hasError('required')">
       {{ 'admin.twilio-account-token-required' | translate }}
     </mat-error>
