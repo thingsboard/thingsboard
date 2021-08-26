@@ -1082,7 +1082,7 @@
         "default-rule-chain": "Default rule chain",
         "mobile-dashboard": "Mobile dashboard",
         "mobile-dashboard-hint": "Used by mobile application as a device details dashboard",
-        "select-queue-hint": "Select from a drop-down list or add a custom name.",
+        "select-queue-hint": "Select from a drop-down list.",
         "delete-device-profile-title": "Are you sure you want to delete the device profile '{{deviceProfileName}}'?",
         "delete-device-profile-text": "Be careful, after the confirmation the device profile and all related data will become unrecoverable.",
         "delete-device-profiles-title": "Are you sure you want to delete { count, plural, 1 {1 device profile} other {# device profiles} }?",
@@ -2570,7 +2570,8 @@
     "queue": {
       "select_name": "Select queue name",
       "name": "Queue Name",
-      "name_required": "Queue name is required!"
+      "name_required": "Queue name is required!",
+      "no-queues-matching": "No queues matching '{{queue}}' were found."
     },
     "tenant": {
         "tenant": "Tenant",
