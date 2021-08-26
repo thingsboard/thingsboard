@@ -23,11 +23,11 @@ import org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest;
 @Slf4j
 public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
-    @Test
-    public void testConnectAndObserveTelemetry() throws Exception {
-        NoSecClientCredentials clientCredentials = new NoSecClientCredentials();
-        clientCredentials.setEndpoint(ENDPOINT_SECURITY);
-        super.basicTestConnectionObserveTelemetry(SECURITY, clientCredentials, COAP_CONFIG, ENDPOINT_SECURITY);
-    }
+//    @Test
+//    public void testConnectAndObserveTelemetry() throws Exception {
+//        NoSecClientCredentials clientCredentials = new NoSecClientCredentials();
+//        clientCredentials.setEndpoint(ENDPOINT_SECURITY);
+//        super.basicTestConnectionObserveTelemetry(SECURITY, clientCredentials, COAP_CONFIG, ENDPOINT_SECURITY);
+//    }
 
 }

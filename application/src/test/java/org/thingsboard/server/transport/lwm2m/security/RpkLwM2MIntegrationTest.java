@@ -25,17 +25,17 @@ import static org.eclipse.leshan.client.object.Security.rpk;
 
 public class RpkLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
-    @Test
-    public void testConnectWithRPKAndObserveTelemetry() throws Exception {
-        RPKClientCredentials rpkClientCredentials = new RPKClientCredentials();
-        rpkClientCredentials.setEndpoint(ENDPOINT_SECURITY);
-        rpkClientCredentials.setKey(Hex.encodeHexString(clientPublicKey.getEncoded()));
-        Security security = rpk(SECURE_URI,
-                SHORT_SERVER_ID,
-                clientPublicKey.getEncoded(),
-                clientPrivateKey.getEncoded(),
-                serverX509Cert.getPublicKey().getEncoded());
-        super.basicTestConnectionObserveTelemetry(security, rpkClientCredentials, SECURE_COAP_CONFIG, ENDPOINT_SECURITY);
-    }
+//    @Test
+//    public void testConnectWithRPKAndObserveTelemetry() throws Exception {
+//        RPKClientCredentials rpkClientCredentials = new RPKClientCredentials();
+//        rpkClientCredentials.setEndpoint(ENDPOINT_SECURITY);
+//        rpkClientCredentials.setKey(Hex.encodeHexString(clientPublicKey.getEncoded()));
+//        Security security = rpk(SECURE_URI,
+//                SHORT_SERVER_ID,
+//                clientPublicKey.getEncoded(),
+//                clientPrivateKey.getEncoded(),
+//                serverX509Cert.getPublicKey().getEncoded());
+//        super.basicTestConnectionObserveTelemetry(security, rpkClientCredentials, SECURE_COAP_CONFIG, ENDPOINT_SECURITY);
+//    }
 
 }
