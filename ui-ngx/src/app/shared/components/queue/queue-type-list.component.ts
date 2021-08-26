@@ -155,12 +155,7 @@ export class QueueTypeListComponent implements ControlValueAccessor, OnInit, Aft
           return searchText ? queue.toUpperCase().startsWith(searchText.toUpperCase()) : true;
         });
         if (result.length) {
-          if (searchText && searchText.length && result.indexOf(searchText) === -1) {
-            result.push(searchText);
-          }
           result.sort();
-        } else if (searchText && searchText.length) {
-          result.push(searchText);
         }
         return result;
       })
