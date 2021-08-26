@@ -112,7 +112,7 @@
                           (focus)="key.isFocused = true;"
                           (blur)="key.isFocused = false; inputChanged(source, key)">
                 <mat-option *ngFor="let option of key.settings.selectOptions"
-                            [value]="option.value !== 'null' ? option.value : null"
+                            [value]="option.value.toLowerCase() !== 'null' ? option.value : null"
                             [disabled]="key.settings.isEditable === 'readonly'">
                   {{ getCustomTranslationText(option.label ? option.label : option.value) }}
                 </mat-option>
