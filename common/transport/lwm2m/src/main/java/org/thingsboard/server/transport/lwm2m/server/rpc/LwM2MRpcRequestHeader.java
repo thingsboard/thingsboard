@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
+package org.thingsboard.server.transport.lwm2m.server.rpc;
 
-import org.eclipse.leshan.server.bootstrap.BootstrapConfigStore;
-import org.eclipse.leshan.server.bootstrap.BootstrapConfigurationStoreAdapter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.Data;
 
-public class LwM2MInMemoryBootstrapConfigurationAdapter extends BootstrapConfigurationStoreAdapter {
+@Data
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class LwM2MRpcRequestHeader {
 
-    public LwM2MInMemoryBootstrapConfigurationAdapter(BootstrapConfigStore store) {
-        super(store);
-    }
-
+    private String key;
+    private String id;
+    private String contentFormat;
 }

@@ -17,7 +17,6 @@ package org.thingsboard.server.transport.lwm2m.server.common;
 
 import org.thingsboard.common.util.ThingsBoardExecutors;
 
-import javax.annotation.PreDestroy;
 import java.util.concurrent.ExecutorService;
 
 public abstract class LwM2MExecutorAwareService {

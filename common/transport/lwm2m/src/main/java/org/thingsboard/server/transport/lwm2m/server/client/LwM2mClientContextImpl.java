@@ -18,8 +18,8 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.SecurityMode;
-import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mPath;
+import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -36,7 +36,6 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
-import org.thingsboard.server.transport.lwm2m.config.LwM2mVersion;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
@@ -59,8 +58,7 @@ import java.util.function.Predicate;
 
 import static org.eclipse.leshan.core.SecurityMode.NO_SEC;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertObjectIdToVersionedId;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.validateObjectVerFromKey;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.getMsgException;
 
 @Slf4j
 @Service
@@ -291,12 +289,13 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     }
 
     @Override
-    public String getObjectIdByKeyNameFromProfile(LwM2mClient client, String keyName) {
+    public String getObjectIdByKeyNameFromProfile(LwM2mClient client, String keyName, boolean isCompositeOperation) {
         Lwm2mDeviceProfileTransportConfiguration profile = getProfile(client.getProfileId());
-
+        Set<String> msgException = ConcurrentHashMap.newKeySet();
+        msgException.add("");
         return profile.getObserveAttr().getKeyName().entrySet().stream()
-                .filter(e -> e.getValue().equals(keyName) && validateResourceInModel(client, e.getKey(), false)).findFirst().orElseThrow(
-                        () -> new IllegalArgumentException(keyName + " is not configured in the device profile!")
+                .filter(e -> e.getValue().equals(keyName) && (isCompositeOperation || !msgException.add(client.isValidObjectVersion(e.getKey())))).findFirst().orElseThrow(
+                        () -> new IllegalArgumentException(getMsgException (keyName, msgException))
                 ).getKey();
     }
 
@@ -336,7 +335,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         if (LwM2MClientState.REGISTERED.equals(lwM2MClient.getState())) {
             PowerMode powerMode = getPowerMode(lwM2MClient);
             if (PowerMode.PSM.equals(powerMode) || PowerMode.E_DRX.equals(powerMode)) {
-                defaultLwM2MUplinkMsgHandler.initAttributes(lwM2MClient);
+                defaultLwM2MUplinkMsgHandler.initAttributes(lwM2MClient, false);
                 TransportProtos.TransportToDeviceActorMsg persistentRpcRequestMsg = TransportProtos.TransportToDeviceActorMsg
                         .newBuilder()
                         .setSessionInfo(lwM2MClient.getSession())
@@ -412,9 +411,9 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     }
 
     @Override
-    public boolean isComposite(LwM2mClient client) {
-        return LwM2mVersion.fromVersionStr(client.getRegistration().getLwM2mVersion()).isComposite() &
-                getProfile(client.getProfileId()).getClientLwM2mSettings().isCompositeOperationsSupport();
+    public ContentFormat getContentFormatComposite(LwM2mClient client) {
+        return client.getClientSupportContentFormats().contains(ContentFormat.SENML_JSON) ? ContentFormat.SENML_JSON :
+                client.getClientSupportContentFormats().contains(ContentFormat.SENML_CBOR) ? ContentFormat.SENML_CBOR : null;
     }
 
     @Override
@@ -541,15 +540,4 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         }
         return timeout;
     }
-
-    private boolean validateResourceInModel(LwM2mClient lwM2mClient, String pathIdVer, boolean isWritableNotOptional) {
-        ResourceModel resourceModel = lwM2mClient.getResourceModel(pathIdVer, this.config
-                .getModelProvider());
-        Integer objectId = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer)).getObjectId();
-        String objectVer = validateObjectVerFromKey(pathIdVer);
-        return resourceModel != null && (isWritableNotOptional ?
-                objectId != null && objectVer != null && objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId)) && resourceModel.operations.isWritable() :
-                objectId != null && objectVer != null && objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId)));
-    }
-
 }
