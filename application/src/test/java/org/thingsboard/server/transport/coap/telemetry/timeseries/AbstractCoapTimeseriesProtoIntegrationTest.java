@@ -207,10 +207,9 @@ public abstract class AbstractCoapTimeseriesProtoIntegrationTest extends Abstrac
                 .setField(postTelemetryMsgDescriptor.findFieldByName("key1"), "")
                 .setField(postTelemetryMsgDescriptor.findFieldByName("key2"), false)
                 .setField(postTelemetryMsgDescriptor.findFieldByName("key3"), 0.0)
-                .setField(postTelemetryMsgDescriptor.findFieldByName("key4"), 0)
                 .setField(postTelemetryMsgDescriptor.findFieldByName("key5"), jsonObject)
                 .build();
-        processTestPostTelemetry(postTelemetryMsg.toByteArray(), Arrays.asList("key1", "key2", "key3", "key4", "key5"), false, true);
+        processTestPostTelemetry(postTelemetryMsg.toByteArray(), Arrays.asList("key1", "key2", "key3", "key5"), false, true);
     }
 
     @Test

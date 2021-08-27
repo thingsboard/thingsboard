@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.common.data.widget;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @Data
+@JsonPropertyOrder({ "alias", "name", "image", "description", "descriptor" })
 public class WidgetTypeDetails extends WidgetType {
 
     private String image;

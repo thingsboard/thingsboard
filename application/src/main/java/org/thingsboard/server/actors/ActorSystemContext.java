@@ -400,6 +400,14 @@ public class ActorSystemContext {
     @Getter
     private String debugPerTenantLimitsConfiguration;
 
+    @Value("${actors.rpc.sequential:false}")
+    @Getter
+    private boolean rpcSequential;
+
+    @Value("${actors.rpc.max_retries:5}")
+    @Getter
+    private int maxRpcRetries;
+
     @Getter
     @Setter
     private TbActorSystem actorSystem;
@@ -477,7 +485,6 @@ public class ActorSystemContext {
     public TopicPartitionInfo resolve(ServiceType serviceType, String queueName, TenantId tenantId, EntityId entityId) {
         return partitionService.resolve(serviceType, queueName, tenantId, entityId);
     }
-
 
     public String getServiceId() {
         return serviceInfoProvider.getServiceId();

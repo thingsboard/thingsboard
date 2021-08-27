@@ -145,6 +145,7 @@ export interface TbFlotComparisonSettings {
   comparisonEnabled: boolean;
   timeForComparison: ComparisonDuration;
   xaxisSecond: TbFlotSecondXAxisSettings;
+  comparisonCustomIntervalValue?: number;
 }
 
 export interface TbFlotThresholdsSettings {
@@ -546,6 +547,11 @@ const chartSettingsSchemaForComparison: JsonSettingsSchema = {
         type: 'string',
         default: 'previousInterval'
       },
+      comparisonCustomIntervalValue: {
+        title: 'Custom interval value (ms)',
+        type: 'number',
+        default: 7200000
+      },
       xaxisSecond: {
         title: 'Second X axis',
         type: 'object',
@@ -596,8 +602,16 @@ const chartSettingsSchemaForComparison: JsonSettingsSchema = {
         {
           value: 'years',
           label: 'Year ago'
+        },
+        {
+          value: 'customInterval',
+          label: 'Custom interval'
         }
       ]
+    },
+    {
+      key: 'comparisonCustomIntervalValue',
+      condition: 'model.timeForComparison === "customInterval"'
     },
     {
       key: 'xaxisSecond',

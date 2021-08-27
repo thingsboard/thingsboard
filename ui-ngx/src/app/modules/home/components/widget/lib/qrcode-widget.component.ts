@@ -101,7 +101,7 @@ export class QrCodeWidgetComponent extends PageComponent implements OnInit, Afte
       const dataSourceData = data[0];
       const pattern = this.settings.useQrCodeTextFunction ?
         safeExecute(this.qrCodeTextFunction, [dataSourceData]) : this.settings.qrCodeTextPattern;
-      const replaceInfo = processPattern(pattern, data);
+      const replaceInfo = processPattern(pattern, dataSourceData);
       qrCodeText = fillPattern(pattern, replaceInfo, dataSourceData);
     }
     this.updateQrCodeText(qrCodeText);

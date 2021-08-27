@@ -123,12 +123,9 @@ public abstract class AbstractCoapAttributesProtoIntegrationTest extends Abstrac
         assertNotNull(postAttributesMsgDescriptor);
         DynamicMessage postAttributesMsg = postAttributesBuilder
                 .setField(postAttributesMsgDescriptor.findFieldByName("key1"), "")
-                .setField(postAttributesMsgDescriptor.findFieldByName("key2"), false)
-                .setField(postAttributesMsgDescriptor.findFieldByName("key3"), 0.0)
-                .setField(postAttributesMsgDescriptor.findFieldByName("key4"), 0)
                 .setField(postAttributesMsgDescriptor.findFieldByName("key5"), jsonObject)
                 .build();
-        processAttributesTest(Arrays.asList("key1", "key2", "key3", "key4", "key5"), postAttributesMsg.toByteArray(), true);
+        processAttributesTest(Arrays.asList("key1", "key5"), postAttributesMsg.toByteArray(), true);
     }
 
 }
