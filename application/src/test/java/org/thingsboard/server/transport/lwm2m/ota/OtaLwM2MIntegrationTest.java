@@ -130,7 +130,6 @@ public class OtaLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
             "  \"type\": \"LWM2M\"\n" +
             "}";
 
-    @Ignore
     @Test
     public void testFirmwareUpdateWithClientWithoutFirmwareInfo() throws Exception {
         LwM2MTestClient client = null;
@@ -166,7 +165,6 @@ public class OtaLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
         }
     }
 
-    @Ignore
     @Test
     public void testFirmwareUpdateByObject5() throws Exception {
         LwM2MTestClient client = null;
@@ -206,7 +204,6 @@ public class OtaLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
      * Test will finish as fast as possible, but will await until TIMEOUT if a build machine is busy or slow
      * Check the detailed log output to learn how Awaitility polling the API and when exactly expected result appears
      * */
-    @Ignore
     @Test
     public void testSoftwareUpdateByObject9() throws Exception {
         //given
