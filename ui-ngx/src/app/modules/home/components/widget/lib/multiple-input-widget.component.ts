@@ -452,6 +452,10 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   }
 
   public getCustomTranslationText(value): string {
+    if (value.toLowerCase() === 'null') {
+      return '';
+    }
+
     return this.utils.customTranslation(value, value);
   }
 
