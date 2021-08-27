@@ -16,30 +16,35 @@
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
 import lombok.Builder;
+import lombok.Getter;
 import org.eclipse.leshan.core.request.ContentFormat;
-import org.eclipse.leshan.core.response.ReadResponse;
+import org.eclipse.leshan.core.response.CreateResponse;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType;
 
-import java.util.Optional;
+import java.util.Map;
 
-public class TbLwM2MReadRequest extends AbstractTbLwM2MTargetedDownlinkRequest<ReadResponse> implements HasContentFormat {
+public class TbLwM2MCreateRequest extends AbstractTbLwM2MTargetedDownlinkRequest<CreateResponse> {
 
-    private final Optional<ContentFormat> requestContentFormat;
+    @Getter
+    private final Object value;
+    @Getter
+    private final ContentFormat objectContentFormat;
+    @Getter
+    private final Map<String, Object> nodes;;
 
     @Builder
-    private TbLwM2MReadRequest(String versionedId, long timeout, ContentFormat requestContentFormat) {
+    private TbLwM2MCreateRequest(String versionedId, long timeout, Object value, ContentFormat objectContentFormat, Map<String, Object> nodes) {
         super(versionedId, timeout);
-        this.requestContentFormat = Optional.ofNullable(requestContentFormat);
+        this.value = value;
+        this.objectContentFormat = objectContentFormat;
+        this.nodes = nodes;
     }
 
     @Override
     public LwM2mOperationType getType() {
-        return LwM2mOperationType.READ;
+        return LwM2mOperationType.CREATE;
     }
 
 
-    @Override
-    public Optional<ContentFormat> getRequestContentFormat() {
-        return this.requestContentFormat;
-    }
+
 }

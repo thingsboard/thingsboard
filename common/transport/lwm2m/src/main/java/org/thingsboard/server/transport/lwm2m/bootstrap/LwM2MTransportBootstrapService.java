@@ -19,17 +19,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.elements.util.SslContextUtil;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
-import org.eclipse.leshan.core.model.ObjectLoader;
-import org.eclipse.leshan.core.model.ObjectModel;
-import org.eclipse.leshan.core.model.StaticModel;
 import org.eclipse.leshan.server.bootstrap.BootstrapSessionManager;
 import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServer;
 import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServerBuilder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapSecurityStore;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MInMemoryBootstrapConfigStore;
-import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MInMemoryBootstrapConfigurationAdapter;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2mDefaultBootstrapSessionManager;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportBootstrapConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
@@ -42,7 +39,6 @@ import java.security.KeyStoreException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
-import java.util.List;
 
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mNetworkConfig.getCoapConfig;
 
@@ -57,7 +53,7 @@ public class LwM2MTransportBootstrapService {
     private final LwM2MTransportBootstrapConfig bootstrapConfig;
     private final LwM2MBootstrapSecurityStore lwM2MBootstrapSecurityStore;
     private final LwM2MInMemoryBootstrapConfigStore lwM2MInMemoryBootstrapConfigStore;
-
+    private final TransportService transportService;
     private LeshanBootstrapServer server;
 
     @PostConstruct
@@ -83,15 +79,11 @@ public class LwM2MTransportBootstrapService {
         /* Create CoAP Config */
         builder.setCoapConfig(getCoapConfig(bootstrapConfig.getPort(), bootstrapConfig.getSecurePort(), serverConfig));
 
-        /* Define model provider (Create Models )*/
-        List<ObjectModel> models = ObjectLoader.loadDefault();
-        builder.setModel(new StaticModel(models));
-
         /*  Create credentials */
         this.setServerWithCredentials(builder);
 
         /* Set securityStore with new ConfigStore */
-        builder.setConfigStore(new LwM2MInMemoryBootstrapConfigurationAdapter(lwM2MInMemoryBootstrapConfigStore));
+        builder.setConfigStore(lwM2MInMemoryBootstrapConfigStore);
 
         /* SecurityStore */
         builder.setSecurityStore(lwM2MBootstrapSecurityStore);
@@ -106,7 +98,7 @@ public class LwM2MTransportBootstrapService {
         /* Set DTLS Config */
         builder.setDtlsConfig(dtlsConfig);
 
-        BootstrapSessionManager sessionManager = new LwM2mDefaultBootstrapSessionManager(lwM2MBootstrapSecurityStore);
+        BootstrapSessionManager sessionManager = new LwM2mDefaultBootstrapSessionManager(lwM2MBootstrapSecurityStore, lwM2MInMemoryBootstrapConfigStore, transportService);
         builder.setSessionManager(sessionManager);
 
         /* Create BootstrapServer */

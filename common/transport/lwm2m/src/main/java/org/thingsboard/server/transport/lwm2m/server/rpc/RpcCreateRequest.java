@@ -15,13 +15,17 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.rpc;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+import java.util.Map;
 
 @Data
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class IdOrKeyRequest {
+@EqualsAndHashCode(callSuper = true)
+public class RpcCreateRequest extends LwM2MRpcRequestHeader {
 
-    private String key;
-    private String id;
+    private Object value;
+    private String contentFormat;
+    private Map<String, Object> nodes;
+
 }

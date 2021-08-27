@@ -39,7 +39,9 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_ERROR;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_INFO;
@@ -58,6 +60,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
 
     private final LwM2mTransportContext context;
     private final LwM2mTransportServerHelper helper;
+    private final Map<String /* endpoint */, TransportProtos.SessionInfoProto> bsSessions = new ConcurrentHashMap<>();
 
     public LwM2MBootstrapSecurityStore(EditableBootstrapConfigStore bootstrapConfigStore, LwM2mCredentialsSecurityInfoValidator lwM2MCredentialsSecurityInfoValidator, LwM2mTransportContext context, LwM2mTransportServerHelper helper) {
         this.bootstrapConfigStore = bootstrapConfigStore;
@@ -82,7 +85,12 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
                     }
                     bootstrapConfigStore.add(endPoint, bsConfigNew);
                 } catch (InvalidConfigurationException e) {
-                    log.error("", e);
+                    if (e.getMessage().contains("Psk identity") && e.getMessage().contains("already used for this bootstrap server")) {
+                        log.trace("", e);
+                    }
+                    else {
+                        log.error("", e);
+                    }
                 }
                 return store.getSecurityInfo() == null ? null : Collections.singletonList(store.getSecurityInfo()).iterator();
             }
@@ -155,6 +163,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
             LwM2MServerBootstrap profileLwm2mServer = JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getLwm2mServer()), LwM2MServerBootstrap.class);
             UUID sessionUUiD = UUID.randomUUID();
             TransportProtos.SessionInfoProto sessionInfo = helper.getValidateSessionInfo(store.getMsg(), sessionUUiD.getMostSignificantBits(), sessionUUiD.getLeastSignificantBits());
+            bsSessions.put(store.getEndpoint(), sessionInfo);
             context.getTransportService().registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(null, null, null, sessionInfo, context.getTransportService()));
             if (this.getValidatedSecurityMode(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap, lwM2MBootstrapConfig.lwm2mServer, profileLwm2mServer)) {
                 lwM2MBootstrapConfig.bootstrapServer = new LwM2MServerBootstrap(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap);
@@ -188,5 +197,13 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
     private boolean getValidatedSecurityMode(LwM2MServerBootstrap bootstrapFromCredential, LwM2MServerBootstrap profileServerBootstrap, LwM2MServerBootstrap lwm2mFromCredential, LwM2MServerBootstrap profileLwm2mServer) {
         return (bootstrapFromCredential.getSecurityMode().equals(profileServerBootstrap.getSecurityMode()) &&
                 lwm2mFromCredential.getSecurityMode().equals(profileLwm2mServer.getSecurityMode()));
+    }
+
+    public TransportProtos.SessionInfoProto getSessionByEndpoint(String endpoint) {
+        return bsSessions.get(endpoint);
+    }
+
+    public TransportProtos.SessionInfoProto removeSessionByEndpoint(String endpoint) {
+        return bsSessions.remove(endpoint);
     }
 }
