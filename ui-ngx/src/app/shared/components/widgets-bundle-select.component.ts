@@ -140,6 +140,8 @@ export class WidgetsBundleSelectComponent implements ControlValueAccessor, OnIni
         this.widgetsBundle = found;
         this.updateView();
       }
+    } else {
+      this.widgetsBundle = null;
     }
   }
 
