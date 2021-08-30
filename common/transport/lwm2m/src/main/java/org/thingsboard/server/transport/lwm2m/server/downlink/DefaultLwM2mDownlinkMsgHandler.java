@@ -21,6 +21,7 @@ import org.eclipse.leshan.core.Link;
 import org.eclipse.leshan.core.LwM2m;
 import org.eclipse.leshan.core.attributes.Attribute;
 import org.eclipse.leshan.core.attributes.AttributeSet;
+import org.eclipse.leshan.core.model.LwM2mModel;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mObjectInstance;
@@ -95,7 +96,9 @@ import static org.eclipse.leshan.core.attributes.Attribute.STEP;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OBJLNK;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertMultiResourceValuesFromRpcBody;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.createModelsDefault;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.getVerFromPathIdVerOrId;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.validateVersionedId;
 
 @Slf4j
@@ -195,9 +198,20 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     @Override
     public void sendExecuteRequest(LwM2mClient client, TbLwM2MExecuteRequest request, DownlinkRequestCallback<ExecuteRequest, ExecuteResponse> callback) {
         try {
+            validateVersionedId(client, request);
+            LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(request.getVersionedId()));
             ResourceModel resourceModelExecute = client.getResourceModel(request.getVersionedId(), this.config.getModelProvider());
-            if (resourceModelExecute != null) {
-                validateVersionedId(client, request);
+            if (resourceModelExecute == null) {
+                LwM2mModel model = createModelsDefault();
+                if (pathIds.isResource()) {
+                    resourceModelExecute = model.getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
+                }
+            }
+            if (resourceModelExecute == null) {
+                callback.onValidationError(request.toString(), "ResourceModel with " + request.getVersionedId() + " is absent in system. Need ddd Lwm2m Model with id=" +
+                        pathIds.getObjectId() + " ver=" + getVerFromPathIdVerOrId(request.getVersionedId()) + " to profile.");
+            }
+            else if (resourceModelExecute.operations.isExecutable()) {
                 ExecuteRequest downlink;
                 if (request.getParams() != null && !resourceModelExecute.multiple) {
                     downlink = new ExecuteRequest(request.getObjectId(), (String) this.converter.convertValue(request.getParams(), resourceModelExecute.type, ResourceModel.Type.STRING, new LwM2mPath(request.getObjectId())));
@@ -205,6 +219,9 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                     downlink = new ExecuteRequest(request.getObjectId());
                 }
                 sendSimpleRequest(client, downlink, request.getTimeout(), callback);
+            }
+            else {
+                callback.onValidationError(request.toString(), "Resource with " + request.getVersionedId() + " is not executable.");
             }
         } catch (InvalidRequestException e) {
             callback.onValidationError(request.toString(), e.getMessage());
