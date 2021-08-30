@@ -49,13 +49,13 @@ public class Lwm2mTestHelper {
     public static final int objectInstanceId_1 = 1;
     public static final int objectInstanceId_12 = 12;
     public static final int resourceId_0 = 0;
-    protected static final int resourceId_1 = 1;
-    protected static final int resourceId_2 = 2;
-    protected static final int resourceId_3 = 3;
+    public static final int resourceId_1 = 1;
+    public static final int resourceId_2 = 2;
+    public static final int resourceId_3 = 3;
     public static final int resourceId_9 = 9;
-    protected static final int resourceId_11 = 11;
+    public static final int resourceId_11 = 11;
     public static final int resourceId_14 = 14;
-    protected static final int resourceId_15= 15;
+    public static final int resourceId_15= 15;
 
     public static final String resourceIdName_3_9 = "batteryLevel";
     public static final String resourceIdName_3_14 = "UtfOffset";
