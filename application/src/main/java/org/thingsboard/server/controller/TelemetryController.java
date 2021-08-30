@@ -269,12 +269,8 @@ public class TelemetryController extends BaseController {
     public DeferredResult<ResponseEntity> saveEntityAttributesV1(@PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr,
                                                                  @PathVariable("scope") String scope,
                                                                  @RequestBody JsonNode request) throws ThingsboardException {
-        try {
-            EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
-            return saveAttributes(getTenantId(), entityId, scope, request);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
+        return saveAttributes(getTenantId(), entityId, scope, request);
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")

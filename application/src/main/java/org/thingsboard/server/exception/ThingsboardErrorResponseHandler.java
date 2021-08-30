@@ -34,10 +34,13 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
+import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.service.security.exception.AuthMethodNotSupportedException;
 import org.thingsboard.server.service.security.exception.JwtExpiredTokenException;
 import org.thingsboard.server.service.security.exception.UserPasswordExpiredException;
 
+import javax.mail.MessagingException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -85,13 +88,31 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
                 } else if (exception instanceof AuthenticationException) {
                     handleAuthenticationException((AuthenticationException) exception, response);
                 } else {
-                    response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-                    mapper.writeValue(response.getWriter(), ThingsboardErrorResponse.of(exception.getMessage(),
-                            ThingsboardErrorCode.GENERAL, HttpStatus.INTERNAL_SERVER_ERROR));
+                    handle(castToThingsboardException(exception, true), response);
                 }
             } catch (IOException e) {
                 log.error("Can't handle exception", e);
             }
+        }
+    }
+
+    public ThingsboardException castToThingsboardException(Exception exception, boolean logException) {
+        if (logException) {
+            log.error("Error [{}]", exception.getMessage(), exception);
+        }
+
+        String cause = "";
+        if (exception.getCause() != null) {
+            cause = exception.getCause().getClass().getCanonicalName();
+        }
+
+        if (exception instanceof IllegalArgumentException || exception instanceof IncorrectParameterException
+                || exception instanceof DataValidationException || cause.contains("IncorrectParameterException")) {
+            return new ThingsboardException(exception.getMessage(), ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        } else if (exception instanceof MessagingException) {
+            return new ThingsboardException("Unable to send mail: " + exception.getMessage(), ThingsboardErrorCode.GENERAL);
+        } else {
+            return new ThingsboardException(exception.getMessage(), ThingsboardErrorCode.GENERAL);
         }
     }
 
