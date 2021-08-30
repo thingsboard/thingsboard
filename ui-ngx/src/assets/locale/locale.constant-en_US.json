@@ -57,7 +57,8 @@
         "download": "Download",
         "next-with-label": "Next: {{label}}",
         "read-more": "Read more",
-        "hide": "Hide"
+        "hide": "Hide",
+        "reset": "Reset"
     },
     "aggregation": {
         "aggregation": "Aggregation",

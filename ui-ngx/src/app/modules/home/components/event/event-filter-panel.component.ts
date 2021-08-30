@@ -14,12 +14,12 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, InjectionToken } from '@angular/core';
+import { Component, Inject, InjectionToken, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { OverlayRef } from '@angular/cdk/overlay';
 import { EntityType } from '@shared/models/entity-type.models';
 import { FilterEventBody } from '@shared/models/event.models';
-import { deepTrim } from '@core/utils';
+import { deepTrim, isEqual } from '@core/utils';
 
 export const EVENT_FILTER_PANEL_DATA = new InjectionToken<any>('AlarmFilterPanelData');
 
@@ -37,7 +37,8 @@ export interface FilterEntityColumn {
 @Component({
   selector: 'tb-event-filter-panel',
   templateUrl: './event-filter-panel.component.html',
-  styleUrls: ['./event-filter-panel.component.scss']
+  styleUrls: ['./event-filter-panel.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EventFilterPanelComponent {
 
@@ -104,6 +105,21 @@ export class EventFilterPanelComponent {
 
   cancel() {
     this.overlayRef.dispose();
+  }
+
+  reset() {
+    const emptyInputValue = {};
+
+    for (const inputValue in this.eventFilterFormGroup.value) {
+      emptyInputValue[inputValue] = '';
+    }
+
+    this.eventFilterFormGroup.reset(emptyInputValue);
+    this.update();
+  }
+
+  get resetButtonDisabled() {
+    return isEqual(this.data.filterParams, {});
   }
 
   changeIsError(value: boolean | string) {
