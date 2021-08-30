@@ -23,8 +23,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.leshan.core.attributes.Attribute;
 import org.eclipse.leshan.core.attributes.AttributeSet;
+import org.eclipse.leshan.core.model.LwM2mModel;
+import org.eclipse.leshan.core.model.ObjectLoader;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.model.StaticModel;
 import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
@@ -520,6 +523,10 @@ public class LwM2mTransportUtil {
     private static String opaqueToString(byte[] value) {
         String opaque = Hex.encodeHexString(value);
         return opaque.length() > 1024 ? opaque.substring(0, 1024) : opaque;
+    }
+
+    public static LwM2mModel createModelsDefault() {
+        return new StaticModel(ObjectLoader.loadDefault());
     }
 
 }
