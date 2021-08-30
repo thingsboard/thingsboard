@@ -97,7 +97,7 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
     public void testSaveDashboardInfoWithViolationOfValidation() throws Exception {
         Dashboard dashboard = new Dashboard();
         dashboard.setTitle(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/dashboard", dashboard).andExpect(statusReason(containsString("length of title should be equals or less than 255")));
+        doPost("/api/dashboard", dashboard).andExpect(statusReason(containsString("length of title must be equal or less than 255")));
     }
 
     @Test

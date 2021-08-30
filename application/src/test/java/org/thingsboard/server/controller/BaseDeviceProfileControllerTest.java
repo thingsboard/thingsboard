@@ -113,7 +113,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
     @Test
     public void saveDeviceProfileWithViolationOfValidation() throws Exception {
         doPost("/api/deviceProfile", this.createDeviceProfile(RandomStringUtils.randomAlphabetic(300), null))
-                .andExpect(statusReason(containsString("length of name should be equals or less than 255")));
+                .andExpect(statusReason(containsString("length of name must be equal or less than 255")));
     }
 
     @Test

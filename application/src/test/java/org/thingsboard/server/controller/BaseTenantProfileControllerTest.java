@@ -79,7 +79,7 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
     public void testSaveTenantProfileWithViolationOfLengthValidation() throws Exception {
         loginSysAdmin();
         TenantProfile tenantProfile = this.createTenantProfile(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/tenantProfile", tenantProfile).andExpect(statusReason(containsString("length of name should be equals or less than 255")));
+        doPost("/api/tenantProfile", tenantProfile).andExpect(statusReason(containsString("length of name must be equal or less than 255")));
     }
 
     @Test

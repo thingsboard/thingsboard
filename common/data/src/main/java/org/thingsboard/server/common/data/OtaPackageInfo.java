@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.validation.Length;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 @Slf4j
 @Data
@@ -37,14 +38,20 @@ public class OtaPackageInfo extends SearchTextBasedWithAdditionalInfo<OtaPackage
     private DeviceProfileId deviceProfileId;
     private OtaPackageType type;
     @Length(fieldName = "title")
+    @NoXss
     private String title;
     @Length(fieldName = "version")
+    @NoXss
     private String version;
     @Length(fieldName = "url")
+    @NoXss
     private String url;
+    @Length(fieldName = "tag")
+    @NoXss
     private String tag;
     private boolean hasData;
     @Length(fieldName = "file name")
+    @NoXss
     private String fileName;
     private String contentType;
     private ChecksumAlgorithm checksumAlgorithm;

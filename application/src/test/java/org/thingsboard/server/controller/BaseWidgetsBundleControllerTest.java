@@ -93,7 +93,7 @@ public abstract class BaseWidgetsBundleControllerTest extends AbstractController
      public void testSaveWidgetBundleWithViolationOfLengthValidation() throws Exception {
          WidgetsBundle widgetsBundle = new WidgetsBundle();
          widgetsBundle.setTitle(RandomStringUtils.randomAlphabetic(300));
-         doPost("/api/widgetsBundle", widgetsBundle).andExpect(statusReason(containsString("length of title should be equals or less than 255")));
+         doPost("/api/widgetsBundle", widgetsBundle).andExpect(statusReason(containsString("length of title must be equal or less than 255")));
      }
 
     @Test

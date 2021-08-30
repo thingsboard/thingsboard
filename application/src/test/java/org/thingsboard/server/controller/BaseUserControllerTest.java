@@ -121,10 +121,10 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         user.setEmail(email);
         user.setFirstName(RandomStringUtils.randomAlphabetic(300));
         user.setLastName("Downs");
-        doPost("/api/user", user).andExpect(statusReason(containsString("Validation error: length of firs name should be equals or less than 255")));
+        doPost("/api/user", user).andExpect(statusReason(containsString("Validation error: length of firs name must be equal or less than 255")));
         user.setFirstName("Normal name");
         user.setLastName(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/user", user).andExpect(statusReason(containsString("length of last name should be equals or less than 255")));
+        doPost("/api/user", user).andExpect(statusReason(containsString("length of last name must be equal or less than 255")));
     }
 
     @Test

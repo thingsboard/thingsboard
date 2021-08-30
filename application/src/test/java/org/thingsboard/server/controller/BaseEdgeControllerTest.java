@@ -116,13 +116,13 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
     @Test
     public void testSaveEdgeWithViolationOfLengthValidation() throws Exception {
         Edge edge = constructEdge(RandomStringUtils.randomAlphabetic(300), "default");
-        doPost("/api/edge", edge).andExpect(statusReason(containsString("length of name should be equals or less than 255")));
+        doPost("/api/edge", edge).andExpect(statusReason(containsString("length of name must be equal or less than 255")));
         edge.setName("normal name");
         edge.setType(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/edge", edge).andExpect(statusReason(containsString("length of type should be equals or less than 255")));
+        doPost("/api/edge", edge).andExpect(statusReason(containsString("length of type must be equal or less than 255")));
         edge.setType("normal type");
         edge.setLabel(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/edge", edge).andExpect(statusReason(containsString("length of label should be equals or less than 255")));
+        doPost("/api/edge", edge).andExpect(statusReason(containsString("length of label must be equal or less than 255")));
     }
 
     @Test

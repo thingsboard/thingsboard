@@ -136,10 +136,10 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
     @Test
     public void testSaveEntityViewWithViolationOfValidation() throws Exception {
         EntityView entityView = createEntityView(RandomStringUtils.randomAlphabetic(300), 0, 0);
-        doPost("/api/entityView", entityView).andExpect(statusReason(containsString("length of name should be equals or less than 255")));
+        doPost("/api/entityView", entityView).andExpect(statusReason(containsString("length of name must be equal or less than 255")));
         entityView.setName("Normal name");
         entityView.setType(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/entityView", entityView).andExpect(statusReason(containsString("length of type should be equals or less than 255")));
+        doPost("/api/entityView", entityView).andExpect(statusReason(containsString("length of type must be equal or less than 255")));
     }
 
     @Test

@@ -74,6 +74,17 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
             try {
                 response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
+                String cause = "";
+                if (exception.getCause() != null) {
+                    cause = exception.getCause().getClass().getCanonicalName();
+                }
+                if (exception instanceof IllegalArgumentException || exception instanceof IncorrectParameterException
+                        || exception instanceof DataValidationException || cause.contains("IncorrectParameterException")) {
+                    exception = new ThingsboardException(exception.getMessage(), ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+                } else if (exception instanceof MessagingException) {
+                    exception = new ThingsboardException("Unable to send mail: " + exception.getMessage(), ThingsboardErrorCode.GENERAL);
+                }
+
                 if (exception instanceof ThingsboardException) {
                     ThingsboardException thingsboardException = (ThingsboardException) exception;
                     if (thingsboardException.getErrorCode() == ThingsboardErrorCode.SUBSCRIPTION_VIOLATION) {
@@ -88,34 +99,15 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
                 } else if (exception instanceof AuthenticationException) {
                     handleAuthenticationException((AuthenticationException) exception, response);
                 } else {
-                    handle(castToThingsboardException(exception, true), response);
+                    response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+                    mapper.writeValue(response.getWriter(), ThingsboardErrorResponse.of(exception.getMessage(),
+                            ThingsboardErrorCode.GENERAL, HttpStatus.INTERNAL_SERVER_ERROR));
                 }
             } catch (IOException e) {
                 log.error("Can't handle exception", e);
             }
         }
     }
-
-    public ThingsboardException castToThingsboardException(Exception exception, boolean logException) {
-        if (logException) {
-            log.error("Error [{}]", exception.getMessage(), exception);
-        }
-
-        String cause = "";
-        if (exception.getCause() != null) {
-            cause = exception.getCause().getClass().getCanonicalName();
-        }
-
-        if (exception instanceof IllegalArgumentException || exception instanceof IncorrectParameterException
-                || exception instanceof DataValidationException || cause.contains("IncorrectParameterException")) {
-            return new ThingsboardException(exception.getMessage(), ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-        } else if (exception instanceof MessagingException) {
-            return new ThingsboardException("Unable to send mail: " + exception.getMessage(), ThingsboardErrorCode.GENERAL);
-        } else {
-            return new ThingsboardException(exception.getMessage(), ThingsboardErrorCode.GENERAL);
-        }
-    }
-
 
     private void handleThingsboardException(ThingsboardException thingsboardException, HttpServletResponse response) throws IOException {
 

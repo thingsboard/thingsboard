@@ -107,7 +107,7 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
         resource.setTitle(RandomStringUtils.randomAlphabetic(300));
         resource.setFileName(DEFAULT_FILE_NAME);
         resource.setData("Test Data");
-        doPost("/api/resource", resource).andExpect(statusReason(containsString("length of title should be equals or less than 255")));
+        doPost("/api/resource", resource).andExpect(statusReason(containsString("length of title must be equal or less than 255")));
     }
 
     @Test

@@ -281,9 +281,6 @@ public abstract class BaseController {
     @Autowired
     protected RuleEngineEntityActionService ruleEngineEntityActionService;
 
-    @Autowired
-    protected ThingsboardErrorResponseHandler thingsboardErrorResponseHandler;
-
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
     private boolean logControllerErrorStackTrace;
@@ -302,7 +299,25 @@ public abstract class BaseController {
     }
 
     private ThingsboardException handleException(Exception exception, boolean logException) {
-        return thingsboardErrorResponseHandler.castToThingsboardException(exception, logException);
+        if (logException && logControllerErrorStackTrace) {
+            log.error("Error [{}]", exception.getMessage(), exception);
+        }
+
+        String cause = "";
+        if (exception.getCause() != null) {
+            cause = exception.getCause().getClass().getCanonicalName();
+        }
+
+        if (exception instanceof ThingsboardException) {
+            return (ThingsboardException) exception;
+        } else if (exception instanceof IllegalArgumentException || exception instanceof IncorrectParameterException
+                || exception instanceof DataValidationException || cause.contains("IncorrectParameterException")) {
+            return new ThingsboardException(exception.getMessage(), ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        } else if (exception instanceof MessagingException) {
+            return new ThingsboardException("Unable to send mail: " + exception.getMessage(), ThingsboardErrorCode.GENERAL);
+        } else {
+            return new ThingsboardException(exception.getMessage(), ThingsboardErrorCode.GENERAL);
+        }
     }
 
     <T> T checkNotNull(T reference) throws ThingsboardException {

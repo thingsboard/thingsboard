@@ -138,11 +138,7 @@ public class TelemetryController extends BaseController {
     @ResponseBody
     public DeferredResult<ResponseEntity> getAttributeKeys(
             @PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr) throws ThingsboardException {
-        try {
-            return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_ATTRIBUTES, entityType, entityIdStr, this::getAttributeKeysCallback);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_ATTRIBUTES, entityType, entityIdStr, this::getAttributeKeysCallback);
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -151,12 +147,8 @@ public class TelemetryController extends BaseController {
     public DeferredResult<ResponseEntity> getAttributeKeysByScope(
             @PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr
             , @PathVariable("scope") String scope) throws ThingsboardException {
-        try {
-            return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_ATTRIBUTES, entityType, entityIdStr,
-                    (result, tenantId, entityId) -> getAttributeKeysCallback(result, tenantId, entityId, scope));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_ATTRIBUTES, entityType, entityIdStr,
+                (result, tenantId, entityId) -> getAttributeKeysCallback(result, tenantId, entityId, scope));
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -165,13 +157,9 @@ public class TelemetryController extends BaseController {
     public DeferredResult<ResponseEntity> getAttributes(
             @PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr,
             @RequestParam(name = "keys", required = false) String keysStr) throws ThingsboardException {
-        try {
-            SecurityUser user = getCurrentUser();
-            return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_ATTRIBUTES, entityType, entityIdStr,
-                    (result, tenantId, entityId) -> getAttributeValuesCallback(result, user, entityId, null, keysStr));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        SecurityUser user = getCurrentUser();
+        return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_ATTRIBUTES, entityType, entityIdStr,
+                (result, tenantId, entityId) -> getAttributeValuesCallback(result, user, entityId, null, keysStr));
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -181,13 +169,9 @@ public class TelemetryController extends BaseController {
             @PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr,
             @PathVariable("scope") String scope,
             @RequestParam(name = "keys", required = false) String keysStr) throws ThingsboardException {
-        try {
-            SecurityUser user = getCurrentUser();
-            return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_ATTRIBUTES, entityType, entityIdStr,
-                    (result, tenantId, entityId) -> getAttributeValuesCallback(result, user, entityId, scope, keysStr));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        SecurityUser user = getCurrentUser();
+        return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_ATTRIBUTES, entityType, entityIdStr,
+                (result, tenantId, entityId) -> getAttributeValuesCallback(result, user, entityId, scope, keysStr));
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -195,12 +179,8 @@ public class TelemetryController extends BaseController {
     @ResponseBody
     public DeferredResult<ResponseEntity> getTimeseriesKeys(
             @PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr) throws ThingsboardException {
-        try {
-            return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_TELEMETRY, entityType, entityIdStr,
-                    (result, tenantId, entityId) -> Futures.addCallback(tsService.findAllLatest(tenantId, entityId), getTsKeysToResponseCallback(result), MoreExecutors.directExecutor()));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_TELEMETRY, entityType, entityIdStr,
+                (result, tenantId, entityId) -> Futures.addCallback(tsService.findAllLatest(tenantId, entityId), getTsKeysToResponseCallback(result), MoreExecutors.directExecutor()));
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -210,14 +190,10 @@ public class TelemetryController extends BaseController {
             @PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr,
             @RequestParam(name = "keys", required = false) String keysStr,
             @RequestParam(name = "useStrictDataTypes", required = false, defaultValue = "false") Boolean useStrictDataTypes) throws ThingsboardException {
-        try {
-            SecurityUser user = getCurrentUser();
+        SecurityUser user = getCurrentUser();
 
-            return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_TELEMETRY, entityType, entityIdStr,
-                    (result, tenantId, entityId) -> getLatestTimeseriesValuesCallback(result, user, entityId, keysStr, useStrictDataTypes));
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_TELEMETRY, entityType, entityIdStr,
+                (result, tenantId, entityId) -> getLatestTimeseriesValuesCallback(result, user, entityId, keysStr, useStrictDataTypes));
     }
 
 
@@ -235,19 +211,15 @@ public class TelemetryController extends BaseController {
             @RequestParam(name = "agg", defaultValue = "NONE") String aggStr,
             @RequestParam(name = "orderBy", defaultValue = "DESC") String orderBy,
             @RequestParam(name = "useStrictDataTypes", required = false, defaultValue = "false") Boolean useStrictDataTypes) throws ThingsboardException {
-        try {
-            return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_TELEMETRY, entityType, entityIdStr,
-                    (result, tenantId, entityId) -> {
-                        // If interval is 0, convert this to a NONE aggregation, which is probably what the user really wanted
-                        Aggregation agg = interval == 0L ? Aggregation.valueOf(Aggregation.NONE.name()) : Aggregation.valueOf(aggStr);
-                        List<ReadTsKvQuery> queries = toKeysList(keys).stream().map(key -> new BaseReadTsKvQuery(key, startTs, endTs, interval, limit, agg, orderBy))
-                                .collect(Collectors.toList());
+        return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_TELEMETRY, entityType, entityIdStr,
+                (result, tenantId, entityId) -> {
+                    // If interval is 0, convert this to a NONE aggregation, which is probably what the user really wanted
+                    Aggregation agg = interval == 0L ? Aggregation.valueOf(Aggregation.NONE.name()) : Aggregation.valueOf(aggStr);
+                    List<ReadTsKvQuery> queries = toKeysList(keys).stream().map(key -> new BaseReadTsKvQuery(key, startTs, endTs, interval, limit, agg, orderBy))
+                            .collect(Collectors.toList());
 
-                        Futures.addCallback(tsService.findAll(tenantId, entityId, queries), getTsKvListCallback(result, useStrictDataTypes), MoreExecutors.directExecutor());
-                    });
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+                    Futures.addCallback(tsService.findAll(tenantId, entityId, queries), getTsKvListCallback(result, useStrictDataTypes), MoreExecutors.directExecutor());
+                });
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -255,12 +227,8 @@ public class TelemetryController extends BaseController {
     @ResponseBody
     public DeferredResult<ResponseEntity> saveDeviceAttributes(@PathVariable("deviceId") String deviceIdStr, @PathVariable("scope") String scope,
                                                                @RequestBody JsonNode request) throws ThingsboardException {
-        try {
-            EntityId entityId = EntityIdFactory.getByTypeAndUuid(EntityType.DEVICE, deviceIdStr);
-            return saveAttributes(getTenantId(), entityId, scope, request);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        EntityId entityId = EntityIdFactory.getByTypeAndUuid(EntityType.DEVICE, deviceIdStr);
+        return saveAttributes(getTenantId(), entityId, scope, request);
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -279,12 +247,8 @@ public class TelemetryController extends BaseController {
     public DeferredResult<ResponseEntity> saveEntityAttributesV2(@PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr,
                                                                  @PathVariable("scope") String scope,
                                                                  @RequestBody JsonNode request) throws ThingsboardException {
-        try {
-            EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
-            return saveAttributes(getTenantId(), entityId, scope, request);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
+        return saveAttributes(getTenantId(), entityId, scope, request);
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -293,12 +257,8 @@ public class TelemetryController extends BaseController {
     public DeferredResult<ResponseEntity> saveEntityTelemetry(@PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr,
                                                               @PathVariable("scope") String scope,
                                                               @RequestBody String requestBody) throws ThingsboardException {
-        try {
-            EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
-            return saveTelemetry(getTenantId(), entityId, requestBody, 0L);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
+        return saveTelemetry(getTenantId(), entityId, requestBody, 0L);
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -307,12 +267,8 @@ public class TelemetryController extends BaseController {
     public DeferredResult<ResponseEntity> saveEntityTelemetryWithTTL(@PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr,
                                                                      @PathVariable("scope") String scope, @PathVariable("ttl") Long ttl,
                                                                      @RequestBody String requestBody) throws ThingsboardException {
-        try {
-            EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
-            return saveTelemetry(getTenantId(), entityId, requestBody, ttl);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
+        return saveTelemetry(getTenantId(), entityId, requestBody, ttl);
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -324,12 +280,8 @@ public class TelemetryController extends BaseController {
                                                                  @RequestParam(name = "startTs", required = false) Long startTs,
                                                                  @RequestParam(name = "endTs", required = false) Long endTs,
                                                                  @RequestParam(name = "rewriteLatestIfDeleted", defaultValue = "false") boolean rewriteLatestIfDeleted) throws ThingsboardException {
-        try {
-            EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
-            return deleteTimeseries(entityId, keysStr, deleteAllDataForKeys, startTs, endTs, rewriteLatestIfDeleted);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
+        return deleteTimeseries(entityId, keysStr, deleteAllDataForKeys, startTs, endTs, rewriteLatestIfDeleted);
     }
 
     private DeferredResult<ResponseEntity> deleteTimeseries(EntityId entityIdStr, String keysStr, boolean deleteAllDataForKeys,
@@ -383,12 +335,8 @@ public class TelemetryController extends BaseController {
     public DeferredResult<ResponseEntity> deleteEntityAttributes(@PathVariable("deviceId") String deviceIdStr,
                                                                  @PathVariable("scope") String scope,
                                                                  @RequestParam(name = "keys") String keysStr) throws ThingsboardException {
-        try {
-            EntityId entityId = EntityIdFactory.getByTypeAndUuid(EntityType.DEVICE, deviceIdStr);
-            return deleteAttributes(entityId, scope, keysStr);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        EntityId entityId = EntityIdFactory.getByTypeAndUuid(EntityType.DEVICE, deviceIdStr);
+        return deleteAttributes(entityId, scope, keysStr);
     }
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -397,12 +345,8 @@ public class TelemetryController extends BaseController {
     public DeferredResult<ResponseEntity> deleteEntityAttributes(@PathVariable("entityType") String entityType, @PathVariable("entityId") String entityIdStr,
                                                                  @PathVariable("scope") String scope,
                                                                  @RequestParam(name = "keys") String keysStr) throws ThingsboardException {
-        try {
-            EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
-            return deleteAttributes(entityId, scope, keysStr);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
+        return deleteAttributes(entityId, scope, keysStr);
     }
 
     private DeferredResult<ResponseEntity> deleteAttributes(EntityId entityIdSrc, String scope, String keysStr) throws ThingsboardException {

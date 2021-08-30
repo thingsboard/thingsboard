@@ -127,14 +127,14 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
         firmwareInfo.setTitle(RandomStringUtils.randomAlphabetic(300));
         firmwareInfo.setVersion(VERSION);
         firmwareInfo.setUsesUrl(false);
-        doPost("/api/otaPackage", firmwareInfo).andExpect(statusReason(containsString("length of title should be equals or less than 255")));
+        doPost("/api/otaPackage", firmwareInfo).andExpect(statusReason(containsString("length of title must be equal or less than 255")));
         firmwareInfo.setTitle(TITLE);
         firmwareInfo.setVersion(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/otaPackage", firmwareInfo).andExpect(statusReason(containsString("length of version should be equals or less than 255")));
+        doPost("/api/otaPackage", firmwareInfo).andExpect(statusReason(containsString("length of version must be equal or less than 255")));
         firmwareInfo.setVersion(VERSION);
         firmwareInfo.setUsesUrl(true);
         firmwareInfo.setUrl(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/otaPackage", firmwareInfo).andExpect(statusReason(containsString("length of url should be equals or less than 255")));
+        doPost("/api/otaPackage", firmwareInfo).andExpect(statusReason(containsString("length of url must be equal or less than 255")));
     }
 
     @Test

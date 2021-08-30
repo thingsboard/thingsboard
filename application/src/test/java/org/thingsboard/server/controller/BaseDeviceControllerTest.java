@@ -119,13 +119,13 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
         Device device = new Device();
         device.setName(RandomStringUtils.randomAlphabetic(300));
         device.setType("default");
-        doPost("/api/device", device).andExpect(statusReason(containsString("length of name should be equals or less than 255")));
+        doPost("/api/device", device).andExpect(statusReason(containsString("length of name must be equal or less than 255")));
         device.setName("Normal Name");
         device.setType(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/device", device).andExpect(statusReason(containsString("length of type should be equals or less than 255")));
+        doPost("/api/device", device).andExpect(statusReason(containsString("length of type must be equal or less than 255")));
         device.setType("Normal type");
         device.setLabel(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/device", device).andExpect(statusReason(containsString("length of label should be equals or less than 255")));
+        doPost("/api/device", device).andExpect(statusReason(containsString("length of label must be equal or less than 255")));
     }
 
     @Test

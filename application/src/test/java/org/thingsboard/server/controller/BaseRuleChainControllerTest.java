@@ -90,7 +90,7 @@ public abstract class BaseRuleChainControllerTest extends AbstractControllerTest
     public void testSaveRuleChainWithViolationOfLengthValidation() throws Exception {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setName(RandomStringUtils.randomAlphabetic(300));
-        doPost("/api/ruleChain", ruleChain).andExpect(statusReason(containsString("length of name should be equals or less than 255")));
+        doPost("/api/ruleChain", ruleChain).andExpect(statusReason(containsString("length of name must be equal or less than 255")));
     }
 
     @Test
