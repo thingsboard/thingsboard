@@ -19,7 +19,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.eclipse.leshan.core.ResponseCode;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.transport.lwm2m.rpc.RpcAbstractLwM2MIntegrationTest;
+import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTest;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -28,7 +28,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInsta
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceId_0;
 
 
-public class RpcLwm2mIntegrationCreateTest extends RpcAbstractLwM2MIntegrationTest {
+public class RpcLwm2mIntegrationCreateTest extends AbstractRpcLwM2MIntegrationTest {
 
 
     /**

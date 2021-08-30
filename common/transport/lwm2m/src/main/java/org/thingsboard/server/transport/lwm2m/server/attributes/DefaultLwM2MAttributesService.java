@@ -198,7 +198,7 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
                     }
                 }
             } catch (IllegalArgumentException e){
-                log.error("Failed update resource [{}] onAttributesUpdate [{}]", lwM2MClient.getEndpoint(), e.getMessage());
+                log.error("Failed update resource ["+lwM2MClient.getEndpoint()+"] onAttributesUpdate:", e);
                 String logMsg = String.format("%s: Failed update resource onAttributesUpdate %s.",
                         LOG_LWM2M_ERROR, e.getMessage());
                 logService.log(lwM2MClient, logMsg);

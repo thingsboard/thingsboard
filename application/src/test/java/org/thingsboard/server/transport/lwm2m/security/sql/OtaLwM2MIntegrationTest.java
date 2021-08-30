@@ -134,14 +134,11 @@ public class OtaLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
     @Test
     public void testFirmwareUpdateWithClientWithoutFirmwareInfo() throws Exception {
-        LwM2MTestClient client = null;
         String endpoint = "WithoutFirmwareInfoDevice";
-        try {
             createDeviceProfile(TRANSPORT_CONFIGURATION);
             NoSecClientCredentials clientCredentials = new NoSecClientCredentials();
             clientCredentials.setEndpoint(endpoint);
             Device device = createDevice(clientCredentials);
-
             client = new LwM2MTestClient(executor, endpoint);
             int clientPort = SocketUtils.findAvailableTcpPort();
             client.init(SECURITY, COAP_CONFIG, clientPort);
@@ -161,48 +158,35 @@ public class OtaLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
             List<OtaPackageUpdateStatus> expectedStatuses = Collections.singletonList(FAILED);
 
             Assert.assertEquals(expectedStatuses, statuses);
-        } finally {
-            if (client != null) {
-                client.destroy();
-            }
-        }
     }
 
     @Test
     public void testFirmwareUpdateByObject5() throws Exception {
-        LwM2MTestClient client = null;
         String endpoint = "Ota5_Device";
         List<OtaPackageUpdateStatus> expectedStatuses = Arrays.asList(QUEUED, INITIATED, DOWNLOADING, DOWNLOADED, UPDATING, UPDATED);
-        try {
-            createDeviceProfile(OTA_TRANSPORT_CONFIGURATION);
-            NoSecClientCredentials clientCredentials = new NoSecClientCredentials();
-            clientCredentials.setEndpoint(endpoint);
-            Device device = createDevice(clientCredentials);
+        createDeviceProfile(OTA_TRANSPORT_CONFIGURATION);
+        NoSecClientCredentials clientCredentials = new NoSecClientCredentials();
+        clientCredentials.setEndpoint(endpoint);
+        Device device = createDevice(clientCredentials);
 
-            device.setFirmwareId(createFirmware().getId());
-            Device saveDevice = doPost("/api/device", device, Device.class);
-            Thread.sleep(1000);
+        device.setFirmwareId(createFirmware().getId());
+        Device saveDevice = doPost("/api/device", device, Device.class);
+        Thread.sleep(1000);
 
-            client = new LwM2MTestClient(executor, endpoint);
-            int clientPort = SocketUtils.findAvailableTcpPort();
-            client.init(SECURITY, COAP_CONFIG, clientPort);
+        client = new LwM2MTestClient(executor, endpoint);
+        int clientPort = SocketUtils.findAvailableTcpPort();
+        client.init(SECURITY, COAP_CONFIG, clientPort);
 
-            List<TsKvEntry> ts = await("await on timeseries")
-                    .atMost(30, TimeUnit.SECONDS)
-                    .until(()->  toTimeseries(doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + saveDevice.getId().getId() + "/values/timeseries?orderBy=ASC&keys=fw_state&startTs=0&endTs=" + System.currentTimeMillis(), new TypeReference<>() {
-                    })),  hasSize(expectedStatuses.size()));
-
-
-            List<OtaPackageUpdateStatus> statuses = ts.stream().sorted(Comparator.comparingLong(TsKvEntry::getTs)).map(KvEntry::getValueAsString).map(OtaPackageUpdateStatus::valueOf).collect(Collectors.toList());
+        List<TsKvEntry> ts = await("await on timeseries")
+                .atMost(30, TimeUnit.SECONDS)
+                .until(() -> toTimeseries(doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + saveDevice.getId().getId() + "/values/timeseries?orderBy=ASC&keys=fw_state&startTs=0&endTs=" + System.currentTimeMillis(), new TypeReference<>() {
+                })), hasSize(expectedStatuses.size()));
 
 
+        List<OtaPackageUpdateStatus> statuses = ts.stream().sorted(Comparator.comparingLong(TsKvEntry::getTs)).map(KvEntry::getValueAsString).map(OtaPackageUpdateStatus::valueOf).collect(Collectors.toList());
 
-            Assert.assertEquals(expectedStatuses, statuses);
-        } finally {
-            if (client != null) {
-                client.destroy();
-            }
-        }
+
+        Assert.assertEquals(expectedStatuses, statuses);
     }
 
     /**
@@ -215,44 +199,39 @@ public class OtaLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
         //given
         final List<OtaPackageUpdateStatus> expectedStatuses = List.of(
                 QUEUED, INITIATED, DOWNLOADING, DOWNLOADING, DOWNLOADING, DOWNLOADED, VERIFIED, UPDATED);
-        LwM2MTestClient client = null;
         String endpoint = "Ota9_Device";
-        try {
-            createDeviceProfile(OTA_TRANSPORT_CONFIGURATION);
-            NoSecClientCredentials clientCredentials = new NoSecClientCredentials();
-            clientCredentials.setEndpoint(endpoint);
-            final Device device = createDevice(clientCredentials);
-            device.setSoftwareId(createSoftware().getId());
+        createDeviceProfile(OTA_TRANSPORT_CONFIGURATION);
+        NoSecClientCredentials clientCredentials = new NoSecClientCredentials();
+        clientCredentials.setEndpoint(endpoint);
+        final Device device = createDevice(clientCredentials);
+        device.setSoftwareId(createSoftware().getId());
 
-            final Device savedDevice = doPost("/api/device", device, Device.class); //sync call
-            assertThat(savedDevice).as("saved device").isNotNull();
-            assertThat(getDeviceFromAPI(device.getId().getId())).as("fetched device").isEqualTo(savedDevice);
+        final Device savedDevice = doPost("/api/device", device, Device.class); //sync call
+        Thread.sleep(1000);
 
-            //when
-            log.warn("Init the client...");
-            client = new LwM2MTestClient(executor, endpoint);
-            int clientPort = SocketUtils.findAvailableTcpPort();
-            client.init(SECURITY, COAP_CONFIG, clientPort);
+        assertThat(savedDevice).as("saved device").isNotNull();
+        assertThat(getDeviceFromAPI(device.getId().getId())).as("fetched device").isEqualTo(savedDevice);
 
-            log.warn("AWAIT atMost {} SECONDS on timeseries List<TsKvEntry> by API with list size {}...", TIMEOUT, expectedStatuses.size());
-            List<TsKvEntry> ts = await("await on timeseries")
-                    .atMost(30, TimeUnit.SECONDS)
-                    .until(() -> getSwStateTelemetryFromAPI(device.getId().getId()), hasSize(expectedStatuses.size()));
-            log.warn("Got the ts: {}", ts);
+        //when
+        log.warn("Init the client...");
+        client = new LwM2MTestClient(executor, endpoint);
+        int clientPort = SocketUtils.findAvailableTcpPort();
+        client.init(SECURITY, COAP_CONFIG, clientPort);
 
-            ts.sort(Comparator.comparingLong(TsKvEntry::getTs));
-            log.warn("Ts ordered: {}", ts);
-            ts.forEach((x) -> log.warn("ts: {} ", x));
+        log.warn("AWAIT atMost {} SECONDS on timeseries List<TsKvEntry> by API with list size {}...", TIMEOUT, expectedStatuses.size());
+        List<TsKvEntry> ts = await("await on timeseries")
+                .atMost(30, TimeUnit.SECONDS)
+                .until(() -> getSwStateTelemetryFromAPI(device.getId().getId()), hasSize(expectedStatuses.size()));
+        log.warn("Got the ts: {}", ts);
 
-            List<OtaPackageUpdateStatus> statuses = ts.stream().map(KvEntry::getValueAsString).map(OtaPackageUpdateStatus::valueOf).collect(Collectors.toList());
-            log.warn("Converted ts to statuses: {}", statuses);
+        ts.sort(Comparator.comparingLong(TsKvEntry::getTs));
+        log.warn("Ts ordered: {}", ts);
+        ts.forEach((x) -> log.warn("ts: {} ", x));
 
-            assertThat(statuses).isEqualTo(expectedStatuses);
-        } finally {
-            if (client != null) {
-                client.destroy();
-            }
-        }
+        List<OtaPackageUpdateStatus> statuses = ts.stream().map(KvEntry::getValueAsString).map(OtaPackageUpdateStatus::valueOf).collect(Collectors.toList());
+        log.warn("Converted ts to statuses: {}", statuses);
+
+        assertThat(statuses).isEqualTo(expectedStatuses);
     }
 
     private Device getDeviceFromAPI(UUID deviceId) throws Exception {

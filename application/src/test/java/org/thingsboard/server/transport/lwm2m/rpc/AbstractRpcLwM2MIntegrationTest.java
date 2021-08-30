@@ -60,19 +60,19 @@ import static org.eclipse.leshan.core.LwM2mId.DEVICE;
 import static org.eclipse.leshan.core.LwM2mId.FIRMWARE;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.COAP_CONFIG;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.HOST;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.HOST_BS;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.PORT;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.PORT_BS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURE_PORT;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURE_PORT_BS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURITY;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SHORT_SERVER_ID;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.HOST;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.PORT;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SHORT_SERVER_ID_BS;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_0;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.TEMPERATURE_SENSOR;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceIdName_19_0_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceIdName_19_1_0;
@@ -84,7 +84,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceId_
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resources;
 
 @DaoSqlTest
-public class RpcAbstractLwM2MIntegrationTest  extends AbstractWebsocketTest {
+public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractWebsocketTest {
 
     protected final String RPC_TRANSPORT_CONFIGURATION = "{\n" +
             "  \"type\": \"LWM2M\",\n" +
@@ -165,7 +165,7 @@ public class RpcAbstractLwM2MIntegrationTest  extends AbstractWebsocketTest {
     protected String objectInstanceIdVer_5;
     protected String objectIdVer_19;
 
-    public RpcAbstractLwM2MIntegrationTest(){ }
+    public AbstractRpcLwM2MIntegrationTest(){ }
 
     @Before
     public void beforeTest() throws Exception {
