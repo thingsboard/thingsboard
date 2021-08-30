@@ -31,6 +31,7 @@ import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
+import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.Tenant;
@@ -102,6 +103,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         Assert.assertEquals(deviceProfile.getProfileData(), savedDeviceProfile.getProfileData());
         Assert.assertEquals(deviceProfile.isDefault(), savedDeviceProfile.isDefault());
         Assert.assertEquals(deviceProfile.getDefaultRuleChainId(), savedDeviceProfile.getDefaultRuleChainId());
+        Assert.assertEquals(DeviceProfileProvisionType.DISABLED, savedDeviceProfile.getProvisionType());
         savedDeviceProfile.setName("New device profile");
         doPost("/api/deviceProfile", savedDeviceProfile, DeviceProfile.class);
         DeviceProfile foundDeviceProfile = doGet("/api/deviceProfile/"+savedDeviceProfile.getId().getId().toString(), DeviceProfile.class);

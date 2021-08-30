@@ -72,7 +72,9 @@ public class RelationEdgeProcessor extends BaseEdgeProcessor {
             entityRelation.setTo(toId);
 
             entityRelation.setType(relationUpdateMsg.getType());
-            entityRelation.setTypeGroup(RelationTypeGroup.valueOf(relationUpdateMsg.getTypeGroup()));
+            if (relationUpdateMsg.hasTypeGroup()) {
+                entityRelation.setTypeGroup(RelationTypeGroup.valueOf(relationUpdateMsg.getTypeGroup()));
+            }
             entityRelation.setAdditionalInfo(mapper.readTree(relationUpdateMsg.getAdditionalInfo()));
             switch (relationUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:

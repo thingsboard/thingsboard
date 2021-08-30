@@ -71,7 +71,7 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
 
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"23\",\"value\": 1}}";
         String deviceId = savedDevice.getId().getId().toString();
-        String result = doPostAsync("/api/plugins/rpc/oneway/" + deviceId, setGpioRequest, String.class, status().isOk());
+        String result = doPostAsync("/api/rpc/oneway/" + deviceId, setGpioRequest, String.class, status().isOk());
 
         latch.await(3, TimeUnit.SECONDS);
 
@@ -99,14 +99,14 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"26\",\"value\": 1}}";
         String deviceId = savedDevice.getId().getId().toString();
 
-        String actualResult = doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().isOk());
+        String actualResult = doPostAsync("/api/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().isOk());
         latch.await(3, TimeUnit.SECONDS);
 
         validateTwoWayStateChangedNotification(callback, 1, expectedResponseResult, actualResult);
 
         latch = new CountDownLatch(1);
 
-        actualResult = doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().isOk());
+        actualResult = doPostAsync("/api/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().isOk());
         latch.await(3, TimeUnit.SECONDS);
 
         validateTwoWayStateChangedNotification(callback, 2, expectedResponseResult, actualResult);
@@ -196,7 +196,7 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
         assertTrue(StringUtils.isEmpty(result));
         assertNotNull(callback.getPayloadBytes());
         assertNotNull(callback.getObserve());
-        assertEquals(callback.getResponseCode(), CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
+        assertEquals(CoAP.ResponseCode.CONTENT, callback.getResponseCode());
         assertEquals(1, callback.getObserve().intValue());
     }
 
@@ -204,7 +204,7 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
         assertEquals(expectedResult, actualResult);
         assertNotNull(callback.getPayloadBytes());
         assertNotNull(callback.getObserve());
-        assertEquals(callback.getResponseCode(), CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
+        assertEquals(CoAP.ResponseCode.CONTENT, callback.getResponseCode());
         assertEquals(expectedObserveNumber, callback.getObserve().intValue());
     }
 

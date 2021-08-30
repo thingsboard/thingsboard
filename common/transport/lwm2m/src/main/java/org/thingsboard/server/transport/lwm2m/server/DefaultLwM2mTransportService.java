@@ -28,6 +28,7 @@ import org.eclipse.leshan.server.californium.registration.CaliforniumRegistratio
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MAuthorizer;
@@ -177,7 +178,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
 
     @Override
     public String getName() {
-        return "LWM2M";
+        return DataConstants.LWM2M_TRANSPORT_NAME;
     }
 
 }

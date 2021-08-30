@@ -35,6 +35,8 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
     private String image;
     @Valid
     private Set<ShortCustomerInfo> assignedCustomers;
+    private boolean mobileHide;
+    private Integer mobileOrder;
 
     public DashboardInfo() {
         super();
@@ -50,6 +52,8 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
         this.title = dashboardInfo.getTitle();
         this.image = dashboardInfo.getImage();
         this.assignedCustomers = dashboardInfo.getAssignedCustomers();
+        this.mobileHide = dashboardInfo.isMobileHide();
+        this.mobileOrder = dashboardInfo.getMobileOrder();
     }
 
     public TenantId getTenantId() {
@@ -84,9 +88,26 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
         this.assignedCustomers = assignedCustomers;
     }
 
+    public boolean isMobileHide() {
+        return mobileHide;
+    }
+
+    public void setMobileHide(boolean mobileHide) {
+        this.mobileHide = mobileHide;
+    }
+
+    public Integer getMobileOrder() {
+        return mobileOrder;
+    }
+
+    public void setMobileOrder(Integer mobileOrder) {
+        this.mobileOrder = mobileOrder;
+    }
+
     public boolean isAssignedToCustomer(CustomerId customerId) {
         return this.assignedCustomers != null && this.assignedCustomers.contains(new ShortCustomerInfo(customerId, null, false));
     }
+
 
     public ShortCustomerInfo getAssignedCustomerInfo(CustomerId customerId) {
         if (this.assignedCustomers != null) {

@@ -45,31 +45,31 @@
             [disabled]="(isLoading$ | async)"
             (click)="onEntityAction($event, 'openEdgeAssets')"
             [fxShow]="!isEdit && edgeScope !== 'customer'">
-      {{'edge.manage-edge-assets' | translate }}
+      {{'edge.edge-assets' | translate }}
     </button>
     <button mat-raised-button color="primary"
             [disabled]="(isLoading$ | async)"
             (click)="onEntityAction($event, 'openEdgeDevices')"
             [fxShow]="!isEdit && edgeScope !== 'customer'">
-      {{'edge.manage-edge-devices' | translate }}
+      {{'edge.edge-devices' | translate }}
     </button>
     <button mat-raised-button color="primary"
             [disabled]="(isLoading$ | async)"
             (click)="onEntityAction($event, 'openEdgeEntityViews')"
             [fxShow]="!isEdit && edgeScope !== 'customer'">
-      {{'edge.manage-edge-entity-views' | translate }}
+      {{'edge.edge-entity-views' | translate }}
     </button>
     <button mat-raised-button color="primary"
             [disabled]="(isLoading$ | async)"
             (click)="onEntityAction($event, 'openEdgeDashboards')"
             [fxShow]="!isEdit && edgeScope !== 'customer'">
-      {{'edge.manage-edge-dashboards' | translate }}
+      {{'edge.edge-dashboards' | translate }}
     </button>
     <button mat-raised-button color="primary"
             [disabled]="(isLoading$ | async)"
             (click)="onEntityAction($event, 'openEdgeRuleChains')"
             [fxShow]="!isEdit && edgeScope === 'tenant'">
-      {{'edge.manage-edge-rulechains' | translate }}
+      {{'edge.edge-rulechains' | translate }}
     </button>
   </div>
   <div fxLayout="row" fxLayout.xs="column">

@@ -16,11 +16,11 @@
 package org.thingsboard.server.service.edge.rpc.constructor;
 
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserCredentials;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
@@ -46,9 +46,6 @@ public class UserMsgConstructor {
         }
         if (user.getLastName() != null) {
             builder.setLastName(user.getLastName());
-        }
-        if (user.getAdditionalInfo() != null) {
-            builder.setAdditionalInfo(JacksonUtil.toString(user.getAdditionalInfo()));
         }
         if (user.getAdditionalInfo() != null) {
             builder.setAdditionalInfo(JacksonUtil.toString(user.getAdditionalInfo()));

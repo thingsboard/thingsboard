@@ -51,6 +51,7 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.thingsboard.server.common.data.CacheConstants.OTA_PACKAGE_CACHE;
@@ -316,6 +317,10 @@ public class BaseOtaPackageService implements OtaPackageService {
 
         if (!otaPackageOld.getVersion().equals(otaPackage.getVersion())) {
             throw new DataValidationException("Updating otaPackage version is prohibited!");
+        }
+
+        if (!Objects.equals(otaPackage.getTag(), otaPackageOld.getTag())) {
+            throw new DataValidationException("Updating otaPackage tag is prohibited!");
         }
 
         if (!otaPackageOld.getDeviceProfileId().equals(otaPackage.getDeviceProfileId())) {

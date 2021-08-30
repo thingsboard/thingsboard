@@ -42,6 +42,7 @@ public class OtaPackageInfo extends SearchTextBasedWithAdditionalInfo<OtaPackage
     private String version;
     @Length(fieldName = "url")
     private String url;
+    private String tag;
     private boolean hasData;
     @Length(fieldName = "file name")
     private String fileName;
@@ -66,6 +67,7 @@ public class OtaPackageInfo extends SearchTextBasedWithAdditionalInfo<OtaPackage
         this.type = otaPackageInfo.getType();
         this.title = otaPackageInfo.getTitle();
         this.version = otaPackageInfo.getVersion();
+        this.tag = otaPackageInfo.getTag();
         this.url = otaPackageInfo.getUrl();
         this.hasData = otaPackageInfo.isHasData();
         this.fileName = otaPackageInfo.getFileName();

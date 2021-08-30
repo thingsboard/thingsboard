@@ -117,7 +117,7 @@ public class WidgetsBundle extends SearchTextBased<WidgetsBundleId> implements H
         if (alias != null ? !alias.equals(that.alias) : that.alias != null) return false;
         if (title != null ? !title.equals(that.title) : that.title != null) return false;
         if (image != null ? !image.equals(that.image) : that.image != null) return false;
-        if (description != null ? !description.equals(that.image) : that.description != null) return false;
+        if (description != null ? !description.equals(that.description) : that.description != null) return false;
         return true;
     }
 

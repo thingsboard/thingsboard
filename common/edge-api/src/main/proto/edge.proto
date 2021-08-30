@@ -129,8 +129,8 @@ message RuleChainUpdateMsg {
   int64 idMSB = 2;
   int64 idLSB = 3;
   string name = 4;
-  int64 firstRuleNodeIdMSB = 5;
-  int64 firstRuleNodeIdLSB = 6;
+  optional int64 firstRuleNodeIdMSB = 5;
+  optional int64 firstRuleNodeIdLSB = 6;
   bool root = 7;
   bool debugMode = 8;
   string configuration = 9;
@@ -174,8 +174,8 @@ message DashboardUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  int64 customerIdMSB = 4;
-  int64 customerIdLSB = 5;
+  optional int64 customerIdMSB = 4;
+  optional int64 customerIdLSB = 5;
   string title = 6;
   string configuration = 7;
 }
@@ -184,15 +184,15 @@ message DeviceUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  int64 customerIdMSB = 4;
-  int64 customerIdLSB = 5;
-  int64 deviceProfileIdMSB = 6;
-  int64 deviceProfileIdLSB = 7;
+  optional int64 customerIdMSB = 4;
+  optional int64 customerIdLSB = 5;
+  optional int64 deviceProfileIdMSB = 6;
+  optional int64 deviceProfileIdLSB = 7;
   string name = 8;
   string type = 9;
-  string label = 10;
-  string additionalInfo = 11;
-  string conflictName = 12;
+  optional string label = 10;
+  optional string additionalInfo = 11;
+  optional string conflictName = 12;
 }
 
 message DeviceProfileUpdateMsg {
@@ -200,16 +200,17 @@ message DeviceProfileUpdateMsg {
   int64 idMSB = 2;
   int64 idLSB = 3;
   string name = 4;
-  string description = 5;
+  optional string description = 5;
   bool default = 6;
   string type = 7;
-  string transportType = 8;
-  string provisionType = 9;
+  optional string transportType = 8;
+  optional string provisionType = 9;
   int64 defaultRuleChainIdMSB = 10;
   int64 defaultRuleChainIdLSB = 11;
   string defaultQueueName = 12;
   bytes profileDataBytes = 13;
-  string provisionDeviceKey = 14;
+  optional string provisionDeviceKey = 14;
+  optional bytes image = 15;
 }
 
 message DeviceCredentialsUpdateMsg {
@@ -217,49 +218,51 @@ message DeviceCredentialsUpdateMsg {
   int64 deviceIdLSB = 2;
   string credentialsType = 3;
   string credentialsId = 4;
-  string credentialsValue = 5;
+  optional string credentialsValue = 5;
 }
 
 message AssetUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  int64 customerIdMSB = 4;
-  int64 customerIdLSB = 5;
+  optional int64 customerIdMSB = 4;
+  optional int64 customerIdLSB = 5;
   string name = 6;
   string type = 7;
-  string label = 8;
-  string additionalInfo = 9;
+  optional string label = 8;
+  optional string additionalInfo = 9;
 }
 
 message EntityViewUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  int64 customerIdMSB = 4;
-  int64 customerIdLSB = 5;
+  optional int64 customerIdMSB = 4;
+  optional int64 customerIdLSB = 5;
   string name = 6;
   string type = 7;
   int64 entityIdMSB = 8;
   int64 entityIdLSB = 9;
   EdgeEntityType entityType = 10;
-  string additionalInfo = 11;
+  optional string additionalInfo = 11;
 }
 
 message AlarmUpdateMsg {
   UpdateMsgType msgType = 1;
-  string name = 2;
-  string type = 3;
-  string originatorType = 4;
-  string originatorName = 5;
-  string severity = 6;
-  string status = 7;
-  int64 startTs = 8;
-  int64 endTs = 9;
-  int64 ackTs = 10;
-  int64 clearTs = 11;
-  string details = 12;
-  bool propagate = 13;
+  int64 idMSB = 2;
+  int64 idLSB = 3;
+  string name = 4;
+  string type = 5;
+  string originatorType = 6;
+  string originatorName = 7;
+  string severity = 8;
+  string status = 9;
+  int64 startTs = 10;
+  int64 endTs = 11;
+  int64 ackTs = 12;
+  int64 clearTs = 13;
+  string details = 14;
+  bool propagate = 15;
 }
 
 message CustomerUpdateMsg {
@@ -267,15 +270,15 @@ message CustomerUpdateMsg {
   int64 idMSB = 2;
   int64 idLSB = 3;
   string title = 4;
-  string country = 5;
-  string state = 6;
-  string city = 7;
-  string address = 8;
-  string address2 = 9;
-  string zip = 10;
-  string phone = 11;
-  string email = 12;
-  string additionalInfo = 13;
+  optional string country = 5;
+  optional string state = 6;
+  optional string city = 7;
+  optional string address = 8;
+  optional string address2 = 9;
+  optional string zip = 10;
+  optional string phone = 11;
+  optional string email = 12;
+  optional string additionalInfo = 13;
 }
 
 message RelationUpdateMsg {
@@ -287,7 +290,7 @@ message RelationUpdateMsg {
   int64 toIdLSB = 6;
   string toEntityType = 7;
   string type = 8;
-  string typeGroup = 9;
+  optional string typeGroup = 9;
   string additionalInfo = 10;
 }
 
@@ -295,13 +298,13 @@ message UserUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  int64 customerIdMSB = 4;
-  int64 customerIdLSB = 5;
+  optional int64 customerIdMSB = 4;
+  optional int64 customerIdLSB = 5;
   string email = 6;
   string authority = 7;
-  string firstName = 8;
-  string lastName = 9;
-  string additionalInfo = 10;
+  optional string firstName = 8;
+  optional string lastName = 9;
+  optional string additionalInfo = 10;
 }
 
 message WidgetsBundleUpdateMsg {
@@ -310,18 +313,19 @@ message WidgetsBundleUpdateMsg {
   int64 idLSB = 3;
   string title = 4;
   string alias = 5;
-  bytes image = 6;
+  optional bytes image = 6;
   bool isSystem = 7;
+  optional string description = 8;
 }
 
 message WidgetTypeUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
   int64 idLSB = 3;
-  string bundleAlias = 4;
-  string alias = 5;
-  string name = 6;
-  string descriptorJson = 7;
+  optional string bundleAlias = 4;
+  optional string alias = 5;
+  optional string name = 6;
+  optional string descriptorJson = 7;
   bool isSystem = 8;
 }
 

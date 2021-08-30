@@ -16,11 +16,17 @@
 package org.thingsboard.server.transport.lwm2m.server.rpc;
 
 import org.eclipse.leshan.core.ResponseCode;
+import org.eclipse.leshan.core.request.exception.ClientSleepingException;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.downlink.DownlinkRequestCallback;
+
+import java.util.concurrent.TimeoutException;
 
 public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkRequestCallback<R, T> {
 
@@ -38,7 +44,13 @@ public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkR
     }
 
     @Override
+    public void onSent(R request) {
+        transportService.process(client.getSession(), this.request, RpcStatus.SENT, TransportServiceCallback.EMPTY);
+    }
+
+    @Override
     public void onSuccess(R request, T response) {
+        transportService.process(client.getSession(), this.request, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
         sendRpcReplyOnSuccess(response);
         if (callback != null) {
             callback.onSuccess(request, response);
@@ -55,18 +67,25 @@ public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkR
 
     @Override
     public void onError(String params, Exception e) {
-        sendRpcReplyOnError(e);
+        if (e instanceof TimeoutException) {
+            transportService.process(client.getSession(), this.request, RpcStatus.TIMEOUT, TransportServiceCallback.EMPTY);
+        } else if (!(e instanceof ClientSleepingException)) {
+            sendRpcReplyOnError(e);
+        }
         if (callback != null) {
             callback.onError(params, e);
         }
     }
 
     protected void reply(LwM2MRpcResponseBody response) {
-        TransportProtos.ToDeviceRpcResponseMsg msg = TransportProtos.ToDeviceRpcResponseMsg.newBuilder()
-                .setPayload(JacksonUtil.toString(response))
-                .setRequestId(request.getRequestId())
-                .build();
-        transportService.process(client.getSession(), msg, null);
+        TransportProtos.ToDeviceRpcResponseMsg.Builder msg = TransportProtos.ToDeviceRpcResponseMsg.newBuilder().setRequestId(request.getRequestId());
+        String responseAsString = JacksonUtil.toString(response);
+        if (StringUtils.isEmpty(response.getError())) {
+            msg.setPayload(responseAsString);
+        } else {
+            msg.setError(responseAsString);
+        }
+        transportService.process(client.getSession(), msg.build(), null);
     }
 
     abstract protected void sendRpcReplyOnSuccess(T response);

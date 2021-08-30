@@ -37,6 +37,15 @@ public interface DashboardInfoDao extends Dao<DashboardInfo> {
     PageData<DashboardInfo> findDashboardsByTenantId(UUID tenantId, PageLink pageLink);
 
     /**
+     * Find dashboards not hidden for mobile by tenantId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param pageLink the page link
+     * @return the list of dashboard objects
+     */
+    PageData<DashboardInfo> findMobileDashboardsByTenantId(UUID tenantId, PageLink pageLink);
+
+    /**
      * Find dashboards by tenantId, customerId and page link.
      *
      * @param tenantId the tenantId
@@ -45,6 +54,16 @@ public interface DashboardInfoDao extends Dao<DashboardInfo> {
      * @return the list of dashboard objects
      */
     PageData<DashboardInfo> findDashboardsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, PageLink pageLink);
+
+    /**
+     * Find dashboards not hidden for mobile by tenantId, customerId and page link.
+     *
+     * @param tenantId the tenantId
+     * @param customerId the customerId
+     * @param pageLink the page link
+     * @return the list of dashboard objects
+     */
+    PageData<DashboardInfo> findMobileDashboardsByTenantIdAndCustomerId(UUID tenantId, UUID customerId, PageLink pageLink);
 
     /**
      * Find dashboards by tenantId, edgeId and page link.

@@ -123,6 +123,8 @@ CREATE TABLE IF NOT EXISTS dashboard (
     search_text varchar(255),
     tenant_id uuid,
     title varchar(255),
+    mobile_hide boolean DEFAULT false,
+    mobile_order int,
     image varchar(1000000)
 );
 
@@ -171,6 +173,7 @@ CREATE TABLE IF NOT EXISTS ota_package (
     type varchar(32) NOT NULL,
     title varchar(255) NOT NULL,
     version varchar(255) NOT NULL,
+    tag varchar(255),
     url varchar(255),
     file_name varchar(255),
     content_type varchar(255),
@@ -579,5 +582,6 @@ CREATE TABLE IF NOT EXISTS rpc (
     expiration_time bigint NOT NULL,
     request varchar(10000000) NOT NULL,
     response varchar(10000000),
+    additional_info varchar(10000000),
     status varchar(255) NOT NULL
 );

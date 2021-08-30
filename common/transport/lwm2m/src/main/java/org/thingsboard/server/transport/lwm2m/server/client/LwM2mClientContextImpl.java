@@ -53,6 +53,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import static org.eclipse.leshan.core.SecurityMode.NO_SEC;
@@ -91,7 +93,12 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         log.debug("Fetched clients from store: {}", fetchedClients);
         fetchedClients.forEach(client -> {
             lwM2mClientsByEndpoint.put(client.getEndpoint(), client);
-            updateFetchedClient(nodeId, client);
+            try {
+                client.lock();
+                updateFetchedClient(nodeId, client);
+            } finally {
+                client.unlock();
+            }
         });
     }
 
@@ -128,7 +135,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     @Override
     public Optional<TransportProtos.SessionInfoProto> register(LwM2mClient client, Registration registration) throws LwM2MClientStateException {
-        TransportProtos.SessionInfoProto oldSession = null;
+        TransportProtos.SessionInfoProto oldSession;
         client.lock();
         try {
             if (LwM2MClientState.UNREGISTERED.equals(client.getState())) {
@@ -158,11 +165,62 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
             client.setRegistration(registration);
             this.lwM2mClientsByRegistrationId.put(registration.getId(), client);
             client.setState(LwM2MClientState.REGISTERED);
-            clientStore.put(client);
+            onUplink(client);
+            if (!compareAndSetSleepFlag(client, false)) {
+                clientStore.put(client);
+            }
         } finally {
             client.unlock();
         }
         return Optional.ofNullable(oldSession);
+    }
+
+    @Override
+    public boolean asleep(LwM2mClient client) {
+        boolean changed = compareAndSetSleepFlag(client, true);
+        if (changed) {
+            log.debug("[{}] client is sleeping", client.getEndpoint());
+            context.getTransportService().log(client.getSession(), "Info : Client is sleeping!");
+        }
+        return changed;
+    }
+
+    @Override
+    public boolean awake(LwM2mClient client) {
+        onUplink(client);
+        boolean changed = compareAndSetSleepFlag(client, false);
+        if (changed) {
+            log.debug("[{}] client is awake", client.getEndpoint());
+            context.getTransportService().log(client.getSession(), "Info : Client is awake!");
+            sendMsgsAfterSleeping(client);
+        }
+        return changed;
+    }
+
+    private boolean compareAndSetSleepFlag(LwM2mClient client, boolean sleeping) {
+        if (sleeping == client.isAsleep()) {
+            log.trace("[{}] Client is already at sleeping: {}, ignoring event: {}", client.getEndpoint(), client.isAsleep(), sleeping);
+            return false;
+        }
+        client.lock();
+        try {
+            if (sleeping == client.isAsleep()) {
+                log.trace("[{}] Client is already at sleeping: {}, ignoring event: {}", client.getEndpoint(), client.isAsleep(), sleeping);
+                return false;
+            } else {
+                PowerMode powerMode = getPowerMode(client);
+                if (PowerMode.PSM.equals(powerMode) || PowerMode.E_DRX.equals(powerMode)) {
+                    log.trace("[{}] Switch sleeping from: {} to: {}", client.getEndpoint(), client.isAsleep(), sleeping);
+                    client.setAsleep(sleeping);
+                    update(client);
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        } finally {
+            client.unlock();
+        }
     }
 
     @Override
@@ -173,8 +231,12 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
                 throw new LwM2MClientStateException(client.getState(), "Client is in invalid state.");
             }
             client.setRegistration(registration);
-            clientStore.put(client);
-            sendMsgsAfterSleeping(client);
+            onUplink(client);
+            if (compareAndSetSleepFlag(client, false)) {
+                sendMsgsAfterSleeping(client);
+            } else {
+                clientStore.put(client);
+            }
         } finally {
             client.unlock();
         }
@@ -254,7 +316,11 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     public void update(LwM2mClient client) {
         client.lock();
         try {
-            clientStore.put(client);
+            if (client.getState().equals(LwM2MClientState.REGISTERED)) {
+                clientStore.put(client);
+            } else {
+                log.error("[{}] Client is in invalid state: {}!", client.getEndpoint(), client.getState());
+            }
         } finally {
             client.unlock();
         }
@@ -268,12 +334,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     @Override
     public void sendMsgsAfterSleeping(LwM2mClient lwM2MClient) {
         if (LwM2MClientState.REGISTERED.equals(lwM2MClient.getState())) {
-            PowerMode powerMode = lwM2MClient.getPowerMode();
-            if (powerMode == null) {
-                Lwm2mDeviceProfileTransportConfiguration deviceProfile = getProfile(lwM2MClient.getProfileId());
-                powerMode = deviceProfile.getClientLwM2mSettings().getPowerMode();
-            }
-
+            PowerMode powerMode = getPowerMode(lwM2MClient);
             if (PowerMode.PSM.equals(powerMode) || PowerMode.E_DRX.equals(powerMode)) {
                 defaultLwM2MUplinkMsgHandler.initAttributes(lwM2MClient);
                 TransportProtos.TransportToDeviceActorMsg persistentRpcRequestMsg = TransportProtos.TransportToDeviceActorMsg
@@ -285,6 +346,15 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
                 otaUpdateService.init(lwM2MClient);
             }
         }
+    }
+
+    private PowerMode getPowerMode(LwM2mClient lwM2MClient) {
+        PowerMode powerMode = lwM2MClient.getPowerMode();
+        if (powerMode == null) {
+            Lwm2mDeviceProfileTransportConfiguration deviceProfile = getProfile(lwM2MClient.getProfileId());
+            powerMode = deviceProfile.getClientLwM2mSettings().getPowerMode();
+        }
+        return powerMode;
     }
 
     @Override
@@ -345,6 +415,113 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     public boolean isComposite(LwM2mClient client) {
         return LwM2mVersion.fromVersionStr(client.getRegistration().getLwM2mVersion()).isComposite() &
                 getProfile(client.getProfileId()).getClientLwM2mSettings().isCompositeOperationsSupport();
+    }
+
+    @Override
+    public boolean isDownlinkAllowed(LwM2mClient client) {
+        PowerMode powerMode = client.getPowerMode();
+        OtherConfiguration profileSettings = null;
+        if (powerMode == null) {
+            var clientProfile = getProfile(client.getProfileId());
+            profileSettings = clientProfile.getClientLwM2mSettings();
+            powerMode = profileSettings.getPowerMode();
+            if (powerMode == null) {
+                powerMode = PowerMode.DRX;
+            }
+        }
+        if (PowerMode.DRX.equals(powerMode)) {
+            return true;
+        }
+        client.lock();
+        long timeSinceLastUplink = System.currentTimeMillis() - client.getLastUplinkTime();
+        try {
+            if (PowerMode.PSM.equals(powerMode)) {
+                Long psmActivityTimer = client.getPsmActivityTimer();
+                if (psmActivityTimer == null && profileSettings != null) {
+                    psmActivityTimer = profileSettings.getPsmActivityTimer();
+
+                }
+                if (psmActivityTimer == null || psmActivityTimer == 0L) {
+                    psmActivityTimer = config.getPsmActivityTimer();
+                }
+                return timeSinceLastUplink <= psmActivityTimer;
+            } else {
+                Long pagingTransmissionWindow = client.getPagingTransmissionWindow();
+                if (pagingTransmissionWindow == null && profileSettings != null) {
+                    pagingTransmissionWindow = profileSettings.getPagingTransmissionWindow();
+
+                }
+                if (pagingTransmissionWindow == null || pagingTransmissionWindow == 0L) {
+                    pagingTransmissionWindow = config.getPagingTransmissionWindow();
+                }
+                boolean allowed = timeSinceLastUplink <= pagingTransmissionWindow;
+                if (!allowed) {
+                    return client.checkFirstDownlink();
+                } else {
+                    return true;
+                }
+            }
+        } finally {
+            client.unlock();
+        }
+    }
+
+    @Override
+    public void onUplink(LwM2mClient client) {
+        PowerMode powerMode = client.getPowerMode();
+        OtherConfiguration profileSettings = null;
+        if (powerMode == null) {
+            var clientProfile = getProfile(client.getProfileId());
+            profileSettings = clientProfile.getClientLwM2mSettings();
+            powerMode = profileSettings.getPowerMode();
+            if (powerMode == null) {
+                powerMode = PowerMode.DRX;
+            }
+        }
+        if (PowerMode.DRX.equals(powerMode)) {
+            client.updateLastUplinkTime();
+            return;
+        }
+        client.lock();
+        try {
+            long uplinkTime = client.updateLastUplinkTime();
+            long timeout;
+            if (PowerMode.PSM.equals(powerMode)) {
+                Long psmActivityTimer = client.getPsmActivityTimer();
+                if (psmActivityTimer == null && profileSettings != null) {
+                    psmActivityTimer = profileSettings.getPsmActivityTimer();
+
+                }
+                if (psmActivityTimer == null || psmActivityTimer == 0L) {
+                    psmActivityTimer = config.getPsmActivityTimer();
+                }
+
+                timeout = psmActivityTimer;
+            } else {
+                Long pagingTransmissionWindow = client.getPagingTransmissionWindow();
+                if (pagingTransmissionWindow == null && profileSettings != null) {
+                    pagingTransmissionWindow = profileSettings.getPagingTransmissionWindow();
+
+                }
+                if (pagingTransmissionWindow == null || pagingTransmissionWindow == 0L) {
+                    pagingTransmissionWindow = config.getPagingTransmissionWindow();
+                }
+                timeout = pagingTransmissionWindow;
+            }
+            Future<Void> sleepTask = client.getSleepTask();
+            if (sleepTask != null) {
+                sleepTask.cancel(false);
+            }
+            Future<Void> task = context.getScheduler().schedule(() -> {
+                if (uplinkTime == client.getLastUplinkTime()) {
+                    asleep(client);
+                }
+                return null;
+            }, timeout, TimeUnit.MILLISECONDS);
+            client.setSleepTask(task);
+        } finally {
+            client.unlock();
+        }
     }
 
     @Override

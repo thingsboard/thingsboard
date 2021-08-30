@@ -18,16 +18,19 @@ package org.thingsboard.server.common.data.device.data.lwm2m;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import org.thingsboard.server.common.data.device.data.PowerMode;
+import org.thingsboard.server.common.data.device.data.PowerSavingConfiguration;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class OtherConfiguration {
+public class OtherConfiguration extends PowerSavingConfiguration {
 
     private Integer fwUpdateStrategy;
     private Integer swUpdateStrategy;
     private Integer clientOnlyObserveAfterConnect;
     private PowerMode powerMode;
+    private Long psmActivityTimer;
     private Long edrxCycle;
+    private Long pagingTransmissionWindow;
     private String fwUpdateResource;
     private String swUpdateResource;
     private boolean compositeOperationsSupport;

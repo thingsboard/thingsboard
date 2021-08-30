@@ -146,6 +146,7 @@ public class OtaPackageController extends BaseController {
             otaPackage.setType(info.getType());
             otaPackage.setTitle(info.getTitle());
             otaPackage.setVersion(info.getVersion());
+            otaPackage.setTag(info.getTag());
             otaPackage.setAdditionalInfo(info.getAdditionalInfo());
 
             ChecksumAlgorithm checksumAlgorithm = ChecksumAlgorithm.valueOf(checksumAlgorithmStr.toUpperCase());

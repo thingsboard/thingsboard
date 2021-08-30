@@ -67,7 +67,7 @@ public class AdminController extends BaseController {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
             AdminSettings adminSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, key));
             if (adminSettings.getKey().equals("mail")) {
-                ((ObjectNode) adminSettings.getJsonValue()).put("password", "");
+                ((ObjectNode) adminSettings.getJsonValue()).remove("password");
             }
             return adminSettings;
         } catch (Exception e) {
@@ -84,7 +84,7 @@ public class AdminController extends BaseController {
             adminSettings = checkNotNull(adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings));
             if (adminSettings.getKey().equals("mail")) {
                 mailService.updateMailConfiguration();
-                ((ObjectNode) adminSettings.getJsonValue()).put("password", "");
+                ((ObjectNode) adminSettings.getJsonValue()).remove("password");
             } else if (adminSettings.getKey().equals("sms")) {
                 smsService.updateSmsConfiguration();
             }
@@ -127,6 +127,10 @@ public class AdminController extends BaseController {
             accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
             adminSettings = checkNotNull(adminSettings);
             if (adminSettings.getKey().equals("mail")) {
+                if(!adminSettings.getJsonValue().has("password")) {
+                    AdminSettings mailSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail"));
+                    ((ObjectNode) adminSettings.getJsonValue()).put("password", mailSettings.getJsonValue().get("password").asText());
+                }
                 String email = getCurrentUser().getEmail();
                 mailService.sendTestMail(adminSettings.getJsonValue(), email);
             }

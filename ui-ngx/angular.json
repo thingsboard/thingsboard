@@ -78,7 +78,8 @@
               "node_modules/leaflet/dist/leaflet.css",
               "src/app/modules/home/components/widget/lib/maps/markers.scss",
               "node_modules/leaflet.markercluster/dist/MarkerCluster.css",
-              "node_modules/leaflet.markercluster/dist/MarkerCluster.Default.css"
+              "node_modules/leaflet.markercluster/dist/MarkerCluster.Default.css",
+              "node_modules/prismjs/themes/prism.css"
             ],
             "stylePreprocessorOptions": {
               "includePaths": [
@@ -88,7 +89,11 @@
             "scripts": [
               "node_modules/tinycolor2/dist/tinycolor-min.js",
               "node_modules/split.js/dist/split.min.js",
-              "node_modules/systemjs/dist/system.js"
+              "node_modules/systemjs/dist/system.js",
+              "node_modules/marked/lib/marked.js",
+              "node_modules/prismjs/prism.js",
+              "node_modules/prismjs/components/prism-bash.min.js",
+              "node_modules/prismjs/components/prism-json.min.js"
             ],
             "customWebpackConfig": {
               "path": "./extra-webpack.config.js"
@@ -118,7 +123,8 @@
               "jquery",
               "jquery.terminal",
               "tooltipster",
-              "jstree"
+              "jstree",
+              "qrcode"
             ]
           },
           "configurations": {

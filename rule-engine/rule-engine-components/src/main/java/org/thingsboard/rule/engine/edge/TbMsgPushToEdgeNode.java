@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -32,6 +31,7 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
@@ -80,7 +80,7 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
                 "Message will be routed via <b>Failure</b> route if node was not able to save edge event to database or unsupported originator type/message type arrived. " +
                 "In case successful storage edge event to database message will be routed via <b>Success</b> route.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbNodeEmptyConfig",
+        configDirective = "tbActionNodePushToEdgeConfig",
         icon = "cloud_download",
         ruleChainTypes = RuleChainType.CORE
 )
@@ -149,20 +149,9 @@ public class TbMsgPushToEdgeNode implements TbNode {
 
     private void notifyEdge(TbContext ctx, TbMsg msg, EdgeEvent edgeEvent, EdgeId edgeId) {
         edgeEvent.setEdgeId(edgeId);
-        ListenableFuture<EdgeEvent> saveFuture = ctx.getEdgeEventService().saveAsync(edgeEvent);
-        Futures.addCallback(saveFuture, new FutureCallback<EdgeEvent>() {
-            @Override
-            public void onSuccess(@Nullable EdgeEvent event) {
-                ctx.tellNext(msg, SUCCESS);
-                ctx.onEdgeEventUpdate(ctx.getTenantId(), edgeId);
-            }
-
-            @Override
-            public void onFailure(Throwable th) {
-                log.warn("[{}] Can't save edge event [{}] for edge [{}]", ctx.getTenantId().getId(), edgeEvent, edgeId.getId(), th);
-                ctx.tellFailure(msg, th);
-            }
-        }, ctx.getDbCallbackExecutor());
+        ctx.getEdgeEventService().save(edgeEvent);
+        ctx.tellNext(msg, SUCCESS);
+        ctx.onEdgeEventUpdate(ctx.getTenantId(), edgeId);
     }
 
     private EdgeEvent buildEdgeEvent(TbMsg msg, TbContext ctx) {

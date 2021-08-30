@@ -23,6 +23,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
+import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.core.coap.Request;
 import org.eclipse.californium.core.coap.Response;
 import org.springframework.stereotype.Component;
@@ -130,8 +131,8 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
     public Response convertToPublish(boolean isConfirmable, TransportProtos.GetAttributeResponseMsg msg) throws AdaptorException {
         if (msg.getSharedStateMsg()) {
             if (StringUtils.isEmpty(msg.getError())) {
-                Response response = new Response(CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
-                response.setAcknowledged(isConfirmable);
+                Response response = new Response(CoAP.ResponseCode.CONTENT);
+                response.setConfirmable(isConfirmable);
                 TransportProtos.AttributeUpdateNotificationMsg notificationMsg = TransportProtos.AttributeUpdateNotificationMsg.newBuilder().addAllSharedUpdated(msg.getSharedAttributeListList()).build();
                 response.setPayload(notificationMsg.toByteArray());
                 return response;
@@ -143,7 +144,7 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
                 return new Response(CoAP.ResponseCode.NOT_FOUND);
             } else {
                 Response response = new Response(CoAP.ResponseCode.CONTENT);
-                response.setAcknowledged(isConfirmable);
+                response.setConfirmable(isConfirmable);
                 response.setPayload(msg.toByteArray());
                 return response;
             }
@@ -151,9 +152,9 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
     }
 
     private Response getObserveNotification(boolean confirmable, byte[] notification) {
-        Response response = new Response(CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
+        Response response = new Response(CoAP.ResponseCode.CONTENT);
         response.setPayload(notification);
-        response.setAcknowledged(confirmable);
+        response.setConfirmable(confirmable);
         return response;
     }
 
@@ -162,4 +163,8 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
         return JsonFormat.printer().includingDefaultValueFields().print(dynamicMessage);
     }
 
+    @Override
+    public int getContentFormat() {
+        return MediaTypeRegistry.APPLICATION_OCTET_STREAM;
+    }
 }

@@ -50,6 +50,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -78,6 +82,8 @@ public class LwM2mClient implements Serializable {
     private final Map<String, ResourceValue> resources;
     @Getter
     private final Map<String, TsKvProto> sharedAttributes;
+    @Getter
+    private final ConcurrentMap<String, AtomicLong> keyTsLatestMap;
 
     @Getter
     private TenantId tenantId;
@@ -93,10 +99,27 @@ public class LwM2mClient implements Serializable {
     @Getter
     private PowerMode powerMode;
     @Getter
+    private Long psmActivityTimer;
+    @Getter
     private Long edrxCycle;
+    @Getter
+    private Long pagingTransmissionWindow;
     @Getter
     @Setter
     private Registration registration;
+    @Getter
+    @Setter
+    private boolean asleep;
+    @Getter
+    private long lastUplinkTime;
+    @Getter
+    @Setter
+    private transient Future<Void> sleepTask;
+
+    private boolean firstEdrxDownlink = true;
+
+    @Getter
+    private final AtomicInteger retryAttempts;
 
     public Object clone() throws CloneNotSupportedException {
         return super.clone();
@@ -107,8 +130,10 @@ public class LwM2mClient implements Serializable {
         this.endpoint = endpoint;
         this.sharedAttributes = new ConcurrentHashMap<>();
         this.resources = new ConcurrentHashMap<>();
+        this.keyTsLatestMap = new ConcurrentHashMap<>();
         this.state = LwM2MClientState.CREATED;
         this.lock = new ReentrantLock();
+        this.retryAttempts = new AtomicInteger(0);
     }
 
     public void init(ValidateDeviceCredentialsResponse credentials, UUID sessionId) {
@@ -118,6 +143,8 @@ public class LwM2mClient implements Serializable {
         this.profileId = new UUID(session.getDeviceProfileIdMSB(), session.getDeviceProfileIdLSB());
         this.powerMode = credentials.getDeviceInfo().getPowerMode();
         this.edrxCycle = credentials.getDeviceInfo().getEdrxCycle();
+        this.psmActivityTimer = credentials.getDeviceInfo().getPsmActivityTimer();
+        this.pagingTransmissionWindow = credentials.getDeviceInfo().getPagingTransmissionWindow();
     }
 
     public void lock() {
@@ -139,6 +166,8 @@ public class LwM2mClient implements Serializable {
         Lwm2mDeviceTransportConfiguration transportConfiguration = (Lwm2mDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
         this.powerMode = transportConfiguration.getPowerMode();
         this.edrxCycle = transportConfiguration.getEdrxCycle();
+        this.psmActivityTimer = transportConfiguration.getPsmActivityTimer();
+        this.pagingTransmissionWindow = transportConfiguration.getPagingTransmissionWindow();
     }
 
     public void onDeviceProfileUpdate(DeviceProfile deviceProfile) {
@@ -236,7 +265,12 @@ public class LwM2mClient implements Serializable {
     }
 
     public boolean isResourceMultiInstances(String pathIdVer, LwM2mModelProvider modelProvider) {
-        return getResourceModel(pathIdVer, modelProvider).multiple;
+        var resourceModel = getResourceModel(pathIdVer, modelProvider);
+        if (resourceModel != null && resourceModel.multiple != null) {
+            return resourceModel.multiple;
+        } else {
+            return false;
+        }
     }
 
     public ObjectModel getObjectModel(String pathIdVer, LwM2mModelProvider modelProvider) {
@@ -342,6 +376,18 @@ public class LwM2mClient implements Serializable {
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         this.lock = new ReentrantLock();
+    }
+
+    public long updateLastUplinkTime(){
+        this.lastUplinkTime = System.currentTimeMillis();
+        this.firstEdrxDownlink = true;
+        return lastUplinkTime;
+    }
+
+    public boolean checkFirstDownlink() {
+        boolean result = firstEdrxDownlink;
+        firstEdrxDownlink = false;
+        return result;
     }
 
 }

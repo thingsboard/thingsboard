@@ -48,6 +48,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_DATA_S
 import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_DEVICE_PROFILE_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_FILE_NAME_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_TABLE_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_TAG_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_TENANT_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_TILE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.OTA_PACKAGE_TYPE_COLUMN;
@@ -77,6 +78,9 @@ public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> implemen
 
     @Column(name = OTA_PACKAGE_VERSION_COLUMN)
     private String version;
+
+    @Column(name = OTA_PACKAGE_TAG_COLUMN)
+    private String tag;
 
     @Column(name = OTA_PACKAGE_URL_COLUMN)
     private String url;
@@ -111,26 +115,27 @@ public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> implemen
         super();
     }
 
-    public OtaPackageInfoEntity(OtaPackageInfo firmware) {
-        this.createdTime = firmware.getCreatedTime();
-        this.setUuid(firmware.getUuidId());
-        this.tenantId = firmware.getTenantId().getId();
-        this.type = firmware.getType();
-        if (firmware.getDeviceProfileId() != null) {
-            this.deviceProfileId = firmware.getDeviceProfileId().getId();
+    public OtaPackageInfoEntity(OtaPackageInfo otaPackageInfo) {
+        this.createdTime = otaPackageInfo.getCreatedTime();
+        this.setUuid(otaPackageInfo.getUuidId());
+        this.tenantId = otaPackageInfo.getTenantId().getId();
+        this.type = otaPackageInfo.getType();
+        if (otaPackageInfo.getDeviceProfileId() != null) {
+            this.deviceProfileId = otaPackageInfo.getDeviceProfileId().getId();
         }
-        this.title = firmware.getTitle();
-        this.version = firmware.getVersion();
-        this.url = firmware.getUrl();
-        this.fileName = firmware.getFileName();
-        this.contentType = firmware.getContentType();
-        this.checksumAlgorithm = firmware.getChecksumAlgorithm();
-        this.checksum = firmware.getChecksum();
-        this.dataSize = firmware.getDataSize();
-        this.additionalInfo = firmware.getAdditionalInfo();
+        this.title = otaPackageInfo.getTitle();
+        this.version = otaPackageInfo.getVersion();
+        this.tag = otaPackageInfo.getTag();
+        this.url = otaPackageInfo.getUrl();
+        this.fileName = otaPackageInfo.getFileName();
+        this.contentType = otaPackageInfo.getContentType();
+        this.checksumAlgorithm = otaPackageInfo.getChecksumAlgorithm();
+        this.checksum = otaPackageInfo.getChecksum();
+        this.dataSize = otaPackageInfo.getDataSize();
+        this.additionalInfo = otaPackageInfo.getAdditionalInfo();
     }
 
-    public OtaPackageInfoEntity(UUID id, long createdTime, UUID tenantId, UUID deviceProfileId, OtaPackageType type, String title, String version,
+    public OtaPackageInfoEntity(UUID id, long createdTime, UUID tenantId, UUID deviceProfileId, OtaPackageType type, String title, String version, String tag,
                                 String url, String fileName, String contentType, ChecksumAlgorithm checksumAlgorithm, String checksum, Long dataSize,
                                 Object additionalInfo, boolean hasData) {
         this.id = id;
@@ -140,6 +145,7 @@ public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> implemen
         this.type = type;
         this.title = title;
         this.version = version;
+        this.tag = tag;
         this.url = url;
         this.fileName = fileName;
         this.contentType = contentType;
@@ -162,23 +168,24 @@ public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> implemen
 
     @Override
     public OtaPackageInfo toData() {
-        OtaPackageInfo firmware = new OtaPackageInfo(new OtaPackageId(id));
-        firmware.setCreatedTime(createdTime);
-        firmware.setTenantId(new TenantId(tenantId));
+        OtaPackageInfo otaPackageInfo = new OtaPackageInfo(new OtaPackageId(id));
+        otaPackageInfo.setCreatedTime(createdTime);
+        otaPackageInfo.setTenantId(new TenantId(tenantId));
         if (deviceProfileId != null) {
-            firmware.setDeviceProfileId(new DeviceProfileId(deviceProfileId));
+            otaPackageInfo.setDeviceProfileId(new DeviceProfileId(deviceProfileId));
         }
-        firmware.setType(type);
-        firmware.setTitle(title);
-        firmware.setVersion(version);
-        firmware.setUrl(url);
-        firmware.setFileName(fileName);
-        firmware.setContentType(contentType);
-        firmware.setChecksumAlgorithm(checksumAlgorithm);
-        firmware.setChecksum(checksum);
-        firmware.setDataSize(dataSize);
-        firmware.setAdditionalInfo(additionalInfo);
-        firmware.setHasData(hasData);
-        return firmware;
+        otaPackageInfo.setType(type);
+        otaPackageInfo.setTitle(title);
+        otaPackageInfo.setVersion(version);
+        otaPackageInfo.setTag(tag);
+        otaPackageInfo.setUrl(url);
+        otaPackageInfo.setFileName(fileName);
+        otaPackageInfo.setContentType(contentType);
+        otaPackageInfo.setChecksumAlgorithm(checksumAlgorithm);
+        otaPackageInfo.setChecksum(checksum);
+        otaPackageInfo.setDataSize(dataSize);
+        otaPackageInfo.setAdditionalInfo(additionalInfo);
+        otaPackageInfo.setHasData(hasData);
+        return otaPackageInfo;
     }
 }

@@ -39,6 +39,8 @@ import { NavigationCardsWidgetComponent } from '@home/components/widget/lib/navi
 import { NavigationCardWidgetComponent } from '@home/components/widget/lib/navigation-card-widget.component';
 import { EdgesOverviewWidgetComponent } from '@home/components/widget/lib/edges-overview-widget.component';
 import { JsonInputWidgetComponent } from '@home/components/widget/lib/json-input-widget.component';
+import { QrCodeWidgetComponent } from '@home/components/widget/lib/qrcode-widget.component';
+import { MarkdownWidgetComponent } from '@home/components/widget/lib/markdown-widget.component';
 
 @NgModule({
   declarations:
@@ -58,7 +60,9 @@ import { JsonInputWidgetComponent } from '@home/components/widget/lib/json-input
       PhotoCameraInputWidgetComponent,
       GatewayFormComponent,
       NavigationCardsWidgetComponent,
-      NavigationCardWidgetComponent
+      NavigationCardWidgetComponent,
+      QrCodeWidgetComponent,
+      MarkdownWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -80,7 +84,9 @@ import { JsonInputWidgetComponent } from '@home/components/widget/lib/json-input
     PhotoCameraInputWidgetComponent,
     GatewayFormComponent,
     NavigationCardsWidgetComponent,
-    NavigationCardWidgetComponent
+    NavigationCardWidgetComponent,
+    QrCodeWidgetComponent,
+    MarkdownWidgetComponent
   ],
   providers: [
     CustomDialogService,

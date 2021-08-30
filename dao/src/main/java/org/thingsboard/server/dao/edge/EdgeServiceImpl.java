@@ -23,22 +23,14 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpHost;
-import org.apache.http.conn.ssl.DefaultHostnameVerifier;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestTemplate;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
@@ -72,20 +64,14 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.user.UserService;
 
 import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.thingsboard.server.common.data.CacheConstants.EDGE_CACHE;
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
@@ -105,10 +91,6 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     private static final ObjectMapper mapper = new ObjectMapper();
 
     private static final int DEFAULT_PAGE_SIZE = 1000;
-
-    private RestTemplate restTemplate;
-
-    private static final String EDGE_LICENSE_SERVER_ENDPOINT = "https://license.thingsboard.io";
 
     @Autowired
     private EdgeDao edgeDao;
@@ -130,16 +112,6 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
 
     @Autowired
     private RelationService relationService;
-
-    @Value("${edges.enabled:false}")
-    private boolean edgesEnabled;
-
-    @PostConstruct
-    public void init() {
-        if (edgesEnabled) {
-            initRestTemplate();
-        }
-    }
 
     @Override
     public Edge findEdgeById(TenantId tenantId, EdgeId edgeId) {
@@ -543,19 +515,6 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     }
 
     @Override
-    public Object checkInstance(Object request) {
-        return this.restTemplate.postForEntity(EDGE_LICENSE_SERVER_ENDPOINT + "/api/license/checkInstance", request, Object.class, new Object[0]);
-    }
-
-    @Override
-    public Object activateInstance(String edgeLicenseSecret, String releaseDate) {
-        Map<String, String> params = new HashMap<>();
-        params.put("licenseSecret", edgeLicenseSecret);
-        params.put("releaseDate", releaseDate);
-        return this.restTemplate.postForEntity(EDGE_LICENSE_SERVER_ENDPOINT + "/api/license/activateInstance?licenseSecret={licenseSecret}&releaseDate={releaseDate}", (Object) null, Object.class, params);
-    }
-
-    @Override
     public String findMissingToRelatedRuleChains(TenantId tenantId, EdgeId edgeId) {
         List<RuleChain> edgeRuleChains = findEdgeRuleChains(tenantId, edgeId);
         List<RuleChainId> edgeRuleChainIds = edgeRuleChains.stream().map(IdBased::getId).collect(Collectors.toList());
@@ -600,43 +559,4 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
         } while (pageData != null && pageData.hasNext());
         return result;
     }
-
-    private void initRestTemplate() {
-        boolean jdkHttpClientEnabled = isNotEmpty(System.getProperty("tb.proxy.jdk")) && System.getProperty("tb.proxy.jdk").equalsIgnoreCase("true");
-        boolean systemProxyEnabled = isNotEmpty(System.getProperty("tb.proxy.system")) && System.getProperty("tb.proxy.system").equalsIgnoreCase("true");
-        boolean proxyEnabled = isNotEmpty(System.getProperty("tb.proxy.host")) && isNotEmpty(System.getProperty("tb.proxy.port"));
-        if (jdkHttpClientEnabled) {
-            log.warn("Going to use plain JDK Http Client!");
-            SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-            if (proxyEnabled) {
-                log.warn("Going to use Proxy Server: [{}:{}]", System.getProperty("tb.proxy.host"), System.getProperty("tb.proxy.port"));
-                factory.setProxy(new Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved(System.getProperty("tb.proxy.host"), Integer.parseInt(System.getProperty("tb.proxy.port")))));
-            }
-
-            this.restTemplate = new RestTemplate(new SimpleClientHttpRequestFactory());
-        } else {
-            CloseableHttpClient httpClient;
-            HttpComponentsClientHttpRequestFactory requestFactory;
-            if (systemProxyEnabled) {
-                log.warn("Going to use System Proxy Server!");
-                httpClient = HttpClients.createSystem();
-                requestFactory = new HttpComponentsClientHttpRequestFactory();
-                requestFactory.setHttpClient(httpClient);
-                this.restTemplate = new RestTemplate(requestFactory);
-            } else if (proxyEnabled) {
-                log.warn("Going to use Proxy Server: [{}:{}]", System.getProperty("tb.proxy.host"), System.getProperty("tb.proxy.port"));
-                httpClient = HttpClients.custom().setSSLHostnameVerifier(new DefaultHostnameVerifier()).setProxy(new HttpHost(System.getProperty("tb.proxy.host"), Integer.parseInt(System.getProperty("tb.proxy.port")), "https")).build();
-                requestFactory = new HttpComponentsClientHttpRequestFactory();
-                requestFactory.setHttpClient(httpClient);
-                this.restTemplate = new RestTemplate(requestFactory);
-            } else {
-                httpClient = HttpClients.custom().setSSLHostnameVerifier(new DefaultHostnameVerifier()).build();
-                requestFactory = new HttpComponentsClientHttpRequestFactory();
-                requestFactory.setHttpClient(httpClient);
-                this.restTemplate = new RestTemplate(requestFactory);
-            }
-        }
-
-    }
-
 }

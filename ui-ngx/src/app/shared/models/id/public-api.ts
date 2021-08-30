@@ -26,6 +26,8 @@ export * from './entity-id';
 export * from './entity-view-id';
 export * from './event-id';
 export * from './has-uuid';
+export * from './ota-package-id';
+export * from './rpc-id';
 export * from './rule-chain-id';
 export * from './rule-node-id';
 export * from './tenant-id';
