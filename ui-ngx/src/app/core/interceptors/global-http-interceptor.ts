@@ -61,8 +61,7 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     if (req.url.startsWith('/api/')) {
       const config = this.getInterceptorConfig(req);
-      const isLoading = !this.isInternalUrlPrefix(req.url);
-      this.updateLoadingState(config, isLoading);
+      this.updateLoadingState(config, true);
       if (this.isTokenBasedAuthEntryPoint(req.url)) {
         if (!AuthService.getJwtToken() && !this.authService.refreshTokenPending()) {
           return this.handleResponseError(req, next, new HttpErrorResponse({error: {message: 'Unauthorized!'}, status: 401}));
@@ -258,11 +257,16 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
   }
 
   private getInterceptorConfig(req: HttpRequest<any>): InterceptorConfig {
+    let config: InterceptorConfig;
     if (req.params && req.params instanceof InterceptorHttpParams) {
-      return (req.params as InterceptorHttpParams).interceptorConfig;
+      config = (req.params as InterceptorHttpParams).interceptorConfig;
     } else {
-      return new InterceptorConfig(false, false);
+      config = new InterceptorConfig(false, false);
     }
+    if (this.isInternalUrlPrefix(req.url)) {
+      config.ignoreLoading = true;
+    }
+    return config;
   }
 
   private showError(error: string, timeout: number = 0) {
