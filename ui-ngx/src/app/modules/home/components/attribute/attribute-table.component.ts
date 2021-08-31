@@ -17,6 +17,7 @@
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   Injector,
@@ -118,7 +119,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   viewsInited = false;
 
   selectedWidgetsBundleAlias: string = null;
-  widgetsBundle: WidgetsBundle = null;
+  widgetBundleSet = false;
   widgetsLoaded = false;
   widgetsCarouselIndex = 0;
   widgetsList: Array<Array<Widget>> = [];
@@ -182,7 +183,8 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
               private utils: UtilsService,
               private dashboardUtils: DashboardUtilsService,
               private widgetService: WidgetService,
-              private zone: NgZone) {
+              private zone: NgZone,
+              private cd: ChangeDetectorRef) {
     super(store);
     this.dirtyValue = !this.activeValue;
     const sortOrder: SortOrder = { property: 'key', direction: Direction.ASC };
@@ -380,8 +382,8 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     this.widgetsList = [];
     this.widgetsListCache = [];
     this.widgetsLoaded = false;
+    this.widgetBundleSet = false;
     this.widgetsCarouselIndex = 0;
-    this.widgetsBundle = null;
     this.selectedWidgetsBundleAlias = 'cards';
 
     const entityAlias: EntityAlias = {
@@ -440,15 +442,17 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     }
   }
 
-  onWidgetsBundleChanged() {
+  onWidgetsBundleChanged(widgetsBundle: WidgetsBundle) {
     if (this.mode === 'widget') {
       this.widgetsList = [];
       this.widgetsListCache = [];
       this.widgetsCarouselIndex = 0;
-      if (this.widgetsBundle) {
+      this.widgetBundleSet = false;
+      if (widgetsBundle) {
         this.widgetsLoaded = false;
-        const bundleAlias = this.widgetsBundle.alias;
-        const isSystem = this.widgetsBundle.tenantId.id === NULL_UUID;
+        this.widgetBundleSet = true;
+        const bundleAlias = widgetsBundle.alias;
+        const isSystem = widgetsBundle.tenantId.id === NULL_UUID;
         this.widgetService.getBundleWidgetTypes(bundleAlias, isSystem).subscribe(
           (widgetTypes) => {
             widgetTypes = widgetTypes.sort((a, b) => {
@@ -486,6 +490,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
               }
             }
             this.widgetsLoaded = true;
+            this.cd.markForCheck();
           }
         );
       }
@@ -510,6 +515,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
 
   exitWidgetMode() {
     this.selectedWidgetsBundleAlias = null;
+    this.widgetBundleSet = false;
     this.mode = 'default';
   }
 
