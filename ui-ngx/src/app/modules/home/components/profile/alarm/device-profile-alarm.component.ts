@@ -30,6 +30,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { EntityId } from '@shared/models/id/entity-id';
+import { UtilsService } from '@core/services/utils.service';
 
 @Component({
   selector: 'tb-device-profile-alarm',
@@ -72,6 +73,7 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
   private propagateChangePending = false;
 
   constructor(private dialog: MatDialog,
+              private utils: UtilsService,
               private fb: FormBuilder) {
   }
 
@@ -185,6 +187,10 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
     }
   }
 
+  get alarmTypeTitle(): string {
+    const alarmType = this.alarmFormGroup.get('alarmType').value;
+    return this.utils.customTranslation(alarmType, alarmType);
+  }
 
   private updateModel() {
     const value = this.alarmFormGroup.value;
