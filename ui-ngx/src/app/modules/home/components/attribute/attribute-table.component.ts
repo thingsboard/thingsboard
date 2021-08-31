@@ -443,14 +443,13 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   }
 
   onWidgetsBundleChanged(widgetsBundle: WidgetsBundle) {
+    this.widgetBundleSet = !!widgetsBundle;
     if (this.mode === 'widget') {
       this.widgetsList = [];
       this.widgetsListCache = [];
-      this.widgetsCarouselIndex = 0;
-      this.widgetBundleSet = false;
+      this.widgetsCarouselIndex = 0;      
       if (widgetsBundle) {
         this.widgetsLoaded = false;
-        this.widgetBundleSet = true;
         const bundleAlias = widgetsBundle.alias;
         const isSystem = widgetsBundle.tenantId.id === NULL_UUID;
         this.widgetService.getBundleWidgetTypes(bundleAlias, isSystem).subscribe(
@@ -515,7 +514,6 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
 
   exitWidgetMode() {
     this.selectedWidgetsBundleAlias = null;
-    this.widgetBundleSet = false;
     this.mode = 'default';
   }
 
