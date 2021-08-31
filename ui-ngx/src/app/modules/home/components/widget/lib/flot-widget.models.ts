@@ -183,6 +183,7 @@ export interface TbFlotPieSettings {
     color: string;
     width: number;
   };
+  showTooltip: boolean,
   showLabels: boolean;
   fontColor: string;
   fontSize: number;
@@ -310,6 +311,12 @@ export function flotSettingsSchema(chartType: ChartType): JsonSettingsSchema {
     title: 'Hide zero/false values from tooltip',
     type: 'boolean',
     default: false
+  };
+
+  properties.showTooltip = {
+    title: 'Show tooltip',
+    type: 'boolean',
+    default: true
   };
 
   properties.grid = {
@@ -461,6 +468,7 @@ export function flotSettingsSchema(chartType: ChartType): JsonSettingsSchema {
     type: 'javascript'
   });
   schema.form.push('hideZeros');
+  schema.form.push('showTooltip');
   schema.form.push({
     key: 'grid',
     items: [
@@ -740,6 +748,11 @@ export const flotPieSettingsSchema: JsonSettingsSchema = {
             }
           }
         },
+        showTooltip: {
+          title: 'Show Tooltip',
+          type: 'boolean',
+          default: true,
+        },
         showLabels: {
           title: 'Show labels',
           type: 'boolean',
@@ -773,6 +786,7 @@ export const flotPieSettingsSchema: JsonSettingsSchema = {
           'stroke.width'
         ]
       },
+      'showTooltip',
       'showLabels',
       {
         key: 'fontColor',
