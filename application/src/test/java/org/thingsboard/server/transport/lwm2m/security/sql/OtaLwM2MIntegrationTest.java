@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredentials;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;
 import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
 import org.thingsboard.server.transport.lwm2m.security.AbstractLwM2MIntegrationTest;
@@ -40,6 +41,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.hasSize;
 import static org.thingsboard.rest.client.utils.RestJsonConverter.toTimeseries;
+import static org.thingsboard.server.common.data.ota.OtaPackageKey.CHECKSUM;
+import static org.thingsboard.server.common.data.ota.OtaPackageKey.CHECKSUM_ALGORITHM;
+import static org.thingsboard.server.common.data.ota.OtaPackageKey.SIZE;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWNLOADED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.DOWNLOADING;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.FAILED;
@@ -133,7 +137,7 @@ public class OtaLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
             "}";
 
     @Test
-    public void testFirmwareUpdateWithClientWithoutFirmwareInfo() throws Exception {
+    public void testFirmwareUpdateWithClientWithoutFirmwareOtaInfoFromProfile() throws Exception {
         String endpoint = "WithoutFirmwareInfoDevice";
             createDeviceProfile(TRANSPORT_CONFIGURATION);
             NoSecClientCredentials clientCredentials = new NoSecClientCredentials();

@@ -44,7 +44,6 @@ import org.eclipse.leshan.core.request.BootstrapRequest;
 import org.eclipse.leshan.core.request.DeregisterRequest;
 import org.eclipse.leshan.core.request.RegisterRequest;
 import org.eclipse.leshan.core.request.UpdateRequest;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 import org.junit.Assert;
 

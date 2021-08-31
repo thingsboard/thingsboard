@@ -363,7 +363,7 @@ public class LwM2mClient implements Serializable {
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(path));
         String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
         if (verSupportedObject == null) {
-            return String.format("Specified resource id %s is missing from the client!", path);
+            return String.format("Specified object id %s absent in the list supported objects of the client or is security object!", pathIds.getObjectId());
         } else {
             String verRez = getVerFromPathIdVerOrId(path);
             if ((verRez != null && !verRez.equals(verSupportedObject)) ||

@@ -59,6 +59,7 @@ import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
 import static org.eclipse.leshan.core.LwM2mId.DEVICE;
 import static org.eclipse.leshan.core.LwM2mId.FIRMWARE;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
+import static org.eclipse.leshan.core.LwM2mId.SOFTWARE_MANAGEMENT;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.COAP_CONFIG;
@@ -72,6 +73,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURITY;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SHORT_SERVER_ID;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SHORT_SERVER_ID_BS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.TEMPERATURE_SENSOR;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectId_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceIdName_19_0_0;
@@ -158,12 +160,16 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractWebsocketT
     public Set expectedObjectIdVerInstances;
 
     protected String objectInstanceIdVer_1;
+    protected String objectIdVer_0;
     protected String objectIdVer_2;
     private static final Predicate predicate_3 = path -> (!((String) path).contains("/" + TEMPERATURE_SENSOR) && ((String) path).contains("/" + DEVICE));
     protected String objectIdVer_3;
     protected String objectInstanceIdVer_3;
     protected String objectInstanceIdVer_5;
+    protected String objectInstanceIdVer_9;
     protected String objectIdVer_19;
+    protected String objectIdVer_50 = "/50";
+    protected String objectIdVer_3303;
 
     public AbstractRpcLwM2MIntegrationTest(){ }
 
@@ -212,13 +218,21 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractWebsocketT
                 });
             }
         });
-        objectInstanceIdVer_1 = (String) expectedObjectIdVerInstances.stream().filter(path -> (!((String) path).contains("/" + BINARY_APP_DATA_CONTAINER) && ((String) path).contains("/" + SERVER))).findFirst().get();
+        String ver_Id_0 = client.getClient().getObjectTree().getModel().getObjectModel(objectId_0).version;
+        if ("1.0".equals(ver_Id_0)) {
+            objectIdVer_0 = "/" + objectId_0;
+        }
+        else {
+            objectIdVer_0 = "/" + objectId_0 + "_" + ver_Id_0;
+        }
         objectIdVer_2 = (String) expectedObjectIdVers.stream().filter(path -> ((String) path).contains("/" + ACCESS_CONTROL)).findFirst().get();
         objectIdVer_3 = (String) expectedObjects.stream().filter(predicate_3).findFirst().get();
-        objectIdVer_19 = (String) expectedObjects.stream().filter(predicate_3).findFirst().get();
+        objectIdVer_19 = (String) expectedObjectIdVers.stream().filter(path -> ((String) path).contains("/" + BINARY_APP_DATA_CONTAINER)).findFirst().get();
+        objectIdVer_3303 = (String) expectedObjectIdVers.stream().filter(path -> ((String) path).contains("/" + TEMPERATURE_SENSOR)).findFirst().get();
+        objectInstanceIdVer_1 = (String) expectedObjectIdVerInstances.stream().filter(path -> (!((String) path).contains("/" + BINARY_APP_DATA_CONTAINER) && ((String) path).contains("/" + SERVER))).findFirst().get();
         objectInstanceIdVer_3 = (String) expectedObjectIdVerInstances.stream().filter(predicate_3).findFirst().get();
         objectInstanceIdVer_5 = (String) expectedObjectIdVerInstances.stream().filter(path -> ((String) path).contains("/" + FIRMWARE)).findFirst().get();
-        objectIdVer_19 = (String) expectedObjectIdVers.stream().filter(path -> ((String) path).contains("/" + BINARY_APP_DATA_CONTAINER)).findFirst().get();
+        objectInstanceIdVer_9 = (String) expectedObjectIdVerInstances.stream().filter(path -> ((String) path).contains("/" + SOFTWARE_MANAGEMENT)).findFirst().get();
     }
 
     protected void createDeviceProfile(String transportConfiguration) throws Exception {
@@ -285,13 +299,13 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractWebsocketT
         return bootstrap;
     }
 
-    protected String objectIdVerToObjectId(String objectIdVer) {
-        return objectIdVer.contains("_") ? objectIdVer.split("_")[0] : objectIdVer;
-    }
-
-    protected String objectInstanceIdVerToObjectInstanceId(String objectInstanceIdVer) {
-        String[] objectIdVer = objectInstanceIdVer.split("/");
-        return objectIdVer[1].contains("_") ? objectIdVer[1].split("_")[0] + "/" + objectIdVer[2] : objectInstanceIdVer;
+    protected String pathIdVerToObjectId(String pathIdVer) {
+        if (pathIdVer.contains("_")){
+            String [] objVer = pathIdVer.split("/");
+            objVer[1] =  objVer[1].split("_")[0];
+            return String.join("/",  objVer);
+        }
+        return pathIdVer;
     }
 
     @After

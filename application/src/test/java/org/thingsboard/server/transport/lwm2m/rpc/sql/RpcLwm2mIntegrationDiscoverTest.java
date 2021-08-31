@@ -74,7 +74,7 @@ public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegration
         expectedObjectIdVers.forEach(expected -> {
             try {
                 String actualResult  = sendDiscover((String) expected);
-                String expectedObjectId = objectIdVerToObjectId ((String) expected);
+                String expectedObjectId = pathIdVerToObjectId((String) expected);
                 ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
                 assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
                 String[] actualValues = rpcActualResult.get("value").asText().split(",");
@@ -88,8 +88,12 @@ public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegration
 
     /**
      * Discover {"id":"3/0"}
-     *
-     * @throws Exception
+     * If WriteAttributes not implemented:
+     * {"result":"CONTENT","value":"</3/0>,</3/0/0>,</3/0/1>,</3/0/2>,</3/0/3>,</3/0/4>,</3/0/5>,</3/0/6>,</3/0/7>,</3/0/8>,</3/0/9>,</3/0/10>,</3/0/11>,</3/0/12>,</3/0/13>,</3/0/14>,</3/0/15>,</3/0/16>,</3/0/1
+     * 7>,</3/0/18>,</3/0/19>,</3/0/20>,</3/0/21>,</3/0/22>"}
+     * If WriteAttributes implemented and WriteAttributes saved
+     * Discover {"id":"19/0"}
+     * {"result":"CONTENT","value":"[</19/0>;dim=2;pmin=10;pmax=60;gt=50;lt=42.2,</19/0/0>;pmax=120, </19/0/1>, </19/0/2>, </19/0/3>, </19/0/4>, </19/0/5>;lt=45]"}
      */
     @Test
     public void testDiscoverInstance_Return_CONTENT_LinksResourcesOnLyExpectedInstance() throws Exception {
@@ -97,7 +101,7 @@ public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegration
         String actualResult = sendDiscover(expected);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-        String expectedObjectInstanceId = objectInstanceIdVerToObjectInstanceId (expected);
+        String expectedObjectInstanceId = pathIdVerToObjectId(expected);
         String[] actualValues = rpcActualResult.get("value").asText().split(",");
         assertTrue(actualValues.length > 0);
         assertEquals(0, Arrays.stream(actualValues).filter(path -> !path.contains(expectedObjectInstanceId)).collect(Collectors.toList()).size());
@@ -105,13 +109,20 @@ public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegration
 
     /**
      * Discover {"id":"3/0/14"}
-     *
-     * @throws Exception
+     * If WriteAttributes implemented:
+     * {"result":"CONTENT","value":"</3/0/14>;pmax=100, "pmin":10, "ver"=1.0"}
+     * If WriteAttributes not implemented:
+     * {"result":"CONTENT","value":"</3/0/14>"}
+     * Discover {"id":"19_1.1/0/0"}
+     * If WriteAttributes implemented:
+     * {"result":"CONTENT","value":"</19/0/0>;pmax=100, "pmin":10, "ver"=1.1"}
+     * If WriteAttributes not implemented:
+     * {"result":"CONTENT","value":"</19/0/0>"}
      */
     @Test
     public void testDiscoverResource_Return_CONTENT_LinksResourceOnLyExpectedResource() throws Exception {
         String expectedInstance = (String) expectedInstances.stream().findFirst().get();
-        String expectedObjectInstanceId = objectInstanceIdVerToObjectInstanceId (expectedInstance);
+        String expectedObjectInstanceId = pathIdVerToObjectId(expectedInstance);
         LwM2mPath expectedPath = new LwM2mPath(expectedObjectInstanceId);
         int expectedResource = client.getClient().getObjectTree().getObjectEnablers().get(expectedPath.getObjectId()).getObjectModel().resources.entrySet().stream().findAny().get().getKey();
         String expected = expectedInstance + "/" + expectedResource;
@@ -125,12 +136,11 @@ public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegration
     }
 
     /**
-     * Discover {"id":"2/0/2"}
-     *
-     * @throws Exception
+     * Discover {"id":"2/0"}
+     *{"result":"NOT_FOUND"}
      */
     @Test
-    public void testDiscoverInstanceAbsentInObject_Return_NOT_FOUND() throws Exception {
+    public void testDiscoverObjectInstanceAbsentInObject_Return_NOT_FOUND() throws Exception {
         String expected = objectIdVer_2 + "/" + objectInstanceId_0;
         String actualResult = sendDiscover(expected);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
@@ -138,8 +148,7 @@ public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegration
     }
     /**
      * Discover {"id":"2/0/2"}
-     *
-     * @throws Exception
+     * {"result":"NOT_FOUND"}
      */
     @Test
     public void testDiscoverResourceAbsentInObject_Return_NOT_FOUND() throws Exception {

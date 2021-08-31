@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.lwm2m.rpc.sql;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.eclipse.leshan.core.ResponseCode;
+import org.eclipse.leshan.core.node.LwM2mPath;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTest;
@@ -27,18 +28,21 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_1;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_2;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceIdName_3_14;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceId_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceId_14;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceId_15;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceId_9;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceInstanceId_2;
 
 public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTest {
 
 
     /**
-     * id
+     * update SingleResource:
      * WriteReplace {"id":"3/0/14","value":"+12"}
+     * {"result":"CHANGED"}
      */
     @Test
     public void testWriteReplaceValueSingleResourceById_Result_CHANGED() throws Exception {
@@ -57,6 +61,7 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
     /**
      * key
      * WriteReplace {"key":"timezone","value":"+10"}
+     * {"result":"CHANGED"}
      */
     @Test
     public void testWriteReplaceValueSingleResourceByKey_Result_CHANGED() throws Exception {
@@ -76,6 +81,7 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
     /**
      * id
      * WriteReplace {"id": "/19_1.1/0/0","value": {"0":"0000ad45675600", "15":"1525ad45675600cdef"}}
+     * {"result":"CHANGED"}
      */
     @Test
     public void testWriteReplaceValueMultipleResource_Result_CHANGED_Value_Multi_Instance_Resource_must_in_Json_format() throws Exception {
@@ -121,7 +127,7 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
 
 
     /**
-     * bad - only read
+     * bad: singleResource, operation="R" - only read
      * WriteReplace {"id":"/3/0/9","value":90}
      * {"result":"METHOD_NOT_ALLOWED"}
      */
@@ -137,7 +143,7 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
     /**
      * ids
      * WriteUpdate  {"id":"/3/0","value":{"14":"+5","15":"Kiyv/Europe"}}
-     *
+     * {"result":"CHANGED"}
      */
     @Test
     public void testWriteUpdateValueSingleResourceById_Result_CHANGED() throws Exception {
@@ -165,6 +171,7 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
     /**
      * id
      * WriteUpdate {"id": "/19_1.1/0","value": {"0":{"0":"00ad456756", "25":"25ad456756"}}}
+     * {"result":"CHANGED"}
      */
     @Test
     public void testWriteUpdateValueMultipleResourceById_Result_CHANGED() throws Exception {
@@ -194,6 +201,7 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
     /**
      * ResourceInstance + KeySingleResource + IdSingleResource
      * WriteComposite {"nodes":{"/19/1/0/2":"00001234", "UtfOffset":"+04", "/3/0/15":"Kiyv/Europe"}}
+     * {"result":"CHANGED"}
      */
     @Test
     public void testWriteCompositeValueSingleResourceResourceInstanceByIdKey_Result_CHANGED() throws Exception {
@@ -246,15 +254,17 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
 
 
     /**
-     * create_2_instances_in_object
-     * new ObjectInstance if Object is Multiple & Resource Single
-     * Create  {"id":"/19/2","value":{"1":2}}
-     * Create  {"id":"/19/3","value":{"0":{"0":"00AC", "1":"ddff12"}}}
+     * update_resourceInstances&update_singleResource
+     * new ResourceInstance if Resource is Multiple & Resource Single
+     *  - WriteReplace  {"id":"/19_1.2/1/0","value":{"2":ddff12"}}
+     *  - WriteReplace {"key":"UtfOffset","value":"+04"}
+     *  - WriteReplace {"id":"/3/0/15","value":"Kiyv/Europe"}
+     * WriteComposite {"nodes":{"/19_1.1/1/0/2":"00001234", "UtfOffset":"+04", "/3/0/15":"Kiyv/Europe"}}}
+     * {"result":"CHANGED"}
      */
     @Test
-    public void testCreateObjectInstanceSingleByIdKey_Result_CHANGED() throws Exception {
-        int resourceInstanceId2 = 2;
-        String expectedPath19_1_0_2 = objectIdVer_19 + "/" + objectInstanceId_1 + "/" + resourceId_0 + "/" + resourceInstanceId2;
+    public void testWriteCompositeCreateResourceInstanceUpdateSingleResourceByIdKey_Result_CHANGED() throws Exception {
+        String expectedPath19_1_0_2 = objectIdVer_19 + "/" + objectInstanceId_1 + "/" + resourceId_0 + "/" + resourceInstanceId_2;
         String expectedValue19_1_0_2 = "00001234";
         String expectedKey3_0_14 = resourceIdName_3_14;
         String expectedValue3_0_14 = "+04";
@@ -268,7 +278,7 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
         actualResult = sendRPCReadById(expectedPath19_1_0_2);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         String actualValues = rpcActualResult.get("value").asText();
-        String expected = "LwM2mResourceInstance [id=" + resourceInstanceId2 + ", value=" + expectedValue19_1_0_2.length()/2 + "Bytes, type=OPAQUE]";
+        String expected = "LwM2mResourceInstance [id=" + resourceInstanceId_2 + ", value=" + expectedValue19_1_0_2.length()/2 + "Bytes, type=OPAQUE]";
         assertTrue(actualValues.contains(expected));
         actualResult = sendRPCReadByKey(expectedKey3_0_14);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
@@ -283,20 +293,33 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
     }
 
     /**
-     * failed: cannot_create_mandatory_single_object
-     * Create  {"id":"/3/2","value":{"0":"00AC"}}
+     * composite_not created_new_instance...
+     * new ObjectInstance if Object is Multiple - bad
+     *  - WriteReplace  {"id":"/19_1.2/2/0","value":{"2":ddff12"}}
+     *  - WriteReplace {"key":"UtfOffset","value":"+04"}
+     *  - WriteReplace {"id":"/3/0/15","value":"Kiyv/Europe"}
+     * WriteComposite {"nodes":{"/19_1.1/1/0/2":"00001234", "UtfOffset":"+04", "/3/0/15":"Kiyv/Europe"}}}
+     * {"result":"BAD_REQUEST","error":"object instance /19/2 not found"}
      */
-
-
-    /**
-     * failed:  cannot_create_instance_of_security_object
-     * Create  {"id":"/0/2","value":{"0":"00AC"}}
-     */
-
-    /**
-     * failed: cannot_create_instance_of_absent_object
-     * Create  {"id":"/50/2","value":{"0":"00AC"}}
-     */
+    @Test
+    public void testWriteCompositeCreateObjectInstanceUpdateSingleResourceByIdKey_Result_BAD_REQUEST() throws Exception {
+        String expectedPath19_1_2_2 = objectIdVer_19 + "/" + objectInstanceId_2 + "/" + resourceId_0 + "/" + resourceInstanceId_2;
+        String expectedValue19_1_0_2 = "00001234";
+        String expectedKey3_0_14 = resourceIdName_3_14;
+        String expectedValue3_0_14 = "+04";
+        String expectedPath3_0_15 = objectInstanceIdVer_3 + "/" + resourceId_15;
+        String expectedValue3_0_15 = "Kiyv/Europe";
+        String nodes = "{\"" + expectedPath19_1_2_2 + "\":\"" + expectedValue19_1_0_2 + "\", \"" + expectedKey3_0_14 +
+                "\":\"" + expectedValue3_0_14 + "\", \"" + expectedPath3_0_15 + "\":\"" + expectedValue3_0_15 + "\"}";
+        String actualResult = sendCompositeRPC(nodes);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
+        String expectedObjectId = pathIdVerToObjectId((String) expectedPath19_1_2_2);
+        LwM2mPath expectedPathId = new LwM2mPath(expectedObjectId);
+        String expected = "object instance " + "/" + expectedPathId.getObjectId() + "/" + expectedPathId.getObjectInstanceId() + " not found";
+        String actual = rpcActualResult.get("error").asText();
+        assertTrue(actual.equals(expected));
+    }
 
     private String sendRPCWriteStringById(String method, String path, String value) throws Exception {
         String setRpcRequest = "{\"method\": \"" + method + "\", \"params\": {\"id\": \"" + path + "\", \"value\": \"" + value + "\" }}";
