@@ -22,6 +22,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,7 +33,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
@@ -54,6 +54,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
+import org.thingsboard.server.service.security.model.token.AccessJwtToken;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -90,12 +91,12 @@ public class UserController extends BaseController {
         try {
             UserId userId = new UserId(toUUID(strUserId));
             User user = checkUserId(userId, Operation.READ);
-            if(user.getAdditionalInfo().isObject()) {
+            if (user.getAdditionalInfo().isObject()) {
                 ObjectNode additionalInfo = (ObjectNode) user.getAdditionalInfo();
                 processDashboardIdFromAdditionalInfo(additionalInfo, DEFAULT_DASHBOARD);
                 processDashboardIdFromAdditionalInfo(additionalInfo, HOME_DASHBOARD);
                 UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getTenantId(), user.getId());
-                if(userCredentials.isEnabled() && !additionalInfo.has("userCredentialsEnabled")) {
+                if (userCredentials.isEnabled() && !additionalInfo.has("userCredentialsEnabled")) {
                     additionalInfo.put("userCredentialsEnabled", true);
                 }
             }
@@ -128,8 +129,9 @@ public class UserController extends BaseController {
             UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
             UserCredentials credentials = userService.findUserCredentialsByUserId(authUser.getTenantId(), userId);
             SecurityUser securityUser = new SecurityUser(user, credentials.isEnabled(), principal);
-            JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
-            JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
+            Pair<AccessJwtToken, JwtToken> tokensPair = tokenFactory.getAccessAndRefreshTokens(securityUser);
+            JwtToken accessToken = tokensPair.getFirst();
+            JwtToken refreshToken = tokensPair.getSecond();
             ObjectMapper objectMapper = new ObjectMapper();
             ObjectNode tokenObject = objectMapper.createObjectNode();
             tokenObject.put("token", accessToken.getToken());

@@ -17,6 +17,7 @@ package org.thingsboard.server.service.security.auth.oauth2;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.util.Pair;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
@@ -31,8 +32,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
 import org.thingsboard.server.common.data.security.model.JwtToken;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
-import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.model.token.AccessJwtToken;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
@@ -48,7 +49,6 @@ import java.util.UUID;
 public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtTokenFactory tokenFactory;
-    private final RefreshTokenRepository refreshTokenRepository;
     private final OAuth2ClientMapperProvider oauth2ClientMapperProvider;
     private final OAuth2Service oAuth2Service;
     private final OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
@@ -57,14 +57,12 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     @Autowired
     public Oauth2AuthenticationSuccessHandler(final JwtTokenFactory tokenFactory,
-                                              final RefreshTokenRepository refreshTokenRepository,
                                               final OAuth2ClientMapperProvider oauth2ClientMapperProvider,
                                               final OAuth2Service oAuth2Service,
                                               final OAuth2AuthorizedClientService oAuth2AuthorizedClientService,
                                               final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository,
                                               final SystemSecurityService systemSecurityService) {
         this.tokenFactory = tokenFactory;
-        this.refreshTokenRepository = refreshTokenRepository;
         this.oauth2ClientMapperProvider = oauth2ClientMapperProvider;
         this.oAuth2Service = oAuth2Service;
         this.oAuth2AuthorizedClientService = oAuth2AuthorizedClientService;
@@ -95,8 +93,9 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             SecurityUser securityUser = mapper.getOrCreateUserByClientPrincipal(request, token, oAuth2AuthorizedClient.getAccessToken().getTokenValue(),
                     registration);
 
-            JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
-            JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
+            Pair<AccessJwtToken, JwtToken> tokensPair = tokenFactory.getAccessAndRefreshTokens(securityUser);
+            JwtToken accessToken = tokensPair.getFirst();
+            JwtToken refreshToken = tokensPair.getSecond();
 
             clearAuthenticationAttributes(request, response);
             getRedirectStrategy().sendRedirect(request, response, baseUrl + "/?accessToken=" + accessToken.getToken() + "&refreshToken=" + refreshToken.getToken());

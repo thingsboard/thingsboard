@@ -17,6 +17,7 @@ package org.thingsboard.server.service.security.auth.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.security.model.JwtToken;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.model.token.AccessJwtToken;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
 import javax.servlet.ServletException;
@@ -54,8 +56,9 @@ public class RestAwareAuthenticationSuccessHandler implements AuthenticationSucc
                                         Authentication authentication) throws IOException, ServletException {
         SecurityUser securityUser = (SecurityUser) authentication.getPrincipal();
 
-        JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
-        JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
+        Pair<AccessJwtToken, JwtToken> tokensPair = tokenFactory.getAccessAndRefreshTokens(securityUser);
+        JwtToken accessToken = tokensPair.getFirst();
+        JwtToken refreshToken = tokensPair.getSecond();
 
         Map<String, String> tokenMap = new HashMap<String, String>();
         tokenMap.put("token", accessToken.getToken());
@@ -70,8 +73,7 @@ public class RestAwareAuthenticationSuccessHandler implements AuthenticationSucc
 
     /**
      * Removes temporary authentication-related data which may have been stored
-     * in the session during the authentication process..
-     *
+     * in the session during the authentication process...
      */
     protected final void clearAuthenticationAttributes(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
