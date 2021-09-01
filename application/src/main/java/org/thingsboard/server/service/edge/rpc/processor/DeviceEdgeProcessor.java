@@ -18,7 +18,6 @@ package org.thingsboard.server.service.edge.rpc.processor;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -27,7 +26,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.api.RpcError;
+import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -60,7 +59,7 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
+import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponseActorMsg;
 
 import java.util.UUID;
@@ -145,7 +144,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                     deviceCredentials.setCredentialsType(DeviceCredentialsType.valueOf(deviceCredentialsUpdateMsg.getCredentialsType()));
                     deviceCredentials.setCredentialsId(deviceCredentialsUpdateMsg.getCredentialsId());
                     if (deviceCredentialsUpdateMsg.hasCredentialsValue()) {
-                        deviceCredentials.setCredentialsValue(deviceCredentialsUpdateMsg.getCredentialsValue().getValue());
+                        deviceCredentials.setCredentialsValue(deviceCredentialsUpdateMsg.getCredentialsValue());
                     }
                     deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
                 } catch (Exception e) {
@@ -165,18 +164,19 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
             device.setName(deviceUpdateMsg.getName());
             device.setType(deviceUpdateMsg.getType());
             if (deviceUpdateMsg.hasLabel()) {
-                device.setLabel(deviceUpdateMsg.getLabel().getValue());
+                device.setLabel(deviceUpdateMsg.getLabel());
             }
             if (deviceUpdateMsg.hasAdditionalInfo()) {
-                device.setAdditionalInfo(JacksonUtil.toJsonNode(deviceUpdateMsg.getAdditionalInfo().getValue()));
+                device.setAdditionalInfo(JacksonUtil.toJsonNode(deviceUpdateMsg.getAdditionalInfo()));
             }
             if (deviceUpdateMsg.hasDeviceProfileIdMSB() && deviceUpdateMsg.hasDeviceProfileIdLSB()) {
                 DeviceProfileId deviceProfileId = new DeviceProfileId(
-                        new UUID(deviceUpdateMsg.getDeviceProfileIdMSB().getValue(),
-                                deviceUpdateMsg.getDeviceProfileIdLSB().getValue()));
+                        new UUID(deviceUpdateMsg.getDeviceProfileIdMSB(),
+                                deviceUpdateMsg.getDeviceProfileIdLSB()));
                 device.setDeviceProfileId(deviceProfileId);
             }
-            deviceService.saveDevice(device);
+            Device savedDevice = deviceService.saveDevice(device);
+            tbClusterService.onDeviceUpdated(savedDevice, device);
             saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.CREDENTIALS_REQUEST, deviceId, null);
         } else {
             log.warn("[{}] can't find device [{}], edge [{}]", tenantId, deviceUpdateMsg, edge.getId());
@@ -203,26 +203,25 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
             device.setName(deviceName);
             device.setType(deviceUpdateMsg.getType());
             if (deviceUpdateMsg.hasLabel()) {
-                device.setLabel(deviceUpdateMsg.getLabel().getValue());
+                device.setLabel(deviceUpdateMsg.getLabel());
             }
             if (deviceUpdateMsg.hasAdditionalInfo()) {
-                device.setAdditionalInfo(JacksonUtil.toJsonNode(deviceUpdateMsg.getAdditionalInfo().getValue()));
+                device.setAdditionalInfo(JacksonUtil.toJsonNode(deviceUpdateMsg.getAdditionalInfo()));
             }
             if (deviceUpdateMsg.hasDeviceProfileIdMSB() && deviceUpdateMsg.hasDeviceProfileIdLSB()) {
                 DeviceProfileId deviceProfileId = new DeviceProfileId(
-                        new UUID(deviceUpdateMsg.getDeviceProfileIdMSB().getValue(),
-                                deviceUpdateMsg.getDeviceProfileIdLSB().getValue()));
+                        new UUID(deviceUpdateMsg.getDeviceProfileIdMSB(),
+                                deviceUpdateMsg.getDeviceProfileIdLSB()));
                 device.setDeviceProfileId(deviceProfileId);
             }
             Device savedDevice = deviceService.saveDevice(device, false);
+            tbClusterService.onDeviceUpdated(savedDevice, created ? null : device, false);
             if (created) {
                 DeviceCredentials deviceCredentials = new DeviceCredentials();
                 deviceCredentials.setDeviceId(new DeviceId(savedDevice.getUuidId()));
                 deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
                 deviceCredentials.setCredentialsId(org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric(20));
                 deviceCredentialsService.createDeviceCredentials(device.getTenantId(), deviceCredentials);
-
-                deviceStateService.onDeviceAdded(savedDevice);
             }
             createRelationFromEdge(tenantId, edge.getId(), device.getId());
             pushDeviceCreatedEventToRuleEngine(tenantId, edge, device);

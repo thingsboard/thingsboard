@@ -27,9 +27,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.nio.charset.StandardCharsets;
 
-import static org.thingsboard.server.service.edge.rpc.EdgeProtoUtils.getBytesValue;
-import static org.thingsboard.server.service.edge.rpc.EdgeProtoUtils.getStringValue;
-
 @Component
 @TbCoreComponent
 public class DeviceProfileMsgConstructor {
@@ -55,19 +52,19 @@ public class DeviceProfileMsgConstructor {
 //            builder.setDefaultQueueName(deviceProfile.getDefaultQueueName());
 //        }
         if (deviceProfile.getDescription() != null) {
-            builder.setDescription(getStringValue(deviceProfile.getDescription()));
+            builder.setDescription(deviceProfile.getDescription());
         }
         if (deviceProfile.getTransportType() != null) {
-            builder.setTransportType(getStringValue(deviceProfile.getTransportType().name()));
+            builder.setTransportType(deviceProfile.getTransportType().name());
         }
         if (deviceProfile.getProvisionType() != null) {
-            builder.setProvisionType(getStringValue(deviceProfile.getProvisionType().name()));
+            builder.setProvisionType(deviceProfile.getProvisionType().name());
         }
         if (deviceProfile.getProvisionDeviceKey() != null) {
-            builder.setProvisionDeviceKey(getStringValue(deviceProfile.getProvisionDeviceKey()));
+            builder.setProvisionDeviceKey(deviceProfile.getProvisionDeviceKey());
         }
         if (deviceProfile.getImage() != null) {
-            builder.setImage(getBytesValue(ByteString.copyFrom(deviceProfile.getImage().getBytes(StandardCharsets.UTF_8))));
+            builder.setImage(ByteString.copyFrom(deviceProfile.getImage().getBytes(StandardCharsets.UTF_8)));
         }
         return builder.build();
     }

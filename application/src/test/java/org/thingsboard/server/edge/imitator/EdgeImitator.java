@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.thingsboard.edge.rpc.EdgeGrpcClient;
 import org.thingsboard.edge.rpc.EdgeRpcClient;
+import org.thingsboard.server.gen.edge.v1.AdminSettingsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
@@ -167,6 +168,11 @@ public class EdgeImitator {
 
     private ListenableFuture<List<Void>> processDownlinkMsg(DownlinkMsg downlinkMsg) {
         List<ListenableFuture<Void>> result = new ArrayList<>();
+        if (downlinkMsg.getAdminSettingsUpdateMsgCount() > 0) {
+            for (AdminSettingsUpdateMsg adminSettingsUpdateMsg : downlinkMsg.getAdminSettingsUpdateMsgList()) {
+                result.add(saveDownlinkMsg(adminSettingsUpdateMsg));
+            }
+        }
         if (downlinkMsg.getDeviceUpdateMsgCount() > 0) {
             for (DeviceUpdateMsg deviceUpdateMsg : downlinkMsg.getDeviceUpdateMsgList()) {
                 result.add(saveDownlinkMsg(deviceUpdateMsg));

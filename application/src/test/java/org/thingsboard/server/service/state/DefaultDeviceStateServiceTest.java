@@ -27,7 +27,7 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.cluster.TbClusterService;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;

@@ -978,7 +978,6 @@
           "client-publicKey-or-id": "Client Public Key or Id",
           "client-publicKey-or-id-required": "Client Public Key or Id is required.",
           "client-publicKey-or-id-pattern": "Client Public Key or Id must be hexadecimal format.",
-          "client-publicKey-or-id-length": "Client Public Key or Id must be {{ count }} characters.",
           "client-secret-key": "Client Secret Key",
           "client-secret-key-required": "Client Secret Key is required.",
           "client-secret-key-pattern": "Client Secret Key must be hexadecimal format.",
@@ -1083,7 +1082,7 @@
         "default-rule-chain": "Default rule chain",
         "mobile-dashboard": "Mobile dashboard",
         "mobile-dashboard-hint": "Used by mobile application as a device details dashboard",
-        "select-queue-hint": "Select from a drop-down list or add a custom name.",
+        "select-queue-hint": "Select from a drop-down list.",
         "delete-device-profile-title": "Are you sure you want to delete the device profile '{{deviceProfileName}}'?",
         "delete-device-profile-text": "Be careful, after the confirmation the device profile and all related data will become unrecoverable.",
         "delete-device-profiles-title": "Are you sure you want to delete { count, plural, 1 {1 device profile} other {# device profiles} }?",
@@ -1315,7 +1314,6 @@
             "server-public-key": "Server Public Key",
             "server-public-key-required": "Server Public Key is required.",
             "server-public-key-pattern": "Server Public Key must be hex decimal format.",
-            "server-public-key-length": "Server Public Key must be {{ count }} characters.",
             "client-hold-off-time": "Hold Off Time",
             "client-hold-off-time-required": "Hold Off Time is required.",
             "client-hold-off-time-pattern": "Hold Off Time must be a positive integer.",
@@ -1824,7 +1822,8 @@
         "all-events": "All",
         "has-error": "Has error",
         "entity-id": "Entity Id",
-        "entity-type": "Entity type"
+        "entity-type": "Entity type",
+        "clear-filter": "Clear Filter"
     },
     "extension": {
         "extensions": "Extensions",
@@ -2265,6 +2264,7 @@
         "total": "total",
         "comparison-time-ago": {
             "previousInterval": "(previous interval)",
+            "customInterval": "(custom interval)",
             "days": "(day ago)",
             "weeks": "(week ago)",
             "months": "(month ago)",
@@ -2571,7 +2571,8 @@
     "queue": {
       "select_name": "Select queue name",
       "name": "Queue Name",
-      "name_required": "Queue name is required!"
+      "name_required": "Queue name is required!",
+      "no-queues-matching": "No queues matching '{{queue}}' were found."
     },
     "tenant": {
         "tenant": "Tenant",
@@ -2809,7 +2810,9 @@
         "disable-account": "Disable User Account",
         "enable-account": "Enable User Account",
         "enable-account-message": "User account was successfully enabled!",
-        "disable-account-message": "User account was successfully disabled!"
+        "disable-account-message": "User account was successfully disabled!",
+        "copyId": "Copy user Id",
+        "idCopiedMessage": "User Id has been copied to clipboard"
     },
     "value": {
         "type": "Value type",

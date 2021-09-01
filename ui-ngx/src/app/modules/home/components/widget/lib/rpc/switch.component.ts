@@ -42,6 +42,8 @@ interface SwitchSettings {
   parseValueFunction: string;
   convertValueFunction: string;
   requestTimeout: number;
+  requestPersistent: boolean;
+  persistentPollingInterval: number;
 }
 
 @Component({
@@ -74,6 +76,8 @@ export class SwitchComponent extends PageComponent implements OnInit, OnDestroy 
 
   private isSimulated: boolean;
   private requestTimeout: number;
+  private requestPersistent: boolean;
+  private persistentPollingInterval: number;
   private retrieveValueMethod: RetrieveValueMethod;
   private valueKey: string;
   private parseValueFunction: (data: any) => boolean;
@@ -133,6 +137,7 @@ export class SwitchComponent extends PageComponent implements OnInit, OnDestroy 
     if (this.switchResize$) {
       this.switchResize$.disconnect();
     }
+    this.ctx.controlApi.completedCommand();
   }
 
   private init() {
@@ -151,6 +156,14 @@ export class SwitchComponent extends PageComponent implements OnInit, OnDestroy 
     this.requestTimeout = 500;
     if (settings.requestTimeout) {
       this.requestTimeout = settings.requestTimeout;
+    }
+    this.requestPersistent = false;
+    if (settings.requestPersistent) {
+      this.requestPersistent = settings.requestPersistent;
+    }
+    this.persistentPollingInterval = 5000;
+    if (settings.persistentPollingInterval) {
+      this.persistentPollingInterval = settings.persistentPollingInterval;
     }
     this.retrieveValueMethod = 'rpc';
     if (settings.retrieveValueMethod && settings.retrieveValueMethod.length) {
@@ -257,7 +270,8 @@ export class SwitchComponent extends PageComponent implements OnInit, OnDestroy 
 
   private rpcRequestValue() {
     this.error = '';
-    this.ctx.controlApi.sendTwoWayCommand(this.getValueMethod, null, this.requestTimeout).subscribe(
+    this.ctx.controlApi.sendTwoWayCommand(this.getValueMethod, null, this.requestTimeout,
+      this.requestPersistent, this.persistentPollingInterval).subscribe(
       (responseBody) => {
         this.setValue(this.parseValueFunction(responseBody));
         this.ctx.detectChanges();
@@ -279,7 +293,8 @@ export class SwitchComponent extends PageComponent implements OnInit, OnDestroy 
       this.executingUpdateValue = true;
     }
     this.error = '';
-    this.ctx.controlApi.sendOneWayCommand(this.setValueMethod, this.convertValueFunction(value), this.requestTimeout).subscribe(
+    this.ctx.controlApi.sendOneWayCommand(this.setValueMethod, this.convertValueFunction(value), this.requestTimeout,
+      this.requestPersistent, this.persistentPollingInterval).subscribe(
       () => {
         this.executingUpdateValue = false;
         if (this.scheduledValue != null && this.scheduledValue !== this.rpcValue) {

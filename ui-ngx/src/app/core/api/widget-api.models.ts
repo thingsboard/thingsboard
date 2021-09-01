@@ -69,8 +69,11 @@ export interface WidgetSubscriptionApi {
 }
 
 export interface RpcApi {
-  sendOneWayCommand: (method: string, params?: any, timeout?: number, persistent?: boolean, requestUUID?: string) => Observable<any>;
-  sendTwoWayCommand: (method: string, params?: any, timeout?: number, persistent?: boolean, requestUUID?: string) => Observable<any>;
+  sendOneWayCommand: (method: string, params?: any, timeout?: number, persistent?: boolean,
+                      persistentPollingInterval?: number, requestUUID?: string) => Observable<any>;
+  sendTwoWayCommand: (method: string, params?: any, timeout?: number, persistent?: boolean,
+                      persistentPollingInterval?: number, requestUUID?: string) => Observable<any>;
+  completedCommand: () => void;
 }
 
 export interface IWidgetUtils {
@@ -240,6 +243,7 @@ export interface WidgetSubscriptionOptions {
   legendConfig?: LegendConfig;
   comparisonEnabled?: boolean;
   timeForComparison?: moment_.unitOfTime.DurationConstructor;
+  comparisonCustomIntervalValue?: number;
   decimals?: number;
   units?: string;
   callbacks?: WidgetSubscriptionCallbacks;
@@ -301,8 +305,10 @@ export interface IWidgetSubscription {
   onResetTimewindow(): void;
   updateTimewindowConfig(newTimewindow: Timewindow): void;
 
-  sendOneWayCommand(method: string, params?: any, timeout?: number, persistent?: boolean, requestUUID?: string): Observable<any>;
-  sendTwoWayCommand(method: string, params?: any, timeout?: number, persistent?: boolean, requestUUID?: string): Observable<any>;
+  sendOneWayCommand(method: string, params?: any, timeout?: number, persistent?: boolean,
+                    persistentPollingInterval?: number, requestUUID?: string): Observable<any>;
+  sendTwoWayCommand(method: string, params?: any, timeout?: number, persistent?: boolean,
+                    persistentPollingInterval?: number, requestUUID?: string): Observable<any>;
   clearRpcError(): void;
 
   subscribe(): void;

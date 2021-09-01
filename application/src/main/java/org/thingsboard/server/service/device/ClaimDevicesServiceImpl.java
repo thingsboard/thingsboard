@@ -29,6 +29,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -69,6 +70,8 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
     private static final String CLAIM_DATA_ATTRIBUTE_NAME = "claimingData";
     private static final ObjectMapper mapper = new ObjectMapper();
 
+    @Autowired
+    private TbClusterService clusterService;
     @Autowired
     private DeviceService deviceService;
     @Autowired
@@ -155,6 +158,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
                 if (device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
                     device.setCustomerId(customerId);
                     Device savedDevice = deviceService.saveDevice(device);
+                    clusterService.onDeviceUpdated(savedDevice, device);
                     return Futures.transform(removeClaimingSavedData(cache, claimData, device), result -> new ClaimResult(savedDevice, ClaimResponse.SUCCESS), MoreExecutors.directExecutor());
                 }
                 return Futures.transform(removeClaimingSavedData(cache, claimData, device), result -> new ClaimResult(null, ClaimResponse.CLAIMED), MoreExecutors.directExecutor());
@@ -179,13 +183,14 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
             cacheEviction(device.getId());
             Customer unassignedCustomer = customerService.findCustomerById(tenantId, device.getCustomerId());
             device.setCustomerId(null);
-            deviceService.saveDevice(device);
+            Device savedDevice = deviceService.saveDevice(device);
+            clusterService.onDeviceUpdated(savedDevice, device);
             if (isAllowedClaimingByDefault) {
                 return Futures.immediateFuture(new ReclaimResult(unassignedCustomer));
             }
             SettableFuture<ReclaimResult> result = SettableFuture.create();
             telemetryService.saveAndNotify(
-                    tenantId, device.getId(), DataConstants.SERVER_SCOPE, Collections.singletonList(
+                    tenantId, savedDevice.getId(), DataConstants.SERVER_SCOPE, Collections.singletonList(
                             new BaseAttributeKvEntry(new BooleanDataEntry(CLAIM_ATTRIBUTE_NAME, true), System.currentTimeMillis())
                     ),
                     new FutureCallback<>() {
@@ -198,7 +203,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
                         public void onFailure(Throwable t) {
                             result.setException(t);
                         }
-            });
+                    });
             return result;
         }
         cacheEviction(device.getId());
@@ -238,7 +243,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
                     public void onFailure(Throwable t) {
                         result.setException(t);
                     }
-        });
+                });
         return result;
     }
 

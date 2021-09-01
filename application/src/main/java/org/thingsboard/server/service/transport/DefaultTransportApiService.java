@@ -95,7 +95,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.service.resource.TbResourceService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
@@ -265,9 +265,11 @@ public class DefaultTransportApiService implements TransportApiService {
                     device.setCustomerId(gateway.getCustomerId());
                     DeviceProfile deviceProfile = deviceProfileCache.findOrCreateDeviceProfile(gateway.getTenantId(), requestMsg.getDeviceType());
                     device.setDeviceProfileId(deviceProfile.getId());
-                    device = deviceService.saveDevice(device);
+                    Device savedDevice = deviceService.saveDevice(device);
+                    tbClusterService.onDeviceUpdated(savedDevice, null);
+                    device = savedDevice;
+
                     relationService.saveRelationAsync(TenantId.SYS_TENANT_ID, new EntityRelation(gateway.getId(), device.getId(), "Created"));
-                    deviceStateService.onDeviceAdded(device);
 
                     TbMsgMetaData metaData = new TbMsgMetaData();
                     CustomerId customerId = gateway.getCustomerId();
@@ -581,7 +583,7 @@ public class DefaultTransportApiService implements TransportApiService {
                 device.setName(deviceName);
                 device.setType("LwM2M");
                 device = deviceService.saveDevice(device);
-                deviceStateService.onDeviceAdded(device);
+                tbClusterService.onDeviceUpdated(device, null);
             }
             TransportProtos.LwM2MRegistrationResponseMsg registrationResponseMsg =
                     TransportProtos.LwM2MRegistrationResponseMsg.newBuilder()

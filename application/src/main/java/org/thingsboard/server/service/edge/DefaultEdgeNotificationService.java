@@ -37,7 +37,7 @@ import org.thingsboard.server.service.edge.rpc.processor.CustomerEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.EdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.EntityEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.RelationEdgeProcessor;
-import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.cluster.TbClusterService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;

@@ -15,8 +15,11 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -59,6 +62,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @TbCoreComponent
+@Slf4j
 @RequestMapping("/api")
 public class EdgeController extends BaseController {
 
@@ -135,7 +139,7 @@ public class EdgeController extends BaseController {
                 edgeService.assignDefaultRuleChainsToEdge(tenantId, savedEdge.getId());
             }
 
-            tbClusterService.onEntityStateChange(savedEdge.getTenantId(), savedEdge.getId(),
+            tbClusterService.broadcastEntityStateChangeEvent(savedEdge.getTenantId(), savedEdge.getId(),
                     created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
 
             logEntityAction(savedEdge.getId(), savedEdge, null, created ? ActionType.ADDED : ActionType.UPDATED, null);
@@ -157,7 +161,7 @@ public class EdgeController extends BaseController {
             Edge edge = checkEdgeId(edgeId, Operation.DELETE);
             edgeService.deleteEdge(getTenantId(), edgeId);
 
-            tbClusterService.onEntityStateChange(getTenantId(), edgeId,
+            tbClusterService.broadcastEntityStateChangeEvent(getTenantId(), edgeId,
                     ComponentLifecycleEvent.DELETED);
 
             logEntityAction(edgeId, edge,
@@ -208,7 +212,7 @@ public class EdgeController extends BaseController {
 
             Edge savedEdge = checkNotNull(edgeService.assignEdgeToCustomer(getCurrentUser().getTenantId(), edgeId, customerId));
 
-            tbClusterService.onEntityStateChange(getTenantId(), edgeId,
+            tbClusterService.broadcastEntityStateChangeEvent(getTenantId(), edgeId,
                     ComponentLifecycleEvent.UPDATED);
 
             logEntityAction(edgeId, savedEdge,
@@ -242,7 +246,7 @@ public class EdgeController extends BaseController {
 
             Edge savedEdge = checkNotNull(edgeService.unassignEdgeFromCustomer(getCurrentUser().getTenantId(), edgeId));
 
-            tbClusterService.onEntityStateChange(getTenantId(), edgeId,
+            tbClusterService.broadcastEntityStateChangeEvent(getTenantId(), edgeId,
                     ComponentLifecycleEvent.UPDATED);
 
             logEntityAction(edgeId, edge,
@@ -272,7 +276,7 @@ public class EdgeController extends BaseController {
             Customer publicCustomer = customerService.findOrCreatePublicCustomer(edge.getTenantId());
             Edge savedEdge = checkNotNull(edgeService.assignEdgeToCustomer(getCurrentUser().getTenantId(), edgeId, publicCustomer.getId()));
 
-            tbClusterService.onEntityStateChange(getTenantId(), edgeId,
+            tbClusterService.broadcastEntityStateChangeEvent(getTenantId(), edgeId,
                     ComponentLifecycleEvent.UPDATED);
 
             logEntityAction(edgeId, savedEdge,
@@ -364,7 +368,7 @@ public class EdgeController extends BaseController {
 
             Edge updatedEdge = edgeNotificationService.setEdgeRootRuleChain(getTenantId(), edge, ruleChainId);
 
-            tbClusterService.onEntityStateChange(updatedEdge.getTenantId(), updatedEdge.getId(), ComponentLifecycleEvent.UPDATED);
+            tbClusterService.broadcastEntityStateChangeEvent(updatedEdge.getTenantId(), updatedEdge.getId(), ComponentLifecycleEvent.UPDATED);
 
             logEntityAction(updatedEdge.getId(), updatedEdge, null, ActionType.UPDATED, null);
 
@@ -544,27 +548,6 @@ public class EdgeController extends BaseController {
         }
     }
 
-    @RequestMapping(value = "/license/checkInstance", method = RequestMethod.POST)
-    @ResponseBody
-    public Object checkInstance(@RequestBody Object request) throws ThingsboardException {
-        try {
-            return edgeService.checkInstance(request);
-        } catch (Exception e) {
-            throw new ThingsboardException(e, ThingsboardErrorCode.SUBSCRIPTION_VIOLATION);
-        }
-    }
-
-    @RequestMapping(value = "/license/activateInstance", params = {"licenseSecret", "releaseDate"}, method = RequestMethod.POST)
-    @ResponseBody
-    public Object activateInstance(@RequestParam String licenseSecret,
-                                   @RequestParam String releaseDate) throws ThingsboardException {
-        try {
-            return edgeService.activateInstance(licenseSecret, releaseDate);
-        } catch (Exception e) {
-            throw new ThingsboardException(e, ThingsboardErrorCode.SUBSCRIPTION_VIOLATION);
-        }
-    }
-
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/missingToRelatedRuleChains/{edgeId}", method = RequestMethod.GET)
     @ResponseBody
@@ -582,5 +565,30 @@ public class EdgeController extends BaseController {
 
     private void cleanUpLicenseKey(Edge edge) {
         edge.setEdgeLicenseKey(null);
+    }
+
+    @RequestMapping(value = "/license/checkInstance", method = RequestMethod.POST)
+    @ResponseBody
+    public ResponseEntity<JsonNode> checkInstance(@RequestBody JsonNode request) throws ThingsboardException {
+        log.debug("Checking instance [{}]", request);
+        try {
+            return edgeLicenseService.checkInstance(request);
+        } catch (Exception e) {
+            log.error("Error occurred: [{}]", e.getMessage(), e);
+            throw new ThingsboardException(e, ThingsboardErrorCode.SUBSCRIPTION_VIOLATION);
+        }
+    }
+
+    @RequestMapping(value = "/license/activateInstance", params = {"licenseSecret", "releaseDate"}, method = RequestMethod.POST)
+    @ResponseBody
+    public ResponseEntity<JsonNode> activateInstance(@RequestParam String licenseSecret,
+                                                     @RequestParam String releaseDate) throws ThingsboardException {
+        log.debug("Activating instance [{}], [{}]", licenseSecret, releaseDate);
+        try {
+            return edgeLicenseService.activateInstance(licenseSecret, releaseDate);
+        } catch (Exception e) {
+            log.error("Error occurred: [{}]", e.getMessage(), e);
+            throw new ThingsboardException(e, ThingsboardErrorCode.SUBSCRIPTION_VIOLATION);
+        }
     }
 }

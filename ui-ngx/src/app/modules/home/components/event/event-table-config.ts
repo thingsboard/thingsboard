@@ -120,6 +120,15 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     this.updateFilterColumns();
 
     this.headerActionDescriptors.push({
+      name: this.translate.instant('event.clear-filter'),
+      icon: 'filter-variant-remove',
+      isMdiIcon: true,
+      isEnabled: () => !isEqual(this.filterParams, {}),
+      onAction: ($event) => {
+        this.clearFiter($event);
+      }
+    },
+    {
       name: this.translate.instant('event.events-filter'),
       icon: 'filter_list',
       isEnabled: () => true,
@@ -314,6 +323,16 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
         );
         break;
     }
+  }
+
+  private clearFiter($event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+
+    this.filterParams = {};
+    this.table.paginator.pageIndex = 0;
+    this.table.updateData();
   }
 
   private editEventFilter($event: MouseEvent) {

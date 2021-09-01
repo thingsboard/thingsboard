@@ -24,13 +24,13 @@ import { AfterViewInit, Component, ElementRef } from '@angular/core';
 export class TogglePasswordComponent implements AfterViewInit {
   showPassword = false;
   hideToggle = false;
+
   private input: HTMLInputElement = null;
 
   constructor(private hostElement: ElementRef) { }
 
   togglePassword($event: Event) {
     $event.stopPropagation();
-    $event.preventDefault();
     this.showPassword = !this.showPassword;
     this.input.type = this.showPassword ? 'text' : 'password';
   }

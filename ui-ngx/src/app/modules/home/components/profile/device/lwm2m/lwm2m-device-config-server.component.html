@@ -95,23 +95,16 @@
     <mat-form-field class="mat-block">
       <mat-label>{{ 'device-profile.lwm2m.server-public-key' | translate }}</mat-label>
       <textarea matInput
-                #serverPublicKey
-                maxlength="{{maxLengthPublicKey}}"
                 cdkTextareaAutosize
                 cdkAutosizeMinRows="1"
                 cols="1" required
                 formControlName="serverPublicKey"
       ></textarea>
-      <mat-hint align="end">{{serverPublicKey.value?.length || 0}}/{{maxLengthPublicKey}}</mat-hint>
       <mat-error *ngIf="serverFormGroup.get('serverPublicKey').hasError('required')">
         {{ 'device-profile.lwm2m.server-public-key-required' | translate }}
       </mat-error>
       <mat-error *ngIf="serverFormGroup.get('serverPublicKey').hasError('pattern')">
         {{ 'device-profile.lwm2m.server-public-key-pattern' | translate }}
-      </mat-error>
-      <mat-error *ngIf="serverFormGroup.get('serverPublicKey').hasError('maxlength') ||
-                serverFormGroup.get('serverPublicKey').hasError('minlength')">
-        {{ 'device-profile.lwm2m.server-public-key-length' | translate: {count: maxLengthPublicKey } }}
       </mat-error>
     </mat-form-field>
   </div>

@@ -187,6 +187,7 @@ export class AddDeviceProfileDialogComponent extends
         name: this.deviceProfileDetailsFormGroup.get('name').value,
         type: this.deviceProfileDetailsFormGroup.get('type').value,
         image: this.deviceProfileDetailsFormGroup.get('image').value,
+        defaultQueueName: this.deviceProfileDetailsFormGroup.get('defaultQueueName').value,
         transportType: this.transportConfigFormGroup.get('transportType').value,
         provisionType: deviceProvisionConfiguration.type,
         provisionDeviceKey,

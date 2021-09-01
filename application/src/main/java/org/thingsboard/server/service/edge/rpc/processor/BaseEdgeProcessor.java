@@ -62,7 +62,7 @@ import org.thingsboard.server.service.edge.rpc.constructor.WidgetTypeMsgConstruc
 import org.thingsboard.server.service.edge.rpc.constructor.WidgetsBundleMsgConstructor;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
 @Slf4j

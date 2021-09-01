@@ -95,6 +95,7 @@ public class AppActor extends ContextAwareActor {
             case DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG:
             case DEVICE_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
             case SERVER_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
+            case REMOVE_RPC_TO_DEVICE_ACTOR_MSG:
                 onToDeviceActorMsg((TenantAwareMsg) msg, true);
                 break;
             case EDGE_EVENT_UPDATE_TO_EDGE_SESSION_MSG:

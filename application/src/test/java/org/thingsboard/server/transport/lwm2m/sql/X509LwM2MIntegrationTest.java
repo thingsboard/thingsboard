@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m;
+package org.thingsboard.server.transport.lwm2m.sql;
 
 import org.eclipse.leshan.client.object.Security;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredentials;
 import org.thingsboard.server.common.transport.util.SslUtil;
+import org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest;
 
 import static org.eclipse.leshan.client.object.Security.x509;
 

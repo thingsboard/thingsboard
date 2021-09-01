@@ -45,7 +45,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
-import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
 import javax.annotation.Nullable;

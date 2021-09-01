@@ -16,13 +16,11 @@
 package org.thingsboard.server.service.edge.rpc.constructor;
 
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-
-import static org.thingsboard.server.service.edge.rpc.EdgeProtoUtils.getStringValue;
 
 @Component
 @TbCoreComponent
@@ -42,7 +40,7 @@ public class RelationMsgConstructor {
             builder.setAdditionalInfo(JacksonUtil.toString(entityRelation.getAdditionalInfo()));
         }
         if (entityRelation.getTypeGroup() != null) {
-            builder.setTypeGroup(getStringValue(entityRelation.getTypeGroup().name()));
+            builder.setTypeGroup(entityRelation.getTypeGroup().name());
         }
         return builder.build();
     }

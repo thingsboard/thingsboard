@@ -31,7 +31,6 @@ import {
   getDefaultServerSecurityConfig,
   KEY_REGEXP_HEX_DEC,
   LEN_MAX_PSK,
-  LEN_MAX_PUBLIC_KEY_RPK,
   Lwm2mSecurityConfigModels,
   Lwm2mSecurityType,
   Lwm2mSecurityTypeTranslationMap
@@ -65,7 +64,7 @@ export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Va
   securityConfigLwM2MTypes = Object.keys(Lwm2mSecurityType);
   credentialTypeLwM2MNamesMap = Lwm2mSecurityTypeTranslationMap;
   lenMaxKeyClient = LEN_MAX_PSK;
-  allowLengthKey: number[];
+  allowLengthKey = [32, 64, LEN_MAX_PSK];
 
   private destroy$ = new Subject();
   private propagateChange = (v: any) => {};
@@ -137,13 +136,11 @@ export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Va
         break;
       case Lwm2mSecurityType.PSK:
         this.lenMaxKeyClient = LEN_MAX_PSK;
-        this.allowLengthKey = [32, 64, LEN_MAX_PSK];
         this.setValidatorsPskRpk(mode);
         this.lwm2mConfigFormGroup.get('client.identity').enable({emitEvent: false});
         break;
       case Lwm2mSecurityType.RPK:
-        this.lenMaxKeyClient = LEN_MAX_PUBLIC_KEY_RPK;
-        this.allowLengthKey = [LEN_MAX_PUBLIC_KEY_RPK];
+        this.lenMaxKeyClient = null;
         this.setValidatorsPskRpk(mode);
         this.lwm2mConfigFormGroup.get('client.identity').disable({emitEvent: false});
         break;
@@ -160,16 +157,14 @@ export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Va
   }
 
   private setValidatorsPskRpk = (mode: Lwm2mSecurityType): void => {
+    const keyValidators = [Validators.required, Validators.pattern(KEY_REGEXP_HEX_DEC)];
     if (mode === Lwm2mSecurityType.PSK) {
       this.lwm2mConfigFormGroup.get('client.identity').setValidators([Validators.required]);
+      keyValidators.push(this.maxLength(this.allowLengthKey));
     } else {
       this.lwm2mConfigFormGroup.get('client.identity').clearValidators();
     }
-    this.lwm2mConfigFormGroup.get('client.key').setValidators([
-        Validators.required,
-        Validators.pattern(KEY_REGEXP_HEX_DEC),
-        this.maxLength(this.allowLengthKey)
-      ]);
+    this.lwm2mConfigFormGroup.get('client.key').setValidators(keyValidators);
     this.lwm2mConfigFormGroup.get('client.key').enable({emitEvent: false});
     this.lwm2mConfigFormGroup.get('client.cert').disable({emitEvent: false});
   }

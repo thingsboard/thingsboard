@@ -192,9 +192,8 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     @Override
     public UserCredentials requestPasswordReset(TenantId tenantId, String email) {
         log.trace("Executing requestPasswordReset email [{}]", email);
-        validateString(email, "Incorrect email " + email);
         DataValidator.validateEmail(email);
-        User user = userDao.findByEmail(tenantId, email);
+        User user = findUserByEmail(tenantId, email);
         if (user == null) {
             throw new UsernameNotFoundException(String.format("Unable to find user by email [%s]", email));
         }

@@ -16,6 +16,7 @@
 
 import { Component, forwardRef, OnDestroy } from '@angular/core';
 import {
+  AbstractControl,
   ControlValueAccessor,
   FormBuilder,
   FormGroup,
@@ -29,8 +30,6 @@ import {
   KEY_REGEXP_HEX_DEC,
   LEN_MAX_PRIVATE_KEY,
   LEN_MAX_PSK,
-  LEN_MAX_PUBLIC_KEY_RPK,
-  LEN_MAX_PUBLIC_KEY_X509,
   Lwm2mSecurityType,
   Lwm2mSecurityTypeTranslationMap,
   ServerSecurityConfig
@@ -62,9 +61,8 @@ export class DeviceCredentialsLwm2mServerComponent implements OnDestroy, Control
   securityConfigLwM2MType = Lwm2mSecurityType;
   securityConfigLwM2MTypes = Object.values(Lwm2mSecurityType);
   lwm2mSecurityTypeTranslationMap = Lwm2mSecurityTypeTranslationMap;
-  lenMinClientPublicKeyOrId = 0;
-  lenMaxClientPublicKeyOrId = LEN_MAX_PUBLIC_KEY_RPK;
   lengthClientSecretKey = LEN_MAX_PRIVATE_KEY;
+  allowLengthKey = [32, 64, LEN_MAX_PSK];
 
   private destroy$ = new Subject();
   private propagateChange = (v: any) => {};
@@ -134,21 +132,15 @@ export class DeviceCredentialsLwm2mServerComponent implements OnDestroy, Control
         this.serverFormGroup.get('clientSecretKey').disable();
         break;
       case Lwm2mSecurityType.PSK:
-        this.lenMinClientPublicKeyOrId = 0;
-        this.lenMaxClientPublicKeyOrId = LEN_MAX_PUBLIC_KEY_RPK;
         this.lengthClientSecretKey = LEN_MAX_PSK;
         this.setValidatorsSecurity(securityMode);
         break;
       case Lwm2mSecurityType.RPK:
-        this.lenMinClientPublicKeyOrId = LEN_MAX_PUBLIC_KEY_RPK;
-        this.lenMaxClientPublicKeyOrId = LEN_MAX_PUBLIC_KEY_RPK;
-        this.lengthClientSecretKey = LEN_MAX_PRIVATE_KEY;
+        this.lengthClientSecretKey = null;
         this.setValidatorsSecurity(securityMode);
         break;
       case Lwm2mSecurityType.X509:
-        this.lenMinClientPublicKeyOrId = 0;
-        this.lenMaxClientPublicKeyOrId = LEN_MAX_PUBLIC_KEY_X509;
-        this.lengthClientSecretKey = LEN_MAX_PRIVATE_KEY;
+        this.lengthClientSecretKey = null;
         this.setValidatorsSecurity(securityMode);
         break;
     }
@@ -157,25 +149,28 @@ export class DeviceCredentialsLwm2mServerComponent implements OnDestroy, Control
   }
 
   private setValidatorsSecurity = (securityMode: Lwm2mSecurityType): void => {
+    const clientSecretKeyValidators = [Validators.required, Validators.pattern(KEY_REGEXP_HEX_DEC)];
+    const clientPublicKeyOrIdValidators = [Validators.required];
     if (securityMode === Lwm2mSecurityType.PSK) {
-      this.serverFormGroup.get('clientPublicKeyOrId').setValidators([Validators.required]);
+      clientSecretKeyValidators.push(this.maxLength(this.allowLengthKey));
     } else {
-      this.serverFormGroup.get('clientPublicKeyOrId').setValidators([
-        Validators.required,
-        Validators.pattern(KEY_REGEXP_HEX_DEC),
-        Validators.minLength(this.lenMinClientPublicKeyOrId),
-        Validators.maxLength(this.lenMaxClientPublicKeyOrId)
-      ]);
+      clientPublicKeyOrIdValidators.push(Validators.pattern(KEY_REGEXP_HEX_DEC));
     }
 
-    this.serverFormGroup.get('clientSecretKey').setValidators([
-      Validators.required,
-      Validators.pattern(KEY_REGEXP_HEX_DEC),
-      Validators.minLength(this.lengthClientSecretKey),
-      Validators.maxLength(this.lengthClientSecretKey)
-    ]);
+    this.serverFormGroup.get('clientPublicKeyOrId').setValidators(clientPublicKeyOrIdValidators);
+    this.serverFormGroup.get('clientSecretKey').setValidators(clientSecretKeyValidators);
 
     this.serverFormGroup.get('clientPublicKeyOrId').enable({emitEvent: false});
     this.serverFormGroup.get('clientSecretKey').enable();
+  }
+
+  private maxLength(keyLengths: number[]) {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value;
+      if (keyLengths.some(len => value.length === len)) {
+        return null;
+      }
+      return {length: true};
+    };
   }
 }

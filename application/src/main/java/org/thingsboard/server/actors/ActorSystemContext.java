@@ -81,7 +81,7 @@ import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.executors.SharedEventLoopGroupService;
 import org.thingsboard.server.service.mail.MailExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.rpc.TbRpcService;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
@@ -400,6 +400,14 @@ public class ActorSystemContext {
     @Getter
     private String debugPerTenantLimitsConfiguration;
 
+    @Value("${actors.rpc.sequential:false}")
+    @Getter
+    private boolean rpcSequential;
+
+    @Value("${actors.rpc.max_retries:5}")
+    @Getter
+    private int maxRpcRetries;
+
     @Getter
     @Setter
     private TbActorSystem actorSystem;
@@ -477,7 +485,6 @@ public class ActorSystemContext {
     public TopicPartitionInfo resolve(ServiceType serviceType, String queueName, TenantId tenantId, EntityId entityId) {
         return partitionService.resolve(serviceType, queueName, tenantId, entityId);
     }
-
 
     public String getServiceId() {
         return serviceInfoProvider.getServiceId();

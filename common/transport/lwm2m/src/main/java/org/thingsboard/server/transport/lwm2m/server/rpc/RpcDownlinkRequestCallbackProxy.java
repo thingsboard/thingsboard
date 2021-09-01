@@ -19,6 +19,7 @@ import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.request.exception.ClientSleepingException;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -43,8 +44,13 @@ public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkR
     }
 
     @Override
+    public void onSent(R request) {
+        transportService.process(client.getSession(), this.request, RpcStatus.SENT, TransportServiceCallback.EMPTY);
+    }
+
+    @Override
     public void onSuccess(R request, T response) {
-        transportService.process(client.getSession(), this.request, TransportServiceCallback.EMPTY);
+        transportService.process(client.getSession(), this.request, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
         sendRpcReplyOnSuccess(response);
         if (callback != null) {
             callback.onSuccess(request, response);
@@ -61,7 +67,9 @@ public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkR
 
     @Override
     public void onError(String params, Exception e) {
-        if (!(e instanceof TimeoutException || e instanceof ClientSleepingException)) {
+        if (e instanceof TimeoutException) {
+            transportService.process(client.getSession(), this.request, RpcStatus.TIMEOUT, TransportServiceCallback.EMPTY);
+        } else if (!(e instanceof ClientSleepingException)) {
             sendRpcReplyOnError(e);
         }
         if (callback != null) {
