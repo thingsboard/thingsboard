@@ -239,18 +239,29 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     public static EntityType[] RELATION_QUERY_ENTITY_TYPES = new EntityType[]{
             EntityType.TENANT, EntityType.CUSTOMER, EntityType.USER, EntityType.DASHBOARD, EntityType.ASSET, EntityType.DEVICE, EntityType.ENTITY_VIEW};
 
-    private static final String HIERARCHICAL_QUERY_TEMPLATE = " FROM (WITH RECURSIVE related_entities(from_id, from_type, to_id, to_type, relation_type, lvl) AS (" +
-            " SELECT from_id, from_type, to_id, to_type, relation_type, 1 as lvl" +
+    private static final String HIERARCHICAL_QUERY_TEMPLATE = " FROM (WITH RECURSIVE related_entities(from_id, from_type, to_id, to_type, lvl, path) AS (" +
+            " SELECT from_id, from_type, to_id, to_type," +
+            "        1 as lvl," +
+            "        ARRAY[$in_id] as path" + // initial path
             " FROM relation" +
             " WHERE $in_id = :relation_root_id and $in_type = :relation_root_type and relation_type_group = 'COMMON'" +
             " UNION ALL" +
-            " SELECT r.from_id, r.from_type, r.to_id, r.to_type, r.relation_type, lvl + 1" +
+            " SELECT r.from_id, r.from_type, r.to_id, r.to_type," +
+            "        (re.lvl + 1) as lvl, " +
+            "        (re.path || ARRAY[r.$in_id]) as path" +
             " FROM relation r" +
             " INNER JOIN related_entities re ON" +
             " r.$in_id = re.$out_id and r.$in_type = re.$out_type and" +
-            " relation_type_group = 'COMMON' %s)" +
-            " SELECT re.$out_id entity_id, re.$out_type entity_type, max(re.lvl) lvl" +
-            " from related_entities re" +
+            " relation_type_group = 'COMMON' " +
+            " AND r.$in_id NOT IN (SELECT * FROM unnest(re.path)) " +
+            " %s" +
+            " GROUP BY r.from_id, r.from_type, r.to_id, r.to_type, (re.lvl + 1), (re.path || ARRAY[r.$in_id])" +
+            " )" +
+            " SELECT re.$out_id entity_id, re.$out_type entity_type, max(r_int.lvl) lvl" +
+            " from related_entities r_int" +
+            "  INNER JOIN relation re ON re.from_id = r_int.from_id AND re.from_type = r_int.from_type" +
+            "                         AND re.to_id = r_int.to_id AND re.to_type = r_int.to_type" +
+            "                         AND re.relation_type_group = 'COMMON'" +
             " %s GROUP BY entity_id, entity_type) entity";
     private static final String HIERARCHICAL_TO_QUERY_TEMPLATE = HIERARCHICAL_QUERY_TEMPLATE.replace("$in", "to").replace("$out", "from");
     private static final String HIERARCHICAL_FROM_QUERY_TEMPLATE = HIERARCHICAL_QUERY_TEMPLATE.replace("$in", "from").replace("$out", "to");
