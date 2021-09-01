@@ -61,9 +61,8 @@
   <div fxLayout="row" class="tb-panel-actions" fxLayoutAlign="end center">
     <button type="button"
             mat-button
-            [disabled]="resetButtonDisabled"
-            (click)="reset()">
-      {{ 'action.reset' | translate }}
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
     </button>
     <button type="submit"
             mat-raised-button

@@ -107,21 +107,6 @@ export class EventFilterPanelComponent {
     this.overlayRef.dispose();
   }
 
-  reset() {
-    const emptyInputValue = {};
-
-    for (const inputValue in this.eventFilterFormGroup.value) {
-      emptyInputValue[inputValue] = '';
-    }
-
-    this.eventFilterFormGroup.reset(emptyInputValue);
-    this.update();
-  }
-
-  get resetButtonDisabled() {
-    return isEqual(this.data.filterParams, {});
-  }
-
   changeIsError(value: boolean | string) {
     if (this.conditionError && value === '') {
       this.eventFilterFormGroup.get('error').reset('', {emitEvent: false});

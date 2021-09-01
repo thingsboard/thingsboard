@@ -57,8 +57,7 @@
         "download": "Download",
         "next-with-label": "Next: {{label}}",
         "read-more": "Read more",
-        "hide": "Hide",
-        "reset": "Reset"
+        "hide": "Hide"
     },
     "aggregation": {
         "aggregation": "Aggregation",
@@ -1823,7 +1822,8 @@
         "all-events": "All",
         "has-error": "Has error",
         "entity-id": "Entity Id",
-        "entity-type": "Entity type"
+        "entity-type": "Entity type",
+        "clear-filter": "Clear Filter"
     },
     "extension": {
         "extensions": "Extensions",
