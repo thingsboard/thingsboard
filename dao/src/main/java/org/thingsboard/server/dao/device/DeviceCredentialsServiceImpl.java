@@ -18,12 +18,12 @@ package org.thingsboard.server.dao.device;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
@@ -120,9 +120,14 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
         } catch (IllegalArgumentException e) {
             throw new DeviceCredentialsValidationException("Invalid credentials body for simple mqtt credentials!");
         }
+
         if (StringUtils.isEmpty(mqttCredentials.getClientId()) && StringUtils.isEmpty(mqttCredentials.getUserName())) {
             throw new DeviceCredentialsValidationException("Both mqtt client id and user name are empty!");
         }
+        if (StringUtils.isNotEmpty(mqttCredentials.getClientId()) && StringUtils.isNotEmpty(mqttCredentials.getPassword())) {
+            throw new DeviceCredentialsValidationException("Password cannot be specified along with client id");
+        }
+
         if (StringUtils.isEmpty(mqttCredentials.getClientId())) {
             deviceCredentials.setCredentialsId(mqttCredentials.getUserName());
         } else if (StringUtils.isEmpty(mqttCredentials.getUserName())) {
@@ -130,7 +135,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
         } else {
             deviceCredentials.setCredentialsId(EncryptionUtil.getSha3Hash("|", mqttCredentials.getClientId(), mqttCredentials.getUserName()));
         }
-        if (!StringUtils.isEmpty(mqttCredentials.getPassword())) {
+        if (StringUtils.isNotEmpty(mqttCredentials.getPassword())) {
             mqttCredentials.setPassword(mqttCredentials.getPassword());
         }
         deviceCredentials.setCredentialsValue(JacksonUtil.toString(mqttCredentials));
