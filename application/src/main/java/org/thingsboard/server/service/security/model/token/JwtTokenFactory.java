@@ -26,6 +26,7 @@ import io.jsonwebtoken.UnsupportedJwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.util.Pair;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
@@ -50,6 +51,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class JwtTokenFactory {
 
+    public static final String TOKEN_ID = "tokenId";
     private static final String SCOPES = "scopes";
     private static final String USER_ID = "userId";
     private static final String FIRST_NAME = "firstName";
@@ -69,7 +71,7 @@ public class JwtTokenFactory {
     /**
      * Factory method for issuing new JWT Tokens.
      */
-    public AccessJwtToken createAccessJwtToken(SecurityUser securityUser) {
+    public AccessJwtToken createAccessJwtToken(SecurityUser securityUser, UUID tokenUuid) {
         if (StringUtils.isBlank(securityUser.getEmail()))
             throw new IllegalArgumentException("Cannot create JWT Token without username/email");
 
@@ -79,6 +81,7 @@ public class JwtTokenFactory {
         UserPrincipal principal = securityUser.getUserPrincipal();
         String subject = principal.getValue();
         Claims claims = Jwts.claims().setSubject(subject);
+        claims.put(TOKEN_ID, tokenUuid);
         claims.put(SCOPES, securityUser.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
         claims.put(USER_ID, securityUser.getId().getId().toString());
         claims.put(FIRST_NAME, securityUser.getFirstName());
@@ -136,7 +139,7 @@ public class JwtTokenFactory {
         return securityUser;
     }
 
-    public JwtToken createRefreshToken(SecurityUser securityUser) {
+    public JwtToken createRefreshToken(SecurityUser securityUser, UUID tokenUuid) {
         if (StringUtils.isBlank(securityUser.getEmail())) {
             throw new IllegalArgumentException("Cannot create JWT Token without username/email");
         }
@@ -145,6 +148,7 @@ public class JwtTokenFactory {
 
         UserPrincipal principal = securityUser.getUserPrincipal();
         Claims claims = Jwts.claims().setSubject(principal.getValue());
+        claims.put(TOKEN_ID, tokenUuid);
         claims.put(SCOPES, Collections.singletonList(Authority.REFRESH_TOKEN.name()));
         claims.put(USER_ID, securityUser.getId().getId().toString());
         claims.put(IS_PUBLIC, principal.getType() == UserPrincipal.Type.PUBLIC_ID);
@@ -192,5 +196,10 @@ public class JwtTokenFactory {
             log.debug("JWT Token is expired", expiredEx);
             throw new JwtExpiredTokenException(token, "JWT Token expired", expiredEx);
         }
+    }
+
+    public Pair<JwtToken, JwtToken> getAccessAndRefreshTokens(SecurityUser securityUser) {
+        UUID tokenUuid = UUID.randomUUID();
+        return Pair.of(createAccessJwtToken(securityUser, tokenUuid), createRefreshToken(securityUser, tokenUuid));
     }
 }

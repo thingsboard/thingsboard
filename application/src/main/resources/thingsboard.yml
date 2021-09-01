@@ -118,6 +118,9 @@ security:
     loginProcessingUrl: "${SECURITY_OAUTH2_LOGIN_PROCESSING_URL:/login/oauth2/code/}"
     githubMapper:
       emailUrl: "${SECURITY_OAUTH2_GITHUB_MAPPER_EMAIL_URL_KEY:https://api.github.com/user/emails}"
+  sessionsLimit:
+    machinesLimit: "${SECURITY_SESSION_LIMIT_MACHINES:0}"
+    oneMachineLimit: "${SECURITY_SESSION_LIMIT_ON_ONE_MACHINE:0}"
 
 # Usage statistics parameters
 usage:
@@ -379,6 +382,9 @@ caffeine:
       timeToLiveInMinutes: 1440
       maxSize: 100000
     tokensOutdatageTime:
+      timeToLiveInMinutes: 20000
+      maxSize: 10000
+    userActiveSessionsLimit:
       timeToLiveInMinutes: 20000
       maxSize: 10000
     otaPackages:

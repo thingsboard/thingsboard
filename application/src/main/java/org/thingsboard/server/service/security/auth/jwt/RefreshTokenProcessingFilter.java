@@ -27,7 +27,9 @@ import org.springframework.security.web.authentication.AbstractAuthenticationPro
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.thingsboard.server.service.security.auth.RefreshAuthenticationToken;
+import org.thingsboard.server.service.security.auth.UserActiveSessionsLimitService;
 import org.thingsboard.server.service.security.exception.AuthMethodNotSupportedException;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.RawAccessJwtToken;
 
 import javax.servlet.FilterChain;
@@ -35,6 +37,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.security.Security;
 
 @Slf4j
 public class RefreshTokenProcessingFilter extends AbstractAuthenticationProcessingFilter {
@@ -43,6 +46,8 @@ public class RefreshTokenProcessingFilter extends AbstractAuthenticationProcessi
     private final AuthenticationFailureHandler failureHandler;
 
     private final ObjectMapper objectMapper;
+
+//    private final UserActiveSessionsLimitService sessionsLimitService;
 
     public RefreshTokenProcessingFilter(String defaultProcessUrl, AuthenticationSuccessHandler successHandler,
                                         AuthenticationFailureHandler failureHandler, ObjectMapper mapper) {
@@ -88,6 +93,7 @@ public class RefreshTokenProcessingFilter extends AbstractAuthenticationProcessi
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
                                               AuthenticationException failed) throws IOException, ServletException {
         SecurityContextHolder.clearContext();
+//        sessionsLimitService.decreaseCurrentActiveSessions();
         failureHandler.onAuthenticationFailure(request, response, failed);
     }
 }

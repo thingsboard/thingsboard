@@ -15,12 +15,13 @@
  */
 package org.thingsboard.server.controller;
 
+import org.junit.Test;
+import org.thingsboard.server.common.data.security.Authority;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import org.thingsboard.server.common.data.security.Authority;
-import org.junit.Test;
 
 public abstract class BaseAuthControllerTest extends AbstractControllerTest {
 
@@ -76,4 +77,24 @@ public abstract class BaseAuthControllerTest extends AbstractControllerTest {
                 .andExpect(jsonPath("$.authority",is(Authority.SYS_ADMIN.name())))
                 .andExpect(jsonPath("$.email",is(SYS_ADMIN_EMAIL)));
     }
+
+    @Test
+    public void testTokenExpiredOnLogout() throws Exception {
+        loginTenantAdmin();
+        String token = this.token;
+        String refreshToken = this.refreshToken;
+
+        SECONDS.sleep(1); // need to wait before outdating so that outdatage time is strictly after token issue time
+        doPost("/api/auth/logout")
+                .andExpect(status().isOk());
+
+        this.token = token;
+        this.refreshToken = refreshToken;
+
+        doGet("/api/auth/user")
+                .andExpect(status().isUnauthorized());
+
+    }
+
+
 }

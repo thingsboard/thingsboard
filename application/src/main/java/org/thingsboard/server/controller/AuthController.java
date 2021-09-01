@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.util.Pair;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -48,11 +49,14 @@ import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
+import org.thingsboard.server.service.security.auth.UserActiveSessionsLimitService;
+import org.thingsboard.server.service.security.auth.TokenOutdatingService;
+import org.thingsboard.server.service.security.auth.jwt.extractor.JwtHeaderTokenExtractor;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
+import org.thingsboard.server.service.security.model.token.RawAccessJwtToken;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 import ua_parser.Client;
 
@@ -68,11 +72,13 @@ import java.net.URISyntaxException;
 public class AuthController extends BaseController {
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtTokenFactory tokenFactory;
-    private final RefreshTokenRepository refreshTokenRepository;
     private final MailService mailService;
     private final SystemSecurityService systemSecurityService;
     private final AuditLogService auditLogService;
     private final ApplicationEventPublisher eventPublisher;
+    private final TokenOutdatingService tokenOutdatingService;
+    private final UserActiveSessionsLimitService userActiveSessionsLimitService;
+    private final JwtHeaderTokenExtractor tokenExtractor;
 
     @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/auth/user", method = RequestMethod.GET)
@@ -90,12 +96,16 @@ public class AuthController extends BaseController {
     @ResponseStatus(value = HttpStatus.OK)
     public void logout(HttpServletRequest request) throws ThingsboardException {
         logLogoutAction(request);
+        SecurityUser securityUser = getCurrentUser();
+        RawAccessJwtToken token = new RawAccessJwtToken(tokenExtractor.extract(request));
+        tokenOutdatingService.outdateTokens(token);
+        userActiveSessionsLimitService.invalidateSessionFor(securityUser.getId(), token, getClientIp(request));
     }
 
     @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/auth/changePassword", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public ObjectNode changePassword(@RequestBody JsonNode changePasswordRequest) throws ThingsboardException {
+    public ObjectNode changePassword(@RequestBody JsonNode changePasswordRequest, HttpServletRequest request) throws ThingsboardException {
         try {
             String currentPassword = changePasswordRequest.get("currentPassword").asText();
             String newPassword = changePasswordRequest.get("newPassword").asText();
@@ -115,8 +125,10 @@ public class AuthController extends BaseController {
 
             eventPublisher.publishEvent(new UserAuthDataChangedEvent(securityUser.getId()));
             ObjectNode response = JacksonUtil.newObjectNode();
-            response.put("token", tokenFactory.createAccessJwtToken(securityUser).getToken());
-            response.put("refreshToken", tokenFactory.createRefreshToken(securityUser).getToken());
+            Pair<JwtToken, JwtToken> tokensPair = tokenFactory.getAccessAndRefreshTokens(securityUser);
+            response.put("token", tokensPair.getFirst().getToken());
+            response.put("refreshToken", tokensPair.getSecond().getToken());
+            userActiveSessionsLimitService.validateSessionFor(securityUser.getId(), tokensPair.getFirst(), getClientIp(request));
             return response;
         } catch (Exception e) {
             throw handleException(e);
@@ -229,8 +241,10 @@ public class AuthController extends BaseController {
 
             sendEntityNotificationMsg(user.getTenantId(), user.getId(), EdgeEventActionType.CREDENTIALS_UPDATED);
 
-            JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
-            JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
+            Pair<JwtToken, JwtToken> tokensPair = tokenFactory.getAccessAndRefreshTokens(securityUser);
+            JwtToken accessToken = tokensPair.getFirst();
+            JwtToken refreshToken = tokensPair.getSecond();
+            userActiveSessionsLimitService.validateSessionFor(securityUser.getId(), accessToken, getClientIp(request));
 
             ObjectMapper objectMapper = new ObjectMapper();
             ObjectNode tokenObject = objectMapper.createObjectNode();
@@ -270,8 +284,10 @@ public class AuthController extends BaseController {
                 mailService.sendPasswordWasResetEmail(loginUrl, email);
 
                 eventPublisher.publishEvent(new UserAuthDataChangedEvent(securityUser.getId()));
-                JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
-                JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
+                Pair<JwtToken, JwtToken> tokensPair = tokenFactory.getAccessAndRefreshTokens(securityUser);
+                JwtToken accessToken = tokensPair.getFirst();
+                JwtToken refreshToken = tokensPair.getSecond();
+                userActiveSessionsLimitService.validateSessionFor(securityUser.getId(), accessToken, getClientIp(request));
 
                 ObjectMapper objectMapper = new ObjectMapper();
                 ObjectNode tokenObject = objectMapper.createObjectNode();
@@ -284,6 +300,11 @@ public class AuthController extends BaseController {
         } catch (Exception e) {
             throw handleException(e);
         }
+    }
+
+    private String getClientIp(HttpServletRequest request) {
+        RestAuthenticationDetails details = new RestAuthenticationDetails(request);
+        return details.getClientAddress();
     }
 
     private void logLogoutAction(HttpServletRequest request) throws ThingsboardException {

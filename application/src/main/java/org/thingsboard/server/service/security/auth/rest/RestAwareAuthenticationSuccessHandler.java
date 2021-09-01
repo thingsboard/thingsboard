@@ -17,6 +17,7 @@ package org.thingsboard.server.service.security.auth.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
@@ -24,7 +25,7 @@ import org.springframework.security.web.WebAttributes;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.security.model.JwtToken;
-import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
+import org.thingsboard.server.service.security.auth.UserActiveSessionsLimitService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
@@ -40,22 +41,25 @@ import java.util.Map;
 public class RestAwareAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
     private final ObjectMapper mapper;
     private final JwtTokenFactory tokenFactory;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final UserActiveSessionsLimitService userActiveSessionsLimitService;
 
     @Autowired
-    public RestAwareAuthenticationSuccessHandler(final ObjectMapper mapper, final JwtTokenFactory tokenFactory, final RefreshTokenRepository refreshTokenRepository) {
+    public RestAwareAuthenticationSuccessHandler(final ObjectMapper mapper, final JwtTokenFactory tokenFactory, UserActiveSessionsLimitService userActiveSessionsLimitService) {
         this.mapper = mapper;
         this.tokenFactory = tokenFactory;
-        this.refreshTokenRepository = refreshTokenRepository;
+        this.userActiveSessionsLimitService = userActiveSessionsLimitService;
     }
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
         SecurityUser securityUser = (SecurityUser) authentication.getPrincipal();
+        Pair<JwtToken, JwtToken> tokensPair = tokenFactory.getAccessAndRefreshTokens(securityUser);
+        JwtToken accessToken = tokensPair.getFirst();
+        JwtToken refreshToken = tokensPair.getSecond();
 
-        JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
-        JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
+        RestAuthenticationDetails details = (RestAuthenticationDetails) authentication.getDetails();
+        userActiveSessionsLimitService.validateSessionFor(securityUser.getId(), accessToken, details.getClientAddress());
 
         Map<String, String> tokenMap = new HashMap<String, String>();
         tokenMap.put("token", accessToken.getToken());

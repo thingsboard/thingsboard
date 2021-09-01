@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.service.security.exception.AuthMethodNotSupportedException;
 import org.thingsboard.server.service.security.exception.JwtExpiredTokenException;
+import org.thingsboard.server.service.security.exception.UserActiveSessionsLimitException;
 import org.thingsboard.server.service.security.exception.UserPasswordExpiredException;
 
 import javax.servlet.ServletException;
@@ -167,6 +168,8 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
             UserPasswordExpiredException expiredException = (UserPasswordExpiredException) authenticationException;
             String resetToken = expiredException.getResetToken();
             mapper.writeValue(response.getWriter(), ThingsboardCredentialsExpiredResponse.of(expiredException.getMessage(), resetToken));
+        } else if (authenticationException instanceof UserActiveSessionsLimitException) {
+            mapper.writeValue(response.getWriter(), ThingsboardErrorResponse.of(authenticationException.getMessage(), ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED));
         } else {
             mapper.writeValue(response.getWriter(), ThingsboardErrorResponse.of("Authentication failed", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED));
         }

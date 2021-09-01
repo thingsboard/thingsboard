@@ -16,6 +16,8 @@
 package org.thingsboard.server.service.security.auth.jwt;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AccountExpiredException;
+import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContext;
@@ -24,7 +26,11 @@ import org.springframework.security.web.authentication.AbstractAuthenticationPro
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.thingsboard.server.service.security.auth.JwtAuthenticationToken;
+import org.thingsboard.server.service.security.auth.UserActiveSessionsLimitService;
 import org.thingsboard.server.service.security.auth.jwt.extractor.TokenExtractor;
+import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
+import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetailsSource;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.RawAccessJwtToken;
 
 import javax.servlet.FilterChain;
@@ -36,20 +42,41 @@ import java.io.IOException;
 public class JwtTokenAuthenticationProcessingFilter extends AbstractAuthenticationProcessingFilter {
     private final AuthenticationFailureHandler failureHandler;
     private final TokenExtractor tokenExtractor;
+    private final UserActiveSessionsLimitService userActiveSessionsLimitService;
 
     @Autowired
     public JwtTokenAuthenticationProcessingFilter(AuthenticationFailureHandler failureHandler,
-                                                  TokenExtractor tokenExtractor, RequestMatcher matcher) {
+                                                  TokenExtractor tokenExtractor, RequestMatcher matcher,
+                                                  UserActiveSessionsLimitService userActiveSessionsLimitService) {
         super(matcher);
         this.failureHandler = failureHandler;
         this.tokenExtractor = tokenExtractor;
+        this.userActiveSessionsLimitService = userActiveSessionsLimitService;
     }
+
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
             throws AuthenticationException, IOException, ServletException {
         RawAccessJwtToken token = new RawAccessJwtToken(tokenExtractor.extract(request));
-        return getAuthenticationManager().authenticate(new JwtAuthenticationToken(token));
+
+        Authentication authentication = getAuthenticationManager().authenticate(new JwtAuthenticationToken(token));
+
+        RestAuthenticationDetails details = (RestAuthenticationDetails) authentication.getDetails();
+        SecurityUser securityUser = (SecurityUser) authentication.getPrincipal();
+
+        if (details == null) {
+            AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new RestAuthenticationDetailsSource();
+            details = (RestAuthenticationDetails) authenticationDetailsSource.buildDetails(request);
+        }
+
+        String clientIp = details.getClientAddress();
+
+        if (!userActiveSessionsLimitService.sessionIsValidFor(securityUser.getId(), token, clientIp)) {
+            throw new AccountExpiredException("Disconnected due to session invalidation!");
+        }
+
+        return authentication;
     }
 
     @Override

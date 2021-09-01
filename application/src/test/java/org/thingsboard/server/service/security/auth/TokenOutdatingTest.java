@@ -99,12 +99,12 @@ public class TokenOutdatingTest {
         JwtToken jwtToken = createAccessJwtToken(userId);
 
         SECONDS.sleep(1); // need to wait before outdating so that outdatage time is strictly after token issue time
-        tokenOutdatingService.outdateOldUserTokens(userId);
+        tokenOutdatingService.outdateTokens(userId.getId().toString());
         assertTrue(tokenOutdatingService.isOutdated(jwtToken, userId));
 
         SECONDS.sleep(1);
 
-        JwtToken newJwtToken = tokenFactory.createAccessJwtToken(createMockSecurityUser(userId));
+        JwtToken newJwtToken = tokenFactory.createAccessJwtToken(createMockSecurityUser(userId), UUID.randomUUID());
         assertFalse(tokenOutdatingService.isOutdated(newJwtToken, userId));
     }
 
@@ -117,7 +117,7 @@ public class TokenOutdatingTest {
         });
 
         SECONDS.sleep(1);
-        tokenOutdatingService.outdateOldUserTokens(userId);
+        tokenOutdatingService.outdateTokens(userId.getId().toString());
 
         assertThrows(JwtExpiredTokenException.class, () -> {
             accessTokenAuthenticationProvider.authenticate(new JwtAuthenticationToken(accessJwtToken));
@@ -133,7 +133,7 @@ public class TokenOutdatingTest {
         });
 
         SECONDS.sleep(1);
-        tokenOutdatingService.outdateOldUserTokens(userId);
+        tokenOutdatingService.outdateTokens(userId.getId().toString());
 
         assertThrows(CredentialsExpiredException.class, () -> {
             refreshTokenAuthenticationProvider.authenticate(new RefreshAuthenticationToken(refreshJwtToken));
@@ -145,7 +145,7 @@ public class TokenOutdatingTest {
         JwtToken jwtToken = createAccessJwtToken(userId);
 
         SECONDS.sleep(1);
-        tokenOutdatingService.outdateOldUserTokens(userId);
+        tokenOutdatingService.outdateTokens(userId.getId().toString());
 
         int refreshTokenExpirationTime = 5;
         jwtSettings.setRefreshTokenExpTime(refreshTokenExpirationTime);
@@ -161,12 +161,13 @@ public class TokenOutdatingTest {
         assertNull(cacheManager.getCache(CacheConstants.TOKEN_OUTDATAGE_TIME_CACHE).get(userId.getId().toString()));
     }
 
+
     private JwtToken createAccessJwtToken(UserId userId) {
-        return tokenFactory.createAccessJwtToken(createMockSecurityUser(userId));
+        return tokenFactory.createAccessJwtToken(createMockSecurityUser(userId), UUID.randomUUID());
     }
 
     private JwtToken createRefreshJwtToken(UserId userId) {
-        return tokenFactory.createRefreshToken(createMockSecurityUser(userId));
+        return tokenFactory.createRefreshToken(createMockSecurityUser(userId), UUID.randomUUID());
     }
 
     private RawAccessJwtToken getRawJwtToken(JwtToken token) {

@@ -22,6 +22,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,7 +33,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
@@ -51,7 +51,8 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.event.UserAuthDataChangedEvent;
 import org.thingsboard.server.common.data.security.model.JwtToken;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
+import org.thingsboard.server.service.security.auth.UserActiveSessionsLimitService;
+import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
@@ -78,9 +79,9 @@ public class UserController extends BaseController {
 
     private final MailService mailService;
     private final JwtTokenFactory tokenFactory;
-    private final RefreshTokenRepository refreshTokenRepository;
     private final SystemSecurityService systemSecurityService;
     private final ApplicationEventPublisher eventPublisher;
+    private final UserActiveSessionsLimitService userActiveSessionsLimitService;
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/user/{userId}", method = RequestMethod.GET)
@@ -115,7 +116,7 @@ public class UserController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/user/{userId}/token", method = RequestMethod.GET)
     @ResponseBody
-    public JsonNode getUserToken(@PathVariable(USER_ID) String strUserId) throws ThingsboardException {
+    public JsonNode getUserToken(@PathVariable(USER_ID) String strUserId, HttpServletRequest request) throws ThingsboardException {
         checkParameter(USER_ID, strUserId);
         try {
             if (!userTokenAccessEnabled) {
@@ -128,8 +129,15 @@ public class UserController extends BaseController {
             UserPrincipal principal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
             UserCredentials credentials = userService.findUserCredentialsByUserId(authUser.getTenantId(), userId);
             SecurityUser securityUser = new SecurityUser(user, credentials.isEnabled(), principal);
-            JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
-            JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
+            Pair<JwtToken, JwtToken> tokensPair = tokenFactory.getAccessAndRefreshTokens(securityUser);
+            JwtToken accessToken = tokensPair.getFirst();
+            JwtToken refreshToken = tokensPair.getSecond();
+
+            RestAuthenticationDetails details = new RestAuthenticationDetails(request);
+            userActiveSessionsLimitService.validateSessionFor(
+                    securityUser.getId(), accessToken, details.getClientAddress()
+            );
+
             ObjectMapper objectMapper = new ObjectMapper();
             ObjectNode tokenObject = objectMapper.createObjectNode();
             tokenObject.put("token", accessToken.getToken());

@@ -42,6 +42,7 @@ import org.springframework.web.filter.CorsFilter;
 import org.thingsboard.server.dao.audit.AuditLogLevelFilter;
 import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
+import org.thingsboard.server.service.security.auth.UserActiveSessionsLimitService;
 import org.thingsboard.server.service.security.auth.jwt.JwtAuthenticationProvider;
 import org.thingsboard.server.service.security.auth.jwt.JwtTokenAuthenticationProcessingFilter;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenAuthenticationProvider;
@@ -116,6 +117,8 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
 
     @Autowired private RateLimitProcessingFilter rateLimitProcessingFilter;
 
+    @Autowired private UserActiveSessionsLimitService userActiveSessionsLimitService;
+
     @Bean
     protected RestLoginProcessingFilter buildRestLoginProcessingFilter() throws Exception {
         RestLoginProcessingFilter filter = new RestLoginProcessingFilter(FORM_BASED_LOGIN_ENTRY_POINT, successHandler, failureHandler, objectMapper);
@@ -136,7 +139,7 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
                 PUBLIC_LOGIN_ENTRY_POINT, DEVICE_API_ENTRY_POINT, WEBJARS_ENTRY_POINT));
         SkipPathRequestMatcher matcher = new SkipPathRequestMatcher(pathsToSkip, TOKEN_BASED_AUTH_ENTRY_POINT);
         JwtTokenAuthenticationProcessingFilter filter
-                = new JwtTokenAuthenticationProcessingFilter(failureHandler, jwtHeaderTokenExtractor, matcher);
+                = new JwtTokenAuthenticationProcessingFilter(failureHandler, jwtHeaderTokenExtractor, matcher, userActiveSessionsLimitService);
         filter.setAuthenticationManager(this.authenticationManager);
         return filter;
     }
@@ -152,7 +155,7 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
     protected JwtTokenAuthenticationProcessingFilter buildWsJwtTokenAuthenticationProcessingFilter() throws Exception {
         AntPathRequestMatcher matcher = new AntPathRequestMatcher(WS_TOKEN_BASED_AUTH_ENTRY_POINT);
         JwtTokenAuthenticationProcessingFilter filter
-                = new JwtTokenAuthenticationProcessingFilter(failureHandler, jwtQueryTokenExtractor, matcher);
+                = new JwtTokenAuthenticationProcessingFilter(failureHandler, jwtQueryTokenExtractor, matcher, userActiveSessionsLimitService);
         filter.setAuthenticationManager(this.authenticationManager);
         return filter;
     }
