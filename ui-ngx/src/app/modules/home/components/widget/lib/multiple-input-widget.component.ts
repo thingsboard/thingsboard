@@ -59,7 +59,7 @@ interface MultipleInputWidgetSettings {
 }
 
 interface MultipleInputWidgetSelectOption {
-  value: string;
+  value: string | null;
   label: string;
 }
 
@@ -252,6 +252,14 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
               }
             }
             // For backward compatibility
+
+            if (dataKey.settings.dataKeyValueType === 'select') {
+              dataKey.settings.selectOptions.forEach((option) => {
+                if (option.value.toLowerCase() === 'null') {
+                  option.value = null;
+                }
+              });
+            }
 
             source.keys.push(dataKey);
           });
@@ -452,10 +460,6 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   }
 
   public getCustomTranslationText(value): string {
-    if (value.toLowerCase() === 'null') {
-      return '';
-    }
-
     return this.utils.customTranslation(value, value);
   }
 
