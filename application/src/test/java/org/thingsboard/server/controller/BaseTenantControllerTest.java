@@ -60,11 +60,6 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         tenant.setTitle(RandomStringUtils.randomAlphanumeric(300));
         doPost("/api/tenant", tenant).andExpect(statusReason(containsString("length of title must be equal or less than 255")));
     }
-
-    public static void main(String[] args) {
-        String temp = RandomStringUtils.randomAlphanumeric(300);
-        System.err.println(temp);
-    }
     
     @Test
     public void testFindTenantById() throws Exception {
