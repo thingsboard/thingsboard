@@ -48,11 +48,20 @@ public class LoginAmountLimitService {
     }
 
     public void decreaseCurrentLoginAmount(UserId userId) {
-        getCurrentAmount(userId).ifPresent(currentAmount -> loginLimitCache.put(toKey(userId), currentAmount - 1));
+        getCurrentAmount(userId).ifPresent(currentAmount -> {
+            loginLimitCache.put(toKey(userId), --currentAmount);
+            if (currentAmount == 0)
+                loginLimitCache.evict(toKey(userId));
+        });
     }
 
     public void increaseCurrentLoginAmount(UserId userId) {
-        getCurrentAmount(userId).ifPresent(currentAmount -> loginLimitCache.put(toKey(userId), currentAmount + 1));
+        Optional<Long> currentAmount = getCurrentAmount(userId);
+        String key = toKey(userId);
+        if (currentAmount.isPresent())
+            loginLimitCache.put(key, currentAmount.get() + 1);
+        else
+            loginLimitCache.put(key, 1L);
     }
 
     private Optional<Long> getCurrentAmount(UserId userId) {

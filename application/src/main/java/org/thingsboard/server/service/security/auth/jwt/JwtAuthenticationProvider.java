@@ -21,7 +21,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.service.security.auth.JwtAuthenticationToken;
-import org.thingsboard.server.service.security.auth.LoginAmountLimitService;
 import org.thingsboard.server.service.security.auth.TokenOutdatingService;
 import org.thingsboard.server.service.security.exception.JwtExpiredTokenException;
 import org.thingsboard.server.service.security.model.SecurityUser;

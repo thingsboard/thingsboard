@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.profile;
 
 import lombok.Getter;
+import lombok.ToString;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.query.EntityKey;
@@ -23,6 +24,7 @@ import org.thingsboard.server.common.data.query.EntityKeyType;
 
 import java.util.Set;
 
+@ToString
 class SnapshotUpdate {
 
     @Getter

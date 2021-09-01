@@ -51,7 +51,6 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.event.UserAuthDataChangedEvent;
 import org.thingsboard.server.common.data.security.model.JwtToken;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.model.token.AccessJwtToken;
@@ -79,7 +78,6 @@ public class UserController extends BaseController {
 
     private final MailService mailService;
     private final JwtTokenFactory tokenFactory;
-    private final RefreshTokenRepository refreshTokenRepository;
     private final SystemSecurityService systemSecurityService;
     private final ApplicationEventPublisher eventPublisher;
 

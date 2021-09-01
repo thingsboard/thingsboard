@@ -20,12 +20,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.WebAttributes;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.security.model.JwtToken;
-import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
+import org.thingsboard.server.service.security.auth.LoginAmountLimitService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.AccessJwtToken;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
@@ -42,19 +43,21 @@ import java.util.Map;
 public class RestAwareAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
     private final ObjectMapper mapper;
     private final JwtTokenFactory tokenFactory;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final LoginAmountLimitService loginAmountLimitService;
 
     @Autowired
-    public RestAwareAuthenticationSuccessHandler(final ObjectMapper mapper, final JwtTokenFactory tokenFactory, final RefreshTokenRepository refreshTokenRepository) {
+    public RestAwareAuthenticationSuccessHandler(final ObjectMapper mapper, final JwtTokenFactory tokenFactory, LoginAmountLimitService loginAmountLimitService) {
         this.mapper = mapper;
         this.tokenFactory = tokenFactory;
-        this.refreshTokenRepository = refreshTokenRepository;
+        this.loginAmountLimitService = loginAmountLimitService;
     }
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
         SecurityUser securityUser = (SecurityUser) authentication.getPrincipal();
+        if (loginAmountLimitService.isOverLimit(securityUser.getId()))
+            throw new AuthenticationServiceException("Violation of users amount limit");
 
         Pair<AccessJwtToken, JwtToken> tokensPair = tokenFactory.getAccessAndRefreshTokens(securityUser);
         JwtToken accessToken = tokensPair.getFirst();
