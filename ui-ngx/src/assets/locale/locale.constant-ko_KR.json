@@ -959,7 +959,7 @@
         "profile-configuration": "프로파일 설정",
         "transport-configuration": "전송 설정",
         "default-rule-chain": "기본 규칙 사슬",
-        "select-queue-hint": "Select from a drop-down list or add a custom name.",
+        "select-queue-hint": "Select from a drop-down list.",
         "delete-device-profile-title": "Are you sure you want to delete the device profile '{{deviceProfileName}}'?",
         "delete-device-profile-text": "Be careful, after the confirmation the device profile and all related data will become unrecoverable.",
         "delete-device-profiles-title": "Are you sure you want to delete { count, plural, 1 {1 개 장치 프로파일} other {# 개 장치 프로파일} }?",

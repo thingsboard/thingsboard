@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.downlink;
+package org.thingsboard.server.service.edge;
 
-public interface DownlinkRequestCallback<R, T> {
+import com.fasterxml.jackson.databind.JsonNode;
+import org.springframework.http.ResponseEntity;
 
-    default void onSent(R request){};
+public interface EdgeLicenseService {
 
-    void onSuccess(R request, T response);
+    ResponseEntity<JsonNode> checkInstance(JsonNode request);
 
-    void onValidationError(String params, String msg);
-
-    void onError(String params, Exception e);
-
+    ResponseEntity<JsonNode> activateInstance(String licenseSecret, String releaseDate);
 }

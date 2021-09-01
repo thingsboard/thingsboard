@@ -113,6 +113,7 @@
     "@types/js-beautify": "^1.13.1",
     "@types/jstree": "^3.3.40",
     "@types/leaflet": "1.5.17",
+    "@types/leaflet-editable": "^1.2.1",
     "@types/leaflet-polylinedecorator": "^1.6.0",
     "@types/leaflet.markercluster": "^1.4.4",
     "@types/lodash": "^4.14.170",

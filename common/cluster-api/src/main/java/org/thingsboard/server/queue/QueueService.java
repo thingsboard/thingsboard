@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.downlink;
+package org.thingsboard.server.queue;
 
-public interface DownlinkRequestCallback<R, T> {
+import org.thingsboard.server.common.msg.queue.ServiceType;
 
-    default void onSent(R request){};
+import java.util.Set;
 
-    void onSuccess(R request, T response);
+public interface QueueService {
 
-    void onValidationError(String params, String msg);
+    Set<String> getQueuesByServiceType(ServiceType serviceType);
 
-    void onError(String params, Exception e);
+    String resolve(ServiceType serviceType, String queueName);
 
 }
