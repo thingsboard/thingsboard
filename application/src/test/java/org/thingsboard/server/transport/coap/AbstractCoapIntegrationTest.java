@@ -52,6 +52,16 @@ import static org.junit.Assert.assertNotNull;
 @Slf4j
 public abstract class AbstractCoapIntegrationTest extends AbstractTransportIntegrationTest {
 
+    protected CoapClient client;
+
+    @Override
+    protected void processAfterTest() throws Exception {
+        if (client != null) {
+            client.shutdown();
+        }
+        super.processAfterTest();
+    }
+
     protected void processBeforeTest(String deviceName, CoapDeviceType coapDeviceType, TransportPayloadType payloadType) throws Exception {
         this.processBeforeTest(deviceName, coapDeviceType, payloadType, null, null, null, null, null, null, DeviceProfileProvisionType.DISABLED);
     }
