@@ -35,8 +35,6 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <main.dir>${basedir}/../..</main.dir>
-        <aws.sdk.version>1.11.747</aws.sdk.version>
-        <google.common.protos.version>1.16.0</google.common.protos.version>
     </properties>
 
     <dependencies>
@@ -93,7 +91,6 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-sns</artifactId>
-            <version>${aws.sdk.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.cloud</groupId>
@@ -102,7 +99,6 @@
         <dependency>
             <groupId>com.google.api.grpc</groupId>
             <artifactId>proto-google-common-protos</artifactId>
-            <version>${google.common.protos.version}</version>
         </dependency>
         <dependency>
             <groupId>com.rabbitmq</groupId>
