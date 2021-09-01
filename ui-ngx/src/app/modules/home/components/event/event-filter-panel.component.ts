@@ -14,12 +14,12 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, InjectionToken, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Inject, InjectionToken } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { OverlayRef } from '@angular/cdk/overlay';
 import { EntityType } from '@shared/models/entity-type.models';
 import { FilterEventBody } from '@shared/models/event.models';
-import { deepTrim, isEqual } from '@core/utils';
+import { deepTrim } from '@core/utils';
 
 export const EVENT_FILTER_PANEL_DATA = new InjectionToken<any>('AlarmFilterPanelData');
 
@@ -37,8 +37,7 @@ export interface FilterEntityColumn {
 @Component({
   selector: 'tb-event-filter-panel',
   templateUrl: './event-filter-panel.component.html',
-  styleUrls: ['./event-filter-panel.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrls: ['./event-filter-panel.component.scss']
 })
 export class EventFilterPanelComponent {
 
