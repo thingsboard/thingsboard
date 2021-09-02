@@ -118,7 +118,7 @@ security:
     loginProcessingUrl: "${SECURITY_OAUTH2_LOGIN_PROCESSING_URL:/login/oauth2/code/}"
     githubMapper:
       emailUrl: "${SECURITY_OAUTH2_GITHUB_MAPPER_EMAIL_URL_KEY:https://api.github.com/user/emails}"
-  max_login_users: "${SECURITY_MAX_LOGIN_USERS:1}"
+  max_logged_in_users: "${SECURITY_MAX_LOGIN_USERS:0}"
 
 # Usage statistics parameters
 usage:

@@ -42,12 +42,10 @@ import org.thingsboard.server.common.msg.queue.ServiceQueue;
 import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 
 @Data
 @Slf4j
@@ -86,8 +84,6 @@ class AlarmState {
     }
 
     public <T> boolean createOrClearAlarms(TbContext ctx, TbMsg msg, T data, SnapshotUpdate update, BiFunction<AlarmRuleState, T, AlarmEvalResult> evalFunction) {
-        log.info("(createOrClearAlarms) data snapshot: {}; SnapshotUpdate: {}", dataSnapshot, update);
-        log.info(Arrays.stream(Thread.currentThread().getStackTrace()).map(StackTraceElement::toString).collect(Collectors.joining()));
         boolean stateUpdate = false;
         AlarmRuleState resultState = null;
         log.debug("[{}] processing update: {}", alarmDefinition.getId(), data);

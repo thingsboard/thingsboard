@@ -17,7 +17,6 @@ package org.thingsboard.rule.engine.profile;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.query.EntityKey;
@@ -79,16 +78,6 @@ class DataSnapshot {
         } else {
             return false;
         }
-    }
-
-    @Override
-    public String toString() {
-        return "DataSnapshot{" +
-                "ready=" + ready +
-                ", ts=" + ts +
-                ", keys=" + keys +
-                ", values=" + values +
-                '}';
     }
 
     EntityKeyValue getValue(AlarmConditionFilterKey key) {

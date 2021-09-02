@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.security.auth;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -27,13 +26,18 @@ import javax.annotation.PostConstruct;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
-public class LoginAmountLimitService {
+public class LoggedInUsersLimitService {
     private final CacheManager cacheManager;
     private Cache loginLimitCache;
 
-    @Value("${security.max_login_users}")
-    private Long maxLoginUsers;
+    private final Long maxLoginUsers;
+
+    public LoggedInUsersLimitService(CacheManager cacheManager,
+                                     @Value("${security.max_logged_in_users}") Long maxLoginUsers) {
+        this.cacheManager = cacheManager;
+        this.maxLoginUsers = maxLoginUsers;
+    }
+
 
     @PostConstruct
     protected void initCache() {
@@ -41,13 +45,12 @@ public class LoginAmountLimitService {
     }
 
     public boolean isOverLimit(UserId userId) {
-        Boolean isOverLimit = getCurrentAmount(userId).map(currentAmount -> currentAmount >= maxLoginUsers).orElse(false);
-        if (!isOverLimit)
-            increaseCurrentLoginAmount(userId);
-        return isOverLimit;
+        if (maxLoginUsers == 0)
+            return false;
+        return getCurrentAmount(userId).map(currentAmount -> currentAmount >= maxLoginUsers).orElse(false);
     }
 
-    public void decreaseCurrentLoginAmount(UserId userId) {
+    public void decreaseCurrentLoggedInUsers(UserId userId) {
         getCurrentAmount(userId).ifPresent(currentAmount -> {
             loginLimitCache.put(toKey(userId), --currentAmount);
             if (currentAmount == 0)
@@ -55,7 +58,7 @@ public class LoginAmountLimitService {
         });
     }
 
-    public void increaseCurrentLoginAmount(UserId userId) {
+    public void increaseCurrentLoggedInUsers(UserId userId) {
         Optional<Long> currentAmount = getCurrentAmount(userId);
         String key = toKey(userId);
         if (currentAmount.isPresent())
@@ -64,7 +67,7 @@ public class LoginAmountLimitService {
             loginLimitCache.put(key, 1L);
     }
 
-    private Optional<Long> getCurrentAmount(UserId userId) {
+    public Optional<Long> getCurrentAmount(UserId userId) {
         return Optional.ofNullable(loginLimitCache.get(toKey(userId), Long.class));
     }
 

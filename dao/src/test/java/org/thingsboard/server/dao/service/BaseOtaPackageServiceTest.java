@@ -38,7 +38,6 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
-import javax.validation.ValidationException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -673,8 +672,8 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmwareInfo.setUrl(URL);
         firmwareInfo.setTenantId(tenantId);
 
-        thrown.expect(ValidationException.class);
-        thrown.expectMessage("length of title must be equal or less than 255");
+        thrown.expect(DataValidationException.class);
+        thrown.expectMessage("The length of title should be equal or shorter than 255");
 
         otaPackageService.saveOtaPackageInfo(firmwareInfo, true);
     }
@@ -689,7 +688,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmwareInfo.setTitle(TITLE);
 
         firmwareInfo.setVersion(RandomStringUtils.random(257));
-        thrown.expectMessage("length of title must be equal or less than 255");
+        thrown.expectMessage("The length of version should be equal or shorter than 255");
 
         otaPackageService.saveOtaPackageInfo(firmwareInfo, true);
     }

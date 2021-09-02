@@ -64,11 +64,11 @@ public class TokenOutdatingService {
         boolean isTokenExpired = true;
         if (tokenId.isPresent()) {
             isTokenExpired = Optional.ofNullable(tokenOutdatageTimeCache.get(tokenId.get(), Long.class))
-                    .map(time -> checkIfOutdate(time, issueTime, userId)).orElse(false);
+                    .map(time -> checkIfOutdated(time, issueTime, userId)).orElse(false);
         }
 
         Boolean isUserExpired = Optional.ofNullable(tokenOutdatageTimeCache.get(toKey(userId), Long.class))
-                .map(time -> checkIfOutdate(time, issueTime, userId)).orElse(false);
+                .map(time -> checkIfOutdated(time, issueTime, userId)).orElse(false);
 
         return isTokenExpired || isUserExpired;
     }
@@ -82,7 +82,7 @@ public class TokenOutdatingService {
         Optional.of(claimsJws.getBody().get("tokenId").toString()).ifPresent(this::outdateTokens);
     }
 
-    private boolean checkIfOutdate(Long outdatageTime, long issueTime, UserId userId) {
+    private boolean checkIfOutdated(Long outdatageTime, long issueTime, UserId userId) {
         if (System.currentTimeMillis() - outdatageTime <= SECONDS.toMillis(jwtSettings.getRefreshTokenExpTime())) {
             return MILLISECONDS.toSeconds(issueTime) < MILLISECONDS.toSeconds(outdatageTime);
         } else {

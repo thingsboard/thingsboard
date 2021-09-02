@@ -49,7 +49,7 @@ import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.auth.LoginAmountLimitService;
+import org.thingsboard.server.service.security.auth.LoggedInUsersLimitService;
 import org.thingsboard.server.service.security.auth.TokenOutdatingService;
 import org.thingsboard.server.service.security.auth.jwt.extractor.JwtHeaderTokenExtractor;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
@@ -78,13 +78,12 @@ public class AuthController extends BaseController {
     private final AuditLogService auditLogService;
     private final ApplicationEventPublisher eventPublisher;
     private final TokenOutdatingService tokenOutdatingService;
-    private final LoginAmountLimitService loginAmountLimitService;
+    private final LoggedInUsersLimitService loggedInUsersLimitService;
     private final JwtHeaderTokenExtractor tokenExtractor;
 
     @PreAuthorize("isAuthenticated()")
     @RequestMapping(value = "/auth/user", method = RequestMethod.GET)
-    public @ResponseBody
-    User getUser() throws ThingsboardException {
+    public @ResponseBody User getUser() throws ThingsboardException {
         try {
             SecurityUser securityUser = getCurrentUser();
             return userService.findUserById(securityUser.getTenantId(), securityUser.getId());
@@ -101,7 +100,7 @@ public class AuthController extends BaseController {
         SecurityUser securityUser = getCurrentUser();
         RawAccessJwtToken token = new RawAccessJwtToken(tokenExtractor.extract(request));
         tokenOutdatingService.outdateTokens(token);
-        loginAmountLimitService.decreaseCurrentLoginAmount(securityUser.getId());
+        loggedInUsersLimitService.decreaseCurrentLoggedInUsers(securityUser.getId());
     }
 
     @PreAuthorize("isAuthenticated()")
@@ -127,7 +126,7 @@ public class AuthController extends BaseController {
 
             eventPublisher.publishEvent(new UserAuthDataChangedEvent(securityUser.getId()));
             ObjectNode response = JacksonUtil.newObjectNode();
-            Pair<AccessJwtToken, JwtToken> tokensPair = tokenFactory.getAccessAndRefreshTokens(securityUser);
+            Pair<JwtToken, JwtToken> tokensPair = tokenFactory.getAccessAndRefreshTokens(securityUser);
             response.put("token", tokensPair.getFirst().getToken());
             response.put("refreshToken", tokensPair.getSecond().getToken());
             return response;
@@ -242,7 +241,7 @@ public class AuthController extends BaseController {
 
             sendEntityNotificationMsg(user.getTenantId(), user.getId(), EdgeEventActionType.CREDENTIALS_UPDATED);
 
-            Pair<AccessJwtToken, JwtToken> tokensPair = tokenFactory.getAccessAndRefreshTokens(securityUser);
+            Pair<JwtToken, JwtToken> tokensPair = tokenFactory.getAccessAndRefreshTokens(securityUser);
             JwtToken accessToken = tokensPair.getFirst();
             JwtToken refreshToken = tokensPair.getSecond();
 
@@ -284,7 +283,7 @@ public class AuthController extends BaseController {
                 mailService.sendPasswordWasResetEmail(loginUrl, email);
 
                 eventPublisher.publishEvent(new UserAuthDataChangedEvent(securityUser.getId()));
-                Pair<AccessJwtToken, JwtToken> tokensPair = tokenFactory.getAccessAndRefreshTokens(securityUser);
+                Pair<JwtToken, JwtToken> tokensPair = tokenFactory.getAccessAndRefreshTokens(securityUser);
                 JwtToken accessToken = tokensPair.getFirst();
                 JwtToken refreshToken = tokensPair.getSecond();
 

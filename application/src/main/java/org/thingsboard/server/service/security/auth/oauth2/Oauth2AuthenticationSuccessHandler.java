@@ -93,7 +93,7 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             SecurityUser securityUser = mapper.getOrCreateUserByClientPrincipal(request, token, oAuth2AuthorizedClient.getAccessToken().getTokenValue(),
                     registration);
 
-            Pair<AccessJwtToken, JwtToken> tokensPair = tokenFactory.getAccessAndRefreshTokens(securityUser);
+            Pair<JwtToken, JwtToken> tokensPair = tokenFactory.getAccessAndRefreshTokens(securityUser);
             JwtToken accessToken = tokensPair.getFirst();
             JwtToken refreshToken = tokensPair.getSecond();
 

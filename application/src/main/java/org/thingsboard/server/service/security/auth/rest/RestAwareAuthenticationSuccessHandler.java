@@ -26,9 +26,8 @@ import org.springframework.security.web.WebAttributes;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.security.model.JwtToken;
-import org.thingsboard.server.service.security.auth.LoginAmountLimitService;
+import org.thingsboard.server.service.security.auth.LoggedInUsersLimitService;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.model.token.AccessJwtToken;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
 import javax.servlet.ServletException;
@@ -43,23 +42,24 @@ import java.util.Map;
 public class RestAwareAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
     private final ObjectMapper mapper;
     private final JwtTokenFactory tokenFactory;
-    private final LoginAmountLimitService loginAmountLimitService;
+    private final LoggedInUsersLimitService loggedInUsersLimitService;
 
     @Autowired
-    public RestAwareAuthenticationSuccessHandler(final ObjectMapper mapper, final JwtTokenFactory tokenFactory, LoginAmountLimitService loginAmountLimitService) {
+    public RestAwareAuthenticationSuccessHandler(final ObjectMapper mapper, final JwtTokenFactory tokenFactory, LoggedInUsersLimitService loggedInUsersLimitService) {
         this.mapper = mapper;
         this.tokenFactory = tokenFactory;
-        this.loginAmountLimitService = loginAmountLimitService;
+        this.loggedInUsersLimitService = loggedInUsersLimitService;
     }
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
         SecurityUser securityUser = (SecurityUser) authentication.getPrincipal();
-        if (loginAmountLimitService.isOverLimit(securityUser.getId()))
-            throw new AuthenticationServiceException("Violation of users amount limit");
+        if (loggedInUsersLimitService.isOverLimit(securityUser.getId()))
+            throw new AuthenticationServiceException("Violation of logged in users amount limit");
+        loggedInUsersLimitService.increaseCurrentLoggedInUsers(securityUser.getId());
 
-        Pair<AccessJwtToken, JwtToken> tokensPair = tokenFactory.getAccessAndRefreshTokens(securityUser);
+        Pair<JwtToken, JwtToken> tokensPair = tokenFactory.getAccessAndRefreshTokens(securityUser);
         JwtToken accessToken = tokensPair.getFirst();
         JwtToken refreshToken = tokensPair.getSecond();
 
@@ -76,7 +76,8 @@ public class RestAwareAuthenticationSuccessHandler implements AuthenticationSucc
 
     /**
      * Removes temporary authentication-related data which may have been stored
-     * in the session during the authentication process...
+     * in the session during the authentication process..
+     *
      */
     protected final void clearAuthenticationAttributes(HttpServletRequest request) {
         HttpSession session = request.getSession(false);

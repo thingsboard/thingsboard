@@ -161,6 +161,7 @@ public class TokenOutdatingTest {
         assertNull(cacheManager.getCache(CacheConstants.TOKEN_OUTDATAGE_TIME_CACHE).get(userId.getId().toString()));
     }
 
+
     private JwtToken createAccessJwtToken(UserId userId) {
         return tokenFactory.createAccessJwtToken(createMockSecurityUser(userId), UUID.randomUUID());
     }

@@ -108,7 +108,6 @@ public class JwtTokenFactory {
         return new AccessJwtToken(token, claims);
     }
 
-
     public SecurityUser parseAccessJwtToken(RawAccessJwtToken rawAccessToken) {
         Jws<Claims> jwsClaims = parseTokenClaims(rawAccessToken);
         Claims claims = jwsClaims.getBody();
@@ -199,7 +198,7 @@ public class JwtTokenFactory {
         }
     }
 
-    public Pair<AccessJwtToken, JwtToken> getAccessAndRefreshTokens(SecurityUser securityUser) {
+    public Pair<JwtToken, JwtToken> getAccessAndRefreshTokens(SecurityUser securityUser) {
         UUID tokenUuid = UUID.randomUUID();
         return Pair.of(createAccessJwtToken(securityUser, tokenUuid), createRefreshToken(securityUser, tokenUuid));
     }
