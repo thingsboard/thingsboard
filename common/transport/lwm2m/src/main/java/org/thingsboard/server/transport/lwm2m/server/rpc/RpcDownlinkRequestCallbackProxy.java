@@ -26,8 +26,6 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.downlink.DownlinkRequestCallback;
 
-import java.util.concurrent.TimeoutException;
-
 public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkRequestCallback<R, T> {
 
     private final TransportService transportService;
@@ -67,7 +65,7 @@ public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkR
 
     @Override
     public void onError(String params, Exception e) {
-        if (e instanceof TimeoutException) {
+        if (e instanceof java.util.concurrent.TimeoutException || e instanceof org.eclipse.leshan.core.request.exception.TimeoutException) {
             transportService.process(client.getSession(), this.request, RpcStatus.TIMEOUT, TransportServiceCallback.EMPTY);
         } else if (!(e instanceof ClientSleepingException)) {
             sendRpcReplyOnError(e);
