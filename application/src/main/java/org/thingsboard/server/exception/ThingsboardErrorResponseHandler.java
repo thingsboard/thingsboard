@@ -34,13 +34,10 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
-import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.service.security.exception.AuthMethodNotSupportedException;
 import org.thingsboard.server.service.security.exception.JwtExpiredTokenException;
 import org.thingsboard.server.service.security.exception.UserPasswordExpiredException;
 
-import javax.mail.MessagingException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -73,17 +70,6 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
         if (!response.isCommitted()) {
             try {
                 response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-
-                String cause = "";
-                if (exception.getCause() != null) {
-                    cause = exception.getCause().getClass().getCanonicalName();
-                }
-                if (exception instanceof IllegalArgumentException || exception instanceof IncorrectParameterException
-                        || exception instanceof DataValidationException || cause.contains("IncorrectParameterException")) {
-                    exception = new ThingsboardException(exception.getMessage(), ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-                } else if (exception instanceof MessagingException) {
-                    exception = new ThingsboardException("Unable to send mail: " + exception.getMessage(), ThingsboardErrorCode.GENERAL);
-                }
 
                 if (exception instanceof ThingsboardException) {
                     ThingsboardException thingsboardException = (ThingsboardException) exception;

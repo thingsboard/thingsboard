@@ -35,6 +35,7 @@ public class WidgetsBundle extends SearchTextBased<WidgetsBundleId> implements H
     private String title;
     private String image;
     @NoXss
+    @Length(fieldName = "description")
     private String description;
 
     public WidgetsBundle() {
