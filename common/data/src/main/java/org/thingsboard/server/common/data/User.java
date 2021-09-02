@@ -36,7 +36,7 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
     private String email;
     private Authority authority;
     @NoXss
-    @Length(fieldName = "firs name")
+    @Length(fieldName = "first name")
     private String firstName;
     @NoXss
     @Length(fieldName = "last name")

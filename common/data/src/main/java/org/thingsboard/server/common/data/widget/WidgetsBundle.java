@@ -28,6 +28,7 @@ public class WidgetsBundle extends SearchTextBased<WidgetsBundleId> implements H
 
     private TenantId tenantId;
     @NoXss
+    @Length(fieldName = "alias")
     private String alias;
     @NoXss
     @Length(fieldName = "title")

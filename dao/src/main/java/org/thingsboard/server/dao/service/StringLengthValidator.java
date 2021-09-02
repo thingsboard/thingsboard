@@ -31,7 +31,7 @@ public class StringLengthValidator implements ConstraintValidator<Length, String
         if (StringUtils.isEmpty(value)) {
             return true;
         }
-        return value.trim().length() <= max;
+        return value.length() <= max;
     }
 
     @Override
