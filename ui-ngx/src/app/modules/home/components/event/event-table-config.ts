@@ -121,7 +121,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
     this.headerActionDescriptors.push({
       name: this.translate.instant('event.clear-filter'),
-      icon: 'filter-variant-remove',
+      icon: 'mdi:filter-variant-remove',
       isMdiIcon: true,
       isEnabled: () => !isEqual(this.filterParams, {}),
       onAction: ($event) => {
