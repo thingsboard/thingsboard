@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.TbTransportService;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -114,7 +115,6 @@ public class DeviceApiController implements TbTransportService {
                     TransportService transportService = transportContext.getTransportService();
                     transportService.process(sessionInfo, JsonConverter.convertToAttributesProto(new JsonParser().parse(json)),
                             new HttpOkCallback(responseWriter));
-                    reportActivity(sessionInfo);
                 }));
         return responseWriter;
     }
@@ -128,7 +128,6 @@ public class DeviceApiController implements TbTransportService {
                     TransportService transportService = transportContext.getTransportService();
                     transportService.process(sessionInfo, JsonConverter.convertToTelemetryProto(new JsonParser().parse(json)),
                             new HttpOkCallback(responseWriter));
-                    reportActivity(sessionInfo);
                 }));
         return responseWriter;
     }
@@ -408,7 +407,7 @@ public class DeviceApiController implements TbTransportService {
         public void onToDeviceRpcRequest(UUID sessionId, ToDeviceRpcRequestMsg msg) {
             log.trace("[{}] Received RPC command to device", sessionId);
             responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg, true).toString(), HttpStatus.OK));
-            transportService.process(sessionInfo, msg, false, TransportServiceCallback.EMPTY);
+            transportService.process(sessionInfo, msg, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
         }
 
         @Override
@@ -416,14 +415,6 @@ public class DeviceApiController implements TbTransportService {
             responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg).toString(), HttpStatus.OK));
         }
 
-    }
-
-    private void reportActivity(SessionInfoProto sessionInfo) {
-        transportContext.getTransportService().process(sessionInfo, TransportProtos.SubscriptionInfoProto.newBuilder()
-                .setAttributeSubscription(false)
-                .setRpcSubscription(false)
-                .setLastActivityTime(System.currentTimeMillis())
-                .build(), TransportServiceCallback.EMPTY);
     }
 
     private static MediaType parseMediaType(String contentType) {
@@ -436,7 +427,7 @@ public class DeviceApiController implements TbTransportService {
 
     @Override
     public String getName() {
-        return "HTTP";
+        return DataConstants.HTTP_TRANSPORT_NAME;
     }
 
 }

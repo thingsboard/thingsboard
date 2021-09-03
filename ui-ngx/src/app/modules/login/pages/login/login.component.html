@@ -51,12 +51,8 @@
             </mat-form-field>
             <mat-form-field>
               <mat-label translate>common.password</mat-label>
-              <input id="password-input" matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password"/>
-	                   <button mat-icon-button matSuffix type="button"
-                         (click)="hidePassword = !hidePassword"
-                         [attr.aria-pressed]="hidePassword">
-                         <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
-                     </button>
+              <input id="password-input" matInput type="password" formControlName="password"/>
+              <tb-toggle-password matSuffix></tb-toggle-password>
               <mat-icon matPrefix>lock</mat-icon>
             </mat-form-field>
             <div fxLayoutAlign="end center" class="forgot-password">

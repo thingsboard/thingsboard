@@ -23,6 +23,7 @@ import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.response.ExecuteResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.core.response.WriteResponse;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 
 import javax.security.auth.Destroyable;
 import java.util.Arrays;
@@ -37,7 +38,7 @@ public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
 
     private static final List<Integer> supportedResources = Arrays.asList(0, 1, 2, 3, 5, 6, 7, 9);
 
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName(getClass().getSimpleName() + "-test-scope"));
 
     private final AtomicInteger state = new AtomicInteger(0);
 
@@ -128,10 +129,14 @@ public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
 
     private void startDownloading() {
         scheduler.schedule(() -> {
-            state.set(1);
-            fireResourcesChange(3);
-            state.set(2);
-            fireResourcesChange(3);
+            try {
+                state.set(1);
+                fireResourcesChange(3);
+                Thread.sleep(100);
+                state.set(2);
+                fireResourcesChange(3);
+            } catch (Exception e) {
+            }
         }, 100, TimeUnit.MILLISECONDS);
     }
 
@@ -144,7 +149,6 @@ public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
                 updateResult.set(1);
                 fireResourcesChange(5);
             } catch (Exception e) {
-
             }
         }, 100, TimeUnit.MILLISECONDS);
     }

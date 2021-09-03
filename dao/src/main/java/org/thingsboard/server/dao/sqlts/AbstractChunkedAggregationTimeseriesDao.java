@@ -100,7 +100,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
     }
 
     @Override
-    public ListenableFuture<Integer> savePartition(TenantId tenantId, EntityId entityId, long tsKvEntryTs, String key, long ttl) {
+    public ListenableFuture<Integer> savePartition(TenantId tenantId, EntityId entityId, long tsKvEntryTs, String key) {
         return Futures.immediateFuture(null);
     }
 

@@ -17,7 +17,7 @@
 -->
 <form [formGroup]="instancesFormGroup" (ngSubmit)="add()" style="min-width: 400px;">
   <mat-toolbar fxLayout="row" color="primary">
-    <b><i>{{data.objectName}}</i></b> (object <<b>{{data.objectId}}</b>>)
+    <span style="font-weight: 500">{{data.objectName}}</span>&nbsp;#{{data.objectId}}
     <span fxFlex></span>
     <button mat-button mat-icon-button
             (click)="cancel()"
@@ -31,6 +31,7 @@
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async">
       <tb-profile-lwm2m-object-add-instances-list
+        required
         formControlName="instancesIds">
       </tb-profile-lwm2m-object-add-instances-list>
     </fieldset>

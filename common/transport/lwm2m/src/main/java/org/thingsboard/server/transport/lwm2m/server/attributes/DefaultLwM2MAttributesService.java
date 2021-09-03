@@ -120,9 +120,11 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
         if (msg.getSharedUpdatedCount() > 0 && lwM2MClient != null) {
             String newFirmwareTitle = null;
             String newFirmwareVersion = null;
+            String newFirmwareTag = null;
             String newFirmwareUrl = null;
             String newSoftwareTitle = null;
             String newSoftwareVersion = null;
+            String newSoftwareTag = null;
             String newSoftwareUrl = null;
             List<TransportProtos.TsKvProto> otherAttributes = new ArrayList<>();
             for (TransportProtos.TsKvProto tsKvProto : msg.getSharedUpdatedList()) {
@@ -131,12 +133,16 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
                     newFirmwareTitle = getStrValue(tsKvProto);
                 } else if (DefaultLwM2MOtaUpdateService.FIRMWARE_VERSION.equals(attrName)) {
                     newFirmwareVersion = getStrValue(tsKvProto);
+                } else if (DefaultLwM2MOtaUpdateService.FIRMWARE_TAG.equals(attrName)) {
+                    newFirmwareTag = getStrValue(tsKvProto);
                 } else if (DefaultLwM2MOtaUpdateService.FIRMWARE_URL.equals(attrName)) {
                     newFirmwareUrl = getStrValue(tsKvProto);
                 } else if (DefaultLwM2MOtaUpdateService.SOFTWARE_TITLE.equals(attrName)) {
                     newSoftwareTitle = getStrValue(tsKvProto);
                 } else if (DefaultLwM2MOtaUpdateService.SOFTWARE_VERSION.equals(attrName)) {
                     newSoftwareVersion = getStrValue(tsKvProto);
+                } else if (DefaultLwM2MOtaUpdateService.SOFTWARE_TAG.equals(attrName)) {
+                    newSoftwareTag = getStrValue(tsKvProto);
                 } else if (DefaultLwM2MOtaUpdateService.SOFTWARE_URL.equals(attrName)) {
                     newSoftwareUrl = getStrValue(tsKvProto);
                 }else {
@@ -144,10 +150,10 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
                 }
             }
             if (newFirmwareTitle != null || newFirmwareVersion != null) {
-                otaUpdateService.onTargetFirmwareUpdate(lwM2MClient, newFirmwareTitle, newFirmwareVersion, Optional.ofNullable(newFirmwareUrl));
+                otaUpdateService.onTargetFirmwareUpdate(lwM2MClient, newFirmwareTitle, newFirmwareVersion, Optional.ofNullable(newFirmwareUrl), Optional.ofNullable(newFirmwareTag));
             }
             if (newSoftwareTitle != null || newSoftwareVersion != null) {
-                otaUpdateService.onTargetSoftwareUpdate(lwM2MClient, newSoftwareTitle, newSoftwareVersion, Optional.ofNullable(newSoftwareUrl));
+                otaUpdateService.onTargetSoftwareUpdate(lwM2MClient, newSoftwareTitle, newSoftwareVersion, Optional.ofNullable(newSoftwareUrl), Optional.ofNullable(newSoftwareTag));
             }
             if (!otherAttributes.isEmpty()) {
                 onAttributesUpdate(lwM2MClient, otherAttributes);

@@ -16,11 +16,17 @@
 package org.thingsboard.server.service.queue;
 
 import com.google.protobuf.ByteString;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.thingsboard.rule.engine.api.msg.ToDeviceActorNotificationMsg;
+import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
+import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.EdgeUtils;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -29,7 +35,6 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -56,8 +61,9 @@ import org.thingsboard.server.queue.common.MultipleTbQueueCallbackWrapper;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
+import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.service.rpc.FromDeviceRpcResponse;
+import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -66,10 +72,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class DefaultTbClusterService implements TbClusterService {
 
     @Value("${cluster.stats.enabled:false}")
     private boolean statsEnabled;
+    @Value("${edges.enabled}")
+    protected boolean edgesEnabled;
 
     private final AtomicInteger toCoreMsgs = new AtomicInteger(0);
     private final AtomicInteger toCoreNfs = new AtomicInteger(0);
@@ -81,13 +90,7 @@ public class DefaultTbClusterService implements TbClusterService {
     private final PartitionService partitionService;
     private final DataDecodingEncodingService encodingService;
     private final TbDeviceProfileCache deviceProfileCache;
-
-    public DefaultTbClusterService(TbQueueProducerProvider producerProvider, PartitionService partitionService, DataDecodingEncodingService encodingService, TbDeviceProfileCache deviceProfileCache) {
-        this.producerProvider = producerProvider;
-        this.partitionService = partitionService;
-        this.encodingService = encodingService;
-        this.deviceProfileCache = deviceProfileCache;
-    }
+    private final OtaPackageStateService otaPackageStateService;
 
     @Override
     public void pushMsgToCore(TenantId tenantId, EntityId entityId, ToCoreMsg msg, TbQueueCallback callback) {
@@ -200,55 +203,52 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
-    public void onEntityStateChange(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent state) {
+    public void broadcastEntityStateChangeEvent(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent state) {
         log.trace("[{}] Processing {} state change event: {}", tenantId, entityId.getEntityType(), state);
         broadcast(new ComponentLifecycleMsg(tenantId, entityId, state));
     }
 
     @Override
     public void onDeviceProfileChange(DeviceProfile deviceProfile, TbQueueCallback callback) {
-        onEntityChange(deviceProfile.getTenantId(), deviceProfile.getId(), deviceProfile, callback);
+        broadcastEntityChangeToTransport(deviceProfile.getTenantId(), deviceProfile.getId(), deviceProfile, callback);
     }
 
     @Override
     public void onTenantProfileChange(TenantProfile tenantProfile, TbQueueCallback callback) {
-        onEntityChange(TenantId.SYS_TENANT_ID, tenantProfile.getId(), tenantProfile, callback);
+        broadcastEntityChangeToTransport(TenantId.SYS_TENANT_ID, tenantProfile.getId(), tenantProfile, callback);
     }
 
     @Override
     public void onTenantChange(Tenant tenant, TbQueueCallback callback) {
-        onEntityChange(TenantId.SYS_TENANT_ID, tenant.getId(), tenant, callback);
+        broadcastEntityChangeToTransport(TenantId.SYS_TENANT_ID, tenant.getId(), tenant, callback);
     }
 
     @Override
     public void onApiStateChange(ApiUsageState apiUsageState, TbQueueCallback callback) {
-        onEntityChange(apiUsageState.getTenantId(), apiUsageState.getId(), apiUsageState, callback);
+        broadcastEntityChangeToTransport(apiUsageState.getTenantId(), apiUsageState.getId(), apiUsageState, callback);
         broadcast(new ComponentLifecycleMsg(apiUsageState.getTenantId(), apiUsageState.getId(), ComponentLifecycleEvent.UPDATED));
     }
 
     @Override
     public void onDeviceProfileDelete(DeviceProfile entity, TbQueueCallback callback) {
-        onEntityDelete(entity.getTenantId(), entity.getId(), entity.getName(), callback);
+        broadcastEntityDeleteToTransport(entity.getTenantId(), entity.getId(), entity.getName(), callback);
     }
 
     @Override
     public void onTenantProfileDelete(TenantProfile entity, TbQueueCallback callback) {
-        onEntityDelete(TenantId.SYS_TENANT_ID, entity.getId(), entity.getName(), callback);
+        broadcastEntityDeleteToTransport(TenantId.SYS_TENANT_ID, entity.getId(), entity.getName(), callback);
     }
 
     @Override
     public void onTenantDelete(Tenant entity, TbQueueCallback callback) {
-        onEntityDelete(TenantId.SYS_TENANT_ID, entity.getId(), entity.getName(), callback);
+        broadcastEntityDeleteToTransport(TenantId.SYS_TENANT_ID, entity.getId(), entity.getName(), callback);
     }
 
     @Override
-    public void onDeviceChange(Device entity, TbQueueCallback callback) {
-        onEntityChange(entity.getTenantId(), entity.getId(), entity, callback);
-    }
-
-    @Override
-    public void onDeviceDeleted(Device entity, TbQueueCallback callback) {
-        onEntityDelete(entity.getTenantId(), entity.getId(), entity.getName(), callback);
+    public void onDeviceDeleted(Device device, TbQueueCallback callback) {
+        broadcastEntityDeleteToTransport(device.getTenantId(), device.getId(), device.getName(), callback);
+        sendDeviceStateServiceEvent(device.getTenantId(), device.getId(), false, false, true);
+        broadcastEntityStateChangeEvent(device.getTenantId(), device.getId(), ComponentLifecycleEvent.DELETED);
     }
 
     @Override
@@ -278,7 +278,7 @@ public class DefaultTbClusterService implements TbClusterService {
         broadcast(transportMsg, callback);
     }
 
-    public <T> void onEntityChange(TenantId tenantId, EntityId entityid, T entity, TbQueueCallback callback) {
+    public <T> void broadcastEntityChangeToTransport(TenantId tenantId, EntityId entityid, T entity, TbQueueCallback callback) {
         String entityName = (entity instanceof HasName) ? ((HasName) entity).getName() : entity.getClass().getName();
         log.trace("[{}][{}][{}] Processing [{}] change event", tenantId, entityid.getEntityType(), entityid.getId(), entityName);
         TransportProtos.EntityUpdateMsg entityUpdateMsg = TransportProtos.EntityUpdateMsg.newBuilder()
@@ -288,7 +288,7 @@ public class DefaultTbClusterService implements TbClusterService {
         broadcast(transportMsg, callback);
     }
 
-    private void onEntityDelete(TenantId tenantId, EntityId entityId, String name, TbQueueCallback callback) {
+    private void broadcastEntityDeleteToTransport(TenantId tenantId, EntityId entityId, String name, TbQueueCallback callback) {
         log.trace("[{}][{}][{}] Processing [{}] delete event", tenantId, entityId.getEntityType(), entityId.getId(), name);
         TransportProtos.EntityDeleteMsg entityDeleteMsg = TransportProtos.EntityDeleteMsg.newBuilder()
                 .setEntityType(entityId.getEntityType().name())
@@ -369,4 +369,77 @@ public class DefaultTbClusterService implements TbClusterService {
             }
         }
     }
+
+    private void sendDeviceStateServiceEvent(TenantId tenantId, DeviceId deviceId, boolean added, boolean updated, boolean deleted) {
+        TransportProtos.DeviceStateServiceMsgProto.Builder builder = TransportProtos.DeviceStateServiceMsgProto.newBuilder();
+        builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
+        builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
+        builder.setDeviceIdMSB(deviceId.getId().getMostSignificantBits());
+        builder.setDeviceIdLSB(deviceId.getId().getLeastSignificantBits());
+        builder.setAdded(added);
+        builder.setUpdated(updated);
+        builder.setDeleted(deleted);
+        TransportProtos.DeviceStateServiceMsgProto msg = builder.build();
+        pushMsgToCore(tenantId, deviceId, TransportProtos.ToCoreMsg.newBuilder().setDeviceStateServiceMsg(msg).build(), null);
+    }
+
+    @Override
+    public void onDeviceUpdated(Device device, Device old) {
+        onDeviceUpdated(device, old, true);
+    }
+
+    @Override
+    public void onDeviceUpdated(Device device, Device old, boolean notifyEdge) {
+        var created = old == null;
+        broadcastEntityChangeToTransport(device.getTenantId(), device.getId(), device, null);
+        if (old != null && (!device.getName().equals(old.getName()) || !device.getType().equals(old.getType()))) {
+            pushMsgToCore(new DeviceNameOrTypeUpdateMsg(device.getTenantId(), device.getId(), device.getName(), device.getType()), null);
+        }
+        broadcastEntityStateChangeEvent(device.getTenantId(), device.getId(), created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+        sendDeviceStateServiceEvent(device.getTenantId(), device.getId(), created, !created, false);
+        otaPackageStateService.update(device, old);
+        if (!created && notifyEdge) {
+            sendNotificationMsgToEdgeService(device.getTenantId(), null, device.getId(), null, null, EdgeEventActionType.UPDATED);
+        }
+    }
+
+    @Override
+    public void sendNotificationMsgToEdgeService(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action) {
+        if (!edgesEnabled) {
+            return;
+        }
+        if (type == null) {
+            if (entityId != null) {
+                type = EdgeUtils.getEdgeEventTypeByEntityType(entityId.getEntityType());
+            } else {
+                log.trace("[{}] entity id and type are null. Ignoring this notification", tenantId);
+                return;
+            }
+            if (type == null) {
+                log.trace("[{}] edge event type is null. Ignoring this notification [{}]", tenantId, entityId);
+                return;
+            }
+        }
+        TransportProtos.EdgeNotificationMsgProto.Builder builder = TransportProtos.EdgeNotificationMsgProto.newBuilder();
+        builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
+        builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
+        builder.setType(type.name());
+        builder.setAction(action.name());
+        if (entityId != null) {
+            builder.setEntityIdMSB(entityId.getId().getMostSignificantBits());
+            builder.setEntityIdLSB(entityId.getId().getLeastSignificantBits());
+            builder.setEntityType(entityId.getEntityType().name());
+        }
+        if (edgeId != null) {
+            builder.setEdgeIdMSB(edgeId.getId().getMostSignificantBits());
+            builder.setEdgeIdLSB(edgeId.getId().getLeastSignificantBits());
+        }
+        if (body != null) {
+            builder.setBody(body);
+        }
+        TransportProtos.EdgeNotificationMsgProto msg = builder.build();
+        log.trace("[{}] sending notification to edge service {}", tenantId.getId(), msg);
+        pushMsgToCore(tenantId, entityId != null ? entityId : tenantId, TransportProtos.ToCoreMsg.newBuilder().setEdgeNotificationMsg(msg).build(), null);
+    }
+
 }

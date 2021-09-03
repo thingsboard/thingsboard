@@ -162,7 +162,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   private initializeConfig() {
 
     if (this.settings.widgetTitle && this.settings.widgetTitle.length) {
-      this.ctx.widgetTitle = this.utils.customTranslation(this.settings.widgetTitle, this.settings.widgetTitle);
+      const titlePatternText = this.utils.customTranslation(this.settings.widgetTitle, this.settings.widgetTitle);
+      this.ctx.widgetTitle = createLabelFromDatasource(this.datasources[0], titlePatternText);
     } else {
       this.ctx.widgetTitle = this.ctx.widgetConfig.title;
     }
@@ -495,8 +496,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
       const serverAttributes: AttributeData[] = [];
       const sharedAttributes: AttributeData[] = [];
       const telemetry: AttributeData[] = [];
-      for (const key of this.visibleKeys(toSave)) {
-        const currentValue = this.multipleInputFormGroup.get(key.formId).value;
+      for (const key of toSave.keys) {
+        const currentValue = key.settings.dataKeyHidden ? key.value : this.multipleInputFormGroup.get(key.formId).value;
         if (!isEqual(currentValue, key.value) || this.settings.updateAllValues) {
           const attribute: AttributeData = {
             key: key.name,

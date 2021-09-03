@@ -111,8 +111,7 @@ public class TbCoapDtlsCertificateVerifier implements NewAdvancedCertificateVeri
                     if (msg != null && strCert.equals(msg.getCredentials())) {
                         DeviceProfile deviceProfile = msg.getDeviceProfile();
                         if (msg.hasDeviceInfo() && deviceProfile != null) {
-                            TransportProtos.SessionInfoProto sessionInfoProto = SessionInfoCreator.create(msg, serviceInfoProvider.getServiceId(), UUID.randomUUID());
-                            tbCoapDtlsSessionInMemoryStorage.put(session.getSessionIdentifier().toString(), new TbCoapDtlsSessionInfo(sessionInfoProto, deviceProfile));
+                            tbCoapDtlsSessionInMemoryStorage.put(session.getSessionIdentifier().toString(), new TbCoapDtlsSessionInfo(msg, deviceProfile));
                         }
                         break;
                     }

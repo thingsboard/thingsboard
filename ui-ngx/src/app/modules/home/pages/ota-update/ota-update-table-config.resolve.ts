@@ -59,9 +59,10 @@ export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<Ot
 
     this.config.columns.push(
       new DateEntityTableColumn<OtaPackageInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<OtaPackageInfo>('title', 'ota-update.title', '20%'),
-      new EntityTableColumn<OtaPackageInfo>('version', 'ota-update.version', '20%'),
-      new EntityTableColumn<OtaPackageInfo>('type', 'ota-update.package-type', '20%', entity => {
+      new EntityTableColumn<OtaPackageInfo>('title', 'ota-update.title', '15%'),
+      new EntityTableColumn<OtaPackageInfo>('version', 'ota-update.version', '15%'),
+      new EntityTableColumn<OtaPackageInfo>('tag', 'ota-update.version-tag', '15%'),
+      new EntityTableColumn<OtaPackageInfo>('type', 'ota-update.package-type', '15%', entity => {
         return this.translate.instant(OtaUpdateTypeTranslationMap.get(entity.type));
       }),
       new EntityTableColumn<OtaPackageInfo>('url', 'ota-update.direct-url', '20%', entity => {

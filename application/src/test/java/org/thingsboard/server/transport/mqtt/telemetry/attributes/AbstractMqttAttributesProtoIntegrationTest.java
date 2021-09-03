@@ -47,9 +47,8 @@ public abstract class AbstractMqttAttributesProtoIntegrationTest extends Abstrac
     }
 
     @Test
-    public void testPushMqttAttributes() throws Exception {
+    public void testPushAttributes() throws Exception {
         super.processBeforeTest("Test Post Attributes device", "Test Post Attributes gateway", TransportPayloadType.PROTOBUF, null, POST_DATA_ATTRIBUTES_TOPIC);
-        List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
         assertTrue(transportConfiguration instanceof MqttDeviceProfileTransportConfiguration);
         MqttDeviceProfileTransportConfiguration mqttTransportConfiguration = (MqttDeviceProfileTransportConfiguration) transportConfiguration;
@@ -85,11 +84,48 @@ public abstract class AbstractMqttAttributesProtoIntegrationTest extends Abstrac
                 .setField(postAttributesMsgDescriptor.findFieldByName("key4"), 4)
                 .setField(postAttributesMsgDescriptor.findFieldByName("key5"), jsonObject)
                 .build();
-        processAttributesTest(POST_DATA_ATTRIBUTES_TOPIC, expectedKeys, postAttributesMsg.toByteArray());
+        processAttributesTest(POST_DATA_ATTRIBUTES_TOPIC, Arrays.asList("key1", "key2", "key3", "key4", "key5"), postAttributesMsg.toByteArray(), false);
     }
 
     @Test
-    public void testPushMqttAttributesGateway() throws Exception {
+    public void testPushAttributesWithExplicitPresenceProtoKeys() throws Exception {
+        super.processBeforeTest("Test Post Attributes device", "Test Post Attributes gateway", TransportPayloadType.PROTOBUF, null, POST_DATA_ATTRIBUTES_TOPIC);
+        DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
+        assertTrue(transportConfiguration instanceof MqttDeviceProfileTransportConfiguration);
+        MqttDeviceProfileTransportConfiguration mqttTransportConfiguration = (MqttDeviceProfileTransportConfiguration) transportConfiguration;
+        TransportPayloadTypeConfiguration transportPayloadTypeConfiguration = mqttTransportConfiguration.getTransportPayloadTypeConfiguration();
+        assertTrue(transportPayloadTypeConfiguration instanceof ProtoTransportPayloadConfiguration);
+        ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
+        ProtoFileElement transportProtoSchemaFile = protoTransportPayloadConfiguration.getTransportProtoSchema(DEVICE_ATTRIBUTES_PROTO_SCHEMA);
+        DynamicSchema attributesSchema = protoTransportPayloadConfiguration.getDynamicSchema(transportProtoSchemaFile, ProtoTransportPayloadConfiguration.ATTRIBUTES_PROTO_SCHEMA);
+
+        DynamicMessage.Builder nestedJsonObjectBuilder = attributesSchema.newMessageBuilder("PostAttributes.JsonObject.NestedJsonObject");
+        Descriptors.Descriptor nestedJsonObjectBuilderDescriptor = nestedJsonObjectBuilder.getDescriptorForType();
+        assertNotNull(nestedJsonObjectBuilderDescriptor);
+        DynamicMessage nestedJsonObject = nestedJsonObjectBuilder.setField(nestedJsonObjectBuilderDescriptor.findFieldByName("key"), "value").build();
+
+        DynamicMessage.Builder jsonObjectBuilder = attributesSchema.newMessageBuilder("PostAttributes.JsonObject");
+        Descriptors.Descriptor jsonObjectBuilderDescriptor = jsonObjectBuilder.getDescriptorForType();
+        assertNotNull(jsonObjectBuilderDescriptor);
+        DynamicMessage jsonObject = jsonObjectBuilder
+                .addRepeatedField(jsonObjectBuilderDescriptor.findFieldByName("someArray"), 1)
+                .addRepeatedField(jsonObjectBuilderDescriptor.findFieldByName("someArray"), 2)
+                .addRepeatedField(jsonObjectBuilderDescriptor.findFieldByName("someArray"), 3)
+                .setField(jsonObjectBuilderDescriptor.findFieldByName("someNestedObject"), nestedJsonObject)
+                .build();
+
+        DynamicMessage.Builder postAttributesBuilder = attributesSchema.newMessageBuilder("PostAttributes");
+        Descriptors.Descriptor postAttributesMsgDescriptor = postAttributesBuilder.getDescriptorForType();
+        assertNotNull(postAttributesMsgDescriptor);
+        DynamicMessage postAttributesMsg = postAttributesBuilder
+                .setField(postAttributesMsgDescriptor.findFieldByName("key1"), "")
+                .setField(postAttributesMsgDescriptor.findFieldByName("key5"), jsonObject)
+                .build();
+        processAttributesTest(POST_DATA_ATTRIBUTES_TOPIC, Arrays.asList("key1", "key5"), postAttributesMsg.toByteArray(), true);
+    }
+
+    @Test
+    public void testPushAttributesGateway() throws Exception {
         super.processBeforeTest("Test Post Attributes device", "Test Post Attributes gateway", TransportPayloadType.PROTOBUF, null, null);
         TransportApiProtos.GatewayAttributesMsg.Builder gatewayAttributesMsgProtoBuilder = TransportApiProtos.GatewayAttributesMsg.newBuilder();
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");

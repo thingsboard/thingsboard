@@ -27,6 +27,5 @@ public class LwM2MRpcResponseBody {
     private String result;
     private String value;
     private String error;
-    private String info;
 
 }

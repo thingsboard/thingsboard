@@ -27,6 +27,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
@@ -87,7 +88,7 @@ import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
 
 @DaoSqlTest
-public class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
+public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
 
     protected final String TRANSPORT_CONFIGURATION = "{\n" +
             "  \"type\": \"LWM2M\",\n" +
@@ -261,7 +262,7 @@ public class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
 
     @Before
     public void beforeTest() throws Exception {
-        executor = Executors.newScheduledThreadPool(10);
+        executor = Executors.newScheduledThreadPool(10, ThingsBoardThreadFactory.forName("test-lwm2m-scheduled"));
         loginTenantAdmin();
 
         String[] resources = new String[]{"1.xml", "2.xml", "3.xml", "5.xml", "9.xml"};
@@ -372,38 +373,44 @@ public class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
                                                     LwM2MClientCredentials credentials,
                                                     NetworkConfig coapConfig,
                                                     String endpoint) throws Exception {
-        createDeviceProfile(TRANSPORT_CONFIGURATION);
-        Device device = createDevice(credentials);
+        LwM2MTestClient client = null;
+        try {
+            createDeviceProfile(TRANSPORT_CONFIGURATION);
+            Device device = createDevice(credentials);
 
-        SingleEntityFilter sef = new SingleEntityFilter();
-        sef.setSingleEntity(device.getId());
-        LatestValueCmd latestCmd = new LatestValueCmd();
-        latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "batteryLevel")));
-        EntityDataQuery edq = new EntityDataQuery(sef, new EntityDataPageLink(1, 0, null, null),
-                Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+            SingleEntityFilter sef = new SingleEntityFilter();
+            sef.setSingleEntity(device.getId());
+            LatestValueCmd latestCmd = new LatestValueCmd();
+            latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "batteryLevel")));
+            EntityDataQuery edq = new EntityDataQuery(sef, new EntityDataPageLink(1, 0, null, null),
+                    Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 
-        EntityDataCmd cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
-        TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
-        wrapper.setEntityDataCmds(Collections.singletonList(cmd));
+            EntityDataCmd cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
+            TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
+            wrapper.setEntityDataCmds(Collections.singletonList(cmd));
 
-        wsClient.send(mapper.writeValueAsString(wrapper));
-        wsClient.waitForReply();
+            wsClient.send(mapper.writeValueAsString(wrapper));
+            wsClient.waitForReply();
 
-        wsClient.registerWaitForUpdate();
-        LwM2MTestClient client = new LwM2MTestClient(executor, endpoint);
+            wsClient.registerWaitForUpdate();
+            client = new LwM2MTestClient(executor, endpoint);
 
-        client.init(security, coapConfig);
-        String msg = wsClient.waitForUpdate();
+            client.init(security, coapConfig);
+            String msg = wsClient.waitForUpdate();
 
-        EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
-        Assert.assertEquals(1, update.getCmdId());
-        List<EntityData> eData = update.getUpdate();
-        Assert.assertNotNull(eData);
-        Assert.assertEquals(1, eData.size());
-        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
-        Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES));
-        var tsValue = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("batteryLevel");
-        Assert.assertEquals(42, Long.parseLong(tsValue.getValue()));
-        client.destroy();
+            EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
+            Assert.assertEquals(1, update.getCmdId());
+            List<EntityData> eData = update.getUpdate();
+            Assert.assertNotNull(eData);
+            Assert.assertEquals(1, eData.size());
+            Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+            Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES));
+            var tsValue = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("batteryLevel");
+            Assert.assertEquals(42, Long.parseLong(tsValue.getValue()));
+        } finally {
+            if(client != null) {
+                client.destroy();
+            }
+        }
     }
 }

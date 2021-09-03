@@ -25,6 +25,7 @@ import {
   createDeviceProfileConfiguration,
   createDeviceProfileTransportConfiguration,
   DeviceProfile,
+  DeviceProfileInfo,
   DeviceProfileType,
   DeviceProvisionConfiguration,
   DeviceProvisionType,
@@ -91,6 +92,7 @@ export class DeviceWizardDialogComponent extends
   serviceType = ServiceType.TB_RULE_ENGINE;
 
   private subscriptions: Subscription[] = [];
+  private currentDeviceProfileTransportType = DeviceTransportType.DEFAULT;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -265,6 +267,20 @@ export class DeviceWizardDialogComponent extends
     }
   }
 
+  get deviceTransportType(): DeviceTransportType {
+    if (this.deviceWizardFormGroup.get('addProfileType').value) {
+      return this.transportConfigFormGroup.get('transportType').value;
+    } else {
+      return this.currentDeviceProfileTransportType;
+    }
+  }
+
+  deviceProfileChanged(deviceProfile: DeviceProfileInfo) {
+    if (deviceProfile) {
+      this.currentDeviceProfileTransportType = deviceProfile.transportType;
+    }
+  }
+
   private createDeviceProfile(): Observable<EntityId> {
     if (this.deviceWizardFormGroup.get('addProfileType').value) {
       const deviceProvisionConfiguration: DeviceProvisionConfiguration = this.provisionConfigFormGroup.get('provisionConfiguration').value;
@@ -273,6 +289,7 @@ export class DeviceWizardDialogComponent extends
       const deviceProfile: DeviceProfile = {
         name: this.deviceWizardFormGroup.get('newDeviceProfileTitle').value,
         type: DeviceProfileType.DEFAULT,
+        defaultQueueName: this.deviceWizardFormGroup.get('defaultQueueName').value,
         transportType: this.transportConfigFormGroup.get('transportType').value,
         provisionType: deviceProvisionConfiguration.type,
         provisionDeviceKey,
@@ -287,13 +304,14 @@ export class DeviceWizardDialogComponent extends
         deviceProfile.defaultRuleChainId = new RuleChainId(this.deviceWizardFormGroup.get('defaultRuleChainId').value);
       }
       return this.deviceProfileService.saveDeviceProfile(deepTrim(deviceProfile)).pipe(
-        map(profile => profile.id),
-        tap((profileId) => {
+        tap((profile) => {
+          this.currentDeviceProfileTransportType = profile.transportType;
           this.deviceWizardFormGroup.patchValue({
-            deviceProfileId: profileId,
+            deviceProfileId: profile.id,
             addProfileType: 0
           });
-        })
+        }),
+        map(profile => profile.id)
       );
     } else {
       return of(this.deviceWizardFormGroup.get('deviceProfileId').value);
@@ -318,7 +336,12 @@ export class DeviceWizardDialogComponent extends
         id: this.customerFormGroup.get('customerId').value
       };
     }
-    return this.data.entitiesTableConfig.saveEntity(deepTrim(device));
+    return this.data.entitiesTableConfig.saveEntity(deepTrim(device)).pipe(
+      catchError(e => {
+        this.addDeviceWizardStepper.selectedIndex = 0;
+        return throwError(e);
+      })
+    );
   }
 
   private saveCredentials(device: BaseData<HasId>): Observable<boolean> {
@@ -329,6 +352,7 @@ export class DeviceWizardDialogComponent extends
             const deviceCredentialsValue = {...deviceCredentials, ...this.credentialsFormGroup.value.credential};
             return this.deviceService.saveDeviceCredentials(deviceCredentialsValue).pipe(
               catchError(e => {
+                this.addDeviceWizardStepper.selectedIndex = 1;
                 return this.deviceService.deleteDevice(device.id.id).pipe(
                   mergeMap(() => {
                     return throwError(e);

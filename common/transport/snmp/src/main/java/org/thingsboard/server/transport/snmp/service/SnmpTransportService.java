@@ -34,7 +34,9 @@ import org.snmp4j.transport.DefaultTcpTransportMapping;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.TbTransportService;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.transport.snmp.SnmpCommunicationSpec;
@@ -89,13 +91,23 @@ public class SnmpTransportService implements TbTransportService {
     @PostConstruct
     private void init() throws IOException {
         queryingExecutor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors(), ThingsBoardThreadFactory.forName("snmp-querying"));
-        responseProcessingExecutor = Executors.newWorkStealingPool(responseProcessingParallelismLevel);
+        responseProcessingExecutor = ThingsBoardExecutors.newWorkStealingPool(responseProcessingParallelismLevel, "snmp-response-processing");
 
         initializeSnmp();
         configureResponseDataMappers();
         configureResponseProcessors();
 
         log.info("SNMP transport service initialized");
+    }
+
+    @PreDestroy
+    public void stop() {
+        if (queryingExecutor != null) {
+            queryingExecutor.shutdownNow();
+        }
+        if (responseProcessingExecutor != null) {
+            responseProcessingExecutor.shutdownNow();
+        }
     }
 
     private void initializeSnmp() throws IOException {
@@ -300,7 +312,7 @@ public class SnmpTransportService implements TbTransportService {
 
     @Override
     public String getName() {
-        return "SNMP";
+        return DataConstants.SNMP_TRANSPORT_NAME;
     }
 
     @PreDestroy

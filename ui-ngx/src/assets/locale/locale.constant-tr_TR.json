@@ -667,7 +667,7 @@
     "credentials-type": "Kimlik Bilgi Türü",
     "access-token": "Erişim şifresi",
     "access-token-required": "Erişim şifresi gerekli.",
-    "access-token-invalid": "Erişim şifresi uzunluğu 1 ile 20 karakter arasında olmalıdır.",
+    "access-token-invalid": "Erişim şifresi uzunluğu 1 ile 32 karakter arasında olmalıdır.",
     "rsa-key": "RSA açık anahtarı",
     "rsa-key-required": "RSA açık anahtarı gerekli.",
     "secret": "Secret",

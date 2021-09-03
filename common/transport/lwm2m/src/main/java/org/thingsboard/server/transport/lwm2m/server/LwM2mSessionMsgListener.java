@@ -84,7 +84,6 @@ public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? s
     public void onToDeviceRpcRequest(UUID sessionId, ToDeviceRpcRequestMsg toDeviceRequest) {
         log.trace("[{}] Received RPC command to device", sessionId);
         this.rpcHandler.onToDeviceRpcRequest(toDeviceRequest, this.sessionInfo);
-        transportService.process(sessionInfo, toDeviceRequest, false, TransportServiceCallback.EMPTY);
     }
 
     @Override

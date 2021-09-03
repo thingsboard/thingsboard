@@ -219,7 +219,7 @@ export class MenuService {
           {
             name: 'resource.resources-library',
             icon: 'folder',
-            path: '/resources-library'
+            path: '/settings/resources-library'
           }
         ]
       }

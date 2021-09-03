@@ -121,14 +121,7 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
     this.config.entitySelectionEnabled = (widgetsBundle) => this.isWidgetsBundleEditable(widgetsBundle, authUser.authority);
     this.config.detailsReadonly = (widgetsBundle) => !this.isWidgetsBundleEditable(widgetsBundle, authUser.authority);
     const authState = getCurrentAuthState(this.store);
-    this.config.entitiesFetchFunction = pageLink => this.widgetsService.getWidgetBundles(pageLink).pipe(
-      map((widgetBundles) => {
-        if (!authState.edgesSupportEnabled) {
-          widgetBundles.data = widgetBundles.data.filter(widgetBundle => widgetBundle.alias !== 'edge_widgets');
-        }
-        return widgetBundles;
-      })
-    );
+    this.config.entitiesFetchFunction = pageLink => this.widgetsService.getWidgetBundles(pageLink);
     return this.config;
   }
 
