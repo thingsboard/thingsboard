@@ -223,6 +223,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     private static final String SELECT_API_USAGE_STATE = "(select aus.id, aus.created_time, aus.tenant_id, aus.entity_id, " +
             "coalesce((select title from tenant where id = aus.entity_id), (select title from customer where id = aus.entity_id)) as name " +
             "from api_usage_state as aus)";
+    static final int MAX_LEVEL_DEFAULT = 10; //This value has to be reasonable small to prevent infinite recursion as early as possible
 
     static {
         entityTableMap.put(EntityType.ASSET, "asset");
@@ -704,8 +705,12 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         return whereFilter.toString();
     }
 
-    private String getLvlFilter(int maxLevel) {
-        return maxLevel > 0 ? ("and lvl <= " + (maxLevel - 1)) : "";
+    String getLvlFilter(int maxLevel) {
+        return "and re.lvl <= " + (getMaxLevel(maxLevel) - 1);
+    }
+
+    int getMaxLevel(int maxLevel) {
+        return maxLevel > 0 ? maxLevel : MAX_LEVEL_DEFAULT;
     }
 
     private String getQueryTemplate(EntitySearchDirection direction) {
