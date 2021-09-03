@@ -58,6 +58,7 @@ import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper.getValueFromKvProto;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_ERROR;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_WARN;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertMultiResourceValuesFromJson;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
 
@@ -241,32 +242,30 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
 
     private void pushUpdateMultiToClientIfNeeded(LwM2mClient client, ResourceModel resourceModel, JsonElement newValProto,
                                                  Map<Integer, LwM2mResourceInstance> valueOld, String versionedId) {
-        Map newValues = convertMultiResourceValuesFromJson((JsonObject)newValProto, resourceModel.type, versionedId);
-        if (newValues.size() > 0) {
-            if (valueOld != null && valueOld.size() > 0) {
-                valueOld.values().stream().forEach((v) -> {
-                    if (newValues.containsKey(v.getId())) {
-                        boolean isValueEquals;
-                        if (OPAQUE.equals(v.getType())) {
-                            isValueEquals = Arrays.equals((byte [])newValues.get(v.getId()), (byte[]) v.getValue());
-                        } else {
-                            isValueEquals = newValues.get(v.getId()).toString().equals(v.getValue().toString());
-                        }
-                        if (isValueEquals) {
-                            newValues.remove(v.getId());
-                        }
+        Map newValues = convertMultiResourceValuesFromJson((JsonObject) newValProto, resourceModel.type, versionedId);
+        if (newValues.size() > 0 && valueOld != null && valueOld.size() > 0) {
+            valueOld.values().stream().forEach((v) -> {
+                if (newValues.containsKey(v.getId())) {
+                    boolean isValueEquals;
+                    if (OPAQUE.equals(v.getType())) {
+                        isValueEquals = Arrays.equals((byte[]) newValues.get(v.getId()), (byte[]) v.getValue());
+                    } else {
+                        isValueEquals = newValues.get(v.getId()).toString().equals(v.getValue().toString());
                     }
-                });
-            }
+                    if (isValueEquals) {
+                        newValues.remove(v.getId());
+                    }
+                }
+            });
         }
 
         if (newValues.size() > 0) {
             TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(versionedId).value(newValues).timeout(this.config.getTimeout()).build();
             downlinkHandler.sendWriteReplaceRequest(client, request, new TbLwM2MWriteResponseCallback(uplinkHandler, logService, client, versionedId));
         } else {
-            log.error("Failed update resource [{}] [{}]", versionedId, newValProto);
+            log.warn("Failed update resource [{}] [{}]", versionedId, newValProto);
             String logMsg = String.format("%s: Failed update resource versionedId - %s value - %s. Value is not changed or bad",
-                    LOG_LWM2M_ERROR, versionedId, newValProto);
+                    LOG_LWM2M_WARN, versionedId, newValProto);
             logService.log(client, logMsg);
         }
     }
