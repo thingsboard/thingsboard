@@ -319,7 +319,8 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                         clientContext.awake(client);
                     }
                 });
-            },e -> handleDownlinkError(client, request, callback, e));
+            }, e -> handleDownlinkError(client, request, callback, e));
+            callback.onSent(request);
         } catch (Exception e) {
             handleDownlinkError(client, request, callback, e);
         }

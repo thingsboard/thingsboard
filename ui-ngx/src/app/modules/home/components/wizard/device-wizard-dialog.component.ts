@@ -289,6 +289,7 @@ export class DeviceWizardDialogComponent extends
       const deviceProfile: DeviceProfile = {
         name: this.deviceWizardFormGroup.get('newDeviceProfileTitle').value,
         type: DeviceProfileType.DEFAULT,
+        defaultQueueName: this.deviceWizardFormGroup.get('defaultQueueName').value,
         transportType: this.transportConfigFormGroup.get('transportType').value,
         provisionType: deviceProvisionConfiguration.type,
         provisionDeviceKey,

@@ -17,10 +17,12 @@ package org.thingsboard.server.util;
 
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.utils.EventDeduplicationExecutor;
 
 import java.util.concurrent.ExecutorService;
@@ -30,6 +32,16 @@ import java.util.function.Consumer;
 @Slf4j
 @RunWith(MockitoJUnitRunner.class)
 public class EventDeduplicationExecutorTest {
+
+    ThingsBoardThreadFactory threadFactory = ThingsBoardThreadFactory.forName(getClass().getSimpleName());
+    ExecutorService executor;
+
+    @After
+    public void tearDown() throws Exception {
+        if (executor != null) {
+            executor.shutdownNow();
+        }
+    }
 
     @Test
     public void testSimpleFlowSameThread() throws InterruptedException {
@@ -48,32 +60,38 @@ public class EventDeduplicationExecutorTest {
 
     @Test
     public void testSimpleFlowSingleThread() throws InterruptedException {
-        simpleFlow(Executors.newSingleThreadExecutor());
+        executor = Executors.newSingleThreadExecutor(threadFactory);
+        simpleFlow(executor);
     }
 
     @Test
     public void testPeriodicFlowSingleThread() throws InterruptedException {
-        periodicFlow(Executors.newSingleThreadExecutor());
+        executor = Executors.newSingleThreadExecutor(threadFactory);
+        periodicFlow(executor);
     }
 
     @Test
     public void testExceptionFlowSingleThread() throws InterruptedException {
-        exceptionFlow(Executors.newSingleThreadExecutor());
+        executor = Executors.newSingleThreadExecutor(threadFactory);
+        exceptionFlow(executor);
     }
 
     @Test
     public void testSimpleFlowMultiThread() throws InterruptedException {
-        simpleFlow(Executors.newFixedThreadPool(3));
+        executor = Executors.newFixedThreadPool(3, threadFactory);
+        simpleFlow(executor);
     }
 
     @Test
     public void testPeriodicFlowMultiThread() throws InterruptedException {
-        periodicFlow(Executors.newFixedThreadPool(3));
+        executor = Executors.newFixedThreadPool(3, threadFactory);
+        periodicFlow(executor);
     }
 
     @Test
     public void testExceptionFlowMultiThread() throws InterruptedException {
-        exceptionFlow(Executors.newFixedThreadPool(3));
+        executor = Executors.newFixedThreadPool(3, threadFactory);
+        exceptionFlow(executor);
     }
 
     private void simpleFlow(ExecutorService executorService) throws InterruptedException {
