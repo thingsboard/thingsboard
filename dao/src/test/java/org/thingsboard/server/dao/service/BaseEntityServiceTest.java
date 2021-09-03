@@ -567,7 +567,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         }
 
         createManyCustomRelationsBetweenTwoNodes(tenantId, "UseCase", assets, devices);
-        //createHorizontalRingRelations(tenantId, "Ring(Loop)-Ast", assets);
+        createHorizontalRingRelations(tenantId, "Ring(Loop)-Ast", assets);
         //createLoopRelations(tenantId, "Loop-Tnt-Ast-Dev", tenantId, assets.get(0).getId(), devices.get(0).getId());
         //createLoopRelations(tenantId, "Loop-Tnt-Ast", tenantId, assets.get(1).getId());
         //createLoopRelations(tenantId, "Loop-Ast-Tnt-Ast", assets.get(2).getId(), tenantId, assets.get(3).getId());
