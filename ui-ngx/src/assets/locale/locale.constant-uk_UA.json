@@ -310,7 +310,9 @@
         "group-name-starts-with": "Групи активів, чиї імена починаються з '{{prefix}}'",
         "import": "Імпортувати активи",
         "asset-file": "Файл з активами",
-        "label": "Мітка"
+        "label": "Мітка",
+        "assign-public-asset-title": "Ви не можете надати клієнту публічний актив!",
+        "assing-public-asset-text": "Публічні активи: {{assetsName}}."
     },
     "attribute": {
         "attributes": "Атрибути",
@@ -832,7 +834,9 @@
         "remove-devices-from-group": "Ви впевнені, що хочете видалити { count, plural, 1 {1 пристрій} other {# пристрої} } з групи '{entityGroup}'?",
         "group": "Група пристроїв",
         "list-of-groups": "{ count, plural, 1 {Одна група пристроїв} other {Список # груп пристроїв} }",
-        "group-name-starts-with": "Групи пристроїв, імена яких починаються з '{{prefix}}'"
+        "group-name-starts-with": "Групи пристроїв, імена яких починаються з '{{prefix}}'",
+        "assign-public-device-title": "Ви не можете призначити клієнту публічний пристрій!",
+        "assing-public-device-text": "Публічні пристрої: {{devicesName}}."
     },
     "dialog": {
         "close": "Закрити діалогове вікно"

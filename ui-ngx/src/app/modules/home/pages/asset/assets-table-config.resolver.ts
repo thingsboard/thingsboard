@@ -260,7 +260,7 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
           name: this.translate.instant('asset.assign-assets'),
           icon: 'assignment_ind',
           isEnabled: true,
-          onAction: ($event, entities) => this.assignToCustomer($event, entities.map((entity) => entity.id))
+          onAction: ($event, entities) => this.assignAction($event, entities)
         }
       );
     }
@@ -379,6 +379,16 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
     );
   }
 
+  assignAction($event: Event, asset: Array<AssetInfo>) {
+    const publickAssets = asset.filter(asset => asset.customerIsPublic === true);
+
+    if (publickAssets.length) {
+      this.showPublicAssetAlert($event, publickAssets);
+    } else {
+      this.assignToCustomer($event, asset.map((entity) => entity.id));
+    }
+  }
+
   assignToCustomer($event: Event, assetIds: Array<AssetId>) {
     if ($event) {
       $event.stopPropagation();
@@ -397,6 +407,19 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
           this.config.table.updateData();
         }
       });
+  }
+
+  showPublicAssetAlert($event: Event, assets: Array<AssetInfo>) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+
+    const publicAssetsName = assets.map(publicAsset => publicAsset.name).join(', ');
+
+    this.dialogService.alert(
+      this.translate.instant('asset.assign-public-asset-title'),
+      this.translate.instant('asset.assing-public-asset-text', {assetsName: publicAssetsName})
+    )
   }
 
   unassignFromCustomer($event: Event, asset: AssetInfo) {

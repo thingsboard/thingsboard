@@ -439,7 +439,9 @@
         "unassign-asset-from-edge-text": "After the confirmation the asset will be unassigned and won't be accessible by the edge.",
         "unassign-assets-from-edge-title": "Are you sure you want to unassign { count, plural, 1 {1 asset} other {# assets} }?",
         "unassign-assets-from-edge-text": "After the confirmation all selected assets will be unassigned and won't be accessible by the edge.",
-        "selected-assets": "{ count, plural, 1 {1 asset} other {# assets} } selected"
+        "selected-assets": "{ count, plural, 1 {1 asset} other {# assets} } selected",
+        "assign-public-asset-title": "You can not assign public asset(s) to customer!",
+        "assing-public-asset-text": "Public Asset(s): {{assetsName}}."
     },
     "attribute": {
         "attributes": "Attributes",
@@ -1037,7 +1039,9 @@
             "add-credentials": "Add credentials"
         },
         "unassign-devices-from-edge-title": "Are you sure you want to unassign { count, plural, 1 {1 device} other {# devices} }?",
-        "unassign-devices-from-edge-text": "After the confirmation all selected devices will be unassigned and won't be accessible by the edge."
+        "unassign-devices-from-edge-text": "After the confirmation all selected devices will be unassigned and won't be accessible by the edge.",
+        "assign-public-device-title": "You can not assign public device(s) to the customer!",
+        "assing-public-device-text": "Public device(s): {{devicesName}}."
     },
     "device-profile": {
         "device-profile": "Device profile",

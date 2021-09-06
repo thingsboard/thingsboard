@@ -280,7 +280,9 @@
         "name-starts-with": "Название актива, начинающееся с",
         "import": "Импортировать активы",
         "asset-file": "Файл с активами",
-        "label": "Метка"
+        "label": "Метка",
+        "assign-public-asset-title": "Вы не можете присвоить клиенту публичный актив!",
+        "assing-public-asset-text": "Публичные активы: {{assetsName}}."
     },
     "attribute": {
         "attributes": "Атрибуты",
@@ -707,7 +709,9 @@
         "device-public": "Устройство общедоступно",
         "select-device": "Выбрать устройство",
         "import": "Импортировать устройства",
-        "device-file": "Файл с устройствами"
+        "device-file": "Файл с устройствами",
+        "assign-public-device-title": "Вы не можете присвоить клиенту публичное устройство!",
+        "assing-public-device-text": "Публичные устройства: {{devicesName}}."
     },
     "dialog": {
         "close": "Закрыть диалог"

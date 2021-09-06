@@ -303,7 +303,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
           name: this.translate.instant('device.assign-devices'),
           icon: 'assignment_ind',
           isEnabled: true,
-          onAction: ($event, entities) => this.assignToCustomer($event, entities.map((entity) => entity.id))
+          onAction: ($event, entities) => this.assignAction($event, entities)
         }
       );
     }
@@ -439,6 +439,16 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     );
   }
 
+  assignAction($event: Event, devices: Array<DeviceInfo>) {
+    const publickDevices = devices.filter(device => device.customerIsPublic === true);
+
+    if (publickDevices.length) {
+      this.showPublicDeviceAlert($event, publickDevices);
+    } else {
+      this.assignToCustomer($event, devices.map((entity) => entity.id));
+    }
+  }
+
   assignToCustomer($event: Event, deviceIds: Array<DeviceId>) {
     if ($event) {
       $event.stopPropagation();
@@ -457,6 +467,19 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
           this.config.table.updateData();
         }
       });
+  }
+
+  showPublicDeviceAlert($event: Event, device: Array<DeviceInfo>) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+
+    const publicDevicesName = device.map(publicDevice => publicDevice.name).join(', ');
+
+    this.dialogService.alert(
+      this.translate.instant('device.assign-public-device-title'),
+      this.translate.instant('device.assing-public-device-text', {devicesName: publicDevicesName})
+    )
   }
 
   unassignFromCustomer($event: Event, device: DeviceInfo) {
