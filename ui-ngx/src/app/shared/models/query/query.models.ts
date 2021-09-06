@@ -226,7 +226,9 @@ export enum StringOperation {
   STARTS_WITH = 'STARTS_WITH',
   ENDS_WITH = 'ENDS_WITH',
   CONTAINS = 'CONTAINS',
-  NOT_CONTAINS = 'NOT_CONTAINS'
+  NOT_CONTAINS = 'NOT_CONTAINS',
+  IN = 'CONTAINS',
+  NOT_IN = 'NOT_CONTAINS'
 }
 
 export const stringOperationTranslationMap = new Map<StringOperation, string>(
@@ -236,7 +238,9 @@ export const stringOperationTranslationMap = new Map<StringOperation, string>(
     [StringOperation.STARTS_WITH, 'filter.operation.starts-with'],
     [StringOperation.ENDS_WITH, 'filter.operation.ends-with'],
     [StringOperation.CONTAINS, 'filter.operation.contains'],
-    [StringOperation.NOT_CONTAINS, 'filter.operation.not-contains']
+    [StringOperation.NOT_CONTAINS, 'filter.operation.not-contains'],
+    [StringOperation.IN, 'filter.operation.in'],
+    [StringOperation.NOT_IN, 'filter.operation.not-in']
   ]
 );
 

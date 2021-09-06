@@ -537,6 +537,7 @@ public class EntityKeyMapping {
             value = value.toLowerCase();
             operationField = String.format("lower(%s)", operationField);
         }
+        List<String> values = new ArrayList<>();
         switch (stringFilterPredicate.getOperation()) {
             case EQUAL:
                 stringOperationQuery = String.format("%s = :%s)", operationField, paramName);
@@ -560,8 +561,29 @@ public class EntityKeyMapping {
                 value = "%" + value + "%";
                 stringOperationQuery = String.format("%s not like :%s or %s is null)", operationField, paramName, operationField);
                 break;
+            case IN:
+                value = value.replaceAll("'","").replaceAll("\"", "");
+                values = List.of(value.trim().split("\\s*,\\s*"));
+                System.out.println(value);
+                stringOperationQuery = String.format("%s in (:%s))", operationField, paramName);
+                break;
+            case NOT_IN:
+                value = value.replaceAll("'","").replaceAll("\"", "");
+                values = List.of(value.trim().split("\\s*,\\s*"));
+                System.out.println(value);
+                stringOperationQuery = String.format("%s not in (:%s))", operationField, paramName);
         }
-        ctx.addStringParameter(paramName, value);
+        switch (stringFilterPredicate.getOperation()) {
+            case IN:
+            case NOT_IN:
+                for (String str : values) {
+                    System.out.println(str);
+                }
+                ctx.addStringListParameter(paramName, values);
+                break;
+            default:
+                ctx.addStringParameter(paramName, value);
+        }
         return String.format("((%s is not null and %s)", field, stringOperationQuery);
     }
 
