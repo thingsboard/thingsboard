@@ -70,6 +70,7 @@ import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
+import org.thingsboard.server.dao.sql.relation.RelationRepository;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.util.ArrayList;
@@ -97,6 +98,9 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
 
     @Autowired
     private JdbcTemplate template;
+
+    @Autowired
+    private RelationRepository relationRepository;
 
     @Before
     public void before() {
@@ -156,7 +160,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         Assert.assertEquals(0, count);
     }
 
-    
+
     @Test
     public void testCountHierarchicalEntitiesByQuery() throws InterruptedException {
         List<Asset> assets = new ArrayList<>();
@@ -571,6 +575,47 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         createLoopRelations(tenantId, "Loop-Tnt-Ast-Dev", tenantId, assets.get(0).getId(), devices.get(0).getId());
         createLoopRelations(tenantId, "Loop-Tnt-Ast", tenantId, assets.get(1).getId());
         createLoopRelations(tenantId, "Loop-Ast-Tnt-Ast", assets.get(2).getId(), tenantId, assets.get(3).getId());
+
+        printAllRelations();
+    }
+
+    /*
+     * This useful to reproduce exact data in the PostgreSQL and play around with pgadmin query and analyze tool
+     * */
+    private void printAllRelations() {
+        System.out.println("" +
+                "DO\n" +
+                "$$\n" +
+                "    DECLARE\n" +
+                "        someint integer;\n" +
+                "    BEGIN\n" +
+                "        DROP TABLE IF EXISTS relation_test;\n" +
+                "        CREATE TABLE IF NOT EXISTS relation_test\n" +
+                "        (\n" +
+                "            from_id             uuid,\n" +
+                "            from_type           varchar(255),\n" +
+                "            to_id               uuid,\n" +
+                "            to_type             varchar(255),\n" +
+                "            relation_type_group varchar(255),\n" +
+                "            relation_type       varchar(255),\n" +
+                "            additional_info     varchar,\n" +
+                "            CONSTRAINT relation_test_pkey PRIMARY KEY (from_id, from_type, relation_type_group, relation_type, to_id, to_type)\n" +
+                "        );");
+
+        relationRepository.findAll().forEach(r ->
+                System.out.printf("INSERT INTO relation_test (from_id, from_type, to_id, to_type, relation_type_group, relation_type, additional_info)" +
+                                " VALUES (%s, %s, %s, %s, %s, %s, %s);\n",
+                        quote(r.getFromId()), quote(r.getFromType()), quote(r.getToId()), quote(r.getToType()),
+                        quote(r.getRelationTypeGroup()), quote(r.getRelationType()), quote(r.getAdditionalInfo()))
+        );
+
+        System.out.println("" +
+                "    END\n" +
+                "$$;");
+    }
+
+    private String quote(Object s) {
+        return s == null ? null : "'" + s + "'";
     }
 
     void createLoopRelations(TenantId tenantId, String type, EntityId... ids) {
