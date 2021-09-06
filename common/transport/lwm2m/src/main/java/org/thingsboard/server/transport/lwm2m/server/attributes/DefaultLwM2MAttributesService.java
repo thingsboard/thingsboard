@@ -226,13 +226,13 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
             String logMsg = String.format("%s: Failed update resource versionedId - %s value - %s. New value is  bad",
                     LOG_LWM2M_ERROR, versionedId, "null");
             logService.log(lwM2MClient, logMsg);
-            log.error("Failed update resource [{}] [{}]", versionedId, newValue);
-        } else if ((valueOld != null && newValue.toString().equals(valueOld.toString()))){
+            log.error("Failed update resource [{}] [{}]", versionedId,  "null");
+        } else if (newValue.toString().equals(valueOld.toString())){
             if (logFailedUpdateOfNonChangedValue) {
-                String logMsg = String.format("%s: Failed update resource versionedId - %s value - %s. Value is not changed",
-                        LOG_LWM2M_INFO, versionedId, newValue);
+                String logMsg = String.format("%s: Didn't update the versionedId resource - %s value - %s. Value is not changed",
+                        LOG_LWM2M_WARN, versionedId, newValue);
                 logService.log(lwM2MClient, logMsg);
-                log.info("Failed update resource [{}] [{}]. Value is not changed", versionedId, newValue);
+                log.warn("Didn't update resource [{}] [{}]. Value is not changed", versionedId, newValue);
             }
         } else {
             TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(versionedId).value(newValue).timeout(clientContext.getRequestTimeout(lwM2MClient)).build();
@@ -263,8 +263,8 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
             TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(versionedId).value(newValues).timeout(this.config.getTimeout()).build();
             downlinkHandler.sendWriteReplaceRequest(client, request, new TbLwM2MWriteResponseCallback(uplinkHandler, logService, client, versionedId));
         } else {
-            log.warn("Failed update resource [{}] [{}]", versionedId, newValProto);
-            String logMsg = String.format("%s: Failed update resource versionedId - %s value - %s. Value is not changed or bad",
+            log.warn("Didn't update resource [{}] [{}]", versionedId, newValProto);
+            String logMsg = String.format("%s: Didn't update resource versionedId - %s value - %s. Value is not changed",
                     LOG_LWM2M_WARN, versionedId, newValProto);
             logService.log(client, logMsg);
         }
