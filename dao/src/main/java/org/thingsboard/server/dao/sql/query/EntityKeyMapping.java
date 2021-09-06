@@ -537,7 +537,6 @@ public class EntityKeyMapping {
             value = value.toLowerCase();
             operationField = String.format("lower(%s)", operationField);
         }
-        List<String> values = new ArrayList<>();
         switch (stringFilterPredicate.getOperation()) {
             case EQUAL:
                 stringOperationQuery = String.format("%s = :%s)", operationField, paramName);
@@ -563,18 +562,17 @@ public class EntityKeyMapping {
                 break;
             case IN:
                 value = value.replaceAll("'","").replaceAll("\"", "");
-                values = List.of(value.trim().split("\\s*,\\s*"));
                 stringOperationQuery = String.format("%s in (:%s))", operationField, paramName);
                 break;
             case NOT_IN:
                 value = value.replaceAll("'","").replaceAll("\"", "");
-                values = List.of(value.trim().split("\\s*,\\s*"));
                 stringOperationQuery = String.format("%s not in (:%s))", operationField, paramName);
+                break;
         }
         switch (stringFilterPredicate.getOperation()) {
             case IN:
             case NOT_IN:
-                ctx.addStringListParameter(paramName, values);
+                ctx.addStringListParameter(paramName, List.of(value.trim().split("\\s*,\\s*")));
                 break;
             default:
                 ctx.addStringParameter(paramName, value);
