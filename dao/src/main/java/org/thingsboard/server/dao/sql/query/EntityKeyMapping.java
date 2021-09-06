@@ -576,9 +576,6 @@ public class EntityKeyMapping {
         switch (stringFilterPredicate.getOperation()) {
             case IN:
             case NOT_IN:
-                for (String str : values) {
-                    System.out.println(str);
-                }
                 ctx.addStringListParameter(paramName, values);
                 break;
             default:
