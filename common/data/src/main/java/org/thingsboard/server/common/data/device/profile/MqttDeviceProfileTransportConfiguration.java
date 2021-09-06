@@ -16,11 +16,13 @@
 package org.thingsboard.server.common.data.device.profile;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.validation.NoXss;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class MqttDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
+public class MqttDeviceProfileTransportConfiguration extends AbstractDeviceProfileTransportConfiguration {
 
     @NoXss
     private String deviceTelemetryTopic = MqttTopics.DEVICE_TELEMETRY_TOPIC;

@@ -16,11 +16,13 @@
 package org.thingsboard.server.common.data.device.profile;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.data.PowerSavingConfiguration;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class CoapDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
+public class CoapDeviceProfileTransportConfiguration extends AbstractDeviceProfileTransportConfiguration {
 
     private CoapDeviceTypeConfiguration coapDeviceTypeConfiguration;
     private PowerSavingConfiguration clientSettings;

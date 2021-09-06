@@ -16,16 +16,8 @@
 package org.thingsboard.server.common.data.device.profile;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.DeviceTransportType;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
-public class DefaultDeviceProfileTransportConfiguration extends AbstractDeviceProfileTransportConfiguration {
-
-    @Override
-    public DeviceTransportType getType() {
-        return DeviceTransportType.DEFAULT;
-    }
-
+public class CommonTransportConfiguration {
+    private boolean sequentialRpc;
 }

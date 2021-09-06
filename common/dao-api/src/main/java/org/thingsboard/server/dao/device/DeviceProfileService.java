@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.device;
 
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
-import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -36,6 +35,8 @@ public interface DeviceProfileService {
     void deleteDeviceProfile(TenantId tenantId, DeviceProfileId deviceProfileId);
 
     PageData<DeviceProfile> findDeviceProfiles(TenantId tenantId, PageLink pageLink);
+
+    PageData<DeviceProfile> findDeviceProfiles(PageLink pageLink);
 
     PageData<DeviceProfileInfo> findDeviceProfileInfos(TenantId tenantId, PageLink pageLink, String transportType);
 

@@ -32,6 +32,8 @@ public interface DeviceProfileDao extends Dao<DeviceProfile> {
 
     PageData<DeviceProfile> findDeviceProfiles(TenantId tenantId, PageLink pageLink);
 
+    PageData<DeviceProfile> findDeviceProfiles(PageLink pageLink);
+
     PageData<DeviceProfileInfo> findDeviceProfileInfos(TenantId tenantId, PageLink pageLink, String transportType);
 
     DeviceProfile findDefaultDeviceProfile(TenantId tenantId);

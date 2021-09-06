@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.thingsboard.server.common.data.device.profile;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.DeviceTransportType;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
-public class DefaultDeviceProfileTransportConfiguration extends AbstractDeviceProfileTransportConfiguration {
-
-    @Override
-    public DeviceTransportType getType() {
-        return DeviceTransportType.DEFAULT;
-    }
+public abstract class AbstractDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
+    private CommonTransportConfiguration commonTransportConfiguration;
 
 }

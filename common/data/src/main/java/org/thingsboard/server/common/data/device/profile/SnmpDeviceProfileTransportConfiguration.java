@@ -17,14 +17,16 @@ package org.thingsboard.server.common.data.device.profile;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.transport.snmp.SnmpMapping;
 import org.thingsboard.server.common.data.transport.snmp.config.SnmpCommunicationConfig;
 
 import java.util.List;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class SnmpDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
+public class SnmpDeviceProfileTransportConfiguration extends AbstractDeviceProfileTransportConfiguration {
     private Integer timeoutMs;
     private Integer retries;
     private List<SnmpCommunicationConfig> communicationConfigs;

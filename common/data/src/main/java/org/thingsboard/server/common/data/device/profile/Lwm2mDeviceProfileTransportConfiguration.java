@@ -16,13 +16,15 @@
 package org.thingsboard.server.common.data.device.profile;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.data.lwm2m.BootstrapConfiguration;
 import org.thingsboard.server.common.data.device.data.lwm2m.OtherConfiguration;
 import org.thingsboard.server.common.data.device.data.lwm2m.TelemetryMappingConfiguration;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class Lwm2mDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {
+public class Lwm2mDeviceProfileTransportConfiguration extends AbstractDeviceProfileTransportConfiguration {
 
     private static final long serialVersionUID = 6257277825459600068L;
 

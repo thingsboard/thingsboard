@@ -35,7 +35,9 @@ import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.device.profile.CommonTransportConfiguration;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
@@ -122,7 +124,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     private final Map<UUID, SessionInfo> attributeSubscriptions;
     private final Map<UUID, SessionInfo> rpcSubscriptions;
     private final Map<Integer, ToDeviceRpcRequestMetadata> toDeviceRpcPendingMap;
-    private final boolean rpcSequential;
 
     private int rpcSeq = 0;
     private String deviceName;
@@ -134,7 +135,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         super(systemContext);
         this.tenantId = tenantId;
         this.deviceId = deviceId;
-        this.rpcSequential = systemContext.isRpcSequential();
         this.attributeSubscriptions = new HashMap<>();
         this.rpcSubscriptions = new HashMap<>();
         this.toDeviceRpcPendingMap = new LinkedHashMap<>();
@@ -233,7 +233,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     private boolean isSendNewRpcAvailable() {
-        return !rpcSequential || toDeviceRpcPendingMap.values().stream().filter(md -> !md.isDelivered()).findAny().isEmpty();
+        return !isSequentialRpcEnabled() || toDeviceRpcPendingMap.values().stream().filter(md -> !md.isDelivered()).findAny().isEmpty();
     }
 
     private Rpc createRpc(ToDeviceRpcRequest request, RpcStatus status) {
@@ -332,7 +332,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         }
         Set<Integer> sentOneWayIds = new HashSet<>();
 
-        if (rpcSequential) {
+        if (isSequentialRpcEnabled()) {
             getFirstRpc().ifPresent(processPendingRpc(context, sessionId, nodeId, sentOneWayIds));
         } else if (sessionType == SessionType.ASYNC) {
             toDeviceRpcPendingMap.entrySet().forEach(processPendingRpc(context, sessionId, nodeId, sentOneWayIds));
@@ -348,7 +348,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     private void sendNextPendingRequest(TbActorCtx context) {
-        if (rpcSequential) {
+        if (isSequentialRpcEnabled()) {
             rpcSubscriptions.forEach((id, s) -> sendPendingRequests(context, id, s.getNodeId()));
         }
     }
@@ -357,7 +357,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         return entry -> {
             ToDeviceRpcRequest request = entry.getValue().getMsg().getMsg();
             ToDeviceRpcRequestBody body = request.getBody();
-            if (request.isOneway() && !rpcSequential) {
+            if (request.isOneway() && !isSequentialRpcEnabled()) {
                 sentOneWayIds.add(entry.getKey());
                 systemContext.getTbCoreDeviceRpcService().processRpcResponseFromDeviceActor(new FromDeviceRpcResponse(request.getId(), null, null));
             }
@@ -599,7 +599,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             if (status.equals(RpcStatus.DELIVERED)) {
                 if (md.getMsg().getMsg().isOneway()) {
                     toDeviceRpcPendingMap.remove(responseMsg.getRequestId());
-                    if (rpcSequential) {
+                    if (isSequentialRpcEnabled()) {
                         systemContext.getTbCoreDeviceRpcService().processRpcResponseFromDeviceActor(new FromDeviceRpcResponse(rpcId, null, null));
                     }
                 } else {
@@ -625,6 +625,12 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         } else {
             log.info("[{}][{}] Rpc has already removed from pending map.", deviceId, rpcId);
         }
+    }
+
+    private boolean isSequentialRpcEnabled() {
+        DeviceProfile deviceProfile = systemContext.getDeviceProfileCache().get(tenantId, deviceId);
+        return Optional.ofNullable(deviceProfile.getProfileData().getTransportConfiguration().getCommonTransportConfiguration())
+                .map(CommonTransportConfiguration::isSequentialRpc).orElse(false);
     }
 
     private void processSubscriptionCommands(TbActorCtx context, SessionInfoProto sessionInfo, SubscribeToAttributeUpdatesMsg subscribeCmd) {

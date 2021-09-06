@@ -43,4 +43,6 @@ public interface DeviceProfileTransportConfiguration extends Serializable {
     default void validate() {
     }
 
+    CommonTransportConfiguration getCommonTransportConfiguration();
+
 }

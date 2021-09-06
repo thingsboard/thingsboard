@@ -105,6 +105,9 @@ public class DefaultDataUpdateService implements DataUpdateService {
     @Autowired
     private OAuth2Service oAuth2Service;
 
+    @Autowired
+    private DeviceProfileRpcConfigUpdater deviceProfileRpcConfigUpdater;
+
     @Override
     public void updateData(String fromVersion) throws Exception {
         switch (fromVersion) {
@@ -126,6 +129,10 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 tenantsAlarmsCustomerUpdater.updateEntities(null);
                 deviceProfileEntityDynamicConditionsUpdater.updateEntities(null);
                 updateOAuth2Params();
+                break;
+            case "3.3.0":
+                log.info("Updating data from version 3.3.0 to 3.3.1 ...");
+                deviceProfileRpcConfigUpdater.updateEntities(null);
                 break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);

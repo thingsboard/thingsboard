@@ -39,6 +39,9 @@ public interface DeviceProfileRepository extends PagingAndSortingRepository<Devi
                                                  @Param("textSearch") String textSearch,
                                                  Pageable pageable);
 
+    @Query("SELECT d FROM DeviceProfileEntity d WHERE LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+    Page<DeviceProfileEntity> findDeviceProfiles(@Param("textSearch") String textSearch, Pageable pageable);
+
     @Query("SELECT new org.thingsboard.server.common.data.DeviceProfileInfo(d.id, d.name, d.image, d.defaultDashboardId, d.type, d.transportType) " +
             "FROM DeviceProfileEntity d WHERE " +
             "d.tenantId = :tenantId AND LOWER(d.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")

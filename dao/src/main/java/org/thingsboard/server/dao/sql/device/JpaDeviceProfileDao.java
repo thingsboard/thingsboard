@@ -64,6 +64,15 @@ public class JpaDeviceProfileDao extends JpaAbstractSearchTextDao<DeviceProfileE
     }
 
     @Override
+    public PageData<DeviceProfile> findDeviceProfiles(PageLink pageLink) {
+        return DaoUtil.toPageData(
+                deviceProfileRepository.findDeviceProfiles(
+                        Objects.toString(pageLink.getTextSearch(), ""),
+                        DaoUtil.toPageable(pageLink))
+        );
+    }
+
+    @Override
     public PageData<DeviceProfileInfo> findDeviceProfileInfos(TenantId tenantId, PageLink pageLink, String transportType) {
         if (StringUtils.isNotEmpty(transportType)) {
             return DaoUtil.pageToPageData(
