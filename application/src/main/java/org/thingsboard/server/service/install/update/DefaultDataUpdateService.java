@@ -131,7 +131,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 updateOAuth2Params();
                 break;
             case "3.3.0":
-                log.info("Updating data from version 3.3.0 to 3.3.1 ...");
+                log.info("Updating data from version 3.3.0 ...");
                 deviceProfileRpcConfigUpdater.updateEntities(null);
                 break;
             default:
