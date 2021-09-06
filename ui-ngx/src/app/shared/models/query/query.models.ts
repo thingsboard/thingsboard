@@ -227,8 +227,8 @@ export enum StringOperation {
   ENDS_WITH = 'ENDS_WITH',
   CONTAINS = 'CONTAINS',
   NOT_CONTAINS = 'NOT_CONTAINS',
-  IN = 'CONTAINS',
-  NOT_IN = 'NOT_CONTAINS'
+  IN = 'IN',
+  NOT_IN = 'NOT_IN'
 }
 
 export const stringOperationTranslationMap = new Map<StringOperation, string>(
