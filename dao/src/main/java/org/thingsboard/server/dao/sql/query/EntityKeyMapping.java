@@ -564,13 +564,11 @@ public class EntityKeyMapping {
             case IN:
                 value = value.replaceAll("'","").replaceAll("\"", "");
                 values = List.of(value.trim().split("\\s*,\\s*"));
-                System.out.println(value);
                 stringOperationQuery = String.format("%s in (:%s))", operationField, paramName);
                 break;
             case NOT_IN:
                 value = value.replaceAll("'","").replaceAll("\"", "");
                 values = List.of(value.trim().split("\\s*,\\s*"));
-                System.out.println(value);
                 stringOperationQuery = String.format("%s not in (:%s))", operationField, paramName);
         }
         switch (stringFilterPredicate.getOperation()) {
