@@ -223,7 +223,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     private static final String SELECT_API_USAGE_STATE = "(select aus.id, aus.created_time, aus.tenant_id, aus.entity_id, " +
             "coalesce((select title from tenant where id = aus.entity_id), (select title from customer where id = aus.entity_id)) as name " +
             "from api_usage_state as aus)";
-    static final int MAX_LEVEL_DEFAULT = 10; //This value has to be reasonable small to prevent infinite recursion as early as possible
+    static final int MAX_LEVEL_DEFAULT = 50; //This value has to be reasonable small to prevent infinite recursion as early as possible
 
     static {
         entityTableMap.put(EntityType.ASSET, "asset");
@@ -244,8 +244,9 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             " SELECT from_id, from_type, to_id, to_type," +
             "        1 as lvl," +
             "        ARRAY[$in_id] as path" + // initial path
-            " FROM relation" +
+            " FROM relation " +
             " WHERE $in_id = :relation_root_id and $in_type = :relation_root_type and relation_type_group = 'COMMON'" +
+            " GROUP BY from_id, from_type, to_id, to_type, lvl, path" +
             " UNION ALL" +
             " SELECT r.from_id, r.from_type, r.to_id, r.to_type," +
             "        (re.lvl + 1) as lvl, " +
