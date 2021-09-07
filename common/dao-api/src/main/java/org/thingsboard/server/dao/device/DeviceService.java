@@ -56,8 +56,6 @@ public interface DeviceService {
 
     Device saveDevice(ProvisionRequest provisionRequest, DeviceProfile profile);
 
-    void createAccessTokenCredentials(Device device, String accessToken);
-
     Device assignDeviceToCustomer(TenantId tenantId, DeviceId deviceId, CustomerId customerId);
 
     Device unassignDeviceFromCustomer(TenantId tenantId, DeviceId deviceId);

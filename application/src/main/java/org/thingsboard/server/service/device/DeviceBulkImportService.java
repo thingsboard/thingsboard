@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import lombok.SneakyThrows;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
@@ -31,6 +32,7 @@ import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
@@ -58,9 +60,9 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
 
 @Service
 @TbCoreComponent
@@ -96,29 +98,21 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
             device = existingDevice;
         }
 
-        DeviceCredentials deviceCredentials = createDeviceCredentials(fields);
-        if (deviceCredentials.getCredentialsType() != null) {
-            if (deviceCredentials.getCredentialsType() == DeviceCredentialsType.LWM2M_CREDENTIALS) {
-                setUpLwM2mDeviceProfile(user.getTenantId(), device);
-            }
-            try {
-                device = deviceService.saveDeviceWithCredentials(device, deviceCredentials);
-            } catch (DeviceCredentialsValidationException e) {
-                if (deviceCredentials.getId() == null) {
-                    device.setId(deviceCredentials.getDeviceId());
-                    importedEntityInfo.setRelatedError("Failed to create " + deviceCredentials.getCredentialsType() + " credentials: "
-                            + e.getMessage() + ". Falling back to access token creds");
-                    deviceService.createAccessTokenCredentials(device, null);
-                } else {
-                    importedEntityInfo.setRelatedError("Failed to update credentials: " + e.getMessage());
-                }
-            }
-        } else {
-            device = deviceService.saveDevice(device);
+        DeviceCredentials deviceCredentials;
+        try {
+            deviceCredentials = createDeviceCredentials(fields);
+            deviceCredentialsService.formatCredentials(deviceCredentials);
+        } catch (Exception e) {
+            throw new DeviceCredentialsValidationException("Invalid device credentials: " + e.getMessage());
         }
 
-        importedEntityInfo.setEntity(device);
+        if (deviceCredentials.getCredentialsType() == DeviceCredentialsType.LWM2M_CREDENTIALS) {
+            setUpLwM2mDeviceProfile(user.getTenantId(), device);
+        }
 
+        device = deviceService.saveDeviceWithCredentials(device, deviceCredentials);
+
+        importedEntityInfo.setEntity(device);
         return importedEntityInfo;
     }
 
@@ -148,52 +142,77 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
 
     @SneakyThrows
     private DeviceCredentials createDeviceCredentials(Map<BulkImportColumnType, String> fields) {
-        Set<BulkImportColumnType> columns = fields.keySet();
-
         DeviceCredentials credentials = new DeviceCredentials();
-
-        if (columns.contains(BulkImportColumnType.LWM2M_CLIENT_ENDPOINT)) {
+        if (fields.containsKey(BulkImportColumnType.LWM2M_CLIENT_ENDPOINT)) {
             credentials.setCredentialsType(DeviceCredentialsType.LWM2M_CREDENTIALS);
-            ObjectNode lwm2mCredentials = JacksonUtil.newObjectNode();
-
-            ObjectNode client = JacksonUtil.newObjectNode();
-            setValues(client, fields, Set.of(BulkImportColumnType.LWM2M_CLIENT_SECURITY_CONFIG_MODE,
-                    BulkImportColumnType.LWM2M_CLIENT_ENDPOINT, BulkImportColumnType.LWM2M_CLIENT_IDENTITY,
-                    BulkImportColumnType.LWM2M_CLIENT_KEY, BulkImportColumnType.LWM2M_CLIENT_CERT));
-            LwM2MClientCredentials lwM2MClientCredentials = JacksonUtil.treeToValue(client, LwM2MClientCredentials.class);
-            // so that only fields needed for specific type of lwM2MClientCredentials were saved in json
-            lwm2mCredentials.set("client", JacksonUtil.valueToTree(lwM2MClientCredentials));
-
-            ObjectNode bootstrapServer = JacksonUtil.newObjectNode();
-            setValues(bootstrapServer, fields, Set.of(BulkImportColumnType.LWM2M_BOOTSTRAP_SERVER_SECURITY_MODE,
-                    BulkImportColumnType.LWM2M_BOOTSTRAP_SERVER_PUBLIC_KEY_OR_ID, BulkImportColumnType.LWM2M_BOOTSTRAP_SERVER_SECRET_KEY));
-
-            ObjectNode lwm2mServer = JacksonUtil.newObjectNode();
-            setValues(lwm2mServer, fields, Set.of(BulkImportColumnType.LWM2M_SERVER_SECURITY_MODE,
-                    BulkImportColumnType.LWM2M_SERVER_CLIENT_PUBLIC_KEY_OR_ID, BulkImportColumnType.LWM2M_SERVER_CLIENT_SECRET_KEY));
-
-            ObjectNode bootstrap = JacksonUtil.newObjectNode();
-            bootstrap.set("bootstrapServer", bootstrapServer);
-            bootstrap.set("lwm2mServer", lwm2mServer);
-            lwm2mCredentials.set("bootstrap", bootstrap);
-
-            credentials.setCredentialsValue(lwm2mCredentials.toString());
-        } else if (columns.contains(BulkImportColumnType.X509)) {
+            setUpLwm2mCredentials(fields, credentials);
+        } else if (fields.containsKey(BulkImportColumnType.X509)) {
             credentials.setCredentialsType(DeviceCredentialsType.X509_CERTIFICATE);
-            credentials.setCredentialsValue(fields.get(BulkImportColumnType.X509));
-        } else if (CollectionUtils.containsAny(columns, EnumSet.of(BulkImportColumnType.MQTT_CLIENT_ID, BulkImportColumnType.MQTT_USER_NAME, BulkImportColumnType.MQTT_PASSWORD))) {
+            setUpX509CertificateCredentials(fields, credentials);
+        } else if (CollectionUtils.containsAny(fields.keySet(), EnumSet.of(BulkImportColumnType.MQTT_CLIENT_ID, BulkImportColumnType.MQTT_USER_NAME, BulkImportColumnType.MQTT_PASSWORD))) {
             credentials.setCredentialsType(DeviceCredentialsType.MQTT_BASIC);
-
-            BasicMqttCredentials basicMqttCredentials = new BasicMqttCredentials();
-            basicMqttCredentials.setClientId(fields.get(BulkImportColumnType.MQTT_CLIENT_ID));
-            basicMqttCredentials.setUserName(fields.get(BulkImportColumnType.MQTT_USER_NAME));
-            basicMqttCredentials.setPassword(fields.get(BulkImportColumnType.MQTT_PASSWORD));
-            credentials.setCredentialsValue(JacksonUtil.toString(basicMqttCredentials));
-        } else if (columns.contains(BulkImportColumnType.ACCESS_TOKEN)) {
+            setUpBasicMqttCredentials(fields, credentials);
+        } else {
             credentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
-            credentials.setCredentialsId(fields.get(BulkImportColumnType.ACCESS_TOKEN));
+            setUpAccessTokenCredentials(fields, credentials);
         }
         return credentials;
+    }
+
+    private void setUpAccessTokenCredentials(Map<BulkImportColumnType, String> fields, DeviceCredentials credentials) {
+        credentials.setCredentialsValue(Optional.ofNullable(fields.get(BulkImportColumnType.ACCESS_TOKEN))
+                .orElseGet(() -> RandomStringUtils.randomAlphanumeric(20)));
+    }
+
+    private void setUpBasicMqttCredentials(Map<BulkImportColumnType, String> fields, DeviceCredentials credentials) {
+        BasicMqttCredentials basicMqttCredentials = new BasicMqttCredentials();
+        basicMqttCredentials.setClientId(fields.get(BulkImportColumnType.MQTT_CLIENT_ID));
+        basicMqttCredentials.setUserName(fields.get(BulkImportColumnType.MQTT_USER_NAME));
+        basicMqttCredentials.setPassword(fields.get(BulkImportColumnType.MQTT_PASSWORD));
+        credentials.setCredentialsValue(JacksonUtil.toString(basicMqttCredentials));
+    }
+
+    private void setUpX509CertificateCredentials(Map<BulkImportColumnType, String> fields, DeviceCredentials credentials) {
+        credentials.setCredentialsValue(fields.get(BulkImportColumnType.X509));
+    }
+
+    private void setUpLwm2mCredentials(Map<BulkImportColumnType, String> fields, DeviceCredentials credentials) throws com.fasterxml.jackson.core.JsonProcessingException {
+        ObjectNode lwm2mCredentials = JacksonUtil.newObjectNode();
+
+        Set.of(BulkImportColumnType.LWM2M_CLIENT_SECURITY_CONFIG_MODE, BulkImportColumnType.LWM2M_BOOTSTRAP_SERVER_SECURITY_MODE,
+                BulkImportColumnType.LWM2M_SERVER_SECURITY_MODE).stream()
+                .map(fields::get)
+                .filter(Objects::nonNull)
+                .forEach(securityMode -> {
+                    try {
+                        LwM2MSecurityMode.valueOf(securityMode);
+                    } catch (IllegalArgumentException e) {
+                        throw new DeviceCredentialsValidationException("Unknown LwM2M security mode: " + securityMode);
+                    }
+                });
+
+        ObjectNode client = JacksonUtil.newObjectNode();
+        setValues(client, fields, Set.of(BulkImportColumnType.LWM2M_CLIENT_SECURITY_CONFIG_MODE,
+                BulkImportColumnType.LWM2M_CLIENT_ENDPOINT, BulkImportColumnType.LWM2M_CLIENT_IDENTITY,
+                BulkImportColumnType.LWM2M_CLIENT_KEY, BulkImportColumnType.LWM2M_CLIENT_CERT));
+        LwM2MClientCredentials lwM2MClientCredentials = JacksonUtil.treeToValue(client, LwM2MClientCredentials.class);
+        // so that only fields needed for specific type of lwM2MClientCredentials were saved in json
+        lwm2mCredentials.set("client", JacksonUtil.valueToTree(lwM2MClientCredentials));
+
+        ObjectNode bootstrapServer = JacksonUtil.newObjectNode();
+        setValues(bootstrapServer, fields, Set.of(BulkImportColumnType.LWM2M_BOOTSTRAP_SERVER_SECURITY_MODE,
+                BulkImportColumnType.LWM2M_BOOTSTRAP_SERVER_PUBLIC_KEY_OR_ID, BulkImportColumnType.LWM2M_BOOTSTRAP_SERVER_SECRET_KEY));
+
+        ObjectNode lwm2mServer = JacksonUtil.newObjectNode();
+        setValues(lwm2mServer, fields, Set.of(BulkImportColumnType.LWM2M_SERVER_SECURITY_MODE,
+                BulkImportColumnType.LWM2M_SERVER_CLIENT_PUBLIC_KEY_OR_ID, BulkImportColumnType.LWM2M_SERVER_CLIENT_SECRET_KEY));
+
+        ObjectNode bootstrap = JacksonUtil.newObjectNode();
+        bootstrap.set("bootstrapServer", bootstrapServer);
+        bootstrap.set("lwm2mServer", lwm2mServer);
+        lwm2mCredentials.set("bootstrap", bootstrap);
+
+        credentials.setCredentialsValue(lwm2mCredentials.toString());
     }
 
     private void setUpLwM2mDeviceProfile(TenantId tenantId, Device device) {

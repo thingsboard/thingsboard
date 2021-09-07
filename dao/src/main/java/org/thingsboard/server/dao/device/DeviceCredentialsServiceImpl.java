@@ -81,20 +81,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
     }
 
     private DeviceCredentials saveOrUpdate(TenantId tenantId, DeviceCredentials deviceCredentials) {
-        if (deviceCredentials.getCredentialsType() == null) {
-            throw new DataValidationException("Device credentials type should be specified");
-        }
-        switch (deviceCredentials.getCredentialsType()) {
-            case X509_CERTIFICATE:
-                formatCertData(deviceCredentials);
-                break;
-            case MQTT_BASIC:
-                formatSimpleMqttCredentials(deviceCredentials);
-                break;
-            case LWM2M_CREDENTIALS:
-                formatSimpleLwm2mCredentials(deviceCredentials);
-                break;
-        }
+        formatCredentials(deviceCredentials);
         log.trace("Executing updateDeviceCredentials [{}]", deviceCredentials);
         credentialsValidator.validate(deviceCredentials, id -> tenantId);
         try {
@@ -107,6 +94,21 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
             } else {
                 throw t;
             }
+        }
+    }
+
+    @Override
+    public void formatCredentials(DeviceCredentials deviceCredentials) {
+        switch (deviceCredentials.getCredentialsType()) {
+            case X509_CERTIFICATE:
+                formatCertData(deviceCredentials);
+                break;
+            case MQTT_BASIC:
+                formatSimpleMqttCredentials(deviceCredentials);
+                break;
+            case LWM2M_CREDENTIALS:
+                formatSimpleLwm2mCredentials(deviceCredentials);
+                break;
         }
     }
 
