@@ -15,16 +15,17 @@
  */
 package org.thingsboard.edge.rpc;
 
-import com.google.common.io.Resources;
 import io.grpc.ManagedChannel;
-import io.grpc.netty.GrpcSslContexts;
-import io.grpc.netty.NettyChannelBuilder;
+import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts;
+import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContextBuilder;
 import io.grpc.stub.StreamObserver;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.edge.exception.EdgeConnectionException;
 import org.thingsboard.server.common.data.ResourceUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.gen.edge.v1.ConnectRequestMsg;
 import org.thingsboard.server.gen.edge.v1.ConnectResponseCode;
 import org.thingsboard.server.gen.edge.v1.ConnectResponseMsg;
@@ -40,9 +41,6 @@ import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkResponseMsg;
 
 import javax.net.ssl.SSLException;
-import java.io.File;
-import java.net.URISyntaxException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -61,7 +59,7 @@ public class EdgeGrpcClient implements EdgeRpcClient {
     private int keepAliveTimeSec;
     @Value("${cloud.rpc.ssl.enabled}")
     private boolean sslEnabled;
-    @Value("${cloud.rpc.ssl.cert}")
+    @Value("${cloud.rpc.ssl.cert:}")
     private String certResource;
 
     private ManagedChannel channel;
@@ -81,7 +79,11 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                 .keepAliveTime(keepAliveTimeSec, TimeUnit.SECONDS);
         if (sslEnabled) {
             try {
-                builder.sslContext(GrpcSslContexts.forClient().trustManager(ResourceUtils.getInputStream(this, certResource)).build());
+                SslContextBuilder sslContextBuilder = GrpcSslContexts.forClient();
+                if (StringUtils.isNotEmpty(certResource)) {
+                    sslContextBuilder.trustManager(ResourceUtils.getInputStream(this, certResource));
+                }
+                builder.sslContext(sslContextBuilder.build());
             } catch (SSLException e) {
                 log.error("Failed to initialize channel!", e);
                 throw new RuntimeException(e);

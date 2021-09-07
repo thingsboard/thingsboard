@@ -44,6 +44,11 @@ public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkR
     }
 
     @Override
+    public void onSent(R request) {
+        transportService.process(client.getSession(), this.request, RpcStatus.SENT, TransportServiceCallback.EMPTY);
+    }
+
+    @Override
     public void onSuccess(R request, T response) {
         transportService.process(client.getSession(), this.request, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
         sendRpcReplyOnSuccess(response);
