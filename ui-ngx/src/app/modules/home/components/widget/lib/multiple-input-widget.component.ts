@@ -24,7 +24,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DataKey, Datasource, DatasourceData, DatasourceType, WidgetConfig } from '@shared/models/widget.models';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
-import { createLabelFromDatasource, isDefined, isDefinedAndNotNull, isEqual, isUndefined } from '@core/utils';
+import { createLabelFromDatasource, isDefinedAndNotNull, isEqual, isNotEmptyStr, isUndefined } from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
 import * as _moment from 'moment';
 import { FormBuilder, FormGroup, ValidatorFn, Validators } from '@angular/forms';
@@ -488,7 +488,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   public inputChanged(source: MultipleInputWidgetSource, key: MultipleInputWidgetDataKey) {
     if (!this.settings.showActionButtons) {
       const currentValue = this.multipleInputFormGroup.get(key.formId).value;
-      if (!key.settings.required || (key.settings.required && isDefined(currentValue))) {
+      if (!key.settings.required || (key.settings.required && isDefinedAndNotNull(currentValue) && isNotEmptyStr(currentValue.toString()))) {
         const dataToSave: MultipleInputWidgetSource = {
           datasource: source.datasource,
           keys: [key]
