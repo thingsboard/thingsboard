@@ -418,8 +418,6 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
      * #1 clientOnlyObserveAfterConnect == true
      * - Only Observe Request to the client marked as observe from the profile configuration.
      * #2. clientOnlyObserveAfterConnect == false
-     * После регистрации отправляю запрос на read  всех ресурсов, которые после регистрации есть у клиента,
-     * а затем запрос на observe (edited)
      * - Read Request to the client after registration to read all resource values for all objects
      * - then Observe Request to the client marked as observe from the profile configuration.
      *

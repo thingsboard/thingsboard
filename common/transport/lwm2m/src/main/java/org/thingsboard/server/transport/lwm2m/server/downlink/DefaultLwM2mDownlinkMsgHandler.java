@@ -345,13 +345,10 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     @Override
     public void sendWriteUpdateRequest(LwM2mClient client, TbLwM2MWriteUpdateRequest request, DownlinkRequestCallback<WriteRequest, WriteResponse> callback) {
         try {
-
             LwM2mPath resultIds = new LwM2mPath(request.getObjectId());
             if (resultIds.isObjectInstance() || resultIds.isResource()) {
                 validateVersionedId(client, request);
-                ResourceModel resourceModelWrite = client.getResourceModel(request.getVersionedId(), this.config.getModelProvider());
-                if (resourceModelWrite != null) {
-                    WriteRequest downlink = null;
+                WriteRequest downlink = null;
                     ContentFormat contentFormat = getWriteRequestContentFormat(client, request, this.config.getModelProvider());
                     if (resultIds.isObjectInstance()) {
                         /*
@@ -365,15 +362,21 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                         } else {
                             callback.onValidationError(toString(request), "No resources to update!");
                         }
-                    } else if (resultIds.isResource()) {
-                        if (resourceModelWrite.multiple) {
-                            if (request.getValue() instanceof Map && ((Map) request.getValue()).size() > 0) {
-                                Map value = convertMultiResourceValuesFromRpcBody((LinkedHashMap) request.getValue(), resourceModelWrite.type, request.getObjectId());
-                                downlink = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(),
-                                        value, resourceModelWrite.type);
-                            } else {
-                                callback.onValidationError(toString(request), "Resource value is bad. Format: " + request.getValue().getClass().getSimpleName() + ". Value of Multi-Instance Resource must be in Json format!");
+                    }
+                    else if (resultIds.isResource()) {
+                        ResourceModel resourceModelWrite = client.getResourceModel(request.getVersionedId(), this.config.getModelProvider());
+                        if (resourceModelWrite != null) {
+                            if (resourceModelWrite.multiple) {
+                                if (request.getValue() instanceof Map && ((Map) request.getValue()).size() > 0) {
+                                    Map value = convertMultiResourceValuesFromRpcBody((LinkedHashMap) request.getValue(), resourceModelWrite.type, request.getObjectId());
+                                    downlink = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(),
+                                            value, resourceModelWrite.type);
+                                } else {
+                                    callback.onValidationError(toString(request), "Resource value is bad. Format: " + request.getValue().getClass().getSimpleName() + ". Value of Multi-Instance Resource must be in Json format!");
+                                }
                             }
+                        } else {
+                            callback.onValidationError(toString(request), "Resource " + request.getVersionedId() + " is not configured in the device profile!");
                         }
                     }
                     if (downlink != null) {
@@ -381,21 +384,10 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                     } else {
                         callback.onValidationError(toString(request), "Resource " + request.getVersionedId() + ". This operation can only be used for ObjectInstance or Multi-Instance Resource !");
                     }
-                }
-                else {
-                    callback.onValidationError(toString(request), "Resource " + request.getVersionedId() + " is not configured in the device profile!");
-                }
             }
             else {
                 callback.onValidationError(toString(request), "Resource " + request.getVersionedId() + ". This operation can only be used for ObjectInstance or Resource (multiple)");
             }
-
-
-
-
-
-
-
         } catch (Exception e) {
             callback.onValidationError(toString(request), e.getMessage());
         }

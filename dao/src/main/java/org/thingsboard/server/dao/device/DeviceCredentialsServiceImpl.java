@@ -15,9 +15,14 @@
  */
 package org.thingsboard.server.dao.device;
 
+import com.fasterxml.jackson.databind.JsonNode;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
+import org.eclipse.leshan.core.SecurityMode;
+import org.eclipse.leshan.core.util.SecurityUtil;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -30,6 +35,7 @@ import org.thingsboard.server.common.data.device.credentials.BasicMqttCredential
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredentials;
+import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -39,9 +45,19 @@ import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.cert.Certificate;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_CREDENTIALS_CACHE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateString;
+
 
 @Service
 @Slf4j
@@ -92,6 +108,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 break;
             case LWM2M_CREDENTIALS:
                 formatSimpleLwm2mCredentials(deviceCredentials);
+                verifySecurityKeyDevice(deviceCredentials);
                 break;
         }
         log.trace("Executing updateDeviceCredentials [{}]", deviceCredentials);
@@ -237,4 +254,157 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 }
             };
 
+
+    private void verifySecurityKeyDevice(DeviceCredentials deviceCredentials) {
+        try {
+//            LwM2MCredentialsValid credentials = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(), LwM2MCredentialsValid.class);
+            JsonNode nodeCredentialsValue = JacksonUtil.toJsonNode(deviceCredentials.getCredentialsValue());
+            String [] fields = {"client", "bootstrap", "bootstrap:bootstrapServer", "bootstrap:lwm2mServer"};
+            String validateMsg = validateNodeCredentials (nodeCredentialsValue,  fields);
+            if (validateMsg.isEmpty()) {
+                checkClientKey(nodeCredentialsValue.get("client"));
+                checkServerKey(nodeCredentialsValue.get("bootstrap").get("bootstrapServer"), "Client`s by bootstrapServer");
+                checkServerKey(nodeCredentialsValue.get("bootstrap").get("lwm2mServer"), "Client`s by lwm2mServer");
+            }
+            else {
+                throw new DataValidationException(validateMsg);
+            }
+        } catch (DataValidationException | DecoderException e) {
+            throw new DataValidationException(e.getMessage());
+        }
+    }
+
+    public void verifyLwm2mSecurityKeyDeviceProfile(Lwm2mDeviceProfileTransportConfiguration transportConfiguration) {
+        try {
+            Map serverBs = transportConfiguration.getBootstrap().getBootstrapServer();
+            checkDeviceProfileServer (serverBs, "Servers: BootstrapServer`s");
+            Map serverLwm2m = transportConfiguration.getBootstrap().getLwm2mServer();
+            checkDeviceProfileServer (serverLwm2m, "Servers: Lwm2mServer`s");
+        } catch (DataValidationException e) {
+            throw new DataValidationException(e.getMessage());
+
+        }
+    }
+
+    private String validateNodeCredentials (JsonNode nodeCredentialsValue,  String [] fields) {
+        Set  msgSet = ConcurrentHashMap.newKeySet();
+        String msg = "";
+        for (String field : fields) {
+            if (field.contains(":")) {
+                String [] keys = field.split(":");
+                if (!nodeCredentialsValue.hasNonNull(keys[0])) {
+                    msgSet.add(keys[1]);
+                }
+                else {
+                    if (!nodeCredentialsValue.get(keys[0]).hasNonNull(keys[1])) msgSet.add(keys[1]);
+                }
+            }
+            else {
+                if (!nodeCredentialsValue.hasNonNull(field)) msgSet.add(field);
+            }
+        }
+        if (msgSet.size() > 0) msg = "Device credentials are missing fields or mandatory value in this fields: " + String.join(", ", msgSet);
+        return  msg;
+    }
+
+    private void checkClientKey (JsonNode node) throws DataValidationException, DecoderException {
+        String modeName = node.get("securityConfigClientMode").asText();
+        // checks security config
+        // HexDec Len = 32,64,128
+        if (SecurityMode.PSK.name().equals(modeName)) {
+            String key = node.get("key").textValue();
+            assertIf(key == null || key.isEmpty(),
+                    "pre-shared-key mode, Client`s private key or id must be not null or empty.");
+            assertIf(!key.matches("-?[0-9a-fA-F]+"),
+                    "pre-shared-key mode, Client`s private key or id must be HexDecimal format.");
+            assertIf(key.length()%32 != 0 ,
+                    "pre-shared-key mode, Client`s private key or id must be a multiple of 32.");
+            assertIf(key.length() > 128,
+                    "pre-shared-key mode, Client`s private key or id must be not more than 128.");
+            String identity = node.get("identity").textValue();
+            assertIf(identity == null || identity.isEmpty(),
+                    "pre-shared-key mode, Client`s identity key must be not null or empty.");
+        } else if (SecurityMode.RPK.name().equals(modeName)) {
+            String value = node.get("key").textValue();
+            assertIf(decodeRfc7250PublicKey(org.eclipse.leshan.core.util.Hex.decodeHex(((String) value).toCharArray())) == null,
+                    "raw-public-key mode, Client`s public key or id must be RFC7250 encoded public key");
+        } else if (SecurityMode.X509.name().equals(modeName)) {
+            String value = node.get("cert").textValue();
+            if (value != null && !value.isEmpty()) {
+                assertIf(decodeCertificate(Hex.decodeHex(((String) value).toCharArray())) == null,
+                        "x509 mode, Client`s public key must be DER encoded X.509 certificate");
+            }
+        }
+    }
+
+    private void checkServerKey (JsonNode node, String serverType) throws DataValidationException {
+        String modeName = node.get("securityMode").asText();
+        // checks security config
+        if (SecurityMode.RPK.name().equals(modeName)) {
+            checkRPKServer(node, serverType);
+        } else if (SecurityMode.X509.name().equals(modeName)) {
+            checkX509Server(node, serverType);
+        }
+    }
+
+    protected void checkRPKServer(JsonNode node, String serverType) throws DataValidationException  {
+        String value = node.get("clientSecretKey").textValue();
+        assertIf(decodeRfc5958PrivateKey(org.eclipse.leshan.core.util.Hex.decodeHex(value.toCharArray())) == null,
+                "raw-public-key mode, " + serverType + " secret key must be RFC5958 encoded private key");
+        value = node.get("clientPublicKeyOrId").textValue();
+        assertIf(decodeRfc7250PublicKey(org.eclipse.leshan.core.util.Hex.decodeHex(value.toCharArray())) == null,
+                "raw-public-key mode, " + serverType + " public key or id must be RFC7250 encoded public key");
+    }
+
+    protected void checkX509Server(JsonNode node, String serverType) throws DataValidationException {
+        String value = node.get("clientSecretKey").textValue();
+        assertIf(decodeRfc5958PrivateKey(org.eclipse.leshan.core.util.Hex.decodeHex(value.toCharArray())) == null,
+                "x509 mode " + serverType + " secret key must be RFC5958 encoded private key");
+        value = node.get("clientPublicKeyOrId").textValue();
+        assertIf(decodeCertificate(org.eclipse.leshan.core.util.Hex.decodeHex(value.toCharArray())) == null,
+                "x509 mode " + serverType + " public key must be DER encoded X.509 certificate");
+
+    }
+
+    protected void checkDeviceProfileServer (Map server, String serverType) throws DataValidationException {
+        // checks security config
+        String value = (String) server.get("serverPublicKey");
+        if (SecurityMode.RPK.name().equals(server.get("securityMode"))) {
+            assertIf(decodeRfc7250PublicKey(org.eclipse.leshan.core.util.Hex.decodeHex(value.toCharArray())) == null,
+                    "raw-public-key mode, " + serverType + " public key or id must be RFC7250 encoded public key");
+        } else if (SecurityMode.X509.name().equals(server.get("securityMode"))) {
+            assertIf(decodeCertificate(org.eclipse.leshan.core.util.Hex.decodeHex(value.toCharArray())) == null,
+                    "x509 mode, " + serverType + " public key must be DER encoded X.509 certificate");
+        }
+    }
+
+    protected PrivateKey decodeRfc5958PrivateKey(byte[] encodedKey) {
+        try {
+            return SecurityUtil.privateKey.decode(encodedKey);
+        } catch (IOException | GeneralSecurityException e) {
+            return null;
+        }
+    }
+
+    protected PublicKey decodeRfc7250PublicKey(byte[] encodedKey) {
+        try {
+            return SecurityUtil.publicKey.decode(encodedKey);
+        } catch (IOException | GeneralSecurityException e) {
+            return null;
+        }
+    }
+
+    protected Certificate decodeCertificate(byte[] encodedCert) {
+        try {
+            return SecurityUtil.certificate.decode(encodedCert);
+        } catch (IOException | GeneralSecurityException e) {
+            return null;
+        }
+    }
+
+    protected static void assertIf(boolean condition, String message) throws DataValidationException {
+        if (condition) {
+            throw new DataValidationException(message);
+        }
+    }
 }

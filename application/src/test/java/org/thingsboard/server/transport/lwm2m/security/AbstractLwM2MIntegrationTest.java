@@ -57,6 +57,9 @@ import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmdsWrapper;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
+import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapConfig;
+import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapServers;
+import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MServerBootstrap;
 import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
 import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MCredentials;
 
@@ -83,9 +86,18 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.HOST;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.HOST_BS;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.PORT;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.PORT_BS;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURE_PORT;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURE_PORT_BS;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SHORT_SERVER_ID;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SHORT_SERVER_ID_BS;
 
 @DaoSqlTest
 public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
@@ -312,7 +324,13 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         LwM2MCredentials credentials = new LwM2MCredentials();
 
         credentials.setClient(clientCredentials);
-
+        // TODO
+        /**
+         * Without:  credentials.setBootstrap(createBootstrapConfig());
+         *         doPost("/api/device/credentials", deviceCredentials).andExpect(status().isBadRequest())
+         *                 .andExpect(statusReason(containsString("Device credentials are missing fields or mandatory value in these fields: bootstrap, bootstrapServer, lwm2mServer")));
+         */
+        credentials.setBootstrap(createBootstrapConfig());
         deviceCredentials.setCredentialsValue(JacksonUtil.toString(credentials));
         doPost("/api/device/credentials", deviceCredentials).andExpect(status().isOk());
         return device;
@@ -349,6 +367,30 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         MockMultipartFile testData = new MockMultipartFile("file", "filename.txt", "text/plain", new byte[]{1});
 
         return savaData("/api/otaPackage/" + savedFirmwareInfo.getId().getId().toString() + "?checksum={checksum}&checksumAlgorithm={checksumAlgorithm}", testData, CHECKSUM, "SHA256");
+    }
+
+    protected LwM2MBootstrapConfig createBootstrapConfig() {
+        LwM2MBootstrapConfig bootstrap = new LwM2MBootstrapConfig();
+        LwM2MBootstrapServers servers = new LwM2MBootstrapServers();
+        servers.setShortId(SHORT_SERVER_ID);
+        bootstrap.setServers(servers);
+        LwM2MServerBootstrap server = new LwM2MServerBootstrap();
+        server.setHost(HOST);
+        server.setPort(PORT);
+        server.setSecurityHost(HOST);
+        server.setSecurityPort(SECURE_PORT);
+        server.setServerId(servers.getShortId());
+        server.setBootstrapServerIs(false);
+        bootstrap.setLwm2mServer(server);
+        LwM2MServerBootstrap serverBS = new LwM2MServerBootstrap();
+        serverBS.setHost(HOST_BS);
+        serverBS.setPort(PORT_BS);
+        serverBS.setSecurityHost(HOST_BS);
+        serverBS.setSecurityPort(SECURE_PORT_BS);
+        serverBS.setServerId(SHORT_SERVER_ID_BS);
+        serverBS.setBootstrapServerIs(true);
+        bootstrap.setBootstrapServer(serverBS);
+        return bootstrap;
     }
 
     protected OtaPackageInfo savaData(String urlTemplate, MockMultipartFile content, String... params) throws Exception {

@@ -321,7 +321,7 @@ cert_end_point() {
 }
 
 if [ "$client_start" -lt "$client_finish" ]; then
-  echo "Файл содержит, как минимум, одно слово Bash."
+
   echo
   echo "==Start Client=="
   while [ "$CLIENT_NUMBER" -lt "$client_finish" ]; do

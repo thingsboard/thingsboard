@@ -40,7 +40,7 @@ public class LwM2mServerListener {
 
     public final RegistrationListener registrationListener = new RegistrationListener() {
         /**
-         * Register – запрос, представленный в виде POST /rd?…
+         * Register – query represented as POST /rd?…
          */
         @Override
         public void registered(Registration registration, Registration previousReg,
@@ -49,7 +49,7 @@ public class LwM2mServerListener {
         }
 
         /**
-         * Update – представляет из себя CoAP POST запрос на URL, полученный в ответ на Register.
+         * Update – query represented as CoAP POST request for the URL received in response to Register.
          */
         @Override
         public void updated(RegistrationUpdate update, Registration updatedRegistration,
@@ -58,7 +58,7 @@ public class LwM2mServerListener {
         }
 
         /**
-         * De-register (CoAP DELETE) – отправляется клиентом в случае инициирования процедуры выключения.
+         * De-register (CoAP DELETE) – Sent by the client when a shutdown procedure is initiated.
          */
         @Override
         public void unregistered(Registration registration, Collection<Observation> observations, boolean expired,
