@@ -326,6 +326,9 @@ actors:
       queue_size: "${ACTORS_RULE_TRANSACTION_QUEUE_SIZE:15000}"
       # Time in milliseconds for transaction to complete
       duration: "${ACTORS_RULE_TRANSACTION_DURATION:60000}"
+  rpc:
+    max_retries: "${ACTORS_RPC_MAX_RETRIES:5}"
+    sequential: "${ACTORS_RPC_SEQUENTIAL:false}"
   statistics:
     # Enable/disable actor statistics
     enabled: "${ACTORS_STATISTICS_ENABLED:true}"
@@ -344,34 +347,34 @@ caffeine:
   specs:
     relations:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000 # maxSize: 0 means the cache is disabled
     deviceCredentials:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
     devices:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
     sessions:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
     assets:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
     entityViews:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
     claimDevices:
       timeToLiveInMinutes: 1440
       maxSize: 1000
     securitySettings:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
     tenantProfiles:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
     deviceProfiles:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
     attributes:
       timeToLiveInMinutes: 1440
       maxSize: 100000
@@ -386,7 +389,7 @@ caffeine:
       maxSize: 10
     edges:
       timeToLiveInMinutes: 1440
-      maxSize: 0
+      maxSize: 10000
 
 redis:
   # standalone or cluster
@@ -451,6 +454,9 @@ spring.mvc.cors:
       max-age: "1800"
       #Set whether credentials are supported. When not set, credentials are not supported.
       allow-credentials: "true"
+
+# The default timeout for asynchronous requests in milliseconds
+spring.mvc.async.request-timeout: "${SPRING_MVC_ASYNC_REQUEST_TIMEOUT:30000}"
 
 # spring serve gzip compressed static resources
 spring.resources.chain:
@@ -563,7 +569,7 @@ js:
 transport:
   sessions:
     inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:300000}"
-    report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:30000}"
+    report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:3000}"
   json:
     # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
     type_cast_enabled: "${JSON_TYPE_CAST_ENABLED:true}"
@@ -699,7 +705,7 @@ transport:
 
 # Edges parameters
 edges:
-  enabled: "${EDGES_ENABLED:false}"
+  enabled: "${EDGES_ENABLED:true}"
   rpc:
     port: "${EDGES_RPC_PORT:7070}"
     client_max_keep_alive_time_sec: "${EDGES_RPC_CLIENT_MAX_KEEP_ALIVE_TIME_SEC:300}"

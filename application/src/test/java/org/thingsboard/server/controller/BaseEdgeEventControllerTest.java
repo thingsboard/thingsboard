@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
-public class BaseEdgeEventControllerTest extends AbstractControllerTest {
+public abstract class BaseEdgeEventControllerTest extends AbstractControllerTest {
 
     private Tenant savedTenant;
     private User tenantAdmin;

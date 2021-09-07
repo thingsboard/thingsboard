@@ -39,7 +39,7 @@ public class DefaultLwM2MTelemetryLogService implements LwM2MTelemetryLogService
             if (logMsg.length() > 1024) {
                 logMsg = logMsg.substring(0, 1024);
             }
-            this.helper.sendParametersOnThingsboardTelemetry(this.helper.getKvStringtoThingsboard(LOG_LWM2M_TELEMETRY, logMsg), client.getSession());
+            this.helper.sendParametersOnThingsboardTelemetry(this.helper.getKvStringtoThingsboard(LOG_LWM2M_TELEMETRY, logMsg), client.getSession(), client.getKeyTsLatestMap());
         }
     }
 

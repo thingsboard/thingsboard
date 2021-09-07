@@ -68,4 +68,7 @@ public class MqttTransportContext extends TransportContext {
     @Value("${transport.mqtt.msg_queue_size_per_device_limit:100}")
     private int messageQueueSizePerDeviceLimit;
 
+    @Getter
+    @Value("${transport.mqtt.timeout:10000}")
+    private long timeout;
 }

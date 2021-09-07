@@ -86,9 +86,9 @@ public class TbSendEmailNode implements TbNode {
 
     private void sendEmail(TbContext ctx, TbMsg msg, TbEmail email) throws Exception {
         if (this.config.isUseSystemSmtpSettings()) {
-            ctx.getMailService().send(ctx.getTenantId(), msg.getCustomerId(), email);
+            ctx.getMailService(true).send(ctx.getTenantId(), msg.getCustomerId(), email);
         } else {
-            ctx.getMailService().send(ctx.getTenantId(), msg.getCustomerId(), email, this.mailSender);
+            ctx.getMailService(false).send(ctx.getTenantId(), msg.getCustomerId(), email, this.mailSender);
         }
     }
 

@@ -70,6 +70,13 @@ public interface TbRuleEngineQueueFactory extends TbUsageStatsClientQueueFactory
     TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> createTbCoreNotificationsMsgProducer();
 
     /**
+     * Used to consume messages about firmware update notifications to TB Core Service
+     *
+     * @return
+     */
+    TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToOtaPackageStateServiceMsg>> createToOtaPackageStateServiceMsgProducer();
+
+    /**
      * Used to consume messages by TB Core Service
      *
      * @return

@@ -16,14 +16,12 @@
 package org.thingsboard.server.service.edge.rpc.constructor;
 
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-
-import static org.thingsboard.server.service.edge.rpc.EdgeProtoUtils.getStringValue;
 
 @Component
 @TbCoreComponent
@@ -36,31 +34,31 @@ public class CustomerMsgConstructor {
                 .setIdLSB(customer.getId().getId().getLeastSignificantBits())
                 .setTitle(customer.getTitle());
         if (customer.getCountry() != null) {
-            builder.setCountry(getStringValue(customer.getCountry()));
+            builder.setCountry(customer.getCountry());
         }
         if (customer.getState() != null) {
-            builder.setState(getStringValue(customer.getState()));
+            builder.setState(customer.getState());
         }
         if (customer.getCity() != null) {
-            builder.setCity(getStringValue(customer.getCity()));
+            builder.setCity(customer.getCity());
         }
         if (customer.getAddress() != null) {
-            builder.setAddress(getStringValue(customer.getAddress()));
+            builder.setAddress(customer.getAddress());
         }
         if (customer.getAddress2() != null) {
-            builder.setAddress2(getStringValue(customer.getAddress2()));
+            builder.setAddress2(customer.getAddress2());
         }
         if (customer.getZip() != null) {
-            builder.setZip(getStringValue(customer.getZip()));
+            builder.setZip(customer.getZip());
         }
         if (customer.getPhone() != null) {
-            builder.setPhone(getStringValue(customer.getPhone()));
+            builder.setPhone(customer.getPhone());
         }
         if (customer.getEmail() != null) {
-            builder.setEmail(getStringValue(customer.getEmail()));
+            builder.setEmail(customer.getEmail());
         }
         if (customer.getAdditionalInfo() != null) {
-            builder.setAdditionalInfo(getStringValue(JacksonUtil.toString(customer.getAdditionalInfo())));
+            builder.setAdditionalInfo(JacksonUtil.toString(customer.getAdditionalInfo()));
         }
         return builder.build();
     }

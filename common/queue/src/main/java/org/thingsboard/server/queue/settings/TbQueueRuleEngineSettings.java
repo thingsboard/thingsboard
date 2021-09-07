@@ -36,8 +36,6 @@ public class TbQueueRuleEngineSettings {
     private String topic;
     private List<TbRuleEngineQueueConfiguration> queues;
 
-    //TODO 2.5 ybondarenko: make sure the queue names are valid to all queue providers.
-    // See how they are used in TbRuleEngineQueueFactory.createToRuleEngineMsgConsumer and all producers
     @PostConstruct
     public void validate() {
         queues.stream().filter(queue -> queue.getName().equals("Main")).findFirst().orElseThrow(() -> {

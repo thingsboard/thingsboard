@@ -26,8 +26,8 @@ import {
   ViewChild
 } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Observable, of } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
+import { merge, Observable, of, Subject } from 'rxjs';
+import { catchError, debounceTime, map, share, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -66,6 +66,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
       this.entityTypeValue = entityType;
       this.load();
       this.reset();
+      this.refresh$.next([]);
       this.dirty = true;
     }
   }
@@ -78,6 +79,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
       if (currentEntity) {
         if ((currentEntity as any).type !== this.entitySubtypeValue) {
           this.reset();
+          this.refresh$.next([]);
           this.dirty = true;
         }
       }
@@ -121,6 +123,8 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   private dirty = false;
 
+  private refresh$ = new Subject<Array<BaseData<EntityId>>>();
+
   private propagateChange = (v: any) => { };
 
   constructor(private store: Store<AppState>,
@@ -140,27 +144,29 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   }
 
   ngOnInit() {
-    this.filteredEntities = this.selectEntityFormGroup.get('entity').valueChanges
-      .pipe(
-        debounceTime(150),
-        tap(value => {
-          let modelValue;
-          if (typeof value === 'string' || !value) {
-            modelValue = null;
-          } else {
-            modelValue = value.id.id;
-          }
-          this.updateView(modelValue, value);
-          if (value === null) {
-            this.clear();
-          }
-        }),
-        // startWith<string | BaseData<EntityId>>(''),
-        map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
-        distinctUntilChanged(),
-        switchMap(name => this.fetchEntities(name)),
-        share()
-      );
+    this.filteredEntities = merge(
+      this.refresh$.asObservable(),
+      this.selectEntityFormGroup.get('entity').valueChanges
+        .pipe(
+          debounceTime(150),
+          tap(value => {
+            let modelValue;
+            if (typeof value === 'string' || !value) {
+              modelValue = null;
+            } else {
+              modelValue = value.id.id;
+            }
+            this.updateView(modelValue, value);
+            if (value === null) {
+              this.clear();
+            }
+          }),
+          // startWith<string | BaseData<EntityId>>(''),
+          map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
+          switchMap(name => this.fetchEntities(name)),
+          share()
+        )
+    );
   }
 
   ngAfterViewInit(): void {}

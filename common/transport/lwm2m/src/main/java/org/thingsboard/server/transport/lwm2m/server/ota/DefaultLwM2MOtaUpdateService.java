@@ -602,7 +602,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         kvProto = TransportProtos.KeyValueProto.newBuilder().setKey(LOG_LWM2M_TELEMETRY);
         kvProto.setType(TransportProtos.KeyValueType.STRING_V).setStringV(log);
         result.add(kvProto.build());
-        helper.sendParametersOnThingsboardTelemetry(result, client.getSession());
+        helper.sendParametersOnThingsboardTelemetry(result, client.getSession(), client.getKeyTsLatestMap());
     }
 
     private static Optional<OtaPackageUpdateStatus> toOtaPackageUpdateStatus(FirmwareUpdateResult fwUpdateResult) {

@@ -88,7 +88,7 @@ import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
 
 @DaoSqlTest
-public class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
+public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
 
     protected final String TRANSPORT_CONFIGURATION = "{\n" +
             "  \"type\": \"LWM2M\",\n" +
