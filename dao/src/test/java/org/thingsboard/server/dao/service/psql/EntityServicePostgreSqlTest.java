@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service.sql;
+package org.thingsboard.server.dao.service.psql;
 
 import org.thingsboard.server.dao.service.BaseEntityServiceTest;
-import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.dao.service.DaoPostgreSqlTest;
 
-@DaoSqlTest
-public class EntityServiceSqlTest extends BaseEntityServiceTest {
+@DaoPostgreSqlTest
+public class EntityServicePostgreSqlTest extends BaseEntityServiceTest {
 }
