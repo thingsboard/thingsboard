@@ -26,7 +26,7 @@ import org.springframework.security.web.WebAttributes;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.security.model.JwtToken;
-import org.thingsboard.server.service.security.auth.LoggedInUsersLimitService;
+import org.thingsboard.server.service.security.auth.UserActiveSessionsLimitService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
@@ -42,22 +42,20 @@ import java.util.Map;
 public class RestAwareAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
     private final ObjectMapper mapper;
     private final JwtTokenFactory tokenFactory;
-    private final LoggedInUsersLimitService loggedInUsersLimitService;
+    private final UserActiveSessionsLimitService userActiveSessionsLimitService;
 
     @Autowired
-    public RestAwareAuthenticationSuccessHandler(final ObjectMapper mapper, final JwtTokenFactory tokenFactory, LoggedInUsersLimitService loggedInUsersLimitService) {
+    public RestAwareAuthenticationSuccessHandler(final ObjectMapper mapper, final JwtTokenFactory tokenFactory, UserActiveSessionsLimitService userActiveSessionsLimitService) {
         this.mapper = mapper;
         this.tokenFactory = tokenFactory;
-        this.loggedInUsersLimitService = loggedInUsersLimitService;
+        this.userActiveSessionsLimitService = userActiveSessionsLimitService;
     }
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
         SecurityUser securityUser = (SecurityUser) authentication.getPrincipal();
-        if (loggedInUsersLimitService.isOverLimit(securityUser.getId()))
-            throw new AuthenticationServiceException("Violation of logged in users amount limit");
-        loggedInUsersLimitService.increaseCurrentLoggedInUsers(securityUser.getId());
+    userActiveSessionsLimitService.increaseCurrentActiveSessions(securityUser.getId());
 
         Pair<JwtToken, JwtToken> tokensPair = tokenFactory.getAccessAndRefreshTokens(securityUser);
         JwtToken accessToken = tokensPair.getFirst();

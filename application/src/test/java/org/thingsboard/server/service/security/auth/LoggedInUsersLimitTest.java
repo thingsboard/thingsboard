@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class LoggedInUsersLimitTest {
 
-    private LoggedInUsersLimitService loggedInUsersLimitService;
+    private UserActiveSessionsLimitService userActiveSessionsLimitService;
 
     private UserId userId;
 
@@ -40,8 +40,8 @@ public class LoggedInUsersLimitTest {
     public void setUp() {
         ConcurrentMapCacheManager cacheManager = new ConcurrentMapCacheManager();
 
-        loggedInUsersLimitService = new LoggedInUsersLimitService(cacheManager, (long) maxLoginUsers);
-        loggedInUsersLimitService.initCache();
+        userActiveSessionsLimitService = new UserActiveSessionsLimitService(cacheManager, (long) maxLoginUsers);
+        userActiveSessionsLimitService.initCache();
 
         userId = new UserId(UUID.randomUUID());
 
@@ -49,41 +49,38 @@ public class LoggedInUsersLimitTest {
 
     @Test
     public void testIsOverLimit(){
-        assertFalse(loggedInUsersLimitService.isOverLimit(userId));
+        assertFalse(userActiveSessionsLimitService.isOverLimit(userId));
         for (int i = 0; i < maxLoginUsers; i++)
-            loggedInUsersLimitService.increaseCurrentLoggedInUsers(userId);
+            userActiveSessionsLimitService.increaseCurrentActiveSessions(userId);
 
-        boolean isOverLimit = loggedInUsersLimitService.isOverLimit(userId);
+        boolean isOverLimit = userActiveSessionsLimitService.isOverLimit(userId);
         assertTrue(isOverLimit);
     }
 
     @Test
     public void testDecreaseCurrentLoginAmount() {
-        loggedInUsersLimitService.increaseCurrentLoggedInUsers(userId);
-        loggedInUsersLimitService.decreaseCurrentLoggedInUsers(userId);
-        Optional<Long> currentAmount1 = loggedInUsersLimitService.getCurrentAmount(userId);
-        assertTrue(currentAmount1.isEmpty());
+        userActiveSessionsLimitService.increaseCurrentActiveSessions(userId);
+        userActiveSessionsLimitService.decreaseCurrentActiveSessions(userId);
+        long currentAmount1 = userActiveSessionsLimitService.getCurrentAmount(userId);
+        assertEquals(0, currentAmount1);
 
         for (int i = 0; i < 2; i++)
-            loggedInUsersLimitService.increaseCurrentLoggedInUsers(userId);
+            userActiveSessionsLimitService.increaseCurrentActiveSessions(userId);
 
-        loggedInUsersLimitService.decreaseCurrentLoggedInUsers(userId);
-        Optional<Long> currentAmount2 = loggedInUsersLimitService.getCurrentAmount(userId);
-        assertTrue(currentAmount2.isPresent());
-        assertEquals(currentAmount2.get(), 1L);
+        userActiveSessionsLimitService.decreaseCurrentActiveSessions(userId);
+        long currentAmount2 = userActiveSessionsLimitService.getCurrentAmount(userId);
+        assertEquals(currentAmount2, 1L);
     }
 
     @Test
     public void testIncreaseCurrentLoggedInUsers() {
-        loggedInUsersLimitService.increaseCurrentLoggedInUsers(userId);
-        Optional<Long> currentAmount1 = loggedInUsersLimitService.getCurrentAmount(userId);
-        assertTrue(currentAmount1.isPresent());
-        assertEquals(currentAmount1.get(), 1L);
+        userActiveSessionsLimitService.increaseCurrentActiveSessions(userId);
+        long currentAmount1 = userActiveSessionsLimitService.getCurrentAmount(userId);
+        assertEquals(currentAmount1, 1L);
 
-        loggedInUsersLimitService.increaseCurrentLoggedInUsers(userId);
-        Optional<Long> currentAmount2 = loggedInUsersLimitService.getCurrentAmount(userId);
-        assertTrue(currentAmount2.isPresent());
-        assertEquals(currentAmount2.get(), 2L);
+        userActiveSessionsLimitService.increaseCurrentActiveSessions(userId);
+        long currentAmount2 = userActiveSessionsLimitService.getCurrentAmount(userId);
+        assertEquals(currentAmount2, 2L);
 
     }
 }

@@ -28,7 +28,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.thingsboard.server.service.security.auth.UserActiveSessionsLimitService;
 import org.thingsboard.server.service.security.exception.AuthMethodNotSupportedException;
+import org.thingsboard.server.service.security.exception.UserActiveSessionsLimitException;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 
 import javax.servlet.FilterChain;
@@ -45,13 +48,17 @@ public class RestLoginProcessingFilter extends AbstractAuthenticationProcessingF
     private final AuthenticationSuccessHandler successHandler;
     private final AuthenticationFailureHandler failureHandler;
 
+    private final UserActiveSessionsLimitService userActiveSessionsLimitService;
+
     private final ObjectMapper objectMapper;
 
     public RestLoginProcessingFilter(String defaultProcessUrl, AuthenticationSuccessHandler successHandler,
-                                     AuthenticationFailureHandler failureHandler, ObjectMapper mapper) {
+                                     AuthenticationFailureHandler failureHandler, UserActiveSessionsLimitService userActiveSessionsLimitService,
+                                     ObjectMapper mapper) {
         super(defaultProcessUrl);
         this.successHandler = successHandler;
         this.failureHandler = failureHandler;
+        this.userActiveSessionsLimitService = userActiveSessionsLimitService;
         this.objectMapper = mapper;
     }
 
@@ -86,6 +93,11 @@ public class RestLoginProcessingFilter extends AbstractAuthenticationProcessingF
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
                                             Authentication authResult) throws IOException, ServletException {
+        if (userActiveSessionsLimitService.isOverLimit(((SecurityUser) authResult.getPrincipal()).getId())) {
+            unsuccessfulAuthentication(request, response, new UserActiveSessionsLimitException("Violation of logged in users amount limit"));
+            return;
+        }
+
         successHandler.onAuthenticationSuccess(request, response, authResult);
     }
 

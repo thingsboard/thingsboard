@@ -42,6 +42,7 @@ import org.springframework.web.filter.CorsFilter;
 import org.thingsboard.server.dao.audit.AuditLogLevelFilter;
 import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
+import org.thingsboard.server.service.security.auth.UserActiveSessionsLimitService;
 import org.thingsboard.server.service.security.auth.jwt.JwtAuthenticationProvider;
 import org.thingsboard.server.service.security.auth.jwt.JwtTokenAuthenticationProcessingFilter;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenAuthenticationProvider;
@@ -116,9 +117,11 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
 
     @Autowired private RateLimitProcessingFilter rateLimitProcessingFilter;
 
+    @Autowired private UserActiveSessionsLimitService userActiveSessionsLimitService;
+
     @Bean
     protected RestLoginProcessingFilter buildRestLoginProcessingFilter() throws Exception {
-        RestLoginProcessingFilter filter = new RestLoginProcessingFilter(FORM_BASED_LOGIN_ENTRY_POINT, successHandler, failureHandler, objectMapper);
+        RestLoginProcessingFilter filter = new RestLoginProcessingFilter(FORM_BASED_LOGIN_ENTRY_POINT, successHandler, failureHandler, userActiveSessionsLimitService, objectMapper);
         filter.setAuthenticationManager(this.authenticationManager);
         return filter;
     }

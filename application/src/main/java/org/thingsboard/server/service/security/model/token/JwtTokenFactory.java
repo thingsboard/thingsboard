@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class JwtTokenFactory {
 
-    private static final String TOKEN_ID = "tokenId";
+    public static final String TOKEN_ID = "tokenId";
     private static final String SCOPES = "scopes";
     private static final String USER_ID = "userId";
     private static final String FIRST_NAME = "firstName";

@@ -23,52 +23,60 @@ import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.id.UserId;
 
 import javax.annotation.PostConstruct;
+import javax.servlet.http.HttpServletRequest;
 import java.util.Optional;
 
 @Service
-public class LoggedInUsersLimitService {
+public class UserActiveSessionsLimitService {
     private final CacheManager cacheManager;
     private Cache loginLimitCache;
 
     private final Long maxLoginUsers;
 
-    public LoggedInUsersLimitService(CacheManager cacheManager,
-                                     @Value("${security.max_logged_in_users}") Long maxLoginUsers) {
+    public UserActiveSessionsLimitService(CacheManager cacheManager,
+                                          @Value("${security.max_logged_in_users}") Long maxActiveSessions) {
         this.cacheManager = cacheManager;
-        this.maxLoginUsers = maxLoginUsers;
+        this.maxLoginUsers = maxActiveSessions;
     }
 
 
     @PostConstruct
     protected void initCache() {
-        loginLimitCache = cacheManager.getCache(CacheConstants.LOGIN_AMOUNT_LIMIT_CACHE);
+        loginLimitCache = cacheManager.getCache(CacheConstants.USER_ACTIVE_SESSIONS_CACHE);
     }
+
+/*
+    Every request must be checked by ip.
+    Session will expire in specific amount of time stored in cache - then logout.
+ */
 
     public boolean isOverLimit(UserId userId) {
         if (maxLoginUsers == 0)
             return false;
-        return getCurrentAmount(userId).map(currentAmount -> currentAmount >= maxLoginUsers).orElse(false);
+        long currentAmount = getCurrentAmount(userId);
+        return currentAmount >= maxLoginUsers;
     }
 
-    public void decreaseCurrentLoggedInUsers(UserId userId) {
-        getCurrentAmount(userId).ifPresent(currentAmount -> {
-            loginLimitCache.put(toKey(userId), --currentAmount);
-            if (currentAmount == 0)
-                loginLimitCache.evict(toKey(userId));
-        });
+    public void decreaseCurrentActiveSessions(UserId userId) {
+        long currentAmount = getCurrentAmount(userId);
+        if (currentAmount > 0) {
+            loginLimitCache.put(toKey(userId), currentAmount - 1);
+        } else {
+            loginLimitCache.evict(toKey(userId));
+        }
     }
 
-    public void increaseCurrentLoggedInUsers(UserId userId) {
-        Optional<Long> currentAmount = getCurrentAmount(userId);
-        String key = toKey(userId);
-        if (currentAmount.isPresent())
-            loginLimitCache.put(key, currentAmount.get() + 1);
-        else
-            loginLimitCache.put(key, 1L);
+    public void increaseCurrentActiveSessions(UserId userId) {
+        long currentAmount = getCurrentAmount(userId);
+        loginLimitCache.put(toKey(userId), currentAmount + 1);
     }
 
-    public Optional<Long> getCurrentAmount(UserId userId) {
-        return Optional.ofNullable(loginLimitCache.get(toKey(userId), Long.class));
+    public Long getCurrentAmount(UserId userId) {
+        return Optional.ofNullable(loginLimitCache.get(toKey(userId), Long.class))
+                .orElseGet(() -> {
+                    loginLimitCache.put(toKey(userId), 0L);
+                    return 0L;
+                });
     }
 
     private String toKey(UserId userId) {

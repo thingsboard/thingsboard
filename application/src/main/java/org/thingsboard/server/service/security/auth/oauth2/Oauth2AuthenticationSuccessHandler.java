@@ -18,6 +18,7 @@ package org.thingsboard.server.service.security.auth.oauth2;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
@@ -32,8 +33,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
 import org.thingsboard.server.common.data.security.model.JwtToken;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
+import org.thingsboard.server.service.security.auth.UserActiveSessionsLimitService;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.model.token.AccessJwtToken;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
@@ -54,6 +55,7 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private final OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
     private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
     private final SystemSecurityService systemSecurityService;
+    private final UserActiveSessionsLimitService userActiveSessionsLimitService;
 
     @Autowired
     public Oauth2AuthenticationSuccessHandler(final JwtTokenFactory tokenFactory,
@@ -61,13 +63,14 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                                               final OAuth2Service oAuth2Service,
                                               final OAuth2AuthorizedClientService oAuth2AuthorizedClientService,
                                               final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository,
-                                              final SystemSecurityService systemSecurityService) {
+                                              final SystemSecurityService systemSecurityService, UserActiveSessionsLimitService userActiveSessionsLimitService) {
         this.tokenFactory = tokenFactory;
         this.oauth2ClientMapperProvider = oauth2ClientMapperProvider;
         this.oAuth2Service = oAuth2Service;
         this.oAuth2AuthorizedClientService = oAuth2AuthorizedClientService;
         this.httpCookieOAuth2AuthorizationRequestRepository = httpCookieOAuth2AuthorizationRequestRepository;
         this.systemSecurityService = systemSecurityService;
+        this.userActiveSessionsLimitService = userActiveSessionsLimitService;
     }
 
     @Override
@@ -92,6 +95,10 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             OAuth2ClientMapper mapper = oauth2ClientMapperProvider.getOAuth2ClientMapperByType(registration.getMapperConfig().getType());
             SecurityUser securityUser = mapper.getOrCreateUserByClientPrincipal(request, token, oAuth2AuthorizedClient.getAccessToken().getTokenValue(),
                     registration);
+
+            if (userActiveSessionsLimitService.isOverLimit(securityUser.getId()))
+                throw new AuthenticationServiceException("Violation of logged in users amount limit");
+            userActiveSessionsLimitService.increaseCurrentActiveSessions(securityUser.getId());
 
             Pair<JwtToken, JwtToken> tokensPair = tokenFactory.getAccessAndRefreshTokens(securityUser);
             JwtToken accessToken = tokensPair.getFirst();

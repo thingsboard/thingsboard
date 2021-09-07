@@ -59,7 +59,7 @@ public class TokenOutdatingService {
         long issueTime = claims.getIssuedAt().getTime();
 
         Jws<Claims> claimsJws = tokenFactory.parseTokenClaims(token);
-        Optional<String> tokenId = Optional.ofNullable(claimsJws.getBody().get("tokenId").toString());
+        Optional<String> tokenId = Optional.ofNullable(claimsJws.getBody().get(JwtTokenFactory.TOKEN_ID)).map(Object::toString);
 
         boolean isTokenExpired = true;
         if (tokenId.isPresent()) {
@@ -79,7 +79,9 @@ public class TokenOutdatingService {
 
     public void outdateTokens(RawAccessJwtToken token) {
         Jws<Claims> claimsJws = tokenFactory.parseTokenClaims(token);
-        Optional.of(claimsJws.getBody().get("tokenId").toString()).ifPresent(this::outdateTokens);
+        Optional.ofNullable(claimsJws.getBody().get(JwtTokenFactory.TOKEN_ID))
+                .map(Object::toString)
+                .ifPresent(this::outdateTokens);
     }
 
     private boolean checkIfOutdated(Long outdatageTime, long issueTime, UserId userId) {

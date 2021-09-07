@@ -49,13 +49,12 @@ import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.auth.LoggedInUsersLimitService;
+import org.thingsboard.server.service.security.auth.UserActiveSessionsLimitService;
 import org.thingsboard.server.service.security.auth.TokenOutdatingService;
 import org.thingsboard.server.service.security.auth.jwt.extractor.JwtHeaderTokenExtractor;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
-import org.thingsboard.server.service.security.model.token.AccessJwtToken;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.model.token.RawAccessJwtToken;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
@@ -78,7 +77,7 @@ public class AuthController extends BaseController {
     private final AuditLogService auditLogService;
     private final ApplicationEventPublisher eventPublisher;
     private final TokenOutdatingService tokenOutdatingService;
-    private final LoggedInUsersLimitService loggedInUsersLimitService;
+    private final UserActiveSessionsLimitService userActiveSessionsLimitService;
     private final JwtHeaderTokenExtractor tokenExtractor;
 
     @PreAuthorize("isAuthenticated()")
@@ -100,7 +99,7 @@ public class AuthController extends BaseController {
         SecurityUser securityUser = getCurrentUser();
         RawAccessJwtToken token = new RawAccessJwtToken(tokenExtractor.extract(request));
         tokenOutdatingService.outdateTokens(token);
-        loggedInUsersLimitService.decreaseCurrentLoggedInUsers(securityUser.getId());
+        userActiveSessionsLimitService.decreaseCurrentActiveSessions(securityUser.getId());
     }
 
     @PreAuthorize("isAuthenticated()")
