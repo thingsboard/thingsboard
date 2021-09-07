@@ -1361,7 +1361,8 @@ export class EntityService {
         if (entityAction === EdgeEventActionType.POST_ATTRIBUTES ||
             entityAction === EdgeEventActionType.ATTRIBUTES_UPDATED ||
             entityAction === EdgeEventActionType.ATTRIBUTES_DELETED ||
-            entityAction === EdgeEventActionType.TIMESERIES_UPDATED) {
+            entityAction === EdgeEventActionType.TIMESERIES_UPDATED ||
+            entityAction === EdgeEventActionType.RPC_CALL) {
           return of(entity.body);
         } else {
           entityObservable = this.getEntity(entityType, entityId, { ignoreLoading: true, ignoreErrors: true });
