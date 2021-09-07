@@ -355,6 +355,9 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
             case 'booleanSwitch':
               value = (keyData[0][1] === 'true');
               break;
+            case 'select':
+              value = keyData[0][1].toString();
+              break;
             default:
               value = keyData[0][1];
           }
