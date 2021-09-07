@@ -29,6 +29,7 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.mock;
@@ -71,7 +72,7 @@ class LwM2mTransportServerHelperTest {
         assertThat(helper.getTs(emptyList(), keyTsLatestMap)).isEqualTo(now);
         assertThat(helper.getTs(kvList, null)).isEqualTo(now);
 
-        verify(helper, never()).getTsByKey(anyString(), any(ConcurrentMap.class), anyLong());
+        verify(helper, never()).getTsByKey(anyString(), anyMap(), anyLong());
         verify(helper, times(5)).getCurrentTimeMillis();
     }
 
@@ -80,7 +81,7 @@ class LwM2mTransportServerHelperTest {
         assertThat(helper.getTs(kvList, keyTsLatestMap)).isEqualTo(now);
 
         verify(helper, times(1)).getTsByKey(kvList.get(0).getKey(), keyTsLatestMap, now);
-        verify(helper, times(1)).getTsByKey(anyString(), any(ConcurrentMap.class), anyLong());
+        verify(helper, times(1)).getTsByKey(anyString(), anyMap(), anyLong());
     }
 
     @Test

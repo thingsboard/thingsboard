@@ -369,11 +369,6 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public ListeningExecutor getJsExecutor() {
-        return mainCtx.getJsExecutor();
-    }
-
-    @Override
     public ListeningExecutor getMailExecutor() {
         return mainCtx.getMailExecutor();
     }

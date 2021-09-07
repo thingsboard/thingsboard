@@ -17,7 +17,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 buildscript {
     ext {
-        osPackageVersion = "8.3.0"
+        osPackageVersion = "8.6.3"
     }
     repositories {
         jcenter()

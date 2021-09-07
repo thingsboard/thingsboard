@@ -231,10 +231,6 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private JsExecutorService jsExecutor;
-
-    @Autowired
-    @Getter
     private MailExecutorService mailExecutor;
 
     @Autowired

@@ -19,20 +19,12 @@ import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2Info;
 import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
-import org.thingsboard.server.common.data.oauth2.deprecated.OAuth2ClientRegistrationInfo;
-import org.thingsboard.server.common.data.oauth2.deprecated.OAuth2ClientsParams;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface OAuth2Service {
     List<OAuth2ClientInfo> getOAuth2Clients(String domainScheme, String domainName, String pkgName, PlatformType platformType);
-
-    @Deprecated
-    void saveOAuth2Params(OAuth2ClientsParams oauth2Params);
-
-    @Deprecated
-    OAuth2ClientsParams findOAuth2Params();
 
     void saveOAuth2Info(OAuth2Info oauth2Info);
 
