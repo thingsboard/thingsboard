@@ -502,15 +502,10 @@ export class EntityService {
 
   public getAliasFilterTypesByEntityTypes(entityTypes: Array<EntityType | AliasEntityType>): Array<AliasFilterType> {
     const authState = getCurrentAuthState(this.store);
-    const allAliasFilterTypes: Array<AliasFilterType> = Object.keys(AliasFilterType)
-      .map((key) => AliasFilterType[key])
-      .filter(aft => {
-        if (authState.edgesSupportEnabled) {
-          return true;
-        } else {
-          return edgeAliasFilterTypes.indexOf(aft) === -1;
-        }
-      });
+    let allAliasFilterTypes: Array<AliasFilterType> = Object.values(AliasFilterType);
+    if (!authState.edgesSupportEnabled) {
+      allAliasFilterTypes = allAliasFilterTypes.filter(aliasFilterType => !edgeAliasFilterTypes.includes(aliasFilterType));
+    }
     if (!entityTypes || !entityTypes.length) {
       return allAliasFilterTypes;
     }
