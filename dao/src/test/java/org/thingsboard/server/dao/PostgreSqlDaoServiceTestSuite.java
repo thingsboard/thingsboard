@@ -30,12 +30,9 @@
  */
 package org.thingsboard.server.dao;
 
-import org.junit.ClassRule;
 import org.junit.extensions.cpsuite.ClasspathSuite;
 import org.junit.extensions.cpsuite.ClasspathSuite.ClassnameFilters;
 import org.junit.runner.RunWith;
-
-import java.util.Arrays;
 
 @RunWith(ClasspathSuite.class)
 @ClassnameFilters({
@@ -45,32 +42,4 @@ import java.util.Arrays;
         "org.thingsboard.server.dao.service.timeseries.psql.*SqlTest"
 })
 public class PostgreSqlDaoServiceTestSuite {
-
-    @ClassRule
-    public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
-            Arrays.asList("sql/schema-ts-psql.sql", "sql/schema-entities.sql", "sql/schema-entities-idx.sql"
-                    , "sql/system-data.sql"
-                    , "sql/system-test-psql.sql"
-            ),
-            "sql/psql/drop-all-tables.sql",
-            "psql-test.properties"
-    );
-
-//    @ClassRule
-//    public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
-//            Arrays.asList("sql/schema-ts-psql.sql"
-//                    , "sql/schema-entities.sql", "sql/schema-entities-idx.sql"
-//                    , "sql/system-data.sql", "sql/system-test.sql"
-//            ),
-//            "sql/psql/drop-all-tables.sql",
-//            "sql-test.properties"
-//    );
-
-//    @ClassRule
-//    public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
-//            Arrays.asList("sql/schema-timescale.sql", "sql/schema-entities.sql", "sql/schema-entities-idx.sql", "sql/system-data.sql", "sql/system-test.sql"),
-//            "sql/timescale/drop-all-tables.sql",
-//            "sql-test.properties"
-//    );
-
 }
