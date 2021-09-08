@@ -256,6 +256,7 @@
                 <configuration>
                     <excludes>
                         <exclude>**/sql/*Test.java</exclude>
+                        <exclude>**/sql/*/*Test.java</exclude>
                         <exclude>**/psql/*Test.java</exclude>
                         <exclude>**/nosql/*Test.java</exclude>
                     </excludes>
