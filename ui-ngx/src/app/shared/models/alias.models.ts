@@ -37,6 +37,11 @@ export enum AliasFilterType {
   entityViewSearchQuery = 'entityViewSearchQuery'
 }
 
+export const edgeAliasFilterTypes = new Array<string>(
+  AliasFilterType.edgeType,
+  AliasFilterType.edgeSearchQuery
+);
+
 export const aliasFilterTypeTranslationMap = new Map<AliasFilterType, string>(
   [
     [ AliasFilterType.singleEntity, 'alias.filter-type-single-entity' ],
