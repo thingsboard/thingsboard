@@ -160,7 +160,7 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
     }
 
     private void setUpAccessTokenCredentials(Map<BulkImportColumnType, String> fields, DeviceCredentials credentials) {
-        credentials.setCredentialsValue(Optional.ofNullable(fields.get(BulkImportColumnType.ACCESS_TOKEN))
+        credentials.setCredentialsId(Optional.ofNullable(fields.get(BulkImportColumnType.ACCESS_TOKEN))
                 .orElseGet(() -> RandomStringUtils.randomAlphanumeric(20)));
     }
 
