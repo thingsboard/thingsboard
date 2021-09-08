@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.hamcrest.Matchers;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -83,7 +82,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -582,121 +580,15 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
             createRelation(tenantId, "SharedWithAsset0", assets.get(0).getId(), devices.get(n).getId());
         }
 
-        //createManyCustomRelationsBetweenTwoNodes(tenantId, "UseCase", assets, devices);
+        createManyCustomRelationsBetweenTwoNodes(tenantId, "UseCase", assets, devices);
         createHorizontalRingRelations(tenantId, "Ring(Loop)-Ast", assets);
         createLoopRelations(tenantId, "Loop-Tnt-Ast-Dev", tenantId, assets.get(0).getId(), devices.get(0).getId());
         createLoopRelations(tenantId, "Loop-Tnt-Ast", tenantId, assets.get(1).getId());
         createLoopRelations(tenantId, "Loop-Ast-Tnt-Ast", assets.get(2).getId(), tenantId, assets.get(3).getId());
 
-        //testQuery();
-
         //printAllRelations();
     }
 
-    private void testQuery() {
-
-        template.query("" +
-                "        DROP TABLE IF EXISTS relation_test;\n" +
-                "        CREATE TABLE IF NOT EXISTS relation_test\n" +
-                "        (\n" +
-                "            from_id             uuid,\n" +
-                "            from_type           varchar(255),\n" +
-                "            to_id               uuid,\n" +
-                "            to_type             varchar(255),\n" +
-                "            relation_type_group varchar(255),\n" +
-                "            relation_type       varchar(255),\n" +
-                "            additional_info     varchar,\n" +
-                "            CONSTRAINT relation_test_pkey PRIMARY KEY (from_id, from_type, relation_type_group, relation_type, to_id, to_type)\n" +
-                "        );\n", r -> null);
-
-        log.error("insert test {}", (Object) template.query("" +
-                        "INSERT INTO relation_test (from_id, from_type, to_id, to_type, relation_type_group, relation_type, additional_info) " +
-                        " VALUES " +
-                        " ('11111111-0f19-11ec-ba23-e981fc95500d', 'TENANT', '22222222-0f19-11ec-ba23-e981fc95500d', 'ASSET', 'COMMON', 'Contains', null),\n" +
-                        " ('22222222-0f19-11ec-ba23-e981fc95500d', 'ASSET',  '33333333-0f19-11ec-ba23-e981fc95500d', 'DEVICE', 'COMMON', 'Contains', null),\n" +
-                        " ('33333333-0f19-11ec-ba23-e981fc95500d', 'DEVICE', '11111111-0f19-11ec-ba23-e981fc95500d', 'TENANT', 'COMMON', 'Contains', null);\n" +
-                        ""
-                , r -> null));
-
-
-        //log.error("array_position hsql {}", template.queryForObject("select array_position(ARRAY['sun','mon','tue','wed','thu','fri','sat'], 'mon') from relation_test", Long.class));
-
-        log.error("array_position hsql {}", template.queryForObject("select position_array('mon' in ARRAY['sun','mon','tue']);", Long.class));
-        log.error("array_position psql {}", template.queryForObject("select array_position(ARRAY['sun','mon','tue'], 'mon');", Long.class));
-
-        Long countTest = template.queryForObject("select count(*) from relation_test", Long.class);
-        log.error("count test {}", countTest);
-
-        Long count = template.queryForObject("select count(*) from relation", Long.class);
-        log.error("count {}", count);
-
-        List<List<String>> result = template.query("" +
-                        "WITH RECURSIVE related_entities(from_id, from_type, to_id, to_type, lvl, path)  " +
-                        "                               AS (SELECT from_id,  " +
-                        "                                          from_type,  " +
-                        "                                          to_id,  " +
-                        "                                          to_type,  " +
-                        "                                          1               as lvl,  " +
-                        "                                          ARRAY [from_id] as path  " +
-                        "                                   FROM relation_test r  " +
-                        "                                   WHERE from_id = '11111111-0f19-11ec-ba23-e981fc95500d'  " +
-                        "                                     and from_type = 'TENANT'  " +
-                        "                                     and relation_type_group = 'COMMON'  " +
-                        "           GROUP BY r.from_id, r.from_type, r.to_id, r.to_type  , 1, ARRAY [from_id] " +
-                        "                                   UNION ALL  " +
-                        "                                   SELECT r.from_id,  " +
-                        "                                          r.from_type,  " +
-                        "                                          r.to_id,  " +
-                        "                                          r.to_type,  " +
-                        "                                          (re.lvl + 1)                   as lvl,  " +
-                        "                                          (re.path || ARRAY [r.from_id]) as path  " +
-                        "                                   FROM relation_test r  " +
-                        "                                            INNER JOIN related_entities re  " +
-                        "                                                       ON r.from_id = re.to_id and  " +
-                        "                                                          r.from_type = re.to_type and  " +
-                        "                                                          relation_type_group = 'COMMON' and " +
-                        "                                                          r.from_id NOT IN (SELECT * FROM unnest(re.path)) and " +
-                        "                                                          re.lvl <= 7  " +
-                        "                                   GROUP BY r.from_id, r.from_type, r.to_id, r.to_type,  " +
-                        "                                            (re.lvl + 1), (re.path || ARRAY [r.from_id]))  " +
-                        "  " +
-                        "   SELECT lvl, from_id, from_type, to_id, to_type, path   " + //to_id IN (SELECT * FROM unnest(path)) as is_present,
-                        "            from related_entities r_int  " +
-                        "             " +
-                        "  ",
-                getListResultSetExtractor());
-
-        log.error("result {}", result.size() - 1);
-        AtomicInteger counter = new AtomicInteger();
-        result.forEach(r -> System.out.printf("%s %s\n", counter.incrementAndGet(), r.toString()));
-        log.error("end");
-
-        log.error("query 1 (expected true): {}", template.queryForObject(
-                "SELECT UUID('463e5c80-0f38-11ec-8153-55a9f38b54f3') NOT IN (SELECT * FROM unnest(ARRAY[UUID('463e5c80-0f38-11ec-8153-55a9f38b54f3'), UUID('46957d30-0f38-11ec-8153-55a9f38b54f3')])) ",
-                String.class));
-        log.error("query 1.1 (expected true): {}", template.queryForObject(
-                "SELECT UUID('463e5c80-0f38-11ec-8153-55a9f38b54f3') NOT IN (SELECT * FROM unnest(ARRAY[UUID('463e5c80-0f38-11ec-8153-55a9f38b54f3')] || ARRAY[UUID('46957d30-0f38-11ec-8153-55a9f38b54f3')] )) ",
-                String.class));
-        log.error("query 2 (expected true): {}", template.queryForObject(
-                "SELECT UUID('463e5c80-0f38-11ec-8153-55a9f38b54f3') NOT IN (SELECT UUID('463e5c80-0f38-11ec-8153-55a9f38b54f3')) ",
-                String.class));
-//        log.error("query true3: ", template.queryForObject(
-//                "SELECT '463e5c80-0f38-11ec-8153-55a9f38b54f3' IN (SELECT UUID('463e5c80-0f38-11ec-8153-55a9f38b54f3')) ",
-//                String.class));
-        log.error("query 3 (expected true): {} ", template.queryForObject(
-                "SELECT '463e5c80-0f38-11ec-8153-55a9f38b54f3' NOT IN (SELECT '463e5c80-0f38-11ec-8153-55a9f38b54f3') ",
-                String.class));
-
-        List<List<String>> result2 = template.query("SELECT * FROM unnest(ARRAY[UUID('463e5c80-0f38-11ec-8153-55a9f38b54f3'), UUID('46957d30-0f38-11ec-8153-55a9f38b54f3')]) "
-                , getListResultSetExtractor());
-        log.error("result2 {}", result2.size() - 1);
-        AtomicInteger counter2 = new AtomicInteger();
-        result2.forEach(r -> System.out.printf("%s %s\n", counter2.incrementAndGet(), r.toString()));
-        log.error("end2");
-
-    }
-
-    @NotNull
     private ResultSetExtractor<List<List<String>>> getListResultSetExtractor() {
         return rs -> {
             List<List<String>> list = new ArrayList<>();
