@@ -254,7 +254,13 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surfire.version}</version>
                 <configuration>
+                    <excludes>
+                        <exclude>**/sql/*Test.java</exclude>
+                        <exclude>**/psql/*Test.java</exclude>
+                        <exclude>**/nosql/*Test.java</exclude>
+                    </excludes>
                     <includes>
+                        <include>**/*Test.java</include>
                         <include>**/*TestSuite.java</include>
                     </includes>
                 </configuration>
