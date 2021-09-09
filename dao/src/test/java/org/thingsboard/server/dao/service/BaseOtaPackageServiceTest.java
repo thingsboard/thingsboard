@@ -77,6 +77,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         deviceProfileId = savedDeviceProfile.getId();
     }
 
+    @SuppressWarnings("deprecation")
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 

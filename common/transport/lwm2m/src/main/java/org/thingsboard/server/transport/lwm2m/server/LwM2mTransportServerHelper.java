@@ -38,7 +38,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.thingsboard.server.gen.transport.TransportProtos.KeyValueType.BOOLEAN_V;
@@ -62,7 +62,7 @@ public class LwM2mTransportServerHelper {
         sendParametersOnThingsboardTelemetry(kvList, sessionInfo, null);
     }
 
-    public void sendParametersOnThingsboardTelemetry(List<TransportProtos.KeyValueProto> kvList, SessionInfoProto sessionInfo, @Nullable ConcurrentMap<String, AtomicLong> keyTsLatestMap) {
+    public void sendParametersOnThingsboardTelemetry(List<TransportProtos.KeyValueProto> kvList, SessionInfoProto sessionInfo, @Nullable Map<String, AtomicLong> keyTsLatestMap) {
         TransportProtos.TsKvListProto tsKvList = toTsKvList(kvList, keyTsLatestMap);
 
         PostTelemetryMsg postTelemetryMsg = PostTelemetryMsg.newBuilder()
@@ -72,14 +72,14 @@ public class LwM2mTransportServerHelper {
         context.getTransportService().process(sessionInfo, postTelemetryMsg, TransportServiceCallback.EMPTY);
     }
 
-    TransportProtos.TsKvListProto toTsKvList(List<TransportProtos.KeyValueProto> kvList, ConcurrentMap<String, AtomicLong> keyTsLatestMap) {
+    TransportProtos.TsKvListProto toTsKvList(List<TransportProtos.KeyValueProto> kvList, Map<String, AtomicLong> keyTsLatestMap) {
         return TransportProtos.TsKvListProto.newBuilder()
                 .setTs(getTs(kvList, keyTsLatestMap))
                 .addAllKv(kvList)
                 .build();
     }
 
-    long getTs(List<TransportProtos.KeyValueProto> kvList, ConcurrentMap<String, AtomicLong> keyTsLatestMap) {
+    long getTs(List<TransportProtos.KeyValueProto> kvList, Map<String, AtomicLong> keyTsLatestMap) {
         if (keyTsLatestMap == null || kvList == null || kvList.isEmpty()) {
             return getCurrentTimeMillis();
         }
@@ -87,7 +87,7 @@ public class LwM2mTransportServerHelper {
         return getTsByKey(kvList.get(0).getKey(), keyTsLatestMap, getCurrentTimeMillis());
     }
 
-    long getTsByKey(@Nonnull String key, @Nonnull ConcurrentMap<String, AtomicLong> keyTsLatestMap, final long tsNow) {
+    long getTsByKey(@Nonnull String key, @Nonnull Map<String, AtomicLong> keyTsLatestMap, final long tsNow) {
         AtomicLong tsLatestAtomic = keyTsLatestMap.putIfAbsent(key, new AtomicLong(tsNow));
         if (tsLatestAtomic == null) {
             return tsNow; // it is a first known timestamp for this key. return as the latest
