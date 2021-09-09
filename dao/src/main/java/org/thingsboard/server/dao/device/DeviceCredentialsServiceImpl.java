@@ -260,14 +260,14 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
 //            LwM2MCredentialsValid credentials = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(), LwM2MCredentialsValid.class);
             JsonNode nodeCredentialsValue = JacksonUtil.toJsonNode(deviceCredentials.getCredentialsValue());
             String [] fields = {"client", "bootstrap", "bootstrap:bootstrapServer", "bootstrap:lwm2mServer"};
-            String validateMsg = validateNodeCredentials (nodeCredentialsValue,  fields);
+            String validateMsg = JacksonUtil.validateFieldsToTree(nodeCredentialsValue,  fields, ":");
             if (validateMsg.isEmpty()) {
                 checkClientKey(nodeCredentialsValue.get("client"));
                 checkServerKey(nodeCredentialsValue.get("bootstrap").get("bootstrapServer"), "Client`s by bootstrapServer");
                 checkServerKey(nodeCredentialsValue.get("bootstrap").get("lwm2mServer"), "Client`s by lwm2mServer");
             }
             else {
-                throw new DataValidationException(validateMsg);
+                throw new DataValidationException("Device credentials are missing fields or mandatory value in this fields: " + validateMsg);
             }
         } catch (DataValidationException | DecoderException e) {
             throw new DataValidationException(e.getMessage());
@@ -284,27 +284,6 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
             throw new DataValidationException(e.getMessage());
 
         }
-    }
-
-    private String validateNodeCredentials (JsonNode nodeCredentialsValue,  String [] fields) {
-        Set  msgSet = ConcurrentHashMap.newKeySet();
-        String msg = "";
-        for (String field : fields) {
-            if (field.contains(":")) {
-                String [] keys = field.split(":");
-                if (!nodeCredentialsValue.hasNonNull(keys[0])) {
-                    msgSet.add(keys[1]);
-                }
-                else {
-                    if (!nodeCredentialsValue.get(keys[0]).hasNonNull(keys[1])) msgSet.add(keys[1]);
-                }
-            }
-            else {
-                if (!nodeCredentialsValue.hasNonNull(field)) msgSet.add(field);
-            }
-        }
-        if (msgSet.size() > 0) msg = "Device credentials are missing fields or mandatory value in this fields: " + String.join(", ", msgSet);
-        return  msg;
     }
 
     private void checkClientKey (JsonNode node) throws DataValidationException, DecoderException {
