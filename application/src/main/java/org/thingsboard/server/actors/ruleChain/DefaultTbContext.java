@@ -224,7 +224,7 @@ class DefaultTbContext implements TbContext {
         }
         if (nodeCtx.getSelf().isDebugMode()) {
             relationTypes.forEach(relationType ->
-                    mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), tbMsg, relationType));
+                    mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), tbMsg, relationType, null, failureMessage));
         }
         mainCtx.getClusterService().pushMsgToRuleEngine(tpi, tbMsg.getId(), msg.build(), new SimpleTbQueueCallback(onSuccess, onFailure));
     }
