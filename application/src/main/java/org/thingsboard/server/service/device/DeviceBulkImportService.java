@@ -185,9 +185,9 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
                 .filter(Objects::nonNull)
                 .forEach(securityMode -> {
                     try {
-                        LwM2MSecurityMode.valueOf(securityMode);
+                        LwM2MSecurityMode.valueOf(securityMode.toUpperCase());
                     } catch (IllegalArgumentException e) {
-                        throw new DeviceCredentialsValidationException("Unknown LwM2M security mode: " + securityMode);
+                        throw new DeviceCredentialsValidationException("Unknown LwM2M security mode: " + securityMode + ", (the mode should be: NO_SEC, PSK, RPK, X509)!");
                     }
                 });
 
