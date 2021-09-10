@@ -433,10 +433,8 @@ final class MqttClientImpl implements MqttClient {
 
     private MqttMessageIdVariableHeader getNewMessageId() {
         int messageId;
-        synchronized (this.nextMessageId) {
-            this.nextMessageId.compareAndSet(0xffff, 1);
-            messageId = this.nextMessageId.getAndIncrement();
-        }
+        this.nextMessageId.compareAndSet(0xffff, 1);
+        messageId = this.nextMessageId.getAndIncrement();
         return MqttMessageIdVariableHeader.from(messageId);
     }
 
