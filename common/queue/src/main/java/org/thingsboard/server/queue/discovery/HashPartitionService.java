@@ -294,16 +294,8 @@ public class HashPartitionService implements PartitionService {
         if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
             return false;
         }
-        TenantRoutingInfo routingInfo = tenantRoutingInfoMap.get(tenantId);
-        if (routingInfo == null) {
-            synchronized (tenantRoutingInfoMap) {
-                routingInfo = tenantRoutingInfoMap.get(tenantId);
-                if (routingInfo == null) {
-                    routingInfo = tenantRoutingInfoService.getRoutingInfo(tenantId);
-                    tenantRoutingInfoMap.put(tenantId, routingInfo);
-                }
-            }
-        }
+        TenantRoutingInfo routingInfo = tenantRoutingInfoService.getRoutingInfo(tenantId);
+        tenantRoutingInfoMap.putIfAbsent(tenantId, routingInfo);
         if (routingInfo == null) {
             throw new RuntimeException("Tenant not found!");
         }
