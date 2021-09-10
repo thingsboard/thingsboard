@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Base64Utils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
@@ -47,6 +48,8 @@ import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
+
+import java.security.cert.Certificate;
 
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_CREDENTIALS_CACHE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -272,14 +275,25 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 break;
             case X509:
                 X509ClientCredentials x509CCredentials = (X509ClientCredentials) clientCredentials;
-                if (x509CCredentials.getCert() != null) {
+                String value = x509CCredentials.getCert();
+                if (value != null) {
                     try {
-                        SecurityUtil.certificate.decode(Hex.decodeHex(x509CCredentials.getCert().toLowerCase().toCharArray()));
+                        if (decodeCertificateBase64(value) == null) {
+                            SecurityUtil.certificate.decode(Hex.decodeHex(value.toLowerCase().toCharArray()));
+                        }
                     } catch (Exception e) {
                         throw new DeviceCredentialsValidationException("LwM2M client X509 certificate should be in DER-encoded X.509 format!");
                     }
                 }
                 break;
+        }
+    }
+
+    private Certificate decodeCertificateBase64(String value) {
+        try {
+            return SecurityUtil.certificate.decode(Base64Utils.decodeFromString(value));
+        } catch (Exception e) {
+            return null;
         }
     }
 
