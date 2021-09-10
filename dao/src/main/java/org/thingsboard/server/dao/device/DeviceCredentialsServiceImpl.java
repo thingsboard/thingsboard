@@ -17,7 +17,7 @@ package org.thingsboard.server.dao.device;
 
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.binary.Hex;
+import org.eclipse.leshan.core.util.Base64;
 import org.eclipse.leshan.core.util.SecurityUtil;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -274,7 +274,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 X509ClientCredentials x509CCredentials = (X509ClientCredentials) clientCredentials;
                 if (x509CCredentials.getCert() != null) {
                     try {
-                        SecurityUtil.certificate.decode(Hex.decodeHex(x509CCredentials.getCert().toLowerCase().toCharArray()));
+                        SecurityUtil.certificate.decode(Base64.decodeBase64(x509CCredentials.getCert()));
                     } catch (Exception e) {
                         throw new DeviceCredentialsValidationException("LwM2M client X509 certificate should be in DER-encoded X.509 format!");
                     }
