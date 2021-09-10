@@ -262,35 +262,35 @@ export class WidgetContext {
   showSuccessToast(message: string, duration: number = 1000,
                    verticalPosition: NotificationVerticalPosition = 'bottom',
                    horizontalPosition: NotificationHorizontalPosition = 'left',
-                   target?: string) {
+                   target: string = 'dashboardRoot') {
     this.showToast('success', message, duration, verticalPosition, horizontalPosition, target);
   }
 
   showInfoToast(message: string,
                 verticalPosition: NotificationVerticalPosition = 'bottom',
                 horizontalPosition: NotificationHorizontalPosition = 'left',
-                target?: string) {
+                target: string = 'dashboardRoot') {
     this.showToast('info', message, undefined, verticalPosition, horizontalPosition, target);
   }
 
   showWarnToast(message: string,
                 verticalPosition: NotificationVerticalPosition = 'bottom',
                 horizontalPosition: NotificationHorizontalPosition = 'left',
-                target?: string) {
+                target: string = 'dashboardRoot') {
     this.showToast('warn', message, undefined, verticalPosition, horizontalPosition, target);
   }
 
   showErrorToast(message: string,
                  verticalPosition: NotificationVerticalPosition = 'bottom',
                  horizontalPosition: NotificationHorizontalPosition = 'left',
-                 target?: string) {
+                 target: string = 'dashboardRoot') {
     this.showToast('error', message, undefined, verticalPosition, horizontalPosition, target);
   }
 
   showToast(type: NotificationType, message: string, duration: number,
             verticalPosition: NotificationVerticalPosition = 'bottom',
             horizontalPosition: NotificationHorizontalPosition = 'left',
-            target?: string) {
+            target: string = 'dashboardRoot') {
     this.store.dispatch(new ActionNotificationShow(
       {
         message,
