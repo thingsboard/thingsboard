@@ -272,7 +272,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 break;
             case X509:
                 X509ClientCredentials x509CCredentials = (X509ClientCredentials) clientCredentials;
-                if (x509CCredentials.getCert() != null) {
+                if (StringUtils.isNotEmpty(x509CCredentials.getCert())) {
                     try {
                         SecurityUtil.certificate.decode(Base64.decodeBase64(x509CCredentials.getCert()));
                     } catch (Exception e) {
