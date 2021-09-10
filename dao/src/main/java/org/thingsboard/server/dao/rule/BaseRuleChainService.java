@@ -416,13 +416,13 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
-    public List<RuleChainImportResult> importTenantRuleChains(TenantId tenantId, RuleChainData ruleChainData, RuleChainType type, boolean overwrite) {
+    public List<RuleChainImportResult> importTenantRuleChains(TenantId tenantId, RuleChainData ruleChainData, boolean overwrite) {
         List<RuleChainImportResult> importResults = new ArrayList<>();
         setRandomRuleChainIds(ruleChainData);
         resetRuleNodeIds(ruleChainData.getMetadata());
         resetRuleChainMetadataTenantIds(tenantId, ruleChainData.getMetadata());
         if (overwrite) {
-            List<RuleChain> persistentRuleChains = findAllTenantRuleChains(tenantId, type);
+            List<RuleChain> persistentRuleChains = findAllTenantRuleChains(tenantId);
             for (RuleChain ruleChain : ruleChainData.getRuleChains()) {
                 ComponentLifecycleEvent lifecycleEvent;
                 Optional<RuleChain> persistentRuleChainOpt = persistentRuleChains.stream().filter(rc -> rc.getName().equals(ruleChain.getName())).findFirst();
@@ -435,15 +435,15 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     lifecycleEvent = ComponentLifecycleEvent.CREATED;
                 }
                 ruleChain.setTenantId(tenantId);
-                ruleChainDao.save(tenantId, ruleChain);
-                importResults.add(new RuleChainImportResult(tenantId, ruleChain.getId(), lifecycleEvent));
+                RuleChain savedRc = saveRuleChain(ruleChain);
+                importResults.add(new RuleChainImportResult(tenantId, savedRc.getId(), lifecycleEvent));
             }
         } else {
             if (!CollectionUtils.isEmpty(ruleChainData.getRuleChains())) {
                 ruleChainData.getRuleChains().forEach(rc -> {
                     rc.setTenantId(tenantId);
                     rc.setRoot(false);
-                    RuleChain savedRc = ruleChainDao.save(tenantId, rc);
+                    RuleChain savedRc = saveRuleChain(rc);
                     importResults.add(new RuleChainImportResult(tenantId, savedRc.getId(), ComponentLifecycleEvent.CREATED));
                 });
             }
@@ -501,9 +501,12 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         }
     }
 
-    private List<RuleChain> findAllTenantRuleChains(TenantId tenantId, RuleChainType type) {
-        PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
-        return findAllTenantRuleChainsRecursive(tenantId, new ArrayList<>(), type, pageLink);
+    private List<RuleChain> findAllTenantRuleChains(TenantId tenantId) {
+        List<RuleChain> accumulator = new ArrayList<>();
+        for (RuleChainType ruleChainType : RuleChainType.values()) {
+            accumulator = findAllTenantRuleChainsRecursive(tenantId, accumulator, ruleChainType, new PageLink(DEFAULT_PAGE_SIZE));
+        }
+        return accumulator;
     }
 
     private List<RuleChain> findAllTenantRuleChainsRecursive(TenantId tenantId, List<RuleChain> accumulator, RuleChainType type, PageLink pageLink) {
