@@ -22,18 +22,16 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
-        property = "securityConfigClientMode")
+        property = "securityMode")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = NoSecClientCredentials.class, name = "NO_SEC"),
-        @JsonSubTypes.Type(value = PSKClientCredentials.class, name = "PSK"),
-        @JsonSubTypes.Type(value = RPKClientCredentials.class, name = "RPK"),
-        @JsonSubTypes.Type(value = X509ClientCredentials.class, name = "X509")
+        @JsonSubTypes.Type(value = NoSecServerCredentials.class, name = "NO_SEC"),
+        @JsonSubTypes.Type(value = PSKServerCredentials.class, name = "PSK"),
+        @JsonSubTypes.Type(value = RPKServerCredentials.class, name = "RPK"),
+        @JsonSubTypes.Type(value = X509ServerCredentials.class, name = "X509")
 })
 @JsonIgnoreProperties(ignoreUnknown = true)
-public interface LwM2MClientCredentials {
+public interface LwM2MServerCredentials {
 
     @JsonIgnore
-    LwM2MSecurityMode getSecurityConfigClientMode();
-
-    String getEndpoint();
+    LwM2MSecurityMode getSecurityMode();
 }

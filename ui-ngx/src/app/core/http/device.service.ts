@@ -30,6 +30,7 @@ import {
 } from '@app/shared/models/device.models';
 import { EntitySubtype } from '@app/shared/models/entity-type.models';
 import { AuthService } from '@core/auth/auth.service';
+import { BulkImportRequest, BulkImportResult } from '@home/components/import-export/import-export.models';
 import { PersistentRpc } from '@shared/models/rpc.models';
 
 @Injectable({
@@ -176,6 +177,10 @@ export class DeviceService {
                         config?: RequestConfig): Observable<PageData<DeviceInfo>> {
     return this.http.get<PageData<DeviceInfo>>(`/api/edge/${edgeId}/devices${pageLink.toQuery()}&type=${type}`,
       defaultHttpOptionsFromConfig(config));
+  }
+
+  public bulkImportDevices(entitiesData: BulkImportRequest, config?: RequestConfig): Observable<BulkImportResult> {
+    return this.http.post<BulkImportResult>('/api/device/bulk_import', entitiesData, defaultHttpOptionsFromConfig(config));
   }
 
 }

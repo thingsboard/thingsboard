@@ -25,6 +25,8 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.NoXss;
 
+import java.util.Optional;
+
 @EqualsAndHashCode(callSuper = true)
 public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements HasName, HasTenantId, HasCustomerId {
 
@@ -54,6 +56,15 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
         this.name = asset.getName();
         this.type = asset.getType();
         this.label = asset.getLabel();
+    }
+
+    public void update(Asset asset) {
+        this.tenantId = asset.getTenantId();
+        this.customerId = asset.getCustomerId();
+        this.name = asset.getName();
+        this.type = asset.getType();
+        this.label = asset.getLabel();
+        Optional.ofNullable(asset.getAdditionalInfo()).ifPresent(this::setAdditionalInfo);
     }
 
     public TenantId getTenantId() {

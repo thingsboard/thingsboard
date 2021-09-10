@@ -16,9 +16,12 @@
 package org.thingsboard.server.controller;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -34,7 +37,6 @@ import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetSearchQuery;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -48,6 +50,9 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.asset.AssetBulkImportService;
+import org.thingsboard.server.service.importing.BulkImportRequest;
+import org.thingsboard.server.service.importing.BulkImportResult;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -63,7 +68,10 @@ import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
+@RequiredArgsConstructor
+@Slf4j
 public class AssetController extends BaseController {
+    private final AssetBulkImportService assetBulkImportService;
 
     public static final String ASSET_ID = "assetId";
 
@@ -108,19 +116,27 @@ public class AssetController extends BaseController {
 
             Asset savedAsset = checkNotNull(assetService.saveAsset(asset));
 
-            logEntityAction(savedAsset.getId(), savedAsset,
-                    savedAsset.getCustomerId(),
-                    asset.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
-
-            if (asset.getId() != null) {
-                sendEntityNotificationMsg(savedAsset.getTenantId(), savedAsset.getId(), EdgeEventActionType.UPDATED);
-            }
+            onAssetCreatedOrUpdated(savedAsset, asset.getId() != null);
 
             return savedAsset;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.ASSET), asset,
                     null, asset.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
             throw handleException(e);
+        }
+    }
+
+    private void onAssetCreatedOrUpdated(Asset asset, boolean updated) {
+        try {
+            logEntityAction(asset.getId(), asset,
+                    asset.getCustomerId(),
+                    updated ? ActionType.UPDATED : ActionType.ADDED, null);
+        } catch (ThingsboardException e) {
+            log.error("Failed to log entity action", e);
+        }
+
+        if (updated) {
+            sendEntityNotificationMsg(asset.getTenantId(), asset.getId(), EdgeEventActionType.UPDATED);
         }
     }
 
@@ -258,7 +274,7 @@ public class AssetController extends BaseController {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            if (type != null && type.trim().length()>0) {
+            if (type != null && type.trim().length() > 0) {
                 return checkNotNull(assetService.findAssetsByTenantIdAndType(tenantId, type, pageLink));
             } else {
                 return checkNotNull(assetService.findAssetsByTenantId(tenantId, pageLink));
@@ -321,7 +337,7 @@ public class AssetController extends BaseController {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             checkCustomerId(customerId, Operation.READ);
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            if (type != null && type.trim().length()>0) {
+            if (type != null && type.trim().length() > 0) {
                 return checkNotNull(assetService.findAssetsByTenantIdAndCustomerIdAndType(tenantId, customerId, type, pageLink));
             } else {
                 return checkNotNull(assetService.findAssetsByTenantIdAndCustomerId(tenantId, customerId, pageLink));
@@ -426,7 +442,7 @@ public class AssetController extends BaseController {
     @RequestMapping(value = "/edge/{edgeId}/asset/{assetId}", method = RequestMethod.POST)
     @ResponseBody
     public Asset assignAssetToEdge(@PathVariable(EDGE_ID) String strEdgeId,
-                                       @PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
+                                   @PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
         checkParameter(ASSET_ID, strAssetId);
         try {
@@ -444,7 +460,7 @@ public class AssetController extends BaseController {
 
             sendEntityAssignToEdgeNotificationMsg(getTenantId(), edgeId, savedAsset.getId(), EdgeEventActionType.ASSIGNED_TO_EDGE);
 
-            return  savedAsset;
+            return savedAsset;
         } catch (Exception e) {
 
             logEntityAction(emptyId(EntityType.ASSET), null,
@@ -530,4 +546,13 @@ public class AssetController extends BaseController {
             throw handleException(e);
         }
     }
+
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @PostMapping("/asset/bulk_import")
+    public BulkImportResult<Asset> processAssetsBulkImport(@RequestBody BulkImportRequest request) throws Exception {
+        return assetBulkImportService.processBulkImport(request, getCurrentUser(), importedAssetInfo -> {
+            onAssetCreatedOrUpdated(importedAssetInfo.getEntity(), importedAssetInfo.isUpdated());
+        });
+    }
+
 }

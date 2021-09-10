@@ -23,6 +23,7 @@ import { PageData } from '@shared/models/page/page-data';
 import { EntitySubtype } from '@app/shared/models/entity-type.models';
 import { Edge, EdgeEvent, EdgeInfo, EdgeSearchQuery } from '@shared/models/edge.models';
 import { EntityId } from '@shared/models/id/entity-id';
+import { BulkImportRequest, BulkImportResult } from '@home/components/import-export/import-export.models';
 
 @Injectable({
   providedIn: 'root'
@@ -59,7 +60,7 @@ export class EdgeService {
   }
 
   public getCustomerEdgeInfos(customerId: string, pageLink: PageLink, type: string = '',
-                               config?: RequestConfig): Observable<PageData<EdgeInfo>> {
+                              config?: RequestConfig): Observable<PageData<EdgeInfo>> {
     return this.http.get<PageData<EdgeInfo>>(`/api/customer/${customerId}/edgeInfos${pageLink.toQuery()}&type=${type}`,
       defaultHttpOptionsFromConfig(config));
   }
@@ -107,5 +108,9 @@ export class EdgeService {
 
   public findByName(edgeName: string, config?: RequestConfig): Observable<Edge> {
     return this.http.get<Edge>(`/api/tenant/edges?edgeName=${edgeName}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public bulkImportEdges(entitiesData: BulkImportRequest, config?: RequestConfig): Observable<BulkImportResult> {
+    return this.http.post<BulkImportResult>('/api/edge/bulk_import', entitiesData, defaultHttpOptionsFromConfig(config));
   }
 }

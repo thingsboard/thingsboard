@@ -13,23 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  overflow-x: auto;
+package org.thingsboard.server.service.importing;
 
-  .mat-column-order {
-    flex: 0 0 40px;
-  }
-  .mat-column-sampleData {
-    flex: 0 0 120px;
-    min-width: 120px;
-    max-width: 230px;
-  }
-  .mat-column-type {
-    flex: 0 0 180px;
-    min-width: 180px;
-  }
-  .mat-column-key {
-    flex: 0 0 120px;
-    min-width: 120px;
-  }
+import lombok.Data;
+
+@Data
+public class ImportedEntityInfo<E> {
+    private E entity;
+    private boolean isUpdated;
+    private E oldEntity;
+    private String relatedError;
 }

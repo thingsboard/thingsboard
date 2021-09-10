@@ -13,23 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  overflow-x: auto;
+package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
-  .mat-column-order {
-    flex: 0 0 40px;
-  }
-  .mat-column-sampleData {
-    flex: 0 0 120px;
-    min-width: 120px;
-    max-width: 230px;
-  }
-  .mat-column-type {
-    flex: 0 0 180px;
-    min-width: 180px;
-  }
-  .mat-column-key {
-    flex: 0 0 120px;
-    min-width: 120px;
-  }
+public class X509ServerCredentials extends AbstractLwM2MServerCredentialsWithKeys {
+
+    @Override
+    public LwM2MSecurityMode getSecurityMode() {
+        return LwM2MSecurityMode.X509;
+    }
 }

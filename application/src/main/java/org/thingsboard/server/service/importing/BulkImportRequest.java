@@ -13,23 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  overflow-x: auto;
+package org.thingsboard.server.service.importing;
 
-  .mat-column-order {
-    flex: 0 0 40px;
-  }
-  .mat-column-sampleData {
-    flex: 0 0 120px;
-    min-width: 120px;
-    max-width: 230px;
-  }
-  .mat-column-type {
-    flex: 0 0 180px;
-    min-width: 180px;
-  }
-  .mat-column-key {
-    flex: 0 0 120px;
-    min-width: 120px;
-  }
+import lombok.Data;
+
+import java.util.List;
+
+@Data
+public class BulkImportRequest {
+    private String file;
+    private Mapping mapping;
+
+    @Data
+    public static class Mapping {
+        private List<ColumnMapping> columns;
+        private Character delimiter;
+        private Boolean update;
+        private Boolean header;
+    }
+
+    @Data
+    public static class ColumnMapping {
+        private BulkImportColumnType type;
+        private String key;
+    }
+
 }
