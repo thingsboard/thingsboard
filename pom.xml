@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>3.3.1-SNAPSHOT</version>
+    <version>3.3.2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
@@ -42,7 +42,7 @@
         <spring-boot.version>2.3.12.RELEASE</spring-boot.version>
         <spring.version>5.2.16.RELEASE</spring.version>
         <spring-redis.version>5.2.11.RELEASE</spring-redis.version>
-        <spring-security.version>5.4.4</spring-security.version>
+        <spring-security.version>5.4.7</spring-security.version>
         <spring-data-redis.version>2.4.3</spring-data-redis.version>
         <jedis.version>3.3.0</jedis.version>
         <jjwt.version>0.7.0</jjwt.version>
@@ -53,7 +53,7 @@
         <metrics.version>4.0.5</metrics.version>
         <cassandra-all.version>3.11.10</cassandra-all.version>
         <cassandra-driver-core.version>3.11.0</cassandra-driver-core.version>
-        <guava.version>28.2-jre</guava.version>
+        <guava.version>30.0-jre</guava.version>
         <caffeine.version>2.6.1</caffeine.version>
         <commons-lang3.version>3.4</commons-lang3.version>
         <commons-codec.version>1.15</commons-codec.version>
@@ -87,7 +87,7 @@
         <springfox-swagger-ui-rfc6570.version>1.0.0</springfox-swagger-ui-rfc6570.version>
         <spatial4j.version>0.7</spatial4j.version>
         <jts.version>1.15.0</jts.version>
-        <bouncycastle.version>1.64</bouncycastle.version>
+        <bouncycastle.version>1.67</bouncycastle.version>
         <winsw.version>2.0.1</winsw.version>
         <postgresql.driver.version>42.2.20</postgresql.driver.version>
         <sonar.exclusions>org/thingsboard/server/gen/**/*,
@@ -112,10 +112,10 @@
         <protobuf-dynamic.version>1.0.3TB</protobuf-dynamic.version>
         <wire-schema.version>3.4.0</wire-schema.version>
         <twilio.version>8.17.0</twilio.version>
-        <hibernate-validator.version>6.0.13.Final</hibernate-validator.version>
+        <hibernate-validator.version>6.0.20.Final</hibernate-validator.version>
         <javax.el.version>3.0.0</javax.el.version>
         <javax.validation-api.version>2.0.1.Final</javax.validation-api.version>
-        <antisamy.version>1.6.2</antisamy.version>
+        <antisamy.version>1.6.4</antisamy.version>
         <snmp4j.version>2.8.5</snmp4j.version>
         <!--         TEST SCOPE         -->
         <awaitility.version>4.1.0</awaitility.version>
@@ -510,8 +510,6 @@
                                     <task>build</task>
                                     <task>buildDeb</task>
                                     <task>buildRpm</task>
-                                    <task>renameDeb</task>
-                                    <task>renameRpm</task>
                                 </tasks>
                                 <args>
                                     <arg>-PpackagingDir=${main.dir}/packaging</arg>
@@ -642,7 +640,7 @@
                 <plugin>
                     <groupId>org.thingsboard</groupId>
                     <artifactId>gradle-maven-plugin</artifactId>
-                    <version>1.0.10</version>
+                    <version>1.0.11</version>
                 </plugin>
                 <plugin>
                     <groupId>com.github.eirslett</groupId>

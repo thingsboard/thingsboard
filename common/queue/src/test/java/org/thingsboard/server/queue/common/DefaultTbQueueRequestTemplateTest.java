@@ -75,12 +75,12 @@ public class DefaultTbQueueRequestTemplateTest {
     long maxPendingRequests = 32;
     long pollInterval = 5;
 
-    DefaultTbQueueRequestTemplate inst;
+    DefaultTbQueueRequestTemplate<TbQueueMsg, TbQueueMsg> inst;
 
     @Before
     public void setUp() throws Exception {
         willReturn(topic).given(responseTemplate).getTopic();
-        inst = spy(new DefaultTbQueueRequestTemplate(
+        inst = spy(new DefaultTbQueueRequestTemplate<>(
                 queueAdmin, requestTemplate, responseTemplate,
                 maxRequestTimeout, maxPendingRequests, pollInterval, executorMock));
 
@@ -170,6 +170,7 @@ public class DefaultTbQueueRequestTemplateTest {
         verify(inst, times((int) inst.maxPendingRequests)).sendToRequestTemplate(any(), any(), any(), any());
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void givenNothing_whenSendAndFetchAndProcessResponsesWithTimeout_thenFail() {
         //given

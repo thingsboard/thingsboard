@@ -34,7 +34,7 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.action.RuleEngineEntityActionService;
+import org.thingsboard.server.service.action.EntityActionService;
 
 import java.util.Date;
 import java.util.Optional;
@@ -52,7 +52,7 @@ public class AlarmsCleanUpService {
     private final TenantDao tenantDao;
     private final AlarmDao alarmDao;
     private final AlarmService alarmService;
-    private final RuleEngineEntityActionService ruleEngineEntityActionService;
+    private final EntityActionService entityActionService;
     private final PartitionService partitionService;
     private final TbTenantProfileCache tenantProfileCache;
 
@@ -81,7 +81,7 @@ public class AlarmsCleanUpService {
                     PageData<AlarmId> toRemove = alarmDao.findAlarmsIdsByEndTsBeforeAndTenantId(expirationTime, tenantId, removalBatchRequest);
                     toRemove.getData().forEach(alarmId -> {
                         Alarm alarm = alarmService.deleteAlarm(tenantId, alarmId).getAlarm();
-                        ruleEngineEntityActionService.pushEntityActionToRuleEngine(alarm.getOriginator(), alarm, tenantId, null, ActionType.ALARM_DELETE, null);
+                        entityActionService.pushEntityActionToRuleEngine(alarm.getOriginator(), alarm, tenantId, null, ActionType.ALARM_DELETE, null);
                     });
 
                     totalRemoved += toRemove.getTotalElements();

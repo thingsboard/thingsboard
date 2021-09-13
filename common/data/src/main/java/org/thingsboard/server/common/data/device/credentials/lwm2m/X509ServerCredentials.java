@@ -13,20 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.oauth2.deprecated;
+package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
-import lombok.*;
+public class X509ServerCredentials extends AbstractLwM2MServerCredentialsWithKeys {
 
-import java.util.List;
-
-@Deprecated
-@EqualsAndHashCode
-@Data
-@ToString
-@Builder(toBuilder = true)
-@NoArgsConstructor
-@AllArgsConstructor
-public class OAuth2ClientsDomainParams {
-    private List<DomainInfo> domainInfos;
-    private List<ClientRegistrationDto> clientRegistrations;
+    @Override
+    public LwM2MSecurityMode getSecurityMode() {
+        return LwM2MSecurityMode.X509;
+    }
 }

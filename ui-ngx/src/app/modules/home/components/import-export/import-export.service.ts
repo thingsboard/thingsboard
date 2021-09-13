@@ -21,7 +21,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { Dashboard, DashboardLayoutId } from '@shared/models/dashboard.models';
-import { deepClone, isDefined, isObject, isUndefined } from '@core/utils';
+import { deepClone, isDefined, isObject, isString, isUndefined } from '@core/utils';
 import { WINDOW } from '@core/services/window.service';
 import { DOCUMENT } from '@angular/common';
 import {
@@ -44,8 +44,8 @@ import {
   EntityAliasesDialogData
 } from '@home/components/alias/entity-aliases-dialog.component';
 import { ItemBufferService, WidgetItem } from '@core/services/item-buffer.service';
-import { FileType, ImportWidgetResult, JSON_TYPE, WidgetsBundleItem, ZIP_TYPE } from './import-export.models';
-import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
+import { FileType, ImportWidgetResult, JSON_TYPE, WidgetsBundleItem, ZIP_TYPE, BulkImportRequest, BulkImportResult } from './import-export.models';
+import { EntityType } from '@shared/models/entity-type.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetService } from '@core/http/widget.service';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
@@ -59,6 +59,9 @@ import { DeviceProfileService } from '@core/http/device-profile.service';
 import { DeviceProfile } from '@shared/models/device.models';
 import { TenantProfile } from '@shared/models/tenant.model';
 import { TenantProfileService } from '@core/http/tenant-profile.service';
+import { DeviceService } from '@core/http/device.service';
+import { AssetService } from '@core/http/asset.service';
+import { EdgeService } from '@core/http/edge.service';
 
 // @dynamic
 @Injectable()
@@ -75,6 +78,9 @@ export class ImportExportService {
               private tenantProfileService: TenantProfileService,
               private entityService: EntityService,
               private ruleChainService: RuleChainService,
+              private deviceService: DeviceService,
+              private assetService: AssetService,
+              private edgeService: EdgeService,
               private utils: UtilsService,
               private itembuffer: ItemBufferService,
               private dialog: MatDialog) {
@@ -342,6 +348,17 @@ export class ImportExportService {
     );
   }
 
+  public bulkImportEntities(entitiesData: BulkImportRequest, entityType: EntityType, config?: RequestConfig): Observable<BulkImportResult> {
+    switch (entityType) {
+      case EntityType.DEVICE:
+        return this.deviceService.bulkImportDevices(entitiesData, config);
+      case EntityType.ASSET:
+        return this.assetService.bulkImportAssets(entitiesData, config);
+      case EntityType.EDGE:
+        return this.edgeService.bulkImportEdges(entitiesData, config);
+    }
+  }
+
   public importEntities(entitiesData: ImportEntityData[], entityType: EntityType, updateData: boolean,
                         importEntityCompleted?: () => void, config?: RequestConfig): Observable<ImportEntitiesResultInfo> {
     let partSize = 100;
@@ -563,6 +580,8 @@ export class ImportExportService {
       if (isObject(obj2[key])) {
         obj1[key] = obj1[key] || {};
         obj1[key] = {...obj1[key], ...this.sumObject(obj1[key], obj2[key])};
+      } else if (isString(obj2[key])) {
+        obj1[key] = (obj1[key] || '') + `${obj2[key]}\n`;
       } else {
         obj1[key] = (obj1[key] || 0) + obj2[key];
       }
@@ -686,9 +705,6 @@ export class ImportExportService {
 
   private editMissingAliases(widgets: Array<Widget>, isSingleWidget: boolean,
                              customTitle: string, missingEntityAliases: EntityAliases): Observable<EntityAliases> {
-    const allowedEntityTypes: Array<EntityType | AliasEntityType> =
-      this.entityService.prepareAllowedEntityTypesList(null, true);
-
     return this.dialog.open<EntityAliasesDialogComponent, EntityAliasesDialogData,
       EntityAliases>(EntityAliasesDialogComponent, {
       disableClose: true,
@@ -698,8 +714,7 @@ export class ImportExportService {
         widgets,
         customTitle,
         isSingleWidget,
-        disableAdd: true,
-        allowedEntityTypes
+        disableAdd: true
       }
     }).afterClosed().pipe(
       map((updatedEntityAliases) => {

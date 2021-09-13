@@ -121,7 +121,6 @@ import {
   DisplayWidgetTypesPanelData
 } from '@home/components/dashboard-page/widget-types-panel.component';
 import { DashboardWidgetSelectComponent } from '@home/components/dashboard-page/dashboard-widget-select.component';
-import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
 import { MobileService } from '@core/services/mobile.service';
 
 import {
@@ -192,8 +191,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   isToolbarOpened = false;
   isToolbarOpenedAnimate = false;
   isRightLayoutOpened = false;
-
-  allowedEntityTypes: Array<EntityType | AliasEntityType> = null;
 
   editingWidget: Widget = null;
   editingWidgetLayout: WidgetLayout = null;
@@ -409,8 +406,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       };
       this.window.parent.postMessage(JSON.stringify(message), '*');
     }
-
-    this.allowedEntityTypes = this.entityService.prepareAllowedEntityTypesList(null, true);
   }
 
   private reset() {
@@ -658,8 +653,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       data: {
         entityAliases: deepClone(this.dashboard.configuration.entityAliases),
         widgets: this.dashboardUtils.getWidgetsArray(this.dashboard),
-        isSingleEntityAlias: false,
-        allowedEntityTypes: this.allowedEntityTypes
+        isSingleEntityAlias: false
       }
     }).afterClosed().subscribe((entityAliases) => {
       if (entityAliases) {

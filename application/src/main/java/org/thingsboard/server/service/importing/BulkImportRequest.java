@@ -13,20 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.oauth2.deprecated;
+package org.thingsboard.server.service.importing;
 
-import lombok.*;
+import lombok.Data;
 
 import java.util.List;
 
-@Deprecated
-@EqualsAndHashCode
 @Data
-@ToString
-@Builder(toBuilder = true)
-@NoArgsConstructor
-@AllArgsConstructor
-public class OAuth2ClientsParams {
-    private boolean enabled;
-    private List<OAuth2ClientsDomainParams> domainsParams;
+public class BulkImportRequest {
+    private String file;
+    private Mapping mapping;
+
+    @Data
+    public static class Mapping {
+        private List<ColumnMapping> columns;
+        private Character delimiter;
+        private Boolean update;
+        private Boolean header;
+    }
+
+    @Data
+    public static class ColumnMapping {
+        private BulkImportColumnType type;
+        private String key;
+    }
+
 }

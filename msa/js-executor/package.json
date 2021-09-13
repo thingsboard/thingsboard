@@ -1,7 +1,7 @@
 {
   "name": "thingsboard-js-executor",
   "private": true,
-  "version": "3.3.1",
+  "version": "3.3.2",
   "description": "ThingsBoard JavaScript Executor Microservice",
   "main": "server.js",
   "bin": "server.js",
@@ -39,9 +39,9 @@
     ]
   },
   "devDependencies": {
-    "fs-extra": "^9.0.1",
-    "nodemon": "^2.0.4",
-    "pkg": "^4.4.9"
+    "fs-extra": "^10.0.0",
+    "nodemon": "^2.0.12",
+    "pkg": "^5.3.1"
   },
   "pkg": {
     "assets": [
