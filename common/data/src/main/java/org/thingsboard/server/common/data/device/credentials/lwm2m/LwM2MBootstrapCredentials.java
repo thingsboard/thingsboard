@@ -13,19 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.oauth2.deprecated;
+package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
-import lombok.*;
-import org.thingsboard.server.common.data.oauth2.SchemeType;
+import lombok.Getter;
+import lombok.Setter;
 
-@Deprecated
-@EqualsAndHashCode
-@Data
-@ToString
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class DomainInfo {
-    private SchemeType scheme;
-    private String name;
+@Getter
+@Setter
+public class LwM2MBootstrapCredentials {
+    private LwM2MServerCredentials bootstrapServer;
+    private LwM2MServerCredentials lwm2mServer;
 }

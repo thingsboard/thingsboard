@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.lwm2m.security;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.network.config.NetworkConfig;
 import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.core.util.Hex;
@@ -37,7 +38,10 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecServerCredentials;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
@@ -57,11 +61,7 @@ import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmdsWrapper;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
-import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapConfig;
-import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapServers;
-import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MServerBootstrap;
 import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
-import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MCredentials;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -86,18 +86,12 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import static org.hamcrest.Matchers.containsString;
+import static org.eclipse.leshan.client.object.Security.noSec;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.HOST;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.HOST_BS;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.PORT;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.PORT_BS;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURE_PORT;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURE_PORT_BS;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SHORT_SERVER_ID;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SHORT_SERVER_ID_BS;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.COAP_CONFIG;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURITY;
 
 @DaoSqlTest
 public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
@@ -183,7 +177,9 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
 
     protected static final String ENDPOINT = "deviceAEndpoint";
 
-    protected LwM2MTestClient client;
+    protected CoapClient client;
+
+    private final LwM2MBootstrapCredentials defaultBootstrapCredentials;
 
     public AbstractLwM2MIntegrationTest() {
 // create client credentials
@@ -265,6 +261,13 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         } catch (GeneralSecurityException | IOException e) {
             throw new RuntimeException(e);
         }
+
+        defaultBootstrapCredentials = new LwM2MBootstrapCredentials();
+
+        NoSecServerCredentials serverCredentials = new NoSecServerCredentials();
+
+        defaultBootstrapCredentials.setBootstrapServer(serverCredentials);
+        defaultBootstrapCredentials.setLwm2mServer(serverCredentials);
     }
 
     @Before
@@ -321,16 +324,11 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         Assert.assertEquals(device.getId(), deviceCredentials.getDeviceId());
         deviceCredentials.setCredentialsType(DeviceCredentialsType.LWM2M_CREDENTIALS);
 
-        LwM2MCredentials credentials = new LwM2MCredentials();
+        LwM2MDeviceCredentials credentials = new LwM2MDeviceCredentials();
 
         credentials.setClient(clientCredentials);
-        // TODO
-        /**
-         * Without:  credentials.setBootstrap(createBootstrapConfig());
-         *         doPost("/api/device/credentials", deviceCredentials).andExpect(status().isBadRequest())
-         *                 .andExpect(statusReason(containsString("Device credentials are missing fields or mandatory value in these fields: bootstrap, bootstrapServer, lwm2mServer")));
-         */
-        credentials.setBootstrap(createBootstrapConfig());
+        credentials.setBootstrap(defaultBootstrapCredentials);
+
         deviceCredentials.setCredentialsValue(JacksonUtil.toString(credentials));
         doPost("/api/device/credentials", deviceCredentials).andExpect(status().isOk());
         return device;
@@ -369,30 +367,6 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         return savaData("/api/otaPackage/" + savedFirmwareInfo.getId().getId().toString() + "?checksum={checksum}&checksumAlgorithm={checksumAlgorithm}", testData, CHECKSUM, "SHA256");
     }
 
-    protected LwM2MBootstrapConfig createBootstrapConfig() {
-        LwM2MBootstrapConfig bootstrap = new LwM2MBootstrapConfig();
-        LwM2MBootstrapServers servers = new LwM2MBootstrapServers();
-        servers.setShortId(SHORT_SERVER_ID);
-        bootstrap.setServers(servers);
-        LwM2MServerBootstrap server = new LwM2MServerBootstrap();
-        server.setHost(HOST);
-        server.setPort(PORT);
-        server.setSecurityHost(HOST);
-        server.setSecurityPort(SECURE_PORT);
-        server.setServerId(servers.getShortId());
-        server.setBootstrapServerIs(false);
-        bootstrap.setLwm2mServer(server);
-        LwM2MServerBootstrap serverBS = new LwM2MServerBootstrap();
-        serverBS.setHost(HOST_BS);
-        serverBS.setPort(PORT_BS);
-        serverBS.setSecurityHost(HOST_BS);
-        serverBS.setSecurityPort(SECURE_PORT_BS);
-        serverBS.setServerId(SHORT_SERVER_ID_BS);
-        serverBS.setBootstrapServerIs(true);
-        bootstrap.setBootstrapServer(serverBS);
-        return bootstrap;
-    }
-
     protected OtaPackageInfo savaData(String urlTemplate, MockMultipartFile content, String... params) throws Exception {
         MockMultipartHttpServletRequestBuilder postRequest = MockMvcRequestBuilders.multipart(urlTemplate, params);
         postRequest.file(content);
@@ -413,37 +387,44 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
                                                     LwM2MClientCredentials credentials,
                                                     NetworkConfig coapConfig,
                                                     String endpoint) throws Exception {
-        createDeviceProfile(TRANSPORT_CONFIGURATION);
-        Device device = createDevice(credentials);
+        LwM2MTestClient client = null;
+        try {
+            createDeviceProfile(TRANSPORT_CONFIGURATION);
+            Device device = createDevice(credentials);
 
-        SingleEntityFilter sef = new SingleEntityFilter();
-        sef.setSingleEntity(device.getId());
-        LatestValueCmd latestCmd = new LatestValueCmd();
-        latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "batteryLevel")));
-        EntityDataQuery edq = new EntityDataQuery(sef, new EntityDataPageLink(1, 0, null, null),
-                Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+            SingleEntityFilter sef = new SingleEntityFilter();
+            sef.setSingleEntity(device.getId());
+            LatestValueCmd latestCmd = new LatestValueCmd();
+            latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "batteryLevel")));
+            EntityDataQuery edq = new EntityDataQuery(sef, new EntityDataPageLink(1, 0, null, null),
+                    Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 
-        EntityDataCmd cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
-        TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
-        wrapper.setEntityDataCmds(Collections.singletonList(cmd));
+            EntityDataCmd cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
+            TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
+            wrapper.setEntityDataCmds(Collections.singletonList(cmd));
 
-        wsClient.send(mapper.writeValueAsString(wrapper));
-        wsClient.waitForReply();
+            wsClient.send(mapper.writeValueAsString(wrapper));
+            wsClient.waitForReply();
 
-        wsClient.registerWaitForUpdate();
-        client = new LwM2MTestClient(executor, endpoint);
-        int clientPort = SocketUtils.findAvailableTcpPort();
-        client.init(security, coapConfig, clientPort);
-        String msg = wsClient.waitForUpdate();
+            wsClient.registerWaitForUpdate();
+            client = new LwM2MTestClient(executor, endpoint);
+            int clientPort = SocketUtils.findAvailableTcpPort();
+            client.init(security, coapConfig, clientPort);
+            String msg = wsClient.waitForUpdate();
 
-        EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
-        Assert.assertEquals(1, update.getCmdId());
-        List<EntityData> eData = update.getUpdate();
-        Assert.assertNotNull(eData);
-        Assert.assertEquals(1, eData.size());
-        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
-        Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES));
-        var tsValue = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("batteryLevel");
-        Assert.assertEquals(42, Long.parseLong(tsValue.getValue()));
+            EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
+            Assert.assertEquals(1, update.getCmdId());
+            List<EntityData> eData = update.getUpdate();
+            Assert.assertNotNull(eData);
+            Assert.assertEquals(1, eData.size());
+            Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+            Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES));
+            var tsValue = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("batteryLevel");
+            Assert.assertEquals(42, Long.parseLong(tsValue.getValue()));
+        } finally {
+            if (client != null) {
+                client.destroy();
+            }
+        }
     }
 }

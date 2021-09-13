@@ -13,23 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.id.deprecated;
+package org.thingsboard.server.service.importing;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.thingsboard.server.common.data.id.UUIDBased;
+import lombok.Data;
 
-import java.util.UUID;
-
-@Deprecated
-public class OAuth2ClientRegistrationId extends UUIDBased {
-
-    @JsonCreator
-    public OAuth2ClientRegistrationId(@JsonProperty("id") UUID id) {
-        super(id);
-    }
-
-    public static OAuth2ClientRegistrationId fromString(String clientRegistrationId) {
-        return new OAuth2ClientRegistrationId(UUID.fromString(clientRegistrationId));
-    }
+@Data
+public class ImportedEntityInfo<E> {
+    private E entity;
+    private boolean isUpdated;
+    private E oldEntity;
+    private String relatedError;
 }

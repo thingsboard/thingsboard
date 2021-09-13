@@ -46,6 +46,7 @@ import org.eclipse.leshan.core.request.RegisterRequest;
 import org.eclipse.leshan.core.request.UpdateRequest;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 import org.junit.Assert;
+import org.junit.Assert;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

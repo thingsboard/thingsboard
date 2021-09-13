@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.oauth2.deprecated;
+package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
-import org.thingsboard.server.common.data.oauth2.deprecated.OAuth2ClientRegistration;
-import org.thingsboard.server.dao.Dao;
+public class NoSecServerCredentials implements LwM2MServerCredentials {
 
-@Deprecated
-public interface OAuth2ClientRegistrationDao extends Dao<OAuth2ClientRegistration> {
-    void deleteAll();
+    @Override
+    public LwM2MSecurityMode getSecurityMode() {
+        return LwM2MSecurityMode.NO_SEC;
+    }
 }

@@ -121,7 +121,7 @@ import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.action.RuleEngineEntityActionService;
+import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.edge.EdgeLicenseService;
 import org.thingsboard.server.service.edge.EdgeNotificationService;
@@ -279,7 +279,7 @@ public abstract class BaseController {
     protected EdgeLicenseService edgeLicenseService;
 
     @Autowired
-    protected RuleEngineEntityActionService ruleEngineEntityActionService;
+    protected EntityActionService entityActionService;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
@@ -819,13 +819,7 @@ public abstract class BaseController {
 
     protected <E extends HasName, I extends EntityId> void logEntityAction(User user, I entityId, E entity, CustomerId customerId,
                                                                            ActionType actionType, Exception e, Object... additionalInfo) throws ThingsboardException {
-        if (customerId == null || customerId.isNullUid()) {
-            customerId = user.getCustomerId();
-        }
-        if (e == null) {
-            ruleEngineEntityActionService.pushEntityActionToRuleEngine(entityId, entity, user.getTenantId(), customerId, actionType, user, additionalInfo);
-        }
-        auditLogService.logEntityAction(user.getTenantId(), customerId, user.getId(), user.getName(), entityId, entity, actionType, e, additionalInfo);
+        entityActionService.logEntityAction(user, entityId, entity, customerId, actionType, e, additionalInfo);
     }
 
 

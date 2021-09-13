@@ -121,6 +121,11 @@ public class JacksonUtil {
         return OBJECT_MAPPER.valueToTree(value);
     }
 
+    public static <T> T treeToValue(JsonNode tree, Class<T> type) throws JsonProcessingException {
+        return OBJECT_MAPPER.treeToValue(tree, type);
+    }
+
+
     public static String validateFieldsToTree(JsonNode nodeCredentialsValue, String[] fields, String delimiter) {
         try {
             Set msgSet = ConcurrentHashMap.newKeySet();

@@ -38,8 +38,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.oauth2.OAuth2Info;
-import org.thingsboard.server.common.data.oauth2.deprecated.OAuth2ClientsParams;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -55,7 +53,6 @@ import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
-import org.thingsboard.server.dao.oauth2.OAuth2Utils;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.sql.device.DeviceProfileRepository;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -448,18 +445,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
     }
 
     private void updateOAuth2Params() {
-        try {
-            OAuth2ClientsParams oauth2ClientsParams = oAuth2Service.findOAuth2Params();
-            if (!oauth2ClientsParams.getDomainsParams().isEmpty()) {
-                log.info("Updating OAuth2 parameters ...");
-                OAuth2Info oAuth2Info = OAuth2Utils.clientParamsToOAuth2Info(oauth2ClientsParams);
-                oAuth2Service.saveOAuth2Info(oAuth2Info);
-                oAuth2Service.saveOAuth2Params(new OAuth2ClientsParams(false, Collections.emptyList()));
-                log.info("Successfully updated OAuth2 parameters!");
-            }
-        } catch (Exception e) {
-            log.error("Failed to update OAuth2 parameters", e);
-        }
+        log.warn("CAUTION: Update of Oauth2 parameters from 3.2.2 to 3.3.0 available only in ThingsBoard versions 3.3.0/3.3.1");
     }
 
 }

@@ -43,7 +43,13 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 import { AliasInfo, StateParams, SubscriptionInfo } from '@core/api/widget-api.models';
 import { DataKey, Datasource, DatasourceType, KeyInfo } from '@app/shared/models/widget.models';
 import { UtilsService } from '@core/services/utils.service';
-import { AliasFilterType, EntityAlias, EntityAliasFilter, EntityAliasFilterResult } from '@shared/models/alias.models';
+import {
+  AliasFilterType,
+  edgeAliasFilterTypes,
+  EntityAlias,
+  EntityAliasFilter,
+  EntityAliasFilterResult
+} from '@shared/models/alias.models';
 import {
   EdgeImportEntityData,
   EntitiesKeysByQuery,
@@ -53,7 +59,7 @@ import {
   ImportEntityData
 } from '@shared/models/entity.models';
 import { EntityRelationService } from '@core/http/entity-relation.service';
-import { deepClone, generateSecret, guid, isDefined, isDefinedAndNotNull } from '@core/utils';
+import { deepClone, generateSecret, guid, isDefined, isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
 import { Asset } from '@shared/models/asset.models';
 import { Device, DeviceCredentialsType } from '@shared/models/device.models';
 import { AttributeService } from '@core/http/attribute.service';
@@ -495,7 +501,11 @@ export class EntityService {
   }
 
   public getAliasFilterTypesByEntityTypes(entityTypes: Array<EntityType | AliasEntityType>): Array<AliasFilterType> {
-    const allAliasFilterTypes: Array<AliasFilterType> = Object.keys(AliasFilterType).map((key) => AliasFilterType[key]);
+    const authState = getCurrentAuthState(this.store);
+    let allAliasFilterTypes: Array<AliasFilterType> = Object.values(AliasFilterType);
+    if (!authState.edgesSupportEnabled) {
+      allAliasFilterTypes = allAliasFilterTypes.filter(aliasFilterType => !edgeAliasFilterTypes.includes(aliasFilterType));
+    }
     if (!entityTypes || !entityTypes.length) {
       return allAliasFilterTypes;
     }
@@ -622,14 +632,14 @@ export class EntityService {
       case Authority.TENANT_ADMIN:
         entityTypes.push(EntityType.DEVICE);
         entityTypes.push(EntityType.ASSET);
-        if (authState.edgesSupportEnabled) {
-          entityTypes.push(EntityType.EDGE);
-        }
         entityTypes.push(EntityType.ENTITY_VIEW);
         entityTypes.push(EntityType.TENANT);
         entityTypes.push(EntityType.CUSTOMER);
         entityTypes.push(EntityType.USER);
         entityTypes.push(EntityType.DASHBOARD);
+        if (authState.edgesSupportEnabled) {
+          entityTypes.push(EntityType.EDGE);
+        }
         if (useAliasEntityTypes) {
           entityTypes.push(AliasEntityType.CURRENT_CUSTOMER);
           entityTypes.push(AliasEntityType.CURRENT_TENANT);
@@ -638,13 +648,13 @@ export class EntityService {
       case Authority.CUSTOMER_USER:
         entityTypes.push(EntityType.DEVICE);
         entityTypes.push(EntityType.ASSET);
-        if (authState.edgesSupportEnabled) {
-          entityTypes.push(EntityType.EDGE);
-        }
         entityTypes.push(EntityType.ENTITY_VIEW);
         entityTypes.push(EntityType.CUSTOMER);
         entityTypes.push(EntityType.USER);
         entityTypes.push(EntityType.DASHBOARD);
+        if (authState.edgesSupportEnabled) {
+          entityTypes.push(EntityType.EDGE);
+        }
         if (useAliasEntityTypes) {
           entityTypes.push(AliasEntityType.CURRENT_CUSTOMER);
         }
@@ -954,7 +964,12 @@ export class EntityService {
           map(() => {
             return { create: { entity: 1 } } as ImportEntitiesResultInfo;
           }),
-          catchError(err => of({ error: { entity: 1 } } as ImportEntitiesResultInfo))
+          catchError(err => of({
+            error: {
+              entity: 1,
+              errors: err.message
+            }
+          } as ImportEntitiesResultInfo))
         );
       }),
       catchError(err => {
@@ -978,13 +993,28 @@ export class EntityService {
                 map(() => {
                   return { update: { entity: 1 } } as ImportEntitiesResultInfo;
                 }),
-                catchError(updateError => of({ error: { entity: 1 } } as ImportEntitiesResultInfo))
+                catchError(updateError => of({
+                  error: {
+                    entity: 1,
+                    errors: updateError.message
+                  }
+                } as ImportEntitiesResultInfo))
               );
             }),
-            catchError(findErr => of({ error: { entity: 1 } } as ImportEntitiesResultInfo))
+            catchError(findErr => of({
+              error: {
+                entity: 1,
+                errors: `Line: ${entityData.lineNumber}; Error: ${findErr.error.message}`
+              }
+            } as ImportEntitiesResultInfo))
           );
         } else {
-          return of({ error: { entity: 1 } } as ImportEntitiesResultInfo);
+          return of({
+            error: {
+              entity: 1,
+              errors: `Line: ${entityData.lineNumber}; Error: ${err.error.message}`
+            }
+          } as ImportEntitiesResultInfo);
         }
       })
     );
@@ -1040,7 +1070,6 @@ export class EntityService {
         break;
     }
     return saveEntityObservable;
-
   }
 
   private getUpdateEntityTasks(entityType: EntityType,  entityData: ImportEntityData | EdgeImportEntityData,
@@ -1113,15 +1142,31 @@ export class EntityService {
   public saveEntityData(entityId: EntityId, entityData: ImportEntityData, config?: RequestConfig): Observable<any> {
     const observables: Observable<string>[] = [];
     let observable: Observable<string>;
-    if (entityData.accessToken && entityData.accessToken !== '') {
+    if (Object.keys(entityData.credential).length) {
+      let credentialsType: DeviceCredentialsType;
+      let credentialsId: string = null;
+      let credentialsValue: string = null;
+      if (isDefinedAndNotNull(entityData.credential.mqtt)) {
+        credentialsType = DeviceCredentialsType.MQTT_BASIC;
+        credentialsValue = JSON.stringify(entityData.credential.mqtt);
+      } else if (isDefinedAndNotNull(entityData.credential.lwm2m)) {
+        credentialsType = DeviceCredentialsType.LWM2M_CREDENTIALS;
+        credentialsValue = JSON.stringify(entityData.credential.lwm2m);
+      } else if (isNotEmptyStr(entityData.credential.x509)) {
+        credentialsType = DeviceCredentialsType.X509_CERTIFICATE;
+        credentialsValue = entityData.credential.x509;
+      } else {
+        credentialsType = DeviceCredentialsType.ACCESS_TOKEN;
+        credentialsId = entityData.credential.accessToken;
+      }
       observable = this.deviceService.getDeviceCredentials(entityId.id, false, config).pipe(
         mergeMap((credentials) => {
-          credentials.credentialsId = entityData.accessToken;
-          credentials.credentialsType = DeviceCredentialsType.ACCESS_TOKEN;
-          credentials.credentialsValue = null;
+          credentials.credentialsId = credentialsId;
+          credentials.credentialsType = credentialsType;
+          credentials.credentialsValue = credentialsValue;
           return this.deviceService.saveDeviceCredentials(credentials, config).pipe(
             map(() => 'ok'),
-            catchError(err => of('error'))
+            catchError(err => of(`Line: ${entityData.lineNumber}; Error: ${err.error.message}`))
           );
         })
       );
@@ -1131,7 +1176,7 @@ export class EntityService {
       observable = this.attributeService.saveEntityAttributes(entityId, AttributeScope.SHARED_SCOPE,
         entityData.attributes.shared, config).pipe(
         map(() => 'ok'),
-        catchError(err => of('error'))
+        catchError(err => of(`Line: ${entityData.lineNumber}; Error: ${err.error.message}`))
       );
       observables.push(observable);
     }
@@ -1139,23 +1184,23 @@ export class EntityService {
       observable = this.attributeService.saveEntityAttributes(entityId, AttributeScope.SERVER_SCOPE,
         entityData.attributes.server, config).pipe(
         map(() => 'ok'),
-        catchError(err => of('error'))
+        catchError(err => of(`Line: ${entityData.lineNumber}; Error: ${err.error.message}`))
       );
       observables.push(observable);
     }
     if (entityData.timeseries && entityData.timeseries.length) {
       observable = this.attributeService.saveEntityTimeseries(entityId, 'time', entityData.timeseries, config).pipe(
         map(() => 'ok'),
-        catchError(err => of('error'))
+        catchError(err => of(`Line: ${entityData.lineNumber}; Error: ${err.error.message}`))
       );
       observables.push(observable);
     }
     if (observables.length) {
       return forkJoin(observables).pipe(
         map((response) => {
-          const hasError = response.filter((status) => status === 'error').length > 0;
-          if (hasError) {
-            throw Error();
+          const hasError = response.filter((status) => status !== 'ok');
+          if (hasError.length > 0) {
+            throw Error(hasError.join('\n'));
           } else {
             return response;
           }
