@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.oauth2.deprecated;
+package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
-import org.springframework.data.repository.CrudRepository;
-import org.thingsboard.server.dao.model.sql.deprecated.OAuth2ClientRegistrationEntity;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.util.UUID;
-
-@Deprecated
-public interface OAuth2ClientRegistrationRepository extends CrudRepository<OAuth2ClientRegistrationEntity, UUID> {
+@Getter
+@Setter
+public class LwM2MDeviceCredentials {
+    private LwM2MClientCredentials client;
+    private LwM2MBootstrapCredentials bootstrap;
 }

@@ -228,6 +228,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
             if (foundDeviceCredentials == null) {
                 deviceCredentialsService.createDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
             } else {
+                deviceCredentials.setId(foundDeviceCredentials.getId());
                 deviceCredentialsService.updateDeviceCredentials(device.getTenantId(), deviceCredentials);
             }
         }
@@ -241,7 +242,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
             deviceCredentials.setDeviceId(new DeviceId(savedDevice.getUuidId()));
             deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
             deviceCredentials.setCredentialsId(!StringUtils.isEmpty(accessToken) ? accessToken : RandomStringUtils.randomAlphanumeric(20));
-            deviceCredentialsService.createDeviceCredentials(device.getTenantId(), deviceCredentials);
+            deviceCredentialsService.createDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
         }
         return savedDevice;
     }
@@ -268,7 +269,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
             }
             device.setType(deviceProfile.getName());
             device.setDeviceData(syncDeviceData(deviceProfile, device.getDeviceData()));
-            return deviceDao.save(device.getTenantId(), device);
+            return deviceDao.saveAndFlush(device.getTenantId(), device);
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_name_unq_key")) {

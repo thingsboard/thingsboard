@@ -78,7 +78,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { SortOrder } from '@shared/models/page/sort-order';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
-import { map, mergeMap } from 'rxjs/operators';
+import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 
 export interface IWidgetAction {
   name: string;
@@ -254,41 +254,43 @@ export class WidgetContext {
     forkJoin,
     of,
     map,
-    mergeMap
+    mergeMap,
+    switchMap,
+    catchError
   };
 
   showSuccessToast(message: string, duration: number = 1000,
                    verticalPosition: NotificationVerticalPosition = 'bottom',
                    horizontalPosition: NotificationHorizontalPosition = 'left',
-                   target?: string) {
+                   target: string = 'dashboardRoot') {
     this.showToast('success', message, duration, verticalPosition, horizontalPosition, target);
   }
 
   showInfoToast(message: string,
                 verticalPosition: NotificationVerticalPosition = 'bottom',
                 horizontalPosition: NotificationHorizontalPosition = 'left',
-                target?: string) {
+                target: string = 'dashboardRoot') {
     this.showToast('info', message, undefined, verticalPosition, horizontalPosition, target);
   }
 
   showWarnToast(message: string,
                 verticalPosition: NotificationVerticalPosition = 'bottom',
                 horizontalPosition: NotificationHorizontalPosition = 'left',
-                target?: string) {
+                target: string = 'dashboardRoot') {
     this.showToast('warn', message, undefined, verticalPosition, horizontalPosition, target);
   }
 
   showErrorToast(message: string,
                  verticalPosition: NotificationVerticalPosition = 'bottom',
                  horizontalPosition: NotificationHorizontalPosition = 'left',
-                 target?: string) {
+                 target: string = 'dashboardRoot') {
     this.showToast('error', message, undefined, verticalPosition, horizontalPosition, target);
   }
 
   showToast(type: NotificationType, message: string, duration: number,
             verticalPosition: NotificationVerticalPosition = 'bottom',
             horizontalPosition: NotificationHorizontalPosition = 'left',
-            target?: string) {
+            target: string = 'dashboardRoot') {
     this.store.dispatch(new ActionNotificationShow(
       {
         message,

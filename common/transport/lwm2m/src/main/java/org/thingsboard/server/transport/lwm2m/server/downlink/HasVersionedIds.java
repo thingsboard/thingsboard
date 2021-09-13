@@ -25,11 +25,11 @@ public interface HasVersionedIds {
     String[] getVersionedIds();
 
     default String[] getObjectIds() {
-        Set objectIds = ConcurrentHashMap.newKeySet();
+        Set<String> objectIds = ConcurrentHashMap.newKeySet();
         for (String versionedId : getVersionedIds()) {
             objectIds.add(LwM2mTransportUtil.fromVersionedIdToObjectId(versionedId));
         }
-        return (String[]) objectIds.toArray(String[]::new);
+        return objectIds.toArray(String[]::new);
     }
 
 }

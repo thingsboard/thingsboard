@@ -33,6 +33,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.http.ResponseEntity;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.mqtt.MqttClient;
 import org.thingsboard.mqtt.MqttClientConfig;
 import org.thingsboard.mqtt.MqttHandler;
@@ -259,7 +260,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         JsonObject serverRpcPayload = new JsonObject();
         serverRpcPayload.addProperty("method", "getValue");
         serverRpcPayload.addProperty("params", true);
-        ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
+        ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName(getClass().getSimpleName())));
         ListenableFuture<ResponseEntity> future = service.submit(() -> {
             try {
                 return restClient.getRestTemplate()
@@ -273,6 +274,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
 
         // Wait for RPC call from the server and send the response
         MqttEvent requestFromServer = listener.getEvents().poll(10, TimeUnit.SECONDS);
+        service.shutdownNow();
 
         Assert.assertNotNull(requestFromServer);
         Assert.assertNotNull(requestFromServer.getMessage());

@@ -419,7 +419,6 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         sendRequest(client, request, timeoutInMs, callback, r -> request.getPaths().toString());
     }
 
-
     private <R extends DownlinkRequest<T>, T extends LwM2mResponse> void sendRequest(LwM2mClient client, R request, long timeoutInMs, DownlinkRequestCallback<R, T> callback, Function<R, String> pathToStringFunction) {
         if (!clientContext.isDownlinkAllowed(client)) {
             log.trace("[{}] ignore downlink request cause client is sleeping.", client.getEndpoint());
@@ -439,6 +438,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                     }
                 });
             }, e -> handleDownlinkError(client, request, callback, e));
+            callback.onSent(request);
         } catch (Exception e) {
             handleDownlinkError(client, request, callback, e);
         }
@@ -484,7 +484,6 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             callback.onError(toString(request), e);
         });
     }
-
 
     private WriteRequest getWriteRequestSingleResource(ResourceModel.Type type, ContentFormat contentFormat, int objectId, int instanceId, int resourceId, Object value) {
         switch (type) {

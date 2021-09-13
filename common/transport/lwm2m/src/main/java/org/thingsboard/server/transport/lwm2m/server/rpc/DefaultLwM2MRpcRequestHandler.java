@@ -21,6 +21,8 @@ import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.request.ContentFormat;
+import org.eclipse.leshan.core.request.ReadCompositeRequest;
+import org.eclipse.leshan.core.response.ReadCompositeResponse;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
@@ -71,6 +73,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertMultiResourceValuesFromRpcBody;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
@@ -177,7 +180,6 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
                         throw new IllegalArgumentException("Unsupported operation: " + operationType.name());
                 }
             }
-            transportService.process(client.getSession(), rpcRequest, RpcStatus.SENT, TransportServiceCallback.EMPTY);
         } catch (IllegalArgumentException e) {
             this.sendErrorRpcResponse(sessionInfo, rpcRequest.getRequestId(), ResponseCode.BAD_REQUEST, e.getMessage());
         }
@@ -354,7 +356,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
     private String[] getIdsFromParameters(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg rpcRequst) {
         RpcReadCompositeRequest requestParams = JacksonUtil.fromString(rpcRequst.getParams(), RpcReadCompositeRequest.class);
         if (requestParams.getKeys() != null && requestParams.getKeys().length > 0) {
-            Set<String> targetIds = new HashSet<>();
+            Set<String> targetIds = ConcurrentHashMap.newKeySet();
             for (String key : requestParams.getKeys()) {
                 String targetId = clientContext.getObjectIdByKeyNameFromProfile(client, key, true);
                 if (targetId != null) {

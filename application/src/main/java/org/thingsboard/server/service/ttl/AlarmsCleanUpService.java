@@ -26,7 +26,6 @@ import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.alarm.AlarmDao;
@@ -34,17 +33,12 @@ import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
-import org.thingsboard.server.dao.util.PsqlDao;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.action.RuleEngineEntityActionService;
-import org.thingsboard.server.service.ttl.AbstractCleanUpService;
+import org.thingsboard.server.service.action.EntityActionService;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Date;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @TbCoreComponent
@@ -60,7 +54,7 @@ public class AlarmsCleanUpService {
     private final AlarmDao alarmDao;
     private final AlarmService alarmService;
     private final RelationService relationService;
-    private final RuleEngineEntityActionService ruleEngineEntityActionService;
+    private final EntityActionService entityActionService;
     private final PartitionService partitionService;
     private final TbTenantProfileCache tenantProfileCache;
 
@@ -90,7 +84,7 @@ public class AlarmsCleanUpService {
                     toRemove.getData().forEach(alarmId -> {
                         relationService.deleteEntityRelations(tenantId, alarmId);
                         Alarm alarm = alarmService.deleteAlarm(tenantId, alarmId).getAlarm();
-                        ruleEngineEntityActionService.pushEntityActionToRuleEngine(alarm.getOriginator(), alarm, tenantId, null, ActionType.ALARM_DELETE, null);
+                        entityActionService.pushEntityActionToRuleEngine(alarm.getOriginator(), alarm, tenantId, null, ActionType.ALARM_DELETE, null);
                     });
 
                     totalRemoved += toRemove.getTotalElements();

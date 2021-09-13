@@ -100,7 +100,7 @@ class DeviceState {
     }
 
     public void updateProfile(TbContext ctx, DeviceProfile deviceProfile) throws ExecutionException, InterruptedException {
-        Set<AlarmConditionFilterKey> oldKeys = this.deviceProfile.getEntityKeys();
+        Set<AlarmConditionFilterKey> oldKeys = Set.copyOf(this.deviceProfile.getEntityKeys());
         this.deviceProfile.updateDeviceProfile(deviceProfile);
         if (latestValues != null) {
             Set<AlarmConditionFilterKey> keysToFetch = new HashSet<>(this.deviceProfile.getEntityKeys());

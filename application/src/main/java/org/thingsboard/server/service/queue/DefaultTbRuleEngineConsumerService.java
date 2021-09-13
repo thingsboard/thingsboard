@@ -103,8 +103,8 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     private final ConcurrentMap<String, TbRuleEngineQueueConfiguration> consumerConfigurations = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TbRuleEngineConsumerStats> consumerStats = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TbTopicWithConsumerPerPartition> topicsConsumerPerPartition = new ConcurrentHashMap<>();
-    final ExecutorService submitExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-service-submit-executor"));
-    final ScheduledExecutorService repartitionExecutor = Executors.newScheduledThreadPool(1, ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-repartition-executor"));
+    final ExecutorService submitExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-submit"));
+    final ScheduledExecutorService repartitionExecutor = Executors.newScheduledThreadPool(1, ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-repartition"));
 
     public DefaultTbRuleEngineConsumerService(TbRuleEngineProcessingStrategyFactory processingStrategyFactory,
                                               TbRuleEngineSubmitStrategyFactory submitStrategyFactory,
@@ -146,6 +146,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     public void stop() {
         super.destroy();
         submitExecutor.shutdownNow();
+        repartitionExecutor.shutdownNow();
         ruleEngineSettings.getQueues().forEach(config -> consumerConfigurations.put(config.getName(), config));
     }
 

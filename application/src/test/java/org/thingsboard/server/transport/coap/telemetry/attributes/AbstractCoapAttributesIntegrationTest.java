@@ -114,8 +114,8 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         assertEquals(CoAP.ResponseCode.CREATED, coapResponse.getCode());
     }
 
-    @SuppressWarnings("unchecked")
-    protected void assertAttributesValues(List<Map<String, Object>> deviceValues, Set<String> keySet) throws JsonProcessingException {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    protected void assertAttributesValues(List<Map<String, Object>> deviceValues, Set<String> keySet) {
         for (Map<String, Object> map : deviceValues) {
             String key = (String) map.get("key");
             Object value = map.get("value");
@@ -145,6 +145,7 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         }
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private void assertAttributesProtoValues(List<Map<String, Object>> values, Set<String> keySet) {
         for (Map<String, Object> map : values) {
             String key = (String) map.get("key");
