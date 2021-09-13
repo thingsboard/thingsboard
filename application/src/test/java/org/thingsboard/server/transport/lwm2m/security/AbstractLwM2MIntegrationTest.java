@@ -177,7 +177,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
 
     protected static final String ENDPOINT = "deviceAEndpoint";
 
-    protected CoapClient client;
+    protected LwM2MTestClient client;
 
     private final LwM2MBootstrapCredentials defaultBootstrapCredentials;
 

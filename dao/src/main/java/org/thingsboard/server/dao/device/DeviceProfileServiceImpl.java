@@ -414,7 +414,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                             }
                         }
                     } else if (transportConfiguration instanceof Lwm2mDeviceProfileTransportConfiguration) {
-                        deviceCredentialsService.verifyLwm2mSecurityKeyDeviceProfile((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration);
+//                        deviceCredentialsService.verifyLwm2mSecurityKeyDeviceProfile((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration);
                     }
 
                     List<DeviceProfileAlarm> profileAlarms = deviceProfile.getProfileData().getAlarms();

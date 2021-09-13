@@ -35,5 +35,4 @@ public interface DeviceCredentialsService {
 
     void deleteDeviceCredentials(TenantId tenantId, DeviceCredentials deviceCredentials);
 
-    void verifyLwm2mSecurityKeyDeviceProfile(Lwm2mDeviceProfileTransportConfiguration transportConfiguration) ;
 }
