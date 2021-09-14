@@ -30,8 +30,11 @@ import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecServerCredentials;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
@@ -267,9 +270,15 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractWebsocketT
                 doGet("/api/device/" + device.getId().getId().toString() + "/credentials", DeviceCredentials.class);
         Assert.assertEquals(device.getId(), deviceCredentials.getDeviceId());
         deviceCredentials.setCredentialsType(DeviceCredentialsType.LWM2M_CREDENTIALS);
-        LwM2MCredentials credentials = new LwM2MCredentials();
+
+        LwM2MDeviceCredentials credentials = new LwM2MDeviceCredentials();
         credentials.setClient(clientCredentials);
-        credentials.setBootstrap(createBootstrapConfig());
+        LwM2MBootstrapCredentials defaultBootstrapCredentials = new LwM2MBootstrapCredentials();
+        NoSecServerCredentials serverCredentials = new NoSecServerCredentials();
+        defaultBootstrapCredentials.setBootstrapServer(serverCredentials);
+        defaultBootstrapCredentials.setLwm2mServer(serverCredentials);
+
+        credentials.setBootstrap(defaultBootstrapCredentials);
         deviceCredentials.setCredentialsValue(JacksonUtil.toString(credentials));
         doPost("/api/device/credentials", deviceCredentials).andExpect(status().isOk());
         return device;

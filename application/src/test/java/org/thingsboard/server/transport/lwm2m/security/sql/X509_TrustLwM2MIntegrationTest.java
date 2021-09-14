@@ -25,7 +25,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURE_COAP
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURE_URI;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SHORT_SERVER_ID;
 
-public class X509LwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
+public class X509_TrustLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
     @Test
     public void testConnectAndObserveTelemetry() throws Exception {
@@ -38,19 +38,5 @@ public class X509LwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
                 serverX509Cert.getEncoded());
         super.basicTestConnectionObserveTelemetry(security, credentials, SECURE_COAP_CONFIG, ENDPOINT);
     }
-
-//    @Ignore //See LwM2mClientContextImpl.unregister
-//    @Test
-//    public void testConnectWithCertAndObserveTelemetry() throws Exception {
-//        X509ClientCredentials credentials = new X509ClientCredentials();
-//        credentials.setEndpoint(ENDPOINT);
-//        credentials.setCert(SslUtil.getCertificateString(clientX509CertNotTrusted));
-//        Security security = x509(SECURE_URI,
-//                123,
-//                clientX509CertNotTrusted.getEncoded(),
-//                clientPrivateKeyFromCert.getEncoded(),
-//                serverX509Cert.getEncoded());
-//        super.basicTestConnectionObserveTelemetry(security, credentials, SECURE_COAP_CONFIG, ENDPOINT);
-//    }
 
 }
