@@ -127,6 +127,8 @@ export class AlarmDurationPredicateValueComponent implements ControlValueAccesso
         inherit: predicateValue?.dynamicValue ? predicateValue.dynamicValue.inherit : null
       }
     }, {emitEvent: false});
+
+    this.updateShowInheritMode(this.alarmDurationPredicateValueFormGroup.get('dynamicValue').get('sourceType').value);
   }
 
   private updateModel() {
