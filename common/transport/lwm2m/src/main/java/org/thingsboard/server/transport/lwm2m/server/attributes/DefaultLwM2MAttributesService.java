@@ -153,7 +153,12 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
                     newSoftwareTag = getStrValue(tsKvProto);
                 } else if (DefaultLwM2MOtaUpdateService.SOFTWARE_URL.equals(attrName)) {
                     newSoftwareUrl = getStrValue(tsKvProto);
-                } else {
+                } else if (!DefaultLwM2MOtaUpdateService.FIRMWARE_SIZE.equals(attrName) &&
+                           !DefaultLwM2MOtaUpdateService.FIRMWARE_CHECKSUM.equals(attrName) &&
+                           !DefaultLwM2MOtaUpdateService.FIRMWARE_CHECKSUM_ALGORITHM.equals(attrName) &&
+                           !DefaultLwM2MOtaUpdateService.SOFTWARE_SIZE.equals(attrName) &&
+                           !DefaultLwM2MOtaUpdateService.SOFTWARE_CHECKSUM.equals(attrName) &&
+                           !DefaultLwM2MOtaUpdateService.SOFTWARE_CHECKSUM_ALGORITHM.equals(attrName)){
                     otherAttributes.add(tsKvProto);
                 }
             }

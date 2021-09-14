@@ -61,12 +61,12 @@ import static org.eclipse.leshan.core.LwM2mId.LOCATION;
 import static org.eclipse.leshan.core.LwM2mId.SECURITY;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.eclipse.leshan.core.LwM2mId.SOFTWARE_MANAGEMENT;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resources;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.TEMPERATURE_SENSOR;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_12;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resources;
 
 
 @Slf4j

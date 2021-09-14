@@ -18,14 +18,14 @@ package org.thingsboard.server.transport.lwm2m.security.sql;
 import org.eclipse.leshan.client.object.Security;
 import org.junit.Test;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredentials;
-import org.thingsboard.server.transport.lwm2m.security.AbstractLwM2MIntegrationTest;
+import org.thingsboard.server.transport.lwm2m.security.AbstractSecurityLwM2MIntegrationTest;
 
 import static org.eclipse.leshan.client.object.Security.x509;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURE_COAP_CONFIG;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURE_URI;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SHORT_SERVER_ID;
 
-public class X509_TrustLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
+public class X509_TrustLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTest {
 
     @Test
     public void testConnectAndObserveTelemetry() throws Exception {

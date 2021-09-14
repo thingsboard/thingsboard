@@ -19,7 +19,7 @@ import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.core.util.Hex;
 import org.junit.Test;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCredentials;
-import org.thingsboard.server.transport.lwm2m.security.AbstractLwM2MIntegrationTest;
+import org.thingsboard.server.transport.lwm2m.security.AbstractSecurityLwM2MIntegrationTest;
 
 import java.nio.charset.StandardCharsets;
 
@@ -28,12 +28,10 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURE_COAP
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURE_URI;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SHORT_SERVER_ID;
 
-public class PskLwm2mIntegrationTest extends AbstractLwM2MIntegrationTest {
+public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTest {
 
     @Test
     public void testConnectWithPSKAndObserveTelemetry() throws Exception {
-        String pskIdentity = "SOME_PSK_ID";
-        String pskKey = "73656372657450534b73656372657450";
         PSKClientCredentials clientCredentials = new PSKClientCredentials();
         clientCredentials.setEndpoint(ENDPOINT);
         clientCredentials.setKey(pskKey);

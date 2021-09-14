@@ -15,46 +15,14 @@
  */
 package org.thingsboard.server.transport.lwm2m.rpc;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import org.apache.commons.io.IOUtils;
-import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
-import org.springframework.util.SocketUtils;
-import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.DeviceProfileProvisionType;
-import org.thingsboard.server.common.data.DeviceProfileType;
-import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.ResourceType;
-import org.thingsboard.server.common.data.TbResource;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecServerCredentials;
-import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
-import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
-import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
-import org.thingsboard.server.common.data.security.DeviceCredentials;
-import org.thingsboard.server.common.data.security.DeviceCredentialsType;
-import org.thingsboard.server.controller.AbstractWebsocketTest;
 import org.thingsboard.server.controller.TbTestWebSocketClient;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapConfig;
-import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapServers;
-import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MServerBootstrap;
-import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
-import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MCredentials;
-import org.thingsboard.server.transport.lwm2m.security.AbstractLwM2MIntegrationTest;
-
-import java.util.Base64;
+import org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Predicate;
 
@@ -63,18 +31,9 @@ import static org.eclipse.leshan.core.LwM2mId.DEVICE;
 import static org.eclipse.leshan.core.LwM2mId.FIRMWARE;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.eclipse.leshan.core.LwM2mId.SOFTWARE_MANAGEMENT;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.COAP_CONFIG;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.HOST;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.HOST_BS;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.PORT;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.PORT_BS;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURE_PORT;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURE_PORT_BS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURITY;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SHORT_SERVER_ID;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SHORT_SERVER_ID_BS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.TEMPERATURE_SENSOR;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectId_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_0;
@@ -89,7 +48,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceId_
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resources;
 
 @DaoSqlTest
-public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractWebsocketTest {
+public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
     protected final String RPC_TRANSPORT_CONFIGURATION = "{\n" +
             "  \"type\": \"LWM2M\",\n" +
@@ -152,10 +111,6 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractWebsocketT
     protected static final String ENDPOINT_RPC = "deviceEndpointRpc";
     protected ScheduledExecutorService executor;
     protected TbTestWebSocketClient wsClient;
-    protected DeviceProfile deviceProfile;
-
-    protected NoSecClientCredentials clientCredentials;
-    protected LwM2MTestClient client;
     protected String deviceId;
     public Set expectedObjects;
     public Set expectedObjectIdVers;
@@ -174,34 +129,25 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractWebsocketT
     protected String objectIdVer_50 = "/50";
     protected String objectIdVer_3303;
 
-    public AbstractRpcLwM2MIntegrationTest(){ }
+    public AbstractRpcLwM2MIntegrationTest(){
+        setResources(resources);
+        setEndpoint(ENDPOINT_RPC);
+    }
 
     @Before
     public void beforeTest() throws Exception {
-        executor = Executors.newScheduledThreadPool(10, ThingsBoardThreadFactory.forName("test-lwm2m-rpc-scheduled"));
-        loginTenantAdmin();
-        wsClient = buildAndConnectWebSocketClient();
+        init();
         createDeviceProfile(RPC_TRANSPORT_CONFIGURATION);
-        clientCredentials = new NoSecClientCredentials();
-        clientCredentials.setEndpoint(ENDPOINT_RPC);
-        Device device = createDevice(clientCredentials);
+
+        Thread.sleep(1000);
+
+        NoSecClientCredentials credentials =  createNoSecClientCredentials(ENDPOINT_RPC);
+        final Device device = createDevice(credentials);
         deviceId = device.getId().getId().toString();
-        client = new LwM2MTestClient(executor, ENDPOINT_RPC);
-        int clientPort = SocketUtils.findAvailableTcpPort();
-        client.init(SECURITY, COAP_CONFIG, clientPort);
-        for (String resourceName : resources) {
-            TbResource lwModel = new TbResource();
-            lwModel.setResourceType(ResourceType.LWM2M_MODEL);
-            lwModel.setTitle(resourceName);
-            lwModel.setFileName(resourceName);
-            lwModel.setTenantId(tenantId);
-            byte[] bytes = IOUtils.toByteArray(AbstractLwM2MIntegrationTest.class.getClassLoader().getResourceAsStream("lwm2m/" + resourceName));
-            lwModel.setData(Base64.getEncoder().encodeToString(bytes));
-            lwModel = doPostWithTypedResponse("/api/resource", lwModel, new TypeReference<>() {
-            });
-            Assert.assertNotNull(lwModel);
-        }
-        wsClient = buildAndConnectWebSocketClient();
+        createNewClient (SECURITY, COAP_CONFIG);
+
+        Thread.sleep(1000);
+
         expectedObjects = ConcurrentHashMap.newKeySet();
         expectedObjectIdVers = ConcurrentHashMap.newKeySet();
         expectedInstances = ConcurrentHashMap.newKeySet();
@@ -238,76 +184,6 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractWebsocketT
         objectInstanceIdVer_9 = (String) expectedObjectIdVerInstances.stream().filter(path -> ((String) path).contains("/" + SOFTWARE_MANAGEMENT)).findFirst().get();
     }
 
-    protected void createDeviceProfile(String transportConfiguration) throws Exception {
-        deviceProfile = new DeviceProfile();
-
-        deviceProfile.setName("LwM2M_RPC");
-        deviceProfile.setType(DeviceProfileType.DEFAULT);
-        deviceProfile.setTenantId(tenantId);
-        deviceProfile.setTransportType(DeviceTransportType.LWM2M);
-        deviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
-        deviceProfile.setDescription(deviceProfile.getName());
-
-        DeviceProfileData deviceProfileData = new DeviceProfileData();
-        deviceProfileData.setConfiguration(new DefaultDeviceProfileConfiguration());
-        deviceProfileData.setProvisionConfiguration(new DisabledDeviceProfileProvisionConfiguration(null));
-        deviceProfileData.setTransportConfiguration(JacksonUtil.fromString(transportConfiguration, Lwm2mDeviceProfileTransportConfiguration.class));
-        deviceProfile.setProfileData(deviceProfileData);
-
-        deviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
-        Assert.assertNotNull(deviceProfile);
-    }
-
-
-    protected Device createDevice(LwM2MClientCredentials clientCredentials) throws Exception {
-        Device device = new Device();
-        device.setName("Device A");
-        device.setDeviceProfileId(deviceProfile.getId());
-        device.setTenantId(tenantId);
-        device = doPost("/api/device", device, Device.class);
-        Assert.assertNotNull(device);
-        DeviceCredentials deviceCredentials =
-                doGet("/api/device/" + device.getId().getId().toString() + "/credentials", DeviceCredentials.class);
-        Assert.assertEquals(device.getId(), deviceCredentials.getDeviceId());
-        deviceCredentials.setCredentialsType(DeviceCredentialsType.LWM2M_CREDENTIALS);
-
-        LwM2MDeviceCredentials credentials = new LwM2MDeviceCredentials();
-        credentials.setClient(clientCredentials);
-        LwM2MBootstrapCredentials defaultBootstrapCredentials = new LwM2MBootstrapCredentials();
-        NoSecServerCredentials serverCredentials = new NoSecServerCredentials();
-        defaultBootstrapCredentials.setBootstrapServer(serverCredentials);
-        defaultBootstrapCredentials.setLwm2mServer(serverCredentials);
-
-        credentials.setBootstrap(defaultBootstrapCredentials);
-        deviceCredentials.setCredentialsValue(JacksonUtil.toString(credentials));
-        doPost("/api/device/credentials", deviceCredentials).andExpect(status().isOk());
-        return device;
-    }
-
-    protected LwM2MBootstrapConfig createBootstrapConfig() {
-        LwM2MBootstrapConfig bootstrap = new LwM2MBootstrapConfig();
-        LwM2MBootstrapServers servers = new LwM2MBootstrapServers();
-        servers.setShortId(SHORT_SERVER_ID);
-        bootstrap.setServers(servers);
-        LwM2MServerBootstrap server = new LwM2MServerBootstrap();
-        server.setHost(HOST);
-        server.setPort(PORT);
-        server.setSecurityHost(HOST);
-        server.setSecurityPort(SECURE_PORT);
-        server.setServerId(servers.getShortId());
-        server.setBootstrapServerIs(false);
-        bootstrap.setLwm2mServer(server);
-        LwM2MServerBootstrap serverBS = new LwM2MServerBootstrap();
-        serverBS.setHost(HOST_BS);
-        serverBS.setPort(PORT_BS);
-        serverBS.setSecurityHost(HOST_BS);
-        serverBS.setSecurityPort(SECURE_PORT_BS);
-        serverBS.setServerId(SHORT_SERVER_ID_BS);
-        serverBS.setBootstrapServerIs(true);
-        bootstrap.setBootstrapServer(serverBS);
-        return bootstrap;
-    }
-
     protected String pathIdVerToObjectId(String pathIdVer) {
         if (pathIdVer.contains("_")){
             String [] objVer = pathIdVer.split("/");
@@ -315,16 +191,5 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractWebsocketT
             return String.join("/",  objVer);
         }
         return pathIdVer;
-    }
-
-    @After
-    public void after() {
-        if (client != null) {
-            client.destroy();
-        }
-        executor.shutdownNow();
-        if (wsClient != null) {
-            wsClient.close();
-        }
     }
 }
