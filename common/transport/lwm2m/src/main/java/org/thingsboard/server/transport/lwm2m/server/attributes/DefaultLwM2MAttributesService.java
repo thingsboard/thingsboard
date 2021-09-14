@@ -26,6 +26,7 @@ import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mResourceInstance;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -137,28 +138,25 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
             List<TransportProtos.TsKvProto> otherAttributes = new ArrayList<>();
             for (TransportProtos.TsKvProto tsKvProto : msg.getSharedUpdatedList()) {
                 String attrName = tsKvProto.getKv().getKey();
-                if (DefaultLwM2MOtaUpdateService.FIRMWARE_TITLE.equals(attrName)) {
-                    newFirmwareTitle = getStrValue(tsKvProto);
-                } else if (DefaultLwM2MOtaUpdateService.FIRMWARE_VERSION.equals(attrName)) {
-                    newFirmwareVersion = getStrValue(tsKvProto);
-                } else if (DefaultLwM2MOtaUpdateService.FIRMWARE_TAG.equals(attrName)) {
-                    newFirmwareTag = getStrValue(tsKvProto);
-                } else if (DefaultLwM2MOtaUpdateService.FIRMWARE_URL.equals(attrName)) {
-                    newFirmwareUrl = getStrValue(tsKvProto);
-                } else if (DefaultLwM2MOtaUpdateService.SOFTWARE_TITLE.equals(attrName)) {
-                    newSoftwareTitle = getStrValue(tsKvProto);
-                } else if (DefaultLwM2MOtaUpdateService.SOFTWARE_VERSION.equals(attrName)) {
-                    newSoftwareVersion = getStrValue(tsKvProto);
-                } else if (DefaultLwM2MOtaUpdateService.SOFTWARE_TAG.equals(attrName)) {
-                    newSoftwareTag = getStrValue(tsKvProto);
-                } else if (DefaultLwM2MOtaUpdateService.SOFTWARE_URL.equals(attrName)) {
-                    newSoftwareUrl = getStrValue(tsKvProto);
-                } else if (!DefaultLwM2MOtaUpdateService.FIRMWARE_SIZE.equals(attrName) &&
-                           !DefaultLwM2MOtaUpdateService.FIRMWARE_CHECKSUM.equals(attrName) &&
-                           !DefaultLwM2MOtaUpdateService.FIRMWARE_CHECKSUM_ALGORITHM.equals(attrName) &&
-                           !DefaultLwM2MOtaUpdateService.SOFTWARE_SIZE.equals(attrName) &&
-                           !DefaultLwM2MOtaUpdateService.SOFTWARE_CHECKSUM.equals(attrName) &&
-                           !DefaultLwM2MOtaUpdateService.SOFTWARE_CHECKSUM_ALGORITHM.equals(attrName)){
+                if (attrName.contains(OtaPackageType.FIRMWARE.getKeyPrefix()) || attrName.contains(OtaPackageType.SOFTWARE.getKeyPrefix())) {
+                    if (DefaultLwM2MOtaUpdateService.FIRMWARE_TITLE.equals(attrName)) {
+                        newFirmwareTitle = getStrValue(tsKvProto);
+                    } else if (DefaultLwM2MOtaUpdateService.FIRMWARE_VERSION.equals(attrName)) {
+                        newFirmwareVersion = getStrValue(tsKvProto);
+                    } else if (DefaultLwM2MOtaUpdateService.FIRMWARE_TAG.equals(attrName)) {
+                        newFirmwareTag = getStrValue(tsKvProto);
+                    } else if (DefaultLwM2MOtaUpdateService.FIRMWARE_URL.equals(attrName)) {
+                        newFirmwareUrl = getStrValue(tsKvProto);
+                    } else if (DefaultLwM2MOtaUpdateService.SOFTWARE_TITLE.equals(attrName)) {
+                        newSoftwareTitle = getStrValue(tsKvProto);
+                    } else if (DefaultLwM2MOtaUpdateService.SOFTWARE_VERSION.equals(attrName)) {
+                        newSoftwareVersion = getStrValue(tsKvProto);
+                    } else if (DefaultLwM2MOtaUpdateService.SOFTWARE_TAG.equals(attrName)) {
+                        newSoftwareTag = getStrValue(tsKvProto);
+                    } else if (DefaultLwM2MOtaUpdateService.SOFTWARE_URL.equals(attrName)) {
+                        newSoftwareUrl = getStrValue(tsKvProto);
+                    }
+                } else {
                     otherAttributes.add(tsKvProto);
                 }
             }
