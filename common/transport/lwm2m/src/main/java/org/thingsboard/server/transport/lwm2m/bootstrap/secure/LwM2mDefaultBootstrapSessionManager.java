@@ -218,7 +218,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
     }
 
     private void sendLogs (String endpointName, String logMsg) {
-        log.trace(logMsg);
+        log.info(logMsg);
         transportService.log(((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(endpointName), logMsg);
     }
 }
