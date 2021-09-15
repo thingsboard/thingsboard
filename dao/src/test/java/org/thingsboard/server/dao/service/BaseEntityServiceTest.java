@@ -92,6 +92,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public abstract class BaseEntityServiceTest extends AbstractServiceTest {
 
     static final int ENTITY_COUNT = 5;
+
     @Autowired
     private AttributesService attributesService;
 
@@ -314,6 +315,20 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
 
     @Test
     public void testHierarchicalFindEntityDataWithAttributesByQuery() throws ExecutionException, InterruptedException {
+        doTestHierarchicalFindEntityDataWithAttributesByQuery(0, false);
+    }
+
+    @Test
+    public void testHierarchicalFindEntityDataWithAttributesByQueryWithLevel() throws ExecutionException, InterruptedException {
+        doTestHierarchicalFindEntityDataWithAttributesByQuery(2, false);
+    }
+
+    @Test
+    public void testHierarchicalFindEntityDataWithAttributesByQueryWithLastLevelOnly() throws ExecutionException, InterruptedException {
+        doTestHierarchicalFindEntityDataWithAttributesByQuery(2, true);
+    }
+
+    private void doTestHierarchicalFindEntityDataWithAttributesByQuery(final int maxLevel, final boolean fetchLastLevelOnly) throws ExecutionException, InterruptedException {
         List<Asset> assets = new ArrayList<>();
         List<Device> devices = new ArrayList<>();
         List<Long> temperatures = new ArrayList<>();
@@ -331,6 +346,8 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         filter.setRootEntity(tenantId);
         filter.setDirection(EntitySearchDirection.FROM);
         filter.setFilters(Collections.singletonList(new RelationEntityTypeFilter("Contains", Collections.singletonList(EntityType.DEVICE))));
+        filter.setMaxLevel(maxLevel);
+        filter.setFetchLastLevelOnly(fetchLastLevelOnly);
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
                 new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.ASC
@@ -383,7 +400,6 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         deviceService.deleteDevicesByTenantId(tenantId);
     }
 
-
     @Test
     public void testHierarchicalFindDevicesWithAttributesByQuery() throws ExecutionException, InterruptedException {
         List<Asset> assets = new ArrayList<>();
@@ -403,6 +419,8 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         filter.setRootEntity(tenantId);
         filter.setDirection(EntitySearchDirection.FROM);
         filter.setRelationType("Contains");
+        filter.setMaxLevel(2);
+        filter.setFetchLastLevelOnly(true);
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
                 new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.ASC
