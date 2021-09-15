@@ -95,11 +95,11 @@ import static org.eclipse.leshan.core.attributes.Attribute.MINIMUM_PERIOD;
 import static org.eclipse.leshan.core.attributes.Attribute.STEP;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OBJLNK;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertMultiResourceValuesFromRpcBody;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.createModelsDefault;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.getVerFromPathIdVerOrId;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.validateVersionedId;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.convertMultiResourceValuesFromRpcBody;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.createModelsDefault;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.fromVersionedIdToObjectId;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.getVerFromPathIdVerOrId;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.validateVersionedId;
 
 @Slf4j
 @Service

@@ -74,8 +74,8 @@ import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDA
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATING;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.VERIFIED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUtil.getAttributeKey;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_TELEMETRY;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertObjectIdToVersionedId;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.LOG_LWM2M_TELEMETRY;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.convertObjectIdToVersionedId;
 
 @Slf4j
 @Service
@@ -87,16 +87,10 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     public static final String FIRMWARE_TITLE = getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.TITLE);
     public static final String FIRMWARE_TAG = getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.TAG);
     public static final String FIRMWARE_URL = getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.URL);
-    public static final String FIRMWARE_SIZE = getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.SIZE);
-    public static final String FIRMWARE_CHECKSUM_ALGORITHM = getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.CHECKSUM_ALGORITHM);
-    public static final String FIRMWARE_CHECKSUM = getAttributeKey(OtaPackageType.FIRMWARE, OtaPackageKey.CHECKSUM);
     public static final String SOFTWARE_VERSION = getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.VERSION);
     public static final String SOFTWARE_TITLE = getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.TITLE);
     public static final String SOFTWARE_TAG = getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.TAG);
     public static final String SOFTWARE_URL = getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.URL);
-    public static final String SOFTWARE_SIZE = getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.SIZE);
-    public static final String SOFTWARE_CHECKSUM_ALGORITHM = getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.CHECKSUM_ALGORITHM);
-    public static final String SOFTWARE_CHECKSUM = getAttributeKey(OtaPackageType.SOFTWARE, OtaPackageKey.CHECKSUM);
 
     public static final String FIRMWARE_UPDATE_COAP_RESOURCE = "tbfw";
     public static final String SOFTWARE_UPDATE_COAP_RESOURCE = "tbsw";

@@ -24,7 +24,7 @@ import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogServic
 
 import java.util.Arrays;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.LOG_LWM2M_INFO;
 
 @Slf4j
 public abstract class TbLwM2MTargetedCallback<R, T> extends AbstractTbLwM2MRequestCallback<R, T> {

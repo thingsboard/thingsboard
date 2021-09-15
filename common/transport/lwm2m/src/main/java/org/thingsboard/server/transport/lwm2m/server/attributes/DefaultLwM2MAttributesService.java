@@ -26,7 +26,6 @@ import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mResourceInstance;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -34,7 +33,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponse
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
+import org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.downlink.LwM2mDownlinkMsgHandler;
@@ -57,10 +56,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper.getValueFromKvProto;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_ERROR;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_WARN;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertMultiResourceValuesFromJson;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FIRMWARE_TAG;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FIRMWARE_TITLE;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FIRMWARE_URL;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FIRMWARE_VERSION;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SOFTWARE_TAG;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SOFTWARE_TITLE;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SOFTWARE_URL;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SOFTWARE_VERSION;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.LOG_LWM2M_ERROR;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.LOG_LWM2M_WARN;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.compareAttNameKeyOta;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.convertMultiResourceValuesFromJson;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.fromVersionedIdToObjectId;
 
 @Slf4j
 @Service
@@ -138,22 +146,22 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
             List<TransportProtos.TsKvProto> otherAttributes = new ArrayList<>();
             for (TransportProtos.TsKvProto tsKvProto : msg.getSharedUpdatedList()) {
                 String attrName = tsKvProto.getKv().getKey();
-                if (attrName.contains(OtaPackageType.FIRMWARE.getKeyPrefix()) || attrName.contains(OtaPackageType.SOFTWARE.getKeyPrefix())) {
-                    if (DefaultLwM2MOtaUpdateService.FIRMWARE_TITLE.equals(attrName)) {
+                if (compareAttNameKeyOta(attrName)) {
+                    if (FIRMWARE_TITLE.equals(attrName)) {
                         newFirmwareTitle = getStrValue(tsKvProto);
-                    } else if (DefaultLwM2MOtaUpdateService.FIRMWARE_VERSION.equals(attrName)) {
+                    } else if (FIRMWARE_VERSION.equals(attrName)) {
                         newFirmwareVersion = getStrValue(tsKvProto);
-                    } else if (DefaultLwM2MOtaUpdateService.FIRMWARE_TAG.equals(attrName)) {
+                    } else if (FIRMWARE_TAG.equals(attrName)) {
                         newFirmwareTag = getStrValue(tsKvProto);
-                    } else if (DefaultLwM2MOtaUpdateService.FIRMWARE_URL.equals(attrName)) {
+                    } else if (FIRMWARE_URL.equals(attrName)) {
                         newFirmwareUrl = getStrValue(tsKvProto);
-                    } else if (DefaultLwM2MOtaUpdateService.SOFTWARE_TITLE.equals(attrName)) {
+                    } else if (SOFTWARE_TITLE.equals(attrName)) {
                         newSoftwareTitle = getStrValue(tsKvProto);
-                    } else if (DefaultLwM2MOtaUpdateService.SOFTWARE_VERSION.equals(attrName)) {
+                    } else if (SOFTWARE_VERSION.equals(attrName)) {
                         newSoftwareVersion = getStrValue(tsKvProto);
-                    } else if (DefaultLwM2MOtaUpdateService.SOFTWARE_TAG.equals(attrName)) {
+                    } else if (SOFTWARE_TAG.equals(attrName)) {
                         newSoftwareTag = getStrValue(tsKvProto);
-                    } else if (DefaultLwM2MOtaUpdateService.SOFTWARE_URL.equals(attrName)) {
+                    } else if (SOFTWARE_URL.equals(attrName)) {
                         newSoftwareUrl = getStrValue(tsKvProto);
                     }
                 } else {

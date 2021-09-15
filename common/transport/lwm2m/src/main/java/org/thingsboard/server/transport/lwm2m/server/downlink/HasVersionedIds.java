@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
+import org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
