@@ -55,11 +55,11 @@ public interface LwM2mUplinkMsgHandler {
 
     void onAwakeDev(Registration registration);
 
-    void onWriteResponseOk(LwM2mClient client, String path, WriteRequest request);
+    void onWriteResponseOk(LwM2mClient client, String path, WriteRequest request, int code);
 
     void onCreateResponseOk(LwM2mClient client, String path, CreateRequest request);
 
-    void onWriteCompositeResponseOk(LwM2mClient client, WriteCompositeRequest request);
+    void onWriteCompositeResponseOk(LwM2mClient client, WriteCompositeRequest request, int code);
 
     void onToTransportUpdateCredentials(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToTransportUpdateCredentialsProto updateCredentials);
 
