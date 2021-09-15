@@ -195,6 +195,7 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
         }
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private void assertAttributesProtoValues(List<Map<String, Object>> values, Set<String> keySet) {
         for (Map<String, Object> map : values) {
             String key = (String) map.get("key");

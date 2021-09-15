@@ -26,7 +26,7 @@
     </span>
     <span *ngIf="alarmRuleFormGroup.get('alarmDetails').value" class="tb-alarm-rule-details"
           (click)="openEditDetailsDialog($event)"
-          [innerHTML]="alarmRuleFormGroup.get('alarmDetails').value"></span>
+          [innerHTML]="alarmDetailsText"></span>
     <button mat-icon-button color="primary"
        type="button"
        (click)="openEditDetailsDialog($event)"

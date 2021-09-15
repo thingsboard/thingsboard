@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.oauth2.deprecated;
+package org.thingsboard.server.queue;
 
-import org.thingsboard.server.common.data.oauth2.deprecated.OAuth2ClientRegistration;
-import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 
-@Deprecated
-public interface OAuth2ClientRegistrationDao extends Dao<OAuth2ClientRegistration> {
-    void deleteAll();
+import java.util.Set;
+
+public interface QueueService {
+
+    Set<String> getQueuesByServiceType(ServiceType serviceType);
+
+    String resolve(ServiceType serviceType, String queueName);
+
 }

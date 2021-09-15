@@ -55,6 +55,14 @@ public interface DeviceDao extends Dao<Device>, TenantEntityDao {
     Device save(TenantId tenantId, Device device);
 
     /**
+     * Save or update device object
+     *
+     * @param device the device object
+     * @return saved device object
+     */
+    Device saveAndFlush(TenantId tenantId, Device device);
+
+    /**
      * Find devices by tenantId and page link.
      *
      * @param tenantId the tenantId

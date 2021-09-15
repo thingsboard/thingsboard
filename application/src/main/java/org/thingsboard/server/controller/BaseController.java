@@ -27,6 +27,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
@@ -120,14 +121,14 @@ import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.action.RuleEngineEntityActionService;
+import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
+import org.thingsboard.server.service.edge.EdgeLicenseService;
 import org.thingsboard.server.service.edge.EdgeNotificationService;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
 import org.thingsboard.server.service.lwm2m.LwM2MServerSecurityInfoRepository;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.service.resource.TbResourceService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
@@ -274,8 +275,11 @@ public abstract class BaseController {
     @Autowired(required = false)
     protected EdgeRpcService edgeGrpcService;
 
+    @Autowired(required = false)
+    protected EdgeLicenseService edgeLicenseService;
+
     @Autowired
-    protected RuleEngineEntityActionService ruleEngineEntityActionService;
+    protected EntityActionService entityActionService;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
@@ -815,13 +819,7 @@ public abstract class BaseController {
 
     protected <E extends HasName, I extends EntityId> void logEntityAction(User user, I entityId, E entity, CustomerId customerId,
                                                                            ActionType actionType, Exception e, Object... additionalInfo) throws ThingsboardException {
-        if (customerId == null || customerId.isNullUid()) {
-            customerId = user.getCustomerId();
-        }
-        if (e == null) {
-            ruleEngineEntityActionService.pushEntityActionToRuleEngine(entityId, entity, user.getTenantId(), customerId, actionType, user, additionalInfo);
-        }
-        auditLogService.logEntityAction(user.getTenantId(), customerId, user.getId(), user.getName(), entityId, entity, actionType, e, additionalInfo);
+        entityActionService.logEntityAction(user, entityId, entity, customerId, actionType, e, additionalInfo);
     }
 
 

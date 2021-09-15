@@ -81,6 +81,7 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
         return Arrays.asList(CertificateType.X_509, CertificateType.RAW_PUBLIC_KEY);
     }
 
+    @SuppressWarnings("deprecation")
     @PostConstruct
     public void init() {
         try {

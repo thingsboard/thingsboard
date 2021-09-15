@@ -17,11 +17,13 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -52,10 +54,14 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.EdgeBulkImportService;
+import org.thingsboard.server.service.importing.BulkImportRequest;
+import org.thingsboard.server.service.importing.BulkImportResult;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -64,7 +70,9 @@ import java.util.stream.Collectors;
 @TbCoreComponent
 @Slf4j
 @RequestMapping("/api")
+@RequiredArgsConstructor
 public class EdgeController extends BaseController {
+    private final EdgeBulkImportService edgeBulkImportService;
 
     public static final String EDGE_ID = "edgeId";
 
@@ -132,23 +140,27 @@ public class EdgeController extends BaseController {
                     edge.getId(), edge);
 
             Edge savedEdge = checkNotNull(edgeService.saveEdge(edge, true));
+            onEdgeCreatedOrUpdated(tenantId, savedEdge, edgeTemplateRootRuleChain, !created);
 
-            if (created) {
-                ruleChainService.assignRuleChainToEdge(tenantId, edgeTemplateRootRuleChain.getId(), savedEdge.getId());
-                edgeNotificationService.setEdgeRootRuleChain(tenantId, savedEdge, edgeTemplateRootRuleChain.getId());
-                edgeService.assignDefaultRuleChainsToEdge(tenantId, savedEdge.getId());
-            }
-
-            tbClusterService.broadcastEntityStateChangeEvent(savedEdge.getTenantId(), savedEdge.getId(),
-                    created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
-
-            logEntityAction(savedEdge.getId(), savedEdge, null, created ? ActionType.ADDED : ActionType.UPDATED, null);
             return savedEdge;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.EDGE), edge,
                     null, edge.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
             throw handleException(e);
         }
+    }
+
+    private void onEdgeCreatedOrUpdated(TenantId tenantId, Edge edge, RuleChain edgeTemplateRootRuleChain, boolean updated) throws IOException, ThingsboardException {
+        if (!updated) {
+            ruleChainService.assignRuleChainToEdge(tenantId, edgeTemplateRootRuleChain.getId(), edge.getId());
+            edgeNotificationService.setEdgeRootRuleChain(tenantId, edge, edgeTemplateRootRuleChain.getId());
+            edgeService.assignDefaultRuleChainsToEdge(tenantId, edge.getId());
+        }
+
+        tbClusterService.broadcastEntityStateChangeEvent(edge.getTenantId(), edge.getId(),
+                updated ? ComponentLifecycleEvent.UPDATED : ComponentLifecycleEvent.CREATED);
+
+        logEntityAction(edge.getId(), edge, null, updated ? ActionType.UPDATED : ActionType.ADDED, null);
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
@@ -563,6 +575,24 @@ public class EdgeController extends BaseController {
         }
     }
 
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @PostMapping("/edge/bulk_import")
+    public BulkImportResult<Edge> processEdgeBulkImport(@RequestBody BulkImportRequest request) throws Exception {
+        SecurityUser user = getCurrentUser();
+        RuleChain edgeTemplateRootRuleChain = ruleChainService.getEdgeTemplateRootRuleChain(user.getTenantId());
+        if (edgeTemplateRootRuleChain == null) {
+            throw new DataValidationException("Root edge rule chain is not available!");
+        }
+
+        return edgeBulkImportService.processBulkImport(request, user, importedAssetInfo -> {
+            try {
+                onEdgeCreatedOrUpdated(user.getTenantId(), importedAssetInfo.getEntity(), edgeTemplateRootRuleChain, importedAssetInfo.isUpdated());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
     private void cleanUpLicenseKey(Edge edge) {
         edge.setEdgeLicenseKey(null);
     }
@@ -572,7 +602,7 @@ public class EdgeController extends BaseController {
     public ResponseEntity<JsonNode> checkInstance(@RequestBody JsonNode request) throws ThingsboardException {
         log.debug("Checking instance [{}]", request);
         try {
-            return edgeService.checkInstance(request);
+            return edgeLicenseService.checkInstance(request);
         } catch (Exception e) {
             log.error("Error occurred: [{}]", e.getMessage(), e);
             throw new ThingsboardException(e, ThingsboardErrorCode.SUBSCRIPTION_VIOLATION);
@@ -585,7 +615,7 @@ public class EdgeController extends BaseController {
                                                      @RequestParam String releaseDate) throws ThingsboardException {
         log.debug("Activating instance [{}], [{}]", licenseSecret, releaseDate);
         try {
-            return edgeService.activateInstance(licenseSecret, releaseDate);
+            return edgeLicenseService.activateInstance(licenseSecret, releaseDate);
         } catch (Exception e) {
             log.error("Error occurred: [{}]", e.getMessage(), e);
             throw new ThingsboardException(e, ThingsboardErrorCode.SUBSCRIPTION_VIOLATION);

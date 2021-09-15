@@ -58,6 +58,20 @@ export interface Lwm2mSecurityConfigModels {
   bootstrap: BootstrapSecurityConfig;
 }
 
+
+export function getLwm2mSecurityConfigModelsDefault(): Lwm2mSecurityConfigModels {
+  return {
+    client: {
+      securityConfigClientMode: Lwm2mSecurityType.NO_SEC,
+      endpoint: ''
+    },
+    bootstrap: {
+      bootstrapServer: getDefaultServerSecurityConfig(),
+      lwm2mServer: getDefaultServerSecurityConfig()
+    }
+  };
+}
+
 export function getDefaultClientSecurityConfig(securityConfigMode: Lwm2mSecurityType, endPoint = ''): ClientSecurityConfig {
   let security =  {
     securityConfigClientMode: securityConfigMode,

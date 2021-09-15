@@ -57,6 +57,7 @@ import java.util.Scanner;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("deprecation")
 public class SnmpDeviceSimulatorV2 extends BaseAgent {
 
     public static class RequestProcessor extends CommandProcessor {
@@ -167,6 +168,7 @@ public class SnmpDeviceSimulatorV2 extends BaseAgent {
     protected void addUsmUser(USM usm) {
     }
 
+    @SuppressWarnings({"unchecked"})
     protected void initTransportMappings() {
         transportMappings = new TransportMapping[]{TransportMappings.getInstance().createTransportMapping(address)};
     }
