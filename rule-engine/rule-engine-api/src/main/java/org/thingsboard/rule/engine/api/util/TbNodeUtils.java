@@ -39,11 +39,7 @@ public class TbNodeUtils {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    private static final String METADATA_VARIABLE_TEMPLATE = "${%s}";
-
     private static final Pattern DATA_PATTERN = Pattern.compile("(\\$\\[)(.*?)(])");
-
-    private static final String DATA_VARIABLE_TEMPLATE = "$[%s]";
 
     public static <T> T convert(TbNodeConfiguration configuration, Class<T> clazz) throws TbNodeException {
         try {
@@ -80,7 +76,7 @@ public class TbNodeUtils {
                     }
 
                     if (jsonNode != null && jsonNode.isValueNode()) {
-                        result = result.replace(String.format(DATA_VARIABLE_TEMPLATE, group), jsonNode.asText());
+                        result = result.replace(formatDataVarTemplate(group), jsonNode.asText());
                     }
                 }
             }
@@ -106,8 +102,14 @@ public class TbNodeUtils {
     }
 
     private static String processVar(String pattern, String key, String val) {
-        String varPattern = String.format(METADATA_VARIABLE_TEMPLATE, key);
-        return pattern.replace(varPattern, val);
+        return pattern.replace(formatMetadataVarTemplate(key), val);
     }
 
+    static String formatDataVarTemplate(String key) {
+        return "$[" + key + ']';
+    }
+
+    static String formatMetadataVarTemplate(String key) {
+        return "${" + key + '}';
+    }
 }
