@@ -1026,7 +1026,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         const params = deepClone(this.widgetContext.stateController.getStateParams());
         this.updateEntityParams(params, targetEntityParamName, targetEntityId, entityName, entityLabel);
         if (type === WidgetActionType.openDashboardState) {
-          if (descriptor.openInSeparateDialog) {
+          if (descriptor.openInSeparateDialog && !this.mobileService.isMobileApp()) {
             this.openDashboardStateInSeparateDialog(descriptor.targetDashboardStateId, params, descriptor.dialogTitle,
               descriptor.dialogHideDashboardToolbar, descriptor.dialogWidth, descriptor.dialogHeight);
           } else {
