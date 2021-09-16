@@ -19,7 +19,6 @@ import {
   Component,
   ElementRef,
   Input,
-  NgZone,
   OnInit,
   QueryList,
   ViewChild,
@@ -59,7 +58,8 @@ import {
   getCellStyleInfo,
   getRowStyleInfo,
   RowStyleInfo,
-  TableWidgetDataKeySettings, TableWidgetSettings
+  TableWidgetDataKeySettings,
+  TableWidgetSettings
 } from '@home/components/widget/lib/table-widget.models';
 import { Overlay } from '@angular/cdk/overlay';
 import { SubscriptionEntityInfo } from '@core/api/widget-api.models';
@@ -151,7 +151,6 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
 
   constructor(protected store: Store<AppState>,
               private elementRef: ElementRef,
-              private ngZone: NgZone,
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
               private utils: UtilsService,
@@ -199,6 +198,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   public onDataUpdated() {
     this.updateCurrentSourceData();
     this.clearCache();
+    this.ctx.detectChanges();
   }
 
   private initialize() {
@@ -291,7 +291,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
         if (this.actionCellDescriptors.length) {
           source.displayedColumns.push('actions');
         }
-        const tsDatasource = new TimeseriesDatasource(source, this.hideEmptyLines, this.dateFormatFilter, this.datePipe, this.ngZone);
+        const tsDatasource = new TimeseriesDatasource(source, this.hideEmptyLines, this.dateFormatFilter, this.datePipe);
         tsDatasource.dataUpdated(this.data);
         this.sources.push(source);
       }
@@ -574,8 +574,7 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
     private source: TimeseriesTableSource,
     private hideEmptyLines: boolean,
     private dateFormatFilter: string,
-    private datePipe: DatePipe,
-    private ngZone: NgZone
+    private datePipe: DatePipe
   ) {
     this.source.timeseriesDatasource = this;
   }
@@ -598,10 +597,8 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
       catchError(() => of(emptyPageData<TimeseriesRow>())),
     ).subscribe(
       (pageData) => {
-        this.ngZone.run(() => {
-          this.rowsSubject.next(pageData.data);
-          this.pageDataSubject.next(pageData);
-        });
+        this.rowsSubject.next(pageData.data);
+        this.pageDataSubject.next(pageData);
       }
     );
   }

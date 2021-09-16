@@ -117,6 +117,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   resetButtonLabel: string;
 
   entityDetected = false;
+  datasourceDetected = false;
   isAllParametersValid = true;
 
   multipleInputFormGroup: FormGroup;
@@ -203,7 +204,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   }
 
   private updateDatasources() {
-    if (this.datasources && this.datasources.length) {
+    this.datasourceDetected = this.datasources?.length !== 0;
+    if (this.datasourceDetected) {
       this.entityDetected = true;
       let keyIndex = 0;
       this.datasources.forEach((datasource) => {
