@@ -54,6 +54,7 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
+import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
@@ -131,6 +132,9 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
 
     @Autowired
     private DashboardService dashboardService;
+
+    @Autowired
+    private DeviceCredentialsService deviceCredentialsService;
 
     private final Lock findOrCreateLock = new ReentrantLock();
 
@@ -409,6 +413,8 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                                 validateRpcRequestDynamicMessageFields(protoTransportPayloadConfiguration);
                             }
                         }
+                    } else if (transportConfiguration instanceof Lwm2mDeviceProfileTransportConfiguration) {
+//                        deviceCredentialsService.verifyLwm2mSecurityKeyDeviceProfile((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration);
                     }
 
                     List<DeviceProfileAlarm> profileAlarms = deviceProfile.getProfileData().getAlarms();

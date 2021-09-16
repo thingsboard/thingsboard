@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.common.data.security;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
@@ -86,5 +89,4 @@ public class DeviceCredentials extends BaseData<DeviceCredentialsId> implements 
                 + credentialsId + ", credentialsValue=" + credentialsValue + ", createdTime=" + createdTime + ", id="
                 + id + "]";
     }
-
 }

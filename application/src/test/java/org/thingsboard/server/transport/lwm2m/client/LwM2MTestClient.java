@@ -44,7 +44,6 @@ import org.eclipse.leshan.core.request.BootstrapRequest;
 import org.eclipse.leshan.core.request.DeregisterRequest;
 import org.eclipse.leshan.core.request.RegisterRequest;
 import org.eclipse.leshan.core.request.UpdateRequest;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 import org.junit.Assert;
 import org.junit.Assert;
@@ -62,12 +61,12 @@ import static org.eclipse.leshan.core.LwM2mId.LOCATION;
 import static org.eclipse.leshan.core.LwM2mId.SECURITY;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.eclipse.leshan.core.LwM2mId.SOFTWARE_MANAGEMENT;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resources;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.TEMPERATURE_SENSOR;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_12;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resources;
 
 
 @Slf4j

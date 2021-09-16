@@ -183,7 +183,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 break;
             case X509:
                 X509ClientCredentials x509Config = (X509ClientCredentials) clientCredentials;
-                if (x509Config.getCert() != null) {
+                if ((StringUtils.isNotBlank(x509Config.getCert()))) {
                     String cert = EncryptionUtil.trimNewLines(x509Config.getCert());
                     String sha3Hash = EncryptionUtil.getSha3Hash(cert);
                     x509Config.setCert(cert);
@@ -272,7 +272,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 break;
             case X509:
                 X509ClientCredentials x509CCredentials = (X509ClientCredentials) clientCredentials;
-                if (x509CCredentials.getCert() != null) {
+                if (StringUtils.isNotBlank(x509CCredentials.getCert())) {
                     try {
                         SecurityUtil.certificate.decode(Base64.decodeBase64(x509CCredentials.getCert()));
                     } catch (Exception e) {

@@ -16,7 +16,9 @@
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
+import org.eclipse.leshan.core.response.LwM2mResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.core.util.Hex;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
@@ -24,7 +26,8 @@ import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogServic
 
 import java.util.Arrays;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.LOG_LWM2M_ERROR;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.LOG_LWM2M_INFO;
 
 @Slf4j
 public abstract class TbLwM2MTargetedCallback<R, T> extends AbstractTbLwM2MRequestCallback<R, T> {
@@ -49,11 +52,22 @@ public abstract class TbLwM2MTargetedCallback<R, T> extends AbstractTbLwM2MReque
         //TODO convert camelCase to "camel case" using .split("(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")
         String requestName = request.getClass().getSimpleName();
         String responseStr =  response.toString();
+        int code = 0;
         if (response instanceof ReadResponse) {
             responseStr = responseToString ((ReadResponse) response);
+            code = ((ReadResponse) response).getCode().getCode();
         }
-        log.trace("[{}] {} [{}] successful: {}", client.getEndpoint(), requestName, versionedId != null ? versionedId : versionedIds, responseStr);
-        logService.log(client, String.format("[%s]: %s [%s] successful. Result: [%s]", LOG_LWM2M_INFO, requestName, versionedId != null ? versionedId : Arrays.toString(versionedIds), responseStr));
+        else if (response instanceof LwM2mResponse) {
+            code = ((LwM2mResponse) response).getCode().getCode();
+        }
+        if (code >= ResponseCode.BAD_REQUEST.getCode()) {
+            log.error("[{}] [{}] [{}] failed to process successful response [{}] ", client.getEndpoint(), requestName, versionedId != null ? versionedId : Arrays.toString(versionedIds), responseStr);
+            logService.log(client, String.format("[%s]: %s [%s] failed to process successful. Result: %s", LOG_LWM2M_ERROR, requestName, versionedId != null ? versionedId : Arrays.toString(versionedIds), responseStr));
+        }
+        else {
+            log.trace("[{}] {} [{}] successful: {}", client.getEndpoint(), requestName, versionedId != null ? versionedId : versionedIds, responseStr);
+            logService.log(client, String.format("[%s]: %s [%s] successful. Result: %s", LOG_LWM2M_INFO, requestName, versionedId != null ? versionedId : Arrays.toString(versionedIds), responseStr));
+        }
     }
 
     private String responseToString (ReadResponse response) {

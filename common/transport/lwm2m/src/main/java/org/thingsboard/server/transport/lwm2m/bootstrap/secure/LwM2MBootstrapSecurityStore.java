@@ -43,10 +43,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_ERROR;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_INFO;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_TELEMETRY;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.getBootstrapParametersFromThingsboard;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.LOG_LWM2M_ERROR;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.LOG_LWM2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.LOG_LWM2M_TELEMETRY;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.getBootstrapParametersFromThingsboard;
 import static org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer.BOOTSTRAP;
 
 @Slf4j
@@ -160,7 +160,15 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
             BootstrapConfiguration bootstrapObject = getBootstrapParametersFromThingsboard(store.getDeviceProfile());
             lwM2MBootstrapConfig.servers = JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getServers()), LwM2MBootstrapServers.class);
             LwM2MServerBootstrap profileServerBootstrap = JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getBootstrapServer()), LwM2MServerBootstrap.class);
+            if (SecurityMode.NO_SEC != profileServerBootstrap.getSecurityMode() && profileServerBootstrap != null) {
+                profileServerBootstrap.setSecurityHost( profileServerBootstrap.getHost());
+                profileServerBootstrap.setSecurityPort( profileServerBootstrap.getPort());
+            }
             LwM2MServerBootstrap profileLwm2mServer = JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getLwm2mServer()), LwM2MServerBootstrap.class);
+            if (SecurityMode.NO_SEC != profileLwm2mServer.getSecurityMode() && profileLwm2mServer != null) {
+                profileLwm2mServer.setSecurityHost(profileLwm2mServer.getHost());
+                profileLwm2mServer.setSecurityPort(profileLwm2mServer.getPort());
+            }
             UUID sessionUUiD = UUID.randomUUID();
             TransportProtos.SessionInfoProto sessionInfo = helper.getValidateSessionInfo(store.getMsg(), sessionUUiD.getMostSignificantBits(), sessionUUiD.getLeastSignificantBits());
             bsSessions.put(store.getEndpoint(), sessionInfo);

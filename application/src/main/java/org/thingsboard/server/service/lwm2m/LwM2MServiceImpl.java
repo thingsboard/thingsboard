@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.lwm2m;
 
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.util.Hex;
@@ -25,34 +24,19 @@ import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MSecureServerConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportBootstrapConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
-
-import java.math.BigInteger;
-import java.security.AlgorithmParameters;
-import java.security.GeneralSecurityException;
-import java.security.KeyFactory;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
-import java.security.spec.ECGenParameterSpec;
-import java.security.spec.ECParameterSpec;
-import java.security.spec.ECPoint;
-import java.security.spec.ECPublicKeySpec;
-import java.security.spec.KeySpec;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true') || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
-public class LwM2MServerSecurityInfoRepository {
+public class LwM2MServiceImpl implements LwM2MService {
 
     private final LwM2MTransportServerConfig serverConfig;
     private final LwM2MTransportBootstrapConfig bootstrapConfig;
 
+    @Override
     public ServerSecurityConfig getServerSecurityInfo(boolean bootstrapServer) {
         ServerSecurityConfig result = getServerSecurityConfig(bootstrapServer ? bootstrapConfig : serverConfig);
         result.setBootstrapServerIs(bootstrapServer);
@@ -83,6 +67,5 @@ public class LwM2MServerSecurityInfoRepository {
         }
         return "";
     }
-
 }
 

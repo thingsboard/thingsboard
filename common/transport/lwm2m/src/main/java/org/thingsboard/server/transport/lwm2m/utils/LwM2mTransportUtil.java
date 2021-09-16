@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server;
+package org.thingsboard.server.transport.lwm2m.utils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,8 +24,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.leshan.core.attributes.Attribute;
 import org.eclipse.leshan.core.attributes.AttributeSet;
+import org.eclipse.leshan.core.model.LwM2mModel;
+import org.eclipse.leshan.core.model.ObjectLoader;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.model.StaticModel;
 import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
@@ -42,7 +45,10 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.data.lwm2m.BootstrapConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.ota.OtaPackageKey;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.transport.lwm2m.config.LwM2mVersion;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mOtaConvert;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.ResourceValue;
 import org.thingsboard.server.transport.lwm2m.server.downlink.HasVersionedId;
@@ -80,6 +86,7 @@ import static org.eclipse.leshan.core.model.ResourceModel.Type.STRING;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.TIME;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_KEY;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
+import static org.thingsboard.server.common.data.ota.OtaPackageUtil.getAttributeKey;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_RESULT_ID;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_STATE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SW_RESULT_ID;
@@ -297,7 +304,8 @@ public class LwM2mTransportUtil {
 
     private static Attribute[] createWriteAttributes(Object params, DefaultLwM2MUplinkMsgHandler serviceImpl, String target) {
         List<Attribute> attributeLists = new ArrayList<>();
-        Map<String, Object> map = JacksonUtil.convertValue(params, new TypeReference<>() {});
+        Map<String, Object> map = JacksonUtil.convertValue(params, new TypeReference<>() {
+        });
         map.forEach((k, v) -> {
             if (StringUtils.trimToNull(v.toString()) != null) {
                 Object attrValue = convertWriteAttributes(k, v, serviceImpl, target);
@@ -313,9 +321,9 @@ public class LwM2mTransportUtil {
     }
 
     /**
-     *  "UNSIGNED_INTEGER":  // Number -> Integer Example:
-     *  Alarm Timestamp [32-bit unsigned integer]
-     *  Short Server ID, Object ID, Object Instance ID, Resource ID, Resource Instance ID
+     * "UNSIGNED_INTEGER":  // Number -> Integer Example:
+     * Alarm Timestamp [32-bit unsigned integer]
+     * Short Server ID, Object ID, Object Instance ID, Resource ID, Resource Instance ID
      * "CORELINK": // String used in Attribute
      */
     public static ResourceModel.Type equalsResourceTypeGetSimpleName(Object value) {
@@ -346,7 +354,7 @@ public class LwM2mTransportUtil {
         } else {
             msgExceptionStr = client.isValidObjectVersion(request.getVersionedId());
         }
-        if (!msgExceptionStr.isEmpty() ) {
+        if (!msgExceptionStr.isEmpty()) {
             throw new IllegalArgumentException(msgExceptionStr);
         }
     }
@@ -524,4 +532,15 @@ public class LwM2mTransportUtil {
         return opaque.length() > 1024 ? opaque.substring(0, 1024) : opaque;
     }
 
+    public static LwM2mModel createModelsDefault() {
+        return new StaticModel(ObjectLoader.loadDefault());
+    }
+
+    public static boolean compareAttNameKeyOta(String attrName) {
+        for (OtaPackageKey value : OtaPackageKey.values()) {
+            if (getAttributeKey(OtaPackageType.FIRMWARE, value).equals(attrName)) return true;
+            if (getAttributeKey(OtaPackageType.SOFTWARE, value).equals(attrName)) return true;
+        }
+        return false;
+    }
 }

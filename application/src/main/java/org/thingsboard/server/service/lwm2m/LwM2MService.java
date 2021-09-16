@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.downlink;
+package org.thingsboard.server.service.lwm2m;
 
-import org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil;
+import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
 
-public interface HasVersionedId {
+public interface LwM2MService {
 
-    String getVersionedId();
-
-    default String getObjectId(){
-        return LwM2mTransportUtil.fromVersionedIdToObjectId(getVersionedId());
-    }
+    ServerSecurityConfig getServerSecurityInfo(boolean bootstrapServer);
 
 }

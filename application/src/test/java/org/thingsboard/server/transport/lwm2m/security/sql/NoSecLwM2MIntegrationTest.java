@@ -18,18 +18,17 @@ package org.thingsboard.server.transport.lwm2m.security.sql;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredentials;
-import org.thingsboard.server.transport.lwm2m.security.AbstractLwM2MIntegrationTest;
+import org.thingsboard.server.transport.lwm2m.security.AbstractSecurityLwM2MIntegrationTest;
 
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.COAP_CONFIG;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURITY;
 
 @Slf4j
-public class NoSecLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
+public class NoSecLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTest {
 
     @Test
     public void testConnectAndObserveTelemetry() throws Exception {
-        NoSecClientCredentials clientCredentials = new NoSecClientCredentials();
-        clientCredentials.setEndpoint(ENDPOINT);
+        NoSecClientCredentials clientCredentials =  createNoSecClientCredentials(ENDPOINT);
         super.basicTestConnectionObserveTelemetry(SECURITY, clientCredentials, COAP_CONFIG, ENDPOINT);
     }
 

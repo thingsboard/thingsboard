@@ -23,6 +23,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by Valerii Sosliuk on 5/12/2017.
@@ -123,4 +125,25 @@ public class JacksonUtil {
         return OBJECT_MAPPER.treeToValue(tree, type);
     }
 
+
+    public static String validateFieldsToTree(JsonNode nodeCredentialsValue, String[] fields, String delimiter) {
+        try {
+            Set msgSet = ConcurrentHashMap.newKeySet();
+            for (String field : fields) {
+                String[] keys = field.split(delimiter);
+                JsonNode nodeVal = nodeCredentialsValue;
+                for (String key : keys) {
+                    if (!nodeVal.hasNonNull(key)) {
+                        msgSet.add(keys[keys.length - 1]);
+                        break;
+                    } else {
+                        nodeVal = nodeVal.get(key);
+                    }
+                }
+            }
+            return String.join(", ", msgSet);
+        } catch (Exception e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
 }

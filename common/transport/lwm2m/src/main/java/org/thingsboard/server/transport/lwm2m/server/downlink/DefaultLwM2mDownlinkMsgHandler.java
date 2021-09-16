@@ -19,8 +19,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.Link;
 import org.eclipse.leshan.core.LwM2m;
+import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.attributes.Attribute;
 import org.eclipse.leshan.core.attributes.AttributeSet;
+import org.eclipse.leshan.core.model.LwM2mModel;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mObjectInstance;
@@ -94,9 +96,11 @@ import static org.eclipse.leshan.core.attributes.Attribute.MINIMUM_PERIOD;
 import static org.eclipse.leshan.core.attributes.Attribute.STEP;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OBJLNK;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertMultiResourceValuesFromRpcBody;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.validateVersionedId;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.convertMultiResourceValuesFromRpcBody;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.createModelsDefault;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.fromVersionedIdToObjectId;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.getVerFromPathIdVerOrId;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.validateVersionedId;
 
 @Slf4j
 @Service
@@ -195,9 +199,20 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     @Override
     public void sendExecuteRequest(LwM2mClient client, TbLwM2MExecuteRequest request, DownlinkRequestCallback<ExecuteRequest, ExecuteResponse> callback) {
         try {
+            validateVersionedId(client, request);
+            LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(request.getVersionedId()));
             ResourceModel resourceModelExecute = client.getResourceModel(request.getVersionedId(), this.config.getModelProvider());
-            if (resourceModelExecute != null) {
-                validateVersionedId(client, request);
+            if (resourceModelExecute == null) {
+                LwM2mModel model = createModelsDefault();
+                if (pathIds.isResource()) {
+                    resourceModelExecute = model.getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
+                }
+            }
+            if (resourceModelExecute == null) {
+                callback.onValidationError(request.toString(), "ResourceModel with " + request.getVersionedId() + " is absent in system. Need ddd Lwm2m Model with id=" +
+                        pathIds.getObjectId() + " ver=" + getVerFromPathIdVerOrId(request.getVersionedId()) + " to profile.");
+            }
+            else if (resourceModelExecute.operations.isExecutable()) {
                 ExecuteRequest downlink;
                 if (request.getParams() != null && !resourceModelExecute.multiple) {
                     downlink = new ExecuteRequest(request.getObjectId(), (String) this.converter.convertValue(request.getParams(), resourceModelExecute.type, ResourceModel.Type.STRING, new LwM2mPath(request.getObjectId())));
@@ -205,6 +220,9 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                     downlink = new ExecuteRequest(request.getObjectId());
                 }
                 sendSimpleRequest(client, downlink, request.getTimeout(), callback);
+            }
+            else {
+                callback.onValidationError(request.toString(), "Resource with " + request.getVersionedId() + " is not executable.");
             }
         } catch (InvalidRequestException e) {
             callback.onValidationError(request.toString(), e.getMessage());
@@ -328,38 +346,48 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     @Override
     public void sendWriteUpdateRequest(LwM2mClient client, TbLwM2MWriteUpdateRequest request, DownlinkRequestCallback<WriteRequest, WriteResponse> callback) {
         try {
-            validateVersionedId(client, request);
-            WriteRequest downlink = null;
             LwM2mPath resultIds = new LwM2mPath(request.getObjectId());
-            ContentFormat contentFormat = getWriteRequestContentFormat(client, request, this.config.getModelProvider());
-            if (resultIds.isObjectInstance()) {
-                /*
-                 *  params = "{\"id\":0,\"value\":[{\"id\":14,\"value\":\"+5\"},{\"id\":15,\"value\":\"+9\"}]}"
-                 *  int rscId = resultIds.getObjectInstanceId();
-                 *  contentFormat – Format of the payload (TLV or JSON).
-                 */
-                Collection<LwM2mResource> resources = client.getNewResourcesForInstance(request.getVersionedId(), request.getValue(), this.config.getModelProvider(), this.converter);
-                if (resources.size() > 0) {
-                    downlink = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resources);
-                } else {
-                    callback.onValidationError(toString(request), "No resources to update!");
-                }
-            } else if (resultIds.isResource()) {
-                ResourceModel resourceModelWrite = client.getResourceModel(request.getVersionedId(), this.config.getModelProvider());
-                if (resourceModelWrite.multiple) {
-                    if (request.getValue() instanceof Map && ((Map) request.getValue()).size() > 0) {
-                        Map value = convertMultiResourceValuesFromRpcBody((LinkedHashMap) request.getValue(), resourceModelWrite.type, request.getObjectId());
-                        downlink = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(),
-                                value, resourceModelWrite.type);
-                    } else {
-                        callback.onValidationError(toString(request), "Resource value is bad. Format: " + request.getValue().getClass().getSimpleName() + ". Value of Multi-Instance Resource must be in Json format!");
+            if (resultIds.isObjectInstance() || resultIds.isResource()) {
+                validateVersionedId(client, request);
+                WriteRequest downlink = null;
+                    ContentFormat contentFormat = getWriteRequestContentFormat(client, request, this.config.getModelProvider());
+                    if (resultIds.isObjectInstance()) {
+                        /*
+                         *  params = "{\"id\":0,\"value\":[{\"id\":14,\"value\":\"+5\"},{\"id\":15,\"value\":\"+9\"}]}"
+                         *  int rscId = resultIds.getObjectInstanceId();
+                         *  contentFormat – Format of the payload (TLV or JSON).
+                         */
+                        Collection<LwM2mResource> resources = client.getNewResourcesForInstance(request.getVersionedId(), request.getValue(), this.config.getModelProvider(), this.converter);
+                        if (resources.size() > 0) {
+                            downlink = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resources);
+                        } else {
+                            callback.onValidationError(toString(request), "No resources to update!");
+                        }
                     }
-                }
+                    else if (resultIds.isResource()) {
+                        ResourceModel resourceModelWrite = client.getResourceModel(request.getVersionedId(), this.config.getModelProvider());
+                        if (resourceModelWrite != null) {
+                            if (resourceModelWrite.multiple) {
+                                if (request.getValue() instanceof Map && ((Map) request.getValue()).size() > 0) {
+                                    Map value = convertMultiResourceValuesFromRpcBody((LinkedHashMap) request.getValue(), resourceModelWrite.type, request.getObjectId());
+                                    downlink = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(),
+                                            value, resourceModelWrite.type);
+                                } else {
+                                    callback.onValidationError(toString(request), "Resource value is bad. Format: " + request.getValue().getClass().getSimpleName() + ". Value of Multi-Instance Resource must be in Json format!");
+                                }
+                            }
+                        } else {
+                            callback.onValidationError(toString(request), "Resource " + request.getVersionedId() + " is not configured in the device profile!");
+                        }
+                    }
+                    if (downlink != null) {
+                        sendSimpleRequest(client, downlink, request.getTimeout(), callback);
+                    } else {
+                        callback.onValidationError(toString(request), "Resource " + request.getVersionedId() + ". This operation can only be used for ObjectInstance or Multi-Instance Resource !");
+                    }
             }
-            if (downlink != null) {
-                sendSimpleRequest(client, downlink, request.getTimeout(), callback);
-            } else {
-                callback.onValidationError(toString(request), "Resource " + request.getVersionedId() + ". This operation can only be used for ObjectInstance or Multi-Instance Resource !");
+            else {
+                callback.onValidationError(toString(request), "Resource " + request.getVersionedId() + ". This operation can only be used for ObjectInstance or Resource (multiple)");
             }
         } catch (Exception e) {
             callback.onValidationError(toString(request), e.getMessage());
@@ -567,7 +595,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             }
         } else if (pathIds.isResource()) {
             ResourceModel resourceModel = client.getResourceModel(versionedId, modelProvider);
-            if (!resourceModel.multiple) {
+            if (resourceModel!= null && !resourceModel.multiple) {
                 if (OBJLNK.equals(resourceModel.type)) {
                     return ContentFormat.LINK;
                 } else if (OPAQUE.equals(resourceModel.type)) {
