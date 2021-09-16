@@ -59,4 +59,6 @@ public interface PartitionService {
     TopicPartitionInfo getNotificationsTopic(ServiceType serviceType, String serviceId);
 
     int resolvePartitionIndex(UUID entityId, int partitions);
+
+    int countTransportsByType(String type);
 }

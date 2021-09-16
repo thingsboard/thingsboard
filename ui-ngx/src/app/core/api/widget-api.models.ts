@@ -69,8 +69,11 @@ export interface WidgetSubscriptionApi {
 }
 
 export interface RpcApi {
-  sendOneWayCommand: (method: string, params?: any, timeout?: number, requestUUID?: string) => Observable<any>;
-  sendTwoWayCommand: (method: string, params?: any, timeout?: number, requestUUID?: string) => Observable<any>;
+  sendOneWayCommand: (method: string, params?: any, timeout?: number, persistent?: boolean,
+                      persistentPollingInterval?: number, requestUUID?: string) => Observable<any>;
+  sendTwoWayCommand: (method: string, params?: any, timeout?: number, persistent?: boolean,
+                      persistentPollingInterval?: number, requestUUID?: string) => Observable<any>;
+  completedCommand: () => void;
 }
 
 export interface IWidgetUtils {
@@ -84,6 +87,8 @@ export interface WidgetActionsApi {
                        entityId?: EntityId, entityName?: string, additionalParams?: any, entityLabel?: string) => void;
   elementClick: ($event: Event) => void;
   getActiveEntityInfo: () => SubscriptionEntityInfo;
+  openDashboardStateInSeparateDialog: (targetDashboardStateId: string, params?: StateParams, dialogTitle?: string,
+                                       hideDashboardToolbar?: boolean, dialogWidth?: number, dialogHeight?: number) => void;
 }
 
 export interface AliasInfo {
@@ -152,6 +157,7 @@ export interface IStateController {
   getStateIndex(): number;
   getStateIdAtIndex(index: number): string;
   getEntityId(entityParamName: string): EntityId;
+  getCurrentStateName(): string;
 }
 
 export interface SubscriptionInfo {
@@ -237,6 +243,7 @@ export interface WidgetSubscriptionOptions {
   legendConfig?: LegendConfig;
   comparisonEnabled?: boolean;
   timeForComparison?: moment_.unitOfTime.DurationConstructor;
+  comparisonCustomIntervalValue?: number;
   decimals?: number;
   units?: string;
   callbacks?: WidgetSubscriptionCallbacks;
@@ -298,8 +305,10 @@ export interface IWidgetSubscription {
   onResetTimewindow(): void;
   updateTimewindowConfig(newTimewindow: Timewindow): void;
 
-  sendOneWayCommand(method: string, params?: any, timeout?: number, requestUUID?: string): Observable<any>;
-  sendTwoWayCommand(method: string, params?: any, timeout?: number, requestUUID?: string): Observable<any>;
+  sendOneWayCommand(method: string, params?: any, timeout?: number, persistent?: boolean,
+                    persistentPollingInterval?: number, requestUUID?: string): Observable<any>;
+  sendTwoWayCommand(method: string, params?: any, timeout?: number, persistent?: boolean,
+                    persistentPollingInterval?: number, requestUUID?: string): Observable<any>;
   clearRpcError(): void;
 
   subscribe(): void;

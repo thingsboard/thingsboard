@@ -22,6 +22,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.DeviceId;
 
 import java.util.ArrayList;
@@ -41,9 +43,11 @@ public class ActorSystemTest {
 
     public static final String ROOT_DISPATCHER = "root-dispatcher";
     private static final int _100K = 100 * 1024;
+    public static final int TIMEOUT_AWAIT_MAX_SEC = 100;
 
     private volatile TbActorSystem actorSystem;
     private volatile ExecutorService submitPool;
+    private ExecutorService executor;
     private int parallelism;
 
     @Before
@@ -52,54 +56,64 @@ public class ActorSystemTest {
         parallelism = Math.max(2, cores / 2);
         TbActorSystemSettings settings = new TbActorSystemSettings(5, parallelism, 42);
         actorSystem = new DefaultTbActorSystem(settings);
-        submitPool = Executors.newWorkStealingPool(parallelism);
+        submitPool = Executors.newFixedThreadPool(parallelism, ThingsBoardThreadFactory.forName(getClass().getSimpleName() + "-submit-test-scope")); //order guaranteed
     }
 
     @After
     public void shutdownActorSystem() {
         actorSystem.stop();
         submitPool.shutdownNow();
+        if (executor != null) {
+            executor.shutdownNow();
+        }
     }
 
     @Test
     public void test1actorsAnd100KMessages() throws InterruptedException {
-        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newWorkStealingPool(parallelism));
+        executor = ThingsBoardExecutors.newWorkStealingPool(parallelism, getClass());
+        actorSystem.createDispatcher(ROOT_DISPATCHER, executor);
         testActorsAndMessages(1, _100K, 1);
     }
 
     @Test
     public void test10actorsAnd100KMessages() throws InterruptedException {
-        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newWorkStealingPool(parallelism));
+        executor = ThingsBoardExecutors.newWorkStealingPool(parallelism, getClass());
+        actorSystem.createDispatcher(ROOT_DISPATCHER, executor);
         testActorsAndMessages(10, _100K, 1);
     }
 
     @Test
     public void test100KActorsAnd1Messages5timesSingleThread() throws InterruptedException {
-        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newSingleThreadExecutor());
+        executor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName(getClass().getSimpleName()));
+        actorSystem.createDispatcher(ROOT_DISPATCHER, executor);
         testActorsAndMessages(_100K, 1, 5);
     }
 
     @Test
     public void test100KActorsAnd1Messages5times() throws InterruptedException {
-        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newWorkStealingPool(parallelism));
+        executor = ThingsBoardExecutors.newWorkStealingPool(parallelism, getClass());
+        actorSystem.createDispatcher(ROOT_DISPATCHER, executor);
         testActorsAndMessages(_100K, 1, 5);
     }
 
     @Test
     public void test100KActorsAnd10Messages() throws InterruptedException {
-        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newWorkStealingPool(parallelism));
+        executor = ThingsBoardExecutors.newWorkStealingPool(parallelism, getClass());
+        actorSystem.createDispatcher(ROOT_DISPATCHER, executor);
         testActorsAndMessages(_100K, 10, 1);
     }
 
     @Test
     public void test1KActorsAnd1KMessages() throws InterruptedException {
-        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newWorkStealingPool(parallelism));
+        executor = ThingsBoardExecutors.newWorkStealingPool(parallelism, getClass());
+        actorSystem.createDispatcher(ROOT_DISPATCHER, executor);
         testActorsAndMessages(1000, 1000, 10);
     }
 
     @Test
     public void testNoMessagesAfterDestroy() throws InterruptedException {
-        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newWorkStealingPool(parallelism));
+        executor = ThingsBoardExecutors.newWorkStealingPool(parallelism, getClass());
+        actorSystem.createDispatcher(ROOT_DISPATCHER, executor);
         ActorTestCtx testCtx1 = getActorTestCtx(1);
         ActorTestCtx testCtx2 = getActorTestCtx(1);
 
@@ -118,39 +132,60 @@ public class ActorSystemTest {
 
     @Test
     public void testOneActorCreated() throws InterruptedException {
-        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newWorkStealingPool(parallelism));
+        executor = ThingsBoardExecutors.newWorkStealingPool(parallelism, getClass());
+        actorSystem.createDispatcher(ROOT_DISPATCHER, executor);
         ActorTestCtx testCtx1 = getActorTestCtx(1);
         ActorTestCtx testCtx2 = getActorTestCtx(1);
         TbActorId actorId = new TbEntityActorId(new DeviceId(UUID.randomUUID()));
-        submitPool.submit(() -> actorSystem.createRootActor(ROOT_DISPATCHER, new SlowCreateActor.SlowCreateActorCreator(actorId, testCtx1)));
-        submitPool.submit(() -> actorSystem.createRootActor(ROOT_DISPATCHER, new SlowCreateActor.SlowCreateActorCreator(actorId, testCtx2)));
+        final CountDownLatch initLatch = new CountDownLatch(1);
+        final CountDownLatch actorsReadyLatch = new CountDownLatch(2);
+        submitPool.submit(() -> {
+            actorSystem.createRootActor(ROOT_DISPATCHER, new SlowCreateActor.SlowCreateActorCreator(actorId, testCtx1, initLatch));
+            actorsReadyLatch.countDown();
+        });
+        submitPool.submit(() -> {
+            actorSystem.createRootActor(ROOT_DISPATCHER, new SlowCreateActor.SlowCreateActorCreator(actorId, testCtx2, initLatch));
+            actorsReadyLatch.countDown();
+        });
 
-        Thread.sleep(1000);
+        initLatch.countDown(); //replacement for Thread.wait(500) in the SlowCreateActorCreator
+        Assert.assertTrue(actorsReadyLatch.await(TIMEOUT_AWAIT_MAX_SEC, TimeUnit.SECONDS));
+
         actorSystem.tell(actorId, new IntTbActorMsg(42));
 
-        Assert.assertTrue(testCtx1.getLatch().await(1, TimeUnit.SECONDS));
+        Assert.assertTrue(testCtx1.getLatch().await(TIMEOUT_AWAIT_MAX_SEC, TimeUnit.SECONDS));
         Assert.assertFalse(testCtx2.getLatch().await(1, TimeUnit.SECONDS));
     }
 
     @Test
     public void testActorCreatorCalledOnce() throws InterruptedException {
-        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newWorkStealingPool(parallelism));
+        executor = ThingsBoardExecutors.newWorkStealingPool(parallelism, getClass());
+        actorSystem.createDispatcher(ROOT_DISPATCHER, executor);
         ActorTestCtx testCtx = getActorTestCtx(1);
         TbActorId actorId = new TbEntityActorId(new DeviceId(UUID.randomUUID()));
-        for (int i = 0; i < 1000; i++) {
-            submitPool.submit(() -> actorSystem.createRootActor(ROOT_DISPATCHER, new SlowCreateActor.SlowCreateActorCreator(actorId, testCtx)));
+        final int actorsCount = 1000;
+        final CountDownLatch initLatch = new CountDownLatch(1);
+        final CountDownLatch actorsReadyLatch = new CountDownLatch(actorsCount);
+        for (int i = 0; i < actorsCount; i++) {
+            submitPool.submit(() -> {
+                actorSystem.createRootActor(ROOT_DISPATCHER, new SlowCreateActor.SlowCreateActorCreator(actorId, testCtx, initLatch));
+                actorsReadyLatch.countDown();
+            });
         }
-        Thread.sleep(1000);
+        initLatch.countDown();
+        Assert.assertTrue(actorsReadyLatch.await(TIMEOUT_AWAIT_MAX_SEC, TimeUnit.SECONDS));
+
         actorSystem.tell(actorId, new IntTbActorMsg(42));
 
-        Assert.assertTrue(testCtx.getLatch().await(1, TimeUnit.SECONDS));
+        Assert.assertTrue(testCtx.getLatch().await(TIMEOUT_AWAIT_MAX_SEC, TimeUnit.SECONDS));
         //One for creation and one for message
         Assert.assertEquals(2, testCtx.getInvocationCount().get());
     }
 
     @Test
     public void testFailedInit() throws InterruptedException {
-        actorSystem.createDispatcher(ROOT_DISPATCHER, Executors.newWorkStealingPool(parallelism));
+        executor = ThingsBoardExecutors.newWorkStealingPool(parallelism, getClass());
+        actorSystem.createDispatcher(ROOT_DISPATCHER, executor);
         ActorTestCtx testCtx1 = getActorTestCtx(1);
         ActorTestCtx testCtx2 = getActorTestCtx(1);
 

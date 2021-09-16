@@ -18,22 +18,24 @@ import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
-  FormControl, FormGroup,
+  FormControl,
+  FormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  Validator, Validators
+  Validator,
+  Validators
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { deepClone, isUndefined } from '@core/utils';
+import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
-import { DatePipe } from '@angular/common';
-import { AlarmCondition, AlarmConditionSpec, AlarmConditionType } from '@shared/models/device.models';
+import { AlarmCondition, AlarmConditionType } from '@shared/models/device.models';
 import {
   AlarmRuleConditionDialogComponent,
   AlarmRuleConditionDialogData
 } from '@home/components/profile/alarm/alarm-rule-condition-dialog.component';
 import { TimeUnit } from '@shared/models/time/time.models';
 import { EntityId } from '@shared/models/id/entity-id';
+import { dynamicValueSourceTypeTranslationMap } from '@shared/models/query/query.models';
 
 @Component({
   selector: 'tb-alarm-rule-condition',
@@ -70,8 +72,7 @@ export class AlarmRuleConditionComponent implements ControlValueAccessor, OnInit
 
   constructor(private dialog: MatDialog,
               private fb: FormBuilder,
-              private translate: TranslateService,
-              private datePipe: DatePipe) {
+              private translate: TranslateService) {
   }
 
   registerOnChange(fn: any): void {
@@ -99,7 +100,7 @@ export class AlarmRuleConditionComponent implements ControlValueAccessor, OnInit
 
   writeValue(value: AlarmCondition): void {
     this.modelValue = value;
-    if (this.modelValue !== null && isUndefined(this.modelValue?.spec)) {
+    if (this.modelValue !== null && !isDefinedAndNotNull(this.modelValue?.spec?.predicate)) {
       this.modelValue = Object.assign(this.modelValue, {spec: {type: AlarmConditionType.SIMPLE}});
     }
     this.updateConditionInfo();
@@ -159,22 +160,43 @@ export class AlarmRuleConditionComponent implements ControlValueAccessor, OnInit
           let duringText = '';
           switch (spec.unit) {
             case TimeUnit.SECONDS:
-              duringText = this.translate.instant('timewindow.seconds', {seconds: spec.value});
+              duringText = this.translate.instant('timewindow.seconds', {seconds: spec.predicate.defaultValue});
               break;
             case TimeUnit.MINUTES:
-              duringText = this.translate.instant('timewindow.minutes', {minutes: spec.value});
+              duringText = this.translate.instant('timewindow.minutes', {minutes: spec.predicate.defaultValue});
               break;
             case TimeUnit.HOURS:
-              duringText = this.translate.instant('timewindow.hours', {hours: spec.value});
+              duringText = this.translate.instant('timewindow.hours', {hours: spec.predicate.defaultValue});
               break;
             case TimeUnit.DAYS:
-              duringText = this.translate.instant('timewindow.days', {days: spec.value});
+              duringText = this.translate.instant('timewindow.days', {days: spec.predicate.defaultValue});
               break;
           }
-          this.specText = this.translate.instant('device-profile.condition-during', {during: duringText});
+          if (spec.predicate.dynamicValue && spec.predicate.dynamicValue.sourceAttribute) {
+            const attributeSource =
+              this.translate.instant(dynamicValueSourceTypeTranslationMap.get(spec.predicate.dynamicValue.sourceType));
+            this.specText = this.translate.instant('device-profile.condition-during-dynamic', {
+              during: duringText,
+              attribute: `${attributeSource}.${spec.predicate.dynamicValue.sourceAttribute}`
+            });
+          } else {
+            this.specText = this.translate.instant('device-profile.condition-during', {
+              during: duringText
+            });
+          }
           break;
         case AlarmConditionType.REPEATING:
-          this.specText = this.translate.instant('device-profile.condition-repeat-times', {count: spec.count});
+          if (spec.predicate.dynamicValue && spec.predicate.dynamicValue.sourceAttribute) {
+            const attributeSource =
+              this.translate.instant(dynamicValueSourceTypeTranslationMap.get(spec.predicate.dynamicValue.sourceType));
+            this.specText = this.translate.instant('device-profile.condition-repeat-times-dynamic', {
+              count: spec.predicate.defaultValue,
+              attribute: `${attributeSource}.${spec.predicate.dynamicValue.sourceAttribute}`
+            });
+          } else {
+            this.specText = this.translate.instant('device-profile.condition-repeat-times',
+              {count: spec.predicate.defaultValue});
+          }
           break;
       }
     }

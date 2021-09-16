@@ -70,7 +70,7 @@ scrape_configs:
     metrics_path: /actuator/prometheus
     static_configs:
       - targets: [ 'tb-http-transport1:8081' ]
-        -
+
   - job_name: 'tb-http-transport2'
     metrics_path: /actuator/prometheus
     static_configs:
@@ -81,3 +81,12 @@ scrape_configs:
     static_configs:
       - targets: [ 'tb-coap-transport:8081' ]
 
+  - job_name: 'tb-lwm2m-transport'
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: [ 'tb-lwm2m-transport:8081' ]
+
+  - job_name: 'tb-snmp-transport'
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: [ 'tb-snmp-transport:8081' ]

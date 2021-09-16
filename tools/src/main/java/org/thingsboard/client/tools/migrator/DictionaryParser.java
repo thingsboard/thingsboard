@@ -43,7 +43,7 @@ public class DictionaryParser {
         return line.startsWith("COPY public.ts_kv_dictionary (");
     }
 
-    private void parseDictionaryDump(LineIterator iterator) {
+    private void parseDictionaryDump(LineIterator iterator) throws IOException {
         try {
             String tempLine;
             while (iterator.hasNext()) {

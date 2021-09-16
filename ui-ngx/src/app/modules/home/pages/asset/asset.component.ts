@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityComponent } from '../../components/entity/entity.component';
@@ -41,8 +41,9 @@ export class AssetComponent extends EntityComponent<AssetInfo> {
               protected translate: TranslateService,
               @Inject('entity') protected entityValue: AssetInfo,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<AssetInfo>,
-              public fb: FormBuilder) {
-    super(store, fb, entityValue, entitiesTableConfigValue);
+              public fb: FormBuilder,
+              protected cd: ChangeDetectorRef) {
+    super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
 
   ngOnInit() {

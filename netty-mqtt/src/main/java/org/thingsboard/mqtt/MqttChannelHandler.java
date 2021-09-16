@@ -200,7 +200,6 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
 
                     MqttIncomingQos2Publish incomingQos2Publish = new MqttIncomingQos2Publish(message);
                     this.client.getQos2PendingIncomingPublishes().put(message.variableHeader().packetId(), incomingQos2Publish);
-                    message.payload().retain();
 
                     channel.writeAndFlush(pubrecMessage);
                 }

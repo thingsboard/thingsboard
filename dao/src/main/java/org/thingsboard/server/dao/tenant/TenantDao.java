@@ -46,5 +46,7 @@ public interface TenantDao extends Dao<Tenant> {
     PageData<Tenant> findTenantsByRegion(TenantId tenantId, String region, PageLink pageLink);
 
     PageData<TenantInfo> findTenantInfosByRegion(TenantId tenantId, String region, PageLink pageLink);
-    
+
+    PageData<TenantId> findTenantsIds(PageLink pageLink);
+
 }

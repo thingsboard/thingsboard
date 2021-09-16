@@ -468,13 +468,18 @@ public class DashboardController extends BaseController {
     public PageData<DashboardInfo> getTenantDashboards(
             @RequestParam int pageSize,
             @RequestParam int page,
+            @RequestParam(required = false) Boolean mobile,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String sortProperty,
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            return checkNotNull(dashboardService.findDashboardsByTenantId(tenantId, pageLink));
+            if (mobile != null && mobile.booleanValue()) {
+                return checkNotNull(dashboardService.findMobileDashboardsByTenantId(tenantId, pageLink));
+            } else {
+                return checkNotNull(dashboardService.findDashboardsByTenantId(tenantId, pageLink));
+            }
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -487,6 +492,7 @@ public class DashboardController extends BaseController {
             @PathVariable("customerId") String strCustomerId,
             @RequestParam int pageSize,
             @RequestParam int page,
+            @RequestParam(required = false) Boolean mobile,
             @RequestParam(required = false) String textSearch,
             @RequestParam(required = false) String sortProperty,
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
@@ -496,7 +502,11 @@ public class DashboardController extends BaseController {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             checkCustomerId(customerId, Operation.READ);
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            return checkNotNull(dashboardService.findDashboardsByTenantIdAndCustomerId(tenantId, customerId, pageLink));
+            if (mobile != null && mobile.booleanValue()) {
+                return checkNotNull(dashboardService.findMobileDashboardsByTenantIdAndCustomerId(tenantId, customerId, pageLink));
+            } else {
+                return checkNotNull(dashboardService.findDashboardsByTenantIdAndCustomerId(tenantId, customerId, pageLink));
+            }
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -657,7 +667,7 @@ public class DashboardController extends BaseController {
             Edge edge = checkEdgeId(edgeId, Operation.READ);
 
             DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
-            checkDashboardId(dashboardId, Operation.ASSIGN_TO_EDGE);
+            checkDashboardId(dashboardId, Operation.READ);
 
             Dashboard savedDashboard = checkNotNull(dashboardService.assignDashboardToEdge(getCurrentUser().getTenantId(), dashboardId, edgeId));
 
@@ -689,7 +699,7 @@ public class DashboardController extends BaseController {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
             Edge edge = checkEdgeId(edgeId, Operation.READ);
             DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
-            Dashboard dashboard = checkDashboardId(dashboardId, Operation.UNASSIGN_FROM_EDGE);
+            Dashboard dashboard = checkDashboardId(dashboardId, Operation.READ);
 
             Dashboard savedDashboard = checkNotNull(dashboardService.unassignDashboardFromEdge(getCurrentUser().getTenantId(), dashboardId, edgeId));
 

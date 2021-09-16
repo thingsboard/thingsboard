@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.request.BootstrapRequest;
 import org.eclipse.leshan.core.request.Identity;
 import org.eclipse.leshan.server.bootstrap.BootstrapSession;
 import org.eclipse.leshan.server.bootstrap.DefaultBootstrapSession;
@@ -25,7 +26,7 @@ import org.eclipse.leshan.server.security.SecurityChecker;
 import org.eclipse.leshan.server.security.SecurityInfo;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Iterator;
 
 @Slf4j
 public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSessionManager {
@@ -50,16 +51,17 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
     }
 
     @SuppressWarnings("deprecation")
-    public BootstrapSession begin(String endpoint, Identity clientIdentity) {
+    public BootstrapSession begin(BootstrapRequest request, Identity clientIdentity) {
         boolean authorized;
         if (bsSecurityStore != null) {
-            List<SecurityInfo> securityInfos = (clientIdentity.getPskIdentity() != null && !clientIdentity.getPskIdentity().isEmpty()) ? Collections.singletonList(bsSecurityStore.getByIdentity(clientIdentity.getPskIdentity())) : bsSecurityStore.getAllByEndpoint(endpoint);
+            Iterator<SecurityInfo> securityInfos = (clientIdentity.getPskIdentity() != null && !clientIdentity.getPskIdentity().isEmpty()) ?
+                    Collections.singletonList(bsSecurityStore.getByIdentity(clientIdentity.getPskIdentity())).iterator() : bsSecurityStore.getAllByEndpoint(request.getEndpointName());
             log.info("Bootstrap session started securityInfos: [{}]", securityInfos);
-            authorized = securityChecker.checkSecurityInfos(endpoint, clientIdentity, securityInfos);
+            authorized = securityChecker.checkSecurityInfos(request.getEndpointName(), clientIdentity, securityInfos);
         } else {
             authorized = true;
         }
-        DefaultBootstrapSession session = new DefaultBootstrapSession(endpoint, clientIdentity, authorized);
+        DefaultBootstrapSession session = new DefaultBootstrapSession(request, clientIdentity, authorized);
         log.info("Bootstrap session started : {}", session);
         return session;
     }

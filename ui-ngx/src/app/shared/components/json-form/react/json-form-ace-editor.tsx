@@ -159,8 +159,8 @@ class ThingsboardAceEditor extends React.Component<ThingsboardAceEditorProps, Th
                   <div className='json-form-ace-editor'>
                       <div className='title-panel'>
                           <label>{this.props.mode}</label>
-                          <Button style={ styles.tidyButtonStyle }
-                                  className='tidy-button' onClick={this.onTidy}>Tidy</Button>
+                          { this.props.onTidy ? <Button style={ styles.tidyButtonStyle }
+                                                       className='tidy-button' onClick={this.onTidy}>Tidy</Button> : null }
                           <Button style={ styles.tidyButtonStyle }
                                   className='tidy-button' onClick={this.onToggleFull}>
                             {this.state.isFull ?

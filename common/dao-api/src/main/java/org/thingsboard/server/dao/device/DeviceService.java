@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -45,11 +46,15 @@ public interface DeviceService {
 
     Device findDeviceByTenantIdAndName(TenantId tenantId, String name);
 
+    Device saveDevice(Device device, boolean doValidate);
+
     Device saveDevice(Device device);
 
     Device saveDeviceWithAccessToken(Device device, String accessToken);
 
     Device saveDeviceWithCredentials(Device device, DeviceCredentials deviceCredentials);
+
+    Device saveDevice(ProvisionRequest provisionRequest, DeviceProfile profile);
 
     Device assignDeviceToCustomer(TenantId tenantId, DeviceId deviceId, CustomerId customerId);
 
@@ -63,9 +68,9 @@ public interface DeviceService {
 
     PageData<Device> findDevicesByTenantIdAndType(TenantId tenantId, String type, PageLink pageLink);
 
-    PageData<Device> findDevicesByTenantIdAndTypeAndEmptyFirmware(TenantId tenantId, String type, PageLink pageLink);
+    PageData<Device> findDevicesByTenantIdAndTypeAndEmptyOtaPackage(TenantId tenantId, DeviceProfileId deviceProfileId, OtaPackageType type, PageLink pageLink);
 
-    PageData<Device> findDevicesByTenantIdAndTypeAndEmptySoftware(TenantId tenantId, String type, PageLink pageLink);
+    Long countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(TenantId tenantId, DeviceProfileId deviceProfileId, OtaPackageType otaPackageType);
 
     PageData<DeviceInfo> findDeviceInfosByTenantIdAndType(TenantId tenantId, String type, PageLink pageLink);
 
@@ -94,8 +99,6 @@ public interface DeviceService {
     ListenableFuture<List<EntitySubtype>> findDeviceTypesByTenantId(TenantId tenantId);
 
     Device assignDeviceToTenant(TenantId tenantId, Device device);
-
-    Device saveDevice(ProvisionRequest provisionRequest, DeviceProfile profile);
 
     PageData<UUID> findDevicesIdsByDeviceProfileTransportType(DeviceTransportType transportType, PageLink pageLink);
 

@@ -24,6 +24,7 @@ import {
   isDefinedAndNotNull,
   isEqual,
   isNumber,
+  isNumeric,
   isUndefined
 } from '@app/core/utils';
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
@@ -76,7 +77,7 @@ export class TbFlot {
   private settings: TbFlotSettings;
   private comparisonEnabled: boolean;
 
-  private readonly tooltip: JQuery<any>;
+  private tooltip: JQuery<any>;
 
   private readonly yAxisTickFormatter: TbFlotTicksFormatterFunction;
   private readonly yaxis: TbFlotAxisOptions;
@@ -118,6 +119,7 @@ export class TbFlot {
   private mouseleaveHandler = this.onFlotMouseLeave.bind(this);
   private flotClickHandler = this.onFlotClick.bind(this);
 
+  private readonly showTooltip: boolean;
   private readonly animatedPie: boolean;
   private pieDataAnimationDuration: number;
   private pieData: DatasourceData[];
@@ -147,8 +149,9 @@ export class TbFlot {
     this.chartType = this.chartType || 'line';
     this.settings = ctx.settings as TbFlotSettings;
     this.utils = this.ctx.$injector.get(UtilsService);
-    this.tooltip = $('#flot-series-tooltip');
-    if (this.tooltip.length === 0) {
+    this.showTooltip = isDefined(this.settings.showTooltip) ? this.settings.showTooltip : true;
+    this.tooltip = this.showTooltip ? $('#flot-series-tooltip') : null;
+    if (this.tooltip?.length === 0) {
       this.tooltip = this.createTooltipElement();
     }
 
@@ -277,7 +280,7 @@ export class TbFlot {
         };
       }
 
-      if (this.chartType === 'line' && isFinite(this.settings.thresholdsLineWidth)) {
+      if ((this.chartType === 'line' || this.chartType === 'bar') && isFinite(this.settings.thresholdsLineWidth)) {
         this.options.grid.markingsLineWidth = this.settings.thresholdsLineWidth;
       }
 
@@ -841,7 +844,7 @@ export class TbFlot {
     data.forEach((keyData) => {
       if (keyData && keyData.data && keyData.data[0]) {
         const attrValue = keyData.data[0][1];
-        if (isFinite(attrValue)) {
+        if (isNumeric(attrValue) && isFinite(attrValue)) {
           const settings: TbFlotThresholdKeySettings = keyData.dataKey.settings;
           const colorIndex = this.subscription.data.length + allThresholds.length;
           this.generateThreshold(allThresholds, settings.yaxis, settings.lineWidth, settings.color, colorIndex, attrValue);
@@ -1168,7 +1171,7 @@ export class TbFlot {
   }
 
   private onFlotHover(e: any, pos: JQueryPlotPoint, item: TbFlotPlotItem) {
-    if (!this.plot) {
+    if (!this.plot || !this.tooltip) {
       return;
     }
     if ((!this.tooltipIndividual || item) && !this.ctx.isEdit) {

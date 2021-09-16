@@ -33,6 +33,7 @@ import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorRef;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -69,7 +70,9 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
+import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -221,7 +224,7 @@ class DefaultTbContext implements TbContext {
         }
         if (nodeCtx.getSelf().isDebugMode()) {
             relationTypes.forEach(relationType ->
-                    mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), tbMsg, relationType));
+                    mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), tbMsg, relationType, null, failureMessage));
         }
         mainCtx.getClusterService().pushMsgToRuleEngine(tpi, tbMsg.getId(), msg.build(), new SimpleTbQueueCallback(onSuccess, onFailure));
     }
@@ -366,11 +369,6 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public ListeningExecutor getJsExecutor() {
-        return mainCtx.getJsExecutor();
-    }
-
-    @Override
     public ListeningExecutor getMailExecutor() {
         return mainCtx.getMailExecutor();
     }
@@ -452,6 +450,11 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public TbClusterService getClusterService() {
+        return mainCtx.getClusterService();
+    }
+
+    @Override
     public DashboardService getDashboardService() {
         return mainCtx.getDashboardService();
     }
@@ -487,6 +490,16 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public ResourceService getResourceService() {
+        return mainCtx.getResourceService();
+    }
+
+    @Override
+    public OtaPackageService getOtaPackageService() {
+        return mainCtx.getOtaPackageService();
+    }
+
+    @Override
     public RuleEngineDeviceProfileCache getDeviceProfileCache() {
         return mainCtx.getDeviceProfileCache();
     }
@@ -507,8 +520,8 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public MailService getMailService() {
-        if (mainCtx.isAllowSystemMailService()) {
+    public MailService getMailService(boolean isSystem) {
+        if (!isSystem || mainCtx.isAllowSystemMailService()) {
             return mainCtx.getMailService();
         } else {
             throw new RuntimeException("Access to System Mail Service is forbidden!");

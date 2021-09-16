@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.api;
 import io.netty.channel.EventLoopGroup;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -47,7 +48,9 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
+import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -186,6 +189,8 @@ public interface TbContext {
 
     DeviceService getDeviceService();
 
+    TbClusterService getClusterService();
+
     DashboardService getDashboardService();
 
     RuleEngineAlarmService getAlarmService();
@@ -202,13 +207,15 @@ public interface TbContext {
 
     EntityViewService getEntityViewService();
 
+    ResourceService getResourceService();
+
+    OtaPackageService getOtaPackageService();
+
     RuleEngineDeviceProfileCache getDeviceProfileCache();
 
     EdgeService getEdgeService();
 
     EdgeEventService getEdgeEventService();
-
-    ListeningExecutor getJsExecutor();
 
     ListeningExecutor getMailExecutor();
 
@@ -218,7 +225,7 @@ public interface TbContext {
 
     ListeningExecutor getExternalCallExecutor();
 
-    MailService getMailService();
+    MailService getMailService(boolean isSystem);
 
     SmsService getSmsService();
 

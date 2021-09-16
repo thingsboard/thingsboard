@@ -56,13 +56,13 @@ public abstract class AbstractMqttServerSideRpcProtoIntegrationTest extends Abst
             "package rpc;\n" +
             "\n" +
             "message RpcRequestMsg {\n" +
-            "  string method = 1;\n" +
-            "  int32 requestId = 2;\n" +
+            "  optional string method = 1;\n" +
+            "  optional int32 requestId = 2;\n" +
             "  Params params = 3;\n" +
             "\n" +
             "  message Params {\n" +
-            "      string pin = 1;\n" +
-            "      int32 value = 2;\n" +
+            "      optional string pin = 1;\n" +
+            "      optional int32 value = 2;\n" +
             "   }\n" +
             "}";
 
@@ -131,7 +131,7 @@ public abstract class AbstractMqttServerSideRpcProtoIntegrationTest extends Abst
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"26\",\"value\": 1}}";
         String deviceId = savedDevice.getId().getId().toString();
 
-        String result = doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().isOk());
+        String result = doPostAsync("/api/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().isOk());
         String expected = "{\"payload\":\"{\\\"value1\\\":\\\"A\\\",\\\"value2\\\":\\\"B\\\"}\"}";
         latch.await(3, TimeUnit.SECONDS);
         Assert.assertEquals(expected, result);

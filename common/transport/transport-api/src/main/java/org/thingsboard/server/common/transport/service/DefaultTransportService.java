@@ -34,7 +34,9 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -42,6 +44,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.ServiceQueue;
@@ -92,10 +95,12 @@ import org.thingsboard.server.queue.util.TbTransportComponent;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -116,6 +121,12 @@ public class DefaultTransportService implements TransportService {
 
     public static final String OVERWRITE_ACTIVITY_TIME = "overwriteActivityTime";
 
+    private final AtomicInteger atomicTs = new AtomicInteger(0);
+
+    @Value("${transport.log.enabled:true}")
+    private boolean logEnabled;
+    @Value("${transport.log.max_length:1024}")
+    private int logMaxLength;
     @Value("${transport.sessions.inactivity_timeout}")
     private long sessionInactivityTimeout;
     @Value("${transport.sessions.report_timeout}")
@@ -153,6 +164,7 @@ public class DefaultTransportService implements TransportService {
     private ExecutorService mainConsumerExecutor;
 
     private final ConcurrentMap<UUID, SessionMetaData> sessions = new ConcurrentHashMap<>();
+    private final ConcurrentMap<UUID, SessionActivityData> sessionsActivity = new ConcurrentHashMap<>();
     private final Map<String, RpcRequestMetadata> toServerRpcPendingMap = new ConcurrentHashMap<>();
 
     private volatile boolean stopped = false;
@@ -207,7 +219,6 @@ public class DefaultTransportService implements TransportService {
                     }
                     records.forEach(record -> {
                         try {
-                            log.info("[{}] SessionIdMSB, [{}] SessionIdLSB, records", record.getValue().getSessionIdMSB(), record.getValue().getSessionIdLSB());
                             processToTransportMsg(record.getValue());
                         } catch (Throwable e) {
                             log.warn("Failed to process the notification.", e);
@@ -439,6 +450,12 @@ public class DefaultTransportService implements TransportService {
         tdi.setAdditionalInfo(di.getAdditionalInfo());
         tdi.setDeviceName(di.getDeviceName());
         tdi.setDeviceType(di.getDeviceType());
+        if (StringUtils.isNotEmpty(di.getPowerMode())) {
+            tdi.setPowerMode(PowerMode.valueOf(di.getPowerMode()));
+            tdi.setEdrxCycle(di.getEdrxCycle());
+            tdi.setPsmActivityTimer(di.getPsmActivityTimer());
+            tdi.setPagingTransmissionWindow(di.getPagingTransmissionWindow());
+        }
         return tdi;
     }
 
@@ -531,8 +548,11 @@ public class DefaultTransportService implements TransportService {
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SubscribeToAttributeUpdatesMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
-            SessionMetaData sessionMetaData = reportActivityInternal(sessionInfo);
-            sessionMetaData.setSubscribedToAttributes(!msg.getUnsubscribe());
+            SessionMetaData sessionMetaData = sessions.get(toSessionId(sessionInfo));
+            if (sessionMetaData != null) {
+                sessionMetaData.setSubscribedToAttributes(!msg.getUnsubscribe());
+            }
+            reportActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setSubscribeToAttributes(msg).build(),
                     new ApiStatsProxyCallback<>(getTenantId(sessionInfo), getCustomerId(sessionInfo), 1, callback));
         }
@@ -541,8 +561,11 @@ public class DefaultTransportService implements TransportService {
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.SubscribeToRPCMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
-            SessionMetaData sessionMetaData = reportActivityInternal(sessionInfo);
-            sessionMetaData.setSubscribedToRPC(!msg.getUnsubscribe());
+            SessionMetaData sessionMetaData = sessions.get(toSessionId(sessionInfo));
+            if (sessionMetaData != null) {
+                sessionMetaData.setSubscribedToRPC(!msg.getUnsubscribe());
+            }
+            reportActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setSubscribeToRPC(msg).build(),
                     new ApiStatsProxyCallback<>(getTenantId(sessionInfo), getCustomerId(sessionInfo), 1, callback));
         }
@@ -554,6 +577,30 @@ public class DefaultTransportService implements TransportService {
             reportActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setToDeviceRPCCallResponse(msg).build(),
                     new ApiStatsProxyCallback<>(getTenantId(sessionInfo), getCustomerId(sessionInfo), 1, callback));
+        }
+    }
+
+    @Override
+    public void notifyAboutUplink(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.UplinkNotificationMsg msg, TransportServiceCallback<Void> callback) {
+        if (checkLimits(sessionInfo, msg, callback)) {
+            reportActivityInternal(sessionInfo);
+            sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setUplinkNotificationMsg(msg).build(), callback);
+        }
+    }
+
+    @Override
+    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToDeviceRpcRequestMsg msg, RpcStatus rpcStatus, TransportServiceCallback<Void> callback) {
+        TransportProtos.ToDeviceRpcResponseStatusMsg responseMsg = TransportProtos.ToDeviceRpcResponseStatusMsg.newBuilder()
+                .setRequestId(msg.getRequestId())
+                .setRequestIdLSB(msg.getRequestIdLSB())
+                .setRequestIdMSB(msg.getRequestIdMSB())
+                .setStatus(rpcStatus.name())
+                .build();
+
+        if (checkLimits(sessionInfo, responseMsg, callback)) {
+            reportActivityInternal(sessionInfo);
+            sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setRpcResponseStatusMsg(responseMsg).build(),
+                    new ApiStatsProxyCallback<>(getTenantId(sessionInfo), getCustomerId(sessionInfo), 1, TransportServiceCallback.EMPTY));
         }
     }
 
@@ -614,60 +661,73 @@ public class DefaultTransportService implements TransportService {
     }
 
     @Override
-    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.GetFirmwareRequestMsg msg, TransportServiceCallback<TransportProtos.GetFirmwareResponseMsg> callback) {
+    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.GetOtaPackageRequestMsg msg, TransportServiceCallback<TransportProtos.GetOtaPackageResponseMsg> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
             TbProtoQueueMsg<TransportProtos.TransportApiRequestMsg> protoMsg =
-                    new TbProtoQueueMsg<>(UUID.randomUUID(), TransportProtos.TransportApiRequestMsg.newBuilder().setFirmwareRequestMsg(msg).build());
+                    new TbProtoQueueMsg<>(UUID.randomUUID(), TransportProtos.TransportApiRequestMsg.newBuilder().setOtaPackageRequestMsg(msg).build());
 
             AsyncCallbackTemplate.withCallback(transportApiRequestTemplate.send(protoMsg), response -> {
-                callback.onSuccess(response.getValue().getFirmwareResponseMsg());
+                callback.onSuccess(response.getValue().getOtaPackageResponseMsg());
             }, callback::onError, transportCallbackExecutor);
         }
     }
 
     @Override
-    public SessionMetaData reportActivity(TransportProtos.SessionInfoProto sessionInfo) {
-        return reportActivityInternal(sessionInfo);
+    public void reportActivity(TransportProtos.SessionInfoProto sessionInfo) {
+        reportActivityInternal(sessionInfo);
     }
 
-    private SessionMetaData reportActivityInternal(TransportProtos.SessionInfoProto sessionInfo) {
+    private void reportActivityInternal(TransportProtos.SessionInfoProto sessionInfo) {
         UUID sessionId = toSessionId(sessionInfo);
-        SessionMetaData sessionMetaData = sessions.get(sessionId);
-        if (sessionMetaData != null) {
-            sessionMetaData.updateLastActivityTime();
-        }
-        return sessionMetaData;
+        SessionActivityData sessionMetaData = sessionsActivity.computeIfAbsent(sessionId, id -> new SessionActivityData(sessionInfo));
+        sessionMetaData.updateLastActivityTime();
     }
 
     private void checkInactivityAndReportActivity() {
         long expTime = System.currentTimeMillis() - sessionInactivityTimeout;
-        sessions.forEach((uuid, sessionMD) -> {
-            long lastActivityTime = sessionMD.getLastActivityTime();
-            TransportProtos.SessionInfoProto sessionInfo = sessionMD.getSessionInfo();
-            if (sessionInfo.getGwSessionIdMSB() != 0 &&
-                    sessionInfo.getGwSessionIdLSB() != 0) {
-                SessionMetaData gwMetaData = sessions.get(new UUID(sessionInfo.getGwSessionIdMSB(), sessionInfo.getGwSessionIdLSB()));
+        Set<UUID> sessionsToRemove = new HashSet<>();
+        sessionsActivity.forEach((uuid, sessionAD) -> {
+            long lastActivityTime = sessionAD.getLastActivityTime();
+            SessionMetaData sessionMD = sessions.get(uuid);
+            if (sessionMD != null) {
+                sessionAD.setSessionInfo(sessionMD.getSessionInfo());
+            } else {
+                sessionsToRemove.add(uuid);
+            }
+            TransportProtos.SessionInfoProto sessionInfo = sessionAD.getSessionInfo();
+
+            if (sessionInfo.getGwSessionIdMSB() != 0 && sessionInfo.getGwSessionIdLSB() != 0) {
+                var gwSessionId = new UUID(sessionInfo.getGwSessionIdMSB(), sessionInfo.getGwSessionIdLSB());
+                SessionMetaData gwMetaData = sessions.get(gwSessionId);
+                SessionActivityData gwActivityData = sessionsActivity.get(gwSessionId);
                 if (gwMetaData != null && gwMetaData.isOverwriteActivityTime()) {
-                    lastActivityTime = Math.max(gwMetaData.getLastActivityTime(), lastActivityTime);
+                    lastActivityTime = Math.max(gwActivityData.getLastActivityTime(), lastActivityTime);
                 }
             }
             if (lastActivityTime < expTime) {
-                if (log.isDebugEnabled()) {
-                    log.debug("[{}] Session has expired due to last activity time: {}", toSessionId(sessionInfo), lastActivityTime);
+                if (sessionMD != null) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("[{}] Session has expired due to last activity time: {}", toSessionId(sessionInfo), lastActivityTime);
+                    }
+                    sessions.remove(uuid);
+                    sessionsToRemove.add(uuid);
+                    process(sessionInfo, getSessionEventMsg(TransportProtos.SessionEvent.CLOSED), null);
+                    TransportProtos.SessionCloseNotificationProto sessionCloseNotificationProto = TransportProtos.SessionCloseNotificationProto
+                            .newBuilder()
+                            .setMessage("Session has expired due to last activity time!")
+                            .build();
+                    sessionMD.getListener().onRemoteSessionCloseCommand(uuid, sessionCloseNotificationProto);
                 }
-                process(sessionInfo, getSessionEventMsg(TransportProtos.SessionEvent.CLOSED), null);
-                sessions.remove(uuid);
-                sessionMD.getListener().onRemoteSessionCloseCommand(TransportProtos.SessionCloseNotificationProto.getDefaultInstance());
             } else {
-                if (lastActivityTime > sessionMD.getLastReportedActivityTime()) {
+                if (lastActivityTime > sessionAD.getLastReportedActivityTime()) {
                     final long lastActivityTimeFinal = lastActivityTime;
                     process(sessionInfo, TransportProtos.SubscriptionInfoProto.newBuilder()
-                            .setAttributeSubscription(sessionMD.isSubscribedToAttributes())
-                            .setRpcSubscription(sessionMD.isSubscribedToRPC())
+                            .setAttributeSubscription(sessionMD != null && sessionMD.isSubscribedToAttributes())
+                            .setRpcSubscription(sessionMD != null && sessionMD.isSubscribedToRPC())
                             .setLastActivityTime(lastActivityTime).build(), new TransportServiceCallback<Void>() {
                         @Override
                         public void onSuccess(Void msg) {
-                            sessionMD.setLastReportedActivityTime(lastActivityTimeFinal);
+                            sessionAD.setLastReportedActivityTime(lastActivityTimeFinal);
                         }
 
                         @Override
@@ -678,15 +738,20 @@ public class DefaultTransportService implements TransportService {
                 }
             }
         });
+        // Removes all closed or short-lived sessions.
+        sessionsToRemove.forEach(sessionsActivity::remove);
     }
 
     @Override
     public SessionMetaData registerSyncSession(TransportProtos.SessionInfoProto sessionInfo, SessionMsgListener listener, long timeout) {
         SessionMetaData currentSession = new SessionMetaData(sessionInfo, TransportProtos.SessionType.SYNC, listener);
-        sessions.putIfAbsent(toSessionId(sessionInfo), currentSession);
+        UUID sessionId = toSessionId(sessionInfo);
+        sessions.putIfAbsent(sessionId, currentSession);
+
+        TransportProtos.SessionCloseNotificationProto notification = TransportProtos.SessionCloseNotificationProto.newBuilder().setMessage("session timeout!").build();
 
         ScheduledFuture executorFuture = scheduler.schedule(() -> {
-            listener.onRemoteSessionCloseCommand(TransportProtos.SessionCloseNotificationProto.getDefaultInstance());
+            listener.onRemoteSessionCloseCommand(sessionId, notification);
             deregisterSession(sessionInfo);
         }, timeout, TimeUnit.MILLISECONDS);
 
@@ -702,6 +767,26 @@ public class DefaultTransportService implements TransportService {
             currentSession.getScheduledFuture().cancel(false);
         }
         sessions.remove(toSessionId(sessionInfo));
+    }
+
+    @Override
+    public void log(TransportProtos.SessionInfoProto sessionInfo, String msg) {
+        if (!logEnabled || sessionInfo == null || StringUtils.isEmpty(msg)) {
+            return;
+        }
+        if (msg.length() > logMaxLength) {
+            msg = msg.substring(0, logMaxLength);
+        }
+        TransportProtos.PostTelemetryMsg.Builder request = TransportProtos.PostTelemetryMsg.newBuilder();
+        TransportProtos.TsKvListProto.Builder builder = TransportProtos.TsKvListProto.newBuilder();
+        builder.setTs(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) * 1000L + (atomicTs.getAndIncrement() % 1000));
+        builder.addKv(TransportProtos.KeyValueProto.newBuilder()
+                .setKey("transportLog")
+                .setType(TransportProtos.KeyValueType.STRING_V)
+                .setStringV(msg).build());
+        request.addTsKvList(builder.build());
+        TransportProtos.PostTelemetryMsg postTelemetryMsg = request.build();
+        process(sessionInfo, postTelemetryMsg, TransportServiceCallback.EMPTY);
     }
 
     private boolean checkLimits(TransportProtos.SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<?> callback) {
@@ -730,22 +815,23 @@ public class DefaultTransportService implements TransportService {
         UUID sessionId = new UUID(toSessionMsg.getSessionIdMSB(), toSessionMsg.getSessionIdLSB());
         SessionMetaData md = sessions.get(sessionId);
         if (md != null) {
+            log.trace("[{}] Processing notification: {}", sessionId, toSessionMsg);
             SessionMsgListener listener = md.getListener();
             transportCallbackExecutor.submit(() -> {
                 if (toSessionMsg.hasGetAttributesResponse()) {
                     listener.onGetAttributesResponse(toSessionMsg.getGetAttributesResponse());
                 }
                 if (toSessionMsg.hasAttributeUpdateNotification()) {
-                    listener.onAttributeUpdate(toSessionMsg.getAttributeUpdateNotification());
+                    listener.onAttributeUpdate(sessionId, toSessionMsg.getAttributeUpdateNotification());
                 }
                 if (toSessionMsg.hasSessionCloseNotification()) {
-                    listener.onRemoteSessionCloseCommand(toSessionMsg.getSessionCloseNotification());
+                    listener.onRemoteSessionCloseCommand(sessionId, toSessionMsg.getSessionCloseNotification());
                 }
                 if (toSessionMsg.hasToTransportUpdateCredentialsNotification()) {
                     listener.onToTransportUpdateCredentials(toSessionMsg.getToTransportUpdateCredentialsNotification());
                 }
                 if (toSessionMsg.hasToDeviceRequest()) {
-                    listener.onToDeviceRpcRequest(toSessionMsg.getToDeviceRequest());
+                    listener.onToDeviceRpcRequest(sessionId, toSessionMsg.getToDeviceRequest());
                 }
                 if (toSessionMsg.hasToServerResponse()) {
                     String requestId = sessionId + "-" + toSessionMsg.getToServerResponse().getRequestId();
@@ -757,12 +843,14 @@ public class DefaultTransportService implements TransportService {
                 deregisterSession(md.getSessionInfo());
             }
         } else {
+            log.trace("Processing broadcast notification: {}", toSessionMsg);
             if (toSessionMsg.hasEntityUpdateMsg()) {
                 TransportProtos.EntityUpdateMsg msg = toSessionMsg.getEntityUpdateMsg();
                 EntityType entityType = EntityType.valueOf(msg.getEntityType());
                 if (EntityType.DEVICE_PROFILE.equals(entityType)) {
                     DeviceProfile deviceProfile = deviceProfileCache.put(msg.getData());
                     if (deviceProfile != null) {
+                        log.info("On device profile update: {}", deviceProfile);
                         onProfileUpdate(deviceProfile);
                     }
                 } else if (EntityType.TENANT_PROFILE.equals(entityType)) {
@@ -1068,5 +1156,15 @@ public class DefaultTransportService implements TransportService {
         public void onError(Throwable e) {
             callback.onError(e);
         }
+    }
+
+    @Override
+    public ExecutorService getCallbackExecutor() {
+        return transportCallbackExecutor;
+    }
+
+    @Override
+    public boolean hasSession(TransportProtos.SessionInfoProto sessionInfo) {
+        return sessions.containsKey(toSessionId(sessionInfo));
     }
 }

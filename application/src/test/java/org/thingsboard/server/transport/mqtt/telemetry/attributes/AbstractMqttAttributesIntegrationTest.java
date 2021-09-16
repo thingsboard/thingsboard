@@ -55,13 +55,13 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
     }
 
     @Test
-    public void testPushMqttAttributes() throws Exception {
+    public void testPushAttributes() throws Exception {
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        processAttributesTest(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, expectedKeys, PAYLOAD_VALUES_STR.getBytes());
+        processJsonPayloadAttributesTest(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, expectedKeys, PAYLOAD_VALUES_STR.getBytes());
     }
 
     @Test
-    public void testPushMqttAttributesGateway() throws Exception {
+    public void testPushAttributesGateway() throws Exception {
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
         String deviceName1 = "Device A";
         String deviceName2 = "Device B";
@@ -69,7 +69,11 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
         processGatewayAttributesTest(expectedKeys, payload.getBytes(), deviceName1, deviceName2);
     }
 
-    protected void processAttributesTest(String topic, List<String> expectedKeys, byte[] payload) throws Exception {
+    protected void processJsonPayloadAttributesTest(String topic, List<String> expectedKeys, byte[] payload) throws Exception {
+        processAttributesTest(topic, expectedKeys, payload, false);
+    }
+
+    protected void processAttributesTest(String topic, List<String> expectedKeys, byte[] payload, boolean presenceFieldsTest) throws Exception {
         MqttAsyncClient client = getMqttAsyncClient(accessToken);
 
         publishMqttMsg(client, payload, topic);
@@ -98,7 +102,11 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
 
         String getAttributesValuesUrl = getAttributesValuesUrl(deviceId, actualKeySet);
         List<Map<String, Object>> values = doGetAsyncTyped(getAttributesValuesUrl, new TypeReference<>() {});
-        assertAttributesValues(values, expectedKeySet);
+        if (presenceFieldsTest) {
+            assertAttributesProtoValues(values, actualKeySet);
+        } else {
+            assertAttributesValues(values, actualKeySet);
+        }
         String deleteAttributesUrl = "/api/plugins/telemetry/DEVICE/" + deviceId + "/CLIENT_SCOPE?keys=" + String.join(",", actualKeySet);
         doDelete(deleteAttributesUrl);
     }
@@ -145,11 +153,11 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
     }
 
     @SuppressWarnings("unchecked")
-    protected void assertAttributesValues(List<Map<String, Object>> deviceValues, Set<String> expectedKeySet) throws JsonProcessingException {
+    protected void assertAttributesValues(List<Map<String, Object>> deviceValues, Set<String> keySet) throws JsonProcessingException {
         for (Map<String, Object> map : deviceValues) {
             String key = (String) map.get("key");
             Object value = map.get("value");
-            assertTrue(expectedKeySet.contains(key));
+            assertTrue(keySet.contains(key));
             switch (key) {
                 case "key1":
                     assertEquals("value1", value);
@@ -167,6 +175,27 @@ public abstract class AbstractMqttAttributesIntegrationTest extends AbstractMqtt
                     assertNotNull(value);
                     assertEquals(3, ((LinkedHashMap) value).size());
                     assertEquals(42, ((LinkedHashMap) value).get("someNumber"));
+                    assertEquals(Arrays.asList(1, 2, 3), ((LinkedHashMap) value).get("someArray"));
+                    LinkedHashMap<String, String> someNestedObject = (LinkedHashMap) ((LinkedHashMap) value).get("someNestedObject");
+                    assertEquals("value", someNestedObject.get("key"));
+                    break;
+            }
+        }
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void assertAttributesProtoValues(List<Map<String, Object>> values, Set<String> keySet) {
+        for (Map<String, Object> map : values) {
+            String key = (String) map.get("key");
+            Object value = map.get("value");
+            assertTrue(keySet.contains(key));
+            switch (key) {
+                case "key1":
+                    assertEquals("", value);
+                    break;
+                case "key5":
+                    assertNotNull(value);
+                    assertEquals(2, ((LinkedHashMap) value).size());
                     assertEquals(Arrays.asList(1, 2, 3), ((LinkedHashMap) value).get("someArray"));
                     LinkedHashMap<String, String> someNestedObject = (LinkedHashMap) ((LinkedHashMap) value).get("someNestedObject");
                     assertEquals("value", someNestedObject.get("key"));

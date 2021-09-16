@@ -60,25 +60,26 @@
         formControlName="defaultRuleChainId">
       </tb-rule-chain-autocomplete>
       <tb-dashboard-autocomplete
-        placeholder="{{'device-profile.default-dashboard' | translate}}"
+        placeholder="{{'device-profile.mobile-dashboard' | translate}}"
         formControlName="defaultDashboardId">
+        <div tb-hint>{{'device-profile.mobile-dashboard-hint' | translate}}</div>
       </tb-dashboard-autocomplete>
       <tb-queue-type-list
         [queueType]="serviceType"
         formControlName="defaultQueueName">
       </tb-queue-type-list>
-      <tb-firmware-autocomplete
+      <tb-ota-package-autocomplete
         [useFullEntityId]="true"
-        [type]="firmwareTypes.FIRMWARE"
+        [type]="otaUpdateType.FIRMWARE"
         [deviceProfileId]="deviceProfileId?.id"
         formControlName="firmwareId">
-      </tb-firmware-autocomplete>
-      <tb-firmware-autocomplete
+      </tb-ota-package-autocomplete>
+      <tb-ota-package-autocomplete
         [useFullEntityId]="true"
-        [type]="firmwareTypes.SOFTWARE"
+        [type]="otaUpdateType.SOFTWARE"
         [deviceProfileId]="deviceProfileId?.id"
         formControlName="softwareId">
-      </tb-firmware-autocomplete>
+      </tb-ota-package-autocomplete>
       <mat-form-field fxHide class="mat-block">
         <mat-label translate>device-profile.type</mat-label>
         <mat-select formControlName="type" required>

@@ -28,11 +28,13 @@ import com.google.gson.JsonSyntaxException;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.ProtocolStringList;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ConcurrentReferenceHashMap;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.TransportService;
@@ -65,6 +67,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static org.springframework.util.ConcurrentReferenceHashMap.ReferenceType;
+
 /**
  * Created by ashvayka on 19.01.17.
  */
@@ -81,7 +85,7 @@ public class GatewaySessionHandler {
     private final UUID sessionId;
     private final ConcurrentMap<String, Lock> deviceCreationLockMap;
     private final ConcurrentMap<String, GatewayDeviceSessionCtx> devices;
-    private final ConcurrentMap<String, SettableFuture<GatewayDeviceSessionCtx>> deviceFutures;
+    private final ConcurrentMap<String, ListenableFuture<GatewayDeviceSessionCtx>> deviceFutures;
     private final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
     private final ChannelHandlerContext channel;
     private final DeviceSessionCtx deviceSessionCtx;
@@ -94,9 +98,13 @@ public class GatewaySessionHandler {
         this.sessionId = sessionId;
         this.devices = new ConcurrentHashMap<>();
         this.deviceFutures = new ConcurrentHashMap<>();
-        this.deviceCreationLockMap = new ConcurrentHashMap<>();
+        this.deviceCreationLockMap = createWeakMap();
         this.mqttQoSMap = deviceSessionCtx.getMqttQoSMap();
         this.channel = deviceSessionCtx.getChannel();
+    }
+
+    ConcurrentReferenceHashMap<String, Lock> createWeakMap() {
+        return new ConcurrentReferenceHashMap<>(16, ReferenceType.WEAK);
     }
 
     public void onDeviceConnect(MqttPublishMessage mqttMsg) throws AdaptorException {
@@ -188,8 +196,8 @@ public class GatewaySessionHandler {
         }
     }
 
-    void writeAndFlush(MqttMessage mqttMessage) {
-        channel.writeAndFlush(mqttMessage);
+    ChannelFuture writeAndFlush(MqttMessage mqttMessage) {
+        return channel.writeAndFlush(mqttMessage);
     }
 
     int nextMsgId() {
@@ -227,21 +235,22 @@ public class GatewaySessionHandler {
                 if (result == null) {
                     return getDeviceCreationFuture(deviceName, deviceType);
                 } else {
-                    return toCompletedFuture(result);
+                    return Futures.immediateFuture(result);
                 }
             } finally {
                 deviceCreationLock.unlock();
             }
         } else {
-            return toCompletedFuture(result);
+            return Futures.immediateFuture(result);
         }
     }
 
     private ListenableFuture<GatewayDeviceSessionCtx> getDeviceCreationFuture(String deviceName, String deviceType) {
-        SettableFuture<GatewayDeviceSessionCtx> future = deviceFutures.get(deviceName);
-        if (future == null) {
-            final SettableFuture<GatewayDeviceSessionCtx> futureToSet = SettableFuture.create();
-            deviceFutures.put(deviceName, futureToSet);
+        final SettableFuture<GatewayDeviceSessionCtx> futureToSet = SettableFuture.create();
+        ListenableFuture<GatewayDeviceSessionCtx> future = deviceFutures.putIfAbsent(deviceName, futureToSet);
+        if (future != null) {
+            return future;
+        }
             try {
                 transportService.process(GetOrCreateDeviceFromGatewayRequestMsg.newBuilder()
                                 .setDeviceName(deviceName)
@@ -251,7 +260,7 @@ public class GatewaySessionHandler {
                         new TransportServiceCallback<GetOrCreateDeviceFromGatewayResponse>() {
                             @Override
                             public void onSuccess(GetOrCreateDeviceFromGatewayResponse msg) {
-                                GatewayDeviceSessionCtx deviceSessionCtx = new GatewayDeviceSessionCtx(GatewaySessionHandler.this, msg.getDeviceInfo(), msg.getDeviceProfile(), mqttQoSMap);
+                                GatewayDeviceSessionCtx deviceSessionCtx = new GatewayDeviceSessionCtx(GatewaySessionHandler.this, msg.getDeviceInfo(), msg.getDeviceProfile(), mqttQoSMap, transportService);
                                 if (devices.putIfAbsent(deviceName, deviceSessionCtx) == null) {
                                     log.trace("[{}] First got or created device [{}], type [{}] for the gateway session", sessionId, deviceName, deviceType);
                                     SessionInfoProto deviceSessionInfo = deviceSessionCtx.getSessionInfo();
@@ -259,8 +268,10 @@ public class GatewaySessionHandler {
                                     transportService.process(TransportProtos.TransportToDeviceActorMsg.newBuilder()
                                             .setSessionInfo(deviceSessionInfo)
                                             .setSessionEvent(DefaultTransportService.getSessionEventMsg(TransportProtos.SessionEvent.OPEN))
-                                            .setSubscribeToAttributes(TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().build())
-                                            .setSubscribeToRPC(TransportProtos.SubscribeToRPCMsg.newBuilder().build())
+                                            .setSubscribeToAttributes(TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder()
+                                                    .setSessionType(TransportProtos.SessionType.ASYNC).build())
+                                            .setSubscribeToRPC(TransportProtos.SubscribeToRPCMsg.newBuilder()
+                                                    .setSessionType(TransportProtos.SessionType.ASYNC).build())
                                             .build(), null);
                                 }
                                 futureToSet.set(devices.get(deviceName));
@@ -279,15 +290,6 @@ public class GatewaySessionHandler {
                 deviceFutures.remove(deviceName);
                 throw e;
             }
-        } else {
-            return future;
-        }
-    }
-
-    private ListenableFuture<GatewayDeviceSessionCtx> toCompletedFuture(GatewayDeviceSessionCtx result) {
-        SettableFuture<GatewayDeviceSessionCtx> future = SettableFuture.create();
-        future.set(result);
-        return future;
     }
 
     private int getMsgId(MqttPublishMessage mqttMsg) {
@@ -339,7 +341,7 @@ public class GatewaySessionHandler {
             for (Map.Entry<String, JsonElement> deviceEntry : jsonObj.entrySet()) {
                 String deviceName = deviceEntry.getKey();
                 Futures.addCallback(checkDeviceConnected(deviceName),
-                        new FutureCallback<GatewayDeviceSessionCtx>() {
+                        new FutureCallback<>() {
                             @Override
                             public void onSuccess(@Nullable GatewayDeviceSessionCtx deviceCtx) {
                                 if (!deviceEntry.getValue().isJsonArray()) {
@@ -350,6 +352,7 @@ public class GatewaySessionHandler {
                                     processPostTelemetryMsg(deviceCtx, postTelemetryMsg, deviceName, msgId);
                                 } catch (Throwable e) {
                                     log.warn("[{}][{}] Failed to convert telemetry: {}", gateway.getDeviceId(), deviceName, deviceEntry.getValue(), e);
+                                    channel.close();
                                 }
                             }
 
@@ -381,6 +384,7 @@ public class GatewaySessionHandler {
                                         processPostTelemetryMsg(deviceCtx, postTelemetryMsg, deviceName, msgId);
                                     } catch (Throwable e) {
                                         log.warn("[{}][{}] Failed to convert telemetry: {}", gateway.getDeviceId(), deviceName, msg, e);
+                                        channel.close();
                                     }
                                 }
 

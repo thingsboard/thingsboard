@@ -157,11 +157,11 @@ export class EntityKeysListComponent implements ControlValueAccessor, OnInit, Af
 
   add(event: MatChipInputEvent): void {
    if (!this.matAutocomplete.isOpen) {
-      const value = event.value;
-      if ((value || '').trim()) {
-        this.addKey(value.trim());
+      const value = (event.value || '').trim();
+      if (value) {
+        this.addKey(value);
       }
-      this.clear('');
+      this.clear('', document.activeElement === this.keyInput.nativeElement);
    }
   }
 
@@ -194,13 +194,15 @@ export class EntityKeysListComponent implements ControlValueAccessor, OnInit, Af
       map((data) => data ? data : [])) : of([]);
   }
 
-  clear(value: string = '') {
+  clear(value: string = '', emitEvent = true) {
     this.keyInput.nativeElement.value = value;
-    this.keysListFormGroup.get('key').patchValue(null, {emitEvent: true});
-    setTimeout(() => {
-      this.keyInput.nativeElement.blur();
-      this.keyInput.nativeElement.focus();
-    }, 0);
+    this.keysListFormGroup.get('key').patchValue(null, {emitEvent});
+    if (emitEvent) {
+      setTimeout(() => {
+        this.keyInput.nativeElement.blur();
+        this.keyInput.nativeElement.focus();
+      }, 0);
+    }
   }
 
 }

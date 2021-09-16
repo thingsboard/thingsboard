@@ -26,7 +26,9 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.data.SnmpDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.SnmpDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.transport.SessionMsgListener;
+import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
@@ -127,17 +129,21 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     }
 
     @Override
-    public void onAttributeUpdate(AttributeUpdateNotificationMsg attributeUpdateNotification) {
+    public void onAttributeUpdate(UUID sessionId, AttributeUpdateNotificationMsg attributeUpdateNotification) {
+        log.trace("[{}] Received attributes update notification to device", sessionId);
         snmpTransportContext.getSnmpTransportService().onAttributeUpdate(this, attributeUpdateNotification);
     }
 
     @Override
-    public void onRemoteSessionCloseCommand(SessionCloseNotificationProto sessionCloseNotification) {
+    public void onRemoteSessionCloseCommand(UUID sessionId, SessionCloseNotificationProto sessionCloseNotification) {
+        log.trace("[{}] Received the remote command to close the session: {}", sessionId, sessionCloseNotification.getMessage());
     }
 
     @Override
-    public void onToDeviceRpcRequest(ToDeviceRpcRequestMsg toDeviceRequest) {
-       snmpTransportContext.getSnmpTransportService().onToDeviceRpcRequest(this, toDeviceRequest);
+    public void onToDeviceRpcRequest(UUID sessionId, ToDeviceRpcRequestMsg toDeviceRequest) {
+        log.trace("[{}] Received RPC command to device", sessionId);
+        snmpTransportContext.getSnmpTransportService().onToDeviceRpcRequest(this, toDeviceRequest);
+        snmpTransportContext.getTransportService().process(getSessionInfo(), toDeviceRequest, RpcStatus.DELIVERED, TransportServiceCallback.EMPTY);
     }
 
     @Override

@@ -25,8 +25,10 @@ import org.thingsboard.server.gen.transport.TransportProtos.SessionCloseNotifica
 import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCredentialsProto;
+import org.thingsboard.server.gen.transport.TransportProtos.UplinkNotificationMsg;
 
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Created by ashvayka on 04.10.18.
@@ -35,13 +37,15 @@ public interface SessionMsgListener {
 
     void onGetAttributesResponse(GetAttributeResponseMsg getAttributesResponse);
 
-    void onAttributeUpdate(AttributeUpdateNotificationMsg attributeUpdateNotification);
+    void onAttributeUpdate(UUID sessionId, AttributeUpdateNotificationMsg attributeUpdateNotification);
 
-    void onRemoteSessionCloseCommand(SessionCloseNotificationProto sessionCloseNotification);
+    void onRemoteSessionCloseCommand(UUID sessionId, SessionCloseNotificationProto sessionCloseNotification);
 
-    void onToDeviceRpcRequest(ToDeviceRpcRequestMsg toDeviceRequest);
+    void onToDeviceRpcRequest(UUID sessionId, ToDeviceRpcRequestMsg toDeviceRequest);
 
     void onToServerRpcResponse(ToServerRpcResponseMsg toServerResponse);
+
+    default void onUplinkNotification(UplinkNotificationMsg notificationMsg){};
 
     default void onToTransportUpdateCredentials(ToTransportUpdateCredentialsProto toTransportUpdateCredentials){}
 

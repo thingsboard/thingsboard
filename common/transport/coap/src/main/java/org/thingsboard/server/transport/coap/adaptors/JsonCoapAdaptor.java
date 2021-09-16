@@ -23,9 +23,11 @@ import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
+import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.core.coap.Request;
 import org.eclipse.californium.core.coap.Response;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
@@ -101,10 +103,11 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
     }
 
     @Override
-    public Response convertToPublish(TransportProtos.ToServerRpcResponseMsg msg) throws AdaptorException {
+    public Response convertToPublish(boolean isConfirmable, TransportProtos.ToServerRpcResponseMsg msg) throws AdaptorException {
         Response response = new Response(CoAP.ResponseCode.CONTENT);
         JsonElement result = JsonConverter.toJson(msg);
         response.setPayload(result.toString());
+        response.setConfirmable(isConfirmable);
         return response;
     }
 
@@ -119,14 +122,28 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
     }
 
     @Override
-    public Response convertToPublish(TransportProtos.GetAttributeResponseMsg msg) throws AdaptorException {
-        if (msg.getClientAttributeListCount() == 0 && msg.getSharedAttributeListCount() == 0) {
-            return new Response(CoAP.ResponseCode.NOT_FOUND);
+    public Response convertToPublish(boolean isConfirmable, TransportProtos.GetAttributeResponseMsg msg) throws AdaptorException {
+        if (msg.getSharedStateMsg()) {
+            if (StringUtils.isEmpty(msg.getError())) {
+                Response response = new Response(CoAP.ResponseCode.CONTENT);
+                response.setConfirmable(isConfirmable);
+                TransportProtos.AttributeUpdateNotificationMsg notificationMsg = TransportProtos.AttributeUpdateNotificationMsg.newBuilder().addAllSharedUpdated(msg.getSharedAttributeListList()).build();
+                JsonObject result = JsonConverter.toJson(notificationMsg);
+                response.setPayload(result.toString());
+                return response;
+            } else {
+                return new Response(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);
+            }
         } else {
-            Response response = new Response(CoAP.ResponseCode.CONTENT);
-            JsonObject result = JsonConverter.toJson(msg);
-            response.setPayload(result.toString());
-            return response;
+            if (msg.getClientAttributeListCount() == 0 && msg.getSharedAttributeListCount() == 0) {
+                return new Response(CoAP.ResponseCode.NOT_FOUND);
+            } else {
+                Response response = new Response(CoAP.ResponseCode.CONTENT);
+                response.setConfirmable(isConfirmable);
+                JsonObject result = JsonConverter.toJson(msg);
+                response.setPayload(result.toString());
+                return response;
+            }
         }
     }
 
@@ -146,6 +163,11 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
             }
         }
         return payload;
+    }
+
+    @Override
+    public int getContentFormat() {
+        return MediaTypeRegistry.APPLICATION_JSON;
     }
 
 }

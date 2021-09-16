@@ -185,7 +185,7 @@ export class TimewindowComponent implements OnInit, OnDestroy, ControlValueAcces
     });
     if (isGtXs) {
       config.minWidth = '417px';
-      config.maxHeight = '500px';
+      config.maxHeight = '550px';
       const panelHeight = 375;
       const panelWidth = 417;
       const el = this.timewindowPanelOrigin.elementRef.nativeElement;

@@ -35,9 +35,11 @@ public final class RuleEngineDeviceRpcRequest {
     private final UUID requestUUID;
     private final String originServiceId;
     private final boolean oneway;
+    private final boolean persisted;
     private final String method;
     private final String body;
     private final long expirationTime;
     private final boolean restApiCall;
-
+    private final String additionalInfo;
+    private final Integer retries;
 }

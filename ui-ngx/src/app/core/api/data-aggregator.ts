@@ -16,16 +16,17 @@
 
 import { SubscriptionData, SubscriptionDataHolder } from '@app/shared/models/telemetry/telemetry.models';
 import {
-  AggregationType, calculateIntervalComparisonEndTime,
-  calculateIntervalEndTime, calculateIntervalStartEndTime,
+  AggregationType,
+  calculateIntervalComparisonEndTime,
+  calculateIntervalEndTime,
+  calculateIntervalStartEndTime,
   getCurrentTime,
-  getCurrentTimeForComparison, getTime,
+  getTime,
   SubscriptionTimewindow
 } from '@shared/models/time/time.models';
 import { UtilsService } from '@core/services/utils.service';
-import { deepClone } from '@core/utils';
+import { deepClone, isNumeric } from '@core/utils';
 import Timeout = NodeJS.Timeout;
-import * as moment_ from 'moment';
 
 export declare type onAggregatedData = (data: SubscriptionData, detectChanges: boolean) => void;
 
@@ -307,7 +308,7 @@ export class DataAggregator {
           }
           aggKeyData.delete(aggTimestamp);
           this.updatedData = true;
-        } else if (aggTimestamp < this.endTs) {
+        } else if (aggTimestamp < this.endTs || this.noAggregation) {
           const kvPair: [number, any] = [aggTimestamp, aggData.aggValue];
           keyData.push(kvPair);
         }
@@ -407,24 +408,11 @@ export class DataAggregator {
     }
   }
 
-  private isNumeric(val: any): boolean {
-    return (val - parseFloat( val ) + 1) >= 0;
-  }
-
   private convertValue(val: string): any {
-    if (!this.noAggregation || val && this.isNumeric(val)) {
+    if (!this.noAggregation || val && isNumeric(val) && Number(val).toString() === val) {
       return Number(val);
-    } else {
-      return val;
     }
-  }
-
-  private getCurrentTime() {
-    if (this.subsTw.timeForComparison) {
-      return getCurrentTimeForComparison(this.subsTw.timeForComparison as moment_.unitOfTime.DurationConstructor, this.subsTw.timezone);
-    } else {
-      return getCurrentTime(this.subsTw.timezone);
-    }
+    return val;
   }
 
 }

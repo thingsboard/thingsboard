@@ -149,7 +149,8 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
           entityType: EntityType.DEVICE,
           id: '123'
         },
-        name: 'TEST DEV1'
+        name: 'TEST DEV1',
+        label: ''
       },
       data: {},
       level: 2
@@ -289,7 +290,7 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
         const descriptors = this.ctx.actionsApi.getActionDescriptors('nodeSelected');
         if (descriptors.length) {
           const entity = selectedNode.data.nodeCtx.entity;
-          this.ctx.actionsApi.handleWidgetAction(event, descriptors[0], entity.id, entity.name, { nodeCtx: selectedNode.data.nodeCtx });
+          this.ctx.actionsApi.handleWidgetAction(event, descriptors[0], entity.id, entity.name,{ nodeCtx: selectedNode.data.nodeCtx }, entity.label);
         }
       }
     }
@@ -443,7 +444,7 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
             const dataPageData = subscription.dataPages[0];
             const childNodes: HierarchyNavTreeNode[] = [];
             datasourcesPageData.data.forEach((childDatasource, index) => {
-              childNodes.push(this.datasourceToNode(childDatasource as HierarchyNodeDatasource, dataPageData.data[index]));
+              childNodes.push(this.datasourceToNode(childDatasource as HierarchyNodeDatasource, dataPageData.data[index], nodeCtx));
             });
             nodeCtx.childrenNodesLoaded = true;
             childrenNodesLoadCb(this.prepareNodes(childNodes));

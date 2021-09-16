@@ -16,7 +16,7 @@
 
 import { FormattedData, MapProviders, ReplaceInfo } from '@home/components/widget/lib/maps/map-models';
 import {
-  createLabelFromDatasource,
+  createLabelFromDatasource, deepClone,
   hashCode,
   isDefined,
   isDefinedAndNotNull,
@@ -319,7 +319,7 @@ export const parseWithTranslation = {
 };
 
 export function parseData(input: DatasourceData[]): FormattedData[] {
-  return _(input).groupBy(el => el?.datasource.entityId + el?.datasource.entityType)
+  return _(input).groupBy(el => el?.datasource.entityName + el?.datasource.entityType)
     .values().value().map((entityArray, i) => {
       const obj: FormattedData = {
         entityName: entityArray[0]?.datasource?.entityName,
@@ -341,6 +341,22 @@ export function parseData(input: DatasourceData[]): FormattedData[] {
       });
       return obj;
     });
+}
+
+export function flatData(input: FormattedData[]): FormattedData {
+  let result: FormattedData = {} as FormattedData;
+  if (input.length) {
+    for (const toMerge of input) {
+      result = {...result, ...toMerge};
+    }
+    result.entityName =  input[0].entityName;
+    result.entityId =  input[0].entityId;
+    result.entityType =  input[0].entityType;
+    result.$datasource =  input[0].$datasource;
+    result.dsIndex =  input[0].dsIndex;
+    result.deviceType =  input[0].deviceType;
+  }
+  return result;
 }
 
 export function parseArray(input: DatasourceData[]): FormattedData[][] {
