@@ -308,7 +308,7 @@ export class DataAggregator {
           }
           aggKeyData.delete(aggTimestamp);
           this.updatedData = true;
-        } else if (aggTimestamp < this.endTs) {
+        } else if (aggTimestamp < this.endTs || this.noAggregation) {
           const kvPair: [number, any] = [aggTimestamp, aggData.aggValue];
           keyData.push(kvPair);
         }
