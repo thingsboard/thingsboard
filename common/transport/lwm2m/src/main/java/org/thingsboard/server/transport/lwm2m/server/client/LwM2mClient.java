@@ -46,7 +46,6 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -106,7 +105,6 @@ public class LwM2mClient implements Serializable {
     @Getter
     private Long pagingTransmissionWindow;
     @Getter
-    @Setter
     private Long edrxCycle;
     @Getter
     private Registration registration;
@@ -122,9 +120,9 @@ public class LwM2mClient implements Serializable {
     private boolean firstEdrxDownlink = true;
 
     @Getter
-    Set<ContentFormat> clientSupportContentFormats;
+    private Set<ContentFormat> clientSupportContentFormats;
     @Getter
-    ContentFormat defaultContentFormat;
+    private ContentFormat defaultContentFormat;
     @Getter
     private final AtomicInteger retryAttempts;
 
@@ -327,15 +325,18 @@ public class LwM2mClient implements Serializable {
         Collection<LwM2mResource> resources = ConcurrentHashMap.newKeySet();
         Map<Integer, ResourceModel> resourceModels = modelProvider.getObjectModel(registration)
                 .getObjectModel(pathIds.getObjectId()).resources;
-        if (params != null) {
+        if (params != null && params instanceof Map && ((Map<?, ?>) params).size() > 0) {
             resourceModels.forEach((resourceId, resourceModel) -> {
                 if (((Map) params).containsKey(String.valueOf(resourceId))) {
                     Object value = ((Map) params).get((String.valueOf(resourceId)));
-                    LwM2mResource resource = null;
+                    LwM2mResource resource;
                     if (resourceModel.multiple) {
-                        if (value instanceof LinkedHashMap) {
-                            Map values = convertMultiResourceValuesFromRpcBody((LinkedHashMap) value, resourceModel.type, pathRezIdVer);
+                        try {
+                            Map values = convertMultiResourceValuesFromRpcBody(value, resourceModel.type, pathRezIdVer);
                             resource = LwM2mMultipleResource.newResource(resourceId, (Map<Integer, ?>) values, resourceModel.type);
+                        } catch (Exception e) {
+                            throw new IllegalArgumentException("Resource id=" + resourceId + ", value = " + value + ", class = " +
+                                    value.getClass().getSimpleName() + "is bad. Value of Multi-Instance Resource must be in Json format!");
                         }
                     } else {
                         Object valueRez = value.getClass().getSimpleName().equals("Integer") ? ((Integer) value).longValue() : value;
@@ -353,8 +354,11 @@ public class LwM2mClient implements Serializable {
                 }
             });
         }
-        else {
+        else if (params == null) {
             throw new IllegalArgumentException("The value of this resource must not be null.");
+        }
+        else {
+            throw new IllegalArgumentException("The value of this resource must be in Map format and size > 0");
         }
         return resources;
     }

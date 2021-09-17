@@ -50,16 +50,13 @@ public enum LwM2mOperationType {
     WRITE_COMPOSITE(14, "WriteComposite", false, true),
     WRITE_ATTRIBUTES(15, "WriteAttributes", true),
     DELETE(16, "Delete", true),
-
-    // only for RPC
-    FW_UPDATE(17, "FirmwareUpdate", false),
-    //        FW_READ_INFO(18, "FirmwareReadInfo", false),
-    SW_UPDATE(19, "SoftwareUpdate", false),
-    //        SW_READ_INFO(20, "SoftwareReadInfo", false),
-    SW_UNINSTALL(21, "SoftwareUninstall", false),
-    CREATE(11, "Create", true);
-
-
+    CREATE(17, "Create", true);
+    // only for RPC - future
+//    FW_UPDATE(18, "FirmwareUpdate", false),
+//    FW_READ_INFO(19, "FirmwareReadInfo", false),
+//    SW_UPDATE(20, "SoftwareUpdate", false),
+//    SW_READ_INFO(21, "SoftwareReadInfo", false),
+//    SW_UNINSTALL(22, "SoftwareUninstall", false);
 
 
     @Getter

@@ -200,21 +200,20 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
     public BootstrapPolicy onRequestFailure(BootstrapSession bsSession,
                                             BootstrapDownlinkRequest<? extends LwM2mResponse> request, Throwable cause) {
         this.sendLogs (bsSession.getEndpoint(),
-                String.format("%s: %s %s failed because of %s for %s : %s", LOG_LWM2M_INFO,
-                        request.getClass().getSimpleName(), request.getPath().toString(), cause.toString(), bsSession.toString(), request.toString()));
+                String.format("%s: %s %s failed because of %s for %s : %s", LOG_LWM2M_INFO, request.getClass().getSimpleName(),
+                        request.getPath().toString(), cause.toString(), bsSession.toString(), request.toString()));
         return BootstrapPolicy.failed();
     }
 
     @Override
     public void end(BootstrapSession bsSession) {
-        this.sendLogs (bsSession.getEndpoint(),
-                String.format("%s: Bootstrap session finished : %s", LOG_LWM2M_INFO, bsSession.toString()));
+        this.sendLogs (bsSession.getEndpoint(), String.format("%s: Bootstrap session finished : %s", LOG_LWM2M_INFO, bsSession.toString()));
     }
 
     @Override
     public void failed(BootstrapSession bsSession, BootstrapFailureCause cause) {
-        this.sendLogs (bsSession.getEndpoint(),
-                String.format("%s: Bootstrap session failed by %s: %s", LOG_LWM2M_INFO, cause.toString(), bsSession.toString()));
+        this.sendLogs (bsSession.getEndpoint(), String.format("%s: Bootstrap session failed by %s: %s", LOG_LWM2M_INFO,
+                cause.toString(), bsSession.toString()));
     }
 
     private void sendLogs (String endpointName, String logMsg) {

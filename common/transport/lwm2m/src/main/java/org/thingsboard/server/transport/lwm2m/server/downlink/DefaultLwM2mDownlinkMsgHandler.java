@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.Link;
 import org.eclipse.leshan.core.LwM2m;
-import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.attributes.Attribute;
 import org.eclipse.leshan.core.attributes.AttributeSet;
 import org.eclipse.leshan.core.model.LwM2mModel;
@@ -79,7 +78,6 @@ import javax.annotation.PreDestroy;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -302,11 +300,13 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                 try {
                     WriteRequest downlink = null;
                     if (resourceModelWrite.multiple) {
-                        if (request.getValue() instanceof Map && ((Map) request.getValue()).size() > 0) {
+                        try {
+                            Map value = convertMultiResourceValuesFromRpcBody(request.getValue(), resourceModelWrite.type, request.getObjectId());
                             downlink = new WriteRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(),
-                                    (Map<Integer, ?>) request.getValue(), resourceModelWrite.type);
-                        } else {
-                            callback.onValidationError(toString(request), "Resource value is: " + request.getValue().getClass().getSimpleName() + ". Value of Multi-Instance Resource must be in Json format!");
+                                    value, resourceModelWrite.type);
+                        } catch (Exception e) {
+                            callback.onValidationError(toString(request), "Resource id=" + resultIds.toString() + ", value = " + request.getValue() +
+                                    ", class = " + request.getValue().getClass().getSimpleName() + "is bad. Value of Multi-Instance Resource must be in Json format!");
                         }
                     } else {
                         downlink = this.getWriteRequestSingleResource(resourceModelWrite.type, contentFormat,
@@ -368,12 +368,12 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                         ResourceModel resourceModelWrite = client.getResourceModel(request.getVersionedId(), this.config.getModelProvider());
                         if (resourceModelWrite != null) {
                             if (resourceModelWrite.multiple) {
-                                if (request.getValue() instanceof Map && ((Map) request.getValue()).size() > 0) {
-                                    Map value = convertMultiResourceValuesFromRpcBody((LinkedHashMap) request.getValue(), resourceModelWrite.type, request.getObjectId());
+                                try {
+                                    Map value = convertMultiResourceValuesFromRpcBody(request.getValue(), resourceModelWrite.type, request.getObjectId());
                                     downlink = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(),
                                             value, resourceModelWrite.type);
-                                } else {
-                                    callback.onValidationError(toString(request), "Resource value is bad. Format: " + request.getValue().getClass().getSimpleName() + ". Value of Multi-Instance Resource must be in Json format!");
+                                } catch (Exception e1) {
+                                    callback.onValidationError(toString(request), "Resource id=" + resultIds.toString() + ", value = " + request.getValue() + ", class = " + request.getValue().getClass().getSimpleName() + "is bad. Value of Multi-Instance Resource must be in Json format!");
                                 }
                             }
                         } else {

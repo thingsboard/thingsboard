@@ -83,7 +83,7 @@ public class SwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
 
     @Override
     public WriteResponse write(ServerIdentity identity, boolean replace, int resourceId, LwM2mResource value) {
-        log.warn("Write on Device resource /{}/{}/{}", getModel().id, getId(), resourceId);
+        log.info("Write on Device resource /{}/{}/{}", getModel().id, getId(), resourceId);
 
         switch (resourceId) {
             case 2:

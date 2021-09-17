@@ -16,10 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.utils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.leshan.core.attributes.Attribute;
@@ -47,6 +44,7 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportC
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.ota.OtaPackageKey;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
+import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.transport.lwm2m.config.LwM2mVersion;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mOtaConvert;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
@@ -57,18 +55,15 @@ import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdate
 import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateResult;
 import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateState;
 import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
-import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.eclipse.leshan.core.attributes.Attribute.DIMENSION;
 import static org.eclipse.leshan.core.attributes.Attribute.GREATER_THAN;
@@ -367,11 +362,9 @@ public class LwM2mTransportUtil {
         return String.format("%s %s", keyName, String.join(",", msgException)).trim();
     }
 
-    public static Map convertMultiResourceValuesFromRpcBody(LinkedHashMap value, ResourceModel.Type type, String versionedId) {
-        Gson gson = new Gson();
-        JsonParser JSON_PARSER = new JsonParser();
-        String json = gson.toJson(value, LinkedHashMap.class);
-        return convertMultiResourceValuesFromJson((JsonObject) JSON_PARSER.parse(json), type, versionedId);
+    public static Map convertMultiResourceValuesFromRpcBody(Object value, ResourceModel.Type type, String versionedId) throws Exception {
+            String valueJsonStr = JsonUtils.riteValueAsString(value);
+            return convertMultiResourceValuesFromJson((JsonObject) JsonUtils.parse(valueJsonStr), type, versionedId);
     }
 
     public static Map convertMultiResourceValuesFromJson(JsonObject newValProto, ResourceModel.Type type, String versionedId) {

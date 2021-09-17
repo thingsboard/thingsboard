@@ -169,8 +169,6 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
                     case DISCOVER_ALL:
                         sendDiscoverAllRequest(client, rpcRequest);
                         break;
-                    case FW_UPDATE:
-                        //TODO: implement and add break statement
                     default:
                         throw new IllegalArgumentException("Unsupported operation: " + operationType.name());
                 }
@@ -257,11 +255,16 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
     private void sendWriteReplaceRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
         RpcWriteReplaceRequest requestBody = JacksonUtil.fromString(requestMsg.getParams(), RpcWriteReplaceRequest.class);
         LwM2mPath path = new LwM2mPath(fromVersionedIdToObjectId(versionedId));
-        if (path.isResource() && requestBody.getValue() instanceof LinkedHashMap) {
+        if (path.isResource()) {
             ResourceModel resourceModel = client.getResourceModel(versionedId, this.config.getModelProvider());
             if (resourceModel != null && resourceModel.multiple) {
-                Map value = convertMultiResourceValuesFromRpcBody((LinkedHashMap) requestBody.getValue(), resourceModel.type, versionedId);
-                requestBody.setValue(value);
+                try {
+                    Map value = convertMultiResourceValuesFromRpcBody(requestBody.getValue(), resourceModel.type, versionedId);
+                    requestBody.setValue(value);
+                } catch (Exception e) {
+                    throw new IllegalArgumentException("Resource id=" + versionedId + ", value = " + requestBody.getValue() + ", class = " +
+                            requestBody.getValue().getClass().getSimpleName() + "is bad. Value of Multi-Instance Resource must be in Json format!");
+                }
             }
         }
         TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(versionedId)

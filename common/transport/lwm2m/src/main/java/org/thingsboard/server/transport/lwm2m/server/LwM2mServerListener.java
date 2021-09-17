@@ -98,7 +98,9 @@ public class LwM2mServerListener {
 
         @Override
         public void onError(Observation observation, Registration registration, Exception error) {
-            log.error("Unable to handle notification of [{}:{}] [{}]", observation.getRegistrationId(), observation.getPath(), error.getMessage());
+            if (error != null) {
+                log.debug("Unable to handle notification of [{}:{}] [{}]", observation.getRegistrationId(), observation.getPath(), error.getMessage());
+            }
         }
 
         @Override
