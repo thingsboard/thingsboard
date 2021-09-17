@@ -75,6 +75,41 @@
               <span class="label-wrapper">{{key.label}}</span>
             </mat-checkbox>
           </div>
+          <div class="input-field" *ngIf="key.settings.dataKeyValueType === 'JSON'">
+            <mat-form-field class="mat-block">
+              <mat-label>{{key.label}}</mat-label>
+              <input
+                [readonly]="key.settings.isEditable === 'readonly'"
+                [required]="key.settings.required"
+                matInput
+                type="text"
+                tb-json-to-string
+                formControlName="{{key.formId}}"
+              />
+              <button [disabled]="key.settings.isEditable === 'disabled' || key.settings.isEditable === 'readonly'"
+                      type="button"
+                      matSuffix
+                      mat-button
+                      mat-icon-button
+                      (click)="openEditJSONDialog($event, key.formId)">
+                <mat-icon>open_in_new</mat-icon>
+              </button>
+              <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
+                {{
+                  (
+                    getErrorMessageText(key.settings,'required')
+                    ?
+                    getErrorMessageText(key.settings,'required')
+                    :
+                    'value.json-value-required'
+                  ) | translate
+                }}
+              </mat-error>
+              <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('invalidJSON')">
+                {{ 'value.json-value-invalid' | translate }}
+              </mat-error>
+            </mat-form-field>
+          </div>
           <div class="input-field mat-block" *ngIf="key.settings.dataKeyValueType === 'booleanSwitch'">
             <mat-slide-toggle formControlName="{{key.formId}}"
                               (change)="inputChanged(source, key)">

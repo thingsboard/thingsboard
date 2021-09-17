@@ -349,6 +349,7 @@ import { markedOptionsFactory } from '@shared/components/markdown.factory';
     JsFuncComponent,
     FabTriggerDirective,
     FabActionsDirective,
+    TbJsonToStringDirective,
     FabToolbarComponent,
     WidgetsBundleSelectComponent,
     ValueInputComponent,

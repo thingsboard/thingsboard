@@ -24,7 +24,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DataKey, Datasource, DatasourceData, DatasourceType, WidgetConfig } from '@shared/models/widget.models';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
-import { createLabelFromDatasource, isDefined, isDefinedAndNotNull, isEqual, isUndefined } from '@core/utils';
+import { createLabelFromDatasource, isDefined, isDefinedAndNotNull, isEqual, isString, isUndefined } from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
 import * as _moment from 'moment';
 import { FormBuilder, FormGroup, ValidatorFn, Validators } from '@angular/forms';
@@ -35,12 +35,14 @@ import { forkJoin, Observable, Subject } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { takeUntil } from 'rxjs/operators';
+import { JsonObjectEditDialogComponent, JsonObjectEditDialogData } from "@shared/components/dialog/json-object-edit-dialog.component";
+import { MatDialog } from "@angular/material/dialog";
 
 type FieldAlignment = 'row' | 'column';
 
 type MultipleInputWidgetDataKeyType = 'server' | 'shared' | 'timeseries';
 type MultipleInputWidgetDataKeyValueType = 'string' | 'double' | 'integer' |
-                                           'booleanCheckbox' | 'booleanSwitch' |
+                                           'JSON'| 'booleanCheckbox' | 'booleanSwitch' |
                                            'dateTime' | 'date' | 'time';
 type MultipleInputWidgetDataKeyEditableType = 'editable' | 'disabled' | 'readonly';
 
@@ -132,7 +134,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
               private utils: UtilsService,
               private fb: FormBuilder,
               private attributeService: AttributeService,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              private dialog: MatDialog) {
     super(store);
   }
 
@@ -343,6 +346,9 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
             case 'booleanCheckbox':
             case 'booleanSwitch':
               value = (keyData[0][1] === 'true');
+              break;
+            case 'JSON':
+              value = isString(keyData[0][1]) ? JSON.parse(keyData[0][1]) : keyData[0][1];
               break;
             default:
               value = keyData[0][1];
@@ -596,5 +602,26 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
       }
     });
     this.multipleInputFormGroup.markAsPristine();
+  }
+
+  openEditJSONDialog($event: Event, formKey: string) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const formControl = this.multipleInputFormGroup.controls[formKey];
+    this.dialog.open<JsonObjectEditDialogComponent, JsonObjectEditDialogData, object>(JsonObjectEditDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        jsonValue: formControl.value
+      }
+    }).afterClosed().subscribe(
+      (res) => {
+        if (res && !isEqual(res, formControl.value)) {
+          formControl.patchValue(res);
+          formControl.markAsDirty();
+        }
+      }
+    );
   }
 }
