@@ -190,7 +190,7 @@ export const digitalGaugeSettingsSchema: JsonSettingsSchema = {
         }
       },
       fixedLevelColors: {
-        title: 'The colors for the indicator using boundary values',
+        title: 'The colors for the indicator using boundary values in percents',
         type: 'array',
         items: {
           title: 'levelColor',
@@ -214,8 +214,9 @@ export const digitalGaugeSettingsSchema: JsonSettingsSchema = {
                   type: 'string'
                 },
                 value: {
-                  title: '[From] Value (if predefined value is selected)',
-                  type: 'number'
+                  title: '[From] Value, % (if predefined value is selected)',
+                  type: 'number',
+                  default: 0
                 }
               }
             },
@@ -237,8 +238,9 @@ export const digitalGaugeSettingsSchema: JsonSettingsSchema = {
                   type: 'string'
                 },
                 value: {
-                  title: '[To] Value (if predefined value is selected)',
-                  type: 'number'
+                  title: '[To] Value, % (if predefined value is selected)',
+                  type: 'number',
+                  default: 100
                 }
               }
             },
@@ -246,7 +248,8 @@ export const digitalGaugeSettingsSchema: JsonSettingsSchema = {
               title: 'Color',
               type: 'string'
             }
-          }
+          },
+          required: ['color'],
         }
       },
       showTicks: {
