@@ -42,6 +42,8 @@ import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
+import org.thingsboard.server.common.data.query.EntityFilterType;
+import org.thingsboard.server.common.data.query.RelationsQueryFilter;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -228,6 +230,8 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
             throw new IncorrectParameterException("Query entity filter must be specified.");
         } else if (query.getEntityFilter().getType() == null) {
             throw new IncorrectParameterException("Query entity filter type must be specified.");
+        } else if (query.getEntityFilter().getType().equals(EntityFilterType.RELATIONS_QUERY)) {
+            validateRelationQuery((RelationsQueryFilter) query.getEntityFilter());
         }
     }
 
@@ -246,4 +250,12 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         }
     }
 
+    private static void validateRelationQuery(RelationsQueryFilter queryFilter) {
+        if(queryFilter.isMultiRoot() && queryFilter.getMultiRootEntities().isEmpty()) {
+            throw new IncorrectParameterException("Multi-root relation query filter should contain root entities");
+        }
+        if(!queryFilter.isMultiRoot() && queryFilter.getRootEntity() == null) {
+            throw new IncorrectParameterException("Relation query filter root entity should not be blank");
+        }
+    }
 }

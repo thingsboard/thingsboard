@@ -220,6 +220,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             " THEN (select additional_info from edge where id = entity_id)" +
             " END as additional_info";
 
+    private static final String SELECT_RELATED_PARENT_ID = "entity.parentId AS parentId";
+
     private static final String SELECT_API_USAGE_STATE = "(select aus.id, aus.created_time, aus.tenant_id, aus.entity_id, " +
             "coalesce((select title from tenant where id = aus.entity_id), (select title from customer where id = aus.entity_id)) as name " +
             "from api_usage_state as aus)";
@@ -242,16 +244,16 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     private static final String HIERARCHICAL_QUERY_TEMPLATE = " FROM (WITH RECURSIVE related_entities(from_id, from_type, to_id, to_type, relation_type, lvl) AS (" +
             " SELECT from_id, from_type, to_id, to_type, relation_type, 1 as lvl" +
             " FROM relation" +
-            " WHERE $in_id = :relation_root_id and $in_type = :relation_root_type and relation_type_group = 'COMMON'" +
+            " WHERE $in_id $rootIdCondition and $in_type = :relation_root_type and relation_type_group = 'COMMON'" +
             " UNION ALL" +
             " SELECT r.from_id, r.from_type, r.to_id, r.to_type, r.relation_type, lvl + 1" +
             " FROM relation r" +
             " INNER JOIN related_entities re ON" +
             " r.$in_id = re.$out_id and r.$in_type = re.$out_type and" +
             " relation_type_group = 'COMMON' %s)" +
-            " SELECT re.$out_id entity_id, re.$out_type entity_type, max(re.lvl) lvl" +
+            " SELECT re.$out_id entity_id, re.$out_type entity_type, re.$in_id parentId, max(re.lvl) lvl" +
             " from related_entities re" +
-            " %s GROUP BY entity_id, entity_type) entity";
+            " %s GROUP BY entity_id, entity_type, parentId) entity";
     private static final String HIERARCHICAL_TO_QUERY_TEMPLATE = HIERARCHICAL_QUERY_TEMPLATE.replace("$in", "to").replace("$out", "from");
     private static final String HIERARCHICAL_FROM_QUERY_TEMPLATE = HIERARCHICAL_QUERY_TEMPLATE.replace("$in", "from").replace("$out", "to");
 
@@ -562,6 +564,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 + (entityType.equals(EntityType.ENTITY_VIEW) ? "" : ", label ")
                 + "FROM " + entityType.name() + " WHERE id in ( SELECT entity_id";
         String from = getQueryTemplate(entityFilter.getDirection());
+        from = from.replace("$rootIdCondition", "= :relation_root_id");
         String whereFilter = " WHERE";
         if (!StringUtils.isEmpty(entityFilter.getRelationType())) {
             ctx.addStringParameter("where_relation_type", entityFilter.getRelationType());
@@ -604,11 +607,20 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 + SELECT_TYPE + ", " + SELECT_NAME + ", " + SELECT_LABEL + ", " +
                 SELECT_FIRST_NAME + ", " + SELECT_LAST_NAME + ", " + SELECT_EMAIL + ", " + SELECT_REGION + ", " +
                 SELECT_TITLE + ", " + SELECT_COUNTRY + ", " + SELECT_STATE + ", " + SELECT_CITY + ", " +
-                SELECT_ADDRESS + ", " + SELECT_ADDRESS_2 + ", " + SELECT_ZIP + ", " + SELECT_PHONE + ", " + SELECT_ADDITIONAL_INFO +
+                SELECT_ADDRESS + ", " + SELECT_ADDRESS_2 + ", " + SELECT_ZIP + ", " + SELECT_PHONE + ", " +
+                SELECT_ADDITIONAL_INFO + ", " + SELECT_RELATED_PARENT_ID +
                 ", entity.entity_type as entity_type";
         String from = getQueryTemplate(entityFilter.getDirection());
-        ctx.addUuidParameter("relation_root_id", rootId.getId());
-        ctx.addStringParameter("relation_root_type", rootId.getEntityType().name());
+
+        if(entityFilter.isMultiRoot()) {
+            ctx.addUuidListParameter("relation_root_ids", entityFilter.getMultiRootEntities().stream().map(EntityId::getId).collect(Collectors.toList()));
+            ctx.addStringParameter("relation_root_type", entityFilter.getMultiRootEntities().stream().map(EntityId::getEntityType).findFirst().get().name());
+            from = from.replace("$rootIdCondition", "in (:relation_root_ids)");
+        } else {
+            ctx.addUuidParameter("relation_root_id", rootId.getId());
+            ctx.addStringParameter("relation_root_type", rootId.getEntityType().name());
+            from = from.replace("$rootIdCondition", "= :relation_root_id");
+        }
 
         StringBuilder whereFilter = new StringBuilder();
 
@@ -790,7 +802,11 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             case EDGE_SEARCH_QUERY:
                 return EntityType.EDGE;
             case RELATIONS_QUERY:
-                return ((RelationsQueryFilter) entityFilter).getRootEntity().getEntityType();
+                RelationsQueryFilter rgf = (RelationsQueryFilter) entityFilter;
+                if(rgf.isMultiRoot()) {
+                    return rgf.getMultiRootEntities().iterator().next().getEntityType();
+                }
+                return rgf.getRootEntity().getEntityType();
             case API_USAGE_STATE:
                 return EntityType.API_USAGE_STATE;
             default:

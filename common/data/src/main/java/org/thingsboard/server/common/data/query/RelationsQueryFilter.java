@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 
 import java.util.List;
+import java.util.Set;
 
 @Data
 public class RelationsQueryFilter implements EntityFilter {
@@ -31,6 +32,8 @@ public class RelationsQueryFilter implements EntityFilter {
     }
 
     private EntityId rootEntity;
+    private boolean isMultiRoot;
+    private Set<EntityId> multiRootEntities;
     private EntitySearchDirection direction;
     private List<RelationEntityTypeFilter> filters;
     private int maxLevel;
