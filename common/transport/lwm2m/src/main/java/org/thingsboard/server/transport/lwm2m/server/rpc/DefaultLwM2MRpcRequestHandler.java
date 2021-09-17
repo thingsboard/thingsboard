@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.rpc;
 
+import com.google.gson.JsonSyntaxException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.ResponseCode;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
@@ -103,10 +105,6 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
             if (operationType.isHasObjectId()) {
                 LwM2MRpcRequestHeader header = JacksonUtil.fromString(rpcRequest.getParams(), LwM2MRpcRequestHeader.class);
                 String objectId = getIdFromParameters(client, header);
-                ContentFormat contentFormat = null;
-                if (StringUtils.isNotEmpty(header.getContentFormat())) {
-                    contentFormat = ContentFormat.fromName(header.getContentFormat());
-                }
                 switch (operationType) {
                     case READ:
                         sendReadRequest(client, rpcRequest, objectId);
@@ -142,7 +140,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
                         throw new IllegalArgumentException("Unsupported operation: " + operationType.name());
                 }
             } else if (operationType.isComposite()) {
-                ContentFormat contentFormatComposite = clientContext.getContentFormatComposite(client);
+                ContentFormat contentFormatComposite = this.getContentFormatComposite(client);
                 if (contentFormatComposite != null) {
                     switch (operationType) {
                         case READ_COMPOSITE:
@@ -305,14 +303,21 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
                 new LwM2mPath(fromVersionedIdToObjectId(key.toString()));
                 versionedId = key.toString();
             } catch (Exception e) {
-                versionedId = clientContext.getObjectIdByKeyNameFromProfile(client, key.toString(), true);
+                versionedId = clientContext.getObjectIdByKeyNameFromProfile(client, key.toString());
             }
             // validate value. Must be only primitive, not Json
-            if (value instanceof LinkedHashMap) {
+            try {
+                JsonUtils.parse(value.toString());
                 throw new IllegalArgumentException(String.format("nodes: %s is not validate value. " +
                         "The WriteComposite operation is only used for SingleResources or/and ResourceInstance.", nodes.toString()));
-            } else {
-                newNodes.put(fromVersionedIdToObjectId(versionedId), value);
+            } catch (JsonSyntaxException jse) {
+//                if (value instanceof LinkedHashMap) {
+//                    throw new IllegalArgumentException(String.format("nodes: %s is not validate value. " +
+//                            "The WriteComposite operation is only used for SingleResources or/and ResourceInstance.", nodes.toString()));
+//                }
+                if (versionedId != null) {
+                    newNodes.put(fromVersionedIdToObjectId(versionedId), value);
+                }
             }
         });
         return newNodes;
@@ -342,7 +347,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
     private String getIdFromParameters(LwM2mClient client, LwM2MRpcRequestHeader header) {
         String targetId;
         if (StringUtils.isNotEmpty(header.getKey())) {
-            targetId = clientContext.getObjectIdByKeyNameFromProfile(client, header.getKey(), false);
+            targetId = clientContext.getObjectIdByKeyNameFromProfile(client, header.getKey());
         } else if (StringUtils.isNotEmpty(header.getId())) {
             targetId = header.getId();
         } else {
@@ -356,7 +361,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         if (requestParams.getKeys() != null && requestParams.getKeys().length > 0) {
             Set<String> targetIds = ConcurrentHashMap.newKeySet();
             for (String key : requestParams.getKeys()) {
-                String targetId = clientContext.getObjectIdByKeyNameFromProfile(client, key, true);
+                String targetId = clientContext.getObjectIdByKeyNameFromProfile(client, key);
                 if (targetId != null) {
                     targetIds.add(targetId);
                 }
@@ -383,5 +388,17 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
 
     public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg toServerResponse) {
         log.info("[{}] toServerRpcResponse", toServerResponse);
+    }
+
+    private ContentFormat getContentFormatComposite(LwM2mClient client) {
+        if (client.getClientSupportContentFormats().contains(ContentFormat.SENML_JSON)) {
+            return ContentFormat.SENML_JSON;
+        }
+        else if (client.getClientSupportContentFormats().contains(ContentFormat.SENML_CBOR)) {
+            return ContentFormat.SENML_CBOR;
+        }
+        else {
+            return null;
+        }
     }
 }

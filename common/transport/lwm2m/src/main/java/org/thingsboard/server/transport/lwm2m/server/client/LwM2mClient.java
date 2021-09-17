@@ -61,7 +61,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.LWM2M_OBJECT_VERSION_DEFAULT;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.convertMultiResourceValuesFromRpcBody;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.convertObjectIdToVersionedId;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.equalsResourceTypeGetSimpleName;
@@ -277,7 +276,7 @@ public class LwM2mClient implements Serializable {
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer));
         String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
         String verRez = getVerFromPathIdVerOrId(pathIdVer);
-        return verRez == null || verRez.equals(verSupportedObject) ? modelProvider.getObjectModel(registration)
+        return verRez != null && verRez.equals(verSupportedObject) ? modelProvider.getObjectModel(registration)
                 .getResourceModel(pathIds.getObjectId(), pathIds.getResourceId()) : null;
     }
 
@@ -294,7 +293,7 @@ public class LwM2mClient implements Serializable {
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer));
         String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
         String verRez = getVerFromPathIdVerOrId(pathIdVer);
-        return verRez == null || verRez.equals(verSupportedObject) ? modelProvider.getObjectModel(registration)
+        return verRez != null && verRez.equals(verSupportedObject) ? modelProvider.getObjectModel(registration)
                 .getObjectModel(pathIds.getObjectId()) : null;
     }
 
@@ -339,7 +338,7 @@ public class LwM2mClient implements Serializable {
                                     value.getClass().getSimpleName() + "is bad. Value of Multi-Instance Resource must be in Json format!");
                         }
                     } else {
-                        Object valueRez = value.getClass().getSimpleName().equals("Integer") ? ((Integer) value).longValue() : value;
+                        Object valueRez = value instanceof Integer ? ((Integer) value).longValue() : value;
                         resource = LwM2mSingleResource.newResource(resourceId,
                                 converter.convertValue(valueRez, equalsResourceTypeGetSimpleName(value), resourceModel.type, pathIds), resourceModel.type);
                     }
@@ -370,8 +369,7 @@ public class LwM2mClient implements Serializable {
             return String.format("Specified object id %s absent in the list supported objects of the client or is security object!", pathIds.getObjectId());
         } else {
             String verRez = getVerFromPathIdVerOrId(path);
-            if ((verRez != null && !verRez.equals(verSupportedObject)) ||
-                    (verRez == null && !LWM2M_OBJECT_VERSION_DEFAULT.equals(verSupportedObject))) {
+            if (verRez == null || !verRez.equals(verSupportedObject)) {
                 return String.format("Specified resource id %s is not valid version! Must be version: %s", path, verSupportedObject);
             }
         }
@@ -425,23 +423,17 @@ public class LwM2mClient implements Serializable {
         }
     }
 
-    private Set<ContentFormat> clientSupportContentFormat(Registration registration) {
+    static private Set<ContentFormat> clientSupportContentFormat(Registration registration) {
         Set<ContentFormat> contentFormats = new HashSet<>();
-        if (registration == null) {
-            contentFormats.add(ContentFormat.DEFAULT);
-        } else {
-            String code = Arrays.stream(registration.getObjectLinks()).filter(link -> link.getUrl().equals("/")).
-                    findFirst().get().getAttributes().get("ct");
-            if (code != null) {
-                Set<ContentFormat> codes = Stream.of(code.replaceAll("\"", "").split(" ", -1))
-                        .map(String::trim)
-                        .map(Integer::parseInt)
-                        .map(ContentFormat::fromCode)
-                        .collect(Collectors.toSet());
-                contentFormats.addAll(codes);
-            } else {
-                contentFormats.add(ContentFormat.DEFAULT);
-            }
+        contentFormats.add(ContentFormat.DEFAULT);
+        String code = Arrays.stream(registration.getObjectLinks()).filter(link -> link.getUrl().equals("/")).findFirst().get().getAttributes().get("ct");
+        if (code != null) {
+            Set<ContentFormat> codes = Stream.of(code.replaceAll("\"", "").split(" ", -1))
+                    .map(String::trim)
+                    .map(Integer::parseInt)
+                    .map(ContentFormat::fromCode)
+                    .collect(Collectors.toSet());
+            contentFormats.addAll(codes);
         }
         return contentFormats;
     }

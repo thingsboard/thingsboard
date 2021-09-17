@@ -63,7 +63,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.eclipse.leshan.core.attributes.Attribute.DIMENSION;
 import static org.eclipse.leshan.core.attributes.Attribute.GREATER_THAN;
@@ -220,7 +219,7 @@ public class LwM2mTransportUtil {
         } catch (Exception e) {
             return null;
         }
-        return null;
+        return LWM2M_OBJECT_VERSION_DEFAULT;
     }
 
     public static String validPathIdVer(String pathIdVer, Registration registration) throws
@@ -352,14 +351,6 @@ public class LwM2mTransportUtil {
         if (!msgExceptionStr.isEmpty()) {
             throw new IllegalArgumentException(msgExceptionStr);
         }
-    }
-
-    public static String getMsgException(String keyName, Set<String> msgException) {
-        if (msgException.size() == 1) {
-            msgException.add(" is not configured in the device profile!");
-        }
-        msgException.remove("");
-        return String.format("%s %s", keyName, String.join(",", msgException)).trim();
     }
 
     public static Map convertMultiResourceValuesFromRpcBody(Object value, ResourceModel.Type type, String versionedId) throws Exception {

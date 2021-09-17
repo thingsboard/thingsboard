@@ -23,8 +23,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by Valerii Sosliuk on 5/12/2017.
@@ -126,22 +126,35 @@ public class JacksonUtil {
     }
 
 
+    /**
+     *
+     * @param {bootstrap:client:host, client, client:port, client:endpoint}
+     * @param ":"
+     * @return
+     * - "bootstrap:client:host"
+     * -- if in nodeCredentialsValue is absent:
+     * --- "bootstrap" or "bootstrap:client" or "bootstrap:client:host" -> return "host"
+     * -- if in nodeCredentialsValue is absent:
+     * --- "client:port"  -> return "port"
+     * -- if the nodeCredentialsValue contains:
+     * --- "client" and "client:port" -> "port" not add to Set
+     */
     public static String validateFieldsToTree(JsonNode nodeCredentialsValue, String[] fields, String delimiter) {
         try {
-            Set msgSet = ConcurrentHashMap.newKeySet();
+            StringBuilder msgSet = new StringBuilder();
             for (String field : fields) {
                 String[] keys = field.split(delimiter);
                 JsonNode nodeVal = nodeCredentialsValue;
                 for (String key : keys) {
                     if (!nodeVal.hasNonNull(key)) {
-                        msgSet.add(keys[keys.length - 1]);
+                        msgSet.append(" " + keys[keys.length - 1]);
                         break;
                     } else {
                         nodeVal = nodeVal.get(key);
                     }
                 }
             }
-            return String.join(", ", msgSet);
+            return msgSet.toString().trim();
         } catch (Exception e) {
             throw new IllegalArgumentException(e);
         }

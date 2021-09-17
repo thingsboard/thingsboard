@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.node.LwM2mPath;
-import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -58,7 +57,6 @@ import java.util.function.Predicate;
 
 import static org.eclipse.leshan.core.SecurityMode.NO_SEC;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.convertObjectIdToVersionedId;
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.getMsgException;
 
 @Slf4j
 @Service
@@ -289,14 +287,16 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     }
 
     @Override
-    public String getObjectIdByKeyNameFromProfile(LwM2mClient client, String keyName, boolean isCompositeOperation) {
+    public String getObjectIdByKeyNameFromProfile(LwM2mClient client, String keyName) {
         Lwm2mDeviceProfileTransportConfiguration profile = getProfile(client.getProfileId());
-        Set<String> msgException = ConcurrentHashMap.newKeySet();
-        msgException.add("");
-        return profile.getObserveAttr().getKeyName().entrySet().stream()
-                .filter(e -> e.getValue().equals(keyName) && (isCompositeOperation || !msgException.add(client.isValidObjectVersion(e.getKey())))).findFirst().orElseThrow(
-                        () -> new IllegalArgumentException(getMsgException (keyName, msgException))
-                ).getKey();
+        for (Map.Entry<String, String> entry : profile.getObserveAttr().getKeyName().entrySet()) {
+            String k = entry.getKey();
+            String v = entry.getValue();
+            if (v.equals(keyName) && client.isValidObjectVersion(k).isEmpty()) {
+                return   k;
+            }
+        }
+        throw new IllegalArgumentException(keyName + " is not configured in the device profile!");
     }
 
     public Registration getRegistration(String registrationId) {
@@ -408,12 +408,6 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     @Override
     public LwM2mClient getClientByDeviceId(UUID deviceId) {
         return lwM2mClientsByRegistrationId.values().stream().filter(e -> deviceId.equals(e.getDeviceId())).findFirst().orElse(null);
-    }
-
-    @Override
-    public ContentFormat getContentFormatComposite(LwM2mClient client) {
-        return client.getClientSupportContentFormats().contains(ContentFormat.SENML_JSON) ? ContentFormat.SENML_JSON :
-                client.getClientSupportContentFormats().contains(ContentFormat.SENML_CBOR) ? ContentFormat.SENML_CBOR : null;
     }
 
     @Override

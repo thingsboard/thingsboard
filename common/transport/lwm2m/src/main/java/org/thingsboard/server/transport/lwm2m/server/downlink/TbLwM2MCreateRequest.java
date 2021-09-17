@@ -30,7 +30,7 @@ public class TbLwM2MCreateRequest extends AbstractTbLwM2MTargetedDownlinkRequest
     @Getter
     private final ContentFormat objectContentFormat;
     @Getter
-    private final Map<String, Object> nodes;;
+    private final Map<String, Object> nodes;
 
     @Builder
     private TbLwM2MCreateRequest(String versionedId, long timeout, Object value, ContentFormat objectContentFormat, Map<String, Object> nodes) {
@@ -44,7 +44,4 @@ public class TbLwM2MCreateRequest extends AbstractTbLwM2MTargetedDownlinkRequest
     public LwM2mOperationType getType() {
         return LwM2mOperationType.CREATE;
     }
-
-
-
 }

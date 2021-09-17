@@ -17,10 +17,7 @@ package org.thingsboard.server.transport.lwm2m.server.downlink;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.ResponseCode;
-import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.response.LwM2mResponse;
-import org.eclipse.leshan.core.response.ReadResponse;
-import org.eclipse.leshan.core.util.Hex;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 
@@ -50,40 +47,22 @@ public abstract class TbLwM2MTargetedCallback<R, T> extends AbstractTbLwM2MReque
     @Override
     public void onSuccess(R request, T response) {
         //TODO convert camelCase to "camel case" using .split("(?<!(^|[A-Z]))(?=[A-Z])|(?<!^)(?=[A-Z][a-z])")
-        String requestName = request.getClass().getSimpleName();
-        String responseStr =  response.toString();
-        int code = 0;
-        if (response instanceof ReadResponse) {
-            responseStr = responseToString ((ReadResponse) response);
-            code = ((ReadResponse) response).getCode().getCode();
-        }
-        else if (response instanceof LwM2mResponse) {
-            code = ((LwM2mResponse) response).getCode().getCode();
-        }
-        if (code >= ResponseCode.BAD_REQUEST.getCode()) {
-            log.error("[{}] [{}] [{}] failed to process successful response [{}] ", client.getEndpoint(), requestName, versionedId != null ? versionedId : Arrays.toString(versionedIds), responseStr);
-            logService.log(client, String.format("[%s]: %s [%s] failed to process successful. Result: %s", LOG_LWM2M_ERROR, requestName, versionedId != null ? versionedId : Arrays.toString(versionedIds), responseStr));
-        }
-        else {
-            log.trace("[{}] {} [{}] successful: {}", client.getEndpoint(), requestName, versionedId != null ? versionedId : versionedIds, responseStr);
-            logService.log(client, String.format("[%s]: %s [%s] successful. Result: %s", LOG_LWM2M_INFO, requestName, versionedId != null ? versionedId : Arrays.toString(versionedIds), responseStr));
+        if (response instanceof LwM2mResponse) {
+            logForBadResponse(((LwM2mResponse) response).getCode().getCode(), response.toString(), request.getClass().getSimpleName());
         }
     }
 
-    private String responseToString (ReadResponse response) {
-        if (response.getContent() instanceof LwM2mSingleResource) {
-            if (((LwM2mSingleResource) response.getContent()).getType().name().equals("OPAQUE")) {
-                if (((byte[])((LwM2mSingleResource) response.getContent()).getValue()).length > 0) {
-                    int len = ((byte[])((LwM2mSingleResource) response.getContent()).getValue()).length;
-                    String valueReplace = len + "Bytes";
-                    String valueStr = Hex.encodeHexString((byte[]) (((LwM2mSingleResource) response.getContent()).getValue()));
-                    return response.toString().replace(valueReplace, valueStr);
-                }
-            }
-            return response.toString();
-        }
-        else {
-           return response.toString();
+    public void logForBadResponse(int code, String responseStr, String requestName) {
+        if (code > ResponseCode.CONTENT_CODE) {
+            log.error("[{}] [{}] [{}] failed to process successful response [{}] ", client.getEndpoint(), requestName,
+                    versionedId != null ? versionedId : Arrays.toString(versionedIds), responseStr);
+            logService.log(client, String.format("[%s]: %s [%s] failed to process successful. Result: %s", LOG_LWM2M_ERROR,
+                    requestName, versionedId != null ? versionedId : Arrays.toString(versionedIds), responseStr));
+        } else {
+            log.trace("[{}] {} [{}] successful: {}", client.getEndpoint(), requestName, versionedId != null ?
+                    versionedId : versionedIds, responseStr);
+            logService.log(client, String.format("[%s]: %s [%s] successful. Result: %s", LOG_LWM2M_INFO, requestName,
+                    versionedId != null ? versionedId : Arrays.toString(versionedIds), responseStr));
         }
     }
 }

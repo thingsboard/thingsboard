@@ -194,7 +194,7 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
         Map <String, TransportProtos.TsKvProto> attributesUpdate =  new ConcurrentHashMap<>();
         tsKvProtos.forEach(tsKvProto -> {
             try {
-                String pathIdVer = clientContext.getObjectIdByKeyNameFromProfile(lwM2MClient, tsKvProto.getKv().getKey(), false);
+                String pathIdVer = clientContext.getObjectIdByKeyNameFromProfile(lwM2MClient, tsKvProto.getKv().getKey());
                 if (pathIdVer != null) {
                     // #1.1
                     if (lwM2MClient.getSharedAttributes().containsKey(pathIdVer)) {
