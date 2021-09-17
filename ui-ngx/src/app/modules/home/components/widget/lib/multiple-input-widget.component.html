@@ -79,12 +79,14 @@
             <mat-form-field class="mat-block">
               <mat-label>{{key.label}}</mat-label>
               <input
-                [readonly]="key.settings.isEditable === 'readonly'"
-                [required]="key.settings.required"
                 matInput
                 type="text"
-                tb-json-to-string
                 formControlName="{{key.formId}}"
+                tb-json-to-string
+                [readonly]="key.settings.isEditable === 'readonly'"
+                [required]="key.settings.required"
+                (focus)="key.isFocused = true; focusInputElement($event)"
+                (blur)="key.isFocused = false; inputChanged(source, key)"
               />
               <button [disabled]="key.settings.isEditable === 'disabled' || key.settings.isEditable === 'readonly'"
                       type="button"
