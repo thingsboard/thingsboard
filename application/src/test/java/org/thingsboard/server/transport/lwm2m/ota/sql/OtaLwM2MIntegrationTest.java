@@ -137,7 +137,7 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         createDeviceProfile(transportConfiguration);
         NoSecClientCredentials credentials = createNoSecClientCredentials(endpoint);
         final Device device = createDevice(credentials);
-        createNewClient(SECURITY, COAP_CONFIG);
+        createNewClient(SECURITY, COAP_CONFIG, false);
 
         Thread.sleep(1000);
 
@@ -164,7 +164,7 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         createDeviceProfile(OTA_TRANSPORT_CONFIGURATION);
         NoSecClientCredentials credentials = createNoSecClientCredentials(endpoint);
         final Device device = createDevice(credentials);
-        createNewClient(SECURITY, COAP_CONFIG);
+        createNewClient(SECURITY, COAP_CONFIG, false);
 
         Thread.sleep(1000);
 
@@ -203,7 +203,7 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         createDeviceProfile(OTA_TRANSPORT_CONFIGURATION);
         NoSecClientCredentials credentials = createNoSecClientCredentials(endpoint);
         final Device device = createDevice(credentials);
-        createNewClient(SECURITY, COAP_CONFIG);
+        createNewClient(SECURITY, COAP_CONFIG, false);
 
         Thread.sleep(1000);
 

@@ -81,7 +81,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
     @Before
     public void beforeTest() throws Exception {
         init();
-        createNewClient (SECURITY, COAP_CONFIG);
+        createNewClient (SECURITY, COAP_CONFIG, true);
 
         Thread.sleep(1000);
 

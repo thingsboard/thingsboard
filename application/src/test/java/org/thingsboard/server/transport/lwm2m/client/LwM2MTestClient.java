@@ -46,7 +46,6 @@ import org.eclipse.leshan.core.request.RegisterRequest;
 import org.eclipse.leshan.core.request.UpdateRequest;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 import org.junit.Assert;
-import org.junit.Assert;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -85,7 +84,7 @@ public class LwM2MTestClient {
     private LwM2MLocationParams locationParams;
     private LwM2mTemperatureSensor lwM2MTemperatureSensor;
 
-    public void init(Security security, NetworkConfig coapConfig, int port) throws InvalidDDFFileException, IOException {
+    public void init(Security security, NetworkConfig coapConfig, int port, boolean isRpc) throws InvalidDDFFileException, IOException {
         Assert.assertNull("client already initialized", client);
         List<ObjectModel> models = new ArrayList<>();
         for (String resourceName : resources) {
@@ -250,6 +249,9 @@ public class LwM2MTestClient {
             }
         };
         this.client.addObserver(observer);
+        if (!isRpc) {
+            client.start();
+        }
     }
 
     public void destroy() {
