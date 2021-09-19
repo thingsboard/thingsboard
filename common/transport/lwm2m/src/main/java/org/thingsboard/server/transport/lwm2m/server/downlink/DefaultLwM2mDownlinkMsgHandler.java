@@ -378,9 +378,10 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                                             resultIds.getObjectInstanceId(), resultIds.getResourceId(),
                                             value, resourceModelWrite.type);
                                 } catch (Exception e1) {
-                                    callback.onValidationError(toString(request), "Resource id=" + resultIds.toString() + ", value = " +
-                                            request.getValue() + ", class = " + request.getValue().getClass().getSimpleName() +
-                                            "is bad. Value of Multi-Instance Resource must be in Json format!");
+                                    callback.onValidationError(toString(request), "Resource id=" + resultIds.toString() +
+                                            ", class = " + request.getValue().getClass().getSimpleName() +
+                                            ", value = " + request.getValue() + " is bad. " +
+                                            "Value of Multi-Instance Resource must be in Json format!");
                                 }
                             }
                         } else {
@@ -408,43 +409,48 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         validateVersionedId(client, request);
         CreateRequest downlink = null;
         LwM2mPath resultIds = new LwM2mPath(request.getObjectId());
-        ObjectModel objectModel = client.getObjectModel(request.getObjectId(), this.config.getModelProvider());
+        ObjectModel objectModel = client.getObjectModel(request.getVersionedId(), this.config.getModelProvider());
         // POST /{Object ID}/{Object Instance ID} && Resources is Mandatory
-        if (objectModel.multiple) {
-            // LwM2M CBOR, SenML CBOR, SenML JSON, or TLV (see [LwM2M-CORE])
-            ContentFormat contentFormat = getWriteRequestContentFormat(client, request, this.config.getModelProvider());
-            if (resultIds.isObject() || resultIds.isObjectInstance()) {
-                Collection<LwM2mResource> resources;
-                if (resultIds.isObject()) {
-                    if (request.getValue() != null) {
-                        resources = client.getNewResourcesForInstance(request.getVersionedId(), request.getValue(), this.config.getModelProvider(), this.converter);
-                        downlink = new CreateRequest(contentFormat, resultIds.getObjectId(), resources);
-                    } else if (request.getNodes() != null && request.getNodes().size() > 0) {
-                        Set<LwM2mObjectInstance> instances = ConcurrentHashMap.newKeySet();
-                        request.getNodes().forEach((key, value) -> {
-                            Collection<LwM2mResource> resourcesForInstance = client.getNewResourcesForInstance(request.getVersionedId(), value, this.config.getModelProvider(), this.converter);
-                            LwM2mObjectInstance instance = new LwM2mObjectInstance(Integer.parseInt(key), resourcesForInstance);
-                            instances.add(instance);
-                        });
-                        LwM2mObjectInstance[] instanceArrays = instances.toArray(new LwM2mObjectInstance[instances.size()]);
-                        downlink = new CreateRequest(contentFormat, resultIds.getObjectId(), instanceArrays);
-                    }
+        if (objectModel != null) {
+            if (objectModel.multiple) {
 
-                } else {
-                    resources = client.getNewResourcesForInstance(request.getVersionedId(), request.getValue(), this.config.getModelProvider(), this.converter);
-                    LwM2mObjectInstance instance = new LwM2mObjectInstance(resultIds.getObjectInstanceId(), resources);
-                    downlink = new CreateRequest(contentFormat, resultIds.getObjectId(), instance);
+                // LwM2M CBOR, SenML CBOR, SenML JSON, or TLV (see [LwM2M-CORE])
+                ContentFormat contentFormat = getWriteRequestContentFormat(client, request, this.config.getModelProvider());
+                if (resultIds.isObject() || resultIds.isObjectInstance()) {
+                    Collection<LwM2mResource> resources;
+                    if (resultIds.isObject()) {
+                        if (request.getValue() != null) {
+                            resources = client.getNewResourcesForInstance(request.getVersionedId(), request.getValue(), this.config.getModelProvider(), this.converter);
+                            downlink = new CreateRequest(contentFormat, resultIds.getObjectId(), resources);
+                        } else if (request.getNodes() != null && request.getNodes().size() > 0) {
+                            Set<LwM2mObjectInstance> instances = ConcurrentHashMap.newKeySet();
+                            request.getNodes().forEach((key, value) -> {
+                                Collection<LwM2mResource> resourcesForInstance = client.getNewResourcesForInstance(request.getVersionedId(), value, this.config.getModelProvider(), this.converter);
+                                LwM2mObjectInstance instance = new LwM2mObjectInstance(Integer.parseInt(key), resourcesForInstance);
+                                instances.add(instance);
+                            });
+                            LwM2mObjectInstance[] instanceArrays = instances.toArray(new LwM2mObjectInstance[instances.size()]);
+                            downlink = new CreateRequest(contentFormat, resultIds.getObjectId(), instanceArrays);
+                        }
+
+                    } else {
+                        resources = client.getNewResourcesForInstance(request.getVersionedId(), request.getValue(), this.config.getModelProvider(), this.converter);
+                        LwM2mObjectInstance instance = new LwM2mObjectInstance(resultIds.getObjectInstanceId(), resources);
+                        downlink = new CreateRequest(contentFormat, resultIds.getObjectId(), instance);
+                    }
                 }
-            }
-            if (downlink != null) {
-                sendSimpleRequest(client, downlink, request.getTimeout(), callback);
+                if (downlink != null) {
+                    sendSimpleRequest(client, downlink, request.getTimeout(), callback);
+                } else {
+                    callback.onValidationError(toString(request), "Path " + request.getVersionedId() +
+                            ". Object must be Multiple !");
+                }
             } else {
-                callback.onValidationError(toString(request), "Path " + request.getVersionedId() +
-                        ". This operation can only be used for created new ObjectInstance !");
+                throw new IllegalArgumentException("Path " + request.getVersionedId() + ". Object must be Multiple !");
             }
         } else {
-            throw new IllegalArgumentException("Path " + request.getVersionedId() +
-                    ". Object must be Multiple !");
+            callback.onValidationError(toString(request), "Resource " + request.getVersionedId() +
+                    " is not configured in the device profile!");
         }
     }
 

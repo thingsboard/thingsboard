@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.rpc;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -260,8 +261,8 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
                     Map value = convertMultiResourceValuesFromRpcBody(requestBody.getValue(), resourceModel.type, versionedId);
                     requestBody.setValue(value);
                 } catch (Exception e) {
-                    throw new IllegalArgumentException("Resource id=" + versionedId + ", value = " + requestBody.getValue() + ", class = " +
-                            requestBody.getValue().getClass().getSimpleName() + "is bad. Value of Multi-Instance Resource must be in Json format!");
+                    throw new IllegalArgumentException("Resource id=" + versionedId + ", class = " +
+                            requestBody.getValue().getClass().getSimpleName() + ", value = " + requestBody.getValue() + " is bad. Value of Multi-Instance Resource must be in Json format!");
                 }
             }
         }
@@ -300,21 +301,28 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
             String versionedId;
             try {
                 // validate key.toString()
-                new LwM2mPath(fromVersionedIdToObjectId(key.toString()));
-                versionedId = key.toString();
+                LwM2mPath path = new LwM2mPath(fromVersionedIdToObjectId(key.toString()));
+                if (path.isResource() || path.isResourceInstance()) {
+                    versionedId = key.toString();
+                }
+                else {
+                    throw new IllegalArgumentException(String.format("nodes: %s is not validate value. " +
+                            "The WriteComposite operation is only used for SingleResources or/and ResourceInstance.", nodes.toString()));
+                }
             } catch (Exception e) {
                 versionedId = clientContext.getObjectIdByKeyNameFromProfile(client, key.toString());
             }
-            // validate value. Must be only primitive, not Json
+            // validate value. Must be only primitive, not JsonObject or JsonArray
             try {
-                JsonUtils.parse(value.toString());
-                throw new IllegalArgumentException(String.format("nodes: %s is not validate value. " +
-                        "The WriteComposite operation is only used for SingleResources or/and ResourceInstance.", nodes.toString()));
+                JsonElement element = JsonUtils.parse(value.toString());
+                if (!element.isJsonNull() && !element.isJsonPrimitive()) {
+                    throw new IllegalArgumentException(String.format("nodes: %s is not validate value. " +
+                            "The WriteComposite operation is only used for SingleResources or/and ResourceInstance.", nodes.toString()));
+                }
+                else if (versionedId != null) {
+                    newNodes.put(fromVersionedIdToObjectId(versionedId), value);
+                }
             } catch (JsonSyntaxException jse) {
-//                if (value instanceof LinkedHashMap) {
-//                    throw new IllegalArgumentException(String.format("nodes: %s is not validate value. " +
-//                            "The WriteComposite operation is only used for SingleResources or/and ResourceInstance.", nodes.toString()));
-//                }
                 if (versionedId != null) {
                     newNodes.put(fromVersionedIdToObjectId(versionedId), value);
                 }
@@ -356,8 +364,8 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         return targetId;
     }
 
-    private String[] getIdsFromParameters(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg rpcRequst) {
-        RpcReadCompositeRequest requestParams = JacksonUtil.fromString(rpcRequst.getParams(), RpcReadCompositeRequest.class);
+    private String[] getIdsFromParameters(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg rpcRequest) {
+        RpcReadCompositeRequest requestParams = JacksonUtil.fromString(rpcRequest.getParams(), RpcReadCompositeRequest.class);
         if (requestParams.getKeys() != null && requestParams.getKeys().length > 0) {
             Set<String> targetIds = ConcurrentHashMap.newKeySet();
             for (String key : requestParams.getKeys()) {

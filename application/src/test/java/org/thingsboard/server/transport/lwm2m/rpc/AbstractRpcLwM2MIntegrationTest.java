@@ -50,63 +50,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resources;
 @DaoSqlTest
 public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
-    protected final String RPC_TRANSPORT_CONFIGURATION = "{\n" +
-            "  \"type\": \"LWM2M\",\n" +
-            "  \"observeAttr\": {\n" +
-            "    \"keyName\": {\n" +
-            "      \"" + "/" + DEVICE + "/" + objectInstanceId_0 + "/" + resourceId_9 + "\": \"" + resourceIdName_3_9 + "\",\n" +
-            "      \"" + "/" + DEVICE + "/" + objectInstanceId_0 + "/" + resourceId_14 + "\": \"" + resourceIdName_3_14 + "\",\n" +
-            "      \"" + "/" + BINARY_APP_DATA_CONTAINER + "/" + objectInstanceId_0 + "/" + resourceId_0 + "\": \"" + resourceIdName_19_0_0 + "\",\n" +
-            "      \"" + "/" + BINARY_APP_DATA_CONTAINER + "/" + objectInstanceId_1 + "/" + resourceId_0 + "\": \"" + resourceIdName_19_1_0 + "\"\n" +
-            "    },\n" +
-            "    \"observe\": [\n" +
-            "      \"" + "/" + DEVICE + "/" + objectInstanceId_0 + "/" + resourceId_9 + "\",\n" +
-            "      \"" + "/" + BINARY_APP_DATA_CONTAINER + "/" + objectInstanceId_0 + "/" + resourceId_0 + "\"\n" +
-            "    ],\n" +
-            "    \"attribute\": [\n" +
-            "    ],\n" +
-            "    \"telemetry\": [\n" +
-            "      \"" + "/" + DEVICE + "/" + objectInstanceId_0 + "/" + resourceId_9 + "\",\n" +
-            "      \"" + "/" + DEVICE + "/" + objectInstanceId_0 + "/" + resourceId_14 + "\",\n" +
-            "      \"" + "/" + BINARY_APP_DATA_CONTAINER + "/" + objectInstanceId_0 + "/" + resourceId_0 + "\",\n" +
-            "      \"" + "/" + BINARY_APP_DATA_CONTAINER + "/" + objectInstanceId_1 + "/" + resourceId_0 + "\"\n" +
-            "    ],\n" +
-            "    \"attributeLwm2m\": {}\n" +
-            "  },\n" +
-            "  \"bootstrap\": {\n" +
-            "    \"servers\": {\n" +
-            "      \"binding\": \"U\",\n" +
-            "      \"shortId\": 123,\n" +
-            "      \"lifetime\": 300,\n" +
-            "      \"notifIfDisabled\": true,\n" +
-            "      \"defaultMinPeriod\": 1\n" +
-            "    },\n" +
-            "    \"lwm2mServer\": {\n" +
-            "      \"host\": \"localhost\",\n" +
-            "      \"port\": 5686,\n" +
-            "      \"serverId\": 123,\n" +
-            "      \"serverPublicKey\": \"\",\n" +
-            "      \"bootstrapServerIs\": false,\n" +
-            "      \"clientHoldOffTime\": 1,\n" +
-            "      \"bootstrapServerAccountTimeout\": 0\n" +
-            "    },\n" +
-            "    \"bootstrapServer\": {\n" +
-            "      \"host\": \"localhost\",\n" +
-            "      \"port\": 5687,\n" +
-            "      \"serverId\": 111,\n" +
-            "      \"securityMode\": \"NO_SEC\",\n" +
-            "      \"serverPublicKey\": \"\",\n" +
-            "      \"bootstrapServerIs\": true,\n" +
-            "      \"clientHoldOffTime\": 1,\n" +
-            "      \"bootstrapServerAccountTimeout\": 0\n" +
-            "    }\n" +
-            "  },\n" +
-            "  \"clientLwM2mSettings\": {\n" +
-            "    \"clientOnlyObserveAfterConnect\": 1,\n" +
-            "    \"fwUpdateStrategy\": 1,\n" +
-            "    \"swUpdateStrategy\": 1\n" +
-            "  }\n" +
-            "}";
+    protected String RPC_TRANSPORT_CONFIGURATION;
 
     protected static final String ENDPOINT_RPC = "deviceEndpointRpc";
     protected ScheduledExecutorService executor;
@@ -137,13 +81,6 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
     @Before
     public void beforeTest() throws Exception {
         init();
-        createDeviceProfile(RPC_TRANSPORT_CONFIGURATION);
-
-        Thread.sleep(1000);
-
-        NoSecClientCredentials credentials =  createNoSecClientCredentials(ENDPOINT_RPC);
-        final Device device = createDevice(credentials);
-        deviceId = device.getId().getId().toString();
         createNewClient (SECURITY, COAP_CONFIG);
 
         Thread.sleep(1000);
@@ -182,7 +119,76 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
         objectInstanceIdVer_3 = (String) expectedObjectIdVerInstances.stream().filter(predicate_3).findFirst().get();
         objectInstanceIdVer_5 = (String) expectedObjectIdVerInstances.stream().filter(path -> ((String) path).contains("/" + FIRMWARE)).findFirst().get();
         objectInstanceIdVer_9 = (String) expectedObjectIdVerInstances.stream().filter(path -> ((String) path).contains("/" + SOFTWARE_MANAGEMENT)).findFirst().get();
-    }
+
+        RPC_TRANSPORT_CONFIGURATION = "{\n" +
+                "  \"type\": \"LWM2M\",\n" +
+                "  \"observeAttr\": {\n" +
+                "    \"keyName\": {\n" +
+                "      \""  + objectIdVer_3 + "/" + objectInstanceId_0 + "/" + resourceId_9 + "\": \"" + resourceIdName_3_9 + "\",\n" +
+                "      \"" + objectIdVer_3 + "/" + objectInstanceId_0 + "/" + resourceId_14 + "\": \"" + resourceIdName_3_14 + "\",\n" +
+                "      \""  + objectIdVer_19 + "/" + objectInstanceId_0 + "/" + resourceId_0 + "\": \"" + resourceIdName_19_0_0 + "\",\n" +
+                "      \"" + objectIdVer_19 + "/" + objectInstanceId_1 + "/" + resourceId_0 + "\": \"" + resourceIdName_19_1_0 + "\"\n" +
+                "    },\n" +
+                "    \"observe\": [\n" +
+                "      \"" + objectIdVer_3 + "/" + objectInstanceId_0 + "/" + resourceId_9 + "\",\n" +
+                "      \""  + objectIdVer_19 + "/" + objectInstanceId_0 + "/" + resourceId_0 + "\"\n" +
+                "    ],\n" +
+                "    \"attribute\": [\n" +
+                "    ],\n" +
+                "    \"telemetry\": [\n" +
+                "      \""  + objectIdVer_3 + "/" + objectInstanceId_0 + "/" + resourceId_9 + "\",\n" +
+                "      \""  + objectIdVer_3 + "/" + objectInstanceId_0 + "/" + resourceId_14 + "\",\n" +
+                "      \""  + objectIdVer_19 + "/" + objectInstanceId_0 + "/" + resourceId_0 + "\",\n" +
+                "      \""  + objectIdVer_19 + "/" + objectInstanceId_1 + "/" + resourceId_0 + "\"\n" +
+                "    ],\n" +
+                "    \"attributeLwm2m\": {}\n" +
+                "  },\n" +
+                "  \"bootstrap\": {\n" +
+                "    \"servers\": {\n" +
+                "      \"binding\": \"U\",\n" +
+                "      \"shortId\": 123,\n" +
+                "      \"lifetime\": 300,\n" +
+                "      \"notifIfDisabled\": true,\n" +
+                "      \"defaultMinPeriod\": 1\n" +
+                "    },\n" +
+                "    \"lwm2mServer\": {\n" +
+                "      \"host\": \"localhost\",\n" +
+                "      \"port\": 5686,\n" +
+                "      \"serverId\": 123,\n" +
+                "      \"serverPublicKey\": \"\",\n" +
+                "      \"bootstrapServerIs\": false,\n" +
+                "      \"clientHoldOffTime\": 1,\n" +
+                "      \"bootstrapServerAccountTimeout\": 0\n" +
+                "    },\n" +
+                "    \"bootstrapServer\": {\n" +
+                "      \"host\": \"localhost\",\n" +
+                "      \"port\": 5687,\n" +
+                "      \"serverId\": 111,\n" +
+                "      \"securityMode\": \"NO_SEC\",\n" +
+                "      \"serverPublicKey\": \"\",\n" +
+                "      \"bootstrapServerIs\": true,\n" +
+                "      \"clientHoldOffTime\": 1,\n" +
+                "      \"bootstrapServerAccountTimeout\": 0\n" +
+                "    }\n" +
+                "  },\n" +
+                "  \"clientLwM2mSettings\": {\n" +
+                "    \"clientOnlyObserveAfterConnect\": 1,\n" +
+                "    \"fwUpdateStrategy\": 1,\n" +
+                "    \"swUpdateStrategy\": 1\n" +
+                "  }\n" +
+                "}";
+        createDeviceProfile(RPC_TRANSPORT_CONFIGURATION);
+
+        Thread.sleep(1000);
+
+        NoSecClientCredentials credentials =  createNoSecClientCredentials(ENDPOINT_RPC);
+        final Device device = createDevice(credentials);
+        deviceId = device.getId().getId().toString();
+
+        Thread.sleep(1000);
+
+        client.start();
+     }
 
     protected String pathIdVerToObjectId(String pathIdVer) {
         if (pathIdVer.contains("_")){
@@ -192,4 +198,5 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
         }
         return pathIdVer;
     }
+
 }

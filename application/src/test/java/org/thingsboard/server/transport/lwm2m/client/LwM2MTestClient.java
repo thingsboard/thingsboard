@@ -250,8 +250,6 @@ public class LwM2MTestClient {
             }
         };
         this.client.addObserver(observer);
-
-        client.start();
     }
 
     public void destroy() {
@@ -275,6 +273,12 @@ public class LwM2MTestClient {
         }
         if (lwM2MTemperatureSensor != null) {
             lwM2MTemperatureSensor.destroy();
+        }
+    }
+
+    public void start() {
+        if (client != null) {
+            client.start();
         }
     }
 

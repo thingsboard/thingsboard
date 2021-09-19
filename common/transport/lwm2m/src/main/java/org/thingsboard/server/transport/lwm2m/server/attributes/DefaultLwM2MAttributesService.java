@@ -18,7 +18,6 @@ package org.thingsboard.server.transport.lwm2m.server.attributes;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ResourceModel;
@@ -223,8 +222,15 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
             if (!resourceModel.multiple || !(newValProto instanceof JsonElement)) {
                 this.pushUpdateToClientIfNeeded(lwM2MClient, oldResourceValue, newValProto, pathIdVer, logFailedUpdateOfNonChangedValue, resourceModel.type);
             } else {
-                pushUpdateMultiToClientIfNeeded(lwM2MClient, resourceModel, (JsonElement) newValProto,
-                        (Map<Integer, LwM2mResourceInstance>) oldResourceValue, pathIdVer, logFailedUpdateOfNonChangedValue);
+                try {
+                    pushUpdateMultiToClientIfNeeded(lwM2MClient, resourceModel, (JsonElement) newValProto,
+                            (Map<Integer, LwM2mResourceInstance>) oldResourceValue, pathIdVer, logFailedUpdateOfNonChangedValue);
+                } catch (Exception e){
+                    log.error("Failed update resource ["+lwM2MClient.getEndpoint()+"] onAttributesUpdate:", e);
+                    String logMsg = String.format("%s: Failed update resource onAttributesUpdate %s.",
+                            LOG_LWM2M_ERROR, e.getMessage());
+                    logService.log(lwM2MClient, logMsg);
+                }
             }
         });
     }
@@ -250,8 +256,9 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
     }
 
     private void pushUpdateMultiToClientIfNeeded(LwM2mClient client, ResourceModel resourceModel, JsonElement newValProto,
-                                                 Map<Integer, LwM2mResourceInstance> valueOld, String versionedId, boolean logFailedUpdateOfNonChangedValue) {
-        Map newValues = convertMultiResourceValuesFromJson((JsonObject) newValProto, resourceModel.type, versionedId);
+                                                 Map<Integer, LwM2mResourceInstance> valueOld, String versionedId,
+                                                 boolean logFailedUpdateOfNonChangedValue) throws Exception {
+        Map newValues = convertMultiResourceValuesFromJson(newValProto, resourceModel.type, versionedId);
         if (newValues.size() > 0 && valueOld != null && valueOld.size() > 0) {
             valueOld.values().stream().forEach((v) -> {
                 if (newValues.containsKey(v.getId())) {

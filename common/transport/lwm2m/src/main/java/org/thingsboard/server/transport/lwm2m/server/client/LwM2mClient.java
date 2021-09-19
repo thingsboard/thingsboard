@@ -334,8 +334,8 @@ public class LwM2mClient implements Serializable {
                             Map values = convertMultiResourceValuesFromRpcBody(value, resourceModel.type, pathRezIdVer);
                             resource = LwM2mMultipleResource.newResource(resourceId, (Map<Integer, ?>) values, resourceModel.type);
                         } catch (Exception e) {
-                            throw new IllegalArgumentException("Resource id=" + resourceId + ", value = " + value + ", class = " +
-                                    value.getClass().getSimpleName() + "is bad. Value of Multi-Instance Resource must be in Json format!");
+                            throw new IllegalArgumentException("Resource id=" + resourceId + ", class = " +
+                                    value.getClass().getSimpleName() + ", value = " + value + " is bad. Value of Multi-Instance Resource must be in Json format!");
                         }
                     } else {
                         Object valueRez = value instanceof Integer ? ((Integer) value).longValue() : value;

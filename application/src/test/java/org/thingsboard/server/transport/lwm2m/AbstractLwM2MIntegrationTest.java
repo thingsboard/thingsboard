@@ -261,6 +261,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         client = new LwM2MTestClient(this.executor, this.endpoint);
         int clientPort = SocketUtils.findAvailableTcpPort();
         client.init(security, coapConfig, clientPort);
+        client.start();
     }
 
     private void clientDestroy() {

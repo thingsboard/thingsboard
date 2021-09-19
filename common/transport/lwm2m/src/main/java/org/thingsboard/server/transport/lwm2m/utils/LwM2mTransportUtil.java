@@ -16,7 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.utils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.gson.JsonObject;
+import com.google.gson.JsonElement;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.leshan.core.attributes.Attribute;
@@ -214,12 +214,12 @@ public class LwM2mTransportUtil {
             String[] keyArray = path.split(LWM2M_SEPARATOR_PATH);
             if (keyArray.length > 1) {
                 String[] keyArrayVer = keyArray[1].split(LWM2M_SEPARATOR_KEY);
-                return keyArrayVer.length == 2 ? keyArrayVer[1] : null;
+                return keyArrayVer.length == 2 ? keyArrayVer[1] : LWM2M_OBJECT_VERSION_DEFAULT;
             }
         } catch (Exception e) {
             return null;
         }
-        return LWM2M_OBJECT_VERSION_DEFAULT;
+        return null;
     }
 
     public static String validPathIdVer(String pathIdVer, Registration registration) throws
@@ -355,10 +355,11 @@ public class LwM2mTransportUtil {
 
     public static Map convertMultiResourceValuesFromRpcBody(Object value, ResourceModel.Type type, String versionedId) throws Exception {
             String valueJsonStr = JsonUtils.riteValueAsString(value);
-            return convertMultiResourceValuesFromJson((JsonObject) JsonUtils.parse(valueJsonStr), type, versionedId);
+            JsonElement element = JsonUtils.parse(valueJsonStr);
+            return convertMultiResourceValuesFromJson(element, type, versionedId);
     }
 
-    public static Map convertMultiResourceValuesFromJson(JsonObject newValProto, ResourceModel.Type type, String versionedId) {
+    public static Map convertMultiResourceValuesFromJson(JsonElement newValProto, ResourceModel.Type type, String versionedId)  throws Exception{
         Map newValues = equalsMultiResourceValuesResourceType(type);
         newValProto.getAsJsonObject().entrySet().forEach((obj) -> {
             newValues.put(Integer.valueOf(obj.getKey()), LwM2mValueConverterImpl.getInstance().convertValue(obj.getValue().getAsString(),
