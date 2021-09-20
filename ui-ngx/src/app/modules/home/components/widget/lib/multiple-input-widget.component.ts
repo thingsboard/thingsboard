@@ -121,6 +121,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
 
   multipleInputFormGroup: FormGroup;
 
+  isSavingInProgress: boolean = false;
+
   toastTargetId = 'multiple-input-widget' + this.utils.guid();
 
   constructor(protected store: Store<AppState>,
@@ -466,7 +468,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   }
 
   public inputChanged(source: MultipleInputWidgetSource, key: MultipleInputWidgetDataKey) {
-    if (!this.settings.showActionButtons) {
+    if (!this.settings.showActionButtons && !this.isSavingInProgress) {
+      this.isSavingInProgress = true;
       const currentValue = this.multipleInputFormGroup.get(key.formId).value;
       if (!key.settings.required || (key.settings.required && isDefined(currentValue))) {
         const dataToSave: MultipleInputWidgetSource = {
@@ -479,7 +482,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   }
 
   public save(dataToSave?: MultipleInputWidgetSource) {
-    if (document && document.activeElement) {
+    if (document?.activeElement && !this.isSavingInProgress) {
+      this.isSavingInProgress = true;
       (document.activeElement as HTMLElement).blur();
     }
     const config: RequestConfig = {
@@ -569,6 +573,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
         () => {
           this.multipleInputFormGroup.markAsPristine();
           this.ctx.detectChanges();
+          this.isSavingInProgress = false;
           if (this.settings.showResultMessage) {
             this.ctx.showSuccessToast(this.translate.instant('widgets.input-widgets.update-successful'),
               1000, 'bottom', 'left', this.toastTargetId);
@@ -583,6 +588,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
     } else {
       this.multipleInputFormGroup.markAsPristine();
       this.ctx.detectChanges();
+      this.isSavingInProgress = false;
     }
   }
 

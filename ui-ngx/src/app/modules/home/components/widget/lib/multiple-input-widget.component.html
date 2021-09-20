@@ -108,7 +108,7 @@
       </div>
     </fieldset>
     <div class="mat-padding" fxLayout="row" fxLayoutAlign="end center"
-         *ngIf="entityDetected && settings.showActionButtons">
+         [fxShow]="entityDetected && settings.showActionButtons">
       <button mat-button color="primary" type="button"
               (click)="discardAll()" style="max-height: 50px; margin-right:20px;"
               [disabled]="!multipleInputFormGroup.dirty">
