@@ -1677,7 +1677,10 @@
         "profile": "Профіль",
         "last-login-time": "Час останнього входу",
         "change-password": "Змінити пароль",
-        "current-password": "Поточний пароль"
+        "current-password": "Поточний пароль",
+        "copy-jwt-token": "Копіювати JWT токен",
+        "valid-till": "Придатний до {{expirationData}}",
+        "tokenCopiedMessage": "JWT токен скопійовано в буфер обміну"
     },
     "relation": {
         "relations": "Відношення",

@@ -1262,7 +1262,10 @@
         "profile": "Профиль",
         "last-login-time": "Время последнего входа в систему",
         "change-password": "Изменить пароль",
-        "current-password": "Текущий пароль"
+        "current-password": "Текущий пароль",
+        "copy-jwt-token": "Копировать JWT токен",
+        "valid-till": "Годен до {{expirationData}}",
+        "tokenCopiedMessage": "JWT токен скопирован в буфер обмена"
     },
     "relation": {
         "relations": "Отношения",

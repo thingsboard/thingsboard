@@ -84,6 +84,15 @@
               {{'profile.change-password' | translate}}
             </button>
           </div>
+          <div fxLayout="row" fxLayoutAlign=" center" style="padding-bottom: 16px;">
+            <button mat-raised-button ngxClipboard
+                    (cbOnSuccess)="onTokenCopied($event)"
+                    [cbContent]="token">
+              <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+              <span>{{ 'profile.copy-jwt-token' | translate }}</span>
+            </button>
+            <span style="padding: 10px; opacity: 0.7;">{{getExpirationDate}}</span>
+          </div>
           <div fxLayout="row" class="layout-wrap">
             <span fxFlex></span>
             <button mat-button mat-raised-button color="primary"

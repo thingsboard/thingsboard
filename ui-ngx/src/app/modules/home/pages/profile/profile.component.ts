@@ -34,6 +34,8 @@ import { AuthService } from '@core/auth/auth.service';
 import { ActivatedRoute } from '@angular/router';
 import { isDefinedAndNotNull } from '@core/utils';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import {ActionNotificationShow} from "@core/notification/notification.actions";
+import { DatePipe } from '@angular/common';
 
 @Component({
   selector: 'tb-profile',
@@ -48,6 +50,15 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
   languageList = env.supportedLangs;
   private readonly authUser: AuthUser;
 
+  get token() {
+    return `Bearer ${localStorage.getItem('jwt_token')}`;
+  }
+
+  get getExpirationDate() {
+    const expirationData = this.datePipe.transform(localStorage.getItem('jwt_token_expiration'), 'yyyy-MM-dd HH:mm:ss');
+    return this.translate.instant('profile.valid-till', {expirationData});
+  };
+
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
               private userService: UserService,
@@ -55,7 +66,8 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
               private translate: TranslateService,
               public dialog: MatDialog,
               public dialogService: DialogService,
-              public fb: FormBuilder) {
+              public fb: FormBuilder,
+              private datePipe: DatePipe) {
     super(store);
     this.authUser = getCurrentAuthUser(this.store);
   }
@@ -141,4 +153,13 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
     return this.authUser.authority === Authority.SYS_ADMIN;
   }
 
+  onTokenCopied($event) {
+    this.store.dispatch(new ActionNotificationShow({
+      message: this.translate.instant('profile.tokenCopiedMessage'),
+      type: 'success',
+      duration: 750,
+      verticalPosition: 'bottom',
+      horizontalPosition: 'right'
+    }));
+  }
 }
