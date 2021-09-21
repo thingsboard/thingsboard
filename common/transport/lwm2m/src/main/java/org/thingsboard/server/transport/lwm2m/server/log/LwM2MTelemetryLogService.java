@@ -15,10 +15,10 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.log;
 
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClient;
 
 public interface LwM2MTelemetryLogService {
 
-    void log(LwM2mClient client, String msg);
+    void log(LwM2MClient client, String msg);
 
 }

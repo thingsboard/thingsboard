@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.lwm2m.LwM2MService;
 import org.thingsboard.server.service.lwm2m.LwM2MServiceImpl;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -44,7 +45,7 @@ import java.util.Map;
 public class Lwm2mController extends BaseController {
 
     @Autowired
-    protected LwM2MServiceImpl lwM2MService;
+    protected LwM2MService lwM2MService;
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/lwm2m/deviceProfile/bootstrap/{isBootstrapServer}", method = RequestMethod.GET)

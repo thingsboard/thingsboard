@@ -22,7 +22,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.ScanOptions;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClientState;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClient;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -42,21 +42,21 @@ public class TbRedisLwM2MClientStore implements TbLwM2MClientStore {
     }
 
     @Override
-    public LwM2mClient get(String endpoint) {
+    public LwM2MClient get(String endpoint) {
         try (var connection = connectionFactory.getConnection()) {
             byte[] data = connection.get(getKey(endpoint));
             if (data == null) {
                 return null;
             } else {
-                return (LwM2mClient) serializer.asObject(data);
+                return (LwM2MClient) serializer.asObject(data);
             }
         }
     }
 
     @Override
-    public Set<LwM2mClient> getAll() {
+    public Set<LwM2MClient> getAll() {
         try (var connection = connectionFactory.getConnection()) {
-            Set<LwM2mClient> clients = new HashSet<>();
+            Set<LwM2MClient> clients = new HashSet<>();
             ScanOptions scanOptions = ScanOptions.scanOptions().count(100).match(CLIENT_EP + "*").build();
             List<Cursor<byte[]>> scans = new ArrayList<>();
             if (connection instanceof RedisClusterConnection) {
@@ -70,7 +70,7 @@ public class TbRedisLwM2MClientStore implements TbLwM2MClientStore {
             scans.forEach(scan -> {
                 scan.forEachRemaining(key -> {
                     byte[] element = connection.get(key);
-                    clients.add((LwM2mClient) serializer.asObject(element));
+                    clients.add((LwM2MClient) serializer.asObject(element));
                 });
             });
             return clients;
@@ -78,7 +78,7 @@ public class TbRedisLwM2MClientStore implements TbLwM2MClientStore {
     }
 
     @Override
-    public void put(LwM2mClient client) {
+    public void put(LwM2MClient client) {
         if (client.getState().equals(LwM2MClientState.UNREGISTERED)) {
             log.error("[{}] Client is in invalid state: {}!", client.getEndpoint(), client.getState(), new Exception());
         } else {

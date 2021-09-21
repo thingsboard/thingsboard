@@ -39,7 +39,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.LOG_LWM2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_INFO;
 
 @Slf4j
 public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSessionManager {
@@ -199,7 +199,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
     @Override
     public BootstrapPolicy onRequestFailure(BootstrapSession bsSession,
                                             BootstrapDownlinkRequest<? extends LwM2mResponse> request, Throwable cause) {
-        this.sendLogs (bsSession.getEndpoint(),
+        this.sendLogs(bsSession.getEndpoint(),
                 String.format("%s: %s %s failed because of %s for %s : %s", LOG_LWM2M_INFO, request.getClass().getSimpleName(),
                         request.getPath().toString(), cause.toString(), bsSession.toString(), request.toString()));
         return BootstrapPolicy.failed();
@@ -207,16 +207,16 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
 
     @Override
     public void end(BootstrapSession bsSession) {
-        this.sendLogs (bsSession.getEndpoint(), String.format("%s: Bootstrap session finished : %s", LOG_LWM2M_INFO, bsSession.toString()));
+        this.sendLogs(bsSession.getEndpoint(), String.format("%s: Bootstrap session finished : %s", LOG_LWM2M_INFO, bsSession.toString()));
     }
 
     @Override
     public void failed(BootstrapSession bsSession, BootstrapFailureCause cause) {
-        this.sendLogs (bsSession.getEndpoint(), String.format("%s: Bootstrap session failed by %s: %s", LOG_LWM2M_INFO,
+        this.sendLogs(bsSession.getEndpoint(), String.format("%s: Bootstrap session failed by %s: %s", LOG_LWM2M_INFO,
                 cause.toString(), bsSession.toString()));
     }
 
-    private void sendLogs (String endpointName, String logMsg) {
+    private void sendLogs(String endpointName, String logMsg) {
         log.info(logMsg);
         transportService.log(((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(endpointName), logMsg);
     }

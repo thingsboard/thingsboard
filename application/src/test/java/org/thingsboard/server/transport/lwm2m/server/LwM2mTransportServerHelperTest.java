@@ -37,7 +37,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.LOG_LWM2M_TELEMETRY;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_TELEMETRY;
 
 class LwM2mTransportServerHelperTest {
 
@@ -47,15 +47,15 @@ class LwM2mTransportServerHelperTest {
     long now;
     List<TransportProtos.KeyValueProto> kvList;
     ConcurrentMap<String, AtomicLong> keyTsLatestMap;
-    LwM2mTransportServerHelper helper;
-    LwM2mTransportContext context;
+    LwM2MTransportServerHelper helper;
+    LwM2MTransportContext context;
 
 
     @BeforeEach
     void setUp() {
         now = System.currentTimeMillis();
-        context = mock(LwM2mTransportContext.class);
-        helper = spy(new LwM2mTransportServerHelper(context));
+        context = mock(LwM2MTransportContext.class);
+        helper = spy(new LwM2MTransportServerHelper(context));
         willReturn(now).given(helper).getCurrentTimeMillis();
         kvList = List.of(
                 TransportProtos.KeyValueProto.newBuilder().setKey(KEY_SW_STATE).setStringV(DOWNLOADING).build(),

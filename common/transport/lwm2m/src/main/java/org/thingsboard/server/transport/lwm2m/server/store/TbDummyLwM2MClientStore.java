@@ -15,24 +15,24 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.store;
 
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClient;
 
 import java.util.Collections;
 import java.util.Set;
 
 public class TbDummyLwM2MClientStore implements TbLwM2MClientStore {
     @Override
-    public LwM2mClient get(String endpoint) {
+    public LwM2MClient get(String endpoint) {
         return null;
     }
 
     @Override
-    public Set<LwM2mClient> getAll() {
+    public Set<LwM2MClient> getAll() {
         return Collections.emptySet();
     }
 
     @Override
-    public void put(LwM2mClient client) {
+    public void put(LwM2MClient client) {
 
     }
 

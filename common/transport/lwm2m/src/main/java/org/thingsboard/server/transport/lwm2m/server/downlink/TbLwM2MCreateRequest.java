@@ -19,7 +19,7 @@ import lombok.Builder;
 import lombok.Getter;
 import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.core.response.CreateResponse;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType;
+import org.thingsboard.server.transport.lwm2m.server.LwM2MOperationType;
 
 import java.util.Map;
 
@@ -41,7 +41,7 @@ public class TbLwM2MCreateRequest extends AbstractTbLwM2MTargetedDownlinkRequest
     }
 
     @Override
-    public LwM2mOperationType getType() {
-        return LwM2mOperationType.CREATE;
+    public LwM2MOperationType getType() {
+        return LwM2MOperationType.CREATE;
     }
 }

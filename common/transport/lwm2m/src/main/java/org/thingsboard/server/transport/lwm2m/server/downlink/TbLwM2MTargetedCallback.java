@@ -18,13 +18,13 @@ package org.thingsboard.server.transport.lwm2m.server.downlink;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.response.LwM2mResponse;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClient;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 
 import java.util.Arrays;
 
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.LOG_LWM2M_ERROR;
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.LOG_LWM2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_ERROR;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_INFO;
 
 @Slf4j
 public abstract class TbLwM2MTargetedCallback<R, T> extends AbstractTbLwM2MRequestCallback<R, T> {
@@ -32,13 +32,13 @@ public abstract class TbLwM2MTargetedCallback<R, T> extends AbstractTbLwM2MReque
     protected final String versionedId;
     protected final String[] versionedIds;
 
-    public TbLwM2MTargetedCallback(LwM2MTelemetryLogService logService, LwM2mClient client, String versionedId) {
+    public TbLwM2MTargetedCallback(LwM2MTelemetryLogService logService, LwM2MClient client, String versionedId) {
         super(logService, client);
         this.versionedId = versionedId;
         this.versionedIds = null;
     }
 
-    public TbLwM2MTargetedCallback(LwM2MTelemetryLogService logService, LwM2mClient client, String[] versionedIds) {
+    public TbLwM2MTargetedCallback(LwM2MTelemetryLogService logService, LwM2MClient client, String[] versionedIds) {
         super(logService, client);
         this.versionedId = null;
         this.versionedIds = versionedIds;

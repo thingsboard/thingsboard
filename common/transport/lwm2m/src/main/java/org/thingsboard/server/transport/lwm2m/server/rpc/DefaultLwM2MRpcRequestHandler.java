@@ -31,10 +31,10 @@ import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
-import org.thingsboard.server.transport.lwm2m.server.downlink.LwM2mDownlinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.LwM2MOperationType;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClient;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClientContext;
+import org.thingsboard.server.transport.lwm2m.server.downlink.LwM2MDownlinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelAllObserveCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelAllRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelObserveCallback;
@@ -65,7 +65,7 @@ import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogServic
 import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcReadCompositeRequest;
 import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcReadResponseCompositeCallback;
 import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcWriteCompositeRequest;
-import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2MUplinkMsgHandler;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -73,8 +73,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.convertMultiResourceValuesFromRpcBody;
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.fromVersionedIdToObjectId;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertMultiResourceValuesFromRpcBody;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fromVersionedIdToObjectId;
 
 @Slf4j
 @Service
@@ -83,21 +83,21 @@ import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.fr
 public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
 
     private final TransportService transportService;
-    private final LwM2mClientContext clientContext;
+    private final LwM2MClientContext clientContext;
     private final LwM2MTransportServerConfig config;
-    private final LwM2mUplinkMsgHandler uplinkHandler;
-    private final LwM2mDownlinkMsgHandler downlinkHandler;
+    private final LwM2MUplinkMsgHandler uplinkHandler;
+    private final LwM2MDownlinkMsgHandler downlinkHandler;
     private final LwM2MTelemetryLogService logService;
 
     @Override
     public void onToDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg rpcRequest, TransportProtos.SessionInfoProto sessionInfo) {
         log.debug("Received params: {}", rpcRequest.getParams());
-        LwM2mOperationType operationType = LwM2mOperationType.fromType(rpcRequest.getMethodName());
+        LwM2MOperationType operationType = LwM2MOperationType.fromType(rpcRequest.getMethodName());
         if (operationType == null) {
             this.sendErrorRpcResponse(sessionInfo, rpcRequest.getRequestId(), ResponseCode.METHOD_NOT_ALLOWED, "Unsupported operation type: " + rpcRequest.getMethodName());
             return;
         }
-        LwM2mClient client = clientContext.getClientBySessionInfo(sessionInfo);
+        LwM2MClient client = clientContext.getClientBySessionInfo(sessionInfo);
         if (client.getRegistration() == null) {
             this.sendErrorRpcResponse(sessionInfo, rpcRequest.getRequestId(), ResponseCode.INTERNAL_SERVER_ERROR, "Registration is empty");
             return;
@@ -141,7 +141,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
                         throw new IllegalArgumentException("Unsupported operation: " + operationType.name());
                 }
             } else if (operationType.isComposite()) {
-                ContentFormat contentFormatComposite = this.getContentFormatComposite(client);
+                ContentFormat contentFormatComposite = this.getCompositeContentFormat(client);
                 if (contentFormatComposite != null) {
                     switch (operationType) {
                         case READ_COMPOSITE:
@@ -177,14 +177,14 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         }
     }
 
-    private void sendReadRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
+    private void sendReadRequest(LwM2MClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
         TbLwM2MReadRequest request = TbLwM2MReadRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MReadCallback(uplinkHandler, logService, client, versionedId);
         var rpcCallback = new RpcReadResponseCallback<>(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendReadRequest(client, request, rpcCallback);
     }
 
-    private void sendReadCompositeRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, ContentFormat contentFormatComposite) {
+    private void sendReadCompositeRequest(LwM2MClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, ContentFormat contentFormatComposite) {
         String[] versionedIds = getIdsFromParameters(client, requestMsg);
         TbLwM2MReadCompositeRequest request = TbLwM2MReadCompositeRequest.builder().versionedIds(versionedIds).timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MReadCompositeCallback(uplinkHandler, logService, client, versionedIds);
@@ -192,38 +192,38 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         downlinkHandler.sendReadCompositeRequest(client, request, rpcCallback, contentFormatComposite);
     }
 
-    private void sendObserveRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
+    private void sendObserveRequest(LwM2MClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
         TbLwM2MObserveRequest request = TbLwM2MObserveRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MObserveCallback(uplinkHandler, logService, client, versionedId);
         var rpcCallback = new RpcReadResponseCallback<>(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendObserveRequest(client, request, rpcCallback);
     }
 
-    private void sendObserveAllRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
+    private void sendObserveAllRequest(LwM2MClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
         TbLwM2MObserveAllRequest request = TbLwM2MObserveAllRequest.builder().timeout(clientContext.getRequestTimeout(client)).build();
         downlinkHandler.sendObserveAllRequest(client, request, new RpcLinkSetCallback<>(transportService, client, requestMsg, null));
     }
 
-    private void sendDiscoverAllRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
+    private void sendDiscoverAllRequest(LwM2MClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
         TbLwM2MDiscoverAllRequest request = TbLwM2MDiscoverAllRequest.builder().timeout(clientContext.getRequestTimeout(client)).build();
         downlinkHandler.sendDiscoverAllRequest(client, request, new RpcLinkSetCallback<>(transportService, client, requestMsg, null));
     }
 
-    private void sendDiscoverRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
+    private void sendDiscoverRequest(LwM2MClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
         TbLwM2MDiscoverRequest request = TbLwM2MDiscoverRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MDiscoverCallback(logService, client, versionedId);
         var rpcCallback = new RpcDiscoverCallback(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendDiscoverRequest(client, request, rpcCallback);
     }
 
-    private void sendExecuteRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
+    private void sendExecuteRequest(LwM2MClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
         TbLwM2MExecuteRequest downlink = TbLwM2MExecuteRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MExecuteCallback(logService, client, versionedId);
         var rpcCallback = new RpcEmptyResponseCallback<>(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendExecuteRequest(client, downlink, rpcCallback);
     }
 
-    private void sendWriteAttributesRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
+    private void sendWriteAttributesRequest(LwM2MClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
         RpcWriteAttributesRequest requestBody = JacksonUtil.fromString(requestMsg.getParams(), RpcWriteAttributesRequest.class);
         TbLwM2MWriteAttributesRequest request = TbLwM2MWriteAttributesRequest.builder().versionedId(versionedId)
                 .attributes(requestBody.getAttributes())
@@ -233,7 +233,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         downlinkHandler.sendWriteAttributesRequest(client, request, rpcCallback);
     }
 
-    private void sendWriteUpdateRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
+    private void sendWriteUpdateRequest(LwM2MClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
         RpcWriteUpdateRequest requestBody = JacksonUtil.fromString(requestMsg.getParams(), RpcWriteUpdateRequest.class);
         TbLwM2MWriteUpdateRequest.TbLwM2MWriteUpdateRequestBuilder builder = TbLwM2MWriteUpdateRequest.builder().versionedId(versionedId);
         builder.value(requestBody.getValue()).timeout(clientContext.getRequestTimeout(client));
@@ -242,7 +242,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         downlinkHandler.sendWriteUpdateRequest(client, builder.build(), rpcCallback);
     }
 
-    private void sendCreateRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
+    private void sendCreateRequest(LwM2MClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
         RpcCreateRequest requestBody = JacksonUtil.fromString(requestMsg.getParams(), RpcCreateRequest.class);
         TbLwM2MCreateRequest.TbLwM2MCreateRequestBuilder builder = TbLwM2MCreateRequest.builder().versionedId(versionedId);
         builder.value(requestBody.getValue()).nodes(requestBody.getNodes()).timeout(clientContext.getRequestTimeout(client));
@@ -251,7 +251,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         downlinkHandler.sendCreateRequest(client, builder.build(), rpcCallback);
     }
 
-    private void sendWriteReplaceRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
+    private void sendWriteReplaceRequest(LwM2MClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
         RpcWriteReplaceRequest requestBody = JacksonUtil.fromString(requestMsg.getParams(), RpcWriteReplaceRequest.class);
         LwM2mPath path = new LwM2mPath(fromVersionedIdToObjectId(versionedId));
         if (path.isResource()) {
@@ -282,7 +282,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
      * nodes.put("/1/0/2", 100);
      * nodes.put("/5/0/1", "coap://localhost:5685");
      */
-    private void sendWriteCompositeRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, ContentFormat contentFormatComposite) {
+    private void sendWriteCompositeRequest(LwM2MClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, ContentFormat contentFormatComposite) {
         RpcWriteCompositeRequest rpcWriteCompositeRequest = JacksonUtil.fromString(requestMsg.getParams(), RpcWriteCompositeRequest.class);
         Map validNodes = validateNodes(client, rpcWriteCompositeRequest.getNodes());
         if (validNodes.size() > 0) {
@@ -295,7 +295,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         }
     }
 
-    private Map validateNodes(LwM2mClient client, Map nodes) {
+    private Map validateNodes(LwM2MClient client, Map nodes) {
         Map newNodes = new LinkedHashMap();
         nodes.forEach((key, value) -> {
             String versionedId;
@@ -331,28 +331,28 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         return newNodes;
     }
 
-    private void sendCancelObserveRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
+    private void sendCancelObserveRequest(LwM2MClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
         TbLwM2MCancelObserveRequest downlink = TbLwM2MCancelObserveRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MCancelObserveCallback(logService, client, versionedId);
         var rpcCallback = new RpcCancelObserveCallback(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendCancelObserveRequest(client, downlink, rpcCallback);
     }
 
-    private void sendDeleteRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
+    private void sendDeleteRequest(LwM2MClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
         TbLwM2MDeleteRequest downlink = TbLwM2MDeleteRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MDeleteCallback(logService, client, versionedId);
         var rpcCallback = new RpcEmptyResponseCallback<>(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendDeleteRequest(client, downlink, rpcCallback);
     }
 
-    private void sendCancelAllObserveRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
+    private void sendCancelAllObserveRequest(LwM2MClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
         TbLwM2MCancelAllRequest downlink = TbLwM2MCancelAllRequest.builder().timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MCancelAllObserveCallback(logService, client);
         var rpcCallback = new RpcCancelAllObserveCallback(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendCancelAllRequest(client, downlink, rpcCallback);
     }
 
-    private String getIdFromParameters(LwM2mClient client, LwM2MRpcRequestHeader header) {
+    private String getIdFromParameters(LwM2MClient client, LwM2MRpcRequestHeader header) {
         String targetId;
         if (StringUtils.isNotEmpty(header.getKey())) {
             targetId = clientContext.getObjectIdByKeyNameFromProfile(client, header.getKey());
@@ -364,7 +364,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         return targetId;
     }
 
-    private String[] getIdsFromParameters(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg rpcRequest) {
+    private String[] getIdsFromParameters(LwM2MClient client, TransportProtos.ToDeviceRpcRequestMsg rpcRequest) {
         RpcReadCompositeRequest requestParams = JacksonUtil.fromString(rpcRequest.getParams(), RpcReadCompositeRequest.class);
         if (requestParams.getKeys() != null && requestParams.getKeys().length > 0) {
             Set<String> targetIds = ConcurrentHashMap.newKeySet();
@@ -398,7 +398,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         log.info("[{}] toServerRpcResponse", toServerResponse);
     }
 
-    private ContentFormat getContentFormatComposite(LwM2mClient client) {
+    private ContentFormat getCompositeContentFormat(LwM2MClient client) {
         if (client.getClientSupportContentFormats().contains(ContentFormat.SENML_JSON)) {
             return ContentFormat.SENML_JSON;
         }
