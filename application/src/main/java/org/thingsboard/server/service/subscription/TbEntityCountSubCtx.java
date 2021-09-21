@@ -17,14 +17,11 @@ package org.thingsboard.server.service.subscription;
 
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
-import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityCountUpdate;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
-import org.thingsboard.server.service.telemetry.sub.TelemetrySubscriptionUpdate;
+import org.thingsboard.server.common.data.telemetry.cmd.v2.EntityCountUpdate;
 
 @Slf4j
 public class TbEntityCountSubCtx extends TbAbstractSubCtx<EntityCountQuery> {

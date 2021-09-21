@@ -55,10 +55,10 @@ import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.controller.AbstractWebsocketTest;
 import org.thingsboard.server.controller.TbTestWebSocketClient;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmdsWrapper;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
-import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
+import org.thingsboard.server.common.data.telemetry.wrapper.TelemetryPluginCmdsWrapper;
+import org.thingsboard.server.common.data.telemetry.cmd.v2.EntityDataCmd;
+import org.thingsboard.server.common.data.telemetry.cmd.v2.EntityDataUpdate;
+import org.thingsboard.server.common.data.telemetry.cmd.LatestValueCmd;
 import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
 
 import java.io.IOException;

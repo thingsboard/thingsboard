@@ -17,15 +17,7 @@ package org.thingsboard.server.service.telemetry.sub;
 
 import lombok.Getter;
 import org.thingsboard.server.common.data.alarm.Alarm;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.query.AlarmData;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
+import org.thingsboard.server.common.data.telemetry.SubscriptionErrorCode;
 
 public class AlarmSubscriptionUpdate {
 

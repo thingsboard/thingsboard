@@ -49,7 +49,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmUpdateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmDeleteProto;
 import org.thingsboard.server.service.telemetry.sub.AlarmSubscriptionUpdate;
-import org.thingsboard.server.service.telemetry.sub.SubscriptionErrorCode;
+import org.thingsboard.server.common.data.telemetry.SubscriptionErrorCode;
 import org.thingsboard.server.service.telemetry.sub.TelemetrySubscriptionUpdate;
 
 import java.util.ArrayList;

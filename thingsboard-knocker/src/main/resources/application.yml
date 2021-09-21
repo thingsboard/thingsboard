@@ -1,0 +1,38 @@
+mqtt:
+  url: "${MQTT_URL:tcp://localhost:1883}"
+  qos: "${MQTT_QOS:1}"
+  timeout: "${MQTT_TIMEOUT:5000}"
+  monitoring_rate: "${MQTT_MONITORING_RATE:10000}"
+  test_device:
+    access_token: "${MQTT_TEST_DEVICE_ACCESS_TOKEN:arcJJM9VeH7g0i1402ew}"
+    id: "${MQTT_TEST_DEVICE_ID:38d5ae20-16f1-11ec-82c2-279b70afb31e}"
+
+http:
+  url: "${HTTP_URL:tcp://localhost:1883}"
+  qos: "${HTTP_QOS:1}"
+  timeout: "${HTTP_TIMEOUT:5000}"
+  monitoring_rate: "${HTTP_MONITORING_RATE:10000}"
+  test_device:
+    access_token: "${HTTP_TEST_DEVICE_ACCESS_TOKEN:PJP6ZPVxK881XeK4QDZe}"
+
+lwm2m:
+  url: "${HTTP_URL:tcp://localhost:1883}"
+  qos: "${HTTP_QOS:1}"
+  timeout: "${HTTP_TIMEOUT:5000}"
+  monitoring_rate: "${HTTP_MONITORING_RATE:10000}"
+  test_device:
+    access_token: "${HTTP_TEST_DEVICE_ACCESS_TOKEN:PJP6ZPVxK881XeK4QDZe}"
+
+snmp:
+  url: "${HTTP_URL:tcp://localhost:1883}"
+  qos: "${HTTP_QOS:1}"
+  timeout: "${HTTP_TIMEOUT:5000}"
+  monitoring_rate: "${HTTP_MONITORING_RATE:10000}"
+  test_device:
+    access_token: "${HTTP_TEST_DEVICE_ACCESS_TOKEN:PJP6ZPVxK881XeK4QDZe}"
+    device_id: "${WEBSOCKET_DEVICE_ID:}"
+
+websocket:
+  wait_time: "${WEBSOCKET_WAIT_TIME:4000}"
+
+#TODO refactor env variables

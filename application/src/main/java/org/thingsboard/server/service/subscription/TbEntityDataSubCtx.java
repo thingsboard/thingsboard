@@ -28,10 +28,10 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
-import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
-import org.thingsboard.server.service.telemetry.cmd.v2.TimeSeriesCmd;
+import org.thingsboard.server.common.data.telemetry.cmd.v2.EntityDataCmd;
+import org.thingsboard.server.common.data.telemetry.cmd.v2.EntityDataUpdate;
+import org.thingsboard.server.common.data.telemetry.cmd.LatestValueCmd;
+import org.thingsboard.server.common.data.telemetry.cmd.v2.TimeSeriesCmd;
 import org.thingsboard.server.service.telemetry.sub.TelemetrySubscriptionUpdate;
 
 import java.util.ArrayList;

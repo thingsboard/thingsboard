@@ -16,11 +16,10 @@
 package org.thingsboard.server.service.subscription;
 
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
-import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataCmd;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityCountCmd;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
-import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUnsubscribeCmd;
-import org.thingsboard.server.service.telemetry.cmd.v2.UnsubscribeCmd;
+import org.thingsboard.server.common.data.telemetry.cmd.v2.AlarmDataCmd;
+import org.thingsboard.server.common.data.telemetry.cmd.v2.EntityCountCmd;
+import org.thingsboard.server.common.data.telemetry.cmd.v2.EntityDataCmd;
+import org.thingsboard.server.common.data.telemetry.cmd.v2.UnsubscribeCmd;
 
 public interface TbEntityDataSubscriptionService {
 

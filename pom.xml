@@ -143,6 +143,7 @@
         <module>application</module>
         <module>msa</module>
         <module>rest-client</module>
+        <module>thingsboard-knocker</module>
     </modules>
 
     <profiles>
@@ -1077,6 +1078,11 @@
             </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter</artifactId>
+                <version>${spring-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-web</artifactId>
                 <version>${spring-boot.version}</version>
             </dependency>
@@ -1746,7 +1752,7 @@
                 <groupId>org.java-websocket</groupId>
                 <artifactId>Java-WebSocket</artifactId>
                 <version>${java-websocket.version}</version>
-                <scope>test</scope>
+<!--                <scope>test</scope>-->
             </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>

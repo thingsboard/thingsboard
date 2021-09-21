@@ -15,8 +15,7 @@
  */
 package org.thingsboard.server.service.telemetry;
 
-import org.thingsboard.server.service.telemetry.cmd.v2.CmdUpdate;
-import org.thingsboard.server.service.telemetry.cmd.v2.DataUpdate;
+import org.thingsboard.server.common.data.telemetry.cmd.v2.CmdUpdate;
 import org.thingsboard.server.service.telemetry.sub.TelemetrySubscriptionUpdate;
 
 /**

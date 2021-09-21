@@ -19,7 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.service.telemetry.TelemetryFeature;
+import org.thingsboard.server.common.data.telemetry.TelemetryFeature;
 
 import java.util.Map;
 

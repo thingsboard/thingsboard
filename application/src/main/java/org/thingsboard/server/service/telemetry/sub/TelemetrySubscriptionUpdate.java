@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.telemetry.sub;
 
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.telemetry.SubscriptionErrorCode;
 
 import java.util.ArrayList;
 import java.util.Collections;

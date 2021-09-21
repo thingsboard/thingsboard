@@ -39,7 +39,7 @@ import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketSessionRef;
-import org.thingsboard.server.service.telemetry.cmd.v2.AlarmDataUpdate;
+import org.thingsboard.server.common.data.telemetry.cmd.v2.AlarmDataUpdate;
 import org.thingsboard.server.service.telemetry.sub.AlarmSubscriptionUpdate;
 import org.thingsboard.server.service.telemetry.sub.TelemetrySubscriptionUpdate;
 
