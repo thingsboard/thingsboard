@@ -1407,7 +1407,7 @@ export class EntityService {
       case EdgeEventType.ASSET:
       case EdgeEventType.DEVICE:
       case EdgeEventType.ENTITY_VIEW:
-        if (bodyContentEdgeEventActionTypes.indexOf(entity.action) > -1) {
+        if (bodyContentEdgeEventActionTypes.includes(entity.action)) {
           entityObservable = of(entity.body);
         } else {
           entityObservable = this.getEntity(entityType, entityId, { ignoreLoading: true, ignoreErrors: true });
