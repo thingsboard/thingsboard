@@ -109,6 +109,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   private datasources: Array<Datasource>;
   private destroy$ = new Subject();
   public sources: Array<MultipleInputWidgetSource> = [];
+  private isSavingInProgress = false;
 
   isVerticalAlignment: boolean;
   inputWidthSettings: string;
@@ -120,8 +121,6 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   isAllParametersValid = true;
 
   multipleInputFormGroup: FormGroup;
-
-  isSavingInProgress: boolean = false;
 
   toastTargetId = 'multiple-input-widget' + this.utils.guid();
 
@@ -580,6 +579,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
           }
         },
         () => {
+          this.isSavingInProgress = false;
           if (this.settings.showResultMessage) {
             this.ctx.showErrorToast(this.translate.instant('widgets.input-widgets.update-failed'),
               'bottom', 'left', this.toastTargetId);
