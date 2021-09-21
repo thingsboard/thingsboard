@@ -137,7 +137,7 @@ export const edgeEventActionTypeTranslations = new Map<EdgeEventActionType, stri
   ]
 );
 
-export const bodyContentEdgeEventActionTypes = [
+export const bodyContentEdgeEventActionTypes: EdgeEventActionType[] = [
   EdgeEventActionType.POST_ATTRIBUTES,
   EdgeEventActionType.ATTRIBUTES_UPDATED,
   EdgeEventActionType.ATTRIBUTES_DELETED,
