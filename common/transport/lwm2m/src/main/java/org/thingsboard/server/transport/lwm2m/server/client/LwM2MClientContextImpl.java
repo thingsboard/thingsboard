@@ -37,12 +37,12 @@ import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContext;
-import org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil;
 import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MOtaUpdateService;
 import org.thingsboard.server.transport.lwm2m.server.session.LwM2MSessionManager;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MClientStore;
 import org.thingsboard.server.transport.lwm2m.server.store.TbMainSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -293,7 +293,7 @@ public class LwM2MClientContextImpl implements LwM2MClientContext {
             String k = entry.getKey();
             String v = entry.getValue();
             if (v.equals(keyName) && client.isValidObjectVersion(k).isEmpty()) {
-                return   k;
+                return k;
             }
         }
         throw new IllegalArgumentException(keyName + " is not configured in the device profile!");

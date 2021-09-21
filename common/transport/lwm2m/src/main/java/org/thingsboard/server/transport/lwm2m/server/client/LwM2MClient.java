@@ -348,16 +348,13 @@ public class LwM2MClient implements Serializable {
                     } else if (resourceModel.operations.isWritable() && resourceModel.mandatory) {
                         throw new IllegalArgumentException("Resource id=" + resourceId + " is mandatory. The value of this resource must not be null.");
                     }
-                }
-                else if (resourceModel.operations.isWritable() && resourceModel.mandatory) {
+                } else if (resourceModel.operations.isWritable() && resourceModel.mandatory) {
                     throw new IllegalArgumentException("Resource id=" + resourceId + " is mandatory. The value of this resource must not be null.");
                 }
             });
-        }
-        else if (params == null) {
+        } else if (params == null) {
             throw new IllegalArgumentException("The value of this resource must not be null.");
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("The value of this resource must be in Map format and size > 0");
         }
         return resources;

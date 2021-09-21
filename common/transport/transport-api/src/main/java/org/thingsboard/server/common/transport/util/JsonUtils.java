@@ -57,7 +57,7 @@ public class JsonUtils {
         return jsonParser.parse(params);
     }
 
-    public static String riteValueAsString (Object value) throws JsonProcessingException {
+    public static String writeValueAsString(Object value) throws JsonProcessingException {
             return json.writeValueAsString(value);
 
     }

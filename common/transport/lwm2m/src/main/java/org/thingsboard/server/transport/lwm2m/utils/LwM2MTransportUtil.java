@@ -352,7 +352,7 @@ public class LwM2MTransportUtil {
     }
 
     public static Map convertMultiResourceValuesFromRpcBody(Object value, ResourceModel.Type type, String versionedId) throws Exception {
-            String valueJsonStr = JsonUtils.riteValueAsString(value);
+            String valueJsonStr = JsonUtils.writeValueAsString(value);
             JsonElement element = JsonUtils.parse(valueJsonStr);
             return convertMultiResourceValuesFromJson(element, type, versionedId);
     }

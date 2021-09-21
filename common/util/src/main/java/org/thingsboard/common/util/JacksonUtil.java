@@ -124,39 +124,4 @@ public class JacksonUtil {
     public static <T> T treeToValue(JsonNode tree, Class<T> type) throws JsonProcessingException {
         return OBJECT_MAPPER.treeToValue(tree, type);
     }
-
-
-    /**
-     *
-     * @param {bootstrap:client:host, client, client:port, client:endpoint}
-     * @param ":"
-     * @return
-     * - "bootstrap:client:host"
-     * -- if in nodeCredentialsValue is absent:
-     * --- "bootstrap" or "bootstrap:client" or "bootstrap:client:host" -> return "host"
-     * -- if in nodeCredentialsValue is absent:
-     * --- "client:port"  -> return "port"
-     * -- if the nodeCredentialsValue contains:
-     * --- "client" and "client:port" -> "port" not add to Set
-     */
-    public static String validateFieldsToTree(JsonNode nodeCredentialsValue, String[] fields, String delimiter) {
-        try {
-            StringBuilder msgSet = new StringBuilder();
-            for (String field : fields) {
-                String[] keys = field.split(delimiter);
-                JsonNode nodeVal = nodeCredentialsValue;
-                for (String key : keys) {
-                    if (!nodeVal.hasNonNull(key)) {
-                        msgSet.append(" " + keys[keys.length - 1]);
-                        break;
-                    } else {
-                        nodeVal = nodeVal.get(key);
-                    }
-                }
-            }
-            return msgSet.toString().trim();
-        } catch (Exception e) {
-            throw new IllegalArgumentException(e);
-        }
-    }
 }
