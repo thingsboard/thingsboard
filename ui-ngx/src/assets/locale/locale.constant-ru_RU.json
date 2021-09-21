@@ -1264,7 +1264,7 @@
         "change-password": "Изменить пароль",
         "current-password": "Текущий пароль",
         "copy-jwt-token": "Копировать JWT токен",
-        "valid-till": "Годен до {{expirationData}}",
+        "valid-till": "Действителен до {{expirationData}}",
         "tokenCopiedMessage": "JWT токен скопирован в буфер обмена"
     },
     "relation": {
