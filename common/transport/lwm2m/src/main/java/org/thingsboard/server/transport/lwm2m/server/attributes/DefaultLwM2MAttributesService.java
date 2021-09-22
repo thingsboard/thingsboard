@@ -18,7 +18,6 @@ package org.thingsboard.server.transport.lwm2m.server.attributes;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ResourceModel;
@@ -32,18 +31,17 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
-import org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
-import org.thingsboard.server.transport.lwm2m.server.downlink.LwM2mDownlinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportServerHelper;
+import org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClient;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClientContext;
+import org.thingsboard.server.transport.lwm2m.server.downlink.LwM2MDownlinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteReplaceRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteResponseCallback;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
-import org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService;
 import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MOtaUpdateService;
-import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
-import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
+import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2MUplinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.utils.LwM2MValueConverterImpl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,7 +53,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper.getValueFromKvProto;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MTransportServerHelper.getValueFromKvProto;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FIRMWARE_TAG;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FIRMWARE_TITLE;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FIRMWARE_URL;
@@ -64,11 +62,11 @@ import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaU
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SOFTWARE_TITLE;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SOFTWARE_URL;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SOFTWARE_VERSION;
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.LOG_LWM2M_ERROR;
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.LOG_LWM2M_WARN;
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.compareAttNameKeyOta;
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.convertMultiResourceValuesFromJson;
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.fromVersionedIdToObjectId;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_ERROR;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_WARN;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.compareAttNameKeyOta;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertMultiResourceValuesFromJson;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fromVersionedIdToObjectId;
 
 @Slf4j
 @Service
@@ -81,16 +79,16 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
     private final Map<Integer, SettableFuture<List<TransportProtos.TsKvProto>>> futures;
 
     private final TransportService transportService;
-    private final LwM2mTransportServerHelper helper;
-    private final LwM2mClientContext clientContext;
+    private final LwM2MTransportServerHelper helper;
+    private final LwM2MClientContext clientContext;
     private final LwM2MTransportServerConfig config;
-    private final LwM2mUplinkMsgHandler uplinkHandler;
-    private final LwM2mDownlinkMsgHandler downlinkHandler;
+    private final LwM2MUplinkMsgHandler uplinkHandler;
+    private final LwM2MDownlinkMsgHandler downlinkHandler;
     private final LwM2MTelemetryLogService logService;
     private final LwM2MOtaUpdateService otaUpdateService;
 
     @Override
-    public ListenableFuture<List<TransportProtos.TsKvProto>> getSharedAttributes(LwM2mClient client, Collection<String> keys) {
+    public ListenableFuture<List<TransportProtos.TsKvProto>> getSharedAttributes(LwM2MClient client, Collection<String> keys) {
         SettableFuture<List<TransportProtos.TsKvProto>> future = SettableFuture.create();
         int requestId = reqIdSeq.incrementAndGet();
         futures.put(requestId, future);
@@ -133,7 +131,7 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
      */
     @Override
     public void onAttributesUpdate(TransportProtos.AttributeUpdateNotificationMsg msg, TransportProtos.SessionInfoProto sessionInfo) {
-        LwM2mClient lwM2MClient = clientContext.getClientBySessionInfo(sessionInfo);
+        LwM2MClient lwM2MClient = clientContext.getClientBySessionInfo(sessionInfo);
         if (msg.getSharedUpdatedCount() > 0 && lwM2MClient != null) {
             String newFirmwareTitle = null;
             String newFirmwareVersion = null;
@@ -190,12 +188,12 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
      * #2.1 if there is not a difference in values between the current resource values and the shared attribute values
      */
     @Override
-    public void onAttributesUpdate(LwM2mClient lwM2MClient, List<TransportProtos.TsKvProto> tsKvProtos, boolean logFailedUpdateOfNonChangedValue) {
+    public void onAttributesUpdate(LwM2MClient lwM2MClient, List<TransportProtos.TsKvProto> tsKvProtos, boolean logFailedUpdateOfNonChangedValue) {
         log.trace("[{}] onAttributesUpdate [{}]", lwM2MClient.getEndpoint(), tsKvProtos);
         Map <String, TransportProtos.TsKvProto> attributesUpdate =  new ConcurrentHashMap<>();
         tsKvProtos.forEach(tsKvProto -> {
             try {
-                String pathIdVer = clientContext.getObjectIdByKeyNameFromProfile(lwM2MClient, tsKvProto.getKv().getKey(), false);
+                String pathIdVer = clientContext.getObjectIdByKeyNameFromProfile(lwM2MClient, tsKvProto.getKv().getKey());
                 if (pathIdVer != null) {
                     // #1.1
                     if (lwM2MClient.getSharedAttributes().containsKey(pathIdVer)) {
@@ -224,13 +222,20 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
             if (!resourceModel.multiple || !(newValProto instanceof JsonElement)) {
                 this.pushUpdateToClientIfNeeded(lwM2MClient, oldResourceValue, newValProto, pathIdVer, logFailedUpdateOfNonChangedValue, resourceModel.type);
             } else {
-                pushUpdateMultiToClientIfNeeded(lwM2MClient, resourceModel, (JsonElement) newValProto,
-                        (Map<Integer, LwM2mResourceInstance>) oldResourceValue, pathIdVer);
+                try {
+                    pushUpdateMultiToClientIfNeeded(lwM2MClient, resourceModel, (JsonElement) newValProto,
+                            (Map<Integer, LwM2mResourceInstance>) oldResourceValue, pathIdVer, logFailedUpdateOfNonChangedValue);
+                } catch (Exception e){
+                    log.error("Failed update resource ["+lwM2MClient.getEndpoint()+"] onAttributesUpdate:", e);
+                    String logMsg = String.format("%s: Failed update resource onAttributesUpdate %s.",
+                            LOG_LWM2M_ERROR, e.getMessage());
+                    logService.log(lwM2MClient, logMsg);
+                }
             }
         });
     }
 
-    private void pushUpdateToClientIfNeeded(LwM2mClient lwM2MClient, Object valueOld, Object newValue,
+    private void pushUpdateToClientIfNeeded(LwM2MClient lwM2MClient, Object valueOld, Object newValue,
                                             String versionedId, boolean logFailedUpdateOfNonChangedValue, ResourceModel.Type type) {
         if (newValue == null) {
             String logMsg = String.format("%s: Failed update resource versionedId - %s value - %s. New value is  bad",
@@ -250,9 +255,10 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
         }
     }
 
-    private void pushUpdateMultiToClientIfNeeded(LwM2mClient client, ResourceModel resourceModel, JsonElement newValProto,
-                                                 Map<Integer, LwM2mResourceInstance> valueOld, String versionedId) {
-        Map newValues = convertMultiResourceValuesFromJson((JsonObject) newValProto, resourceModel.type, versionedId);
+    private void pushUpdateMultiToClientIfNeeded(LwM2MClient client, ResourceModel resourceModel, JsonElement newValProto,
+                                                 Map<Integer, LwM2mResourceInstance> valueOld, String versionedId,
+                                                 boolean logFailedUpdateOfNonChangedValue) throws Exception {
+        Map newValues = convertMultiResourceValuesFromJson(newValProto, resourceModel.type, versionedId);
         if (newValues.size() > 0 && valueOld != null && valueOld.size() > 0) {
             valueOld.values().stream().forEach((v) -> {
                 if (newValues.containsKey(v.getId())) {
@@ -272,7 +278,7 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
         if (newValues.size() > 0) {
             TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(versionedId).value(newValues).timeout(this.config.getTimeout()).build();
             downlinkHandler.sendWriteReplaceRequest(client, request, new TbLwM2MWriteResponseCallback(uplinkHandler, logService, client, versionedId));
-        } else {
+        } else if (logFailedUpdateOfNonChangedValue) {
             log.warn("Didn't update resource [{}] [{}]", versionedId, newValProto);
             String logMsg = String.format("%s: Didn't update resource versionedId - %s value - %s. Value is not changed",
                     LOG_LWM2M_WARN, versionedId, newValProto);
@@ -284,13 +290,13 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
      * @param pathIdVer - path resource
      * @return - value of Resource into format KvProto or null
      */
-    private Object getResourceValueFormatKv(LwM2mClient lwM2MClient, String pathIdVer) {
-        LwM2mResource resourceValue = LwM2mTransportUtil.getResourceValueFromLwM2MClient(lwM2MClient, pathIdVer);
+    private Object getResourceValueFormatKv(LwM2MClient lwM2MClient, String pathIdVer) {
+        LwM2mResource resourceValue = LwM2MTransportUtil.getResourceValueFromLwM2MClient(lwM2MClient, pathIdVer);
         if (resourceValue != null) {
             ResourceModel.Type currentType = resourceValue.getType();
             ResourceModel.Type expectedType = helper.getResourceModelTypeEqualsKvProtoValueType(currentType, pathIdVer);
             if (!resourceValue.isMultiInstances()) {
-                return LwM2mValueConverterImpl.getInstance().convertValue(resourceValue.getValue(), currentType, expectedType,
+                return LwM2MValueConverterImpl.getInstance().convertValue(resourceValue.getValue(), currentType, expectedType,
                         new LwM2mPath(fromVersionedIdToObjectId(pathIdVer)));
             } else if (resourceValue.getInstances().size() > 0) {
                 return resourceValue.getInstances();

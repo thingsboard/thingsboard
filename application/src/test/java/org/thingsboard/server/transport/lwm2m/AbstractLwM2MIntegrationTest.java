@@ -186,7 +186,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
 
             wsClient.registerWaitForUpdate();
             this.endpoint = endpoint;
-            createNewClient (security, coapConfig);
+            createNewClient (security, coapConfig, false);
             String msg = wsClient.waitForUpdate();
 
             EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
@@ -256,11 +256,11 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         this.endpoint = endpoint;
     }
 
-    public void createNewClient (Security security, NetworkConfig coapConfig)  throws Exception {
+    public void createNewClient (Security security, NetworkConfig coapConfig, boolean isRpc)  throws Exception {
         clientDestroy();
         client = new LwM2MTestClient(this.executor, this.endpoint);
         int clientPort = SocketUtils.findAvailableTcpPort();
-        client.init(security, coapConfig, clientPort);
+        client.init(security, coapConfig, clientPort, isRpc);
     }
 
     private void clientDestroy() {

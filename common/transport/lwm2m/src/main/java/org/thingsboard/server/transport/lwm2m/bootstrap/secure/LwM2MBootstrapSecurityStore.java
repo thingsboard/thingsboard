@@ -29,11 +29,11 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.device.data.lwm2m.BootstrapConfiguration;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
+import org.thingsboard.server.transport.lwm2m.secure.LwM2MCredentialsSecurityInfoValidator;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mSessionMsgListener;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
+import org.thingsboard.server.transport.lwm2m.server.LwM2MSessionMsgListener;
+import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportContext;
+import org.thingsboard.server.transport.lwm2m.server.LwM2MTransportServerHelper;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -43,11 +43,11 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.LOG_LWM2M_ERROR;
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.LOG_LWM2M_INFO;
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.LOG_LWM2M_TELEMETRY;
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.getBootstrapParametersFromThingsboard;
-import static org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer.BOOTSTRAP;
+import static org.thingsboard.server.transport.lwm2m.server.uplink.LwM2MTypeServer.BOOTSTRAP;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_ERROR;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_TELEMETRY;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.getBootstrapParametersFromThingsboard;
 
 @Slf4j
 @Service("LwM2MBootstrapSecurityStore")
@@ -56,13 +56,13 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
 
     private final EditableBootstrapConfigStore bootstrapConfigStore;
 
-    private final LwM2mCredentialsSecurityInfoValidator lwM2MCredentialsSecurityInfoValidator;
+    private final LwM2MCredentialsSecurityInfoValidator lwM2MCredentialsSecurityInfoValidator;
 
-    private final LwM2mTransportContext context;
-    private final LwM2mTransportServerHelper helper;
+    private final LwM2MTransportContext context;
+    private final LwM2MTransportServerHelper helper;
     private final Map<String /* endpoint */, TransportProtos.SessionInfoProto> bsSessions = new ConcurrentHashMap<>();
 
-    public LwM2MBootstrapSecurityStore(EditableBootstrapConfigStore bootstrapConfigStore, LwM2mCredentialsSecurityInfoValidator lwM2MCredentialsSecurityInfoValidator, LwM2mTransportContext context, LwM2mTransportServerHelper helper) {
+    public LwM2MBootstrapSecurityStore(EditableBootstrapConfigStore bootstrapConfigStore, LwM2MCredentialsSecurityInfoValidator lwM2MCredentialsSecurityInfoValidator, LwM2MTransportContext context, LwM2MTransportServerHelper helper) {
         this.bootstrapConfigStore = bootstrapConfigStore;
         this.lwM2MCredentialsSecurityInfoValidator = lwM2MCredentialsSecurityInfoValidator;
         this.context = context;
@@ -86,10 +86,10 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
                     bootstrapConfigStore.add(endPoint, bsConfigNew);
                 } catch (InvalidConfigurationException e) {
                     if (e.getMessage().contains("Psk identity") && e.getMessage().contains("already used for this bootstrap server")) {
-                        log.trace("", e);
+                        log.trace("Invalid Bootstrap Configuration", e);
                     }
                     else {
-                        log.error("", e);
+                        log.error("Invalid Bootstrap Configuration", e);
                     }
                 }
                 return store.getSecurityInfo() == null ? null : Collections.singletonList(store.getSecurityInfo()).iterator();
@@ -109,7 +109,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
                 try {
                     bootstrapConfigStore.add(store.getEndpoint(), bsConfig);
                 } catch (InvalidConfigurationException e) {
-                    log.error("", e);
+                    log.error("Invalid Bootstrap Configuration", e);
                 }
                 return store.getSecurityInfo();
             }
@@ -158,11 +158,11 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
         LwM2MBootstrapConfig lwM2MBootstrapConfig = store.getBootstrapCredentialConfig();
         if (lwM2MBootstrapConfig != null) {
             BootstrapConfiguration bootstrapObject = getBootstrapParametersFromThingsboard(store.getDeviceProfile());
-            lwM2MBootstrapConfig.servers = JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getServers()), LwM2MBootstrapServers.class);
-            LwM2MServerBootstrap profileServerBootstrap = JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getBootstrapServer()), LwM2MServerBootstrap.class);
-            if (SecurityMode.NO_SEC != profileServerBootstrap.getSecurityMode() && profileServerBootstrap != null) {
-                profileServerBootstrap.setSecurityHost( profileServerBootstrap.getHost());
-                profileServerBootstrap.setSecurityPort( profileServerBootstrap.getPort());
+            lwM2MBootstrapConfig.setServers(JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getServers()), LwM2MBootstrapServers.class));
+            LwM2MServerBootstrap bootstrapServerProfile = JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getBootstrapServer()), LwM2MServerBootstrap.class);
+            if (SecurityMode.NO_SEC != bootstrapServerProfile.getSecurityMode() && bootstrapServerProfile != null) {
+                bootstrapServerProfile.setSecurityHost(bootstrapServerProfile.getHost());
+                bootstrapServerProfile.setSecurityPort(bootstrapServerProfile.getPort());
             }
             LwM2MServerBootstrap profileLwm2mServer = JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getLwm2mServer()), LwM2MServerBootstrap.class);
             if (SecurityMode.NO_SEC != profileLwm2mServer.getSecurityMode() && profileLwm2mServer != null) {
@@ -172,10 +172,10 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
             UUID sessionUUiD = UUID.randomUUID();
             TransportProtos.SessionInfoProto sessionInfo = helper.getValidateSessionInfo(store.getMsg(), sessionUUiD.getMostSignificantBits(), sessionUUiD.getLeastSignificantBits());
             bsSessions.put(store.getEndpoint(), sessionInfo);
-            context.getTransportService().registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(null, null, null, sessionInfo, context.getTransportService()));
-            if (this.getValidatedSecurityMode(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap, lwM2MBootstrapConfig.lwm2mServer, profileLwm2mServer)) {
-                lwM2MBootstrapConfig.bootstrapServer = new LwM2MServerBootstrap(lwM2MBootstrapConfig.bootstrapServer, profileServerBootstrap);
-                lwM2MBootstrapConfig.lwm2mServer = new LwM2MServerBootstrap(lwM2MBootstrapConfig.lwm2mServer, profileLwm2mServer);
+            context.getTransportService().registerAsyncSession(sessionInfo, new LwM2MSessionMsgListener(null, null, null, sessionInfo, context.getTransportService()));
+            if (this.getValidatedSecurityMode(lwM2MBootstrapConfig.getBootstrapServer(), bootstrapServerProfile, lwM2MBootstrapConfig.getLwm2mServer(), profileLwm2mServer)) {
+                lwM2MBootstrapConfig.setBootstrapServer(new LwM2MServerBootstrap(lwM2MBootstrapConfig.getBootstrapServer(), bootstrapServerProfile));
+                lwM2MBootstrapConfig.setLwm2mServer(new LwM2MServerBootstrap(lwM2MBootstrapConfig.getLwm2mServer(), profileLwm2mServer));
                 String logMsg = String.format("%s: getParametersBootstrap: %s Access connect client with bootstrap server.", LOG_LWM2M_INFO, store.getEndpoint());
                 helper.sendParametersOnThingsboardTelemetry(helper.getKvStringtoThingsboard(LOG_LWM2M_TELEMETRY, logMsg), sessionInfo);
                 return lwM2MBootstrapConfig;
@@ -187,7 +187,6 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
                 return null;
             }
         }
-
         log.error("Unable to decode Json or Certificate for [{}]", store.getEndpoint());
         return null;
     }
@@ -197,13 +196,13 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
      * and (lwm2mServer  in credential and lwm2mServer  in profile
      *
      * @param bootstrapFromCredential - Bootstrap -> Security of bootstrapServer in credential
-     * @param profileServerBootstrap  - Bootstrap -> Security of bootstrapServer in profile
+     * @param bootstrapServerProfile  - Bootstrap -> Security of bootstrapServer in profile
      * @param lwm2mFromCredential     - Bootstrap -> Security of lwm2mServer in credential
      * @param profileLwm2mServer      - Bootstrap -> Security of lwm2mServer in profile
      * @return false if not sync between SecurityMode of Bootstrap credential and profile
      */
-    private boolean getValidatedSecurityMode(LwM2MServerBootstrap bootstrapFromCredential, LwM2MServerBootstrap profileServerBootstrap, LwM2MServerBootstrap lwm2mFromCredential, LwM2MServerBootstrap profileLwm2mServer) {
-        return (bootstrapFromCredential.getSecurityMode().equals(profileServerBootstrap.getSecurityMode()) &&
+    private boolean getValidatedSecurityMode(LwM2MServerBootstrap bootstrapFromCredential, LwM2MServerBootstrap bootstrapServerProfile, LwM2MServerBootstrap lwm2mFromCredential, LwM2MServerBootstrap profileLwm2mServer) {
+        return (bootstrapFromCredential.getSecurityMode().equals(bootstrapServerProfile.getSecurityMode()) &&
                 lwm2mFromCredential.getSecurityMode().equals(profileLwm2mServer.getSecurityMode()));
     }
 

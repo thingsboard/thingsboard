@@ -30,7 +30,7 @@ import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MInMemoryBoot
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2mDefaultBootstrapSessionManager;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportBootstrapConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
-import org.thingsboard.server.transport.lwm2m.server.DefaultLwM2mTransportService;
+import org.thingsboard.server.transport.lwm2m.server.DefaultLwM2MTransportService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -40,7 +40,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mNetworkConfig.getCoapConfig;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MNetworkConfig.getCoapConfig;
 
 @Slf4j
 @Component
@@ -93,7 +93,7 @@ public class LwM2MTransportBootstrapService {
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
         dtlsConfig.setRecommendedSupportedGroupsOnly(serverConfig.isRecommendedSupportedGroups());
         dtlsConfig.setRecommendedCipherSuitesOnly(serverConfig.isRecommendedCiphers());
-        dtlsConfig.setSupportedCipherSuites(this.pskMode ? DefaultLwM2mTransportService.PSK_CIPHER_SUITES : DefaultLwM2mTransportService.RPK_OR_X509_CIPHER_SUITES);
+        dtlsConfig.setSupportedCipherSuites(this.pskMode ? DefaultLwM2MTransportService.PSK_CIPHER_SUITES : DefaultLwM2MTransportService.RPK_OR_X509_CIPHER_SUITES);
 
         /* Set DTLS Config */
         builder.setDtlsConfig(dtlsConfig);

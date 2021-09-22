@@ -23,7 +23,7 @@ import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClient;
 import org.thingsboard.server.transport.lwm2m.server.downlink.DownlinkRequestCallback;
 
 import java.util.concurrent.TimeoutException;
@@ -34,9 +34,9 @@ public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkR
     private final TransportProtos.ToDeviceRpcRequestMsg request;
     private final DownlinkRequestCallback<R, T> callback;
 
-    protected final LwM2mClient client;
+    protected final LwM2MClient client;
 
-    public RpcDownlinkRequestCallbackProxy(TransportService transportService, LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, DownlinkRequestCallback<R, T> callback) {
+    public RpcDownlinkRequestCallbackProxy(TransportService transportService, LwM2MClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, DownlinkRequestCallback<R, T> callback) {
         this.transportService = transportService;
         this.client = client;
         this.request = requestMsg;

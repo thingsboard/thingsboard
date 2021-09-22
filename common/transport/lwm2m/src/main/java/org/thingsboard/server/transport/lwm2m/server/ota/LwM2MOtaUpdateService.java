@@ -16,43 +16,43 @@
 package org.thingsboard.server.transport.lwm2m.server.ota;
 
 import org.thingsboard.server.common.data.device.data.lwm2m.OtherConfiguration;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClient;
 
 import java.util.Optional;
 
 public interface LwM2MOtaUpdateService {
 
-    void init(LwM2mClient client);
+    void init(LwM2MClient client);
 
-    void forceFirmwareUpdate(LwM2mClient client);
+    void forceFirmwareUpdate(LwM2MClient client);
 
-    void onTargetFirmwareUpdate(LwM2mClient client, String newFwTitle, String newFwVersion, Optional<String> newFwUrl, Optional<String> newFwTag);
+    void onTargetFirmwareUpdate(LwM2MClient client, String newFwTitle, String newFwVersion, Optional<String> newFwUrl, Optional<String> newFwTag);
 
-    void onTargetSoftwareUpdate(LwM2mClient client, String newSwTitle, String newSwVersion, Optional<String> newSwUrl, Optional<String> newSwTag);
+    void onTargetSoftwareUpdate(LwM2MClient client, String newSwTitle, String newSwVersion, Optional<String> newSwUrl, Optional<String> newSwTag);
 
-    void onCurrentFirmwareNameUpdate(LwM2mClient client, String name);
+    void onCurrentFirmwareNameUpdate(LwM2MClient client, String name);
 
-    void onFirmwareStrategyUpdate(LwM2mClient client, OtherConfiguration configuration);
+    void onFirmwareStrategyUpdate(LwM2MClient client, OtherConfiguration configuration);
 
-    void onCurrentSoftwareStrategyUpdate(LwM2mClient client, OtherConfiguration configuration);
+    void onCurrentSoftwareStrategyUpdate(LwM2MClient client, OtherConfiguration configuration);
 
-    void onCurrentFirmwareVersion3Update(LwM2mClient client, String version);
+    void onCurrentFirmwareVersion3Update(LwM2MClient client, String version);
 
-    void onCurrentFirmwareVersionUpdate(LwM2mClient client, String version);
+    void onCurrentFirmwareVersionUpdate(LwM2MClient client, String version);
 
-    void onCurrentFirmwareStateUpdate(LwM2mClient client, Long state);
+    void onCurrentFirmwareStateUpdate(LwM2MClient client, Long state);
 
-    void onCurrentFirmwareResultUpdate(LwM2mClient client, Long result);
+    void onCurrentFirmwareResultUpdate(LwM2MClient client, Long result);
 
-    void onCurrentFirmwareDeliveryMethodUpdate(LwM2mClient lwM2MClient, Long value);
+    void onCurrentFirmwareDeliveryMethodUpdate(LwM2MClient lwM2MClient, Long value);
 
-    void onCurrentSoftwareNameUpdate(LwM2mClient lwM2MClient, String name);
+    void onCurrentSoftwareNameUpdate(LwM2MClient lwM2MClient, String name);
 
-    void onCurrentSoftwareVersion3Update(LwM2mClient lwM2MClient, String version);
+    void onCurrentSoftwareVersion3Update(LwM2MClient lwM2MClient, String version);
 
-    void onCurrentSoftwareVersionUpdate(LwM2mClient client, String version);
+    void onCurrentSoftwareVersionUpdate(LwM2MClient client, String version);
 
-    void onCurrentSoftwareStateUpdate(LwM2mClient lwM2MClient, Long value);
+    void onCurrentSoftwareStateUpdate(LwM2MClient lwM2MClient, Long value);
 
-    void onCurrentSoftwareResultUpdate(LwM2mClient client, Long result);
+    void onCurrentSoftwareResultUpdate(LwM2MClient client, Long result);
 }

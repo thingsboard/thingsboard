@@ -17,7 +17,7 @@ package org.thingsboard.server.transport.lwm2m.server.downlink;
 
 import lombok.Builder;
 import lombok.Getter;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType;
+import org.thingsboard.server.transport.lwm2m.server.LwM2MOperationType;
 
 public class TbLwM2MCancelAllRequest implements TbLwM2MDownlinkRequest<Integer> {
 
@@ -30,8 +30,8 @@ public class TbLwM2MCancelAllRequest implements TbLwM2MDownlinkRequest<Integer> 
     }
 
     @Override
-    public LwM2mOperationType getType() {
-        return LwM2mOperationType.OBSERVE_CANCEL_ALL;
+    public LwM2MOperationType getType() {
+        return LwM2MOperationType.OBSERVE_CANCEL_ALL;
     }
 
 }

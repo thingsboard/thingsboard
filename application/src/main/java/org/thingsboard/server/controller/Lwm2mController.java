@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,6 +32,8 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.lwm2m.LwM2MService;
+import org.thingsboard.server.service.lwm2m.LwM2MServiceImpl;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.Map;
@@ -40,6 +43,9 @@ import java.util.Map;
 @TbCoreComponent
 @RequestMapping("/api")
 public class Lwm2mController extends BaseController {
+
+    @Autowired
+    protected LwM2MService lwM2MService;
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/lwm2m/deviceProfile/bootstrap/{isBootstrapServer}", method = RequestMethod.GET)

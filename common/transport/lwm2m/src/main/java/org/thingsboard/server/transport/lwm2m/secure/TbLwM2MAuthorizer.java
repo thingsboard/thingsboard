@@ -26,7 +26,7 @@ import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClientContext;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
 import org.thingsboard.server.transport.lwm2m.server.store.TbSecurityStore;
 
@@ -39,7 +39,7 @@ public class TbLwM2MAuthorizer implements Authorizer {
     private final TbLwM2MDtlsSessionStore sessionStorage;
     private final TbSecurityStore securityStore;
     private final SecurityChecker securityChecker = new SecurityChecker();
-    private final LwM2mClientContext clientContext;
+    private final LwM2MClientContext clientContext;
 
     @Override
     public Registration isAuthorized(UplinkRequest<?> request, Registration registration, Identity senderIdentity) {

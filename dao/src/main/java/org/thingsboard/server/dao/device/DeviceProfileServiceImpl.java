@@ -133,9 +133,6 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     @Autowired
     private DashboardService dashboardService;
 
-    @Autowired
-    private DeviceCredentialsService deviceCredentialsService;
-
     private final Lock findOrCreateLock = new ReentrantLock();
 
     @Cacheable(cacheNames = DEVICE_PROFILE_CACHE, key = "{#deviceProfileId.id}")

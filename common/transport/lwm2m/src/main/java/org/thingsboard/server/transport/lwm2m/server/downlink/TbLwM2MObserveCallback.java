@@ -18,14 +18,14 @@ package org.thingsboard.server.transport.lwm2m.server.downlink;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.request.ObserveRequest;
 import org.eclipse.leshan.core.response.ObserveResponse;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClient;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
-import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2MUplinkMsgHandler;
 
 @Slf4j
 public class TbLwM2MObserveCallback extends TbLwM2MUplinkTargetedCallback<ObserveRequest, ObserveResponse> {
 
-    public TbLwM2MObserveCallback(LwM2mUplinkMsgHandler handler, LwM2MTelemetryLogService logService, LwM2mClient client, String targetId) {
+    public TbLwM2MObserveCallback(LwM2MUplinkMsgHandler handler, LwM2MTelemetryLogService logService, LwM2MClient client, String targetId) {
         super(handler, logService, client, targetId);
     }
 

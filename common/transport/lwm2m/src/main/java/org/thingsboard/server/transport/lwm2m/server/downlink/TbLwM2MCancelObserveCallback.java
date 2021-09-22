@@ -16,17 +16,17 @@
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClient;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2mTransportUtil.LOG_LWM2M_INFO;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_INFO;
 
 @Slf4j
 public class TbLwM2MCancelObserveCallback extends AbstractTbLwM2MRequestCallback<TbLwM2MCancelObserveRequest, Integer> {
 
     private final String versionedId;
 
-    public TbLwM2MCancelObserveCallback(LwM2MTelemetryLogService logService, LwM2mClient client, String versionedId) {
+    public TbLwM2MCancelObserveCallback(LwM2MTelemetryLogService logService, LwM2MClient client, String versionedId) {
         super(logService, client);
         this.versionedId = versionedId;
     }
