@@ -47,15 +47,15 @@ class LwM2mTransportServerHelperTest {
     long now;
     List<TransportProtos.KeyValueProto> kvList;
     ConcurrentMap<String, AtomicLong> keyTsLatestMap;
-    LwM2MTransportServerHelper helper;
-    LwM2MTransportContext context;
+    LwM2mTransportServerHelper helper;
+    LwM2mTransportContext context;
 
 
     @BeforeEach
     void setUp() {
         now = System.currentTimeMillis();
-        context = mock(LwM2MTransportContext.class);
-        helper = spy(new LwM2MTransportServerHelper(context));
+        context = mock(LwM2mTransportContext.class);
+        helper = spy(new LwM2mTransportServerHelper(context));
         willReturn(now).given(helper).getCurrentTimeMillis();
         kvList = List.of(
                 TransportProtos.KeyValueProto.newBuilder().setKey(KEY_SW_STATE).setStringV(DOWNLOADING).build(),

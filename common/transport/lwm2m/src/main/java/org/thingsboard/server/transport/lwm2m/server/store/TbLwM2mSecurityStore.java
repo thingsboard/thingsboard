@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.server.security.NonUniqueSecurityInfoException;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.jetbrains.annotations.Nullable;
-import org.thingsboard.server.transport.lwm2m.secure.LwM2MCredentialsSecurityInfoValidator;
+import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 
 import java.util.HashSet;
@@ -27,16 +27,16 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static org.thingsboard.server.transport.lwm2m.server.uplink.LwM2MTypeServer.CLIENT;
+import static org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer.CLIENT;
 
 @Slf4j
 public class TbLwM2mSecurityStore implements TbMainSecurityStore {
 
     private final TbEditableSecurityStore securityStore;
-    private final LwM2MCredentialsSecurityInfoValidator validator;
+    private final LwM2mCredentialsSecurityInfoValidator validator;
     private final ConcurrentMap<String, Set<String>> endpointRegistrations = new ConcurrentHashMap<>();
 
-    public TbLwM2mSecurityStore(TbEditableSecurityStore securityStore, LwM2MCredentialsSecurityInfoValidator validator) {
+    public TbLwM2mSecurityStore(TbEditableSecurityStore securityStore, LwM2mCredentialsSecurityInfoValidator validator) {
         this.securityStore = securityStore;
         this.validator = validator;
     }

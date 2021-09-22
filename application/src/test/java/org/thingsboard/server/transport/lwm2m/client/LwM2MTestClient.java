@@ -44,7 +44,7 @@ import org.eclipse.leshan.core.request.BootstrapRequest;
 import org.eclipse.leshan.core.request.DeregisterRequest;
 import org.eclipse.leshan.core.request.RegisterRequest;
 import org.eclipse.leshan.core.request.UpdateRequest;
-import org.thingsboard.server.transport.lwm2m.utils.LwM2MValueConverterImpl;
+import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 import org.junit.Assert;
 
 import java.io.IOException;
@@ -80,9 +80,9 @@ public class LwM2MTestClient {
     private SimpleLwM2MDevice lwM2MDevice;
     private FwLwM2MDevice fwLwM2MDevice;
     private SwLwM2MDevice swLwM2MDevice;
-    private LwM2MBinaryAppDataContainer lwM2MBinaryAppDataContainer;
+    private LwM2mBinaryAppDataContainer lwM2MBinaryAppDataContainer;
     private LwM2MLocationParams locationParams;
-    private LwM2MTemperatureSensor lwM2MTemperatureSensor;
+    private LwM2mTemperatureSensor lwM2MTemperatureSensor;
 
     public void init(Security security, NetworkConfig coapConfig, int port, boolean isRpc) throws InvalidDDFFileException, IOException {
         Assert.assertNull("client already initialized", client);
@@ -99,12 +99,12 @@ public class LwM2MTestClient {
         initializer.setInstancesForObject(FIRMWARE, fwLwM2MDevice = new FwLwM2MDevice());
         initializer.setInstancesForObject(SOFTWARE_MANAGEMENT, swLwM2MDevice = new SwLwM2MDevice());
         initializer.setClassForObject(ACCESS_CONTROL, DummyInstanceEnabler.class);
-        initializer.setInstancesForObject(BINARY_APP_DATA_CONTAINER, lwM2MBinaryAppDataContainer = new LwM2MBinaryAppDataContainer(executor, objectInstanceId_0),
-                new LwM2MBinaryAppDataContainer(executor, objectInstanceId_1));
+        initializer.setInstancesForObject(BINARY_APP_DATA_CONTAINER, lwM2MBinaryAppDataContainer = new LwM2mBinaryAppDataContainer(executor, objectInstanceId_0),
+                new LwM2mBinaryAppDataContainer(executor, objectInstanceId_1));
         locationParams = new LwM2MLocationParams();
         locationParams.getPos();
-        initializer.setInstancesForObject(LOCATION, new LwM2MLocation(locationParams.getLatitude(), locationParams.getLongitude(), locationParams.getScaleFactor(), executor, objectInstanceId_0));
-        initializer.setInstancesForObject(TEMPERATURE_SENSOR, lwM2MTemperatureSensor = new LwM2MTemperatureSensor(executor, objectInstanceId_0), new LwM2MTemperatureSensor(executor, objectInstanceId_12));
+        initializer.setInstancesForObject(LOCATION, new LwM2mLocation(locationParams.getLatitude(), locationParams.getLongitude(), locationParams.getScaleFactor(), executor, objectInstanceId_0));
+        initializer.setInstancesForObject(TEMPERATURE_SENSOR, lwM2MTemperatureSensor = new LwM2mTemperatureSensor(executor, objectInstanceId_0), new LwM2mTemperatureSensor(executor, objectInstanceId_12));
 
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
         dtlsConfig.setRecommendedCipherSuitesOnly(true);
@@ -157,7 +157,7 @@ public class LwM2MTestClient {
         builder.setSharedExecutor(executor);
         builder.setDecoder(new DefaultLwM2mDecoder(false));
 
-        builder.setEncoder(new DefaultLwM2mEncoder(new LwM2MValueConverterImpl(), false));
+        builder.setEncoder(new DefaultLwM2mEncoder(new LwM2mValueConverterImpl(), false));
         client = builder.build();
 
         LwM2mClientObserver observer = new LwM2mClientObserver() {

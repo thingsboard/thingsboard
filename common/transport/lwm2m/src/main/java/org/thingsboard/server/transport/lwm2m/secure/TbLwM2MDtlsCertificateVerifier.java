@@ -57,7 +57,7 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.thingsboard.server.transport.lwm2m.server.uplink.LwM2MTypeServer.CLIENT;
+import static org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer.CLIENT;
 
 @Slf4j
 @Component
@@ -67,7 +67,7 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
 
     private final TbLwM2MDtlsSessionStore sessionStorage;
     private final LwM2MTransportServerConfig config;
-    private final LwM2MCredentialsSecurityInfoValidator securityInfoValidator;
+    private final LwM2mCredentialsSecurityInfoValidator securityInfoValidator;
     private final TbMainSecurityStore securityStore;
 
     @SuppressWarnings("deprecation")

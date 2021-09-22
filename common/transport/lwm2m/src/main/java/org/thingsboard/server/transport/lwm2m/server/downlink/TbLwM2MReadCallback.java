@@ -20,14 +20,14 @@ import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.request.ReadRequest;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.core.util.Hex;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClient;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
-import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2MUplinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
 @Slf4j
 public class TbLwM2MReadCallback extends TbLwM2MUplinkTargetedCallback<ReadRequest, ReadResponse> {
 
-    public TbLwM2MReadCallback(LwM2MUplinkMsgHandler handler, LwM2MTelemetryLogService logService, LwM2MClient client, String targetId) {
+    public TbLwM2MReadCallback(LwM2mUplinkMsgHandler handler, LwM2MTelemetryLogService logService, LwM2mClient client, String targetId) {
         super(handler, logService, client, targetId);
     }
 
