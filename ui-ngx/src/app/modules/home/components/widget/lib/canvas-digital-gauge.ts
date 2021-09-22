@@ -466,9 +466,9 @@ export class CanvasDigitalGauge extends BaseGauge {
         const progress = (Drawings.normalizedValue(options).normal - options.minValue) /
           (options.maxValue - options.minValue);
         if (options.neonGlowBrightness) {
-          color = getProgressColor(progress, options.neonColorsRange, options.neonColorValue);
+          color = getProgressColor(progress, options.neonColorsRange);
         } else {
-          color = getProgressColor(progress, options.colorsRange, options.neonColorValue);
+          color = getProgressColor(progress, options.colorsRange);
         }
       }
       return color;
@@ -814,14 +814,14 @@ function drawDigitalValue(context: DigitalGaugeCanvasRenderingContext2D, options
   drawText(context, options, 'Value', text, textX, textY);
 }
 
-function getProgressColor(progress: number, colorsRange: DigitalGaugeColorRange[], defaultColor: string): string {
+function getProgressColor(progress: number, colorsRange: DigitalGaugeColorRange[]): string {
 
   if (progress === 0 || colorsRange.length === 1) {
-    return defaultColor;
+    return colorsRange[0].rgbString;
   }
 
-  for (let j = 1; j < colorsRange.length; j += 2) {
-    if (progress >= colorsRange[j - 1].pct && progress <= colorsRange[j].pct) {
+  for (let j = 1; j < colorsRange.length; j++) {
+    if (progress <= colorsRange[j].pct) {
       const lower = colorsRange[j - 1];
       const upper = colorsRange[j];
       const range = upper.pct - lower.pct;
@@ -836,7 +836,6 @@ function getProgressColor(progress: number, colorsRange: DigitalGaugeColorRange[
       return color.toRgbString();
     }
   }
-  return defaultColor;
 }
 
 function drawArcGlow(context: DigitalGaugeCanvasRenderingContext2D,
@@ -946,9 +945,9 @@ function drawProgress(context: DigitalGaugeCanvasRenderingContext2D,
                       options: CanvasDigitalGaugeOptions, progress: number) {
   let neonColor;
   if (options.neonGlowBrightness) {
-    context.currentColor = neonColor = getProgressColor(progress, options.neonColorsRange, options.neonColorValue);
+    context.currentColor = neonColor = getProgressColor(progress, options.neonColorsRange);
   } else {
-    context.currentColor = context.strokeStyle = getProgressColor(progress, options.colorsRange, options.neonColorValue);
+    context.currentColor = context.strokeStyle = getProgressColor(progress, options.colorsRange);
   }
 
   const {barLeft, barRight, barTop, baseX, width, barBottom, Cx, Cy, Rm, Ro, Ri, strokeWidth} =
