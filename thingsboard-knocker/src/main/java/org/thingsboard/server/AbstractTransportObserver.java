@@ -100,11 +100,12 @@ public abstract class AbstractTransportObserver implements TransportObserver {
             if (jsonNode.has("token")) {
                 String token = jsonNode.get("token").asText();
                 log.info("Token received: {}", token);
+                actualAccessToken = token;
                 return token;
             }
             return null;
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error(e.toString());
         }
         return null;
 

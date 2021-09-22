@@ -28,6 +28,10 @@
             <version>3.3.2-SNAPSHOT</version>
         </dependency>
         <dependency>
+            <groupId>org.eclipse.californium</groupId>
+            <artifactId>californium-core</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.eclipse.paho</groupId>
             <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
         </dependency>

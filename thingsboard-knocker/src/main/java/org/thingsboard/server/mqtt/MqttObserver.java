@@ -63,15 +63,12 @@ public class MqttObserver extends AbstractTransportObserver {
             webSocketClient.send(mapper.writeValueAsString(getTelemetryCmdsWrapper(testDeviceUuid)));
             webSocketClient.waitForReply(websocketWaitTime);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e.toString());
         }
     }
 
     @Override
     public String pingTransport(String payload) throws Exception {
-        if (webSocketClient == null || webSocketClient.isClosed()) {
-            webSocketClient = buildAndConnectWebSocketClient();
-        }
         webSocketClient.registerWaitForUpdate();
         publishMqttMsg(mqttAsyncClient, payload.getBytes(), DEVICE_TELEMETRY_TOPIC);
         return webSocketClient.waitForUpdate(websocketWaitTime);
@@ -100,10 +97,8 @@ public class MqttObserver extends AbstractTransportObserver {
     }
 
     @Override
-    public TransportType getTransportType(String msg) {
-        TransportType mqtt = TransportType.MQTT;
-        mqtt.setInfo(msg);
-        return mqtt;
+    public TransportType getTransportType() {
+        return TransportType.MQTT;
     }
     
     

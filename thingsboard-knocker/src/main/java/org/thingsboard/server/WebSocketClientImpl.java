@@ -27,7 +27,7 @@ public class WebSocketClientImpl extends WebSocketClient {
 
     @Override
     public void onMessage(String s) {
-        log.info("RECEIVED: {}", s);
+        log.debug("RECEIVED: {}", s);
         lastMsg = s;
         if (reply != null) {
             reply.countDown();
@@ -39,7 +39,7 @@ public class WebSocketClientImpl extends WebSocketClient {
 
     @Override
     public void onClose(int i, String s, boolean b) {
-        log.error("CLOSED:");
+        log.debug("CLOSED:");
     }
 
     @Override
@@ -62,7 +62,7 @@ public class WebSocketClientImpl extends WebSocketClient {
         try {
             update.await(ms, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-            log.warn("Failed to await reply", e);
+            log.debug("Failed to await reply", e);
         }
         return lastMsg;
     }
@@ -71,7 +71,7 @@ public class WebSocketClientImpl extends WebSocketClient {
         try {
             reply.await(ms, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-            log.warn("Failed to await reply", e);
+            log.debug("Failed to await reply", e);
         }
         return lastMsg;
     }

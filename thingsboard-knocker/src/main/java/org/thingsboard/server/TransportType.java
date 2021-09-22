@@ -8,15 +8,5 @@ public enum TransportType {
     HTTP,
     LWM2M,
     MQTT,
-    SNMP;
-
-    private String info;
-
-    public String getInfo() {
-        return info;
-    }
-
-    public void setInfo(String info) {
-        this.info = info;
-    }
+    SNMP
 }

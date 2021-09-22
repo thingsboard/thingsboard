@@ -22,9 +22,7 @@ public class Lwm2MObserver implements TransportObserver {
     }
 
     @Override
-    public TransportType getTransportType(String msg) {
-        TransportType mqtt = TransportType.LWM2M;
-        mqtt.setInfo(msg);
-        return mqtt;
+    public TransportType getTransportType() {
+        return TransportType.LWM2M;
     }
 }

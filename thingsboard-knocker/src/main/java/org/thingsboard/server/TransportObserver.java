@@ -6,5 +6,5 @@ public interface TransportObserver {
 
     int getMonitoringRate();
 
-    TransportType getTransportType(String msg);
+    TransportType getTransportType();
 }

@@ -70,10 +70,7 @@ public class HttpObserver extends AbstractTransportObserver {
 
     @Override
     public String pingTransport(String payload) throws Exception {
-        if (webSocketClient == null || webSocketClient.isClosed()) {
-            webSocketClient = buildAndConnectWebSocketClient();
-        }
-
+        validateWebsocket();
         webSocketClient.registerWaitForUpdate();
         sendHttpPostWithTimeout(payload);
         return webSocketClient.waitForUpdate(websocketWaitTime);
@@ -105,9 +102,17 @@ public class HttpObserver extends AbstractTransportObserver {
     }
 
     @Override
-    public TransportType getTransportType(String msg) {
-        TransportType mqtt = TransportType.HTTP;
-        mqtt.setInfo(msg);
-        return mqtt;
+    public TransportType getTransportType() {
+        return TransportType.HTTP;
+    }
+
+    private void validateWebsocket() throws Exception{
+        if (webSocketClient == null) {
+            webSocketClient = buildAndConnectWebSocketClient();
+        }
+        if (webSocketClient.isClosed()) {
+            webSocketClient.send(mapper.writeValueAsString(getTelemetryCmdsWrapper(testDeviceUuid)));
+            webSocketClient.waitForReply(websocketWaitTime);
+        }
     }
 }

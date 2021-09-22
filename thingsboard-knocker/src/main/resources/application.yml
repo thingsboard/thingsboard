@@ -24,14 +24,23 @@ lwm2m:
   test_device:
     access_token: "${HTTP_TEST_DEVICE_ACCESS_TOKEN:PJP6ZPVxK881XeK4QDZe}"
 
+coap:
+  url: "${HTTP_URL:coap://localhost}"
+  qos: "${HTTP_QOS:1}"
+  timeout: "${HTTP_TIMEOUT:5000}"
+  monitoring_rate: "${HTTP_MONITORING_RATE:10000}"
+  test_device:
+    access_token: "${HTTP_TEST_DEVICE_ACCESS_TOKEN:MtyXwpFyKKcNJhwVMi09}"
+    id: "${WEBSOCKET_DEVICE_ID:d6089640-1baa-11ec-8009-5572699cb133}"
+
 snmp:
   url: "${HTTP_URL:tcp://localhost:1883}"
   qos: "${HTTP_QOS:1}"
   timeout: "${HTTP_TIMEOUT:5000}"
   monitoring_rate: "${HTTP_MONITORING_RATE:10000}"
   test_device:
-    access_token: "${HTTP_TEST_DEVICE_ACCESS_TOKEN:PJP6ZPVxK881XeK4QDZe}"
-    device_id: "${WEBSOCKET_DEVICE_ID:}"
+    access_token: "${HTTP_TEST_DEVICE_ACCESS_TOKEN:MtyXwpFyKKcNJhwVMi09}"
+    id: "${WEBSOCKET_DEVICE_ID:d6089640-1baa-11ec-8009-5572699cb133}"
 
 websocket:
   wait_time: "${WEBSOCKET_WAIT_TIME:10000}"

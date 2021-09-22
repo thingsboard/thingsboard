@@ -39,25 +39,25 @@ public class TransportsMonitoringScheduler {
                 String expectedValue = String.valueOf(System.currentTimeMillis());
                 try {
                     String msg = observer.pingTransport(toJsonPayload(expectedValue));
-                    String receivedValue = getWebsocketUpdatedValue(msg).orElse("");
-                    if (!receivedValue.equals(expectedValue)) {
-                        onMonitoringFailure(observer.getTransportType("Violation of message validation"));
+                    String receivedValue = getWebsocketUpdatedValue(msg).orElse(null);
+                    if (!expectedValue.equals(receivedValue)) {
+                        onMonitoringFailure(new TransportInfo(observer.getTransportType(), "Transport didn't send websocket update or wrong message was received"));
                     }
                     else {
-                        log.warn(observer.getTransportType("Success").toString());
+                        log.warn(observer.getTransportType().toString() + " | Successfully");
                     }
 
                 } catch (Exception e) {
-                    onMonitoringFailure(observer.getTransportType(e.getMessage()));
+                    onMonitoringFailure(new TransportInfo(observer.getTransportType(), e.toString()));
                 }
             }, 0, observer.getMonitoringRate(), TimeUnit.MILLISECONDS);
 
         }
     }
 
-    private void onMonitoringFailure(TransportType type) {
+    private void onMonitoringFailure(TransportInfo transportInfo) {
         for (NotificationChannel channel : channels) {
-            channel.onTransportUnavailable(type);
+            channel.onTransportUnavailable(transportInfo);
         }
     }
 

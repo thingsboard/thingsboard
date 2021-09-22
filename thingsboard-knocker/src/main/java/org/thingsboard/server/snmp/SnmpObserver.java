@@ -22,9 +22,7 @@ public class SnmpObserver implements TransportObserver {
     }
 
     @Override
-    public TransportType getTransportType(String msg) {
-        TransportType mqtt = TransportType.SNMP;
-        mqtt.setInfo(msg);
-        return mqtt;
+    public TransportType getTransportType() {
+        return TransportType.SNMP;
     }
 }
