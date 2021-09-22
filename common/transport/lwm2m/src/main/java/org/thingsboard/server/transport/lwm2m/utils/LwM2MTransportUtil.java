@@ -45,15 +45,15 @@ import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTrans
 import org.thingsboard.server.common.data.ota.OtaPackageKey;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.transport.lwm2m.config.LwM2mVersion;
-import org.thingsboard.server.transport.lwm2m.server.LwM2MOtaConvert;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClient;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mOtaConvert;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.ResourceValue;
 import org.thingsboard.server.transport.lwm2m.server.downlink.HasVersionedId;
 import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdateResult;
 import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdateState;
 import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateResult;
 import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateState;
-import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -144,9 +144,9 @@ public class LwM2MTransportUtil {
         }
     }
 
-    public static LwM2MOtaConvert convertOtaUpdateValueToString(String pathIdVer, Object value, ResourceModel.Type currentType) {
+    public static LwM2mOtaConvert convertOtaUpdateValueToString(String pathIdVer, Object value, ResourceModel.Type currentType) {
         String path = fromVersionedIdToObjectId(pathIdVer);
-        LwM2MOtaConvert lwM2mOtaConvert = new LwM2MOtaConvert();
+        LwM2mOtaConvert lwM2mOtaConvert = new LwM2mOtaConvert();
         if (path != null) {
             if (FW_STATE_ID.equals(path)) {
                 lwM2mOtaConvert.setCurrentType(STRING);
@@ -289,12 +289,12 @@ public class LwM2MTransportUtil {
      * Attribute pmax = new Attribute(MAXIMUM_PERIOD, "60");
      * Attribute [] attrs = {gt, st};
      */
-    public static SimpleDownlinkRequest createWriteAttributeRequest(String target, Object params, DefaultLwM2MUplinkMsgHandler serviceImpl) {
+    public static SimpleDownlinkRequest createWriteAttributeRequest(String target, Object params, DefaultLwM2mUplinkMsgHandler serviceImpl) {
         AttributeSet attrSet = new AttributeSet(createWriteAttributes(params, serviceImpl, target));
         return attrSet.getAttributes().size() > 0 ? new WriteAttributesRequest(target, attrSet) : null;
     }
 
-    private static Attribute[] createWriteAttributes(Object params, DefaultLwM2MUplinkMsgHandler serviceImpl, String target) {
+    private static Attribute[] createWriteAttributes(Object params, DefaultLwM2mUplinkMsgHandler serviceImpl, String target) {
         List<Attribute> attributeLists = new ArrayList<>();
         Map<String, Object> map = JacksonUtil.convertValue(params, new TypeReference<>() {
         });
@@ -339,7 +339,7 @@ public class LwM2MTransportUtil {
         }
     }
 
-    public static void validateVersionedId(LwM2MClient client, HasVersionedId request) {
+    public static void validateVersionedId(LwM2mClient client, HasVersionedId request) {
         String msgExceptionStr = "";
         if (request.getObjectId() == null) {
             msgExceptionStr = "Specified object id is null!";
@@ -360,7 +360,7 @@ public class LwM2MTransportUtil {
     public static Map convertMultiResourceValuesFromJson(JsonElement newValProto, ResourceModel.Type type, String versionedId)  throws Exception{
         Map newValues = equalsMultiResourceValuesResourceType(type);
         newValProto.getAsJsonObject().entrySet().forEach((obj) -> {
-            newValues.put(Integer.valueOf(obj.getKey()), LwM2MValueConverterImpl.getInstance().convertValue(obj.getValue().getAsString(),
+            newValues.put(Integer.valueOf(obj.getKey()), LwM2mValueConverterImpl.getInstance().convertValue(obj.getValue().getAsString(),
                     STRING, type, new LwM2mPath(fromVersionedIdToObjectId(versionedId))));
         });
         return newValues;
@@ -387,7 +387,7 @@ public class LwM2MTransportUtil {
         }
     }
 
-    public static Object convertWriteAttributes(String type, Object value, DefaultLwM2MUplinkMsgHandler serviceImpl, String target) {
+    public static Object convertWriteAttributes(String type, Object value, DefaultLwM2mUplinkMsgHandler serviceImpl, String target) {
         switch (type) {
             /** Integer [0:255]; */
             case DIMENSION:
@@ -427,7 +427,7 @@ public class LwM2MTransportUtil {
      * @param path        -
      * @return - return value of Resource by idPath
      */
-    public static LwM2mResource getResourceValueFromLwM2MClient(LwM2MClient lwM2MClient, String path) {
+    public static LwM2mResource getResourceValueFromLwM2MClient(LwM2mClient lwM2MClient, String path) {
         LwM2mResource lwm2mResourceValue = null;
         ResourceValue resourceValue = lwM2MClient.getResources().get(path);
         if (resourceValue != null) {

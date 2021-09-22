@@ -22,10 +22,10 @@ import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.service.DefaultTransportService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
-import org.thingsboard.server.transport.lwm2m.server.LwM2MSessionMsgListener;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mSessionMsgListener;
 import org.thingsboard.server.transport.lwm2m.server.attributes.LwM2MAttributesService;
 import org.thingsboard.server.transport.lwm2m.server.rpc.LwM2MRpcRequestHandler;
-import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2MUplinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
 @Slf4j
 @Service
@@ -35,12 +35,12 @@ public class DefaultLwM2MSessionManager implements LwM2MSessionManager {
     private final TransportService transportService;
     private final LwM2MAttributesService attributesService;
     private final LwM2MRpcRequestHandler rpcHandler;
-    private final LwM2MUplinkMsgHandler uplinkHandler;
+    private final LwM2mUplinkMsgHandler uplinkHandler;
 
     public DefaultLwM2MSessionManager(TransportService transportService,
                                       @Lazy LwM2MAttributesService attributesService,
                                       @Lazy LwM2MRpcRequestHandler rpcHandler,
-                                      @Lazy LwM2MUplinkMsgHandler uplinkHandler) {
+                                      @Lazy LwM2mUplinkMsgHandler uplinkHandler) {
         this.transportService = transportService;
         this.attributesService = attributesService;
         this.rpcHandler = rpcHandler;
@@ -49,7 +49,7 @@ public class DefaultLwM2MSessionManager implements LwM2MSessionManager {
 
     @Override
     public void register(TransportProtos.SessionInfoProto sessionInfo) {
-        transportService.registerAsyncSession(sessionInfo, new LwM2MSessionMsgListener(uplinkHandler, attributesService, rpcHandler, sessionInfo, transportService));
+        transportService.registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(uplinkHandler, attributesService, rpcHandler, sessionInfo, transportService));
         TransportProtos.TransportToDeviceActorMsg msg = TransportProtos.TransportToDeviceActorMsg.newBuilder()
                 .setSessionInfo(sessionInfo)
                 .setSessionEvent(DefaultTransportService.getSessionEventMsg(TransportProtos.SessionEvent.OPEN))

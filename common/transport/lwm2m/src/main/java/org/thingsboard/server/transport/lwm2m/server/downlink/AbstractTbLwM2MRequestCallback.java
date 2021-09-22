@@ -16,7 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClient;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_ERROR;
@@ -25,9 +25,9 @@ import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LO
 public abstract class AbstractTbLwM2MRequestCallback<R, T> implements DownlinkRequestCallback<R, T> {
 
     protected final LwM2MTelemetryLogService logService;
-    protected final LwM2MClient client;
+    protected final LwM2mClient client;
 
-    protected AbstractTbLwM2MRequestCallback(LwM2MTelemetryLogService logService, LwM2MClient client) {
+    protected AbstractTbLwM2MRequestCallback(LwM2MTelemetryLogService logService, LwM2mClient client) {
         this.logService = logService;
         this.client = client;
     }
