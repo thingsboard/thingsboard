@@ -4,8 +4,8 @@ mqtt:
   timeout: "${MQTT_TIMEOUT:5000}"
   monitoring_rate: "${MQTT_MONITORING_RATE:10000}"
   test_device:
-    access_token: "${MQTT_TEST_DEVICE_ACCESS_TOKEN:arcJJM9VeH7g0i1402ew}"
-    id: "${MQTT_TEST_DEVICE_ID:38d5ae20-16f1-11ec-82c2-279b70afb31e}"
+    access_token: "${MQTT_TEST_DEVICE_ACCESS_TOKEN:qMlayxUWDAFsXmiVcUGr}"
+    id: "${MQTT_TEST_DEVICE_ID:db96cbe0-1b96-11ec-9bbf-7165a6bd0cd0}"
 
 http:
   url: "${HTTP_URL:tcp://localhost:1883}"
@@ -13,7 +13,8 @@ http:
   timeout: "${HTTP_TIMEOUT:5000}"
   monitoring_rate: "${HTTP_MONITORING_RATE:10000}"
   test_device:
-    access_token: "${HTTP_TEST_DEVICE_ACCESS_TOKEN:PJP6ZPVxK881XeK4QDZe}"
+    access_token: "${HTTP_TEST_DEVICE_ACCESS_TOKEN:ikoLNfBDlNE3zO6wTekL}"
+    id: "${HTTP_TEST_DEVICE_ID:dfe0d1a0-1b96-11ec-9bbf-7165a6bd0cd0}"
 
 lwm2m:
   url: "${HTTP_URL:tcp://localhost:1883}"
@@ -33,6 +34,8 @@ snmp:
     device_id: "${WEBSOCKET_DEVICE_ID:}"
 
 websocket:
-  wait_time: "${WEBSOCKET_WAIT_TIME:4000}"
+  wait_time: "${WEBSOCKET_WAIT_TIME:10000}"
+  monitoring_tenant_username: "${WEBSOCKET_MONITORING_TENANT_USERNAME:monitoring@gmail.com}"
+  monitoring_tenant_password: "${WEBSOCKET_MONITORING_TENANT_PASSWORD:tenant}"
 
 #TODO refactor env variables

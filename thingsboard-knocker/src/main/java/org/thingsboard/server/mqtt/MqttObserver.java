@@ -24,7 +24,6 @@ import java.util.UUID;
 
 @Component
 @Slf4j
-@RequiredArgsConstructor
 public class MqttObserver extends AbstractTransportObserver {
 
     private WebSocketClientImpl webSocketClient;
@@ -51,6 +50,10 @@ public class MqttObserver extends AbstractTransportObserver {
 
     private MqttAsyncClient mqttAsyncClient;
 
+    public MqttObserver() {
+        super();
+    }
+
     @PostConstruct
     private void init() {
         try {
@@ -58,15 +61,17 @@ public class MqttObserver extends AbstractTransportObserver {
 
             webSocketClient = buildAndConnectWebSocketClient();
             webSocketClient.send(mapper.writeValueAsString(getTelemetryCmdsWrapper(testDeviceUuid)));
-            String s = webSocketClient.waitForReply(websocketWaitTime);
-            System.out.println(s);
-        } catch (URISyntaxException | JsonProcessingException | InterruptedException | MqttException e) {
+            webSocketClient.waitForReply(websocketWaitTime);
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     @Override
     public String pingTransport(String payload) throws Exception {
+        if (webSocketClient == null || webSocketClient.isClosed()) {
+            webSocketClient = buildAndConnectWebSocketClient();
+        }
         webSocketClient.registerWaitForUpdate();
         publishMqttMsg(mqttAsyncClient, payload.getBytes(), DEVICE_TELEMETRY_TOPIC);
         return webSocketClient.waitForUpdate(websocketWaitTime);

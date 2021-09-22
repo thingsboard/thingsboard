@@ -24,8 +24,8 @@ import java.util.Map;
 public class EntityData {
 
     private final EntityId entityId;
-    private final boolean readAttrs;
-    private final boolean readTs;
+    private final boolean readAttrs; // FIXME REMOVE AFTER TESTING
+    private final boolean readTs; // FIXME REMOVE AFTER TESTING
     private final Map<EntityKeyType, Map<String, TsValue>> latest;
     private final Map<String, TsValue[]> timeseries;
 
