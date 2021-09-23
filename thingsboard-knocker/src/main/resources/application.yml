@@ -1,5 +1,5 @@
 mqtt:
-  url: "${MQTT_URL:tcp://localhost:1883}"
+  host: "${MQTT_HOST:tcp://localhost:1883}"
   qos: "${MQTT_QOS:1}"
   timeout: "${MQTT_TIMEOUT:5000}"
   monitoring_rate: "${MQTT_MONITORING_RATE:10000}"
@@ -8,43 +8,45 @@ mqtt:
     id: "${MQTT_TEST_DEVICE_ID:db96cbe0-1b96-11ec-9bbf-7165a6bd0cd0}"
 
 http:
-  url: "${HTTP_URL:tcp://localhost:1883}"
-  qos: "${HTTP_QOS:1}"
-  timeout: "${HTTP_TIMEOUT:5000}"
+  host: "${HTTP_HOST:http://localhost:8080}"
+  response_timeout: "${HTTP_RESPONSE_TIMEOUT:5000}"
+  connect_timeout: "${HTTP_CONNECT_TIMEOUT: 5000}"
+  connection_request_timeout: "${HTTP_CONNECTION_REQUEST_TIMEOUT: 5000}"
+  socket_timeout: "${HTTP_SOCKET_TIMEOUT:5000}"
   monitoring_rate: "${HTTP_MONITORING_RATE:10000}"
   test_device:
     access_token: "${HTTP_TEST_DEVICE_ACCESS_TOKEN:ikoLNfBDlNE3zO6wTekL}"
     id: "${HTTP_TEST_DEVICE_ID:dfe0d1a0-1b96-11ec-9bbf-7165a6bd0cd0}"
 
+coap:
+  host: "${COAP_HOST:coap://localhost}"
+  timeout: "${COAP_TIMEOUT:5000}"
+  monitoring_rate: "${COAP_MONITORING_RATE:10000}"
+  test_device:
+    access_token: "${COAP_TEST_DEVICE_ACCESS_TOKEN:MtyXwpFyKKcNJhwVMi09}"
+    id: "${COAP_TEST_DEVICE_ID:d6089640-1baa-11ec-8009-5572699cb133}"
+
+websocket:
+  host: "${WEBSOCKET_HOST:ws://localhost:8080}"
+  update_wait_time: "${WEBSOCKET_UPDATE_WAIT_TIME:10000}"
+  monitoring_tenant_username: "${WEBSOCKET_MONITORING_TENANT_USERNAME:monitoring@gmail.com}"
+  monitoring_tenant_password: "${WEBSOCKET_MONITORING_TENANT_PASSWORD:tenant}"
+  token_host: "${WEBSOCKET_TOKEN_HOST:http://localhost:8080}"
+
+# not implemented ---
+
 lwm2m:
   url: "${HTTP_URL:tcp://localhost:1883}"
-  qos: "${HTTP_QOS:1}"
   timeout: "${HTTP_TIMEOUT:5000}"
   monitoring_rate: "${HTTP_MONITORING_RATE:10000}"
   test_device:
     access_token: "${HTTP_TEST_DEVICE_ACCESS_TOKEN:PJP6ZPVxK881XeK4QDZe}"
-
-coap:
-  url: "${HTTP_URL:coap://localhost}"
-  qos: "${HTTP_QOS:1}"
-  timeout: "${HTTP_TIMEOUT:5000}"
-  monitoring_rate: "${HTTP_MONITORING_RATE:10000}"
-  test_device:
-    access_token: "${HTTP_TEST_DEVICE_ACCESS_TOKEN:MtyXwpFyKKcNJhwVMi09}"
     id: "${WEBSOCKET_DEVICE_ID:d6089640-1baa-11ec-8009-5572699cb133}"
 
 snmp:
   url: "${HTTP_URL:tcp://localhost:1883}"
-  qos: "${HTTP_QOS:1}"
   timeout: "${HTTP_TIMEOUT:5000}"
   monitoring_rate: "${HTTP_MONITORING_RATE:10000}"
   test_device:
     access_token: "${HTTP_TEST_DEVICE_ACCESS_TOKEN:MtyXwpFyKKcNJhwVMi09}"
     id: "${WEBSOCKET_DEVICE_ID:d6089640-1baa-11ec-8009-5572699cb133}"
-
-websocket:
-  wait_time: "${WEBSOCKET_WAIT_TIME:10000}"
-  monitoring_tenant_username: "${WEBSOCKET_MONITORING_TENANT_USERNAME:monitoring@gmail.com}"
-  monitoring_tenant_password: "${WEBSOCKET_MONITORING_TENANT_PASSWORD:tenant}"
-
-#TODO refactor env variables

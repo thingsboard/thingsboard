@@ -22,13 +22,10 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class TransportsMonitoringScheduler {
 
-    private final ObjectMapper mapper = new ObjectMapper();
-
-    private final List<TransportObserver> transports;
-
-    private final List<NotificationChannel> channels;
-
     public static final String PAYLOAD_KEY_STR = "key1";
+    private final ObjectMapper mapper = new ObjectMapper();
+    private final List<TransportObserver> transports;
+    private final List<NotificationChannel> channels;
 
     @PostConstruct
     public void startMonitoringTransports() {
@@ -42,8 +39,7 @@ public class TransportsMonitoringScheduler {
                     String receivedValue = getWebsocketUpdatedValue(msg).orElse(null);
                     if (!expectedValue.equals(receivedValue)) {
                         onMonitoringFailure(new TransportInfo(observer.getTransportType(), "Transport didn't send websocket update or wrong message was received"));
-                    }
-                    else {
+                    } else {
                         log.warn(observer.getTransportType().toString() + " | Successfully");
                     }
 
@@ -62,7 +58,7 @@ public class TransportsMonitoringScheduler {
     }
 
     private String toJsonPayload(String value) {
-        return "{"+ "\"" + PAYLOAD_KEY_STR + "\"" + ":" + "\"" + value + "\"" + "}";
+        return "{" + "\"" + PAYLOAD_KEY_STR + "\"" + ":" + "\"" + value + "\"" + "}";
     }
 
     private Optional<String> getWebsocketUpdatedValue(String msg) {

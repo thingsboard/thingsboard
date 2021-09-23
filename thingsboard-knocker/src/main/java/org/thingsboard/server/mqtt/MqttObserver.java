@@ -1,10 +1,6 @@
 package org.thingsboard.server.mqtt;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.IMqttActionListener;
-import org.eclipse.paho.client.mqttv3.IMqttToken;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -13,25 +9,22 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.AbstractTransportObserver;
-import org.thingsboard.server.OnPingCallback;
-import org.thingsboard.server.TransportObserver;
 import org.thingsboard.server.TransportType;
 import org.thingsboard.server.WebSocketClientImpl;
 
-import javax.annotation.PostConstruct;
-import java.net.URISyntaxException;
 import java.util.UUID;
 
 @Component
 @Slf4j
 public class MqttObserver extends AbstractTransportObserver {
 
+    private static final String DEVICE_TELEMETRY_TOPIC = "v1/devices/me/telemetry";
     private WebSocketClientImpl webSocketClient;
 
     @Value("${mqtt.monitoring_rate}")
     private int monitoringRate;
-    
-    @Value("${mqtt.url}")
+
+    @Value("${mqtt.host}")
     private String mqttUrl;
 
     @Value("${mqtt.test_device.access_token}")
@@ -43,8 +36,6 @@ public class MqttObserver extends AbstractTransportObserver {
     @Value("${mqtt.timeout}")
     private long timeout;
 
-    private static final String DEVICE_TELEMETRY_TOPIC = "v1/devices/me/telemetry";
-
     @Value("${mqtt.test_device.id}")
     private UUID testDeviceUuid;
 
@@ -54,29 +45,26 @@ public class MqttObserver extends AbstractTransportObserver {
         super();
     }
 
-    @PostConstruct
-    private void init() {
-        try {
-            mqttAsyncClient = getMqttAsyncClient();
-
-            webSocketClient = buildAndConnectWebSocketClient();
-            webSocketClient.send(mapper.writeValueAsString(getTelemetryCmdsWrapper(testDeviceUuid)));
-            webSocketClient.waitForReply(websocketWaitTime);
-        } catch (Exception e) {
-            log.error(e.toString());
-        }
-    }
-
     @Override
     public String pingTransport(String payload) throws Exception {
+        if (mqttAsyncClient == null) {
+            mqttAsyncClient = getMqttAsyncClient();
+        }
+        webSocketClient = validateWebsocketClient(webSocketClient, testDeviceUuid);
+
         webSocketClient.registerWaitForUpdate();
-        publishMqttMsg(mqttAsyncClient, payload.getBytes(), DEVICE_TELEMETRY_TOPIC);
+        publishMqttMsg(mqttAsyncClient, payload.getBytes());
         return webSocketClient.waitForUpdate(websocketWaitTime);
     }
-    
+
     @Override
     public int getMonitoringRate() {
         return monitoringRate;
+    }
+
+    @Override
+    public TransportType getTransportType() {
+        return TransportType.MQTT;
     }
 
     private MqttAsyncClient getMqttAsyncClient() throws MqttException {
@@ -89,19 +77,11 @@ public class MqttObserver extends AbstractTransportObserver {
         return client;
     }
 
-    private void publishMqttMsg(MqttAsyncClient client, byte[] payload, String topic) throws MqttException {
+    private void publishMqttMsg(MqttAsyncClient client, byte[] payload) throws MqttException {
         MqttMessage message = new MqttMessage();
         message.setPayload(payload);
         message.setQos(qos);
-        client.publish(topic, message);
+        client.publish(MqttObserver.DEVICE_TELEMETRY_TOPIC, message);
     }
 
-    @Override
-    public TransportType getTransportType() {
-        return TransportType.MQTT;
-    }
-    
-    
-    
-    
 }

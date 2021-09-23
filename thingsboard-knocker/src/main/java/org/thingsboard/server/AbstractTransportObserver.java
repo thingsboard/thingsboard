@@ -1,10 +1,8 @@
 package org.thingsboard.server;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -13,7 +11,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
@@ -25,12 +22,12 @@ import org.thingsboard.server.common.data.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.common.data.telemetry.wrapper.TelemetryPluginCmdsWrapper;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -38,8 +35,13 @@ import java.util.concurrent.TimeUnit;
 public abstract class AbstractTransportObserver implements TransportObserver {
 
     protected final ObjectMapper mapper = new ObjectMapper();
+    protected String actualAccessToken;
 
-    private final String WS_URL = "ws://localhost:8080";
+    @Value("${websocket.update_wait_time}")
+    protected int websocketWaitTime;
+
+    @Value("${websocket.host}")
+    private String WS_URL;
 
     @Value("${websocket.monitoring_tenant_username}")
     private String monitoringTenantUsername;
@@ -47,10 +49,20 @@ public abstract class AbstractTransportObserver implements TransportObserver {
     @Value("${websocket.monitoring_tenant_password}")
     private String monitoringTenantPassword;
 
-    protected String actualAccessToken;
+    @Value("${websocket.token_host}")
+    private String tokenHost;
 
-    @Value("${websocket.wait_time}")
-    protected int websocketWaitTime;
+
+    protected WebSocketClientImpl validateWebsocketClient(WebSocketClientImpl webSocketClient, UUID deviceToOpenSession) throws Exception {
+        if (webSocketClient == null || webSocketClient.isClosed()) {
+            webSocketClient = buildAndConnectWebSocketClient();
+            webSocketClient.send(mapper.writeValueAsString(getTelemetryCmdsWrapper(deviceToOpenSession)));
+            Optional.ofNullable(webSocketClient.waitForReply(websocketWaitTime))
+                    .orElseThrow(() -> new IllegalStateException(String.valueOf(new TransportInfo(getTransportType(), "Unable to open websocket session"))));
+            return webSocketClient;
+        }
+        return webSocketClient;
+    }
 
     protected TelemetryPluginCmdsWrapper getTelemetryCmdsWrapper(UUID uuid) {
         DeviceId deviceId = new DeviceId(uuid);
@@ -68,29 +80,29 @@ public abstract class AbstractTransportObserver implements TransportObserver {
     }
 
     protected WebSocketClientImpl buildAndConnectWebSocketClient() throws URISyntaxException, InterruptedException {
-        URI serverUri = new URI(WS_URL + "/api/ws/plugins/telemetry?token=" + getAccessToken());
+        String accessToken = getAccessToken().orElseThrow(() -> new IllegalArgumentException("Access token hasn't been received"));
+        URI serverUri = new URI(WS_URL + "/api/ws/plugins/telemetry?token=" + accessToken);
         WebSocketClientImpl webSocketClient = new WebSocketClientImpl(serverUri);
-        boolean b = webSocketClient.connectBlocking(websocketWaitTime, TimeUnit.MILLISECONDS);
-        log.info(String.valueOf(b));
+        webSocketClient.connectBlocking(websocketWaitTime, TimeUnit.MILLISECONDS);
         return webSocketClient;
     }
 
-    protected String getAccessToken() {
+    protected Optional<String> getAccessToken() {
         try {
             RequestConfig config = RequestConfig.custom()
                     .setConnectTimeout(websocketWaitTime)
-                    .setConnectionRequestTimeout(websocketWaitTime )
+                    .setConnectionRequestTimeout(websocketWaitTime)
                     .setSocketTimeout(websocketWaitTime).build();
             CloseableHttpClient httpClient = HttpClientBuilder.create().setDefaultRequestConfig(config).build();
 
-            String uri = "http://localhost:8080/api/auth/login";
+            String uri = tokenHost + "/api/auth/login";
             HttpPost httpPost = new HttpPost(uri);
 
             Map<String, String> map = new HashMap<>();
             map.put("username", monitoringTenantUsername);
             map.put("password", monitoringTenantPassword);
 
-            StringEntity entity  = new StringEntity(mapper.writeValueAsString(map));
+            StringEntity entity = new StringEntity(mapper.writeValueAsString(map));
             httpPost.setEntity(entity);
             httpPost.setHeader("Accept", "application/json");
             httpPost.setHeader("Content-type", "application/json");
@@ -101,14 +113,13 @@ public abstract class AbstractTransportObserver implements TransportObserver {
                 String token = jsonNode.get("token").asText();
                 log.info("Token received: {}", token);
                 actualAccessToken = token;
-                return token;
+                return Optional.of(token);
             }
-            return null;
+            return Optional.empty();
         } catch (IOException e) {
             log.error(e.toString());
         }
-        return null;
-
+        return Optional.empty();
     }
 
 }
