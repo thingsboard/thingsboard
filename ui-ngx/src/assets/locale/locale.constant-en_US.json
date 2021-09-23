@@ -2367,7 +2367,8 @@
         "current-password": "Current password",
         "copy-jwt-token": "Copy JWT token",
         "valid-till": "Valid till {{expirationData}}",
-        "tokenCopiedMessage": "JWT token has been copied to clipboard"
+        "tokenCopiedSuccessMessage": "JWT token has been copied to clipboard",
+        "tokenCopiedWarnMessage": "JWT token is expired! Please, refresh the page."
     },
     "relation": {
         "relations": "Relations",

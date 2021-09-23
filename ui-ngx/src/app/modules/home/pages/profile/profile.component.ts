@@ -36,6 +36,7 @@ import { isDefinedAndNotNull } from '@core/utils';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { DatePipe } from '@angular/common';
+import { ClipboardService } from 'ngx-clipboard';
 
 @Component({
   selector: 'tb-profile',
@@ -54,8 +55,12 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
     return `Bearer ${localStorage.getItem('jwt_token')}`;
   }
 
+  get jwtTokenExpiration(): string {
+    return localStorage.getItem('jwt_token_expiration');
+  }
+
   get expirationJwtData(): string {
-    const expirationData = this.datePipe.transform(localStorage.getItem('jwt_token_expiration'), 'yyyy-MM-dd HH:mm:ss');
+    const expirationData = this.datePipe.transform(this.jwtTokenExpiration, 'yyyy-MM-dd HH:mm:ss');
     return this.translate.instant('profile.valid-till', { expirationData });
   }
 
@@ -67,7 +72,8 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
               public dialog: MatDialog,
               public dialogService: DialogService,
               public fb: FormBuilder,
-              private datePipe: DatePipe) {
+              private datePipe: DatePipe,
+              private clipboardService: ClipboardService) {
     super(store);
     this.authUser = getCurrentAuthUser(this.store);
   }
@@ -153,13 +159,24 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
     return this.authUser.authority === Authority.SYS_ADMIN;
   }
 
-  onTokenCopied() {
-    this.store.dispatch(new ActionNotificationShow({
-      message: this.translate.instant('profile.tokenCopiedMessage'),
-      type: 'success',
-      duration: 750,
-      verticalPosition: 'bottom',
-      horizontalPosition: 'right'
-    }));
+  copyToken() {
+    if (+this.jwtTokenExpiration < Date.now()) {
+      this.store.dispatch(new ActionNotificationShow({
+        message: this.translate.instant('profile.tokenCopiedWarnMessage'),
+        type: 'warn',
+        duration: 1500,
+        verticalPosition: 'bottom',
+        horizontalPosition: 'right'
+      }));
+    } else {
+      this.clipboardService.copyFromContent(this.jwtToken);
+      this.store.dispatch(new ActionNotificationShow({
+        message: this.translate.instant('profile.tokenCopiedSuccessMessage'),
+        type: 'success',
+        duration: 750,
+        verticalPosition: 'bottom',
+        horizontalPosition: 'right'
+      }));
+    }
   }
 }

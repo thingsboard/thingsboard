@@ -1265,7 +1265,8 @@
         "current-password": "Текущий пароль",
         "copy-jwt-token": "Копировать JWT токен",
         "valid-till": "Действителен до {{expirationData}}",
-        "tokenCopiedMessage": "JWT токен скопирован в буфер обмена"
+        "tokenCopiedMessage": "JWT токен скопирован в буфер обмена",
+        "tokenCopiedWarnMessage": "JWT токен недействителен! Перезагрузите страницу."
     },
     "relation": {
         "relations": "Отношения",
