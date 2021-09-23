@@ -103,9 +103,6 @@
       <mat-error *ngIf="serverFormGroup.get('serverPublicKey').hasError('required')">
         {{ 'device-profile.lwm2m.server-public-key-required' | translate }}
       </mat-error>
-      <mat-error *ngIf="serverFormGroup.get('serverPublicKey').hasError('pattern')">
-        {{ 'device-profile.lwm2m.server-public-key-pattern' | translate }}
-      </mat-error>
     </mat-form-field>
   </div>
 </section>

@@ -28,7 +28,6 @@ import {
 import {
   DEFAULT_PORT_BOOTSTRAP_NO_SEC,
   DEFAULT_PORT_SERVER_NO_SEC,
-  KEY_REGEXP_HEX_DEC,
   securityConfigMode,
   securityConfigModeNames,
   ServerSecurityConfig
@@ -158,10 +157,7 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
   }
 
   private setValidators(): void {
-    this.serverFormGroup.get('serverPublicKey').setValidators([
-      Validators.required,
-      Validators.pattern(KEY_REGEXP_HEX_DEC)
-    ]);
+    this.serverFormGroup.get('serverPublicKey').setValidators([Validators.required]);
   }
 
   private propagateChangeState = (value: ServerSecurityConfig): void => {

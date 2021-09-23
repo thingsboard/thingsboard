@@ -14,10 +14,6 @@
 /// limitations under the License.
 ///
 
-export const LEN_MAX_PSK = 128;
-export const LEN_MAX_PRIVATE_KEY = 134;
-export const KEY_REGEXP_HEX_DEC = /^[-+]?[0-9A-Fa-f]+\.?[0-9A-Fa-f]*?$/;
-
 export enum Lwm2mSecurityType {
   PSK = 'PSK',
   RPK = 'RPK',
