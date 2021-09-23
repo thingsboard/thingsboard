@@ -38,10 +38,10 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
-        name = "delay",
+        name = "delay (deprecated)",
         configClazz = TbMsgDelayNodeConfiguration.class,
-        nodeDescription = "Delays incoming message",
-        nodeDetails = "Delays messages for configurable period. Please note, this node acknowledges the message from the current queue (message will be removed from queue)",
+        nodeDescription = "Delays incoming message (deprecated)",
+        nodeDetails = "Deprecated! Delays messages for configurable period. Please note, this node acknowledges the message from the current queue (message will be removed from queue)",
         icon = "pause",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeMsgDelayConfig"
