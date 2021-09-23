@@ -36,17 +36,17 @@ websocket:
 # not implemented ---
 
 lwm2m:
-  url: "${HTTP_URL:tcp://localhost:1883}"
-  timeout: "${HTTP_TIMEOUT:5000}"
-  monitoring_rate: "${HTTP_MONITORING_RATE:10000}"
+  host: "${LWM2M_HOST:}"
+  timeout: "${LWM2M_TIMEOUT:5000}"
+  monitoring_rate: "${LWM2M_MONITORING_RATE:10000}"
   test_device:
-    access_token: "${HTTP_TEST_DEVICE_ACCESS_TOKEN:PJP6ZPVxK881XeK4QDZe}"
-    id: "${WEBSOCKET_DEVICE_ID:d6089640-1baa-11ec-8009-5572699cb133}"
+    access_token: "${LWM2M_TEST_DEVICE_ACCESS_TOKEN:U0nQRlmZpoaNM377tiIg}"
+    id: "${LWM2M_TEST_DEVICE_ID:91abf160-1c57-11ec-a206-196535a67775}"
 
 snmp:
-  url: "${HTTP_URL:tcp://localhost:1883}"
-  timeout: "${HTTP_TIMEOUT:5000}"
-  monitoring_rate: "${HTTP_MONITORING_RATE:10000}"
+  host: "${SNMP_HOST:tcp://localhost:1883}"
+  timeout: "${SNMP_TIMEOUT:5000}"
+  monitoring_rate: "${SNMP_MONITORING_RATE:10000}"
   test_device:
-    access_token: "${HTTP_TEST_DEVICE_ACCESS_TOKEN:MtyXwpFyKKcNJhwVMi09}"
-    id: "${WEBSOCKET_DEVICE_ID:d6089640-1baa-11ec-8009-5572699cb133}"
+    access_token: "${SNMP_TEST_DEVICE_ACCESS_TOKEN:7BVkQRSTbWQwSx0tSdYR}"
+    id: "${SNMP_TEST_DEVICE_ID:8d00dfe0-1c57-11ec-a206-196535a67775}"

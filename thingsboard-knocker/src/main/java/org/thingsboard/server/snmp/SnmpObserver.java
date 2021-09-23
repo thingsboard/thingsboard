@@ -2,18 +2,30 @@ package org.thingsboard.server.snmp;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.AbstractTransportObserver;
 import org.thingsboard.server.TransportObserver;
 import org.thingsboard.server.TransportType;
+import org.thingsboard.server.WebSocketClientImpl;
+
+import java.util.UUID;
 
 @Component
-public class SnmpObserver implements TransportObserver {
+public class SnmpObserver extends AbstractTransportObserver {
+
+    private WebSocketClientImpl webSocketClient;
 
     @Value("${snmp.monitoring_rate}")
     private int monitoringRate;
-    
+
+    @Value("${snmp.test_device.id}")
+    private UUID testDeviceUuid;
+
     @Override
-    public String pingTransport(String payload) {
-        return "";
+    public String pingTransport(String payload) throws Exception {
+        webSocketClient = validateWebsocketClient(webSocketClient, testDeviceUuid);
+        webSocketClient.registerWaitForUpdate();
+
+        return webSocketClient.waitForUpdate(1000);
     }
 
     @Override

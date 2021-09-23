@@ -2,18 +2,30 @@ package org.thingsboard.server.lwm2m;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.AbstractTransportObserver;
 import org.thingsboard.server.TransportObserver;
 import org.thingsboard.server.TransportType;
+import org.thingsboard.server.WebSocketClientImpl;
+
+import java.util.UUID;
 
 @Component
-public class Lwm2MObserver implements TransportObserver {
+public class Lwm2MObserver extends AbstractTransportObserver {
+
+    private WebSocketClientImpl webSocketClient;
 
     @Value("${lwm2m.monitoring_rate}")
     private int monitoringRate;
 
+    @Value("${lwm2m.test_device.id}")
+    private UUID testDeviceUuid;
+
     @Override
-    public String pingTransport(String payload) {
-        return "";
+    public String pingTransport(String payload) throws Exception {
+        webSocketClient = validateWebsocketClient(webSocketClient, testDeviceUuid);
+
+        webSocketClient.registerWaitForUpdate();
+        return webSocketClient.waitForUpdate(1000);
     }
 
     @Override
