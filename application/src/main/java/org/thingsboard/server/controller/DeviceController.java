@@ -129,11 +129,15 @@ public class DeviceController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Create Or Update Device (saveDevice)", notes = "Platform generates random device Id and credentials (access token) during device creation. " +
+            "The device id will be present in the response. " +
+            "Specify the device id when you would like to update the device. Referencing non-existing device Id will cause error.")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device", method = RequestMethod.POST)
     @ResponseBody
-    public Device saveDevice(@RequestBody Device device,
-                             @RequestParam(name = "accessToken", required = false) String accessToken) throws ThingsboardException {
+    public Device saveDevice(@ApiParam(value = "A JSON value representing the device.") @RequestBody Device device,
+                             @ApiParam(value = "Optional value of the device credentials to be used during device creation. " +
+                                     "If omitted, access token will be auto-generated.") @RequestParam(name = "accessToken", required = false) String accessToken) throws ThingsboardException {
         boolean created = device.getId() == null;
         try {
             device.setTenantId(getCurrentUser().getTenantId());
@@ -307,14 +311,14 @@ public class DeviceController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Updates device credentials.", notes = "During device creation, platform generates random 'ACCESS_TOKEN' credentials. " +
+    @ApiOperation(value = "Update device credentials (updateDeviceCredentials)", notes = "During device creation, platform generates random 'ACCESS_TOKEN' credentials. " +
             "Use this method to update the device credentials. First use 'getDeviceCredentialsByDeviceId' to get the credentials id and value. " +
             "Then use current method to update the credentials type and value. It is not possible to create multiple device credentials for the same device. " +
             "The structure of device credentials id and value is simple for the 'ACCESS_TOKEN' but is much more complex for the 'MQTT_BASIC' or 'LWM2M_CREDENTIALS'.")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/device/credentials", method = RequestMethod.POST)
     @ResponseBody
-    public DeviceCredentials saveDeviceCredentials(
+    public DeviceCredentials updateDeviceCredentials(
             @ApiParam(value = "A JSON value representing the device credentials.")
             @RequestBody DeviceCredentials deviceCredentials) throws ThingsboardException {
         checkNotNull(deviceCredentials);
