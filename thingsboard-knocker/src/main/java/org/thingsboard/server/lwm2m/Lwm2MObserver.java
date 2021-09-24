@@ -1,15 +1,19 @@
 package org.thingsboard.server.lwm2m;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.AbstractTransportObserver;
-import org.thingsboard.server.TransportObserver;
 import org.thingsboard.server.TransportType;
 import org.thingsboard.server.WebSocketClientImpl;
 
 import java.util.UUID;
 
 @Component
+@ConditionalOnProperty(
+        value = "lwm2m.enabled",
+        havingValue = "true"
+)
 public class Lwm2MObserver extends AbstractTransportObserver {
 
     private WebSocketClientImpl webSocketClient;

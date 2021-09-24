@@ -6,6 +6,7 @@ import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.elements.exception.ConnectorException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.AbstractTransportObserver;
 import org.thingsboard.server.TransportType;
@@ -15,6 +16,9 @@ import java.io.IOException;
 import java.util.UUID;
 
 @Component
+@ConditionalOnProperty(
+        value="coap.enabled",
+        havingValue = "true")
 @Slf4j
 public class CoapObserver extends AbstractTransportObserver {
 

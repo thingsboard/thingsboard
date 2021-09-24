@@ -38,7 +38,10 @@ public class TransportsMonitoringScheduler {
                     String msg = observer.pingTransport(toJsonPayload(expectedValue));
                     String receivedValue = getWebsocketUpdatedValue(msg).orElse(null);
                     if (!expectedValue.equals(receivedValue)) {
-                        onMonitoringFailure(new TransportInfo(observer.getTransportType(), "Transport didn't send websocket update or wrong message was received"));
+                        onMonitoringFailure(new TransportInfo(
+                                observer.getTransportType(),
+                                "Transport didn't send websocket update or wrong message was received")
+                        );
                     } else {
                         log.info(observer.getTransportType().toString() + " | Successfully");
                     }
@@ -47,7 +50,6 @@ public class TransportsMonitoringScheduler {
                     onMonitoringFailure(new TransportInfo(observer.getTransportType(), e.toString()));
                 }
             }, 0, observer.getMonitoringRate(), TimeUnit.MILLISECONDS);
-
         }
     }
 

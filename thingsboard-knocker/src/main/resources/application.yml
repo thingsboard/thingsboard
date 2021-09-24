@@ -1,4 +1,5 @@
 mqtt:
+  enabled: "${MQTT_ENABLED:true}"
   host: "${MQTT_HOST:tcp://localhost:1883}"
   qos: "${MQTT_QOS:1}"
   timeout: "${MQTT_TIMEOUT:5000}"
@@ -8,6 +9,7 @@ mqtt:
     id: "${MQTT_TEST_DEVICE_ID:db96cbe0-1b96-11ec-9bbf-7165a6bd0cd0}"
 
 http:
+  enabled: "${HTTP_ENABLED:true}"
   host: "${HTTP_HOST:http://localhost:8080}"
   response_timeout: "${HTTP_RESPONSE_TIMEOUT:5000}"
   connect_timeout: "${HTTP_CONNECT_TIMEOUT: 5000}"
@@ -19,6 +21,7 @@ http:
     id: "${HTTP_TEST_DEVICE_ID:dfe0d1a0-1b96-11ec-9bbf-7165a6bd0cd0}"
 
 coap:
+  enabled: "${COAP_ENABLED:true}"
   host: "${COAP_HOST:coap://localhost}"
   timeout: "${COAP_TIMEOUT:5000}"
   monitoring_rate: "${COAP_MONITORING_RATE:10000}"
@@ -33,9 +36,18 @@ websocket:
   monitoring_tenant_password: "${WEBSOCKET_MONITORING_TENANT_PASSWORD:tenant}"
   token_host: "${WEBSOCKET_TOKEN_HOST:http://localhost:8080}"
 
+notifications:
+  slack:
+    enabled: "${NOTIFICATIONS_SLACK_ENABLED:true}"
+    webhook_url: "${NOTIFICATIONS_SLACK_WEBHOOK_URL:https://hooks.slack.com/services/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}"
+  logging:
+    enabled: "${NOTIFICATIONS_LOGGING_ENABLED:true}"
+
+
 # not implemented ---
 
 lwm2m:
+  enabled: "${LWM2M_ENABLED:true}"
   host: "${LWM2M_HOST:}"
   timeout: "${LWM2M_TIMEOUT:5000}"
   monitoring_rate: "${LWM2M_MONITORING_RATE:10000}"
@@ -44,6 +56,7 @@ lwm2m:
     id: "${LWM2M_TEST_DEVICE_ID:91abf160-1c57-11ec-a206-196535a67775}"
 
 snmp:
+  enabled: "${SNMP_ENABLED:true}"
   host: "${SNMP_HOST:tcp://localhost:1883}"
   timeout: "${SNMP_TIMEOUT:5000}"
   monitoring_rate: "${SNMP_MONITORING_RATE:10000}"

@@ -1,6 +1,7 @@
 package org.thingsboard.server.snmp;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.AbstractTransportObserver;
 import org.thingsboard.server.TransportObserver;
@@ -10,6 +11,9 @@ import org.thingsboard.server.WebSocketClientImpl;
 import java.util.UUID;
 
 @Component
+@ConditionalOnProperty(
+        value="snmp.enabled",
+        havingValue = "true")
 public class SnmpObserver extends AbstractTransportObserver {
 
     private WebSocketClientImpl webSocketClient;

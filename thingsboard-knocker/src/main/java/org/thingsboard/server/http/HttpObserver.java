@@ -7,6 +7,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.AbstractTransportObserver;
 import org.thingsboard.server.TransportType;
@@ -18,6 +19,9 @@ import java.util.TimerTask;
 import java.util.UUID;
 
 @Component
+@ConditionalOnProperty(
+        value="http.enabled",
+        havingValue = "true")
 @Slf4j
 public class HttpObserver extends AbstractTransportObserver {
 

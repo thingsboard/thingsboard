@@ -7,6 +7,7 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.AbstractTransportObserver;
 import org.thingsboard.server.TransportType;
@@ -15,6 +16,9 @@ import org.thingsboard.server.WebSocketClientImpl;
 import java.util.UUID;
 
 @Component
+@ConditionalOnProperty(
+        value="mqtt.enabled",
+        havingValue = "true")
 @Slf4j
 public class MqttObserver extends AbstractTransportObserver {
 
@@ -47,7 +51,7 @@ public class MqttObserver extends AbstractTransportObserver {
 
     @Override
     public String pingTransport(String payload) throws Exception {
-        if (mqttAsyncClient == null) {
+        if (mqttAsyncClient == null || !mqttAsyncClient.isConnected()) {
             mqttAsyncClient = getMqttAsyncClient();
         }
         webSocketClient = validateWebsocketClient(webSocketClient, testDeviceUuid);
