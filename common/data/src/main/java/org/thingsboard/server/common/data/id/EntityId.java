@@ -18,7 +18,6 @@ package org.thingsboard.server.common.data.id;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import io.swagger.annotations.ApiModelProperty;
 import org.thingsboard.server.common.data.EntityType;
 
 import java.io.Serializable;
