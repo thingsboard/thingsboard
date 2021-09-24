@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data;
 
 import java.io.Serializable;
 
+import io.swagger.annotations.ApiModelProperty;
 import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.UUIDBased;
 

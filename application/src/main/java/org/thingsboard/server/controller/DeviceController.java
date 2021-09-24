@@ -19,9 +19,15 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.Example;
+import io.swagger.annotations.ExampleProperty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -301,10 +307,16 @@ public class DeviceController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Updates device credentials.", notes = "During device creation, platform generates random 'ACCESS_TOKEN' credentials. " +
+            "Use this method to update the device credentials. First use 'getDeviceCredentialsByDeviceId' to get the credentials id and value. " +
+            "Then use current method to update the credentials type and value. It is not possible to create multiple device credentials for the same device. " +
+            "The structure of device credentials id and value is simple for the 'ACCESS_TOKEN' but is much more complex for the 'MQTT_BASIC' or 'LWM2M_CREDENTIALS'.")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/device/credentials", method = RequestMethod.POST)
     @ResponseBody
-    public DeviceCredentials saveDeviceCredentials(@RequestBody DeviceCredentials deviceCredentials) throws ThingsboardException {
+    public DeviceCredentials saveDeviceCredentials(
+            @ApiParam(value = "A JSON value representing the device credentials.")
+            @RequestBody DeviceCredentials deviceCredentials) throws ThingsboardException {
         checkNotNull(deviceCredentials);
         try {
             Device device = checkDeviceId(deviceCredentials.getDeviceId(), Operation.WRITE_CREDENTIALS);
