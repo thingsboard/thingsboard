@@ -1,3 +1,19 @@
+#
+# Copyright © 2016-2021 The Thingsboard Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 mqtt:
   enabled: "${MQTT_ENABLED:true}"
   host: "${MQTT_HOST:tcp://localhost:1883}"
@@ -39,7 +55,8 @@ websocket:
 notifications:
   slack:
     enabled: "${NOTIFICATIONS_SLACK_ENABLED:true}"
-    webhook_url: "${NOTIFICATIONS_SLACK_WEBHOOK_URL:https://hooks.slack.com/services/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}"
+    access_token: "${NOTIFICATIONS_SLACK_TOKEN:xoxb-92450428978-2540868241681-K8KHPKP1wS0pIkywCObMzbTr}"
+    channel_id: "${NOTIFICATIONS_SLACK_CHANNEL_ID:C02FJ74DB2N}"
   logging:
     enabled: "${NOTIFICATIONS_LOGGING_ENABLED:true}"
 

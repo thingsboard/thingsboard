@@ -13,22 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.channels;
+package org.thingsboard.server.transport;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
-import org.thingsboard.server.transport.TransportInfo;
+import lombok.ToString;
 
-@Component
-@Slf4j
-@ConditionalOnProperty(
-        value="notifications.logging.enabled",
-        havingValue = "true")
-public class ConsoleNotificationChannel implements NotificationChannel {
-
-    @Override
-    public void onTransportUnavailable(TransportInfo transportInfo) {
-        log.error(String.valueOf(transportInfo));
-    }
+@ToString
+public enum TransportType {
+    COAP,
+    HTTP,
+    LWM2M,
+    MQTT,
+    SNMP
 }
