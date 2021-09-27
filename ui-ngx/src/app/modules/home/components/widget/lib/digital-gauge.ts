@@ -285,8 +285,8 @@ export class TbCanvasDigitalGauge {
     const predefineLevelColors: ColorLevelSetting[] = [];
 
     predefineLevelColors.push({
-      value: -Infinity,
-      color: this.ctx.data[0].dataKey.color
+      value: this.localSettings.minValue,
+      color: this.localSettings.gaugeColor
     });
 
     function setLevelColor(levelSetting: AttributeSourceProperty, color: string) {
