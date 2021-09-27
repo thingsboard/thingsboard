@@ -54,7 +54,7 @@ websocket:
 
 notifications:
   slack:
-    enabled: "${NOTIFICATIONS_SLACK_ENABLED:true}"
+    enabled: "${NOTIFICATIONS_SLACK_ENABLED:false}"
     access_token: "${NOTIFICATIONS_SLACK_TOKEN:xoxb-92450428978-2540868241681-K8KHPKP1wS0pIkywCObMzbTr}"
     channel_id: "${NOTIFICATIONS_SLACK_CHANNEL_ID:C02FJ74DB2N}"
   logging:
@@ -64,7 +64,7 @@ notifications:
 # not implemented ---
 
 lwm2m:
-  enabled: "${LWM2M_ENABLED:true}"
+  enabled: "${LWM2M_ENABLED:false}"
   host: "${LWM2M_HOST:}"
   timeout: "${LWM2M_TIMEOUT:5000}"
   monitoring_rate: "${LWM2M_MONITORING_RATE:10000}"
@@ -73,7 +73,7 @@ lwm2m:
     id: "${LWM2M_TEST_DEVICE_ID:91abf160-1c57-11ec-a206-196535a67775}"
 
 snmp:
-  enabled: "${SNMP_ENABLED:true}"
+  enabled: "${SNMP_ENABLED:false}"
   host: "${SNMP_HOST:tcp://localhost:1883}"
   timeout: "${SNMP_TIMEOUT:5000}"
   monitoring_rate: "${SNMP_MONITORING_RATE:10000}"

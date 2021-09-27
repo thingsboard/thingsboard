@@ -43,6 +43,7 @@
         <module>web-ui</module>
         <module>tb-node</module>
         <module>transport</module>
+        <module>transport-monitoring</module>
     </modules>
 
     <profiles>

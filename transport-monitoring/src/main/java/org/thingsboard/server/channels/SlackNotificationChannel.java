@@ -16,11 +16,9 @@
 package org.thingsboard.server.channels;
 
 import com.slack.api.Slack;
-import com.slack.api.methods.MethodsClient;
 import com.slack.api.methods.SlackApiException;
 import com.slack.api.methods.request.chat.ChatPostMessageRequest;
 import com.slack.api.methods.response.chat.ChatPostMessageResponse;
-import com.slack.api.webhook.WebhookResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -29,8 +27,6 @@ import org.thingsboard.server.transport.TransportInfo;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
-
-import static com.slack.api.webhook.WebhookPayloads.payload;
 
 @Component
 @ConditionalOnProperty(

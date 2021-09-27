@@ -21,10 +21,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
-public class KnockerServiceApplication {
+public class MonitoringServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(KnockerServiceApplication.class, args);
+        SpringApplication.run(MonitoringServiceApplication.class, args);
     }
 
 }
