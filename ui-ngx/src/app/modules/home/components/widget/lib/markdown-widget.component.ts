@@ -31,6 +31,7 @@ import {
 import { FormattedData } from '@home/components/widget/lib/maps/map-models';
 import { hashCode, isNotEmptyStr } from '@core/utils';
 import cssjs from '@core/css/css';
+import { UtilsService } from '@core/services/utils.service';
 
 interface MarkdownWidgetSettings {
   markdownTextPattern: string;
@@ -59,6 +60,7 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
   markdownClass: string;
 
   constructor(protected store: Store<AppState>,
+              private utils: UtilsService,
               private cd: ChangeDetectorRef) {
     super(store);
   }
@@ -104,7 +106,7 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
       markdownText = fillPattern(markdownText, replaceInfo, allData);
     }
     if (this.markdownText !== markdownText) {
-      this.markdownText = markdownText;
+      this.markdownText = this.utils.customTranslation(markdownText, markdownText);
       this.cd.detectChanges();
     }
   }
