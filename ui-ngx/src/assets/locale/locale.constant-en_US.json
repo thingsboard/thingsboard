@@ -2387,7 +2387,11 @@
         "profile": "Profile",
         "last-login-time": "Last Login",
         "change-password": "Change Password",
-        "current-password": "Current password"
+        "current-password": "Current password",
+        "copy-jwt-token": "Copy JWT token",
+        "valid-till": "Valid till {{expirationData}}",
+        "tokenCopiedSuccessMessage": "JWT token has been copied to clipboard",
+        "tokenCopiedWarnMessage": "JWT token is expired! Please, refresh the page."
     },
     "relation": {
         "relations": "Relations",
