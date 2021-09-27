@@ -581,7 +581,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                     systemContext.getTbRpcService().save(tenantId, new RpcId(requestMd.getMsg().getMsg().getId()), status, response);
                 }
             } finally {
-                if (hasError) {
+                if (hasError && !requestMd.isDelivered()) {
                     sendNextPendingRequest(context);
                 }
             }
@@ -619,7 +619,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             if (md.getMsg().getMsg().isPersisted()) {
                 systemContext.getTbRpcService().save(tenantId, new RpcId(rpcId), status, null);
             }
-            if (status != RpcStatus.SENT && !(status == RpcStatus.FAILED && md.isDelivered())) {
+            if (status != RpcStatus.SENT) {
                 sendNextPendingRequest(context);
             }
         } else {
