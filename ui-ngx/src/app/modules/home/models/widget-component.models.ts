@@ -103,7 +103,7 @@ export class WidgetContext {
 
   constructor(public dashboard: IDashboardComponent,
               private dashboardWidget: IDashboardWidget,
-              private widget: Widget) {}
+              public widget: Widget) {}
 
   get stateController(): IStateController {
     return this.dashboard.stateController;

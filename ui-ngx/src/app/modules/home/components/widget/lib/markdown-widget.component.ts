@@ -66,7 +66,12 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
   ngOnInit(): void {
     this.ctx.$scope.markdownWidget = this;
     this.settings = this.ctx.settings;
-    this.markdownTextFunction = this.settings.useMarkdownTextFunction ? parseFunction(this.settings.markdownTextFunction, ['data']) : null;
+    if (this.ctx.widget.type === 'static') {
+      this.markdownText = this.settings.markdownTextPattern;
+    } else {
+      this.markdownTextFunction = this.settings.useMarkdownTextFunction
+        ? parseFunction(this.settings.markdownTextFunction, ['data']) : null;
+    }
     this.markdownClass = 'markdown-widget';
     const cssString = this.settings.markdownCss;
     if (isNotEmptyStr(cssString)) {
