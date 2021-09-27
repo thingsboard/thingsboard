@@ -511,7 +511,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
   @enumerable(true)
   get rows(): number {
     let res;
-    if (this.dashboard.isMobileSize && !this.dashboard.mobileAutofillHeight) {
+    if (this.dashboard.isMobileSize) {
       let mobileHeight;
       if (this.widgetLayout) {
         mobileHeight = this.widgetLayout.mobileHeight;
