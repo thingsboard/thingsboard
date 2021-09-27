@@ -215,8 +215,7 @@ export const digitalGaugeSettingsSchema: JsonSettingsSchema = {
                 },
                 value: {
                   title: '[From] Value (if predefined value is selected)',
-                  type: 'number',
-                  default: 0
+                  type: 'number'
                 }
               }
             },
@@ -239,8 +238,7 @@ export const digitalGaugeSettingsSchema: JsonSettingsSchema = {
                 },
                 value: {
                   title: '[To] Value (if predefined value is selected)',
-                  type: 'number',
-                  default: 100
+                  type: 'number'
                 }
               }
             },
