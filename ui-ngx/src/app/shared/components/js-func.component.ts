@@ -117,6 +117,7 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
   errorAnnotationId = -1;
 
   private propagateChange = null;
+  private hasErrors = false;
 
   constructor(public elementRef: ElementRef,
               private utils: UtilsService,
@@ -164,6 +165,34 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
             this.updateView();
           }
         });
+        // @ts-ignore
+        this.jsEditor.session.on('changeAnnotation', () => {
+          const annotations = this.jsEditor.session.getAnnotations();
+          annotations.filter(annotation => annotation.text.includes('is not defined')).forEach(annotation => {
+            annotation.type = 'error';
+          });
+          this.jsEditor.renderer.setAnnotations(annotations);
+          const hasErrors = annotations.filter(annotation => annotation.type === 'error').length > 0;
+          if (this.hasErrors !== hasErrors) {
+            this.hasErrors = hasErrors;
+            this.propagateChange(this.modelValue);
+          }
+        });
+        // @ts-ignore
+        if (!!this.jsEditor.session.$worker) {
+          const jsWorkerOptions = {
+            undef: true,
+            unused: true,
+            globals: {}
+          };
+          if (this.functionArgs) {
+            this.functionArgs.forEach(arg => {
+              jsWorkerOptions.globals[arg] = false;
+            });
+          }
+          // @ts-ignore
+          this.jsEditor.session.$worker.send('changeOptions', [jsWorkerOptions]);
+        }
         if (this.editorCompleter) {
           this.jsEditor.completers = [this.editorCompleter, ...(this.jsEditor.completers || [])];
         }
@@ -207,7 +236,7 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
   }
 
   public validate(c: FormControl) {
-    return (this.functionValid) ? null : {
+    return (this.functionValid && !this.hasErrors) ? null : {
       jsFunc: {
         valid: false,
       },
@@ -358,5 +387,4 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
       this.propagateChange(this.modelValue);
     }
   }
-
 }
