@@ -97,6 +97,7 @@ import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 @RequiredArgsConstructor
 @Slf4j
 public class DeviceController extends BaseController {
+    public static final String DEVICE_ID_PARAM_DESCRIPTION = "A string value representing the device id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     private final DeviceBulkImportService deviceBulkImportService;
 
     private static final String DEVICE_ID = "deviceId";
@@ -235,10 +236,13 @@ public class DeviceController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Unassign device from customer (unassignDeviceFromCustomer)",
+            notes = "Clears assignment of the device to customer. Customer will not be able to query device afterwards.")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer/device/{deviceId}", method = RequestMethod.DELETE)
     @ResponseBody
-    public Device unassignDeviceFromCustomer(@PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
+    public Device unassignDeviceFromCustomer(@ApiParam(value = DEVICE_ID_PARAM_DESCRIPTION)
+                                                 @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
         checkParameter(DEVICE_ID, strDeviceId);
         try {
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
@@ -266,10 +270,15 @@ public class DeviceController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Make device publicly available (assignDeviceToPublicCustomer)",
+            notes = "Device will be available for non-authorized (not logged-in) users. " +
+                    "This is useful to create dashboards that you plan to share/embed on a publicly available website. " +
+                    "However, users that are logged-in and belong to different tenant will not be able to access the device.")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer/public/device/{deviceId}", method = RequestMethod.POST)
     @ResponseBody
-    public Device assignDeviceToPublicCustomer(@PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
+    public Device assignDeviceToPublicCustomer(@ApiParam(value = DEVICE_ID_PARAM_DESCRIPTION)
+                                                   @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
         checkParameter(DEVICE_ID, strDeviceId);
         try {
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
