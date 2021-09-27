@@ -619,7 +619,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
             if (md.getMsg().getMsg().isPersisted()) {
                 systemContext.getTbRpcService().save(tenantId, new RpcId(rpcId), status, null);
             }
-            if (status != RpcStatus.SENT) {
+            if (status != RpcStatus.SENT && !(status == RpcStatus.FAILED && md.isDelivered())) {
                 sendNextPendingRequest(context);
             }
         } else {
