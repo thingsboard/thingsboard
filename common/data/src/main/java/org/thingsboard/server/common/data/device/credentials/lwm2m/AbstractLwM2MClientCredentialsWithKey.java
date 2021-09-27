@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
-import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.binary.Base64;
 
 public abstract class AbstractLwM2MClientCredentialsWithKey extends AbstractLwM2MClientCredentials {
     @Getter
@@ -30,9 +30,9 @@ public abstract class AbstractLwM2MClientCredentialsWithKey extends AbstractLwM2
 
     @SneakyThrows
     @JsonIgnore
-    public byte[] getDecodedKey() {
+    public byte[] getDecodedKey() throws IllegalArgumentException {
         if (keyInBytes == null) {
-            keyInBytes = Hex.decodeHex(key.toLowerCase().toCharArray());
+            keyInBytes = Base64.decodeBase64(key.getBytes());
         }
         return keyInBytes;
     }

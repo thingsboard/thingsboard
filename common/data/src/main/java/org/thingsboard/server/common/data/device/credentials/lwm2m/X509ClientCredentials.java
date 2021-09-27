@@ -15,16 +15,30 @@
  */
 package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.SneakyThrows;
+import org.apache.commons.codec.binary.Base64;
 
 @Getter
 @Setter
 public class X509ClientCredentials extends AbstractLwM2MClientCredentials {
     private String cert;
 
+    private byte[] certInBytes;
+
     @Override
     public LwM2MSecurityMode getSecurityConfigClientMode() {
         return LwM2MSecurityMode.X509;
+    }
+
+    @SneakyThrows
+    @JsonIgnore
+    public byte[] getDecodedCert() throws IllegalArgumentException {
+        if (certInBytes == null) {
+            certInBytes = Base64.decodeBase64(cert.getBytes());
+        }
+        return certInBytes;
     }
 }
