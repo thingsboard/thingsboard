@@ -45,6 +45,7 @@ public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkR
 
     @Override
     public void onSent(R request) {
+        client.setLastSentRpcId(this.request.getRequestId());
         transportService.process(client.getSession(), this.request, RpcStatus.SENT, TransportServiceCallback.EMPTY);
     }
 
@@ -68,6 +69,7 @@ public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkR
     @Override
     public void onError(String params, Exception e) {
         if (e instanceof TimeoutException || e instanceof org.eclipse.leshan.core.request.exception.TimeoutException) {
+            client.setLastSentRpcId(null);
             transportService.process(client.getSession(), this.request, RpcStatus.TIMEOUT, TransportServiceCallback.EMPTY);
         } else if (!(e instanceof ClientSleepingException)) {
             sendRpcReplyOnError(e);
