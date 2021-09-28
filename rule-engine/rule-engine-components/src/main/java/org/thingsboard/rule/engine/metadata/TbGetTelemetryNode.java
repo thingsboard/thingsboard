@@ -130,8 +130,14 @@ public class TbGetTelemetryNode implements TbNode {
     }
 
     private List<ReadTsKvQuery> buildQueries(TbMsg msg, List<String> keys) {
+        final Interval interval = getInterval(msg);
+        final long aggIntervalStep = Aggregation.NONE.equals(aggregation) ? 1 :
+                // exact how it validates on BaseTimeseriesService.validate()
+                // see CassandraBaseTimeseriesDao.findAllAsync()
+                interval.getEndTs() - interval.getStartTs();
+
         return keys.stream()
-                .map(key -> new BaseReadTsKvQuery(key, getInterval(msg).getStartTs(), getInterval(msg).getEndTs(), 1, limit, aggregation, getOrderBy()))
+                .map(key -> new BaseReadTsKvQuery(key, interval.getStartTs(), interval.getEndTs(), aggIntervalStep, limit, aggregation, getOrderBy()))
                 .collect(Collectors.toList());
     }
 
