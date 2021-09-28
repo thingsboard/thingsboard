@@ -20,6 +20,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.Hex;
 
 public abstract class AbstractLwM2MClientCredentialsWithKey extends AbstractLwM2MClientCredentials {
     @Getter
@@ -32,7 +33,12 @@ public abstract class AbstractLwM2MClientCredentialsWithKey extends AbstractLwM2
     @JsonIgnore
     public byte[] getDecodedKey() throws IllegalArgumentException {
         if (keyInBytes == null) {
-            keyInBytes = Base64.decodeBase64(key.getBytes());
+            if (this.getSecurityConfigClientMode() == LwM2MSecurityMode.PSK) {
+                keyInBytes = Hex.decodeHex(key.toLowerCase().toCharArray());
+            }
+            else {
+                keyInBytes = Base64.decodeBase64(key.getBytes());
+            }
         }
         return keyInBytes;
     }
