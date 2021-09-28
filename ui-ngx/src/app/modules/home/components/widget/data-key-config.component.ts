@@ -40,7 +40,7 @@ import { map, mergeMap, publishReplay, refCount, tap } from 'rxjs/operators';
 import { alarmFields } from '@shared/models/alarm.models';
 import { JsFuncComponent } from '@shared/components/js-func.component';
 import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
-import { WidgetService } from "@core/http/widget.service";
+import { WidgetService } from '@core/http/widget.service';
 
 @Component({
   selector: 'tb-data-key-config',

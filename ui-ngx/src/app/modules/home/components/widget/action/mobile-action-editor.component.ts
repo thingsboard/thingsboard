@@ -36,7 +36,7 @@ import {
   getDefaultProcessLocationFunction,
   getDefaultProcessQrCodeFunction
 } from '@home/components/widget/action/mobile-action-editor.models';
-import { WidgetService } from "@core/http/widget.service";
+import { WidgetService } from '@core/http/widget.service';
 
 @Component({
   selector: 'tb-mobile-action-editor',

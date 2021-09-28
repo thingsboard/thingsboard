@@ -47,7 +47,7 @@ import { CustomActionEditorCompleter } from '@home/components/widget/action/cust
 import { isDefinedAndNotNull } from '@core/utils';
 import { MobileActionEditorComponent } from '@home/components/widget/action/mobile-action-editor.component';
 import { widgetType } from '@shared/models/widget.models';
-import { WidgetService } from "@core/http/widget.service";
+import { WidgetService } from '@core/http/widget.service';
 
 export interface WidgetActionDialogData {
   isAdd: boolean;

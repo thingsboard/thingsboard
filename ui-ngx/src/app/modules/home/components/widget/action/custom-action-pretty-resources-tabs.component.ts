@@ -41,7 +41,6 @@ import { forkJoin, from } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { getAce } from '@shared/models/ace/ace.models';
 import { beautifyCss, beautifyHtml } from '@shared/models/beautify.models';
-import { WidgetService } from "@core/http/widget.service";
 
 @Component({
   selector: 'tb-custom-action-pretty-resources-tabs',
@@ -76,16 +75,12 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
   cssEditor: Ace.Editor;
   setValuesPending = false;
 
-  functionScopeVariables: string[];
-
   customPrettyActionEditorCompleter = CustomPrettyActionEditorCompleter;
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
-              private widgetService: WidgetService,
               private raf: RafService) {
     super(store);
-    this.functionScopeVariables = this.widgetService.getWidgetScopeVariables();
   }
 
   ngOnInit(): void {

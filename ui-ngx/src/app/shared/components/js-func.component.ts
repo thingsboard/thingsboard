@@ -85,6 +85,8 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
 
   @Input() globalVariables: Array<string>;
 
+  @Input() disableUndefinedCheck = false;
+
   private noValidateValue: boolean;
   get noValidate(): boolean {
     return this.noValidateValue;
@@ -167,32 +169,34 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
             this.updateView();
           }
         });
-        // @ts-ignore
-        this.jsEditor.session.on('changeAnnotation', () => {
-          const annotations = this.jsEditor.session.getAnnotations();
-          annotations.filter(annotation => annotation.text.includes('is not defined')).forEach(annotation => {
-            annotation.type = 'error';
+        if (!this.disableUndefinedCheck) {
+          // @ts-ignore
+          this.jsEditor.session.on('changeAnnotation', () => {
+            const annotations = this.jsEditor.session.getAnnotations();
+            annotations.filter(annotation => annotation.text.includes('is not defined')).forEach(annotation => {
+              annotation.type = 'error';
+            });
+            this.jsEditor.renderer.setAnnotations(annotations);
+            const hasErrors = annotations.filter(annotation => annotation.type === 'error').length > 0;
+            if (this.hasErrors !== hasErrors) {
+              this.hasErrors = hasErrors;
+              this.propagateChange(this.modelValue);
+            }
           });
-          this.jsEditor.renderer.setAnnotations(annotations);
-          const hasErrors = annotations.filter(annotation => annotation.type === 'error').length > 0;
-          if (this.hasErrors !== hasErrors) {
-            this.hasErrors = hasErrors;
-            this.propagateChange(this.modelValue);
-          }
-        });
+        }
         // @ts-ignore
         if (!!this.jsEditor.session.$worker) {
           const jsWorkerOptions = {
-            undef: true,
+            undef: !this.disableUndefinedCheck,
             unused: true,
             globals: {}
           };
-          if (this.functionArgs) {
+          if (!this.disableUndefinedCheck && this.functionArgs) {
             this.functionArgs.forEach(arg => {
               jsWorkerOptions.globals[arg] = false;
             });
           }
-          if (this.globalVariables) {
+          if (!this.disableUndefinedCheck && this.globalVariables) {
             this.globalVariables.forEach(arg => {
               jsWorkerOptions.globals[arg] = false;
             });
