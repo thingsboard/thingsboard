@@ -318,7 +318,7 @@ export const parseWithTranslation = {
   }
 };
 
-export function parseData(input: DatasourceData[]): FormattedData[] {
+export function parseData(input: DatasourceData[], dataIndex?: number): FormattedData[] {
   return _(input).groupBy(el => el?.datasource.entityName + el?.datasource.entityType)
     .values().value().map((entityArray, i) => {
       const obj: FormattedData = {
@@ -330,12 +330,12 @@ export function parseData(input: DatasourceData[]): FormattedData[] {
         deviceType: null
       };
       entityArray.filter(el => el.data.length).forEach(el => {
-        const indexDate = el.data.length - 1;
-        if (!obj.hasOwnProperty(el.dataKey.label) || el.data[indexDate][1] !== '') {
-          obj[el.dataKey.label] = el.data[indexDate][1];
-          obj[el.dataKey.label + '|ts'] = el.data[indexDate][0];
+        dataIndex = isDefined(dataIndex) ? dataIndex : el.data.length - 1;
+        if (!obj.hasOwnProperty(el.dataKey.label) || el.data[dataIndex][1] !== '') {
+          obj[el.dataKey.label] = el.data[dataIndex][1];
+          obj[el.dataKey.label + '|ts'] = el.data[dataIndex][0];
           if (el.dataKey.label === 'type') {
-            obj.deviceType = el.data[indexDate][1];
+            obj.deviceType = el.data[dataIndex][1];
           }
         }
       });

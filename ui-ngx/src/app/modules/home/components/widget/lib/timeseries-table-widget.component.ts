@@ -53,17 +53,22 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
   CellContentInfo,
   CellStyleInfo,
+  checkHasActions,
   constructTableCssString,
   getCellContentInfo,
   getCellStyleInfo,
   getRowStyleInfo,
+  getTableCellButtonActions,
+  prepareTableCellButtonActions,
   RowStyleInfo,
+  TableCellButtonActionDescriptor,
   TableWidgetDataKeySettings,
   TableWidgetSettings
 } from '@home/components/widget/lib/table-widget.models';
 import { Overlay } from '@angular/cdk/overlay';
 import { SubscriptionEntityInfo } from '@core/api/widget-api.models';
 import { DatePipe } from '@angular/common';
+import { parseData } from '@home/components/widget/lib/maps/common-maps-utils';
 
 export interface TimeseriesTableWidgetSettings extends TableWidgetSettings {
   showTimestamp: boolean;
@@ -72,6 +77,8 @@ export interface TimeseriesTableWidgetSettings extends TableWidgetSettings {
 }
 
 interface TimeseriesRow {
+  actionCellButtons?: TableCellButtonActionDescriptor[];
+  hasActions?: boolean;
   [col: number]: any;
   formattedTs: string;
 }
@@ -116,9 +123,9 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   public pageSizeOptions;
   public textSearchMode = false;
   public textSearch: string = null;
-  public actionCellDescriptors: WidgetActionDescriptor[];
   public sources: TimeseriesTableSource[];
   public sourceIndex: number;
+  public countCellButtonAction: number;
 
   private cellContentCache: Array<any> = [];
   private cellStyleCache: Array<any> = [];
@@ -204,7 +211,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   private initialize() {
     this.ctx.widgetActions = [this.searchAction ];
 
-    this.actionCellDescriptors = this.ctx.actionsApi.getActionDescriptors('actionCellButton');
+    this.countCellButtonAction = this.ctx.actionsApi.getActionDescriptors('actionCellButton').length;
 
     this.searchAction.show = isDefined(this.settings.enableSearch) ? this.settings.enableSearch : true;
     this.displayPagination = isDefined(this.settings.displayPagination) ? this.settings.displayPagination : true;
@@ -288,10 +295,10 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
           cellContentInfo.decimals = dataKey.decimals;
           source.contentsInfo.push(cellContentInfo);
         }
-        if (this.actionCellDescriptors.length) {
+        if (this.countCellButtonAction) {
           source.displayedColumns.push('actions');
         }
-        const tsDatasource = new TimeseriesDatasource(source, this.hideEmptyLines, this.dateFormatFilter, this.datePipe);
+        const tsDatasource = new TimeseriesDatasource(source, this.hideEmptyLines, this.dateFormatFilter, this.datePipe, this.ctx);
         tsDatasource.dataUpdated(this.data);
         this.sources.push(source);
       }
@@ -570,12 +577,18 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
   private allRowsSubject = new BehaviorSubject<TimeseriesRow[]>([]);
   private allRows$: Observable<Array<TimeseriesRow>> = this.allRowsSubject.asObservable();
 
+  private cellButtonActions: TableCellButtonActionDescriptor[];
+  private readonly usedShowCellActionFunction: boolean;
+
   constructor(
     private source: TimeseriesTableSource,
     private hideEmptyLines: boolean,
     private dateFormatFilter: string,
-    private datePipe: DatePipe
+    private datePipe: DatePipe,
+    private widgetContext: WidgetContext
   ) {
+    this.cellButtonActions = getTableCellButtonActions(widgetContext);
+    this.usedShowCellActionFunction = this.cellButtonActions.some(action => action.useShowActionCellButtonFunction);
     this.source.timeseriesDatasource = this;
   }
 
@@ -617,13 +630,23 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
     const rowsMap: {[timestamp: number]: TimeseriesRow} = {};
     for (let d = 0; d < data.length; d++) {
       const columnData = data[d].data;
-      columnData.forEach((cellData) => {
+      columnData.forEach((cellData, index) => {
         const timestamp = cellData[0];
         let row = rowsMap[timestamp];
         if (!row) {
           row = {
             formattedTs: this.datePipe.transform(timestamp, this.dateFormatFilter)
           };
+          if (this.cellButtonActions.length) {
+            if (this.usedShowCellActionFunction) {
+              const parsedData = parseData(data, index);
+              row.actionCellButtons = prepareTableCellButtonActions(this.widgetContext, this.cellButtonActions, parsedData[0]);
+              row.hasActions = checkHasActions(row.actionCellButtons);
+            } else {
+              row.hasActions = true;
+              row.actionCellButtons = this.cellButtonActions;
+            }
+          }
           row[0] = timestamp;
           for (let c = 0; c < data.length; c++) {
             row[c + 1] = undefined;
