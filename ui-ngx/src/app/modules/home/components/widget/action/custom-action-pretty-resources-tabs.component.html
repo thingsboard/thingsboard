@@ -94,6 +94,7 @@
       [(ngModel)]="action.customFunction"
       (ngModelChange)="notifyActionUpdated()"
       [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'htmlTemplate', 'additionalParams', 'entityLabel']"
+      [globalVariables]="functionScopeVariables"
       [validationArgs]="[]"
       [editorCompleter]="customPrettyActionEditorCompleter">
     </tb-js-func>

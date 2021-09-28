@@ -36,6 +36,7 @@ import { AppState } from '@core/core.state';
 import { combineLatest } from 'rxjs';
 import { CustomActionDescriptor } from '@shared/models/widget.models';
 import { CustomPrettyActionEditorCompleter } from '@home/components/widget/action/custom-action.models';
+import { WidgetService } from "@core/http/widget.service";
 
 @Component({
   selector: 'tb-custom-action-pretty-editor',
@@ -58,6 +59,8 @@ export class CustomActionPrettyEditorComponent extends PageComponent implements 
 
   fullscreen = false;
 
+  functionScopeVariables: string[];
+
   @ViewChildren('leftPanel')
   leftPanelElmRef: QueryList<ElementRef<HTMLElement>>;
 
@@ -68,8 +71,10 @@ export class CustomActionPrettyEditorComponent extends PageComponent implements 
 
   private propagateChange = (_: any) => {};
 
-  constructor(protected store: Store<AppState>) {
+  constructor(protected store: Store<AppState>,
+              private widgetService: WidgetService) {
     super(store);
+    this.functionScopeVariables = this.widgetService.getWidgetScopeVariables();
   }
 
   ngOnInit(): void {

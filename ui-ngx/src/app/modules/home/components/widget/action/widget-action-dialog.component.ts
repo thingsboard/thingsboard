@@ -47,6 +47,7 @@ import { CustomActionEditorCompleter } from '@home/components/widget/action/cust
 import { isDefinedAndNotNull } from '@core/utils';
 import { MobileActionEditorComponent } from '@home/components/widget/action/mobile-action-editor.component';
 import { widgetType } from '@shared/models/widget.models';
+import { WidgetService } from "@core/http/widget.service";
 
 export interface WidgetActionDialogData {
   isAdd: boolean;
@@ -88,11 +89,14 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
   submitted = false;
   widgetType = widgetType;
 
+  functionScopeVariables: string[];
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               private utils: UtilsService,
               private dashboardService: DashboardService,
               private dashboardUtils: DashboardUtilsService,
+              private widgetService: WidgetService,
               @Inject(MAT_DIALOG_DATA) public data: WidgetActionDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<WidgetActionDialogComponent, WidgetActionDescriptorInfo>,
@@ -109,6 +113,7 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
     } else {
       this.action = this.data.action;
     }
+    this.functionScopeVariables = this.widgetService.getWidgetScopeVariables();
   }
 
   ngOnInit(): void {

@@ -83,6 +83,8 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
 
   @Input() editorCompleter: TbEditorCompleter;
 
+  @Input() globalVariables: Array<string>;
+
   private noValidateValue: boolean;
   get noValidate(): boolean {
     return this.noValidateValue;
@@ -187,6 +189,11 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
           };
           if (this.functionArgs) {
             this.functionArgs.forEach(arg => {
+              jsWorkerOptions.globals[arg] = false;
+            });
+          }
+          if (this.globalVariables) {
+            this.globalVariables.forEach(arg => {
               jsWorkerOptions.globals[arg] = false;
             });
           }

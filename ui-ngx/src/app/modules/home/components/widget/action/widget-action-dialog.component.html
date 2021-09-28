@@ -171,6 +171,7 @@
           <tb-js-func
             formControlName="customFunction"
             [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
+            [globalVariables]="functionScopeVariables"
             [validationArgs]="[]"
             [editorCompleter]="customActionEditorCompleter"
           ></tb-js-func>
