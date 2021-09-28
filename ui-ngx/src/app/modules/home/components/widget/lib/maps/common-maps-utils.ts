@@ -330,7 +330,7 @@ export function parseData(input: DatasourceData[]): FormattedData[] {
         deviceType: null
       };
       entityArray.filter(el => el.data.length).forEach(el => {
-        const indexDate = el.data.length ? el.data.length - 1 : 0;
+        const indexDate = el.data.length - 1;
         if (!obj.hasOwnProperty(el.dataKey.label) || el.data[indexDate][1] !== '') {
           obj[el.dataKey.label] = el.data[indexDate][1];
           obj[el.dataKey.label + '|ts'] = el.data[indexDate][0];

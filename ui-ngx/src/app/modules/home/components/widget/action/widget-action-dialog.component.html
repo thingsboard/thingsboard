@@ -54,6 +54,17 @@
       <tb-material-icon-select
         formControlName="icon">
       </tb-material-icon-select>
+      <mat-checkbox *ngIf="displayShowWidgetActionForm()" formControlName="useShowWidgetActionFunction" style="padding-bottom: 16px;">
+        {{ 'widget-config.use-show-widget-action-function' | translate }}
+      </mat-checkbox>
+      <tb-js-func *ngIf="displayShowWidgetActionForm() && widgetActionFormGroup.get('useShowWidgetActionFunction').value"
+        formControlName="showWidgetActionFunction"
+        [functionArgs]="['widgetContext', 'data']"
+        [globalVariables]="functionScopeVariables"
+        [validationArgs]="[]"
+        [resultType]="'boolean'"
+        [editorCompleter]="customActionEditorCompleter"
+      ></tb-js-func>
       <mat-form-field class="mat-block">
         <mat-label translate>widget-config.action-type</mat-label>
         <mat-select required formControlName="type">

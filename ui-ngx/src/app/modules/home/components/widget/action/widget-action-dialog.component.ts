@@ -38,7 +38,12 @@ import {
   WidgetActionsData
 } from '@home/components/widget/action/manage-widget-actions.component.models';
 import { UtilsService } from '@core/services/utils.service';
-import { WidgetActionSource, WidgetActionType, widgetActionTypeTranslationMap } from '@shared/models/widget.models';
+import {
+  WidgetActionSource,
+  widgetActionSources,
+  WidgetActionType,
+  widgetActionTypeTranslationMap
+} from '@shared/models/widget.models';
 import { map, mergeMap, startWith, tap } from 'rxjs/operators';
 import { DashboardService } from '@core/http/dashboard.service';
 import { Dashboard } from '@shared/models/dashboard.models';
@@ -124,15 +129,39 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
       this.fb.control(this.action.name, [this.validateActionName(), Validators.required]));
     this.widgetActionFormGroup.addControl('icon',
       this.fb.control(this.action.icon, [Validators.required]));
+    this.widgetActionFormGroup.addControl('useShowWidgetActionFunction',
+      this.fb.control(this.action.useShowWidgetActionFunction, []));
+    this.widgetActionFormGroup.addControl('showWidgetActionFunction',
+      this.fb.control(this.action.showWidgetActionFunction || 'return true;', []));
     this.widgetActionFormGroup.addControl('type',
       this.fb.control(this.action.type, [Validators.required]));
+    this.updateShowWidgetActionForm();
     this.updateActionTypeFormGroup(this.action.type, this.action);
     this.widgetActionFormGroup.get('type').valueChanges.subscribe((type: WidgetActionType) => {
       this.updateActionTypeFormGroup(type);
     });
     this.widgetActionFormGroup.get('actionSourceId').valueChanges.subscribe(() => {
       this.widgetActionFormGroup.get('name').updateValueAndValidity();
+      this.updateShowWidgetActionForm();
     });
+    this.widgetActionFormGroup.get('useShowWidgetActionFunction').valueChanges.subscribe(() => {
+      this.updateShowWidgetActionForm();
+    });
+  }
+
+  displayShowWidgetActionForm(): boolean {
+    return this.widgetActionFormGroup.get('actionSourceId').value === widgetActionSources.headerButton.value;
+  }
+
+  private updateShowWidgetActionForm() {
+    const actionSourceId = this.widgetActionFormGroup.get('actionSourceId').value;
+    const useShowWidgetActionFunction = this.widgetActionFormGroup.get('useShowWidgetActionFunction').value;
+    if (actionSourceId === widgetActionSources.headerButton.value && useShowWidgetActionFunction) {
+      this.widgetActionFormGroup.get('showWidgetActionFunction').setValidators([Validators.required]);
+    } else {
+      this.widgetActionFormGroup.get('showWidgetActionFunction').clearValidators();
+    }
+    this.widgetActionFormGroup.get('showWidgetActionFunction').updateValueAndValidity();
   }
 
   private updateActionTypeFormGroup(type?: WidgetActionType, action?: WidgetActionDescriptorInfo) {

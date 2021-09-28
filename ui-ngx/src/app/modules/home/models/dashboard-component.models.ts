@@ -25,6 +25,8 @@ import { IterableDiffer, KeyValueDiffer } from '@angular/core';
 import { IAliasController, IStateController } from '@app/core/api/widget-api.models';
 import { enumerable } from '@shared/decorators/enumerable';
 import { UtilsService } from '@core/services/utils.service';
+import { FormattedData } from '@home/components/widget/lib/maps/map-models';
+import { parseData } from '@home/components/widget/lib/maps/common-maps-utils';
 
 export interface WidgetsData {
   widgets: Array<Widget>;
@@ -438,10 +440,42 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
     this.showWidgetActions = !this.widgetContext.hideTitlePanel;
 
-    this.customHeaderActions = this.widgetContext.customHeaderActions ? this.widgetContext.customHeaderActions : [];
+    this.updateCustomHeaderActions();
     this.widgetActions = this.widgetContext.widgetActions ? this.widgetContext.widgetActions : [];
     if (detectChanges) {
       this.widgetContext.detectContainerChanges();
+    }
+  }
+
+  updateCustomHeaderActions(detectChanges = false) {
+    let customHeaderActions: Array<WidgetHeaderAction>;
+    if (this.widgetContext.customHeaderActions) {
+      let data: FormattedData[] = [];
+      if (this.widgetContext.customHeaderActions.some(action => action.useShowWidgetHeaderActionFunction)) {
+        data = parseData(this.widgetContext.data || []);
+      }
+      customHeaderActions = this.widgetContext.customHeaderActions.filter(action => this.filterCustomHeaderAction(action, data));
+    } else {
+      customHeaderActions = [];
+    }
+    if (!isEqual(this.customHeaderActions, customHeaderActions)) {
+      this.customHeaderActions = customHeaderActions;
+      if (detectChanges) {
+        this.widgetContext.detectContainerChanges();
+      }
+    }
+  }
+
+  private filterCustomHeaderAction(action: WidgetHeaderAction, data: FormattedData[]): boolean {
+    if (action.useShowWidgetHeaderActionFunction) {
+      try {
+        return action.showWidgetHeaderActionFunction(this.widgetContext, data);
+      } catch (e) {
+        console.warn('Failed to execute showWidgetHeaderActionFunction', e);
+        return false;
+      }
+    } else {
+      return true;
     }
   }
 

@@ -79,6 +79,7 @@ import { SortOrder } from '@shared/models/page/sort-order';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
+import { FormattedData } from '@home/components/widget/lib/maps/map-models';
 
 export interface IWidgetAction {
   name: string;
@@ -86,9 +87,13 @@ export interface IWidgetAction {
   onAction: ($event: Event) => void;
 }
 
+export type ShowWidgetHeaderActionFunction = (ctx: WidgetContext, data: FormattedData[]) => boolean;
+
 export interface WidgetHeaderAction extends IWidgetAction {
   displayName: string;
   descriptor: WidgetActionDescriptor;
+  useShowWidgetHeaderActionFunction: boolean;
+  showWidgetHeaderActionFunction: ShowWidgetHeaderActionFunction;
 }
 
 export interface WidgetAction extends IWidgetAction {

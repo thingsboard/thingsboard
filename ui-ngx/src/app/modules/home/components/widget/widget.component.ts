@@ -55,9 +55,17 @@ import { AppState } from '@core/core.state';
 import { WidgetService } from '@core/http/widget.service';
 import { UtilsService } from '@core/services/utils.service';
 import { forkJoin, Observable, of, ReplaySubject, Subscription, throwError } from 'rxjs';
-import { deepClone, insertVariable, isDefined, objToBase64, objToBase64URI, validateEntityId } from '@core/utils';
 import {
-  IDynamicWidgetComponent,
+  deepClone,
+  insertVariable,
+  isDefined,
+  isNotEmptyStr,
+  objToBase64,
+  objToBase64URI,
+  validateEntityId
+} from '@core/utils';
+import {
+  IDynamicWidgetComponent, ShowWidgetHeaderActionFunction,
   WidgetContext,
   WidgetHeaderAction,
   WidgetInfo,
@@ -290,12 +298,25 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
     this.widgetContext.customHeaderActions = [];
     const headerActionsDescriptors = this.getActionDescriptors(widgetActionSources.headerButton.value);
-    headerActionsDescriptors.forEach((descriptor) => {
+    headerActionsDescriptors.forEach((descriptor) =>
+    {
+      let useShowWidgetHeaderActionFunction = descriptor.useShowWidgetActionFunction || false;
+      let showWidgetHeaderActionFunction: ShowWidgetHeaderActionFunction = null;
+      if (useShowWidgetHeaderActionFunction && isNotEmptyStr(descriptor.showWidgetActionFunction)) {
+        try {
+          showWidgetHeaderActionFunction =
+            new Function('widgetContext', 'data', descriptor.showWidgetActionFunction) as ShowWidgetHeaderActionFunction;
+        } catch (e) {
+          useShowWidgetHeaderActionFunction = false;
+        }
+      }
       const headerAction: WidgetHeaderAction = {
         name: descriptor.name,
         displayName: descriptor.displayName,
         icon: descriptor.icon,
         descriptor,
+        useShowWidgetHeaderActionFunction,
+        showWidgetHeaderActionFunction,
         onAction: $event => {
           const entityInfo = this.getActiveEntityInfo();
           const entityId = entityInfo ? entityInfo.entityId : null;
@@ -507,6 +528,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             this.widgetInstanceInited = true;
             if (this.dataUpdatePending) {
               this.widgetTypeInstance.onDataUpdated();
+              setTimeout(() => {
+                this.dashboardWidget.updateCustomHeaderActions(true);
+              }, 0);
               this.dataUpdatePending = false;
             }
             if (this.pendingMessage) {
@@ -844,6 +868,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           if (this.displayWidgetInstance()) {
             if (this.widgetInstanceInited) {
               this.widgetTypeInstance.onDataUpdated();
+              setTimeout(() => {
+                this.dashboardWidget.updateCustomHeaderActions(true);
+              }, 0);
             } else {
               this.dataUpdatePending = true;
             }

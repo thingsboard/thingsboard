@@ -462,6 +462,8 @@ export interface WidgetActionDescriptor extends CustomActionDescriptor {
   setEntityId?: boolean;
   stateEntityParamName?: string;
   mobileAction?: WidgetMobileActionDescriptor;
+  useShowWidgetActionFunction?: boolean;
+  showWidgetActionFunction?: string;
 }
 
 export interface WidgetComparisonSettings {
