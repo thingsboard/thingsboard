@@ -40,7 +40,6 @@ import {
 import { UtilsService } from '@core/services/utils.service';
 import {
   WidgetActionSource,
-  widgetActionSources,
   WidgetActionType,
   widgetActionTypeTranslationMap
 } from '@shared/models/widget.models';
@@ -150,13 +149,13 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
   }
 
   displayShowWidgetActionForm(): boolean {
-    return this.widgetActionFormGroup.get('actionSourceId').value === widgetActionSources.headerButton.value;
+    return !!this.data.actionsData.actionSources[this.widgetActionFormGroup.get('actionSourceId').value]?.hasShowCondition;
   }
 
   private updateShowWidgetActionForm() {
     const actionSourceId = this.widgetActionFormGroup.get('actionSourceId').value;
     const useShowWidgetActionFunction = this.widgetActionFormGroup.get('useShowWidgetActionFunction').value;
-    if (actionSourceId === widgetActionSources.headerButton.value && useShowWidgetActionFunction) {
+    if (!!this.data.actionsData.actionSources[actionSourceId]?.hasShowCondition && useShowWidgetActionFunction) {
       this.widgetActionFormGroup.get('showWidgetActionFunction').setValidators([Validators.required]);
     } else {
       this.widgetActionFormGroup.get('showWidgetActionFunction').clearValidators();

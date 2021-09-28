@@ -58,6 +58,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
   CellContentInfo,
   CellStyleInfo,
+  checkHasActions,
   constructTableCssString,
   DisplayColumn,
   EntityColumn,
@@ -72,7 +73,10 @@ import {
   getColumnSelectionAvailability,
   getColumnWidth,
   getRowStyleInfo,
+  getTableCellButtonActions,
+  prepareTableCellButtonActions,
   RowStyleInfo,
+  TableCellButtonActionDescriptor,
   TableWidgetDataKeySettings,
   TableWidgetSettings,
   widthStyle
@@ -130,7 +134,7 @@ interface AlarmsTableWidgetSettings extends TableWidgetSettings {
   allowClear: boolean;
 }
 
-interface AlarmWidgetActionDescriptor extends WidgetActionDescriptor {
+interface AlarmWidgetActionDescriptor extends TableCellButtonActionDescriptor {
   details?: boolean;
   acknowledge?: boolean;
   clear?: boolean;
@@ -160,8 +164,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   public textSearchMode = false;
   public columns: Array<EntityColumn> = [];
   public displayedColumns: string[] = [];
-  public actionCellDescriptors: AlarmWidgetActionDescriptor[] = [];
   public alarmsDatasource: AlarmsDatasource;
+  public countCellButtonAction: number;
 
   private cellContentCache: Array<any> = [];
   private cellStyleCache: Array<any> = [];
@@ -288,38 +292,6 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.allowAcknowledgment = isDefined(this.settings.allowAcknowledgment) ? this.settings.allowAcknowledgment : true;
     this.allowClear = isDefined(this.settings.allowClear) ? this.settings.allowClear : true;
 
-    if (this.displayDetails) {
-      this.actionCellDescriptors.push(
-        {
-          displayName: this.translate.instant('alarm.details'),
-          icon: 'more_horiz',
-          details: true
-        } as AlarmWidgetActionDescriptor
-      );
-    }
-
-    if (this.allowAcknowledgment) {
-      this.actionCellDescriptors.push(
-        {
-          displayName: this.translate.instant('alarm.acknowledge'),
-          icon: 'done',
-          acknowledge: true
-        } as AlarmWidgetActionDescriptor
-      );
-    }
-
-    if (this.allowClear) {
-      this.actionCellDescriptors.push(
-        {
-          displayName: this.translate.instant('alarm.clear'),
-          icon: 'clear',
-          clear: true
-        } as AlarmWidgetActionDescriptor
-      );
-    }
-
-    this.actionCellDescriptors = this.actionCellDescriptors.concat(this.ctx.actionsApi.getActionDescriptors('actionCellButton'));
-
     if (this.settings.alarmsTitle && this.settings.alarmsTitle.length) {
       this.alarmsTitlePattern = this.utils.customTranslation(this.settings.alarmsTitle, this.settings.alarmsTitle);
     } else {
@@ -436,11 +408,44 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     }
     this.sortOrderProperty = sortColumn ? sortColumn.def : null;
 
-    if (this.actionCellDescriptors.length) {
+    const actionCellDescriptors: AlarmWidgetActionDescriptor[] = [];
+    if (this.displayDetails) {
+      actionCellDescriptors.push(
+        {
+          displayName: this.translate.instant('alarm.details'),
+          icon: 'more_horiz',
+          details: true
+        } as AlarmWidgetActionDescriptor
+      );
+    }
+
+    if (this.allowAcknowledgment) {
+      actionCellDescriptors.push(
+        {
+          displayName: this.translate.instant('alarm.acknowledge'),
+          icon: 'done',
+          acknowledge: true
+        } as AlarmWidgetActionDescriptor
+      );
+    }
+
+    if (this.allowClear) {
+      actionCellDescriptors.push(
+        {
+          displayName: this.translate.instant('alarm.clear'),
+          icon: 'clear',
+          clear: true
+        } as AlarmWidgetActionDescriptor
+      );
+    }
+
+    this.countCellButtonAction = actionCellDescriptors.length + this.ctx.actionsApi.getActionDescriptors('actionCellButton').length;
+
+    if (this.countCellButtonAction) {
       this.displayedColumns.push('actions');
     }
 
-    this.alarmsDatasource = new AlarmsDatasource(this.subscription, latestDataKeys, this.ngZone);
+    this.alarmsDatasource = new AlarmsDatasource(this.subscription, latestDataKeys, this.ngZone, this.ctx, actionCellDescriptors);
     if (this.enableSelection) {
       this.alarmsDatasource.selectionModeChanged$.subscribe((selectionMode) => {
         const hideTitlePanel = selectionMode || this.textSearchMode;
@@ -495,7 +500,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
             if (this.enableSelection) {
               this.displayedColumns.unshift('select');
             }
-            if (this.actionCellDescriptors.length) {
+            if (this.countCellButtonAction) {
               this.displayedColumns.push('actions');
             }
             this.clearCache();
@@ -986,9 +991,16 @@ class AlarmsDatasource implements DataSource<AlarmDataInfo> {
   private appliedPageLink: AlarmDataPageLink;
   private appliedSortOrderLabel: string;
 
+  private cellButtonActions: TableCellButtonActionDescriptor[];
+  private readonly usedShowCellActionFunction: boolean;
+
   constructor(private subscription: IWidgetSubscription,
               private dataKeys: Array<DataKey>,
-              private ngZone: NgZone) {
+              private ngZone: NgZone,
+              private widgetContext: WidgetContext,
+              actionCellDescriptors: AlarmWidgetActionDescriptor[]) {
+    this.cellButtonActions = actionCellDescriptors.concat(getTableCellButtonActions(widgetContext));
+    this.usedShowCellActionFunction = this.cellButtonActions.some(action => action.useShowActionCellButtonFunction);
   }
 
   connect(collectionViewer: CollectionViewer): Observable<AlarmDataInfo[] | ReadonlyArray<AlarmDataInfo>> {
@@ -1069,6 +1081,15 @@ class AlarmsDatasource implements DataSource<AlarmDataInfo> {
       }
       alarm[dataKey.label] = value;
     });
+    if (this.cellButtonActions.length) {
+      if (this.usedShowCellActionFunction) {
+        alarm.actionCellButtons = prepareTableCellButtonActions(this.widgetContext, this.cellButtonActions, alarm);
+        alarm.hasActions = checkHasActions(alarm.actionCellButtons);
+      } else {
+        alarm.actionCellButtons = this.cellButtonActions;
+        alarm.hasActions = true;
+      }
+    }
     return alarm;
   }
 
