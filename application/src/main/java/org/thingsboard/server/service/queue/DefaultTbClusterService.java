@@ -196,6 +196,10 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public void pushNotificationToTransport(String serviceId, ToTransportMsg response, TbQueueCallback callback) {
+        if (serviceId == null || serviceId.isEmpty()){
+            log.trace("pushNotificationToTransport: skipping message without serviceId [{}], (ToTransportMsg) response [{}]", serviceId, response);
+            return;
+        }
         TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_TRANSPORT, serviceId);
         log.trace("PUSHING msg: {} to:{}", response, tpi);
         producerProvider.getTransportNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), response), callback);
