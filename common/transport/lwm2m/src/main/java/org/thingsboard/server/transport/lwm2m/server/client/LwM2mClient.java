@@ -119,7 +119,7 @@ public class LwM2mClient implements Serializable {
 
     @Getter
     @Setter
-    private Integer lastSentRpcId;
+    private UUID lastSentRpcId;
 
     public Object clone() throws CloneNotSupportedException {
         return super.clone();

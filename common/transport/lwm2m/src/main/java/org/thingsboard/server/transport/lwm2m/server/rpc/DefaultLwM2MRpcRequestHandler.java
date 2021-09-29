@@ -95,8 +95,11 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
             this.sendErrorRpcResponse(sessionInfo, rpcRequest.getRequestId(), ResponseCode.INTERNAL_SERVER_ERROR, "Registration is empty");
             return;
         }
-        if (client.getLastSentRpcId() != null && client.getLastSentRpcId().equals(rpcRequest.getRequestId())) {
-            log.info("[{}] Rpc has already sent!", rpcRequest.getRequestId());
+        UUID rpcId = new UUID(rpcRequest.getRequestIdMSB(), rpcRequest.getRequestIdLSB());
+
+        if (rpcId.equals(client.getLastSentRpcId())) {
+            log.debug("[{}]][{}] Rpc has already sent!", client.getEndpoint(), rpcId);
+            return;
         }
         try {
             if (operationType.isHasObjectId()) {
