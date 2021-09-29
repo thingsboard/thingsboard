@@ -717,6 +717,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         log.error("[{}] Unexpected Exception", sessionId, cause);
         ctx.close();
+        if (cause instanceof OutOfMemoryError) {
+            log.error("Received critical error. Going to shutdown the service.");
+            System.exit(1);
+        }
     }
 
     private static MqttSubAckMessage createSubAckMessage(Integer msgId, List<Integer> grantedQoSList) {
