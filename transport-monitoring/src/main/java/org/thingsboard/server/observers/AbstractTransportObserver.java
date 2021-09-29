@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport;
+package org.thingsboard.server.observers;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,7 +27,9 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.server.TransportsMonitoringScheduler;
-import org.thingsboard.server.WebSocketClientImpl;
+import org.thingsboard.server.transport.TransportInfo;
+import org.thingsboard.server.transport.TransportObserver;
+import org.thingsboard.server.websocket.WebSocketClientImpl;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
@@ -69,8 +71,10 @@ public abstract class AbstractTransportObserver implements TransportObserver {
     @Value("${websocket.token_host}")
     private String tokenHost;
 
+    private final String UNABLE_RECEIVE_ACCESS_TOKEN_MSG = "Unable to receive access token to perform websocket subscription";
 
-    protected WebSocketClientImpl validateWebsocketClient(WebSocketClientImpl webSocketClient, UUID deviceToOpenSession) throws Exception {
+    protected WebSocketClientImpl validateWebsocketClient(WebSocketClientImpl webSocketClient, UUID deviceToOpenSession)
+            throws URISyntaxException, IOException, InterruptedException {
         if (webSocketClient == null || webSocketClient.isClosed()) {
             webSocketClient = buildAndConnectWebSocketClient();
             webSocketClient.send(mapper.writeValueAsString(getTelemetryCmdsWrapper(deviceToOpenSession)));
@@ -96,8 +100,8 @@ public abstract class AbstractTransportObserver implements TransportObserver {
         return wrapper;
     }
 
-    protected WebSocketClientImpl buildAndConnectWebSocketClient() throws URISyntaxException, InterruptedException {
-        String accessToken = getAccessToken().orElseThrow(() -> new IllegalArgumentException("Access token hasn't been received"));
+    protected WebSocketClientImpl buildAndConnectWebSocketClient() throws URISyntaxException, InterruptedException, IOException {
+        String accessToken = getAccessToken().orElseThrow(() -> new IOException(UNABLE_RECEIVE_ACCESS_TOKEN_MSG));
         URI serverUri = new URI(WS_URL + "/api/ws/plugins/telemetry?token=" + accessToken);
         WebSocketClientImpl webSocketClient = new WebSocketClientImpl(serverUri);
         webSocketClient.connectBlocking(websocketWaitTime, TimeUnit.MILLISECONDS);

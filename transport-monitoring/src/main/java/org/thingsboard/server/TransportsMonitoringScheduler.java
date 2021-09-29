@@ -57,10 +57,11 @@ public class TransportsMonitoringScheduler {
                     if (!expectedValue.equals(receivedValue)) {
                         onMonitoringFailure(new TransportInfo(
                                 observer.getTransportType(),
-                                "Transport didn't send websocket update or wrong message was received")
+                                "Websocket update msg is empty or it differ from expected one")
                         );
                     } else {
-                        log.info(observer.getTransportType().toString() + " | Successfully");
+                        log.info(new TransportInfo(observer.getTransportType(),
+                                "Successfully").toString());
                     }
 
                 } catch (Exception e) {

@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.http;
+package org.thingsboard.server.observers;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -24,10 +25,10 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.transport.AbstractTransportObserver;
 import org.thingsboard.server.transport.TransportType;
-import org.thingsboard.server.WebSocketClientImpl;
+import org.thingsboard.server.websocket.WebSocketClientImpl;
 
+import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -72,17 +73,17 @@ public class HttpObserver extends AbstractTransportObserver {
 
     @Override
     public String pingTransport(String payload) throws Exception {
+        webSocketClient = validateWebsocketClient(webSocketClient, testDeviceUuid);
         if (httpClient == null) {
             httpClient = buildHttpClient();
         }
-        webSocketClient = validateWebsocketClient(webSocketClient, testDeviceUuid);
 
         webSocketClient.registerWaitForUpdate();
         sendHttpPostWithTimeout(payload);
         return webSocketClient.waitForUpdate(websocketWaitTime);
     }
 
-    private void sendHttpPostWithTimeout(String payload) throws Exception {
+    private void sendHttpPostWithTimeout(String payload) throws IOException {
         String uri = host + "/api/v1/" + testDeviceAccessToken + "/telemetry";
         HttpPost httpPost = new HttpPost(uri);
         StringEntity entity = new StringEntity(payload);
@@ -97,7 +98,10 @@ public class HttpObserver extends AbstractTransportObserver {
             }
         };
         new Timer(true).schedule(task, responseTimeout);
-        httpClient.execute(httpPost);
+        CloseableHttpResponse response = httpClient.execute(httpPost);
+        if (response.getStatusLine().getStatusCode() != 200) {
+            throw new IOException("HTTP client didn't receive success response from transport");
+        }
     }
 
     @Override

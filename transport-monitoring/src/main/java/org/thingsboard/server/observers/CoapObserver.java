@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.coap;
+package org.thingsboard.server.observers;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapResponse;
+import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.elements.exception.ConnectorException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.transport.AbstractTransportObserver;
 import org.thingsboard.server.transport.TransportType;
-import org.thingsboard.server.WebSocketClientImpl;
+import org.thingsboard.server.websocket.WebSocketClientImpl;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -57,10 +57,10 @@ public class CoapObserver extends AbstractTransportObserver {
 
     @Override
     public String pingTransport(String payload) throws Exception {
+        webSocketClient = validateWebsocketClient(webSocketClient, testDeviceUuid);
         if (coapClient == null) {
             coapClient = new CoapClient(coapBaseUrl + "/api/v1/" + testDeviceAccessToken + "/" + "telemetry");
         }
-        webSocketClient = validateWebsocketClient(webSocketClient, testDeviceUuid);
 
         webSocketClient.registerWaitForUpdate();
         postCoapTelemetry(coapClient, payload.getBytes());
@@ -79,6 +79,10 @@ public class CoapObserver extends AbstractTransportObserver {
 
     private void postCoapTelemetry(CoapClient client, byte[] payload) throws IOException, ConnectorException {
         CoapResponse response = client.setTimeout(timeout).post(payload, MediaTypeRegistry.APPLICATION_JSON);
+        CoAP.ResponseCode code = response.getCode();
+        if (code.codeClass != CoAP.CodeClass.SUCCESS_RESPONSE.value) {
+            throw new IOException("COAP client didn't receive success response from transport");
+        }
     }
 
 }
