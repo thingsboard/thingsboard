@@ -266,18 +266,18 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                     rpkCredentials.setKey(pubkClient);
                     SecurityUtil.publicKey.decode(rpkCredentials.getDecodedKey());
                 } catch (Exception e) {
-                    throw new DeviceCredentialsValidationException("LwM2M client RPK key should be in RFC7250 standard and support only EC algorithm and encoded to Bas64 format!");
+                    throw new DeviceCredentialsValidationException("LwM2M client RPK key should be in RFC7250 standard and support only EC algorithm and encoded to Base64 format!");
                 }
                 break;
             case X509:
                 X509ClientCredentials x509CCredentials = (X509ClientCredentials) clientCredentials;
-                if (StringUtils.isNotBlank(x509CCredentials.getCert())) {
+                if (StringUtils.isNotEmpty(x509CCredentials.getCert())) {
                     try {
                         String certClient = EncryptionUtil.certTrimNewLines(x509CCredentials.getCert());
                         x509CCredentials.setCert(certClient);
                         SecurityUtil.certificate.decode(x509CCredentials.getDecodedCert());
                     } catch (Exception e) {
-                        throw new DeviceCredentialsValidationException("LwM2M client X509 certificate should be in DER-encoded X509v3 format and support only EC algorithm and encoded to Bas64 format!");
+                        throw new DeviceCredentialsValidationException("LwM2M client X509 certificate should be in DER-encoded X509v3 format and support only EC algorithm and encoded to Base64 format!");
                     }
                 }
                 break;
@@ -317,7 +317,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                     rpkServerCredentials.setClientPublicKeyOrId(pubkRpkSever);
                     SecurityUtil.publicKey.decode(rpkServerCredentials.getDecodedClientPublicKeyOrId());
                 } catch (Exception e) {
-                    throw new DeviceCredentialsValidationException(server + " client RPK public key or id should be in RFC7250 standard and encoded to Bas64 format!");
+                    throw new DeviceCredentialsValidationException(server + " client RPK public key or id should be in RFC7250 standard and encoded to Base64 format!");
                 }
 
                 if (StringUtils.isEmpty(rpkServerCredentials.getClientSecretKey())) {
@@ -329,7 +329,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                     rpkServerCredentials.setClientSecretKey(prikRpkSever);
                     SecurityUtil.privateKey.decode(rpkServerCredentials.getDecodedClientSecretKey());
                 } catch (Exception e) {
-                    throw new DeviceCredentialsValidationException(server + " client RPK secret key should be in PKCS#8 format (DER encoding, RFC5958 standard) and encoded to Bas64 format!");
+                    throw new DeviceCredentialsValidationException(server + " client RPK secret key should be in PKCS#8 format (DER encoding, RFC5958 standard) and encoded to Base64 format!");
                 }
                 break;
             case X509:
@@ -343,7 +343,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                     x509ServerCredentials.setClientPublicKeyOrId(certServer);
                     SecurityUtil.certificate.decode(x509ServerCredentials.getDecodedClientPublicKeyOrId());
                 } catch (Exception e) {
-                    throw new DeviceCredentialsValidationException(server + " client X509 public key or id should be in DER-encoded X509v3 format  and support only EC algorithm and encoded to Bas64 format!");
+                    throw new DeviceCredentialsValidationException(server + " client X509 public key or id should be in DER-encoded X509v3 format  and support only EC algorithm and encoded to Base64 format!");
                 }
                 if (StringUtils.isBlank(x509ServerCredentials.getClientSecretKey())) {
                     throw new DeviceCredentialsValidationException(server + " client X509 secret key should be specified!");
@@ -354,7 +354,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                     x509ServerCredentials.setClientSecretKey(prikX509Sever);
                     SecurityUtil.privateKey.decode(x509ServerCredentials.getDecodedClientSecretKey());
                 } catch (Exception e) {
-                    throw new DeviceCredentialsValidationException(server + " client X509 secret key should be in PKCS#8 format (DER encoding, RFC5958 standard) and encoded to Bas64 format!");
+                    throw new DeviceCredentialsValidationException(server + " client X509 secret key should be in PKCS#8 format (DER encoding, RFC5958 standard) and encoded to Base64 format!");
                 }
                 break;
         }
