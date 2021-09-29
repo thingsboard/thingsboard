@@ -968,7 +968,6 @@
       "endpoint-required": "Uç Nokta İstemci Adı gerekli.",
       "mode": "Güvenlik yapılandırma modu",
       "client-tab": "İstemci Güvenlik Yapılandırması",
-      "client-certificate": "İstemci sertifikası",
       "bootstrap-tab": "Önyükleme İstemcisi",
       "bootstrap-server": "Önyükleme Sunucusu",
       "lwm2m-server": "LwM2M Sunucusu",
@@ -1271,7 +1270,7 @@
       "view-attribute": "Öznitelik görüntüle",
       "remove-attribute": "Öznitelik kaldır",
       "mode": "Güvenlik yapılandırma modu",
-      "servers": "Sunucular",
+
       "short-id": "Kısa ID",
       "short-id-required": "Kısa ID gerekli.",
       "short-id-range": "Kısa ID 1 ile 65534 aralığında olmalıdır.",
