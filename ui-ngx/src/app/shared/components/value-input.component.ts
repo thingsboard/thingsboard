@@ -114,7 +114,7 @@ export class ValueInputComponent implements OnInit, ControlValueAccessor {
   }
 
   updateView() {
-    if (this.inputForm.valid || this.valueType === ValueType.BOOLEAN || this.valueType === ValueType.JSON) {
+    if (this.inputForm.valid || this.valueType === ValueType.BOOLEAN) {
       this.propagateChange(this.modelValue);
     } else {
       this.propagateChange(null);
@@ -126,6 +126,7 @@ export class ValueInputComponent implements OnInit, ControlValueAccessor {
       this.modelValue = false;
     } else if (this.valueType === ValueType.JSON) {
       this.modelValue = {};
+      this.inputForm.form.get('value').patchValue({});
     } else {
       this.modelValue = null;
     }
