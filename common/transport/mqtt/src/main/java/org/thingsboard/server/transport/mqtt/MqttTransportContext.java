@@ -77,6 +77,7 @@ public class MqttTransportContext extends TransportContext {
 
     @PostConstruct
     public void init() {
+        super.init();
         transportService.createGaugeStats("openConnections", connectionsCounter);
     }
 
