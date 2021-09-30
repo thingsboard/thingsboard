@@ -198,6 +198,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   attributeScopeChanged(attributeScope: TelemetryType) {
     this.attributeScope = attributeScope;
     this.mode = 'default';
+    this.paginator.pageIndex = 0;
     this.updateData(true);
   }
 
@@ -447,7 +448,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     if (this.mode === 'widget') {
       this.widgetsList = [];
       this.widgetsListCache = [];
-      this.widgetsCarouselIndex = 0;      
+      this.widgetsCarouselIndex = 0;
       if (widgetsBundle) {
         this.widgetsLoaded = false;
         const bundleAlias = widgetsBundle.alias;
