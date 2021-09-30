@@ -19,6 +19,7 @@ import com.slack.api.Slack;
 import com.slack.api.methods.SlackApiException;
 import com.slack.api.methods.request.chat.ChatPostMessageRequest;
 import com.slack.api.methods.response.chat.ChatPostMessageResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -32,6 +33,7 @@ import java.time.LocalTime;
 @ConditionalOnProperty(
         value="notifications.slack.enabled",
         havingValue = "true")
+@Slf4j
 public class SlackNotificationChannel implements NotificationChannel {
 
     @Value("${notifications.slack.access_token}")
@@ -52,6 +54,9 @@ public class SlackNotificationChannel implements NotificationChannel {
                     .channel(channelId)
                     .text(String.format(markdownTemplate, localDate, localTime, transportInfo.getTransportType().name(), transportInfo.getInformation()))
                     .build());
+            if (!response.getErrors().isEmpty()) {
+                log.error(response.getErrors().toString());
+            }
         } catch (IOException | SlackApiException e) {
             e.printStackTrace();
         }
