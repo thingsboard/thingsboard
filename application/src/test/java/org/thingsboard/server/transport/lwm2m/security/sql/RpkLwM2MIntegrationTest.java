@@ -16,10 +16,11 @@
 package org.thingsboard.server.transport.lwm2m.security.sql;
 
 import org.eclipse.leshan.client.object.Security;
-import org.eclipse.leshan.core.util.Hex;
 import org.junit.Test;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCredentials;
 import org.thingsboard.server.transport.lwm2m.security.AbstractSecurityLwM2MIntegrationTest;
+
+import org.apache.commons.codec.binary.Base64;;
 
 import static org.eclipse.leshan.client.object.Security.rpk;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURE_COAP_CONFIG;
@@ -32,7 +33,7 @@ public class RpkLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
     public void testConnectWithRPKAndObserveTelemetry() throws Exception {
         RPKClientCredentials rpkClientCredentials = new RPKClientCredentials();
         rpkClientCredentials.setEndpoint(ENDPOINT);
-        rpkClientCredentials.setKey(Hex.encodeHexString(clientPublicKey.getEncoded()));
+        rpkClientCredentials.setKey(new String(Base64.encodeBase64(clientPublicKey.getEncoded())));
         Security security = rpk(SECURE_URI,
                 SHORT_SERVER_ID,
                 clientPublicKey.getEncoded(),
@@ -40,5 +41,4 @@ public class RpkLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
                 serverX509Cert.getPublicKey().getEncoded());
         super.basicTestConnectionObserveTelemetry(security, rpkClientCredentials, SECURE_COAP_CONFIG, ENDPOINT);
     }
-
 }

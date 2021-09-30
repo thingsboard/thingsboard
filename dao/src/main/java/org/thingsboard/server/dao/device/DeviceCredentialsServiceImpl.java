@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.device;
 
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.util.Base64;
 import org.eclipse.leshan.core.util.SecurityUtil;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -118,7 +117,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 formatSimpleMqttCredentials(deviceCredentials);
                 break;
             case LWM2M_CREDENTIALS:
-                formatSimpleLwm2mCredentials(deviceCredentials);
+                formatAndValidateSimpleLwm2mCredentials(deviceCredentials);
                 break;
         }
     }
@@ -155,13 +154,13 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
     }
 
     private void formatCertData(DeviceCredentials deviceCredentials) {
-        String cert = EncryptionUtil.trimNewLines(deviceCredentials.getCredentialsValue());
+        String cert = EncryptionUtil.certTrimNewLines(deviceCredentials.getCredentialsValue());
         String sha3Hash = EncryptionUtil.getSha3Hash(cert);
         deviceCredentials.setCredentialsId(sha3Hash);
         deviceCredentials.setCredentialsValue(cert);
     }
 
-    private void formatSimpleLwm2mCredentials(DeviceCredentials deviceCredentials) {
+    private void formatAndValidateSimpleLwm2mCredentials(DeviceCredentials deviceCredentials) {
         LwM2MDeviceCredentials lwM2MCredentials;
         try {
             lwM2MCredentials = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(), LwM2MDeviceCredentials.class);
@@ -172,26 +171,23 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
 
         String credentialsId = null;
         LwM2MClientCredentials clientCredentials = lwM2MCredentials.getClient();
-
         switch (clientCredentials.getSecurityConfigClientMode()) {
             case NO_SEC:
             case RPK:
+                deviceCredentials.setCredentialsValue(JacksonUtil.toString(lwM2MCredentials));
                 credentialsId = clientCredentials.getEndpoint();
                 break;
             case PSK:
                 credentialsId = ((PSKClientCredentials) clientCredentials).getIdentity();
                 break;
             case X509:
-                X509ClientCredentials x509Config = (X509ClientCredentials) clientCredentials;
-                if ((StringUtils.isNotBlank(x509Config.getCert()))) {
-                    String cert = EncryptionUtil.trimNewLines(x509Config.getCert());
-                    String sha3Hash = EncryptionUtil.getSha3Hash(cert);
-                    x509Config.setCert(cert);
-                    ((X509ClientCredentials) clientCredentials).setCert(cert);
-                    deviceCredentials.setCredentialsValue(JacksonUtil.toString(lwM2MCredentials));
+                deviceCredentials.setCredentialsValue(JacksonUtil.toString(lwM2MCredentials));
+                X509ClientCredentials x509ClientConfig = (X509ClientCredentials) clientCredentials;
+                if ((StringUtils.isNotBlank(x509ClientConfig.getCert()))) {
+                    String sha3Hash = EncryptionUtil.getSha3Hash(x509ClientConfig.getCert());
                     credentialsId = sha3Hash;
                 } else {
-                    credentialsId = x509Config.getEndpoint();
+                    credentialsId = x509ClientConfig.getEndpoint();
                 }
                 break;
         }
@@ -231,7 +227,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
     }
 
     private void validateLwM2MClientCredentials(LwM2MClientCredentials clientCredentials) {
-        if (StringUtils.isEmpty(clientCredentials.getEndpoint())) {
+        if (StringUtils.isBlank(clientCredentials.getEndpoint())) {
             throw new DeviceCredentialsValidationException("LwM2M client endpoint should be specified!");
         }
 
@@ -240,43 +236,46 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 break;
             case PSK:
                 PSKClientCredentials pskCredentials = (PSKClientCredentials) clientCredentials;
-                if (StringUtils.isEmpty(pskCredentials.getIdentity())) {
+                if (StringUtils.isBlank(pskCredentials.getIdentity())) {
                     throw new DeviceCredentialsValidationException("LwM2M client PSK identity should be specified!");
                 }
 
                 String pskKey = pskCredentials.getKey();
-                if (StringUtils.isEmpty(pskKey)) {
+                if (StringUtils.isBlank(pskKey)) {
                     throw new DeviceCredentialsValidationException("LwM2M client PSK key should be specified!");
                 }
 
                 if (!pskKey.matches("-?[0-9a-fA-F]+")) {
-                    throw new DeviceCredentialsValidationException("LwM2M client PSK key should be HexDecimal format!");
+                    throw new DeviceCredentialsValidationException("LwM2M client PSK key should be random sequence in hex encoding!");
                 }
 
-                if (pskKey.length() % 32 != 0 || pskKey.length() > 128) {
-                    throw new DeviceCredentialsValidationException("LwM2M client PSK key must be 32, 64, 128 characters!");
+                if (pskKey.length()% 32 != 0 || pskKey.length() > 128) {
+                    throw new DeviceCredentialsValidationException("LwM2M client PSK key length = " + pskKey.length() + ". Key should be HexDec format: 32, 64, 128 characters!");
                 }
                 break;
             case RPK:
                 RPKClientCredentials rpkCredentials = (RPKClientCredentials) clientCredentials;
-
-                if (StringUtils.isEmpty(rpkCredentials.getKey())) {
+                if (StringUtils.isBlank(rpkCredentials.getKey())) {
                     throw new DeviceCredentialsValidationException("LwM2M client RPK key should be specified!");
                 }
 
                 try {
-                    SecurityUtil.publicKey.decode(rpkCredentials.getDecodedKey());
+                    String pubkClient = EncryptionUtil.pubkTrimNewLines(rpkCredentials.getKey());
+                    rpkCredentials.setKey(pubkClient);
+                    SecurityUtil.publicKey.decode(rpkCredentials.getDecoded());
                 } catch (Exception e) {
-                    throw new DeviceCredentialsValidationException("LwM2M client RPK key should be in RFC7250 standard!");
+                    throw new DeviceCredentialsValidationException("LwM2M client RPK key should be in RFC7250 standard and support only EC algorithm and encoded to Base64 format!");
                 }
                 break;
             case X509:
                 X509ClientCredentials x509CCredentials = (X509ClientCredentials) clientCredentials;
-                if (StringUtils.isNotBlank(x509CCredentials.getCert())) {
+                if (StringUtils.isNotEmpty(x509CCredentials.getCert())) {
                     try {
-                        SecurityUtil.certificate.decode(Base64.decodeBase64(x509CCredentials.getCert()));
+                        String certClient = EncryptionUtil.certTrimNewLines(x509CCredentials.getCert());
+                        x509CCredentials.setCert(certClient);
+                        SecurityUtil.certificate.decode(x509CCredentials.getDecoded());
                     } catch (Exception e) {
-                        throw new DeviceCredentialsValidationException("LwM2M client X509 certificate should be in DER-encoded X.509 format!");
+                        throw new DeviceCredentialsValidationException("LwM2M client X509 certificate should be in DER-encoded X509v3 format and support only EC algorithm and encoded to Base64 format!");
                     }
                 }
                 break;
@@ -289,65 +288,71 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 break;
             case PSK:
                 PSKServerCredentials pskCredentials = (PSKServerCredentials) serverCredentials;
-                if (StringUtils.isEmpty(pskCredentials.getClientPublicKeyOrId())) {
+                if (StringUtils.isBlank(pskCredentials.getClientPublicKeyOrId())) {
                     throw new DeviceCredentialsValidationException(server + " client PSK public key or id should be specified!");
                 }
 
                 String pskKey = pskCredentials.getClientSecretKey();
-                if (StringUtils.isEmpty(pskKey)) {
+                if (StringUtils.isBlank(pskKey)) {
                     throw new DeviceCredentialsValidationException(server + " client PSK key should be specified!");
                 }
 
                 if (!pskKey.matches("-?[0-9a-fA-F]+")) {
-                    throw new DeviceCredentialsValidationException(server + " client PSK key should be HexDecimal format!");
+                    throw new DeviceCredentialsValidationException(server + " client PSK key should be random sequence in hex encoding!");
                 }
 
                 if (pskKey.length() % 32 != 0 || pskKey.length() > 128) {
-                    throw new DeviceCredentialsValidationException(server + " client PSK key must be 32, 64, 128 characters!");
+                    throw new DeviceCredentialsValidationException(server + " client PSK key length = " + pskKey.length() + ". Key should be HexDec format: 32, 64, 128 characters!");
                 }
                 break;
             case RPK:
-                RPKServerCredentials rpkCredentials = (RPKServerCredentials) serverCredentials;
-
-                if (StringUtils.isEmpty(rpkCredentials.getClientPublicKeyOrId())) {
+                RPKServerCredentials rpkServerCredentials = (RPKServerCredentials) serverCredentials;
+                if (StringUtils.isEmpty(rpkServerCredentials.getClientPublicKeyOrId())) {
                     throw new DeviceCredentialsValidationException(server + " client RPK public key or id should be specified!");
                 }
-
                 try {
-                    SecurityUtil.publicKey.decode(rpkCredentials.getDecodedClientPublicKeyOrId());
+                    String pubkRpkSever = EncryptionUtil.pubkTrimNewLines(rpkServerCredentials.getClientPublicKeyOrId());
+                    rpkServerCredentials.setClientPublicKeyOrId(pubkRpkSever);
+                    SecurityUtil.publicKey.decode(rpkServerCredentials.getDecodedClientPublicKeyOrId());
                 } catch (Exception e) {
-                    throw new DeviceCredentialsValidationException(server + " client RPK public key or id should be in RFC7250 standard!");
+                    throw new DeviceCredentialsValidationException(server + " client RPK public key or id should be in RFC7250 standard and encoded to Base64 format!");
                 }
 
-                if (StringUtils.isEmpty(rpkCredentials.getClientSecretKey())) {
+                if (StringUtils.isEmpty(rpkServerCredentials.getClientSecretKey())) {
                     throw new DeviceCredentialsValidationException(server + " client RPK secret key should be specified!");
                 }
 
                 try {
-                    SecurityUtil.privateKey.decode(rpkCredentials.getDecodedClientSecretKey());
+                    String prikRpkSever = EncryptionUtil.prikTrimNewLines(rpkServerCredentials.getClientSecretKey());
+                    rpkServerCredentials.setClientSecretKey(prikRpkSever);
+                    SecurityUtil.privateKey.decode(rpkServerCredentials.getDecodedClientSecretKey());
                 } catch (Exception e) {
-                    throw new DeviceCredentialsValidationException(server + " client RPK secret key should be in RFC5958 standard!");
+                    throw new DeviceCredentialsValidationException(server + " client RPK secret key should be in PKCS#8 format (DER encoding, RFC5958 standard) and encoded to Base64 format!");
                 }
                 break;
             case X509:
-                X509ServerCredentials x509CCredentials = (X509ServerCredentials) serverCredentials;
-                if (StringUtils.isEmpty(x509CCredentials.getClientPublicKeyOrId())) {
+                X509ServerCredentials x509ServerCredentials = (X509ServerCredentials) serverCredentials;
+                if (StringUtils.isBlank(x509ServerCredentials.getClientPublicKeyOrId())) {
                     throw new DeviceCredentialsValidationException(server + " client X509 public key or id should be specified!");
                 }
 
                 try {
-                    SecurityUtil.certificate.decode(x509CCredentials.getDecodedClientPublicKeyOrId());
+                    String certServer = EncryptionUtil.certTrimNewLines(x509ServerCredentials.getClientPublicKeyOrId());
+                    x509ServerCredentials.setClientPublicKeyOrId(certServer);
+                    SecurityUtil.certificate.decode(x509ServerCredentials.getDecodedClientPublicKeyOrId());
                 } catch (Exception e) {
-                    throw new DeviceCredentialsValidationException(server + " client X509 public key or id should be in DER-encoded X.509 format!");
+                    throw new DeviceCredentialsValidationException(server + " client X509 public key or id should be in DER-encoded X509v3 format  and support only EC algorithm and encoded to Base64 format!");
                 }
-                if (StringUtils.isEmpty(x509CCredentials.getClientSecretKey())) {
+                if (StringUtils.isBlank(x509ServerCredentials.getClientSecretKey())) {
                     throw new DeviceCredentialsValidationException(server + " client X509 secret key should be specified!");
                 }
 
                 try {
-                    SecurityUtil.privateKey.decode(x509CCredentials.getDecodedClientSecretKey());
+                    String prikX509Sever = EncryptionUtil.prikTrimNewLines(x509ServerCredentials.getClientSecretKey());
+                    x509ServerCredentials.setClientSecretKey(prikX509Sever);
+                    SecurityUtil.privateKey.decode(x509ServerCredentials.getDecodedClientSecretKey());
                 } catch (Exception e) {
-                    throw new DeviceCredentialsValidationException(server + " client X509 secret key should be in RFC5958 standard!");
+                    throw new DeviceCredentialsValidationException(server + " client X509 secret key should be in PKCS#8 format (DER encoding, RFC5958 standard) and encoded to Base64 format!");
                 }
                 break;
         }

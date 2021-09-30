@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
-import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.binary.Base64;
 
 @Getter
 @Setter
@@ -40,6 +40,6 @@ public abstract class AbstractLwM2MServerCredentialsWithKeys implements LwM2MSer
 
     @SneakyThrows
     private static byte[] getDecoded(String key) {
-        return Hex.decodeHex(key.toLowerCase().toCharArray());
+        return Base64.decodeBase64(key.getBytes());
     }
 }

@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.lwm2m.secure;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.DecoderException;
 import org.eclipse.leshan.core.util.SecurityUtil;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.stereotype.Component;
@@ -146,14 +147,14 @@ public class LwM2mCredentialsSecurityInfoValidator {
         PSKClientCredentials pskConfig = (PSKClientCredentials) clientCredentialsConfig;
         if (StringUtils.isNotEmpty(pskConfig.getIdentity())) {
             try {
-                if (pskConfig.getDecodedKey() != null && pskConfig.getDecodedKey().length > 0) {
+                if (pskConfig.getDecoded() != null && pskConfig.getDecoded().length > 0) {
                     endpoint = StringUtils.isNotEmpty(pskConfig.getEndpoint()) ? pskConfig.getEndpoint() : endpoint;
                     if (endpoint != null && !endpoint.isEmpty()) {
-                        result.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(endpoint, pskConfig.getIdentity(), pskConfig.getDecodedKey()));
+                        result.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(endpoint, pskConfig.getIdentity(), pskConfig.getDecoded()));
                         result.setSecurityMode(PSK);
                     }
                 }
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException | DecoderException e) {
                 log.error("Missing PSK key: " + e.getMessage());
             }
         } else {
@@ -164,14 +165,14 @@ public class LwM2mCredentialsSecurityInfoValidator {
     private void createClientSecurityInfoRPK(TbLwM2MSecurityInfo result, String endpoint, LwM2MClientCredentials clientCredentialsConfig) {
         RPKClientCredentials rpkConfig = (RPKClientCredentials) clientCredentialsConfig;
         try {
-            if (rpkConfig.getDecodedKey() != null) {
-                PublicKey key = SecurityUtil.publicKey.decode(rpkConfig.getDecodedKey());
+            if (rpkConfig.getDecoded() != null) {
+                PublicKey key = SecurityUtil.publicKey.decode(rpkConfig.getDecoded());
                 result.setSecurityInfo(SecurityInfo.newRawPublicKeyInfo(endpoint, key));
                 result.setSecurityMode(RPK);
             } else {
                 log.error("Missing RPK key");
             }
-        } catch (IllegalArgumentException | IOException | GeneralSecurityException e) {
+        } catch (IllegalArgumentException | IOException | GeneralSecurityException | DecoderException e) {
             log.error("RPK: Invalid security info content: " + e.getMessage());
         }
     }

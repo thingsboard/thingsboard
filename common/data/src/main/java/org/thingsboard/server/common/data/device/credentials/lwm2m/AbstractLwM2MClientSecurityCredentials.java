@@ -15,25 +15,16 @@
  */
 package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.SneakyThrows;
-import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.DecoderException;
 
-public abstract class AbstractLwM2MClientCredentialsWithKey extends AbstractLwM2MClientCredentials {
+public abstract class AbstractLwM2MClientSecurityCredentials extends AbstractLwM2MClientCredentials {
     @Getter
     @Setter
-    private String key;
+    protected String key;
 
-    private byte[] keyInBytes;
+    protected byte[] securityInBytes;
 
-    @SneakyThrows
-    @JsonIgnore
-    public byte[] getDecodedKey() {
-        if (keyInBytes == null) {
-            keyInBytes = Hex.decodeHex(key.toLowerCase().toCharArray());
-        }
-        return keyInBytes;
-    }
+    public abstract byte[] getDecoded() throws IllegalArgumentException, DecoderException;
 }
