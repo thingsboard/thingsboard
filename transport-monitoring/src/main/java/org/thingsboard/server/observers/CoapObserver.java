@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.transport.TransportType;
+import org.thingsboard.server.utils.AccessTokenHttpProvider;
 import org.thingsboard.server.websocket.WebSocketClientImpl;
 
 import java.io.IOException;
@@ -38,7 +39,6 @@ import java.util.UUID;
 public class CoapObserver extends AbstractTransportObserver {
 
     private CoapClient coapClient;
-    private WebSocketClientImpl webSocketClient;
 
     @Value("${coap.host}")
     private String coapBaseUrl;
@@ -55,16 +55,25 @@ public class CoapObserver extends AbstractTransportObserver {
     @Value("${coap.timeout}")
     private long timeout;
 
-    @Override
-    public String pingTransport(String payload) throws Exception {
-        webSocketClient = validateWebsocketClient(webSocketClient, testDeviceUuid);
-        if (coapClient == null) {
-            coapClient = new CoapClient(coapBaseUrl + "/api/v1/" + testDeviceAccessToken + "/" + "telemetry");
-        }
+    public CoapObserver(AccessTokenHttpProvider tokenHttpProvider) {
+        super(tokenHttpProvider);
+    }
 
-        webSocketClient.registerWaitForUpdate();
-        postCoapTelemetry(coapClient, payload.getBytes());
-        return webSocketClient.waitForUpdate(timeout);
+    @Override
+    protected void publishMsg(String payload) throws Exception {
+        if (coapClient == null) {
+            coapClient = buildCoapClient();
+        }
+        CoapResponse response = coapClient.setTimeout(timeout).post(payload, MediaTypeRegistry.APPLICATION_JSON);
+        CoAP.ResponseCode code = response.getCode();
+        if (code.codeClass != CoAP.CodeClass.SUCCESS_RESPONSE.value) {
+            throw new IOException("COAP client didn't receive success response from transport");
+        }
+    }
+
+    @Override
+    public UUID getTestDeviceUuid() {
+        return testDeviceUuid;
     }
 
     @Override
@@ -77,12 +86,8 @@ public class CoapObserver extends AbstractTransportObserver {
         return TransportType.COAP;
     }
 
-    private void postCoapTelemetry(CoapClient client, byte[] payload) throws IOException, ConnectorException {
-        CoapResponse response = client.setTimeout(timeout).post(payload, MediaTypeRegistry.APPLICATION_JSON);
-        CoAP.ResponseCode code = response.getCode();
-        if (code.codeClass != CoAP.CodeClass.SUCCESS_RESPONSE.value) {
-            throw new IOException("COAP client didn't receive success response from transport");
-        }
+    private CoapClient buildCoapClient() {
+        return new CoapClient(coapBaseUrl + "/api/v1/" + testDeviceAccessToken + "/" + "telemetry");
     }
 
 }

@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.transport.TransportType;
+import org.thingsboard.server.utils.AccessTokenHttpProvider;
 import org.thingsboard.server.websocket.WebSocketClientImpl;
 
 import java.util.UUID;
@@ -29,20 +30,24 @@ import java.util.UUID;
         havingValue = "true")
 public class SnmpObserver extends AbstractTransportObserver {
 
-    private WebSocketClientImpl webSocketClient;
-
     @Value("${snmp.monitoring_rate}")
     private int monitoringRate;
 
     @Value("${snmp.test_device.id}")
     private UUID testDeviceUuid;
 
-    @Override
-    public String pingTransport(String payload) throws Exception {
-        webSocketClient = validateWebsocketClient(webSocketClient, testDeviceUuid);
-        webSocketClient.registerWaitForUpdate();
+    public SnmpObserver(AccessTokenHttpProvider tokenHttpProvider) {
+        super(tokenHttpProvider);
+    }
 
-        return webSocketClient.waitForUpdate(1000);
+    @Override
+    protected void publishMsg(String payload) throws Exception {
+
+    }
+
+    @Override
+    public UUID getTestDeviceUuid() {
+        return testDeviceUuid;
     }
 
     @Override

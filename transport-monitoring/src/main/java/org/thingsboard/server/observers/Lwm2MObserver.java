@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.transport.TransportType;
+import org.thingsboard.server.utils.AccessTokenHttpProvider;
 import org.thingsboard.server.websocket.WebSocketClientImpl;
 
 import java.util.UUID;
@@ -30,20 +31,25 @@ import java.util.UUID;
 )
 public class Lwm2MObserver extends AbstractTransportObserver {
 
-    private WebSocketClientImpl webSocketClient;
-
     @Value("${lwm2m.monitoring_rate}")
     private int monitoringRate;
 
     @Value("${lwm2m.test_device.id}")
     private UUID testDeviceUuid;
 
-    @Override
-    public String pingTransport(String payload) throws Exception {
-        webSocketClient = validateWebsocketClient(webSocketClient, testDeviceUuid);
+    public Lwm2MObserver(AccessTokenHttpProvider tokenHttpProvider) {
+        super(tokenHttpProvider);
+    }
 
-        webSocketClient.registerWaitForUpdate();
-        return webSocketClient.waitForUpdate(1000);
+
+    @Override
+    protected void publishMsg(String payload) throws Exception {
+
+    }
+
+    @Override
+    public UUID getTestDeviceUuid() {
+        return testDeviceUuid;
     }
 
     @Override

@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.transport.TransportType;
+import org.thingsboard.server.utils.AccessTokenHttpProvider;
 import org.thingsboard.server.websocket.WebSocketClientImpl;
 
 import java.io.IOException;
@@ -40,7 +41,6 @@ import java.util.UUID;
 @Slf4j
 public class HttpObserver extends AbstractTransportObserver {
 
-    private WebSocketClientImpl webSocketClient;
     private CloseableHttpClient httpClient;
 
     @Value("${http.host}")
@@ -67,23 +67,15 @@ public class HttpObserver extends AbstractTransportObserver {
     @Value("${http.test_device.id}")
     private UUID testDeviceUuid;
 
-    public HttpObserver() {
-        super();
+    public HttpObserver(AccessTokenHttpProvider tokenHttpProvider) {
+        super(tokenHttpProvider);
     }
 
     @Override
-    public String pingTransport(String payload) throws Exception {
-        webSocketClient = validateWebsocketClient(webSocketClient, testDeviceUuid);
+    protected void publishMsg(String payload) throws Exception {
         if (httpClient == null) {
             httpClient = buildHttpClient();
         }
-
-        webSocketClient.registerWaitForUpdate();
-        sendHttpPostWithTimeout(payload);
-        return webSocketClient.waitForUpdate(websocketWaitTime);
-    }
-
-    private void sendHttpPostWithTimeout(String payload) throws IOException {
         String uri = host + "/api/v1/" + testDeviceAccessToken + "/telemetry";
         HttpPost httpPost = new HttpPost(uri);
         StringEntity entity = new StringEntity(payload);
@@ -102,6 +94,11 @@ public class HttpObserver extends AbstractTransportObserver {
         if (response.getStatusLine().getStatusCode() != 200) {
             throw new IOException("HTTP client didn't receive success response from transport");
         }
+    }
+
+    @Override
+    public UUID getTestDeviceUuid() {
+        return testDeviceUuid;
     }
 
     @Override

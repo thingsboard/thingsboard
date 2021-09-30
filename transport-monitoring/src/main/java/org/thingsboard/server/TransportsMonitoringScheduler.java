@@ -24,8 +24,8 @@ import org.thingsboard.server.channels.NotificationChannel;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.telemetry.cmd.v2.EntityDataUpdate;
+import org.thingsboard.server.observers.AbstractTransportObserver;
 import org.thingsboard.server.transport.TransportInfo;
-import org.thingsboard.server.transport.TransportObserver;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
@@ -38,17 +38,18 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 @Slf4j
 public class TransportsMonitoringScheduler {
+    private final ObjectMapper mapper = new ObjectMapper();
 
     public static final String PAYLOAD_KEY_STR = "key1";
-    private final ObjectMapper mapper = new ObjectMapper();
-    private final List<TransportObserver> transports;
+
+    private final List<AbstractTransportObserver> observers;
     private final List<NotificationChannel> channels;
 
     @PostConstruct
     public void startMonitoringTransports() {
-        ScheduledExecutorService executorService = Executors.newScheduledThreadPool(transports.size());
+        ScheduledExecutorService executorService = Executors.newScheduledThreadPool(observers.size());
 
-        for (TransportObserver observer : transports) {
+        for (AbstractTransportObserver observer : observers) {
             executorService.scheduleAtFixedRate(() -> {
                 String expectedValue = String.valueOf(System.currentTimeMillis());
                 try {
