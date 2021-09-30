@@ -17,7 +17,7 @@
 import { Component, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NgForm } from '@angular/forms';
 import { ValueType, valueTypesMap } from '@shared/models/constants';
-import { isObject } from '@core/utils';
+import { isObject, isDefinedAndNotNull } from '@core/utils';
 import { MatDialog } from '@angular/material/dialog';
 import {
   JsonObjectEditDialogComponent,
@@ -114,7 +114,7 @@ export class ValueInputComponent implements OnInit, ControlValueAccessor {
   }
 
   updateView() {
-    if (this.inputForm.valid || this.valueType === ValueType.BOOLEAN) {
+    if (this.inputForm.valid || this.valueType === ValueType.BOOLEAN || this.valueType === ValueType.JSON) {
       this.propagateChange(this.modelValue);
     } else {
       this.propagateChange(null);
@@ -124,7 +124,7 @@ export class ValueInputComponent implements OnInit, ControlValueAccessor {
   onValueTypeChanged() {
     if (this.valueType === ValueType.BOOLEAN) {
       this.modelValue = false;
-    } if (this.valueType === ValueType.JSON) {
+    } else if (this.valueType === ValueType.JSON) {
       this.modelValue = {};
     } else {
       this.modelValue = null;
