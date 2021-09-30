@@ -17,7 +17,7 @@
 import { Component, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NgForm } from '@angular/forms';
 import { ValueType, valueTypesMap } from '@shared/models/constants';
-import { isObject, isDefinedAndNotNull } from '@core/utils';
+import { isObject } from '@core/utils';
 import { MatDialog } from '@angular/material/dialog';
 import {
   JsonObjectEditDialogComponent,
