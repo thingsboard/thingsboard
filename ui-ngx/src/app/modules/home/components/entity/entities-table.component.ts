@@ -432,6 +432,9 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
   }
 
   onTimewindowChange() {
+    if (this.displayPagination) {
+      this.paginator.pageIndex = 0;
+    }
     this.updateData();
   }
 
