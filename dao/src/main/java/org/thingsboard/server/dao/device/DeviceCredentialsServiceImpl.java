@@ -117,7 +117,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 formatSimpleMqttCredentials(deviceCredentials);
                 break;
             case LWM2M_CREDENTIALS:
-                formatSimpleLwm2mCredentials(deviceCredentials);
+                formatAndValidateSimpleLwm2mCredentials(deviceCredentials);
                 break;
         }
     }
@@ -160,7 +160,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
         deviceCredentials.setCredentialsValue(cert);
     }
 
-    private void formatSimpleLwm2mCredentials(DeviceCredentials deviceCredentials) {
+    private void formatAndValidateSimpleLwm2mCredentials(DeviceCredentials deviceCredentials) {
         LwM2MDeviceCredentials lwM2MCredentials;
         try {
             lwM2MCredentials = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(), LwM2MDeviceCredentials.class);
@@ -171,8 +171,6 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
 
         String credentialsId = null;
         LwM2MClientCredentials clientCredentials = lwM2MCredentials.getClient();
-        LwM2MServerCredentials bootstrapServer = lwM2MCredentials.getBootstrap().getBootstrapServer();
-        LwM2MServerCredentials lwm2mServer = lwM2MCredentials.getBootstrap().getLwm2mServer();
         switch (clientCredentials.getSecurityConfigClientMode()) {
             case NO_SEC:
             case RPK:
@@ -264,7 +262,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 try {
                     String pubkClient = EncryptionUtil.pubkTrimNewLines(rpkCredentials.getKey());
                     rpkCredentials.setKey(pubkClient);
-                    SecurityUtil.publicKey.decode(rpkCredentials.getDecodedKey());
+                    SecurityUtil.publicKey.decode(rpkCredentials.getDecoded());
                 } catch (Exception e) {
                     throw new DeviceCredentialsValidationException("LwM2M client RPK key should be in RFC7250 standard and support only EC algorithm and encoded to Base64 format!");
                 }
@@ -275,7 +273,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                     try {
                         String certClient = EncryptionUtil.certTrimNewLines(x509CCredentials.getCert());
                         x509CCredentials.setCert(certClient);
-                        SecurityUtil.certificate.decode(x509CCredentials.getDecodedCert());
+                        SecurityUtil.certificate.decode(x509CCredentials.getDecoded());
                     } catch (Exception e) {
                         throw new DeviceCredentialsValidationException("LwM2M client X509 certificate should be in DER-encoded X509v3 format and support only EC algorithm and encoded to Base64 format!");
                     }

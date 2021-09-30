@@ -18,23 +18,13 @@ package org.thingsboard.server.common.data.device.credentials.lwm2m;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.binary.Hex;
 
-@Getter
-@Setter
-public class PSKClientCredentials extends AbstractLwM2MClientSecurityCredentials {
-    private String identity;
+public abstract class AbstractLwM2MClientSecurityCredentials extends AbstractLwM2MClientCredentials {
+    @Getter
+    @Setter
+    protected String key;
 
-    @Override
-    public LwM2MSecurityMode getSecurityConfigClientMode() {
-        return LwM2MSecurityMode.PSK;
-    }
+    protected byte[] securityInBytes;
 
-    @Override
-    public byte[] getDecoded() throws IllegalArgumentException, DecoderException {
-        if (securityInBytes == null) {
-                securityInBytes = Hex.decodeHex(key.toLowerCase().toCharArray());
-        }
-        return securityInBytes;
-    }
+    public abstract byte[] getDecoded() throws IllegalArgumentException, DecoderException;
 }
