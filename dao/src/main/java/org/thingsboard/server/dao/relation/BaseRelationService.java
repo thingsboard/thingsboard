@@ -204,7 +204,7 @@ public class BaseRelationService implements RelationService {
 
             relationDao.deleteOutboundRelations(tenantId, entityId);
         } catch (ConcurrencyFailureException e) {
-            log.error("Concurrency exception while deleting relations [{}]",entityId, e);
+            log.debug("Concurrency exception while deleting relations [{}]",entityId, e);
         }
     }
 
