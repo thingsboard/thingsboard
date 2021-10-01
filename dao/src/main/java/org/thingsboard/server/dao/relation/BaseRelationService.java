@@ -193,19 +193,16 @@ public class BaseRelationService implements RelationService {
             outboundRelations.addAll(relationDao.findAllByFrom(tenantId, entityId, typeGroup));
         }
 
-        try {
-            for (EntityRelation relation : inboundRelations){
-                delete(tenantId, cache, relation, true);
-            }
-
-            for (EntityRelation relation : outboundRelations){
-                delete(tenantId, cache, relation, false);
-            }
-
-            relationDao.deleteOutboundRelations(tenantId, entityId);
-        } catch (ConcurrencyFailureException e) {
-            log.debug("Concurrency exception while deleting relations [{}]",entityId, e);
+        for (EntityRelation relation : inboundRelations){
+            delete(tenantId, cache, relation, true);
         }
+
+        for (EntityRelation relation : outboundRelations){
+            delete(tenantId, cache, relation, false);
+        }
+
+        relationDao.deleteOutboundRelations(tenantId, entityId);
+
     }
 
     @Override
@@ -267,10 +264,13 @@ public class BaseRelationService implements RelationService {
     boolean delete(TenantId tenantId, Cache cache, EntityRelation relation, boolean deleteFromDb) {
         cacheEviction(relation, cache);
         if (deleteFromDb) {
-            return relationDao.deleteRelation(tenantId, relation);
-        } else {
-            return false;
+            try {
+                return relationDao.deleteRelation(tenantId, relation);
+            } catch (ConcurrencyFailureException e) {
+                log.debug("Concurrency exception while deleting relations [{}]", relation, e);
+            }
         }
+        return false;
     }
 
     private void cacheEviction(EntityRelation relation, Cache cache) {
