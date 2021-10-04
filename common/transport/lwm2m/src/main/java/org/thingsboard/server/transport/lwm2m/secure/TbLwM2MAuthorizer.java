@@ -68,11 +68,13 @@ public class TbLwM2MAuthorizer implements Authorizer {
         }
         if (securityChecker.checkSecurityInfo(registration.getEndpoint(), senderIdentity, expectedSecurityInfo)) {
             securityStore.getTbLwM2MSecurityInfoByEndpoint(registration.getEndpoint());
-            if (senderIdentity.isPSK() && securityStore.isByStartEpIdentity(senderIdentity.getPskIdentity())) {
-                securityStore.removeStartEpIdentity(senderIdentity.getPskIdentity());
-            }
-            if (securityStore.isByStartEpIdentity(expectedSecurityInfo.getEndpoint())) {
-                securityStore.removeStartEpIdentity(expectedSecurityInfo.getEndpoint());
+            if (senderIdentity.isSecure()) {
+                if (senderIdentity.isPSK() && securityStore.isByStartEpIdentity(senderIdentity.getPskIdentity())) {
+                    securityStore.removeStartEpIdentity(senderIdentity.getPskIdentity());
+                }
+                if (securityStore.isByStartEpIdentity(expectedSecurityInfo.getEndpoint())) {
+                    securityStore.removeStartEpIdentity(expectedSecurityInfo.getEndpoint());
+                }
             }
             return registration;
         } else {
