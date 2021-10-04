@@ -26,4 +26,6 @@ public interface TbMainSecurityStore extends TbSecurityStore {
 
     void remove(String endpoint, String registrationId);
 
+    TbEditableSecurityStore getSecurityStore ();
+
 }

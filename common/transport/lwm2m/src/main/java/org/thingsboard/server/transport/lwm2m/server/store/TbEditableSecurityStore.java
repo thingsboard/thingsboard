@@ -24,4 +24,7 @@ public interface TbEditableSecurityStore extends TbSecurityStore {
 
     void remove(String endpoint);
 
+    void putStartEpIdentity(String epIdentity, TbLwM2MSecurityInfo tbSecurityInfo) throws NonUniqueSecurityInfoException;
+
+    void removeStartEpIdentity(String epIdentity);
 }

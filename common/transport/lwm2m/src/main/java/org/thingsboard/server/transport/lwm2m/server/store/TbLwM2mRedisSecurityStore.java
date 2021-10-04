@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.store;
 
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.server.security.NonUniqueSecurityInfoException;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.nustaq.serialization.FSTConfiguration;
@@ -24,6 +25,7 @@ import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 
 import java.util.concurrent.locks.Lock;
 
+@Slf4j
 public class TbLwM2mRedisSecurityStore implements TbEditableSecurityStore {
     private static final String SEC_EP = "SEC#EP#";
     private static final String LOCK_EP = "LOCK#EP#";
@@ -116,6 +118,11 @@ public class TbLwM2mRedisSecurityStore implements TbEditableSecurityStore {
     }
 
     @Override
+    public void putStartEpIdentity(String epIdentity, TbLwM2MSecurityInfo tbSecurityInfo) throws NonUniqueSecurityInfoException {
+        log.info("Redis Put  epIdentity3: [{}]", epIdentity);
+    }
+
+    @Override
     public TbLwM2MSecurityInfo getTbLwM2MSecurityInfoByEndpoint(String endpoint) {
         Lock lock = null;
         try (var connection = connectionFactory.getConnection()) {
@@ -153,6 +160,17 @@ public class TbLwM2mRedisSecurityStore implements TbEditableSecurityStore {
                 lock.unlock();
             }
         }
+    }
+
+    @Override
+    public void removeStartEpIdentity(String epIdentity) {
+        log.info("Redis removeStartEpIdentity: [{}]", epIdentity);
+    }
+
+    @Override
+    public boolean isByStartEpIdentity(String epIdentity) {
+        log.info("Redis isByStartEpIdentity: [{}]", epIdentity);
+        return false;
     }
 
     private String toLockKey(String endpoint) {

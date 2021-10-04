@@ -22,4 +22,7 @@ public interface TbSecurityStore extends SecurityStore {
 
     TbLwM2MSecurityInfo getTbLwM2MSecurityInfoByEndpoint(String endpoint);
 
+    void removeStartEpIdentity(String epIdentity);
+
+    boolean isByStartEpIdentity(String epIdentity);
 }

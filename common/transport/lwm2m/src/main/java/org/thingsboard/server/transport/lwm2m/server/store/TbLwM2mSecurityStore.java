@@ -47,6 +47,16 @@ public class TbLwM2mSecurityStore implements TbMainSecurityStore {
     }
 
     @Override
+    public void removeStartEpIdentity(String epIdentity) {
+        securityStore.removeStartEpIdentity(epIdentity);
+    }
+
+    @Override
+    public boolean isByStartEpIdentity(String epIdentity) {
+        return securityStore.isByStartEpIdentity(epIdentity);
+    }
+
+    @Override
     public SecurityInfo getByEndpoint(String endpoint) {
         SecurityInfo securityInfo = securityStore.getByEndpoint(endpoint);
         if (securityInfo == null) {
@@ -60,6 +70,11 @@ public class TbLwM2mSecurityStore implements TbMainSecurityStore {
         SecurityInfo securityInfo = securityStore.getByIdentity(pskIdentity);
         if (securityInfo == null) {
             securityInfo = fetchAndPutSecurityInfo(pskIdentity);
+        }
+        else {
+            if (securityStore.isByStartEpIdentity(pskIdentity)) {
+                securityInfo = fetchAndPutSecurityInfo(pskIdentity);
+            }
         }
         return securityInfo;
     }
@@ -75,6 +90,21 @@ public class TbLwM2mSecurityStore implements TbMainSecurityStore {
         if (securityInfo != null) {
             try {
                 securityStore.put(securityInfo);
+                String epIdentity;
+                switch (securityInfo.getSecurityMode()) {
+                    case PSK:
+                        epIdentity = securityInfo.getSecurityInfo().getIdentity();
+                        break;
+                    case RPK:
+                    case X509:
+                        epIdentity = securityInfo.getSecurityInfo().getEndpoint();
+                        break;
+                    default:
+                        epIdentity = null;
+                }
+                if (epIdentity != null) {
+                    securityStore.putStartEpIdentity(epIdentity, securityInfo);
+                }
             } catch (NonUniqueSecurityInfoException e) {
                 log.trace("Failed to add security info: {}", securityInfo, e);
             }
@@ -104,5 +134,10 @@ public class TbLwM2mSecurityStore implements TbMainSecurityStore {
         if (shouldRemove) {
             securityStore.remove(endpoint);
         }
+    }
+
+    @Override
+    public TbEditableSecurityStore getSecurityStore () {
+        return  securityStore;
     }
 }

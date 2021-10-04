@@ -15,16 +15,20 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.store;
 
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.server.security.NonUniqueSecurityInfoException;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+@Slf4j
 public class TbInMemorySecurityStore implements TbEditableSecurityStore {
     // lock for the two maps
     protected final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
@@ -36,6 +40,9 @@ public class TbInMemorySecurityStore implements TbEditableSecurityStore {
 
     // by PSK identity
     protected Map<String, TbLwM2MSecurityInfo> securityByIdentity = new HashMap<>();
+
+    // by Start client end-point, identity
+    protected Set<String> securityStartByEpIdentity = new HashSet<>();
 
     public TbInMemorySecurityStore() {
     }
@@ -49,8 +56,10 @@ public class TbInMemorySecurityStore implements TbEditableSecurityStore {
         try {
             TbLwM2MSecurityInfo securityInfo = securityByEp.get(endpoint);
             if (securityInfo != null) {
+                securityStartByEpIdentity.add(endpoint);
                 return securityInfo.getSecurityInfo();
             } else {
+                securityStartByEpIdentity.remove(endpoint);
                 return null;
             }
         } finally {
@@ -67,8 +76,10 @@ public class TbInMemorySecurityStore implements TbEditableSecurityStore {
         try {
             TbLwM2MSecurityInfo securityInfo = securityByIdentity.get(identity);
             if (securityInfo != null) {
+                securityStartByEpIdentity.add(identity);
                 return securityInfo.getSecurityInfo();
             } else {
+                securityStartByEpIdentity.remove(identity);
                 return null;
             }
         } finally {
@@ -105,6 +116,17 @@ public class TbInMemorySecurityStore implements TbEditableSecurityStore {
     }
 
     @Override
+    public void putStartEpIdentity(String epIdentity, TbLwM2MSecurityInfo tbSecurityInfo) throws NonUniqueSecurityInfoException {
+        writeLock.lock();
+        try {
+            log.info("Put Start EpIdentity: [{}]", epIdentity);
+            securityStartByEpIdentity.add(epIdentity);
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    @Override
     public void remove(String endpoint) {
         writeLock.lock();
         try {
@@ -115,6 +137,22 @@ public class TbInMemorySecurityStore implements TbEditableSecurityStore {
         } finally {
             writeLock.unlock();
         }
+    }
+
+    @Override
+    public void removeStartEpIdentity(String epIdentity) {
+        writeLock.lock();
+        try {
+            log.info("Remove Start EpIdentity: [{}]", epIdentity);
+            securityStartByEpIdentity.remove(epIdentity);
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    @Override
+    public boolean isByStartEpIdentity(String epIdentity) {
+        return securityStartByEpIdentity.contains(epIdentity);
     }
 
     @Override
