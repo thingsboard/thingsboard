@@ -59,13 +59,13 @@
                 </mat-cell>
               </ng-container>
               <ng-container matColumnDef="actions" [stickyEnd]="enableStickyAction">
-                <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (countCellButtonAction * 40) + 'px',
-                                                                      maxWidth: (countCellButtonAction * 40) + 'px',
-                                                                      width: (countCellButtonAction * 40) + 'px' }">
+                <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (source.timeseriesDatasource.countCellButtonAction * 40) + 'px',
+                                                                      maxWidth: (source.timeseriesDatasource.countCellButtonAction * 40) + 'px',
+                                                                      width: (source.timeseriesDatasource.countCellButtonAction * 40) + 'px' }">
                 </mat-header-cell>
-                <mat-cell *matCellDef="let row" [ngStyle.gt-md]="{ minWidth: (countCellButtonAction * 40) + 'px',
-                                                                   maxWidth: (countCellButtonAction * 40) + 'px',
-                                                                   width: (countCellButtonAction * 40) + 'px' }">
+                <mat-cell *matCellDef="let row" [ngStyle.gt-md]="{ minWidth: (source.timeseriesDatasource.countCellButtonAction * 40) + 'px',
+                                                                   maxWidth: (source.timeseriesDatasource.countCellButtonAction * 40) + 'px',
+                                                                   width: (source.timeseriesDatasource.countCellButtonAction * 40) + 'px' }">
                   <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
                     <ng-container *ngFor="let actionDescriptor of row.actionCellButtons; trackBy: trackByActionCellDescriptionId">
                       <span *ngIf="!actionDescriptor.icon" style="width: 40px;"></span>

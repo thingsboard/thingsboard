@@ -69,6 +69,7 @@ import { Overlay } from '@angular/cdk/overlay';
 import { SubscriptionEntityInfo } from '@core/api/widget-api.models';
 import { DatePipe } from '@angular/common';
 import { parseData } from '@home/components/widget/lib/maps/common-maps-utils';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 export interface TimeseriesTableWidgetSettings extends TableWidgetSettings {
   showTimestamp: boolean;
@@ -125,7 +126,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   public textSearch: string = null;
   public sources: TimeseriesTableSource[];
   public sourceIndex: number;
-  public countCellButtonAction: number;
+  private setCellButtonAction: boolean;
 
   private cellContentCache: Array<any> = [];
   private cellStyleCache: Array<any> = [];
@@ -211,7 +212,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   private initialize() {
     this.ctx.widgetActions = [this.searchAction ];
 
-    this.countCellButtonAction = this.ctx.actionsApi.getActionDescriptors('actionCellButton').length;
+    this.setCellButtonAction = !!this.ctx.actionsApi.getActionDescriptors('actionCellButton').length;
 
     this.searchAction.show = isDefined(this.settings.enableSearch) ? this.settings.enableSearch : true;
     this.displayPagination = isDefined(this.settings.displayPagination) ? this.settings.displayPagination : true;
@@ -295,7 +296,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
           cellContentInfo.decimals = dataKey.decimals;
           source.contentsInfo.push(cellContentInfo);
         }
-        if (this.countCellButtonAction) {
+        if (this.setCellButtonAction) {
           source.displayedColumns.push('actions');
         }
         const tsDatasource = new TimeseriesDatasource(source, this.hideEmptyLines, this.dateFormatFilter, this.datePipe, this.ctx);
@@ -577,6 +578,9 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
   private allRowsSubject = new BehaviorSubject<TimeseriesRow[]>([]);
   private allRows$: Observable<Array<TimeseriesRow>> = this.allRowsSubject.asObservable();
 
+  public countCellButtonAction = 0;
+
+  private reserveSpaceForHiddenAction = true;
   private cellButtonActions: TableCellButtonActionDescriptor[];
   private readonly usedShowCellActionFunction: boolean;
 
@@ -589,6 +593,9 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
   ) {
     this.cellButtonActions = getTableCellButtonActions(widgetContext);
     this.usedShowCellActionFunction = this.cellButtonActions.some(action => action.useShowActionCellButtonFunction);
+    if (this.widgetContext.settings.reserveSpaceForHiddenAction) {
+      this.reserveSpaceForHiddenAction = coerceBooleanProperty(this.widgetContext.settings.reserveSpaceForHiddenAction);
+    }
     this.source.timeseriesDatasource = this;
   }
 
@@ -640,7 +647,8 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
           if (this.cellButtonActions.length) {
             if (this.usedShowCellActionFunction) {
               const parsedData = parseData(data, index);
-              row.actionCellButtons = prepareTableCellButtonActions(this.widgetContext, this.cellButtonActions, parsedData[0]);
+              row.actionCellButtons = prepareTableCellButtonActions(this.widgetContext, this.cellButtonActions,
+                                                                    parsedData[0], this.reserveSpaceForHiddenAction);
               row.hasActions = checkHasActions(row.actionCellButtons);
             } else {
               row.hasActions = true;
@@ -690,7 +698,19 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
 
   private fetchRows(pageLink: PageLink): Observable<PageData<TimeseriesRow>> {
     return this.allRows$.pipe(
-      map((data) => pageLink.filterData(data))
+      map((data) => {
+        const fetchData = pageLink.filterData(data);
+        if (this.cellButtonActions.length) {
+          let maxCellButtonAction: number;
+          if (this.usedShowCellActionFunction && !this.reserveSpaceForHiddenAction) {
+            maxCellButtonAction = Math.max(...fetchData.data.map(tsRow => tsRow.actionCellButtons.length));
+          } else {
+            maxCellButtonAction = this.cellButtonActions.length;
+          }
+          this.countCellButtonAction = maxCellButtonAction;
+        }
+        return fetchData;
+      })
     );
   }
 }

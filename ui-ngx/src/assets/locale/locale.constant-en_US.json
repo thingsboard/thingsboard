@@ -3038,7 +3038,7 @@
         "action-name-required": "Action name is required.",
         "action-name-not-unique": "Another action with the same name already exists.<br/>Action name should be unique within the same action source.",
         "action-icon": "Icon",
-        "use-show-widget-action-function": "Use show widget action function",
+        "show-hide-action-using-function": "Show/hide action using function",
         "action-type": "Type",
         "action-type-required": "Action type is required.",
         "edit-action": "Edit action",

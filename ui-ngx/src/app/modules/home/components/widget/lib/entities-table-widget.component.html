@@ -48,13 +48,13 @@
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" [stickyEnd]="enableStickyAction">
-          <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (countCellButtonAction * 40) + 'px',
-                                                                maxWidth: (countCellButtonAction * 40) + 'px',
-                                                                width: (countCellButtonAction * 40) + 'px' }">
+          <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (entityDatasource.countCellButtonAction * 40) + 'px',
+                                                                maxWidth: (entityDatasource.countCellButtonAction * 40) + 'px',
+                                                                width: (entityDatasource.countCellButtonAction * 40) + 'px' }">
           </mat-header-cell>
-          <mat-cell *matCellDef="let entity" [ngStyle.gt-md]="{ minWidth: (countCellButtonAction * 40) + 'px',
-                                                                maxWidth: (countCellButtonAction * 40) + 'px',
-                                                                width: (countCellButtonAction * 40) + 'px' }">
+          <mat-cell *matCellDef="let entity" [ngStyle.gt-md]="{ minWidth: (entityDatasource.countCellButtonAction * 40) + 'px',
+                                                                maxWidth: (entityDatasource.countCellButtonAction * 40) + 'px',
+                                                                width: (entityDatasource.countCellButtonAction * 40) + 'px' }">
             <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
               <ng-container *ngFor="let actionDescriptor of entity.actionCellButtons; trackBy: trackByActionCellDescriptionId">
                 <span *ngIf="!actionDescriptor.icon" style="width: 40px;"></span>
