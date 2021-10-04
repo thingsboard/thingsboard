@@ -119,7 +119,7 @@ public class TbInMemorySecurityStore implements TbEditableSecurityStore {
     public void putStartEpIdentity(String epIdentity, TbLwM2MSecurityInfo tbSecurityInfo) throws NonUniqueSecurityInfoException {
         writeLock.lock();
         try {
-            log.info("Put Start EpIdentity: [{}]", epIdentity);
+            log.trace("Put Start EpIdentity: [{}]", epIdentity);
             securityStartByEpIdentity.add(epIdentity);
         } finally {
             writeLock.unlock();

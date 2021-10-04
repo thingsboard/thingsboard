@@ -66,7 +66,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
                 new TransportServiceCallback<>() {
                     @Override
                     public void onSuccess(ValidateDeviceCredentialsResponse msg) {
-                        log.info("Validated credentials: [{}] [{}]", credentialsId, msg);
+                        log.trace("Validated credentials: [{}] [{}]", credentialsId, msg);
                         String credentialsBody = msg.getCredentials();
                         resultSecurityStore[0] = createSecurityInfo(credentialsId, credentialsBody, keyValue);
                         resultSecurityStore[0].setMsg(msg);

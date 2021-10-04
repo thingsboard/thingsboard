@@ -62,6 +62,11 @@ public class TbLwM2mSecurityStore implements TbMainSecurityStore {
         if (securityInfo == null) {
             securityInfo = fetchAndPutSecurityInfo(endpoint);
         }
+        else {
+            if (securityStore.isByStartEpIdentity(endpoint)) {
+                securityInfo = fetchAndPutSecurityInfo(endpoint);
+            }
+        }
         return securityInfo;
     }
 

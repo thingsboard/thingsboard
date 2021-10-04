@@ -34,6 +34,7 @@ import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MAuthorizer;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MDtlsCertificateVerifier;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
+import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MEndpointFactory;
 import org.thingsboard.server.transport.lwm2m.server.store.TbSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
@@ -138,6 +139,10 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
 
         /* Set DTLS Config */
         builder.setDtlsConfig(dtlsConfig);
+
+        // configure EndpointFactory
+        TbLwM2MEndpointFactory endpointFactory = new TbLwM2MEndpointFactory("LWM2M SERVER");
+        builder.setEndpointFactory(endpointFactory);
 
         /* Create LWM2M server */
         return builder.build();
