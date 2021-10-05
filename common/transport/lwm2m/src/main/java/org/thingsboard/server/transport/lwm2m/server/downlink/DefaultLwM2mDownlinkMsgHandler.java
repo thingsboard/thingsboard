@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
+import com.google.gson.JsonElement;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.Link;
@@ -62,6 +63,7 @@ import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.device.data.lwm2m.ObjectAttributes;
+import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
@@ -307,11 +309,25 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                                     value, resourceModelWrite.type);
                         } catch (Exception e) {
                             msgError = "Resource id=" + resultIds.toString() + ", value = " + request.getValue() +
-                                    ", class = " + request.getValue().getClass().getSimpleName() + "is bad. Value of Multi-Instance Resource must be in Json format!";
+                                    ", class = " + request.getValue().getClass().getSimpleName() + " is bad. Value of Multi-Instance Resource must be in Json format!";
                         }
                     } else {
-                        downlink = this.getWriteRequestSingleResource(resourceModelWrite.type, contentFormat,
-                                resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(), request.getValue());
+                        if (!(request.getValue() instanceof byte [])) {
+                            try {
+                                JsonElement element = JsonUtils.parse(JsonUtils.writeValueAsString(request.getValue()));
+                                if (!element.isJsonNull() && !element.isJsonPrimitive()) {
+                                    msgError = "Resource id=" + resultIds.toString() + ", value = " + request.getValue() +
+                                            ", class = " + request.getValue().getClass().getSimpleName() + " is bad. Value of Single Resource must be in Primitive format!";
+                                }
+                            } catch (Exception e) {
+                                downlink = this.getWriteRequestSingleResource(resourceModelWrite.type, contentFormat,
+                                        resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(), request.getValue());
+                            }
+                        }
+                        if (msgError.isEmpty() && downlink == null) {
+                            downlink = this.getWriteRequestSingleResource(resourceModelWrite.type, contentFormat,
+                                    resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(), request.getValue());
+                        }
                     }
                     if (downlink != null) {
                         sendSimpleRequest(client, downlink, request.getTimeout(), callback);

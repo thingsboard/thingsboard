@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.lwm2m.rpc.sql;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.node.LwM2mPath;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTest;
@@ -319,6 +320,23 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
         String expected = "object instance " + "/" + expectedPathId.getObjectId() + "/" + expectedPathId.getObjectInstanceId() + " not found";
         String actual = rpcActualResult.get("error").asText();
         assertTrue(actual.equals(expected));
+    }
+
+    /**
+     * id
+     * WriteReplace {"id":"/3/0/14","value":{"14":"+5","15":"Kiyv/Europe"}}..
+     */
+    @Ignore
+    @Test
+    public void testWriteReplaceValueSingleResourceAsMultipleInstabceResource_Result_BAD_REQUEST_Value_Single_Resource_must_be_in_Primitive_format() throws Exception {
+        String expectedPath = objectInstanceIdVer_3 + "/" + resourceId_15;
+        String expectedValue = "{\"0\":\"abcd5678\", \"10\":\"abcd5678\"}";
+        String actualResult = sendRPCWriteStringById("WriteReplace", expectedPath, expectedValue);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
+        String actualValues = rpcActualResult.get("error").asText();
+        String expected = "\"is bad. Value of Single Resource must be in Primitive format!";
+        assertTrue(actualValues.contains(expected));
     }
 
     private String sendRPCWriteStringById(String method, String path, String value) throws Exception {

@@ -525,4 +525,20 @@ public class LwM2MTransportUtil {
         }
         return false;
     }
+
+    public static boolean valueEquals(Object newValue, Object oldValue) {
+        String newValueStr;
+        String oldValueStr;
+        if (oldValue instanceof byte[]) {
+            oldValueStr = Hex.encodeHexString((byte[]) oldValue);
+        } else {
+            oldValueStr = oldValue.toString();
+        }
+        if (newValue instanceof byte[]) {
+            newValueStr = Hex.encodeHexString((byte[]) newValue);
+        } else {
+            newValueStr = newValue.toString();
+        }
+        return newValueStr.equals(oldValueStr);
+    }
 }
