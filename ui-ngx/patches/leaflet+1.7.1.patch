@@ -1,0 +1,13 @@
+diff --git a/node_modules/leaflet/dist/leaflet-src.js b/node_modules/leaflet/dist/leaflet-src.js
+index 9acc7da..6c9acf8 100644
+--- a/node_modules/leaflet/dist/leaflet-src.js
++++ b/node_modules/leaflet/dist/leaflet-src.js
+@@ -2050,6 +2050,8 @@
+   		obj.removeEventListener(POINTER_CANCEL, handler, false);
+   	}
+ 
++    delete obj['_leaflet_' + type + id];
++
+   	return this;
+   }
+ 
