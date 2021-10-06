@@ -38,6 +38,7 @@ export interface TableWidgetSettings {
   defaultPageSize: number;
   useRowStyleFunction: boolean;
   rowStyleFunction?: string;
+  reserveSpaceForHiddenAction?: boolean;
 }
 
 export interface TableWidgetDataKeySettings {
@@ -328,9 +329,13 @@ export function checkHasActions(cellButtonActions: TableCellButtonActionDescript
 }
 
 export function prepareTableCellButtonActions(widgetContext: WidgetContext, cellButtonActions: TableCellButtonActionDescriptor[],
-                                              data: EntityData | AlarmDataInfo | FormattedData): TableCellButtonActionDescriptor[] {
-  return cellButtonActions.map(action =>
-    filterTableCellButtonAction(widgetContext, action, data) ? action : { id: action.id } as TableCellButtonActionDescriptor);
+                                              data: EntityData | AlarmDataInfo | FormattedData,
+                                              reserveSpaceForHiddenAction = true): TableCellButtonActionDescriptor[] {
+  if (reserveSpaceForHiddenAction) {
+    return cellButtonActions.map(action =>
+      filterTableCellButtonAction(widgetContext, action, data) ? action : { id: action.id } as TableCellButtonActionDescriptor);
+  }
+  return cellButtonActions.filter(action => filterTableCellButtonAction(widgetContext, action, data));
 }
 
 function filterTableCellButtonAction(widgetContext: WidgetContext,

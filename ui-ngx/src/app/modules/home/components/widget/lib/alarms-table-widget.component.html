@@ -87,13 +87,13 @@
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" [stickyEnd]="enableStickyAction">
-          <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (countCellButtonAction * 40) + 'px',
-                                                                maxWidth: (countCellButtonAction * 40) + 'px',
-                                                                width: (countCellButtonAction * 40) + 'px' }">
+          <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (alarmsDatasource.countCellButtonAction  * 40) + 'px',
+                                                                maxWidth: (alarmsDatasource.countCellButtonAction * 40) + 'px',
+                                                                width: (alarmsDatasource.countCellButtonAction * 40) + 'px' }">
           </mat-header-cell>
-          <mat-cell *matCellDef="let alarm" [ngStyle.gt-md]="{ minWidth: (countCellButtonAction * 40) + 'px',
-                                                                maxWidth: (countCellButtonAction * 40) + 'px',
-                                                                width: (countCellButtonAction * 40) + 'px' }">
+          <mat-cell *matCellDef="let alarm" [ngStyle.gt-md]="{ minWidth: (alarmsDatasource.countCellButtonAction * 40) + 'px',
+                                                               maxWidth: (alarmsDatasource.countCellButtonAction * 40) + 'px',
+                                                               width: (alarmsDatasource.countCellButtonAction * 40) + 'px' }">
             <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
               <ng-container *ngFor="let actionDescriptor of alarm.actionCellButtons; trackBy: trackByActionCellDescriptionId">
                 <span *ngIf="!actionDescriptor.icon" style="width: 40px;"></span>

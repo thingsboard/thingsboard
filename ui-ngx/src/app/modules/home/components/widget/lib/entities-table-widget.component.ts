@@ -105,6 +105,7 @@ import {
 import { sortItems } from '@shared/models/page/page-link';
 import { entityFields } from '@shared/models/entity.models';
 import { DatePipe } from '@angular/common';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 interface EntitiesTableWidgetSettings extends TableWidgetSettings {
   entitiesTitle: string;
@@ -141,7 +142,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   public columns: Array<EntityColumn> = [];
   public displayedColumns: string[] = [];
   public entityDatasource: EntityDatasource;
-  public countCellButtonAction: number;
+  private setCellButtonAction: boolean;
 
   private cellContentCache: Array<any> = [];
   private cellStyleCache: Array<any> = [];
@@ -249,7 +250,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   private initializeConfig() {
     this.ctx.widgetActions = [this.searchAction, this.columnDisplayAction];
 
-    this.countCellButtonAction = this.ctx.actionsApi.getActionDescriptors('actionCellButton').length;
+    this.setCellButtonAction = !!this.ctx.actionsApi.getActionDescriptors('actionCellButton').length;
 
     if (this.settings.entitiesTitle && this.settings.entitiesTitle.length) {
       this.entitiesTitlePattern = this.utils.customTranslation(this.settings.entitiesTitle, this.settings.entitiesTitle);
@@ -430,7 +431,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     }
     this.sortOrderProperty = sortColumn ? sortColumn.def : null;
 
-    if (this.countCellButtonAction) {
+    if (this.setCellButtonAction) {
       this.displayedColumns.push('actions');
     }
     this.entityDatasource = new EntityDatasource(this.translate, dataKeys, this.subscription, this.ngZone, this.ctx);
@@ -474,7 +475,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
           columns,
           columnsUpdated: (newColumns) => {
             this.displayedColumns = newColumns.filter(column => column.display).map(column => column.def);
-            if (this.countCellButtonAction) {
+            if (this.setCellButtonAction) {
               this.displayedColumns.push('actions');
             }
             this.clearCache();
@@ -713,10 +714,12 @@ class EntityDatasource implements DataSource<EntityData> {
   private currentEntity: EntityData = null;
 
   public dataLoading = true;
+  public countCellButtonAction = 0;
 
   private appliedPageLink: EntityDataPageLink;
   private appliedSortOrderLabel: string;
 
+  private reserveSpaceForHiddenAction = true;
   private cellButtonActions: TableCellButtonActionDescriptor[];
   private readonly usedShowCellActionFunction: boolean;
 
@@ -729,6 +732,9 @@ class EntityDatasource implements DataSource<EntityData> {
     ) {
     this.cellButtonActions = getTableCellButtonActions(widgetContext);
     this.usedShowCellActionFunction = this.cellButtonActions.some(action => action.useShowActionCellButtonFunction);
+    if (this.widgetContext.settings.reserveSpaceForHiddenAction) {
+      this.reserveSpaceForHiddenAction = coerceBooleanProperty(this.widgetContext.settings.reserveSpaceForHiddenAction);
+    }
   }
 
   connect(collectionViewer: CollectionViewer): Observable<EntityData[] | ReadonlyArray<EntityData>> {
@@ -757,12 +763,21 @@ class EntityDatasource implements DataSource<EntityData> {
     const datasourcesPageData = this.subscription.datasourcePages[0];
     const dataPageData = this.subscription.dataPages[0];
     let entities = new Array<EntityData>();
+    let maxCellButtonAction = 0;
+    const dynamicWidthCellButtonActions = this.usedShowCellActionFunction && !this.reserveSpaceForHiddenAction;
     datasourcesPageData.data.forEach((datasource, index) => {
-      entities.push(this.datasourceToEntityData(datasource, dataPageData.data[index]));
+      const entity = this.datasourceToEntityData(datasource, dataPageData.data[index]);
+      entities.push(entity);
+      if (dynamicWidthCellButtonActions && entity.actionCellButtons.length > maxCellButtonAction) {
+        maxCellButtonAction = entity.actionCellButtons.length;
+      }
     });
     if (this.appliedSortOrderLabel && this.appliedSortOrderLabel.length) {
       const asc = this.appliedPageLink.sortOrder.direction === Direction.ASC;
       entities = entities.sort((a, b) => sortItems(a, b, this.appliedSortOrderLabel, asc));
+    }
+    if (!dynamicWidthCellButtonActions && this.cellButtonActions.length && entities.length) {
+      maxCellButtonAction = entities[0].actionCellButtons.length;
     }
     const entitiesPageData: PageData<EntityData> = {
       data: entities,
@@ -773,6 +788,7 @@ class EntityDatasource implements DataSource<EntityData> {
     this.ngZone.run(() => {
       this.entitiesSubject.next(entities);
       this.pageDataSubject.next(entitiesPageData);
+      this.countCellButtonAction = maxCellButtonAction;
       this.dataLoading = false;
     });
   }
@@ -804,7 +820,8 @@ class EntityDatasource implements DataSource<EntityData> {
     });
     if (this.cellButtonActions.length) {
       if (this.usedShowCellActionFunction) {
-        entity.actionCellButtons = prepareTableCellButtonActions(this.widgetContext, this.cellButtonActions, entity);
+        entity.actionCellButtons = prepareTableCellButtonActions(this.widgetContext, this.cellButtonActions,
+                                                                 entity, this.reserveSpaceForHiddenAction);
         entity.hasActions = checkHasActions(entity.actionCellButtons);
       } else {
         entity.actionCellButtons = this.cellButtonActions;
