@@ -140,7 +140,7 @@ public class EdgeController extends BaseController {
                     edge.getId(), edge);
 
             Edge savedEdge = checkNotNull(edgeService.saveEdge(edge, true));
-            onEdgeCreatedOrUpdated(tenantId, savedEdge, edgeTemplateRootRuleChain, !created);
+            onEdgeCreatedOrUpdated(tenantId, savedEdge, edgeTemplateRootRuleChain, !created, getCurrentUser());
 
             return savedEdge;
         } catch (Exception e) {
@@ -150,7 +150,7 @@ public class EdgeController extends BaseController {
         }
     }
 
-    private void onEdgeCreatedOrUpdated(TenantId tenantId, Edge edge, RuleChain edgeTemplateRootRuleChain, boolean updated) throws IOException, ThingsboardException {
+    private void onEdgeCreatedOrUpdated(TenantId tenantId, Edge edge, RuleChain edgeTemplateRootRuleChain, boolean updated, SecurityUser user) throws IOException, ThingsboardException {
         if (!updated) {
             ruleChainService.assignRuleChainToEdge(tenantId, edgeTemplateRootRuleChain.getId(), edge.getId());
             edgeNotificationService.setEdgeRootRuleChain(tenantId, edge, edgeTemplateRootRuleChain.getId());
@@ -160,7 +160,7 @@ public class EdgeController extends BaseController {
         tbClusterService.broadcastEntityStateChangeEvent(edge.getTenantId(), edge.getId(),
                 updated ? ComponentLifecycleEvent.UPDATED : ComponentLifecycleEvent.CREATED);
 
-        logEntityAction(edge.getId(), edge, null, updated ? ActionType.UPDATED : ActionType.ADDED, null);
+        logEntityAction(user, edge.getId(), edge, null, updated ? ActionType.UPDATED : ActionType.ADDED, null);
     }
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
@@ -586,7 +586,7 @@ public class EdgeController extends BaseController {
 
         return edgeBulkImportService.processBulkImport(request, user, importedAssetInfo -> {
             try {
-                onEdgeCreatedOrUpdated(user.getTenantId(), importedAssetInfo.getEntity(), edgeTemplateRootRuleChain, importedAssetInfo.isUpdated());
+                onEdgeCreatedOrUpdated(user.getTenantId(), importedAssetInfo.getEntity(), edgeTemplateRootRuleChain, importedAssetInfo.isUpdated(), user);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
