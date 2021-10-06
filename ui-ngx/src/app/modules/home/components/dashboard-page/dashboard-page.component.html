@@ -176,7 +176,8 @@
               [isEdit]="isEdit"
               [isEditingWidget]="isEditingWidget"
               [isMobile]="forceDashboardMobileMode"
-              [widgetEditMode]="widgetEditMode">
+              [widgetEditMode]="widgetEditMode"
+              [parentDashboard]="parentDashboard">
             </tb-dashboard-layout>
           </mat-drawer>
           <mat-drawer-content [fxShow]="layouts.main.show"
@@ -190,7 +191,8 @@
               [isEdit]="isEdit"
               [isEditingWidget]="isEditingWidget"
               [isMobile]="forceDashboardMobileMode"
-              [widgetEditMode]="widgetEditMode">
+              [widgetEditMode]="widgetEditMode"
+              [parentDashboard]="parentDashboard">
             </tb-dashboard-layout>
           </mat-drawer-content>
         </mat-drawer-container>
@@ -219,7 +221,7 @@
             <mat-icon>{{ isEdit ? 'close' : 'edit' }}</mat-icon>
           </button>
         </section>
-        <section data-html2canvas-ignore class="tb-powered-by-footer" [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">
+        <section *ngIf="!embedded" data-html2canvas-ignore class="tb-powered-by-footer" [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">
           <span>Powered by <a href="https://thingsboard.io" target="_blank">Thingsboard v.{{ thingsboardVersion }}</a></span>
         </section>
       </mat-drawer-content>

@@ -101,6 +101,8 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
   widgets: Iterable<Widget>;
   widgetLayouts: WidgetLayouts;
 
+  parentDashboard?: IDashboardComponent;
+
   [Symbol.iterator](): Iterator<DashboardWidget> {
     return this.activeDashboardWidgets[Symbol.iterator]();
   }
@@ -166,7 +168,7 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
         switch (record.operation) {
           case 'add':
             this.dashboardWidgets.push(
-              new DashboardWidget(this.dashboard, record.widget, record.widgetLayout)
+              new DashboardWidget(this.dashboard, record.widget, record.widgetLayout, this.parentDashboard)
             );
             break;
           case 'remove':
@@ -181,7 +183,8 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
               const prevDashboardWidget = this.dashboardWidgets[index];
               if (!isEqual(prevDashboardWidget.widget, record.widget) ||
                   !isEqual(prevDashboardWidget.widgetLayout, record.widgetLayout)) {
-                this.dashboardWidgets[index] = new DashboardWidget(this.dashboard, record.widget, record.widgetLayout);
+                this.dashboardWidgets[index] = new DashboardWidget(this.dashboard, record.widget, record.widgetLayout,
+                  this.parentDashboard);
                 this.dashboardWidgets[index].highlighted = prevDashboardWidget.highlighted;
                 this.dashboardWidgets[index].selected = prevDashboardWidget.selected;
               } else {
@@ -332,7 +335,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
   customHeaderActions: Array<WidgetHeaderAction>;
   widgetActions: Array<WidgetAction>;
 
-  widgetContext = new WidgetContext(this.dashboard, this, this.widget);
+  widgetContext = new WidgetContext(this.dashboard, this, this.widget, this.parentDashboard);
 
   widgetId: string;
 
@@ -374,7 +377,8 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
   constructor(
     private dashboard: IDashboardComponent,
     public widget: Widget,
-    public widgetLayout?: WidgetLayout) {
+    public widgetLayout?: WidgetLayout,
+    private parentDashboard?: IDashboardComponent) {
     if (!widget.id) {
       widget.id = guid();
     }

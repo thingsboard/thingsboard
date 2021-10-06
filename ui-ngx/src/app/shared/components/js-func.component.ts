@@ -87,6 +87,8 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
 
   @Input() disableUndefinedCheck = false;
 
+  @Input() helpId: string;
+
   private noValidateValue: boolean;
   get noValidate(): boolean {
     return this.noValidateValue;

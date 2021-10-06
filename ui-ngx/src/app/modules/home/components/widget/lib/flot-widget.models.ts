@@ -465,7 +465,8 @@ export function flotSettingsSchema(chartType: ChartType): JsonSettingsSchema {
   schema.form.push('tooltipCumulative');
   schema.form.push({
     key: 'tooltipValueFormatter',
-    type: 'javascript'
+    type: 'javascript',
+    helpId: 'widget/lib/tooltip_value_format_fn'
   });
   schema.form.push('hideZeros');
   schema.form.push('showTooltip');

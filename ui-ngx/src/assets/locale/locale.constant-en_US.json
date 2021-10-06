@@ -2171,7 +2171,8 @@
         "scroll-to-top": "Scroll to top"
     },
     "help": {
-        "goto-help-page": "Go to help page"
+        "goto-help-page": "Go to help page",
+        "show-help": "Show help"
     },
     "home": {
         "home": "Home",
@@ -2314,6 +2315,10 @@
         "login-with": "Login with {{name}}",
         "or": "or",
         "error": "Login error"
+    },
+    "markdown": {
+        "copy-code": "Click to copy",
+        "copied": "Copied!"
     },
     "ota-update": {
       "add": "Add package",
@@ -2940,12 +2945,33 @@
         "set-entity-from-widget": "Set entity from widget",
         "target-dashboard": "Target dashboard",
         "open-right-layout": "Open right dashboard layout (mobile view)",
+        "state-display-type": "Dashboard state display option",
+        "open-normal": "Normal",
         "open-in-separate-dialog": "Open in separate dialog",
+        "open-in-popover": "Open in popover",
         "dialog-title": "Dialog title",
         "dialog-hide-dashboard-toolbar": "Hide dashboard toolbar in dialog",
         "dialog-width": "Dialog width in percents relative to viewport width",
         "dialog-height": "Dialog height in percents relative to viewport height",
         "dialog-size-range-error": "Dialog size percent value should be in a range from 1 to 100.",
+        "popover-preferred-placement": "Preferred popover placement",
+        "popover-placement-top": "Top",
+        "popover-placement-topLeft": "Top left",
+        "popover-placement-topRight": "Top right",
+        "popover-placement-right": "Right",
+        "popover-placement-rightTop": "Right top",
+        "popover-placement-rightBottom": "Right bottom",
+        "popover-placement-bottom": "Bottom",
+        "popover-placement-bottomLeft": "Bottom left",
+        "popover-placement-bottomRight": "Bottom right",
+        "popover-placement-left": "Left",
+        "popover-placement-leftTop": "Left top",
+        "popover-placement-leftBottom": "Left bottom",
+        "popover-hide-on-click-outside": "Hide popover on outside click",
+        "popover-hide-dashboard-toolbar": "Hide dashboard toolbar in popover",
+        "popover-width": "Popover width in browser units (ex. 100px, 25vw)",
+        "popover-height": "Popover height in browser units (ex. 100px, 25vh)",
+        "popover-style": "Popover style",
         "open-new-browser-tab": "Open in a new browser tab",
         "mobile": {
           "action-type": "Mobile action type",

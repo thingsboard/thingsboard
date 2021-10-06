@@ -23,7 +23,7 @@ import {
   Input,
   NgZone,
   OnDestroy,
-  OnInit,
+  OnInit, Optional,
   StaticProvider,
   ViewChild,
   ViewContainerRef,
@@ -80,7 +80,11 @@ import { Observable, of, Subscription } from 'rxjs';
 import { FooterFabButtons } from '@shared/components/footer-fab-buttons.component';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { DashboardService } from '@core/http/dashboard.service';
-import { DashboardContextMenuItem, WidgetContextMenuItem } from '../../models/dashboard-component.models';
+import {
+  DashboardContextMenuItem,
+  IDashboardComponent,
+  WidgetContextMenuItem
+} from '../../models/dashboard-component.models';
 import { WidgetComponentService } from '../../components/widget/widget-component.service';
 import { FormBuilder } from '@angular/forms';
 import { ItemBufferService } from '@core/services/item-buffer.service';
@@ -166,6 +170,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   @Input()
   dashboard: Dashboard;
   dashboardConfiguration: DashboardConfiguration;
+
+  @Input()
+  parentDashboard?: IDashboardComponent = null;
 
   @ViewChild('dashboardContainer') dashboardContainer: ElementRef<HTMLElement>;
 
@@ -309,12 +316,15 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private dialog: MatDialog,
               private translate: TranslateService,
               private ngZone: NgZone,
+              @Optional() @Inject('embeddedValue') private embeddedValue,
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
               private cd: ChangeDetectorRef,
               private sanitizer: DomSanitizer) {
     super(store);
-
+    if (isDefinedAndNotNull(embeddedValue)) {
+      this.embedded = embeddedValue;
+    }
   }
 
   ngOnInit() {
