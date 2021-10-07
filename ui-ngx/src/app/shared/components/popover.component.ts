@@ -16,14 +16,30 @@
 
 import {
   AfterViewInit,
-  ChangeDetectionStrategy, ChangeDetectorRef,
-  Component, ComponentFactory, ComponentFactoryResolver, ComponentRef,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  ComponentFactory,
+  ComponentFactoryResolver,
+  ComponentRef,
   Directive,
   ElementRef,
-  EventEmitter, Injectable, Injector,
-  Input, OnChanges, OnDestroy, OnInit, Optional,
-  Output, Renderer2, SimpleChanges,
-  TemplateRef, Type, ViewChild, ViewContainerRef, ViewEncapsulation
+  EventEmitter,
+  Injectable,
+  Injector,
+  Input,
+  OnChanges,
+  OnDestroy,
+  OnInit,
+  Optional,
+  Output,
+  Renderer2,
+  SimpleChanges,
+  TemplateRef,
+  Type,
+  ViewChild,
+  ViewContainerRef,
+  ViewEncapsulation
 } from '@angular/core';
 import { Direction, Directionality } from '@angular/cdk/bidi';
 import {
@@ -36,14 +52,14 @@ import { Subject, Subscription } from 'rxjs';
 import {
   DEFAULT_POPOVER_POSITIONS,
   getPlacementName,
-  popoverMotion, PopoverPlacement, PopoverWithTrigger,
-  POSITION_MAP, PropertyMapping
+  popoverMotion,
+  PopoverPlacement,
+  PopoverWithTrigger,
+  POSITION_MAP,
+  PropertyMapping
 } from '@shared/components/popover.models';
 import { distinctUntilChanged, takeUntil } from 'rxjs/operators';
-import { isDefinedAndNotNull, isNotEmptyStr, onParentScrollOrWindowResize } from '@core/utils';
-import { ScrollStrategyOptions } from '@angular/cdk/overlay/scroll/scroll-strategy-options';
-import { ScrollStrategy } from '@angular/cdk/overlay/scroll/scroll-strategy';
-import { taggedTemplate } from '@angular/compiler/src/output/output_ast';
+import { isNotEmptyStr, onParentScrollOrWindowResize } from '@core/utils';
 import { HelpMarkdownComponent } from '@shared/components/help-markdown.component';
 
 export type TbPopoverTrigger = 'click' | 'focus' | 'hover' | null;
