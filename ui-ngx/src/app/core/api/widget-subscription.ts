@@ -67,7 +67,7 @@ import {
   KeyFilter,
   updateDatasourceFromEntityInfo
 } from '@shared/models/query/query.models';
-import { filter, map, switchMap, takeUntil } from 'rxjs/operators';
+import { distinct, filter, map, switchMap, takeUntil } from 'rxjs/operators';
 import { AlarmDataListener } from '@core/api/alarm-data.service';
 import { RpcStatus } from '@shared/models/rpc.models';
 
@@ -139,6 +139,11 @@ export class WidgetSubscription implements IWidgetSubscription {
   executingSubjects: Array<Subject<any>>;
 
   subscribed = false;
+  widgetTimewindowChangedSubject: Subject<WidgetTimewindow> = new ReplaySubject<WidgetTimewindow>();
+
+  widgetTimewindowChanged = this.widgetTimewindowChangedSubject.asObservable().pipe(
+    distinct()
+  );
 
   constructor(subscriptionContext: WidgetSubscriptionContext, public options: WidgetSubscriptionOptions) {
     const subscriptionSubject = new ReplaySubject<IWidgetSubscription>();
@@ -805,6 +810,7 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   update(isTimewindowTypeChanged = false) {
     if (this.type !== widgetType.rpc) {
+      this.widgetTimewindowChangedSubject.next(this.timeWindowConfig);
       if (this.type === widgetType.alarm) {
         this.updateAlarmDataSubscription();
       } else {
