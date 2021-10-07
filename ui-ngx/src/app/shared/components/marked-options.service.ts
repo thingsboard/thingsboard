@@ -21,6 +21,7 @@ import { DOCUMENT } from '@angular/common';
 import { WINDOW } from '@core/services/window.service';
 
 const copyCodeBlock = '{:copy-code}';
+const targetBlankBlock = '{:target=&quot;_blank&quot;}';
 
 // @dynamic
 @Injectable()
@@ -49,7 +50,7 @@ export class MarkedOptionsService extends MarkedOptions {
         this.id++;
         return this.wrapCopyCode(this.id, content, code);
       } else {
-        return checkLineNumbers(this.renderer2.code(code, language, isEscaped), code);
+        return this.wrapDiv(checkLineNumbers(this.renderer2.code(code, language, isEscaped), code));
       }
     };
     this.renderer.tablecell = (content: string, flags: {
@@ -63,8 +64,21 @@ export class MarkedOptionsService extends MarkedOptions {
       }
       return this.renderer2.tablecell(content, flags);
     };
+    this.renderer.link = (href: string | null, title: string | null, text: string) => {
+      if (text.endsWith(targetBlankBlock)) {
+        text = text.substring(0, text.length - targetBlankBlock.length);
+        const content = this.renderer2.link(href, title, text);
+        return content.replace('<a href=', '<a target="_blank" href=');
+      } else {
+        return this.renderer2.link(href, title, text);
+      }
+    };
     this.document.addEventListener('selectionchange', this.onSelectionChange.bind(this));
     (this.window as any).markdownCopyCode = this.markdownCopyCode.bind(this);
+  }
+
+  private wrapDiv(content: string): string {
+    return `<div>${content}</div>`;
   }
 
   private wrapCopyCode(id: number, content: string, code: string): string {
