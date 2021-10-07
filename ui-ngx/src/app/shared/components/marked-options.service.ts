@@ -22,6 +22,7 @@ import { WINDOW } from '@core/services/window.service';
 
 const copyCodeBlock = '{:copy-code}';
 
+// @dynamic
 @Injectable()
 export class MarkedOptionsService extends MarkedOptions {
 
