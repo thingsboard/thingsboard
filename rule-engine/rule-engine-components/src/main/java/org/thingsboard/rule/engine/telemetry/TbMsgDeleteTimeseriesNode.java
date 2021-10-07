@@ -86,7 +86,7 @@ public class TbMsgDeleteTimeseriesNode implements TbNode {
                     deleteTsKvQueries.add(new BaseDeleteTsKvQuery(TbNodeUtils.processPattern(key, msg), deleteFromTs, deleteToTs, config.getRewriteLatestIfDeleted()));
                 }
                 ListenableFuture<List<Void>> removeFuture = ctx.getTimeseriesService().remove(ctx.getTenantId(), msg.getOriginator(), deleteTsKvQueries);
-                DonAsynchron.withCallback(removeFuture, success -> ctx.tellNext(msg, msg.getType()), throwable -> ctx.tellFailure(msg, throwable));
+                DonAsynchron.withCallback(removeFuture, onSuccess -> ctx.tellSuccess(msg), throwable -> ctx.tellFailure(msg, throwable));
             } catch (Exception e) {
                 ctx.tellFailure(msg, e);
             }
