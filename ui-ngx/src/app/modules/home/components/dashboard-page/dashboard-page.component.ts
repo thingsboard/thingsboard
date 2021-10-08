@@ -183,6 +183,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   singlePageMode: boolean;
   forceFullscreen = this.authState.forceFullscreen;
 
+  readonly = false;
   isMobileApp = this.mobileService.isMobileApp();
   isFullscreen = false;
   isEdit = false;
@@ -402,6 +403,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.layouts.right.layoutCtx.widgets = new LayoutWidgetsArray(this.dashboardCtx);
     this.widgetEditMode = data.widgetEditMode;
     this.singlePageMode = data.singlePageMode;
+
+    this.readonly = this.embedded || (this.singlePageMode && !this.widgetEditMode && !this.route.snapshot.queryParamMap.get('edit'))
+                    || this.forceFullscreen || this.isMobileApp || this.authUser.authority === Authority.CUSTOMER_USER;
 
     this.dashboardCtx.aliasController = new AliasController(this.utils,
       this.entityService,
