@@ -48,9 +48,9 @@ public interface LwM2mUplinkMsgHandler {
 
     void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt);
 
-    void onResourceUpdate(Optional<TransportProtos.ResourceUpdateMsg> resourceUpdateMsgOpt);
+    void onResourceUpdate(TransportProtos.ResourceUpdateMsg resourceUpdateMsgOpt);
 
-    void onResourceDelete(Optional<TransportProtos.ResourceDeleteMsg> resourceDeleteMsgOpt);
+    void onResourceDelete(TransportProtos.ResourceDeleteMsg resourceDeleteMsgOpt);
 
     void onAwakeDev(Registration registration);
 
