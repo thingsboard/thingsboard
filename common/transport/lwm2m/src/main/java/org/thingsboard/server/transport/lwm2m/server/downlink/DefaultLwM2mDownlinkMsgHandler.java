@@ -60,6 +60,7 @@ import org.thingsboard.server.common.data.device.data.lwm2m.ObjectAttributes;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mVersionedModelProvider;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.common.LwM2MExecutorAwareService;
@@ -99,6 +100,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     private final LwM2MTransportServerConfig config;
     private final LwM2MTelemetryLogService logService;
     private final LwM2mClientContext clientContext;
+    private final LwM2mVersionedModelProvider modelProvider;
 
     @PostConstruct
     public void init() {
@@ -124,7 +126,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     @Override
     public void sendReadRequest(LwM2mClient client, TbLwM2MReadRequest request, DownlinkRequestCallback<ReadRequest, ReadResponse> callback) {
         validateVersionedId(client, request);
-        ReadRequest downlink = new ReadRequest(getRequestContentFormat(client, request, this.config.getModelProvider()), request.getObjectId());
+        ReadRequest downlink = new ReadRequest(getRequestContentFormat(client, request, modelProvider), request.getObjectId());
         sendSimpleRequest(client, downlink, request.getTimeout(), callback);
     }
 
@@ -145,7 +147,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
         if (observations.stream().noneMatch(observation -> observation.getPath().equals(resultIds))) {
             ObserveRequest downlink;
-            ContentFormat contentFormat = getRequestContentFormat(client, request, this.config.getModelProvider());
+            ContentFormat contentFormat = getRequestContentFormat(client, request, modelProvider);
             if (resultIds.isResource()) {
                 downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId());
             } else if (resultIds.isObjectInstance()) {
@@ -174,7 +176,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
 
     @Override
     public void sendExecuteRequest(LwM2mClient client, TbLwM2MExecuteRequest request, DownlinkRequestCallback<ExecuteRequest, ExecuteResponse> callback) {
-        ResourceModel resourceModelExecute = client.getResourceModel(request.getVersionedId(), this.config.getModelProvider());
+        ResourceModel resourceModelExecute = client.getResourceModel(request.getVersionedId(), modelProvider);
         if (resourceModelExecute != null) {
             ExecuteRequest downlink;
             if (request.getParams() != null && !resourceModelExecute.multiple) {
@@ -231,7 +233,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
 
     @Override
     public void sendWriteReplaceRequest(LwM2mClient client, TbLwM2MWriteReplaceRequest request, DownlinkRequestCallback<WriteRequest, WriteResponse> callback) {
-        ResourceModel resourceModelWrite = client.getResourceModel(request.getVersionedId(), this.config.getModelProvider());
+        ResourceModel resourceModelWrite = client.getResourceModel(request.getVersionedId(), modelProvider);
         if (resourceModelWrite != null) {
             ContentFormat contentFormat = convertResourceModelTypeToContentFormat(client, resourceModelWrite.type);
             try {
@@ -267,8 +269,8 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
              * send request: path = '/3/0' node == wM2mObjectInstance
              * with params == "\"resources\": {15: resource:{id:15. value:'+01'...}}
              **/
-            Collection<LwM2mResource> resources = client.getNewResourceForInstance(request.getVersionedId(), request.getValue(), this.config.getModelProvider(), this.converter);
-            ResourceModel resourceModelWrite = client.getResourceModel(request.getVersionedId(), this.config.getModelProvider());
+            Collection<LwM2mResource> resources = client.getNewResourceForInstance(request.getVersionedId(), request.getValue(), modelProvider, this.converter);
+            ResourceModel resourceModelWrite = client.getResourceModel(request.getVersionedId(), modelProvider);
             ContentFormat contentFormat = request.getObjectContentFormat() != null ? request.getObjectContentFormat() : convertResourceModelTypeToContentFormat(client, resourceModelWrite.type);
             WriteRequest downlink = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(),
                     resultIds.getObjectInstanceId(), resources);
@@ -279,7 +281,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
              *  int rscId = resultIds.getObjectInstanceId();
              *  contentFormat – Format of the payload (TLV or JSON).
              */
-            Collection<LwM2mResource> resources = client.getNewResourcesForInstance(request.getVersionedId(), request.getValue(), this.config.getModelProvider(), this.converter);
+            Collection<LwM2mResource> resources = client.getNewResourcesForInstance(request.getVersionedId(), request.getValue(), modelProvider, this.converter);
             if (resources.size() > 0) {
                 ContentFormat contentFormat = request.getObjectContentFormat() != null ? request.getObjectContentFormat() : ContentFormat.DEFAULT;
                 WriteRequest downlink = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resources);

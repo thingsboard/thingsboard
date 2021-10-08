@@ -62,14 +62,13 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
 
     private final LwM2mTransportContext context;
     private final LwM2MTransportServerConfig config;
-    private final LwM2mTransportServerHelper helper;
     private final OtaPackageDataCache otaPackageDataCache;
     private final DefaultLwM2MUplinkMsgHandler handler;
     private final CaliforniumRegistrationStore registrationStore;
     private final TbSecurityStore securityStore;
-    private final LwM2mClientContext lwM2mClientContext;
     private final TbLwM2MDtlsCertificateVerifier certificateVerifier;
     private final TbLwM2MAuthorizer authorizer;
+    private final LwM2mVersionedModelProvider modelProvider;
 
     private LeshanServer server;
 
@@ -118,8 +117,6 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         builder.setCoapConfig(getCoapConfig(config.getPort(), config.getSecurePort(), config));
 
         /* Define model provider (Create Models )*/
-        LwM2mModelProvider modelProvider = new LwM2mVersionedModelProvider(this.lwM2mClientContext, this.helper, this.context);
-        config.setModelProvider(modelProvider);
         builder.setObjectModelProvider(modelProvider);
 
         /* Set securityStore with new registrationStore */
