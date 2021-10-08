@@ -24,7 +24,9 @@ const copyCodeBlock = '{:copy-code}';
 const targetBlankBlock = '{:target=&quot;_blank&quot;}';
 
 // @dynamic
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class MarkedOptionsService extends MarkedOptions {
 
   renderer = new MarkedRenderer();
