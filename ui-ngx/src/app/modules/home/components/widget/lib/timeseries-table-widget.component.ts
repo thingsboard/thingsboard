@@ -171,15 +171,17 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.initialize();
     this.ctx.updateWidgetParams();
 
-    this.widgetTimewindowChangedSubscription = this.ctx.defaultSubscription.widgetTimewindowChanged.subscribe(
-      () => {
-        this.sources.forEach((source) => {
-          if (this.displayPagination) {
-            source.pageLink.page = 0;
-          }
-        });
-      }
-    );
+    if (this.displayPagination) {
+      this.widgetTimewindowChangedSubscription = this.ctx.defaultSubscription.widgetTimewindowChanged.subscribe(
+        () => {
+          this.sources.forEach((source) => {
+            if (this.displayPagination) {
+              source.pageLink.page = 0;
+            }
+          });
+        }
+      );
+    }
   }
 
   ngOnDestroy(): void {
@@ -187,6 +189,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
       this.widgetTimewindowChangedSubscription.unsubscribe();
       this.widgetTimewindowChangedSubscription = null;
     }
+    this.ctx.defaultSubscription.widgetTimewindowChangedSubject.complete();
   }
 
   ngAfterViewInit(): void {

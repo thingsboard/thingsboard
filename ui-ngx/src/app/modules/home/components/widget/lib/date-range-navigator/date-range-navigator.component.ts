@@ -119,6 +119,7 @@ export class DateRangeNavigatorWidgetComponent extends PageComponent implements 
       this.dashboardTimewindowChangedSubscription.unsubscribe();
       this.dashboardTimewindowChangedSubscription = null;
     }
+    this.ctx.dashboard.dashboardTimewindowChangedSubject.complete();
   }
 
   openNavigatorPanel($event: Event) {
