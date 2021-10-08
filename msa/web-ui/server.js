@@ -83,7 +83,7 @@ var server;
               apiProxy.web(req, res);
             });
 
-            app.all('/assets/help/*/rulenode/*', (req, res) => {
+            app.all('/assets/help/*/rulenode/**', (req, res) => {
                 apiProxy.web(req, res);
             });
 
