@@ -188,7 +188,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
 
   private rowStylesInfo: RowStyleInfo;
 
-  private widgetTimewindowChangedSubscription: Subscription;
+  private widgetTimewindowChanged$: Subscription;
 
   private searchAction: WidgetAction = {
     name: 'action.search',
@@ -247,18 +247,17 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.ctx.updateWidgetParams();
 
     if (this.displayPagination) {
-      this.widgetTimewindowChangedSubscription = this.ctx.defaultSubscription.widgetTimewindowChanged.subscribe(
+      this.widgetTimewindowChanged$ = this.ctx.defaultSubscription.widgetTimewindowChanged$.subscribe(
         () => this.pageLink.page = 0
       );
     }
   }
 
   ngOnDestroy(): void {
-    if (this.widgetTimewindowChangedSubscription) {
-      this.widgetTimewindowChangedSubscription.unsubscribe();
-      this.widgetTimewindowChangedSubscription = null;
+    if (this.widgetTimewindowChanged$) {
+      this.widgetTimewindowChanged$.unsubscribe();
+      this.widgetTimewindowChanged$ = null;
     }
-    this.ctx.defaultSubscription.widgetTimewindowChangedSubject.complete();
   }
 
   ngAfterViewInit(): void {

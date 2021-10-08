@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Observable, Subject } from 'rxjs';
+import { Observable } from 'rxjs';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import {
   DataSet,
@@ -277,7 +277,7 @@ export interface IWidgetSubscription {
   hiddenData?: Array<{data: DataSet}>;
   timeWindowConfig?: Timewindow;
   timeWindow?: WidgetTimewindow;
-  widgetTimewindowChanged: Observable<WidgetTimewindow>;
+  widgetTimewindowChanged$: Observable<WidgetTimewindow>;
   comparisonEnabled?: boolean;
   comparisonTimeWindow?: WidgetTimewindow;
 

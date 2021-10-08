@@ -67,7 +67,6 @@ export interface IDashboardComponent {
   autofillHeight: boolean;
   dashboardTimewindow: Timewindow;
   dashboardTimewindowChanged: Observable<Timewindow>;
-  dashboardTimewindowChangedSubject: Subject<Timewindow>;
   aliasController: IAliasController;
   stateController: IStateController;
   onUpdateTimewindow(startTimeMs: number, endTimeMs: number, interval?: number, persist?: boolean): void;

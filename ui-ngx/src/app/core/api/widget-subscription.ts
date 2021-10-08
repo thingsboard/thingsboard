@@ -141,7 +141,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   subscribed = false;
   widgetTimewindowChangedSubject: Subject<WidgetTimewindow> = new ReplaySubject<WidgetTimewindow>();
 
-  widgetTimewindowChanged = this.widgetTimewindowChangedSubject.asObservable().pipe(
+  widgetTimewindowChanged$ = this.widgetTimewindowChangedSubject.asObservable().pipe(
     distinct()
   );
 
@@ -1124,6 +1124,7 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   destroy(): void {
     this.unsubscribe();
+    this.widgetTimewindowChangedSubject.complete();
     for (const cafId of Object.keys(this.cafs)) {
       if (this.cafs[cafId]) {
         this.cafs[cafId]();
