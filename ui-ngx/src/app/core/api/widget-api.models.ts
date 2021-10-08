@@ -278,7 +278,6 @@ export interface IWidgetSubscription {
   timeWindowConfig?: Timewindow;
   timeWindow?: WidgetTimewindow;
   widgetTimewindowChanged: Observable<WidgetTimewindow>;
-  widgetTimewindowChangedSubject: Subject<WidgetTimewindow>;
   comparisonEnabled?: boolean;
   comparisonTimeWindow?: WidgetTimewindow;
 
