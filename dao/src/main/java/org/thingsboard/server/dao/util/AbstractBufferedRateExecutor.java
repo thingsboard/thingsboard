@@ -199,7 +199,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
         while (!Thread.interrupted()) {
             AsyncTaskContext<T, V> taskCtx = null;
             try {
-                if (concurrencyLevel.get() <= concurrencyLimit) {
+                if (concurrencyLevel.get() >= concurrencyLimit) {
                     Thread.sleep(pollMs);
                     continue;
                 }
