@@ -68,13 +68,6 @@ enum SessionType {
   ASYNC = 1;
 }
 
-enum TopicType {
-  V1 = 0;
-  V2 = 1;
-  V2_JSON = 2;
-  V2_PROTO = 3;
-}
-
 enum KeyValueType {
   BOOLEAN_V = 0;
   LONG_V = 1;

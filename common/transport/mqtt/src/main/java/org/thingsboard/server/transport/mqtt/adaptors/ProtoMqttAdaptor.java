@@ -141,13 +141,7 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
         } else {
             int requestId = responseMsg.getRequestId();
             if (requestId >= 0) {
-                TransportApiProtos.GetAttributeResponseMsg attributesResponse = TransportApiProtos.GetAttributeResponseMsg.newBuilder()
-                        .setRequestId(requestId)
-                        .addAllClientAttributeList(responseMsg.getClientAttributeListList())
-                        .addAllSharedAttributeList(responseMsg.getSharedAttributeListList()).build();
-                return Optional.of(createMqttPublishMsg(ctx,
-                        topicBase + requestId,
-                        attributesResponse.toByteArray()));
+                return Optional.of(createMqttPublishMsg(ctx, topicBase + requestId, responseMsg.toByteArray()));
             }
             return Optional.empty();
         }

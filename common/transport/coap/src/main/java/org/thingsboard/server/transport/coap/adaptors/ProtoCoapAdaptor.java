@@ -146,13 +146,9 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
             if (msg.getClientAttributeListCount() == 0 && msg.getSharedAttributeListCount() == 0) {
                 return new Response(CoAP.ResponseCode.NOT_FOUND);
             } else {
-                TransportApiProtos.GetAttributeResponseMsg attributesResponse = TransportApiProtos.GetAttributeResponseMsg.newBuilder()
-                        .setRequestId(msg.getRequestId())
-                        .addAllClientAttributeList(msg.getClientAttributeListList())
-                        .addAllSharedAttributeList(msg.getSharedAttributeListList()).build();
                 Response response = new Response(CoAP.ResponseCode.CONTENT);
                 response.setConfirmable(isConfirmable);
-                response.setPayload(attributesResponse.toByteArray());
+                response.setPayload(msg.toByteArray());
                 return response;
             }
         }
