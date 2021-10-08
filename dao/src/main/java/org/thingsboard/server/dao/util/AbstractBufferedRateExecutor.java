@@ -31,9 +31,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.StatsType;
-import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 
 import javax.annotation.Nullable;
@@ -48,6 +48,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 
 /**
@@ -60,10 +61,14 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
 
     private final long maxWaitTime;
     private final long pollMs;
-    private final BlockingQueue<AsyncTaskContext<T, V>> queue;
-    private final ExecutorService dispatcherExecutor;
-    private final ExecutorService callbackExecutor;
-    private final ScheduledExecutorService timeoutExecutor;
+    private final BlockingQueue<AsyncTaskContext<T, V>> queueRead;
+    private final BlockingQueue<AsyncTaskContext<T, V>> queueWrite;
+    private final ExecutorService dispatcherExecutorRead;
+    private final ExecutorService dispatcherExecutorWrite;
+    private final ExecutorService callbackExecutorRead;
+    private final ExecutorService callbackExecutorWrite;
+    private final ScheduledExecutorService timeoutExecutorRead;
+    private final ScheduledExecutorService timeoutExecutorWrite;
     private final int concurrencyLimit;
     private final int printQueriesFreq;
     private final boolean perTenantLimitsEnabled;
@@ -72,8 +77,10 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
 
     private final AtomicInteger printQueriesIdx = new AtomicInteger(0);
 
-    protected final AtomicInteger concurrencyLevel;
-    protected final BufferedRateExecutorStats stats;
+    protected final AtomicInteger concurrencyLevelRead;
+    protected final AtomicInteger concurrencyLevelWrite;
+    protected final BufferedRateExecutorStats statsRead;
+    protected final BufferedRateExecutorStats statsWrite;
 
     public AbstractBufferedRateExecutor(int queueLimit, int concurrencyLimit, long maxWaitTime, int dispatcherThreads, int callbackThreads, long pollMs,
                                         boolean perTenantLimitsEnabled, String perTenantLimitsConfiguration, int printQueriesFreq, StatsFactory statsFactory) {
@@ -81,23 +88,40 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
         this.pollMs = pollMs;
         this.concurrencyLimit = concurrencyLimit;
         this.printQueriesFreq = printQueriesFreq;
-        this.queue = new LinkedBlockingDeque<>(queueLimit);
-        this.dispatcherExecutor = Executors.newFixedThreadPool(dispatcherThreads, ThingsBoardThreadFactory.forName("nosql-dispatcher"));
-        this.callbackExecutor = ThingsBoardExecutors.newWorkStealingPool(callbackThreads, getClass());
-        this.timeoutExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("nosql-timeout"));
+        this.queueRead = new LinkedBlockingDeque<>(queueLimit);
+        this.queueWrite = new LinkedBlockingDeque<>(queueLimit);
+        this.dispatcherExecutorRead = Executors.newFixedThreadPool(dispatcherThreads, ThingsBoardThreadFactory.forName("nosql-read-dispatcher"));
+        this.dispatcherExecutorWrite = Executors.newFixedThreadPool(dispatcherThreads, ThingsBoardThreadFactory.forName("nosql-write-dispatcher"));
+        this.callbackExecutorRead = ThingsBoardExecutors.newWorkStealingPool(callbackThreads, "nosql-read-callback");
+        this.callbackExecutorWrite = ThingsBoardExecutors.newWorkStealingPool(callbackThreads, "nosql-write-callback");
+        this.timeoutExecutorRead = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("nosql-read-timeout"));
+        this.timeoutExecutorWrite = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("nosql-write-timeout"));
         this.perTenantLimitsEnabled = perTenantLimitsEnabled;
         this.perTenantLimitsConfiguration = perTenantLimitsConfiguration;
-        this.stats = new BufferedRateExecutorStats(statsFactory);
-        String concurrencyLevelKey = StatsType.RATE_EXECUTOR.getName() + "." + CONCURRENCY_LEVEL;
-        this.concurrencyLevel = statsFactory.createGauge(concurrencyLevelKey, new AtomicInteger(0));
+        this.statsRead = new BufferedRateExecutorStats(statsFactory);
+        this.statsWrite = new BufferedRateExecutorStats(statsFactory);
+        String concurrencyLevelKeyRead = StatsType.RATE_EXECUTOR.getName() + "." + CONCURRENCY_LEVEL; //.READ not added to maintain compatibility with already existed metric dashboards
+        this.concurrencyLevelRead = statsFactory.createGauge(concurrencyLevelKeyRead, new AtomicInteger(0));
+        String concurrencyLevelKeyWrite = StatsType.RATE_EXECUTOR.getName() + ".WRITE." + CONCURRENCY_LEVEL;
+        this.concurrencyLevelWrite = statsFactory.createGauge(concurrencyLevelKeyWrite, new AtomicInteger(0));
 
         for (int i = 0; i < dispatcherThreads; i++) {
-            dispatcherExecutor.submit(this::dispatch);
+            dispatcherExecutorRead.submit(this::dispatchRead);
+            dispatcherExecutorWrite.submit(this::dispatchWrite);
         }
     }
 
     @Override
-    public F submit(T task) {
+    public F submitRead(T task) {
+        return doSubmit(task, queueRead, statsRead);
+    }
+
+    @Override
+    public F submitWrite(T task) {
+        return doSubmit(task, queueWrite, statsWrite);
+    }
+
+    F doSubmit(T task, BlockingQueue<AsyncTaskContext<T, V>> queue, BufferedRateExecutorStats stats) {
         SettableFuture<V> settableFuture = create();
         F result = wrap(task, settableFuture);
         boolean perTenantLimitReached = false;
@@ -127,14 +151,23 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
     }
 
     public void stop() {
-        if (dispatcherExecutor != null) {
-            dispatcherExecutor.shutdownNow();
+        if (dispatcherExecutorRead != null) {
+            dispatcherExecutorRead.shutdownNow();
         }
-        if (callbackExecutor != null) {
-            callbackExecutor.shutdownNow();
+        if (dispatcherExecutorWrite != null) {
+            dispatcherExecutorWrite.shutdownNow();
         }
-        if (timeoutExecutor != null) {
-            timeoutExecutor.shutdownNow();
+        if (callbackExecutorRead != null) {
+            callbackExecutorRead.shutdownNow();
+        }
+        if (callbackExecutorWrite != null) {
+            callbackExecutorWrite.shutdownNow();
+        }
+        if (timeoutExecutorRead != null) {
+            timeoutExecutorRead.shutdownNow();
+        }
+        if (timeoutExecutorWrite != null) {
+            timeoutExecutorWrite.shutdownNow();
         }
     }
 
@@ -144,60 +177,77 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
 
     protected abstract ListenableFuture<V> execute(AsyncTaskContext<T, V> taskCtx);
 
-    private void dispatch() {
+    protected abstract ListenableFuture<V> executeWrite(AsyncTaskContext<T, V> taskCtx);
+
+    void dispatchRead() {
+        dispatch(this.queueRead, this.statsRead, this.concurrencyLevelRead, this::execute,
+                this.callbackExecutorRead, this.timeoutExecutorRead);
+    }
+
+    void dispatchWrite() {
+        dispatch(this.queueWrite, this.statsWrite, this.concurrencyLevelWrite, this::executeWrite,
+                this.callbackExecutorWrite, this.timeoutExecutorWrite);
+    }
+
+    void dispatch(final BlockingQueue<AsyncTaskContext<T, V>> queue,
+                  final BufferedRateExecutorStats stats,
+                  final AtomicInteger concurrencyLevel,
+                  final Function<AsyncTaskContext<T, V>, ListenableFuture<V>> executeFunction,
+                  final ExecutorService callbackExecutor,
+                  final ScheduledExecutorService timeoutExecutor) {
         log.info("Buffered rate executor thread started");
         while (!Thread.interrupted()) {
-            int curLvl = concurrencyLevel.get();
             AsyncTaskContext<T, V> taskCtx = null;
             try {
-                if (curLvl <= concurrencyLimit) {
-                    taskCtx = queue.take();
-                    final AsyncTaskContext<T, V> finalTaskCtx = taskCtx;
-                    if (printQueriesFreq > 0) {
-                        if (printQueriesIdx.incrementAndGet() >= printQueriesFreq) {
-                            printQueriesIdx.set(0);
-                            String query = queryToString(finalTaskCtx);
-                            log.info("[{}] Cassandra query: {}", taskCtx.getId(), query);
-                        }
-                    }
-                    logTask("Processing", finalTaskCtx);
-                    concurrencyLevel.incrementAndGet();
-                    long timeout = finalTaskCtx.getCreateTime() + maxWaitTime - System.currentTimeMillis();
-                    if (timeout > 0) {
-                        stats.getTotalLaunched().increment();
-                        ListenableFuture<V> result = execute(finalTaskCtx);
-                        result = Futures.withTimeout(result, timeout, TimeUnit.MILLISECONDS, timeoutExecutor);
-                        Futures.addCallback(result, new FutureCallback<V>() {
-                            @Override
-                            public void onSuccess(@Nullable V result) {
-                                logTask("Releasing", finalTaskCtx);
-                                stats.getTotalReleased().increment();
-                                concurrencyLevel.decrementAndGet();
-                                finalTaskCtx.getFuture().set(result);
-                            }
-
-                            @Override
-                            public void onFailure(Throwable t) {
-                                if (t instanceof TimeoutException) {
-                                    logTask("Expired During Execution", finalTaskCtx);
-                                } else {
-                                    logTask("Failed", finalTaskCtx);
-                                }
-                                stats.getTotalFailed().increment();
-                                concurrencyLevel.decrementAndGet();
-                                finalTaskCtx.getFuture().setException(t);
-                                log.debug("[{}] Failed to execute task: {}", finalTaskCtx.getId(), finalTaskCtx.getTask(), t);
-                            }
-                        }, callbackExecutor);
-                    } else {
-                        logTask("Expired Before Execution", finalTaskCtx);
-                        stats.getTotalExpired().increment();
-                        concurrencyLevel.decrementAndGet();
-                        taskCtx.getFuture().setException(new TimeoutException());
-                    }
-                } else {
+                if (concurrencyLevel.get() <= concurrencyLimit) {
                     Thread.sleep(pollMs);
+                    continue;
                 }
+
+                taskCtx = queue.take();
+                final AsyncTaskContext<T, V> finalTaskCtx = taskCtx;
+                if (printQueriesFreq > 0) {
+                    if (printQueriesIdx.incrementAndGet() >= printQueriesFreq) {
+                        printQueriesIdx.set(0);
+                        String query = queryToString(finalTaskCtx);
+                        log.info("[{}] Cassandra query: {}", taskCtx.getId(), query);
+                    }
+                }
+                logTask("Processing", finalTaskCtx);
+                concurrencyLevel.incrementAndGet();
+                long timeout = finalTaskCtx.getCreateTime() + maxWaitTime - System.currentTimeMillis();
+                if (timeout <= 0) {
+                    logTask("Expired Before Execution", finalTaskCtx);
+                    stats.getTotalExpired().increment();
+                    concurrencyLevel.decrementAndGet();
+                    taskCtx.getFuture().setException(new TimeoutException());
+                }
+                stats.getTotalLaunched().increment();
+                ListenableFuture<V> result = executeFunction.apply(finalTaskCtx);
+                result = Futures.withTimeout(result, timeout, TimeUnit.MILLISECONDS, timeoutExecutor);
+                Futures.addCallback(result, new FutureCallback<V>() {
+                    @Override
+                    public void onSuccess(@Nullable V result) {
+                        logTask("Releasing", finalTaskCtx);
+                        stats.getTotalReleased().increment();
+                        concurrencyLevel.decrementAndGet();
+                        finalTaskCtx.getFuture().set(result);
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        if (t instanceof TimeoutException) {
+                            logTask("Expired During Execution", finalTaskCtx);
+                        } else {
+                            logTask("Failed", finalTaskCtx);
+                        }
+                        stats.getTotalFailed().increment();
+                        concurrencyLevel.decrementAndGet();
+                        finalTaskCtx.getFuture().setException(t);
+                        log.debug("[{}] Failed to execute task: {}", finalTaskCtx.getId(), finalTaskCtx.getTask(), t);
+                    }
+                }, callbackExecutor);
+
             } catch (InterruptedException e) {
                 break;
             } catch (Throwable e) {
@@ -261,7 +311,11 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
         return query;
     }
 
-    protected int getQueueSize() {
-        return queue.size();
+    protected int getReadQueueSize() {
+        return queueRead.size();
+    }
+
+    protected int getWriteQueueSize() {
+        return queueWrite.size();
     }
 }

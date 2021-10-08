@@ -245,7 +245,15 @@ public interface TbContext {
 
     CassandraCluster getCassandraCluster();
 
+    /**
+     * For read query only. Old name (without read) has left for backward compatibility with custom rulenodes
+     * */
     TbResultSetFuture submitCassandraTask(CassandraStatementTask task);
+
+    /**
+     * For write query only
+     * */
+    TbResultSetFuture submitCassandraTaskWrite(CassandraStatementTask task);
 
     PageData<RuleNodeState> findRuleNodeStates(PageLink pageLink);
 

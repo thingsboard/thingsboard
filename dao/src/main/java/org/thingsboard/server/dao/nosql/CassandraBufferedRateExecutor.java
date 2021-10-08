@@ -29,11 +29,14 @@ import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.util.AbstractBufferedRateExecutor;
 import org.thingsboard.server.dao.util.AsyncTaskContext;
+import org.thingsboard.server.dao.util.BufferedRateExecutorStats;
 import org.thingsboard.server.dao.util.NoSqlAnyDao;
 
 import javax.annotation.PreDestroy;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 /**
  * Created by ashvayka on 24.10.18.
@@ -66,8 +69,20 @@ public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<
     }
 
     @Scheduled(fixedDelayString = "${cassandra.query.rate_limit_print_interval_ms}")
-    public void printStats() {
-        int queueSize = getQueueSize();
+    public void printReadStats() {
+        printStats("read", this.statsRead, this.concurrencyLevelRead, this::getReadQueueSize);
+    }
+
+    @Scheduled(fixedDelayString = "${cassandra.query.rate_limit_print_interval_ms}")
+    public void printWriteStats() {
+        printStats("write", this.statsWrite, this.concurrencyLevelWrite, this::getWriteQueueSize);
+    }
+
+    void printStats(final String statsName,
+                    final BufferedRateExecutorStats stats,
+                    final AtomicInteger concurrencyLevel,
+                    final Supplier<Integer> queueSizeSupplier) {
+        int queueSize = queueSizeSupplier.get();
         int rateLimitedTenantsCount = (int) stats.getRateLimitedTenants().values().stream()
                 .filter(defaultCounter -> defaultCounter.get() > 0)
                 .count();
@@ -77,17 +92,15 @@ public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<
                 || concurrencyLevel.get() > 0
                 || stats.getStatsCounters().stream().anyMatch(counter -> counter.get() > 0)
         ) {
-            StringBuilder statsBuilder = new StringBuilder();
+            final StringBuilder statsBuilder = new StringBuilder();
 
             statsBuilder.append("queueSize").append(" = [").append(queueSize).append("] ");
-            stats.getStatsCounters().forEach(counter -> {
-                statsBuilder.append(counter.getName()).append(" = [").append(counter.get()).append("] ");
-            });
+            stats.getStatsCounters().forEach(counter -> statsBuilder.append(counter.getName()).append(" = [").append(counter.get()).append("] "));
             statsBuilder.append("totalRateLimitedTenants").append(" = [").append(rateLimitedTenantsCount).append("] ");
             statsBuilder.append(CONCURRENCY_LEVEL).append(" = [").append(concurrencyLevel.get()).append("] ");
 
             stats.getStatsCounters().forEach(StatsCounter::clear);
-            log.info("Permits {}", statsBuilder);
+            log.info("Permits {} {}", statsName, statsBuilder);
         }
 
         stats.getRateLimitedTenants().entrySet().stream()
@@ -133,7 +146,16 @@ public class CassandraBufferedRateExecutor extends AbstractBufferedRateExecutor<
         CassandraStatementTask task = taskCtx.getTask();
         return task.executeAsync(
                 statement ->
-                    this.submit(new CassandraStatementTask(task.getTenantId(), task.getSession(), statement))
+                        this.submitRead(new CassandraStatementTask(task.getTenantId(), task.getSession(), statement))
+        );
+    }
+
+    @Override
+    protected ListenableFuture<TbResultSet> executeWrite(AsyncTaskContext<CassandraStatementTask, TbResultSet> taskCtx) {
+        CassandraStatementTask task = taskCtx.getTask();
+        return task.executeAsync(
+                statement ->
+                        this.submitWrite(new CassandraStatementTask(task.getTenantId(), task.getSession(), statement))
         );
     }
 

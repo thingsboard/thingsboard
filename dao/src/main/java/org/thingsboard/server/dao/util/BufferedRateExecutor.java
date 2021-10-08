@@ -22,6 +22,8 @@ import com.google.common.util.concurrent.ListenableFuture;
  */
 public interface BufferedRateExecutor<T extends AsyncTask, F extends ListenableFuture> {
 
-    F submit(T task);
+    F submitRead(T task);
+
+    F submitWrite(T task);
 
 }

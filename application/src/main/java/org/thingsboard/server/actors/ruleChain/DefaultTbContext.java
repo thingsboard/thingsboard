@@ -554,7 +554,12 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public TbResultSetFuture submitCassandraTask(CassandraStatementTask task) {
-        return mainCtx.getCassandraBufferedRateExecutor().submit(task);
+        return mainCtx.getCassandraBufferedRateExecutor().submitRead(task);
+    }
+
+    @Override
+    public TbResultSetFuture submitCassandraTaskWrite(CassandraStatementTask task) {
+        return mainCtx.getCassandraBufferedRateExecutor().submitWrite(task);
     }
 
     @Override

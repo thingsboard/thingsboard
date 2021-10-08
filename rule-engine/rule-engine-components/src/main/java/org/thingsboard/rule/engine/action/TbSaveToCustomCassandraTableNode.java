@@ -213,7 +213,7 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
         if (statement.getConsistencyLevel() == null) {
             statement.setConsistencyLevel(level);
         }
-        return ctx.submitCassandraTask(new CassandraStatementTask(ctx.getTenantId(), getSession(), statement));
+        return ctx.submitCassandraTaskWrite(new CassandraStatementTask(ctx.getTenantId(), getSession(), statement));
     }
 
     private static String statementToString(Statement statement) {

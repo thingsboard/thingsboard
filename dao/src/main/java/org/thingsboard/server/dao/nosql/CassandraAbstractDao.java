@@ -61,36 +61,53 @@ public abstract class CassandraAbstractDao {
     }
 
     protected AsyncResultSet executeRead(TenantId tenantId, Statement statement) {
-        return execute(tenantId, statement, defaultReadLevel);
+        return executeRead(tenantId, statement, defaultReadLevel);
     }
 
     protected AsyncResultSet executeWrite(TenantId tenantId, Statement statement) {
-        return execute(tenantId, statement, defaultWriteLevel);
+        return executeWrite(tenantId, statement, defaultWriteLevel);
     }
 
     protected TbResultSetFuture executeAsyncRead(TenantId tenantId, Statement statement) {
-        return executeAsync(tenantId, statement, defaultReadLevel);
+        return executeAsyncRead(tenantId, statement, defaultReadLevel);
     }
 
     protected TbResultSetFuture executeAsyncWrite(TenantId tenantId, Statement statement) {
-        return executeAsync(tenantId, statement, defaultWriteLevel);
+        return executeAsyncWrite(tenantId, statement, defaultWriteLevel);
     }
 
-    private AsyncResultSet execute(TenantId tenantId, Statement statement, ConsistencyLevel level) {
+    private AsyncResultSet executeRead(TenantId tenantId, Statement statement, ConsistencyLevel level) {
         if (log.isDebugEnabled()) {
             log.debug("Execute cassandra statement {}", statementToString(statement));
         }
-        return executeAsync(tenantId, statement, level).getUninterruptibly();
+        return executeAsyncRead(tenantId, statement, level).getUninterruptibly();
     }
 
-    private TbResultSetFuture executeAsync(TenantId tenantId, Statement statement, ConsistencyLevel level) {
+    private AsyncResultSet executeWrite(TenantId tenantId, Statement statement, ConsistencyLevel level) {
+        if (log.isDebugEnabled()) {
+            log.debug("Execute cassandra write statement {}", statementToString(statement));
+        }
+        return executeAsyncWrite(tenantId, statement, level).getUninterruptibly();
+    }
+
+    private TbResultSetFuture executeAsyncRead(TenantId tenantId, Statement statement, ConsistencyLevel level) {
         if (log.isDebugEnabled()) {
             log.debug("Execute cassandra async statement {}", statementToString(statement));
         }
         if (statement.getConsistencyLevel() == null) {
             statement.setConsistencyLevel(level);
         }
-        return rateLimiter.submit(new CassandraStatementTask(tenantId, getSession(), statement));
+        return rateLimiter.submitRead(new CassandraStatementTask(tenantId, getSession(), statement));
+    }
+
+    private TbResultSetFuture executeAsyncWrite(TenantId tenantId, Statement statement, ConsistencyLevel level) {
+        if (log.isDebugEnabled()) {
+            log.debug("Execute cassandra async write statement {}", statementToString(statement));
+        }
+        if (statement.getConsistencyLevel() == null) {
+            statement.setConsistencyLevel(level);
+        }
+        return rateLimiter.submitWrite(new CassandraStatementTask(tenantId, getSession(), statement));
     }
 
     private static String statementToString(Statement statement) {
