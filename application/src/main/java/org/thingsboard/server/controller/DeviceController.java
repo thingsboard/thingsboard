@@ -363,7 +363,7 @@ public class DeviceController extends BaseController {
 
     @ApiOperation(value = "Get Tenant Devices (getEdgeDevices)",
             notes = "Returns a page of devices owned by tenant. " +
-                    "You can specify number of parameters to filter the result set of devices. ")
+                    PAGE_DATA_PARAMETERS)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/devices", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
@@ -527,7 +527,7 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Get Devices By Ids (getDevicesByIds)",
-            notes = "Requested devices must be in the possession of tenant or customer that performs request. ")
+            notes = "Requested devices must be owned by tenant or assigned to customer which user is performing the request. ")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/devices", params = {"deviceIds"}, method = RequestMethod.GET)
     @ResponseBody
@@ -555,6 +555,10 @@ public class DeviceController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Find related devices (findByQuery)",
+            notes = "Returns all devices that are related to the specific entity. " +
+                    "The entity id, relation type, device types, depth of the search, and other query parameters defined using complex 'DeviceSearchQuery' object. " +
+                    "See 'Model' tab of the Parameters for more info.")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/devices", method = RequestMethod.POST)
     @ResponseBody
@@ -580,7 +584,7 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Get Device Types (getDeviceTypes)",
-            notes = "Returns all device profile names of all devices in the possession of user that is performing request.")
+            notes = "Returns a set of unique device profile names based on devices that are either owned by the tenant or assigned to the customer which user is performing the request.")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/types", method = RequestMethod.GET)
     @ResponseBody
@@ -846,7 +850,7 @@ public class DeviceController extends BaseController {
 
     @ApiOperation(value = "Get devices assigned to edge (getEdgeDevices)",
             notes = "Returns a page of devices assigned to edge. " +
-                    "You can specify number of parameters to filter the result set of devices. ")
+                    PAGE_DATA_PARAMETERS)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/edge/{edgeId}/devices", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody

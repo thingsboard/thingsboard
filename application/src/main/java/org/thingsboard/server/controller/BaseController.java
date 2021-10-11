@@ -154,7 +154,9 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 public abstract class BaseController {
 
     /*Swagger UI description*/
-    public static final String PAGE_DATA_PARAMETERS = "You can specify parameters to filter the results. ";
+    public static final String PAGE_DATA_PARAMETERS = "You can specify parameters to filter the results. " +
+            "The result is wrapped with PageData object that allows you to iterate over result set using pagination. " +
+            "See the 'Model' tab of the Response Class for more details. ";
     public static final String DEVICE_ID_PARAM_DESCRIPTION = "A string value representing the device id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     public static final String DEVICE_PROFILE_ID_DESCRIPTION = "A string value representing the device profile id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     public static final String TENANT_ID_PARAM_DESCRIPTION = "A string value representing the tenant id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
