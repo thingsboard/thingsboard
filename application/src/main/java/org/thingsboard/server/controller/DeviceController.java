@@ -93,27 +93,12 @@ import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 @RequiredArgsConstructor
 @Slf4j
 public class DeviceController extends BaseController {
+
+    protected static final String DEVICE_ID = "deviceId";
+    protected static final String DEVICE_NAME = "deviceName";
+    protected static final String TENANT_ID = "tenantId";
+
     private final DeviceBulkImportService deviceBulkImportService;
-
-    public static final String DEVICE_ID_PARAM_DESCRIPTION = "A string value representing the device id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
-    public static final String DEVICE_PROFILE_ID_DESCRIPTION = "A string value representing the device profile id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
-    public static final String TENANT_ID_PARAM_DESCRIPTION = "A string value representing the tenant id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
-    public static final String EDGE_ID_PARAM_DESCRIPTION = "A string value representing the edge id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
-    public static final String CUSTOMER_ID_PARAM_DESCRIPTION = "A string value representing the customer id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
-
-    private static final String DEVICE_ID = "deviceId";
-    private static final String DEVICE_NAME = "deviceName";
-    private static final String TENANT_ID = "tenantId";
-    private final String PAGE_SIZE_DESCRIPTION = "Maximum amount of entities in a one page";
-    private final String PAGE_NUMBER_DESCRIPTION = "Sequence number of page starting from 0";
-    private final String DEVICE_TYPE_DESCRIPTION = "Device type as the name of the device profile";
-    private final String DEVICE_TEXT_SEARCH_DESCRIPTION = "The search is performed by device special field 'textSearch' represented by device name";
-    private final String SORT_PROPERTY_DESCRIPTION = "Property of device to sort by";
-    private final String SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, label, type";
-    private final String SORT_ORDER_DESCRIPTION = "Sort order. ASC (ASCENDING) or DESCENDING (DESC)";
-    private final String SORT_ORDER_ALLOWABLE_VALUES = "ASC, DESC";
-    private final String DEVICE_INFO_DESCRIPTION = "Device Info is an object which are an extension of default Device object. " +
-            "Apart from Device object, Device Info provides additional information such as customer name and device profile name. ";
 
     @ApiOperation(value = "Get Device (getDeviceById)",
             notes = "If device with given Id exists in the system it will be present in the response, otherwise an empty object will be provided")
@@ -377,7 +362,7 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Get Tenant Devices (getEdgeDevices)",
-            notes = "Returns a page (representation of a bunch) of devices in the possession of tenant. " +
+            notes = "Returns a page of devices owned by tenant. " +
                     "You can specify number of parameters to filter the result set of devices. ")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/devices", params = {"pageSize", "page"}, method = RequestMethod.GET)
@@ -409,8 +394,8 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Get Tenant Device Infos (getTenantDeviceInfos)",
-            notes = "Returns a page (representation of a bunch) of devices info objects in the possession of tenant. " +
-                    "You can specify number of parameters to filter the result set. " + DEVICE_INFO_DESCRIPTION)
+            notes = "Returns a page of devices info objects owned by tenant. " +
+                    PAGE_DATA_PARAMETERS + DEVICE_INFO_DESCRIPTION)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/deviceInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
@@ -447,8 +432,8 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Get Tenant Device (getTenantDevice)",
-            notes = "Requested device must be in the possession of user that perform request. " +
-                    "In the Thingsboard platform Device name is an unique property of device. So it can be used to identify the device.")
+            notes = "Requested device must be owned by tenant of customer that the user belongs to. " +
+                    "Device name is an unique property of device. So it can be used to identify the device.")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/devices", params = {"deviceName"}, method = RequestMethod.GET)
     @ResponseBody
@@ -463,8 +448,8 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Get Customer Devices (getCustomerDevices)",
-            notes = "Returns a page (representation of a bunch) of devices objects in the possession of customer. " +
-                    "You can specify number of parameters to filter the result set. ")
+            notes = "Returns a page of devices objects assigned to customer. " +
+                    PAGE_DATA_PARAMETERS)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/customer/{customerId}/devices", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
@@ -500,8 +485,8 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Get Customer Device Infos (getCustomerDeviceInfos)",
-            notes = "Returns a page (representation of a bunch) of devices info objects in the possession of customer. " +
-                    "You can specify number of parameters to filter the result set. " + DEVICE_INFO_DESCRIPTION)
+            notes = "Returns a page of devices info objects assigned to customer. " +
+                    PAGE_DATA_PARAMETERS + DEVICE_INFO_DESCRIPTION)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/customer/{customerId}/deviceInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
@@ -782,10 +767,9 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Assign device to edge (assignDeviceToEdge)",
-            notes = "Creates assignment of an existing device to an instance of The ThingsBoard Edge. " +
-                    "The ThingsBoard Edge is a ThingsBoard’s software product for edge computing. " +
-                    "It allows bringing data analysis and management to the edge, while seamlessly synchronizing with ThingsBoard CE/PE server (cloud). " +
-                    "See official documentation for more details regarding provisioning the edge on ThingsBoard server")
+            notes = "Creates assignment of an existing device to an instance of The Edge. " +
+                    "The Edge is a software product for edge computing. " +
+                    "It allows bringing data analysis and management to the edge, while seamlessly synchronizing with the platform server (cloud). ")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/device/{deviceId}", method = RequestMethod.POST)
     @ResponseBody
@@ -861,7 +845,7 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Get devices assigned to edge (getEdgeDevices)",
-            notes = "Returns a page (representation of a bunch) of devices assigned to edge. " +
+            notes = "Returns a page of devices assigned to edge. " +
                     "You can specify number of parameters to filter the result set of devices. ")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/edge/{edgeId}/devices", params = {"pageSize", "page"}, method = RequestMethod.GET)
@@ -916,7 +900,7 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Count devices by device profile  (countByDeviceProfileAndEmptyOtaPackage)",
-            notes = "The Thingsboard platform gives an ability to load OTA (over-the-air) packages to devices. " +
+            notes = "The platform gives an ability to load OTA (over-the-air) packages to devices. " +
                     "It can be done in two different ways: device scope or device profile scope." +
                     "In the response you will find the number of devices with specified device profile, but without previously defined device scope OTA package. " +
                     "It can be useful when you want to define number of devices that will be affected with future OTA package")
