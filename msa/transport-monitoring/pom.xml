@@ -61,7 +61,7 @@
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>copy-tb-mqtt-transport-deb</id>
+                        <id>copy-tb-monitoring-transport-deb</id>
                         <phase>package</phase>
                         <goals>
                             <goal>copy</goal>
