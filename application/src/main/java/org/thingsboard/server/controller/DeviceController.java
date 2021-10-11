@@ -97,7 +97,7 @@ import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 @RequiredArgsConstructor
 @Slf4j
 public class DeviceController extends BaseController {
-    public static final String DEVICE_ID_PARAM_DESCRIPTION = "A string value representing the device id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
+    public static final String DEVICE_ID_PARAM_DESCRIPTION = BaseController.DEVICE_ID_DESCRIPTION + " For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     private final DeviceBulkImportService deviceBulkImportService;
 
     private static final String DEVICE_ID = "deviceId";

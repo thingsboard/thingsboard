@@ -156,6 +156,7 @@ public abstract class BaseController {
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     protected static final String DEFAULT_DASHBOARD = "defaultDashboardId";
     protected static final String HOME_DASHBOARD = "homeDashboardId";
+    public static final String DEVICE_ID_DESCRIPTION = "A string value representing the device id.";
 
     private static final int DEFAULT_PAGE_SIZE = 1000;
 
