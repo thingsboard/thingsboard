@@ -101,7 +101,9 @@ public class DeviceController extends BaseController {
     private final DeviceBulkImportService deviceBulkImportService;
 
     @ApiOperation(value = "Get Device (getDeviceById)",
-            notes = "If device with given Id exists in the system it will be present in the response, otherwise an empty object will be provided")
+            notes = "Fetch the Device object based on the provided Device Id. " +
+                    "If the user has the authority of 'Tenant Administrator', the server checks that the device is owned by the same tenant. " +
+                    "If the user has the authority of 'Customer User', the server checks that the device is assigned to the same customer.")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/{deviceId}", method = RequestMethod.GET)
     @ResponseBody
@@ -116,7 +118,10 @@ public class DeviceController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Get Device Info (getDeviceInfoById)", notes = DEVICE_INFO_DESCRIPTION)
+    @ApiOperation(value = "Get Device Info (getDeviceInfoById)",
+            notes = "Fetch the Device Info object based on the provided Device Id. " +
+            "If the user has the authority of 'Tenant Administrator', the server checks that the device is owned by the same tenant. " +
+            "If the user has the authority of 'Customer User', the server checks that the device is assigned to the same customer. " + DEVICE_INFO_DESCRIPTION)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/info/{deviceId}", method = RequestMethod.GET)
     @ResponseBody
@@ -131,7 +136,8 @@ public class DeviceController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Create Or Update Device (saveDevice)", notes = "Platform generates random device Id and credentials (access token) during device creation. " +
+    @ApiOperation(value = "Create Or Update Device (saveDevice)",
+            notes = "Creates or Updates the Device. Platform generates random device Id and credentials (access token) during device creation. " +
             "The device id will be present in the response. " +
             "Specify the device id when you would like to update the device. Referencing non-existing device Id will cause an error.")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -177,7 +183,7 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Delete device (deleteDevice)",
-            notes = "Referencing non-existing device Id will cause an error.")
+            notes = "Deletes the device and it's credentials. Referencing non-existing device Id will cause an error.")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/device/{deviceId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
@@ -361,7 +367,7 @@ public class DeviceController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Get Tenant Devices (getEdgeDevices)",
+    @ApiOperation(value = "Get Tenant Devices (getTenantDevices)",
             notes = "Returns a page of devices owned by tenant. " +
                     PAGE_DATA_PARAMETERS)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
