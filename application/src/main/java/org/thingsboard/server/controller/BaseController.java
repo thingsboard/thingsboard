@@ -153,6 +153,29 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 @TbCoreComponent
 public abstract class BaseController {
 
+    /*Swagger UI description*/
+    public static final String PAGE_DATA_PARAMETERS = "You can specify parameters to filter the results. " +
+            "The result is wrapped with PageData object that allows you to iterate over result set using pagination. " +
+            "See the 'Model' tab of the Response Class for more details. ";
+    public static final String DEVICE_ID_PARAM_DESCRIPTION = "A string value representing the device id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
+    public static final String DEVICE_PROFILE_ID_DESCRIPTION = "A string value representing the device profile id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
+    public static final String TENANT_ID_PARAM_DESCRIPTION = "A string value representing the tenant id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
+    public static final String EDGE_ID_PARAM_DESCRIPTION = "A string value representing the edge id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
+    public static final String CUSTOMER_ID_PARAM_DESCRIPTION = "A string value representing the customer id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
+
+    protected final String PAGE_SIZE_DESCRIPTION = "Maximum amount of entities in a one page";
+    protected final String PAGE_NUMBER_DESCRIPTION = "Sequence number of page starting from 0";
+    protected final String DEVICE_TYPE_DESCRIPTION = "Device type as the name of the device profile";
+    protected final String DEVICE_TEXT_SEARCH_DESCRIPTION = "The search is performed by device special field 'textSearch' represented by device name";
+    protected final String SORT_PROPERTY_DESCRIPTION = "Property of device to sort by";
+    protected final String SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, label, type";
+    protected final String SORT_ORDER_DESCRIPTION = "Sort order. ASC (ASCENDING) or DESCENDING (DESC)";
+    protected final String SORT_ORDER_ALLOWABLE_VALUES = "ASC, DESC";
+    protected final String DEVICE_INFO_DESCRIPTION = "Device Info is an object which are an extension of default Device object. " +
+            "Apart from Device object, Device Info provides additional information such as customer name and device profile name. ";
+
+
+
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     protected static final String DEFAULT_DASHBOARD = "defaultDashboardId";
     protected static final String HOME_DASHBOARD = "homeDashboardId";
