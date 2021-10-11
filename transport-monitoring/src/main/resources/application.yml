@@ -59,6 +59,7 @@ websocket:
     request_timeout: "${WEBSOCKET_TOKEN_REQUEST_TIMEOUT:5000}"
 
 notifications:
+  on_success_enabled: "${NOTIFICATIONS_ON_SUCCESS_ENABLED:true}"
   slack:
     enabled: "${NOTIFICATIONS_SLACK_ENABLED:false}"
     access_token: "${NOTIFICATIONS_SLACK_TOKEN:}"

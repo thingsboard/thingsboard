@@ -56,6 +56,9 @@ public class TransportsMonitoringScheduler {
     @Value("${common.failure_threshold}")
     private int failureThreshold;
 
+    @Value("${notifications.on_success_enabled}")
+    private boolean onSuccessEnabled;
+
     private Map<TransportType, AtomicInteger> failuresCountsMap = new ConcurrentHashMap<>();
 
     @PostConstruct
@@ -63,6 +66,7 @@ public class TransportsMonitoringScheduler {
         ScheduledExecutorService executorService = Executors.newScheduledThreadPool(observers.size());
 
         for (AbstractTransportObserver observer : observers) {
+            failuresCountsMap.put(observer.getTransportType(), new AtomicInteger(0));
             executorService.scheduleAtFixedRate(() -> {
                 String expectedValue = String.valueOf(System.currentTimeMillis());
                 try {
@@ -81,7 +85,6 @@ public class TransportsMonitoringScheduler {
                     onMonitoringFailure(new TransportInfo(observer.getTransportType(), e.toString()));
                 }
             }, initialDelay, observer.getMonitoringRate(), TimeUnit.MILLISECONDS);
-            failuresCountsMap.put(observer.getTransportType(), new AtomicInteger(0));
 
         }
     }
@@ -100,6 +103,11 @@ public class TransportsMonitoringScheduler {
     }
 
     private void onMonitoringSuccess(TransportInfo transportInfo) {
+        if (onSuccessEnabled) {
+            for (NotificationChannel channel : channels) {
+                channel.sendNotification(transportInfo);
+            }
+        }
         failuresCountsMap.get(transportInfo.getTransportType()).set(0);
 
         log.info(transportInfo.toString());

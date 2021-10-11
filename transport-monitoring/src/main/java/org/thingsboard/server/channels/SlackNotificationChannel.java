@@ -16,6 +16,7 @@
 package org.thingsboard.server.channels;
 
 import com.slack.api.Slack;
+import com.slack.api.methods.MethodsClient;
 import com.slack.api.methods.SlackApiException;
 import com.slack.api.methods.request.chat.ChatPostMessageRequest;
 import com.slack.api.methods.response.chat.ChatPostMessageResponse;
@@ -43,13 +44,13 @@ public class SlackNotificationChannel implements NotificationChannel {
     @Value("${notifications.slack.channel_id}")
     private String channelId;
 
-    private Slack slackClient;
+    private MethodsClient methodsClient;
 
     private final String markdownTemplate = "%s | %s | *%s* | %s";
 
     @PostConstruct
     public void init() {
-        slackClient = Slack.getInstance();
+        methodsClient = buildSlackClient();
     }
 
     @Override
@@ -58,7 +59,7 @@ public class SlackNotificationChannel implements NotificationChannel {
             String localDate = LocalDate.now().toString();
             String localTime = LocalTime.now().toString();
 
-            ChatPostMessageResponse response = slackClient.methods(token).chatPostMessage(ChatPostMessageRequest.builder()
+            ChatPostMessageResponse response = methodsClient.chatPostMessage(ChatPostMessageRequest.builder()
                     .channel(channelId)
                     .text(String.format(markdownTemplate, localDate, localTime, transportInfo.getTransportType().name(), transportInfo.getInformation()))
                     .build());
@@ -68,5 +69,9 @@ public class SlackNotificationChannel implements NotificationChannel {
         } catch (IOException | SlackApiException e) {
             e.printStackTrace();
         }
+    }
+
+    private MethodsClient buildSlackClient() {
+        return Slack.getInstance().methods(token);
     }
 }
