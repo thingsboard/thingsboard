@@ -15,12 +15,9 @@
  */
 package org.thingsboard.server.channels;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.thingsboard.server.transport.TransportInfo;
 
 public interface NotificationChannel {
 
-    ObjectMapper mapper = new ObjectMapper();
-
-    void onTransportUnavailable(TransportInfo transportInfo);
+    void sendNotification(TransportInfo transportInfo);
 }

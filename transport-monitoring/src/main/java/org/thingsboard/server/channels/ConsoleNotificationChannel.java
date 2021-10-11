@@ -28,7 +28,7 @@ import org.thingsboard.server.transport.TransportInfo;
 public class ConsoleNotificationChannel implements NotificationChannel {
 
     @Override
-    public void onTransportUnavailable(TransportInfo transportInfo) {
+    public void sendNotification(TransportInfo transportInfo) {
         log.error(String.valueOf(transportInfo));
     }
 }

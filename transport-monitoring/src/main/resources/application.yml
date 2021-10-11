@@ -14,6 +14,10 @@
 # limitations under the License.
 #
 
+common:
+  initial_delay: "${COMMON_INITIAL_DELAY:0}"
+  failure_threshold: "${COMMON_FAILURE_THRESHOLD:5}"
+
 mqtt:
   enabled: "${MQTT_ENABLED:true}"
   host: "${MQTT_HOST:tcp://localhost:1883}"
@@ -50,7 +54,9 @@ websocket:
   update_wait_time: "${WEBSOCKET_UPDATE_WAIT_TIME:10000}"
   monitoring_tenant_username: "${WEBSOCKET_MONITORING_TENANT_USERNAME:monitoring@gmail.com}"
   monitoring_tenant_password: "${WEBSOCKET_MONITORING_TENANT_PASSWORD:tenant}"
-  token_host: "${WEBSOCKET_TOKEN_HOST:http://localhost:8080}"
+  token:
+    host: "${WEBSOCKET_TOKEN_HOST:http://localhost:8080}"
+    request_timeout: "${WEBSOCKET_TOKEN_REQUEST_TIMEOUT:5000}"
 
 notifications:
   slack:

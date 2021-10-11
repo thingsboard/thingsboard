@@ -25,6 +25,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.transport.TransportInfo;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -42,15 +43,22 @@ public class SlackNotificationChannel implements NotificationChannel {
     @Value("${notifications.slack.channel_id}")
     private String channelId;
 
+    private Slack slackClient;
+
+    private final String markdownTemplate = "%s | %s | *%s* | %s";
+
+    @PostConstruct
+    public void init() {
+        slackClient = Slack.getInstance();
+    }
+
     @Override
-    public void onTransportUnavailable(TransportInfo transportInfo) {
+    public void sendNotification(TransportInfo transportInfo) {
         try {
-            Slack slack = Slack.getInstance();
             String localDate = LocalDate.now().toString();
             String localTime = LocalTime.now().toString();
-            String markdownTemplate = "%s | %s | *%s* | %s";
 
-            ChatPostMessageResponse response = slack.methods(token).chatPostMessage(ChatPostMessageRequest.builder()
+            ChatPostMessageResponse response = slackClient.methods(token).chatPostMessage(ChatPostMessageRequest.builder()
                     .channel(channelId)
                     .text(String.format(markdownTemplate, localDate, localTime, transportInfo.getTransportType().name(), transportInfo.getInformation()))
                     .build());

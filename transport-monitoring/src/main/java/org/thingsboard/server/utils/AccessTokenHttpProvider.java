@@ -29,6 +29,7 @@ import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -53,14 +54,19 @@ public class AccessTokenHttpProvider {
     @Value("${websocket.monitoring_tenant_password}")
     private String monitoringTenantPassword;
 
+    private CloseableHttpClient httpClient;
+
+    @PostConstruct
+    private void init() {
+        RequestConfig config = RequestConfig.custom()
+                .setConnectTimeout(timeout)
+                .setConnectionRequestTimeout(timeout)
+                .setSocketTimeout(timeout).build();
+        httpClient = HttpClientBuilder.create().setDefaultRequestConfig(config).build();
+    }
+
     public String getAccessToken() {
         try {
-            RequestConfig config = RequestConfig.custom()
-                    .setConnectTimeout(timeout)
-                    .setConnectionRequestTimeout(timeout)
-                    .setSocketTimeout(timeout).build();
-            CloseableHttpClient httpClient = HttpClientBuilder.create().setDefaultRequestConfig(config).build();
-
             String uri = tokenHost + "/api/auth/login";
             HttpPost httpPost = new HttpPost(uri);
 

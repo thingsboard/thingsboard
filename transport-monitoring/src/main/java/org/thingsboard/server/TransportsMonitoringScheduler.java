@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.channels.NotificationChannel;
 import org.thingsboard.server.common.data.query.EntityData;
@@ -26,13 +27,17 @@ import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.observers.AbstractTransportObserver;
 import org.thingsboard.server.transport.TransportInfo;
+import org.thingsboard.server.transport.TransportType;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 @RequiredArgsConstructor
@@ -44,6 +49,14 @@ public class TransportsMonitoringScheduler {
 
     private final List<AbstractTransportObserver> observers;
     private final List<NotificationChannel> channels;
+
+    @Value("${common.initial_delay}")
+    private int initialDelay;
+
+    @Value("${common.failure_threshold}")
+    private int failureThreshold;
+
+    private Map<TransportType, AtomicInteger> failuresCountsMap = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void startMonitoringTransports() {
@@ -61,21 +74,35 @@ public class TransportsMonitoringScheduler {
                                 "Websocket update msg is empty or it differ from expected one")
                         );
                     } else {
-                        log.info(new TransportInfo(observer.getTransportType(),
-                                "Successfully").toString());
+                        onMonitoringSuccess(new TransportInfo(observer.getTransportType(), "Successfully"));
                     }
 
                 } catch (Exception e) {
                     onMonitoringFailure(new TransportInfo(observer.getTransportType(), e.toString()));
                 }
-            }, 0, observer.getMonitoringRate(), TimeUnit.MILLISECONDS);
+            }, initialDelay, observer.getMonitoringRate(), TimeUnit.MILLISECONDS);
+            failuresCountsMap.put(observer.getTransportType(), new AtomicInteger(0));
+
         }
     }
 
     private void onMonitoringFailure(TransportInfo transportInfo) {
-        for (NotificationChannel channel : channels) {
-            channel.onTransportUnavailable(transportInfo);
+        AtomicInteger failureCount = failuresCountsMap.get(transportInfo.getTransportType());
+        if (failureCount.get() >= failureThreshold) {
+            for (NotificationChannel channel : channels) {
+                channel.sendNotification(transportInfo);
+            }
         }
+        else {
+            failureCount.incrementAndGet();
+        }
+
+    }
+
+    private void onMonitoringSuccess(TransportInfo transportInfo) {
+        failuresCountsMap.get(transportInfo.getTransportType()).set(0);
+
+        log.info(transportInfo.toString());
     }
 
     private String toJsonPayload(String value) {
