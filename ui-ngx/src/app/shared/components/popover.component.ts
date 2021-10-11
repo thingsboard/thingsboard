@@ -312,7 +312,7 @@ export class TbPopoverService {
 
   displayPopover<T>(trigger: Element, renderer: Renderer2, hostView: ViewContainerRef,
                     componentType: Type<T>, preferredPlacement: PopoverPlacement = 'top', hideOnClickOutside = true,
-                    injector?: Injector, context?: any, popoverStyle: any = {}, style?: any): TbPopoverComponent {
+                    injector?: Injector, context?: any, overlayStyle: any = {}, popoverStyle: any = {}, style?: any): TbPopoverComponent {
     const componentRef = hostView.createComponent(this.componentFactory);
     const component = componentRef.instance;
     this.popoverWithTriggers.push({
@@ -329,6 +329,7 @@ export class TbPopoverService {
     component.tbComponentFactory = this.resolver.resolveComponentFactory(componentType);
     component.tbComponentInjector = injector;
     component.tbComponentContext = context;
+    component.tbOverlayStyle = overlayStyle;
     component.tbPopoverInnerStyle = popoverStyle;
     component.tbComponentStyle = style;
     component.tbHideOnClickOutside = hideOnClickOutside;
@@ -474,7 +475,7 @@ export class TbPopoverService {
             </div>
             <div class="tb-popover-inner" [ngStyle]="tbPopoverInnerStyle" role="tooltip">
               <div class="tb-popover-close-button" (click)="closeButtonClick($event)">×</div>
-              <div>
+              <div style="width: 100%; height: 100%;">
                 <div class="tb-popover-inner-content">
                   <ng-container *ngIf="tbContent">
                     <ng-container *tbStringTemplateOutlet="tbContent">{{ tbContent }}</ng-container>

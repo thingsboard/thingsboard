@@ -314,7 +314,8 @@ import { MarkedOptionsService } from '@shared/components/marked-options.service'
       sanitize: SecurityContext.NONE,
       markedOptions: {
         provide: MarkedOptions,
-        useClass: MarkedOptionsService
+        useFactory: (markedOptionsService: MarkedOptionsService) => markedOptionsService,
+        deps: [MarkedOptionsService]
       }
     })
   ],

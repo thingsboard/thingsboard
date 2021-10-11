@@ -1355,8 +1355,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           parentDashboard: this.widgetContext.parentDashboard ?
             this.widgetContext.parentDashboard : this.widgetContext.dashboard
         },
+        {width: popoverWidth, height: popoverHeight},
         popoverStyle,
-        {width: popoverWidth, height: popoverHeight}
+        {}
       );
       this.widgetContext.registerPopoverComponent(component);
     }
@@ -1398,6 +1399,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.dialog.open(this.embedDashboardDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      viewContainerRef: this.widgetContentContainer,
       data: {
         dashboard,
         state: objToBase64([ stateObject ]),
