@@ -303,7 +303,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private breakpointObserver: BreakpointObserver,
               private route: ActivatedRoute,
               private router: Router,
-              private utils: UtilsService,
+              public utils: UtilsService,
               private dashboardUtils: DashboardUtilsService,
               private authService: AuthService,
               private entityService: EntityService,
