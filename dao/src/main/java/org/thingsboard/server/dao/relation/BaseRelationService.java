@@ -27,6 +27,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -201,6 +202,7 @@ public class BaseRelationService implements RelationService {
         }
 
         relationDao.deleteOutboundRelations(tenantId, entityId);
+
     }
 
     @Override
@@ -262,10 +264,13 @@ public class BaseRelationService implements RelationService {
     boolean delete(TenantId tenantId, Cache cache, EntityRelation relation, boolean deleteFromDb) {
         cacheEviction(relation, cache);
         if (deleteFromDb) {
-            return relationDao.deleteRelation(tenantId, relation);
-        } else {
-            return false;
+            try {
+                return relationDao.deleteRelation(tenantId, relation);
+            } catch (ConcurrencyFailureException e) {
+                log.debug("Concurrency exception while deleting relations [{}]", relation, e);
+            }
         }
+        return false;
     }
 
     private void cacheEviction(EntityRelation relation, Cache cache) {
