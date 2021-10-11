@@ -25,7 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -450,15 +449,17 @@ public class RuleChainController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChains/import", method = RequestMethod.POST)
     @ResponseBody
-    public void importRuleChains(@RequestBody RuleChainData ruleChainData, @RequestParam(required = false, defaultValue = "false") boolean overwrite) throws ThingsboardException {
+    public List<RuleChainImportResult> importRuleChains(@RequestBody RuleChainData ruleChainData, @RequestParam(required = false, defaultValue = "false") boolean overwrite) throws ThingsboardException {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
-            List<RuleChainImportResult> importResults = ruleChainService.importTenantRuleChains(tenantId, ruleChainData, RuleChainType.CORE, overwrite);
-            if (!CollectionUtils.isEmpty(importResults)) {
-                for (RuleChainImportResult importResult : importResults) {
-                    tbClusterService.broadcastEntityStateChangeEvent(importResult.getTenantId(), importResult.getRuleChainId(), importResult.getLifecycleEvent());
+            List<RuleChainImportResult> importResults = ruleChainService.importTenantRuleChains(tenantId, ruleChainData, overwrite);
+            for (RuleChainImportResult importResult : importResults) {
+                if (importResult.getError() == null) {
+                    tbClusterService.broadcastEntityStateChangeEvent(importResult.getTenantId(), importResult.getRuleChainId(),
+                            importResult.isUpdated() ? ComponentLifecycleEvent.UPDATED : ComponentLifecycleEvent.CREATED);
                 }
             }
+            return importResults;
         } catch (Exception e) {
             throw handleException(e);
         }
