@@ -79,6 +79,8 @@ public class EdgeController extends BaseController {
     public static final String EDGE_SECURITY_CHECK = "If the user has the authority of 'Tenant Administrator', the server checks that the edge is owned by the same tenant. " +
             "If the user has the authority of 'Customer User', the server checks that the edge is assigned to the same customer.";
 
+    @ApiOperation(value = "Is edges support enabled (isEdgesSupportEnabled)",
+            notes = "Returns 'true' if edges support enabled on server, 'false' - otherwise.")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/edges/enabled", method = RequestMethod.GET)
     @ResponseBody
@@ -397,7 +399,7 @@ public class EdgeController extends BaseController {
 
     @ApiOperation(value = "Set root rule chain for provided edge (setRootRuleChain)",
             notes = "Change root rule chain of the edge from the current to the new provided rule chain. \n" +
-                    "This operation will send an notification to remote edge service to update root rule chain remotely.")
+                    "This operation will send a notification to remote edge service to update root rule chain remotely.")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/{ruleChainId}/root", method = RequestMethod.POST)
     @ResponseBody
@@ -592,7 +594,8 @@ public class EdgeController extends BaseController {
     }
 
     @ApiOperation(value = "Sync edge (syncEdge)",
-            notes = "Starts synchronization process between edge and cloud - all entities that are assigned to particular edge are going to be send to remote edge service.")
+            notes = "Starts synchronization process between edge and cloud. \n" +
+                    "All entities that are assigned to particular edge are going to be send to remote edge service.")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/sync/{edgeId}", method = RequestMethod.POST)
     public void syncEdge(@PathVariable("edgeId") String strEdgeId) throws ThingsboardException {
@@ -613,7 +616,7 @@ public class EdgeController extends BaseController {
     }
 
     @ApiOperation(value = "Find missing rule chains (findMissingToRelatedRuleChains)",
-            notes = "Returns list of rule chains IDs that are not assigned to particular edge, but these rule chains are present in the already assigned rule chains to edge")
+            notes = "Returns list of rule chains ids that are not assigned to particular edge, but these rule chains are present in the already assigned rule chains to edge")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/missingToRelatedRuleChains/{edgeId}", method = RequestMethod.GET)
     @ResponseBody
