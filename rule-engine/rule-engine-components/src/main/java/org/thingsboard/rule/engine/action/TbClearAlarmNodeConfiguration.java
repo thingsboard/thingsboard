@@ -31,7 +31,7 @@ public class TbClearAlarmNodeConfiguration extends TbAbstractAlarmNodeConfigurat
                 "if (metadata.prevAlarmDetails) {\n" +
                 "    details = JSON.parse(metadata.prevAlarmDetails);\n" +
                 "    //remove prevAlarmDetails from metadata\n" +
-                "    metadata.delete('prevAlarmDetails')\n" +
+                "    delete metadata.prevAlarmDetails;\n" +
                 "    //now metadata is the same as it comes IN this rule node" +
                 "}\n" +
                 "//***PLACE YOUR CODE BELOW***\n" +
