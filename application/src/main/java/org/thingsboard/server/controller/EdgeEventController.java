@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -45,17 +47,28 @@ public class EdgeEventController extends BaseController {
 
     public static final String EDGE_ID = "edgeId";
 
+    @ApiOperation(value = "Get Edge Events (getEdgeEvents)",
+            notes = "Returns a page of edge events for the requested edge. " +
+                    PAGE_DATA_PARAMETERS)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/events", method = RequestMethod.GET)
     @ResponseBody
     public PageData<EdgeEvent> getEdgeEvents(
+            @ApiParam(value = EDGE_ID_PARAM_DESCRIPTION)
             @PathVariable(EDGE_ID) String strEdgeId,
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION)
             @RequestParam int pageSize,
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION)
             @RequestParam int page,
+            @ApiParam(value = EDGE_EVENT_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
+            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = SORT_PROPERTY_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortProperty,
+            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder,
+            @ApiParam(value = "Timestamp. Edge events with creation time before it won't be queried")
             @RequestParam(required = false) Long startTime,
+            @ApiParam(value = "Timestamp. Edge events with creation time after it won't be queried")
             @RequestParam(required = false) Long endTime) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
         try {

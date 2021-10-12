@@ -174,7 +174,7 @@ public abstract class BaseController {
     protected final String SORT_ORDER_ALLOWABLE_VALUES = "ASC, DESC";
     protected final String DEVICE_INFO_DESCRIPTION = "Device Info is an extension of the default Device object that contains information about the assigned customer name and device profile name. ";
 
-
+    protected final String EDGE_EVENT_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the edge event type name.";
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     protected static final String DEFAULT_DASHBOARD = "defaultDashboardId";
