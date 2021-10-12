@@ -162,19 +162,27 @@ public abstract class BaseController {
     public static final String TENANT_ID_PARAM_DESCRIPTION = "A string value representing the tenant id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     public static final String EDGE_ID_PARAM_DESCRIPTION = "A string value representing the edge id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     public static final String CUSTOMER_ID_PARAM_DESCRIPTION = "A string value representing the customer id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
+    public static final String ASSET_ID_PARAM_DESCRIPTION = "A string value representing the asset id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
+
 
     protected final String PAGE_SIZE_DESCRIPTION = "Maximum amount of entities in a one page";
     protected final String PAGE_NUMBER_DESCRIPTION = "Sequence number of page starting from 0";
     protected final String DEVICE_TYPE_DESCRIPTION = "Device type as the name of the device profile";
+    protected final String ASSET_TYPE_DESCRIPTION = "Asset type";
     protected final String DEVICE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the device name.";
     protected final String CUSTOMER_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the customer name.";
-    protected final String SORT_PROPERTY_DESCRIPTION = "Property of device to sort by";
+    protected final String ASSET_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the asset name.";
+    protected final String SORT_PROPERTY_DESCRIPTION = "Property of entity to sort by";
     protected final String SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, label, type";
-    protected final String SORT_ORDER_DESCRIPTION = "Sort order. ASC (ASCENDING) or DESCENDING (DESC)";
+    protected final String CUSTOMER_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title";
+    protected final String SORT_ORDER_DESCRIPTION = "Sort order. ASC (ASCENDING) or DESC (DESCENDING)";
     protected final String SORT_ORDER_ALLOWABLE_VALUES = "ASC, DESC";
     protected final String DEVICE_INFO_DESCRIPTION = "Device Info is an extension of the default Device object that contains information about the assigned customer name and device profile name. ";
+    protected final String ASSET_INFO_DESCRIPTION = "Asset Info is an extension of the default Asset object that contains information about the assigned customer name. ";
 
 
+    protected final String DEVICE_NAME_DESCRIPTION = "A string value representing the Device name.";
+    protected final String ASSET_NAME_DESCRIPTION = "A string value representing the Asset name.";
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     protected static final String DEFAULT_DASHBOARD = "defaultDashboardId";
@@ -920,7 +928,7 @@ public abstract class BaseController {
         PageDataIterableByTenantIdEntityId<EdgeId> relatedEdgeIdsIterator =
                 new PageDataIterableByTenantIdEntityId<>(edgeService::findRelatedEdgeIdsByEntityId, tenantId, entityId, DEFAULT_PAGE_SIZE);
         List<EdgeId> result = new ArrayList<>();
-        for(EdgeId edgeId : relatedEdgeIdsIterator) {
+        for (EdgeId edgeId : relatedEdgeIdsIterator) {
             result.add(edgeId);
         }
         return result;

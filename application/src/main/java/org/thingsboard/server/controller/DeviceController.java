@@ -120,8 +120,8 @@ public class DeviceController extends BaseController {
 
     @ApiOperation(value = "Get Device Info (getDeviceInfoById)",
             notes = "Fetch the Device Info object based on the provided Device Id. " +
-            "If the user has the authority of 'Tenant Administrator', the server checks that the device is owned by the same tenant. " +
-            "If the user has the authority of 'Customer User', the server checks that the device is assigned to the same customer. " + DEVICE_INFO_DESCRIPTION)
+                    "If the user has the authority of 'Tenant Administrator', the server checks that the device is owned by the same tenant. " +
+                    "If the user has the authority of 'Customer User', the server checks that the device is assigned to the same customer. " + DEVICE_INFO_DESCRIPTION)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/info/{deviceId}", method = RequestMethod.GET)
     @ResponseBody
@@ -138,8 +138,8 @@ public class DeviceController extends BaseController {
 
     @ApiOperation(value = "Create Or Update Device (saveDevice)",
             notes = "Creates or Updates the Device. Platform generates random device Id and credentials (access token) during device creation. " +
-            "The device id will be present in the response. " +
-            "Specify the device id when you would like to update the device. Referencing non-existing device Id will cause an error.")
+                    "The device id will be present in the response. " +
+                    "Specify the device id when you would like to update the device. Referencing non-existing device Id will cause an error.")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device", method = RequestMethod.POST)
     @ResponseBody
@@ -183,7 +183,7 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Delete device (deleteDevice)",
-            notes = "Deletes the device and it's credentials. Referencing non-existing device Id will cause an error.")
+            notes = "Deletes the device, it's credentials and all the relations (from and to the device). Referencing non-existing device Id will cause an error.")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/device/{deviceId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
@@ -438,12 +438,13 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Get Tenant Device (getTenantDevice)",
-            notes = "Requested device must be owned by tenant of customer that the user belongs to. " +
+            notes = "Requested device must be owned by tenant that the user belongs to. " +
                     "Device name is an unique property of device. So it can be used to identify the device.")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/devices", params = {"deviceName"}, method = RequestMethod.GET)
     @ResponseBody
     public Device getTenantDevice(
+            @ApiParam(value = DEVICE_NAME_DESCRIPTION)
             @RequestParam String deviceName) throws ThingsboardException {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
