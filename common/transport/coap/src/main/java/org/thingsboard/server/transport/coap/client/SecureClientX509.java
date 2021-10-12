@@ -27,6 +27,7 @@ import org.eclipse.californium.scandium.DTLSConnector;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.californium.scandium.dtls.CertificateType;
 import org.eclipse.californium.scandium.dtls.x509.StaticNewAdvancedCertificateVerifier;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -41,7 +42,7 @@ import java.util.concurrent.Executors;
 public class SecureClientX509 {
 
     private final DTLSConnector dtlsConnector;
-    private ExecutorService executor = Executors.newFixedThreadPool(1);
+    private ExecutorService executor = Executors.newFixedThreadPool(1, ThingsBoardThreadFactory.forName(getClass().getSimpleName()));
     private CoapClient coapClient;
 
     public SecureClientX509(DTLSConnector dtlsConnector, String host, int port, String clientKeys, String sharedKeys) throws URISyntaxException {

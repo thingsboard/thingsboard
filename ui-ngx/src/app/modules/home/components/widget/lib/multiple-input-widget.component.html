@@ -108,7 +108,7 @@
       </div>
     </fieldset>
     <div class="mat-padding" fxLayout="row" fxLayoutAlign="end center"
-         *ngIf="entityDetected && settings.showActionButtons">
+         [fxShow]="entityDetected && settings.showActionButtons">
       <button mat-button color="primary" type="button"
               (click)="discardAll()" style="max-height: 50px; margin-right:20px;"
               [disabled]="!multipleInputFormGroup.dirty">
@@ -122,7 +122,7 @@
     </div>
   </div>
   <div class="tb-multiple-input__errors" fxLayout="column" fxLayoutAlign="center center" style="height: 100%;"
-       *ngIf="!entityDetected || !isAllParametersValid">
+       *ngIf="(!entityDetected || !isAllParametersValid) && datasourceDetected">
     <div style="text-align: center; font-size: 18px; color: #a0a0a0;" [fxHide]="entityDetected">
       {{ 'widgets.input-widgets.no-entity-selected' | translate }}
     </div>

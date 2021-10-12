@@ -29,6 +29,9 @@ import org.thingsboard.server.service.ttl.AbstractCleanUpService;
 @Service
 public class EventsCleanUpService extends AbstractCleanUpService {
 
+    public static final String RANDOM_DELAY_INTERVAL_MS_EXPRESSION =
+            "#{T(org.apache.commons.lang3.RandomUtils).nextLong(0, ${sql.ttl.events.execution_interval_ms})}";
+
     @Value("${sql.ttl.events.events_ttl}")
     private long ttl;
 
@@ -45,7 +48,7 @@ public class EventsCleanUpService extends AbstractCleanUpService {
         this.eventService = eventService;
     }
 
-    @Scheduled(initialDelayString = "${sql.ttl.events.execution_interval_ms}", fixedDelayString = "${sql.ttl.events.execution_interval_ms}")
+    @Scheduled(initialDelayString = RANDOM_DELAY_INTERVAL_MS_EXPRESSION, fixedDelayString = "${sql.ttl.events.execution_interval_ms}")
     public void cleanUp() {
         if (ttlTaskExecutionEnabled && isSystemTenantPartitionMine()) {
             eventService.cleanupEvents(ttl, debugTtl);

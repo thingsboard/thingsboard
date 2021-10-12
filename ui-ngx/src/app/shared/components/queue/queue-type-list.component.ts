@@ -34,6 +34,10 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { QueueService } from '@core/http/queue.service';
 import { ServiceType } from '@shared/models/queue.models';
 
+interface Queue {
+  queueName: string;
+}
+
 @Component({
   selector: 'tb-queue-type-list',
   templateUrl: './queue-type-list.component.html',
@@ -48,7 +52,7 @@ export class QueueTypeListComponent implements ControlValueAccessor, OnInit, Aft
 
   queueFormGroup: FormGroup;
 
-  modelValue: string | null;
+  modelValue: Queue | null;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -67,9 +71,9 @@ export class QueueTypeListComponent implements ControlValueAccessor, OnInit, Aft
 
   @ViewChild('queueInput', {static: true}) queueInput: ElementRef<HTMLInputElement>;
 
-  filteredQueues: Observable<Array<string>>;
+  filteredQueues: Observable<Array<Queue>>;
 
-  queues: Observable<Array<string>>;
+  queues: Observable<Array<Queue>>;
 
   searchText = '';
 
@@ -99,9 +103,15 @@ export class QueueTypeListComponent implements ControlValueAccessor, OnInit, Aft
         debounceTime(150),
         distinctUntilChanged(),
         tap(value => {
-          this.updateView(value);
+          let modelValue;
+          if (typeof value === 'string' || !value) {
+            modelValue = null;
+          } else {
+            modelValue = value;
+          }
+          this.updateView(modelValue);
         }),
-        map(value => value ? value : ''),
+        map(value => value ? (typeof value === 'string' ? value : value.queueName) : ''),
         switchMap(queue => this.fetchQueues(queue) )
       );
   }
@@ -123,8 +133,8 @@ export class QueueTypeListComponent implements ControlValueAccessor, OnInit, Aft
 
   writeValue(value: string | null): void {
     this.searchText = '';
-    this.modelValue = value;
-    this.queueFormGroup.get('queue').patchValue(value, {emitEvent: false});
+    this.modelValue = value ? { queueName: value } : null;
+    this.queueFormGroup.get('queue').patchValue(this.modelValue, {emitEvent: false});
     this.dirty = true;
   }
 
@@ -135,42 +145,42 @@ export class QueueTypeListComponent implements ControlValueAccessor, OnInit, Aft
     }
   }
 
-  updateView(value: string | null) {
+  updateView(value: Queue | null) {
     if (this.modelValue !== value) {
       this.modelValue = value;
-      this.propagateChange(this.modelValue);
+      this.propagateChange(this.modelValue ? this.modelValue.queueName : null);
     }
   }
 
-  displayQueueFn(queue?: string): string | undefined {
-    return queue ? queue : undefined;
+  displayQueueFn(queue?: Queue): string | undefined {
+    return queue ? queue.queueName : undefined;
   }
 
-  fetchQueues(searchText?: string): Observable<Array<string>> {
+  fetchQueues(searchText?: string): Observable<Array<Queue>> {
     this.searchText = searchText;
     return this.getQueues().pipe(
-      catchError(() => of([])),
+      catchError(() => of([] as Array<Queue>)),
       map(queues => {
         const result = queues.filter( queue => {
-          return searchText ? queue.toUpperCase().startsWith(searchText.toUpperCase()) : true;
+          return searchText ? queue.queueName.toUpperCase().startsWith(searchText.toUpperCase()) : true;
         });
         if (result.length) {
-          if (searchText && searchText.length && result.indexOf(searchText) === -1) {
-            result.push(searchText);
-          }
-          result.sort();
-        } else if (searchText && searchText.length) {
-          result.push(searchText);
+          result.sort((q1, q2) => q1.queueName.localeCompare(q2.queueName));
         }
         return result;
       })
     );
   }
 
-  getQueues(): Observable<Array<string>> {
+  getQueues(): Observable<Array<Queue>> {
     if (!this.queues) {
       this.queues = this.queueService.
       getTenantQueuesByServiceType(this.queueType, {ignoreLoading: true}).pipe(
+        map((queues) => {
+          return queues.map((queueName) => {
+            return { queueName };
+          });
+        }),
         publishReplay(1),
         refCount()
       );

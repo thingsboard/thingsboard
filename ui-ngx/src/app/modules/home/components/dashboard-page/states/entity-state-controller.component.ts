@@ -23,7 +23,7 @@ import { StateControllerComponent } from './state-controller.component';
 import { StatesControllerService } from '@home/components/dashboard-page/states/states-controller.service';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { UtilsService } from '@core/services/utils.service';
-import { base64toObj, insertVariable, isEmpty, objToBase64URI } from '@app/core/utils';
+import { base64toObj, insertVariable, isEmpty, objToBase64 } from '@app/core/utils';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -277,7 +277,9 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
   private gotoState(stateId: string, update: boolean, openRightLayout?: boolean) {
     const isStateIdChanged = this.dashboardCtrl.dashboardCtx.state !== stateId;
     this.dashboardCtrl.openDashboardState(stateId, openRightLayout);
-    this.mobileService.handleDashboardStateName(this.getStateName(this.stateObject.length - 1));
+    if (this.syncStateWithQueryParam) {
+      this.mobileService.handleDashboardStateName(this.getStateName(this.stateObject.length - 1));
+    }
     if (update) {
       this.updateLocation(isStateIdChanged);
     }
@@ -289,7 +291,7 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
       if (this.isDefaultState()) {
         newState = null;
       } else {
-        newState = objToBase64URI(this.stateObject);
+        newState = objToBase64(this.stateObject);
       }
       this.updateStateParam(newState, !isStateIdChanged);
     }

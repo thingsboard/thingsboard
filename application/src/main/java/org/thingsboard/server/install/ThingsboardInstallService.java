@@ -200,7 +200,10 @@ public class ThingsboardInstallService {
 
                             dataUpdateService.updateData("3.2.2");
                             systemDataLoaderService.createOAuth2Templates();
-
+                        case "3.3.0":
+                            log.info("Upgrading ThingsBoard from version 3.3.0 to 3.3.1 ...");
+                        case "3.3.1":
+                            log.info("Upgrading ThingsBoard from version 3.3.1 to 3.3.2 ...");
                             log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();
                             break;

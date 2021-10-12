@@ -20,6 +20,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
+import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;
 
 import java.util.Optional;
 
@@ -32,12 +33,14 @@ public abstract class LwM2MClientOtaInfo<Strategy, State, Result> {
 
     protected String targetName;
     protected String targetVersion;
+    protected String targetTag;
     protected String targetUrl;
 
     //TODO: use value from device if applicable;
     protected Strategy strategy;
     protected State updateState;
     protected Result result;
+    protected OtaPackageUpdateStatus status;
 
     protected String failedPackageId;
     protected int retryAttempts;
@@ -52,10 +55,11 @@ public abstract class LwM2MClientOtaInfo<Strategy, State, Result> {
         this.strategy = strategy;
     }
 
-    public void updateTarget(String targetName, String targetVersion, Optional<String> newTargetUrl) {
+    public void updateTarget(String targetName, String targetVersion, Optional<String> newTargetUrl, Optional<String> newTargetTag) {
         this.targetName = targetName;
         this.targetVersion = targetVersion;
         this.targetUrl = newTargetUrl.orElse(null);
+        this.targetTag = newTargetTag.orElse(null);
     }
 
     @JsonIgnore
@@ -64,13 +68,18 @@ public abstract class LwM2MClientOtaInfo<Strategy, State, Result> {
             return false;
         } else {
             String targetPackageId = getPackageId(targetName, targetVersion);
-            String currentPackageIdUsingObject5 = getPackageId(currentName, currentVersion);
+            String currentPackageId = getPackageId(currentName, currentVersion);
             if (StringUtils.isNotEmpty(failedPackageId) && failedPackageId.equals(targetPackageId)) {
                 return false;
             } else {
-                if (targetPackageId.equals(currentPackageIdUsingObject5)) {
+                if (targetPackageId.equals(currentPackageId)) {
+                    return false;
+                } else if (StringUtils.isNotEmpty(targetTag) && targetTag.equals(currentPackageId)) {
                     return false;
                 } else if (StringUtils.isNotEmpty(currentVersion3)) {
+                    if (StringUtils.isNotEmpty(targetTag) && currentVersion3.contains(targetTag)) {
+                        return false;
+                    }
                     return !currentVersion3.contains(targetPackageId);
                 } else {
                     return true;
@@ -84,6 +93,11 @@ public abstract class LwM2MClientOtaInfo<Strategy, State, Result> {
         return StringUtils.isNotEmpty(currentName) || StringUtils.isNotEmpty(currentVersion) || StringUtils.isNotEmpty(currentVersion3);
     }
 
+    @JsonIgnore
+    public boolean isAssigned() {
+        return StringUtils.isNotEmpty(targetName) && StringUtils.isNotEmpty(targetVersion);
+    }
+
     public abstract void update(Result result);
 
     protected static String getPackageId(String name, String version) {
@@ -92,4 +106,8 @@ public abstract class LwM2MClientOtaInfo<Strategy, State, Result> {
 
     public abstract OtaPackageType getType();
 
+    @JsonIgnore
+    public String getTargetPackageId() {
+        return getPackageId(targetName, targetVersion);
+    }
 }

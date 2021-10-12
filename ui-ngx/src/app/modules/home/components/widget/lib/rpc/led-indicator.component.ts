@@ -44,6 +44,8 @@ interface LedIndicatorSettings {
   valueAttribute: string;
   parseValueFunction: string;
   requestTimeout: number;
+  requestPersistent: boolean;
+  persistentPollingInterval: number;
 }
 
 @Component({
@@ -77,6 +79,8 @@ export class LedIndicatorComponent extends PageComponent implements OnInit, OnDe
 
   private isSimulated: boolean;
   private requestTimeout: number;
+  private requestPersistent: boolean;
+  private persistentPollingInterval: number;
   private retrieveValueMethod: RetrieveValueMethod;
   private parseValueFunction: (data: any) => boolean;
   private performCheckStatus: boolean;
@@ -141,6 +145,7 @@ export class LedIndicatorComponent extends PageComponent implements OnInit, OnDe
     if (this.ledResize$) {
       this.ledResize$.disconnect();
     }
+    this.ctx.controlApi.completedCommand();
   }
 
   private init() {
@@ -167,6 +172,14 @@ export class LedIndicatorComponent extends PageComponent implements OnInit, OnDe
     this.requestTimeout = 500;
     if (settings.requestTimeout) {
       this.requestTimeout = settings.requestTimeout;
+    }
+    this.requestPersistent = false;
+    if (settings.requestPersistent) {
+      this.requestPersistent = settings.requestPersistent;
+    }
+    this.persistentPollingInterval = 5000;
+    if (settings.persistentPollingInterval) {
+      this.persistentPollingInterval = settings.persistentPollingInterval;
     }
     this.retrieveValueMethod = 'attribute';
     if (settings.retrieveValueMethod && settings.retrieveValueMethod.length) {
@@ -219,11 +232,11 @@ export class LedIndicatorComponent extends PageComponent implements OnInit, OnDe
       fontSize--;
       textWidth = this.measureTextWidth(text, fontSize);
     }
-    element.css({fontSize: fontSize+'px', lineHeight: fontSize+'px'});
+    element.css({fontSize: fontSize + 'px', lineHeight: fontSize + 'px'});
   }
 
   private measureTextWidth(text: string, fontSize: number): number {
-    this.textMeasure.css({fontSize: fontSize+'px', lineHeight: fontSize+'px'});
+    this.textMeasure.css({fontSize: fontSize + 'px', lineHeight: fontSize + 'px'});
     this.textMeasure.text(text);
     return this.textMeasure.width();
   }
@@ -259,7 +272,8 @@ export class LedIndicatorComponent extends PageComponent implements OnInit, OnDe
       return;
     }
     this.error = '';
-    this.ctx.controlApi.sendTwoWayCommand(this.checkStatusMethod, null, this.requestTimeout).subscribe(
+    this.ctx.controlApi.sendTwoWayCommand(this.checkStatusMethod, null, this.requestTimeout,
+      this.requestPersistent, this.persistentPollingInterval).subscribe(
       (responseBody) => {
         const status = !!responseBody;
         if (status) {
@@ -313,7 +327,7 @@ export class LedIndicatorComponent extends PageComponent implements OnInit, OnDe
     );
   }
 
-  private onDataUpdated (subscription: IWidgetSubscription, detectChanges: boolean) {
+  private onDataUpdated(subscription: IWidgetSubscription, detectChanges: boolean) {
     let value = false;
     const data = subscription.data;
     if (data.length) {

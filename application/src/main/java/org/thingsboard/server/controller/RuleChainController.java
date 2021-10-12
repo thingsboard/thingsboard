@@ -50,6 +50,7 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageDataIterableByTenant;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rule.DefaultRuleChainCreateRequest;
@@ -70,6 +71,7 @@ import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -85,6 +87,8 @@ public class RuleChainController extends BaseController {
 
     public static final String RULE_CHAIN_ID = "ruleChainId";
     public static final String RULE_NODE_ID = "ruleNodeId";
+
+    private static final int DEFAULT_PAGE_SIZE = 1000;
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
     public static final int TIMEOUT = 20;
@@ -145,7 +149,7 @@ public class RuleChainController extends BaseController {
             RuleChain savedRuleChain = checkNotNull(ruleChainService.saveRuleChain(ruleChain));
 
             if (RuleChainType.CORE.equals(savedRuleChain.getType())) {
-                tbClusterService.onEntityStateChange(ruleChain.getTenantId(), savedRuleChain.getId(),
+                tbClusterService.broadcastEntityStateChangeEvent(ruleChain.getTenantId(), savedRuleChain.getId(),
                         created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
             }
 
@@ -179,7 +183,7 @@ public class RuleChainController extends BaseController {
 
             RuleChain savedRuleChain = installScripts.createDefaultRuleChain(getCurrentUser().getTenantId(), request.getName());
 
-            tbClusterService.onEntityStateChange(savedRuleChain.getTenantId(), savedRuleChain.getId(), ComponentLifecycleEvent.CREATED);
+            tbClusterService.broadcastEntityStateChangeEvent(savedRuleChain.getTenantId(), savedRuleChain.getId(), ComponentLifecycleEvent.CREATED);
 
             logEntityAction(savedRuleChain.getId(), savedRuleChain, null, ActionType.ADDED, null);
 
@@ -206,7 +210,7 @@ public class RuleChainController extends BaseController {
                 if (previousRootRuleChain != null) {
                     previousRootRuleChain = ruleChainService.findRuleChainById(getTenantId(), previousRootRuleChain.getId());
 
-                    tbClusterService.onEntityStateChange(previousRootRuleChain.getTenantId(), previousRootRuleChain.getId(),
+                    tbClusterService.broadcastEntityStateChangeEvent(previousRootRuleChain.getTenantId(), previousRootRuleChain.getId(),
                             ComponentLifecycleEvent.UPDATED);
 
                     logEntityAction(previousRootRuleChain.getId(), previousRootRuleChain,
@@ -214,7 +218,7 @@ public class RuleChainController extends BaseController {
                 }
                 ruleChain = ruleChainService.findRuleChainById(getTenantId(), ruleChainId);
 
-                tbClusterService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(),
+                tbClusterService.broadcastEntityStateChangeEvent(ruleChain.getTenantId(), ruleChain.getId(),
                         ComponentLifecycleEvent.UPDATED);
 
                 logEntityAction(ruleChain.getId(), ruleChain,
@@ -250,7 +254,7 @@ public class RuleChainController extends BaseController {
             RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.loadRuleChainMetaData(tenantId, ruleChainMetaData.getRuleChainId()));
 
             if (RuleChainType.CORE.equals(ruleChain.getType())) {
-                tbClusterService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.UPDATED);
+                tbClusterService.broadcastEntityStateChangeEvent(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.UPDATED);
             }
 
             logEntityAction(ruleChain.getId(), ruleChain,
@@ -319,9 +323,9 @@ public class RuleChainController extends BaseController {
 
             if (RuleChainType.CORE.equals(ruleChain.getType())) {
                 referencingRuleChainIds.forEach(referencingRuleChainId ->
-                        tbClusterService.onEntityStateChange(ruleChain.getTenantId(), referencingRuleChainId, ComponentLifecycleEvent.UPDATED));
+                        tbClusterService.broadcastEntityStateChangeEvent(ruleChain.getTenantId(), referencingRuleChainId, ComponentLifecycleEvent.UPDATED));
 
-                tbClusterService.onEntityStateChange(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.DELETED);
+                tbClusterService.broadcastEntityStateChangeEvent(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.DELETED);
             }
 
             logEntityAction(ruleChainId, ruleChain,
@@ -452,7 +456,7 @@ public class RuleChainController extends BaseController {
             List<RuleChainImportResult> importResults = ruleChainService.importTenantRuleChains(tenantId, ruleChainData, RuleChainType.CORE, overwrite);
             if (!CollectionUtils.isEmpty(importResults)) {
                 for (RuleChainImportResult importResult : importResults) {
-                    tbClusterService.onEntityStateChange(importResult.getTenantId(), importResult.getRuleChainId(), importResult.getLifecycleEvent());
+                    tbClusterService.broadcastEntityStateChangeEvent(importResult.getTenantId(), importResult.getRuleChainId(), importResult.getLifecycleEvent());
                 }
             }
         } catch (Exception e) {
@@ -479,7 +483,7 @@ public class RuleChainController extends BaseController {
         return objectMapper.writeValueAsString(resultNode);
     }
 
-    private JsonNode convertMsgToOut(TbMsg msg) throws Exception{
+    private JsonNode convertMsgToOut(TbMsg msg) throws Exception {
         ObjectNode msgData = objectMapper.createObjectNode();
         if (!StringUtils.isEmpty(msg.getData())) {
             msgData.set("msg", objectMapper.readTree(msg.getData()));
@@ -502,7 +506,7 @@ public class RuleChainController extends BaseController {
             Edge edge = checkEdgeId(edgeId, Operation.READ);
 
             RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
-            checkRuleChain(ruleChainId, Operation.ASSIGN_TO_EDGE);
+            checkRuleChain(ruleChainId, Operation.READ);
 
             RuleChain savedRuleChain = checkNotNull(ruleChainService.assignRuleChainToEdge(getCurrentUser().getTenantId(), ruleChainId, edgeId));
 
@@ -534,7 +538,7 @@ public class RuleChainController extends BaseController {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
             Edge edge = checkEdgeId(edgeId, Operation.READ);
             RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
-            RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.UNASSIGN_FROM_EDGE);
+            RuleChain ruleChain = checkRuleChain(ruleChainId, Operation.READ);
 
             RuleChain savedRuleChain = checkNotNull(ruleChainService.unassignRuleChainFromEdge(getCurrentUser().getTenantId(), ruleChainId, edgeId, false));
 
@@ -634,13 +638,20 @@ public class RuleChainController extends BaseController {
         }
     }
 
+    // TODO: @voba refactor this - add new config to edge rule chain to set it as auto-assign
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChain/autoAssignToEdgeRuleChains", method = RequestMethod.GET)
     @ResponseBody
     public List<RuleChain> getAutoAssignToEdgeRuleChains() throws ThingsboardException {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
-            return checkNotNull(ruleChainService.findAutoAssignToEdgeRuleChainsByTenantId(tenantId)).get();
+            List<RuleChain> result = new ArrayList<>();
+            PageDataIterableByTenant<RuleChain> autoAssignRuleChainsIterator =
+                    new PageDataIterableByTenant<>(ruleChainService::findAutoAssignToEdgeRuleChainsByTenantId, tenantId, DEFAULT_PAGE_SIZE);
+            for (RuleChain ruleChain : autoAssignRuleChainsIterator) {
+                result.add(ruleChain);
+            }
+            return checkNotNull(result);
         } catch (Exception e) {
             throw handleException(e);
         }

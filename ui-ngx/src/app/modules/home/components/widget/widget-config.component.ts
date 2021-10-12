@@ -228,7 +228,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     });
     this.layoutSettings = this.fb.group({
       mobileOrder: [null, [Validators.pattern(/^-?[0-9]+$/)]],
-      mobileHeight: [null, [Validators.min(1), Validators.max(10), Validators.pattern(/^\d*$/)]]
+      mobileHeight: [null, [Validators.min(1), Validators.max(10), Validators.pattern(/^\d*$/)]],
+      mobileHide: [false]
     });
     this.actionsSettings = this.fb.group({
       actionsData: [null, []]
@@ -502,7 +503,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           this.layoutSettings.patchValue(
             {
               mobileOrder: layout.mobileOrder,
-              mobileHeight: layout.mobileHeight
+              mobileHeight: layout.mobileHeight,
+              mobileHide: layout.mobileHide
             },
             {emitEvent: false}
           );
@@ -510,7 +512,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           this.layoutSettings.patchValue(
             {
               mobileOrder: null,
-              mobileHeight: null
+              mobileHeight: null,
+              mobileHide: false
             },
             {emitEvent: false}
           );

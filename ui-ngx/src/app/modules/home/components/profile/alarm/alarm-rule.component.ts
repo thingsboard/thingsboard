@@ -35,6 +35,7 @@ import {
 } from '@home/components/profile/alarm/edit-alarm-details-dialog.component';
 import { EntityId } from '@shared/models/id/entity-id';
 import { DashboardId } from '@shared/models/id/dashboard-id';
+import { UtilsService } from '@core/services/utils.service';
 
 @Component({
   selector: 'tb-alarm-rule',
@@ -79,6 +80,7 @@ export class AlarmRuleComponent implements ControlValueAccessor, OnInit, Validat
   private propagateChange = (v: any) => { };
 
   constructor(private dialog: MatDialog,
+              private utils: UtilsService,
               private fb: FormBuilder) {
   }
 
@@ -144,6 +146,11 @@ export class AlarmRuleComponent implements ControlValueAccessor, OnInit, Validat
         valid: false,
       },
     };
+  }
+
+  get alarmDetailsText(): string {
+    const alarmType = this.alarmRuleFormGroup.get('alarmDetails').value;
+    return this.utils.customTranslation(alarmType, alarmType);
   }
 
   private updateModel() {

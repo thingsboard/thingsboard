@@ -73,7 +73,7 @@
               <input placeholder="{{ !dataSettings.get('alarmTypeList').value?.length ? ('alarm.any-type' | translate) : '' }}"
                      [matChipInputFor]="alarmTypeChipList"
                      [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-                     [matChipInputAddOnBlur]="true"
+                     matChipInputAddOnBlur
                      (matChipInputTokenEnd)="addAlarmType($event)">
             </mat-chip-list>
           </mat-form-field>
@@ -418,6 +418,9 @@
         <span translate>widget-config.mobile-mode-settings</span>
         <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
              fxLayoutGap="8px">
+          <mat-checkbox formControlName="mobileHide">
+            {{ 'widget-config.mobile-hide' | translate }}
+          </mat-checkbox>
           <mat-form-field fxFlex>
             <mat-label translate>widget-config.order</mat-label>
             <input matInput formControlName="mobileOrder" type="number" step="1">

@@ -18,40 +18,32 @@
 <section [formGroup]="instancesListFormGroup" class="lwm2m-instances-list">
   <mat-form-field class="mat-block">
     <mat-label>{{ 'device-profile.lwm2m.instances-list' | translate }}</mat-label>
-    <mat-chip-list>
+    <mat-chip-list #chipList formControlName="instanceList" [required]="required" (focus)="onFocus()">
       <mat-chip
         *ngFor="let instanceId of instancesId"
-        [selectable]="true"
-        [removable]="true"
+        [selectable]="!disabled"
+        [removable]="!disabled"
         (removed)="remove(instanceId)">
         {{instanceId}}
-        <mat-icon matChipRemove>close</mat-icon>
+        <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
       </mat-chip>
+      <input matInput type="text"
+             #instanceId
+             style="max-width: 70px;"
+             formControlName="instanceId"
+             [matChipInputFor]="chipList"
+             [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+             matChipInputAddOnBlur
+             (matChipInputTokenEnd)="add($event)">
     </mat-chip-list>
-  </mat-form-field>
-  <mat-form-field class="mat-block">
-    <mat-label>{{ 'device-profile.lwm2m.instances-input' | translate }}</mat-label>
-    <input fxFlexFill matInput type='text'
-           placeholder="{{'device-profile.lwm2m.instances-input-holder' | translate}}"
-           formControlName="instanceIdInput">
-    <button mat-icon-button matSuffix
-            (click)="add()" type="button">
-      <mat-icon>add</mat-icon>
-    </button>
-    <mat-error *ngIf="instancesListFormGroup.get('instanceIdInput').hasError('min')">
-      {{ 'device-profile.lwm2m.valid-id-instance' | translate: {
-      count: 2, instance: instanceId, min: instanceIdValueMin
-    } }}
+    <mat-error *ngIf="instancesListFormGroup.get('instanceList').hasError('required')">
+      {{ 'device-profile.lwm2m.instances-list-required' | translate }}
     </mat-error>
-    <mat-error *ngIf="instancesListFormGroup.get('instanceIdInput').hasError('max')">
-      {{ 'device-profile.lwm2m.valid-id-instance' | translate: {
-      count: 1, instance: instanceId, max: instanceIdValueMax
-    } }}
+    <mat-error *ngIf="instancesListFormGroup.get('instanceId').hasError('pattern')">
+      {{ 'device-profile.lwm2m.instance-id-pattern' | translate }}
     </mat-error>
-    <mat-error *ngIf="instancesListFormGroup.get('instanceIdInput').hasError('pattern')">
-      {{ 'device-profile.lwm2m.valid-id-instance' | translate: {
-      count: 0, instance: instanceId, max: instanceIdValueMax
-    } }}
+    <mat-error *ngIf="instancesListFormGroup.get('instanceId').hasError('max')">
+      {{ 'device-profile.lwm2m.instance-id-max' | translate: {max: instanceIdValueMax} }}
     </mat-error>
   </mat-form-field>
 </section>

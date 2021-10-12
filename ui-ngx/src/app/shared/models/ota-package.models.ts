@@ -91,6 +91,7 @@ export interface OtaPackageInfo extends BaseData<OtaPackageId> {
   deviceProfileId?: DeviceProfileId;
   title?: string;
   version?: string;
+  tag?: string;
   hasData?: boolean;
   url?: string;
   fileName: string;
@@ -99,6 +100,7 @@ export interface OtaPackageInfo extends BaseData<OtaPackageId> {
   contentType: string;
   dataSize?: number;
   additionalInfo?: any;
+  isURL?: boolean;
 }
 
 export interface OtaPackage extends OtaPackageInfo {

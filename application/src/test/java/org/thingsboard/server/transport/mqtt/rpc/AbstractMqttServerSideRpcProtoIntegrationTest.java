@@ -56,13 +56,13 @@ public abstract class AbstractMqttServerSideRpcProtoIntegrationTest extends Abst
             "package rpc;\n" +
             "\n" +
             "message RpcRequestMsg {\n" +
-            "  string method = 1;\n" +
-            "  int32 requestId = 2;\n" +
+            "  optional string method = 1;\n" +
+            "  optional int32 requestId = 2;\n" +
             "  Params params = 3;\n" +
             "\n" +
             "  message Params {\n" +
-            "      string pin = 1;\n" +
-            "      int32 value = 2;\n" +
+            "      optional string pin = 1;\n" +
+            "      optional int32 value = 2;\n" +
             "   }\n" +
             "}";
 
@@ -78,12 +78,32 @@ public abstract class AbstractMqttServerSideRpcProtoIntegrationTest extends Abst
 
     @Test
     public void testServerMqttOneWayRpc() throws Exception {
-        processOneWayRpcTest();
+        processOneWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC);
+    }
+
+    @Test
+    public void testServerMqttOneWayRpcOnShortTopic() throws Exception {
+        processOneWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_TOPIC);
+    }
+
+    @Test
+    public void testServerMqttOneWayRpcOnShortProtoTopic() throws Exception {
+        processOneWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_PROTO_TOPIC);
     }
 
     @Test
     public void testServerMqttTwoWayRpc() throws Exception {
-        processTwoWayRpcTest();
+        processTwoWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC);
+    }
+
+    @Test
+    public void testServerMqttTwoWayRpcOnShortTopic() throws Exception {
+        processTwoWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_TOPIC);
+    }
+
+    @Test
+    public void testServerMqttTwoWayRpcOnShortProtoTopic() throws Exception {
+        processTwoWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_PROTO_TOPIC);
     }
 
     @Test
@@ -118,9 +138,9 @@ public abstract class AbstractMqttServerSideRpcProtoIntegrationTest extends Abst
         return builder.build();
     }
 
-    protected void processTwoWayRpcTest() throws Exception {
+    protected void processTwoWayRpcTest(String rpcSubTopic) throws Exception {
         MqttAsyncClient client = getMqttAsyncClient(accessToken);
-        client.subscribe(MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC, 1);
+        client.subscribe(rpcSubTopic, 1);
 
         CountDownLatch latch = new CountDownLatch(1);
         TestMqttCallback callback = new TestMqttCallback(client, latch);
@@ -131,7 +151,7 @@ public abstract class AbstractMqttServerSideRpcProtoIntegrationTest extends Abst
         String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"26\",\"value\": 1}}";
         String deviceId = savedDevice.getId().getId().toString();
 
-        String result = doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().isOk());
+        String result = doPostAsync("/api/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().isOk());
         String expected = "{\"payload\":\"{\\\"value1\\\":\\\"A\\\",\\\"value2\\\":\\\"B\\\"}\"}";
         latch.await(3, TimeUnit.SECONDS);
         Assert.assertEquals(expected, result);
@@ -139,7 +159,7 @@ public abstract class AbstractMqttServerSideRpcProtoIntegrationTest extends Abst
 
     protected MqttMessage processMessageArrived(String requestTopic, MqttMessage mqttMessage) throws MqttException, InvalidProtocolBufferException {
         MqttMessage message = new MqttMessage();
-        if (requestTopic.startsWith(MqttTopics.BASE_DEVICE_API_TOPIC)) {
+        if (requestTopic.startsWith(MqttTopics.BASE_DEVICE_API_TOPIC) || requestTopic.startsWith(MqttTopics.BASE_DEVICE_API_TOPIC_V2)) {
             ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = getProtoTransportPayloadConfiguration();
             ProtoFileElement rpcRequestProtoSchemaFile = protoTransportPayloadConfiguration.getTransportProtoSchema(RPC_REQUEST_PROTO_SCHEMA);
             DynamicSchema rpcRequestProtoSchema = protoTransportPayloadConfiguration.getDynamicSchema(rpcRequestProtoSchemaFile, ProtoTransportPayloadConfiguration.RPC_REQUEST_PROTO_SCHEMA);

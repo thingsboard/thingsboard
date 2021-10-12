@@ -16,7 +16,7 @@
 
 import { FormattedData, MapProviders, ReplaceInfo } from '@home/components/widget/lib/maps/map-models';
 import {
-  createLabelFromDatasource,
+  createLabelFromDatasource, deepClone,
   hashCode,
   isDefined,
   isDefinedAndNotNull,
@@ -318,7 +318,7 @@ export const parseWithTranslation = {
   }
 };
 
-export function parseData(input: DatasourceData[]): FormattedData[] {
+export function parseData(input: DatasourceData[], dataIndex?: number): FormattedData[] {
   return _(input).groupBy(el => el?.datasource.entityName + el?.datasource.entityType)
     .values().value().map((entityArray, i) => {
       const obj: FormattedData = {
@@ -330,17 +330,33 @@ export function parseData(input: DatasourceData[]): FormattedData[] {
         deviceType: null
       };
       entityArray.filter(el => el.data.length).forEach(el => {
-        const indexDate = el.data.length ? el.data.length - 1 : 0;
-        if (!obj.hasOwnProperty(el.dataKey.label) || el.data[indexDate][1] !== '') {
-          obj[el.dataKey.label] = el.data[indexDate][1];
-          obj[el.dataKey.label + '|ts'] = el.data[indexDate][0];
+        dataIndex = isDefined(dataIndex) ? dataIndex : el.data.length - 1;
+        if (!obj.hasOwnProperty(el.dataKey.label) || el.data[dataIndex][1] !== '') {
+          obj[el.dataKey.label] = el.data[dataIndex][1];
+          obj[el.dataKey.label + '|ts'] = el.data[dataIndex][0];
           if (el.dataKey.label === 'type') {
-            obj.deviceType = el.data[indexDate][1];
+            obj.deviceType = el.data[dataIndex][1];
           }
         }
       });
       return obj;
     });
+}
+
+export function flatData(input: FormattedData[]): FormattedData {
+  let result: FormattedData = {} as FormattedData;
+  if (input.length) {
+    for (const toMerge of input) {
+      result = {...result, ...toMerge};
+    }
+    result.entityName =  input[0].entityName;
+    result.entityId =  input[0].entityId;
+    result.entityType =  input[0].entityType;
+    result.$datasource =  input[0].$datasource;
+    result.dsIndex =  input[0].dsIndex;
+    result.deviceType =  input[0].deviceType;
+  }
+  return result;
 }
 
 export function parseArray(input: DatasourceData[]): FormattedData[][] {

@@ -677,7 +677,7 @@
         "credentials-type": "Тип учетных данных",
         "access-token": "Токен",
         "access-token-required": "Токен обязателен.",
-        "access-token-invalid": "Длина токена должна быть от 1 до 20 символов.",
+        "access-token-invalid": "Длина токена должна быть от 1 до 32 символов.",
         "rsa-key": "Открытый ключ RSA",
         "rsa-key-required": "Открытый ключ RSA обязателен.",
         "secret": "Секрет",
@@ -1262,7 +1262,11 @@
         "profile": "Профиль",
         "last-login-time": "Время последнего входа в систему",
         "change-password": "Изменить пароль",
-        "current-password": "Текущий пароль"
+        "current-password": "Текущий пароль",
+        "copy-jwt-token": "Копировать JWT токен",
+        "valid-till": "Действителен до {{expirationData}}",
+        "tokenCopiedMessage": "JWT токен скопирован в буфер обмена",
+        "tokenCopiedWarnMessage": "JWT токен недействителен! Перезагрузите страницу."
     },
     "relation": {
         "relations": "Отношения",
@@ -1510,7 +1514,9 @@
         "disable-account": "Отключить учетную запись пользователя",
         "enable-account": "Включить учетную запись пользователя",
         "enable-account-message": "Учетная запись пользователя была успешно включена!",
-        "disable-account-message": "Учетная запись пользователя была успешно отключена!"
+        "disable-account-message": "Учетная запись пользователя была успешно отключена!",
+        "copyId": "Копировать ИД пользователя",
+        "idCopiedMessage": "ИД пользователя скопирован в буфер обмена"
     },
     "value": {
         "type": "Тип значения",

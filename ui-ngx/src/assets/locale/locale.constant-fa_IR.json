@@ -640,7 +640,7 @@
         "credentials-type": "نوع اعتبارنامه ها",
         "access-token": "شناسه دسترسي",
         "access-token-required": ".شناسه دسترسي مورد نياز است",
-        "access-token-invalid": ".طول شناسه دسترسي بايد از 1 تا 20 حرف باشد",
+        "access-token-invalid": ".طول شناسه دسترسي بايد از 1 تا 32 حرف باشد",
         "rsa-key": "RSA کليد عمومي",
         "rsa-key-required": ".مورد نياز است RSA کليد عمومي",
         "secret": "محرمانه",

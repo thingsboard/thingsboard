@@ -21,7 +21,6 @@ import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
@@ -124,7 +123,7 @@ public abstract class AbstractCoapAttributesRequestProtoIntegrationTest extends 
                 .setField(postAttributesMsgDescriptor.findFieldByName("attribute5"), jsonObject)
                 .build();
         byte[] payload = postAttributesMsg.toByteArray();
-        CoapClient client = getCoapClient(FeatureType.ATTRIBUTES);
+        client = getCoapClient(FeatureType.ATTRIBUTES);
         CoapResponse coapResponse = client.setTimeout(CLIENT_REQUEST_TIMEOUT).post(payload, MediaTypeRegistry.APPLICATION_JSON);
         assertEquals(CoAP.ResponseCode.CREATED, coapResponse.getCode());
     }

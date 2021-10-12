@@ -47,7 +47,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
@@ -65,6 +64,9 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
 
     @Autowired
     private EventInsertRepository eventInsertRepository;
+
+    @Autowired
+    private EventCleanupRepository eventCleanupRepository;
 
     @Override
     protected Class<EventEntity> getEntityClass() {
@@ -263,21 +265,7 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
     @Override
     public void cleanupEvents(long otherEventsTtl, long debugEventsTtl) {
         log.info("Going to cleanup old events using debug events ttl: {}s and other events ttl: {}s", debugEventsTtl, otherEventsTtl);
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement stmt = connection.prepareStatement("call cleanup_events_by_ttl(?,?,?)")) {
-            stmt.setLong(1, otherEventsTtl);
-            stmt.setLong(2, debugEventsTtl);
-            stmt.setLong(3, 0);
-            stmt.setQueryTimeout((int) TimeUnit.HOURS.toSeconds(1));
-            stmt.execute();
-            printWarnings(stmt);
-            try (ResultSet resultSet = stmt.getResultSet()){
-                resultSet.next();
-                log.info("Total events removed by TTL: [{}]", resultSet.getLong(1));
-            }
-        } catch (SQLException e) {
-            log.error("SQLException occurred during events TTL task execution ", e);
-        }
+        eventCleanupRepository.cleanupEvents(otherEventsTtl, debugEventsTtl);
     }
 
     public Optional<Event> save(EventEntity entity, boolean ifNotExists) {

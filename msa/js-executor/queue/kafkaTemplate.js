@@ -190,6 +190,16 @@ async function sendMessagesAsBatch(isImmediately) {
         removeListeners[COMMIT_OFFSETS] = consumer.on(COMMIT_OFFSETS, e => logger.info(`consumer COMMIT_OFFSETS topics ${e.payload.topics}`));
 */
 
+        const { CRASH } = consumer.events;
+
+        consumer.on(CRASH, e => {
+            logger.error(`Got consumer CRASH event, should restart: ${e.payload.restart}`);
+            if (!e.payload.restart) {
+                logger.error('Going to exit due to not retryable error!');
+                exit(-1);
+            }
+        });
+
         const messageProcessor = new JsInvokeMessageProcessor(new KafkaProducer());
         await consumer.connect();
         await producer.connect();

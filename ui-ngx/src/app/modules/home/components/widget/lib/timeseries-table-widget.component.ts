@@ -19,7 +19,6 @@ import {
   Component,
   ElementRef,
   Input,
-  NgZone,
   OnInit,
   QueryList,
   ViewChild,
@@ -54,16 +53,23 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
   CellContentInfo,
   CellStyleInfo,
+  checkHasActions,
   constructTableCssString,
   getCellContentInfo,
   getCellStyleInfo,
   getRowStyleInfo,
+  getTableCellButtonActions,
+  prepareTableCellButtonActions,
   RowStyleInfo,
-  TableWidgetDataKeySettings, TableWidgetSettings
+  TableCellButtonActionDescriptor,
+  TableWidgetDataKeySettings,
+  TableWidgetSettings
 } from '@home/components/widget/lib/table-widget.models';
 import { Overlay } from '@angular/cdk/overlay';
 import { SubscriptionEntityInfo } from '@core/api/widget-api.models';
 import { DatePipe } from '@angular/common';
+import { parseData } from '@home/components/widget/lib/maps/common-maps-utils';
+import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 export interface TimeseriesTableWidgetSettings extends TableWidgetSettings {
   showTimestamp: boolean;
@@ -72,6 +78,8 @@ export interface TimeseriesTableWidgetSettings extends TableWidgetSettings {
 }
 
 interface TimeseriesRow {
+  actionCellButtons?: TableCellButtonActionDescriptor[];
+  hasActions?: boolean;
   [col: number]: any;
   formattedTs: string;
 }
@@ -116,9 +124,9 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   public pageSizeOptions;
   public textSearchMode = false;
   public textSearch: string = null;
-  public actionCellDescriptors: WidgetActionDescriptor[];
   public sources: TimeseriesTableSource[];
   public sourceIndex: number;
+  private setCellButtonAction: boolean;
 
   private cellContentCache: Array<any> = [];
   private cellStyleCache: Array<any> = [];
@@ -151,7 +159,6 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
 
   constructor(protected store: Store<AppState>,
               private elementRef: ElementRef,
-              private ngZone: NgZone,
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
               private utils: UtilsService,
@@ -199,12 +206,13 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   public onDataUpdated() {
     this.updateCurrentSourceData();
     this.clearCache();
+    this.ctx.detectChanges();
   }
 
   private initialize() {
     this.ctx.widgetActions = [this.searchAction ];
 
-    this.actionCellDescriptors = this.ctx.actionsApi.getActionDescriptors('actionCellButton');
+    this.setCellButtonAction = !!this.ctx.actionsApi.getActionDescriptors('actionCellButton').length;
 
     this.searchAction.show = isDefined(this.settings.enableSearch) ? this.settings.enableSearch : true;
     this.displayPagination = isDefined(this.settings.displayPagination) ? this.settings.displayPagination : true;
@@ -288,10 +296,10 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
           cellContentInfo.decimals = dataKey.decimals;
           source.contentsInfo.push(cellContentInfo);
         }
-        if (this.actionCellDescriptors.length) {
+        if (this.setCellButtonAction) {
           source.displayedColumns.push('actions');
         }
-        const tsDatasource = new TimeseriesDatasource(source, this.hideEmptyLines, this.dateFormatFilter, this.datePipe, this.ngZone);
+        const tsDatasource = new TimeseriesDatasource(source, this.hideEmptyLines, this.dateFormatFilter, this.datePipe, this.ctx);
         tsDatasource.dataUpdated(this.data);
         this.sources.push(source);
       }
@@ -570,13 +578,24 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
   private allRowsSubject = new BehaviorSubject<TimeseriesRow[]>([]);
   private allRows$: Observable<Array<TimeseriesRow>> = this.allRowsSubject.asObservable();
 
+  public countCellButtonAction = 0;
+
+  private reserveSpaceForHiddenAction = true;
+  private cellButtonActions: TableCellButtonActionDescriptor[];
+  private readonly usedShowCellActionFunction: boolean;
+
   constructor(
     private source: TimeseriesTableSource,
     private hideEmptyLines: boolean,
     private dateFormatFilter: string,
     private datePipe: DatePipe,
-    private ngZone: NgZone
+    private widgetContext: WidgetContext
   ) {
+    this.cellButtonActions = getTableCellButtonActions(widgetContext);
+    this.usedShowCellActionFunction = this.cellButtonActions.some(action => action.useShowActionCellButtonFunction);
+    if (this.widgetContext.settings.reserveSpaceForHiddenAction) {
+      this.reserveSpaceForHiddenAction = coerceBooleanProperty(this.widgetContext.settings.reserveSpaceForHiddenAction);
+    }
     this.source.timeseriesDatasource = this;
   }
 
@@ -598,10 +617,8 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
       catchError(() => of(emptyPageData<TimeseriesRow>())),
     ).subscribe(
       (pageData) => {
-        this.ngZone.run(() => {
-          this.rowsSubject.next(pageData.data);
-          this.pageDataSubject.next(pageData);
-        });
+        this.rowsSubject.next(pageData.data);
+        this.pageDataSubject.next(pageData);
       }
     );
   }
@@ -620,13 +637,24 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
     const rowsMap: {[timestamp: number]: TimeseriesRow} = {};
     for (let d = 0; d < data.length; d++) {
       const columnData = data[d].data;
-      columnData.forEach((cellData) => {
+      columnData.forEach((cellData, index) => {
         const timestamp = cellData[0];
         let row = rowsMap[timestamp];
         if (!row) {
           row = {
             formattedTs: this.datePipe.transform(timestamp, this.dateFormatFilter)
           };
+          if (this.cellButtonActions.length) {
+            if (this.usedShowCellActionFunction) {
+              const parsedData = parseData(data, index);
+              row.actionCellButtons = prepareTableCellButtonActions(this.widgetContext, this.cellButtonActions,
+                                                                    parsedData[0], this.reserveSpaceForHiddenAction);
+              row.hasActions = checkHasActions(row.actionCellButtons);
+            } else {
+              row.hasActions = true;
+              row.actionCellButtons = this.cellButtonActions;
+            }
+          }
           row[0] = timestamp;
           for (let c = 0; c < data.length; c++) {
             row[c + 1] = undefined;
@@ -670,7 +698,19 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
 
   private fetchRows(pageLink: PageLink): Observable<PageData<TimeseriesRow>> {
     return this.allRows$.pipe(
-      map((data) => pageLink.filterData(data))
+      map((data) => {
+        const fetchData = pageLink.filterData(data);
+        if (this.cellButtonActions.length) {
+          let maxCellButtonAction: number;
+          if (this.usedShowCellActionFunction && !this.reserveSpaceForHiddenAction) {
+            maxCellButtonAction = Math.max(...fetchData.data.map(tsRow => tsRow.actionCellButtons.length));
+          } else {
+            maxCellButtonAction = this.cellButtonActions.length;
+          }
+          this.countCellButtonAction = maxCellButtonAction;
+        }
+        return fetchData;
+      })
     );
   }
 }

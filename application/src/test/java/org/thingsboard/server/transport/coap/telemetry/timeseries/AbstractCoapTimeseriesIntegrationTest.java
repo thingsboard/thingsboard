@@ -56,20 +56,23 @@ public abstract class AbstractCoapTimeseriesIntegrationTest extends AbstractCoap
 
     @Test
     public void testPushTelemetry() throws Exception {
-        processTestPostTelemetry(null, false);
+        processJsonPayloadTelemetryTest(PAYLOAD_VALUES_STR.getBytes(), false);
     }
 
     @Test
     public void testPushTelemetryWithTs() throws Exception {
         String payloadStr = "{\"ts\": 10000, \"values\": " + PAYLOAD_VALUES_STR + "}";
-        processTestPostTelemetry(payloadStr.getBytes(), true);
+        processJsonPayloadTelemetryTest(payloadStr.getBytes(), true);
     }
 
-    protected void processTestPostTelemetry(byte[] payloadBytes, boolean withTs) throws Exception {
-        log.warn("[testPushTelemetry] Device: {}, Transport type: {}", savedDevice.getName(), savedDevice.getType());
+    protected void processJsonPayloadTelemetryTest(byte[] payloadBytes, boolean withTs) throws Exception {
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        CoapClient coapClient = getCoapClient(FeatureType.TELEMETRY);
-        postTelemetry(coapClient, payloadBytes);
+        processTestPostTelemetry(payloadBytes, expectedKeys, withTs, false);
+    }
+
+    protected void processTestPostTelemetry(byte[] payloadBytes, List<String> expectedKeys, boolean withTs, boolean presenceFieldsTest) throws Exception {
+        client = getCoapClient(FeatureType.TELEMETRY);
+        postTelemetry(client, payloadBytes);
 
         String deviceId = savedDevice.getId().getId().toString();
 
@@ -130,13 +133,14 @@ public abstract class AbstractCoapTimeseriesIntegrationTest extends AbstractCoap
         if (withTs) {
             assertTs(values, expectedKeys, 10000, 0);
         }
-        assertValues(values, 0);
+        if (presenceFieldsTest) {
+            assertExplicitProtoFieldValues(values);
+        } else {
+            assertValues(values, 0);
+        }
     }
 
     private void postTelemetry(CoapClient client, byte[] payload) throws IOException, ConnectorException {
-        if (payload == null) {
-            payload = PAYLOAD_VALUES_STR.getBytes();
-        }
         CoapResponse coapResponse = client.setTimeout((long) 60000).post(payload, MediaTypeRegistry.APPLICATION_JSON);
         assertEquals(CoAP.ResponseCode.CREATED, coapResponse.getCode());
     }
@@ -174,5 +178,29 @@ public abstract class AbstractCoapTimeseriesIntegrationTest extends AbstractCoap
         }
     }
 
+    private void assertExplicitProtoFieldValues(Map<String, List<Map<String, Object>>> deviceValues) {
+        for (Map.Entry<String, List<Map<String, Object>>> entry : deviceValues.entrySet()) {
+            String key = entry.getKey();
+            List<Map<String, Object>> tsKv = entry.getValue();
+            String value = (String) tsKv.get(0).get("value");
+            switch (key) {
+                case "key1":
+                    assertEquals("", value);
+                    break;
+                case "key2":
+                    assertEquals("false", value);
+                    break;
+                case "key3":
+                    assertEquals("0.0", value);
+                    break;
+                case "key4":
+                    assertEquals("0", value);
+                    break;
+                case "key5":
+                    assertEquals("{\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}", value);
+                    break;
+            }
+        }
+    }
 
 }

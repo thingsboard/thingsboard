@@ -37,12 +37,13 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.edge.imitator.EdgeImitator;
-import org.thingsboard.server.gen.edge.AssetUpdateMsg;
-import org.thingsboard.server.gen.edge.DeviceProfileUpdateMsg;
-import org.thingsboard.server.gen.edge.DeviceUpdateMsg;
-import org.thingsboard.server.gen.edge.RuleChainUpdateMsg;
-import org.thingsboard.server.gen.edge.UserCredentialsUpdateMsg;
-import org.thingsboard.server.gen.edge.UserUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.AdminSettingsUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -657,7 +658,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
 
         Device device = new Device();
         device.setName("Edge Device 1");
-        device.setType("test");
+        device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
         doPost("/api/edge/" + edge.getId().getId().toString()
                 + "/device/" + savedDevice.getId().getId().toString(), Device.class);
@@ -671,29 +672,27 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
 
         EdgeImitator edgeImitator = new EdgeImitator("localhost", 7070, edge.getRoutingKey(), edge.getSecret());
         edgeImitator.ignoreType(UserCredentialsUpdateMsg.class);
-        edgeImitator.expectMessageAmount(7);
+
+        edgeImitator.expectMessageAmount(11);
         edgeImitator.connect();
         Assert.assertTrue(edgeImitator.waitForMessages());
 
-        Assert.assertEquals(7, edgeImitator.getDownlinkMsgs().size());
-        Assert.assertTrue(edgeImitator.findMessageByType(RuleChainUpdateMsg.class).isPresent());
-        Assert.assertTrue(edgeImitator.findMessageByType(DeviceProfileUpdateMsg.class).isPresent());
-        Assert.assertTrue(edgeImitator.findMessageByType(DeviceUpdateMsg.class).isPresent());
-        Assert.assertTrue(edgeImitator.findMessageByType(AssetUpdateMsg.class).isPresent());
-        Assert.assertTrue(edgeImitator.findMessageByType(UserUpdateMsg.class).isPresent());
+        Assert.assertEquals(2, edgeImitator.findAllMessagesByType(RuleChainUpdateMsg.class).size()); // one msg during sync process, another from edge creation
+        Assert.assertEquals(1, edgeImitator.findAllMessagesByType(DeviceProfileUpdateMsg.class).size()); // one msg during sync process for 'default' device profile
+        Assert.assertEquals(1, edgeImitator.findAllMessagesByType(DeviceUpdateMsg.class).size()); // one msg once device assigned to edge
+        Assert.assertEquals(2, edgeImitator.findAllMessagesByType(AssetUpdateMsg.class).size()); // two msgs - one during sync process, and one more once asset assigned to edge
+        Assert.assertEquals(1, edgeImitator.findAllMessagesByType(UserUpdateMsg.class).size()); // one msg during sync process for tenant admin user
+        Assert.assertEquals(4, edgeImitator.findAllMessagesByType(AdminSettingsUpdateMsg.class).size());
 
-        edgeImitator.getDownlinkMsgs().clear();
-
-        edgeImitator.expectMessageAmount(7);
+        edgeImitator.expectMessageAmount(8);
         doPost("/api/edge/sync/" + edge.getId());
         Assert.assertTrue(edgeImitator.waitForMessages());
 
-        Assert.assertEquals(7, edgeImitator.getDownlinkMsgs().size());
-        Assert.assertTrue(edgeImitator.findMessageByType(RuleChainUpdateMsg.class).isPresent());
-        Assert.assertTrue(edgeImitator.findMessageByType(DeviceProfileUpdateMsg.class).isPresent());
-        Assert.assertTrue(edgeImitator.findMessageByType(DeviceUpdateMsg.class).isPresent());
-        Assert.assertTrue(edgeImitator.findMessageByType(AssetUpdateMsg.class).isPresent());
-        Assert.assertTrue(edgeImitator.findMessageByType(UserUpdateMsg.class).isPresent());
+        Assert.assertEquals(1, edgeImitator.findAllMessagesByType(RuleChainUpdateMsg.class).size());
+        Assert.assertEquals(1, edgeImitator.findAllMessagesByType(DeviceProfileUpdateMsg.class).size());
+        Assert.assertEquals(1, edgeImitator.findAllMessagesByType(AssetUpdateMsg.class).size());
+        Assert.assertEquals(1, edgeImitator.findAllMessagesByType(UserUpdateMsg.class).size());
+        Assert.assertEquals(4, edgeImitator.findAllMessagesByType(AdminSettingsUpdateMsg.class).size());
 
         edgeImitator.allowIgnoredTypes();
         try {

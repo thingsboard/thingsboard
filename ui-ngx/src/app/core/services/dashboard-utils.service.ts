@@ -389,7 +389,8 @@ export class DashboardUtilsService {
       sizeX: originalSize ? originalSize.sizeX : widget.sizeX,
       sizeY: originalSize ? originalSize.sizeY : widget.sizeY,
       mobileOrder: widget.config.mobileOrder,
-      mobileHeight: widget.config.mobileHeight
+      mobileHeight: widget.config.mobileHeight,
+      mobileHide: widget.config.mobileHide
     };
     if (isUndefined(originalColumns)) {
       originalColumns = 24;

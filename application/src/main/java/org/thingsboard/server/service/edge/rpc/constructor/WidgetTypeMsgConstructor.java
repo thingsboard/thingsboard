@@ -16,12 +16,12 @@
 package org.thingsboard.server.service.edge.rpc.constructor;
 
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.widget.WidgetType;
-import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.gen.edge.UpdateMsgType;
-import org.thingsboard.server.gen.edge.WidgetTypeUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
+import org.thingsboard.server.gen.edge.v1.WidgetTypeUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 @Component
@@ -33,21 +33,21 @@ public class WidgetTypeMsgConstructor {
                 .setMsgType(msgType)
                 .setIdMSB(widgetType.getId().getId().getMostSignificantBits())
                 .setIdLSB(widgetType.getId().getId().getLeastSignificantBits());
-                if (widgetType.getBundleAlias() != null) {
-                    builder.setBundleAlias(widgetType.getBundleAlias());
-                }
-                if (widgetType.getAlias() != null) {
-                    builder.setAlias(widgetType.getAlias());
-                }
-                if (widgetType.getName() != null) {
-                    builder.setName(widgetType.getName());
-                }
-                if (widgetType.getDescriptor() != null) {
-                    builder.setDescriptorJson(JacksonUtil.toString(widgetType.getDescriptor()));
-                }
-                if (widgetType.getTenantId().equals(TenantId.SYS_TENANT_ID)) {
-                   builder.setIsSystem(true);
-                }
+        if (widgetType.getBundleAlias() != null) {
+            builder.setBundleAlias(widgetType.getBundleAlias());
+        }
+        if (widgetType.getAlias() != null) {
+            builder.setAlias(widgetType.getAlias());
+        }
+        if (widgetType.getName() != null) {
+            builder.setName(widgetType.getName());
+        }
+        if (widgetType.getDescriptor() != null) {
+            builder.setDescriptorJson(JacksonUtil.toString(widgetType.getDescriptor()));
+        }
+        if (widgetType.getTenantId().equals(TenantId.SYS_TENANT_ID)) {
+            builder.setIsSystem(true);
+        }
         return builder.build();
     }
 

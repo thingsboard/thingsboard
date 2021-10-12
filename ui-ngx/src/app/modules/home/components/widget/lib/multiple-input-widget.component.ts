@@ -109,6 +109,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   private datasources: Array<Datasource>;
   private destroy$ = new Subject();
   public sources: Array<MultipleInputWidgetSource> = [];
+  private isSavingInProgress = false;
 
   isVerticalAlignment: boolean;
   inputWidthSettings: string;
@@ -117,6 +118,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   resetButtonLabel: string;
 
   entityDetected = false;
+  datasourceDetected = false;
   isAllParametersValid = true;
 
   multipleInputFormGroup: FormGroup;
@@ -162,7 +164,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   private initializeConfig() {
 
     if (this.settings.widgetTitle && this.settings.widgetTitle.length) {
-      this.ctx.widgetTitle = this.utils.customTranslation(this.settings.widgetTitle, this.settings.widgetTitle);
+      const titlePatternText = this.utils.customTranslation(this.settings.widgetTitle, this.settings.widgetTitle);
+      this.ctx.widgetTitle = createLabelFromDatasource(this.datasources[0], titlePatternText);
     } else {
       this.ctx.widgetTitle = this.ctx.widgetConfig.title;
     }
@@ -202,7 +205,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   }
 
   private updateDatasources() {
-    if (this.datasources && this.datasources.length) {
+    this.datasourceDetected = this.datasources?.length !== 0;
+    if (this.datasourceDetected) {
       this.entityDetected = true;
       let keyIndex = 0;
       this.datasources.forEach((datasource) => {
@@ -465,7 +469,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   }
 
   public inputChanged(source: MultipleInputWidgetSource, key: MultipleInputWidgetDataKey) {
-    if (!this.settings.showActionButtons) {
+    if (!this.settings.showActionButtons && !this.isSavingInProgress) {
+      this.isSavingInProgress = true;
       const currentValue = this.multipleInputFormGroup.get(key.formId).value;
       if (!key.settings.required || (key.settings.required && isDefined(currentValue))) {
         const dataToSave: MultipleInputWidgetSource = {
@@ -478,7 +483,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   }
 
   public save(dataToSave?: MultipleInputWidgetSource) {
-    if (document && document.activeElement) {
+    if (document?.activeElement && !this.isSavingInProgress) {
+      this.isSavingInProgress = true;
       (document.activeElement as HTMLElement).blur();
     }
     const config: RequestConfig = {
@@ -495,8 +501,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
       const serverAttributes: AttributeData[] = [];
       const sharedAttributes: AttributeData[] = [];
       const telemetry: AttributeData[] = [];
-      for (const key of this.visibleKeys(toSave)) {
-        const currentValue = this.multipleInputFormGroup.get(key.formId).value;
+      for (const key of toSave.keys) {
+        const currentValue = key.settings.dataKeyHidden ? key.value : this.multipleInputFormGroup.get(key.formId).value;
         if (!isEqual(currentValue, key.value) || this.settings.updateAllValues) {
           const attribute: AttributeData = {
             key: key.name,
@@ -568,12 +574,14 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
         () => {
           this.multipleInputFormGroup.markAsPristine();
           this.ctx.detectChanges();
+          this.isSavingInProgress = false;
           if (this.settings.showResultMessage) {
             this.ctx.showSuccessToast(this.translate.instant('widgets.input-widgets.update-successful'),
               1000, 'bottom', 'left', this.toastTargetId);
           }
         },
         () => {
+          this.isSavingInProgress = false;
           if (this.settings.showResultMessage) {
             this.ctx.showErrorToast(this.translate.instant('widgets.input-widgets.update-failed'),
               'bottom', 'left', this.toastTargetId);
@@ -582,6 +590,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
     } else {
       this.multipleInputFormGroup.markAsPristine();
       this.ctx.detectChanges();
+      this.isSavingInProgress = false;
     }
   }
 

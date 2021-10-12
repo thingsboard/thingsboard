@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbEmail;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
@@ -52,6 +53,7 @@ public class TbMsgToEmailNode implements TbNode {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final String IMAGES = "images";
+    private static final String DYNAMIC = "dynamic";
 
     private TbMsgToEmailNodeConfiguration config;
     private boolean isDynamicHtmlTemplate;
@@ -59,13 +61,13 @@ public class TbMsgToEmailNode implements TbNode {
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgToEmailNodeConfiguration.class);
-        this.isDynamicHtmlTemplate = this.config.getMailBodyType().equals("dynamic");
+        this.isDynamicHtmlTemplate = DYNAMIC.equals(this.config.getMailBodyType());
      }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         try {
-            EmailPojo email = convert(msg);
+            TbEmail email = convert(msg);
             TbMsg emailMsg = buildEmailMsg(ctx, msg, email);
             ctx.tellNext(emailMsg, SUCCESS);
         } catch (Exception ex) {
@@ -74,13 +76,13 @@ public class TbMsgToEmailNode implements TbNode {
         }
     }
 
-    private TbMsg buildEmailMsg(TbContext ctx, TbMsg msg, EmailPojo email) throws JsonProcessingException {
+    private TbMsg buildEmailMsg(TbContext ctx, TbMsg msg, TbEmail email) throws JsonProcessingException {
         String emailJson = MAPPER.writeValueAsString(email);
         return ctx.transformMsg(msg, SEND_EMAIL_TYPE, msg.getOriginator(), msg.getMetaData().copy(), emailJson);
     }
 
-    private EmailPojo convert(TbMsg msg) throws IOException {
-        EmailPojo.EmailPojoBuilder builder = EmailPojo.builder();
+    private TbEmail convert(TbMsg msg) throws IOException {
+        TbEmail.TbEmailBuilder builder = TbEmail.builder();
         builder.from(fromTemplate(this.config.getFromTemplate(), msg));
         builder.to(fromTemplate(this.config.getToTemplate(), msg));
         builder.cc(fromTemplate(this.config.getCcTemplate(), msg));

@@ -79,13 +79,19 @@ public abstract class TBRedisCacheConfiguration {
 
     protected abstract JedisConnectionFactory loadFactory();
 
+    /**
+     * Transaction aware RedisCacheManager.
+     * Enable RedisCaches to synchronize cache put/evict operations with ongoing Spring-managed transactions.
+     */
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory cf) {
         DefaultFormattingConversionService redisConversionService = new DefaultFormattingConversionService();
         RedisCacheConfiguration.registerDefaultConverters(redisConversionService);
         registerDefaultConverters(redisConversionService);
         RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig().withConversionService(redisConversionService);
-        return RedisCacheManager.builder(cf).cacheDefaults(configuration).build();
+        return RedisCacheManager.builder(cf).cacheDefaults(configuration)
+                .transactionAware()
+                .build();
     }
 
     @Bean
