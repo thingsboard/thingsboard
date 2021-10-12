@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.data;
+package org.thingsboard.server.service.security.model;
 
 import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 @ApiModel
 @Data
-public class DeviceData {
+public class ChangePasswordRequest {
 
-    private DeviceConfiguration configuration;
-    private DeviceTransportConfiguration transportConfiguration;
+    @ApiModelProperty(position = 1, value = "The old password", example = "OldPassword")
+    private String currentPassword;
+    @ApiModelProperty(position = 1, value = "The new password", example = "NewPassword")
+    private String newPassword;
 
 }

@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.data;
+package org.thingsboard.server.service.security.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 @ApiModel
 @Data
-public class DeviceData {
+public class ResetPasswordEmailRequest {
 
-    private DeviceConfiguration configuration;
-    private DeviceTransportConfiguration transportConfiguration;
-
+    @ApiModelProperty(position = 1, value = "The email of the user", example = "user@example.com")
+    private String email;
 }

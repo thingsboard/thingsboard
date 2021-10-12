@@ -20,6 +20,7 @@ import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.annotations.ApiModelProperty;
 import org.thingsboard.server.common.data.EntityType;
 
 public class TenantProfileId extends UUIDBased implements EntityId {
@@ -35,7 +36,7 @@ public class TenantProfileId extends UUIDBased implements EntityId {
         return new TenantProfileId(UUID.fromString(tenantProfileId));
     }
 
-    @JsonIgnore
+    @ApiModelProperty(position = 2, required = true, value = "string", example = "TENANT_PROFILE", allowableValues = "TENANT_PROFILE")
     @Override
     public EntityType getEntityType() {
         return EntityType.TENANT_PROFILE;

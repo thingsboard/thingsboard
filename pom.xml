@@ -85,6 +85,7 @@
         <jar-plugin.version>3.0.2</jar-plugin.version>
         <springfox-swagger.version>2.6.1</springfox-swagger.version>
         <springfox-swagger-ui-rfc6570.version>1.0.0</springfox-swagger-ui-rfc6570.version>
+        <swagger-annotations.version>1.5.10</swagger-annotations.version>
         <spatial4j.version>0.7</spatial4j.version>
         <jts.version>1.15.0</jts.version>
         <bouncycastle.version>1.67</bouncycastle.version>
@@ -1622,6 +1623,11 @@
                 <groupId>io.springfox</groupId>
                 <artifactId>springfox-swagger2</artifactId>
                 <version>${springfox-swagger.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger</groupId>
+                <artifactId>swagger-annotations</artifactId>
+                <version>${swagger-annotations.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.bouncycastle</groupId>

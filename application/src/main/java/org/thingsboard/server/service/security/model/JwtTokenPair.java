@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.data;
+package org.thingsboard.server.service.security.model;
 
 import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
-@ApiModel
+@ApiModel(value = "JWT Token Pair")
 @Data
-public class DeviceData {
+@AllArgsConstructor
+public class JwtTokenPair {
 
-    private DeviceConfiguration configuration;
-    private DeviceTransportConfiguration transportConfiguration;
-
+    @ApiModelProperty(position = 1, value = "The JWT Access Token. Used to perform API calls.", example = "AAB254FF67D..")
+    private String token;
+    @ApiModelProperty(position = 1, value = "The JWT Refresh Token. Used to get new JWT Access Token if old one has expired.", example = "AAB254FF67D..")
+    private String refreshToken;
 }
