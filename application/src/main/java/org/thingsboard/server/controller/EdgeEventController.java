@@ -60,7 +60,7 @@ public class EdgeEventController extends BaseController {
             @RequestParam int pageSize,
             @ApiParam(value = PAGE_NUMBER_DESCRIPTION)
             @RequestParam int page,
-            @ApiParam(value = EDGE_EVENT_TEXT_SEARCH_DESCRIPTION)
+            @ApiParam(value = "The case insensitive 'startsWith' filter based on the edge event type name.")
             @RequestParam(required = false) String textSearch,
             @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = SORT_PROPERTY_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortProperty,
