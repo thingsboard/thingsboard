@@ -162,6 +162,7 @@ public abstract class BaseController {
     public static final String TENANT_ID_PARAM_DESCRIPTION = "A string value representing the tenant id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     public static final String EDGE_ID_PARAM_DESCRIPTION = "A string value representing the edge id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     public static final String CUSTOMER_ID_PARAM_DESCRIPTION = "A string value representing the customer id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
+    protected static final String ENTITY_VIEW_ID_DESCRIPTION = "A string value representing the entity view id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
 
     protected final String PAGE_SIZE_DESCRIPTION = "Maximum amount of entities in a one page";
     protected final String PAGE_NUMBER_DESCRIPTION = "Sequence number of page starting from 0";
