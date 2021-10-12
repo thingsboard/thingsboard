@@ -158,7 +158,7 @@ public class AssetController extends BaseController {
     }
 
     @ApiOperation(value = "Delete asset (deleteAsset)",
-            notes = "Deletes the asset and all the relations (from and to the asset). Referencing non-existing asset Id will cause an error.", produces = MediaType.APPLICATION_JSON_VALUE)
+            notes = "Deletes the asset and all the relations (from and to the asset). Referencing non-existing asset Id will cause an error.")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/asset/{assetId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
