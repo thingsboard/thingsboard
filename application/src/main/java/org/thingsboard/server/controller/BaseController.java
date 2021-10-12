@@ -174,12 +174,12 @@ public abstract class BaseController {
     protected final String SORT_ORDER_ALLOWABLE_VALUES = "ASC, DESC";
     protected final String DEVICE_INFO_DESCRIPTION = "Device Info is an extension of the default Device object that contains information about the assigned customer name and device profile name. ";
 
-
+    protected static final String ENTITY_TYPE_DESCRIPTION = "A string value representing the entity type. For example, 'DEVICE'";
+    protected static final String ENTITY_ID_DESCRIPTION = "A string value representing the entity id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     protected static final String DEFAULT_DASHBOARD = "defaultDashboardId";
     protected static final String HOME_DASHBOARD = "homeDashboardId";
-    public static final String DEVICE_ID_DESCRIPTION = "A string value representing the device id.";
 
     private static final int DEFAULT_PAGE_SIZE = 1000;
 
