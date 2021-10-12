@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2021 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -137,9 +137,11 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Create Or Update Device (saveDevice)",
-            notes = "Creates or Updates the Device. Platform generates random device Id and credentials (access token) during device creation. " +
-                    "The device id will be present in the response. " +
-                    "Specify the device id when you would like to update the device. Referencing non-existing device Id will cause an error.")
+            notes = "Creates or Updates the Device. When creating device, platform generates Device Id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address)" +
+                    "Device credentials are also generated if not provided in the 'accessToken' request parameter. " +
+                    "The newly created device id will be present in the response. " +
+                    "Specify existing Device id to update the device. " +
+                    "Referencing non-existing device Id will cause 'Not Found' error.")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device", method = RequestMethod.POST)
     @ResponseBody

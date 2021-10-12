@@ -114,9 +114,10 @@ public class AssetController extends BaseController {
     }
 
     @ApiOperation(value = "Create Or Update Asset (saveAsset)",
-            notes = "Creates or Updates the Asset. Platform generates random asset Id during asset creation. " +
-                    "The asset id will be present in the response. " +
-                    "Specify the asset id when you would like to update the asset. Referencing non-existing asset Id will cause an error.", produces = MediaType.APPLICATION_JSON_VALUE)
+            notes = "Creates or Updates the Asset. When creating asset, platform generates Asset Id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address)" +
+                    "The newly created asset id will be present in the response. " +
+                    "Specify existing Asset id to update the asset. " +
+                    "Referencing non-existing asset Id will cause 'Not Found' error.", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/asset", method = RequestMethod.POST)
     @ResponseBody
