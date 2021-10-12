@@ -137,9 +137,11 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Create Or Update Device (saveDevice)",
-            notes = "Creates or Updates the Device. Platform generates random device Id and credentials (access token) during device creation. " +
-            "The device id will be present in the response. " +
-            "Specify the device id when you would like to update the device. Referencing non-existing device Id will cause an error.")
+            notes = "Creates or Updates the Device. When creating device, platform generates Device Id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address)" +
+            "Device credentials are also generated if not provided in the 'accessToken' request parameter. " +
+            "The newly created device id will be present in the response. " +
+            "Specify existing Device id to update the device. " +
+            "Referencing non-existing device Id will cause 'Not Found' error.")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device", method = RequestMethod.POST)
     @ResponseBody
