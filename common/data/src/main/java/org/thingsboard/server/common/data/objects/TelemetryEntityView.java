@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data.objects;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -25,11 +27,14 @@ import java.util.List;
 /**
  * Created by Victor Basanets on 9/05/2017.
  */
+@ApiModel
 @Data
 @NoArgsConstructor
 public class TelemetryEntityView implements Serializable {
 
+    @ApiModelProperty(position = 1, required = true, value = "A list of strings representing timeseries", example = "temperature")
     private List<String> timeseries;
+    @ApiModelProperty(position = 2, required = true, value = "JSON object of entity attributes types", readOnly = true)
     private AttributesEntityView attributes;
 
     public TelemetryEntityView(List<String> timeseries, AttributesEntityView attributes) {
