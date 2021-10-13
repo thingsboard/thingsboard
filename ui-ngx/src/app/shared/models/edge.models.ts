@@ -137,6 +137,14 @@ export const edgeEventActionTypeTranslations = new Map<EdgeEventActionType, stri
   ]
 );
 
+export const bodyContentEdgeEventActionTypes: EdgeEventActionType[] = [
+  EdgeEventActionType.POST_ATTRIBUTES,
+  EdgeEventActionType.ATTRIBUTES_UPDATED,
+  EdgeEventActionType.ATTRIBUTES_DELETED,
+  EdgeEventActionType.TIMESERIES_UPDATED,
+  EdgeEventActionType.RPC_CALL
+];
+
 export const edgeEventStatusColor = new Map<EdgeEventStatus, string>(
   [
     [EdgeEventStatus.DEPLOYED, '#000000'],

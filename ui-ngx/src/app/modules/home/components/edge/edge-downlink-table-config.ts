@@ -47,7 +47,7 @@ import { AttributeService } from '@core/http/attribute.service';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { EdgeDownlinkTableHeaderComponent } from '@home/components/edge/edge-downlink-table-header.component';
 import { EdgeService } from '@core/http/edge.service';
-import { map } from 'rxjs/operators';
+import { concatMap, map } from 'rxjs/operators';
 import { EntityService } from "@core/http/entity.service";
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -55,7 +55,7 @@ import { ActionNotificationShow } from '@core/notification/notification.actions'
 
 export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePageLink> {
 
-  queueStartTs: number;
+  private queueStartTs: number;
 
   constructor(private attributeService: AttributeService,
               private datePipe: DatePipe,
@@ -85,19 +85,14 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
     this.updateColumns();
   }
 
-  fetchEvents(pageLink: TimePageLink): Observable<PageData<EdgeEvent>> {
-    this.loadEdgeInfo();
-    return this.edgeService.getEdgeEvents(this.entityId, pageLink);
+  private fetchEvents(pageLink: TimePageLink): Observable<PageData<EdgeEvent>> {
+    return this.attributeService.getEntityAttributes(this.entityId, AttributeScope.SERVER_SCOPE, ['queueStartTs']).pipe(
+      map((attributes) => this.onUpdate(attributes)),
+      concatMap(() => this.edgeService.getEdgeEvents(this.entityId, pageLink))
+    );
   }
 
-  loadEdgeInfo(): void {
-    this.attributeService.getEntityAttributes(this.entityId, AttributeScope.SERVER_SCOPE, ['queueStartTs'])
-      .subscribe(
-        attributes => this.onUpdate(attributes)
-      );
-  }
-
-  onUpdate(attributes): void {
+  private onUpdate(attributes: any): void {
     this.queueStartTs = 0;
     let edge = attributes.reduce(function (map, attribute) {
       map[attribute.key] = attribute;
@@ -108,7 +103,7 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
     }
   }
 
-  updateColumns(updateTableColumns: boolean = false): void {
+  private updateColumns(updateTableColumns: boolean = false): void {
     this.columns = [];
     this.columns.push(
       new DateEntityTableColumn<EdgeEvent>('createdTime', 'event.event-time', this.datePipe, '120px'),
@@ -117,7 +112,7 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
       new EntityTableColumn<EdgeEvent>('action', 'edge.event-action', '25%',
         entity => this.translate.instant(edgeEventActionTypeTranslations.get(entity.action)), entity => ({}), false),
       new EntityTableColumn<EdgeEvent>('entityId', 'edge.entity-id', '40%',
-        (entity) => entity.entityId, entity => ({}), false),
+        (entity) => entity.entityId ? entity.entityId : '', () => ({}), false),
       new EntityTableColumn<EdgeEvent>('status', 'event.status', '10%',
         (entity) => this.updateEdgeEventStatus(entity.createdTime),
         entity => ({
@@ -143,7 +138,7 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
     }
   }
 
-  updateEdgeEventStatus(createdTime: number): string {
+  private updateEdgeEventStatus(createdTime: number): string {
     if (this.queueStartTs && createdTime < this.queueStartTs) {
       return this.translate.instant('edge.deployed');
     } else {
@@ -151,22 +146,22 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
     }
   }
 
-  isPending(createdTime: number): boolean {
+  private isPending(createdTime: number): boolean {
     return createdTime > this.queueStartTs;
   }
 
-  isEdgeEventHasData(entity: EdgeEvent): boolean {
+  private isEdgeEventHasData(entity: EdgeEvent): boolean {
     return !(entity.type === EdgeEventType.ADMIN_SETTINGS ||
              entity.action === EdgeEventActionType.DELETED);
   }
 
-  prepareEdgeEventContent(entity: EdgeEvent): Observable<string> {
+  private prepareEdgeEventContent(entity: EdgeEvent): Observable<string> {
     return this.entityService.getEdgeEventContent(entity).pipe(
       map((result) => JSON.stringify(result))
     );
   }
 
-  showEdgeEventContent($event: MouseEvent, content: string, title: string): void {
+  private showEdgeEventContent($event: MouseEvent, content: string, title: string): void {
     if ($event) {
       $event.stopPropagation();
     }
@@ -181,7 +176,7 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
     });
   }
 
-  showEntityNotFoundError(): void {
+  private showEntityNotFoundError(): void {
     this.store.dispatch(new ActionNotificationShow(
       {
         message: this.translate.instant('edge.load-entity-error'),

@@ -60,14 +60,14 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
         asyncContextTimeoutToUseRpcPlugin = 10000L;
     }
 
-    protected void processOneWayRpcTest() throws Exception {
+    protected void processOneWayRpcTest(String rpcSubTopic) throws Exception {
         MqttAsyncClient client = getMqttAsyncClient(accessToken);
 
         CountDownLatch latch = new CountDownLatch(1);
         TestMqttCallback callback = new TestMqttCallback(client, latch);
         client.setCallback(callback);
 
-        client.subscribe(MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC, MqttQoS.AT_MOST_ONCE.value());
+        client.subscribe(rpcSubTopic, MqttQoS.AT_MOST_ONCE.value());
 
         Thread.sleep(1000);
 
@@ -86,9 +86,9 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
         validateOneWayRpcGatewayResponse(deviceName, client, payloadBytes);
     }
 
-    protected void processTwoWayRpcTest() throws Exception {
+    protected void processTwoWayRpcTest(String rpcSubTopic) throws Exception {
         MqttAsyncClient client = getMqttAsyncClient(accessToken);
-        client.subscribe(MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC, 1);
+        client.subscribe(rpcSubTopic, 1);
 
         CountDownLatch latch = new CountDownLatch(1);
         TestMqttCallback callback = new TestMqttCallback(client, latch);
@@ -199,7 +199,7 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
 
     protected MqttMessage processMessageArrived(String requestTopic, MqttMessage mqttMessage) throws MqttException, InvalidProtocolBufferException {
         MqttMessage message = new MqttMessage();
-        if (requestTopic.startsWith(MqttTopics.BASE_DEVICE_API_TOPIC)) {
+        if (requestTopic.startsWith(MqttTopics.BASE_DEVICE_API_TOPIC) || requestTopic.startsWith(MqttTopics.BASE_DEVICE_API_TOPIC_V2)) {
             message.setPayload(DEVICE_RESPONSE.getBytes(StandardCharset.UTF_8));
         } else {
             JsonNode requestMsgNode = JacksonUtil.toJsonNode(new String(mqttMessage.getPayload(), StandardCharset.UTF_8));
@@ -232,7 +232,12 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
         @Override
         public void messageArrived(String requestTopic, MqttMessage mqttMessage) throws Exception {
             log.info("Message Arrived: " + Arrays.toString(mqttMessage.getPayload()));
-            String responseTopic = requestTopic.replace("request", "response");
+            String responseTopic;
+            if (requestTopic.startsWith(MqttTopics.BASE_DEVICE_API_TOPIC_V2)) {
+                responseTopic = requestTopic.replace("req", "res");
+            } else {
+                responseTopic = requestTopic.replace("request", "response");
+            }
             qoS = mqttMessage.getQos();
             client.publish(responseTopic, processMessageArrived(requestTopic, mqttMessage));
             latch.countDown();

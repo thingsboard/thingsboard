@@ -1775,6 +1775,8 @@
         "attributes-propagation-hint": "Entity View will automatically copy specified attributes from Target Entity each time you save or update this entity view. For performance reasons target entity attributes are not propagated to entity view on each attribute change. You can enable automatic propagation by configuring \"copy to view\" rule node in your rule chain and linking \"Post attributes\" and \"Attributes Updated\" messages to the new rule node.",
         "timeseries-data": "Timeseries data",
         "timeseries-data-hint": "Configure timeseries data keys of the target entity that will be accessible to the entity view. This timeseries data is read-only.",
+        "search": "Search entity views",
+        "selected-entity-views": "{ count, plural, 1 {1 entity view} other {# entity views} } selected",
         "make-public-entity-view-title": "Are you sure you want to make the entity view '{{entityViewName}}' public?",
         "make-public-entity-view-text": "After the confirmation the entity view and all its data will be made public and accessible by others.",
         "make-private-entity-view-title": "Are you sure you want to make the entity view '{{entityViewName}}' private?",
@@ -2169,7 +2171,8 @@
         "scroll-to-top": "Scroll to top"
     },
     "help": {
-        "goto-help-page": "Go to help page"
+        "goto-help-page": "Go to help page",
+        "show-help": "Show help"
     },
     "home": {
         "home": "Home",
@@ -2313,6 +2316,10 @@
         "or": "or",
         "error": "Login error"
     },
+    "markdown": {
+        "copy-code": "Click to copy",
+        "copied": "Copied!"
+    },
     "ota-update": {
       "add": "Add package",
       "assign-firmware": "Assigned firmware",
@@ -2385,7 +2392,11 @@
         "profile": "Profile",
         "last-login-time": "Last Login",
         "change-password": "Change Password",
-        "current-password": "Current password"
+        "current-password": "Current password",
+        "copy-jwt-token": "Copy JWT token",
+        "valid-till": "Valid till {{expirationData}}",
+        "tokenCopiedSuccessMessage": "JWT token has been copied to clipboard",
+        "tokenCopiedWarnMessage": "JWT token is expired! Please, refresh the page."
     },
     "relation": {
         "relations": "Relations",
@@ -2934,12 +2945,33 @@
         "set-entity-from-widget": "Set entity from widget",
         "target-dashboard": "Target dashboard",
         "open-right-layout": "Open right dashboard layout (mobile view)",
+        "state-display-type": "Dashboard state display option",
+        "open-normal": "Normal",
         "open-in-separate-dialog": "Open in separate dialog",
+        "open-in-popover": "Open in popover",
         "dialog-title": "Dialog title",
         "dialog-hide-dashboard-toolbar": "Hide dashboard toolbar in dialog",
         "dialog-width": "Dialog width in percents relative to viewport width",
         "dialog-height": "Dialog height in percents relative to viewport height",
         "dialog-size-range-error": "Dialog size percent value should be in a range from 1 to 100.",
+        "popover-preferred-placement": "Preferred popover placement",
+        "popover-placement-top": "Top",
+        "popover-placement-topLeft": "Top left",
+        "popover-placement-topRight": "Top right",
+        "popover-placement-right": "Right",
+        "popover-placement-rightTop": "Right top",
+        "popover-placement-rightBottom": "Right bottom",
+        "popover-placement-bottom": "Bottom",
+        "popover-placement-bottomLeft": "Bottom left",
+        "popover-placement-bottomRight": "Bottom right",
+        "popover-placement-left": "Left",
+        "popover-placement-leftTop": "Left top",
+        "popover-placement-leftBottom": "Left bottom",
+        "popover-hide-on-click-outside": "Hide popover on outside click",
+        "popover-hide-dashboard-toolbar": "Hide dashboard toolbar in popover",
+        "popover-width": "Popover width in browser units (ex. 100px, 25vw)",
+        "popover-height": "Popover height in browser units (ex. 100px, 25vh)",
+        "popover-style": "Popover style",
         "open-new-browser-tab": "Open in a new browser tab",
         "mobile": {
           "action-type": "Mobile action type",
@@ -3032,6 +3064,7 @@
         "action-name-required": "Action name is required.",
         "action-name-not-unique": "Another action with the same name already exists.<br/>Action name should be unique within the same action source.",
         "action-icon": "Icon",
+        "show-hide-action-using-function": "Show/hide action using function",
         "action-type": "Type",
         "action-type-required": "Action type is required.",
         "edit-action": "Edit action",

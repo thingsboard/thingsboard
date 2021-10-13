@@ -702,6 +702,9 @@ transport:
       parallelism_level: "${SNMP_RESPONSE_PROCESSING_PARALLELISM_LEVEL:20}"
     # to configure SNMP to work over UDP or TCP
     underlying_protocol: "${SNMP_UNDERLYING_PROTOCOL:udp}"
+  stats:
+    enabled: "${TB_TRANSPORT_STATS_ENABLED:true}"
+    print-interval-ms: "${TB_TRANSPORT_STATS_PRINT_INTERVAL_MS:60000}"
 
 # Edges parameters
 edges:

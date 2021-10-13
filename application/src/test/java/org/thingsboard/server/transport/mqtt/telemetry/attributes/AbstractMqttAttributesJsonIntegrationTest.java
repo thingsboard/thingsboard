@@ -20,6 +20,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
+import org.thingsboard.server.common.data.device.profile.MqttTopics;
 
 import java.util.Arrays;
 import java.util.List;
@@ -46,11 +47,17 @@ public abstract class AbstractMqttAttributesJsonIntegrationTest extends Abstract
     }
 
     @Test
+    public void testPushAttributesOnShortTopic() throws Exception {
+        super.testPushAttributesOnShortTopic();
+    }
+
+    @Test
+    public void testPushAttributesOnShortJsonTopic() throws Exception {
+        super.testPushAttributesOnShortJsonTopic();
+    }
+
+    @Test
     public void testPushAttributesGateway() throws Exception {
-        List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
-        String deviceName1 = "Device A";
-        String deviceName2 = "Device B";
-        String payload = getGatewayAttributesJsonPayload(deviceName1, deviceName2);
-        processGatewayAttributesTest(expectedKeys, payload.getBytes(), deviceName1, deviceName2);
+        super.testPushAttributesGateway();
     }
 }

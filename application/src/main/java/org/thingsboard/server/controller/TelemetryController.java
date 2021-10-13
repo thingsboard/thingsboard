@@ -151,8 +151,8 @@ public class TelemetryController extends BaseController {
     @RequestMapping(value = "/{entityType}/{entityId}/keys/attributes", method = RequestMethod.GET)
     @ResponseBody
     public DeferredResult<ResponseEntity> getAttributeKeys(
-            @ApiParam(value = ENTITY_TYPE_DESCRIPTION) @PathVariable("entityType") String entityType,
-            @ApiParam(value = ENTITY_ID_DESCRIPTION) @PathVariable("entityId") String entityIdStr) throws ThingsboardException {
+            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION) @PathVariable("entityType") String entityType,
+            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION) @PathVariable("entityId") String entityIdStr) throws ThingsboardException {
         return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_ATTRIBUTES, entityType, entityIdStr, this::getAttributeKeysCallback);
     }
 
@@ -162,8 +162,8 @@ public class TelemetryController extends BaseController {
     @RequestMapping(value = "/{entityType}/{entityId}/keys/attributes/{scope}", method = RequestMethod.GET)
     @ResponseBody
     public DeferredResult<ResponseEntity> getAttributeKeysByScope(
-            @ApiParam(value = ENTITY_TYPE_DESCRIPTION) @PathVariable("entityType") String entityType,
-            @ApiParam(value = ENTITY_ID_DESCRIPTION) @PathVariable("entityId") String entityIdStr,
+            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION) @PathVariable("entityType") String entityType,
+            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION) @PathVariable("entityId") String entityIdStr,
             @ApiParam(value = ATTRIBUTES_SCOPE_DESCRIPTION, allowableValues = ATTRIBUTES_SCOPE_ALLOWED_VALUES) @PathVariable("scope") String scope) throws ThingsboardException {
         return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_ATTRIBUTES, entityType, entityIdStr,
                 (result, tenantId, entityId) -> getAttributeKeysCallback(result, tenantId, entityId, scope));
@@ -175,8 +175,8 @@ public class TelemetryController extends BaseController {
     @RequestMapping(value = "/{entityType}/{entityId}/values/attributes", method = RequestMethod.GET)
     @ResponseBody
     public DeferredResult<ResponseEntity> getAttributes(
-            @ApiParam(value = ENTITY_TYPE_DESCRIPTION) @PathVariable("entityType") String entityType,
-            @ApiParam(value = ENTITY_ID_DESCRIPTION) @PathVariable("entityId") String entityIdStr,
+            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION) @PathVariable("entityType") String entityType,
+            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION) @PathVariable("entityId") String entityIdStr,
             @ApiParam(value = ATTRIBUTES_KEYS_DESCRIPTION) @RequestParam(name = "keys", required = false) String keysStr) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_ATTRIBUTES, entityType, entityIdStr,
@@ -189,8 +189,8 @@ public class TelemetryController extends BaseController {
     @RequestMapping(value = "/{entityType}/{entityId}/values/attributes/{scope}", method = RequestMethod.GET)
     @ResponseBody
     public DeferredResult<ResponseEntity> getAttributesByScope(
-            @ApiParam(value = ENTITY_TYPE_DESCRIPTION) @PathVariable("entityType") String entityType,
-            @ApiParam(value = ENTITY_ID_DESCRIPTION) @PathVariable("entityId") String entityIdStr,
+            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION) @PathVariable("entityType") String entityType,
+            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION) @PathVariable("entityId") String entityIdStr,
             @ApiParam(value = ATTRIBUTES_SCOPE_DESCRIPTION, allowableValues = ATTRIBUTES_SCOPE_ALLOWED_VALUES) @PathVariable("scope") String scope,
             @ApiParam(value = ATTRIBUTES_KEYS_DESCRIPTION) @RequestParam(name = "keys", required = false) String keysStr) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
@@ -204,8 +204,8 @@ public class TelemetryController extends BaseController {
     @RequestMapping(value = "/{entityType}/{entityId}/keys/timeseries", method = RequestMethod.GET)
     @ResponseBody
     public DeferredResult<ResponseEntity> getTimeseriesKeys(
-            @ApiParam(value = ENTITY_TYPE_DESCRIPTION) @PathVariable("entityType") String entityType,
-            @ApiParam(value = ENTITY_ID_DESCRIPTION) @PathVariable("entityId") String entityIdStr) throws ThingsboardException {
+            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION) @PathVariable("entityType") String entityType,
+            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION) @PathVariable("entityId") String entityIdStr) throws ThingsboardException {
         return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_TELEMETRY, entityType, entityIdStr,
                 (result, tenantId, entityId) -> Futures.addCallback(tsService.findAllLatest(tenantId, entityId), getTsKeysToResponseCallback(result), MoreExecutors.directExecutor()));
     }
@@ -216,8 +216,8 @@ public class TelemetryController extends BaseController {
     @RequestMapping(value = "/{entityType}/{entityId}/values/timeseries", method = RequestMethod.GET)
     @ResponseBody
     public DeferredResult<ResponseEntity> getLatestTimeseries(
-            @ApiParam(value = ENTITY_TYPE_DESCRIPTION) @PathVariable("entityType") String entityType,
-            @ApiParam(value = ENTITY_ID_DESCRIPTION) @PathVariable("entityId") String entityIdStr,
+            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION) @PathVariable("entityType") String entityType,
+            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION) @PathVariable("entityId") String entityIdStr,
             @ApiParam(value = TELEMETRY_KEYS_DESCRIPTION) @RequestParam(name = "keys", required = false) String keysStr,
             @ApiParam(value = STRICT_DATA_TYPES_DESCRIPTION)
             @RequestParam(name = "useStrictDataTypes", required = false, defaultValue = "false") Boolean useStrictDataTypes) throws ThingsboardException {
@@ -233,8 +233,8 @@ public class TelemetryController extends BaseController {
     @RequestMapping(value = "/{entityType}/{entityId}/values/timeseries", method = RequestMethod.GET, params = {"keys", "startTs", "endTs"})
     @ResponseBody
     public DeferredResult<ResponseEntity> getTimeseries(
-            @ApiParam(value = ENTITY_TYPE_DESCRIPTION) @PathVariable("entityType") String entityType,
-            @ApiParam(value = ENTITY_ID_DESCRIPTION) @PathVariable("entityId") String entityIdStr,
+            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION) @PathVariable("entityType") String entityType,
+            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION) @PathVariable("entityId") String entityIdStr,
             @ApiParam(value = TELEMETRY_KEYS_DESCRIPTION) @RequestParam(name = "keys") String keys,
             @ApiParam(value = "A long value representing the start timestamp(milliseconds) of search time range.")
             @RequestParam(name = "startTs") Long startTs,
@@ -280,8 +280,8 @@ public class TelemetryController extends BaseController {
     @RequestMapping(value = "/{entityType}/{entityId}/{scope}", method = RequestMethod.POST)
     @ResponseBody
     public DeferredResult<ResponseEntity> saveEntityAttributesV1(
-            @ApiParam(value = ENTITY_TYPE_DESCRIPTION) @PathVariable("entityType") String entityType,
-            @ApiParam(value = ENTITY_ID_DESCRIPTION) @PathVariable("entityId") String entityIdStr,
+            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION) @PathVariable("entityType") String entityType,
+            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION) @PathVariable("entityId") String entityIdStr,
             @ApiParam(value = ATTRIBUTES_SCOPE_DESCRIPTION, allowableValues = ATTRIBUTES_SCOPE_ALLOWED_VALUES) @PathVariable("scope") String scope,
             @ApiParam(value = ATTRIBUTES_JSON_REQUEST_DESCRIPTION) @RequestBody JsonNode request) throws ThingsboardException {
         EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
@@ -293,8 +293,8 @@ public class TelemetryController extends BaseController {
     @RequestMapping(value = "/{entityType}/{entityId}/attributes/{scope}", method = RequestMethod.POST)
     @ResponseBody
     public DeferredResult<ResponseEntity> saveEntityAttributesV2(
-            @ApiParam(value = ENTITY_TYPE_DESCRIPTION) @PathVariable("entityType") String entityType,
-            @ApiParam(value = ENTITY_ID_DESCRIPTION) @PathVariable("entityId") String entityIdStr,
+            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION) @PathVariable("entityType") String entityType,
+            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION) @PathVariable("entityId") String entityIdStr,
             @ApiParam(value = ATTRIBUTES_SCOPE_DESCRIPTION, allowableValues = ATTRIBUTES_SCOPE_ALLOWED_VALUES) @PathVariable("scope") String scope,
             @ApiParam(value = ATTRIBUTES_JSON_REQUEST_DESCRIPTION) @RequestBody JsonNode request) throws ThingsboardException {
         EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
@@ -306,8 +306,8 @@ public class TelemetryController extends BaseController {
     @RequestMapping(value = "/{entityType}/{entityId}/timeseries/{scope}", method = RequestMethod.POST)
     @ResponseBody
     public DeferredResult<ResponseEntity> saveEntityTelemetry(
-            @ApiParam(value = ENTITY_TYPE_DESCRIPTION) @PathVariable("entityType") String entityType,
-            @ApiParam(value = ENTITY_ID_DESCRIPTION) @PathVariable("entityId") String entityIdStr,
+            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION) @PathVariable("entityType") String entityType,
+            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION) @PathVariable("entityId") String entityIdStr,
             @ApiParam(value = TELEMETRY_SCOPE_DESCRIPTION) @PathVariable("scope") String scope,
             @ApiParam(value = TELEMETRY_JSON_REQUEST_DESCRIPTION) @RequestBody String requestBody) throws ThingsboardException {
         EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
@@ -320,8 +320,8 @@ public class TelemetryController extends BaseController {
     @RequestMapping(value = "/{entityType}/{entityId}/timeseries/{scope}/{ttl}", method = RequestMethod.POST)
     @ResponseBody
     public DeferredResult<ResponseEntity> saveEntityTelemetryWithTTL(
-            @ApiParam(value = ENTITY_TYPE_DESCRIPTION) @PathVariable("entityType") String entityType,
-            @ApiParam(value = ENTITY_ID_DESCRIPTION) @PathVariable("entityId") String entityIdStr,
+            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION) @PathVariable("entityType") String entityType,
+            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION) @PathVariable("entityId") String entityIdStr,
             @ApiParam(value = TELEMETRY_SCOPE_DESCRIPTION) @PathVariable("scope") String scope,
             @ApiParam(value = "A long value representing TTL(Time to Live) parameter.") @PathVariable("ttl") Long ttl,
             @ApiParam(value = TELEMETRY_JSON_REQUEST_DESCRIPTION) @RequestBody String requestBody) throws ThingsboardException {
@@ -335,8 +335,8 @@ public class TelemetryController extends BaseController {
     @RequestMapping(value = "/{entityType}/{entityId}/timeseries/delete", method = RequestMethod.DELETE)
     @ResponseBody
     public DeferredResult<ResponseEntity> deleteEntityTimeseries(
-            @ApiParam(value = ENTITY_TYPE_DESCRIPTION) @PathVariable("entityType") String entityType,
-            @ApiParam(value = ENTITY_ID_DESCRIPTION) @PathVariable("entityId") String entityIdStr,
+            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION) @PathVariable("entityType") String entityType,
+            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION) @PathVariable("entityId") String entityIdStr,
             @ApiParam(value = TELEMETRY_KEYS_DESCRIPTION) @RequestParam(name = "keys") String keysStr,
             @ApiParam(value = "A boolean value to specify if should be deleted all data for selected keys or only data that are in the selected time range.")
             @RequestParam(name = "deleteAllDataForKeys", defaultValue = "false") boolean deleteAllDataForKeys,
@@ -413,8 +413,8 @@ public class TelemetryController extends BaseController {
     @RequestMapping(value = "/{entityType}/{entityId}/{scope}", method = RequestMethod.DELETE)
     @ResponseBody
     public DeferredResult<ResponseEntity> deleteEntityAttributes(
-            @ApiParam(value = ENTITY_TYPE_DESCRIPTION) @PathVariable("entityType") String entityType,
-            @ApiParam(value = ENTITY_ID_DESCRIPTION) @PathVariable("entityId") String entityIdStr,
+            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION) @PathVariable("entityType") String entityType,
+            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION) @PathVariable("entityId") String entityIdStr,
             @ApiParam(value = ATTRIBUTES_SCOPE_DESCRIPTION, allowableValues = ATTRIBUTES_SCOPE_ALLOWED_VALUES) @PathVariable("scope") String scope,
             @ApiParam(value = ATTRIBUTES_KEYS_DESCRIPTION) @RequestParam(name = "keys") String keysStr) throws ThingsboardException {
         EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
