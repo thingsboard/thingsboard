@@ -223,6 +223,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     private static final String SELECT_API_USAGE_STATE = "(select aus.id, aus.created_time, aus.tenant_id, aus.entity_id, " +
             "coalesce((select title from tenant where id = aus.entity_id), (select title from customer where id = aus.entity_id)) as name " +
             "from api_usage_state as aus)";
+    static final int MAX_LEVEL_DEFAULT = 50; //This value has to be reasonable small to prevent infinite recursion as early as possible
 
     static {
         entityTableMap.put(EntityType.ASSET, "asset");
@@ -239,18 +240,30 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     public static EntityType[] RELATION_QUERY_ENTITY_TYPES = new EntityType[]{
             EntityType.TENANT, EntityType.CUSTOMER, EntityType.USER, EntityType.DASHBOARD, EntityType.ASSET, EntityType.DEVICE, EntityType.ENTITY_VIEW};
 
-    private static final String HIERARCHICAL_QUERY_TEMPLATE = " FROM (WITH RECURSIVE related_entities(from_id, from_type, to_id, to_type, relation_type, lvl) AS (" +
-            " SELECT from_id, from_type, to_id, to_type, relation_type, 1 as lvl" +
-            " FROM relation" +
+    private static final String HIERARCHICAL_QUERY_TEMPLATE = " FROM (WITH RECURSIVE related_entities(from_id, from_type, to_id, to_type, lvl, path) AS (" +
+            " SELECT from_id, from_type, to_id, to_type," +
+            "        1 as lvl," +
+            "        ARRAY[$in_id] as path" + // initial path
+            " FROM relation " +
             " WHERE $in_id = :relation_root_id and $in_type = :relation_root_type and relation_type_group = 'COMMON'" +
+            " GROUP BY from_id, from_type, to_id, to_type, lvl, path" +
             " UNION ALL" +
-            " SELECT r.from_id, r.from_type, r.to_id, r.to_type, r.relation_type, lvl + 1" +
+            " SELECT r.from_id, r.from_type, r.to_id, r.to_type," +
+            "        (re.lvl + 1) as lvl, " +
+            "        (re.path || ARRAY[r.$in_id]) as path" +
             " FROM relation r" +
             " INNER JOIN related_entities re ON" +
             " r.$in_id = re.$out_id and r.$in_type = re.$out_type and" +
-            " relation_type_group = 'COMMON' %s)" +
-            " SELECT re.$out_id entity_id, re.$out_type entity_type, max(re.lvl) lvl" +
-            " from related_entities re" +
+            " relation_type_group = 'COMMON' " +
+            " AND r.$in_id NOT IN (SELECT * FROM unnest(re.path)) " +
+            " %s" +
+            " GROUP BY r.from_id, r.from_type, r.to_id, r.to_type, (re.lvl + 1), (re.path || ARRAY[r.$in_id])" +
+            " )" +
+            " SELECT re.$out_id entity_id, re.$out_type entity_type, max(r_int.lvl) lvl" +
+            " from related_entities r_int" +
+            "  INNER JOIN relation re ON re.from_id = r_int.from_id AND re.from_type = r_int.from_type" +
+            "                         AND re.to_id = r_int.to_id AND re.to_type = r_int.to_type" +
+            "                         AND re.relation_type_group = 'COMMON'" +
             " %s GROUP BY entity_id, entity_type) entity";
     private static final String HIERARCHICAL_TO_QUERY_TEMPLATE = HIERARCHICAL_QUERY_TEMPLATE.replace("$in", "to").replace("$out", "from");
     private static final String HIERARCHICAL_FROM_QUERY_TEMPLATE = HIERARCHICAL_QUERY_TEMPLATE.replace("$in", "from").replace("$out", "to");
@@ -580,7 +593,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                     .append("nr.").append(fromOrTo).append("_type").append(" = re.").append(toOrFrom).append("_type");
 
             notExistsPart.append(")");
-            whereFilter += " and ( re.lvl = " + entityFilter.getMaxLevel() + " OR " + notExistsPart.toString() + ")";
+            whereFilter += " and ( r_int.lvl = " + entityFilter.getMaxLevel() + " OR " + notExistsPart.toString() + ")";
         }
         from = String.format(from, lvlFilter, whereFilter);
         String query = "( " + selectFields + from + ")";
@@ -659,7 +672,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                     .append(whereFilter.toString().replaceAll("re\\.", "nr\\."));
 
             notExistsPart.append(")");
-            whereFilter.append(" and ( re.lvl = ").append(entityFilter.getMaxLevel()).append(" OR ").append(notExistsPart.toString()).append(")");
+            whereFilter.append(" and ( r_int.lvl = ").append(entityFilter.getMaxLevel()).append(" OR ").append(notExistsPart.toString()).append(")");
         }
         from = String.format(from, lvlFilter, " WHERE " + whereFilter);
         return "( " + selectFields + from + ")";
@@ -693,8 +706,12 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         return whereFilter.toString();
     }
 
-    private String getLvlFilter(int maxLevel) {
-        return maxLevel > 0 ? ("and lvl <= " + (maxLevel - 1)) : "";
+    String getLvlFilter(int maxLevel) {
+        return "and re.lvl <= " + (getMaxLevel(maxLevel) - 1);
+    }
+
+    int getMaxLevel(int maxLevel) {
+        return maxLevel > 0 ? maxLevel : MAX_LEVEL_DEFAULT;
     }
 
     private String getQueryTemplate(EntitySearchDirection direction) {
