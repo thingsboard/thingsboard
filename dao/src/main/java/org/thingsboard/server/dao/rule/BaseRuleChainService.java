@@ -481,7 +481,9 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         }
         if (isTenantId) {
             ObjectNode objNode = (ObjectNode) node;
-            objNode.put("id", tenantId.getId().toString());
+            if (objNode.has("id")) {
+                objNode.put("id", tenantId.getId().toString());
+            }
         } else {
             for (JsonNode jsonNode : node) {
                 searchTenantIdRecursive(tenantId, jsonNode);
