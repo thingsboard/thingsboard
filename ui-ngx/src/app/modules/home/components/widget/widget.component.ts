@@ -361,6 +361,11 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     }, 0);
   }
 
+  get noDataDisplayMessageText(): string {
+    const noDataDisplayMessage = isNotEmptyStr(this.widget.config.noDataDisplayMessage) ? this.widget.config.noDataDisplayMessage : '{i18n:widget.no-data}';
+    return this.utils.customTranslation(noDataDisplayMessage, noDataDisplayMessage);
+  }
+
   ngAfterViewInit(): void {
   }
 

@@ -323,6 +323,8 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
   dropShadow: boolean;
   enableFullscreen: boolean;
 
+  noDataDisplayMessage: string;
+
   hasTimewindow: boolean;
 
   hasAggregation: boolean;
@@ -411,6 +413,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
     this.titleIcon = isDefined(this.widget.config.titleIcon) ? this.widget.config.titleIcon : '';
     this.showTitleIcon = isDefined(this.widget.config.showTitleIcon) ? this.widget.config.showTitleIcon : false;
+    this.noDataDisplayMessage = isDefined(this.widget.config.noDataDisplayMessage) ? this.widget.config.noDataDisplayMessage : '';
     this.titleIconStyle = {};
     if (this.widget.config.iconColor) {
       this.titleIconStyle.color = this.widget.config.iconColor;

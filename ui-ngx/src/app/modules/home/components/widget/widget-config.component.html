@@ -402,6 +402,13 @@
             <input matInput formControlName="decimals" type="number" min="0" max="15" step="1">
           </mat-form-field>
         </div>
+        <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
+             fxLayoutGap="8px" *ngIf="widgetType !== 'static'">
+          <mat-form-field fxFlex>
+            <mat-label translate>widget-config.no-data-display-message</mat-label>
+            <input matInput formControlName="noDataDisplayMessage">
+          </mat-form-field>
+        </div>
         <div [fxShow]="widgetType === widgetTypes.timeseries || widgetType === widgetTypes.latest"
              fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
              fxLayoutGap="8px" fxFlex="100%">

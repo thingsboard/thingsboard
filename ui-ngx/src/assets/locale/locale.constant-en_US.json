@@ -3073,7 +3073,8 @@
         "delete-action-text": "Are you sure you want delete widget action with name '{{actionName}}'?",
         "display-icon": "Display title icon",
         "icon-color": "Icon color",
-        "icon-size": "Icon size"
+        "icon-size": "Icon size",
+        "no-data-display-message": "\"No data to display\" alternative message"
     },
     "widget-type": {
         "import": "Import widget type",
