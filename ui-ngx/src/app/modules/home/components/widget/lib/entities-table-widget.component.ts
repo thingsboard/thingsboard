@@ -44,7 +44,7 @@ import {
   createLabelFromDatasource,
   deepClone,
   hashCode,
-  isDefined,
+  isDefined, isNotEmptyStr,
   isNumber,
   isObject,
   isUndefined
@@ -209,6 +209,11 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     this.initializeConfig();
     this.updateDatasources();
     this.ctx.updateWidgetParams();
+  }
+
+  get noDataDisplayMessageText() {
+    const noDataDisplayMessage = isNotEmptyStr(this.ctx.widgetConfig.noDataDisplayMessage) ? this.ctx.widgetConfig.noDataDisplayMessage : '{i18n:entity.no-entities-prompt}';
+    return this.utils.customTranslation(noDataDisplayMessage, noDataDisplayMessage);
   }
 
   ngAfterViewInit(): void {
