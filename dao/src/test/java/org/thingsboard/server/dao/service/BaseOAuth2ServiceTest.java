@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-public class BaseOAuth2ServiceTest extends AbstractServiceTest {
+public abstract class BaseOAuth2ServiceTest extends AbstractServiceTest {
     private static final OAuth2Info EMPTY_PARAMS = new OAuth2Info(false, Collections.emptyList());
 
     @Autowired
