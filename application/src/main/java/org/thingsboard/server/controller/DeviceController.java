@@ -141,7 +141,8 @@ public class DeviceController extends BaseController {
             "Device credentials are also generated if not provided in the 'accessToken' request parameter. " +
             "The newly created device id will be present in the response. " +
             "Specify existing Device id to update the device. " +
-            "Referencing non-existing device Id will cause 'Not Found' error.")
+            "Referencing non-existing device Id will cause 'Not Found' error." +
+            "\n\nDevice name is unique in the scope of tenant. Use unique identifiers like MAC or IMEI for the device names and non-unique 'label' field for user-friendly visualization purposes.")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device", method = RequestMethod.POST)
     @ResponseBody

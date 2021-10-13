@@ -189,7 +189,7 @@ public abstract class BaseController {
     protected final String SORT_ORDER_ALLOWABLE_VALUES = "ASC, DESC";
     protected final String DEVICE_INFO_DESCRIPTION = "Device Info is an extension of the default Device object that contains information about the assigned customer name and device profile name. ";
     protected final String ASSET_INFO_DESCRIPTION = "Asset Info is an extension of the default Asset object that contains information about the assigned customer name. ";
-    protected final String ALARM_INFO_DESCRIPTION = "Alarm Info is an extension of the default Alarm object that contains information about alarm originator name.";
+    protected final String ALARM_INFO_DESCRIPTION = "Alarm Info is an extension of the default Alarm object that also contains name of the alarm originator.";
 
 
     protected final String DEVICE_NAME_DESCRIPTION = "A string value representing the Device name.";
