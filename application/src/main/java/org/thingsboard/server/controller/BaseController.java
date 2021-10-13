@@ -184,6 +184,7 @@ public abstract class BaseController {
     protected final String CUSTOMER_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title, email, country, city";
     protected final String DEVICE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, deviceProfileName, label, customerTitle";
     protected final String ASSET_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, label, customerTitle";
+    protected final String ALARM_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, startTs, endTs, type, ackTs, clearTs, severity, status";
     protected final String SORT_ORDER_DESCRIPTION = "Sort order. ASC (ASCENDING) or DESC (DESCENDING)";
     protected final String SORT_ORDER_ALLOWABLE_VALUES = "ASC, DESC";
     protected final String DEVICE_INFO_DESCRIPTION = "Device Info is an extension of the default Device object that contains information about the assigned customer name and device profile name. ";
