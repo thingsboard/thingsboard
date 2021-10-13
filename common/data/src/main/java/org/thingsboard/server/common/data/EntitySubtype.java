@@ -15,8 +15,11 @@
  */
 package org.thingsboard.server.common.data;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import org.thingsboard.server.common.data.id.TenantId;
 
+@ApiModel
 public class EntitySubtype {
 
     private static final long serialVersionUID = 8057240243059922101L;
@@ -35,6 +38,7 @@ public class EntitySubtype {
         this.type = type;
     }
 
+    @ApiModelProperty(position = 1, value = "JSON object with Tenant Id.", readOnly = true)
     public TenantId getTenantId() {
         return tenantId;
     }
@@ -43,6 +47,7 @@ public class EntitySubtype {
         this.tenantId = tenantId;
     }
 
+    @ApiModelProperty(position = 2, required = true, value = "string", example = "ENTITY_VIEW", readOnly = true)
     public EntityType getEntityType() {
         return entityType;
     }
@@ -51,6 +56,7 @@ public class EntitySubtype {
         this.entityType = entityType;
     }
 
+    @ApiModelProperty(position = 3, required = true, value = "string value representing entity view type", example = "new-entity-view-type", readOnly = true)
     public String getType() {
         return type;
     }

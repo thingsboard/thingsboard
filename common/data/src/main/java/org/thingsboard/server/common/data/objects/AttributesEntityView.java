@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data.objects;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -25,12 +27,16 @@ import java.util.List;
 /**
  * Created by Victor Basanets on 9/05/2017.
  */
+@ApiModel
 @Data
 @NoArgsConstructor
 public class AttributesEntityView implements Serializable {
 
+    @ApiModelProperty(position = 1, required = true, value = "A list of strings representing client attributes", example = "[\"lastActivityTime\",\"inactivityAlarmTime\"]")
     private List<String> cs = new ArrayList<>();
+    @ApiModelProperty(position = 2, required = true, value = "A list of strings representing server attributes", example = "[\"lastActivityTime\",\"inactivityAlarmTime\",\"active\"]")
     private List<String> ss = new ArrayList<>();
+    @ApiModelProperty(position = 3, required = true, value = "A list of strings representing shared attributes", example = "active")
     private List<String> sh = new ArrayList<>();
 
     public AttributesEntityView(List<String> cs,

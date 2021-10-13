@@ -15,13 +15,19 @@
  */
 package org.thingsboard.server.common.data;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.EntityViewId;
 
+@ApiModel
 @Data
 public class EntityViewInfo extends EntityView {
 
+    @ApiModelProperty(position = 12, value = "Unique name of the customer that assigns to entity view. Use " +
+            "'assignEntityViewToCustomer' to change the customer name.", example = "Customer A", readOnly = true)
     private String customerTitle;
+    @ApiModelProperty(position = 14, value = "Boolean value representing is customer is public", example = "false", readOnly = true)
     private boolean customerIsPublic;
 
     public EntityViewInfo() {
