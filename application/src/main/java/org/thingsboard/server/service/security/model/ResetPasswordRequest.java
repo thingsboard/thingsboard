@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.service.security.model;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -21,16 +21,10 @@ import lombok.Data;
 
 @ApiModel
 @Data
-public class HomeDashboard extends Dashboard {
+public class ResetPasswordRequest {
 
-    public static final String HIDE_DASHBOARD_TOOLBAR_DESCRIPTION = "Hide dashboard toolbar flag. Useful for rendering dashboards on mobile.";
-
-    @ApiModelProperty(position = 10, value = HIDE_DASHBOARD_TOOLBAR_DESCRIPTION)
-    private boolean hideDashboardToolbar;
-
-    public HomeDashboard(Dashboard dashboard, boolean hideDashboardToolbar) {
-        super(dashboard);
-        this.hideDashboardToolbar = hideDashboardToolbar;
-    }
-
+    @ApiModelProperty(position = 1, value = "The reset token to verify", example = "AAB254FF67D..")
+    private String resetToken;
+    @ApiModelProperty(position = 2, value = "The new password to set", example = "secret")
+    private String password;
 }
