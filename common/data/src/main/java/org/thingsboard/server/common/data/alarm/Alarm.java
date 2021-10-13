@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data.alarm;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,6 +36,7 @@ import java.util.List;
 /**
  * Created by ashvayka on 11.05.17.
  */
+@ApiModel
 @Data
 @Builder
 @AllArgsConstructor
