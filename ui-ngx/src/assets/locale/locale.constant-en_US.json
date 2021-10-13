@@ -3077,7 +3077,8 @@
         "icon-color": "Icon color",
         "icon-size": "Icon size",
         "advanced-settings": "Advanced settings",
-        "data-settings": "Data settings"
+        "data-settings": "Data settings",
+        "no-data-display-message": "\"No data to display\" alternative message"
     },
     "widget-type": {
         "import": "Import widget type",

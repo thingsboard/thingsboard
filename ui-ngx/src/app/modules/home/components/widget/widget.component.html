@@ -39,8 +39,7 @@
 <div class="tb-absolute-fill tb-widget-no-data" *ngIf="displayNoData">
   <span fxLayoutAlign="center center"
         style="display: flex;"
-        class="tb-absolute-fill"
-        translate>widget.no-data</span>
+        class="tb-absolute-fill">{{ noDataDisplayMessageText }}</span>
 </div>
 <div class="tb-absolute-fill tb-widget-loading" [fxShow]="loadingData" fxLayout="column" fxLayoutAlign="center center">
   <mat-spinner color="accent" md-mode="indeterminate" diameter="40"></mat-spinner>

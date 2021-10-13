@@ -509,6 +509,7 @@ export interface WidgetConfig {
   titleStyle?: {[klass: string]: any};
   units?: string;
   decimals?: number;
+  noDataDisplayMessage?: string;
   actions?: {[actionSourceId: string]: Array<WidgetActionDescriptor>};
   settings?: any;
   alarmSource?: Datasource;
