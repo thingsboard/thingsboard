@@ -15,7 +15,10 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -44,18 +47,35 @@ import java.util.stream.Collectors;
 @RequestMapping("/api")
 public class AuditLogController extends BaseController {
 
+    protected final String AUDIT_LOG_ACTION_TYPES_DESCRIPTION = "A String value representing action types parameter. The value is not required, but it can be any value of ActionType class. " +
+            "For example, 'ADDED,DELETED,UPDATED,LOGIN,LOGOUT'.";
+    protected final String SORT_AUDIT_LOG_PROPERTY_DESCRIPTION = "Property of logs to sort by";
+    protected final String SORT_AUDIT_LOG_PROPERTY_ALLOWABLE_VALUES = "createdTime, entityName, entityType, user, type, status";
+
+    @ApiOperation(value = "Get audit logs by customer id (getAuditLogsByCustomerId)",
+            notes = "Returns a page of audit logs by selected customer. " + PAGE_DATA_PARAMETERS,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/audit/logs/customer/{customerId}", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<AuditLog> getAuditLogsByCustomerId(
+            @ApiParam(value = CUSTOMER_ID_PARAM_DESCRIPTION)
             @PathVariable("customerId") String strCustomerId,
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION)
             @RequestParam int pageSize,
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION)
             @RequestParam int page,
+            @ApiParam(value = "The case insensitive 'startsWith' filter based on the customer name.")
             @RequestParam(required = false) String textSearch,
+            @ApiParam(value = SORT_AUDIT_LOG_PROPERTY_DESCRIPTION, allowableValues = SORT_AUDIT_LOG_PROPERTY_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortProperty,
+            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder,
+            @ApiParam(value = "A long value representing the start timestamp(milliseconds) of search time range.")
             @RequestParam(required = false) Long startTime,
+            @ApiParam(value = "A long value representing the end timestamp(milliseconds) of search time range.")
             @RequestParam(required = false) Long endTime,
+            @ApiParam(value = AUDIT_LOG_ACTION_TYPES_DESCRIPTION)
             @RequestParam(name = "actionTypes", required = false) String actionTypesStr) throws ThingsboardException {
         try {
             checkParameter("CustomerId", strCustomerId);
@@ -68,18 +88,30 @@ public class AuditLogController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get audit logs by user id (getAuditLogsByUserId)",
+            notes = "Returns a page of audit logs by selected user. " + PAGE_DATA_PARAMETERS,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/audit/logs/user/{userId}", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<AuditLog> getAuditLogsByUserId(
+            @ApiParam(value = USER_ID_PARAM_DESCRIPTION)
             @PathVariable("userId") String strUserId,
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION)
             @RequestParam int pageSize,
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION)
             @RequestParam int page,
+            @ApiParam(value = "The case insensitive 'startsWith' filter based on the user name.")
             @RequestParam(required = false) String textSearch,
+            @ApiParam(value = SORT_AUDIT_LOG_PROPERTY_DESCRIPTION, allowableValues = SORT_AUDIT_LOG_PROPERTY_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortProperty,
+            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder,
+            @ApiParam(value = "A long value representing the start timestamp(milliseconds) of search time range.")
             @RequestParam(required = false) Long startTime,
+            @ApiParam(value = "A long value representing the end timestamp(milliseconds) of search time range.")
             @RequestParam(required = false) Long endTime,
+            @ApiParam(value = AUDIT_LOG_ACTION_TYPES_DESCRIPTION)
             @RequestParam(name = "actionTypes", required = false) String actionTypesStr) throws ThingsboardException {
         try {
             checkParameter("UserId", strUserId);
@@ -92,19 +124,32 @@ public class AuditLogController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get audit logs by entity id (getAuditLogsByEntityId)",
+            notes = "Returns a page of audit logs by selected entity. " + PAGE_DATA_PARAMETERS,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/audit/logs/entity/{entityType}/{entityId}", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<AuditLog> getAuditLogsByEntityId(
+            @ApiParam(value = ENTITY_TYPE_DESCRIPTION)
             @PathVariable("entityType") String strEntityType,
+            @ApiParam(value = ENTITY_ID_DESCRIPTION)
             @PathVariable("entityId") String strEntityId,
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION)
             @RequestParam int pageSize,
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION)
             @RequestParam int page,
+            @ApiParam(value = "The case insensitive 'startsWith' filter based on the entity name.")
             @RequestParam(required = false) String textSearch,
+            @ApiParam(value = SORT_AUDIT_LOG_PROPERTY_DESCRIPTION, allowableValues = SORT_AUDIT_LOG_PROPERTY_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortProperty,
+            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder,
+            @ApiParam(value = "A long value representing the start timestamp(milliseconds) of search time range.")
             @RequestParam(required = false) Long startTime,
+            @ApiParam(value = "A long value representing the end timestamp(milliseconds) of search time range.")
             @RequestParam(required = false) Long endTime,
+            @ApiParam(value = AUDIT_LOG_ACTION_TYPES_DESCRIPTION)
             @RequestParam(name = "actionTypes", required = false) String actionTypesStr) throws ThingsboardException {
         try {
             checkParameter("EntityId", strEntityId);
@@ -118,17 +163,27 @@ public class AuditLogController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get all audit logs (getAuditLogs)",
+            notes = "Returns a page of all audit logs. " + PAGE_DATA_PARAMETERS, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/audit/logs", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<AuditLog> getAuditLogs(
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION)
             @RequestParam int pageSize,
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION)
             @RequestParam int page,
+            @ApiParam(value = "The case insensitive 'startsWith' filter based on any name like 'Device', 'Asset', 'Customer' etc.")
             @RequestParam(required = false) String textSearch,
+            @ApiParam(value = SORT_AUDIT_LOG_PROPERTY_DESCRIPTION, allowableValues = SORT_AUDIT_LOG_PROPERTY_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortProperty,
+            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder,
+            @ApiParam(value = "A long value representing the start timestamp(milliseconds) of search time range.")
             @RequestParam(required = false) Long startTime,
+            @ApiParam(value = "A long value representing the end timestamp(milliseconds) of search time range.")
             @RequestParam(required = false) Long endTime,
+            @ApiParam(value = AUDIT_LOG_ACTION_TYPES_DESCRIPTION)
             @RequestParam(name = "actionTypes", required = false) String actionTypesStr) throws ThingsboardException {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();

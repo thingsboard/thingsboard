@@ -162,6 +162,7 @@ public abstract class BaseController {
     public static final String TENANT_ID_PARAM_DESCRIPTION = "A string value representing the tenant id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     public static final String EDGE_ID_PARAM_DESCRIPTION = "A string value representing the edge id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     public static final String CUSTOMER_ID_PARAM_DESCRIPTION = "A string value representing the customer id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
+    public static final String USER_ID_PARAM_DESCRIPTION = "A string value representing the user id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
 
     protected final String PAGE_SIZE_DESCRIPTION = "Maximum amount of entities in a one page";
     protected final String PAGE_NUMBER_DESCRIPTION = "Sequence number of page starting from 0";
@@ -174,7 +175,8 @@ public abstract class BaseController {
     protected final String SORT_ORDER_ALLOWABLE_VALUES = "ASC, DESC";
     protected final String DEVICE_INFO_DESCRIPTION = "Device Info is an extension of the default Device object that contains information about the assigned customer name and device profile name. ";
 
-
+    protected static final String ENTITY_TYPE_DESCRIPTION = "A string value representing the entity type. For example, 'DEVICE'";
+    protected static final String ENTITY_ID_DESCRIPTION = "A string value representing the entity id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     protected static final String DEFAULT_DASHBOARD = "defaultDashboardId";
