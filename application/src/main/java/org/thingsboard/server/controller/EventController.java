@@ -55,7 +55,7 @@ public class EventController extends BaseController {
     @RequestMapping(value = "/events/{entityType}/{entityId}/{eventType}", method = RequestMethod.GET)
     @ResponseBody
     public PageData<Event> getEvents(
-            @ApiParam(value = ENTITY_TYPE_DESCRIPTION, required = true)
+            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_TYPE) String strEntityType,
             @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_ID) String strEntityId,
@@ -98,7 +98,7 @@ public class EventController extends BaseController {
     @RequestMapping(value = "/events/{entityType}/{entityId}", method = RequestMethod.GET)
     @ResponseBody
     public PageData<Event> getEvents(
-            @ApiParam(value = ENTITY_TYPE_DESCRIPTION, required = true)
+            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_TYPE) String strEntityType,
             @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_ID) String strEntityId,
@@ -141,7 +141,7 @@ public class EventController extends BaseController {
     @RequestMapping(value = "/events/{entityType}/{entityId}", method = RequestMethod.POST)
     @ResponseBody
     public PageData<Event> getEvents(
-            @ApiParam(value = ENTITY_TYPE_DESCRIPTION, required = true)
+            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_TYPE) String strEntityType,
             @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_ID) String strEntityId,

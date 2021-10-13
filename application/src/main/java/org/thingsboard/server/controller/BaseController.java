@@ -172,7 +172,7 @@ public abstract class BaseController {
     public static final String ASSET_ID_PARAM_DESCRIPTION = "A string value representing the asset id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     public static final String ALARM_ID_PARAM_DESCRIPTION = "A string value representing the alarm id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     public static final String ENTITY_ID_PARAM_DESCRIPTION = "A string value representing the entity id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
-    public static final String ENTITY_TYPE_DESCRIPTION = "A string value representing the entity type. For example, 'DEVICE'";
+    public static final String ENTITY_TYPE_PARAM_DESCRIPTION = "A string value representing the entity type. For example, 'DEVICE'";
 
     protected final String PAGE_SIZE_DESCRIPTION = "Maximum amount of entities in a one page";
     protected final String PAGE_NUMBER_DESCRIPTION = "Sequence number of page starting from 0";

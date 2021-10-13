@@ -217,7 +217,7 @@ public class AlarmController extends BaseController {
     @RequestMapping(value = "/alarm/{entityType}/{entityId}", method = RequestMethod.GET)
     @ResponseBody
     public PageData<AlarmInfo> getAlarms(
-            @ApiParam(value = ENTITY_TYPE_DESCRIPTION)
+            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION)
             @PathVariable(ENTITY_TYPE) String strEntityType,
             @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION)
             @PathVariable(ENTITY_ID) String strEntityId,
@@ -318,7 +318,7 @@ public class AlarmController extends BaseController {
     @RequestMapping(value = "/alarm/highestSeverity/{entityType}/{entityId}", method = RequestMethod.GET)
     @ResponseBody
     public AlarmSeverity getHighestAlarmSeverity(
-            @ApiParam(value = ENTITY_TYPE_DESCRIPTION, required = true)
+            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_TYPE) String strEntityType,
             @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_ID) String strEntityId,

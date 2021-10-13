@@ -105,11 +105,11 @@ public class EntityRelationController extends BaseController {
     @RequestMapping(value = "/relation", method = RequestMethod.DELETE, params = {FROM_ID, FROM_TYPE, RELATION_TYPE, TO_ID, TO_TYPE})
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteRelation(@ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true) @RequestParam(FROM_ID) String strFromId,
-                               @ApiParam(value = ENTITY_TYPE_DESCRIPTION, required = true) @RequestParam(FROM_TYPE) String strFromType,
+                               @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(FROM_TYPE) String strFromType,
                                @ApiParam(value = RELATION_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(RELATION_TYPE) String strRelationType,
                                @ApiParam(value = RELATION_TYPE_GROUP_PARAM_DESCRIPTION) @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup,
                                @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true) @RequestParam(TO_ID) String strToId,
-                               @ApiParam(value = ENTITY_TYPE_DESCRIPTION, required = true) @RequestParam(TO_TYPE) String strToType) throws ThingsboardException {
+                               @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(TO_TYPE) String strToType) throws ThingsboardException {
         checkParameter(FROM_ID, strFromId);
         checkParameter(FROM_TYPE, strFromType);
         checkParameter(RELATION_TYPE, strRelationType);
@@ -148,7 +148,7 @@ public class EntityRelationController extends BaseController {
     @RequestMapping(value = "/relations", method = RequestMethod.DELETE, params = {"entityId", "entityType"})
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteRelations(@ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true) @RequestParam("entityId") String strId,
-                                @ApiParam(value = ENTITY_TYPE_DESCRIPTION, required = true) @RequestParam("entityType") String strType) throws ThingsboardException {
+                                @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam("entityType") String strType) throws ThingsboardException {
         checkParameter("entityId", strId);
         checkParameter("entityType", strType);
         EntityId entityId = EntityIdFactory.getByTypeAndId(strType, strId);
@@ -169,11 +169,11 @@ public class EntityRelationController extends BaseController {
     @RequestMapping(value = "/relation", method = RequestMethod.GET, params = {FROM_ID, FROM_TYPE, RELATION_TYPE, TO_ID, TO_TYPE})
     @ResponseBody
     public EntityRelation getRelation(@ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true) @RequestParam(FROM_ID) String strFromId,
-                                      @ApiParam(value = ENTITY_TYPE_DESCRIPTION, required = true) @RequestParam(FROM_TYPE) String strFromType,
+                                      @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(FROM_TYPE) String strFromType,
                                       @ApiParam(value = RELATION_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(RELATION_TYPE) String strRelationType,
                                       @ApiParam(value = RELATION_TYPE_GROUP_PARAM_DESCRIPTION) @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup,
                                       @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true) @RequestParam(TO_ID) String strToId,
-                                      @ApiParam(value = ENTITY_TYPE_DESCRIPTION, required = true) @RequestParam(TO_TYPE) String strToType) throws ThingsboardException {
+                                      @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(TO_TYPE) String strToType) throws ThingsboardException {
         try {
             checkParameter(FROM_ID, strFromId);
             checkParameter(FROM_TYPE, strFromType);
@@ -199,7 +199,7 @@ public class EntityRelationController extends BaseController {
     @RequestMapping(value = "/relations", method = RequestMethod.GET, params = {FROM_ID, FROM_TYPE})
     @ResponseBody
     public List<EntityRelation> findByFrom(@ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true) @RequestParam(FROM_ID) String strFromId,
-                                           @ApiParam(value = ENTITY_TYPE_DESCRIPTION, required = true) @RequestParam(FROM_TYPE) String strFromType,
+                                           @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(FROM_TYPE) String strFromType,
                                            @ApiParam(value = RELATION_TYPE_GROUP_PARAM_DESCRIPTION)
                                            @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup) throws ThingsboardException {
         checkParameter(FROM_ID, strFromId);
@@ -222,7 +222,7 @@ public class EntityRelationController extends BaseController {
     @RequestMapping(value = "/relations/info", method = RequestMethod.GET, params = {FROM_ID, FROM_TYPE})
     @ResponseBody
     public List<EntityRelationInfo> findInfoByFrom(@ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true) @RequestParam(FROM_ID) String strFromId,
-                                                   @ApiParam(value = ENTITY_TYPE_DESCRIPTION, required = true) @RequestParam(FROM_TYPE) String strFromType,
+                                                   @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(FROM_TYPE) String strFromType,
                                                    @ApiParam(value = RELATION_TYPE_GROUP_PARAM_DESCRIPTION)
                                                    @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup) throws ThingsboardException {
         checkParameter(FROM_ID, strFromId);
@@ -245,7 +245,7 @@ public class EntityRelationController extends BaseController {
     @RequestMapping(value = "/relations", method = RequestMethod.GET, params = {FROM_ID, FROM_TYPE, RELATION_TYPE})
     @ResponseBody
     public List<EntityRelation> findByFrom(@ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true) @RequestParam(FROM_ID) String strFromId,
-                                           @ApiParam(value = ENTITY_TYPE_DESCRIPTION, required = true) @RequestParam(FROM_TYPE) String strFromType,
+                                           @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(FROM_TYPE) String strFromType,
                                            @ApiParam(value = RELATION_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(RELATION_TYPE) String strRelationType,
                                            @ApiParam(value = RELATION_TYPE_GROUP_PARAM_DESCRIPTION)
                                            @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup) throws ThingsboardException {
@@ -270,7 +270,7 @@ public class EntityRelationController extends BaseController {
     @RequestMapping(value = "/relations", method = RequestMethod.GET, params = {TO_ID, TO_TYPE})
     @ResponseBody
     public List<EntityRelation> findByTo(@ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true) @RequestParam(TO_ID) String strToId,
-                                         @ApiParam(value = ENTITY_TYPE_DESCRIPTION, required = true) @RequestParam(TO_TYPE) String strToType,
+                                         @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(TO_TYPE) String strToType,
                                          @ApiParam(value = RELATION_TYPE_GROUP_PARAM_DESCRIPTION)
                                          @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup) throws ThingsboardException {
         checkParameter(TO_ID, strToId);
@@ -293,7 +293,7 @@ public class EntityRelationController extends BaseController {
     @RequestMapping(value = "/relations/info", method = RequestMethod.GET, params = {TO_ID, TO_TYPE})
     @ResponseBody
     public List<EntityRelationInfo> findInfoByTo(@ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true) @RequestParam(TO_ID) String strToId,
-                                                 @ApiParam(value = ENTITY_TYPE_DESCRIPTION, required = true) @RequestParam(TO_TYPE) String strToType,
+                                                 @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(TO_TYPE) String strToType,
                                                  @ApiParam(value = RELATION_TYPE_GROUP_PARAM_DESCRIPTION)
                                                  @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup) throws ThingsboardException {
         checkParameter(TO_ID, strToId);
@@ -316,7 +316,7 @@ public class EntityRelationController extends BaseController {
     @RequestMapping(value = "/relations", method = RequestMethod.GET, params = {TO_ID, TO_TYPE, RELATION_TYPE})
     @ResponseBody
     public List<EntityRelation> findByTo(@ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true) @RequestParam(TO_ID) String strToId,
-                                         @ApiParam(value = ENTITY_TYPE_DESCRIPTION, required = true) @RequestParam(TO_TYPE) String strToType,
+                                         @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(TO_TYPE) String strToType,
                                          @ApiParam(value = RELATION_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(RELATION_TYPE) String strRelationType,
                                          @ApiParam(value = RELATION_TYPE_GROUP_PARAM_DESCRIPTION)
                                          @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup) throws ThingsboardException {
