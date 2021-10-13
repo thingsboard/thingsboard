@@ -85,7 +85,7 @@ export class MarkedOptionsService extends MarkedOptions {
 
   private wrapCopyCode(id: number, content: string, code: string): string {
     return `<div class="code-wrapper noChars" id="codeWrapper${id}" onClick="markdownCopyCode(${id})">${content}` +
-      `<span id="copyCodeId${id}" style="display: none;">${code}</span>` +
+      `<span id="copyCodeId${id}" style="display: none;">${encodeURIComponent(code)}</span>` +
       `<button class="clipboard-btn">\n` +
       `    <p>${this.translate.instant('markdown.copy-code')}</p>\n` +
       `    <div>\n` +
@@ -119,7 +119,7 @@ export class MarkedOptionsService extends MarkedOptions {
   private markdownCopyCode(id: number) {
     const copyWrapper = $('#codeWrapper' + id);
     if (copyWrapper.hasClass('noChars')) {
-      const text = $('#copyCodeId' + id).text();
+      const text = decodeURIComponent($('#copyCodeId' + id).text());
       this.window.navigator.clipboard.writeText(text).then(() => {
         import('tooltipster').then(
           () => {

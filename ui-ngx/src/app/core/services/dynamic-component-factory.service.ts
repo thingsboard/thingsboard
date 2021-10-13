@@ -55,11 +55,12 @@ export class DynamicComponentFactoryService {
   public createDynamicComponentFactory<T>(
                      componentType: Type<T>,
                      template: string,
-                     modules?: Type<any>[]): Observable<ComponentFactory<T>> {
+                     modules?: Type<any>[],
+                     preserveWhitespaces?: boolean): Observable<ComponentFactory<T>> {
     const dymamicComponentFactorySubject = new ReplaySubject<ComponentFactory<T>>();
     import('@angular/compiler').then(
       () => {
-        const comp = this.createDynamicComponent(componentType, template);
+        const comp = this.createDynamicComponent(componentType, template, preserveWhitespaces);
         let moduleImports: Type<any>[] = [CommonModule];
         if (modules) {
           moduleImports = [...moduleImports, ...modules];
@@ -103,10 +104,11 @@ export class DynamicComponentFactoryService {
     }
   }
 
-  private createDynamicComponent<T>(componentType: Type<T>, template: string): Type<T> {
+  private createDynamicComponent<T>(componentType: Type<T>, template: string, preserveWhitespaces?: boolean): Type<T> {
     // noinspection AngularMissingOrInvalidDeclarationInModule
     return Component({
-      template
+      template,
+      preserveWhitespaces
     })(componentType);
   }
 

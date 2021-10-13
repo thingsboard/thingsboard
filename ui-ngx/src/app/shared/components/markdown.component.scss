@@ -13,19 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-:host ::ng-deep {
-  .tb-help-markdown {
-    overflow: auto;
-    max-width: 80vw;
-    max-height: 80vh;
-    margin-top: 30px;
-  }
-  .tb-help-markdown.tb-markdown-view {
-    h1, h2, h3, h4, h5, h6 {
-      &:first-child {
-        padding-top: 0;
-      }
-    }
+:host {
+  markdown {
+    display: none;
   }
 }
