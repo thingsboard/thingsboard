@@ -8,7 +8,8 @@
     "build:prod": "ng build --prod --vendor-chunk",
     "test": "ng test",
     "lint": "ng lint",
-    "e2e": "ng e2e"
+    "e2e": "ng e2e",
+    "prepare": "patch-package"
   },
   "private": true,
   "dependencies": {
@@ -135,6 +136,8 @@
     "karma-jasmine": "~4.0.0",
     "karma-jasmine-html-reporter": "^1.5.0",
     "ngrx-store-freeze": "^0.2.4",
+    "patch-package": "^6.4.7",
+    "postinstall-prepare": "^2.0.0",
     "protractor": "~7.0.0",
     "ts-node": "^9.0.0",
     "tslint": "~6.1.3",

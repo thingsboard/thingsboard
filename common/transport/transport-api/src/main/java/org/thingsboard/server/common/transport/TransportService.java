@@ -58,6 +58,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenR
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by ashvayka on 04.10.18.
@@ -138,4 +139,6 @@ public interface TransportService {
     ExecutorService getCallbackExecutor();
 
     boolean hasSession(SessionInfoProto sessionInfo);
+
+    void createGaugeStats(String openConnections, AtomicInteger connectionsCounter);
 }

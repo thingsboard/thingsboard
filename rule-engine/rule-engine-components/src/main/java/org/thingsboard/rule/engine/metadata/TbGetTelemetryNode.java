@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.json.JsonWriteFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,6 +34,7 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -50,7 +50,6 @@ import java.util.stream.Collectors;
 import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL;
 import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.FETCH_MODE_FIRST;
 import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.MAX_FETCH_SIZE;
-import static org.thingsboard.server.common.data.kv.Aggregation.NONE;
 
 /**
  * Created by mshvayka on 04.09.18.
@@ -64,6 +63,7 @@ import static org.thingsboard.server.common.data.kv.Aggregation.NONE;
                 "If selected fetch mode <b>ALL</b> Telemetry will be added like array into Message Metadata where <b>key</b> is Timestamp and <b>value</b> is value of Telemetry.</br>" +
                 "If selected fetch mode <b>FIRST</b> or <b>LAST</b> Telemetry will be added like string without Timestamp.</br>" +
                 "Also, the rule node allows you to select telemetry sampling order: <b>ASC</b> or <b>DESC</b>. </br>" +
+                "Aggregation feature allows you to fetch aggregated telemetry as a single value by <b>AVG, COUNT, SUM, MIN, MAX, NONE</b>. </br>" +
                 "<b>Note</b>: The maximum size of the fetched array is 1000 records.\n ",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeGetTelemetryFromDatabase")
@@ -78,6 +78,7 @@ public class TbGetTelemetryNode implements TbNode {
     private ObjectMapper mapper;
     private String fetchMode;
     private String orderByFetchAll;
+    private Aggregation aggregation;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -89,9 +90,18 @@ public class TbGetTelemetryNode implements TbNode {
         if (StringUtils.isEmpty(orderByFetchAll)) {
             orderByFetchAll = ASC_ORDER;
         }
+        aggregation = parseAggregationConfig(config.getAggregation());
+
         mapper = new ObjectMapper();
         mapper.configure(JsonWriteFeature.QUOTE_FIELD_NAMES.mappedFeature(), false);
         mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+    }
+
+    Aggregation parseAggregationConfig(String aggName) {
+        if (StringUtils.isEmpty(aggName)) {
+            return Aggregation.NONE;
+        }
+        return Aggregation.valueOf(aggName);
     }
 
     @Override
@@ -120,8 +130,14 @@ public class TbGetTelemetryNode implements TbNode {
     }
 
     private List<ReadTsKvQuery> buildQueries(TbMsg msg, List<String> keys) {
+        final Interval interval = getInterval(msg);
+        final long aggIntervalStep = Aggregation.NONE.equals(aggregation) ? 1 :
+                // exact how it validates on BaseTimeseriesService.validate()
+                // see CassandraBaseTimeseriesDao.findAllAsync()
+                interval.getEndTs() - interval.getStartTs();
+
         return keys.stream()
-                .map(key -> new BaseReadTsKvQuery(key, getInterval(msg).getStartTs(), getInterval(msg).getEndTs(), 1, limit, NONE, getOrderBy()))
+                .map(key -> new BaseReadTsKvQuery(key, interval.getStartTs(), interval.getEndTs(), aggIntervalStep, limit, aggregation, getOrderBy()))
                 .collect(Collectors.toList());
     }
 

@@ -874,6 +874,11 @@ export abstract class TbBaseGauge<S, O extends GenericOptions> {
   resize() {
     this.gauge.update({width: this.ctx.width, height: this.ctx.height} as GenericOptions);
   }
+
+  destroy() {
+    this.gauge.destroy();
+    this.gauge = null;
+  }
 }
 
 export abstract class TbAnalogueGauge<S extends AnalogueGaugeSettings, O extends GenericOptions> extends TbBaseGauge<S, O> {
