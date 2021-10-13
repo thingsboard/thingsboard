@@ -39,7 +39,7 @@ import {
   createLabelFromDatasource,
   deepClone,
   hashCode,
-  isDefined,
+  isDefined, isNotEmptyStr,
   isNumber,
   isObject,
   isUndefined
@@ -248,6 +248,11 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.initializeConfig();
     this.updateAlarmSource();
     this.ctx.updateWidgetParams();
+  }
+
+  get noDataDisplayMessageText() {
+    const noDataDisplayMessage = isNotEmptyStr(this.ctx.widgetConfig.noDataDisplayMessage) ? this.ctx.widgetConfig.noDataDisplayMessage : '{i18n:alarm.no-alarms-prompt}';
+    return this.utils.customTranslation(noDataDisplayMessage, noDataDisplayMessage);
   }
 
   ngAfterViewInit(): void {

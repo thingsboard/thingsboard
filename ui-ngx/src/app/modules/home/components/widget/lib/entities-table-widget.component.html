@@ -95,7 +95,7 @@
       </table>
       <span [fxShow]="(entityDatasource.isEmpty() | async) && !entityDatasource.dataLoading"
             fxLayoutAlign="center center"
-            class="no-data-found" translate>entity.no-entities-prompt</span>
+            class="no-data-found">{{ noDataDisplayMessageText }}</span>
       <span [fxShow]="entityDatasource.dataLoading"
             fxLayoutAlign="center center"
             class="no-data-found">{{ 'common.loading' | translate }}</span>
