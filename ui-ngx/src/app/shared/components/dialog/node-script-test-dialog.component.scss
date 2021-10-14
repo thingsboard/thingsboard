@@ -72,6 +72,9 @@
 
     &.tb-js-function {
       right: 80px;
+      &.tb-js-function-help {
+        right: 116px;
+      }
     }
 
     label {

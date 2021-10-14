@@ -127,6 +127,9 @@ transport:
   log:
     enabled: "${TB_TRANSPORT_LOG_ENABLED:true}"
     max_length: "${TB_TRANSPORT_LOG_MAX_LENGTH:1024}"
+  stats:
+    enabled: "${TB_TRANSPORT_STATS_ENABLED:true}"
+    print-interval-ms: "${TB_TRANSPORT_STATS_PRINT_INTERVAL_MS:60000}"
 
 
 queue:

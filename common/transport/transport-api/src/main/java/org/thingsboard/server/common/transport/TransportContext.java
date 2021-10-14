@@ -39,7 +39,7 @@ public abstract class TransportContext {
     protected final ObjectMapper mapper = new ObjectMapper();
 
     @Autowired
-    private TransportService transportService;
+    protected TransportService transportService;
 
     @Autowired
     private TbServiceInfoProvider serviceInfoProvider;

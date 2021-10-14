@@ -84,6 +84,15 @@
               {{'profile.change-password' | translate}}
             </button>
           </div>
+          <div fxLayout="row" fxLayoutAlign=" center" style="padding-bottom: 16px;">
+            <button mat-raised-button
+                    type="button"
+                    (click)="copyToken()">
+              <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
+              <span>{{ 'profile.copy-jwt-token' | translate }}</span>
+            </button>
+            <span class="profile-btn-subtext">{{ expirationJwtData }}</span>
+          </div>
           <div fxLayout="row" class="layout-wrap">
             <span fxFlex></span>
             <button mat-button mat-raised-button color="primary"

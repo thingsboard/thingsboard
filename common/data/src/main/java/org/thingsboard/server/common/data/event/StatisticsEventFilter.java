@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.common.data.event;
 
+import io.swagger.annotations.ApiModel;
 import lombok.Data;
 import org.thingsboard.server.common.data.StringUtils;
 
 @Data
+@ApiModel
 public class StatisticsEventFilter implements EventFilter {
     private String server;
     private Integer messagesProcessed;
