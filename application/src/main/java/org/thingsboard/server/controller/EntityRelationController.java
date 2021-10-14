@@ -59,17 +59,14 @@ public class EntityRelationController extends BaseController {
             "If the user has the authority of 'Tenant Administrator', the server checks that 'from' and 'to' entities are owned by the same tenant. " +
             "If the user has the authority of 'Customer User', the server checks that the 'from' and 'to' entities are assigned to the same customer.";
 
-    private static final String SECURITY_CHECKS_ENTITY_DESCRIPTION = "\n\nIf the user has the authority of 'System Administrator', the server checks that 'from' and 'to' entities are owned by the sysadmin. " +
+    private static final String SECURITY_CHECKS_ENTITY_DESCRIPTION = "\n\nIf the user has the authority of 'System Administrator', the server checks that the entity is owned by the sysadmin. " +
             "If the user has the authority of 'Tenant Administrator', the server checks that the entity is owned by the same tenant. " +
             "If the user has the authority of 'Customer User', the server checks that the entity is assigned to the same customer.";
-
 
     @ApiOperation(value = "Create Relation (saveRelation)",
             notes = "Creates or updates a relation between two entities in the platform. " +
                     "Relations unique key is a combination of from/to entity id and relation type group and relation type. " +
-                    "\n\nIf the user has the authority of 'System Administrator', the server checks that 'from' and 'to' entities are owned by the sysadmin. " +
-                    "If the user has the authority of 'Tenant Administrator', the server checks that 'from' and 'to' entities are owned by the same tenant. " +
-                    "If the user has the authority of 'Customer User', the server checks that the 'from' and 'to' entities are assigned to the same customer.")
+                    SECURITY_CHECKS_ENTITIES_DESCRIPTION)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/relation", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
@@ -163,7 +160,7 @@ public class EntityRelationController extends BaseController {
     }
 
     @ApiOperation(value = "Get Relation (getRelation)",
-            notes = "Returns relation object between two specified entities if present. Otherwise throws exception." + SECURITY_CHECKS_ENTITIES_DESCRIPTION,
+            notes = "Returns relation object between two specified entities if present. Otherwise throws exception. " + SECURITY_CHECKS_ENTITIES_DESCRIPTION,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/relation", method = RequestMethod.GET, params = {FROM_ID, FROM_TYPE, RELATION_TYPE, TO_ID, TO_TYPE})
@@ -216,7 +213,7 @@ public class EntityRelationController extends BaseController {
 
     @ApiOperation(value = "Get List of Relation Infos (findInfoByFrom)",
             notes = "Returns list of relation info objects for the specified entity by the 'from' direction. " +
-                    SECURITY_CHECKS_ENTITY_DESCRIPTION +" " + RELATION_INFO_DESCRIPTION,
+                    SECURITY_CHECKS_ENTITY_DESCRIPTION + " " + RELATION_INFO_DESCRIPTION,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/relations/info", method = RequestMethod.GET, params = {FROM_ID, FROM_TYPE})
