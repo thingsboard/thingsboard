@@ -15,6 +15,7 @@
 ///
 
 import {
+  ChangeDetectorRef,
   Component,
   ComponentFactory,
   ComponentRef,
@@ -22,37 +23,30 @@ import {
   Inject,
   Injector,
   Input, OnChanges,
-  OnDestroy,
-  OnInit,
   Output,
-  Renderer2, SimpleChanges,
-  Type,
-  ViewChild,
+  SimpleChanges,
+  Type, ViewChild,
   ViewContainerRef
 } from '@angular/core';
 import { HelpService } from '@core/services/help.service';
-import { MarkdownComponent } from 'ngx-markdown';
+import { MarkdownService, PrismPlugin } from 'ngx-markdown';
 import { DynamicComponentFactoryService } from '@core/services/dynamic-component-factory.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { SHARED_MODULE_TOKEN } from '@shared/components/tokens';
 
 @Component({
   selector: 'tb-markdown',
-  templateUrl: './markdown.component.html',
-  styleUrls: ['./markdown.component.scss']
+  template: '<ng-container #markdownContainer>' +
+            '</ng-container>' +
+            '<div *ngIf="error" style="color: #f00; font-size: 14px;' +
+                                      ' line-height: 28px;' +
+                                      ' background: #efefef;">' +
+                      '{{error}}' +
+            '</div>'
 })
-export class TbMarkdownComponent implements OnDestroy, OnInit, OnChanges {
-
-  private markdownComponent: MarkdownComponent;
+export class TbMarkdownComponent implements OnChanges {
 
   @ViewChild('markdownContainer', {read: ViewContainerRef, static: true}) markdownContainer: ViewContainerRef;
-
-  @ViewChild('markdownComponent', {static: false}) set content(content: MarkdownComponent) {
-      this.markdownComponent = content;
-      if (this.isMarkdownReady && this.markdownComponent) {
-        this.processMarkdownComponent();
-      }
-  }
 
   @Input() data: string | undefined;
 
@@ -70,35 +64,25 @@ export class TbMarkdownComponent implements OnDestroy, OnInit, OnChanges {
 
   isMarkdownReady = false;
 
+  error = null;
+
   private tbMarkdownInstanceComponentRef: ComponentRef<any>;
   private tbMarkdownInstanceComponentFactory: ComponentFactory<any>;
 
   constructor(private help: HelpService,
-              private renderer: Renderer2,
+              private cd: ChangeDetectorRef,
+              public markdownService: MarkdownService,
               @Inject(SHARED_MODULE_TOKEN) private sharedModule: Type<any>,
               private dynamicComponentFactoryService: DynamicComponentFactoryService) {}
 
-  ngOnInit(): void {
-  }
-
-  ngOnDestroy(): void {
-  }
-
   ngOnChanges(changes: SimpleChanges): void {
-    for (const propName of Object.keys(changes)) {
-      const change = changes[propName];
-      if (!change.firstChange && change.currentValue !== change.previousValue) {
-        if (propName === 'data') {
-          if (this.data) {
-            this.isMarkdownReady = false;
-          }
-        }
-      }
+    if (this.data) {
+      this.render(this.data);
     }
   }
 
-  private processMarkdownComponent() {
-    let template = this.markdownComponent.element.nativeElement.innerHTML;
+  private render(markdown: string) {
+    let template = this.markdownService.compile(markdown, false);
     template = this.sanitizeCurlyBraces(template);
     let markdownClass = 'tb-markdown-view';
     if (this.markdownClass) {
@@ -106,7 +90,6 @@ export class TbMarkdownComponent implements OnDestroy, OnInit, OnChanges {
     }
     template = `<div [ngStyle]="style" class="${markdownClass}">${template}</div>`;
     this.markdownContainer.clear();
-    this.markdownComponent = null;
     const parent = this;
     this.dynamicComponentFactoryService.createDynamicComponentFactory(
       class TbMarkdownInstance {
@@ -124,11 +107,36 @@ export class TbMarkdownComponent implements OnDestroy, OnInit, OnChanges {
         this.tbMarkdownInstanceComponentRef =
           this.markdownContainer.createComponent(this.tbMarkdownInstanceComponentFactory, 0, injector);
         this.tbMarkdownInstanceComponentRef.instance.style = this.style;
-      } catch (e) {
+        this.handlePlugins(this.tbMarkdownInstanceComponentRef.location.nativeElement);
+        this.markdownService.highlight(this.tbMarkdownInstanceComponentRef.location.nativeElement);
+        this.error = null;
+      } catch (error) {
+        this.error = (error ? error + '' : 'Failed to render markdown!').replace(/\n/g, '<br>');
         this.destroyMarkdownInstanceResources();
       }
+      this.cd.detectChanges();
+      this.ready.emit();
+    },
+    (error) => {
+      this.error = (error ? error + '' : 'Failed to render markdown!').replace(/\n/g, '<br>');
+      this.destroyMarkdownInstanceResources();
+      this.cd.detectChanges();
       this.ready.emit();
     });
+  }
+
+  private handlePlugins(element: HTMLElement): void {
+    if (this.lineNumbers) {
+      this.setPluginClass(element, PrismPlugin.LineNumbers);
+    }
+  }
+
+  private setPluginClass(element: HTMLElement, plugin: string | string[]): void {
+    const preElements = element.querySelectorAll('pre');
+    for (let i = 0; i < preElements.length; i++) {
+      const classes = plugin instanceof Array ? plugin : [plugin];
+      preElements.item(i).classList.add(...classes);
+    }
   }
 
   private sanitizeCurlyBraces(template: string): string {
@@ -141,14 +149,5 @@ export class TbMarkdownComponent implements OnDestroy, OnInit, OnChanges {
       this.tbMarkdownInstanceComponentFactory = null;
     }
     this.tbMarkdownInstanceComponentRef = null;
-  }
-
-  onMarkdownReady() {
-    if (this.data) {
-      this.isMarkdownReady = true;
-      if (this.markdownComponent) {
-        this.processMarkdownComponent();
-      }
-    }
   }
 }

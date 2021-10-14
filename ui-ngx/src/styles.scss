@@ -516,12 +516,12 @@ mat-label {
   }
 
   p, div {
-    padding-right: 32px;
     color: rgba(15, 22, 29, 0.8);
     line-height: 1.5em;
   }
 
-  p, div {
+  & > p, & > div {
+    padding-right: 32px;
     padding-left: 32px;
   }
 
