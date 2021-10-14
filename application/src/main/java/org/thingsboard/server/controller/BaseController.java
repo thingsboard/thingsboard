@@ -186,6 +186,7 @@ public abstract class BaseController {
     protected final String DEVICE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the device name.";
     protected final String CUSTOMER_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the customer title.";
     protected final String EVENT_TEXT_SEARCH_DESCRIPTION = "The value is not used in searching.";
+    protected final String AUDIT_LOG_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on one of the next properties: entityType, entityName, userName, actionType, actionStatus.";
     protected final String SORT_PROPERTY_DESCRIPTION = "Property of entity to sort by";
     protected final String DASHBOARD_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title";
     protected final String CUSTOMER_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title, email, country, city";
@@ -193,6 +194,7 @@ public abstract class BaseController {
     protected final String ASSET_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, label, customerTitle";
     protected final String ALARM_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, startTs, endTs, type, ackTs, clearTs, severity, status";
     protected final String EVENT_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, id";
+    protected final String AUDIT_LOG_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, entityType, entityName, userName, actionType, actionStatus";
     protected final String SORT_ORDER_DESCRIPTION = "Sort order. ASC (ASCENDING) or DESC (DESCENDING)";
     protected final String SORT_ORDER_ALLOWABLE_VALUES = "ASC, DESC";
     protected final String DEVICE_INFO_DESCRIPTION = "Device Info is an extension of the default Device object that contains information about the assigned customer name and device profile name. ";
@@ -205,8 +207,10 @@ public abstract class BaseController {
 
     protected final String EVENT_START_TIME_DESCRIPTION = "Timestamp. Events with creation time before it won't be queried.";
     protected final String EVENT_END_TIME_DESCRIPTION = "Timestamp. Events with creation time after it won't be queried.";
-    protected static final String RELATION_TYPE_PARAM_DESCRIPTION = "A string value representing relation type between entities. For example, 'Contains', 'Manages'. It can be any string value.";
-    protected static final String RELATION_TYPE_GROUP_PARAM_DESCRIPTION = "A string value representing relation type group. For example, 'COMMON'";
+    protected final String RELATION_TYPE_PARAM_DESCRIPTION = "A string value representing relation type between entities. For example, 'Contains', 'Manages'. It can be any string value.";
+    protected final String RELATION_TYPE_GROUP_PARAM_DESCRIPTION = "A string value representing relation type group. For example, 'COMMON'";
+
+    protected final String ADMINISTRATOR_AUTHORITY_ONLY = "Available for users with 'Tenant Administrator' authority only.";
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     protected static final String DEFAULT_DASHBOARD = "defaultDashboardId";
