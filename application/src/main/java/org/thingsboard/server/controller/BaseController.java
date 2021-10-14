@@ -203,6 +203,14 @@ public abstract class BaseController {
 
     protected final String EVENT_START_TIME_DESCRIPTION = "Timestamp. Events with creation time before it won't be queried.";
     protected final String EVENT_END_TIME_DESCRIPTION = "Timestamp. Events with creation time after it won't be queried.";
+
+    protected final String EVENT_ERROR_FILTER_OBJ = "{ \"eventType\": \"ERROR\", \"server\": \"ip-172-31-24-152\", \"method\": \"onClusterEventMsg\", \"error\": \"Error Message\" }";
+    protected final String EVENT_LC_EVENT_FILTER_OBJ = "{ \"eventType\": \"LC_EVENT\", \"server\": \"ip-172-31-24-152\", \"event\": \"STARTED\", \"status\": \"Success\", \"error\": \"Error Message\" }";
+    protected final String EVENT_STATS_FILTER_OBJ = "{ \"eventType\": \"STATS\", \"server\": \"ip-172-31-24-152\", \"messagesProcessed\": 10, \"errorsOccurred\": 5 }";
+    protected final String DEBUG_FILTER_OBJ = "\"msgDirectionType\": \"IN\", \"server\": \"ip-172-31-24-152\", \"dataSearch\": \"humidity\", \"metadataSearch\": \"deviceName\", \"entityName\": \"DEVICE\", \"relationType\": \"Success\", \"entityId\": \"de9d54a0-2b7a-11ec-a3cc-23386423d98f\", \"msgType\": \"POST_TELEMETRY_REQUEST\", \"isError\": \"false\", \"error\": \"Error Message\" }";
+    protected final String EVENT_DEBUG_RULE_NODE_FILTER_OBJ = "{ \"eventType\": \"DEBUG_RULE_NODE\"," + DEBUG_FILTER_OBJ;
+    protected final String EVENT_DEBUG_RULE_CHAIN_FILTER_OBJ = "{ \"eventType\": \"DEBUG_RULE_CHAIN\"," + DEBUG_FILTER_OBJ;
+
     protected static final String RELATION_TYPE_PARAM_DESCRIPTION = "A string value representing relation type between entities. For example, 'Contains', 'Manages'. It can be any string value.";
     protected static final String RELATION_TYPE_GROUP_PARAM_DESCRIPTION = "A string value representing relation type group. For example, 'COMMON'";
 
