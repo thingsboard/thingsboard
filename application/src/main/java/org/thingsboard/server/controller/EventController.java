@@ -48,8 +48,8 @@ public class EventController extends BaseController {
     @Autowired
     private EventService eventService;
 
-    @ApiOperation(value = "Get Events (getEvents)",
-            notes = "Returns a page of events for specified entity by specifying event type." +
+    @ApiOperation(value = "Get Events by type (getEvents)",
+            notes = "Returns a page of events for specified entity by specifying event type. " +
                     PAGE_DATA_PARAMETERS, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}/{eventType}", method = RequestMethod.GET)
@@ -92,7 +92,7 @@ public class EventController extends BaseController {
     }
 
     @ApiOperation(value = "Get Events (getEvents)",
-            notes = "Returns a page of events for specified entity." +
+            notes = "Returns a page of events for specified entity. " +
                     PAGE_DATA_PARAMETERS, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}", method = RequestMethod.GET)
@@ -134,8 +134,8 @@ public class EventController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Get Events (getEvents)",
-            notes = "Returns a page of events for specified entity by specifying event filter." +
+    @ApiOperation(value = "Get Events by event filter (getEvents)",
+            notes = "Returns a page of events for specified entity by specifying event filter. " +
                     PAGE_DATA_PARAMETERS, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}", method = RequestMethod.POST)
