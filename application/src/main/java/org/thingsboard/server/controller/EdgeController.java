@@ -22,6 +22,7 @@ import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -90,11 +91,12 @@ public class EdgeController extends BaseController {
     }
 
     @ApiOperation(value = "Get Edge (getEdgeById)",
-            notes = "Get the Edge object based on the provided Edge Id. " + EDGE_SECURITY_CHECK)
+            notes = "Get the Edge object based on the provided Edge Id. " + EDGE_SECURITY_CHECK,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/edge/{edgeId}", method = RequestMethod.GET)
     @ResponseBody
-    public Edge getEdgeById(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION)
+    public Edge getEdgeById(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
                             @PathVariable(EDGE_ID) String strEdgeId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
         try {
@@ -110,11 +112,12 @@ public class EdgeController extends BaseController {
     }
 
     @ApiOperation(value = "Get Edge Info (getEdgeInfoById)",
-            notes = "Get the Edge Info object based on the provided Edge Id. " + EDGE_SECURITY_CHECK)
+            notes = "Get the Edge Info object based on the provided Edge Id. " + EDGE_SECURITY_CHECK,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/edge/info/{edgeId}", method = RequestMethod.GET)
     @ResponseBody
-    public EdgeInfo getEdgeInfoById(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION)
+    public EdgeInfo getEdgeInfoById(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
                                     @PathVariable(EDGE_ID) String strEdgeId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
         try {
@@ -130,13 +133,16 @@ public class EdgeController extends BaseController {
     }
 
     @ApiOperation(value = "Create Or Update Edge (saveEdge)",
-            notes = "Creates or Updates the Edge. Platform generates random Edge Id during edge creation. " +
-                    "The edge id will be present in the response. " +
-                    "Specify the Edge id when you would like to update the edge. Referencing non-existing edge Id will cause an error.")
+            notes = "Create or update the Edge. When creating edge, platform generates Edge Id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address). " +
+                    "The newly created edge id will be present in the response. " +
+                    "Specify existing Edge id to update the edge. " +
+                    "Referencing non-existing Edge Id will cause 'Not Found' error." +
+                    "\n\nEdge name is unique in the scope of tenant. Use unique identifiers like MAC or IMEI for the edge names and non-unique 'label' field for user-friendly visualization purposes.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge", method = RequestMethod.POST)
     @ResponseBody
-    public Edge saveEdge(@ApiParam(value = "A JSON value representing the ed.")
+    public Edge saveEdge(@ApiParam(value = "A JSON value representing the ed.", required = true)
                          @RequestBody Edge edge) throws ThingsboardException {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
@@ -185,7 +191,7 @@ public class EdgeController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public void deleteEdge(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION)
+    public void deleteEdge(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
                            @PathVariable(EDGE_ID) String strEdgeId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
         try {
@@ -213,17 +219,17 @@ public class EdgeController extends BaseController {
 
     @ApiOperation(value = "Get Tenant Edges (getEdges)",
             notes = "Returns a page of edges owned by tenant. " +
-                    PAGE_DATA_PARAMETERS)
+                    PAGE_DATA_PARAMETERS, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edges", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
-    public PageData<Edge> getEdges(@ApiParam(value = PAGE_SIZE_DESCRIPTION)
+    public PageData<Edge> getEdges(@ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
                                    @RequestParam int pageSize,
-                                   @ApiParam(value = PAGE_NUMBER_DESCRIPTION)
+                                   @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
                                    @RequestParam int page,
                                    @ApiParam(value = EDGE_TEXT_SEARCH_DESCRIPTION)
                                    @RequestParam(required = false) String textSearch,
-                                   @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = SORT_PROPERTY_ALLOWABLE_VALUES)
+                                   @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = EDGE_SORT_PROPERTY_ALLOWABLE_VALUES)
                                    @RequestParam(required = false) String sortProperty,
                                    @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
                                    @RequestParam(required = false) String sortOrder) throws ThingsboardException {
@@ -237,13 +243,14 @@ public class EdgeController extends BaseController {
     }
 
     @ApiOperation(value = "Assign edge to customer (assignEdgeToCustomer)",
-            notes = "Creates assignment of the edge to customer. Customer will be able to query edge afterwards.")
+            notes = "Creates assignment of the edge to customer. Customer will be able to query edge afterwards.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer/{customerId}/edge/{edgeId}", method = RequestMethod.POST)
     @ResponseBody
-    public Edge assignEdgeToCustomer(@ApiParam(value = CUSTOMER_ID_PARAM_DESCRIPTION)
+    public Edge assignEdgeToCustomer(@ApiParam(value = CUSTOMER_ID_PARAM_DESCRIPTION, required = true)
                                      @PathVariable("customerId") String strCustomerId,
-                                     @ApiParam(value = EDGE_ID_PARAM_DESCRIPTION)
+                                     @ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
                                      @PathVariable(EDGE_ID) String strEdgeId) throws ThingsboardException {
         checkParameter("customerId", strCustomerId);
         checkParameter(EDGE_ID, strEdgeId);
@@ -276,11 +283,12 @@ public class EdgeController extends BaseController {
     }
 
     @ApiOperation(value = "Unassign edge from customer (unassignEdgeFromCustomer)",
-            notes = "Clears assignment of the edge to customer. Customer will not be able to query edge afterwards.")
+            notes = "Clears assignment of the edge to customer. Customer will not be able to query edge afterwards.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer/edge/{edgeId}", method = RequestMethod.DELETE)
     @ResponseBody
-    public Edge unassignEdgeFromCustomer(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION)
+    public Edge unassignEdgeFromCustomer(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
                                          @PathVariable(EDGE_ID) String strEdgeId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
         try {
@@ -315,11 +323,12 @@ public class EdgeController extends BaseController {
     @ApiOperation(value = "Make edge publicly available (assignEdgeToPublicCustomer)",
             notes = "Edge will be available for non-authorized (not logged-in) users. " +
                     "This is useful to create dashboards that you plan to share/embed on a publicly available website. " +
-                    "However, users that are logged-in and belong to different tenant will not be able to access the edge.")
+                    "However, users that are logged-in and belong to different tenant will not be able to access the edge.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer/public/edge/{edgeId}", method = RequestMethod.POST)
     @ResponseBody
-    public Edge assignEdgeToPublicCustomer(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION)
+    public Edge assignEdgeToPublicCustomer(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
                                            @PathVariable(EDGE_ID) String strEdgeId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
         try {
@@ -346,20 +355,20 @@ public class EdgeController extends BaseController {
 
     @ApiOperation(value = "Get Tenant Edges (getTenantEdges)",
             notes = "Returns a page of edges owned by tenant. " +
-                    PAGE_DATA_PARAMETERS)
+                    PAGE_DATA_PARAMETERS, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/edges", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<Edge> getTenantEdges(
-            @ApiParam(value = PAGE_SIZE_DESCRIPTION)
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
-            @ApiParam(value = PAGE_NUMBER_DESCRIPTION)
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
             @ApiParam(value = EDGE_TYPE_DESCRIPTION)
             @RequestParam(required = false) String type,
             @ApiParam(value = EDGE_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
-            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = SORT_PROPERTY_ALLOWABLE_VALUES)
+            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = EDGE_SORT_PROPERTY_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortProperty,
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
@@ -378,20 +387,21 @@ public class EdgeController extends BaseController {
 
     @ApiOperation(value = "Get Tenant Edge Infos (getTenantEdgeInfos)",
             notes = "Returns a page of edges info objects owned by tenant. " +
-                    PAGE_DATA_PARAMETERS + DEVICE_INFO_DESCRIPTION)
+                    PAGE_DATA_PARAMETERS + EDGE_INFO_DESCRIPTION,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/edgeInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<EdgeInfo> getTenantEdgeInfos(
-            @ApiParam(value = PAGE_SIZE_DESCRIPTION)
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
-            @ApiParam(value = PAGE_NUMBER_DESCRIPTION)
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
             @ApiParam(value = EDGE_TYPE_DESCRIPTION)
             @RequestParam(required = false) String type,
             @ApiParam(value = EDGE_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
-            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = SORT_PROPERTY_ALLOWABLE_VALUES)
+            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = EDGE_SORT_PROPERTY_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortProperty,
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
@@ -410,11 +420,12 @@ public class EdgeController extends BaseController {
 
     @ApiOperation(value = "Get Tenant Edge (getTenantEdge)",
             notes = "Requested edge must be owned by tenant or customer that the user belongs to. " +
-                    "Edge name is an unique property of edge. So it can be used to identify the edge.")
+                    "Edge name is an unique property of edge. So it can be used to identify the edge.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/edges", params = {"edgeName"}, method = RequestMethod.GET)
     @ResponseBody
-    public Edge getTenantEdge(@ApiParam(value = "Unique name of the edge")
+    public Edge getTenantEdge(@ApiParam(value = "Unique name of the edge", required = true)
                               @RequestParam String edgeName) throws ThingsboardException {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
@@ -425,14 +436,15 @@ public class EdgeController extends BaseController {
     }
 
     @ApiOperation(value = "Set root rule chain for provided edge (setRootRuleChain)",
-            notes = "Change root rule chain of the edge from the current to the new provided rule chain. \n" +
-                    "This operation will send a notification to remote edge service to update root rule chain remotely.")
+            notes = "Change root rule chain of the edge to the new provided rule chain. \n" +
+                    "This operation will send a notification to update root rule chain on remote edge service.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/{ruleChainId}/root", method = RequestMethod.POST)
     @ResponseBody
-    public Edge setRootRuleChain(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION)
+    public Edge setRootRuleChain(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
                                  @PathVariable(EDGE_ID) String strEdgeId,
-                                 @ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION)
+                                 @ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION, required = true)
                                  @PathVariable("ruleChainId") String strRuleChainId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
         checkParameter("ruleChainId", strRuleChainId);
@@ -463,22 +475,22 @@ public class EdgeController extends BaseController {
 
     @ApiOperation(value = "Get Customer Edges (getCustomerEdges)",
             notes = "Returns a page of edges objects assigned to customer. " +
-                    PAGE_DATA_PARAMETERS)
+                    PAGE_DATA_PARAMETERS, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/customer/{customerId}/edges", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<Edge> getCustomerEdges(
             @ApiParam(value = CUSTOMER_ID_PARAM_DESCRIPTION)
             @PathVariable("customerId") String strCustomerId,
-            @ApiParam(value = PAGE_SIZE_DESCRIPTION)
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
-            @ApiParam(value = PAGE_NUMBER_DESCRIPTION)
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
             @ApiParam(value = EDGE_TYPE_DESCRIPTION)
             @RequestParam(required = false) String type,
             @ApiParam(value = EDGE_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
-            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = SORT_PROPERTY_ALLOWABLE_VALUES)
+            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = EDGE_SORT_PROPERTY_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortProperty,
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
@@ -508,22 +520,22 @@ public class EdgeController extends BaseController {
 
     @ApiOperation(value = "Get Customer Edge Infos (getCustomerEdgeInfos)",
             notes = "Returns a page of edges info objects assigned to customer. " +
-                    PAGE_DATA_PARAMETERS + DEVICE_INFO_DESCRIPTION)
+                    PAGE_DATA_PARAMETERS + EDGE_INFO_DESCRIPTION, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/customer/{customerId}/edgeInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<EdgeInfo> getCustomerEdgeInfos(
             @ApiParam(value = CUSTOMER_ID_PARAM_DESCRIPTION)
             @PathVariable("customerId") String strCustomerId,
-            @ApiParam(value = PAGE_SIZE_DESCRIPTION)
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
-            @ApiParam(value = PAGE_NUMBER_DESCRIPTION)
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
             @ApiParam(value = EDGE_TYPE_DESCRIPTION)
             @RequestParam(required = false) String type,
             @ApiParam(value = EDGE_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
-            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = SORT_PROPERTY_ALLOWABLE_VALUES)
+            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = EDGE_SORT_PROPERTY_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortProperty,
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
@@ -552,12 +564,13 @@ public class EdgeController extends BaseController {
     }
 
     @ApiOperation(value = "Get Edges By Ids (getEdgesByIds)",
-            notes = "Requested edges must be owned by tenant or assigned to customer which user is performing the request. ")
+            notes = "Requested edges must be owned by tenant or assigned to customer which user is performing the request.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/edges", params = {"edgeIds"}, method = RequestMethod.GET)
     @ResponseBody
     public List<Edge> getEdgesByIds(
-            @ApiParam(value = "A list of edges ids, separated by comma ','")
+            @ApiParam(value = "A list of edges ids, separated by comma ','", required = true)
             @RequestParam("edgeIds") String[] strEdgeIds) throws ThingsboardException {
         checkArrayParameter("edgeIds", strEdgeIds);
         try {
@@ -588,8 +601,9 @@ public class EdgeController extends BaseController {
 
     @ApiOperation(value = "Find related edges (findByQuery)",
             notes = "Returns all edges that are related to the specific entity. " +
-                    "The entity id, relation type, device types, depth of the search, and other query parameters defined using complex 'EdgeSearchQuery' object. " +
-                    "See 'Model' tab of the Parameters for more info.")
+                    "The entity id, relation type, edge types, depth of the search, and other query parameters defined using complex 'EdgeSearchQuery' object. " +
+                    "See 'Model' tab of the Parameters for more info.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/edges", method = RequestMethod.POST)
     @ResponseBody
@@ -622,7 +636,8 @@ public class EdgeController extends BaseController {
     }
 
     @ApiOperation(value = "Get Edge Types (getEdgeTypes)",
-            notes = "Returns a set of unique edge types based on edges that are either owned by the tenant or assigned to the customer which user is performing the request.")
+            notes = "Returns a set of unique edge types based on edges that are either owned by the tenant or assigned to the customer which user is performing the request.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/edge/types", method = RequestMethod.GET)
     @ResponseBody
@@ -642,7 +657,7 @@ public class EdgeController extends BaseController {
                     "All entities that are assigned to particular edge are going to be send to remote edge service.")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/sync/{edgeId}", method = RequestMethod.POST)
-    public void syncEdge(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION)
+    public void syncEdge(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
                          @PathVariable("edgeId") String strEdgeId) throws ThingsboardException {
         checkParameter("edgeId", strEdgeId);
         try {
@@ -661,11 +676,11 @@ public class EdgeController extends BaseController {
     }
 
     @ApiOperation(value = "Find missing rule chains (findMissingToRelatedRuleChains)",
-            notes = "Returns list of rule chains ids that are not assigned to particular edge, but these rule chains are present in the already assigned rule chains to edge")
+            notes = "Returns list of rule chains ids that are not assigned to particular edge, but these rule chains are present in the already assigned rule chains to edge.")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/missingToRelatedRuleChains/{edgeId}", method = RequestMethod.GET)
     @ResponseBody
-    public String findMissingToRelatedRuleChains(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION)
+    public String findMissingToRelatedRuleChains(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
                                                  @PathVariable("edgeId") String strEdgeId) throws ThingsboardException {
         try {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
@@ -679,7 +694,8 @@ public class EdgeController extends BaseController {
     }
 
     @ApiOperation(value = "Import the bulk of edges (processEdgesBulkImport)",
-            notes = "There's an ability to import the bulk of edges using the only .csv file.")
+            notes = "There's an ability to import the bulk of edges using the only .csv file.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @PostMapping("/edge/bulk_import")
     public BulkImportResult<Edge> processEdgesBulkImport(@RequestBody BulkImportRequest request) throws Exception {
