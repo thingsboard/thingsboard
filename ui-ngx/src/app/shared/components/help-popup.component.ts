@@ -14,8 +14,18 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, Input, OnDestroy, Renderer2, ViewContainerRef, ViewEncapsulation } from '@angular/core';
-import { TbPopoverService } from '@shared/components/popover.component';
+import {
+  Component,
+  ElementRef,
+  Input,
+  OnDestroy,
+  Renderer2,
+  ViewChild,
+  ViewContainerRef,
+  ViewEncapsulation
+} from '@angular/core';
+import { TbPopoverService } from '@shared/components/popover.service';
+import { PopoverPlacement } from '@shared/components/popover.models';
 
 @Component({
   // tslint:disable-next-line:component-selector
@@ -26,25 +36,41 @@ import { TbPopoverService } from '@shared/components/popover.component';
 })
 export class HelpPopupComponent implements OnDestroy {
 
+  @ViewChild('toggleHelpButton', {read: ElementRef, static: false}) toggleHelpButton: ElementRef;
+  @ViewChild('toggleHelpSpan', {read: ElementRef, static: false}) toggleHelpSpan: ElementRef;
+
   // tslint:disable-next-line:no-input-rename
   @Input('tb-help-popup') helpId: string;
+
+  // tslint:disable-next-line:no-input-rename
+  @Input('trigger-text') triggerText: string;
+
+  // tslint:disable-next-line:no-input-rename
+  @Input('tb-help-popup-placement') helpPopupPlacement: PopoverPlacement;
+
+  // tslint:disable-next-line:no-input-rename
+  @Input('tb-help-popup-style') helpPopupStyle: { [klass: string]: any } = {};
 
   popoverVisible = false;
   popoverReady = true;
 
-  constructor(private elementRef: ElementRef,
-              private viewContainerRef: ViewContainerRef,
+  constructor(private viewContainerRef: ViewContainerRef,
               private renderer: Renderer2,
               private popoverService: TbPopoverService) {}
 
   toggleHelp() {
-    this.popoverService.toggleHelpPopover(this.elementRef.nativeElement, this.renderer, this.viewContainerRef,
+    const trigger = this.triggerText ? this.toggleHelpSpan.nativeElement : this.toggleHelpButton.nativeElement;
+    this.popoverService.toggleHelpPopover(trigger, this.renderer, this.viewContainerRef,
       this.helpId,
+      '',
       (visible) => {
         this.popoverVisible = visible;
       }, (ready => {
         this.popoverReady = ready;
-      }));
+      }),
+      this.helpPopupPlacement,
+      {},
+      this.helpPopupStyle);
   }
 
   ngOnDestroy(): void {

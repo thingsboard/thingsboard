@@ -34,7 +34,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class BaseTenantProfileServiceTest extends AbstractServiceTest {
+public abstract class BaseTenantProfileServiceTest extends AbstractServiceTest {
 
     private IdComparator<TenantProfile> idComparator = new IdComparator<>();
     private IdComparator<EntityInfo> tenantProfileInfoIdComparator = new IdComparator<>();

@@ -107,9 +107,9 @@ import { ComponentType } from '@angular/cdk/portal';
 import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/embed-dashboard-dialog-token';
 import { MobileService } from '@core/services/mobile.service';
 import { DialogService } from '@core/services/dialog.service';
-import { TbPopoverService } from '@shared/components/popover.component';
 import { DashboardPageComponent } from '@home/components/dashboard-page/dashboard-page.component';
 import { PopoverPlacement } from '@shared/components/popover.models';
+import { TbPopoverService } from '@shared/components/popover.service';
 
 @Component({
   selector: 'tb-widget',

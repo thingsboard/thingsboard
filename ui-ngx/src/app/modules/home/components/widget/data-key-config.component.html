@@ -70,6 +70,7 @@
           [globalVariables]="functionScopeVariables"
           [validationArgs]="[[1, 1],[1, '1']]"
           resultType="any"
+          helpId="widget/config/datakey_generation_fn"
           formControlName="funcBody">
         </tb-js-func>
       </section>
@@ -82,6 +83,7 @@
                     [globalVariables]="functionScopeVariables"
                     [validationArgs]="[[1, 1, 1, 1, 1],[1, '1', '1', 1, '1']]"
                     resultType="any"
+                    helpId="widget/config/datakey_postprocess_fn"
                     formControlName="postFuncBody">
         </tb-js-func>
         <label *ngIf="dataKeyFormGroup.get('usePostProcessing').value" class="tb-title" style="margin-left: 15px;">
