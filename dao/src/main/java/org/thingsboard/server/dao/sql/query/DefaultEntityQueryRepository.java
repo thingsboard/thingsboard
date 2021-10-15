@@ -716,12 +716,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     }
 
     int getMaxLevel(int maxLevel) {
-        int level = maxLevel > 0 ? maxLevel : this.maxLevelAllowed;
-        if (level > this.maxLevelAllowed) {
-            log.debug("hierarchy level {} is reduced down to maxLevelAllowed {}", level, this.maxLevelAllowed);
-            return this.maxLevelAllowed;
-        }
-        return level;
+        return (maxLevel <= 0 || maxLevel > this.maxLevelAllowed) ? this.maxLevelAllowed : maxLevel;
     }
 
     private String getQueryTemplate(EntitySearchDirection direction) {
