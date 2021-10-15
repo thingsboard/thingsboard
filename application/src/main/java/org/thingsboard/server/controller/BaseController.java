@@ -169,62 +169,68 @@ public abstract class BaseController {
     public static final String TENANT_ID_PARAM_DESCRIPTION = "A string value representing the tenant id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     public static final String EDGE_ID_PARAM_DESCRIPTION = "A string value representing the edge id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     public static final String CUSTOMER_ID_PARAM_DESCRIPTION = "A string value representing the customer id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
+    public static final String USER_ID_PARAM_DESCRIPTION = "A string value representing the user id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     public static final String ASSET_ID_PARAM_DESCRIPTION = "A string value representing the asset id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     public static final String ALARM_ID_PARAM_DESCRIPTION = "A string value representing the alarm id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     public static final String ENTITY_ID_PARAM_DESCRIPTION = "A string value representing the entity id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     public static final String ENTITY_TYPE_PARAM_DESCRIPTION = "A string value representing the entity type. For example, 'DEVICE'";
     public static final String RULE_CHAIN_ID_PARAM_DESCRIPTION = "A string value representing the rule chain id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
 
-    protected final String PAGE_SIZE_DESCRIPTION = "Maximum amount of entities in a one page";
-    protected final String PAGE_NUMBER_DESCRIPTION = "Sequence number of page starting from 0";
-    protected final String DEVICE_TYPE_DESCRIPTION = "Device type as the name of the device profile";
-    protected final String ASSET_TYPE_DESCRIPTION = "Asset type";
-    protected final String EDGE_TYPE_DESCRIPTION = "A string value representing the edge type. For example, 'default'";
 
-    protected final String ASSET_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the asset name.";
-    protected final String DASHBOARD_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the dashboard title.";
-    protected final String DEVICE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the device name.";
-    protected final String CUSTOMER_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the customer title.";
-    protected final String EDGE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the edge name.";
-    protected final String EVENT_TEXT_SEARCH_DESCRIPTION = "The value is not used in searching.";
-    protected final String SORT_PROPERTY_DESCRIPTION = "Property of entity to sort by";
-    protected final String DASHBOARD_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title";
-    protected final String CUSTOMER_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title, email, country, city";
-    protected final String DEVICE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, deviceProfileName, label, customerTitle";
-    protected final String ASSET_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, label, customerTitle";
-    protected final String ALARM_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, startTs, endTs, type, ackTs, clearTs, severity, status";
-    protected final String EVENT_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, id";
-    protected final String EDGE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, label, customerTitle";
-    protected final String SORT_ORDER_DESCRIPTION = "Sort order. ASC (ASCENDING) or DESC (DESCENDING)";
-    protected final String SORT_ORDER_ALLOWABLE_VALUES = "ASC, DESC";
-    protected final String DEVICE_INFO_DESCRIPTION = "Device Info is an extension of the default Device object that contains information about the assigned customer name and device profile name. ";
-    protected final String ASSET_INFO_DESCRIPTION = "Asset Info is an extension of the default Asset object that contains information about the assigned customer name. ";
-    protected final String ALARM_INFO_DESCRIPTION = "Alarm Info is an extension of the default Alarm object that also contains name of the alarm originator.";
-    protected final String RELATION_INFO_DESCRIPTION = "Relation Info is an extension of the default Relation object that contains information about the 'from' and 'to' entity names. ";
-    protected final String EDGE_INFO_DESCRIPTION = "Edge Info is an extension of the default Edge object that contains information about the assigned customer name. ";
+    protected static final String PAGE_SIZE_DESCRIPTION = "Maximum amount of entities in a one page";
+    protected static final String PAGE_NUMBER_DESCRIPTION = "Sequence number of page starting from 0";
+    protected static final String DEVICE_TYPE_DESCRIPTION = "Device type as the name of the device profile";
+    protected static final String ASSET_TYPE_DESCRIPTION = "Asset type";
+    protected static final String EDGE_TYPE_DESCRIPTION = "A string value representing the edge type. For example, 'default'";
 
-    protected final String DEVICE_NAME_DESCRIPTION = "A string value representing the Device name.";
-    protected final String ASSET_NAME_DESCRIPTION = "A string value representing the Asset name.";
+    protected static final String ASSET_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the asset name.";
+    protected static final String DASHBOARD_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the dashboard title.";
+    protected static final String DEVICE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the device name.";
+    protected static final String CUSTOMER_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the customer title.";
+    protected static final String EDGE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the edge name.";
+    protected static final String EVENT_TEXT_SEARCH_DESCRIPTION = "The value is not used in searching.";
+    protected static final String AUDIT_LOG_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on one of the next properties: entityType, entityName, userName, actionType, actionStatus.";
+    protected static final String SORT_PROPERTY_DESCRIPTION = "Property of entity to sort by";
+    protected static final String DASHBOARD_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title";
+    protected static final String CUSTOMER_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title, email, country, city";
+    protected static final String DEVICE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, deviceProfileName, label, customerTitle";
+    protected static final String ASSET_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, label, customerTitle";
+    protected static final String ALARM_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, startTs, endTs, type, ackTs, clearTs, severity, status";
+    protected static final String EVENT_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, id";
+    protected static final String EDGE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, label, customerTitle";
+    protected static final String AUDIT_LOG_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, entityType, entityName, userName, actionType, actionStatus";
+    protected static final String SORT_ORDER_DESCRIPTION = "Sort order. ASC (ASCENDING) or DESC (DESCENDING)";
+    protected static final String SORT_ORDER_ALLOWABLE_VALUES = "ASC, DESC";
+    protected static final String DEVICE_INFO_DESCRIPTION = "Device Info is an extension of the default Device object that contains information about the assigned customer name and device profile name. ";
+    protected static final String ASSET_INFO_DESCRIPTION = "Asset Info is an extension of the default Asset object that contains information about the assigned customer name. ";
+    protected static final String ALARM_INFO_DESCRIPTION = "Alarm Info is an extension of the default Alarm object that also contains name of the alarm originator.";
+    protected static final String RELATION_INFO_DESCRIPTION = "Relation Info is an extension of the default Relation object that contains information about the 'from' and 'to' entity names. ";
+    protected static final String EDGE_INFO_DESCRIPTION = "Edge Info is an extension of the default Edge object that contains information about the assigned customer name. ";
 
-    protected final String EVENT_START_TIME_DESCRIPTION = "Timestamp. Events with creation time before it won't be queried.";
-    protected final String EVENT_END_TIME_DESCRIPTION = "Timestamp. Events with creation time after it won't be queried.";
+    protected static final String DEVICE_NAME_DESCRIPTION = "A string value representing the Device name.";
+    protected static final String ASSET_NAME_DESCRIPTION = "A string value representing the Asset name.";
 
-    protected final String MARKDOWN_CODE_BLOCK_START = "```json\n";
-    protected final String MARKDOWN_CODE_BLOCK_END = "\n```";
-    protected final String EVENT_ERROR_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START + "{ \"eventType\": \"ERROR\", \"server\": \"ip-172-31-24-152\", " +
+    protected static final String EVENT_START_TIME_DESCRIPTION = "Timestamp. Events with creation time before it won't be queried.";
+    protected static final String EVENT_END_TIME_DESCRIPTION = "Timestamp. Events with creation time after it won't be queried.";
+
+    protected static final String MARKDOWN_CODE_BLOCK_START = "```json\n";
+    protected static final String MARKDOWN_CODE_BLOCK_END = "\n```";
+    protected static final String EVENT_ERROR_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START + "{ \"eventType\": \"ERROR\", \"server\": \"ip-172-31-24-152\", " +
             "\"method\": \"onClusterEventMsg\", \"error\": \"Error Message\" }" + MARKDOWN_CODE_BLOCK_END;
-    protected final String EVENT_LC_EVENT_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START + "{ \"eventType\": \"LC_EVENT\", \"server\": \"ip-172-31-24-152\", \"event\":" +
+    protected static final String EVENT_LC_EVENT_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START + "{ \"eventType\": \"LC_EVENT\", \"server\": \"ip-172-31-24-152\", \"event\":" +
             " \"STARTED\", \"status\": \"Success\", \"error\": \"Error Message\" }" + MARKDOWN_CODE_BLOCK_END;
-    protected final String EVENT_STATS_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START + "{ \"eventType\": \"STATS\", \"server\": \"ip-172-31-24-152\", \"messagesProcessed\": 10, \"errorsOccurred\": 5 }" + MARKDOWN_CODE_BLOCK_END;
-    protected final String DEBUG_FILTER_OBJ = "\"msgDirectionType\": \"IN\", \"server\": \"ip-172-31-24-152\", \"dataSearch\": \"humidity\", " +
+    protected static final String EVENT_STATS_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START + "{ \"eventType\": \"STATS\", \"server\": \"ip-172-31-24-152\", \"messagesProcessed\": 10, \"errorsOccurred\": 5 }" + MARKDOWN_CODE_BLOCK_END;
+    protected static final String DEBUG_FILTER_OBJ = "\"msgDirectionType\": \"IN\", \"server\": \"ip-172-31-24-152\", \"dataSearch\": \"humidity\", " +
             "\"metadataSearch\": \"deviceName\", \"entityName\": \"DEVICE\", \"relationType\": \"Success\"," +
             " \"entityId\": \"de9d54a0-2b7a-11ec-a3cc-23386423d98f\", \"msgType\": \"POST_TELEMETRY_REQUEST\"," +
             " \"isError\": \"false\", \"error\": \"Error Message\" }";
-    protected final String EVENT_DEBUG_RULE_NODE_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START + "{ \"eventType\": \"DEBUG_RULE_NODE\"," + DEBUG_FILTER_OBJ + MARKDOWN_CODE_BLOCK_END;
-    protected final String EVENT_DEBUG_RULE_CHAIN_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START + "{ \"eventType\": \"DEBUG_RULE_CHAIN\"," + DEBUG_FILTER_OBJ + MARKDOWN_CODE_BLOCK_END;
+    protected static final String EVENT_DEBUG_RULE_NODE_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START + "{ \"eventType\": \"DEBUG_RULE_NODE\"," + DEBUG_FILTER_OBJ + MARKDOWN_CODE_BLOCK_END;
+    protected static final String EVENT_DEBUG_RULE_CHAIN_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START + "{ \"eventType\": \"DEBUG_RULE_CHAIN\"," + DEBUG_FILTER_OBJ + MARKDOWN_CODE_BLOCK_END;
 
     protected static final String RELATION_TYPE_PARAM_DESCRIPTION = "A string value representing relation type between entities. For example, 'Contains', 'Manages'. It can be any string value.";
     protected static final String RELATION_TYPE_GROUP_PARAM_DESCRIPTION = "A string value representing relation type group. For example, 'COMMON'";
+
+    protected static final String ADMINISTRATOR_AUTHORITY_ONLY = "Available for users with 'Tenant Administrator' authority only.";
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     protected static final String DEFAULT_DASHBOARD = "defaultDashboardId";
