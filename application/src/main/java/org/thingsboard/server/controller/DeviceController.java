@@ -415,7 +415,7 @@ public class DeviceController extends BaseController {
             @RequestParam int page,
             @ApiParam(value = DEVICE_TYPE_DESCRIPTION)
             @RequestParam(required = false) String type,
-            @ApiParam(value = DEVICE_PROFILE_ID_DESCRIPTION)
+            @ApiParam(value = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
             @RequestParam(required = false) String deviceProfileId,
             @ApiParam(value = DEVICE_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
@@ -509,7 +509,7 @@ public class DeviceController extends BaseController {
             @RequestParam int page,
             @ApiParam(value = DEVICE_TYPE_DESCRIPTION)
             @RequestParam(required = false) String type,
-            @ApiParam(value = DEVICE_PROFILE_ID_DESCRIPTION)
+            @ApiParam(value = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
             @RequestParam(required = false) String deviceProfileId,
             @ApiParam(value = DEVICE_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,

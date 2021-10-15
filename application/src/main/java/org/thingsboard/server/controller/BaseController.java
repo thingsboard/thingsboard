@@ -165,7 +165,7 @@ public abstract class BaseController {
             "See the 'Model' tab of the Response Class for more details. ";
     public static final String DASHBOARD_ID_PARAM_DESCRIPTION = "A string value representing the device id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     public static final String DEVICE_ID_PARAM_DESCRIPTION = "A string value representing the device id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
-    public static final String DEVICE_PROFILE_ID_DESCRIPTION = "A string value representing the device profile id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
+    public static final String DEVICE_PROFILE_ID_PARAM_DESCRIPTION = "A string value representing the device profile id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     public static final String TENANT_ID_PARAM_DESCRIPTION = "A string value representing the tenant id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     public static final String EDGE_ID_PARAM_DESCRIPTION = "A string value representing the edge id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     public static final String CUSTOMER_ID_PARAM_DESCRIPTION = "A string value representing the customer id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
@@ -176,6 +176,8 @@ public abstract class BaseController {
     public static final String ENTITY_TYPE_PARAM_DESCRIPTION = "A string value representing the entity type. For example, 'DEVICE'";
     public static final String RULE_CHAIN_ID_PARAM_DESCRIPTION = "A string value representing the rule chain id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
 
+    protected static final String TENANT_AUTHORITY_PARAGRAPH = "\n\nAvailable for users with 'TENANT_ADMIN' authority.";
+    protected static final String TENANT_AND_USER_AUTHORITY_PARAGRAPH = "\n\nAvailable for users with 'TENANT_ADMIN' or 'CUSTOMER_USER' authority.";
 
     protected static final String PAGE_SIZE_DESCRIPTION = "Maximum amount of entities in a one page";
     protected static final String PAGE_NUMBER_DESCRIPTION = "Sequence number of page starting from 0";
@@ -186,6 +188,7 @@ public abstract class BaseController {
     protected static final String ASSET_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the asset name.";
     protected static final String DASHBOARD_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the dashboard title.";
     protected static final String DEVICE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the device name.";
+    protected static final String DEVICE_PROFILE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the device profile name.";
     protected static final String CUSTOMER_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the customer title.";
     protected static final String EDGE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the edge name.";
     protected static final String EVENT_TEXT_SEARCH_DESCRIPTION = "The value is not used in searching.";
@@ -194,6 +197,7 @@ public abstract class BaseController {
     protected static final String DASHBOARD_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title";
     protected static final String CUSTOMER_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title, email, country, city";
     protected static final String DEVICE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, deviceProfileName, label, customerTitle";
+    protected static final String DEVICE_PROFILE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, transportType, description, isDefault";
     protected static final String ASSET_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, label, customerTitle";
     protected static final String ALARM_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, startTs, endTs, type, ackTs, clearTs, severity, status";
     protected static final String EVENT_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, id";
@@ -201,11 +205,13 @@ public abstract class BaseController {
     protected static final String AUDIT_LOG_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, entityType, entityName, userName, actionType, actionStatus";
     protected static final String SORT_ORDER_DESCRIPTION = "Sort order. ASC (ASCENDING) or DESC (DESCENDING)";
     protected static final String SORT_ORDER_ALLOWABLE_VALUES = "ASC, DESC";
+    protected static final String TRANSPORT_TYPE_ALLOWABLE_VALUES = "DEFAULT, MQTT, COAP, LWM2M, SNMP";
     protected static final String DEVICE_INFO_DESCRIPTION = "Device Info is an extension of the default Device object that contains information about the assigned customer name and device profile name. ";
     protected static final String ASSET_INFO_DESCRIPTION = "Asset Info is an extension of the default Asset object that contains information about the assigned customer name. ";
     protected static final String ALARM_INFO_DESCRIPTION = "Alarm Info is an extension of the default Alarm object that also contains name of the alarm originator.";
     protected static final String RELATION_INFO_DESCRIPTION = "Relation Info is an extension of the default Relation object that contains information about the 'from' and 'to' entity names. ";
     protected static final String EDGE_INFO_DESCRIPTION = "Edge Info is an extension of the default Edge object that contains information about the assigned customer name. ";
+    protected static final String DEVICE_PROFILE_INFO_DESCRIPTION = "Device Profile Info is a lightweight object that includes main information about Device Profile excluding the heavyweight configuration object. ";
 
     protected static final String DEVICE_NAME_DESCRIPTION = "A string value representing the Device name.";
     protected static final String ASSET_NAME_DESCRIPTION = "A string value representing the Asset name.";
