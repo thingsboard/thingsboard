@@ -518,8 +518,11 @@ public class AssetController extends BaseController {
 
     @ApiOperation(value = "Assign asset to edge (assignAssetToEdge)",
             notes = "Creates assignment of an existing asset to an instance of The Edge. " +
-                    "The Edge is a software product for edge computing. " +
-                    "It allows bringing data analysis and management to the edge, while seamlessly synchronizing with the platform server (cloud). ", produces = MediaType.APPLICATION_JSON_VALUE)
+                    EDGE_ASSIGN_ASYNC_FIRST_STEP_DESCRIPTION +
+                    "Second, remote edge service will receive a copy of assignment asset " +
+                    EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION + ". " +
+                    "Third, once asset will be delivered to edge service, it's going to be available for usage on remote edge instance.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/asset/{assetId}", method = RequestMethod.POST)
     @ResponseBody
@@ -554,7 +557,12 @@ public class AssetController extends BaseController {
     }
 
     @ApiOperation(value = "Unassign asset from edge (unassignAssetFromEdge)",
-            notes = "Clears assignment of the asset to the edge", produces = MediaType.APPLICATION_JSON_VALUE)
+            notes = "Clears assignment of the asset to the edge. " +
+                    EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION +
+                    "Second, remote edge service will receive an 'unassign' command to remove asset " +
+                    EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION + ". " +
+                    "Third, once 'unassign' command will be delivered to edge service, it's going to remove asset locally.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/asset/{assetId}", method = RequestMethod.DELETE)
     @ResponseBody

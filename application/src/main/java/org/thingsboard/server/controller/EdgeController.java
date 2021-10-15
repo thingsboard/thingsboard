@@ -142,7 +142,7 @@ public class EdgeController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge", method = RequestMethod.POST)
     @ResponseBody
-    public Edge saveEdge(@ApiParam(value = "A JSON value representing the ed.", required = true)
+    public Edge saveEdge(@ApiParam(value = "A JSON value representing the edge.", required = true)
                          @RequestBody Edge edge) throws ThingsboardException {
         try {
             TenantId tenantId = getCurrentUser().getTenantId();
