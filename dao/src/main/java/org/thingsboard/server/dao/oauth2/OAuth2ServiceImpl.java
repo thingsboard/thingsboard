@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.oauth2;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -224,7 +225,7 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
                 if (StringUtils.isEmpty(clientRegistration.getAccessTokenUri())) {
                     throw new DataValidationException("Token uri should be specified!");
                 }
-                if (StringUtils.isEmpty(clientRegistration.getScope())) {
+                if (CollectionUtils.isEmpty(clientRegistration.getScope())) {
                     throw new DataValidationException("Scope should be specified!");
                 }
                 if (StringUtils.isEmpty(clientRegistration.getUserNameAttributeName())) {
