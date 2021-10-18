@@ -307,11 +307,16 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                                     value, resourceModelWrite.type);
                         } catch (Exception e) {
                             msgError = "Resource id=" + resultIds.toString() + ", value = " + request.getValue() +
-                                    ", class = " + request.getValue().getClass().getSimpleName() + "is bad. Value of Multi-Instance Resource must be in Json format!";
+                                    ", class = " + request.getValue().getClass().getSimpleName() + ". Format value is bad. Value for this Multi-Instance Resource must be in Json format!";
                         }
                     } else {
-                        downlink = this.getWriteRequestSingleResource(resourceModelWrite.type, contentFormat,
-                                resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(), request.getValue());
+                        try {
+                            downlink = this.getWriteRequestSingleResource(resourceModelWrite.type, contentFormat,
+                                    resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(), request.getValue());
+                        } catch (Exception e) {
+                            msgError = "Resource id=" + resultIds.toString() + ", value = " + request.getValue() +
+                                    ", class = " + request.getValue().getClass().getSimpleName() + ". Format value is bad. Value for this Single Resource must be " + resourceModelWrite.type + "!";
+                        }
                     }
                     if (downlink != null) {
                         sendSimpleRequest(client, downlink, request.getTimeout(), callback);

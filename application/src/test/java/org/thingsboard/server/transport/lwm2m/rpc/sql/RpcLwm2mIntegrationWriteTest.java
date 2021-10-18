@@ -121,7 +121,7 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
         String actualValues = rpcActualResult.get("error").asText();
-        String expected = "is bad. Value of Multi-Instance Resource must be in Json format!";
+        String expected = "Format value is bad. Value for this Multi-Instance Resource must be in Json format!";
         assertTrue(actualValues.contains(expected));
     }
 
