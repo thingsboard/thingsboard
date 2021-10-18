@@ -573,7 +573,9 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/devices", method = RequestMethod.POST)
     @ResponseBody
-    public List<Device> findByQuery(@RequestBody DeviceSearchQuery query) throws ThingsboardException {
+    public List<Device> findByQuery(
+            @ApiParam(value = "The device search query JSON")
+            @RequestBody DeviceSearchQuery query) throws ThingsboardException {
         checkNotNull(query);
         checkNotNull(query.getParameters());
         checkNotNull(query.getDeviceTypes());
