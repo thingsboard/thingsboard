@@ -63,7 +63,7 @@ public class TbLwM2MAuthorizer implements Authorizer {
         if (securityStore != null) {
             try {
                 expectedSecurityInfo = securityStore.getByEndpoint(registration.getEndpoint());
-                if (expectedSecurityInfo.usePSK() && expectedSecurityInfo.getEndpoint().equals(SecurityMode.NO_SEC.toString())
+                if (expectedSecurityInfo != null && expectedSecurityInfo.usePSK() && expectedSecurityInfo.getEndpoint().equals(SecurityMode.NO_SEC.toString())
                         && expectedSecurityInfo.getIdentity().equals(SecurityMode.NO_SEC.toString())
                         && Arrays.equals(SecurityMode.NO_SEC.toString().getBytes(), expectedSecurityInfo.getPreSharedKey())) {
                     expectedSecurityInfo = null;
