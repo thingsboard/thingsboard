@@ -71,6 +71,8 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.config.ThingsboardSecurityConfiguration;
+import org.thingsboard.server.dao.tenant.TenantProfileService;
+import org.thingsboard.server.queue.memory.InMemoryStorage;
 import org.thingsboard.server.service.mail.TestMailService;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
@@ -93,7 +95,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
 @Slf4j
-public abstract class AbstractWebTest {
+public abstract class AbstractWebTest extends AbstractInMemoryStorageTest{
 
     protected ObjectMapper mapper = new ObjectMapper();
 
@@ -132,6 +134,9 @@ public abstract class AbstractWebTest {
     @Autowired
     private WebApplicationContext webApplicationContext;
 
+    @Autowired
+    private TenantProfileService tenantProfileService;
+
     @Rule
     public TestRule watcher = new TestWatcher() {
         protected void starting(Description description) {
@@ -161,8 +166,9 @@ public abstract class AbstractWebTest {
     }
 
     @Before
-    public void setup() throws Exception {
-        log.info("Executing setup");
+    public void setupWebTest() throws Exception {
+        log.info("Executing web test setup");
+
         if (this.mockMvc == null) {
             this.mockMvc = webAppContextSetup(webApplicationContext)
                     .apply(springSecurity()).build();
@@ -197,16 +203,20 @@ public abstract class AbstractWebTest {
 
         logout();
 
-        log.info("Executed setup");
+        log.info("Executed web test setup");
     }
 
     @After
-    public void teardown() throws Exception {
-        log.info("Executing teardown");
+    public void teardownWebTest() throws Exception {
+        log.info("Executing web test teardown");
+
         loginSysAdmin();
         doDelete("/api/tenant/" + tenantId.getId().toString())
                 .andExpect(status().isOk());
-        log.info("Executed teardown");
+
+        tenantProfileService.deleteTenantProfiles(TenantId.SYS_TENANT_ID);
+
+        log.info("Executed web test teardown");
     }
 
     protected void loginSysAdmin() throws Exception {
