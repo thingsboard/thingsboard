@@ -15,16 +15,14 @@
  */
 .tb-help-popup-button {
   position: relative;
-}
-.tb-help-popup-button-loading {
-  background: #fff;
-  border-radius: 50%;
-  width: 32px !important;
-  height: 32px !important;
-  position: absolute;
-  top: 0;
-  left: 0;
-  &.mat-progress-spinner {
+  .mat-progress-spinner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: #fff;
+    border-radius: 50%;
+    width: 32px !important;
+    height: 32px !important;
     svg {
       top: 6px;
       left: 6px;
@@ -32,36 +30,20 @@
   }
 }
 
-.tb-help-popup-span {
+.tb-help-popup-text-button {
   position: relative;
-  cursor: pointer;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  color: #2a7dec;
-  font-weight: 500;
-  &.active.ready {
-    text-decoration: underline;
+  padding: 0 2px 0 8px;
+  line-height: 28px;
+  &.mat-stroked-button {
+    padding: 0 1px 0 7px;
+    line-height: 26px;
   }
-  &:hover {
-    &:not(.active) {
-      text-decoration: underline;
-    }
+  .mat-icon {
+    padding-left: 4px;
   }
-  &:after {
+  .mat-progress-spinner {
     display: inline-block;
-    font-family: "FontAwesome";
-    content: '\f08e';
-    padding-left: 5px;
-    font-size: 14px;
-    font-weight: 600;
-  }
-  .mat-progress-bar {
-    position: absolute;
-    height: 2px;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    margin-left: 4px;
+    margin-right: 5px;
   }
 }

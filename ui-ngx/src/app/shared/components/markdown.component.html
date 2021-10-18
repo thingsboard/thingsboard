@@ -15,4 +15,12 @@
     limitations under the License.
 
 -->
-<tb-markdown [style]="style" [data]="markdownText$ | async" lineNumbers (ready)="onMarkdownReady()" markdownClass="tb-help-markdown" (click)="markdownClick($event)"></tb-markdown>
+<ng-container #markdownContainer>
+</ng-container>
+<div *ngIf="error && !fallbackToPlainMarkdown" style="color: #f00; font-size: 14px;
+                                                      line-height: 28px;
+                                                      background: #efefef;">
+  {{error}}
+</div>
+<div #fallbackElement [fxShow]="error && fallbackToPlainMarkdown" class="tb-markdown-view" [ngClass]="markdownClass" [ngStyle]="style">
+</div>

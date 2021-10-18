@@ -498,9 +498,11 @@ mat-label {
       color: #0F161D;
       line-height: normal;
       font-weight: 500;
-      padding: 30px 32px 10px;
       border-bottom: none;
       margin: 0;
+    }
+    & > #{$heading} {
+      padding: 30px 32px 10px;
     }
   }
 
@@ -575,6 +577,9 @@ mat-label {
     margin-bottom: 30px;
     overflow: hidden;
     table-layout: fixed;
+    &.auto {
+      table-layout: auto;
+    }
 
     & > thead {
       background-color: #f9fbff;
@@ -587,10 +592,12 @@ mat-label {
           padding: 12px 16px;
           text-align: left;
           margin: 0;
-          word-break: break-word;
           @media screen and (max-width: 400px) {
             font-size: 12px;
             padding: 12px 4px;
+            code:not([class*=language-]) {
+              font-size: 12px;
+            }
           }
         }
       }
@@ -608,11 +615,13 @@ mat-label {
           padding: 12px 16px;
           text-align: left;
           margin: 0;
-          word-break: break-word;
           color: rgba(15, 22, 29, 0.8);
           @media screen and (max-width: 400px) {
             font-size: 12px;
             padding: 12px 4px;
+            code:not([class*=language-]) {
+              font-size: 12px;
+            }
           }
         }
       }
