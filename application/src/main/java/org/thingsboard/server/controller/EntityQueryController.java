@@ -681,8 +681,7 @@ public class EntityQueryController extends BaseController {
 
     private static final int MAX_PAGE_SIZE = 100;
 
-    @ApiOperation(value = "Count Entities by Query",
-            notes = ENTITY_COUNT_QUERY_DESCRIPTION)
+    @ApiOperation(value = "Count Entities by Query", notes = ENTITY_COUNT_QUERY_DESCRIPTION)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/entitiesQuery/count", method = RequestMethod.POST)
     @ResponseBody
@@ -697,8 +696,7 @@ public class EntityQueryController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Find Entity Data by Query",
-            notes = ENTITY_DATA_QUERY_DESCRIPTION)
+    @ApiOperation(value = "Find Entity Data by Query", notes = ENTITY_DATA_QUERY_DESCRIPTION)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/entitiesQuery/find", method = RequestMethod.POST)
     @ResponseBody
@@ -713,8 +711,7 @@ public class EntityQueryController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Find Alarms by Query",
-            notes = ALARM_DATA_QUERY_DESCRIPTION)
+    @ApiOperation(value = "Find Alarms by Query", notes = ALARM_DATA_QUERY_DESCRIPTION)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarmsQuery/find", method = RequestMethod.POST)
     @ResponseBody
