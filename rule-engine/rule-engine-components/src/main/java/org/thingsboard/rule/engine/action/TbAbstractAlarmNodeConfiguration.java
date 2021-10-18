@@ -21,15 +21,13 @@ import lombok.Data;
 public abstract class TbAbstractAlarmNodeConfiguration {
 
     static final String ALARM_DETAILS_BUILD_JS_TEMPLATE = "" +
-            "//***DO NOT CHANGE THIS LINES***\n" +
             "var details = {};\n" +
             "if (metadata.prevAlarmDetails) {\n" +
             "    details = JSON.parse(metadata.prevAlarmDetails);\n" +
             "    //remove prevAlarmDetails from metadata\n" +
             "    delete metadata.prevAlarmDetails;\n" +
-            "    //now metadata is the same as it comes IN this rule node" +
+            "    //now metadata is the same as it comes IN this rule node\n" +
             "}\n" +
-            "//***PLACE YOUR CODE BELOW***\n" +
             "\n" +
             "\n" +
             "return details;";
