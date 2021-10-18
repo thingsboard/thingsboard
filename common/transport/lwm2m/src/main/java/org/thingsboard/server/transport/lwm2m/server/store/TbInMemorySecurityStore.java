@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.store;
 
+import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.server.security.NonUniqueSecurityInfoException;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
@@ -48,9 +49,15 @@ public class TbInMemorySecurityStore implements TbEditableSecurityStore {
         readLock.lock();
         try {
             TbLwM2MSecurityInfo securityInfo = securityByEp.get(endpoint);
-            if (securityInfo != null) {
-                return securityInfo.getSecurityInfo();
-            } else {
+            if (securityInfo != null ) {
+                if (SecurityMode.NO_SEC.equals(securityInfo.getSecurityMode())) {
+                    byte[] preSharedKeyNoSec = SecurityMode.NO_SEC.toString().getBytes();
+                    return SecurityInfo.newPreSharedKeyInfo(endpoint, endpoint, preSharedKeyNoSec);
+                } else {
+                    return securityInfo.getSecurityInfo();
+                }
+            }
+            else {
                 return null;
             }
         } finally {
