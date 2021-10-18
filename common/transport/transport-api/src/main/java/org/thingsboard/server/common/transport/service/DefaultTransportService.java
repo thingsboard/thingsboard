@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
@@ -112,6 +111,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -932,6 +932,7 @@ public class DefaultTransportService implements TransportService {
     public void onProfileUpdate(DeviceProfile deviceProfile) {
         long deviceProfileIdMSB = deviceProfile.getId().getId().getMostSignificantBits();
         long deviceProfileIdLSB = deviceProfile.getId().getId().getLeastSignificantBits();
+        AtomicBoolean isProfileSessions = new AtomicBoolean(false);
         sessions.forEach((id, md) -> {
             //TODO: if transport types are different - we should close the session.
             if (md.getSessionInfo().getDeviceProfileIdMSB() == deviceProfileIdMSB
@@ -944,8 +945,12 @@ public class DefaultTransportService implements TransportService {
                         .build();
                 md.setSessionInfo(newSessionInfo);
                 transportCallbackExecutor.submit(() -> md.getListener().onDeviceProfileUpdate(newSessionInfo, deviceProfile));
+                isProfileSessions.set(true);
             }
         });
+        if (isProfileSessions.get()) {
+            deviceProfileCache.put(deviceProfile);
+        }
     }
 
     private void onDeviceUpdate(Device device) {
