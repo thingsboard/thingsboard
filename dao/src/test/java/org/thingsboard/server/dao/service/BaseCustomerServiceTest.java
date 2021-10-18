@@ -21,6 +21,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -31,6 +32,13 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.junit.Assert.assertTrue;
 
 public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
 
@@ -244,5 +252,43 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
         pageData = customerService.findCustomersByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
+    }
+
+    @Test
+    public void testCreateTwoCustomerInSameTime() throws InterruptedException {
+        final int TIMEOUT = 10;
+        int parallelCount = 4;
+        ExecutorService executorService = Executors.newFixedThreadPool(parallelCount, ThingsBoardThreadFactory.forName(getClass().getSimpleName() + "-test-scope"));
+
+        Customer customer = new Customer();
+        customer.setTitle("TEST" + RandomStringUtils.randomAlphanumeric(7));
+        customer.setTenantId(tenantId);
+        AtomicInteger cntSaved = new AtomicInteger(0);
+        AtomicInteger cntError = new AtomicInteger(0);
+        final CountDownLatch readyLatch = new CountDownLatch(parallelCount);
+        final CountDownLatch startLatch = new CountDownLatch(1);
+        final CountDownLatch finishLatch = new CountDownLatch(parallelCount);
+        for (int i = 0; i < parallelCount; i++) {
+            executorService.submit(() -> {
+                readyLatch.countDown();
+                try {
+                    Customer savedCustomer = customerService.saveCustomer(customer);
+                    if (savedCustomer != null &&
+                            savedCustomer.getTitle().equals(customer.getTitle()) &&
+                            savedCustomer.getTenantId().equals(customer.getTenantId())) cntSaved.getAndIncrement();
+                } catch (Exception t) {
+                    if (t.getMessage().equals("Customer with such name for this tenant already exists!")) {
+                        cntError.getAndIncrement();
+                    }
+                }
+                finishLatch.countDown();
+            });
+        }
+        assertTrue(readyLatch.await(TIMEOUT, TimeUnit.SECONDS));
+        Thread.yield();
+        startLatch.countDown(); //run all-at-once submitted tasks
+        assertTrue(finishLatch.await(TIMEOUT, TimeUnit.SECONDS));
+        Assert.assertEquals("Saved count different with 1", cntSaved.get(), 1);
+        Assert.assertEquals("Saved = " + cntSaved + ", errors = " + cntError + ". But need saved = 1, error = " + (parallelCount - 1) + "!", cntError.get(), parallelCount - cntSaved.get());
     }
 }
