@@ -31,9 +31,6 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
 
@@ -247,44 +244,5 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
         pageData = customerService.findCustomersByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
-    }
-
-    @Test
-    public void testCreateTwoCustomerInSameTime() throws InterruptedException {
-        ExecutorService executorService1 = Executors.newSingleThreadExecutor();
-        ExecutorService executorService2 = Executors.newSingleThreadExecutor();
-        Customer customer = new Customer();
-        customer.setTitle("TEST" + RandomStringUtils.randomAlphanumeric(7));
-        customer.setTenantId(tenantId);
-        AtomicInteger cntSaved = new AtomicInteger(0);
-        AtomicInteger cntError = new AtomicInteger(0);
-        executorService1.submit(() -> {
-            try {
-                Customer savedCustomer = customerService.saveCustomer(customer);
-                if (savedCustomer != null &&
-                        savedCustomer.getTitle().equals(customer.getTitle()) &&
-                        savedCustomer.getTenantId().equals(customer.getTenantId())) cntSaved.getAndIncrement();
-            } catch (Exception t) {
-                if (t.getMessage().equals("Customer with such name already exists!")) {
-                    cntError.getAndIncrement();
-                }
-            }
-        });
-        executorService2.submit(() -> {
-            try {
-                Customer savedCustomer = customerService.saveCustomer(customer);
-                if (savedCustomer != null &&
-                        savedCustomer.getTitle().equals(customer.getTitle()) &&
-                        savedCustomer.getTenantId().equals(customer.getTenantId())) cntSaved.getAndIncrement();
-            } catch (Exception t) {
-                if (t.getMessage().equals("Customer with such name already exists!")) {
-                    cntError.getAndIncrement();
-                }
-            }
-        });
-        Thread.sleep(5000);
-        Assert.assertNotEquals("Zero customer saved", 0, cntSaved.get());
-        Assert.assertNotEquals("Saved two same customer", 0, cntError.get());
-        Assert.assertEquals("Saved = " + cntSaved + ", errors = " + cntError + ". But need saved = 1, error = 1!", cntError.get(), cntSaved.get());
     }
 }
