@@ -51,8 +51,8 @@ public class TbInMemorySecurityStore implements TbEditableSecurityStore {
             TbLwM2MSecurityInfo securityInfo = securityByEp.get(endpoint);
             if (securityInfo != null ) {
                 if (SecurityMode.NO_SEC.equals(securityInfo.getSecurityMode())) {
-                    byte[] preSharedKeyNoSec = SecurityMode.NO_SEC.toString().getBytes();
-                    return SecurityInfo.newPreSharedKeyInfo(endpoint, endpoint, preSharedKeyNoSec);
+                    return SecurityInfo.newPreSharedKeyInfo(SecurityMode.NO_SEC.toString(), SecurityMode.NO_SEC.toString(),
+                            SecurityMode.NO_SEC.toString().getBytes());
                 } else {
                     return securityInfo.getSecurityInfo();
                 }
