@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -112,9 +113,18 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     public Customer saveCustomer(Customer customer) {
         log.trace("Executing saveCustomer [{}]", customer);
         customerValidator.validate(customer, Customer::getTenantId);
-        Customer savedCustomer = customerDao.save(customer.getTenantId(), customer);
-        dashboardService.updateCustomerDashboards(savedCustomer.getTenantId(), savedCustomer.getId());
-        return savedCustomer;
+        try {
+            Customer savedCustomer = customerDao.save(customer.getTenantId(), customer);
+            dashboardService.updateCustomerDashboards(savedCustomer.getTenantId(), savedCustomer.getId());
+            return savedCustomer;
+        } catch (Exception t) {
+            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
+            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("customer_title_unq_key")) {
+                throw new DataValidationException("Customer with such name already exists!");
+            } else {
+                throw t;
+            }
+        }
     }
 
     @Override

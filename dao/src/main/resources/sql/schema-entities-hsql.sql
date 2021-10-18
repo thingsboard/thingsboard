@@ -112,7 +112,8 @@ CREATE TABLE IF NOT EXISTS customer (
     state varchar(255),
     tenant_id uuid,
     title varchar(255),
-    zip varchar(255)
+    zip varchar(255),
+    CONSTRAINT customer_title_unq_key UNIQUE (tenant_id, title)
 );
 
 CREATE TABLE IF NOT EXISTS dashboard (
