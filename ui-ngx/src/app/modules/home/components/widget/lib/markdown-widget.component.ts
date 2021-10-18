@@ -19,7 +19,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { DatasourceData } from '@shared/models/widget.models';
+import { DatasourceData, widgetType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import {
   fillPattern, flatData,
@@ -31,6 +31,7 @@ import {
 import { FormattedData } from '@home/components/widget/lib/maps/map-models';
 import { hashCode, isNotEmptyStr } from '@core/utils';
 import cssjs from '@core/css/css';
+import { UtilsService } from '@core/services/utils.service';
 
 interface MarkdownWidgetSettings {
   markdownTextPattern: string;
@@ -59,6 +60,7 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
   markdownClass: string;
 
   constructor(protected store: Store<AppState>,
+              private utils: UtilsService,
               private cd: ChangeDetectorRef) {
     super(store);
   }
@@ -66,12 +68,11 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
   ngOnInit(): void {
     this.ctx.$scope.markdownWidget = this;
     this.settings = this.ctx.settings;
-    if (this.ctx.widget.type === 'static') {
-      this.markdownText = this.settings.markdownTextPattern;
-    } else {
-      this.markdownTextFunction = this.settings.useMarkdownTextFunction
-        ? parseFunction(this.settings.markdownTextFunction, ['data']) : null;
+    if (this.ctx.widget.type === widgetType.static) {
+      this.markdownText = this.markdownCustomTranslation(this.settings.markdownTextPattern);
     }
+    this.markdownTextFunction = this.settings.useMarkdownTextFunction
+      ? parseFunction(this.settings.markdownTextFunction, ['data']) : null;
     this.markdownClass = 'markdown-widget';
     const cssString = this.settings.markdownCss;
     if (isNotEmptyStr(cssString)) {
@@ -109,9 +110,13 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
       markdownText = fillPattern(markdownText, replaceInfo, allData);
     }
     if (this.markdownText !== markdownText) {
-      this.markdownText = markdownText;
+      this.markdownText = this.markdownCustomTranslation(markdownText);
       this.cd.detectChanges();
     }
+  }
+
+  markdownCustomTranslation(markdownPattern: string): string {
+    return this.utils.customTranslation(markdownPattern, markdownPattern);
   }
 
   markdownClick($event: MouseEvent) {
