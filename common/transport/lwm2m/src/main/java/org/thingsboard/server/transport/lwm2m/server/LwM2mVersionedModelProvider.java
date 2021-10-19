@@ -95,7 +95,7 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
                 if (objectModel != null)
                     return objectModel.resources.get(resourceId);
                 else
-                    log.trace("TbResources (Object model) with id [{}/0/{}] not found on the server", objectId, resourceId);
+                    log.trace("TbResources (Object model) with id [{}/0/{}] not found on the server.", objectId, resourceId);
                 return null;
             } catch (Exception e) {
                 log.error("", e);
@@ -128,14 +128,17 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
         private ObjectModel getObjectModelDynamic(Integer objectId, String version) {
             String key = getKeyIdVer(objectId, version);
             ObjectModel objectModel = models.get(tenantId).get(key);
-
             if (objectModel == null) {
                 modelsLock.lock();
                 try {
                     objectModel = models.get(tenantId).get(key);
                     if (objectModel == null) {
                         objectModel = getObjectModel(key);
+                    }
+                    if (objectModel != null) {
                         models.get(tenantId).put(key, objectModel);
+                    } else {
+                        log.error("Object model with id [{}] version [{}] not found on the server.", objectId, version);
                     }
                 } finally {
                     modelsLock.unlock();
