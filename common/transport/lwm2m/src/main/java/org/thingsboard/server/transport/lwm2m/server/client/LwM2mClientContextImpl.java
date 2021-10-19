@@ -189,17 +189,17 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     @Override
     public boolean awake(LwM2mClient client) {
+        boolean changed = false;
         if (LwM2MClientState.REGISTERED.equals(client.getState())) {
             onUplink(client);
-            boolean changed = compareAndSetSleepFlag(client, false);
+            changed = compareAndSetSleepFlag(client, false);
             if (changed) {
                 log.debug("[{}] client is awake", client.getEndpoint());
                 context.getTransportService().log(client.getSession(), "Info : Client is awake!");
                 sendMsgsAfterSleeping(client);
             }
-            return changed;
         }
-        return  false;
+        return changed;
     }
 
     private boolean compareAndSetSleepFlag(LwM2mClient client, boolean sleeping) {
