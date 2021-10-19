@@ -168,6 +168,12 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
                                     values.addProperty("temperature_" + channel, ((double) (startPoint + sampleOffset)) / 10f);
                                     startTimestampMillis = startTimestampMillis + measurementPeriodMillis;
                                     break;
+                                case WATER_METER:
+                                    values = valuesMap.computeIfAbsent(startTimestampMillis, k ->
+                                            CoapEfentoUtils.setDefaultMeasurements(serialNumber, batteryStatus, measurementPeriod, nextTransmissionAtMillis, signal, k));
+                                    values.addProperty("pulse_counter_" + channel, ((double) (startPoint + sampleOffset)));
+                                    startTimestampMillis = startTimestampMillis + measurementPeriodMillis;
+                                    break;
                                 case HUMIDITY:
                                     values = valuesMap.computeIfAbsent(startTimestampMillis, k ->
                                             CoapEfentoUtils.setDefaultMeasurements(serialNumber, batteryStatus, measurementPeriod, nextTransmissionAtMillis, signal, k));
