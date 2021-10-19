@@ -37,6 +37,7 @@
         [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
         [globalVariables]="functionScopeVariables"
         [editorCompleter]="customActionEditorCompleter"
+        helpId="widget/action/mobile_get_location_fn"
       ></tb-js-func>
     </ng-template>
     <ng-template [ngSwitchCase]="mobileActionType.makePhoneCall">
@@ -46,6 +47,7 @@
         [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
         [globalVariables]="functionScopeVariables"
         [editorCompleter]="customActionEditorCompleter"
+        helpId="widget/action/mobile_get_phone_number_fn"
       ></tb-js-func>
     </ng-template>
     <ng-template [ngSwitchCase]="mobileActionFormGroup.get('type').value === mobileActionType.takePhoto ||
@@ -58,6 +60,7 @@
         [functionArgs]="['imageUrl', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
         [globalVariables]="functionScopeVariables"
         [editorCompleter]="customActionEditorCompleter"
+        helpId="widget/action/mobile_process_image_fn"
       ></tb-js-func>
     </ng-template>
     <ng-template [ngSwitchCase]="mobileActionType.scanQrCode">
@@ -67,6 +70,7 @@
         [functionArgs]="['code', 'format', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
         [globalVariables]="functionScopeVariables"
         [editorCompleter]="customActionEditorCompleter"
+        helpId="widget/action/mobile_process_qr_code_fn"
       ></tb-js-func>
     </ng-template>
     <ng-template [ngSwitchCase]="mobileActionType.getLocation">
@@ -76,6 +80,7 @@
         [functionArgs]="['latitude', 'longitude', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
         [globalVariables]="functionScopeVariables"
         [editorCompleter]="customActionEditorCompleter"
+        helpId="widget/action/mobile_process_location_fn"
       ></tb-js-func>
     </ng-template>
     <ng-template [ngSwitchCase]="mobileActionFormGroup.get('type').value === mobileActionType.mapDirection ||
@@ -88,6 +93,7 @@
         [functionArgs]="['launched', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
         [globalVariables]="functionScopeVariables"
         [editorCompleter]="customActionEditorCompleter"
+        helpId="widget/action/mobile_process_launch_result_fn"
       ></tb-js-func>
     </ng-template>
   </div>
@@ -97,6 +103,7 @@
               [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
               [globalVariables]="functionScopeVariables"
               [editorCompleter]="customActionEditorCompleter"
+              helpId="widget/action/mobile_handle_empty_result_fn"
   ></tb-js-func>
   <tb-js-func *ngIf="mobileActionFormGroup.get('type').value"
     formControlName="handleErrorFunction"
@@ -104,5 +111,6 @@
     [functionArgs]="['error', '$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
     [globalVariables]="functionScopeVariables"
     [editorCompleter]="customActionEditorCompleter"
+    helpId="widget/action/mobile_handle_error_fn"
   ></tb-js-func>
 </div>

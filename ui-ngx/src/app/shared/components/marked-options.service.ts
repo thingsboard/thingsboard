@@ -21,6 +21,7 @@ import { DOCUMENT } from '@angular/common';
 import { WINDOW } from '@core/services/window.service';
 
 const copyCodeBlock = '{:copy-code}';
+const autoBlock = '{:auto}';
 const targetBlankBlock = '{:target=&quot;_blank&quot;}';
 
 // @dynamic
@@ -48,12 +49,24 @@ export class MarkedOptionsService extends MarkedOptions {
     this.renderer.code = (code: string, language: string | undefined, isEscaped: boolean) => {
       if (code.endsWith(copyCodeBlock)) {
         code = code.substring(0, code.length - copyCodeBlock.length);
-        const content = checkLineNumbers(this.renderer2.code(code, language, isEscaped), code);
+        const content = postProcessCodeContent(this.renderer2.code(code, language, isEscaped), code);
         this.id++;
         return this.wrapCopyCode(this.id, content, code);
       } else {
-        return this.wrapDiv(checkLineNumbers(this.renderer2.code(code, language, isEscaped), code));
+        return this.wrapDiv(postProcessCodeContent(this.renderer2.code(code, language, isEscaped), code));
       }
+    };
+    this.renderer.table = (header: string, body: string) => {
+      let autoLayout = false;
+      if (header.includes(autoBlock)) {
+        autoLayout = true;
+        header = header.replace(autoBlock, '');
+      }
+      let table = this.renderer2.table(header, body);
+      if (autoLayout) {
+        table = table.replace('<table', '<table class="auto"');
+      }
+      return table;
     };
     this.renderer.tablecell = (content: string, flags: {
       header: boolean;
@@ -85,7 +98,7 @@ export class MarkedOptionsService extends MarkedOptions {
 
   private wrapCopyCode(id: number, content: string, code: string): string {
     return `<div class="code-wrapper noChars" id="codeWrapper${id}" onClick="markdownCopyCode(${id})">${content}` +
-      `<span id="copyCodeId${id}" style="display: none;">${code}</span>` +
+      `<span id="copyCodeId${id}" style="display: none;">${encodeURIComponent(code)}</span>` +
       `<button class="clipboard-btn">\n` +
       `    <p>${this.translate.instant('markdown.copy-code')}</p>\n` +
       `    <div>\n` +
@@ -119,7 +132,7 @@ export class MarkedOptionsService extends MarkedOptions {
   private markdownCopyCode(id: number) {
     const copyWrapper = $('#codeWrapper' + id);
     if (copyWrapper.hasClass('noChars')) {
-      const text = $('#copyCodeId' + id).text();
+      const text = decodeURIComponent($('#copyCodeId' + id).text());
       this.window.navigator.clipboard.writeText(text).then(() => {
         import('tooltipster').then(
           () => {
@@ -151,10 +164,13 @@ export class MarkedOptionsService extends MarkedOptions {
   }
 }
 
-function checkLineNumbers(content: string, code: string): string {
+function postProcessCodeContent(content: string, code: string): string {
   const lineCount = code.trim().split('\n').length;
+  let replacement;
   if (lineCount < 2) {
-    content = content.replace('<pre>', '<pre class="no-line-numbers">');
+    replacement = '<pre ngNonBindable class="no-line-numbers">';
+  } else {
+    replacement = '<pre ngNonBindable>';
   }
-  return content;
+  return content.replace('<pre>', replacement);
 }

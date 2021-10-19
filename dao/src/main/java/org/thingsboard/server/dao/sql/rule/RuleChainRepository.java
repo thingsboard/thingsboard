@@ -23,6 +23,7 @@ import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.model.sql.RuleChainEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface RuleChainRepository extends PagingAndSortingRepository<RuleChainEntity, UUID> {
@@ -55,10 +56,13 @@ public interface RuleChainRepository extends PagingAndSortingRepository<RuleChai
             "AND re.relationType = 'Contains' AND re.fromId = :tenantId AND re.fromType = 'TENANT' " +
             "AND LOWER(rc.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
     Page<RuleChainEntity> findAutoAssignByTenantId(@Param("tenantId") UUID tenantId,
-                                                  @Param("searchText") String searchText,
-                                                  Pageable pageable);
+                                                   @Param("searchText") String searchText,
+                                                   Pageable pageable);
 
     RuleChainEntity findByTenantIdAndTypeAndRootIsTrue(UUID tenantId, RuleChainType ruleChainType);
 
     Long countByTenantId(UUID tenantId);
+
+    List<RuleChainEntity> findByTenantIdAndTypeAndName(UUID tenantId, RuleChainType type, String name);
+
 }

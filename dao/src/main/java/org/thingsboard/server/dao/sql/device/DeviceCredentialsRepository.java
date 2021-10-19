@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.device;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.thingsboard.server.dao.model.sql.DeviceCredentialsEntity;
 
 import java.util.UUID;
@@ -23,7 +23,7 @@ import java.util.UUID;
 /**
  * Created by Valerii Sosliuk on 5/6/2017.
  */
-public interface DeviceCredentialsRepository extends CrudRepository<DeviceCredentialsEntity, UUID> {
+public interface DeviceCredentialsRepository extends JpaRepository<DeviceCredentialsEntity, UUID> {
 
     DeviceCredentialsEntity findByDeviceId(UUID deviceId);
 

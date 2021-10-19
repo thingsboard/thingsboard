@@ -13,11 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service.sql;
+package org.thingsboard.server.dao.service;
 
-import org.thingsboard.server.dao.service.BaseEntityServiceTest;
-import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.springframework.test.context.TestPropertySource;
 
-@DaoSqlTest
-public class EntityServiceSqlTest extends BaseEntityServiceTest {
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Inherited
+@Documented
+@TestPropertySource(locations = {"classpath:application-test.properties", "classpath:psql-test.properties"})
+public @interface DaoPostgreSqlTest {
 }

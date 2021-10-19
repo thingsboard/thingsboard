@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
-public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
+public abstract class BaseDeviceProfileServiceTest extends AbstractServiceTest {
 
     private IdComparator<DeviceProfile> idComparator = new IdComparator<>();
     private IdComparator<DeviceProfileInfo> deviceProfileInfoIdComparator = new IdComparator<>();

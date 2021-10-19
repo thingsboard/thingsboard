@@ -163,7 +163,7 @@ public class DeviceController extends BaseController {
 
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
 
-            onDeviceCreatedOrUpdated(savedDevice, oldDevice, !created);
+            onDeviceCreatedOrUpdated(savedDevice, oldDevice, !created, getCurrentUser());
 
             return savedDevice;
         } catch (Exception e) {
@@ -174,11 +174,11 @@ public class DeviceController extends BaseController {
 
     }
 
-    private void onDeviceCreatedOrUpdated(Device savedDevice, Device oldDevice, boolean updated) {
+    private void onDeviceCreatedOrUpdated(Device savedDevice, Device oldDevice, boolean updated, SecurityUser user) {
         tbClusterService.onDeviceUpdated(savedDevice, oldDevice);
 
         try {
-            logEntityAction(savedDevice.getId(), savedDevice,
+            logEntityAction(user, savedDevice.getId(), savedDevice,
                     savedDevice.getCustomerId(),
                     updated ? ActionType.UPDATED : ActionType.ADDED, null);
         } catch (ThingsboardException e) {
@@ -953,8 +953,9 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @PostMapping("/device/bulk_import")
     public BulkImportResult<Device> processDevicesBulkImport(@RequestBody BulkImportRequest request) throws Exception {
-        return deviceBulkImportService.processBulkImport(request, getCurrentUser(), importedDeviceInfo -> {
-            onDeviceCreatedOrUpdated(importedDeviceInfo.getEntity(), importedDeviceInfo.getOldEntity(), importedDeviceInfo.isUpdated());
+        SecurityUser user = getCurrentUser();
+        return deviceBulkImportService.processBulkImport(request, user, importedDeviceInfo -> {
+            onDeviceCreatedOrUpdated(importedDeviceInfo.getEntity(), importedDeviceInfo.getOldEntity(), importedDeviceInfo.isUpdated(), user);
         });
     }
 
