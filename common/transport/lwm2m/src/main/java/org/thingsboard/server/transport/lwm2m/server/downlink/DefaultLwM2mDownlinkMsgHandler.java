@@ -381,7 +381,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                         if (resourceModelWrite.multiple) {
                             try {
                                 Map value = convertMultiResourceValuesFromRpcBody(request.getValue(), resourceModelWrite.type, request.getObjectId());
-                                downlink = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(),
+                                downlink = new WriteRequest(contentFormat, resultIds.getObjectId(),
                                         resultIds.getObjectInstanceId(), resultIds.getResourceId(),
                                         value, resourceModelWrite.type);
                             } catch (Exception e1) {

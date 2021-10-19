@@ -183,12 +183,15 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     @Override
     public boolean awake(LwM2mClient client) {
-        onUplink(client);
-        boolean changed = compareAndSetSleepFlag(client, false);
-        if (changed) {
-            log.debug("[{}] client is awake", client.getEndpoint());
-            context.getTransportService().log(client.getSession(), "Info : Client is awake!");
-            sendMsgsAfterSleeping(client);
+        boolean changed = false;
+        if (LwM2MClientState.REGISTERED.equals(client.getState())) {
+            onUplink(client);
+            changed = compareAndSetSleepFlag(client, false);
+            if (changed) {
+                log.debug("[{}] client is awake", client.getEndpoint());
+                context.getTransportService().log(client.getSession(), "Info : Client is awake!");
+                sendMsgsAfterSleeping(client);
+            }
         }
         return changed;
     }
@@ -223,15 +226,16 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     public void updateRegistration(LwM2mClient client, Registration registration) throws LwM2MClientStateException {
         client.lock();
         try {
-            if (!LwM2MClientState.REGISTERED.equals(client.getState())) {
-                throw new LwM2MClientStateException(client.getState(), "Client is in invalid state.");
-            }
-            client.setRegistration(registration);
-            onUplink(client);
-            if (compareAndSetSleepFlag(client, false)) {
-                sendMsgsAfterSleeping(client);
+            if (LwM2MClientState.REGISTERED.equals(client.getState())) {
+                client.setRegistration(registration);
+                onUplink(client);
+                if (compareAndSetSleepFlag(client, false)) {
+                    sendMsgsAfterSleeping(client);
+                } else {
+                    clientStore.put(client);
+                }
             } else {
-                clientStore.put(client);
+                throw new LwM2MClientStateException(client.getState(), "Client is in invalid state.");
             }
         } finally {
             client.unlock();
@@ -332,18 +336,16 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     @Override
     public void sendMsgsAfterSleeping(LwM2mClient lwM2MClient) {
-        if (LwM2MClientState.REGISTERED.equals(lwM2MClient.getState())) {
-            PowerMode powerMode = getPowerMode(lwM2MClient);
-            if (PowerMode.PSM.equals(powerMode) || PowerMode.E_DRX.equals(powerMode)) {
-                defaultLwM2MUplinkMsgHandler.initAttributes(lwM2MClient, false);
-                TransportProtos.TransportToDeviceActorMsg persistentRpcRequestMsg = TransportProtos.TransportToDeviceActorMsg
-                        .newBuilder()
-                        .setSessionInfo(lwM2MClient.getSession())
-                        .setSendPendingRPC(TransportProtos.SendPendingRPCMsg.newBuilder().build())
-                        .build();
-                context.getTransportService().process(persistentRpcRequestMsg, TransportServiceCallback.EMPTY);
-                otaUpdateService.init(lwM2MClient);
-            }
+        PowerMode powerMode = getPowerMode(lwM2MClient);
+        if (PowerMode.PSM.equals(powerMode) || PowerMode.E_DRX.equals(powerMode)) {
+            defaultLwM2MUplinkMsgHandler.initAttributes(lwM2MClient, false);
+            TransportProtos.TransportToDeviceActorMsg persistentRpcRequestMsg = TransportProtos.TransportToDeviceActorMsg
+                    .newBuilder()
+                    .setSessionInfo(lwM2MClient.getSession())
+                    .setSendPendingRPC(TransportProtos.SendPendingRPCMsg.newBuilder().build())
+                    .build();
+            context.getTransportService().process(persistentRpcRequestMsg, TransportServiceCallback.EMPTY);
+            otaUpdateService.init(lwM2MClient);
         }
     }
 
