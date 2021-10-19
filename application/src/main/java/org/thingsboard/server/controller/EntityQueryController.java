@@ -415,7 +415,7 @@ public class EntityQueryController extends BaseController {
             "  ]\n" +
             "}" +
             MARKDOWN_CODE_BLOCK_END +
-            "\n\n YOu may also want to replace hardcoded values (for example, temperature > 20) with the more dynamic " +
+            "\n\n You may also want to replace hardcoded values (for example, temperature > 20) with the more dynamic " +
             "expression (for example, temperature > 'value of the tenant attribute with key 'temperatureThreshold'). " +
             "It is possible to use 'dynamicValue' to define attribute of the tenant, customer or user that is performing the API call. " +
             "See example below: \n\n" +

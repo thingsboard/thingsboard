@@ -100,7 +100,58 @@ public class TenantProfileController extends BaseController {
                     "The newly created Tenant Profile Id will be present in the response. " +
                     "Specify existing Tenant Profile Id id to update the Tenant Profile. " +
                     "Referencing non-existing Tenant Profile Id will cause 'Not Found' error. " +
-                    "Update of the tenant profile configuration will cause immediate recalculation of API limits for all affected Tenants. " +
+                    "\n\nUpdate of the tenant profile configuration will cause immediate recalculation of API limits for all affected Tenants. " +
+                    "\n\nThe **'profileData'** object is the part of Tenant Profile that defines API limits and Rate limits. " +
+                    "\n\nYou have an ability to define maximum number of devices ('maxDevice'), assets ('maxAssets') and other entities. " +
+                    "You may also define maximum number of messages to be processed per month ('maxTransportMessages', 'maxREExecutions', etc). " +
+                    "The '*RateLimit' defines the rate limits using simple syntax. For example, '1000:1,20000:60' means up to 1000 events per second but no more than 20000 event per minute. " +
+                    "Let's review the example of tenant profile data below: " +
+                    "\n\n" + MARKDOWN_CODE_BLOCK_START +
+                    "{\n" +
+                    "  \"id\": {\n" +
+                    "    \"entityType\": \"TENANT_PROFILE\",\n" +
+                    "    \"id\": \"0f2978a0-0d46-11eb-ab90-09ceaa526dd8\"\n" +
+                    "  },\n" +
+                    "  \"createdTime\": 1602588011818,\n" +
+                    "  \"name\": \"Default\",\n" +
+                    "  \"description\": \"Default tenant profile\",\n" +
+                    "  \"isolatedTbCore\": false,\n" +
+                    "  \"isolatedTbRuleEngine\": false,\n" +
+                    "  \"profileData\": {\n" +
+                    "    \"configuration\": {\n" +
+                    "      \"type\": \"DEFAULT\",\n" +
+                    "      \"maxDevices\": 0,\n" +
+                    "      \"maxAssets\": 0,\n" +
+                    "      \"maxCustomers\": 0,\n" +
+                    "      \"maxUsers\": 0,\n" +
+                    "      \"maxDashboards\": 0,\n" +
+                    "      \"maxRuleChains\": 0,\n" +
+                    "      \"maxResourcesInBytes\": 0,\n" +
+                    "      \"maxOtaPackagesInBytes\": 0,\n" +
+                    "      \"transportTenantMsgRateLimit\": \"1000:1,20000:60\",\n" +
+                    "      \"transportTenantTelemetryMsgRateLimit\": \"1000:1,20000:60\",\n" +
+                    "      \"transportTenantTelemetryDataPointsRateLimit\": \"1000:1,20000:60\",\n" +
+                    "      \"transportDeviceMsgRateLimit\": \"20:1,600:60\",\n" +
+                    "      \"transportDeviceTelemetryMsgRateLimit\": \"20:1,600:60\",\n" +
+                    "      \"transportDeviceTelemetryDataPointsRateLimit\": \"20:1,600:60\",\n" +
+                    "      \"maxTransportMessages\": 10000000,\n" +
+                    "      \"maxTransportDataPoints\": 10000000,\n" +
+                    "      \"maxREExecutions\": 4000000,\n" +
+                    "      \"maxJSExecutions\": 5000000,\n" +
+                    "      \"maxDPStorageDays\": 0,\n" +
+                    "      \"maxRuleNodeExecutionsPerMessage\": 50,\n" +
+                    "      \"maxEmails\": 0,\n" +
+                    "      \"maxSms\": 0,\n" +
+                    "      \"maxCreatedAlarms\": 1000,\n" +
+                    "      \"defaultStorageTtlDays\": 0,\n" +
+                    "      \"alarmsTtlDays\": 0,\n" +
+                    "      \"rpcTtlDays\": 0,\n" +
+                    "      \"warnThreshold\": 0\n" +
+                    "    }\n" +
+                    "  },\n" +
+                    "  \"default\": true\n" +
+                    "}" +
+                    MARKDOWN_CODE_BLOCK_END +
                     SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/tenantProfile", method = RequestMethod.POST)

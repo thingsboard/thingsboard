@@ -100,7 +100,8 @@ public class TenantController extends BaseController {
                     "Default Rule Chain and Device profile are also generated for the new tenants automatically. " +
                     "The newly created Tenant Id will be present in the response. " +
                     "Specify existing Tenant Id id to update the Tenant. " +
-                    "Referencing non-existing Tenant Id will cause 'Not Found' error." + SYSTEM_AUTHORITY_PARAGRAPH)
+                    "Referencing non-existing Tenant Id will cause 'Not Found' error." +
+                    SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/tenant", method = RequestMethod.POST)
     @ResponseBody
