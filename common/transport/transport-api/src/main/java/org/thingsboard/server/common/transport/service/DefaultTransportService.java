@@ -111,7 +111,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -928,15 +927,17 @@ public class DefaultTransportService implements TransportService {
         }
     }
 
-
     public void onProfileUpdate(DeviceProfile deviceProfile) {
         long deviceProfileIdMSB = deviceProfile.getId().getId().getMostSignificantBits();
         long deviceProfileIdLSB = deviceProfile.getId().getId().getLeastSignificantBits();
-        AtomicBoolean isProfileSessions = new AtomicBoolean(false);
-        sessions.forEach((id, md) -> {
-            //TODO: if transport types are different - we should close the session.
-            if (md.getSessionInfo().getDeviceProfileIdMSB() == deviceProfileIdMSB
-                    && md.getSessionInfo().getDeviceProfileIdLSB() == deviceProfileIdLSB) {
+        ConcurrentMap<UUID, SessionMetaData> result =
+                sessions.entrySet()
+                        .stream()
+                        .filter(e -> e.getValue().getSessionInfo().getDeviceProfileIdMSB() == deviceProfileIdMSB
+                                && e.getValue().getSessionInfo().getDeviceProfileIdLSB() == deviceProfileIdLSB)
+                        .collect(Collectors.toConcurrentMap(Map.Entry::getKey, Map.Entry::getValue));
+        if (result.size() > 0) {
+            result.forEach((id, md) -> {
                 TransportProtos.SessionInfoProto newSessionInfo = TransportProtos.SessionInfoProto.newBuilder()
                         .mergeFrom(md.getSessionInfo())
                         .setDeviceProfileIdMSB(deviceProfileIdMSB)
@@ -945,12 +946,12 @@ public class DefaultTransportService implements TransportService {
                         .build();
                 md.setSessionInfo(newSessionInfo);
                 transportCallbackExecutor.submit(() -> md.getListener().onDeviceProfileUpdate(newSessionInfo, deviceProfile));
-                isProfileSessions.set(true);
-            }
-        });
-        if (isProfileSessions.get()) {
+            });
+        }
+        else {
             deviceProfileCache.put(deviceProfile);
         }
+
     }
 
     private void onDeviceUpdate(Device device) {
