@@ -96,6 +96,8 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
           data: []
         }
       ];
+    } else {
+      initialData = [];
     }
     let markdownText: string;
     if (initialData) {

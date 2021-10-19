@@ -387,7 +387,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   private prepareDataSubscriptions(): Observable<any> {
-    if (this.hasDataPageLink) {
+    if (this.hasDataPageLink || !this.configuredDatasources || !this.configuredDatasources.length) {
       this.hasResolvedData = true;
       this.notifyDataLoaded();
       return of(null);

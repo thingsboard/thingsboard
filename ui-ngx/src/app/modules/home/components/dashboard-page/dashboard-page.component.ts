@@ -873,6 +873,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         if (revert) {
           this.dashboard = this.prevDashboard;
           this.dashboardLogoCache = undefined;
+          this.dashboardConfiguration = this.dashboard.configuration;
         }
       } else {
         this.resetHighlight();
