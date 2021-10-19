@@ -187,7 +187,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             sendSimpleRequest(client, downlink, request.getTimeout(), callback);
         }
         else {
-            callback.onValidationError(toString(request), "Resource " + request.getVersionedId() + " is not configured in the device profile!");
+            callback.onValidationError(toString(request), "Tenant hasn't such the TbResources: " + request.getVersionedId() + "!");
         }
     }
 
@@ -248,7 +248,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                 callback.onError(toString(request), e);
             }
         } else {
-            callback.onValidationError(toString(request), "Resource " + request.getVersionedId() + " is not configured in the device profile!");
+            callback.onValidationError(toString(request), "Tenant hasn't such the TbResources: " + request.getVersionedId() + "!");
         }
     }
 
@@ -281,7 +281,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                 sendSimpleRequest(client, downlink, request.getTimeout(), callback);
             }
             else {
-                callback.onValidationError(toString(request), "Resource " + request.getVersionedId() + " is not configured in the device profile!");
+                callback.onValidationError(toString(request), "Tenant hasn't such the TbResources: " + request.getVersionedId() + " !");
             }
         } else if (resultIds.isObjectInstance()) {
             /*
