@@ -17,14 +17,14 @@ package org.thingsboard.server.service.importing;
 
 import lombok.Data;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Collection;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Data
 public class BulkImportResult<E> {
-    private int created = 0;
-    private int updated = 0;
-    private int errors = 0;
-    private List<String> errorsList = new LinkedList<>();
-
+    private AtomicInteger created = new AtomicInteger();
+    private AtomicInteger updated = new AtomicInteger();
+    private AtomicInteger errors = new AtomicInteger();
+    private Collection<String> errorsList = new ConcurrentLinkedDeque<>();
 }
