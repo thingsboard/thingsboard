@@ -244,10 +244,49 @@ public abstract class BaseController {
     protected static final String EVENT_DEBUG_RULE_NODE_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START + "{ \"eventType\": \"DEBUG_RULE_NODE\"," + DEBUG_FILTER_OBJ + MARKDOWN_CODE_BLOCK_END;
     protected static final String EVENT_DEBUG_RULE_CHAIN_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START + "{ \"eventType\": \"DEBUG_RULE_CHAIN\"," + DEBUG_FILTER_OBJ + MARKDOWN_CODE_BLOCK_END;
 
+    protected static final String DEVICE_PROFILE_ALARM_CREATE_RULES_EXAMPLE = MARKDOWN_CODE_BLOCK_START + "{ \"createRules\": { \"MAJOR\": { \"schedule\": null, \"condition\": { \"spec\": { \"type\": \"SIMPLE\" }, " +
+            "\"condition\": [{ \"key\": { \"key\": \"temp\", \"type\": \"TIME_SERIES\" }, \"value\": null, \"predicate\": { \"type\": \"NUMERIC\", \"value\": { \"userValue\": null, \"defaultValue\": 30.0, \"dynamicValue\": null }, " +
+            "\"operation\": \"GREATER\" }, \"valueType\": \"NUMERIC\" }] }, \"dashboardId\": null, \"alarmDetails\": null }, \"CRITICAL\": { \"schedule\": null, \"condition\": { \"spec\": { \"type\": \"SIMPLE\" }, \"condition\": " +
+            "[{ \"key\": { \"key\": \"temp\", \"type\": \"TIME_SERIES\" }, \"value\": null, \"predicate\": { \"type\": \"NUMERIC\", \"value\": { \"userValue\": null, \"defaultValue\": 50.0, \"dynamicValue\": null }, \"operation\": \"GREATER\" }, " +
+            "\"valueType\": \"NUMERIC\" }] }, \"dashboardId\": null, \"alarmDetails\": null } } }" + MARKDOWN_CODE_BLOCK_END;
+
+    protected static final String DEVICE_PROFILE_ALARM_SCHEDULE_SPECIFIC_TIME_EXAMPLE = MARKDOWN_CODE_BLOCK_START +
+            "{ \"schedule\": { \"type\": \"SPECIFIC_TIME\", \"endsOn\": 64800000, \"startsOn\": 43200000, \"timezone\": \"Europe/Kiev\", \"daysOfWeek\": [1, 3, 7] } }" +
+            MARKDOWN_CODE_BLOCK_END;
+    protected static final String DEVICE_PROFILE_ALARM_SCHEDULE_CUSTOM_EXAMPLE = MARKDOWN_CODE_BLOCK_START +
+            "{ \"schedule\": { \"type\": \"CUSTOM\", \"items\": [{ \"endsOn\": 64800000, \"enabled\": true, \"startsOn\": 43200000, \"dayOfWeek\": 1 }, " +
+            "{ \"endsOn\": 0, \"enabled\": false, \"startsOn\": 0, \"dayOfWeek\": 2 }, { \"endsOn\": 57600000, \"enabled\": true, \"startsOn\": 36000000, \"dayOfWeek\": 3 }, " +
+            "{ \"endsOn\": 0, \"enabled\": false, \"startsOn\": 0, \"dayOfWeek\": 4 }, { \"endsOn\": 68400000, \"enabled\": true, \"startsOn\": 32400000, \"dayOfWeek\": 5 }, " +
+            "{ \"endsOn\": 0, \"enabled\": false, \"startsOn\": 0, \"dayOfWeek\": 6 }, { \"endsOn\": 0, \"enabled\": false, \"startsOn\": 0, \"dayOfWeek\": 7 }], \"timezone\": \"Europe/Kiev\" } }" +
+            MARKDOWN_CODE_BLOCK_END;
+    protected static final String DEVICE_PROFILE_ALARM_SCHEDULE_ALWAYS_EXAMPLE = MARKDOWN_CODE_BLOCK_START + "{\"schedule\": null}" + MARKDOWN_CODE_BLOCK_END;
+
+    protected static final String DEVICE_PROFILE_ALARM_CONDITION_REPEATING_EXAMPLE = MARKDOWN_CODE_BLOCK_START +
+            "{ \"spec\": { \"type\": \"DURATION\", \"unit\": \"MINUTES\", \"predicate\": { \"userValue\": null, \"defaultValue\": 30, \"dynamicValue\": null } } }" +
+            MARKDOWN_CODE_BLOCK_END;
+    protected static final String DEVICE_PROFILE_ALARM_CONDITION_DURATION_EXAMPLE = MARKDOWN_CODE_BLOCK_START +
+            "{ \"spec\": { \"type\": \"REPEATING\", \"predicate\": { \"userValue\": null, \"defaultValue\": 3, \"dynamicValue\": " +
+            "{ \"inherit\": false, \"sourceType\": \"CURRENT_DEVICE\", \"sourceAttribute\": \"repeatingLimit\" } } } }" +
+            MARKDOWN_CODE_BLOCK_END;
+
+    protected static final String DEVICE_PROFILE_CONDITIONS_TIME_SERIES_NUMERIC_EXAMPLE = MARKDOWN_CODE_BLOCK_START  +
+            "{ \"condition\": [{ \"key\": { \"key\": \"temp\", \"type\": \"TIME_SERIES\" }, " +
+            "\"value\": null, \"predicate\": { \"type\": \"NUMERIC\", \"value\": { \"userValue\": null, \"defaultValue\": 30.0, \"dynamicValue\": null }, \"operation\": \"GREATER\" }, " +
+            "\"valueType\": \"NUMERIC\" }] }" +
+            MARKDOWN_CODE_BLOCK_END;
+
+    protected static final String DEVICE_PROFILE_CONDITIONS_CONSTANT_EXAMPLE = MARKDOWN_CODE_BLOCK_START  +
+            "{ \"condition\": [{ \"key\": { \"key\": \"constantKey\", \"type\": \"CONSTANT\" }, \"value\": true, \"predicate\": { \"type\": \"BOOLEAN\", \"value\": " +
+            "{ \"userValue\": null, \"defaultValue\": false, \"dynamicValue\": { \"inherit\": false, \"sourceType\": \"CURRENT_TENANT\", \"sourceAttribute\": \"alarmEnabled\" } }, " +
+            "\"operation\": \"EQUAL\" }, \"valueType\": \"BOOLEAN\" }] }" +
+            MARKDOWN_CODE_BLOCK_END;
+
     protected static final String RELATION_TYPE_PARAM_DESCRIPTION = "A string value representing relation type between entities. For example, 'Contains', 'Manages'. It can be any string value.";
     protected static final String RELATION_TYPE_GROUP_PARAM_DESCRIPTION = "A string value representing relation type group. For example, 'COMMON'";
 
     protected static final String ADMINISTRATOR_AUTHORITY_ONLY = "Available for users with 'Tenant Administrator' authority only.";
+
+    protected static final String NEW_LINE = "\n\n";
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     protected static final String DEFAULT_DASHBOARD = "defaultDashboardId";

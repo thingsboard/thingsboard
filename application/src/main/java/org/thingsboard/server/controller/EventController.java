@@ -45,8 +45,6 @@ import org.thingsboard.server.service.security.permission.Operation;
 @RequestMapping("/api")
 public class EventController extends BaseController {
 
-    private static final String NEW_LINE = "\n\n";
-
     @Autowired
     private EventService eventService;
 

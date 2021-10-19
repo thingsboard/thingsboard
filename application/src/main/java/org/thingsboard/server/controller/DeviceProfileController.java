@@ -174,7 +174,19 @@ public class DeviceProfileController extends BaseController {
                     "The newly created device profile id will be present in the response. " +
                     "Specify existing device profile id to update the device profile. " +
                     "Referencing non-existing device profile Id will cause 'Not Found' error. " +
-                    "\n\nDevice profile name is unique in the scope of tenant. Only one 'default' device profile may exist in scope of tenant." + TENANT_AUTHORITY_PARAGRAPH,
+                    "\n\nDevice profile name is unique in the scope of tenant. Only one 'default' device profile may exist in scope of tenant." + TENANT_AUTHORITY_PARAGRAPH +
+                    NEW_LINE + "See the object example below for createRules field:" + NEW_LINE + DEVICE_PROFILE_ALARM_CREATE_RULES_EXAMPLE +
+                    NEW_LINE + "See alarm schedule objects examples below. Note," + NEW_LINE + DEVICE_PROFILE_ALARM_SCHEDULE_ALWAYS_EXAMPLE + NEW_LINE + " means alarm rule is active all the time. " +
+                    "'daysOfWeek' field represents Monday as 1, Tuesday as 2 and so on. 'startsOn' and 'endsOn' represent hours in millis. " +
+                    "'enabled' flag represents if custom rule is active for specific day of the week:" + NEW_LINE +
+                    DEVICE_PROFILE_ALARM_SCHEDULE_SPECIFIC_TIME_EXAMPLE + NEW_LINE + DEVICE_PROFILE_ALARM_SCHEDULE_CUSTOM_EXAMPLE + NEW_LINE +
+                    "Alarm condition type ('spec') can be either simple, duration, or repeating. For example, 5 times in a row or during 5 minutes. See examples below. " + NEW_LINE +
+                    DEVICE_PROFILE_ALARM_CONDITION_REPEATING_EXAMPLE + NEW_LINE + DEVICE_PROFILE_ALARM_CONDITION_DURATION_EXAMPLE + NEW_LINE +
+                    "Note, 'userValue' field is not used, 'dynamicValue' is used for condition appliance from the 'sourceAttribute' or else 'defaultValue' is used. " +
+                    "'sourceType' of the 'sourceAttribute' can be CURRENT_DEVICE/CURRENT_CUSTOMER/CURRENT_TENANT or inherited from the owner if set to true (for device and customer)." +
+                    NEW_LINE + "Condition array examples for alarm rule activation:" + NEW_LINE + DEVICE_PROFILE_CONDITIONS_TIME_SERIES_NUMERIC_EXAMPLE + NEW_LINE +
+                    DEVICE_PROFILE_CONDITIONS_CONSTANT_EXAMPLE + NEW_LINE +
+                    "Note, see description of predicate fields above for 'spec' object. Navigate to Docs or Alarm Rules on ThingsBoard UI for more details and examples of fields possible values. ",
             produces = "application/json",
             consumes = "application/json")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")

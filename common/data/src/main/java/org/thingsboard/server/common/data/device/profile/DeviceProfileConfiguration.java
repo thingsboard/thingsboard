@@ -15,14 +15,16 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import org.thingsboard.server.common.data.DeviceProfileType;
 
 import java.io.Serializable;
 
+@ApiModel
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -32,7 +34,7 @@ import java.io.Serializable;
          @JsonSubTypes.Type(value = DefaultDeviceProfileConfiguration.class, name = "DEFAULT")})
 public interface DeviceProfileConfiguration extends Serializable {
 
-    @JsonIgnore
+    @ApiModelProperty(position = 1, value = "Device profile type", allowableValues = "DEFAULT")
     DeviceProfileType getType();
 
 }
