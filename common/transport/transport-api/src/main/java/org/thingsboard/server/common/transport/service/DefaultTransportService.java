@@ -930,14 +930,14 @@ public class DefaultTransportService implements TransportService {
     public void onProfileUpdate(DeviceProfile deviceProfile) {
         long deviceProfileIdMSB = deviceProfile.getId().getId().getMostSignificantBits();
         long deviceProfileIdLSB = deviceProfile.getId().getId().getLeastSignificantBits();
-        ConcurrentMap<UUID, SessionMetaData> result =
-                sessions.entrySet()
+        List <SessionMetaData> result =
+                sessions.values()
                         .stream()
-                        .filter(e -> e.getValue().getSessionInfo().getDeviceProfileIdMSB() == deviceProfileIdMSB
-                                && e.getValue().getSessionInfo().getDeviceProfileIdLSB() == deviceProfileIdLSB)
-                        .collect(Collectors.toConcurrentMap(Map.Entry::getKey, Map.Entry::getValue));
+                        .filter(md -> md.getSessionInfo().getDeviceProfileIdMSB() == deviceProfileIdMSB
+                                && md.getSessionInfo().getDeviceProfileIdLSB() == deviceProfileIdLSB)
+                        .collect(Collectors.toList());
         if (result.size() > 0) {
-            result.forEach((id, md) -> {
+            result.forEach(md -> {
                 TransportProtos.SessionInfoProto newSessionInfo = TransportProtos.SessionInfoProto.newBuilder()
                         .mergeFrom(md.getSessionInfo())
                         .setDeviceProfileIdMSB(deviceProfileIdMSB)
