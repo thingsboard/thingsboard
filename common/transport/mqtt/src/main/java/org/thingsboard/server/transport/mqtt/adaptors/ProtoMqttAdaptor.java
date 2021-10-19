@@ -20,7 +20,6 @@ import com.google.gson.JsonParser;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.util.JsonFormat;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
@@ -49,10 +48,11 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
     public TransportProtos.PostTelemetryMsg convertToPostTelemetry(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
         DeviceSessionCtx deviceSessionCtx = (DeviceSessionCtx) ctx;
         byte[] bytes = toBytes(inbound.payload());
-        Descriptors.Descriptor telemetryDynamicMsgDescriptor = getDescriptor(deviceSessionCtx.getTelemetryDynamicMsgDescriptor());
+        Descriptors.Descriptor telemetryDynamicMsgDescriptor = ProtoConverter.validateDescriptor(deviceSessionCtx.getTelemetryDynamicMsgDescriptor());
         try {
-            return JsonConverter.convertToTelemetryProto(new JsonParser().parse(dynamicMsgToJson(bytes, telemetryDynamicMsgDescriptor)));
+            return JsonConverter.convertToTelemetryProto(new JsonParser().parse(ProtoConverter.dynamicMsgToJson(bytes, telemetryDynamicMsgDescriptor)));
         } catch (Exception e) {
+            log.warn("Failed to decode post telemetry request", e);
             throw new AdaptorException(e);
         }
     }
@@ -61,10 +61,11 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
     public TransportProtos.PostAttributeMsg convertToPostAttributes(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
         DeviceSessionCtx deviceSessionCtx = (DeviceSessionCtx) ctx;
         byte[] bytes = toBytes(inbound.payload());
-        Descriptors.Descriptor attributesDynamicMessageDescriptor = getDescriptor(deviceSessionCtx.getAttributesDynamicMessageDescriptor());
+        Descriptors.Descriptor attributesDynamicMessageDescriptor = ProtoConverter.validateDescriptor(deviceSessionCtx.getAttributesDynamicMessageDescriptor());
         try {
-            return JsonConverter.convertToAttributesProto(new JsonParser().parse(dynamicMsgToJson(bytes, attributesDynamicMessageDescriptor)));
+            return JsonConverter.convertToAttributesProto(new JsonParser().parse(ProtoConverter.dynamicMsgToJson(bytes, attributesDynamicMessageDescriptor)));
         } catch (Exception e) {
+            log.warn("Failed to decode post attributes request", e);
             throw new AdaptorException(e);
         }
     }
@@ -75,16 +76,17 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
         try {
             return ProtoConverter.convertToClaimDeviceProto(ctx.getDeviceId(), bytes);
         } catch (InvalidProtocolBufferException e) {
+            log.warn("Failed to decode claim device request", e);
             throw new AdaptorException(e);
         }
     }
 
     @Override
-    public TransportProtos.GetAttributeRequestMsg convertToGetAttributes(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
+    public TransportProtos.GetAttributeRequestMsg convertToGetAttributes(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound, String topicBase) throws AdaptorException {
         byte[] bytes = toBytes(inbound.payload());
         String topicName = inbound.variableHeader().topicName();
         try {
-            int requestId = getRequestId(topicName, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX);
+            int requestId = getRequestId(topicName, topicBase);
             return ProtoConverter.convertToGetAttributeRequestMessage(bytes, requestId);
         } catch (InvalidProtocolBufferException e) {
             log.warn("Failed to decode get attributes request", e);
@@ -93,29 +95,30 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
     }
 
     @Override
-    public TransportProtos.ToDeviceRpcResponseMsg convertToDeviceRpcResponse(MqttDeviceAwareSessionContext ctx, MqttPublishMessage mqttMsg) throws AdaptorException {
+    public TransportProtos.ToDeviceRpcResponseMsg convertToDeviceRpcResponse(MqttDeviceAwareSessionContext ctx, MqttPublishMessage mqttMsg, String topicBase) throws AdaptorException {
         DeviceSessionCtx deviceSessionCtx = (DeviceSessionCtx) ctx;
         String topicName = mqttMsg.variableHeader().topicName();
         byte[] bytes = toBytes(mqttMsg.payload());
-        Descriptors.Descriptor rpcResponseDynamicMessageDescriptor = getDescriptor(deviceSessionCtx.getRpcResponseDynamicMessageDescriptor());
+        Descriptors.Descriptor rpcResponseDynamicMessageDescriptor = ProtoConverter.validateDescriptor(deviceSessionCtx.getRpcResponseDynamicMessageDescriptor());
         try {
-            int requestId = getRequestId(topicName, MqttTopics.DEVICE_RPC_RESPONSE_TOPIC);
-            JsonElement response = new JsonParser().parse(dynamicMsgToJson(bytes, rpcResponseDynamicMessageDescriptor));
+            int requestId = getRequestId(topicName, topicBase);
+            JsonElement response = new JsonParser().parse(ProtoConverter.dynamicMsgToJson(bytes, rpcResponseDynamicMessageDescriptor));
             return TransportProtos.ToDeviceRpcResponseMsg.newBuilder().setRequestId(requestId).setPayload(response.toString()).build();
         } catch (Exception e) {
-            log.warn("Failed to decode Rpc response", e);
+            log.warn("Failed to decode rpc response", e);
             throw new AdaptorException(e);
         }
     }
 
     @Override
-    public TransportProtos.ToServerRpcRequestMsg convertToServerRpcRequest(MqttDeviceAwareSessionContext ctx, MqttPublishMessage mqttMsg) throws AdaptorException {
+    public TransportProtos.ToServerRpcRequestMsg convertToServerRpcRequest(MqttDeviceAwareSessionContext ctx, MqttPublishMessage mqttMsg, String topicBase) throws AdaptorException {
         byte[] bytes = toBytes(mqttMsg.payload());
         String topicName = mqttMsg.variableHeader().topicName();
         try {
-            int requestId = getRequestId(topicName, MqttTopics.DEVICE_RPC_REQUESTS_TOPIC);
+            int requestId = getRequestId(topicName, topicBase);
             return ProtoConverter.convertToServerRpcRequest(bytes, requestId);
         } catch (InvalidProtocolBufferException e) {
+            log.warn("Failed to decode to server rpc request", e);
             throw new AdaptorException(e);
         }
     }
@@ -126,40 +129,43 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
         try {
             return ProtoConverter.convertToProvisionRequestMsg(bytes);
         } catch (InvalidProtocolBufferException ex) {
+            log.warn("Failed to decode provision request", ex);
             throw new AdaptorException(ex);
         }
     }
 
     @Override
-    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException {
+    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.GetAttributeResponseMsg responseMsg, String topicBase) throws AdaptorException {
         if (!StringUtils.isEmpty(responseMsg.getError())) {
             throw new AdaptorException(responseMsg.getError());
         } else {
             int requestId = responseMsg.getRequestId();
             if (requestId >= 0) {
-                return Optional.of(createMqttPublishMsg(ctx,
-                        MqttTopics.DEVICE_ATTRIBUTES_RESPONSE_TOPIC_PREFIX + requestId,
-                        responseMsg.toByteArray()));
+                return Optional.of(createMqttPublishMsg(ctx, topicBase + requestId, responseMsg.toByteArray()));
             }
             return Optional.empty();
         }
     }
 
     @Override
-    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.ToDeviceRpcRequestMsg rpcRequest) throws AdaptorException {
+    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.ToDeviceRpcRequestMsg rpcRequest, String topicBase) throws AdaptorException {
         DeviceSessionCtx deviceSessionCtx = (DeviceSessionCtx) ctx;
         DynamicMessage.Builder rpcRequestDynamicMessageBuilder = deviceSessionCtx.getRpcRequestDynamicMessageBuilder();
-        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.DEVICE_RPC_REQUESTS_TOPIC + rpcRequest.getRequestId(), ProtoConverter.convertToRpcRequest(rpcRequest, rpcRequestDynamicMessageBuilder)));
+        if (rpcRequestDynamicMessageBuilder == null) {
+            throw new AdaptorException("Failed to get rpcRequestDynamicMessageBuilder!");
+        } else {
+            return Optional.of(createMqttPublishMsg(ctx, topicBase + rpcRequest.getRequestId(), ProtoConverter.convertToRpcRequest(rpcRequest, rpcRequestDynamicMessageBuilder)));
+        }
     }
 
     @Override
-    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.ToServerRpcResponseMsg rpcResponse) {
-        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.DEVICE_RPC_RESPONSE_TOPIC + rpcResponse.getRequestId(), rpcResponse.toByteArray()));
+    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.ToServerRpcResponseMsg rpcResponse, String topicBase) {
+        return Optional.of(createMqttPublishMsg(ctx, topicBase + rpcResponse.getRequestId(), rpcResponse.toByteArray()));
     }
 
     @Override
-    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.AttributeUpdateNotificationMsg notificationMsg) {
-        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.DEVICE_ATTRIBUTES_TOPIC, notificationMsg.toByteArray()));
+    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.AttributeUpdateNotificationMsg notificationMsg, String topic) {
+        return Optional.of(createMqttPublishMsg(ctx, topic, notificationMsg.toByteArray()));
     }
 
     @Override
@@ -213,17 +219,4 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
     private int getRequestId(String topicName, String topic) {
         return Integer.parseInt(topicName.substring(topic.length()));
     }
-
-    private Descriptors.Descriptor getDescriptor(Descriptors.Descriptor descriptor) throws AdaptorException {
-        if (descriptor == null) {
-            throw new AdaptorException("Failed to get dynamic message descriptor!");
-        }
-        return descriptor;
-    }
-
-    private String dynamicMsgToJson(byte[] bytes, Descriptors.Descriptor descriptor) throws InvalidProtocolBufferException {
-        DynamicMessage dynamicMessage = DynamicMessage.parseFrom(descriptor, bytes);
-        return JsonFormat.printer().includingDefaultValueFields().print(dynamicMessage);
-    }
-
 }

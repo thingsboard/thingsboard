@@ -52,7 +52,6 @@ import java.util.List;
 @RequestMapping("/api")
 public class CustomerController extends BaseController {
 
-    public static final String CUSTOMER_ID = "customerId";
     public static final String IS_PUBLIC = "isPublic";
     public static final String CUSTOMER_SECURITY_CHECK = "If the user has the authority of 'Tenant Administrator', the server checks that the customer is owned by the same tenant. " +
             "If the user has the authority of 'Customer User', the server checks that the user belongs to the customer.";
@@ -120,9 +119,10 @@ public class CustomerController extends BaseController {
     }
 
     @ApiOperation(value = "Create or update Customer (saveCustomer)",
-            notes = "Creates or Updates the Customer. Platform generates random Customer Id during device creation. " +
-                    "The Customer Id will be present in the response. Specify the Customer Id when you would like to update the Customer. " +
-                    "Referencing non-existing Customer Id will cause an error.")
+            notes = "Creates or Updates the Customer. When creating customer, platform generates Customer Id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address) " +
+                    "The newly created Customer Id will be present in the response. " +
+                    "Specify existing Customer Id to update the Customer. " +
+                    "Referencing non-existing Customer Id will cause 'Not Found' error.")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer", method = RequestMethod.POST)
     @ResponseBody
@@ -192,13 +192,13 @@ public class CustomerController extends BaseController {
     @RequestMapping(value = "/customers", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<Customer> getCustomers(
-            @ApiParam(value = PAGE_SIZE_DESCRIPTION)
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
-            @ApiParam(value = PAGE_NUMBER_DESCRIPTION)
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
             @ApiParam(value = CUSTOMER_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
-            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = SORT_PROPERTY_ALLOWABLE_VALUES)
+            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = CUSTOMER_SORT_PROPERTY_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortProperty,
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
@@ -212,7 +212,7 @@ public class CustomerController extends BaseController {
     }
 
     @ApiOperation(value = "Get Tenant Customer by Customer title (getTenantCustomer)",
-            notes = "Get the Customer using Customer Title. Available for users with 'Tenant Administrator' authority only.")
+            notes = "Get the Customer using Customer Title. " + ADMINISTRATOR_AUTHORITY_ONLY)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/customers", params = {"customerTitle"}, method = RequestMethod.GET)
     @ResponseBody

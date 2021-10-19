@@ -15,22 +15,11 @@
  */
 package org.thingsboard.server.common.data.event;
 
-import lombok.Data;
+import io.swagger.annotations.ApiModel;
 import org.thingsboard.server.common.data.StringUtils;
 
-@Data
-public abstract class DebugEvent implements EventFilter {
-
-    private String msgDirectionType;
-    private String server;
-    private String dataSearch;
-    private String metadataSearch;
-    private String entityName;
-    private String relationType;
-    private String entityId;
-    private String msgType;
-    private boolean isError;
-    private String error;
+@ApiModel
+public abstract class DebugEvent extends BaseEventFilter implements EventFilter {
 
     public void setIsError(boolean isError) {
         this.isError = isError;
@@ -39,7 +28,7 @@ public abstract class DebugEvent implements EventFilter {
     @Override
     public boolean hasFilterForJsonBody() {
         return !StringUtils.isEmpty(msgDirectionType) || !StringUtils.isEmpty(server) || !StringUtils.isEmpty(dataSearch) || !StringUtils.isEmpty(metadataSearch)
-                || !StringUtils.isEmpty(entityName) || !StringUtils.isEmpty(relationType) || !StringUtils.isEmpty(entityId) || !StringUtils.isEmpty(msgType) || !StringUtils.isEmpty(error) || isError;
+                || !StringUtils.isEmpty(entityName) || !StringUtils.isEmpty(relationType) || !StringUtils.isEmpty(entityId) || !StringUtils.isEmpty(msgType) || !StringUtils.isEmpty(errorStr) || isError;
     }
 
 }

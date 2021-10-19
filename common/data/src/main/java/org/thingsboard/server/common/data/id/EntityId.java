@@ -28,9 +28,9 @@ import java.util.UUID;
 /**
  * @author Andrew Shvayka
  */
-@ApiModel
 @JsonDeserialize(using = EntityIdDeserializer.class)
 @JsonSerialize(using = EntityIdSerializer.class)
+@ApiModel
 public interface EntityId extends HasUUID, Serializable { //NOSONAR, the constant is closely related to EntityId
 
     UUID NULL_UUID = UUID.fromString("13814000-1dd2-11b2-8080-808080808080");
@@ -38,7 +38,7 @@ public interface EntityId extends HasUUID, Serializable { //NOSONAR, the constan
     @ApiModelProperty(position = 1, required = true, value = "string", example = "784f394c-42b6-435a-983c-b7beff2784f9")
     UUID getId();
 
-    @ApiModelProperty(position = 2, required = true, value = "string", example = "ENTITY_VIEW")
+    @ApiModelProperty(position = 2, required = true, value = "string", example = "DEVICE")
     EntityType getEntityType();
 
     @JsonIgnore

@@ -40,6 +40,7 @@ import org.thingsboard.server.transport.lwm2m.config.LwM2mVersion;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mVersionedModelProvider;
 import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MOtaUpdateService;
 import org.thingsboard.server.transport.lwm2m.server.session.LwM2MSessionManager;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MClientStore;
@@ -74,6 +75,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     private final TbLwM2MClientStore clientStore;
     private final LwM2MSessionManager sessionManager;
     private final TransportDeviceProfileCache deviceProfileCache;
+    private final LwM2mVersionedModelProvider modelProvider;
 
     @Autowired
     @Lazy
@@ -543,8 +545,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     }
 
     private boolean validateResourceInModel(LwM2mClient lwM2mClient, String pathIdVer, boolean isWritableNotOptional) {
-        ResourceModel resourceModel = lwM2mClient.getResourceModel(pathIdVer, this.config
-                .getModelProvider());
+        ResourceModel resourceModel = lwM2mClient.getResourceModel(pathIdVer, modelProvider);
         Integer objectId = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer)).getObjectId();
         String objectVer = validateObjectVerFromKey(pathIdVer);
         return resourceModel != null && (isWritableNotOptional ?

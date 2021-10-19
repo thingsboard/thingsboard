@@ -52,7 +52,17 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
 
     @Test
     public void testRequestAttributesValuesFromTheServer() throws Exception {
-        processTestRequestAttributesValuesFromTheServer();
+        processTestRequestAttributesValuesFromTheServer(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX);
+    }
+
+    @Test
+    public void testRequestAttributesValuesFromTheServerOnShortTopic() throws Exception {
+        processTestRequestAttributesValuesFromTheServer(MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_SHORT_TOPIC_PREFIX);
+    }
+
+    @Test
+    public void testRequestAttributesValuesFromTheServerOnShortJsonTopic() throws Exception {
+        processTestRequestAttributesValuesFromTheServer(MqttTopics.DEVICE_ATTRIBUTES_SHORT_JSON_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_JSON_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_SHORT_JSON_TOPIC_PREFIX);
     }
 
     @Test
@@ -60,18 +70,18 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
         processTestGatewayRequestAttributesValuesFromTheServer();
     }
 
-    protected void processTestRequestAttributesValuesFromTheServer() throws Exception {
+    protected void processTestRequestAttributesValuesFromTheServer(String attrPubTopic, String attrSubTopic, String attrReqTopicPrefix) throws Exception {
 
         MqttAsyncClient client = getMqttAsyncClient(accessToken);
 
-        postAttributesAndSubscribeToTopic(savedDevice, client);
+        postAttributesAndSubscribeToTopic(savedDevice, client, attrPubTopic, attrSubTopic);
 
         Thread.sleep(5000);
 
         TestMqttCallback callback = getTestMqttCallback();
         client.setCallback(callback);
 
-        validateResponse(client, callback.getLatch(), callback);
+        validateResponse(client, callback.getLatch(), callback, attrReqTopicPrefix);
     }
 
     protected void processTestGatewayRequestAttributesValuesFromTheServer() throws Exception {
@@ -103,10 +113,10 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
         validateSharedResponseGateway(client, sharedAttributesCallback);
     }
 
-    protected void postAttributesAndSubscribeToTopic(Device savedDevice, MqttAsyncClient client) throws Exception {
+    protected void postAttributesAndSubscribeToTopic(Device savedDevice, MqttAsyncClient client, String attrPubTopic, String attrSubTopic) throws Exception {
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
-        client.publish(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, new MqttMessage(POST_ATTRIBUTES_PAYLOAD.getBytes())).waitForCompletion(TimeUnit.MINUTES.toMillis(1));
-        client.subscribe(MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC, MqttQoS.AT_MOST_ONCE.value()).waitForCompletion(TimeUnit.MINUTES.toMillis(1));
+        client.publish(attrPubTopic, new MqttMessage(POST_ATTRIBUTES_PAYLOAD.getBytes())).waitForCompletion(TimeUnit.MINUTES.toMillis(1));
+        client.subscribe(attrSubTopic, MqttQoS.AT_MOST_ONCE.value()).waitForCompletion(TimeUnit.MINUTES.toMillis(1));
     }
 
     protected void postGatewayDeviceClientAttributes(MqttAsyncClient client) throws Exception {
@@ -114,12 +124,12 @@ public abstract class AbstractMqttAttributesRequestIntegrationTest extends Abstr
         client.publish(MqttTopics.GATEWAY_ATTRIBUTES_TOPIC, new MqttMessage(postClientAttributes.getBytes())).waitForCompletion(TimeUnit.MINUTES.toMillis(1));
     }
 
-    protected void validateResponse(MqttAsyncClient client, CountDownLatch latch, TestMqttCallback callback) throws MqttException, InterruptedException, InvalidProtocolBufferException {
+    protected void validateResponse(MqttAsyncClient client, CountDownLatch latch, TestMqttCallback callback, String attrReqTopicPrefix) throws MqttException, InterruptedException, InvalidProtocolBufferException {
         String keys = "attribute1,attribute2,attribute3,attribute4,attribute5";
         String payloadStr = "{\"clientKeys\":\"" + keys + "\", \"sharedKeys\":\"" + keys + "\"}";
         MqttMessage mqttMessage = new MqttMessage();
         mqttMessage.setPayload(payloadStr.getBytes());
-        client.publish(MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX + "1", mqttMessage).waitForCompletion(TimeUnit.MINUTES.toMillis(1));
+        client.publish(attrReqTopicPrefix + "1", mqttMessage).waitForCompletion(TimeUnit.MINUTES.toMillis(1));
         latch.await(1, TimeUnit.MINUTES);
         assertEquals(MqttQoS.AT_MOST_ONCE.value(), callback.getQoS());
         String expectedRequestPayload = "{\"client\":{\"attribute1\":\"value1\",\"attribute2\":true,\"attribute3\":42.0,\"attribute4\":73,\"attribute5\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}},\"shared\":{\"attribute1\":\"value1\",\"attribute2\":true,\"attribute3\":42.0,\"attribute4\":73,\"attribute5\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}}}";

@@ -133,6 +133,9 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   @Input()
   dashboardTimewindow: Timewindow;
 
+  @Input()
+  parentDashboard?: IDashboardComponent = null;
+
   dashboardTimewindowChangedSubject: Subject<Timewindow> = new ReplaySubject<Timewindow>();
 
   dashboardTimewindowChanged = this.dashboardTimewindowChangedSubject.asObservable().pipe(
@@ -187,6 +190,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   }
 
   ngOnInit(): void {
+    this.dashboardWidgets.parentDashboard = this.parentDashboard;
     if (!this.dashboardTimewindow) {
       this.dashboardTimewindow = this.timeService.defaultTimewindow();
     }

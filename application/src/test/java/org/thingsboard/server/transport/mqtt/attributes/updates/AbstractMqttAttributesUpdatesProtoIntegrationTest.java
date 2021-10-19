@@ -21,6 +21,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
+import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
@@ -46,7 +47,20 @@ public abstract class AbstractMqttAttributesUpdatesProtoIntegrationTest extends 
 
     @Test
     public void testSubscribeToAttributesUpdatesFromTheServer() throws Exception {
-        processTestSubscribeToAttributesUpdates();
+        super.testSubscribeToAttributesUpdatesFromTheServer();
+    }
+
+    @Test
+    public void testSubscribeToAttributesUpdatesFromTheServerOnShortTopic() throws Exception {
+        super.testSubscribeToAttributesUpdatesFromTheServerOnShortTopic();
+    }
+
+    @Test
+    public void testSubscribeToAttributesUpdatesFromTheServerOnShortJsonTopic() throws Exception {}
+
+    @Test
+    public void testSubscribeToAttributesUpdatesFromTheServerOnShortProtoTopic() throws Exception {
+        processTestSubscribeToAttributesUpdates(MqttTopics.DEVICE_ATTRIBUTES_SHORT_PROTO_TOPIC);
     }
 
     @Test

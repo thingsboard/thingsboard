@@ -67,6 +67,7 @@
         <br/>
         <tb-js-func #funcBodyEdit
           [functionArgs]="['time', 'prevValue']"
+          [globalVariables]="functionScopeVariables"
           [validationArgs]="[[1, 1],[1, '1']]"
           resultType="any"
           formControlName="funcBody">
@@ -78,6 +79,7 @@
         </mat-checkbox>
         <tb-js-func *ngIf="dataKeyFormGroup.get('usePostProcessing').value" #postFuncBodyEdit
                     [functionArgs]="['time', 'value', 'prevValue', 'timePrev', 'prevOrigValue']"
+                    [globalVariables]="functionScopeVariables"
                     [validationArgs]="[[1, 1, 1, 1, 1],[1, '1', '1', 1, '1']]"
                     resultType="any"
                     formControlName="postFuncBody">
