@@ -120,7 +120,7 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("customer_title_unq_key")) {
-                throw new DataValidationException("Customer with such name for this tenant already exists!");
+                throw new DataValidationException("Customer with " + customer.getName() + "  name already exists!");
             } else {
                 throw t;
             }

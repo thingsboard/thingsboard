@@ -272,12 +272,17 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
             executorService.submit(() -> {
                 readyLatch.countDown();
                 try {
+                    startLatch.await();
+                } catch (InterruptedException e) {
+                    Assert.fail("failed to await");
+                }
+                try {
                     Customer savedCustomer = customerService.saveCustomer(customer);
                     if (savedCustomer != null &&
                             savedCustomer.getTitle().equals(customer.getTitle()) &&
                             savedCustomer.getTenantId().equals(customer.getTenantId())) cntSaved.getAndIncrement();
                 } catch (Exception t) {
-                    if (t.getMessage().equals("Customer with such name for this tenant already exists!")) {
+                    if (t.getMessage().equals("Customer with " + customer.getName() + "  name already exists!")) {
                         cntError.getAndIncrement();
                     }
                 }
@@ -288,7 +293,9 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
         Thread.yield();
         startLatch.countDown(); //run all-at-once submitted tasks
         assertTrue(finishLatch.await(TIMEOUT, TimeUnit.SECONDS));
-        Assert.assertEquals("Saved count different with 1", cntSaved.get(), 1);
-        Assert.assertEquals("Saved = " + cntSaved + ", errors = " + cntError + ". But need saved = 1, error = " + (parallelCount - 1) + "!", cntError.get(), parallelCount - cntSaved.get());
+        Assert.assertEquals("Saved count not equals  1", cntSaved.get(), 1);
+        Assert.assertEquals("Saved count equals by " + cntSaved + ", errors  count equals by " + cntError +
+                ". But we have saved count equals by 1, error count equals by " + (parallelCount - 1) + "!",
+                cntError.get(), parallelCount - cntSaved.get());
     }
 }
