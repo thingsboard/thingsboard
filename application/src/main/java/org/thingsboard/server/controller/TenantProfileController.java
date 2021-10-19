@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -44,10 +46,16 @@ import org.thingsboard.server.service.security.permission.Resource;
 @Slf4j
 public class TenantProfileController extends BaseController {
 
+    private static final String TENANT_PROFILE_INFO_DESCRIPTION = "Tenant Profile Info is a lightweight object that contains only id and name of the profile. ";
+
+    @ApiOperation(value = "Get Tenant Profile (getTenantProfileById)",
+            notes = "Fetch the Tenant Profile object based on the provided Tenant Profile Id. " + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/tenantProfile/{tenantProfileId}", method = RequestMethod.GET)
     @ResponseBody
-    public TenantProfile getTenantProfileById(@PathVariable("tenantProfileId") String strTenantProfileId) throws ThingsboardException {
+    public TenantProfile getTenantProfileById(
+            @ApiParam(value = TENANT_PROFILE_ID_PARAM_DESCRIPTION)
+            @PathVariable("tenantProfileId") String strTenantProfileId) throws ThingsboardException {
         checkParameter("tenantProfileId", strTenantProfileId);
         try {
             TenantProfileId tenantProfileId = new TenantProfileId(toUUID(strTenantProfileId));
@@ -57,10 +65,14 @@ public class TenantProfileController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get Tenant Profile Info (getTenantProfileInfoById)",
+            notes = "Fetch the Tenant Profile Info object based on the provided Tenant Profile Id. " + TENANT_PROFILE_INFO_DESCRIPTION + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/tenantProfileInfo/{tenantProfileId}", method = RequestMethod.GET)
     @ResponseBody
-    public EntityInfo getTenantProfileInfoById(@PathVariable("tenantProfileId") String strTenantProfileId) throws ThingsboardException {
+    public EntityInfo getTenantProfileInfoById(
+            @ApiParam(value = TENANT_PROFILE_ID_PARAM_DESCRIPTION)
+            @PathVariable("tenantProfileId") String strTenantProfileId) throws ThingsboardException {
         checkParameter("tenantProfileId", strTenantProfileId);
         try {
             TenantProfileId tenantProfileId = new TenantProfileId(toUUID(strTenantProfileId));
@@ -70,6 +82,8 @@ public class TenantProfileController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get default Tenant Profile Info (getDefaultTenantProfileInfo)",
+            notes = "Fetch the default Tenant Profile Info object based. " + TENANT_PROFILE_INFO_DESCRIPTION + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/tenantProfileInfo/default", method = RequestMethod.GET)
     @ResponseBody
@@ -81,10 +95,19 @@ public class TenantProfileController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Create Or update Tenant Profile (saveTenantProfile)",
+            notes = "Create or update the Tenant Profile. When creating tenant profile, platform generates Tenant Profile Id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address). " +
+                    "The newly created Tenant Profile Id will be present in the response. " +
+                    "Specify existing Tenant Profile Id id to update the Tenant Profile. " +
+                    "Referencing non-existing Tenant Profile Id will cause 'Not Found' error. " +
+                    "Update of the tenant profile configuration will cause immediate recalculation of API limits for all affected Tenants. " +
+                    SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/tenantProfile", method = RequestMethod.POST)
     @ResponseBody
-    public TenantProfile saveTenantProfile(@RequestBody TenantProfile tenantProfile) throws ThingsboardException {
+    public TenantProfile saveTenantProfile(
+            @ApiParam(value = "A JSON value representing the tenant profile.")
+            @RequestBody TenantProfile tenantProfile) throws ThingsboardException {
         try {
             boolean newTenantProfile = tenantProfile.getId() == null;
             if (newTenantProfile) {
@@ -105,10 +128,14 @@ public class TenantProfileController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Delete Tenant Profile (deleteTenantProfile)",
+            notes = "Deletes the tenant profile. Referencing non-existing tenant profile Id will cause an error. Referencing profile that is used by the tenants will cause an error. " + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/tenantProfile/{tenantProfileId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public void deleteTenantProfile(@PathVariable("tenantProfileId") String strTenantProfileId) throws ThingsboardException {
+    public void deleteTenantProfile(
+            @ApiParam(value = TENANT_PROFILE_ID_PARAM_DESCRIPTION)
+            @PathVariable("tenantProfileId") String strTenantProfileId) throws ThingsboardException {
         checkParameter("tenantProfileId", strTenantProfileId);
         try {
             TenantProfileId tenantProfileId = new TenantProfileId(toUUID(strTenantProfileId));
@@ -120,10 +147,14 @@ public class TenantProfileController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Make tenant profile default (setDefaultTenantProfile)",
+            notes = "Makes specified tenant profile to be default. Referencing non-existing tenant profile Id will cause an error. " + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/tenantProfile/{tenantProfileId}/default", method = RequestMethod.POST)
     @ResponseBody
-    public TenantProfile setDefaultTenantProfile(@PathVariable("tenantProfileId") String strTenantProfileId) throws ThingsboardException {
+    public TenantProfile setDefaultTenantProfile(
+            @ApiParam(value = TENANT_PROFILE_ID_PARAM_DESCRIPTION)
+            @PathVariable("tenantProfileId") String strTenantProfileId) throws ThingsboardException {
         checkParameter("tenantProfileId", strTenantProfileId);
         try {
             TenantProfileId tenantProfileId = new TenantProfileId(toUUID(strTenantProfileId));
@@ -135,14 +166,21 @@ public class TenantProfileController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get Tenant Profiles (getTenantProfiles)", notes = "Returns a page of tenant profiles registered in the platform. " + PAGE_DATA_PARAMETERS + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/tenantProfiles", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
-    public PageData<TenantProfile> getTenantProfiles(@RequestParam int pageSize,
-                                                     @RequestParam int page,
-                                                     @RequestParam(required = false) String textSearch,
-                                                     @RequestParam(required = false) String sortProperty,
-                                                     @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+    public PageData<TenantProfile> getTenantProfiles(
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+            @RequestParam int pageSize,
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+            @RequestParam int page,
+            @ApiParam(value = TENANT_PROFILE_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = TENANT_PROFILE_SORT_PROPERTY_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortProperty,
+            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         try {
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             return checkNotNull(tenantProfileService.findTenantProfiles(getTenantId(), pageLink));
@@ -151,14 +189,22 @@ public class TenantProfileController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get Tenant Profiles Info (getTenantProfileInfos)", notes = "Returns a page of tenant profile info objects registered in the platform. "
+            + TENANT_PROFILE_INFO_DESCRIPTION + PAGE_DATA_PARAMETERS + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/tenantProfileInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
-    public PageData<EntityInfo> getTenantProfileInfos(@RequestParam int pageSize,
-                                                      @RequestParam int page,
-                                                      @RequestParam(required = false) String textSearch,
-                                                      @RequestParam(required = false) String sortProperty,
-                                                      @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+    public PageData<EntityInfo> getTenantProfileInfos(
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+            @RequestParam int pageSize,
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+            @RequestParam int page,
+            @ApiParam(value = TENANT_PROFILE_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = TENANT_PROFILE_INFO_SORT_PROPERTY_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortProperty,
+            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         try {
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             return checkNotNull(tenantProfileService.findTenantProfileInfos(getTenantId(), pageLink));
