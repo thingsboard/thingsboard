@@ -123,6 +123,8 @@ public class TelemetryController extends BaseController {
 
     private static final String ERROR_MESSAGE_ENTITY_ID_AND_ENTITY_TYPE = "If chosen the entity id doesn't contain the required entity type, then will be returning an error message.";
 
+    private static final String EMPTY_RESPONSE_BODE_DESCRIPTION = "The result returns empty response body and response code 200.";
+
     @Autowired
     private TimeseriesService tsService;
 
@@ -150,9 +152,7 @@ public class TelemetryController extends BaseController {
 
     @ApiOperation(value = "Get all attribute keys (getAttributeKeys)",
             notes = "Returns a list of key names based on entity id and entity type. " + ERROR_MESSAGE_ENTITY_ID_AND_ENTITY_TYPE,
-            produces = MediaType.APPLICATION_JSON_VALUE,
-            response = String.class,
-            responseContainer = "List")
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/keys/attributes", method = RequestMethod.GET)
     @ResponseBody
@@ -166,9 +166,7 @@ public class TelemetryController extends BaseController {
             notes = "Returns a list of key names based on entity id, entity type and scope. If the 'scope' parameter is " +
                     "omitted, the names of all attribute keys will be returned. If specify the scope parameter, the list " +
                     "of attributes will be filtered by its scope. " + ERROR_MESSAGE_ENTITY_ID_AND_ENTITY_TYPE,
-            produces = MediaType.APPLICATION_JSON_VALUE,
-            response = String.class,
-            responseContainer = "List")
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/keys/attributes/{scope}", method = RequestMethod.GET)
     @ResponseBody
@@ -185,9 +183,7 @@ public class TelemetryController extends BaseController {
                     "a long value representing last modified attribute timestamp(milliseconds), 'key' - attribute key" +
                     " and 'value' - attribute value. If the 'keys' parameter is omitted, the result returns all existed AttributeData objects for the entity. " +
                     ERROR_MESSAGE_ENTITY_ID_AND_ENTITY_TYPE,
-            produces = MediaType.APPLICATION_JSON_VALUE,
-            response = AttributeData.class,
-            responseContainer = "List")
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/values/attributes", method = RequestMethod.GET)
     @ResponseBody
@@ -206,9 +202,7 @@ public class TelemetryController extends BaseController {
                     "and 'value' - attribute value. If the 'keys' or  'scope' parameter is omitted, the result returns " +
                     "all existed AttributeData objects for the entity without filtering by these parameters. " +
                     ERROR_MESSAGE_ENTITY_ID_AND_ENTITY_TYPE,
-            produces = MediaType.APPLICATION_JSON_VALUE,
-            response = AttributeData.class,
-            responseContainer = "List")
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/values/attributes/{scope}", method = RequestMethod.GET)
     @ResponseBody
@@ -225,9 +219,7 @@ public class TelemetryController extends BaseController {
     @ApiOperation(value = "Get timeseries keys (getTimeseriesKeys)",
             notes = "Returns a list of all timeseries keys for the selected entity based on entity id and entity type. " +
                     ERROR_MESSAGE_ENTITY_ID_AND_ENTITY_TYPE,
-            produces = MediaType.APPLICATION_JSON_VALUE,
-            response = String.class,
-            responseContainer = "List")
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/keys/timeseries", method = RequestMethod.GET)
     @ResponseBody
@@ -239,13 +231,11 @@ public class TelemetryController extends BaseController {
     }
 
     @ApiOperation(value = "Get latest timeseries (getLatestTimeseries)",
-            notes = "Returns a JSON array of AttributeData objects based on entity id, entity type, and key, that contains next parameters: " +
-                    "timeseries key and TsData objects that contains 'ts' - a long value representing attribute timestamp(milliseconds) and " +
-                    "'value' - timeseries key value. If the 'keys' parameter is omitted, the result returns all existed " +
-                    "AttributeData objects for the entity. " + ERROR_MESSAGE_ENTITY_ID_AND_ENTITY_TYPE,
-            produces = MediaType.APPLICATION_JSON_VALUE,
-            response = TsData.class,
-            responseContainer = "Map[String, List[TsData]")
+            notes = "Returns a JSON structure representing as a Map where key is a telemetry key name and value - a list " +
+                    "of TsData objects that contains 'ts' - a long value representing attribute timestamp(milliseconds) " +
+                    "and 'value' - timeseries key value. If the 'keys' parameter is omitted - returns all existed " +
+                    "telemetry objects for the entity. " + ERROR_MESSAGE_ENTITY_ID_AND_ENTITY_TYPE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/values/timeseries", method = RequestMethod.GET)
     @ResponseBody
@@ -265,9 +255,7 @@ public class TelemetryController extends BaseController {
                     "- a long value representing attribute timestamp(milliseconds) and 'value' - timeseries key value " +
                     "based on specified filters such as keys, aggregation function (agg), interval, limit, start and end timestamp " +
                     "for the selected entity. The result can also be sorted in ascending or descending order. " + ERROR_MESSAGE_ENTITY_ID_AND_ENTITY_TYPE,
-            produces = MediaType.APPLICATION_JSON_VALUE,
-            response = TsData.class,
-            responseContainer = "Map[String, List[TsData]")
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/values/timeseries", method = RequestMethod.GET, params = {"keys", "startTs", "endTs"})
     @ResponseBody
@@ -305,9 +293,9 @@ public class TelemetryController extends BaseController {
     @ApiOperation(value = "Save or update device attributes (saveDeviceAttributes)",
             notes = "Creates or updates the device attribute based on device id, attribute scope, and JsonNode object " +
                     "that contains key-value info. Key is a unique parameter and cannot be overwritten. Only value can " +
-                    "be overwritten for the key. Also created audit log about device attribute with action type 'ATTRIBUTES_UPDATED'.",
-            produces = MediaType.APPLICATION_JSON_VALUE,
-            response = List.class)
+                    "be overwritten for the key. Also created audit log about device attribute with action type 'ATTRIBUTES_UPDATED'. " +
+                    EMPTY_RESPONSE_BODE_DESCRIPTION,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{deviceId}/{scope}", method = RequestMethod.POST)
     @ResponseBody
@@ -323,9 +311,9 @@ public class TelemetryController extends BaseController {
             notes = "Creates or updates the entity attribute bases on entity id, entity type, entity attributes scope and " +
                     "JsonNode object that contains key-value info. Key is a unique parameter and cannot be overwritten." +
                     "If the scope does not set from the proposed options, nothing will be saved. " + ERROR_MESSAGE_ENTITY_ID_AND_ENTITY_TYPE +
-                    "Also created audit log about entity attribute with action type 'ATTRIBUTES_UPDATED'.",
-            produces = MediaType.APPLICATION_JSON_VALUE,
-            response = List.class)
+                    "Also created audit log about entity attribute with action type 'ATTRIBUTES_UPDATED'." +
+                    EMPTY_RESPONSE_BODE_DESCRIPTION,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/{scope}", method = RequestMethod.POST)
     @ResponseBody
@@ -342,9 +330,8 @@ public class TelemetryController extends BaseController {
             notes = "Creates or updates the entity attribute bases on entity id, entity type, entity attributes scope and " +
                     "JsonNode object that contains key-value info. Key is a unique parameter and cannot be overwritten." +
                     "If the scope does not set from the proposed options, nothing will be saved. " + ERROR_MESSAGE_ENTITY_ID_AND_ENTITY_TYPE +
-                    "Also created audit log about entity attribute with action type 'ATTRIBUTES_UPDATED'.",
-            produces = MediaType.APPLICATION_JSON_VALUE,
-            response = List.class)
+                    "Also created audit log about entity attribute with action type 'ATTRIBUTES_UPDATED'. " +
+                    EMPTY_RESPONSE_BODE_DESCRIPTION)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/attributes/{scope}", method = RequestMethod.POST)
     @ResponseBody
@@ -361,9 +348,9 @@ public class TelemetryController extends BaseController {
             notes = "Creates or updates the entity telemetry bases on entity id, entity type and JsonNode object that " +
                     "contains key-value info. Key is a unique parameter and cannot be overwritten." +
                     "The scope parameter is not used and does not affect the result. " + ERROR_MESSAGE_ENTITY_ID_AND_ENTITY_TYPE +
-                    "Also created audit log about entity telemetry with action type 'TIMESERIES_UPDATED'.",
-            produces = MediaType.APPLICATION_JSON_VALUE,
-            response = List.class)
+                    "Also created audit log about entity telemetry with action type 'TIMESERIES_UPDATED'. " +
+                    EMPTY_RESPONSE_BODE_DESCRIPTION,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/timeseries/{scope}", method = RequestMethod.POST)
     @ResponseBody
@@ -381,9 +368,9 @@ public class TelemetryController extends BaseController {
                     "contains key-value info. Key is a unique parameter and cannot be overwritten." +
                     "The scope parameter is not used and does not affect the result. The TTL parameter is used to extract " +
                     "the number of days to store the data." + ERROR_MESSAGE_ENTITY_ID_AND_ENTITY_TYPE +
-                    "Also created audit log about entity telemetry with action type 'TIMESERIES_UPDATED'.",
-            produces = MediaType.APPLICATION_JSON_VALUE,
-            response = List.class)
+                    "Also created audit log about entity telemetry with action type 'TIMESERIES_UPDATED'. " +
+                    EMPTY_RESPONSE_BODE_DESCRIPTION,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/timeseries/{scope}/{ttl}", method = RequestMethod.POST)
     @ResponseBody
@@ -402,9 +389,9 @@ public class TelemetryController extends BaseController {
                     "and removal time range. To delete all data for keys parameter 'deleteAllDataForKeys' should be set as true, " +
                     "otherwise will be deleted data that is in range of the selected time interval or returns a bad request error. " +
                     "If keys are not chosen, the program returns a bad request error." +
-                    "Also created audit log about entity timeseries with action type 'TIMESERIES_DELETED'.",
-            produces = MediaType.APPLICATION_JSON_VALUE,
-            response = List.class)
+                    "Also created audit log about entity timeseries with action type 'TIMESERIES_DELETED'. " +
+                    EMPTY_RESPONSE_BODE_DESCRIPTION,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/timeseries/delete", method = RequestMethod.DELETE)
     @ResponseBody
@@ -471,9 +458,9 @@ public class TelemetryController extends BaseController {
     @ApiOperation(value = "Delete device attributes (deleteEntityAttributes)",
             notes = "Delete device attributes based on device id, attribute scope and a list of keys. If keys or scope are not chosen, " +
                     "the program returns a bad request error. Selected keys are deleted if only there are exist in the required attribute scope." +
-                    "Also created audit log about device attribute with action type 'ATTRIBUTES_DELETED'.",
-            produces = MediaType.APPLICATION_JSON_VALUE,
-            response = List.class)
+                    "Also created audit log about device attribute with action type 'ATTRIBUTES_DELETED'. " +
+                    EMPTY_RESPONSE_BODE_DESCRIPTION,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{deviceId}/{scope}", method = RequestMethod.DELETE)
     @ResponseBody
@@ -489,9 +476,9 @@ public class TelemetryController extends BaseController {
             notes = "Delete entity attributes based on entity id, entity type, attribute scope and a list of keys. If keys or scope are not chosen, " +
                     "the program returns a bad request error. " + ERROR_MESSAGE_ENTITY_ID_AND_ENTITY_TYPE +
                     " Selected keys are deleted if only there are exist in the required attribute scope." +
-                    "Also created audit log about entity attribute with action type 'ATTRIBUTES_DELETED'.",
-            produces = MediaType.APPLICATION_JSON_VALUE,
-            response = List.class)
+                    "Also created audit log about entity attribute with action type 'ATTRIBUTES_DELETED'. " +
+                    EMPTY_RESPONSE_BODE_DESCRIPTION,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/{scope}", method = RequestMethod.DELETE)
     @ResponseBody
