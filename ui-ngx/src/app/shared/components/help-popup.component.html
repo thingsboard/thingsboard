@@ -15,16 +15,28 @@
     limitations under the License.
 
 -->
-<div style="position: relative;">
-  <button color="primary" mat-button mat-icon-button
-          class="tb-help-popup-button tb-mat-32"
-          type="button"
-          (click)="toggleHelp()"
-          matTooltip="{{'help.show-help' | translate}}"
-          matTooltipPosition="above">
-    <mat-icon class="material-icons">{{popoverVisible ? 'help' : 'help_outline'}}</mat-icon>
-  </button>
-  <div *ngIf="popoverVisible && !popoverReady" fxFlex fxLayoutAlign="center center" class="tb-absolute-fill tb-help-popup-button-loading">
-    <mat-spinner mode="indeterminate" diameter="20" strokeWidth="2"></mat-spinner>
-  </div>
-</div>
+<button #toggleHelpButton
+        *ngIf="!textMode"
+        mat-icon-button
+        color="primary"
+        class="tb-help-popup-button tb-mat-32"
+        type="button"
+        (click)="toggleHelp()"
+        matTooltip="{{'help.show-help' | translate}}"
+        matTooltipPosition="above">
+  <mat-icon class="material-icons">{{popoverVisible ? 'help' : 'help_outline'}}</mat-icon>
+  <mat-spinner *ngIf="popoverVisible && !popoverReady" class="tb-help-popup-button-loading" mode="indeterminate" diameter="20" strokeWidth="2"></mat-spinner>
+</button>
+<button #toggleHelpTextButton
+        *ngIf="textMode"
+        mat-button
+        color="primary"
+        class="tb-help-popup-text-button"
+        [ngClass]="{'mat-stroked-button': popoverVisible && popoverReady}"
+        (click)="toggleHelp()">
+  <ng-container *ngIf="triggerSafeHtml">
+    <span [style]="triggerStyle" [innerHTML]="triggerSafeHtml"></span>
+  </ng-container>
+  <mat-icon *ngIf="!popoverVisible || popoverReady" class="tb-mat-16">open_in_new</mat-icon>
+  <mat-spinner *ngIf="popoverVisible && !popoverReady" mode="indeterminate" diameter="16" strokeWidth="2"></mat-spinner>
+</button>

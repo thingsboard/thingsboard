@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Event;
-import org.thingsboard.server.common.data.event.EventFilter;
+import org.thingsboard.server.common.data.event.BaseEventFilter;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -45,11 +45,13 @@ import org.thingsboard.server.service.security.permission.Operation;
 @RequestMapping("/api")
 public class EventController extends BaseController {
 
+    private static final String NEW_LINE = "\n\n";
+
     @Autowired
     private EventService eventService;
 
-    @ApiOperation(value = "Get Events (getEvents)",
-            notes = "Returns a page of events for specified entity by specifying event type." +
+    @ApiOperation(value = "Get Events by type (getEvents)",
+            notes = "Returns a page of events for specified entity by specifying event type. " +
                     PAGE_DATA_PARAMETERS, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}/{eventType}", method = RequestMethod.GET)
@@ -92,7 +94,7 @@ public class EventController extends BaseController {
     }
 
     @ApiOperation(value = "Get Events (getEvents)",
-            notes = "Returns a page of events for specified entity." +
+            notes = "Returns a page of events for specified entity. " +
                     PAGE_DATA_PARAMETERS, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}", method = RequestMethod.GET)
@@ -134,9 +136,17 @@ public class EventController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Get Events (getEvents)",
-            notes = "Returns a page of events for specified entity by specifying event filter." +
-                    PAGE_DATA_PARAMETERS, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Get Events by event filter (getEvents)",
+            notes = "Returns a page of events for the chosen entity by specifying the event filter. " +
+                    PAGE_DATA_PARAMETERS + NEW_LINE + "5 different eventFilter objects could be set for different event types. " +
+                    "The eventType field is required. Others are optional. If some of them are set, the filtering will be applied according to them. " +
+                    "See the examples below for all the fields used for each event type filtering. " + NEW_LINE +
+                    EVENT_ERROR_FILTER_OBJ + NEW_LINE +
+                    EVENT_LC_EVENT_FILTER_OBJ + NEW_LINE +
+                    EVENT_STATS_FILTER_OBJ + NEW_LINE +
+                    EVENT_DEBUG_RULE_NODE_FILTER_OBJ + NEW_LINE +
+                    EVENT_DEBUG_RULE_CHAIN_FILTER_OBJ + NEW_LINE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}", method = RequestMethod.POST)
     @ResponseBody
@@ -152,7 +162,7 @@ public class EventController extends BaseController {
             @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
             @ApiParam(value = "A JSON value representing the event filter.", required = true)
-            @RequestBody EventFilter eventFilter,
+            @RequestBody BaseEventFilter eventFilter,
             @ApiParam(value = EVENT_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
             @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = EVENT_SORT_PROPERTY_ALLOWABLE_VALUES)

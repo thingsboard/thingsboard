@@ -24,6 +24,7 @@ import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -162,7 +163,7 @@ public class DeviceController extends BaseController {
 
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
 
-            onDeviceCreatedOrUpdated(savedDevice, oldDevice, !created);
+            onDeviceCreatedOrUpdated(savedDevice, oldDevice, !created, getCurrentUser());
 
             return savedDevice;
         } catch (Exception e) {
@@ -173,11 +174,11 @@ public class DeviceController extends BaseController {
 
     }
 
-    private void onDeviceCreatedOrUpdated(Device savedDevice, Device oldDevice, boolean updated) {
+    private void onDeviceCreatedOrUpdated(Device savedDevice, Device oldDevice, boolean updated, SecurityUser user) {
         tbClusterService.onDeviceUpdated(savedDevice, oldDevice);
 
         try {
-            logEntityAction(savedDevice.getId(), savedDevice,
+            logEntityAction(user, savedDevice.getId(), savedDevice,
                     savedDevice.getCustomerId(),
                     updated ? ActionType.UPDATED : ActionType.ADDED, null);
         } catch (ThingsboardException e) {
@@ -415,7 +416,7 @@ public class DeviceController extends BaseController {
             @RequestParam int page,
             @ApiParam(value = DEVICE_TYPE_DESCRIPTION)
             @RequestParam(required = false) String type,
-            @ApiParam(value = DEVICE_PROFILE_ID_DESCRIPTION)
+            @ApiParam(value = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
             @RequestParam(required = false) String deviceProfileId,
             @ApiParam(value = DEVICE_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
@@ -509,7 +510,7 @@ public class DeviceController extends BaseController {
             @RequestParam int page,
             @ApiParam(value = DEVICE_TYPE_DESCRIPTION)
             @RequestParam(required = false) String type,
-            @ApiParam(value = DEVICE_PROFILE_ID_DESCRIPTION)
+            @ApiParam(value = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
             @RequestParam(required = false) String deviceProfileId,
             @ApiParam(value = DEVICE_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
@@ -572,7 +573,9 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/devices", method = RequestMethod.POST)
     @ResponseBody
-    public List<Device> findByQuery(@RequestBody DeviceSearchQuery query) throws ThingsboardException {
+    public List<Device> findByQuery(
+            @ApiParam(value = "The device search query JSON")
+            @RequestBody DeviceSearchQuery query) throws ThingsboardException {
         checkNotNull(query);
         checkNotNull(query.getParameters());
         checkNotNull(query.getDeviceTypes());
@@ -782,8 +785,11 @@ public class DeviceController extends BaseController {
 
     @ApiOperation(value = "Assign device to edge (assignDeviceToEdge)",
             notes = "Creates assignment of an existing device to an instance of The Edge. " +
-                    "The Edge is a software product for edge computing. " +
-                    "It allows bringing data analysis and management to the edge, while seamlessly synchronizing with the platform server (cloud). ")
+                    EDGE_ASSIGN_ASYNC_FIRST_STEP_DESCRIPTION +
+                    "Second, remote edge service will receive a copy of assignment device " +
+                    EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION + ". " +
+                    "Third, once device will be delivered to edge service, it's going to be available for usage on remote edge instance.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/device/{deviceId}", method = RequestMethod.POST)
     @ResponseBody
@@ -821,7 +827,12 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Unassign device from edge (unassignDeviceFromEdge)",
-            notes = "Clears assignment of the device to the edge")
+            notes = "Clears assignment of the device to the edge. " +
+                    EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION +
+                    "Second, remote edge service will receive an 'unassign' command to remove device " +
+                    EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION + ". " +
+                    "Third, once 'unassign' command will be delivered to edge service, it's going to remove device locally.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/device/{deviceId}", method = RequestMethod.DELETE)
     @ResponseBody
@@ -942,8 +953,9 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @PostMapping("/device/bulk_import")
     public BulkImportResult<Device> processDevicesBulkImport(@RequestBody BulkImportRequest request) throws Exception {
-        return deviceBulkImportService.processBulkImport(request, getCurrentUser(), importedDeviceInfo -> {
-            onDeviceCreatedOrUpdated(importedDeviceInfo.getEntity(), importedDeviceInfo.getOldEntity(), importedDeviceInfo.isUpdated());
+        SecurityUser user = getCurrentUser();
+        return deviceBulkImportService.processBulkImport(request, user, importedDeviceInfo -> {
+            onDeviceCreatedOrUpdated(importedDeviceInfo.getEntity(), importedDeviceInfo.getOldEntity(), importedDeviceInfo.isUpdated(), user);
         });
     }
 
