@@ -497,7 +497,7 @@ public class EntityQueryController extends BaseController {
                 "\n\n Example mentioned above search all devices which have attribute 'active' set to 'true'. Now let's review available entity filters and key filters syntax:" +
                 ENTITY_FILTERS +
                 KEY_FILTERS +
-                TENANT_AND_USER_AUTHORITY_PARAGRAPH;;
+                    TENANT_OR_USER_AUTHORITY_PARAGRAPH;;
 
     private static final String ENTITY_DATA_QUERY_DESCRIPTION =
             "Allows to run complex queries over platform entities (devices, assets, customers, etc) " +
@@ -580,7 +580,7 @@ public class EntityQueryController extends BaseController {
                     "\n\n Example mentioned above search all devices which have attribute 'active' set to 'true'. Now let's review available entity filters and key filters syntax:" +
                     ENTITY_FILTERS +
                     KEY_FILTERS +
-                    TENANT_AND_USER_AUTHORITY_PARAGRAPH;
+                    TENANT_OR_USER_AUTHORITY_PARAGRAPH;
 
 
     private static final String ALARM_DATA_QUERY_DESCRIPTION = "This method description defines how Alarm Data Query extends the Entity Data Query. " +

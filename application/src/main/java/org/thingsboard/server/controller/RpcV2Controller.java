@@ -91,9 +91,9 @@ public class RpcV2Controller extends AbstractRpcController {
             "In case of persistent RPC, the result of this call is 'rpcId' UUID. In case of lightweight RPC, " +
             "the result of this call is the response from device, or 504 Gateway Timeout if device is offline.";
 
-    private static final String ONE_WAY_RPC_REQUEST_DESCRIPTION = "Sends the one-way remote-procedure call (RPC) request to device. " + RPC_REQUEST_DESCRIPTION + ONE_WAY_RPC_RESULT + TENANT_AND_USER_AUTHORITY_PARAGRAPH;
+    private static final String ONE_WAY_RPC_REQUEST_DESCRIPTION = "Sends the one-way remote-procedure call (RPC) request to device. " + RPC_REQUEST_DESCRIPTION + ONE_WAY_RPC_RESULT + TENANT_OR_USER_AUTHORITY_PARAGRAPH;
 
-    private static final String TWO_WAY_RPC_REQUEST_DESCRIPTION = "Sends the two-way remote-procedure call (RPC) request to device. " + RPC_REQUEST_DESCRIPTION + TWO_WAY_RPC_RESULT + TENANT_AND_USER_AUTHORITY_PARAGRAPH;
+    private static final String TWO_WAY_RPC_REQUEST_DESCRIPTION = "Sends the two-way remote-procedure call (RPC) request to device. " + RPC_REQUEST_DESCRIPTION + TWO_WAY_RPC_RESULT + TENANT_OR_USER_AUTHORITY_PARAGRAPH;
 
     @ApiOperation(value = "Send one-way RPC request", notes = ONE_WAY_RPC_REQUEST_DESCRIPTION)
     @ApiResponses(value = {
@@ -131,7 +131,7 @@ public class RpcV2Controller extends AbstractRpcController {
         return handleDeviceRPCRequest(false, new DeviceId(UUID.fromString(deviceIdStr)), requestBody, HttpStatus.GATEWAY_TIMEOUT, HttpStatus.GATEWAY_TIMEOUT);
     }
 
-    @ApiOperation(value = "Get persistent RPC request", notes = "Get information about the status of the RPC call." + TENANT_AND_USER_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Get persistent RPC request", notes = "Get information about the status of the RPC call." + TENANT_OR_USER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/persistent/{rpcId}", method = RequestMethod.GET)
     @ResponseBody
@@ -147,7 +147,7 @@ public class RpcV2Controller extends AbstractRpcController {
         }
     }
 
-    @ApiOperation(value = "Get persistent RPC requests", notes = "Allows to query RPC calls for specific device using pagination." + TENANT_AND_USER_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Get persistent RPC requests", notes = "Allows to query RPC calls for specific device using pagination." + TENANT_OR_USER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/persistent/device/{deviceId}", method = RequestMethod.GET)
     @ResponseBody

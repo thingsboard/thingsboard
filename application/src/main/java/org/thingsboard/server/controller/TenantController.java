@@ -57,7 +57,7 @@ public class TenantController extends BaseController {
     private TenantService tenantService;
 
     @ApiOperation(value = "Get Tenant (getTenantById)",
-            notes = "Fetch the Tenant object based on the provided Tenant Id. " + SYSTEM_AND_TENANT_AUTHORITY_PARAGRAPH)
+            notes = "Fetch the Tenant object based on the provided Tenant Id. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/{tenantId}", method = RequestMethod.GET)
     @ResponseBody
@@ -79,7 +79,7 @@ public class TenantController extends BaseController {
 
     @ApiOperation(value = "Get Tenant Info (getTenantInfoById)",
             notes = "Fetch the Tenant Info object based on the provided Tenant Id. " +
-                    TENANT_INFO_DESCRIPTION + SYSTEM_AND_TENANT_AUTHORITY_PARAGRAPH)
+                    TENANT_INFO_DESCRIPTION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/info/{tenantId}", method = RequestMethod.GET)
     @ResponseBody

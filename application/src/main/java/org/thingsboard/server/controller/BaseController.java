@@ -181,9 +181,9 @@ public abstract class BaseController {
     public static final String RULE_CHAIN_ID_PARAM_DESCRIPTION = "A string value representing the rule chain id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
 
     protected static final String SYSTEM_AUTHORITY_PARAGRAPH = "\n\nAvailable for users with 'SYS_ADMIN' authority.";
-    protected static final String SYSTEM_AND_TENANT_AUTHORITY_PARAGRAPH = "\n\nAvailable for users with 'SYS_ADMIN' or 'TENANT_ADMIN' authority.";
+    protected static final String SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH = "\n\nAvailable for users with 'SYS_ADMIN' or 'TENANT_ADMIN' authority.";
     protected static final String TENANT_AUTHORITY_PARAGRAPH = "\n\nAvailable for users with 'TENANT_ADMIN' authority.";
-    protected static final String TENANT_AND_USER_AUTHORITY_PARAGRAPH = "\n\nAvailable for users with 'TENANT_ADMIN' or 'CUSTOMER_USER' authority.";
+    protected static final String TENANT_OR_USER_AUTHORITY_PARAGRAPH = "\n\nAvailable for users with 'TENANT_ADMIN' or 'CUSTOMER_USER' authority.";
 
     protected static final String PAGE_SIZE_DESCRIPTION = "Maximum amount of entities in a one page";
     protected static final String PAGE_NUMBER_DESCRIPTION = "Sequence number of page starting from 0";
@@ -196,6 +196,7 @@ public abstract class BaseController {
     protected static final String DASHBOARD_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the dashboard title.";
     protected static final String RPC_TEXT_SEARCH_DESCRIPTION = "Not implemented. Leave empty.";
     protected static final String DEVICE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the device name.";
+    protected static final String USER_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the user email.";
     protected static final String TENANT_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the tenant name.";
     protected static final String TENANT_PROFILE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the tenant profile name.";
     protected static final String RULE_CHAIN_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the rule chain name.";
@@ -209,6 +210,7 @@ public abstract class BaseController {
     protected static final String CUSTOMER_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title, email, country, city";
     protected static final String RPC_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, expirationTime, request, response";
     protected static final String DEVICE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, deviceProfileName, label, customerTitle";
+    protected static final String USER_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, firstName, lastName, email";
     protected static final String TENANT_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title, email, country, state, city, address, address2, zip, phone, email";
     protected static final String TENANT_PROFILE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, description, isDefault";
     protected static final String TENANT_PROFILE_INFO_SORT_PROPERTY_ALLOWABLE_VALUES = "id, name";

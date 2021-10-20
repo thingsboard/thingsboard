@@ -103,8 +103,8 @@ public class DeviceController extends BaseController {
 
     @ApiOperation(value = "Get Device (getDeviceById)",
             notes = "Fetch the Device object based on the provided Device Id. " +
-                    "If the user has the authority of 'Tenant Administrator', the server checks that the device is owned by the same tenant. " +
-                    "If the user has the authority of 'Customer User', the server checks that the device is assigned to the same customer.")
+                    "If the user has the authority of 'TENANT_ADMIN', the server checks that the device is owned by the same tenant. " +
+                    "If the user has the authority of 'CUSTOMER_USER', the server checks that the device is assigned to the same customer.")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/{deviceId}", method = RequestMethod.GET)
     @ResponseBody

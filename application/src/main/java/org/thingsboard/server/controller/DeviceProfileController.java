@@ -81,7 +81,7 @@ public class DeviceProfileController extends BaseController {
 
     @ApiOperation(value = "Get Device Profile Info (getDeviceProfileInfoById)",
             notes = "Fetch the Device Profile Info object based on the provided Device Profile Id. "
-                    + DEVICE_PROFILE_INFO_DESCRIPTION + TENANT_AND_USER_AUTHORITY_PARAGRAPH,
+                    + DEVICE_PROFILE_INFO_DESCRIPTION + TENANT_OR_USER_AUTHORITY_PARAGRAPH,
             produces = "application/json")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/deviceProfileInfo/{deviceProfileId}", method = RequestMethod.GET)
@@ -100,7 +100,7 @@ public class DeviceProfileController extends BaseController {
 
     @ApiOperation(value = "Get Default Device Profile (getDefaultDeviceProfileInfo)",
             notes = "Fetch the Default Device Profile Info object. " +
-                    DEVICE_PROFILE_INFO_DESCRIPTION + TENANT_AND_USER_AUTHORITY_PARAGRAPH,
+                    DEVICE_PROFILE_INFO_DESCRIPTION + TENANT_OR_USER_AUTHORITY_PARAGRAPH,
             produces = "application/json")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/deviceProfileInfo/default", method = RequestMethod.GET)
@@ -321,7 +321,7 @@ public class DeviceProfileController extends BaseController {
 
     @ApiOperation(value = "Get Device Profiles for transport type (getDeviceProfileInfos)",
             notes = "Returns a page of devices profile info objects owned by tenant. " +
-                    PAGE_DATA_PARAMETERS + DEVICE_PROFILE_INFO_DESCRIPTION + TENANT_AND_USER_AUTHORITY_PARAGRAPH,
+                    PAGE_DATA_PARAMETERS + DEVICE_PROFILE_INFO_DESCRIPTION + TENANT_OR_USER_AUTHORITY_PARAGRAPH,
             produces = "application/json")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/deviceProfileInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
