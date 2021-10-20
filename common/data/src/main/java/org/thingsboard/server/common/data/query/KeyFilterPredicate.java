@@ -15,14 +15,12 @@
  */
 package org.thingsboard.server.common.data.query;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 
 import java.io.Serializable;
 
-@ApiModel
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
@@ -34,7 +32,7 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = ComplexFilterPredicate.class, name = "COMPLEX")})
 public interface KeyFilterPredicate extends Serializable {
 
-    @ApiModelProperty(position = 1, value = "String value representing filter predicate type. See method implementation notes for more examples", example = "BOOLEAN")
+    @JsonIgnore
     FilterPredicateType getType();
 
 }

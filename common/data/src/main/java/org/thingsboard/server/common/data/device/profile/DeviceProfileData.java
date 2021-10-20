@@ -19,15 +19,15 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
-import java.io.Serializable;
 import javax.validation.Valid;
+import java.io.Serializable;
 import java.util.List;
 
 @ApiModel
 @Data
 public class DeviceProfileData implements Serializable {
 
-    @ApiModelProperty(position = 1, value = "JSON object of device profile configuration for device profile type")
+    @ApiModelProperty(position = 1, value = "JSON object of device profile configuration")
     private DeviceProfileConfiguration configuration;
     @Valid
     @ApiModelProperty(position = 2, value = "JSON object of device profile transport configuration")

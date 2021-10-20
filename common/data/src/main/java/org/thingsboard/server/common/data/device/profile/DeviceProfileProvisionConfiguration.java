@@ -19,13 +19,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 
 import java.io.Serializable;
 
-@ApiModel
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -37,10 +34,9 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration.class, name = "CHECK_PRE_PROVISIONED_DEVICES")})
 public interface DeviceProfileProvisionConfiguration extends Serializable {
 
-    @ApiModelProperty(position = 1, value = "String value representing the secret key used to verify provisioning of the device defined in the device profile", example = "bjrj9172va82hvwqtp5b")
     String getProvisionDeviceSecret();
 
-    @ApiModelProperty(position = 2, value = "Device provisioning strategy for device profile", example = "ALLOW_CREATE_NEW_DEVICES")
+    @JsonIgnore
     DeviceProfileProvisionType getType();
 
 }

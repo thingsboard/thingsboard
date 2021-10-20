@@ -21,8 +21,8 @@ import lombok.Data;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-import java.io.Serializable;
 import javax.validation.Valid;
+import java.io.Serializable;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -33,7 +33,7 @@ public class DeviceProfileAlarm implements Serializable {
     @ApiModelProperty(position = 1, value = "String value representing the alarm rule id", example = "highTemperatureAlarmID")
     private String id;
     @NoXss
-    @ApiModelProperty(position = 2, value = "String value representing type of the Alarm", example = "High Temperature Alarm")
+    @ApiModelProperty(position = 2, value = "String value representing type of the alarm", example = "High Temperature Alarm")
     private String alarmType;
 
     @Valid

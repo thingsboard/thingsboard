@@ -15,11 +15,11 @@
  */
 package org.thingsboard.server.common.data.device.data;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 import org.thingsboard.server.common.data.DeviceTransportType;
 
 import java.io.Serializable;
@@ -37,8 +37,7 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = Lwm2mDeviceTransportConfiguration.class, name = "LWM2M"),
         @JsonSubTypes.Type(value = SnmpDeviceTransportConfiguration.class, name = "SNMP")})
 public interface DeviceTransportConfiguration extends Serializable {
-
-    @ApiModelProperty(position = 1, value = "Device transport type", example = "MQTT")
+    @JsonIgnore
     DeviceTransportType getType();
 
     default void validate() {
