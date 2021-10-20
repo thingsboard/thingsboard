@@ -1271,7 +1271,6 @@
       "view-attribute": "Öznitelik görüntüle",
       "remove-attribute": "Öznitelik kaldır",
       "mode": "Güvenlik yapılandırma modu",
-      "servers": "Sunucular",
       "short-id": "Kısa ID",
       "short-id-required": "Kısa ID gerekli.",
       "short-id-range": "Kısa ID 1 ile 65534 aralığında olmalıdır.",

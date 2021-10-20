@@ -99,7 +99,12 @@
                 cdkAutosizeMinRows="1"
                 cols="1" required
                 formControlName="serverPublicKey"
-      ></textarea>
+                matTooltip="{{ 'device.lwm2m-security-config.client-publicKey-or-id-tooltip' | translate:
+                {count: serverFormGroup.get('securityMode').value === securityConfigLwM2MType.RPK? 1 : 2} }}"
+                matTooltipPosition="below"
+                required>
+
+      </textarea>
       <mat-error *ngIf="serverFormGroup.get('serverPublicKey').hasError('required')">
         {{ 'device-profile.lwm2m.server-public-key-required' | translate }}
       </mat-error>
