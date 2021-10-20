@@ -17,6 +17,10 @@ package org.thingsboard.server.transport.http;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,14 +81,139 @@ import java.util.function.Consumer;
 @Slf4j
 public class DeviceApiController implements TbTransportService {
 
+    private static final String MARKDOWN_CODE_BLOCK_START = "```json\n";
+    private static final String MARKDOWN_CODE_BLOCK_END = "\n```";
+
+    private static final String JSON_GET_ALL_SHARED_AND_CLIENT_ATTRIBUTES_EXAMPLE = "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "  {\n" +
+            "    \"client\": {\n" +
+            "       \"model\": \"SMART WIFI WATER SENSOR\",\n" +
+            "       \"description\": {\n" +
+            "           \"material\": \"plastic\",\n" +
+            "           \"start_temp\": -10,\n" +
+            "           \"end_temp\":  40\n" +
+            "     },\n" +
+            "    \"serial_number\": \"10001KA5785O\"\n" +
+            "   },\n" +
+            "       \"shared\": {\n" +
+            "           \"pulse\": 0.995\n" +
+            "     }\n" +
+            "  }\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n";
+
+    private static final String JSON_GET_ALL_CLIENT_ATTRIBUTES_EXAMPLE = "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "  {\n" +
+            "    \"client\": {\n" +
+            "       \"model\": \"SMART WIFI WATER SENSOR\",\n" +
+            "       \"description\": {\n" +
+            "           \"material\": \"plastic\",\n" +
+            "           \"start_temp\": -10,\n" +
+            "           \"end_temp\":  40\n" +
+            "     },\n" +
+            "    \"serial_number\": \"10001KA5785O\"\n" +
+            "   }\n" +
+            "  }\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n";
+
+    private static final String JSON_GET_ALL_SHARED_ATTRIBUTES_EXAMPLE = "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "  {\n" +
+            "       \"shared\": {\n" +
+            "           \"pulse\": 0.995\n" +
+            "        }\n" +
+            "  }\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n";
+
+    private static final String JSON_GET_SHARED_AND_CLIENT_ATTRIBUTES_EXAMPLE = "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "  {\n" +
+            "    \"client\": {\n" +
+            "       \"description\": {\n" +
+            "           \"material\": \"plastic\",\n" +
+            "           \"start_temp\": -10,\n" +
+            "           \"end_temp\":  40\n" +
+            "     }\n" +
+            "   },\n" +
+            "       \"shared\": {\n" +
+            "           \"pulse\": 0.995\n" +
+            "     }\n" +
+            "  }\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n";
+
+    private static final String JSON_DEVICE_ATTRIBUTES_EXAMPLE = "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "  {\n" +
+            "    \"serial_number\": \"10001KA5785O\",\n" +
+            "    \"model\": \"SMART WIFI WATER SENSOR\",\n" +
+            "    \"description\": {\n" +
+            "       \"material\": \"plastic\",\n" +
+            "       \"start_temp\": -10,\n" +
+            "       \"end_temp\":  40\n" +
+            "   }\n" +
+            "  }\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n";
+
+    private static final String JSON_DEFAULT_EXAMPLE = "\n\n For example:" +
+            "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "  {\n" +
+            "    \"stringKey\": \"value1\",\n" +
+            "    \"booleanKey\": true,\n" +
+            "    \"doubleKey\": 42.0,\n" +
+            "    \"longKey\": 73,\n" +
+            "    \"jsonKey\": {\n" +
+            "       \"someNumber\": 42,\n" +
+            "       \"someArray\": [1,2,3],\n" +
+            "       \"someNestedObject\":  {\"key\": \"value\"},\n" +
+            "   }\n" +
+            "  }\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n" + " See the real example in description.\"";
+
+    private static final String JSON_EXAMPLE = "\n\n Let`s see example:" +
+            "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "  {\n" +
+            "    \"stringKey\": \"value1\",\n" +
+            "    \"booleanKey\": true,\n" +
+            "    \"doubleKey\": 42.0,\n" +
+            "    \"longKey\": 73,\n" +
+            "    \"jsonKey\": {\n" +
+            "       \"someNumber\": 42,\n" +
+            "       \"someArray\": [1,2,3],\n" +
+            "       \"someNestedObject\":  {\"key\": \"value\"},\n" +
+            "   }\n" +
+            "  }\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n";
+
+    private static final String SAVE_ATTRIBUTES_STATUS_OK = "Client-side Attribute from the request was created or updated. ";
+    private static final String SAVE_ATTRIBUTES_STATUS_BAD_REQUEST = "Invalid request parameters or body.";
+    private static final String UNAUTHORIZED_STATUS_BAD_REQUEST = "Invalid **DEVICE_TOKEN**. Most likely, Device belongs to different Customer or Tenant.";
+
+    private static final String ACCESS_TOKEN_DESCRIPTION = "The application needs to include deviceToken (token of required device) as a path parameter" +
+            " in each HTTP request. If deviceToken is Invalid then will be return error code 401 Unauthorized. For example, 'iDr0uA1uIRRzd32xGrkG'";
+
+    private static final String KEY_VALUE_FORMAT_DESCRIPTION = "The platform supports key-value content in JSON. Key is always " +
+            "a string, while value can be either string, boolean, double, long or JSON." + JSON_DEFAULT_EXAMPLE;
+
+
     @Autowired
     private HttpTransportContext transportContext;
 
+    @ApiOperation(value = "Get device attributes",
+            notes =
+
+                    "\n\n## Let`s see some response examples: \n\n" +
+                    "\n\nExample when 'clientKeys' and 'sharedKeys' are not given returns both of them " + JSON_GET_ALL_SHARED_AND_CLIENT_ATTRIBUTES_EXAMPLE +
+                    "\n\nExample when selected only 'clientKeys' (e.g. 'model,description,serial_number')" + JSON_GET_ALL_CLIENT_ATTRIBUTES_EXAMPLE +
+                    "\n\nExample when selected only 'sharedKeys' (e.g. 'pulse')" + JSON_GET_ALL_SHARED_ATTRIBUTES_EXAMPLE +
+                    "\n\nExample when selected 'clientKeys' (e.g. 'description') and 'sharedKeys' (e.g. 'pulse')." + JSON_GET_SHARED_AND_CLIENT_ATTRIBUTES_EXAMPLE
+
+            ,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @RequestMapping(value = "/{deviceToken}/attributes", method = RequestMethod.GET, produces = "application/json")
-    public DeferredResult<ResponseEntity> getDeviceAttributes(@PathVariable("deviceToken") String deviceToken,
-                                                              @RequestParam(value = "clientKeys", required = false, defaultValue = "") String clientKeys,
-                                                              @RequestParam(value = "sharedKeys", required = false, defaultValue = "") String sharedKeys,
-                                                              HttpServletRequest httpRequest) {
+    public DeferredResult<ResponseEntity> getDeviceAttributes(
+            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION, example = "iDr0uA1uIRRzd32xGrkG")
+            @PathVariable("deviceToken") String deviceToken,
+            @ApiParam(value = "A string value representing the comma-separated list of client-side attributes keys.", example = "")
+            @RequestParam(value = "clientKeys", required = false, defaultValue = "") String clientKeys,
+            @ApiParam(value = "A string value representing the comma-separated list of shared-side attributes keys.", example = "pulse")
+            @RequestParam(value = "sharedKeys", required = false, defaultValue = "") String sharedKeys,
+            HttpServletRequest httpRequest) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
@@ -106,9 +235,27 @@ public class DeviceApiController implements TbTransportService {
         return responseWriter;
     }
 
+    @ApiOperation(value = "Post device attributes",
+            notes = "Created(published) or updated client-side device attributes to the Platform server side based on " +
+                    "device token and a JSON object with key-value format of attributes to create or update. " +
+                    "**Key** is a unique parameter and cannot be overwritten. Only value can be overwritten for the key." +
+                    "\n\nWhen creating client-side attributes, Platform generates attribute id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address)." +
+                    "\n\n Let`s see example of creating some client-side attributes for the device with **deviceToken ** - 'iDr0uA1uIRRzd32xGrkG' " +
+                    "and JSON object:" + JSON_DEVICE_ATTRIBUTES_EXAMPLE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = SAVE_ATTRIBUTES_STATUS_OK),
+            @ApiResponse(code = 400, message = SAVE_ATTRIBUTES_STATUS_BAD_REQUEST),
+            @ApiResponse(code = 401, message = UNAUTHORIZED_STATUS_BAD_REQUEST),
+            @ApiResponse(code = 500, message = "The exception was thrown during processing the request. "),
+    })
     @RequestMapping(value = "/{deviceToken}/attributes", method = RequestMethod.POST)
-    public DeferredResult<ResponseEntity> postDeviceAttributes(@PathVariable("deviceToken") String deviceToken,
-                                                               @RequestBody String json, HttpServletRequest request) {
+    public DeferredResult<ResponseEntity> postDeviceAttributes(
+            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION, example = "iDr0uA1uIRRzd32xGrkG")
+            @PathVariable("deviceToken") String deviceToken,
+            @ApiParam(value = KEY_VALUE_FORMAT_DESCRIPTION)
+            @RequestBody String json,
+            HttpServletRequest request) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
@@ -120,8 +267,12 @@ public class DeviceApiController implements TbTransportService {
     }
 
     @RequestMapping(value = "/{deviceToken}/telemetry", method = RequestMethod.POST)
-    public DeferredResult<ResponseEntity> postTelemetry(@PathVariable("deviceToken") String deviceToken,
-                                                        @RequestBody String json, HttpServletRequest request) {
+    public DeferredResult<ResponseEntity> postTelemetry(
+            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION, example = "iDr0uA1uIRRzd32xGrkG")
+            @PathVariable("deviceToken") String deviceToken,
+            @ApiParam(value = KEY_VALUE_FORMAT_DESCRIPTION, example = "")
+            @RequestBody String json,
+            HttpServletRequest request) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
@@ -133,8 +284,10 @@ public class DeviceApiController implements TbTransportService {
     }
 
     @RequestMapping(value = "/{deviceToken}/claim", method = RequestMethod.POST)
-    public DeferredResult<ResponseEntity> claimDevice(@PathVariable("deviceToken") String deviceToken,
-                                                      @RequestBody(required = false) String json, HttpServletRequest request) {
+    public DeferredResult<ResponseEntity> claimDevice(
+            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION, example = "iDr0uA1uIRRzd32xGrkG")
+            @PathVariable("deviceToken") String deviceToken,
+            @RequestBody(required = false) String json, HttpServletRequest request) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
@@ -147,9 +300,11 @@ public class DeviceApiController implements TbTransportService {
     }
 
     @RequestMapping(value = "/{deviceToken}/rpc", method = RequestMethod.GET, produces = "application/json")
-    public DeferredResult<ResponseEntity> subscribeToCommands(@PathVariable("deviceToken") String deviceToken,
-                                                              @RequestParam(value = "timeout", required = false, defaultValue = "0") long timeout,
-                                                              HttpServletRequest httpRequest) {
+    public DeferredResult<ResponseEntity> subscribeToCommands(
+            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION, example = "iDr0uA1uIRRzd32xGrkG")
+            @PathVariable("deviceToken") String deviceToken,
+            @RequestParam(value = "timeout", required = false, defaultValue = "0") long timeout,
+            HttpServletRequest httpRequest) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
@@ -165,9 +320,11 @@ public class DeviceApiController implements TbTransportService {
     }
 
     @RequestMapping(value = "/{deviceToken}/rpc/{requestId}", method = RequestMethod.POST)
-    public DeferredResult<ResponseEntity> replyToCommand(@PathVariable("deviceToken") String deviceToken,
-                                                         @PathVariable("requestId") Integer requestId,
-                                                         @RequestBody String json, HttpServletRequest request) {
+    public DeferredResult<ResponseEntity> replyToCommand(
+            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION, example = "iDr0uA1uIRRzd32xGrkG")
+            @PathVariable("deviceToken") String deviceToken,
+            @PathVariable("requestId") Integer requestId,
+            @RequestBody String json, HttpServletRequest request) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
@@ -178,8 +335,12 @@ public class DeviceApiController implements TbTransportService {
     }
 
     @RequestMapping(value = "/{deviceToken}/rpc", method = RequestMethod.POST)
-    public DeferredResult<ResponseEntity> postRpcRequest(@PathVariable("deviceToken") String deviceToken,
-                                                         @RequestBody String json, HttpServletRequest httpRequest) {
+    public DeferredResult<ResponseEntity> postRpcRequest(
+            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION, example = "iDr0uA1uIRRzd32xGrkG")
+            @PathVariable("deviceToken") String deviceToken,
+            @ApiParam(value = KEY_VALUE_FORMAT_DESCRIPTION, example = "")
+            @RequestBody String json,
+            HttpServletRequest httpRequest) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
@@ -196,10 +357,24 @@ public class DeviceApiController implements TbTransportService {
         return responseWriter;
     }
 
+    @ApiOperation(value = "Subscribe to attribute",
+            notes = "Is created a subscription to shared device attribute changes based on device token and timeout parameters," +
+                    "the last one is optional. Once shared attribute will be changed by one of the server-side components " +
+                    "(REST API or Rule Chain) the client will receive the following update:" +
+                    "\n\n" + MARKDOWN_CODE_BLOCK_START +
+                    "  {\n" +
+                    "    \"pulse\": 0.995\n" +
+                    "  }\n" +
+                    MARKDOWN_CODE_BLOCK_END + "\n\n" +
+                    "In this example, initial value of pulse was 0.999, but then it changed, so the subscribed users can get this changing."
+            ,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @RequestMapping(value = "/{deviceToken}/attributes/updates", method = RequestMethod.GET, produces = "application/json")
-    public DeferredResult<ResponseEntity> subscribeToAttributes(@PathVariable("deviceToken") String deviceToken,
-                                                                @RequestParam(value = "timeout", required = false, defaultValue = "0") long timeout,
-                                                                HttpServletRequest httpRequest) {
+    public DeferredResult<ResponseEntity> subscribeToAttributes(
+            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION, example = "iDr0uA1uIRRzd32xGrkG")
+            @PathVariable("deviceToken") String deviceToken,
+            @RequestParam(value = "timeout", required = false, defaultValue = "0") long timeout,
+            HttpServletRequest httpRequest) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
@@ -215,20 +390,24 @@ public class DeviceApiController implements TbTransportService {
     }
 
     @RequestMapping(value = "/{deviceToken}/firmware", method = RequestMethod.GET)
-    public DeferredResult<ResponseEntity> getFirmware(@PathVariable("deviceToken") String deviceToken,
-                                                      @RequestParam(value = "title") String title,
-                                                      @RequestParam(value = "version") String version,
-                                                      @RequestParam(value = "size", required = false, defaultValue = "0") int size,
-                                                      @RequestParam(value = "chunk", required = false, defaultValue = "0") int chunk) {
+    public DeferredResult<ResponseEntity> getFirmware(
+            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION, example = "iDr0uA1uIRRzd32xGrkG")
+            @PathVariable("deviceToken") String deviceToken,
+            @RequestParam(value = "title") String title,
+            @RequestParam(value = "version") String version,
+            @RequestParam(value = "size", required = false, defaultValue = "0") int size,
+            @RequestParam(value = "chunk", required = false, defaultValue = "0") int chunk) {
         return getOtaPackageCallback(deviceToken, title, version, size, chunk, OtaPackageType.FIRMWARE);
     }
 
     @RequestMapping(value = "/{deviceToken}/software", method = RequestMethod.GET)
-    public DeferredResult<ResponseEntity> getSoftware(@PathVariable("deviceToken") String deviceToken,
-                                                      @RequestParam(value = "title") String title,
-                                                      @RequestParam(value = "version") String version,
-                                                      @RequestParam(value = "size", required = false, defaultValue = "0") int size,
-                                                      @RequestParam(value = "chunk", required = false, defaultValue = "0") int chunk) {
+    public DeferredResult<ResponseEntity> getSoftware(
+            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION, example = "iDr0uA1uIRRzd32xGrkG")
+            @PathVariable("deviceToken") String deviceToken,
+            @RequestParam(value = "title") String title,
+            @RequestParam(value = "version") String version,
+            @RequestParam(value = "size", required = false, defaultValue = "0") int size,
+            @RequestParam(value = "chunk", required = false, defaultValue = "0") int chunk) {
         return getOtaPackageCallback(deviceToken, title, version, size, chunk, OtaPackageType.SOFTWARE);
     }
 
