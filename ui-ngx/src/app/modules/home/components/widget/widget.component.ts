@@ -362,8 +362,10 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   get noDataDisplayMessageText(): string {
-    const noDataDisplayMessage = isNotEmptyStr(this.widget.config.noDataDisplayMessage) ? this.widget.config.noDataDisplayMessage : '{i18n:widget.no-data}';
-    return this.utils.customTranslation(noDataDisplayMessage, noDataDisplayMessage);
+    const noDataDisplayMessage = this.widget.config.noDataDisplayMessage;
+    return isNotEmptyStr(noDataDisplayMessage)
+      ? this.utils.customTranslation(noDataDisplayMessage, noDataDisplayMessage)
+      : this.translate.instant('widget.no-data');
   }
 
   ngAfterViewInit(): void {
