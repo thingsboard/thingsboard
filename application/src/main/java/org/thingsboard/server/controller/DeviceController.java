@@ -103,8 +103,8 @@ public class DeviceController extends BaseController {
 
     @ApiOperation(value = "Get Device (getDeviceById)",
             notes = "Fetch the Device object based on the provided Device Id. " +
-                    "If the user has the authority of 'Tenant Administrator', the server checks that the device is owned by the same tenant. " +
-                    "If the user has the authority of 'Customer User', the server checks that the device is assigned to the same customer.")
+                    "If the user has the authority of 'TENANT_ADMIN', the server checks that the device is owned by the same tenant. " +
+                    "If the user has the authority of 'CUSTOMER_USER', the server checks that the device is assigned to the same customer.")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/{deviceId}", method = RequestMethod.GET)
     @ResponseBody
@@ -163,7 +163,7 @@ public class DeviceController extends BaseController {
 
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
 
-            onDeviceCreatedOrUpdated(savedDevice, oldDevice, !created);
+            onDeviceCreatedOrUpdated(savedDevice, oldDevice, !created, getCurrentUser());
 
             return savedDevice;
         } catch (Exception e) {
@@ -174,11 +174,11 @@ public class DeviceController extends BaseController {
 
     }
 
-    private void onDeviceCreatedOrUpdated(Device savedDevice, Device oldDevice, boolean updated) {
+    private void onDeviceCreatedOrUpdated(Device savedDevice, Device oldDevice, boolean updated, SecurityUser user) {
         tbClusterService.onDeviceUpdated(savedDevice, oldDevice);
 
         try {
-            logEntityAction(savedDevice.getId(), savedDevice,
+            logEntityAction(user, savedDevice.getId(), savedDevice,
                     savedDevice.getCustomerId(),
                     updated ? ActionType.UPDATED : ActionType.ADDED, null);
         } catch (ThingsboardException e) {
@@ -373,7 +373,7 @@ public class DeviceController extends BaseController {
 
     @ApiOperation(value = "Get Tenant Devices (getTenantDevices)",
             notes = "Returns a page of devices owned by tenant. " +
-                    PAGE_DATA_PARAMETERS)
+                    PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/devices", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
@@ -416,7 +416,7 @@ public class DeviceController extends BaseController {
             @RequestParam int page,
             @ApiParam(value = DEVICE_TYPE_DESCRIPTION)
             @RequestParam(required = false) String type,
-            @ApiParam(value = DEVICE_PROFILE_ID_DESCRIPTION)
+            @ApiParam(value = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
             @RequestParam(required = false) String deviceProfileId,
             @ApiParam(value = DEVICE_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
@@ -510,7 +510,7 @@ public class DeviceController extends BaseController {
             @RequestParam int page,
             @ApiParam(value = DEVICE_TYPE_DESCRIPTION)
             @RequestParam(required = false) String type,
-            @ApiParam(value = DEVICE_PROFILE_ID_DESCRIPTION)
+            @ApiParam(value = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
             @RequestParam(required = false) String deviceProfileId,
             @ApiParam(value = DEVICE_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
@@ -573,7 +573,9 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/devices", method = RequestMethod.POST)
     @ResponseBody
-    public List<Device> findByQuery(@RequestBody DeviceSearchQuery query) throws ThingsboardException {
+    public List<Device> findByQuery(
+            @ApiParam(value = "The device search query JSON")
+            @RequestBody DeviceSearchQuery query) throws ThingsboardException {
         checkNotNull(query);
         checkNotNull(query.getParameters());
         checkNotNull(query.getDeviceTypes());
@@ -951,8 +953,9 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @PostMapping("/device/bulk_import")
     public BulkImportResult<Device> processDevicesBulkImport(@RequestBody BulkImportRequest request) throws Exception {
-        return deviceBulkImportService.processBulkImport(request, getCurrentUser(), importedDeviceInfo -> {
-            onDeviceCreatedOrUpdated(importedDeviceInfo.getEntity(), importedDeviceInfo.getOldEntity(), importedDeviceInfo.isUpdated());
+        SecurityUser user = getCurrentUser();
+        return deviceBulkImportService.processBulkImport(request, user, importedDeviceInfo -> {
+            onDeviceCreatedOrUpdated(importedDeviceInfo.getEntity(), importedDeviceInfo.getOldEntity(), importedDeviceInfo.isUpdated(), user);
         });
     }
 

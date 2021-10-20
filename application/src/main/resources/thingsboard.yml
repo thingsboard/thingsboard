@@ -279,6 +279,8 @@ sql:
     rpc:
       enabled: "${SQL_TTL_RPC_ENABLED:true}"
       checking_interval: "${SQL_RPC_TTL_CHECKING_INTERVAL:7200000}" # Number of milliseconds. The current value corresponds to two hours
+  relations:
+    max_level: "${SQL_RELATIONS_MAX_LEVEL:50}" # //This value has to be reasonable small to prevent infinite recursion as early as possible
 
 # Actor system parameters
 actors:

@@ -133,7 +133,7 @@ public class AssetController extends BaseController {
 
             Asset savedAsset = checkNotNull(assetService.saveAsset(asset));
 
-            onAssetCreatedOrUpdated(savedAsset, asset.getId() != null);
+            onAssetCreatedOrUpdated(savedAsset, asset.getId() != null, getCurrentUser());
 
             return savedAsset;
         } catch (Exception e) {
@@ -143,9 +143,9 @@ public class AssetController extends BaseController {
         }
     }
 
-    private void onAssetCreatedOrUpdated(Asset asset, boolean updated) {
+    private void onAssetCreatedOrUpdated(Asset asset, boolean updated, SecurityUser user) {
         try {
-            logEntityAction(asset.getId(), asset,
+            logEntityAction(user, asset.getId(), asset,
                     asset.getCustomerId(),
                     updated ? ActionType.UPDATED : ActionType.ADDED, null);
         } catch (ThingsboardException e) {
@@ -656,8 +656,9 @@ public class AssetController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @PostMapping("/asset/bulk_import")
     public BulkImportResult<Asset> processAssetsBulkImport(@RequestBody BulkImportRequest request) throws Exception {
-        return assetBulkImportService.processBulkImport(request, getCurrentUser(), importedAssetInfo -> {
-            onAssetCreatedOrUpdated(importedAssetInfo.getEntity(), importedAssetInfo.isUpdated());
+        SecurityUser user = getCurrentUser();
+        return assetBulkImportService.processBulkImport(request, user, importedAssetInfo -> {
+            onAssetCreatedOrUpdated(importedAssetInfo.getEntity(), importedAssetInfo.isUpdated(), user);
         });
     }
 
