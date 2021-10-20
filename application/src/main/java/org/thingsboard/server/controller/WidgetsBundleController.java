@@ -54,7 +54,7 @@ public class WidgetsBundleController extends BaseController {
     @RequestMapping(value = "/widgetsBundle/{widgetsBundleId}", method = RequestMethod.GET)
     @ResponseBody
     public WidgetsBundle getWidgetsBundleById(
-            @ApiParam(value = WIDGET_BUNDLE_ID_PARAM_DESCRIPTION)
+            @ApiParam(value = WIDGET_BUNDLE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
         checkParameter("widgetsBundleId", strWidgetsBundleId);
         try {
@@ -78,7 +78,7 @@ public class WidgetsBundleController extends BaseController {
     @RequestMapping(value = "/widgetsBundle", method = RequestMethod.POST)
     @ResponseBody
     public WidgetsBundle saveWidgetsBundle(
-            @ApiParam(value = "A JSON value representing the Widget Bundle.")
+            @ApiParam(value = "A JSON value representing the Widget Bundle.", required = true)
             @RequestBody WidgetsBundle widgetsBundle) throws ThingsboardException {
         try {
             if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
@@ -104,7 +104,9 @@ public class WidgetsBundleController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/widgetsBundle/{widgetsBundleId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public void deleteWidgetsBundle(@PathVariable("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
+    public void deleteWidgetsBundle(
+            @ApiParam(value = WIDGET_BUNDLE_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
         checkParameter("widgetsBundleId", strWidgetsBundleId);
         try {
             WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
