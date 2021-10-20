@@ -15,11 +15,12 @@
  */
 package org.thingsboard.server.common.data.event;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 
+@ApiModel
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
@@ -32,7 +33,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = StatisticsEventFilter.class, name = "STATS")
 })
 public interface EventFilter {
-    @JsonIgnore
+
+    @ApiModelProperty(position = 1, required = true, value = "String value representing the event type", example = "STATS")
     EventType getEventType();
 
     boolean hasFilterForJsonBody();

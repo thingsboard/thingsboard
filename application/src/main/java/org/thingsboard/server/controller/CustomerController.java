@@ -212,7 +212,7 @@ public class CustomerController extends BaseController {
     }
 
     @ApiOperation(value = "Get Tenant Customer by Customer title (getTenantCustomer)",
-            notes = "Get the Customer using Customer Title. Available for users with 'Tenant Administrator' authority only.")
+            notes = "Get the Customer using Customer Title. " + ADMINISTRATOR_AUTHORITY_ONLY)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/customers", params = {"customerTitle"}, method = RequestMethod.GET)
     @ResponseBody
