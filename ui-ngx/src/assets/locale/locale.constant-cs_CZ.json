@@ -1258,7 +1258,6 @@
           "view-attribute": "Zobrazit atribut",
           "remove-attribute": "Odebrat atribut",
           "mode": "Režim konfigurace bezpečnosti",
-          "servers": "Servery",
           "short-id": "Krátké ID",
           "short-id-required": "Krátké ID je povinné.",
           "short-id-range": "Krátké ID by mělo být v rozsahu od 1 do 65534.",

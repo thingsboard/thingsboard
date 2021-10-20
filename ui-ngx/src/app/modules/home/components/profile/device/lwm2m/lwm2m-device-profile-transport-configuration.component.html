@@ -31,13 +31,13 @@
         </section>
       </ng-template>
     </mat-tab>
-    <mat-tab label="{{ 'device-profile.lwm2m.servers' | translate }}">
+    <mat-tab label="{{ 'device-profile.lwm2m.bootstrap-tab' | translate }}">
       <section [formGroup]="lwm2mDeviceProfileFormGroup">
         <section formGroupName="bootstrap" style="padding: 4px 2px">
           <mat-accordion multi="true">
             <mat-expansion-panel>
               <mat-expansion-panel-header>
-                <mat-panel-title>{{ 'device-profile.lwm2m.servers' | translate }}</mat-panel-title>
+                <mat-panel-title>{{ 'device-profile.lwm2m.security' | translate }}</mat-panel-title>
               </mat-expansion-panel-header>
               <ng-template matExpansionPanelContent formGroupName="servers">
                 <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px" fxLayoutGap.xs="0px">
