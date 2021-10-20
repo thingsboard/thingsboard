@@ -616,7 +616,7 @@ public class DeviceProfileController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Create Or Update Device Profile (saveDevice)",
+    @ApiOperation(value = "Create Or Update Device Profile (saveDeviceProfile)",
             notes = "Create or update the Device Profile. When creating device profile, platform generates device profile id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address). " +
                     "The newly created device profile id will be present in the response. " +
                     "Specify existing device profile id to update the device profile. " +
