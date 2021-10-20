@@ -112,41 +112,271 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TelemetryController extends BaseController {
 
-    private static final String ATTRIBUTES_SCOPE_DESCRIPTION = "A string value representing the attributes scope. For example, 'SERVER_SCOPE'.";
-    private static final String ATTRIBUTES_KEYS_DESCRIPTION = "A string value representing the comma-separated list of attributes keys. For example, 'active,inactivityAlarmTime'.";
-    private static final String ATTRIBUTES_SCOPE_ALLOWED_VALUES = "SERVER_SCOPE, CLIENT_SCOPE, SHARED_SCOPE";
-    private static final String ATTRIBUTES_JSON_REQUEST_DESCRIPTION = "A string value representing the json object. For example, '{\"key\":\"value\"}'";
-    private static final String ATTRIBUTE_DATA_CLASS_DESCRIPTION = "AttributeData class represents information regarding a particular attribute and includes the next parameters: 'lastUpdatesTs' - a long value representing the timestamp of the last attribute modification in milliseconds. 'key' - attribute key name, and 'value' - attribute value.";
-    private static final String GET_ALL_ATTRIBUTES_BASE_DESCRIPTION = "Returns a JSON structure that represents a list of AttributeData class objects for the selected entity based on the specified comma-separated list of attribute key names. " + ATTRIBUTE_DATA_CLASS_DESCRIPTION;
-    private static final String GET_ALL_ATTRIBUTES_BY_SCOPE_BASE_DESCRIPTION = "Returns a JSON structure that represents a list of AttributeData class objects for the selected entity based on the attributes scope selected and a comma-separated list of attribute key names. " + ATTRIBUTE_DATA_CLASS_DESCRIPTION;
+    private static final String JSON_ATTRIBUTE_EXAMPLE = "\n\n Let's review the example:" +
+            "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "  {\n" +
+            "    \"real_time\": \"27.08.2020 10:14:19\",\n" +
+            "    \"water_pulse\": 330.28000000000003,\n" +
+            "    \"location\": {\n" +
+            "       \"latitude\": 48.44229794818326,\n" +
+            "       \"longitude\": 35.014479160308845,\n" +
+            "       \"altitude\": 144\n" +
+            "   }\n" +
+            "  }\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n";
 
-    private static final String TS_DATA_CLASS_DESCRIPTION = "TsData class is a timeseries data point for specific telemetry key that includes 'value' - object value, and 'ts' - a long value representing timestamp in milliseconds for this value. ";
+    private static final String JSON_TELEMETRY_EXAMPLE = "\n\n Let's review the example:" +
+            "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "  {\n" +
+            "     \"temperature\": 17.5,\n" +
+            "     \"water_pulse\": 330.28000000000003,\n" +
+            "     \"frequency\": 868500000\n" +
+            "  }\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n";
+
+    private static final String JSON_TELEMETRY_EXAMPLE_WITH_TIMESTAMP = "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "  {\n" +
+            "    \"ts\": \"1527863043000\",\n" +
+            "    \"values\": {\n" +
+            "       \"temperature\": 17.5,\n" +
+            "       \"water_pulse\": 330.28000000000003,\n" +
+            "       \"frequency\": 868500000\n" +
+            "   }\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n";
+
+    private static final String JSON_ARRAY_TELEMETRY_EXAMPLE_WITH_TIMESTAMP = "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            " [\n" +
+            "   {\n" +
+            "       \"ts\": 1527863043000,\n" +
+            "       \"values\": {\n" +
+            "           \"temperature\": 17.5,\n" +
+            "           \"water_pulse\": 330.28000000000003,\n" +
+            "           \"frequency\": 868500000\n" +
+            "       }\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \"ts\": 1527863065000,\n" +
+            "    \"values\": {\n" +
+            "           \"temperature\": 17.5,\n" +
+            "           \"water_pulse\": 330.28000000000003,\n" +
+            "           \"frequency\": 868500000\n" +
+            "   }\n" +
+            "  }\n" +
+            " ]\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n";
+
+    private static final String JSON_DEFAULT_EXAMPLE = "\n\n By default, the platform supports key-value content in " +
+            "JSON. Key is always a string, while value can be either string, boolean, double, long or JSON." +
+            "\n\n For example:" +
+            "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "  {\n" +
+            "    \"stringKey\": \"value1\",\n" +
+            "    \"booleanKey\": true,\n" +
+            "    \"doubleKey\": 42.0,\n" +
+            "    \"longKey\": 73,\n" +
+            "    \"jsonKey\": {\n" +
+            "       \"someNumber\": 42,\n" +
+            "       \"someArray\": [1,2,3],\n" +
+            "       \"someNestedObject\":  {\"key\": \"value\"},\n" +
+            "   }\n" +
+            "  }\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n";
+
+    private static final String JSON_GET_ALL_ATTRIBUTES_EXAMPLE = "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "[\n" +
+            "  {\n" +
+            "    \"lastUpdateTs\": 1634731919323,\n" +
+            "    \"key\": \"pulse\",\n" +
+            "    \"value\": 0.999\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \"lastUpdateTs\": 1634731957904,\n" +
+            "    \"key\": \"active\",\n" +
+            "    \"value\": false\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \"lastUpdateTs\": 1634731715991,\n" +
+            "    \"key\": \"real_time\",\n" +
+            "    \"value\": \"27.08.2020 10:14:19\"\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \"lastUpdateTs\": 1634731715991,\n" +
+            "    \"key\": \"water-pulse\",\n" +
+            "    \"value\": 330.28000000000003\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \"lastUpdateTs\": 1634731796255,\n" +
+            "    \"key\": \"location\",\n" +
+            "    \"value\": {\n" +
+            "       \"latitude\": 48.44229794818326,\n" +
+            "       \"longitude\": 35.014479160308845,\n" +
+            "       \"altitude\": 144\n" +
+            "   },\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \"lastUpdateTs\": 1634731957903,\n" +
+            "    \"key\": \"inactivityAlarmTime\",\n" +
+            "    \"value\": 1634731957902\n" +
+            "  }\n" +
+            "]\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n";
+
+    private static final String JSON_GET_ALL_ATTRIBUTES_BY_SCOPE_EXAMPLE = "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "[\n" +
+            "  {\n" +
+            "    \"lastUpdateTs\": 1634731957904,\n" +
+            "    \"key\": \"active\",\n" +
+            "    \"value\": false\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \"lastUpdateTs\": 1634731715991,\n" +
+            "    \"key\": \"real_time\",\n" +
+            "    \"value\": \"27.08.2020 10:14:19\"\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \"lastUpdateTs\": 1634731715991,\n" +
+            "    \"key\": \"water-pulse\",\n" +
+            "    \"value\": 330.28000000000003\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \"lastUpdateTs\": 1634731796255,\n" +
+            "    \"key\": \"location\",\n" +
+            "    \"value\": {\n" +
+            "       \"latitude\": 48.44229794818326,\n" +
+            "       \"longitude\": 35.014479160308845,\n" +
+            "       \"altitude\": 144\n" +
+            "   },\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \"lastUpdateTs\": 1634731957903,\n" +
+            "    \"key\": \"inactivityAlarmTime\",\n" +
+            "    \"value\": 1634731957902\n" +
+            "  }\n" +
+            "]\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n";
+
+    private static final String JSON_GET_ALL_ATTRIBUTES_BY_SCOPE_AND_KEYS_EXAMPLE = "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "[\n" +
+            "  {\n" +
+            "    \"lastUpdateTs\": 1634731715991,\n" +
+            "    \"key\": \"water-pulse\",\n" +
+            "    \"value\": 330.28000000000003\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \"lastUpdateTs\": 1634731796255,\n" +
+            "    \"key\": \"location\",\n" +
+            "    \"value\": {\n" +
+            "       \"latitude\": 48.44229794818326,\n" +
+            "       \"longitude\": 35.014479160308845,\n" +
+            "       \"altitude\": 144\n" +
+            "   },\n" +
+            "  }\n" +
+            "]\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n";
+
+    private static final String JSON_GET_ATTRIBUTES_BY_KEY_AND_DIFF_SCOPE_EXAMPLE = "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "[\n" +
+            "  {\n" +
+            "    \"lastUpdateTs\": 1634731919323,\n" +
+            "    \"key\": \"pulse\",\n" +
+            "    \"value\": 0.999\n" +
+            "  },\n" +
+            "  {\n" +
+            "    \"lastUpdateTs\": 1634731715991,\n" +
+            "    \"key\": \"water-pulse\",\n" +
+            "    \"value\": 330.28000000000003\n" +
+            "  }\n" +
+            "]\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n";
+
+    private static final String JSON_GET_ALL_TIMESERIES_EXAMPLE = "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "{\n" +
+            "    \"temperature\": [\n" +
+            "       {\n" +
+            "           \"ts\": 1634736957115,\n" +
+            "           \"value\":  \"17.5\"\n" +
+            "       }\n" +
+            "      ],\n" +
+            "    \"water_pulse\": [\n" +
+            "       {\n" +
+            "           \"ts\": 1527863043000,\n" +
+            "           \"value\":  \"330.28000000000003\"\n" +
+            "       }\n" +
+            "      ],\n" +
+            "    \"frequency\": [\n" +
+            "       {\n" +
+            "           \"ts\": 1634736957115,\n" +
+            "           \"value\":  \"868500000\"\n" +
+            "       }\n" +
+            "      ]\n" +
+            "}\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n" +
+            "\n\n This result has values as string because 'useStrictdataTypes' parameter is set 'false'.";
+
+    private static final String JSON_GET_ALL_TIMESERIES_BY_KEYS_EXAMPLE = "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "{\n" +
+            "    \"temperature\": [\n" +
+            "       {\n" +
+            "           \"ts\": 1634736957115,\n" +
+            "           \"value\":  \"17.5\"\n" +
+            "       }\n" +
+            "      ],\n" +
+            "    \"frequency\": [\n" +
+            "       {\n" +
+            "           \"ts\": 1634736957115,\n" +
+            "           \"value\":  \"868500000\"\n" +
+            "       }\n" +
+            "      ]\n" +
+            "}\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n";
+
+    private static final String ATTRIBUTES_SCOPE_DESCRIPTION = "A string value representing the attributes scope. " +
+            "For example, 'SERVER_SCOPE'.";
+    private static final String ATTRIBUTES_KEYS_DESCRIPTION = "A string value representing the comma-separated list of attributes keys. " +
+            "For example, 'active,inactivityAlarmTime'.";
+    private static final String ATTRIBUTES_SCOPE_ALLOWED_VALUES = "SERVER_SCOPE, CLIENT_SCOPE, SHARED_SCOPE";
+    private static final String ATTRIBUTES_JSON_REQUEST_DESCRIPTION = "A string value representing the json object."
+            + JSON_DEFAULT_EXAMPLE + " See the real example in description.";
+    private static final String ATTRIBUTE_DATA_CLASS_DESCRIPTION = "AttributeData class represents information regarding " +
+            "a particular attribute and includes the next parameters: **'lastUpdatesTs'** - a long value representing the " +
+            "timestamp of the last attribute modification in milliseconds. **'key'** - attribute key name, and **'value'**" +
+            " - an attribute value.";
+    private static final String GET_ALL_ATTRIBUTES_BASE_DESCRIPTION = "Returns a JSON structure that represents a list of " +
+            "AttributeData class objects for the selected entity based on the specified comma-separated list of attribute key names. " + ATTRIBUTE_DATA_CLASS_DESCRIPTION;
+    private static final String GET_ALL_ATTRIBUTES_BY_SCOPE_BASE_DESCRIPTION = "Returns a JSON structure that represents " +
+            "a list of AttributeData class objects for the selected entity based on the attributes scope selected and a " +
+            "comma-separated list of attribute key names. " + ATTRIBUTE_DATA_CLASS_DESCRIPTION;
+
+    private static final String TS_DATA_CLASS_DESCRIPTION = "TsData class is a timeseries data point for specific " +
+            "telemetry key that includes **'value'** - object value, and **'ts'** - a long value representing timestamp " +
+            "in milliseconds for this value. ";
 
     private static final String TELEMETRY_KEYS_BASE_DESCRIPTION = "A string value representing the comma-separated list of telemetry keys.";
-    private static final String TELEMETRY_KEYS_DESCRIPTION = TELEMETRY_KEYS_BASE_DESCRIPTION + " If keys are not selected, the result will return all latest timeseries. For example, 'temp,humidity'.";
-    private static final String TELEMETRY_SCOPE_DESCRIPTION = "Value is not used in the API call implementation. However, you need to specify whatever value cause scope is a path variable.";
-    private static final String TELEMETRY_JSON_REQUEST_DESCRIPTION = "A string value representing the json object. For example, '{\"key\":\"value\"}' or '{\"ts\":1527863043000,\"values\":{\"key1\":\"value1\",\"key2\":\"value2\"}}' or [{\"ts\":1527863043000,\"values\":{\"key1\":\"value1\",\"key2\":\"value2\"}}, {\"ts\":1527863053000,\"values\":{\"key1\":\"value3\",\"key2\":\"value4\"}}]";
-
+    private static final String TELEMETRY_KEYS_DESCRIPTION = TELEMETRY_KEYS_BASE_DESCRIPTION + " If keys are not selected, " +
+            "the result will return all latest timeseries. For example, **'temp,humidity'**.";
+    private static final String TELEMETRY_SCOPE_DESCRIPTION = "Value is reserved and not used in the current API call implementation. Use 'NA' for now.";
+    private static final String TELEMETRY_JSON_REQUEST_DESCRIPTION = "A string value representing the json object." +
+            JSON_DEFAULT_EXAMPLE;
 
     private static final String STRICT_DATA_TYPES_DESCRIPTION = "A boolean value to specify if values of selected telemetry keys will represent string values(by default) or use strict data type.";
     private static final String INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION = "Referencing a non-existing entity Id or invalid entity type will cause an error. ";
 
     private static final String SAVE_ENTITY_ATTRIBUTES_DESCRIPTION = "Creates or updates the entity attributes based on entity id, entity type, specified attributes scope " +
             "and request payload that represents a JSON object with key-value format of attributes to create or update. " +
-            "For example, '{\"temperature\": 26}'. Key is a unique parameter and cannot be overwritten. Only value can be overwritten for the key. ";
+            JSON_ATTRIBUTE_EXAMPLE + "**Key** is a **unique** parameter and cannot be overwritten. Only **value** can be overwritten for the key. ";
     private static final String SAVE_ATTIRIBUTES_STATUS_OK = "Attribute from the request was created or updated. ";
     private static final String INVALID_STRUCTURE_OF_THE_REQUEST = "Invalid structure of the request";
     private static final String SAVE_ATTIRIBUTES_STATUS_BAD_REQUEST = INVALID_STRUCTURE_OF_THE_REQUEST + " or invalid attributes scope provided.";
-    private static final String SAVE_ENTITY_ATTRIBUTES_STATUS_OK = "Platform creates an audit log event about entity attributes updates with action type 'ATTRIBUTES_UPDATED', " +
-            "and also sends event msg to the rule engine with msg type 'ATTRIBUTES_UPDATED'.";
+    private static final String SAVE_ENTITY_ATTRIBUTES_STATUS_OK = "Platform creates an audit log event about entity attributes updates with action type **'ATTRIBUTES_UPDATED'**, " +
+            "and also sends event msg to the rule engine with msg type **'ATTRIBUTES_UPDATED'**.";
     private static final String SAVE_ENTITY_ATTRIBUTES_STATUS_UNAUTHORIZED = "User is not authorized to save entity attributes for selected entity. Most likely, User belongs to different Customer or Tenant.";
     private static final String SAVE_ENTITY_ATTRIBUTES_STATUS_INTERNAL_SERVER_ERROR = "The exception was thrown during processing the request. " +
-            "Platform creates an audit log event about entity attributes updates with action type 'ATTRIBUTES_UPDATED' that includes an error stacktrace.";
+            "Platform creates an audit log event about entity attributes updates with action type **'ATTRIBUTES_UPDATED'** that includes an error stacktrace.";
     private static final String SAVE_ENTITY_TIMESERIES_DESCRIPTION = "Creates or updates the entity timeseries based on entity id, entity type " +
-            "and request payload that represents a JSON object with key-value or ts-values format. " +
-            "For example, '{\"temperature\": 26}'  or '{\"ts\":1634712287000,\"values\":{\"temperature\":26, \"humidity\":87}}', " +
+            "and request payload that represents a JSON object with key-value or ts-values format." + JSON_TELEMETRY_EXAMPLE +
+            "\n\n or " + JSON_TELEMETRY_EXAMPLE_WITH_TIMESTAMP +
             "or JSON array with inner objects inside of ts-values format. " +
-            "For example, '[{\"ts\":1634712287000,\"values\":{\"temperature\":26, \"humidity\":87}}, {\"ts\":1634712588000,\"values\":{\"temperature\":25, \"humidity\":88}}]'. " +
+            JSON_ARRAY_TELEMETRY_EXAMPLE_WITH_TIMESTAMP +
             "The scope parameter is not used in the API call implementation but should be specified whatever value because it is used as a path variable. ";
     private static final String SAVE_ENTITY_TIMESERIES_STATUS_OK = "Timeseries from the request was created or updated. " +
             "Platform creates an audit log event about entity timeseries updates with action type 'TIMESERIES_UPDATED'.";
@@ -182,7 +412,17 @@ public class TelemetryController extends BaseController {
     @ApiOperation(value = "Get all attribute keys (getAttributeKeys)",
             notes = "Returns a list of all attribute key names for the selected entity. " +
                     "In the case of device entity specified, a response will include merged attribute key names list from each scope: " +
-                    "SERVER_SCOPE, CLIENT_SCOPE, SHARED_SCOPE. " + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION,
+                    "SERVER_SCOPE, CLIENT_SCOPE, SHARED_SCOPE. " + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION +
+                    "\n\n Let's review the example:" +
+                    "\n\n" + MARKDOWN_CODE_BLOCK_START +
+                    "  [\n" +
+                    "    \"pulse\",\n" +
+                    "    \"active\",\n" +
+                    "    \"real_time\",\n" +
+                    "    \"water_pulse\",\n" +
+                    "    \"location\"\n" +
+                    "  ]\n" +
+                    MARKDOWN_CODE_BLOCK_END + "\n\n",
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/keys/attributes", method = RequestMethod.GET)
@@ -195,7 +435,18 @@ public class TelemetryController extends BaseController {
 
     @ApiOperation(value = "Get all attributes keys by scope (getAttributeKeysByScope)",
             notes = "Returns a list of attribute key names from the specified attributes scope for the selected entity. " +
-                    "If scope parameter is omitted, Get all attribute keys(getAttributeKeys) API will be called. " + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION,
+                    "If scope parameter is omitted, Get all attribute keys(getAttributeKeys) API will be called. " + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION +
+                    "\n\n Let's review the example if scope is 'SERVER_SCOPE':" +
+                    "\n\n" + MARKDOWN_CODE_BLOCK_START +
+                    "  [\n" +
+                    "    \"active\",\n" +
+                    "    \"real_time\",\n" +
+                    "    \"water_pulse\",\n" +
+                    "    \"location\",\n" +
+                    "    \"inactivityAlarmTime\"\n" +
+                    "  ]\n" +
+                    MARKDOWN_CODE_BLOCK_END + "\n\n"
+            ,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/keys/attributes/{scope}", method = RequestMethod.GET)
@@ -210,7 +461,10 @@ public class TelemetryController extends BaseController {
 
     @ApiOperation(value = "Get attributes (getAttributes)",
             notes = GET_ALL_ATTRIBUTES_BASE_DESCRIPTION + " If 'keys' parameter is omitted, AttributeData class objects will be added to the response for all existing keys of the selected entity. " +
-                    INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION,
+                    INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION +
+                    "\n\n# Let`s see some response examples: \n\n" +
+                    "\n\n##Example when keys are not given " + JSON_GET_ALL_ATTRIBUTES_EXAMPLE +
+                    "\n\n##Example when keys are given **'real_time,pulse'** where  'real_time' is server attribute and 'pulse' is shared attribute." + JSON_GET_ATTRIBUTES_BY_KEY_AND_DIFF_SCOPE_EXAMPLE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/values/attributes", method = RequestMethod.GET)
@@ -228,7 +482,11 @@ public class TelemetryController extends BaseController {
             notes = GET_ALL_ATTRIBUTES_BY_SCOPE_BASE_DESCRIPTION + " In case that 'keys' parameter is not selected, " +
                     "AttributeData class objects will be added to the response for all existing attribute keys from the " +
                     "specified attributes scope of the selected entity. If 'scope' parameter is omitted, " +
-                    "Get attributes (getAttributes) API will be called. " + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION,
+                    "Get attributes (getAttributes) API will be called. " + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION +
+                    "\n\n# Let`s see some response examples: \n\n" +
+                    "\n\n##Example when keys and scope are not given " + JSON_GET_ALL_ATTRIBUTES_EXAMPLE +
+                    "\n\n##Example when keys are not given and selected server scope" + JSON_GET_ALL_ATTRIBUTES_BY_SCOPE_EXAMPLE +
+                    "\n\n##Example when keys are given **'water-pulse,location'** and " + JSON_GET_ALL_ATTRIBUTES_BY_SCOPE_AND_KEYS_EXAMPLE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/values/attributes/{scope}", method = RequestMethod.GET)
@@ -245,7 +503,15 @@ public class TelemetryController extends BaseController {
 
     @ApiOperation(value = "Get timeseries keys (getTimeseriesKeys)",
             notes = "Returns a list of all telemetry key names for the selected entity based on entity id and entity type specified. " +
-                    INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION,
+                    INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION +
+                    "\n\n Let's review the example:" +
+                    "\n\n" + MARKDOWN_CODE_BLOCK_START +
+                    "  [\n" +
+                    "    \"temperature\",\n" +
+                    "    \"water_pulse\",\n" +
+                    "    \"frequency\"\n" +
+                    "  ]\n" +
+                    MARKDOWN_CODE_BLOCK_END + "\n\n",
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/keys/timeseries", method = RequestMethod.GET)
@@ -259,7 +525,10 @@ public class TelemetryController extends BaseController {
 
     @ApiOperation(value = "Get latest timeseries (getLatestTimeseries)",
             notes = "Returns a JSON structure that represents a Map, where the map key is a telemetry key name " +
-                    "and map value - is a singleton list of TsData class objects. " + TS_DATA_CLASS_DESCRIPTION + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION,
+                    "and map value - is a singleton list of TsData class objects. " + TS_DATA_CLASS_DESCRIPTION + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION +
+                    "\n\n# Let`s see some response examples: \n\n" +
+                    "\n\n##Example when keys are not given " + JSON_GET_ALL_TIMESERIES_EXAMPLE +
+                    "\n\n##Example when keys are given 'temperature,frequency'" + JSON_GET_ALL_TIMESERIES_BY_KEYS_EXAMPLE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/values/timeseries", method = RequestMethod.GET)
@@ -280,7 +549,8 @@ public class TelemetryController extends BaseController {
                     "and map value - is a list of TsData class objects. " + TS_DATA_CLASS_DESCRIPTION +
                     "This method allows us to group original data into intervals and aggregate it using one of the aggregation methods or just limit the number of TsData objects to fetch for each key specified. " +
                     "See the desription of the request parameters for more details. " +
-                    "The result can also be sorted in ascending or descending order. " + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION,
+                    "The result can also be sorted in ascending or descending order. " + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION +
+                    "\n\n Let`s see an example " + JSON_GET_ALL_TIMESERIES_BY_KEYS_EXAMPLE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/values/timeseries", method = RequestMethod.GET, params = {"keys", "startTs", "endTs"})
@@ -320,17 +590,18 @@ public class TelemetryController extends BaseController {
     @ApiOperation(value = "Save or update device attributes (saveDeviceAttributes)",
             notes = "Creates or updates the device attributes based on device id, specified attribute scope, " +
                     "and request payload that represents a JSON object with key-value format of attributes to create or update. " +
-                    "For example, '{\"temperature\": 26}'. Key is a unique parameter and cannot be overwritten. Only value can " +
-                    "be overwritten for the key. ",
+                    "**Key** is a unique parameter and cannot be overwritten. Only value can be overwritten for the key." +
+                    JSON_ATTRIBUTE_EXAMPLE +
+                    "\nWhen creating device attributes, platform generates attribute id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address).",
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = SAVE_ATTIRIBUTES_STATUS_OK +
-                    "Platform creates an audit log event about device attributes updates with action type 'ATTRIBUTES_UPDATED', " +
-                    "and also sends event msg to the rule engine with msg type 'ATTRIBUTES_UPDATED'."),
+                    "Platform creates an audit log event about device attributes updates with action type **'ATTRIBUTES_UPDATED'**, " +
+                    "and also sends event msg to the rule engine with msg type **'ATTRIBUTES_UPDATED'**."),
             @ApiResponse(code = 400, message = SAVE_ATTIRIBUTES_STATUS_BAD_REQUEST),
             @ApiResponse(code = 401, message = "User is not authorized to save device attributes for selected device. Most likely, User belongs to different Customer or Tenant."),
             @ApiResponse(code = 500, message = "The exception was thrown during processing the request. " +
-                    "Platform creates an audit log event about device attributes updates with action type 'ATTRIBUTES_UPDATED' that includes an error stacktrace."),
+                    "Platform creates an audit log event about device attributes updates with action type **'ATTRIBUTES_UPDATED'** that includes an error stacktrace."),
     })
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{deviceId}/{scope}", method = RequestMethod.POST)
@@ -344,7 +615,8 @@ public class TelemetryController extends BaseController {
     }
 
     @ApiOperation(value = "Save or update attributes (saveEntityAttributesV1)",
-            notes = SAVE_ENTITY_ATTRIBUTES_DESCRIPTION + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION,
+            notes = SAVE_ENTITY_ATTRIBUTES_DESCRIPTION + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION +
+                    "\nWhen creating entity attributes, platform generates attribute id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address).",
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = SAVE_ATTIRIBUTES_STATUS_OK + SAVE_ENTITY_ATTRIBUTES_STATUS_OK),
@@ -365,7 +637,8 @@ public class TelemetryController extends BaseController {
     }
 
     @ApiOperation(value = "Save or update attributes (saveEntityAttributesV2)",
-            notes = SAVE_ENTITY_ATTRIBUTES_DESCRIPTION + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION,
+            notes = SAVE_ENTITY_ATTRIBUTES_DESCRIPTION + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION +
+                    "\nWhen creating entity attributes, platform generates attribute id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address).",
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = SAVE_ATTIRIBUTES_STATUS_OK + SAVE_ENTITY_ATTRIBUTES_STATUS_OK),
@@ -386,7 +659,8 @@ public class TelemetryController extends BaseController {
     }
 
     @ApiOperation(value = "Save or update telemetry (saveEntityTelemetry)",
-            notes = SAVE_ENTITY_TIMESERIES_DESCRIPTION + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION,
+            notes = SAVE_ENTITY_TIMESERIES_DESCRIPTION + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION +
+                    "\nWhen creating entity telemetry, platform generates telemetry id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address).",
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = SAVE_ENTITY_TIMESERIES_STATUS_OK),
@@ -401,13 +675,14 @@ public class TelemetryController extends BaseController {
             @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION) @PathVariable("entityType") String entityType,
             @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION) @PathVariable("entityId") String entityIdStr,
             @ApiParam(value = TELEMETRY_SCOPE_DESCRIPTION) @PathVariable("scope") String scope,
-            @ApiParam(value = TELEMETRY_JSON_REQUEST_DESCRIPTION) @RequestBody String requestBody) throws ThingsboardException {
+            @ApiParam(value = TELEMETRY_JSON_REQUEST_DESCRIPTION + " See the real example in description.") @RequestBody String requestBody) throws ThingsboardException {
         EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
         return saveTelemetry(getTenantId(), entityId, requestBody, 0L);
     }
 
     @ApiOperation(value = "Save or update telemetry with TTL (saveEntityTelemetryWithTTL)",
-            notes = SAVE_ENTITY_TIMESERIES_DESCRIPTION + "The ttl parameter used only in case of Cassandra DB use for timeseries data storage. " + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION,
+            notes = SAVE_ENTITY_TIMESERIES_DESCRIPTION + "The ttl parameter used only in case of Cassandra DB use for timeseries data storage. " + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION +
+                    "\nWhen creating entity telemetry, platform generates telemetry id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address).",
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = SAVE_ENTITY_TIMESERIES_STATUS_OK),
@@ -423,23 +698,23 @@ public class TelemetryController extends BaseController {
             @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION) @PathVariable("entityId") String entityIdStr,
             @ApiParam(value = TELEMETRY_SCOPE_DESCRIPTION) @PathVariable("scope") String scope,
             @ApiParam(value = "A long value representing TTL (Time to Live) parameter.") @PathVariable("ttl") Long ttl,
-            @ApiParam(value = TELEMETRY_JSON_REQUEST_DESCRIPTION) @RequestBody String requestBody) throws ThingsboardException {
+            @ApiParam(value = TELEMETRY_JSON_REQUEST_DESCRIPTION + " See the real example in description.") @RequestBody String requestBody) throws ThingsboardException {
         EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
         return saveTelemetry(getTenantId(), entityId, requestBody, ttl);
     }
 
     @ApiOperation(value = "Delete entity timeseries (deleteEntityTimeseries)",
             notes = "Delete timeseries for selected entity based on entity id, entity type, keys " +
-                    "and removal time range. To delete all data for keys parameter 'deleteAllDataForKeys' should be set to true, " +
+                    "and removal time range. To delete all data for keys parameter **'deleteAllDataForKeys'** should be set to true, " +
                     "otherwise, will be deleted data that is in range of the selected time interval. ",
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Timeseries for the selected keys in the request was removed. " +
-                    "Platform creates an audit log event about entity timeseries removal with action type 'TIMESERIES_DELETED'."),
+                    "Platform creates an audit log event about entity timeseries removal with action type **'TIMESERIES_DELETED'**."),
             @ApiResponse(code = 400, message = "Platform returns a bad request in case if keys list is empty or start and end timestamp values is empty when deleteAllDataForKeys is set to false."),
             @ApiResponse(code = 401, message = "User is not authorized to delete entity timeseries for selected entity. Most likely, User belongs to different Customer or Tenant."),
             @ApiResponse(code = 500, message = "The exception was thrown during processing the request. " +
-                    "Platform creates an audit log event about entity timeseries removal with action type 'TIMESERIES_DELETED' that includes an error stacktrace."),
+                    "Platform creates an audit log event about entity timeseries removal with action type **'TIMESERIES_DELETED'** that includes an error stacktrace."),
     })
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/timeseries/delete", method = RequestMethod.DELETE)
@@ -510,11 +785,11 @@ public class TelemetryController extends BaseController {
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Device attributes was removed for the selected keys in the request. " +
-                    "Platform creates an audit log event about device attributes removal with action type 'ATTRIBUTES_DELETED'."),
+                    "Platform creates an audit log event about device attributes removal with action type **'ATTRIBUTES_DELETED'**."),
             @ApiResponse(code = 400, message = "Platform returns a bad request in case if keys or scope are not specified."),
             @ApiResponse(code = 401, message = "User is not authorized to delete device attributes for selected entity. Most likely, User belongs to different Customer or Tenant."),
             @ApiResponse(code = 500, message = "The exception was thrown during processing the request. " +
-                    "Platform creates an audit log event about device attributes removal with action type 'ATTRIBUTES_DELETED' that includes an error stacktrace."),
+                    "Platform creates an audit log event about device attributes removal with action type **'ATTRIBUTES_DELETED'** that includes an error stacktrace."),
     })
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{deviceId}/{scope}", method = RequestMethod.DELETE)
