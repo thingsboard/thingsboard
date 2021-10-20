@@ -18,7 +18,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError, mergeMap, tap } from 'rxjs/operators';
+import { helpBaseUrl } from '@shared/models/constants';
 
 const NOT_FOUND_CONTENT = '## Not found';
 
@@ -26,6 +27,8 @@ const NOT_FOUND_CONTENT = '## Not found';
   providedIn: 'root'
 })
 export class HelpService {
+
+  private helpBaseUrl = helpBaseUrl;
 
   private helpCache: {[lang: string]: {[key: string]: string}} = {};
 
@@ -52,6 +55,9 @@ export class HelpService {
             return of(NOT_FOUND_CONTENT);
           }
         }),
+        mergeMap((content) => {
+          return this.processIncludes(this.processVariables(content));
+        }),
         tap((content) => {
           let langContent = this.helpCache[lang];
           if (!langContent) {
@@ -66,6 +72,27 @@ export class HelpService {
 
   private loadHelpContent(lang: string, key: string): Observable<string> {
     return this.http.get(`/assets/help/${lang}/${key}.md`, {responseType: 'text'} );
+  }
+
+  private processVariables(content: string): string {
+    const baseUrlReg = /\${baseUrl}/g;
+    return content.replace(baseUrlReg, this.helpBaseUrl);
+  }
+
+  private processIncludes(content: string): Observable<string> {
+    const includesRule = /{% include (.*) %}/;
+    const match = includesRule.exec(content);
+    if (match) {
+      const key = match[1];
+      return this.getHelpContent(key).pipe(
+        mergeMap((include) => {
+          content = content.replace(match[0], include);
+          return this.processIncludes(content);
+        })
+      );
+    } else {
+      return of(content);
+    }
   }
 
 }
