@@ -212,8 +212,10 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   }
 
   get noDataDisplayMessageText() {
-    const noDataDisplayMessage = isNotEmptyStr(this.ctx.widgetConfig.noDataDisplayMessage) ? this.ctx.widgetConfig.noDataDisplayMessage : '{i18n:entity.no-entities-prompt}';
-    return this.utils.customTranslation(noDataDisplayMessage, noDataDisplayMessage);
+    const noDataDisplayMessage = this.ctx.widgetConfig.noDataDisplayMessage;
+    return isNotEmptyStr(noDataDisplayMessage)
+      ? this.utils.customTranslation(noDataDisplayMessage, noDataDisplayMessage)
+      : this.translate.instant('entity.no-entities-prompt');
   }
 
   ngAfterViewInit(): void {

@@ -266,8 +266,10 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   }
 
   get noDataDisplayMessageText() {
-    const noDataDisplayMessage = isNotEmptyStr(this.ctx.widgetConfig.noDataDisplayMessage) ? this.ctx.widgetConfig.noDataDisplayMessage : '{i18n:alarm.no-alarms-prompt}';
-    return this.utils.customTranslation(noDataDisplayMessage, noDataDisplayMessage);
+    const noDataDisplayMessage = this.ctx.widgetConfig.noDataDisplayMessage;
+    return isNotEmptyStr(noDataDisplayMessage)
+      ? this.utils.customTranslation(noDataDisplayMessage, noDataDisplayMessage)
+      : this.translate.instant('alarm.no-alarms-prompt');
   }
 
   ngAfterViewInit(): void {
