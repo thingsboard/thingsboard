@@ -14,8 +14,36 @@
  * limitations under the License.
  */
 .tb-help-popup-button {
+  position: relative;
+  .mat-progress-spinner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: #fff;
+    border-radius: 50%;
+    width: 32px !important;
+    height: 32px !important;
+    svg {
+      top: 6px;
+      left: 6px;
+    }
+  }
 }
-.tb-help-popup-button-loading {
-  background: #fff;
-  border-radius: 50%;
+
+.tb-help-popup-text-button {
+  position: relative;
+  padding: 0 2px 0 8px;
+  line-height: 28px;
+  &.mat-stroked-button {
+    padding: 0 1px 0 7px;
+    line-height: 26px;
+  }
+  .mat-icon {
+    padding-left: 4px;
+  }
+  .mat-progress-spinner {
+    display: inline-block;
+    margin-left: 4px;
+    margin-right: 5px;
+  }
 }

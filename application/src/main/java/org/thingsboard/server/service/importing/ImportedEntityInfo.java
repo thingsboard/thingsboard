@@ -22,5 +22,4 @@ public class ImportedEntityInfo<E> {
     private E entity;
     private boolean isUpdated;
     private E oldEntity;
-    private String relatedError;
 }

@@ -15,6 +15,4 @@
     limitations under the License.
 
 -->
-<ng-container *ngIf="markdownText$ | async as text;">
-  <markdown [data]="text" lineNumbers (ready)="onMarkdownReady()" class="tb-help-markdown tb-markdown-view" (click)="markdownClick($event)"></markdown>
-</ng-container>
+<tb-markdown [style]="style" [data]="markdownText$ | async" lineNumbers (ready)="onMarkdownReady()" markdownClass="tb-help-markdown" (click)="markdownClick($event)"></tb-markdown>
