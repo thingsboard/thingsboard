@@ -44,10 +44,10 @@
           {{ 'event.has-error' | translate }}
         </tb-checkbox>
       </ng-template>
-      <ng-template [ngSwitchCase]="'error'">
+      <ng-template [ngSwitchCase]="'errorStr'">
         <mat-form-field fxHide [fxShow]="showErrorMsgFields()">
           <mat-label>{{ column.title | translate}}</mat-label>
-          <input matInput type="text" name="errorSearchText" formControlName="error">
+          <input matInput type="text" name="errorSearchText" formControlName="errorStr">
         </mat-form-field>
       </ng-template>
       <ng-container *ngSwitchDefault>

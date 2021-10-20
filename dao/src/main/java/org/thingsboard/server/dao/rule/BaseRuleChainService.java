@@ -552,6 +552,9 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         if (!edge.getTenantId().equals(ruleChain.getTenantId())) {
             throw new DataValidationException("Can't assign ruleChain to edge from different tenant!");
         }
+        if (!RuleChainType.EDGE.equals(ruleChain.getType())) {
+            throw new DataValidationException("Can't assign non EDGE ruleChain to edge!");
+        }
         try {
             createRelation(tenantId, new EntityRelation(edgeId, ruleChainId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE));
         } catch (Exception e) {

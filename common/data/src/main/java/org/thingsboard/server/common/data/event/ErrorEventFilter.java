@@ -15,14 +15,11 @@
  */
 package org.thingsboard.server.common.data.event;
 
-import lombok.Data;
+import io.swagger.annotations.ApiModel;
 import org.thingsboard.server.common.data.StringUtils;
 
-@Data
-public class ErrorEventFilter implements EventFilter {
-    private String server;
-    private String method;
-    private String error;
+@ApiModel
+public class ErrorEventFilter extends BaseEventFilter implements EventFilter {
 
     @Override
     public EventType getEventType() {
@@ -31,6 +28,6 @@ public class ErrorEventFilter implements EventFilter {
 
     @Override
     public boolean hasFilterForJsonBody() {
-        return !StringUtils.isEmpty(server) || !StringUtils.isEmpty(method) || !StringUtils.isEmpty(error);
+        return !StringUtils.isEmpty(server) || !StringUtils.isEmpty(method) || !StringUtils.isEmpty(errorStr);
     }
 }
