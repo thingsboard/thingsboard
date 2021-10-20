@@ -46,7 +46,6 @@ import org.thingsboard.server.service.update.UpdateService;
 @RequestMapping("/api/admin")
 public class AdminController extends BaseController {
 
-    public static final String SYS_ADMIN_AUTHORITY_ONLY = " Available for users with System Administrator ('SYS_ADMIN') authority only.";
     @Autowired
     private MailService mailService;
 
@@ -63,7 +62,7 @@ public class AdminController extends BaseController {
     private UpdateService updateService;
 
     @ApiOperation(value = "Get the Administration Settings object using key (getAdminSettings)",
-            notes = "Get the Administration Settings object using specified string key. Referencing non-existing key will cause an error." + SYS_ADMIN_AUTHORITY_ONLY)
+            notes = "Get the Administration Settings object using specified string key. Referencing non-existing key will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/settings/{key}", method = RequestMethod.GET)
     @ResponseBody
@@ -86,7 +85,7 @@ public class AdminController extends BaseController {
     @ApiOperation(value = "Get the Administration Settings object using key (getAdminSettings)",
             notes = "Creates or Updates the Administration Settings. Platform generates random Administration Settings Id during settings creation. " +
                     "The Administration Settings Id will be present in the response. Specify the Administration Settings Id when you would like to update the Administration Settings. " +
-                    "Referencing non-existing Administration Settings Id will cause an error." + SYS_ADMIN_AUTHORITY_ONLY)
+                    "Referencing non-existing Administration Settings Id will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/settings", method = RequestMethod.POST)
     @ResponseBody
@@ -109,7 +108,7 @@ public class AdminController extends BaseController {
     }
 
     @ApiOperation(value = "Get the Security Settings object",
-            notes = "Get the Security Settings object that contains password policy, etc." + SYS_ADMIN_AUTHORITY_ONLY)
+            notes = "Get the Security Settings object that contains password policy, etc." + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/securitySettings", method = RequestMethod.GET)
     @ResponseBody
@@ -123,7 +122,7 @@ public class AdminController extends BaseController {
     }
 
     @ApiOperation(value = "Update Security Settings (saveSecuritySettings)",
-            notes = "Updates the Security Settings object that contains password policy, etc." + SYS_ADMIN_AUTHORITY_ONLY)
+            notes = "Updates the Security Settings object that contains password policy, etc." + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/securitySettings", method = RequestMethod.POST)
     @ResponseBody
@@ -141,7 +140,7 @@ public class AdminController extends BaseController {
 
     @ApiOperation(value = "Send test email (sendTestMail)",
             notes = "Attempts to send test email to the System Administrator User using Mail Settings provided as a parameter. " +
-                    "You may change the 'To' email in the user profile of the System Administrator. " + SYS_ADMIN_AUTHORITY_ONLY)
+                    "You may change the 'To' email in the user profile of the System Administrator. " + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/settings/testMail", method = RequestMethod.POST)
     public void sendTestMail(
@@ -165,7 +164,7 @@ public class AdminController extends BaseController {
 
     @ApiOperation(value = "Send test sms (sendTestMail)",
             notes = "Attempts to send test sms to the System Administrator User using SMS Settings and phone number provided as a parameters of the request. "
-                    + SYS_ADMIN_AUTHORITY_ONLY)
+                    + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/settings/testSms", method = RequestMethod.POST)
     public void sendTestSms(
@@ -181,7 +180,7 @@ public class AdminController extends BaseController {
 
     @ApiOperation(value = "Check for new Platform Releases (checkUpdates)",
             notes = "Check notifications about new platform releases. "
-                    + SYS_ADMIN_AUTHORITY_ONLY)
+                    + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/updates", method = RequestMethod.GET)
     @ResponseBody

@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.widget;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.validation.NoXss;
@@ -24,8 +25,10 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @JsonPropertyOrder({ "alias", "name", "image", "description", "descriptor" })
 public class WidgetTypeDetails extends WidgetType {
 
+    @ApiModelProperty(position = 8, value = "Base64 encoded thumbnail", readOnly = true)
     private String image;
     @NoXss
+    @ApiModelProperty(position = 9, value = "Description of the widget", readOnly = true)
     private String description;
 
     public WidgetTypeDetails() {

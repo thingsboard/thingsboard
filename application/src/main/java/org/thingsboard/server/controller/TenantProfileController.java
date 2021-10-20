@@ -108,11 +108,6 @@ public class TenantProfileController extends BaseController {
                     "Let's review the example of tenant profile data below: " +
                     "\n\n" + MARKDOWN_CODE_BLOCK_START +
                     "{\n" +
-                    "  \"id\": {\n" +
-                    "    \"entityType\": \"TENANT_PROFILE\",\n" +
-                    "    \"id\": \"0f2978a0-0d46-11eb-ab90-09ceaa526dd8\"\n" +
-                    "  },\n" +
-                    "  \"createdTime\": 1602588011818,\n" +
                     "  \"name\": \"Default\",\n" +
                     "  \"description\": \"Default tenant profile\",\n" +
                     "  \"isolatedTbCore\": false,\n" +
