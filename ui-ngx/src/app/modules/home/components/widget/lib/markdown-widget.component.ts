@@ -99,15 +99,12 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
     } else {
       initialData = [];
     }
-    let markdownText: string;
-    if (initialData) {
-      const data = parseData(initialData);
-      markdownText = this.settings.useMarkdownTextFunction ?
-        safeExecute(this.markdownTextFunction, [data]) : this.settings.markdownTextPattern;
-      const allData = flatData(data);
-      const replaceInfo = processPattern(markdownText, allData);
-      markdownText = fillPattern(markdownText, replaceInfo, allData);
-    }
+    const data = parseData(initialData);
+    let markdownText = this.settings.useMarkdownTextFunction ?
+      safeExecute(this.markdownTextFunction, [data]) : this.settings.markdownTextPattern;
+    const allData = flatData(data);
+    const replaceInfo = processPattern(markdownText, allData);
+    markdownText = fillPattern(markdownText, replaceInfo, allData);
     if (this.markdownText !== markdownText) {
       this.markdownText = this.utils.customTranslation(markdownText, markdownText);
       this.cd.detectChanges();
