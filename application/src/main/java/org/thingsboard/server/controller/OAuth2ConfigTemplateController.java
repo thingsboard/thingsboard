@@ -45,7 +45,7 @@ public class OAuth2ConfigTemplateController extends BaseController {
 
     private static final String OAUTH2_CLIENT_REGISTRATION_TEMPLATE_DEFINITION = "Client registration template is OAuth2 provider configuration template with default settings for registering new OAuth2 clients";
 
-    @ApiOperation(value = "Create or update OAuth2 client registration template (saveClientRegistrationTemplate)",
+    @ApiOperation(value = "Create or update OAuth2 client registration template (saveClientRegistrationTemplate)" + SYSTEM_AUTHORITY_PARAGRAPH,
             notes = OAUTH2_CLIENT_REGISTRATION_TEMPLATE_DEFINITION)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @RequestMapping(method = RequestMethod.POST)
@@ -59,7 +59,7 @@ public class OAuth2ConfigTemplateController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Delete OAuth2 client registration template by id (deleteClientRegistrationTemplate)",
+    @ApiOperation(value = "Delete OAuth2 client registration template by id (deleteClientRegistrationTemplate)" + SYSTEM_AUTHORITY_PARAGRAPH,
             notes = OAUTH2_CLIENT_REGISTRATION_TEMPLATE_DEFINITION)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/{clientRegistrationTemplateId}", method = RequestMethod.DELETE)
@@ -76,7 +76,7 @@ public class OAuth2ConfigTemplateController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Get the list of all OAuth2 client registration templates (getClientRegistrationTemplates)",
+    @ApiOperation(value = "Get the list of all OAuth2 client registration templates (getClientRegistrationTemplates)" + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH,
             notes = OAUTH2_CLIENT_REGISTRATION_TEMPLATE_DEFINITION)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(method = RequestMethod.GET, produces = "application/json")

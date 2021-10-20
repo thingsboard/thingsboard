@@ -169,7 +169,7 @@ public class RuleChainController extends BaseController {
                     "The newly created Rule Chain Id will be present in the response. " +
                     "Specify existing Rule Chain id to update the rule chain. " +
                     "Referencing non-existing rule chain Id will cause 'Not Found' error." +
-                    "\n\n" + RULE_CHAIN_DESCRIPTION)
+                    "\n\n" + RULE_CHAIN_DESCRIPTION + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChain", method = RequestMethod.POST)
     @ResponseBody
@@ -327,7 +327,7 @@ public class RuleChainController extends BaseController {
 
 
     @ApiOperation(value = "Get Rule Chains (getRuleChains)",
-            notes = "Returns a page of Rule Chains owned by tenant. " + RULE_CHAIN_DESCRIPTION + PAGE_DATA_PARAMETERS)
+            notes = "Returns a page of Rule Chains owned by tenant. " + RULE_CHAIN_DESCRIPTION + PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChains", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
@@ -358,7 +358,8 @@ public class RuleChainController extends BaseController {
     }
 
     @ApiOperation(value = "Delete rule chain (deleteRuleChain)",
-            notes = "Deletes the rule chain. Referencing non-existing rule chain Id will cause an error. Referencing rule chain that is used in the device profiles will cause an error.")
+            notes = "Deletes the rule chain. Referencing non-existing rule chain Id will cause an error. " +
+                    "Referencing rule chain that is used in the device profiles will cause an error." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleChain/{ruleChainId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
@@ -409,7 +410,7 @@ public class RuleChainController extends BaseController {
 
     @ApiOperation(value = "Get latest input message (getLatestRuleNodeDebugInput)",
             notes = "Gets the input message from the debug events for specified Rule Chain Id. " +
-                    "Referencing non-existing rule chain Id will cause an error. ")
+                    "Referencing non-existing rule chain Id will cause an error. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/ruleNode/{ruleNodeId}/debugIn", method = RequestMethod.GET)
     @ResponseBody
@@ -582,7 +583,7 @@ public class RuleChainController extends BaseController {
                     "Second, remote edge service will receive a copy of assignment rule chain " +
                     EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION + ". " +
                     "Third, once rule chain will be delivered to edge service, it's going to start processing messages locally. " +
-                    "\n\nOnly rule chain with type 'EDGE' can be assigned to edge.",
+                    "\n\nOnly rule chain with type 'EDGE' can be assigned to edge." + TENANT_AUTHORITY_PARAGRAPH,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/ruleChain/{ruleChainId}", method = RequestMethod.POST)
@@ -622,7 +623,7 @@ public class RuleChainController extends BaseController {
                     EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION +
                     "Second, remote edge service will receive an 'unassign' command to remove rule chain " +
                     EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION + ". " +
-                    "Third, once 'unassign' command will be delivered to edge service, it's going to remove rule chain locally.",
+                    "Third, once 'unassign' command will be delivered to edge service, it's going to remove rule chain locally." + TENANT_AUTHORITY_PARAGRAPH,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/ruleChain/{ruleChainId}", method = RequestMethod.DELETE)

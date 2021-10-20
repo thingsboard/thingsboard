@@ -80,7 +80,8 @@ public class AssetController extends BaseController {
     @ApiOperation(value = "Get Asset (getAssetById)",
             notes = "Fetch the Asset object based on the provided Asset Id. " +
                     "If the user has the authority of 'Tenant Administrator', the server checks that the asset is owned by the same tenant. " +
-                    "If the user has the authority of 'Customer User', the server checks that the asset is assigned to the same customer.", produces = MediaType.APPLICATION_JSON_VALUE)
+                    "If the user has the authority of 'Customer User', the server checks that the asset is assigned to the same customer." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH
+            , produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/asset/{assetId}", method = RequestMethod.GET)
     @ResponseBody
@@ -98,7 +99,8 @@ public class AssetController extends BaseController {
     @ApiOperation(value = "Get Asset Info (getAssetInfoById)",
             notes = "Fetch the Asset Info object based on the provided Asset Id. " +
                     "If the user has the authority of 'Tenant Administrator', the server checks that the asset is owned by the same tenant. " +
-                    "If the user has the authority of 'Customer User', the server checks that the asset is assigned to the same customer. " + ASSET_INFO_DESCRIPTION, produces = MediaType.APPLICATION_JSON_VALUE)
+                    "If the user has the authority of 'Customer User', the server checks that the asset is assigned to the same customer. "
+                    + ASSET_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/asset/info/{assetId}", method = RequestMethod.GET)
     @ResponseBody
@@ -117,7 +119,7 @@ public class AssetController extends BaseController {
             notes = "Creates or Updates the Asset. When creating asset, platform generates Asset Id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address) " +
                     "The newly created Asset id will be present in the response. " +
                     "Specify existing Asset id to update the asset. " +
-                    "Referencing non-existing Asset Id will cause 'Not Found' error.", produces = MediaType.APPLICATION_JSON_VALUE)
+                    "Referencing non-existing Asset Id will cause 'Not Found' error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/asset", method = RequestMethod.POST)
     @ResponseBody
@@ -158,7 +160,7 @@ public class AssetController extends BaseController {
     }
 
     @ApiOperation(value = "Delete asset (deleteAsset)",
-            notes = "Deletes the asset and all the relations (from and to the asset). Referencing non-existing asset Id will cause an error.")
+            notes = "Deletes the asset and all the relations (from and to the asset). Referencing non-existing asset Id will cause an error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/asset/{assetId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
@@ -187,7 +189,7 @@ public class AssetController extends BaseController {
     }
 
     @ApiOperation(value = "Assign asset to customer (assignAssetToCustomer)",
-            notes = "Creates assignment of the asset to customer. Customer will be able to query asset afterwards.", produces = MediaType.APPLICATION_JSON_VALUE)
+            notes = "Creates assignment of the asset to customer. Customer will be able to query asset afterwards." + TENANT_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer/{customerId}/asset/{assetId}", method = RequestMethod.POST)
     @ResponseBody
@@ -223,7 +225,7 @@ public class AssetController extends BaseController {
     }
 
     @ApiOperation(value = "Unassign asset from customer (unassignAssetFromCustomer)",
-            notes = "Clears assignment of the asset to customer. Customer will not be able to query asset afterwards.", produces = MediaType.APPLICATION_JSON_VALUE)
+            notes = "Clears assignment of the asset to customer. Customer will not be able to query asset afterwards." + TENANT_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer/asset/{assetId}", method = RequestMethod.DELETE)
     @ResponseBody
@@ -261,7 +263,7 @@ public class AssetController extends BaseController {
     @ApiOperation(value = "Make asset publicly available (assignAssetToPublicCustomer)",
             notes = "Asset will be available for non-authorized (not logged-in) users. " +
                     "This is useful to create dashboards that you plan to share/embed on a publicly available website. " +
-                    "However, users that are logged-in and belong to different tenant will not be able to access the asset.", produces = MediaType.APPLICATION_JSON_VALUE)
+                    "However, users that are logged-in and belong to different tenant will not be able to access the asset." + TENANT_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer/public/asset/{assetId}", method = RequestMethod.POST)
     @ResponseBody
@@ -290,7 +292,7 @@ public class AssetController extends BaseController {
 
     @ApiOperation(value = "Get Tenant Assets (getTenantAssets)",
             notes = "Returns a page of assets owned by tenant. " +
-                    PAGE_DATA_PARAMETERS, produces = MediaType.APPLICATION_JSON_VALUE)
+                    PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/assets", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
@@ -322,7 +324,7 @@ public class AssetController extends BaseController {
 
     @ApiOperation(value = "Get Tenant Asset Infos (getTenantAssetInfos)",
             notes = "Returns a page of assets info objects owned by tenant. " +
-                    PAGE_DATA_PARAMETERS + ASSET_INFO_DESCRIPTION, produces = MediaType.APPLICATION_JSON_VALUE)
+                    PAGE_DATA_PARAMETERS + ASSET_INFO_DESCRIPTION + TENANT_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/assetInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
@@ -354,7 +356,7 @@ public class AssetController extends BaseController {
 
     @ApiOperation(value = "Get Tenant Asset (getTenantAsset)",
             notes = "Requested asset must be owned by tenant that the user belongs to. " +
-                    "Asset name is an unique property of asset. So it can be used to identify the asset.", produces = MediaType.APPLICATION_JSON_VALUE)
+                    "Asset name is an unique property of asset. So it can be used to identify the asset." + TENANT_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/assets", params = {"assetName"}, method = RequestMethod.GET)
     @ResponseBody

@@ -302,7 +302,7 @@ public class UserController extends BaseController {
 
     @ApiOperation(value = "Get Users (getUsers)",
             notes = "Returns a page of users owned by tenant or customer. The scope depends on authority of the user that performs the request." +
-                    PAGE_DATA_PARAMETERS + TENANT_OR_USER_AUTHORITY_PARAGRAPH)
+                    PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/users", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody

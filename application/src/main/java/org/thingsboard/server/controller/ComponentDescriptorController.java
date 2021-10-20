@@ -47,7 +47,7 @@ public class ComponentDescriptorController extends BaseController {
 
     @ApiOperation(value = "Get Component Descriptor (getComponentDescriptorByClazz)",
             notes = "Gets the Component Descriptor object using class name from the path parameters. " +
-                    COMPONENT_DESCRIPTOR_DEFINITION)
+                    COMPONENT_DESCRIPTOR_DEFINITION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN')")
     @RequestMapping(value = "/component/{componentDescriptorClazz:.+}", method = RequestMethod.GET)
     @ResponseBody
@@ -64,7 +64,7 @@ public class ComponentDescriptorController extends BaseController {
 
     @ApiOperation(value = "Get Component Descriptors (getComponentDescriptorsByType)",
             notes = "Gets the Component Descriptors using rule node type and optional rule chain type request parameters. " +
-                    COMPONENT_DESCRIPTOR_DEFINITION)
+                    COMPONENT_DESCRIPTOR_DEFINITION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN')")
     @RequestMapping(value = "/components/{componentType}", method = RequestMethod.GET)
     @ResponseBody
@@ -83,7 +83,7 @@ public class ComponentDescriptorController extends BaseController {
 
     @ApiOperation(value = "Get Component Descriptors (getComponentDescriptorsByTypes)",
             notes = "Gets the Component Descriptors using coma separated list of rule node types and optional rule chain type request parameters. " +
-                    COMPONENT_DESCRIPTOR_DEFINITION)
+                    COMPONENT_DESCRIPTOR_DEFINITION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN')")
     @RequestMapping(value = "/components", params = {"componentTypes"}, method = RequestMethod.GET)
     @ResponseBody
