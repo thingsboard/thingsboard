@@ -60,7 +60,7 @@ public abstract class AbstractRpcController extends BaseController {
     protected TbCoreDeviceRpcService deviceRpcService;
 
     @Autowired
-    private AccessValidator accessValidator;
+    protected AccessValidator accessValidator;
 
     @Value("${server.rest.server_side_rpc.min_timeout:5000}")
     protected long minTimeout;
