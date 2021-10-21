@@ -330,12 +330,12 @@ export function parseData(input: DatasourceData[], dataIndex?: number): Formatte
         deviceType: null
       };
       entityArray.filter(el => el.data.length).forEach(el => {
-        dataIndex = isDefined(dataIndex) ? dataIndex : el.data.length - 1;
-        if (!obj.hasOwnProperty(el.dataKey.label) || el.data[dataIndex][1] !== '') {
-          obj[el.dataKey.label] = el.data[dataIndex][1];
-          obj[el.dataKey.label + '|ts'] = el.data[dataIndex][0];
+        const index = isDefined(dataIndex) ? dataIndex : el.data.length - 1;
+        if (!obj.hasOwnProperty(el.dataKey.label) || el.data[index][1] !== '') {
+          obj[el.dataKey.label] = el.data[index][1];
+          obj[el.dataKey.label + '|ts'] = el.data[index][0];
           if (el.dataKey.label.toLowerCase() === 'type') {
-            obj.deviceType = el.data[dataIndex][1];
+            obj.deviceType = el.data[index][1];
           }
         }
       });
