@@ -62,6 +62,8 @@ import org.thingsboard.server.service.security.system.SystemSecurityService;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
+import static org.thingsboard.server.controller.ControllerConstants.*;
+
 @RequiredArgsConstructor
 @RestController
 @TbCoreComponent

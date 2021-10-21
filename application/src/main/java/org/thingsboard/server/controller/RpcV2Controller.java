@@ -53,6 +53,8 @@ import java.util.UUID;
 
 import static org.thingsboard.server.common.data.DataConstants.RPC_DELETED;
 
+import static org.thingsboard.server.controller.ControllerConstants.*;
+
 @RestController
 @TbCoreComponent
 @RequestMapping(TbUrlConstants.RPC_V2_URL_PREFIX)

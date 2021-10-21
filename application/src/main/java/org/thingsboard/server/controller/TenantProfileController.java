@@ -40,6 +40,8 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import static org.thingsboard.server.controller.ControllerConstants.*;
+
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")

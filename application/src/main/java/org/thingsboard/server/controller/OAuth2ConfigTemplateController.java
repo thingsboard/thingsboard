@@ -36,6 +36,9 @@ import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.List;
 
+import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
+
 @RestController
 @TbCoreComponent
 @RequestMapping("/api/oauth2/config/template")

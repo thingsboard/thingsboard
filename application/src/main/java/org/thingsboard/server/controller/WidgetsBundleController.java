@@ -41,6 +41,8 @@ import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.List;
 
+import static org.thingsboard.server.controller.ControllerConstants.*;
+
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")

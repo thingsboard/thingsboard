@@ -34,6 +34,9 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.UUID;
 
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
+
 @RestController
 @TbCoreComponent
 @RequestMapping(TbUrlConstants.RPC_V1_URL_PREFIX)
