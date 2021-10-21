@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Event;
-import org.thingsboard.server.common.data.event.BaseEventFilter;
+import org.thingsboard.server.common.data.event.EventFilter;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -162,7 +162,7 @@ public class EventController extends BaseController {
             @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
             @ApiParam(value = "A JSON value representing the event filter.", required = true)
-            @RequestBody BaseEventFilter eventFilter,
+            @RequestBody EventFilter eventFilter,
             @ApiParam(value = EVENT_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
             @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = EVENT_SORT_PROPERTY_ALLOWABLE_VALUES)
