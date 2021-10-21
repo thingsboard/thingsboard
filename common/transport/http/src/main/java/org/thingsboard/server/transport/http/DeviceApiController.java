@@ -163,55 +163,185 @@ public class DeviceApiController implements TbTransportService {
             "       \"someNestedObject\":  {\"key\": \"value\"},\n" +
             "   }\n" +
             "  }\n" +
-            MARKDOWN_CODE_BLOCK_END + "\n\n" + " See the real example in description.\"";
+            MARKDOWN_CODE_BLOCK_END + "\n\n" + " See the real example in description.";
 
-    private static final String JSON_EXAMPLE = "\n\n Let`s see example:" +
+    private static final String RPC_REQUEST_EXAMPLE = "\n\n Example of the RPC request:" +
             "\n\n" + MARKDOWN_CODE_BLOCK_START +
             "  {\n" +
-            "    \"stringKey\": \"value1\",\n" +
-            "    \"booleanKey\": true,\n" +
-            "    \"doubleKey\": 42.0,\n" +
-            "    \"longKey\": 73,\n" +
-            "    \"jsonKey\": {\n" +
-            "       \"someNumber\": 42,\n" +
-            "       \"someArray\": [1,2,3],\n" +
-            "       \"someNestedObject\":  {\"key\": \"value\"},\n" +
+            "    \"method\": \"setGPIO\",\n" +
+            "    \"params\": {\n" +
+            "       \"pin\": 4,\n" +
+            "       \"value\": 1\n" +
             "   }\n" +
             "  }\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n";
+
+    private static final String RPC_RESPONSE_EXAMPLE = "\n\n The RPC response may be any JSON. For example:" +
+            "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "  {\n" +
+            "    \"pin\": 4,\n" +
+            "    \"value\": 1,\n" +
+            "    \"changed\": true\n" +
+            "  }\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n";
+
+    private static final String JSON_TELEMETRY_EXAMPLE = "\n\n Let's review the example:" +
+            "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "  {\n" +
+            "     \"temperature\": 17.5,\n" +
+            "     \"water_pulse\": 330.28000000000003,\n" +
+            "     \"frequency\": 868500000\n" +
+            "  }\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n";
+
+    private static final String JSON_ARRAY_TELEMETRY_EXAMPLE = "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            " [\n" +
+            "   {\n" +
+            "       \"temperature\": 17.5,\n" +
+            "       \"water_pulse\": 330.28000000000003,\n" +
+            "       \"frequency\": 868500000\n" +
+            "  },\n" +
+            "  {\n" +
+            "       \"temperature\": 17.5,\n" +
+            "       \"water_pulse\": 330.28000000000003,\n" +
+            "       \"frequency\": 868500000\n" +
+            "  }\n" +
+            " ]\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n";
+
+    private static final String JSON_TELEMETRY_EXAMPLE_WITH_TIMESTAMP = "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "  {\n" +
+            "    \"ts\": \"1451649600512\",\n" +
+            "    \"values\": {\n" +
+            "       \"temperature\": 17.5,\n" +
+            "       \"water_pulse\": 330.28000000000003,\n" +
+            "       \"frequency\": 868500000\n" +
+            "   }\n" +
             MARKDOWN_CODE_BLOCK_END + "\n\n";
 
     private static final String SAVE_ATTRIBUTES_STATUS_OK = "Client-side Attribute from the request was created or updated. ";
     private static final String SAVE_ATTRIBUTES_STATUS_BAD_REQUEST = "Invalid request parameters or body.";
     private static final String UNAUTHORIZED_STATUS_BAD_REQUEST = "Invalid **DEVICE_TOKEN**. Most likely, Device belongs to different Customer or Tenant.";
+    private static final String INTERNAL_SERVER_BAD_REQUEST = "The exception was thrown during processing the request.";
 
     private static final String ACCESS_TOKEN_DESCRIPTION = "The application needs to include deviceToken (token of required device) as a path parameter" +
             " in each HTTP request. If deviceToken is Invalid then will be return error code 401 Unauthorized. For example, 'iDr0uA1uIRRzd32xGrkG'";
-
+    private static final String TIMEOUT_DESCRIPTION = "A long value representing a detected timeout of the RPC delivery in milliseconds. The default value is 0 sec, the minimum value is 5000 (5 sec).";
     private static final String KEY_VALUE_FORMAT_DESCRIPTION = "The platform supports key-value content in JSON. Key is always " +
             "a string, while value can be either string, boolean, double, long or JSON." + JSON_DEFAULT_EXAMPLE;
 
+    private static final String RPC_REQUEST_PARAMETERS = "\n\n**method** -  mandatory, name of the method to distinct the " +
+            "RPC calls. For example, “getCurrentTime” or “getWeatherForecast”. The value of the parameter is a string." +
+            "\n\n**params** - mandatory, parameters used for processing of the request. The value is a JSON. Leave empty JSON “{}” if no parameters needed." +
+            "\n\n**timeout** - optional, value of the processing timeout in milliseconds. The default value is 10000 (10 seconds). The minimum value is 5000 (5 seconds)." +
+            "\n\n**expirationTime** - optional, value of the epoch time (in milliseconds, UTC timezone). Overrides timeout if present." +
+            "\n\n**persistent** - optional, see [persistent] vs [lightweight] RPC. The default value is \"false\"." +
+            "\n\n**additionalInfo** - optional, defines metadata for the persistent RPC that will be added to the [persistent RPC events].";
+
+    private static final String CLAIM_DEVICE = "Please see the corresponding article to get more information about the [Claiming devices](https://thingsboard.io/docs/user-guide/claiming-devices/?claimingscenario=deviceside) feature. " +
+            "The Platform User can claim the device if the \"know\" the device Access Token and Secret Key. The Secret Key " +
+            "is optional, always has an expiration time, and may also change over time." +
+            "\n\n The supported data format is:" +
+            "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "  {\n" +
+            "    \"secretKey\": \"value\"\n" +
+            "  }\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n" +
+            "The message does not contain **durationMs** parameter. Whenever claiming is succeed the device is being assigned to the specific customer." +
+            "\n\nIn addition, there is a possibility to reclaim the device, which means the device will be unassigned from the customer. " +
+            "You will receive the response like the following one:" +
+            "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "  {\n" +
+            "    \"secretKey\": {},\n" +
+            "    \"setOrExpired\": true\n" +
+            "  }\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n";
+
+    private static final String SUBSCRIBE_TO_COMMANDS = "Is created a subscription to [RPC](https://thingsboard.io/docs/user-guide/rpc/#server-side-rpc-api) (remote procedure calls)" +
+            "commands based from the server based on device access token and optional parameter 'timeout'. " +
+            "Once subscribed, a client may receive rpc request or a timeout message if there are no requests to " +
+            "a particular device. An example of RPC request body is shown below:" +
+            "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "  {\n" +
+            "    \"id\": \"1\",\n" +
+            "    \"method\": \"setGpio\",\n" +
+            "    \"params\": {\n" +
+            "       \"pin\": \"23\",\n" +
+            "       \"value\": 1\n" +
+            "   }\n" +
+            "  }\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n where " +
+            "\n\n**id** - request id, integer request identifier" +
+            "\n\n**method** - RPC method name, string" +
+            "\n\n**params** - RPC method params, custom json object" +
+            "\n\nand can reply to them using POST request (see 'Reply to command')";
+
+    private static final String POST_RPC_REQUEST = "Is created a post request by [RPC(remote procedure calls)](https://thingsboard.io/docs/user-guide/rpc/#server-side-rpc-api) " +
+            "commands to the server based on device access token and JSON object. A client " +
+            "may receive rpc request or a timeout message and 503 error (Service Unavailable) if there are no requests to a particular device. " +
+            "\n\nAn example of RPC request body is shown below:" +
+            "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "  {\n" +
+            "    \"method\": \"getCurrentTime\",\n" +
+            "    \"params\": {}\n" +
+            "  }\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n" +
+            "\n\n**method** - name of the method to distinct the RPC calls. For example, “getCurrentTime” or “getWeatherForecast”. The value of the parameter is a string." +
+            "\n\n**params** - additional parameters used for processing of the request. The value is a JSON. Leave empty JSON “{}” if no parameters needed." +
+            "\n\nThe RPC response may be any number, string or JSON. For example:" +
+            "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "  {\n" +
+            "    \"time\": \"2016 11 21 12:54:44.287\"\n" +
+            "  }\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n";
+
+    private static final String PROVISION_DEVICE = "See the corresponding article to get more information about the [Device provisioning](https://thingsboard.io/docs/user-guide/device-provisioning/) feature." +
+            "The device may send a device provisioning request to the Platform. The request should always " +
+            "contain a provision key and secret. The request may optionally include the device name and credentials " +
+            "generated by the device. If those credentials are absent, the Server will generate an Access Token to be used by the device." +
+            "\n\nProvisioning request example:" +
+            "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "  {\n" +
+            "    \"deviceName\": \"DEVICE_NAME\",\n" +
+            "    \"provisionDeviceKey\": \"YOUR_PROVISION_KEY_HERE\",\n" +
+            "    \"provisionDeviceSecret\": \"YOUR_PROVISION_SECRET_HERE\"\n" +
+            "  }\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n" +
+            "\n\nwhere" +
+            "\n\n**DEVICE_NAME** - device name in the Platform" +
+            "\n\n**YOUR_PROVISION_KEY_HERE** - provisioning device key, you should take it from configured device profile (\"u7piawkboq8v32dmcmpp\")" +
+            "\n\n**OUR_PROVISION_SECRET_HERE** - provisioning device secret, you should take it from configured device profile (\"jpmwdn8ptlswmf4m29bw\"). " +
+            "The Platform validates the request and replies with the device provisioning response. The successful " +
+            "response contains device id, credentials type, and body. If the validation was not successful, the response will contain only the status." +
+            "\n\nProvisioning response example:" +
+            "\n\n" + MARKDOWN_CODE_BLOCK_START +
+            "  {\n" +
+            "    \"provisionDeviceStatus\": \"SUCCESS\",\n" +
+            "    \"credentialsType\": \"ACCESS_TOKEN\",\n" +
+            "    \"accessToken\": \"sLzc0gDAZPkGMzFVTyUY\"\n" +
+            "  }\n" +
+            MARKDOWN_CODE_BLOCK_END + "\n\n";
 
     @Autowired
     private HttpTransportContext transportContext;
 
     @ApiOperation(value = "Get device attributes",
-            notes =
-
+            notes = "Request client-side or shared device attributes to the Platform server node based on device access token and list of keys. " +
+                    "The intersection of client-side and shared device attribute keys is a bad practice! However, it is " +
+                    "still possible to have same keys for client, shared or even server-side attributes.\n" +
                     "\n\n## Let`s see some response examples: \n\n" +
-                    "\n\nExample when 'clientKeys' and 'sharedKeys' are not given returns both of them " + JSON_GET_ALL_SHARED_AND_CLIENT_ATTRIBUTES_EXAMPLE +
-                    "\n\nExample when selected only 'clientKeys' (e.g. 'model,description,serial_number')" + JSON_GET_ALL_CLIENT_ATTRIBUTES_EXAMPLE +
-                    "\n\nExample when selected only 'sharedKeys' (e.g. 'pulse')" + JSON_GET_ALL_SHARED_ATTRIBUTES_EXAMPLE +
-                    "\n\nExample when selected 'clientKeys' (e.g. 'description') and 'sharedKeys' (e.g. 'pulse')." + JSON_GET_SHARED_AND_CLIENT_ATTRIBUTES_EXAMPLE
-
-            ,
+                    "\n\nExample when 'clientKeys' and 'sharedKeys' are not given -  returns all client-side and shared-side attributes of required device: " + JSON_GET_ALL_SHARED_AND_CLIENT_ATTRIBUTES_EXAMPLE +
+                    "\n\nExample when selected only 'clientKeys' (e.g. 'model,description,serial_number'): " + JSON_GET_ALL_CLIENT_ATTRIBUTES_EXAMPLE +
+                    "\n\nExample when selected only 'sharedKeys' (e.g. 'pulse'): " + JSON_GET_ALL_SHARED_ATTRIBUTES_EXAMPLE +
+                    "\n\nExample when selected 'clientKeys' (e.g. 'description') and 'sharedKeys' (e.g. 'pulse'): " + JSON_GET_SHARED_AND_CLIENT_ATTRIBUTES_EXAMPLE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @RequestMapping(value = "/{deviceToken}/attributes", method = RequestMethod.GET, produces = "application/json")
     public DeferredResult<ResponseEntity> getDeviceAttributes(
-            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION, example = "iDr0uA1uIRRzd32xGrkG")
+            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION)
             @PathVariable("deviceToken") String deviceToken,
-            @ApiParam(value = "A string value representing the comma-separated list of client-side attributes keys.", example = "")
+            @ApiParam(value = "A string value representing the comma-separated list of client-side attributes keys. For example, 'model, description'.")
             @RequestParam(value = "clientKeys", required = false, defaultValue = "") String clientKeys,
-            @ApiParam(value = "A string value representing the comma-separated list of shared-side attributes keys.", example = "pulse")
+            @ApiParam(value = "A string value representing the comma-separated list of shared-side attributes keys. For example, 'pulse'.")
             @RequestParam(value = "sharedKeys", required = false, defaultValue = "") String sharedKeys,
             HttpServletRequest httpRequest) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
@@ -237,9 +367,9 @@ public class DeviceApiController implements TbTransportService {
 
     @ApiOperation(value = "Post device attributes",
             notes = "Created(published) or updated client-side device attributes to the Platform server side based on " +
-                    "device token and a JSON object with key-value format of attributes to create or update. " +
+                    "device token and JSON object with key-value format of attributes to create or update. " +
                     "**Key** is a unique parameter and cannot be overwritten. Only value can be overwritten for the key." +
-                    "\n\nWhen creating client-side attributes, Platform generates attribute id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address)." +
+                    "\n\nWhen creating client-side attributes, the Platform generates attribute id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address)." +
                     "\n\n Let`s see example of creating some client-side attributes for the device with **deviceToken ** - 'iDr0uA1uIRRzd32xGrkG' " +
                     "and JSON object:" + JSON_DEVICE_ATTRIBUTES_EXAMPLE,
             produces = MediaType.APPLICATION_JSON_VALUE)
@@ -247,7 +377,7 @@ public class DeviceApiController implements TbTransportService {
             @ApiResponse(code = 200, message = SAVE_ATTRIBUTES_STATUS_OK),
             @ApiResponse(code = 400, message = SAVE_ATTRIBUTES_STATUS_BAD_REQUEST),
             @ApiResponse(code = 401, message = UNAUTHORIZED_STATUS_BAD_REQUEST),
-            @ApiResponse(code = 500, message = "The exception was thrown during processing the request. "),
+            @ApiResponse(code = 500, message = INTERNAL_SERVER_BAD_REQUEST),
     })
     @RequestMapping(value = "/{deviceToken}/attributes", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> postDeviceAttributes(
@@ -266,6 +396,25 @@ public class DeviceApiController implements TbTransportService {
         return responseWriter;
     }
 
+    @ApiOperation(value = "Post device attributes",
+            notes = "Created(published) or updated telemetry data the Platform server node based on " +
+                    "device access token and JSON object with key-value format of attributes to create or update. " +
+                    "**Key** is a unique parameter and cannot be overwritten. Only value can be overwritten for the key." +
+                    "\n\nWhen creating telemetry, the Platform generates attribute id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address)." +
+                    "\n\n The simplest supported data formats are:" +
+                    JSON_TELEMETRY_EXAMPLE + "\n\n or" + JSON_ARRAY_TELEMETRY_EXAMPLE +
+                    "\n\n In this case, the server-side timestamp will be assigned to uploaded data!" +
+                    "\n\n In case your device is able to get the client-side timestamp, you can use following format:" +
+                    JSON_TELEMETRY_EXAMPLE_WITH_TIMESTAMP +
+                    "In the example above, we assume that \"1451649600512\" is a [unix timestamp](https://en.wikipedia.org/wiki/Unix_time) " +
+                    "with milliseconds precision. For example, the value ‘1451649600512’ corresponds to ‘Fri, 01 Jan 2016 12:00:00.512 GMT’.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = SAVE_ATTRIBUTES_STATUS_OK),
+            @ApiResponse(code = 400, message = SAVE_ATTRIBUTES_STATUS_BAD_REQUEST),
+            @ApiResponse(code = 401, message = UNAUTHORIZED_STATUS_BAD_REQUEST),
+            @ApiResponse(code = 500, message = INTERNAL_SERVER_BAD_REQUEST),
+    })
     @RequestMapping(value = "/{deviceToken}/telemetry", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> postTelemetry(
             @ApiParam(value = ACCESS_TOKEN_DESCRIPTION, example = "iDr0uA1uIRRzd32xGrkG")
@@ -283,11 +432,16 @@ public class DeviceApiController implements TbTransportService {
         return responseWriter;
     }
 
+    @ApiOperation(value = "Claim device",
+            notes = CLAIM_DEVICE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @RequestMapping(value = "/{deviceToken}/claim", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> claimDevice(
-            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION, example = "iDr0uA1uIRRzd32xGrkG")
+            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION)
             @PathVariable("deviceToken") String deviceToken,
-            @RequestBody(required = false) String json, HttpServletRequest request) {
+            @ApiParam(value = KEY_VALUE_FORMAT_DESCRIPTION)
+            @RequestBody(required = false) String json,
+            HttpServletRequest request) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
@@ -299,10 +453,14 @@ public class DeviceApiController implements TbTransportService {
         return responseWriter;
     }
 
+    @ApiOperation(value = "Subscribe to commands",
+            notes = SUBSCRIBE_TO_COMMANDS,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @RequestMapping(value = "/{deviceToken}/rpc", method = RequestMethod.GET, produces = "application/json")
     public DeferredResult<ResponseEntity> subscribeToCommands(
-            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION, example = "iDr0uA1uIRRzd32xGrkG")
+            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION)
             @PathVariable("deviceToken") String deviceToken,
+            @ApiParam(value = TIMEOUT_DESCRIPTION)
             @RequestParam(value = "timeout", required = false, defaultValue = "0") long timeout,
             HttpServletRequest httpRequest) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
@@ -319,12 +477,20 @@ public class DeviceApiController implements TbTransportService {
         return responseWriter;
     }
 
+    @ApiOperation(value = "Reply to command",
+            notes = "Returns a reply to required [RPC](https://thingsboard.io/docs/user-guide/rpc/#server-side-rpc-api) (remote procedure calls) " +
+                    "request, which consists of multiple fields: " +
+                    RPC_REQUEST_PARAMETERS + RPC_REQUEST_EXAMPLE + RPC_RESPONSE_EXAMPLE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @RequestMapping(value = "/{deviceToken}/rpc/{requestId}", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> replyToCommand(
-            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION, example = "iDr0uA1uIRRzd32xGrkG")
+            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION)
             @PathVariable("deviceToken") String deviceToken,
+            @ApiParam(value = "An integer request identifier. You may use this identifier to track the state of the command. For example, 'b10bb1a0-0afd-11ec-a08f-1b3182194747'.")
             @PathVariable("requestId") Integer requestId,
-            @RequestBody String json, HttpServletRequest request) {
+            @ApiParam(value = KEY_VALUE_FORMAT_DESCRIPTION)
+            @RequestBody String json,
+            HttpServletRequest request) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
@@ -334,11 +500,14 @@ public class DeviceApiController implements TbTransportService {
         return responseWriter;
     }
 
+    @ApiOperation(value = "Post RPC request",
+            notes = POST_RPC_REQUEST,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @RequestMapping(value = "/{deviceToken}/rpc", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> postRpcRequest(
-            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION, example = "iDr0uA1uIRRzd32xGrkG")
+            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION)
             @PathVariable("deviceToken") String deviceToken,
-            @ApiParam(value = KEY_VALUE_FORMAT_DESCRIPTION, example = "")
+            @ApiParam(value = KEY_VALUE_FORMAT_DESCRIPTION)
             @RequestBody String json,
             HttpServletRequest httpRequest) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
@@ -358,7 +527,7 @@ public class DeviceApiController implements TbTransportService {
     }
 
     @ApiOperation(value = "Subscribe to attribute",
-            notes = "Is created a subscription to shared device attribute changes based on device token and timeout parameters," +
+            notes = "Is created a subscription to shared device attributes changes based on device token and timeout parameters," +
                     "the last one is optional. Once shared attribute will be changed by one of the server-side components " +
                     "(REST API or Rule Chain) the client will receive the following update:" +
                     "\n\n" + MARKDOWN_CODE_BLOCK_START +
@@ -366,13 +535,13 @@ public class DeviceApiController implements TbTransportService {
                     "    \"pulse\": 0.995\n" +
                     "  }\n" +
                     MARKDOWN_CODE_BLOCK_END + "\n\n" +
-                    "In this example, initial value of pulse was 0.999, but then it changed, so the subscribed users can get this changing."
-            ,
+                    "In this example, initial pulse value was 0.999, but then it changed, so the subscribed users can get this changing.",
             produces = MediaType.APPLICATION_JSON_VALUE)
     @RequestMapping(value = "/{deviceToken}/attributes/updates", method = RequestMethod.GET, produces = "application/json")
     public DeferredResult<ResponseEntity> subscribeToAttributes(
-            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION, example = "iDr0uA1uIRRzd32xGrkG")
+            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION)
             @PathVariable("deviceToken") String deviceToken,
+            @ApiParam(value = TIMEOUT_DESCRIPTION)
             @RequestParam(value = "timeout", required = false, defaultValue = "0") long timeout,
             HttpServletRequest httpRequest) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
@@ -389,30 +558,78 @@ public class DeviceApiController implements TbTransportService {
         return responseWriter;
     }
 
+    @ApiOperation(value = "Get Firmware",
+            notes = "See the corresponding article to get more information about the [Firmware](https://thingsboard.io/docs/user-guide/ota-updates/?remoteintegrationdockerinstall=http#overview)." +
+                    "\n\nWhen the Platform initiates the firmware update over HTTP it sets the 'fw_title', 'fw_version', 'fw_checksum', " +
+                    "'fw_checksum_algorithm' shared attributes. To receive the shared attribute updates, the device has to Get Firmware API call." +
+                    "\n\n If all parameters except title and deviceToken are omitted - returns Error 400. " +
+                    "\n\n To get the correct result first of all you should create [OTA](https://thingsboard.io/docs/user-guide/ota-updates/?remoteintegrationdockerinstall=http#provision-ota-package-to-thingsboard-repository). " +
+                    "Use '/api/otaPackage' and '/api/otaPackage/{otaPackageId}{?checksum,checksumAlgorithm}' API calls from ota-package-controller for this." +
+                    "For the example below was created OTA package and added to the device. So now, device has next shared attributes: " +
+                    "\n\n**fw_title** - temperature-prod" +
+                    "\n\n**fw_version** - 1.1" +
+                    "\n\n**fw_tag** - temperature-prod 1.1" +
+                    "\n\n**fw_size** - 2421" +
+                    "\n\n**fw_checksum** - 679aa02f936d331d8724f38f98c90fcdca00f88dc854bf9b5408ad3939c53c13" +
+                    "\n\n**fw_checksum_algorithm** - SHA256" +
+                    "\n\n If title, version, size and chunk parameters are correct, then response body returns **\"Download firmware?title=temperature-prod&version=1.1&size=2421&chunk=679aa02f936d331d8724f38f98c90fcdca00f88dc854bf9b5408ad3939c53c13\"**." +
+                    "When click on this link, uploaded file of required firmware will be downloaded.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @RequestMapping(value = "/{deviceToken}/firmware", method = RequestMethod.GET)
     public DeferredResult<ResponseEntity> getFirmware(
-            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION, example = "iDr0uA1uIRRzd32xGrkG")
+            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION)
             @PathVariable("deviceToken") String deviceToken,
+            @ApiParam(value = "A string value representing the firmware title. For example, 'temperature-prod'")
             @RequestParam(value = "title") String title,
+            @ApiParam(value = "A string value representing the version of the target firmware. For example, '1.1'")
             @RequestParam(value = "version") String version,
+            @ApiParam(value = "An int value representing the size of the firmware file in bytes. For example, '2421'")
             @RequestParam(value = "size", required = false, defaultValue = "0") int size,
+            @ApiParam(value = "An int  value representing the attribute that is used to verify integrity of the received file. For example, '679aa02f936d331d8724f38f98c90fcdca00f88dc854bf9b5408ad3939c53c13'")
             @RequestParam(value = "chunk", required = false, defaultValue = "0") int chunk) {
         return getOtaPackageCallback(deviceToken, title, version, size, chunk, OtaPackageType.FIRMWARE);
     }
 
+    @ApiOperation(value = "Get Software",
+            notes = "See the corresponding article to get more information about the [Software](https://thingsboard.io/docs/user-guide/ota-updates/?remoteintegrationdockerinstall=http#overview)." +
+                    "\n\nWhen the Platform initiates the software update over HTTP it sets the 'sw_title', 'sw_version', 'sw_checksum', " +
+                    "'sw_checksum_algorithm' shared attributes. To receive the shared attribute updates, the device has to Get Software API call." +
+                    "\n\n If all parameters except title and deviceToken are omitted - returns Error 400. " +
+                    "\n\n To get the correct result first of all you should create [OTA](https://thingsboard.io/docs/user-guide/ota-updates/?remoteintegrationdockerinstall=http#provision-ota-package-to-thingsboard-repository). " +
+                    "Use '/api/otaPackage' and '/api/otaPackage/{otaPackageId}{?checksum,checksumAlgorithm}' API calls from ota-package-controller for this." +
+                    "For the example below was created OTA package and added to the device. So now, device has next shared attributes: " +
+                    "\n\n**sw_title** - temp-prod" +
+                    "\n\n**sw_version** - 1.2" +
+                    "\n\n**sw_tag** - temp-prod 1.2" +
+                    "\n\n**sw_size** - 3069" +
+                    "\n\n**sw_checksum** - 679aa02f936d331d8724f38f98c90fcdca00f88dc854bf9b5408ad3939c53c13" +
+                    "\n\n**sw_checksum_algorithm** - SHA256" +
+                    "\n\n If title, version, size and chunk parameters are correct, then response body returns **\"Download software?title=temp-prod&version=1.2&size=3069&chunk=679aa02f936d331d8724f38f98c90fcdca00f88dc854bf9b5408ad3939c53c13\"**." +
+                    "When click on this link, uploaded file of required firmware will be downloaded.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @RequestMapping(value = "/{deviceToken}/software", method = RequestMethod.GET)
     public DeferredResult<ResponseEntity> getSoftware(
-            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION, example = "iDr0uA1uIRRzd32xGrkG")
+            @ApiParam(value = ACCESS_TOKEN_DESCRIPTION)
             @PathVariable("deviceToken") String deviceToken,
+            @ApiParam(value = "A string value representing the software title. For example, 'temperature-prod'")
             @RequestParam(value = "title") String title,
+            @ApiParam(value = "A string value representing the version of the target software. For example, '1.1'")
             @RequestParam(value = "version") String version,
+            @ApiParam(value = "An int value representing the size of the software file in bytes. For example, '2421'")
             @RequestParam(value = "size", required = false, defaultValue = "0") int size,
+            @ApiParam(value = "An int  value representing the attribute that is used to verify integrity of the received file. For example, '679aa02f936d331d8724f38f98c90fcdca00f88dc854bf9b5408ad3939c53c13'")
             @RequestParam(value = "chunk", required = false, defaultValue = "0") int chunk) {
         return getOtaPackageCallback(deviceToken, title, version, size, chunk, OtaPackageType.SOFTWARE);
     }
 
+    @ApiOperation(value = "Provision device",
+            notes = PROVISION_DEVICE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @RequestMapping(value = "/provision", method = RequestMethod.POST)
-    public DeferredResult<ResponseEntity> provisionDevice(@RequestBody String json, HttpServletRequest httpRequest) {
+    public DeferredResult<ResponseEntity> provisionDevice(
+            @ApiParam(value = KEY_VALUE_FORMAT_DESCRIPTION)
+            @RequestBody String json,
+            HttpServletRequest httpRequest) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
         transportContext.getTransportService().process(JsonConverter.convertToProvisionRequestMsg(json),
                 new DeviceProvisionCallback(responseWriter));
