@@ -165,7 +165,7 @@ public class TelemetryController extends BaseController {
             " ]\n" +
             MARKDOWN_CODE_BLOCK_END + "\n\n";
 
-    private static final String JSON_DEFAULT_EXAMPLE = "\n\n By default, the platform supports key-value content in " +
+    private static final String JSON_DEFAULT_EXAMPLE = "\n\n By default, the Platform supports key-value content in " +
             "JSON. Key is always a string, while value can be either string, boolean, double, long or JSON." +
             "\n\n For example:" +
             "\n\n" + MARKDOWN_CODE_BLOCK_START +
@@ -201,7 +201,7 @@ public class TelemetryController extends BaseController {
             "  },\n" +
             "  {\n" +
             "    \"lastUpdateTs\": 1634731715991,\n" +
-            "    \"key\": \"water-pulse\",\n" +
+            "    \"key\": \"water_pulse\",\n" +
             "    \"value\": 330.28000000000003\n" +
             "  },\n" +
             "  {\n" +
@@ -235,7 +235,7 @@ public class TelemetryController extends BaseController {
             "  },\n" +
             "  {\n" +
             "    \"lastUpdateTs\": 1634731715991,\n" +
-            "    \"key\": \"water-pulse\",\n" +
+            "    \"key\": \"water_pulse\",\n" +
             "    \"value\": 330.28000000000003\n" +
             "  },\n" +
             "  {\n" +
@@ -259,7 +259,7 @@ public class TelemetryController extends BaseController {
             "[\n" +
             "  {\n" +
             "    \"lastUpdateTs\": 1634731715991,\n" +
-            "    \"key\": \"water-pulse\",\n" +
+            "    \"key\": \"water_pulse\",\n" +
             "    \"value\": 330.28000000000003\n" +
             "  },\n" +
             "  {\n" +
@@ -283,7 +283,7 @@ public class TelemetryController extends BaseController {
             "  },\n" +
             "  {\n" +
             "    \"lastUpdateTs\": 1634731715991,\n" +
-            "    \"key\": \"water-pulse\",\n" +
+            "    \"key\": \"water_pulse\",\n" +
             "    \"value\": 330.28000000000003\n" +
             "  }\n" +
             "]\n" +
@@ -367,11 +367,11 @@ public class TelemetryController extends BaseController {
     private static final String SAVE_ATTIRIBUTES_STATUS_OK = "Attribute from the request was created or updated. ";
     private static final String INVALID_STRUCTURE_OF_THE_REQUEST = "Invalid structure of the request";
     private static final String SAVE_ATTIRIBUTES_STATUS_BAD_REQUEST = INVALID_STRUCTURE_OF_THE_REQUEST + " or invalid attributes scope provided.";
-    private static final String SAVE_ENTITY_ATTRIBUTES_STATUS_OK = "Platform creates an audit log event about entity attributes updates with action type **'ATTRIBUTES_UPDATED'**, " +
+    private static final String SAVE_ENTITY_ATTRIBUTES_STATUS_OK = "The Platform creates an audit log event about entity attributes updates with action type **'ATTRIBUTES_UPDATED'**, " +
             "and also sends event msg to the rule engine with msg type **'ATTRIBUTES_UPDATED'**.";
     private static final String SAVE_ENTITY_ATTRIBUTES_STATUS_UNAUTHORIZED = "User is not authorized to save entity attributes for selected entity. Most likely, User belongs to different Customer or Tenant.";
     private static final String SAVE_ENTITY_ATTRIBUTES_STATUS_INTERNAL_SERVER_ERROR = "The exception was thrown during processing the request. " +
-            "Platform creates an audit log event about entity attributes updates with action type **'ATTRIBUTES_UPDATED'** that includes an error stacktrace.";
+            "The Platform creates an audit log event about entity attributes updates with action type **'ATTRIBUTES_UPDATED'** that includes an error stacktrace.";
     private static final String SAVE_ENTITY_TIMESERIES_DESCRIPTION = "Creates or updates the entity timeseries based on entity id, entity type " +
             "and request payload that represents a JSON object with key-value or ts-values format." + JSON_TELEMETRY_EXAMPLE +
             "\n\n or " + JSON_TELEMETRY_EXAMPLE_WITH_TIMESTAMP +
@@ -379,10 +379,10 @@ public class TelemetryController extends BaseController {
             JSON_ARRAY_TELEMETRY_EXAMPLE_WITH_TIMESTAMP +
             "The scope parameter is not used in the API call implementation but should be specified whatever value because it is used as a path variable. ";
     private static final String SAVE_ENTITY_TIMESERIES_STATUS_OK = "Timeseries from the request was created or updated. " +
-            "Platform creates an audit log event about entity timeseries updates with action type 'TIMESERIES_UPDATED'.";
+            "The Platform creates an audit log event about entity timeseries updates with action type 'TIMESERIES_UPDATED'.";
     private static final String SAVE_ENTITY_TIMESERIES_STATUS_UNAUTHORIZED = "User is not authorized to save entity timeseries for selected entity. Most likely, User belongs to different Customer or Tenant.";
     private static final String SAVE_ENTITY_TIMESERIES_STATUS_INTERNAL_SERVER_ERROR = "The exception was thrown during processing the request. " +
-            "Platform creates an audit log event about entity timeseries updates with action type 'TIMESERIES_UPDATED' that includes an error stacktrace.";
+            "The Platform creates an audit log event about entity timeseries updates with action type 'TIMESERIES_UPDATED' that includes an error stacktrace.";
 
     @Autowired
     private TimeseriesService tsService;
@@ -462,9 +462,9 @@ public class TelemetryController extends BaseController {
     @ApiOperation(value = "Get attributes (getAttributes)",
             notes = GET_ALL_ATTRIBUTES_BASE_DESCRIPTION + " If 'keys' parameter is omitted, AttributeData class objects will be added to the response for all existing keys of the selected entity. " +
                     INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION +
-                    "\n\n# Let`s see some response examples: \n\n" +
-                    "\n\n##Example when keys are not given " + JSON_GET_ALL_ATTRIBUTES_EXAMPLE +
-                    "\n\n##Example when keys are given **'real_time,pulse'** where  'real_time' is server attribute and 'pulse' is shared attribute." + JSON_GET_ATTRIBUTES_BY_KEY_AND_DIFF_SCOPE_EXAMPLE,
+                    "\n\n## Let`s see some response examples: \n\n" +
+                    "\n\nExample when keys are not given " + JSON_GET_ALL_ATTRIBUTES_EXAMPLE +
+                    "\n\nExample when keys are given **'real_time,pulse'** where  'real_time' is server attribute and 'pulse' is shared attribute." + JSON_GET_ATTRIBUTES_BY_KEY_AND_DIFF_SCOPE_EXAMPLE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/values/attributes", method = RequestMethod.GET)
@@ -483,10 +483,10 @@ public class TelemetryController extends BaseController {
                     "AttributeData class objects will be added to the response for all existing attribute keys from the " +
                     "specified attributes scope of the selected entity. If 'scope' parameter is omitted, " +
                     "Get attributes (getAttributes) API will be called. " + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION +
-                    "\n\n# Let`s see some response examples: \n\n" +
-                    "\n\n##Example when keys and scope are not given " + JSON_GET_ALL_ATTRIBUTES_EXAMPLE +
-                    "\n\n##Example when keys are not given and selected server scope" + JSON_GET_ALL_ATTRIBUTES_BY_SCOPE_EXAMPLE +
-                    "\n\n##Example when keys are given **'water-pulse,location'** and " + JSON_GET_ALL_ATTRIBUTES_BY_SCOPE_AND_KEYS_EXAMPLE,
+                    "\n\n## Let`s see some response examples: \n\n" +
+                    "\n\nExample when keys and scope are not given " + JSON_GET_ALL_ATTRIBUTES_EXAMPLE +
+                    "\n\nExample when keys are not given and selected server scope" + JSON_GET_ALL_ATTRIBUTES_BY_SCOPE_EXAMPLE +
+                    "\n\nExample when keys are given **'water_pulse,location'** and " + JSON_GET_ALL_ATTRIBUTES_BY_SCOPE_AND_KEYS_EXAMPLE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/values/attributes/{scope}", method = RequestMethod.GET)
@@ -526,9 +526,9 @@ public class TelemetryController extends BaseController {
     @ApiOperation(value = "Get latest timeseries (getLatestTimeseries)",
             notes = "Returns a JSON structure that represents a Map, where the map key is a telemetry key name " +
                     "and map value - is a singleton list of TsData class objects. " + TS_DATA_CLASS_DESCRIPTION + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION +
-                    "\n\n# Let`s see some response examples: \n\n" +
-                    "\n\n##Example when keys are not given " + JSON_GET_ALL_TIMESERIES_EXAMPLE +
-                    "\n\n##Example when keys are given 'temperature,frequency'" + JSON_GET_ALL_TIMESERIES_BY_KEYS_EXAMPLE,
+                    "\n\n## Let`s see some response examples: \n\n" +
+                    "\n\nExample when keys are not given " + JSON_GET_ALL_TIMESERIES_EXAMPLE +
+                    "\n\nExample when keys are given 'temperature,frequency'" + JSON_GET_ALL_TIMESERIES_BY_KEYS_EXAMPLE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/values/timeseries", method = RequestMethod.GET)
@@ -592,16 +592,16 @@ public class TelemetryController extends BaseController {
                     "and request payload that represents a JSON object with key-value format of attributes to create or update. " +
                     "**Key** is a unique parameter and cannot be overwritten. Only value can be overwritten for the key." +
                     JSON_ATTRIBUTE_EXAMPLE +
-                    "\nWhen creating device attributes, platform generates attribute id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address).",
+                    "\nWhen creating device attributes, the Platform generates attribute id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address).",
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = SAVE_ATTIRIBUTES_STATUS_OK +
-                    "Platform creates an audit log event about device attributes updates with action type **'ATTRIBUTES_UPDATED'**, " +
+                    "The Platform creates an audit log event about device attributes updates with action type **'ATTRIBUTES_UPDATED'**, " +
                     "and also sends event msg to the rule engine with msg type **'ATTRIBUTES_UPDATED'**."),
             @ApiResponse(code = 400, message = SAVE_ATTIRIBUTES_STATUS_BAD_REQUEST),
             @ApiResponse(code = 401, message = "User is not authorized to save device attributes for selected device. Most likely, User belongs to different Customer or Tenant."),
             @ApiResponse(code = 500, message = "The exception was thrown during processing the request. " +
-                    "Platform creates an audit log event about device attributes updates with action type **'ATTRIBUTES_UPDATED'** that includes an error stacktrace."),
+                    "The Platform creates an audit log event about device attributes updates with action type **'ATTRIBUTES_UPDATED'** that includes an error stacktrace."),
     })
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{deviceId}/{scope}", method = RequestMethod.POST)
@@ -616,7 +616,7 @@ public class TelemetryController extends BaseController {
 
     @ApiOperation(value = "Save or update attributes (saveEntityAttributesV1)",
             notes = SAVE_ENTITY_ATTRIBUTES_DESCRIPTION + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION +
-                    "\nWhen creating entity attributes, platform generates attribute id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address).",
+                    "\nWhen creating entity attributes, the Platform generates attribute id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address).",
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = SAVE_ATTIRIBUTES_STATUS_OK + SAVE_ENTITY_ATTRIBUTES_STATUS_OK),
@@ -638,7 +638,7 @@ public class TelemetryController extends BaseController {
 
     @ApiOperation(value = "Save or update attributes (saveEntityAttributesV2)",
             notes = SAVE_ENTITY_ATTRIBUTES_DESCRIPTION + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION +
-                    "\nWhen creating entity attributes, platform generates attribute id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address).",
+                    "\nWhen creating entity attributes, the Platform generates attribute id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address).",
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = SAVE_ATTIRIBUTES_STATUS_OK + SAVE_ENTITY_ATTRIBUTES_STATUS_OK),
@@ -660,7 +660,7 @@ public class TelemetryController extends BaseController {
 
     @ApiOperation(value = "Save or update telemetry (saveEntityTelemetry)",
             notes = SAVE_ENTITY_TIMESERIES_DESCRIPTION + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION +
-                    "\nWhen creating entity telemetry, platform generates telemetry id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address).",
+                    "\nWhen creating entity telemetry, the Platform generates telemetry id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address).",
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = SAVE_ENTITY_TIMESERIES_STATUS_OK),
@@ -682,7 +682,7 @@ public class TelemetryController extends BaseController {
 
     @ApiOperation(value = "Save or update telemetry with TTL (saveEntityTelemetryWithTTL)",
             notes = SAVE_ENTITY_TIMESERIES_DESCRIPTION + "The ttl parameter used only in case of Cassandra DB use for timeseries data storage. " + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION +
-                    "\nWhen creating entity telemetry, platform generates telemetry id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address).",
+                    "\nWhen creating entity telemetry, the Platform generates telemetry id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address).",
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = SAVE_ENTITY_TIMESERIES_STATUS_OK),
@@ -710,11 +710,11 @@ public class TelemetryController extends BaseController {
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Timeseries for the selected keys in the request was removed. " +
-                    "Platform creates an audit log event about entity timeseries removal with action type **'TIMESERIES_DELETED'**."),
-            @ApiResponse(code = 400, message = "Platform returns a bad request in case if keys list is empty or start and end timestamp values is empty when deleteAllDataForKeys is set to false."),
+                    "The Platform creates an audit log event about entity timeseries removal with action type **'TIMESERIES_DELETED'**."),
+            @ApiResponse(code = 400, message = "The Platform returns a bad request in case if keys list is empty or start and end timestamp values is empty when deleteAllDataForKeys is set to false."),
             @ApiResponse(code = 401, message = "User is not authorized to delete entity timeseries for selected entity. Most likely, User belongs to different Customer or Tenant."),
             @ApiResponse(code = 500, message = "The exception was thrown during processing the request. " +
-                    "Platform creates an audit log event about entity timeseries removal with action type **'TIMESERIES_DELETED'** that includes an error stacktrace."),
+                    "The Platform creates an audit log event about entity timeseries removal with action type **'TIMESERIES_DELETED'** that includes an error stacktrace."),
     })
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/timeseries/delete", method = RequestMethod.DELETE)
@@ -785,11 +785,11 @@ public class TelemetryController extends BaseController {
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Device attributes was removed for the selected keys in the request. " +
-                    "Platform creates an audit log event about device attributes removal with action type **'ATTRIBUTES_DELETED'**."),
-            @ApiResponse(code = 400, message = "Platform returns a bad request in case if keys or scope are not specified."),
+                    "The Platform creates an audit log event about device attributes removal with action type **'ATTRIBUTES_DELETED'**."),
+            @ApiResponse(code = 400, message = "The Platform returns a bad request in case if keys or scope are not specified."),
             @ApiResponse(code = 401, message = "User is not authorized to delete device attributes for selected entity. Most likely, User belongs to different Customer or Tenant."),
             @ApiResponse(code = 500, message = "The exception was thrown during processing the request. " +
-                    "Platform creates an audit log event about device attributes removal with action type **'ATTRIBUTES_DELETED'** that includes an error stacktrace."),
+                    "The Platform creates an audit log event about device attributes removal with action type **'ATTRIBUTES_DELETED'** that includes an error stacktrace."),
     })
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{deviceId}/{scope}", method = RequestMethod.DELETE)
@@ -808,11 +808,11 @@ public class TelemetryController extends BaseController {
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Entity attributes was removed for the selected keys in the request. " +
-                    "Platform creates an audit log event about entity attributes removal with action type 'ATTRIBUTES_DELETED'."),
-            @ApiResponse(code = 400, message = "Platform returns a bad request in case if keys or scope are not specified."),
+                    "The Platform creates an audit log event about entity attributes removal with action type 'ATTRIBUTES_DELETED'."),
+            @ApiResponse(code = 400, message = "The Platform returns a bad request in case if keys or scope are not specified."),
             @ApiResponse(code = 401, message = "User is not authorized to delete entity attributes for selected entity. Most likely, User belongs to different Customer or Tenant."),
             @ApiResponse(code = 500, message = "The exception was thrown during processing the request. " +
-                    "Platform creates an audit log event about entity attributes removal with action type 'ATTRIBUTES_DELETED' that includes an error stacktrace."),
+                    "The Platform creates an audit log event about entity attributes removal with action type 'ATTRIBUTES_DELETED' that includes an error stacktrace."),
     })
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/{scope}", method = RequestMethod.DELETE)
