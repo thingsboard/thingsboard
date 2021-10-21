@@ -5,7 +5,7 @@
 
 *function (data, dsData, dsIndex): string*
 
-A JavaScript function used to compute text or HTML code to be displayed in the marker tooltip.
+A JavaScript function used to compute text or HTML code to be displayed in the marker, point or polygon tooltip.
 
 **Parameters:**
 
@@ -15,7 +15,7 @@ A JavaScript function used to compute text or HTML code to be displayed in the m
 
 **Returns:**
 
-Should return string value presenting text or HTML for the marker tooltip.
+Should return string value presenting text or HTML for the tooltip.
 
 <div class="divider"></div>
 

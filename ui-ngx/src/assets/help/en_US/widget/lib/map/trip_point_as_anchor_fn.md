@@ -10,7 +10,7 @@ A JavaScript function evaluating whether to use trip point as time anchor used i
 **Parameters:**
 
 <ul>
-  {% include widget/lib/map/trip_fn_args %}
+  {% include widget/lib/map/map_fn_args %}
 </ul>
 
 **Returns:**

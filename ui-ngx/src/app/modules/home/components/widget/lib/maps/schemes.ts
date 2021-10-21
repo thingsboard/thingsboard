@@ -866,7 +866,7 @@ export const pathSchema =
         'useColorFunction',
         {
             key: 'colorFunction',
-            helpId: 'widget/lib/map/trip_path_color_fn',
+            helpId: 'widget/lib/map/path_color_fn',
             type: 'javascript',
             condition: 'model.useColorFunction === true'
         },
@@ -961,7 +961,7 @@ export const pointSchema =
         'useColorPointFunction',
         {
           key: 'colorPointFunction',
-          helpId: 'widget/lib/map/trip_path_point_color_fn',
+          helpId: 'widget/lib/map/path_point_color_fn',
           type: 'javascript',
           condition: 'model.useColorPointFunction === true'
         },
@@ -1150,7 +1150,7 @@ export const tripAnimationSchema = {
       {
         key: 'labelFunction',
         type: 'javascript',
-        helpId: 'widget/lib/map/trip_label_fn',
+        helpId: 'widget/lib/map/label_fn',
         condition: 'model.showLabel === true && model.useLabelFunction === true'
       },
       'showTooltip',
@@ -1184,7 +1184,7 @@ export const tripAnimationSchema = {
       {
         key: 'tooltipFunction',
         type: 'javascript',
-        helpId: 'widget/lib/map/trip_tooltip_fn',
+        helpId: 'widget/lib/map/tooltip_fn',
         condition: 'model.showTooltip === true && model.useTooltipFunction === true'
       },
       'rotationAngle',
@@ -1201,7 +1201,7 @@ export const tripAnimationSchema = {
       {
         key: 'markerImageFunction',
         type: 'javascript',
-        helpId: 'widget/lib/map/trip_marker_image_fn',
+        helpId: 'widget/lib/map/marker_image_fn',
         condition: 'model.useMarkerImageFunction === true'
       },
       {
