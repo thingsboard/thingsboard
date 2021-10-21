@@ -894,7 +894,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           };
         }
       } else if (this.widgetType !== widgetType.static && this.modelValue.isDataEnabled) {
-        if (!config.datasources || !config.datasources.length) {
+        if (!this.modelValue.typeParameters.datasourcesOptional && (!config.datasources || !config.datasources.length)) {
           return {
             datasources: {
               valid: false

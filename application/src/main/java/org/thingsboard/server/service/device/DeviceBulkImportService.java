@@ -113,8 +113,10 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
         DeviceProfile deviceProfile;
         if (deviceCredentials.getCredentialsType() == DeviceCredentialsType.LWM2M_CREDENTIALS) {
             deviceProfile = setUpLwM2mDeviceProfile(user.getTenantId(), device);
-        } else {
+        } else if (StringUtils.isNotEmpty(device.getType())) {
             deviceProfile = deviceProfileService.findOrCreateDeviceProfile(user.getTenantId(), device.getType());
+        } else {
+            deviceProfile = deviceProfileService.findDefaultDeviceProfile(user.getTenantId());
         }
         device.setDeviceProfileId(deviceProfile.getId());
 
