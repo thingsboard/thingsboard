@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.google.common.util.concurrent.FutureCallback;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -45,7 +46,9 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.rpc.RemoveRpcActorMsg;
 import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.telemetry.exception.ToErrorResponseEntity;
 
+import javax.annotation.Nullable;
 import java.util.UUID;
 
 import static org.thingsboard.server.common.data.DataConstants.RPC_DELETED;
@@ -151,7 +154,7 @@ public class RpcV2Controller extends AbstractRpcController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/persistent/device/{deviceId}", method = RequestMethod.GET)
     @ResponseBody
-    public PageData<Rpc> getPersistedRpcByDevice(
+    public DeferredResult<ResponseEntity> getPersistedRpcByDevice(
             @ApiParam(value = DEVICE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(DEVICE_ID) String strDeviceId,
             @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
@@ -171,7 +174,26 @@ public class RpcV2Controller extends AbstractRpcController {
             TenantId tenantId = getCurrentUser().getTenantId();
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             DeviceId deviceId = new DeviceId(UUID.fromString(strDeviceId));
-            return checkNotNull(rpcService.findAllByDeviceIdAndStatus(tenantId, deviceId, rpcStatus, pageLink));
+            final DeferredResult<ResponseEntity> response = new DeferredResult<>();
+            accessValidator.validate(getCurrentUser(), Operation.RPC_CALL, deviceId, new HttpValidationCallback(response, new FutureCallback<>() {
+                @Override
+                public void onSuccess(@Nullable DeferredResult<ResponseEntity> result) {
+                    PageData<Rpc> rpcCalls = rpcService.findAllByDeviceIdAndStatus(tenantId, deviceId, rpcStatus, pageLink);
+                    response.setResult(new ResponseEntity<>(rpcCalls, HttpStatus.OK));
+                }
+
+                @Override
+                public void onFailure(Throwable e) {
+                    ResponseEntity entity;
+                    if (e instanceof ToErrorResponseEntity) {
+                        entity = ((ToErrorResponseEntity) e).toErrorResponseEntity();
+                    } else {
+                        entity = new ResponseEntity(HttpStatus.UNAUTHORIZED);
+                    }
+                    response.setResult(entity);
+                }
+            }));
+            return response;
         } catch (Exception e) {
             throw handleException(e);
         }
