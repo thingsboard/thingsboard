@@ -45,7 +45,7 @@ import org.thingsboard.server.service.query.EntityQueryService;
 public class EntityQueryController extends BaseController {
 
     private static final String SINGLE_ENTITY = "\n\n## Single Entity\n\n" +
-            "Allows to filter only one entity based on the id. For example, this entity filter selects certain device:\n\n"+
+            "Allows to filter only one entity based on the id. For example, this entity filter selects certain device:\n\n" +
             MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "  \"type\": \"singleEntity\",\n" +
@@ -53,12 +53,12 @@ public class EntityQueryController extends BaseController {
             "    \"id\": \"d521edb0-2a7a-11ec-94eb-213c95f54092\",\n" +
             "    \"entityType\": \"DEVICE\"\n" +
             "  }\n" +
-            "}"+
+            "}" +
             MARKDOWN_CODE_BLOCK_END +
             "";
 
     private static final String ENTITY_LIST = "\n\n## Entity List Filter\n\n" +
-            "Allows to filter entities of the same type using their ids. For example, this entity filter selects two devices:\n\n"+
+            "Allows to filter entities of the same type using their ids. For example, this entity filter selects two devices:\n\n" +
             MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "  \"type\": \"entityList\",\n" +
@@ -67,84 +67,84 @@ public class EntityQueryController extends BaseController {
             "    \"e6501f30-2a7a-11ec-94eb-213c95f54092\",\n" +
             "    \"e6657bf0-2a7a-11ec-94eb-213c95f54092\"\n" +
             "  ]\n" +
-            "}"+
+            "}" +
             MARKDOWN_CODE_BLOCK_END +
             "";
 
     private static final String ENTITY_NAME = "\n\n## Entity Name Filter\n\n" +
             "Allows to filter entities of the same type using the **'starts with'** expression over entity name. " +
-            "For example, this entity filter selects all devices which name starts with 'Air Quality':\n\n"+
+            "For example, this entity filter selects all devices which name starts with 'Air Quality':\n\n" +
             MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "  \"type\": \"entityName\",\n" +
             "  \"entityType\": \"DEVICE\",\n" +
             "  \"entityNameFilter\": \"Air Quality\"\n" +
-            "}"+
+            "}" +
             MARKDOWN_CODE_BLOCK_END +
             "";
 
     private static final String ENTITY_TYPE = "\n\n## Entity Type Filter\n\n" +
             "Allows to filter entities based on their type (CUSTOMER, USER, DASHBOARD, ASSET, DEVICE, etc)" +
-            "For example, this entity filter selects all tenant customers:\n\n"+
+            "For example, this entity filter selects all tenant customers:\n\n" +
             MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "  \"type\": \"entityType\",\n" +
             "  \"entityType\": \"CUSTOMER\"\n" +
-            "}"+
+            "}" +
             MARKDOWN_CODE_BLOCK_END +
             "";
 
     private static final String ASSET_TYPE = "\n\n## Asset Type Filter\n\n" +
             "Allows to filter assets based on their type and the **'starts with'** expression over their name. " +
-            "For example, this entity filter selects all 'charging station' assets which name starts with 'Tesla':\n\n"+
+            "For example, this entity filter selects all 'charging station' assets which name starts with 'Tesla':\n\n" +
             MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "  \"type\": \"assetType\",\n" +
             "  \"assetType\": \"charging station\",\n" +
             "  \"assetNameFilter\": \"Tesla\"\n" +
-            "}"+
+            "}" +
             MARKDOWN_CODE_BLOCK_END +
             "";
 
     private static final String DEVICE_TYPE = "\n\n## Device Type Filter\n\n" +
             "Allows to filter devices based on their type and the **'starts with'** expression over their name. " +
-            "For example, this entity filter selects all 'Temperature Sensor' devices which name starts with 'ABC':\n\n"+
+            "For example, this entity filter selects all 'Temperature Sensor' devices which name starts with 'ABC':\n\n" +
             MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "  \"type\": \"deviceType\",\n" +
             "  \"deviceType\": \"Temperature Sensor\",\n" +
             "  \"deviceNameFilter\": \"ABC\"\n" +
-            "}"+
+            "}" +
             MARKDOWN_CODE_BLOCK_END +
             "";
 
     private static final String EDGE_TYPE = "\n\n## Edge Type Filter\n\n" +
             "Allows to filter edge instances based on their type and the **'starts with'** expression over their name. " +
-            "For example, this entity filter selects all 'Factory' edge instances which name starts with 'Nevada':\n\n"+
+            "For example, this entity filter selects all 'Factory' edge instances which name starts with 'Nevada':\n\n" +
             MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "  \"type\": \"edgeType\",\n" +
             "  \"edgeType\": \"Factory\",\n" +
             "  \"edgeNameFilter\": \"Nevada\"\n" +
-            "}"+
+            "}" +
             MARKDOWN_CODE_BLOCK_END +
             "";
 
     private static final String ENTITY_VIEW_TYPE = "\n\n## Entity View Filter\n\n" +
             "Allows to filter entity views based on their type and the **'starts with'** expression over their name. " +
-            "For example, this entity filter selects all 'Concrete Mixer' entity views which name starts with 'CAT':\n\n"+
+            "For example, this entity filter selects all 'Concrete Mixer' entity views which name starts with 'CAT':\n\n" +
             MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "  \"type\": \"entityViewType\",\n" +
             "  \"entityViewType\": \"Concrete Mixer\",\n" +
             "  \"entityViewNameFilter\": \"CAT\"\n" +
-            "}"+
+            "}" +
             MARKDOWN_CODE_BLOCK_END +
             "";
 
     private static final String API_USAGE = "\n\n## Api Usage Filter\n\n" +
             "Allows to query for Api Usage based on optional customer id. If the customer id is not set, returns current tenant API usage." +
-            "For example, this entity filter selects the 'Api Usage' entity for customer with id 'e6501f30-2a7a-11ec-94eb-213c95f54092':\n\n"+
+            "For example, this entity filter selects the 'Api Usage' entity for customer with id 'e6501f30-2a7a-11ec-94eb-213c95f54092':\n\n" +
             MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "  \"type\": \"apiUsageState\",\n" +
@@ -152,7 +152,7 @@ public class EntityQueryController extends BaseController {
             "    \"id\": \"d521edb0-2a7a-11ec-94eb-213c95f54092\",\n" +
             "    \"entityType\": \"CUSTOMER\"\n" +
             "  }\n" +
-            "}"+
+            "}" +
             MARKDOWN_CODE_BLOCK_END +
             "";
 
@@ -165,7 +165,7 @@ public class EntityQueryController extends BaseController {
             FETCH_LAST_LEVEL_ONLY_DESCRIPTION +
             "The 'filter' object allows you to define the relation type and set of acceptable entity types to search for. " +
             "The relation query calculates all related entities, even if they are filtered using different relation types, and then extracts only those who match the 'filters'.\n\n" +
-            "For example, this entity filter selects all devices and assets which are related to the asset with id 'e51de0c0-2a7a-11ec-94eb-213c95f54092':\n\n"+
+            "For example, this entity filter selects all devices and assets which are related to the asset with id 'e51de0c0-2a7a-11ec-94eb-213c95f54092':\n\n" +
             MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "  \"type\": \"relationsQuery\",\n" +
@@ -185,7 +185,7 @@ public class EntityQueryController extends BaseController {
             "      ]\n" +
             "    }\n" +
             "  ]\n" +
-            "}"+
+            "}" +
             MARKDOWN_CODE_BLOCK_END +
             "";
 
@@ -197,7 +197,7 @@ public class EntityQueryController extends BaseController {
             "The 'relationType' defines the type of the relation to search for. " +
             "The 'assetTypes' defines the type of the asset to search for. " +
             "The relation query calculates all related entities, even if they are filtered using different relation types, and then extracts only assets that match 'relationType' and 'assetTypes' conditions.\n\n" +
-            "For example, this entity filter selects 'charging station' assets which are related to the asset with id 'e51de0c0-2a7a-11ec-94eb-213c95f54092' using 'Contains' relation:\n\n"+
+            "For example, this entity filter selects 'charging station' assets which are related to the asset with id 'e51de0c0-2a7a-11ec-94eb-213c95f54092' using 'Contains' relation:\n\n" +
             MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "  \"type\": \"assetSearchQuery\",\n" +
@@ -212,7 +212,7 @@ public class EntityQueryController extends BaseController {
             "  \"assetTypes\": [\n" +
             "    \"charging station\"\n" +
             "  ]\n" +
-            "}"+
+            "}" +
             MARKDOWN_CODE_BLOCK_END +
             "";
 
@@ -223,7 +223,7 @@ public class EntityQueryController extends BaseController {
             "The 'relationType' defines the type of the relation to search for. " +
             "The 'deviceTypes' defines the type of the device to search for. " +
             "The relation query calculates all related entities, even if they are filtered using different relation types, and then extracts only devices that match 'relationType' and 'deviceTypes' conditions.\n\n" +
-            "For example, this entity filter selects 'Charging port' and 'Air Quality Sensor' devices which are related to the asset with id 'e52b0020-2a7a-11ec-94eb-213c95f54092' using 'Contains' relation:\n\n"+
+            "For example, this entity filter selects 'Charging port' and 'Air Quality Sensor' devices which are related to the asset with id 'e52b0020-2a7a-11ec-94eb-213c95f54092' using 'Contains' relation:\n\n" +
             MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "  \"type\": \"deviceSearchQuery\",\n" +
@@ -239,7 +239,7 @@ public class EntityQueryController extends BaseController {
             "    \"Air Quality Sensor\",\n" +
             "    \"Charging port\"\n" +
             "  ]\n" +
-            "}"+
+            "}" +
             MARKDOWN_CODE_BLOCK_END +
             "";
 
@@ -250,7 +250,7 @@ public class EntityQueryController extends BaseController {
             "The 'relationType' defines the type of the relation to search for. " +
             "The 'entityViewTypes' defines the type of the entity view to search for. " +
             "The relation query calculates all related entities, even if they are filtered using different relation types, and then extracts only devices that match 'relationType' and 'deviceTypes' conditions.\n\n" +
-            "For example, this entity filter selects 'Concrete mixer' entity views which are related to the asset with id 'e52b0020-2a7a-11ec-94eb-213c95f54092' using 'Contains' relation:\n\n"+
+            "For example, this entity filter selects 'Concrete mixer' entity views which are related to the asset with id 'e52b0020-2a7a-11ec-94eb-213c95f54092' using 'Contains' relation:\n\n" +
             MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "  \"type\": \"entityViewSearchQuery\",\n" +
@@ -265,7 +265,7 @@ public class EntityQueryController extends BaseController {
             "  \"entityViewTypes\": [\n" +
             "    \"Concrete mixer\"\n" +
             "  ]\n" +
-            "}"+
+            "}" +
             MARKDOWN_CODE_BLOCK_END +
             "";
 
@@ -276,7 +276,7 @@ public class EntityQueryController extends BaseController {
             "The 'relationType' defines the type of the relation to search for. " +
             "The 'deviceTypes' defines the type of the device to search for. " +
             "The relation query calculates all related entities, even if they are filtered using different relation types, and then extracts only devices that match 'relationType' and 'deviceTypes' conditions.\n\n" +
-            "For example, this entity filter selects 'Factory' edge instances which are related to the asset with id 'e52b0020-2a7a-11ec-94eb-213c95f54092' using 'Contains' relation:\n\n"+
+            "For example, this entity filter selects 'Factory' edge instances which are related to the asset with id 'e52b0020-2a7a-11ec-94eb-213c95f54092' using 'Contains' relation:\n\n" +
             MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "  \"type\": \"deviceSearchQuery\",\n" +
@@ -291,27 +291,27 @@ public class EntityQueryController extends BaseController {
             "  \"edgeTypes\": [\n" +
             "    \"Factory\"\n" +
             "  ]\n" +
-            "}"+
+            "}" +
             MARKDOWN_CODE_BLOCK_END +
             "";
 
     private static final String EMPTY = "\n\n## Entity Type Filter\n\n" +
             "Allows to filter multiple entities of the same type using the **'starts with'** expression over entity name. " +
-            "For example, this entity filter selects all devices which name starts with 'Air Quality':\n\n"+
+            "For example, this entity filter selects all devices which name starts with 'Air Quality':\n\n" +
             MARKDOWN_CODE_BLOCK_START +
-            ""+
+            "" +
             MARKDOWN_CODE_BLOCK_END +
             "";
 
     private static final String ENTITY_FILTERS =
             "\n\n # Entity Filters" +
-            "\nEntity Filter body depends on the 'type' parameter. Let's review available entity filter types. In fact, they do correspond to available dashboard aliases." +
-            SINGLE_ENTITY + ENTITY_LIST + ENTITY_NAME + ENTITY_TYPE + ASSET_TYPE + DEVICE_TYPE + EDGE_TYPE + ENTITY_VIEW_TYPE + API_USAGE + RELATIONS_QUERY_FILTER
-            + ASSET_QUERY_FILTER + DEVICE_QUERY_FILTER + EV_QUERY_FILTER + EDGE_QUERY_FILTER;
+                    "\nEntity Filter body depends on the 'type' parameter. Let's review available entity filter types. In fact, they do correspond to available dashboard aliases." +
+                    SINGLE_ENTITY + ENTITY_LIST + ENTITY_NAME + ENTITY_TYPE + ASSET_TYPE + DEVICE_TYPE + EDGE_TYPE + ENTITY_VIEW_TYPE + API_USAGE + RELATIONS_QUERY_FILTER
+                    + ASSET_QUERY_FILTER + DEVICE_QUERY_FILTER + EV_QUERY_FILTER + EDGE_QUERY_FILTER;
 
     private static final String FILTER_KEY = "\n\n## Filter Key\n\n" +
             "Filter Key defines either entity field, attribute or telemetry. It is a JSON object that consists the key name and type. " +
-            "The following filter key types are supported: \n\n"+
+            "The following filter key types are supported: \n\n" +
             " * 'CLIENT_ATTRIBUTE' - used for client attributes; \n" +
             " * 'SHARED_ATTRIBUTE' - used for shared attributes; \n" +
             " * 'SERVER_ATTRIBUTE' - used for server attributes; \n" +
@@ -328,19 +328,10 @@ public class EntityQueryController extends BaseController {
             MARKDOWN_CODE_BLOCK_END +
             "";
 
-    private static final String FILTER_VALUE_TYPE = "\n\n## Value Type and Operations\n\n" +
-            "Provides a hint about the data type of the entity field that is defined in the filter key. " +
-            "The value type impacts the list of possible operations that you may use in the corresponding predicate. For example, you may use 'STARTS_WITH' or 'END_WITH', but you can't use 'GREATER_OR_EQUAL' for string values." +
-            "The following filter value types and corresponding predicate operations are supported: \n\n"+
-            " * 'STRING' - used to filter any 'String' or 'JSON' values. Operations: EQUAL, NOT_EQUAL, STARTS_WITH, ENDS_WITH, CONTAINS, NOT_CONTAINS; \n" +
-            " * 'NUMERIC' - used for 'Long' and 'Double' values. Operations: EQUAL, NOT_EQUAL, GREATER, LESS, GREATER_OR_EQUAL, LESS_OR_EQUAL; \n" +
-            " * 'BOOLEAN' - used for boolean values; Operations: EQUAL, NOT_EQUAL \n" +
-            " * 'DATE_TIME' - similar to numeric, transforms value to milliseconds since epoch. Operations: EQUAL, NOT_EQUAL, GREATER, LESS, GREATER_OR_EQUAL, LESS_OR_EQUAL; \n";
-
     private static final String FILTER_PREDICATE = "\n\n## Filter Predicate\n\n" +
             "Filter Predicate defines the logical expression to evaluate. The list of available operations depends on the filter value type, see above. " +
             "Platform supports 4 predicate types: 'STRING', 'NUMERIC', 'BOOLEAN' and 'COMPLEX'. The last one allows to combine multiple operations over one filter key." +
-            "\n\nSimple predicate example to check 'value < 100': \n\n"+
+            "\n\nSimple predicate example to check 'value < 100': \n\n" +
             MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "  \"operation\": \"LESS\",\n" +
@@ -351,7 +342,7 @@ public class EntityQueryController extends BaseController {
             "  \"type\": \"NUMERIC\"\n" +
             "}" +
             MARKDOWN_CODE_BLOCK_END +
-            "\n\nComplex predicate example, to check 'value < 10 or value > 20': \n\n"+
+            "\n\nComplex predicate example, to check 'value < 10 or value > 20': \n\n" +
             MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "  \"type\": \"COMPLEX\",\n" +
@@ -376,7 +367,7 @@ public class EntityQueryController extends BaseController {
             "  ]\n" +
             "}" +
             MARKDOWN_CODE_BLOCK_END +
-            "\n\nMore complex predicate example, to check 'value < 10 or (value > 50 && value < 60)': \n\n"+
+            "\n\nMore complex predicate example, to check 'value < 10 or (value > 50 && value < 60)': \n\n" +
             MARKDOWN_CODE_BLOCK_START +
             "{\n" +
             "  \"type\": \"COMPLEX\",\n" +
@@ -461,16 +452,16 @@ public class EntityQueryController extends BaseController {
 
     private static final String ENTITY_COUNT_QUERY_DESCRIPTION =
             "Allows to run complex queries to search the count of platform entities (devices, assets, customers, etc) " +
-                "based on the combination of main entity filter and multiple key filters. Returns the number of entities that match the query definition.\n\n" +
-            "# Query Definition\n\n" +
-                "\n\nMain **entity filter** is mandatory and defines generic search criteria. " +
+                    "based on the combination of main entity filter and multiple key filters. Returns the number of entities that match the query definition.\n\n" +
+                    "# Query Definition\n\n" +
+                    "\n\nMain **entity filter** is mandatory and defines generic search criteria. " +
                     "For example, \"find all devices with profile 'Moisture Sensor'\" or \"Find all devices related to asset 'Building A'\"" +
-                "\n\nOptional **key filters** allow to filter results of the entity filter by complex criteria against " +
-                        "main entity fields (name, label, type, etc), attributes and telemetry. " +
-                        "For example, \"temperature > 20 or temperature< 10\" or \"name starts with 'T', and attribute 'model' is 'T1000', and timeseries field 'batteryLevel' > 40\"."+
-                "\n\nLet's review the example:" +
-                "\n\n" + MARKDOWN_CODE_BLOCK_START +
-                "{\n" +
+                    "\n\nOptional **key filters** allow to filter results of the entity filter by complex criteria against " +
+                    "main entity fields (name, label, type, etc), attributes and telemetry. " +
+                    "For example, \"temperature > 20 or temperature< 10\" or \"name starts with 'T', and attribute 'model' is 'T1000', and timeseries field 'batteryLevel' > 40\"." +
+                    "\n\nLet's review the example:" +
+                    "\n\n" + MARKDOWN_CODE_BLOCK_START +
+                    "{\n" +
                     "  \"entityFilter\": {\n" +
                     "    \"type\": \"entityType\",\n" +
                     "    \"entityType\": \"DEVICE\"\n" +
@@ -492,12 +483,12 @@ public class EntityQueryController extends BaseController {
                     "      }\n" +
                     "    }\n" +
                     "  ]\n" +
-                    "}"+
-                MARKDOWN_CODE_BLOCK_END +
-                "\n\n Example mentioned above search all devices which have attribute 'active' set to 'true'. Now let's review available entity filters and key filters syntax:" +
-                ENTITY_FILTERS +
-                KEY_FILTERS +
-                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;;
+                    "}" +
+                    MARKDOWN_CODE_BLOCK_END +
+                    "\n\n Example mentioned above search all devices which have attribute 'active' set to 'true'. Now let's review available entity filters and key filters syntax:" +
+                    ENTITY_FILTERS +
+                    KEY_FILTERS +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 
     private static final String ENTITY_DATA_QUERY_DESCRIPTION =
             "Allows to run complex queries over platform entities (devices, assets, customers, etc) " +
@@ -508,7 +499,7 @@ public class EntityQueryController extends BaseController {
                     "For example, \"find all devices with profile 'Moisture Sensor'\" or \"Find all devices related to asset 'Building A'\"" +
                     "\n\nOptional **key filters** allow to filter results of the **entity filter** by complex criteria against " +
                     "main entity fields (name, label, type, etc), attributes and telemetry. " +
-                    "For example, \"temperature > 20 or temperature< 10\" or \"name starts with 'T', and attribute 'model' is 'T1000', and timeseries field 'batteryLevel' > 40\"."+
+                    "For example, \"temperature > 20 or temperature< 10\" or \"name starts with 'T', and attribute 'model' is 'T1000', and timeseries field 'batteryLevel' > 40\"." +
                     "\n\nThe **entity fields** and **latest values** contains list of entity fields and latest attribute/telemetry fields to fetch for each entity." +
                     "\n\nThe **page link** contains information about the page to fetch and the sort ordering." +
                     "\n\nLet's review the example:" +
@@ -575,7 +566,7 @@ public class EntityQueryController extends BaseController {
                     "      \"direction\": \"ASC\"\n" +
                     "    }\n" +
                     "  }\n" +
-                    "}"+
+                    "}" +
                     MARKDOWN_CODE_BLOCK_END +
                     "\n\n Example mentioned above search all devices which have attribute 'active' set to 'true'. Now let's review available entity filters and key filters syntax:" +
                     ENTITY_FILTERS +
@@ -672,7 +663,7 @@ public class EntityQueryController extends BaseController {
             "      \"key\": \"temperature\"\n" +
             "    }\n" +
             "  ]\n" +
-            "}"+
+            "}" +
             MARKDOWN_CODE_BLOCK_END +
             "";
 
