@@ -19,6 +19,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
@@ -190,4 +191,17 @@ public class ProtoConverter {
             throw new AdaptorException("Failed to convert ToDeviceRpcRequestMsg to Dynamic Rpc request message due to: ", e);
         }
     }
+
+    public static Descriptors.Descriptor validateDescriptor(Descriptors.Descriptor descriptor) throws AdaptorException {
+        if (descriptor == null) {
+            throw new AdaptorException("Failed to get dynamic message descriptor!");
+        }
+        return descriptor;
+    }
+
+    public static String dynamicMsgToJson(byte[] bytes, Descriptors.Descriptor descriptor) throws InvalidProtocolBufferException {
+        DynamicMessage dynamicMessage = DynamicMessage.parseFrom(descriptor, bytes);
+        return JsonFormat.printer().includingDefaultValueFields().print(dynamicMessage);
+    }
+
 }

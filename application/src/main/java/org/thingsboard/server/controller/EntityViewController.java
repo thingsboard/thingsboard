@@ -75,7 +75,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.thingsboard.server.controller.CustomerController.CUSTOMER_ID;
 import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 
 /**
@@ -706,6 +705,13 @@ public class EntityViewController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Assign entity view to edge (assignEntityViewToEdge)",
+            notes = "Creates assignment of an existing entity view to an instance of The Edge. " +
+                    EDGE_ASSIGN_ASYNC_FIRST_STEP_DESCRIPTION +
+                    "Second, remote edge service will receive a copy of assignment entity view " +
+                    EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION + ". " +
+                    "Third, once entity view will be delivered to edge service, it's going to be available for usage on remote edge instance.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/entityView/{entityViewId}", method = RequestMethod.POST)
     @ResponseBody
@@ -738,6 +744,13 @@ public class EntityViewController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Unassign entity view from edge (unassignEntityViewFromEdge)",
+            notes = "Clears assignment of the entity view to the edge. " +
+                    EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION +
+                    "Second, remote edge service will receive an 'unassign' command to remove entity view " +
+                    EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION + ". " +
+                    "Third, once 'unassign' command will be delivered to edge service, it's going to remove entity view locally.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/entityView/{entityViewId}", method = RequestMethod.DELETE)
     @ResponseBody

@@ -83,7 +83,12 @@ import {
 import { alarmFields } from '@shared/models/alarm.models';
 import { OtaPackageService } from '@core/http/ota-package.service';
 import { EdgeService } from '@core/http/edge.service';
-import { Edge, EdgeEvent, EdgeEventType } from '@shared/models/edge.models';
+import {
+  Edge,
+  EdgeEvent,
+  EdgeEventType,
+  bodyContentEdgeEventActionTypes
+} from '@shared/models/edge.models';
 import { RuleChainMetaData, RuleChainType } from '@shared/models/rule-chain.models';
 import { WidgetService } from '@core/http/widget.service';
 import { DeviceProfileService } from '@core/http/device-profile.service';
@@ -1402,7 +1407,11 @@ export class EntityService {
       case EdgeEventType.ASSET:
       case EdgeEventType.DEVICE:
       case EdgeEventType.ENTITY_VIEW:
-        entityObservable = this.getEntity(entityType, entityId, { ignoreLoading: true, ignoreErrors: true });
+        if (bodyContentEdgeEventActionTypes.includes(entity.action)) {
+          entityObservable = of(entity.body);
+        } else {
+          entityObservable = this.getEntity(entityType, entityId, { ignoreLoading: true, ignoreErrors: true });
+        }
         break;
       case EdgeEventType.RULE_CHAIN_METADATA:
         entityObservable = this.ruleChainService.getRuleChainMetadata(entityId);

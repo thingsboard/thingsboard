@@ -79,6 +79,8 @@ import { SortOrder } from '@shared/models/page/sort-order';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
+import { FormattedData } from '@home/components/widget/lib/maps/map-models';
+import { TbPopoverComponent } from '@shared/components/popover.component';
 
 export interface IWidgetAction {
   name: string;
@@ -86,9 +88,13 @@ export interface IWidgetAction {
   onAction: ($event: Event) => void;
 }
 
+export type ShowWidgetHeaderActionFunction = (ctx: WidgetContext, data: FormattedData[]) => boolean;
+
 export interface WidgetHeaderAction extends IWidgetAction {
   displayName: string;
   descriptor: WidgetActionDescriptor;
+  useShowWidgetHeaderActionFunction: boolean;
+  showWidgetHeaderActionFunction: ShowWidgetHeaderActionFunction;
 }
 
 export interface WidgetAction extends IWidgetAction {
@@ -103,10 +109,11 @@ export class WidgetContext {
 
   constructor(public dashboard: IDashboardComponent,
               private dashboardWidget: IDashboardWidget,
-              private widget: Widget) {}
+              private widget: Widget,
+              public parentDashboard?: IDashboardComponent) {}
 
   get stateController(): IStateController {
-    return this.dashboard.stateController;
+    return this.parentDashboard ? this.parentDashboard.stateController : this.dashboard.stateController;
   }
 
   get aliasController(): IAliasController {
@@ -250,6 +257,8 @@ export class WidgetContext {
 
   store?: Store<AppState>;
 
+  private popoverComponents: TbPopoverComponent[] = [];
+
   rxjs = {
     forkJoin,
     of,
@@ -258,6 +267,28 @@ export class WidgetContext {
     switchMap,
     catchError
   };
+
+  registerPopoverComponent(popoverComponent: TbPopoverComponent) {
+    this.popoverComponents.push(popoverComponent);
+    popoverComponent.tbDestroy.subscribe(() => {
+      const index = this.popoverComponents.indexOf(popoverComponent, 0);
+      if (index > -1) {
+        this.popoverComponents.splice(index, 1);
+      }
+    });
+  }
+
+  updatePopoverPositions() {
+    this.popoverComponents.forEach(comp => {
+      comp.updatePosition();
+    });
+  }
+
+  setPopoversHidden(hidden: boolean) {
+    this.popoverComponents.forEach(comp => {
+      comp.tbHidden = hidden;
+    });
+  }
 
   showSuccessToast(message: string, duration: number = 1000,
                    verticalPosition: NotificationVerticalPosition = 'bottom',

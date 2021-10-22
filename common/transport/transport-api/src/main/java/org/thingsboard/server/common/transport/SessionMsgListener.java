@@ -56,7 +56,7 @@ public interface SessionMsgListener {
 
     default void onDeviceDeleted(DeviceId deviceId) {}
 
-    default void onResourceUpdate(Optional<TransportProtos.ResourceUpdateMsg> resourceUpdateMsgOpt) {}
+    default void onResourceUpdate(TransportProtos.ResourceUpdateMsg resourceUpdateMsgOpt) {}
 
-    default void onResourceDelete(Optional<TransportProtos.ResourceDeleteMsg> resourceUpdateMsgOpt) {}
+    default void onResourceDelete(TransportProtos.ResourceDeleteMsg resourceUpdateMsgOpt) {}
 }

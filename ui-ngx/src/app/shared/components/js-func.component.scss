@@ -41,20 +41,26 @@
   }
 
   .tb-js-func-toolbar {
+    & > * {
+      &:not(:last-child) {
+        margin-right: 4px;
+      }
+    }
     button.mat-button, button.mat-icon-button, button.mat-icon-button.tb-mat-32 {
+      background: rgba(220, 220, 220, .35);
       align-items: center;
       vertical-align: middle;
       min-width: 32px;
       min-height: 15px;
       padding: 4px;
-      margin: 0;
       font-size: .8rem;
       line-height: 15px;
-      color: #7b7b7b;
-      background: rgba(220, 220, 220, .35);
-      &:not(:last-child) {
-        margin-right: 4px;
+      &:not(.tb-help-popup-button) {
+        color: #7b7b7b;
       }
+    }
+    .tb-help-popup-button-loading {
+      background: #f3f3f3;
     }
   }
 }

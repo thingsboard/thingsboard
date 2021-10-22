@@ -20,10 +20,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -494,6 +496,14 @@ public class RuleChainController extends BaseController {
         return msgData;
     }
 
+    @ApiOperation(value = "Assign rule chain to edge (assignRuleChainToEdge)",
+            notes = "Creates assignment of an existing rule chain to an instance of The Edge. " +
+                    EDGE_ASSIGN_ASYNC_FIRST_STEP_DESCRIPTION +
+                    "Second, remote edge service will receive a copy of assignment rule chain " +
+                    EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION + ". " +
+                    "Third, once rule chain will be delivered to edge service, it's going to start processing messages locally. " +
+                    "\n\nOnly rule chain with type 'EDGE' can be assigned to edge.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/ruleChain/{ruleChainId}", method = RequestMethod.POST)
     @ResponseBody
@@ -527,6 +537,13 @@ public class RuleChainController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Unassign rule chain from edge (unassignRuleChainFromEdge)",
+            notes = "Clears assignment of the rule chain to the edge. " +
+                    EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION +
+                    "Second, remote edge service will receive an 'unassign' command to remove rule chain " +
+                    EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION + ". " +
+                    "Third, once 'unassign' command will be delivered to edge service, it's going to remove rule chain locally.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/ruleChain/{ruleChainId}", method = RequestMethod.DELETE)
     @ResponseBody

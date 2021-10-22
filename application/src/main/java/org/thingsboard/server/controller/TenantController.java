@@ -57,7 +57,7 @@ public class TenantController extends BaseController {
     @RequestMapping(value = "/tenant/{tenantId}", method = RequestMethod.GET)
     @ResponseBody
     public Tenant getTenantById(@PathVariable("tenantId") String strTenantId) throws ThingsboardException {
-        checkParameter("tenantId", strTenantId);
+        checkParameter(TENANT_ID, strTenantId);
         try {
             TenantId tenantId = new TenantId(toUUID(strTenantId));
             Tenant tenant = checkTenantId(tenantId, Operation.READ);
@@ -74,7 +74,7 @@ public class TenantController extends BaseController {
     @RequestMapping(value = "/tenant/info/{tenantId}", method = RequestMethod.GET)
     @ResponseBody
     public TenantInfo getTenantInfoById(@PathVariable("tenantId") String strTenantId) throws ThingsboardException {
-        checkParameter("tenantId", strTenantId);
+        checkParameter(TENANT_ID, strTenantId);
         try {
             TenantId tenantId = new TenantId(toUUID(strTenantId));
             return checkTenantInfoId(tenantId, Operation.READ);

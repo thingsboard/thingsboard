@@ -28,7 +28,7 @@ import {
   ValidatorFn,
   Validators
 } from '@angular/forms';
-import { Observable, of } from 'rxjs';
+import { Observable, of, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import {
@@ -38,7 +38,11 @@ import {
   WidgetActionsData
 } from '@home/components/widget/action/manage-widget-actions.component.models';
 import { UtilsService } from '@core/services/utils.service';
-import { WidgetActionSource, WidgetActionType, widgetActionTypeTranslationMap } from '@shared/models/widget.models';
+import {
+  WidgetActionSource,
+  WidgetActionType,
+  widgetActionTypeTranslationMap
+} from '@shared/models/widget.models';
 import { map, mergeMap, startWith, tap } from 'rxjs/operators';
 import { DashboardService } from '@core/http/dashboard.service';
 import { Dashboard } from '@shared/models/dashboard.models';
@@ -47,6 +51,9 @@ import { CustomActionEditorCompleter } from '@home/components/widget/action/cust
 import { isDefinedAndNotNull } from '@core/utils';
 import { MobileActionEditorComponent } from '@home/components/widget/action/mobile-action-editor.component';
 import { widgetType } from '@shared/models/widget.models';
+import { WidgetService } from '@core/http/widget.service';
+import { TranslateService } from '@ngx-translate/core';
+import { PopoverPlacement, PopoverPlacements } from '@shared/components/popover.models';
 
 export interface WidgetActionDialogData {
   isAdd: boolean;
@@ -55,6 +62,18 @@ export interface WidgetActionDialogData {
   action?: WidgetActionDescriptorInfo;
   widgetType: widgetType;
 }
+
+const stateDisplayTypes = ['normal', 'separateDialog', 'popover'] as const;
+type stateDisplayTypeTuple = typeof  stateDisplayTypes;
+export type stateDisplayType = stateDisplayTypeTuple[number];
+
+const stateDisplayTypesTranslations = new Map<stateDisplayType, string>(
+  [
+    ['normal', 'widget-action.open-normal'],
+    ['separateDialog', 'widget-action.open-in-separate-dialog'],
+    ['popover', 'widget-action.open-in-popover'],
+  ]
+);
 
 @Component({
   selector: 'tb-widget-action-dialog',
@@ -71,6 +90,8 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
 
   widgetActionFormGroup: FormGroup;
   actionTypeFormGroup: FormGroup;
+  actionTypeFormGroupSubscriptions: Subscription[] = [];
+  stateDisplayTypeFormGroup: FormGroup;
 
   isAdd: boolean;
   action: WidgetActionDescriptorInfo;
@@ -88,11 +109,18 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
   submitted = false;
   widgetType = widgetType;
 
+  functionScopeVariables: string[];
+
+  allStateDisplayTypes = stateDisplayTypes;
+  allPopoverPlacements = PopoverPlacements;
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               private utils: UtilsService,
               private dashboardService: DashboardService,
               private dashboardUtils: DashboardUtilsService,
+              private widgetService: WidgetService,
+              private translate: TranslateService,
               @Inject(MAT_DIALOG_DATA) public data: WidgetActionDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<WidgetActionDialogComponent, WidgetActionDescriptorInfo>,
@@ -109,6 +137,7 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
     } else {
       this.action = this.data.action;
     }
+    this.functionScopeVariables = this.widgetService.getWidgetScopeVariables();
   }
 
   ngOnInit(): void {
@@ -119,18 +148,54 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
       this.fb.control(this.action.name, [this.validateActionName(), Validators.required]));
     this.widgetActionFormGroup.addControl('icon',
       this.fb.control(this.action.icon, [Validators.required]));
+    this.widgetActionFormGroup.addControl('useShowWidgetActionFunction',
+      this.fb.control(this.action.useShowWidgetActionFunction, []));
+    this.widgetActionFormGroup.addControl('showWidgetActionFunction',
+      this.fb.control(this.action.showWidgetActionFunction || 'return true;', []));
     this.widgetActionFormGroup.addControl('type',
       this.fb.control(this.action.type, [Validators.required]));
+    this.updateShowWidgetActionForm();
     this.updateActionTypeFormGroup(this.action.type, this.action);
     this.widgetActionFormGroup.get('type').valueChanges.subscribe((type: WidgetActionType) => {
       this.updateActionTypeFormGroup(type);
     });
     this.widgetActionFormGroup.get('actionSourceId').valueChanges.subscribe(() => {
       this.widgetActionFormGroup.get('name').updateValueAndValidity();
+      this.updateShowWidgetActionForm();
+    });
+    this.widgetActionFormGroup.get('useShowWidgetActionFunction').valueChanges.subscribe(() => {
+      this.updateShowWidgetActionForm();
     });
   }
 
+  displayShowWidgetActionForm(): boolean {
+    return !!this.data.actionsData.actionSources[this.widgetActionFormGroup.get('actionSourceId').value]?.hasShowCondition;
+  }
+
+  getWidgetActionFunctionHelpId(): string | undefined {
+    const actionSourceId = this.widgetActionFormGroup.get('actionSourceId').value;
+    if (actionSourceId === 'headerButton') {
+      return 'widget/action/show_widget_action_header_fn';
+    } else if (actionSourceId === 'actionCellButton') {
+      return 'widget/action/show_widget_action_cell_fn';
+    }
+    return undefined;
+  }
+
+  private updateShowWidgetActionForm() {
+    const actionSourceId = this.widgetActionFormGroup.get('actionSourceId').value;
+    const useShowWidgetActionFunction = this.widgetActionFormGroup.get('useShowWidgetActionFunction').value;
+    if (!!this.data.actionsData.actionSources[actionSourceId]?.hasShowCondition && useShowWidgetActionFunction) {
+      this.widgetActionFormGroup.get('showWidgetActionFunction').setValidators([Validators.required]);
+    } else {
+      this.widgetActionFormGroup.get('showWidgetActionFunction').clearValidators();
+    }
+    this.widgetActionFormGroup.get('showWidgetActionFunction').updateValueAndValidity();
+  }
+
   private updateActionTypeFormGroup(type?: WidgetActionType, action?: WidgetActionDescriptorInfo) {
+    this.actionTypeFormGroupSubscriptions.forEach(s => s.unsubscribe());
+    this.actionTypeFormGroupSubscriptions.length = 0;
     this.actionTypeFormGroup = this.fb.group({});
     if (type) {
       switch (type) {
@@ -163,25 +228,16 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
             this.setupSelectedDashboardStateIds(action ? action.targetDashboardId : null);
           } else {
             if (type === WidgetActionType.openDashboardState) {
+              const displayType = this.getStateDisplayType(action);
               this.actionTypeFormGroup.addControl(
-                'openInSeparateDialog',
-                this.fb.control(action ? action.openInSeparateDialog : false, [])
+                'stateDisplayType',
+                this.fb.control(this.getStateDisplayType(action), [Validators.required])
               );
-              this.actionTypeFormGroup.addControl(
-                'dialogTitle',
-                this.fb.control(action ? action.dialogTitle : '', [])
-              );
-              this.actionTypeFormGroup.addControl(
-                'dialogHideDashboardToolbar',
-                this.fb.control(action && isDefinedAndNotNull(action.dialogHideDashboardToolbar) ? action.dialogHideDashboardToolbar : true, [])
-              );
-              this.actionTypeFormGroup.addControl(
-                'dialogWidth',
-                this.fb.control(action ? action.dialogWidth : null, [Validators.min(1), Validators.max(100)])
-              );
-              this.actionTypeFormGroup.addControl(
-                'dialogHeight',
-                this.fb.control(action ? action.dialogHeight : null, [Validators.min(1), Validators.max(100)])
+              this.updateStateDisplayTypeFormGroup(displayType, action);
+              this.actionTypeFormGroupSubscriptions.push(
+                this.actionTypeFormGroup.get('stateDisplayType').valueChanges.subscribe((displayTypeValue: stateDisplayType) => {
+                    this.updateStateDisplayTypeFormGroup(displayTypeValue);
+                })
               );
             }
             this.actionTypeFormGroup.addControl(
@@ -211,6 +267,76 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
           break;
       }
     }
+  }
+
+  private updateStateDisplayTypeFormGroup(displayType?: stateDisplayType, action?: WidgetActionDescriptorInfo) {
+    this.stateDisplayTypeFormGroup = this.fb.group({});
+    if (displayType) {
+      switch (displayType) {
+        case 'normal':
+          break;
+        case 'separateDialog':
+          this.stateDisplayTypeFormGroup.addControl(
+            'dialogTitle',
+            this.fb.control(action ? action.dialogTitle : '', [])
+          );
+          this.stateDisplayTypeFormGroup.addControl(
+            'dialogHideDashboardToolbar',
+            this.fb.control(action && isDefinedAndNotNull(action.dialogHideDashboardToolbar)
+              ? action.dialogHideDashboardToolbar : true, [])
+          );
+          this.stateDisplayTypeFormGroup.addControl(
+            'dialogWidth',
+            this.fb.control(action ? action.dialogWidth : null, [Validators.min(1), Validators.max(100)])
+          );
+          this.stateDisplayTypeFormGroup.addControl(
+            'dialogHeight',
+            this.fb.control(action ? action.dialogHeight : null, [Validators.min(1), Validators.max(100)])
+          );
+          break;
+        case 'popover':
+          this.stateDisplayTypeFormGroup.addControl(
+            'popoverPreferredPlacement',
+            this.fb.control(action && isDefinedAndNotNull(action.popoverPreferredPlacement)
+              ? action.popoverPreferredPlacement : 'top', [])
+          );
+          this.stateDisplayTypeFormGroup.addControl(
+            'popoverHideOnClickOutside',
+            this.fb.control(action && isDefinedAndNotNull(action.popoverHideOnClickOutside)
+              ? action.popoverHideOnClickOutside : true, [])
+          );
+          this.stateDisplayTypeFormGroup.addControl(
+            'popoverHideDashboardToolbar',
+            this.fb.control(action && isDefinedAndNotNull(action.popoverHideDashboardToolbar)
+              ? action.popoverHideDashboardToolbar : true, [])
+          );
+          this.stateDisplayTypeFormGroup.addControl(
+            'popoverWidth',
+            this.fb.control(action && isDefinedAndNotNull(action.popoverWidth) ? action.popoverWidth : '25vw', [])
+          );
+          this.stateDisplayTypeFormGroup.addControl(
+            'popoverHeight',
+            this.fb.control(action && isDefinedAndNotNull(action.popoverHeight) ? action.popoverHeight : '25vh', [])
+          );
+          this.stateDisplayTypeFormGroup.addControl(
+            'popoverStyle',
+            this.fb.control(action && isDefinedAndNotNull(action.popoverStyle) ? action.popoverStyle : {}, [])
+          );
+          break;
+      }
+    }
+  }
+
+  private getStateDisplayType(action?: WidgetActionDescriptorInfo): stateDisplayType {
+    let res: stateDisplayType = 'normal';
+    if (action) {
+      if (action.openInSeparateDialog) {
+        res = 'separateDialog';
+      } else if (action.openInPopover) {
+        res = 'popover';
+      }
+    }
+    return res;
   }
 
   private setupSelectedDashboardStateIds(targetDashboardId?: string) {
@@ -319,6 +445,22 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
     }
   }
 
+  public stateDisplayTypeName(displayType: stateDisplayType): string {
+    if (displayType) {
+      return this.translate.instant(stateDisplayTypesTranslations.get(displayType)) + '';
+    } else {
+      return '';
+    }
+  }
+
+  public popoverPlacementName(placement: PopoverPlacement): string {
+    if (placement) {
+      return this.translate.instant(`widget-action.popover-placement-${placement}`) + '';
+    } else {
+      return '';
+    }
+  }
+
   cancel(): void {
     this.dialogRef.close(null);
   }
@@ -336,6 +478,16 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
       } else {
         result = {...this.widgetActionFormGroup.value, ...this.actionTypeFormGroup.value};
       }
+      if (this.actionTypeFormGroup.get('stateDisplayType') &&
+          this.actionTypeFormGroup.get('stateDisplayType').value !== 'normal') {
+        result = {...result, ...this.stateDisplayTypeFormGroup.value};
+        result.openInSeparateDialog = this.actionTypeFormGroup.get('stateDisplayType').value === 'separateDialog';
+        result.openInPopover = this.actionTypeFormGroup.get('stateDisplayType').value === 'popover';
+      } else {
+        result.openInSeparateDialog = false;
+        result.openInPopover = false;
+      }
+      delete (result as any).stateDisplayType;
       result.id = this.action.id;
       this.dialogRef.close(result);
     }

@@ -69,7 +69,7 @@
       <div #bottomPanel class="tb-split tb-split-vertical">
         <div #bottomLeftPanel class="tb-split tb-content">
           <div class="tb-resize-container">
-            <div class="tb-editor-area-title-panel tb-js-function">
+            <div class="tb-editor-area-title-panel tb-js-function" [ngClass]="{'tb-js-function-help': data.helpId}">
               <label>{{ functionTitle }}</label>
             </div>
             <tb-js-func
@@ -78,6 +78,7 @@
               [functionArgs]="data.argNames"
               [validationArgs]="[data.msg, data.metadata, data.msgType]"
               resultType="object"
+              [helpId]="data.helpId"
               [fillHeight]="true">
             </tb-js-func>
           </div>
