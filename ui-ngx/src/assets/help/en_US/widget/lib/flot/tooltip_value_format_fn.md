@@ -35,3 +35,6 @@ return value + ' °C';
 return value.toFixed(2) + ' A';
 {:copy-code}
 ```
+
+<br>
+<br>

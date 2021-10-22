@@ -124,6 +124,7 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
   directionChanged(direction: EntitySearchDirection) {
     this.direction = direction;
     this.updateColumns();
+    this.paginator.pageIndex = 0;
     this.updateData(true);
   }
 

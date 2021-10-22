@@ -474,9 +474,10 @@ export default abstract class LeafletMap {
       this.showPolygon = showPolygon;
       if (this.map) {
         const data = this.ctx.data;
-        const formattedData = parseData(this.ctx.data);
+        const formattedData = parseData(data);
         if (drawRoutes) {
-          this.updatePolylines(parseArray(data), false);
+          const polyData = parseArray(data);
+          this.updatePolylines(polyData, formattedData, false);
         }
         if (showPolygon) {
           this.updatePolygons(formattedData, false);
@@ -633,7 +634,8 @@ export default abstract class LeafletMap {
       return polygon;
     }
 
-  updatePoints(pointsData: FormattedData[][], getTooltip: (point: FormattedData) => string) {
+  updatePoints(pointsData: FormattedData[][],
+               getTooltip: (point: FormattedData, points: FormattedData[]) => string) {
     if (pointsData.length) {
       if (this.points) {
         this.map.removeLayer(this.points);
@@ -642,21 +644,25 @@ export default abstract class LeafletMap {
     }
     let pointColor = this.options.pointColor;
     for (const pointsList of pointsData) {
-      pointsList.filter(pdata => !!this.convertPosition(pdata)).forEach(data => {
-        if (this.options.useColorPointFunction) {
-          pointColor = safeExecute(this.options.colorPointFunction, [data, pointsData, data.dsIndex]);
+      for (let tsIndex = 0; tsIndex < pointsList.length; tsIndex++) {
+        const pdata = pointsList[tsIndex];
+        if (!!this.convertPosition(pdata)) {
+          const dsData = pointsData.map(ds => ds[tsIndex]);
+          if (this.options.useColorPointFunction) {
+            pointColor = safeExecute(this.options.colorPointFunction, [pdata, dsData, pdata.dsIndex]);
+          }
+          const point = L.circleMarker(this.convertPosition(pdata), {
+            color: pointColor,
+            radius: this.options.pointSize
+          });
+          if (!this.options.pointTooltipOnRightPanel) {
+            point.on('click', () => getTooltip(pdata, dsData));
+          } else {
+            createTooltip(point, this.options, pdata.$datasource, getTooltip(pdata, dsData));
+          }
+          this.points.addLayer(point);
         }
-        const point = L.circleMarker(this.convertPosition(data), {
-          color: pointColor,
-          radius: this.options.pointSize
-        });
-        if (!this.options.pointTooltipOnRightPanel) {
-          point.on('click', () => getTooltip(data));
-        } else {
-          createTooltip(point, this.options, data.$datasource, getTooltip(data));
-        }
-        this.points.addLayer(point);
-      });
+      }
     }
     if (pointsData.length) {
       this.map.addLayer(this.points);
@@ -665,15 +671,15 @@ export default abstract class LeafletMap {
 
     // Polyline
 
-    updatePolylines(polyData: FormattedData[][], updateBounds = true, activePolyline?: FormattedData) {
+    updatePolylines(polyData: FormattedData[][], dsData: FormattedData[], updateBounds = true) {
         const keys: string[] = [];
-        polyData.forEach((dataSource: FormattedData[]) => {
-            const data = activePolyline || dataSource[0];
-            if (dataSource.length && data.entityName === dataSource[0].entityName) {
+        polyData.forEach((tsData: FormattedData[], index) => {
+            const data = dsData[index];
+            if (tsData.length && data.entityName === tsData[0].entityName) {
                 if (this.polylines.get(data.entityName)) {
-                    this.updatePolyline(data, dataSource, this.options, updateBounds);
+                    this.updatePolyline(data, tsData, dsData, this.options, updateBounds);
                 } else {
-                    this.createPolyline(data, dataSource, this.options, updateBounds);
+                    this.createPolyline(data, tsData, dsData, this.options, updateBounds);
                 }
                 keys.push(data.entityName);
             }
@@ -689,9 +695,9 @@ export default abstract class LeafletMap {
         });
     }
 
-    createPolyline(data: FormattedData, dataSources: FormattedData[], settings: PolylineSettings, updateBounds = true) {
+    createPolyline(data: FormattedData, tsData: FormattedData[], dsData: FormattedData[], settings: PolylineSettings, updateBounds = true) {
         const poly = new Polyline(this.map,
-            dataSources.map(el => this.convertPosition(el)).filter(el => !!el), data, dataSources, settings);
+          tsData.map(el => this.convertPosition(el)).filter(el => !!el), data, dsData, settings);
         if (updateBounds) {
           const bounds = poly.leafletPoly.getBounds();
           this.fitBounds(bounds);
@@ -699,10 +705,10 @@ export default abstract class LeafletMap {
         this.polylines.set(data.entityName, poly);
     }
 
-    updatePolyline(data: FormattedData, dataSources: FormattedData[], settings: PolylineSettings, updateBounds = true) {
+    updatePolyline(data: FormattedData, tsData: FormattedData[], dsData: FormattedData[], settings: PolylineSettings, updateBounds = true) {
         const poly = this.polylines.get(data.entityName);
         const oldBounds = poly.leafletPoly.getBounds();
-        poly.updatePolyline(dataSources.map(el => this.convertPosition(el)).filter(el => !!el), data, dataSources, settings);
+        poly.updatePolyline(tsData.map(el => this.convertPosition(el)).filter(el => !!el), data, dsData, settings);
         const newBounds = poly.leafletPoly.getBounds();
         if (updateBounds && oldBounds.toBBoxString() !== newBounds.toBBoxString()) {
             this.fitBounds(newBounds);
