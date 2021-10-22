@@ -20,8 +20,12 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
+import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
@@ -252,5 +256,23 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
 
+    }
+
+    @Test(expected = DataValidationException.class)
+    public void testSaveTenantWithIsolatedProfileInMonolithSetup() {
+        TenantProfile tenantProfile = new TenantProfile();
+        tenantProfile.setName("Isolated Tenant Profile");
+        TenantProfileData profileData = new TenantProfileData();
+        profileData.setConfiguration(new DefaultTenantProfileConfiguration());
+        tenantProfile.setProfileData(profileData);
+        tenantProfile.setDefault(false);
+        tenantProfile.setIsolatedTbCore(true);
+        tenantProfile.setIsolatedTbRuleEngine(true);
+        TenantProfile isolatedTenantProfile = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
+
+        Tenant tenant = new Tenant();
+        tenant.setTitle("Tenant");
+        tenant.setTenantProfileId(isolatedTenantProfile.getId());
+        tenantService.saveTenant(tenant);
     }
 }
