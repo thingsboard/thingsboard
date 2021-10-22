@@ -936,6 +936,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       options = {
         type: this.widget.type,
         stateData: this.typeParameters.stateData,
+        datasourcesOptional: this.typeParameters.datasourcesOptional,
         hasDataPageLink: this.typeParameters.hasDataPageLink,
         singleEntity: this.typeParameters.singleEntity,
         warnOnPageDataOverflow: this.typeParameters.warnOnPageDataOverflow,
