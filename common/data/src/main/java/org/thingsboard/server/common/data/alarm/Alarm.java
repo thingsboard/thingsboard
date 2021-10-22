@@ -69,8 +69,8 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, Ha
     @ApiModelProperty(position = 15, value = "Propagation flag to specify if alarm should be propagated to parent entities of alarm originator", example = "true")
     private boolean propagate;
     @ApiModelProperty(position = 16, value = "JSON array of relation types that should be used for propagation. " +
-            "By default, 'propagateRelationTypes' array is empty which means that the alarm will propagate based on any relation type to parent entities. " +
-            "This parameter should be used only in case when 'propagate' parameter is set to true, otherwise, 'propagateRelationTypes' array will ignoned.")
+            "By default, 'propagateRelationTypes' array is empty which means that the alarm will be propagated based on any relation type to parent entities. " +
+            "This parameter should be used only in case when 'propagate' parameter is set to true, otherwise, 'propagateRelationTypes' array will be ignored.")
     private List<String> propagateRelationTypes;
 
     public Alarm() {
