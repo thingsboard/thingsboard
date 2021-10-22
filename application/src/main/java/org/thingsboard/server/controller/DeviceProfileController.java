@@ -49,13 +49,29 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_DATA;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_ID;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_INFO_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_SORT_PROPERTY_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_TEXT_SEARCH_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.TRANSPORT_TYPE_ALLOWABLE_VALUES;
+
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
 @Slf4j
 public class DeviceProfileController extends BaseController {
 
-    private static final String DEVICE_PROFILE_ID = "deviceProfileId";
 
     @Autowired
     private TimeseriesService timeseriesService;
@@ -81,7 +97,7 @@ public class DeviceProfileController extends BaseController {
 
     @ApiOperation(value = "Get Device Profile Info (getDeviceProfileInfoById)",
             notes = "Fetch the Device Profile Info object based on the provided Device Profile Id. "
-                    + DEVICE_PROFILE_INFO_DESCRIPTION + TENANT_OR_USER_AUTHORITY_PARAGRAPH,
+                    + DEVICE_PROFILE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
             produces = "application/json")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/deviceProfileInfo/{deviceProfileId}", method = RequestMethod.GET)
@@ -100,7 +116,7 @@ public class DeviceProfileController extends BaseController {
 
     @ApiOperation(value = "Get Default Device Profile (getDefaultDeviceProfileInfo)",
             notes = "Fetch the Default Device Profile Info object. " +
-                    DEVICE_PROFILE_INFO_DESCRIPTION + TENANT_OR_USER_AUTHORITY_PARAGRAPH,
+                    DEVICE_PROFILE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
             produces = "application/json")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/deviceProfileInfo/default", method = RequestMethod.GET)
@@ -169,12 +185,13 @@ public class DeviceProfileController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Create Or Update Device Profile (saveDevice)",
+    @ApiOperation(value = "Create Or Update Device Profile (saveDeviceProfile)",
             notes = "Create or update the Device Profile. When creating device profile, platform generates device profile id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address). " +
                     "The newly created device profile id will be present in the response. " +
                     "Specify existing device profile id to update the device profile. " +
-                    "Referencing non-existing device profile Id will cause 'Not Found' error. " +
-                    "\n\nDevice profile name is unique in the scope of tenant. Only one 'default' device profile may exist in scope of tenant." + TENANT_AUTHORITY_PARAGRAPH,
+                    "Referencing non-existing device profile Id will cause 'Not Found' error. " + NEW_LINE +
+                    "Device profile name is unique in the scope of tenant. Only one 'default' device profile may exist in scope of tenant." + DEVICE_PROFILE_DATA +
+                    TENANT_AUTHORITY_PARAGRAPH,
             produces = "application/json",
             consumes = "application/json")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
@@ -321,7 +338,7 @@ public class DeviceProfileController extends BaseController {
 
     @ApiOperation(value = "Get Device Profiles for transport type (getDeviceProfileInfos)",
             notes = "Returns a page of devices profile info objects owned by tenant. " +
-                    PAGE_DATA_PARAMETERS + DEVICE_PROFILE_INFO_DESCRIPTION + TENANT_OR_USER_AUTHORITY_PARAGRAPH,
+                    PAGE_DATA_PARAMETERS + DEVICE_PROFILE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
             produces = "application/json")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/deviceProfileInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
