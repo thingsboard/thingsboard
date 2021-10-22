@@ -19,6 +19,8 @@ import { Inject, Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { DOCUMENT } from '@angular/common';
 import { WINDOW } from '@core/services/window.service';
+import { Tokenizer } from 'marked';
+import * as marked from 'marked';
 
 const copyCodeBlock = '{:copy-code}';
 const autoBlock = '{:auto}';
@@ -37,6 +39,7 @@ export class MarkedOptionsService extends MarkedOptions {
   pedantic = false;
   smartLists = true;
   smartypants = false;
+  mangle = false;
 
   private renderer2 = new MarkedRenderer();
 
@@ -46,6 +49,26 @@ export class MarkedOptionsService extends MarkedOptions {
               @Inject(WINDOW) private readonly window: Window,
               @Inject(DOCUMENT) private readonly document: Document) {
     super();
+    // @ts-ignore
+    const tokenizer: Tokenizer = {
+      autolink(src: string, mangle: (cap: string) => string): marked.Tokens.Link {
+        if (src.endsWith(copyCodeBlock)) {
+          return undefined;
+        } else {
+          // @ts-ignore
+          return false;
+        }
+      },
+      url(src: string, mangle: (cap: string) => string): marked.Tokens.Link {
+        if (src.endsWith(copyCodeBlock)) {
+          return undefined;
+        } else {
+          // @ts-ignore
+          return false;
+        }
+      }
+    };
+    marked.use({tokenizer});
     this.renderer.code = (code: string, language: string | undefined, isEscaped: boolean) => {
       if (code.endsWith(copyCodeBlock)) {
         code = code.substring(0, code.length - copyCodeBlock.length);
