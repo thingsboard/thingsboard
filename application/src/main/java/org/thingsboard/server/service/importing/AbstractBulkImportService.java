@@ -23,6 +23,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -93,7 +95,11 @@ public abstract class AbstractBulkImportService<E extends BaseData<? extends Ent
         BulkImportResult<E> result = new BulkImportResult<>();
         CountDownLatch completionLatch = new CountDownLatch(entitiesData.size());
 
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+
         entitiesData.forEach(entityData -> DonAsynchron.submit(() -> {
+                    SecurityContextHolder.setContext(securityContext);
+
                     ImportedEntityInfo<E> importedEntityInfo = saveEntity(request, entityData.getFields(), user);
                     E entity = importedEntityInfo.getEntity();
 

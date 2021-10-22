@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.google.common.util.concurrent.FutureCallback;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -45,10 +46,14 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.rpc.RemoveRpcActorMsg;
 import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.telemetry.exception.ToErrorResponseEntity;
 
+import javax.annotation.Nullable;
 import java.util.UUID;
 
 import static org.thingsboard.server.common.data.DataConstants.RPC_DELETED;
+
+import static org.thingsboard.server.controller.ControllerConstants.*;
 
 @RestController
 @TbCoreComponent
@@ -91,9 +96,9 @@ public class RpcV2Controller extends AbstractRpcController {
             "In case of persistent RPC, the result of this call is 'rpcId' UUID. In case of lightweight RPC, " +
             "the result of this call is the response from device, or 504 Gateway Timeout if device is offline.";
 
-    private static final String ONE_WAY_RPC_REQUEST_DESCRIPTION = "Sends the one-way remote-procedure call (RPC) request to device. " + RPC_REQUEST_DESCRIPTION + ONE_WAY_RPC_RESULT + TENANT_OR_USER_AUTHORITY_PARAGRAPH;
+    private static final String ONE_WAY_RPC_REQUEST_DESCRIPTION = "Sends the one-way remote-procedure call (RPC) request to device. " + RPC_REQUEST_DESCRIPTION + ONE_WAY_RPC_RESULT + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 
-    private static final String TWO_WAY_RPC_REQUEST_DESCRIPTION = "Sends the two-way remote-procedure call (RPC) request to device. " + RPC_REQUEST_DESCRIPTION + TWO_WAY_RPC_RESULT + TENANT_OR_USER_AUTHORITY_PARAGRAPH;
+    private static final String TWO_WAY_RPC_REQUEST_DESCRIPTION = "Sends the two-way remote-procedure call (RPC) request to device. " + RPC_REQUEST_DESCRIPTION + TWO_WAY_RPC_RESULT + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 
     @ApiOperation(value = "Send one-way RPC request", notes = ONE_WAY_RPC_REQUEST_DESCRIPTION)
     @ApiResponses(value = {
@@ -131,7 +136,7 @@ public class RpcV2Controller extends AbstractRpcController {
         return handleDeviceRPCRequest(false, new DeviceId(UUID.fromString(deviceIdStr)), requestBody, HttpStatus.GATEWAY_TIMEOUT, HttpStatus.GATEWAY_TIMEOUT);
     }
 
-    @ApiOperation(value = "Get persistent RPC request", notes = "Get information about the status of the RPC call." + TENANT_OR_USER_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Get persistent RPC request", notes = "Get information about the status of the RPC call." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/persistent/{rpcId}", method = RequestMethod.GET)
     @ResponseBody
@@ -147,11 +152,11 @@ public class RpcV2Controller extends AbstractRpcController {
         }
     }
 
-    @ApiOperation(value = "Get persistent RPC requests", notes = "Allows to query RPC calls for specific device using pagination." + TENANT_OR_USER_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Get persistent RPC requests", notes = "Allows to query RPC calls for specific device using pagination." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/persistent/device/{deviceId}", method = RequestMethod.GET)
     @ResponseBody
-    public PageData<Rpc> getPersistedRpcByDevice(
+    public DeferredResult<ResponseEntity> getPersistedRpcByDevice(
             @ApiParam(value = DEVICE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(DEVICE_ID) String strDeviceId,
             @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
@@ -171,7 +176,26 @@ public class RpcV2Controller extends AbstractRpcController {
             TenantId tenantId = getCurrentUser().getTenantId();
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             DeviceId deviceId = new DeviceId(UUID.fromString(strDeviceId));
-            return checkNotNull(rpcService.findAllByDeviceIdAndStatus(tenantId, deviceId, rpcStatus, pageLink));
+            final DeferredResult<ResponseEntity> response = new DeferredResult<>();
+            accessValidator.validate(getCurrentUser(), Operation.RPC_CALL, deviceId, new HttpValidationCallback(response, new FutureCallback<>() {
+                @Override
+                public void onSuccess(@Nullable DeferredResult<ResponseEntity> result) {
+                    PageData<Rpc> rpcCalls = rpcService.findAllByDeviceIdAndStatus(tenantId, deviceId, rpcStatus, pageLink);
+                    response.setResult(new ResponseEntity<>(rpcCalls, HttpStatus.OK));
+                }
+
+                @Override
+                public void onFailure(Throwable e) {
+                    ResponseEntity entity;
+                    if (e instanceof ToErrorResponseEntity) {
+                        entity = ((ToErrorResponseEntity) e).toErrorResponseEntity();
+                    } else {
+                        entity = new ResponseEntity(HttpStatus.UNAUTHORIZED);
+                    }
+                    response.setResult(entity);
+                }
+            }));
+            return response;
         } catch (Exception e) {
             throw handleException(e);
         }

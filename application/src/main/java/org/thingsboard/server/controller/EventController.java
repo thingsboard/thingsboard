@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Event;
-import org.thingsboard.server.common.data.event.BaseEventFilter;
+import org.thingsboard.server.common.data.event.EventFilter;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -40,12 +40,33 @@ import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 
+import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID;
+import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.ENTITY_TYPE;
+import static org.thingsboard.server.controller.ControllerConstants.ENTITY_TYPE_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.EVENT_DEBUG_RULE_CHAIN_FILTER_OBJ;
+import static org.thingsboard.server.controller.ControllerConstants.EVENT_DEBUG_RULE_NODE_FILTER_OBJ;
+import static org.thingsboard.server.controller.ControllerConstants.EVENT_END_TIME_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.EVENT_ERROR_FILTER_OBJ;
+import static org.thingsboard.server.controller.ControllerConstants.EVENT_LC_EVENT_FILTER_OBJ;
+import static org.thingsboard.server.controller.ControllerConstants.EVENT_SORT_PROPERTY_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.EVENT_START_TIME_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.EVENT_STATS_FILTER_OBJ;
+import static org.thingsboard.server.controller.ControllerConstants.EVENT_TEXT_SEARCH_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_ID;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_ID_PARAM_DESCRIPTION;
+
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
 public class EventController extends BaseController {
-
-    private static final String NEW_LINE = "\n\n";
 
     @Autowired
     private EventService eventService;
@@ -162,7 +183,7 @@ public class EventController extends BaseController {
             @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
             @ApiParam(value = "A JSON value representing the event filter.", required = true)
-            @RequestBody BaseEventFilter eventFilter,
+            @RequestBody EventFilter eventFilter,
             @ApiParam(value = EVENT_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
             @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = EVENT_SORT_PROPERTY_ALLOWABLE_VALUES)
