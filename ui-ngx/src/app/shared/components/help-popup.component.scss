@@ -13,6 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+.tb-help-popup-button-container {
+  width: initial;
+  display: inline-block;
+  vertical-align: middle;
+}
+
 .tb-help-popup-button {
   position: relative;
   .mat-progress-spinner {
