@@ -130,17 +130,47 @@ public class ControllerConstants {
 
     protected static final String MARKDOWN_CODE_BLOCK_START = "```json\n";
     protected static final String MARKDOWN_CODE_BLOCK_END = "\n```";
-    protected static final String EVENT_ERROR_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START + "{ \"eventType\": \"ERROR\", \"server\": \"ip-172-31-24-152\", " +
-            "\"method\": \"onClusterEventMsg\", \"error\": \"Error Message\" }" + MARKDOWN_CODE_BLOCK_END;
-    protected static final String EVENT_LC_EVENT_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START + "{ \"eventType\": \"LC_EVENT\", \"server\": \"ip-172-31-24-152\", \"event\":" +
-            " \"STARTED\", \"status\": \"Success\", \"error\": \"Error Message\" }" + MARKDOWN_CODE_BLOCK_END;
-    protected static final String EVENT_STATS_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START + "{ \"eventType\": \"STATS\", \"server\": \"ip-172-31-24-152\", \"messagesProcessed\": 10, \"errorsOccurred\": 5 }" + MARKDOWN_CODE_BLOCK_END;
-    protected static final String DEBUG_FILTER_OBJ = "\"msgDirectionType\": \"IN\", \"server\": \"ip-172-31-24-152\", \"dataSearch\": \"humidity\", " +
-            "\"metadataSearch\": \"deviceName\", \"entityName\": \"DEVICE\", \"relationType\": \"Success\"," +
-            " \"entityId\": \"de9d54a0-2b7a-11ec-a3cc-23386423d98f\", \"msgType\": \"POST_TELEMETRY_REQUEST\"," +
-            " \"isError\": \"false\", \"error\": \"Error Message\" }";
-    protected static final String EVENT_DEBUG_RULE_NODE_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START + "{ \"eventType\": \"DEBUG_RULE_NODE\"," + DEBUG_FILTER_OBJ + MARKDOWN_CODE_BLOCK_END;
-    protected static final String EVENT_DEBUG_RULE_CHAIN_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START + "{ \"eventType\": \"DEBUG_RULE_CHAIN\"," + DEBUG_FILTER_OBJ + MARKDOWN_CODE_BLOCK_END;
+    protected static final String EVENT_ERROR_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START +
+            "{\n" +
+            "   \"eventType\":\"ERROR\",\n" +
+            "   \"server\":\"ip-172-31-24-152\",\n" +
+            "   \"method\":\"onClusterEventMsg\",\n" +
+            "   \"errorStr\":\"Error Message\"\n" +
+            "}" +
+            MARKDOWN_CODE_BLOCK_END;
+    protected static final String EVENT_LC_EVENT_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START +
+            "{\n" +
+            "   \"eventType\":\"LC_EVENT\",\n" +
+            "   \"server\":\"ip-172-31-24-152\",\n" +
+            "   \"event\":\"STARTED\",\n" +
+            "   \"status\":\"Success\",\n" +
+            "   \"errorStr\":\"Error Message\"\n" +
+            "}" +
+            MARKDOWN_CODE_BLOCK_END;
+    protected static final String EVENT_STATS_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START +
+            "{\n" +
+            "   \"eventType\":\"STATS\",\n" +
+            "   \"server\":\"ip-172-31-24-152\",\n" +
+            "   \"messagesProcessed\":10,\n" +
+            "   \"errorsOccurred\":5\n" +
+            "}" +
+            MARKDOWN_CODE_BLOCK_END;
+    protected static final String DEBUG_FILTER_OBJ =
+            "   \"msgDirectionType\":\"IN\",\n" +
+                    "   \"server\":\"ip-172-31-24-152\",\n" +
+                    "   \"dataSearch\":\"humidity\",\n" +
+                    "   \"metadataSearch\":\"deviceName\",\n" +
+                    "   \"entityName\":\"DEVICE\",\n" +
+                    "   \"relationType\":\"Success\",\n" +
+                    "   \"entityId\":\"de9d54a0-2b7a-11ec-a3cc-23386423d98f\",\n" +
+                    "   \"msgType\":\"POST_TELEMETRY_REQUEST\",\n" +
+                    "   \"isError\":\"false\",\n" +
+                    "   \"errorStr\":\"Error Message\"\n" +
+                    "}";
+    protected static final String EVENT_DEBUG_RULE_NODE_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START + "{\n" +
+            "   \"eventType\":\"DEBUG_RULE_NODE\",\n" + DEBUG_FILTER_OBJ + MARKDOWN_CODE_BLOCK_END;
+    protected static final String EVENT_DEBUG_RULE_CHAIN_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START + "{\n" +
+            "   \"eventType\":\"DEBUG_RULE_CHAIN\",\n" + DEBUG_FILTER_OBJ + MARKDOWN_CODE_BLOCK_END;
 
     protected static final String FILTER_VALUE_TYPE = NEW_LINE + "## Value Type and Operations" + NEW_LINE +
             "Provides a hint about the data type of the entity field that is defined in the filter key. " +

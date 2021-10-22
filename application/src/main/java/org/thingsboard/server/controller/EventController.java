@@ -68,6 +68,37 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_ID_PA
 @RequestMapping("/api")
 public class EventController extends BaseController {
 
+    private static final String EVENT_FILTER_DEFINITION = "# Event Filter Definition" + NEW_LINE +
+            "5 different eventFilter objects could be set for different event types. " +
+            "The eventType field is required. Others are optional. If some of them are set, the filtering will be applied according to them. " +
+            "See the examples below for all the fields used for each event type filtering. " + NEW_LINE +
+            "Note," + NEW_LINE +
+            " * 'server' - string value representing the server name, identifier or ip address where the platform is running;\n" +
+            " * 'errorStr' - the case insensitive 'contains' filter based on error message." + NEW_LINE +
+            "## Error Event Filter" + NEW_LINE +
+            EVENT_ERROR_FILTER_OBJ + NEW_LINE +
+            " * 'method' - string value representing the method name when the error happened." + NEW_LINE +
+            "## Lifecycle Event Filter" + NEW_LINE +
+            EVENT_LC_EVENT_FILTER_OBJ + NEW_LINE +
+            " * 'event' - string value representing the lifecycle event type;\n" +
+            " * 'status' - string value representing status of the lifecycle event." + NEW_LINE +
+            "## Statistics Event Filter" + NEW_LINE +
+            EVENT_STATS_FILTER_OBJ + NEW_LINE +
+            " * 'messagesProcessed' - the minimum number of successfully processed messages;\n" +
+            " * 'errorsOccurred' - the minimum number of errors occurred during messages processing." + NEW_LINE +
+            "## Debug Rule Node Event Filter" + NEW_LINE +
+            EVENT_DEBUG_RULE_NODE_FILTER_OBJ + NEW_LINE +
+            "## Debug Rule Chain Event Filter" + NEW_LINE +
+            EVENT_DEBUG_RULE_CHAIN_FILTER_OBJ + NEW_LINE +
+            " * 'msgDirectionType' - string value representing msg direction type (incoming to entity or outcoming from entity);\n" +
+            " * 'dataSearch' - the case insensitive 'contains' filter based on data (key and value) for the message;\n" +
+            " * 'metadataSearch' - the case insensitive 'contains' filter based on metadata (key and value) for the message;\n" +
+            " * 'entityName' - string value representing the entity type;\n" +
+            " * 'relationType' - string value representing the type of message routing;\n" +
+            " * 'entityId' - string value representing the entity id in the event body (originator of the message);\n" +
+            " * 'msgType' - string value representing the message type;\n" +
+            " * 'isError' - boolean value to filter the errors." + NEW_LINE;
+
     @Autowired
     private EventService eventService;
 
@@ -159,14 +190,8 @@ public class EventController extends BaseController {
 
     @ApiOperation(value = "Get Events by event filter (getEvents)",
             notes = "Returns a page of events for the chosen entity by specifying the event filter. " +
-                    PAGE_DATA_PARAMETERS + NEW_LINE + "5 different eventFilter objects could be set for different event types. " +
-                    "The eventType field is required. Others are optional. If some of them are set, the filtering will be applied according to them. " +
-                    "See the examples below for all the fields used for each event type filtering. " + NEW_LINE +
-                    EVENT_ERROR_FILTER_OBJ + NEW_LINE +
-                    EVENT_LC_EVENT_FILTER_OBJ + NEW_LINE +
-                    EVENT_STATS_FILTER_OBJ + NEW_LINE +
-                    EVENT_DEBUG_RULE_NODE_FILTER_OBJ + NEW_LINE +
-                    EVENT_DEBUG_RULE_CHAIN_FILTER_OBJ + NEW_LINE,
+                    PAGE_DATA_PARAMETERS + NEW_LINE +
+                    EVENT_FILTER_DEFINITION,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}", method = RequestMethod.POST)
