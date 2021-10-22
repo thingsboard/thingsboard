@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -41,6 +43,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Enumeration;
 import java.util.List;
 
+import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
+
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
@@ -50,10 +54,20 @@ public class OAuth2Controller extends BaseController {
     @Autowired
     private OAuth2Configuration oAuth2Configuration;
 
+
+    @ApiOperation(value = "Get OAuth2 clients (getOAuth2Clients)", notes = "Get the list of OAuth2 clients " +
+            "to log in with, available for such domain scheme (HTTP or HTTPS) (if x-forwarded-proto request header is present - " +
+            "the scheme is known from it) and domain name and port (port may be known from x-forwarded-port header)")
     @RequestMapping(value = "/noauth/oauth2Clients", method = RequestMethod.POST)
     @ResponseBody
     public List<OAuth2ClientInfo> getOAuth2Clients(HttpServletRequest request,
+                                                   @ApiParam(value = "Mobile application package name, to find OAuth2 clients " +
+                                                           "where there is configured mobile application with such package name")
                                                    @RequestParam(required = false) String pkgName,
+                                                   @ApiParam(value = "Platform type to search OAuth2 clients for which " +
+                                                           "the usage with this platform type is allowed in the settings. " +
+                                                           "If platform type is not one of allowable values - it will just be ignored",
+                                                           allowableValues = "WEB, ANDROID, IOS")
                                                    @RequestParam(required = false) String platform) throws ThingsboardException {
         try {
             if (log.isDebugEnabled()) {
@@ -76,6 +90,7 @@ public class OAuth2Controller extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get current OAuth2 settings (getCurrentOAuth2Info)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/oauth2/config", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
@@ -88,6 +103,7 @@ public class OAuth2Controller extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Save OAuth2 settings (saveOAuth2Info)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/oauth2/config", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
@@ -101,6 +117,10 @@ public class OAuth2Controller extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get OAuth2 log in processing URL (getLoginProcessingUrl)", notes = "Returns the URL enclosed in " +
+            "double quotes. After successful authentication with OAuth2 provider, it makes a redirect to this path so that the platform can do " +
+            "further log in processing. This URL may be configured as 'security.oauth2.loginProcessingUrl' property in yml configuration file, or " +
+            "as 'SECURITY_OAUTH2_LOGIN_PROCESSING_URL' env variable. By default it is '/login/oauth2/code/'" + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/oauth2/loginProcessingUrl", method = RequestMethod.GET)
     @ResponseBody
@@ -112,4 +132,5 @@ public class OAuth2Controller extends BaseController {
             throw handleException(e);
         }
     }
+
 }

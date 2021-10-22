@@ -54,7 +54,7 @@ export const MediaBreakpoints = {
   'gt-xl': 'screen and (min-width: 5001px)'
 };
 
-const helpBaseUrl = 'https://thingsboard.io';
+export const helpBaseUrl = 'https://thingsboard.io';
 
 export const HelpLinks = {
   linksMap: {

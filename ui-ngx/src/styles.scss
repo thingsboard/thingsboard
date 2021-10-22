@@ -498,9 +498,11 @@ mat-label {
       color: #0F161D;
       line-height: normal;
       font-weight: 500;
-      padding: 30px 32px 10px;
       border-bottom: none;
       margin: 0;
+    }
+    & > #{$heading} {
+      padding: 30px 32px 10px;
     }
   }
 
@@ -516,10 +518,13 @@ mat-label {
   }
 
   p, div {
-    padding-left: 32px;
-    padding-right: 32px;
     color: rgba(15, 22, 29, 0.8);
     line-height: 1.5em;
+  }
+
+  & > p, & > div {
+    padding-right: 32px;
+    padding-left: 32px;
   }
 
   ul {
@@ -541,6 +546,12 @@ mat-label {
   li {
     padding-bottom: .75em;
     line-height: 1.5em;
+    ul {
+      margin-bottom: 0;
+    }
+    p {
+      padding-left: 0;
+    }
   }
 
   a {
@@ -566,6 +577,9 @@ mat-label {
     margin-bottom: 30px;
     overflow: hidden;
     table-layout: fixed;
+    &.auto {
+      table-layout: auto;
+    }
 
     & > thead {
       background-color: #f9fbff;
@@ -578,10 +592,12 @@ mat-label {
           padding: 12px 16px;
           text-align: left;
           margin: 0;
-          word-break: break-word;
           @media screen and (max-width: 400px) {
             font-size: 12px;
             padding: 12px 4px;
+            code:not([class*=language-]) {
+              font-size: 12px;
+            }
           }
         }
       }
@@ -599,11 +615,13 @@ mat-label {
           padding: 12px 16px;
           text-align: left;
           margin: 0;
-          word-break: break-word;
           color: rgba(15, 22, 29, 0.8);
           @media screen and (max-width: 400px) {
             font-size: 12px;
             padding: 12px 4px;
+            code:not([class*=language-]) {
+              font-size: 12px;
+            }
           }
         }
       }
@@ -651,7 +669,7 @@ mat-label {
     line-height: 24px;
     color: #fff;
     background-color: #305680;
-    box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.12), 0px 2px 2px rgba(0, 0, 0, 0.14), 0px 3px 1px -2px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.12), 0 2px 2px rgba(0, 0, 0, 0.14), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
     text-decoration: none;
     font-size: 16px;
     font-weight: 500;
@@ -777,7 +795,7 @@ mat-label {
 
       button.clipboard-btn {
         top: -10px;
-        right: 0px;
+        right: 0;
         padding: 0 3px;
       }
     }

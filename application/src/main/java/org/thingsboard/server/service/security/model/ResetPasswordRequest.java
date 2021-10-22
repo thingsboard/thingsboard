@@ -13,11 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service.sql;
+package org.thingsboard.server.service.security.model;
 
-import org.thingsboard.server.dao.service.BaseEntityServiceTest;
-import org.thingsboard.server.dao.service.DaoSqlTest;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
 
-@DaoSqlTest
-public class EntityServiceSqlTest extends BaseEntityServiceTest {
+@ApiModel
+@Data
+public class ResetPasswordRequest {
+
+    @ApiModelProperty(position = 1, value = "The reset token to verify", example = "AAB254FF67D..")
+    private String resetToken;
+    @ApiModelProperty(position = 2, value = "The new password to set", example = "secret")
+    private String password;
 }

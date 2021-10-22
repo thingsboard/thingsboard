@@ -15,14 +15,20 @@
  */
 package org.thingsboard.server.common.data;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.DeviceId;
 
+@ApiModel
 @Data
 public class DeviceInfo extends Device {
 
+    @ApiModelProperty(position = 13, value = "Title of the Customer that owns the device.", readOnly = true)
     private String customerTitle;
+    @ApiModelProperty(position = 14, value = "Indicates special 'Public' Customer that is auto-generated to use the devices on public dashboards.", readOnly = true)
     private boolean customerIsPublic;
+    @ApiModelProperty(position = 15, value = "Name of the corresponding Device Profile.", readOnly = true)
     private String deviceProfileName;
 
     public DeviceInfo() {

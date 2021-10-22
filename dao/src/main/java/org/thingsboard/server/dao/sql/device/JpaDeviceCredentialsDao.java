@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.sql.device;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.DaoUtil;
@@ -44,6 +45,14 @@ public class JpaDeviceCredentialsDao extends JpaAbstractDao<DeviceCredentialsEnt
     @Override
     protected CrudRepository<DeviceCredentialsEntity, UUID> getCrudRepository() {
         return deviceCredentialsRepository;
+    }
+
+    @Transactional
+    @Override
+    public DeviceCredentials saveAndFlush(TenantId tenantId, DeviceCredentials deviceCredentials) {
+        DeviceCredentials result = save(tenantId, deviceCredentials);
+        deviceCredentialsRepository.flush();
+        return result;
     }
 
     @Override

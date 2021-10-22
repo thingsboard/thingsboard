@@ -107,9 +107,9 @@ import { ComponentType } from '@angular/cdk/portal';
 import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/embed-dashboard-dialog-token';
 import { MobileService } from '@core/services/mobile.service';
 import { DialogService } from '@core/services/dialog.service';
-import { TbPopoverService } from '@shared/components/popover.component';
 import { DashboardPageComponent } from '@home/components/dashboard-page/dashboard-page.component';
 import { PopoverPlacement } from '@shared/components/popover.models';
+import { TbPopoverService } from '@shared/components/popover.service';
 
 @Component({
   selector: 'tb-widget',
@@ -936,6 +936,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       options = {
         type: this.widget.type,
         stateData: this.typeParameters.stateData,
+        datasourcesOptional: this.typeParameters.datasourcesOptional,
         hasDataPageLink: this.typeParameters.hasDataPageLink,
         singleEntity: this.typeParameters.singleEntity,
         warnOnPageDataOverflow: this.typeParameters.warnOnPageDataOverflow,
@@ -1355,8 +1356,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           parentDashboard: this.widgetContext.parentDashboard ?
             this.widgetContext.parentDashboard : this.widgetContext.dashboard
         },
+        {width: popoverWidth, height: popoverHeight},
         popoverStyle,
-        {width: popoverWidth, height: popoverHeight}
+        {}
       );
       this.widgetContext.registerPopoverComponent(component);
     }
@@ -1398,6 +1400,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.dialog.open(this.embedDashboardDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      viewContainerRef: this.widgetContentContainer,
       data: {
         dashboard,
         state: objToBase64([ stateObject ]),

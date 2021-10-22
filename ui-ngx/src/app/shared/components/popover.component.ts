@@ -25,7 +25,6 @@ import {
   Directive,
   ElementRef,
   EventEmitter,
-  Injectable,
   Injector,
   Input,
   OnChanges,
@@ -36,7 +35,6 @@ import {
   Renderer2,
   SimpleChanges,
   TemplateRef,
-  Type,
   ViewChild,
   ViewContainerRef,
   ViewEncapsulation
@@ -54,13 +52,11 @@ import {
   getPlacementName,
   popoverMotion,
   PopoverPlacement,
-  PopoverWithTrigger,
   POSITION_MAP,
   PropertyMapping
 } from '@shared/components/popover.models';
 import { distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { isNotEmptyStr, onParentScrollOrWindowResize } from '@core/utils';
-import { HelpMarkdownComponent } from '@shared/components/help-markdown.component';
 
 export type TbPopoverTrigger = 'click' | 'focus' | 'hover' | null;
 
@@ -285,161 +281,6 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
   }
 }
 
-@Injectable()
-export class TbPopoverService {
-
-  private popoverWithTriggers: PopoverWithTrigger[] = [];
-
-  componentFactory: ComponentFactory<TbPopoverComponent> = this.resolver.resolveComponentFactory(TbPopoverComponent);
-
-  constructor(private resolver: ComponentFactoryResolver) {
-  }
-
-  hasPopover(trigger: Element): boolean {
-    const res = this.findPopoverByTrigger(trigger);
-    return res !== null;
-  }
-
-  hidePopover(trigger: Element): boolean {
-    const component: TbPopoverComponent = this.findPopoverByTrigger(trigger);
-    if (component && component.tbVisible) {
-      component.hide();
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  displayPopover<T>(trigger: Element, renderer: Renderer2, hostView: ViewContainerRef,
-                    componentType: Type<T>, preferredPlacement: PopoverPlacement = 'top', hideOnClickOutside = true,
-                    injector?: Injector, context?: any, popoverStyle: any = {}, style?: any): TbPopoverComponent {
-    const componentRef = hostView.createComponent(this.componentFactory);
-    const component = componentRef.instance;
-    this.popoverWithTriggers.push({
-      trigger,
-      popoverComponent: component
-    });
-    renderer.removeChild(
-      renderer.parentNode(trigger),
-      componentRef.location.nativeElement
-    );
-    const originElementRef = new ElementRef(trigger);
-    component.setOverlayOrigin({ elementRef: originElementRef });
-    component.tbPlacement = preferredPlacement;
-    component.tbComponentFactory = this.resolver.resolveComponentFactory(componentType);
-    component.tbComponentInjector = injector;
-    component.tbComponentContext = context;
-    component.tbPopoverInnerStyle = popoverStyle;
-    component.tbComponentStyle = style;
-    component.tbHideOnClickOutside = hideOnClickOutside;
-    component.tbVisibleChange.subscribe((visible: boolean) => {
-      if (!visible) {
-        component.tbAnimationDone.subscribe(() => {
-          componentRef.destroy();
-        });
-      }
-    });
-    component.tbDestroy.subscribe(() => {
-      this.removePopoverByComponent(component);
-    });
-    component.show();
-    return component;
-  }
-
-  toggleHelpPopover(trigger: Element, renderer: Renderer2, hostView: ViewContainerRef, helpId: string,
-                    visibleFn: (visible: boolean) => void, readyFn: (ready: boolean) => void) {
-    if (this.hasPopover(trigger)) {
-      this.hidePopover(trigger);
-    } else {
-      readyFn(false);
-      const injector = Injector.create({
-        parent: hostView.injector, providers: []
-      });
-      const componentRef = hostView.createComponent(this.componentFactory);
-      const component = componentRef.instance;
-      this.popoverWithTriggers.push({
-        trigger,
-        popoverComponent: component
-      });
-      renderer.removeChild(
-        renderer.parentNode(trigger),
-        componentRef.location.nativeElement
-      );
-      const originElementRef = new ElementRef(trigger);
-      component.tbAnimationState = 'void';
-      component.tbOverlayStyle = { opacity: '0' };
-      component.setOverlayOrigin({ elementRef: originElementRef });
-      component.tbPlacement = 'bottom';
-      component.tbComponentFactory = this.resolver.resolveComponentFactory(HelpMarkdownComponent);
-      component.tbComponentInjector = injector;
-      component.tbComponentContext = {
-        helpId,
-        visible: true
-      };
-      component.tbHideOnClickOutside = true;
-      component.tbVisibleChange.subscribe((visible: boolean) => {
-        if (!visible) {
-          visibleFn(false);
-          component.tbAnimationDone.subscribe(() => {
-            componentRef.destroy();
-          });
-        }
-      });
-      component.tbDestroy.subscribe(() => {
-        this.removePopoverByComponent(component);
-      });
-      const showHelpMarkdownComponent = () => {
-        component.tbOverlayStyle = { opacity: '1' };
-        component.tbAnimationState = 'active';
-        component.updatePosition();
-        readyFn(true);
-        setTimeout(() => {
-          component.updatePosition();
-        });
-      };
-      const setupHelpMarkdownComponent = (helpMarkdownComponent: HelpMarkdownComponent) => {
-        if (helpMarkdownComponent.isMarkdownReady) {
-          showHelpMarkdownComponent();
-        } else {
-          helpMarkdownComponent.markdownReady.subscribe(() => {
-            showHelpMarkdownComponent();
-          });
-        }
-      };
-      if (component.tbComponentRef) {
-        setupHelpMarkdownComponent(component.tbComponentRef.instance);
-      } else {
-        component.tbComponentChange.subscribe((helpMarkdownComponentRef) => {
-          setupHelpMarkdownComponent(helpMarkdownComponentRef.instance);
-        });
-      }
-      component.show();
-      visibleFn(true);
-    }
-  }
-
-  private findPopoverByTrigger(trigger: Element): TbPopoverComponent | null {
-    const res = this.popoverWithTriggers.find(val => this.elementsAreEqualOrDescendant(trigger, val.trigger));
-    if (res) {
-      return res.popoverComponent;
-    } else {
-      return null;
-    }
-  }
-
-  private removePopoverByComponent(component: TbPopoverComponent): void {
-    const index = this.popoverWithTriggers.findIndex(val => val.popoverComponent === component);
-    if (index > -1) {
-      this.popoverWithTriggers.splice(index, 1);
-    }
-  }
-
-  private elementsAreEqualOrDescendant(element1: Element, element2: Element): boolean {
-    return element1 === element2 || element1.contains(element2) || element2.contains(element1);
-  }
-}
-
-
 @Component({
   selector: 'tb-popover',
   exportAs: 'tbPopoverComponent',
@@ -474,7 +315,7 @@ export class TbPopoverService {
             </div>
             <div class="tb-popover-inner" [ngStyle]="tbPopoverInnerStyle" role="tooltip">
               <div class="tb-popover-close-button" (click)="closeButtonClick($event)">×</div>
-              <div>
+              <div style="width: 100%; height: 100%;">
                 <div class="tb-popover-inner-content">
                   <ng-container *ngIf="tbContent">
                     <ng-container *tbStringTemplateOutlet="tbContent">{{ tbContent }}</ng-container>
@@ -702,10 +543,12 @@ export class TbPopoverComponent implements OnDestroy, OnInit {
 
   updateStyles(): void {
     this.classMap = {
-      [this.tbOverlayClassName]: true,
       [`tb-popover-placement-${this.preferredPlacement}`]: true,
       ['tb-popover-hidden']: this.tbHidden || !this.lastIsIntersecting
     };
+    if (this.tbOverlayClassName) {
+      this.classMap[this.tbOverlayClassName] = true;
+    }
   }
 
   setOverlayOrigin(origin: CdkOverlayOrigin): void {

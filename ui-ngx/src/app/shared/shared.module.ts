@@ -147,11 +147,18 @@ import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { CopyButtonComponent } from '@shared/components/button/copy-button.component';
 import { TogglePasswordComponent } from '@shared/components/button/toggle-password.component';
 import { HelpPopupComponent } from '@shared/components/help-popup.component';
-import { TbPopoverComponent, TbPopoverDirective, TbPopoverService } from '@shared/components/popover.component';
+import { TbPopoverComponent, TbPopoverDirective } from '@shared/components/popover.component';
 import { TbStringTemplateOutletDirective } from '@shared/components/directives/sring-template-outlet.directive';
 import { TbComponentOutletDirective} from '@shared/components/directives/component-outlet.directive';
 import { HelpMarkdownComponent } from '@shared/components/help-markdown.component';
 import { MarkedOptionsService } from '@shared/components/marked-options.service';
+import { TbPopoverService } from '@shared/components/popover.service';
+import { HELP_MARKDOWN_COMPONENT_TOKEN, SHARED_MODULE_TOKEN } from '@shared/components/tokens';
+import { TbMarkdownComponent } from '@shared/components/markdown.component';
+
+export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
+  return markedOptionsService;
+}
 
 @NgModule({
   providers: [
@@ -170,6 +177,8 @@ import { MarkedOptionsService } from '@shared/components/marked-options.service'
       provide: MAT_DATE_LOCALE,
       useValue: 'en-GB'
     },
+    { provide: HELP_MARKDOWN_COMPONENT_TOKEN, useValue: HelpMarkdownComponent },
+    { provide: SHARED_MODULE_TOKEN, useValue: SharedModule },
     TbPopoverService
   ],
   declarations: [
@@ -186,6 +195,7 @@ import { MarkedOptionsService } from '@shared/components/marked-options.service'
     TbStringTemplateOutletDirective,
     TbComponentOutletDirective,
     TbPopoverDirective,
+    TbMarkdownComponent,
     HelpComponent,
     HelpMarkdownComponent,
     HelpPopupComponent,
@@ -314,7 +324,8 @@ import { MarkedOptionsService } from '@shared/components/marked-options.service'
       sanitize: SecurityContext.NONE,
       markedOptions: {
         provide: MarkedOptions,
-        useClass: MarkedOptionsService
+        useFactory: MarkedOptionsFactory,
+        deps: [MarkedOptionsService]
       }
     })
   ],
@@ -331,6 +342,7 @@ import { MarkedOptionsService } from '@shared/components/marked-options.service'
     TbStringTemplateOutletDirective,
     TbComponentOutletDirective,
     TbPopoverDirective,
+    TbMarkdownComponent,
     HelpComponent,
     HelpMarkdownComponent,
     HelpPopupComponent,

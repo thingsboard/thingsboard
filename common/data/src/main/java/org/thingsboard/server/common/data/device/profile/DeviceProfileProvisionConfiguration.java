@@ -23,7 +23,6 @@ import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 
 import java.io.Serializable;
 
-
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,

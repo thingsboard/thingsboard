@@ -244,7 +244,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         rpc.setExpirationTime(request.getExpirationTime());
         rpc.setRequest(JacksonUtil.valueToTree(request));
         rpc.setStatus(status);
-        rpc.setAdditionalInfo(JacksonUtil.valueToTree(request.getAdditionalInfo()));
+        rpc.setAdditionalInfo(JacksonUtil.toJsonNode(request.getAdditionalInfo()));
         return systemContext.getTbRpcService().save(tenantId, rpc);
     }
 
@@ -731,6 +731,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     private void notifyTransportAboutClosedSessionMaxSessionsLimit(UUID sessionId, SessionInfoMetaData sessionMd) {
+        log.debug("remove eldest session (max concurrent sessions limit reached per device) sessionId [{}] sessionMd [{}]", sessionId, sessionMd);
         notifyTransportAboutClosedSession(sessionId, sessionMd, "max concurrent sessions limit reached per device!");
     }
 

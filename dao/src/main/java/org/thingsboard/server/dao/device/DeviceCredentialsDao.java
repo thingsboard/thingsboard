@@ -35,6 +35,8 @@ public interface DeviceCredentialsDao extends Dao<DeviceCredentials> {
      */
     DeviceCredentials save(TenantId tenantId, DeviceCredentials deviceCredentials);
 
+    DeviceCredentials saveAndFlush(TenantId tenantId, DeviceCredentials deviceCredentials);
+
     /**
      * Find device credentials by device id.
      *

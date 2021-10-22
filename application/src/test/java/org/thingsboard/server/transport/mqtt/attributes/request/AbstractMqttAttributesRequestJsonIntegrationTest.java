@@ -20,6 +20,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
+import org.thingsboard.server.common.data.device.profile.MqttTopics;
 
 @Slf4j
 public abstract class AbstractMqttAttributesRequestJsonIntegrationTest extends AbstractMqttAttributesRequestIntegrationTest {
@@ -36,7 +37,17 @@ public abstract class AbstractMqttAttributesRequestJsonIntegrationTest extends A
 
     @Test
     public void testRequestAttributesValuesFromTheServer() throws Exception {
-        processTestRequestAttributesValuesFromTheServer();
+        super.testRequestAttributesValuesFromTheServer();
+    }
+
+    @Test
+    public void testRequestAttributesValuesFromTheServerOnShortTopic() throws Exception {
+        super.testRequestAttributesValuesFromTheServerOnShortTopic();
+    }
+
+    @Test
+    public void testRequestAttributesValuesFromTheServerOnShortJsonTopic() throws Exception {
+        super.testRequestAttributesValuesFromTheServerOnShortJsonTopic();
     }
 
     @Test

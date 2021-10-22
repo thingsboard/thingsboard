@@ -251,6 +251,7 @@
                 <button mat-button (click)="beautifyJs()">
                   {{ 'widget.tidy' | translate }}
                 </button>
+                <span tb-help-popup="widget/editor/widget_js_fn" tb-help-popup-placement="top" [tb-help-popup-style]="{maxWidth: '1200px'}"></span>
                 <button mat-icon-button class="tb-mat-32"
                         (click)="javascriptFullscreen = !javascriptFullscreen"
                         matTooltip="{{(javascriptFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"

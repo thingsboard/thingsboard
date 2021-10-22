@@ -167,7 +167,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
         }
         DeviceProfile savedDeviceProfile;
         try {
-            savedDeviceProfile = deviceProfileDao.save(deviceProfile.getTenantId(), deviceProfile);
+            savedDeviceProfile = deviceProfileDao.saveAndFlush(deviceProfile.getTenantId(), deviceProfile);
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_profile_name_unq_key")) {

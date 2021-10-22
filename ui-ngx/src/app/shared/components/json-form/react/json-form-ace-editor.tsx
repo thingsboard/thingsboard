@@ -205,9 +205,9 @@ class ThingsboardAceEditor extends React.Component<ThingsboardAceEditorProps, Th
                       </div>
                       <React.Suspense fallback={<div>Loading...</div>}>
                         <ReactAce  mode={this.props.mode}
+                                   theme={'textmate'}
                                    height={this.state.isFull ? '100%' : '150px'}
                                    width={this.state.isFull ? '100%' : '300px'}
-                                   theme='github'
                                    onChange={this.onValueChanged}
                                    onFocus={this.onFocus}
                                    onBlur={this.onBlur}

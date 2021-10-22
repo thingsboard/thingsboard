@@ -16,6 +16,8 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.NoXss;
 
+@ApiModel
 @Slf4j
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -30,11 +33,16 @@ public class TbResourceInfo extends SearchTextBased<TbResourceId> implements Has
 
     private static final long serialVersionUID = 7282664529021651736L;
 
+    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id. Tenant Id of the resource can't be changed.", readOnly = true)
     private TenantId tenantId;
     @NoXss
+    @ApiModelProperty(position = 4, value = "Resource title.", example = "BinaryAppDataContainer id=19 v1.0")
     private String title;
+    @ApiModelProperty(position = 5, value = "Resource type.", example = "LWM2M_MODEL", readOnly = true)
     private ResourceType resourceType;
+    @ApiModelProperty(position = 6, value = "Resource key.", example = "19_1.0", readOnly = true)
     private String resourceKey;
+    @ApiModelProperty(position = 7, value = "Resource search text.", example = "19_1.0:binaryappdatacontainer", readOnly = true)
     private String searchText;
 
     public TbResourceInfo() {
@@ -52,6 +60,21 @@ public class TbResourceInfo extends SearchTextBased<TbResourceId> implements Has
         this.resourceType = resourceInfo.getResourceType();
         this.resourceKey = resourceInfo.getResourceKey();
         this.searchText = resourceInfo.getSearchText();
+    }
+
+    @ApiModelProperty(position = 1, value = "JSON object with the Resource Id. " +
+            "Specify this field to update the Resource. " +
+            "Referencing non-existing Resource Id will cause error. " +
+            "Omit this field to create new Resource." )
+    @Override
+    public TbResourceId getId() {
+        return super.getId();
+    }
+
+    @ApiModelProperty(position = 2, value = "Timestamp of the resource creation, in milliseconds", example = "1609459200000", readOnly = true)
+    @Override
+    public long getCreatedTime() {
+        return super.getCreatedTime();
     }
 
     @Override
