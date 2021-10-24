@@ -16,6 +16,8 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,16 +37,28 @@ import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.Map;
 
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.IS_BOOTSTRAP_SERVER_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
+
 @Slf4j
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
 public class Lwm2mController extends BaseController {
+    public static final String IS_BOOTSTRAP_SERVER = "isBootstrapServer";
 
+
+    @ApiOperation(value = "Get Lwm2m Bootstrap SecurityInfo (getLwm2mBootstrapSecurityInfo)",
+            notes = "Get the Lwm2m Bootstrap SecurityInfo object (of the current server) based on the provided isBootstrapServer parameter. If isBootstrapServer == true, get the parameters of the current Bootstrap Server. If isBootstrapServer == false, get the parameters of the current Lwm2m Server. Used for client settings when starting the client in Bootstrap mode. " +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
+            produces = "application/json")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/lwm2m/deviceProfile/bootstrap/{isBootstrapServer}", method = RequestMethod.GET)
     @ResponseBody
-    public ServerSecurityConfig getLwm2mBootstrapSecurityInfo(@PathVariable("isBootstrapServer") boolean bootstrapServer) throws ThingsboardException {
+    public ServerSecurityConfig getLwm2mBootstrapSecurityInfo(
+            @ApiParam(value = IS_BOOTSTRAP_SERVER_PARAM_DESCRIPTION)
+            @PathVariable(IS_BOOTSTRAP_SERVER) boolean bootstrapServer) throws ThingsboardException {
         try {
             return lwM2MServerSecurityInfoRepository.getServerSecurityInfo(bootstrapServer);
         } catch (Exception e) {
@@ -52,13 +66,26 @@ public class Lwm2mController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Create Device (saveDevice) with credentials ",
+            notes = "\nCreate new Device  with credentials (example with security mode: RPK\n" +
+                    "\nRequestBody is the Map<Class<?>, Object>:\n" +
+                    "\nThe first param of this map: Device\n"+
+                    "\n-- key1 = \"class org.thingsboard.server.common.data.Device\" - value1 = \"new Device()\"\n" +
+                    "\nThe second param of this map: Device credentials\n" +
+                    "\n-- key2 = \"class org.thingsboard.server.common.data.security.DeviceCredentials\" - value2 = \"new DeviceCredentials()\"\n" +
+                    "\n- Example of the RequestBody with security mode: RPK:\n" +
+                    "\n- " + DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION + "\n" +
+                    "\nWhen creating new device, platform generates Device Id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address).\n" +
+                    "\nAfter creating new device Device DeviceCredentials is added to new Device."
+                    + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/lwm2m/device-credentials", method = RequestMethod.POST)
     @ResponseBody
-    public Device saveDeviceWithCredentials(@RequestBody (required=false) Map<Class<?>, Object> deviceWithDeviceCredentials) throws ThingsboardException {
+    public Device saveDeviceWithCredentials(@ApiParam(value = DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION)
+                                            @RequestBody(required = false) Map<Class<?>, Object> deviceWithDeviceCredentials) throws ThingsboardException {
         ObjectMapper mapper = new ObjectMapper();
         Device device = checkNotNull(mapper.convertValue(deviceWithDeviceCredentials.get(Device.class), Device.class));
-        DeviceCredentials credentials = checkNotNull(mapper.convertValue( deviceWithDeviceCredentials.get(DeviceCredentials.class), DeviceCredentials.class));
+        DeviceCredentials credentials = checkNotNull(mapper.convertValue(deviceWithDeviceCredentials.get(DeviceCredentials.class), DeviceCredentials.class));
         try {
             device.setTenantId(getCurrentUser().getTenantId());
             checkEntity(device.getId(), device, Resource.DEVICE);
