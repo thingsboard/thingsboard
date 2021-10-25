@@ -114,7 +114,7 @@ self.onInit = function() {
  - Click the **Run** button on the **Widget Editor Toolbar** in order to see the result in **Widget preview** section.
  - Click dashboard edit button on the preview section to change the size of the resulting widget. Then click dashboard apply button. The final widget should look like the image below.
 
-![image](${baseUrl}/images/user-guide/contribution/widgets/control-widget-sample.png)
+![image](${helpBaseUrl}/help/images/widget/editor/examples/control-widget-sample.png)
 
 - Click the **Save** button on the **Widget Editor Toolbar** to save widget type.
 
@@ -123,13 +123,13 @@ To test how this widget performs RPC commands, we will need to place it in a das
 - Login as Tenant administrator.
 - Navigate to **Devices** and create new device with some name, for ex. "My RPC Device".
 - Open device details and click "Copy Access Token" button to copy device access token to clipboard.
-- Download [mqtt-js-rpc-from-server.sh{:target="_blank"}](${baseUrl}/docs/reference/resources/mqtt-js-rpc-from-server.sh) and [mqtt-js-rpc-from-server.js{:target="_blank"}](${baseUrl}/docs/reference/resources/mqtt-js-rpc-from-server.js). Place these files in a folder.
+- Download [mqtt-js-rpc-from-server.sh{:target="_blank"}](${siteBaseUrl}/docs/reference/resources/mqtt-js-rpc-from-server.sh) and [mqtt-js-rpc-from-server.js{:target="_blank"}](${siteBaseUrl}/docs/reference/resources/mqtt-js-rpc-from-server.js). Place these files in a folder.
   Edit **mqtt-js-rpc-from-server.sh** - replace **$ACCESS_TOKEN** with your device access token from the clipboard. And install mqtt client library.
 - Run **mqtt-js-rpc-from-server.sh** script. You should see a "connected" message in the console.
 - Navigate to **Dashboards** and create a new dashboard with some name, for ex. "My first control dashboard". Open this dashboard.
 - Click dashboard "edit" button. In the dashboard edit mode, click the "Entity aliases" button located on the dashboard toolbar.
 
-![image](${baseUrl}/images/user-guide/contribution/widgets/dashboard-toolbar-entity-aliases.png)
+![image](${helpBaseUrl}/help/images/widget/editor/examples/dashboard-toolbar-entity-aliases.png)
 
 - Inside **Entity aliases** popup click "Add alias".
 - Fill "Alias name" field, for ex. "My RPC Device Alias".
@@ -137,12 +137,12 @@ To test how this widget performs RPC commands, we will need to place it in a das
 - Choose "Device" in "Type" field.
 - Select your device in "Entity list" field. In this example "My RPC Device".
 
-![image](${baseUrl}/images/user-guide/contribution/widgets/add-rpc-device-alias.png)
+![image](${helpBaseUrl}/help/images/widget/editor/examples/add-rpc-device-alias.png)
 
 - Click "Add" and then "Save" in **Entity aliases**.
 - Click dashboard "+" button then click "Create new widget" button.
 
-![image](${baseUrl}/images/user-guide/contribution/widgets/dashboard-create-new-widget-button.png)
+![image](${helpBaseUrl}/help/images/widget/editor/examples/dashboard-create-new-widget-button.png)
 
 - Then select **Widget Bundle** where your RPC widget was saved. Select "Control widget" tab.
 - Click your widget. In this example, "My first control widget".
@@ -152,7 +152,7 @@ To test how this widget performs RPC commands, we will need to place it in a das
 - Fill **RPC params** field with RPC params. For ex. "{ param1: "value1" }".
 - Click **Send RPC command** button. You should see the following response in the widget.
 
-![image](${baseUrl}/images/user-guide/contribution/widgets/control-widget-sample-response-one-way.png)
+![image](${helpBaseUrl}/help/images/widget/editor/examples/control-widget-sample-response-one-way.png)
 
 The following output should be printed in the device console:
 
@@ -166,18 +166,18 @@ In order to test "Two way" RPC command mode, we need to change the corresponding
 - Click dashboard "edit" button. In dashboard edit mode, click **Edit widget** button located in the header of Control widget.
 - In the widget details, view select "Advanced" tab and uncheck "Is One Way Command" checkbox.
 
-![image](${baseUrl}/images/user-guide/contribution/widgets/control-widget-sample-settings.png)
+![image](${helpBaseUrl}/help/images/widget/editor/examples/control-widget-sample-settings.png)
 
 - Click **Apply changes** button on the widget details header. Close details and click dashboard **Apply changes** button.
 - Fill widget fields with RPC method name and params like in previous steps.
   Click **Send RPC command** button. You should see the following response in the widget.
 
-![image](${baseUrl}/images/user-guide/contribution/widgets/control-widget-sample-response-two-way.png)
+![image](${helpBaseUrl}/help/images/widget/editor/examples/control-widget-sample-response-two-way.png)
 
 - stop **mqtt-js-rpc-from-server.sh** script.
   Click **Send RPC command** button. You should see the following response in the widget.
 
-![image](${baseUrl}/images/user-guide/contribution/widgets/control-widget-sample-response-timeout.png)
+![image](${helpBaseUrl}/help/images/widget/editor/examples/control-widget-sample-response-timeout.png)
 
 In this example, **controlApi** is used to send RPC commands. Additionally, custom widget settings were introduced in order to configure RPC command mode and RPC request timeout.
 

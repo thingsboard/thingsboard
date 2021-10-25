@@ -1,6 +1,7 @@
 #### HTML template of dialog to edit a device or an asset
 
 ```html
+{:code-style="max-height: 400px;"}
 <form #editEntityForm="ngForm" [formGroup]="editEntityFormGroup"
       (ngSubmit)="save()"  class="edit-entity-form">
   <mat-toolbar fxLayout="row" color="primary">
@@ -190,3 +191,6 @@
 </form>
 {:copy-code}
 ```
+
+<br>
+<br>

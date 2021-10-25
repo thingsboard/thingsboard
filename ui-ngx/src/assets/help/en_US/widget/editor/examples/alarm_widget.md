@@ -127,7 +127,7 @@ self.onDataUpdated = function() {
 
  - Click the **Run** button on the **Widget Editor Toolbar** in order to see the result in **Widget preview** section.
 
-![image](${baseUrl}/images/user-guide/contribution/widgets/alarm-widget-sample.png)
+![image](${helpBaseUrl}/help/images/widget/editor/examples/alarm-widget-sample.png)
 
 In this example, the **alarmSource** and **alarms** properties of <span trigger-style="fontSize: 16px;" trigger-text="<b>subscription</b>" tb-help-popup="widget/editor/widget_js_subscription_object"></span> are assigned to **$scope** and become accessible within HTML template.
 
