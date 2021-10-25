@@ -52,8 +52,8 @@ return {msg: msg, metadata: metadata, msgType: newType};
 
 You can see real life example, how to use this node in those tutorials:
 
-- [Transform incoming telemetry{:target="_blank"}](${baseUrl}/docs/user-guide/rule-engine-2-0/tutorials/transform-incoming-telemetry/)
-- [Reply to RPC Calls{:target="_blank"}](${baseUrl}/docs/user-guide/rule-engine-2-0/tutorials/rpc-reply-tutorial#add-transform-script-node)
+- [Transform incoming telemetry{:target="_blank"}](${siteBaseUrl}/docs/user-guide/rule-engine-2-0/tutorials/transform-incoming-telemetry/)
+- [Reply to RPC Calls{:target="_blank"}](${siteBaseUrl}/docs/user-guide/rule-engine-2-0/tutorials/rpc-reply-tutorial#add-transform-script-node)
 
 <br>
 <br>

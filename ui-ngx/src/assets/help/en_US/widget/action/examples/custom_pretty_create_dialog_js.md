@@ -1,6 +1,7 @@
 #### Function displaying dialog to create a device or an asset
 
 ```javascript
+{:code-style="max-height: 400px;"}
 let $injector = widgetContext.$scope.$injector;
 let customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));
 let assetService = $injector.get(widgetContext.servicesMap.get('assetService'));
@@ -130,3 +131,6 @@ function AddEntityDialogController(instance) {
 }
 {:copy-code}
 ```
+
+<br>
+<br>

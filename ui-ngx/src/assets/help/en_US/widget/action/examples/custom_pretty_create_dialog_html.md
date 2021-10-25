@@ -1,6 +1,7 @@
 #### HTML template of dialog to create a device or an asset
 
 ```html
+{:code-style="max-height: 400px;"}
 <form #addEntityForm="ngForm" [formGroup]="addEntityFormGroup"
       (ngSubmit)="save()" class="add-entity-form">
   <mat-toolbar fxLayout="row" color="primary">
@@ -158,3 +159,6 @@
 </form>
 {:copy-code}
 ```
+
+<br>
+<br>

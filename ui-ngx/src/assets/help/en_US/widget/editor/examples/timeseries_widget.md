@@ -75,7 +75,7 @@ self.onDataUpdated = function() {
 
  - Click the **Run** button on the **Widget Editor Toolbar** in order to see the result in **Widget preview** section.
 
-![image](${baseUrl}/images/user-guide/contribution/widgets/timeseries-widget-sample.png)
+![image](${helpBaseUrl}/help/images/widget/editor/examples/timeseries-widget-sample.png)
 
 In this example, the <span trigger-style="fontSize: 16px;" trigger-text="<b>subscription</b>" tb-help-popup="widget/editor/widget_js_subscription_object"></span> **datasources** and **data** properties are assigned to **$scope** and become accessible within the HTML template.
 

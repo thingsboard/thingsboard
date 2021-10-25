@@ -96,7 +96,7 @@ public class DashboardController extends BaseController {
     public static final String DASHBOARD_DEFINITION = "The Dashboard object is a heavyweight object that contains information about the dashboard (e.g. title, image, assigned customers) and also configuration JSON (e.g. layouts, widgets, entity aliases).";
     public static final String HIDDEN_FOR_MOBILE = "Exclude dashboards that are hidden for mobile";
 
-    @Value("${dashboard.max_datapoints_limit}")
+    @Value("${ui.dashboard.max_datapoints_limit}")
     private long maxDatapointsLimit;
 
     @ApiOperation(value = "Get server time (getServerTime)",
