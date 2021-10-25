@@ -16,12 +16,14 @@
 package org.thingsboard.server.transport.lwm2m.server.store;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.server.security.NonUniqueSecurityInfoException;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.jetbrains.annotations.Nullable;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,11 +48,21 @@ public class TbLwM2mSecurityStore implements TbMainSecurityStore {
         return securityStore.getTbLwM2MSecurityInfoByEndpoint(endpoint);
     }
 
+    /**
+     * @param endpoint
+     * @return : If SecurityMode == NO_SEC:
+     * return SecurityInfo.newPreSharedKeyInfo(SecurityMode.NO_SEC.toString(), SecurityMode.NO_SEC.toString(),
+     * SecurityMode.NO_SEC.toString().getBytes());
+     */
     @Override
     public SecurityInfo getByEndpoint(String endpoint) {
         SecurityInfo securityInfo = securityStore.getByEndpoint(endpoint);
         if (securityInfo == null) {
             securityInfo = fetchAndPutSecurityInfo(endpoint);
+        } else if (securityInfo.usePSK() && securityInfo.getEndpoint().equals(SecurityMode.NO_SEC.toString())
+                && securityInfo.getIdentity().equals(SecurityMode.NO_SEC.toString())
+                && Arrays.equals(SecurityMode.NO_SEC.toString().getBytes(), securityInfo.getPreSharedKey())) {
+            return null;
         }
         return securityInfo;
     }
