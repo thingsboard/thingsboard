@@ -17,7 +17,6 @@ package org.thingsboard.server.controller;
 
 public class ControllerConstants {
 
-
     protected static final String NEW_LINE = "\n\n";
     protected static final int DEFAULT_PAGE_SIZE = 1000;
     protected static final String ENTITY_TYPE = "entityType";
@@ -32,6 +31,7 @@ public class ControllerConstants {
     protected static final String DASHBOARD_ID_PARAM_DESCRIPTION = "A string value representing the device id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     protected static final String RPC_ID_PARAM_DESCRIPTION = "A string value representing the rpc id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     protected static final String DEVICE_ID_PARAM_DESCRIPTION = "A string value representing the device id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
+    protected static final String ENTITY_VIEW_ID_PARAM_DESCRIPTION = "A string value representing the entity view id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     protected static final String DEVICE_PROFILE_ID_PARAM_DESCRIPTION = "A string value representing the device profile id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     protected static final String TENANT_PROFILE_ID_PARAM_DESCRIPTION = "A string value representing the tenant profile id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     protected static final String TENANT_ID_PARAM_DESCRIPTION = "A string value representing the tenant id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
@@ -56,6 +56,7 @@ public class ControllerConstants {
     protected static final String PAGE_SIZE_DESCRIPTION = "Maximum amount of entities in a one page";
     protected static final String PAGE_NUMBER_DESCRIPTION = "Sequence number of page starting from 0";
     protected static final String DEVICE_TYPE_DESCRIPTION = "Device type as the name of the device profile";
+    protected static final String ENTITY_VIEW_TYPE_DESCRIPTION = "Entity View type";
     protected static final String ASSET_TYPE_DESCRIPTION = "Asset type";
     protected static final String EDGE_TYPE_DESCRIPTION = "A string value representing the edge type. For example, 'default'";
     protected static final String RULE_CHAIN_TYPE_DESCRIPTION = "Rule chain type (CORE or EDGE)";
@@ -64,6 +65,7 @@ public class ControllerConstants {
     protected static final String WIDGET_BUNDLE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the widget bundle title.";
     protected static final String RPC_TEXT_SEARCH_DESCRIPTION = "Not implemented. Leave empty.";
     protected static final String DEVICE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the device name.";
+    protected static final String ENTITY_VIEW_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the entity view name.";
     protected static final String USER_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the user email.";
     protected static final String TENANT_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the tenant name.";
     protected static final String TENANT_PROFILE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the tenant profile name.";
@@ -78,6 +80,8 @@ public class ControllerConstants {
     protected static final String CUSTOMER_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title, email, country, city";
     protected static final String RPC_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, expirationTime, request, response";
     protected static final String DEVICE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, deviceProfileName, label, customerTitle";
+    protected static final String ENTITY_VIEW_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type";
+    protected static final String ENTITY_VIEW_INFO_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, customerTitle";
     protected static final String USER_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, firstName, lastName, email";
     protected static final String TENANT_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title, email, country, state, city, address, address2, zip, phone, email";
     protected static final String TENANT_PROFILE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, description, isDefault";
@@ -1358,5 +1362,12 @@ public class ControllerConstants {
             KEY_FILTERS_DESCRIPTION + PROVISION_CONFIGURATION + TRANSPORT_CONFIGURATION;
 
     protected static final String DEVICE_PROFILE_ID = "deviceProfileId";
+
+    protected static final String MODEL_DESCRIPTION = "See the 'Model' tab for more details.";
+    protected static final String ENTITY_VIEW_DESCRIPTION = "Entity Views limit the degree of exposure of the Device or Asset telemetry and attributes to the Customers. " +
+            "Every Entity View references exactly one entity (device or asset) and defines telemetry and attribute keys that will be visible to the assigned Customer. " +
+            "As a Tenant Administrator you are able to create multiple EVs per Device or Asset and assign them to different Customers. ";
+    protected static final String ENTITY_VIEW_INFO_DESCRIPTION = "Entity Views Info extends the Entity View with customer title and 'is public' flag. " + ENTITY_VIEW_DESCRIPTION;
+
 
 }

@@ -87,6 +87,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_INFO_DESCRIPTION;
@@ -492,7 +493,7 @@ public class DeviceController extends BaseController {
     @ResponseBody
     public PageData<Device> getCustomerDevices(
             @ApiParam(value = CUSTOMER_ID_PARAM_DESCRIPTION, required = true)
-            @PathVariable("customerId") String strCustomerId,
+            @PathVariable(CUSTOMER_ID) String strCustomerId,
             @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
             @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
