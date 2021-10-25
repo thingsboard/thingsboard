@@ -28,14 +28,17 @@ import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.observation.Observation;
+import org.eclipse.leshan.core.request.ExecuteRequest;
 import org.eclipse.leshan.core.request.ObserveRequest;
 import org.eclipse.leshan.core.request.ReadRequest;
 import org.eclipse.leshan.core.request.WriteCompositeRequest;
 import org.eclipse.leshan.core.request.WriteRequest;
+import org.eclipse.leshan.core.response.ExecuteResponse;
 import org.eclipse.leshan.core.response.ObserveResponse;
 import org.eclipse.leshan.core.response.ReadCompositeResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.server.registration.Registration;
+import org.eclipse.leshan.server.registration.RegistrationStore;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
@@ -74,7 +77,6 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelObser
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelObserveRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MDiscoverCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MDiscoverRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MExecuteCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MExecuteRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MLatchCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveCallback;
@@ -147,6 +149,7 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
     private final LwM2mClientContext clientContext;
     private final LwM2mDownlinkMsgHandler defaultLwM2MDownlinkMsgHandler;
     private final LwM2mVersionedModelProvider modelProvider;
+    private final RegistrationStore registrationStore;
 
     public DefaultLwM2MUplinkMsgHandler(TransportService transportService,
                                         LwM2MTransportServerConfig config,
@@ -159,7 +162,8 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
                                         @Lazy LwM2mDownlinkMsgHandler defaultLwM2MDownlinkMsgHandler,
                                         LwM2mTransportContext context,
                                         TbLwM2MDtlsSessionStore sessionStore,
-                                        LwM2mVersionedModelProvider modelProvider) {
+                                        LwM2mVersionedModelProvider modelProvider,
+                                        RegistrationStore registrationStore) {
         this.transportService = transportService;
         this.sessionManager = sessionManager;
         this.attributesService = attributesService;
@@ -172,6 +176,7 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
         this.context = context;
         this.sessionStore = sessionStore;
         this.modelProvider = modelProvider;
+        this.registrationStore = registrationStore;
     }
 
     @PostConstruct
@@ -402,7 +407,20 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
     public void onDeviceDelete(DeviceId deviceId) {
         LwM2mClient client = clientContext.getClientByDeviceId(deviceId.getId());
         TbLwM2MExecuteRequest request = TbLwM2MExecuteRequest.builder().versionedId(REBOOT_ID).timeout(clientContext.getRequestTimeout(client)).build();
-        defaultLwM2MDownlinkMsgHandler.sendExecuteRequest(client, request, new TbLwM2MExecuteCallback(logService, client, REBOOT_ID));
+        defaultLwM2MDownlinkMsgHandler.sendExecuteRequest(client, request, new DownlinkRequestCallback<>() {
+            @Override
+            public void onSuccess(ExecuteRequest request, ExecuteResponse response) {
+            }
+
+            @Override
+            public void onValidationError(String params, String msg) {
+            }
+
+            @Override
+            public void onError(String params, Exception e) {
+            }
+        });
+        registrationStore.removeRegistration(client.getRegistration().getId());
         doUnReg(client.getRegistration(), client);
     }
 
