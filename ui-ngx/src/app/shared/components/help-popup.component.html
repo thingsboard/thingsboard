@@ -15,9 +15,8 @@
     limitations under the License.
 
 -->
-<fieldset class="tb-help-popup-button-container">
+<fieldset class="tb-help-popup-button-container" *ngIf="!textMode">
   <div #toggleHelpButton
-       [fxShow]="!textMode"
        matTooltip="{{'help.show-help' | translate}}"
        matTooltipPosition="above"
        style="border-radius: 50%"
@@ -30,8 +29,9 @@
       <mat-spinner *ngIf="popoverVisible && !popoverReady" class="tb-help-popup-button-loading" mode="indeterminate" diameter="20" strokeWidth="2"></mat-spinner>
     </button>
   </div>
+</fieldset>
+<fieldset class="tb-help-popup-button-container" *ngIf="textMode">
   <div #toggleHelpTextButton
-       [fxShow]="textMode"
        (click)="toggleHelp()">
     <button mat-button
             color="primary"
