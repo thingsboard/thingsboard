@@ -218,6 +218,7 @@ public class DeviceController extends BaseController {
                                             @RequestBody SaveDeviceWithCredentialsRequest deviceAndCredentials) throws ThingsboardException {
         Device device = checkNotNull(deviceAndCredentials.getDevice());
         DeviceCredentials credentials = checkNotNull(deviceAndCredentials.getCredentials());
+        boolean created = device.getId() == null;
         try {
             device.setTenantId(getCurrentUser().getTenantId());
             checkEntity(device.getId(), device, Resource.DEVICE);
@@ -231,7 +232,7 @@ public class DeviceController extends BaseController {
             return savedDevice;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.DEVICE), device,
-                    null, device.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
+                    null, created ? ActionType.ADDED : ActionType.UPDATED, e);
             throw handleException(e);
         }
     }
