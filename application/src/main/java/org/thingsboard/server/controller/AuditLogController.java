@@ -156,13 +156,13 @@ public class AuditLogController extends BaseController {
     @RequestMapping(value = "/audit/logs/entity/{entityType}/{entityId}", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<AuditLog> getAuditLogsByEntityId(
-            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION)
+            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, defaultValue = "DEVICE")
             @PathVariable("entityType") String strEntityType,
-            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION)
+            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("entityId") String strEntityId,
-            @ApiParam(value = PAGE_SIZE_DESCRIPTION)
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
-            @ApiParam(value = PAGE_NUMBER_DESCRIPTION)
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
             @ApiParam(value = AUDIT_LOG_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
