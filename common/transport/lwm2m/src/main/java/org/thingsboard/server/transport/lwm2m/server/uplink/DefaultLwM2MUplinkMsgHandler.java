@@ -46,6 +46,7 @@ import org.thingsboard.server.common.data.device.data.lwm2m.ObjectAttributes;
 import org.thingsboard.server.common.data.device.data.lwm2m.OtherConfiguration;
 import org.thingsboard.server.common.data.device.data.lwm2m.TelemetryMappingConfiguration;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageUtil;
 import org.thingsboard.server.common.transport.TransportService;
@@ -73,6 +74,8 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelObser
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelObserveRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MDiscoverCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MDiscoverRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MExecuteCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MExecuteRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MLatchCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveRequest;
@@ -82,7 +85,6 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttrib
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttributesRequest;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MOtaUpdateService;
-import org.thingsboard.server.transport.lwm2m.server.rpc.LwM2MRpcRequestHandler;
 import org.thingsboard.server.transport.lwm2m.server.session.LwM2MSessionManager;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
@@ -130,6 +132,8 @@ import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaU
 public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService implements LwM2mUplinkMsgHandler {
 
     public LwM2mValueConverterImpl converter;
+
+    private static final String REBOOT_ID = "/3/0/4";
 
     private final TransportService transportService;
     private final LwM2mTransportContext context;
@@ -275,24 +279,28 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
     public void unReg(Registration registration, Collection<Observation> observations) {
         executor.submit(() -> {
             LwM2mClient client = clientContext.getClientByEndpoint(registration.getEndpoint());
-            try {
-                logService.log(client, LOG_LWM2M_INFO + ": Client unRegistration");
-                clientContext.unregister(client, registration);
-                SessionInfoProto sessionInfo = client.getSession();
-                if (sessionInfo != null) {
-                    sessionManager.deregister(sessionInfo);
-                    sessionStore.remove(registration.getEndpoint());
-                    log.info("Client close session: [{}] unReg [{}] name  [{}] profile ", registration.getId(), registration.getEndpoint(), sessionInfo.getDeviceType());
-                } else {
-                    log.error("Client close session: [{}] unReg [{}] name  [{}] sessionInfo ", registration.getId(), registration.getEndpoint(), null);
-                }
-            } catch (LwM2MClientStateException stateException) {
-                log.info("[{}] delete registration: [{}] {}.", registration.getEndpoint(), stateException.getState(), stateException.getMessage());
-            } catch (Throwable t) {
-                log.error("[{}] endpoint [{}] error Unable un registration.", registration.getEndpoint(), t);
-                logService.log(client, LOG_LWM2M_ERROR + String.format(": Client Unable un Registration, %s", t.getMessage()));
-            }
+            logService.log(client, LOG_LWM2M_INFO + ": Client unRegistration");
+            doUnReg(registration, client);
         });
+    }
+
+    private void doUnReg(Registration registration, LwM2mClient client) {
+        try {
+            clientContext.unregister(client, registration);
+            SessionInfoProto sessionInfo = client.getSession();
+            if (sessionInfo != null) {
+                sessionManager.deregister(sessionInfo);
+                sessionStore.remove(registration.getEndpoint());
+                log.info("Client close session: [{}] unReg [{}] name  [{}] profile ", registration.getId(), registration.getEndpoint(), sessionInfo.getDeviceType());
+            } else {
+                log.error("Client close session: [{}] unReg [{}] name  [{}] sessionInfo ", registration.getId(), registration.getEndpoint(), null);
+            }
+        } catch (LwM2MClientStateException stateException) {
+            log.info("[{}] delete registration: [{}] {}.", registration.getEndpoint(), stateException.getState(), stateException.getMessage());
+        } catch (Throwable t) {
+            log.error("[{}] endpoint [{}] error Unable un registration.", registration.getEndpoint(), t);
+            logService.log(client, LOG_LWM2M_ERROR + String.format(": Client Unable un Registration, %s", t.getMessage()));
+        }
     }
 
     @Override
@@ -388,6 +396,14 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
         } catch (Exception e) {
             log.warn("[{}] failed to update device: {}", device.getId(), device);
         }
+    }
+
+    @Override
+    public void onDeviceDelete(DeviceId deviceId) {
+        LwM2mClient client = clientContext.getClientByDeviceId(deviceId.getId());
+        TbLwM2MExecuteRequest request = TbLwM2MExecuteRequest.builder().versionedId(REBOOT_ID).timeout(clientContext.getRequestTimeout(client)).build();
+        defaultLwM2MDownlinkMsgHandler.sendExecuteRequest(client, request, new TbLwM2MExecuteCallback(logService, client, REBOOT_ID));
+        doUnReg(client.getRegistration(), client);
     }
 
     @Override
