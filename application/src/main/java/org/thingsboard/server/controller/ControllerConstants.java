@@ -176,6 +176,51 @@ public class ControllerConstants {
     protected static final String EVENT_DEBUG_RULE_CHAIN_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START + "{\n" +
             "   \"eventType\":\"DEBUG_RULE_CHAIN\",\n" + DEBUG_FILTER_OBJ + MARKDOWN_CODE_BLOCK_END;
 
+    protected static final String IS_BOOTSTRAP_SERVER_PARAM_DESCRIPTION = "A Boolean value representing the Server SecurityInfo for future Bootstrap client mode settings. Values: 'true' for Bootstrap Server; 'false' for Lwm2m Server. ";
+    protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION =
+            "   {\n\"class org.thingsboard.server.common.data.Device\":{\n" +
+            "           \"id\": \"null\",\n" +
+            "           \"createdTime\":0,\n" +
+            "           \"additionalInfo\":\"null\",\n" +
+            "           \"tenantId\":\"null\",\n" +
+            "           \"customerId\":\"null\",\n" +
+            "           \"name\":\"LwRpk00000000\",\n" +
+            "           \"type\":\"lwm2mProfileRpk\",\n" +
+            "           \"label\":\"null\",\"" +
+            "           \"deviceProfileId\":\"null\",\n" +
+            "           \"deviceData\":\"null\",\n" +
+            "           \"firmwareId\":\"null\",\n" +
+            "           \"softwareId\":\"null\"\n" +
+            "       },\n" +
+            "   \"class org.thingsboard.server.common.data.security.DeviceCredentials\":{\n" +
+            "       \"class_DeviceCredentials1\":{\n" +
+            "           \"id\":\"null\",\n" +
+            "           \"createdTime\":0,\n" +
+            "           \"deviceId\":\"null|',\n" +
+            "           \"credentialsType\":\"LWM2M_CREDENTIALS\",\n" +
+            "           \"credentialsId\":\"LwRpk00000000\",\n" +
+            "           \"credentialsValue\":{\n" +
+            "               \"client\":{\n" +
+            "                   \"endpoint\":\"LwRpk00000000\",\n" +
+            "                   \"securityConfigClientMode\":\"RPK\",\n" +
+            "                   \"key\":\"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\"\n" +
+            "               },\n" +
+            "               \"bootstrap\":{\n" +
+            "                   \"bootstrapServer\":{\n" +
+            "                       \"securityMode\":\"RPK\",\n" +
+            "                       \"clientPublicKeyOrId\":\"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\",\n" +
+            "                       \"clientSecretKey\":\"MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgd9GAx7yZW37autew5KZykn4IgRpge/tZSjnudnZJnMahRANCAARQQHE2X9Fxgk2byaT3ULJVeggmJE5gOVdxJKorp7lsMfA5bhmI3aU2ddqXIXQnHDwxsDK2cMwRFfICNrlUQx5V\"" +
+            "                   },\n" +
+            "                   \"lwm2mServer\":{\n" +
+            "                       \"securityMode\":\"RPK\",\n" +
+            "                       \"clientPublicKeyOrId\":\"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\",\n" +
+            "                       \"clientSecretKey\":\"MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgd9GAx7yZW37autew5KZykn4IgRpge/tZSjnudnZJnMahRANCAARQQHE2X9Fxgk2byaT3ULJVeggmJE5gOVdxJKorp7lsMfA5bhmI3aU2ddqXIXQnHDwxsDK2cMwRFfICNrlUQx5V\"\n" +
+            "                   }\n" +
+            "               }\n" +
+            "           }\n" +
+            "   }\n" +
+            "}";
+
     protected static final String FILTER_VALUE_TYPE = NEW_LINE + "## Value Type and Operations" + NEW_LINE +
             "Provides a hint about the data type of the entity field that is defined in the filter key. " +
             "The value type impacts the list of possible operations that you may use in the corresponding predicate. For example, you may use 'STARTS_WITH' or 'END_WITH', but you can't use 'GREATER_OR_EQUAL' for string values." +

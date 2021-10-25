@@ -1134,7 +1134,6 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
             Map<Class<?>, Object> deviceCredentials = new ConcurrentHashMap<>();
             deviceCredentials.put(Device.class, device);
             deviceCredentials.put(DeviceCredentials.class, credentials);
-//            return restTemplate.postForEntity(baseURL + "/api/lwm2m/device-credentials", deviceCredentials, Device.class).getBody();
             ResponseEntity<Device> deviceOpt = restTemplate.postForEntity(baseURL + "/api/lwm2m/device-credentials", deviceCredentials, Device.class);
             return Optional.ofNullable(deviceOpt.getBody());
         } catch (HttpClientErrorException exception) {
