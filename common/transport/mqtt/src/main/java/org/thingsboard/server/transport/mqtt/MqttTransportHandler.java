@@ -966,29 +966,23 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     public void onGetAttributesResponse(TransportProtos.GetAttributeResponseMsg response) {
         log.trace("[{}] Received get attributes response", sessionId);
         String topicBase;
-        MqttTransportAdaptor adaptor;
-        boolean useBackupAdaptorByDefault = false;
+        MqttTransportAdaptor adaptor = deviceSessionCtx.getAdaptor(attrReqTopicType);
         switch (attrReqTopicType) {
             case V2:
-                adaptor = deviceSessionCtx.getPayloadAdaptor();
                 topicBase = MqttTopics.DEVICE_ATTRIBUTES_RESPONSE_SHORT_TOPIC_PREFIX;
                 break;
             case V2_JSON:
-                adaptor = context.getJsonMqttAdaptor();
                 topicBase = MqttTopics.DEVICE_ATTRIBUTES_RESPONSE_SHORT_JSON_TOPIC_PREFIX;
                 break;
             case V2_PROTO:
-                adaptor = context.getProtoMqttAdaptor();
                 topicBase = MqttTopics.DEVICE_ATTRIBUTES_RESPONSE_SHORT_PROTO_TOPIC_PREFIX;
                 break;
             default:
-                adaptor = deviceSessionCtx.getPayloadAdaptor();
                 topicBase = MqttTopics.DEVICE_ATTRIBUTES_RESPONSE_TOPIC_PREFIX;
-                useBackupAdaptorByDefault = true;
                 break;
         }
         try {
-            adaptor.convertToPublish(deviceSessionCtx, response, topicBase, useBackupAdaptorByDefault).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
+            adaptor.convertToPublish(deviceSessionCtx, response, topicBase).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
         } catch (Exception e) {
             log.trace("[{}] Failed to convert device attributes response to MQTT msg", sessionId, e);
         }
@@ -999,29 +993,23 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         log.trace("[{}] Received attributes update notification to device", sessionId);
         log.info("[{}] : attrSubTopicType: {}", notification.toString(), attrSubTopicType);
         String topic;
-        MqttTransportAdaptor adaptor;
-        boolean useBackupAdaptorByDefault = false;
+        MqttTransportAdaptor adaptor = deviceSessionCtx.getAdaptor(attrSubTopicType);
         switch (attrSubTopicType) {
             case V2:
-                adaptor = deviceSessionCtx.getPayloadAdaptor();
                 topic = MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC;
                 break;
             case V2_JSON:
-                adaptor = context.getJsonMqttAdaptor();
                 topic = MqttTopics.DEVICE_ATTRIBUTES_SHORT_JSON_TOPIC;
                 break;
             case V2_PROTO:
-                adaptor = context.getProtoMqttAdaptor();
                 topic = MqttTopics.DEVICE_ATTRIBUTES_SHORT_PROTO_TOPIC;
                 break;
             default:
-                adaptor = deviceSessionCtx.getPayloadAdaptor();
                 topic = MqttTopics.DEVICE_ATTRIBUTES_TOPIC;
-                useBackupAdaptorByDefault = true;
                 break;
         }
         try {
-            adaptor.convertToPublish(deviceSessionCtx, notification, topic, useBackupAdaptorByDefault).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
+            adaptor.convertToPublish(deviceSessionCtx, notification, topic).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
         } catch (Exception e) {
             log.trace("[{}] Failed to convert device attributes update to MQTT msg", sessionId, e);
         }
@@ -1037,29 +1025,23 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     public void onToDeviceRpcRequest(UUID sessionId, TransportProtos.ToDeviceRpcRequestMsg rpcRequest) {
         log.info("[{}] Received RPC command to device", sessionId);
         String baseTopic;
-        MqttTransportAdaptor adaptor;
-        boolean useBackupAdaptorByDefault = false;
+        MqttTransportAdaptor adaptor = deviceSessionCtx.getAdaptor(rpcSubTopicType);
         switch (rpcSubTopicType) {
             case V2:
-                adaptor = deviceSessionCtx.getPayloadAdaptor();
                 baseTopic = MqttTopics.DEVICE_RPC_REQUESTS_SHORT_TOPIC;
                 break;
             case V2_JSON:
-                adaptor = context.getJsonMqttAdaptor();
                 baseTopic = MqttTopics.DEVICE_RPC_REQUESTS_SHORT_JSON_TOPIC;
                 break;
             case V2_PROTO:
-                adaptor = context.getProtoMqttAdaptor();
                 baseTopic = MqttTopics.DEVICE_RPC_REQUESTS_SHORT_PROTO_TOPIC;
                 break;
             default:
-                adaptor = deviceSessionCtx.getPayloadAdaptor();
                 baseTopic = MqttTopics.DEVICE_RPC_REQUESTS_TOPIC;
-                useBackupAdaptorByDefault = true;
                 break;
         }
         try {
-            adaptor.convertToPublish(deviceSessionCtx, rpcRequest, baseTopic, useBackupAdaptorByDefault).ifPresent(payload -> {
+            adaptor.convertToPublish(deviceSessionCtx, rpcRequest, baseTopic).ifPresent(payload -> {
                 int msgId = ((MqttPublishMessage) payload).variableHeader().packetId();
                 if (isAckExpected(payload)) {
                     rpcAwaitingAck.put(msgId, rpcRequest);
@@ -1095,29 +1077,23 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg rpcResponse) {
         log.trace("[{}] Received RPC response from server", sessionId);
         String baseTopic;
-        MqttTransportAdaptor adaptor;
-        boolean useBackupAdaptorByDefault = false;
+        MqttTransportAdaptor adaptor = deviceSessionCtx.getAdaptor(toServerRpcSubTopicType);
         switch (toServerRpcSubTopicType) {
             case V2:
-                adaptor = deviceSessionCtx.getPayloadAdaptor();
                 baseTopic = MqttTopics.DEVICE_RPC_RESPONSE_SHORT_TOPIC;
                 break;
             case V2_JSON:
-                adaptor = context.getJsonMqttAdaptor();
                 baseTopic = MqttTopics.DEVICE_RPC_RESPONSE_SHORT_JSON_TOPIC;
                 break;
             case V2_PROTO:
-                adaptor = context.getProtoMqttAdaptor();
                 baseTopic = MqttTopics.DEVICE_RPC_RESPONSE_SHORT_PROTO_TOPIC;
                 break;
             default:
-                adaptor = deviceSessionCtx.getPayloadAdaptor();
                 baseTopic = MqttTopics.DEVICE_RPC_RESPONSE_TOPIC;
-                useBackupAdaptorByDefault = true;
                 break;
         }
         try {
-            adaptor.convertToPublish(deviceSessionCtx, rpcResponse, baseTopic, useBackupAdaptorByDefault).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
+            adaptor.convertToPublish(deviceSessionCtx, rpcResponse, baseTopic).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
         } catch (Exception e) {
             log.trace("[{}] Failed to convert device RPC command to MQTT msg", sessionId, e);
         }
@@ -1139,10 +1115,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     @Override
     public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
         deviceSessionCtx.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
-    }
-
-    private enum TopicType {
-        V1, V2, V2_JSON, V2_PROTO
     }
 
 }

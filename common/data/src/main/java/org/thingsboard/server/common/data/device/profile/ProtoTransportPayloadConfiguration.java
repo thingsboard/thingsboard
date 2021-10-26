@@ -54,7 +54,8 @@ public class ProtoTransportPayloadConfiguration implements TransportPayloadTypeC
     private String deviceRpcRequestProtoSchema;
     private String deviceRpcResponseProtoSchema;
 
-    private boolean enableCompatibilityWithOtherPayloadFormats;
+    private boolean enableCompatibilityWithJsonPayloadFormat;
+    private boolean useJsonPayloadFormatForDefaultDownlinkTopics;
 
     @Override
     public TransportPayloadType getTransportPayloadType() {

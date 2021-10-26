@@ -32,108 +32,86 @@ import java.util.Optional;
 @Slf4j
 public class BackwardCompatibilityAdaptor implements MqttTransportAdaptor {
 
-    private static final String BACKWARD_COMPATIBILITY_ENABLED = "Other payload formats compatibility enabled! Trying to convert ";
-
-    private MqttTransportAdaptor main;
-    private MqttTransportAdaptor backup;
+    private MqttTransportAdaptor protoAdaptor;
+    private MqttTransportAdaptor jsonAdaptor;
 
     @Override
     public TransportProtos.PostTelemetryMsg convertToPostTelemetry(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
         try {
-            return main.convertToPostTelemetry(ctx, inbound);
+            return protoAdaptor.convertToPostTelemetry(ctx, inbound);
         } catch (AdaptorException e) {
-            log.trace(BACKWARD_COMPATIBILITY_ENABLED + "post telemetry request msg using {} ...", backup.getClass().getSimpleName());
-            return backup.convertToPostTelemetry(ctx, inbound);
+            log.trace("failed to process post telemetry request msg {} due to: ", inbound, e);
+            return jsonAdaptor.convertToPostTelemetry(ctx, inbound);
         }
     }
 
     @Override
     public TransportProtos.PostAttributeMsg convertToPostAttributes(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
         try {
-            return main.convertToPostAttributes(ctx, inbound);
+            return protoAdaptor.convertToPostAttributes(ctx, inbound);
         } catch (AdaptorException e) {
-            log.trace(BACKWARD_COMPATIBILITY_ENABLED + "post attributes request msg using {} ...", backup.getClass().getSimpleName());
-            return backup.convertToPostAttributes(ctx, inbound);
+            log.trace("failed to process post attributes request msg {} due to: ", inbound, e);
+            return jsonAdaptor.convertToPostAttributes(ctx, inbound);
         }
     }
 
     @Override
     public TransportProtos.GetAttributeRequestMsg convertToGetAttributes(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound, String topicBase) throws AdaptorException {
         try {
-            return main.convertToGetAttributes(ctx, inbound, topicBase);
+            return protoAdaptor.convertToGetAttributes(ctx, inbound, topicBase);
         } catch (AdaptorException e) {
-            log.trace(BACKWARD_COMPATIBILITY_ENABLED + "get attributes request msg using {} ...", backup.getClass().getSimpleName());
-            return backup.convertToGetAttributes(ctx, inbound, topicBase);
+            log.trace("failed to process get attributes request msg {} due to: ", inbound, e);
+            return jsonAdaptor.convertToGetAttributes(ctx, inbound, topicBase);
         }
     }
 
     @Override
     public TransportProtos.ToDeviceRpcResponseMsg convertToDeviceRpcResponse(MqttDeviceAwareSessionContext ctx, MqttPublishMessage mqttMsg, String topicBase) throws AdaptorException {
         try {
-            return main.convertToDeviceRpcResponse(ctx, mqttMsg, topicBase);
+            return protoAdaptor.convertToDeviceRpcResponse(ctx, mqttMsg, topicBase);
         } catch (AdaptorException e) {
-            log.trace(BACKWARD_COMPATIBILITY_ENABLED + "to device rpc response msg using {} ...", backup.getClass().getSimpleName());
-            return backup.convertToDeviceRpcResponse(ctx, mqttMsg, topicBase);
+            log.trace("failed to process to device rpc response msg {} due to: ", mqttMsg, e);
+            return jsonAdaptor.convertToDeviceRpcResponse(ctx, mqttMsg, topicBase);
         }
     }
 
     @Override
     public TransportProtos.ToServerRpcRequestMsg convertToServerRpcRequest(MqttDeviceAwareSessionContext ctx, MqttPublishMessage mqttMsg, String topicBase) throws AdaptorException {
         try {
-            return main.convertToServerRpcRequest(ctx, mqttMsg, topicBase);
+            return protoAdaptor.convertToServerRpcRequest(ctx, mqttMsg, topicBase);
         } catch (AdaptorException e) {
-            log.trace(BACKWARD_COMPATIBILITY_ENABLED + "to server rpc request msg using {} ...", backup.getClass().getSimpleName());
-            return backup.convertToServerRpcRequest(ctx, mqttMsg, topicBase);
+            log.trace("failed to process to server rpc request msg {} due to: ", mqttMsg, e);
+            return jsonAdaptor.convertToServerRpcRequest(ctx, mqttMsg, topicBase);
         }
     }
 
     @Override
     public TransportProtos.ClaimDeviceMsg convertToClaimDevice(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
         try {
-            return main.convertToClaimDevice(ctx, inbound);
+            return protoAdaptor.convertToClaimDevice(ctx, inbound);
         } catch (AdaptorException e) {
-            log.trace(BACKWARD_COMPATIBILITY_ENABLED + "claim device request msg using {} ...", backup.getClass().getSimpleName());
-            return backup.convertToClaimDevice(ctx, inbound);
+            log.trace("failed to process claim device request msg {} due to: ", inbound, e);
+            return jsonAdaptor.convertToClaimDevice(ctx, inbound);
         }
     }
 
     @Override
-    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.GetAttributeResponseMsg responseMsg, String topicBase, boolean useBackupAdaptorByDefault) throws AdaptorException {
-        return useBackupAdaptorByDefault ? backup.convertToPublish(ctx, responseMsg, topicBase, false) : main.convertToPublish(ctx, responseMsg, topicBase, false);
-    }
-
-    @Override
     public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException {
-        return main.convertToGatewayPublish(ctx, deviceName, responseMsg);
-    }
-
-    @Override
-    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.AttributeUpdateNotificationMsg notificationMsg, String topic, boolean useBackupAdaptorByDefault) throws AdaptorException {
-        return useBackupAdaptorByDefault ? backup.convertToPublish(ctx, notificationMsg, topic, false) : main.convertToPublish(ctx, notificationMsg, topic, false);
+        return protoAdaptor.convertToGatewayPublish(ctx, deviceName, responseMsg);
     }
 
     @Override
     public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.AttributeUpdateNotificationMsg notificationMsg) throws AdaptorException {
-        return main.convertToGatewayPublish(ctx, deviceName, notificationMsg);
-    }
-
-    @Override
-    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.ToDeviceRpcRequestMsg rpcRequest, String topicBase, boolean useBackupAdaptorByDefault) throws AdaptorException {
-        return useBackupAdaptorByDefault ? backup.convertToPublish(ctx, rpcRequest, topicBase, false) : main.convertToPublish(ctx, rpcRequest, topicBase, false);
+        return protoAdaptor.convertToGatewayPublish(ctx, deviceName, notificationMsg);
     }
 
     @Override
     public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.ToDeviceRpcRequestMsg rpcRequest) throws AdaptorException {
-        return main.convertToGatewayPublish(ctx, deviceName, rpcRequest);
-    }
-
-    @Override
-    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.ToServerRpcResponseMsg rpcResponse, String topicBase, boolean useBackupAdaptorByDefault) throws AdaptorException {
-        return useBackupAdaptorByDefault ? backup.convertToPublish(ctx, rpcResponse, topicBase, false) : main.convertToPublish(ctx, rpcResponse, topicBase, false);
+        return protoAdaptor.convertToGatewayPublish(ctx, deviceName, rpcRequest);
     }
 
     @Override
     public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, byte[] firmwareChunk, String requestId, int chunk, OtaPackageType firmwareType) throws AdaptorException {
-        return main.convertToPublish(ctx, firmwareChunk, requestId, chunk, firmwareType);
+        return protoAdaptor.convertToPublish(ctx, firmwareChunk, requestId, chunk, firmwareType);
     }
 }
