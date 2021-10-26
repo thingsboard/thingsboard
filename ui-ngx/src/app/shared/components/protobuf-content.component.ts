@@ -3,13 +3,11 @@ import {
   ElementRef,
   forwardRef,
   Input,
-  OnChanges,
   OnDestroy,
   OnInit,
-  SimpleChanges,
   ViewChild
 } from '@angular/core';
-import { ControlValueAccessor, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Ace } from 'ace-builds';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { ResizeObserver } from '@juggle/resize-observer';
@@ -29,15 +27,10 @@ import { beautifyJs } from '@shared/models/beautify.models';
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => ProtobufContentComponent),
       multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => ProtobufContentComponent),
-      multi: true,
     }
   ]
 })
-export class ProtobufContentComponent implements OnInit, ControlValueAccessor, Validator, OnDestroy {
+export class ProtobufContentComponent implements OnInit, ControlValueAccessor, OnDestroy {
 
   @ViewChild('protobufEditor', {static: true})
   protobufEditorElmRef: ElementRef;
@@ -71,8 +64,6 @@ export class ProtobufContentComponent implements OnInit, ControlValueAccessor, V
   fullscreen = false;
 
   contentBody: string;
-
-  contentValid: boolean;
 
   errorShowed = false;
 
@@ -138,17 +129,8 @@ export class ProtobufContentComponent implements OnInit, ControlValueAccessor, V
     }
   }
 
-  validate(c: FormControl) {
-    return (this.contentValid) ? null : {
-      contentBody: {
-        valid: false,
-      },
-    };
-  }
-
   writeValue(value: string): void {
     this.contentBody = value;
-    this.contentValid = true;
     if (this.protobufEditor) {
       this.ignoreChange = true;
       this.protobufEditor.setValue(this.contentBody ? this.contentBody : '', -1);

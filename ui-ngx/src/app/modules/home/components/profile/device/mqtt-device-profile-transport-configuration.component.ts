@@ -56,10 +56,6 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
 
   transportPayloadTypes = Object.keys(TransportPayloadType);
 
-  get protobufControls() {
-    return this.getProtobufControls();
-  }
-
   transportPayloadTypeTranslations = transportPayloadTypeTranslationMap;
 
   mqttDeviceProfileTransportConfigurationFormGroup: FormGroup;
@@ -214,22 +210,5 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
       }
     }
     return null;
-  }
-
-  getProtobufControls() {
-    return [
-      {
-        name: 'deviceAttributesProtoSchema',
-        label: 'device-profile.attributes-proto-schema',
-        errorControl: 'transportPayloadTypeConfiguration.deviceAttributesProtoSchema',
-        errorText: 'device-profile.attributes-proto-schema-required'
-      },
-      {
-        deviceTelemetryProtoSchema: 'deviceRpcRequestProtoSchema',
-        label: 'device-profile.rpc-request-proto-schema',
-        errorControl: 'transportPayloadTypeConfiguration.deviceRpcRequestProtoSchema',
-        errorText: 'device-profile.rpc-request-proto-required'
-      }
-    ];
   }
 }
