@@ -22,7 +22,6 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTest;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_12;
@@ -31,17 +30,34 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceId_
 
 public class RpcLwm2mIntegrationDeleteTest extends AbstractRpcLwM2MIntegrationTest {
 
+    @Test
+    public void testDelete() throws Exception {
+        testListActual.add("testDeleteObjectInstanceIsSuchByIdKey_Result_DELETED");
+        testListActual.add("testDeleteObjectInstanceIsNotSuchByIdKey_Result_NOT_FOUND");
+        testListActual.add("testDeleteObjectByIdKey_Result_BAD_REQUEST");
+        testListActual.add("testDeleteResourceByIdKey_Result_METHOD_NOT_ALLOWED");
+
+        testDeleteObjectInstanceIsSuchByIdKey_Result_DELETED();
+        testDeleteObjectInstanceIsNotSuchByIdKey_Result_NOT_FOUND();
+        testDeleteObjectByIdKey_Result_BAD_REQUEST();
+        testDeleteResourceByIdKey_Result_METHOD_NOT_ALLOWED();
+
+        assertEquals(testListActual, testListExpected);
+    }
+
+
     /**
      * if there is such an instance
      * Delete {"id":"/3303/12"}
      * {"result":"DELETE"}
      */
-    @Test
-    public void testDeleteObjectInstanceIsSuchByIdKey_Result_DELETED() throws Exception {
+    private void testDeleteObjectInstanceIsSuchByIdKey_Result_DELETED() throws Exception {
         String expectedPath = objectIdVer_3303 + "/" + objectInstanceId_12;
         String actualResult = sendRPCDeleteById(expectedPath);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
-        assertEquals(ResponseCode.DELETED.getName(), rpcActualResult.get("result").asText());
+        if (ResponseCode.DELETED.getName().equals(rpcActualResult.get("result").asText())) {
+            testListActual.remove("testDeleteObjectInstanceIsSuchByIdKey_Result_DELETED");
+        }
     }
 
     /**
@@ -49,12 +65,13 @@ public class RpcLwm2mIntegrationDeleteTest extends AbstractRpcLwM2MIntegrationTe
      * Delete {"id":"/19/12"}
      * {"result":"NOT_FOUND"}
      */
-    @Test
-    public void testDeleteObjectInstanceIsNotSuchByIdKey_Result_NOT_FOUND() throws Exception {
+    private void testDeleteObjectInstanceIsNotSuchByIdKey_Result_NOT_FOUND() throws Exception {
         String expectedPath = objectIdVer_19 + "/" + objectInstanceId_12;
         String actualResult = sendRPCDeleteById(expectedPath);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
-        assertEquals(ResponseCode.NOT_FOUND.getName(), rpcActualResult.get("result").asText());
+        if (ResponseCode.NOT_FOUND.getName().equals(rpcActualResult.get("result").asText())) {
+            testListActual.remove("testDeleteObjectInstanceIsNotSuchByIdKey_Result_NOT_FOUND");
+        }
     }
 
     /**
@@ -62,15 +79,16 @@ public class RpcLwm2mIntegrationDeleteTest extends AbstractRpcLwM2MIntegrationTe
      * Delete {"id":"/19_1.1"}
      * {"result":"BAD_REQUEST","error":"Invalid path /19 : Only object instances can be delete"}
      */
-    @Test
-    public void testDeleteObjectByIdKey_Result_BAD_REQUEST() throws Exception {
+    private void testDeleteObjectByIdKey_Result_BAD_REQUEST() throws Exception {
         String expectedPath = objectIdVer_19;
         String actualResult = sendRPCDeleteById(expectedPath);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
         String expected = "Invalid path " + pathIdVerToObjectId((String) expectedPath) + " : Only object instances can be delete";
         String actual = rpcActualResult.get("error").asText();
-        assertTrue(actual.equals(expected));
+        if (actual.equals(expected)) {
+            testListActual.remove("testDeleteObjectByIdKey_Result_BAD_REQUEST");
+        }
     }
 
 
@@ -79,12 +97,13 @@ public class RpcLwm2mIntegrationDeleteTest extends AbstractRpcLwM2MIntegrationTe
      * Delete {"id":"/3/0/9"}
      * {"result":"METHOD_NOT_ALLOWED"}
      */
-    @Test
-    public void testDeleteResourceByIdKey_Result_METHOD_NOT_ALLOWED() throws Exception {
+    private void testDeleteResourceByIdKey_Result_METHOD_NOT_ALLOWED() throws Exception {
         String expectedPath = objectIdVer_3 + "/" + objectInstanceId_0 + resourceId_9;
         String actualResult = sendRPCDeleteById(expectedPath);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
-        assertEquals(ResponseCode.METHOD_NOT_ALLOWED.getName(), rpcActualResult.get("result").asText());
+        if (ResponseCode.METHOD_NOT_ALLOWED.getName().equals(rpcActualResult.get("result").asText())) {
+            testListActual.remove("testDeleteResourceByIdKey_Result_METHOD_NOT_ALLOWED");
+        }
     }
 
 

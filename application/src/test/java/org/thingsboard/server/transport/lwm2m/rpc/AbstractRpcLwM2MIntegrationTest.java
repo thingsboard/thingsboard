@@ -21,6 +21,9 @@ import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCr
 import org.thingsboard.server.controller.TbTestWebSocketClient;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
@@ -52,6 +55,9 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
 
     protected String RPC_TRANSPORT_CONFIGURATION;
 
+    protected final Set testListExpected = ConcurrentHashMap.newKeySet();
+    protected Set testListActual;
+
     protected static final String ENDPOINT_RPC = "deviceEndpointRpc";
     protected ScheduledExecutorService executor;
     protected TbTestWebSocketClient wsClient;
@@ -80,6 +86,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
 
     @Before
     public void beforeTest() throws Exception {
+        testListActual = ConcurrentHashMap.newKeySet();
         init();
         createNewClient (SECURITY, COAP_CONFIG, true);
 

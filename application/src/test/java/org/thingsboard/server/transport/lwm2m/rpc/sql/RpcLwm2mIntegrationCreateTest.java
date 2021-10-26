@@ -33,21 +33,48 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceId_
 
 public class RpcLwm2mIntegrationCreateTest extends AbstractRpcLwM2MIntegrationTest {
 
+    @Test
+    public void testCreate() throws Exception {
+
+        testListActual.add("testCreateObjectInstanceWithInstanceIdByIdKey_Result_CREATED");
+        testListActual.add("testCreateObjectInstanceWithInstanceIdAlreadyExistsById_Result_BAD_REQUEST");
+        testListActual.add("testCreateObjectInstanceWithInstanceIdMandatorySingleObjectById_Result_BAD_REQUEST");
+        testListActual.add("testCreateObjectInstanceWithInstanceIdSecurityObjectById_Result_BAD_REQUEST");
+        testListActual.add("testCreateObjectInstanceWithInstanceIdAbsentObjectById_Result_BAD_REQUEST");
+
+        if (testCreateObjectInstanceWithInstanceIdByIdKey_Result_CREATED()){
+            testListActual.remove("testCreateObjectInstanceWithInstanceIdByIdKey_Result_CREATED");
+        }
+        if (testCreateObjectInstanceWithInstanceIdAlreadyExistsById_Result_BAD_REQUEST()) {
+            testListActual.remove("testCreateObjectInstanceWithInstanceIdAlreadyExistsById_Result_BAD_REQUEST");
+        }
+        if (testCreateObjectInstanceWithInstanceIdMandatorySingleObjectById_Result_BAD_REQUEST()) {
+            testListActual.remove("testCreateObjectInstanceWithInstanceIdMandatorySingleObjectById_Result_BAD_REQUEST");
+        }
+        if (testCreateObjectInstanceWithInstanceIdSecurityObjectById_Result_BAD_REQUEST()) {
+            testListActual.remove("testCreateObjectInstanceWithInstanceIdSecurityObjectById_Result_BAD_REQUEST");
+        }
+        if (testCreateObjectInstanceWithInstanceIdAbsentObjectById_Result_BAD_REQUEST()) {
+            testListActual.remove("testCreateObjectInstanceWithInstanceIdAbsentObjectById_Result_BAD_REQUEST");
+        }
+
+        assertEquals(testListActual, testListExpected);
+    }
+
     /**
      * Create  {"id":"/19_1.1","value":{"0":{"0":"00AC"}, "1":1}}
-     *
+     * <p>
      * create_2_instances_in_object
      * new ObjectInstance if Object is Multiple & Resource Single
      * Create  {"id":"/19_1.1/12","value":{"0":{"0":"00AC", "1":1}}}
      * {"{"result":"CREATED"}"}
      */
-    @Test
-    public void testCreateObjectInstanceWithInstanceIdByIdKey_Result_CREATED() throws Exception {
+    private boolean testCreateObjectInstanceWithInstanceIdByIdKey_Result_CREATED() throws Exception {
         String expectedPath = objectIdVer_19 + "/" + objectInstanceId_12;
         String expectedValue = "{\"" + resourceId_0 + "\":{\"0\":\"00AC\"}, \"1\":1}";
         String actualResult = sendRPCreateById(expectedPath, expectedValue);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
-        assertEquals(ResponseCode.CREATED.getName(), rpcActualResult.get("result").asText());
+        return (ResponseCode.CREATED.getName().equals(rpcActualResult.get("result").asText()));
     }
 
     /**
@@ -58,8 +85,7 @@ public class RpcLwm2mIntegrationCreateTest extends AbstractRpcLwM2MIntegrationTe
      * Create  {"id":"/19_1.1/0","value":{"0":{"0":"00AC", "1":1}}}
      * {"result":"BAD_REQUEST","error":"instance 0 already exists"}
      */
-    @Test
-    public void testCreateObjectInstanceWithInstanceIdAlreadyExistsById_Result_BAD_REQUEST() throws Exception {
+    private boolean testCreateObjectInstanceWithInstanceIdAlreadyExistsById_Result_BAD_REQUEST() throws Exception {
         String expectedPath = objectIdVer_19 + "/" + objectInstanceId_0;
         String expectedValue = "{\"" + resourceId_0 + "\":{\"0\":\"00AC\"}, \"1\":1}";
         String actualResult = sendRPCreateById(expectedPath, expectedValue);
@@ -67,7 +93,7 @@ public class RpcLwm2mIntegrationCreateTest extends AbstractRpcLwM2MIntegrationTe
         assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
         String expected = "instance " + objectInstanceId_0 + " already exists";
         String actual = rpcActualResult.get("error").asText();
-        assertTrue(actual.equals(expected));
+        return actual.equals(expected);
     }
 
     /**
@@ -75,8 +101,7 @@ public class RpcLwm2mIntegrationCreateTest extends AbstractRpcLwM2MIntegrationTe
      * Create  {"id":"/3/1,"value":{"0":"00AC"}}
      * {"result":"BAD_REQUEST","error":"Path /3/1. Object must be Multiple !"}
      */
-    @Test
-    public void testCreateObjectInstanceWithInstanceIdMandatorySingleObjectById_Result_BAD_REQUEST() throws Exception {
+    private boolean testCreateObjectInstanceWithInstanceIdMandatorySingleObjectById_Result_BAD_REQUEST() throws Exception {
         String expectedPath = objectIdVer_3 + "/" + objectInstanceId_1;
         String expectedValue = "{\"" + resourceId_0 + "\":{\"0\":\"00AC\"}}";
         String actualResult = sendRPCreateById(expectedPath, expectedValue);
@@ -84,7 +109,7 @@ public class RpcLwm2mIntegrationCreateTest extends AbstractRpcLwM2MIntegrationTe
         assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
         String expected = "Path " + expectedPath + ". Object must be Multiple !";
         String actual = rpcActualResult.get("error").asText();
-        assertTrue(actual.equals(expected));
+        return actual.equals(expected);
     }
 
     /**
@@ -92,8 +117,7 @@ public class RpcLwm2mIntegrationCreateTest extends AbstractRpcLwM2MIntegrationTe
      * Create  {"id":"/0/2","value":{"2":4}}
      * {"result":"BAD_REQUEST","error":"Specified object id 0 absent in the list supported objects of the client or is security object!"}
      */
-    @Test
-    public void testCreateObjectInstanceWithInstanceIdSecurityObjectById_Result_BAD_REQUEST() throws Exception {
+    private boolean testCreateObjectInstanceWithInstanceIdSecurityObjectById_Result_BAD_REQUEST() throws Exception {
         String expectedPath = objectIdVer_0 + "/" + objectInstanceId_1;
         String expectedValue = "{\"" + resourceId_0 + "\":{\"2\":4}}";
         String actualResult = sendRPCreateById(expectedPath, expectedValue);
@@ -103,7 +127,7 @@ public class RpcLwm2mIntegrationCreateTest extends AbstractRpcLwM2MIntegrationTe
         LwM2mPath expectedPathId = new LwM2mPath(expectedObjectId);
         String expected = "Specified object id " + expectedPathId.getObjectId() + " absent in the list supported objects of the client or is security object!";
         String actual = rpcActualResult.get("error").asText();
-        assertTrue(actual.equals(expected));
+        return  actual.equals(expected);
     }
 
     /**
@@ -111,8 +135,7 @@ public class RpcLwm2mIntegrationCreateTest extends AbstractRpcLwM2MIntegrationTe
      * Create  {"id":"/50/1","value":{"0":"00AC"}}
      * {"result":"BAD_REQUEST","error":"Specified object id 50 absent in the list supported objects of the client or is security object!"}
      */
-    @Test
-    public void testCreateObjectInstanceWithInstanceIdAbsentObjectById_Result_BAD_REQUEST() throws Exception {
+    private boolean testCreateObjectInstanceWithInstanceIdAbsentObjectById_Result_BAD_REQUEST() throws Exception {
         String expectedPath = objectIdVer_50+ "/" + objectInstanceId_1;
         String expectedValue = "{\"" + resourceId_0 + "\":{\"0\":\"00AC\"}}";
         String actualResult = sendRPCreateById(expectedPath, expectedValue);
@@ -122,7 +145,7 @@ public class RpcLwm2mIntegrationCreateTest extends AbstractRpcLwM2MIntegrationTe
         LwM2mPath expectedPathId = new LwM2mPath(expectedObjectId);
         String expected = "Specified object id " + expectedPathId.getObjectId() + " absent in the list supported objects of the client or is security object!";
         String actual = rpcActualResult.get("error").asText();
-        assertTrue(actual.equals(expected));
+        return actual.equals(expected);
     }
 
     private String sendRPCreateById(String path, String value) throws Exception {
