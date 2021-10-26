@@ -24,6 +24,7 @@ import org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
@@ -52,7 +53,6 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
 
     protected String RPC_TRANSPORT_CONFIGURATION;
 
-    protected static final String ENDPOINT_RPC = "deviceEndpointRpc";
     protected ScheduledExecutorService executor;
     protected TbTestWebSocketClient wsClient;
     protected String deviceId;
@@ -72,18 +72,17 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
     protected String objectIdVer_19;
     protected String objectIdVer_50 = "/50";
     protected String objectIdVer_3303;
+    protected static AtomicInteger endpointSequence = new AtomicInteger();
 
     public AbstractRpcLwM2MIntegrationTest(){
         setResources(resources);
-        setEndpoint(ENDPOINT_RPC);
     }
 
     @Before
     public void beforeTest() throws Exception {
+        setEndpoint("deviceEndpointRpc" + endpointSequence.incrementAndGet());
         init();
         createNewClient (SECURITY, COAP_CONFIG, true);
-
-        Thread.sleep(1000);
 
         expectedObjects = ConcurrentHashMap.newKeySet();
         expectedObjectIdVers = ConcurrentHashMap.newKeySet();
@@ -179,13 +178,9 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
                 "}";
         createDeviceProfile(RPC_TRANSPORT_CONFIGURATION);
 
-        Thread.sleep(1000);
-
-        NoSecClientCredentials credentials =  createNoSecClientCredentials(ENDPOINT_RPC);
+        NoSecClientCredentials credentials =  createNoSecClientCredentials(endpoint);
         final Device device = createDevice(credentials);
         deviceId = device.getId().getId().toString();
-
-        Thread.sleep(1000);
 
         client.start();
      }
