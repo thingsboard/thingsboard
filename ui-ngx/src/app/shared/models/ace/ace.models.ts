@@ -43,6 +43,7 @@ export function loadAceDependencies(): Observable<any> {
     aceObservables.push(from(import('ace-builds/src-noconflict/snippets/text')));
     aceObservables.push(from(import('ace-builds/src-noconflict/snippets/markdown')));
     aceObservables.push(from(import('ace-builds/src-noconflict/snippets/html')));
+    aceObservables.push(from(import('ace-builds/src-noconflict/theme-textmate')));
     aceObservables.push(from(import('ace-builds/src-noconflict/theme-github')));
     return forkJoin(aceObservables).pipe(
       tap(() => {

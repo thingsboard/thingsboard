@@ -24,7 +24,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DataKey, Datasource, DatasourceData, DatasourceType, WidgetConfig } from '@shared/models/widget.models';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
-import { createLabelFromDatasource, isDefined, isDefinedAndNotNull, isEqual, isUndefined } from '@core/utils';
+import { createLabelFromDatasource, isDefinedAndNotNull, isEqual, isNotEmptyStr, isUndefined } from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
 import * as _moment from 'moment';
 import { FormBuilder, FormGroup, ValidatorFn, Validators } from '@angular/forms';
@@ -41,7 +41,7 @@ type FieldAlignment = 'row' | 'column';
 type MultipleInputWidgetDataKeyType = 'server' | 'shared' | 'timeseries';
 type MultipleInputWidgetDataKeyValueType = 'string' | 'double' | 'integer' |
                                            'booleanCheckbox' | 'booleanSwitch' |
-                                           'dateTime' | 'date' | 'time';
+                                           'dateTime' | 'date' | 'time' | 'select';
 type MultipleInputWidgetDataKeyEditableType = 'editable' | 'disabled' | 'readonly';
 
 interface MultipleInputWidgetSettings {
@@ -58,9 +58,15 @@ interface MultipleInputWidgetSettings {
   attributesShared?: boolean;
 }
 
+interface MultipleInputWidgetSelectOption {
+  value: string | null;
+  label: string;
+}
+
 interface MultipleInputWidgetDataKeySettings {
   dataKeyType: MultipleInputWidgetDataKeyType;
   dataKeyValueType: MultipleInputWidgetDataKeyValueType;
+  selectOptions: MultipleInputWidgetSelectOption[];
   required: boolean;
   isEditable: MultipleInputWidgetDataKeyEditableType;
   disabledOnDataKey: string;
@@ -109,6 +115,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   private datasources: Array<Datasource>;
   private destroy$ = new Subject();
   public sources: Array<MultipleInputWidgetSource> = [];
+  private isSavingInProgress = false;
 
   isVerticalAlignment: boolean;
   inputWidthSettings: string;
@@ -250,6 +257,14 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
             }
             // For backward compatibility
 
+            if (dataKey.settings.dataKeyValueType === 'select') {
+              dataKey.settings.selectOptions.forEach((option) => {
+                if (option.value.toLowerCase() === 'null') {
+                  option.value = null;
+                }
+              });
+            }
+
             source.keys.push(dataKey);
           });
         } else {
@@ -343,6 +358,9 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
             case 'booleanCheckbox':
             case 'booleanSwitch':
               value = (keyData[0][1] === 'true');
+              break;
+            case 'select':
+              value = keyData[0][1].toString();
               break;
             default:
               value = keyData[0][1];
@@ -448,6 +466,10 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
     return messageText;
   }
 
+  public getCustomTranslationText(value): string {
+    return this.utils.customTranslation(value, value);
+  }
+
   public visibleKeys(source: MultipleInputWidgetSource): MultipleInputWidgetDataKey[] {
     return source.keys.filter(key => !key.settings.dataKeyHidden);
   }
@@ -468,9 +490,10 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   }
 
   public inputChanged(source: MultipleInputWidgetSource, key: MultipleInputWidgetDataKey) {
-    if (!this.settings.showActionButtons) {
+    if (!this.settings.showActionButtons && !this.isSavingInProgress) {
+      this.isSavingInProgress = true;
       const currentValue = this.multipleInputFormGroup.get(key.formId).value;
-      if (!key.settings.required || (key.settings.required && isDefined(currentValue))) {
+      if (!key.settings.required || (key.settings.required && isDefinedAndNotNull(currentValue) && isNotEmptyStr(currentValue.toString()))) {
         const dataToSave: MultipleInputWidgetSource = {
           datasource: source.datasource,
           keys: [key]
@@ -481,7 +504,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   }
 
   public save(dataToSave?: MultipleInputWidgetSource) {
-    if (document && document.activeElement) {
+    if (document?.activeElement && !this.isSavingInProgress) {
+      this.isSavingInProgress = true;
       (document.activeElement as HTMLElement).blur();
     }
     const config: RequestConfig = {
@@ -571,12 +595,14 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
         () => {
           this.multipleInputFormGroup.markAsPristine();
           this.ctx.detectChanges();
+          this.isSavingInProgress = false;
           if (this.settings.showResultMessage) {
             this.ctx.showSuccessToast(this.translate.instant('widgets.input-widgets.update-successful'),
               1000, 'bottom', 'left', this.toastTargetId);
           }
         },
         () => {
+          this.isSavingInProgress = false;
           if (this.settings.showResultMessage) {
             this.ctx.showErrorToast(this.translate.instant('widgets.input-widgets.update-failed'),
               'bottom', 'left', this.toastTargetId);
@@ -585,6 +611,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
     } else {
       this.multipleInputFormGroup.markAsPristine();
       this.ctx.detectChanges();
+      this.isSavingInProgress = false;
     }
   }
 

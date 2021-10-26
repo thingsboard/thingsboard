@@ -96,7 +96,7 @@ keytool -genkeypair -v \
   -keypass $CLIENT_KEY_PASSWORD \
   -storepass $CLIENT_KEYSTORE_PASSWORD \
   -keyalg $CLIENT_KEY_ALG \
-  -keysize $CLIENT_KEY_SIZE\
+  -groupname $CLIENT_KEY_GROUP_NAME \
   -validity 9999 \
   -dname "CN=$DOMAIN_SUFFIX, OU=$ORGANIZATIONAL_UNIT, O=$ORGANIZATION, L=$CITY, ST=$STATE_OR_PROVINCE, C=$TWO_LETTER_COUNTRY_CODE"
 

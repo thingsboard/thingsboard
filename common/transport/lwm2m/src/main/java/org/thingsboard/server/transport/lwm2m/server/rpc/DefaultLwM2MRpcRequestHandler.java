@@ -23,6 +23,7 @@ import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.request.ContentFormat;
+import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
@@ -88,6 +89,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
     private final LwM2mUplinkMsgHandler uplinkHandler;
     private final LwM2mDownlinkMsgHandler downlinkHandler;
     private final LwM2MTelemetryLogService logService;
+    private final LwM2mModelProvider modelProvider;
 
     @Override
     public void onToDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg rpcRequest, TransportProtos.SessionInfoProto sessionInfo) {
@@ -255,7 +257,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         RpcWriteReplaceRequest requestBody = JacksonUtil.fromString(requestMsg.getParams(), RpcWriteReplaceRequest.class);
         LwM2mPath path = new LwM2mPath(fromVersionedIdToObjectId(versionedId));
         if (path.isResource()) {
-            ResourceModel resourceModel = client.getResourceModel(versionedId, this.config.getModelProvider());
+            ResourceModel resourceModel = client.getResourceModel(versionedId, modelProvider);
             if (resourceModel != null && resourceModel.multiple) {
                 try {
                     Map value = convertMultiResourceValuesFromRpcBody(requestBody.getValue(), resourceModel.type, versionedId);

@@ -84,7 +84,21 @@ public abstract class AbstractMqttAttributesRequestProtoIntegrationTest extends 
     public void testRequestAttributesValuesFromTheServer() throws Exception {
         super.processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto",
                 TransportPayloadType.PROTOBUF, null, null, null, ATTRIBUTES_SCHEMA_STR, null, null, null, null, DeviceProfileProvisionType.DISABLED);
-        processTestRequestAttributesValuesFromTheServer();
+        processTestRequestAttributesValuesFromTheServer(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX);
+    }
+
+    @Test
+    public void testRequestAttributesValuesFromTheServerOnShortTopic() throws Exception {
+        super.processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto",
+                TransportPayloadType.PROTOBUF, null, null, null, ATTRIBUTES_SCHEMA_STR, null, null, null, null, DeviceProfileProvisionType.DISABLED);
+        processTestRequestAttributesValuesFromTheServer(MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_SHORT_TOPIC_PREFIX);
+    }
+
+    @Test
+    public void testRequestAttributesValuesFromTheServerOnShortProtoTopic() throws Exception {
+        super.processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto",
+                TransportPayloadType.PROTOBUF, null, null, null, ATTRIBUTES_SCHEMA_STR, null, null, null, null, DeviceProfileProvisionType.DISABLED);
+        processTestRequestAttributesValuesFromTheServer(MqttTopics.DEVICE_ATTRIBUTES_SHORT_PROTO_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_PROTO_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_SHORT_PROTO_TOPIC_PREFIX);
     }
 
     @Test
@@ -93,7 +107,10 @@ public abstract class AbstractMqttAttributesRequestProtoIntegrationTest extends 
         processTestGatewayRequestAttributesValuesFromTheServer();
     }
 
-    protected void postAttributesAndSubscribeToTopic(Device savedDevice, MqttAsyncClient client) throws Exception {
+    @Test
+    public void testRequestAttributesValuesFromTheServerOnShortJsonTopic() throws Exception { }
+
+    protected void postAttributesAndSubscribeToTopic(Device savedDevice, MqttAsyncClient client, String attrPubTopic, String attrSubTopic) throws Exception {
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", AbstractMqttAttributesIntegrationTest.POST_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
         assertTrue(transportConfiguration instanceof MqttDeviceProfileTransportConfiguration);
@@ -131,8 +148,8 @@ public abstract class AbstractMqttAttributesRequestProtoIntegrationTest extends 
                 .setField(postAttributesMsgDescriptor.findFieldByName("attribute5"), jsonObject)
                 .build();
         byte[] payload = postAttributesMsg.toByteArray();
-        client.publish(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, new MqttMessage(payload));
-        client.subscribe(MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC, MqttQoS.AT_MOST_ONCE.value());
+        client.publish(attrPubTopic, new MqttMessage(payload));
+        client.subscribe(attrSubTopic, MqttQoS.AT_MOST_ONCE.value());
     }
 
     protected void postGatewayDeviceClientAttributes(MqttAsyncClient client) throws Exception {
@@ -149,7 +166,7 @@ public abstract class AbstractMqttAttributesRequestProtoIntegrationTest extends 
         client.publish(MqttTopics.GATEWAY_ATTRIBUTES_TOPIC, new MqttMessage(bytes));
     }
 
-    protected void validateResponse(MqttAsyncClient client, CountDownLatch latch, AbstractMqttAttributesIntegrationTest.TestMqttCallback callback) throws MqttException, InterruptedException, InvalidProtocolBufferException {
+    protected void validateResponse(MqttAsyncClient client, CountDownLatch latch, TestMqttCallback callback, String attrReqTopic) throws MqttException, InterruptedException, InvalidProtocolBufferException {
         String keys = "attribute1,attribute2,attribute3,attribute4,attribute5";
         TransportApiProtos.AttributesRequest.Builder attributesRequestBuilder = TransportApiProtos.AttributesRequest.newBuilder();
         attributesRequestBuilder.setClientKeys(keys);
@@ -157,7 +174,7 @@ public abstract class AbstractMqttAttributesRequestProtoIntegrationTest extends 
         TransportApiProtos.AttributesRequest attributesRequest = attributesRequestBuilder.build();
         MqttMessage mqttMessage = new MqttMessage();
         mqttMessage.setPayload(attributesRequest.toByteArray());
-        client.publish(MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX + "1", mqttMessage);
+        client.publish(attrReqTopic + "1", mqttMessage);
         latch.await(3, TimeUnit.SECONDS);
         assertEquals(MqttQoS.AT_MOST_ONCE.value(), callback.getQoS());
         TransportProtos.GetAttributeResponseMsg expectedAttributesResponse = getExpectedAttributeResponseMsg();

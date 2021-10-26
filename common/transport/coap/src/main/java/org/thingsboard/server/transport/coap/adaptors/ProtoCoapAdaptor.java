@@ -20,7 +20,6 @@ import com.google.gson.JsonParser;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.util.JsonFormat;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
@@ -32,6 +31,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.adaptor.ProtoConverter;
+import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.coap.CoapTransportResource;
 
@@ -44,8 +44,9 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
 
     @Override
     public TransportProtos.PostTelemetryMsg convertToPostTelemetry(UUID sessionId, Request inbound, Descriptors.Descriptor telemetryMsgDescriptor) throws AdaptorException {
+        ProtoConverter.validateDescriptor(telemetryMsgDescriptor);
         try {
-            return JsonConverter.convertToTelemetryProto(new JsonParser().parse(dynamicMsgToJson(inbound.getPayload(), telemetryMsgDescriptor)));
+            return JsonConverter.convertToTelemetryProto(new JsonParser().parse(ProtoConverter.dynamicMsgToJson(inbound.getPayload(), telemetryMsgDescriptor)));
         } catch (Exception e) {
             throw new AdaptorException(e);
         }
@@ -53,8 +54,9 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
 
     @Override
     public TransportProtos.PostAttributeMsg convertToPostAttributes(UUID sessionId, Request inbound, Descriptors.Descriptor attributesMsgDescriptor) throws AdaptorException {
+        ProtoConverter.validateDescriptor(attributesMsgDescriptor);
         try {
-            return JsonConverter.convertToAttributesProto(new JsonParser().parse(dynamicMsgToJson(inbound.getPayload(), attributesMsgDescriptor)));
+            return JsonConverter.convertToAttributesProto(new JsonParser().parse(ProtoConverter.dynamicMsgToJson(inbound.getPayload(), attributesMsgDescriptor)));
         } catch (Exception e) {
             throw new AdaptorException(e);
         }
@@ -71,8 +73,9 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
         if (requestId.isEmpty()) {
             throw new AdaptorException("Request id is missing!");
         } else {
+            ProtoConverter.validateDescriptor(rpcResponseMsgDescriptor);
             try {
-                JsonElement response = new JsonParser().parse(dynamicMsgToJson(inbound.getPayload(), rpcResponseMsgDescriptor));
+                JsonElement response = new JsonParser().parse(ProtoConverter.dynamicMsgToJson(inbound.getPayload(), rpcResponseMsgDescriptor));
                 return TransportProtos.ToDeviceRpcResponseMsg.newBuilder().setRequestId(requestId.orElseThrow(() -> new AdaptorException("Request id is missing!")))
                         .setPayload(response.toString()).build();
             } catch (Exception e) {
@@ -156,11 +159,6 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
         response.setPayload(notification);
         response.setConfirmable(confirmable);
         return response;
-    }
-
-    private String dynamicMsgToJson(byte[] bytes, Descriptors.Descriptor descriptor) throws InvalidProtocolBufferException {
-        DynamicMessage dynamicMessage = DynamicMessage.parseFrom(descriptor, bytes);
-        return JsonFormat.printer().includingDefaultValueFields().print(dynamicMessage);
     }
 
     @Override

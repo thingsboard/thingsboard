@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.SecurityMode;
+import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,7 @@ import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mVersionedModelProvider;
 import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MOtaUpdateService;
 import org.thingsboard.server.transport.lwm2m.server.session.LwM2MSessionManager;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MClientStore;
@@ -70,6 +72,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     private final TbLwM2MClientStore clientStore;
     private final LwM2MSessionManager sessionManager;
     private final TransportDeviceProfileCache deviceProfileCache;
+    private final LwM2mVersionedModelProvider modelProvider;
 
     @Autowired
     @Lazy
@@ -534,4 +537,5 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         }
         return timeout;
     }
+
 }

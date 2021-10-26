@@ -95,7 +95,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
         log.trace("Executing updateDeviceCredentials [{}]", deviceCredentials);
         credentialsValidator.validate(deviceCredentials, id -> tenantId);
         try {
-            return deviceCredentialsDao.save(tenantId, deviceCredentials);
+            return deviceCredentialsDao.saveAndFlush(tenantId, deviceCredentials);
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null

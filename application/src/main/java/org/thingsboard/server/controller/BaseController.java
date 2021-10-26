@@ -146,17 +146,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_PAGE_SIZE;
+import static org.thingsboard.server.controller.ControllerConstants.INCORRECT_TENANT_ID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Slf4j
 @TbCoreComponent
 public abstract class BaseController {
 
-    public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
-    protected static final String DEFAULT_DASHBOARD = "defaultDashboardId";
-    protected static final String HOME_DASHBOARD = "homeDashboardId";
-
-    private static final int DEFAULT_PAGE_SIZE = 1000;
+    /*Swagger UI description*/
 
     private static final ObjectMapper json = new ObjectMapper();
 
@@ -893,7 +891,7 @@ public abstract class BaseController {
         PageDataIterableByTenantIdEntityId<EdgeId> relatedEdgeIdsIterator =
                 new PageDataIterableByTenantIdEntityId<>(edgeService::findRelatedEdgeIdsByEntityId, tenantId, entityId, DEFAULT_PAGE_SIZE);
         List<EdgeId> result = new ArrayList<>();
-        for(EdgeId edgeId : relatedEdgeIdsIterator) {
+        for (EdgeId edgeId : relatedEdgeIdsIterator) {
             result.add(edgeId);
         }
         return result;

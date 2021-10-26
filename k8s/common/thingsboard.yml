@@ -424,6 +424,10 @@ spec:
         backend:
           serviceName: tb-node
           servicePort: 8080
+      - path: /assets/help/.*/rulenode/.*
+        backend:
+          serviceName: tb-node
+          servicePort: 8080
       - path: /oauth2/.*
         backend:
           serviceName: tb-node

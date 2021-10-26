@@ -292,14 +292,14 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
       case EventType.ERROR:
         this.filterColumns.push(
           {key: 'method', title: 'event.method'},
-          {key: 'error', title: 'event.error'}
+          {key: 'errorStr', title: 'event.error'}
         );
         break;
       case EventType.LC_EVENT:
         this.filterColumns.push(
           {key: 'event', title: 'event.event'},
           {key: 'status', title: 'event.status'},
-          {key: 'error', title: 'event.error'}
+          {key: 'errorStr', title: 'event.error'}
         );
         break;
       case EventType.STATS:
@@ -319,7 +319,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
           {key: 'dataSearch', title: 'event.data'},
           {key: 'metadataSearch', title: 'event.metadata'},
           {key: 'isError', title: 'event.error'},
-          {key: 'error', title: 'event.error'}
+          {key: 'errorStr', title: 'event.error'}
         );
         break;
     }

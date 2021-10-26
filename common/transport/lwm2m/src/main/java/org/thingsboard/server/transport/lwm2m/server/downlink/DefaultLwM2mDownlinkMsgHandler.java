@@ -65,6 +65,7 @@ import org.thingsboard.server.common.data.device.data.lwm2m.ObjectAttributes;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mVersionedModelProvider;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.common.LwM2MExecutorAwareService;
@@ -112,6 +113,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     private final LwM2MTransportServerConfig config;
     private final LwM2MTelemetryLogService logService;
     private final LwM2mClientContext clientContext;
+    private final LwM2mVersionedModelProvider modelProvider;
 
     @PostConstruct
     public void init() {
@@ -136,13 +138,9 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
 
     @Override
     public void sendReadRequest(LwM2mClient client, TbLwM2MReadRequest request, DownlinkRequestCallback<ReadRequest, ReadResponse> callback) {
-        try {
-            validateVersionedId(client, request);
-            ReadRequest downlink = new ReadRequest(getReadRequestContentFormat(client, request, this.config.getModelProvider()), request.getObjectId());
-            sendSimpleRequest(client, downlink, request.getTimeout(), callback);
-        } catch (InvalidRequestException e) {
-            callback.onValidationError(request.toString(), e.getMessage());
-        }
+        validateVersionedId(client, request);
+        ReadRequest downlink = new ReadRequest(getRequestContentFormat(client, request.getVersionedId(), modelProvider), request.getObjectId());
+        sendSimpleRequest(client, downlink, request.getTimeout(), callback);
     }
 
     @Override
@@ -164,7 +162,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
             if (observations.stream().noneMatch(observation -> observation.getPath().equals(resultIds))) {
                 ObserveRequest downlink;
-                ContentFormat contentFormat = getReadRequestContentFormat(client, request, this.config.getModelProvider());
+                ContentFormat contentFormat = getReadRequestContentFormat(client, request, modelProvider);
                 if (resultIds.isResource()) {
                     downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId());
                 } else if (resultIds.isObjectInstance()) {
@@ -199,7 +197,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         try {
             validateVersionedId(client, request);
             LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(request.getVersionedId()));
-            ResourceModel resourceModelExecute = client.getResourceModel(request.getVersionedId(), this.config.getModelProvider());
+            ResourceModel resourceModelExecute = client.getResourceModel(request.getVersionedId(), modelProvider);
             if (resourceModelExecute == null) {
                 LwM2mModel model = createModelsDefault();
                 if (pathIds.isResource()) {
@@ -294,9 +292,9 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         LwM2mPath resultIds = new LwM2mPath(request.getObjectId());
         if (resultIds.isResource() || resultIds.isResourceInstance()) {
             validateVersionedId(client, request);
-            ResourceModel resourceModelWrite = client.getResourceModel(request.getVersionedId(), this.config.getModelProvider());
+            ResourceModel resourceModelWrite = client.getResourceModel(request.getVersionedId(), modelProvider);
             if (resourceModelWrite != null) {
-                ContentFormat contentFormat = getWriteRequestContentFormat(client, request, this.config.getModelProvider());
+                ContentFormat contentFormat = getWriteRequestContentFormat(client, request, modelProvider);
                 try {
                     WriteRequest downlink = null;
                     String msgError = "";
@@ -359,7 +357,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             if (resultIds.isObjectInstance() || resultIds.isResource()) {
                 validateVersionedId(client, request);
                 WriteRequest downlink = null;
-                ContentFormat contentFormat = getWriteRequestContentFormat(client, request, this.config.getModelProvider());
+                ContentFormat contentFormat = getWriteRequestContentFormat(client, request, modelProvider);
                 String msgError = "";
                 if (resultIds.isObjectInstance()) {
                     /*
@@ -368,7 +366,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                      *  contentFormat – Format of the payload (TLV or JSON).
                      */
                     Collection<LwM2mResource> resources = client.getNewResourcesForInstance(request.getVersionedId(),
-                            request.getValue(), this.config.getModelProvider(), this.converter);
+                            request.getValue(), modelProvider, this.converter);
                     if (resources.size() > 0) {
                         downlink = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(),
                                 resultIds.getObjectInstanceId(), resources);
@@ -376,7 +374,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                         msgError = " No resources to update!";
                     }
                 } else if (resultIds.isResource()) {
-                    ResourceModel resourceModelWrite = client.getResourceModel(request.getVersionedId(), this.config.getModelProvider());
+                    ResourceModel resourceModelWrite = client.getResourceModel(request.getVersionedId(), modelProvider);
                     if (resourceModelWrite != null) {
                         if (resourceModelWrite.multiple) {
                             try {
@@ -414,23 +412,23 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         validateVersionedId(client, request);
         CreateRequest downlink = null;
         LwM2mPath resultIds = new LwM2mPath(request.getObjectId());
-        ObjectModel objectModel = client.getObjectModel(request.getVersionedId(), this.config.getModelProvider());
+        ObjectModel objectModel = client.getObjectModel(request.getVersionedId(), modelProvider);
         // POST /{Object ID}/{Object Instance ID} && Resources is Mandatory
         if (objectModel != null) {
             if (objectModel.multiple) {
 
                 // LwM2M CBOR, SenML CBOR, SenML JSON, or TLV (see [LwM2M-CORE])
-                ContentFormat contentFormat = getWriteRequestContentFormat(client, request, this.config.getModelProvider());
+                ContentFormat contentFormat = getWriteRequestContentFormat(client, request, modelProvider);
                 if (resultIds.isObject() || resultIds.isObjectInstance()) {
                     Collection<LwM2mResource> resources;
                     if (resultIds.isObject()) {
                         if (request.getValue() != null) {
-                            resources = client.getNewResourcesForInstance(request.getVersionedId(), request.getValue(), this.config.getModelProvider(), this.converter);
+                            resources = client.getNewResourcesForInstance(request.getVersionedId(), request.getValue(), modelProvider, this.converter);
                             downlink = new CreateRequest(contentFormat, resultIds.getObjectId(), resources);
                         } else if (request.getNodes() != null && request.getNodes().size() > 0) {
                             Set<LwM2mObjectInstance> instances = ConcurrentHashMap.newKeySet();
                             request.getNodes().forEach((key, value) -> {
-                                Collection<LwM2mResource> resourcesForInstance = client.getNewResourcesForInstance(request.getVersionedId(), value, this.config.getModelProvider(), this.converter);
+                                Collection<LwM2mResource> resourcesForInstance = client.getNewResourcesForInstance(request.getVersionedId(), value, modelProvider, this.converter);
                                 LwM2mObjectInstance instance = new LwM2mObjectInstance(Integer.parseInt(key), resourcesForInstance);
                                 instances.add(instance);
                             });
@@ -439,7 +437,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                         }
 
                     } else {
-                        resources = client.getNewResourcesForInstance(request.getVersionedId(), request.getValue(), this.config.getModelProvider(), this.converter);
+                        resources = client.getNewResourcesForInstance(request.getVersionedId(), request.getValue(), modelProvider, this.converter);
                         LwM2mObjectInstance instance = new LwM2mObjectInstance(resultIds.getObjectInstanceId(), resources);
                         downlink = new CreateRequest(contentFormat, resultIds.getObjectId(), instance);
                     }

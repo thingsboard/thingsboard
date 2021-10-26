@@ -34,10 +34,6 @@ import java.security.KeyStore;
 public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
 
     @Getter
-    @Setter
-    private LwM2mModelProvider modelProvider;
-
-    @Getter
     @Value("${transport.lwm2m.timeout:}")
     private Long timeout;
 
@@ -139,7 +135,5 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
             log.info("Unable to lookup LwM2M keystore. Reason: {}, {}", keyStoreFilePath, e.getMessage());
         }
     }
-
-
 
 }

@@ -441,7 +441,7 @@ public class LwM2mClient implements Serializable {
         this.lock = new ReentrantLock();
     }
 
-    public long updateLastUplinkTime(){
+    public long updateLastUplinkTime() {
         this.lastUplinkTime = System.currentTimeMillis();
         this.firstEdrxDownlink = true;
         return lastUplinkTime;

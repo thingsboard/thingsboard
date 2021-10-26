@@ -52,6 +52,7 @@ export interface NodeScriptTestDialogData {
   msg?: any;
   metadata?: {[key: string]: string};
   msgType?: string;
+  helpId?: string;
 }
 
 // @dynamic

@@ -24,6 +24,7 @@ import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mResourceInstance;
+import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
@@ -85,6 +86,7 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
     private final LwM2mDownlinkMsgHandler downlinkHandler;
     private final LwM2MTelemetryLogService logService;
     private final LwM2MOtaUpdateService otaUpdateService;
+    private final LwM2mModelProvider modelProvider;
 
     @Override
     public ListenableFuture<List<TransportProtos.TsKvProto>> getSharedAttributes(LwM2mClient client, Collection<String> keys) {
@@ -215,7 +217,7 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
         clientContext.update(lwM2MClient);
         // #2.1
         attributesUpdate.forEach((pathIdVer, tsKvProto) -> {
-            ResourceModel resourceModel = lwM2MClient.getResourceModel(pathIdVer, this.config.getModelProvider());
+            ResourceModel resourceModel = lwM2MClient.getResourceModel(pathIdVer, modelProvider);
             Object newValProto = getValueFromKvProto(tsKvProto.getKv());
             Object oldResourceValue = this.getResourceValueFormatKv(lwM2MClient, pathIdVer);
             if (!resourceModel.multiple || !(newValProto instanceof JsonElement)) {

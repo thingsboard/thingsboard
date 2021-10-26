@@ -111,12 +111,6 @@ const processLocationFunction =
   'showLocationDialog(\'Location\', latitude, longitude);\n' +
   '// saveEntityLocationAttributes(\'latitude\', \'longitude\', latitude, longitude);\n' +
   '\n' +
-  'function showImageDialog(title, imageUrl) {\n' +
-  '    setTimeout(function() {\n' +
-  '        widgetContext.customDialog.customDialog(imageDialogTemplate, ImageDialogController, {imageUrl: imageUrl, title: title}).subscribe();\n' +
-  '    }, 100);\n' +
-  '}\n' +
-  '\n' +
   'function saveEntityLocationAttributes(latitudeAttributeName, longitudeAttributeName, latitude, longitude) {\n' +
   '    if (entityId) {\n' +
   '        let attributes = [\n' +

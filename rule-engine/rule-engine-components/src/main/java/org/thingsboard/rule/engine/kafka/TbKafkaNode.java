@@ -75,8 +75,8 @@ public class TbKafkaNode implements TbNode {
         Properties properties = new Properties();
         properties.put(ProducerConfig.CLIENT_ID_CONFIG, "producer-tb-kafka-node-" + ctx.getSelfId().getId().toString() + "-" + ctx.getServiceId());
         properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, config.getBootstrapServers());
-        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, getKafkaSerializerClass(config.getValueSerializer()));
-        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, getKafkaSerializerClass(config.getKeySerializer()));
+        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, config.getValueSerializer());
+        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, config.getKeySerializer());
         properties.put(ProducerConfig.ACKS_CONFIG, config.getAcks());
         properties.put(ProducerConfig.RETRIES_CONFIG, config.getRetries());
         properties.put(ProducerConfig.BATCH_SIZE_CONFIG, config.getBatchSize());
@@ -88,26 +88,10 @@ public class TbKafkaNode implements TbNode {
         addMetadataKeyValuesAsKafkaHeaders = BooleanUtils.toBooleanDefaultIfNull(config.isAddMetadataKeyValuesAsKafkaHeaders(), false);
         toBytesCharset = config.getKafkaHeadersCharset() != null ? Charset.forName(config.getKafkaHeadersCharset()) : StandardCharsets.UTF_8;
         try {
-            // Ugly workaround to fix org.apache.kafka.common.KafkaException: javax.security.auth.login.LoginException: unable to find LoginModule class
-            // details: https://stackoverflow.com/questions/57574901/kafka-java-client-classloader-doesnt-find-sasl-scram-login-class
-            Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
             this.producer = new KafkaProducer<>(properties);
         } catch (Exception e) {
             throw new TbNodeException(e);
         }
-    }
-
-    private Class<?> getKafkaSerializerClass(String serializerClassName) {
-        Class<?> serializerClass = null;
-        if (!StringUtils.isEmpty(serializerClassName)) {
-            try {
-                serializerClass = Class.forName(serializerClassName);
-            } catch (ClassNotFoundException e) {}
-        }
-        if (serializerClass == null) {
-            serializerClass = StringSerializer.class;
-        }
-        return serializerClass;
     }
 
     @Override
