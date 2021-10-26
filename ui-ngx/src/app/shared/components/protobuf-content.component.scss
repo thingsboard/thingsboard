@@ -28,13 +28,12 @@
   height: 100%;
   margin-left: 15px;
   border: 1px solid #c0c0c0;
-  overflow: auto;
-  resize: vertical;
 
   #tb-protobuf-input {
     width: 100%;
     min-width: 200px;
     min-height: 100px;
+    height: 100%;
 
     &:not(.fill-height) {
       min-height: 200px;

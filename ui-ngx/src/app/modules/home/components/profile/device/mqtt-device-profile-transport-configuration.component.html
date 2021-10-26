@@ -74,9 +74,8 @@
           </mat-error>
         </mat-form-field>
         <div *ngIf="protoPayloadType" fxLayout="column">
-          <div>
+          <ng-container>
             <tb-protobuf-content
-              [disabled]="disabled"
               fxFlex
               formControlName="deviceTelemetryProtoSchema"
               label="{{ 'device-profile.telemetry-proto-schema' | translate }}"
@@ -85,10 +84,9 @@
             <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.deviceTelemetryProtoSchema').hasError('required')">
               {{ 'device-profile.telemetry-proto-schema-required' | translate}}
             </mat-error>
-          </div>
-          <div>
+          </ng-container>
+          <ng-container>
             <tb-protobuf-content
-              [disabled]="disabled"
               fxFlex
               formControlName="deviceAttributesProtoSchema"
               label="{{ 'device-profile.attributes-proto-schema' | translate }}"
@@ -97,10 +95,9 @@
             <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.deviceAttributesProtoSchema').hasError('required')">
               {{ 'device-profile.attributes-proto-schema-required' | translate}}
             </mat-error>
-          </div>
-          <div>
+          </ng-container>
+          <ng-container>
             <tb-protobuf-content
-              [disabled]="disabled"
               fxFlex
               formControlName="deviceRpcRequestProtoSchema"
               label="{{ 'device-profile.rpc-request-proto-schema' | translate }}"
@@ -109,10 +106,9 @@
             <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.deviceRpcRequestProtoSchema').hasError('required')">
               {{ 'device-profile.rpc-request-proto-required' | translate}}
             </mat-error>
-          </div>
-          <div>
+          </ng-container>
+          <ng-container>
             <tb-protobuf-content
-              [disabled]="disabled"
               fxFlex
               formControlName="deviceRpcResponseProtoSchema"
               label="{{ 'device-profile.rpc-response-proto-schema' | translate }}"
@@ -121,7 +117,7 @@
             <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.deviceRpcResponseProtoSchema').hasError('required')">
               {{ 'device-profile.rpc-response-proto-schema-required' | translate}}
             </mat-error>
-          </div>
+          </ng-container>
         </div>
       </div>
     </fieldset>

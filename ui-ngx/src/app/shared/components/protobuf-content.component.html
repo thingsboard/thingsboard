@@ -5,12 +5,8 @@
     <label class="tb-title no-padding" [ngClass]="{'tb-error': !contentValid}">{{ label }}</label>
     <span fxFlex></span>
     <button type="button"
-            mat-button *ngIf="!readonly && !disabled" class="tidy" (click)="beautifyJSON()">
+            mat-button *ngIf="!readonly && !disabled" class="tidy" (click)="beautifyProtobuf()">
       {{'js-func.tidy' | translate }}
-    </button>
-    <button type="button"
-            mat-button *ngIf="!readonly && !disabled" class="tidy" (click)="minifyJSON()">
-      {{'js-func.mini' | translate }}
     </button>
     <fieldset style="width: initial">
       <div matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
