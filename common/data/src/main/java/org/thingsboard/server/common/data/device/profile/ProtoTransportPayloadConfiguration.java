@@ -54,6 +54,8 @@ public class ProtoTransportPayloadConfiguration implements TransportPayloadTypeC
     private String deviceRpcRequestProtoSchema;
     private String deviceRpcResponseProtoSchema;
 
+    private boolean enableCompatibilityWithOtherPayloadFormats;
+
     @Override
     public TransportPayloadType getTransportPayloadType() {
         return TransportPayloadType.PROTOBUF;

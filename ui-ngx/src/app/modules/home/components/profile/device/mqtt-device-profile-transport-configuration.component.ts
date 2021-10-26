@@ -97,7 +97,8 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
           deviceTelemetryProtoSchema: [defaultTelemetrySchema, Validators.required],
           deviceAttributesProtoSchema: [defaultAttributesSchema, Validators.required],
           deviceRpcRequestProtoSchema: [defaultRpcRequestSchema, Validators.required],
-          deviceRpcResponseProtoSchema: [defaultRpcResponseSchema, Validators.required]
+          deviceRpcResponseProtoSchema: [defaultRpcResponseSchema, Validators.required],
+          enableCompatibilityWithOtherPayloadFormats: [false, Validators.required]
         })
       }, {validator: this.uniqueDeviceTopicValidator}
     );
@@ -156,7 +157,8 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
         deviceTelemetryProtoSchema: defaultTelemetrySchema,
         deviceAttributesProtoSchema: defaultAttributesSchema,
         deviceRpcRequestProtoSchema: defaultRpcRequestSchema,
-        deviceRpcResponseProtoSchema: defaultRpcResponseSchema
+        deviceRpcResponseProtoSchema: defaultRpcResponseSchema,
+        enableCompatibilityWithOtherPayloadFormats: false,
       }, {emitEvent: false});
     }
     if (type === TransportPayloadType.PROTOBUF && !this.disabled) {
@@ -164,11 +166,13 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
       transportPayloadTypeForm.get('deviceAttributesProtoSchema').enable({emitEvent: false});
       transportPayloadTypeForm.get('deviceRpcRequestProtoSchema').enable({emitEvent: false});
       transportPayloadTypeForm.get('deviceRpcResponseProtoSchema').enable({emitEvent: false});
+      transportPayloadTypeForm.get('enableCompatibilityWithOtherPayloadFormats').enable({emitEvent: false});
     } else {
       transportPayloadTypeForm.get('deviceTelemetryProtoSchema').disable({emitEvent: false});
       transportPayloadTypeForm.get('deviceAttributesProtoSchema').disable({emitEvent: false});
       transportPayloadTypeForm.get('deviceRpcRequestProtoSchema').disable({emitEvent: false});
       transportPayloadTypeForm.get('deviceRpcResponseProtoSchema').disable({emitEvent: false});
+      transportPayloadTypeForm.get('enableCompatibilityWithOtherPayloadFormats').disable({emitEvent: false});
     }
   }
 

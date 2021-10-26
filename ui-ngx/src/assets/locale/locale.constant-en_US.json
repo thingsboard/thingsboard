@@ -1096,6 +1096,8 @@
         "mqtt-device-payload-type": "MQTT device payload",
         "mqtt-device-payload-type-json": "JSON",
         "mqtt-device-payload-type-proto": "Protobuf",
+        "mqtt-enable-compatibility-with-other-payload-formats": "Enable compatibility with other payload formats.",
+        "mqtt-enable-compatibility-with-other-payload-formats-hint": "When enabled, the platform will use a specified payload format by default. If parsing fails, the platform will attempt to use other available formats. Useful for backward compatibility during firmware updates. For example, the initial release of the firmware uses JSON, while the new release uses Protobuf. During the process of firmware update for the fleet of devices, it is required to support both Protobuf and JSON simultaneously. The compatibility mode introduces slight performance degradation, so it is recommended to disable this mode once all devices are updated.",
         "snmp-add-mapping": "Add SNMP mapping",
         "snmp-mapping-not-configured": "No mapping for OID to timeseries/telemetry configured",
         "snmp-timseries-or-attribute-name": "Timeseries/attribute name for mapping",

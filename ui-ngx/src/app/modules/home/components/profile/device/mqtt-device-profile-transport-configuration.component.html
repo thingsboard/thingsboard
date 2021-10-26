@@ -73,6 +73,12 @@
             {{ 'device-profile.mqtt-payload-type-required' | translate }}
           </mat-error>
         </mat-form-field>
+        <div *ngIf="protoPayloadType" style="padding-bottom: 20px">
+          <mat-checkbox formControlName="enableCompatibilityWithOtherPayloadFormats">
+            {{ 'device-profile.mqtt-enable-compatibility-with-other-payload-formats' | translate }}
+          </mat-checkbox>
+          <div class="tb-hint" innerHTML="{{ 'device-profile.mqtt-enable-compatibility-with-other-payload-formats-hint' | translate }}"></div>
+        </div>
         <div *ngIf="protoPayloadType" fxLayout="column">
           <mat-form-field fxFlex>
             <mat-label translate>device-profile.telemetry-proto-schema</mat-label>

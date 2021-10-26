@@ -247,6 +247,7 @@ export interface MqttDeviceProfileTransportConfiguration {
   deviceAttributesTopic?: string;
   transportPayloadTypeConfiguration?: {
     transportPayloadType?: TransportPayloadType;
+    enableCompatibilityWithOtherPayloadFormats?: boolean;
   };
   [key: string]: any;
 }
@@ -359,7 +360,10 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
         const mqttTransportConfiguration: MqttDeviceProfileTransportConfiguration = {
           deviceTelemetryTopic: 'v1/devices/me/telemetry',
           deviceAttributesTopic: 'v1/devices/me/attributes',
-          transportPayloadTypeConfiguration: {transportPayloadType: TransportPayloadType.JSON}
+          transportPayloadTypeConfiguration: {
+            transportPayloadType: TransportPayloadType.JSON,
+            enableCompatibilityWithOtherPayloadFormats: false
+          }
         };
         transportConfiguration = {...mqttTransportConfiguration, type: DeviceTransportType.MQTT};
         break;

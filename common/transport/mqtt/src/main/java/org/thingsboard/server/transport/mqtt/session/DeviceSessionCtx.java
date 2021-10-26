@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadCo
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.mqtt.MqttTransportContext;
+import org.thingsboard.server.transport.mqtt.adaptors.BackwardCompatibilityAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.util.MqttTopicFilter;
 import org.thingsboard.server.transport.mqtt.util.MqttTopicFilterFactory;
@@ -76,6 +77,7 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     private volatile MqttTopicFilter telemetryTopicFilter = MqttTopicFilterFactory.getDefaultTelemetryFilter();
     private volatile MqttTopicFilter attributesTopicFilter = MqttTopicFilterFactory.getDefaultAttributesFilter();
     private volatile TransportPayloadType payloadType = TransportPayloadType.JSON;
+    private volatile boolean payloadFormatsCompatipilityEnabled;
     private volatile Descriptors.Descriptor attributesDynamicMessageDescriptor;
     private volatile Descriptors.Descriptor telemetryDynamicMessageDescriptor;
     private volatile Descriptors.Descriptor rpcResponseDynamicMessageDescriptor;
@@ -103,7 +105,15 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     }
 
     public MqttTransportAdaptor getPayloadAdaptor() {
-        return payloadType.equals(TransportPayloadType.JSON) ? context.getJsonMqttAdaptor() : context.getProtoMqttAdaptor();
+        if (payloadType.equals(TransportPayloadType.JSON)) {
+            return context.getJsonMqttAdaptor();
+        } else {
+            if (payloadFormatsCompatipilityEnabled) {
+                return new BackwardCompatibilityAdaptor(context.getProtoMqttAdaptor(), context.getJsonMqttAdaptor());
+            } else {
+                return context.getProtoMqttAdaptor();
+            }
+        }
     }
 
     public boolean isJsonPayloadType() {
@@ -162,6 +172,7 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
         attributesDynamicMessageDescriptor = protoTransportPayloadConfig.getAttributesDynamicMessageDescriptor(protoTransportPayloadConfig.getDeviceAttributesProtoSchema());
         rpcResponseDynamicMessageDescriptor = protoTransportPayloadConfig.getRpcResponseDynamicMessageDescriptor(protoTransportPayloadConfig.getDeviceRpcResponseProtoSchema());
         rpcRequestDynamicMessageBuilder = protoTransportPayloadConfig.getRpcRequestDynamicMessageBuilder(protoTransportPayloadConfig.getDeviceRpcRequestProtoSchema());
+        payloadFormatsCompatipilityEnabled = protoTransportPayloadConfig.isEnableCompatibilityWithOtherPayloadFormats();
     }
 
     public void addToQueue(MqttMessage msg) {
