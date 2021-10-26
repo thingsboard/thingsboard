@@ -123,7 +123,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
     protected LwM2MTestClient client;
     private final LwM2MBootstrapCredentials defaultBootstrapCredentials;
     private String[] resources;
-    private String endpoint;
+    protected String endpoint;
 
     public AbstractLwM2MIntegrationTest() {
         this.defaultBootstrapCredentials = new LwM2MBootstrapCredentials();
@@ -238,7 +238,6 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
 
         deviceCredentials.setCredentialsValue(JacksonUtil.toString(credentials));
         doPost("/api/device/credentials", deviceCredentials).andExpect(status().isOk());
-        Thread.sleep(1000);
         return device;
     }
 
