@@ -52,8 +52,22 @@ import javax.annotation.Nullable;
 import java.util.UUID;
 
 import static org.thingsboard.server.common.data.DataConstants.RPC_DELETED;
-
-import static org.thingsboard.server.controller.ControllerConstants.*;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_END;
+import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_START;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.RPC_ID;
+import static org.thingsboard.server.controller.ControllerConstants.RPC_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.RPC_SORT_PROPERTY_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.RPC_STATUS_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.RPC_TEXT_SEARCH_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 
 @RestController
 @TbCoreComponent
