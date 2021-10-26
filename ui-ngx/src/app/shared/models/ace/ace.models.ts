@@ -36,6 +36,7 @@ export function loadAceDependencies(): Observable<any> {
     aceObservables.push(from(import('ace-builds/src-noconflict/mode-text')));
     aceObservables.push(from(import('ace-builds/src-noconflict/mode-markdown')));
     aceObservables.push(from(import('ace-builds/src-noconflict/mode-html')));
+    aceObservables.push(from(import('ace-builds/src-noconflict/mode-protobuf')));
     aceObservables.push(from(import('ace-builds/src-noconflict/snippets/java')));
     aceObservables.push(from(import('ace-builds/src-noconflict/snippets/css')));
     aceObservables.push(from(import('ace-builds/src-noconflict/snippets/json')));

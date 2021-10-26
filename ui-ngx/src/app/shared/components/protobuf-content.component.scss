@@ -1,0 +1,43 @@
+:host {
+  position: relative;
+
+  .fill-height {
+    height: 100%;
+  }
+}
+
+.tb-protobuf-content-toolbar {
+  button.mat-button, button.mat-icon-button, button.mat-icon-button.tb-mat-32 {
+    align-items: center;
+    vertical-align: middle;
+    min-width: 32px;
+    min-height: 15px;
+    padding: 4px;
+    margin: 0;
+    font-size: .8rem;
+    line-height: 15px;
+    color: #7b7b7b;
+    background: rgba(220, 220, 220, .35);
+    &:not(:last-child) {
+      margin-right: 4px;
+    }
+  }
+}
+
+.tb-protobuf-content-panel {
+  height: 100%;
+  margin-left: 15px;
+  border: 1px solid #c0c0c0;
+  overflow: auto;
+  resize: vertical;
+
+  #tb-protobuf-input {
+    width: 100%;
+    min-width: 200px;
+    min-height: 100px;
+
+    &:not(.fill-height) {
+      min-height: 200px;
+    }
+  }
+}
