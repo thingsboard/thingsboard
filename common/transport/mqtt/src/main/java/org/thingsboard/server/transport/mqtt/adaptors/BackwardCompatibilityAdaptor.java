@@ -40,7 +40,7 @@ public class BackwardCompatibilityAdaptor implements MqttTransportAdaptor {
         try {
             return protoAdaptor.convertToPostTelemetry(ctx, inbound);
         } catch (AdaptorException e) {
-            log.trace("failed to process post telemetry request msg {} due to: ", inbound, e);
+            log.trace("failed to process post telemetry request msg: {} due to: ", inbound, e);
             return jsonAdaptor.convertToPostTelemetry(ctx, inbound);
         }
     }
@@ -50,7 +50,7 @@ public class BackwardCompatibilityAdaptor implements MqttTransportAdaptor {
         try {
             return protoAdaptor.convertToPostAttributes(ctx, inbound);
         } catch (AdaptorException e) {
-            log.trace("failed to process post attributes request msg {} due to: ", inbound, e);
+            log.trace("failed to process post attributes request msg: {} due to: ", inbound, e);
             return jsonAdaptor.convertToPostAttributes(ctx, inbound);
         }
     }
@@ -60,7 +60,7 @@ public class BackwardCompatibilityAdaptor implements MqttTransportAdaptor {
         try {
             return protoAdaptor.convertToGetAttributes(ctx, inbound, topicBase);
         } catch (AdaptorException e) {
-            log.trace("failed to process get attributes request msg {} due to: ", inbound, e);
+            log.trace("failed to process get attributes request msg: {} due to: ", inbound, e);
             return jsonAdaptor.convertToGetAttributes(ctx, inbound, topicBase);
         }
     }
@@ -70,7 +70,7 @@ public class BackwardCompatibilityAdaptor implements MqttTransportAdaptor {
         try {
             return protoAdaptor.convertToDeviceRpcResponse(ctx, mqttMsg, topicBase);
         } catch (AdaptorException e) {
-            log.trace("failed to process to device rpc response msg {} due to: ", mqttMsg, e);
+            log.trace("failed to process to device rpc response msg: {} due to: ", mqttMsg, e);
             return jsonAdaptor.convertToDeviceRpcResponse(ctx, mqttMsg, topicBase);
         }
     }
@@ -80,7 +80,7 @@ public class BackwardCompatibilityAdaptor implements MqttTransportAdaptor {
         try {
             return protoAdaptor.convertToServerRpcRequest(ctx, mqttMsg, topicBase);
         } catch (AdaptorException e) {
-            log.trace("failed to process to server rpc request msg {} due to: ", mqttMsg, e);
+            log.trace("failed to process to server rpc request msg: {} due to: ", mqttMsg, e);
             return jsonAdaptor.convertToServerRpcRequest(ctx, mqttMsg, topicBase);
         }
     }
@@ -90,7 +90,7 @@ public class BackwardCompatibilityAdaptor implements MqttTransportAdaptor {
         try {
             return protoAdaptor.convertToClaimDevice(ctx, inbound);
         } catch (AdaptorException e) {
-            log.trace("failed to process claim device request msg {} due to: ", inbound, e);
+            log.trace("failed to process claim device request msg: {} due to: ", inbound, e);
             return jsonAdaptor.convertToClaimDevice(ctx, inbound);
         }
     }

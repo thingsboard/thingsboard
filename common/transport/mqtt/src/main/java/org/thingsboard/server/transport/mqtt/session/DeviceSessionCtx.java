@@ -85,7 +85,6 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     private volatile boolean jsonPayloadFormatCompatibilityEnabled;
     private volatile boolean useJsonPayloadFormatForDefaultDownlinkTopics;
 
-
     @Getter
     @Setter
     private TransportPayloadType provisionPayloadType = payloadType;

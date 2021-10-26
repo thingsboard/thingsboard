@@ -162,36 +162,6 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
     this.propagateChange(configuration);
   }
 
-  private updateTest(type: TransportPayloadType, forceUpdated = false) {
-    const transportPayloadTypeForm = this.mqttDeviceProfileTransportConfigurationFormGroup
-      .get('transportPayloadTypeConfiguration') as FormGroup;
-    if (forceUpdated) {
-      transportPayloadTypeForm.patchValue({
-        deviceTelemetryProtoSchema: defaultTelemetrySchema,
-        deviceAttributesProtoSchema: defaultAttributesSchema,
-        deviceRpcRequestProtoSchema: defaultRpcRequestSchema,
-        deviceRpcResponseProtoSchema: defaultRpcResponseSchema,
-        enableCompatibilityWithJsonPayloadFormat: false,
-        useJsonPayloadFormatForDefaultDownlinkTopics: false
-      }, {emitEvent: false});
-    }
-    if (type === TransportPayloadType.PROTOBUF && !this.disabled) {
-      transportPayloadTypeForm.get('deviceTelemetryProtoSchema').enable({emitEvent: false});
-      transportPayloadTypeForm.get('deviceAttributesProtoSchema').enable({emitEvent: false});
-      transportPayloadTypeForm.get('deviceRpcRequestProtoSchema').enable({emitEvent: false});
-      transportPayloadTypeForm.get('deviceRpcResponseProtoSchema').enable({emitEvent: false});
-      transportPayloadTypeForm.get('enableCompatibilityWithJsonPayloadFormat').enable({emitEvent: false});
-      transportPayloadTypeForm.get('useJsonPayloadFormatForDefaultDownlinkTopics').enable({emitEvent: false});
-    } else {
-      transportPayloadTypeForm.get('deviceTelemetryProtoSchema').disable({emitEvent: false});
-      transportPayloadTypeForm.get('deviceAttributesProtoSchema').disable({emitEvent: false});
-      transportPayloadTypeForm.get('deviceRpcRequestProtoSchema').disable({emitEvent: false});
-      transportPayloadTypeForm.get('deviceRpcResponseProtoSchema').disable({emitEvent: false});
-      transportPayloadTypeForm.get('enableCompatibilityWithJsonPayloadFormat').disable({emitEvent: false});
-      transportPayloadTypeForm.get('useJsonPayloadFormatForDefaultDownlinkTopics').disable({emitEvent: false});
-    }
-  }
-
   private updateTransportPayloadBasedControls(type: TransportPayloadType, forceUpdated = false) {
     const transportPayloadTypeForm = this.mqttDeviceProfileTransportConfigurationFormGroup
       .get('transportPayloadTypeConfiguration') as FormGroup;
