@@ -13,22 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.config;
+package org.thingsboard.server.common.transport.config.ssl;
 
-import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
-
-public interface LwM2MSecureServerConfig {
-
-    Integer getId();
-
-    String getHost();
-
-    Integer getPort();
-
-    String getSecureHost();
-
-    Integer getSecurePort();
-
-    SslCredentials getSslCredentials();
-
+public enum SslCredentialsType {
+    PEM,
+    KEYSTORE
 }

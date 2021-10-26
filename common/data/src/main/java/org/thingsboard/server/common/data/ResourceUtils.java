@@ -27,6 +27,30 @@ import java.net.URL;
 @Slf4j
 public class ResourceUtils {
 
+    public static boolean resourceExists(Object classLoaderSource, String filePath) {
+        return resourceExists(classLoaderSource.getClass().getClassLoader(), filePath);
+    }
+
+    public static boolean resourceExists(ClassLoader classLoader, String filePath) {
+        File resourceFile = new File(filePath);
+        if (resourceFile.exists()) {
+            return true;
+        } else {
+            InputStream classPathStream = classLoader.getResourceAsStream(filePath);
+            if (classPathStream != null) {
+                return true;
+            } else {
+                try {
+                    URL url = Resources.getResource(filePath);
+                    if (url != null) {
+                        return true;
+                    }
+                } catch (IllegalArgumentException e) {}
+            }
+        }
+        return false;
+    }
+
     public static InputStream getInputStream(Object classLoaderSource, String filePath) {
         return getInputStream(classLoaderSource.getClass().getClassLoader(), filePath);
     }
