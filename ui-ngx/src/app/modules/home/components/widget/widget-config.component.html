@@ -310,21 +310,6 @@
               <input matInput formControlName="titleTooltip">
             </mat-form-field>
           </div>
-          <mat-expansion-panel class="tb-settings">
-            <mat-expansion-panel-header>
-              <mat-panel-description fxLayoutAlign="end" translate>
-                widget-config.advanced-settings
-              </mat-panel-description>
-            </mat-expansion-panel-header>
-            <div fxFlex>
-              <tb-json-object-edit
-                [editorStyle]="{minHeight: '100px'}"
-                required
-                label="{{ 'widget-config.title-style' | translate }}"
-                formControlName="titleStyle"
-              ></tb-json-object-edit>
-            </div>
-          </mat-expansion-panel>
           <fieldset class="fields-group" fxLayout="column" fxLayoutGap="8px">
             <legend class="group-title" translate>widget-config.title-icon</legend>
             <mat-slide-toggle formControlName="showTitleIcon">
@@ -347,6 +332,21 @@
               </mat-form-field>
             </div>
           </fieldset>
+          <mat-expansion-panel class="tb-settings">
+            <mat-expansion-panel-header>
+              <mat-panel-description fxLayoutAlign="end" translate>
+                widget-config.advanced-settings
+              </mat-panel-description>
+            </mat-expansion-panel-header>
+              <ng-template matExpansionPanelContent>
+                <tb-json-object-edit
+                  [editorStyle]="{minHeight: '100px'}"
+                  required
+                  label="{{ 'widget-config.title-style' | translate }}"
+                  formControlName="titleStyle"
+                ></tb-json-object-edit>
+              </ng-template>
+          </mat-expansion-panel>
         </fieldset>
         <fieldset class="fields-group" fxLayout="column" fxLayoutGap="8px">
           <legend class="group-title" translate>widget-config.widget-style</legend>
@@ -391,14 +391,14 @@
                 widget-config.advanced-settings
               </mat-panel-description>
             </mat-expansion-panel-header>
-            <div fxFlex>
+            <ng-template matExpansionPanelContent>
               <tb-json-object-edit
                 [editorStyle]="{minHeight: '100px'}"
                 required
                 label="{{ 'widget-config.widget-style' | translate }}"
                 formControlName="widgetStyle"
               ></tb-json-object-edit>
-            </div>
+            </ng-template>
           </mat-expansion-panel>
         </fieldset>
         <fieldset class="fields-group fields-group-slider" fxLayout="column" fxLayoutGap="8px">
@@ -414,7 +414,9 @@
                 widget-config.advanced-settings
               </mat-panel-description>
             </mat-expansion-panel-header>
-            <tb-legend-config formControlName="legendConfig"></tb-legend-config>
+            <ng-template matExpansionPanelContent>
+              <tb-legend-config formControlName="legendConfig"></tb-legend-config>
+            </ng-template>
           </mat-expansion-panel>
         </fieldset>
         <fieldset [formGroup]="layoutSettings" class="fields-group fields-group-slider" fxLayout="column" fxLayoutGap="8px">
@@ -430,17 +432,19 @@
                 widget-config.advanced-settings
               </mat-panel-description>
             </mat-expansion-panel-header>
-            <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
-                 fxLayoutGap="8px">
-              <mat-form-field fxFlex>
-                <mat-label translate>widget-config.order</mat-label>
-                <input matInput formControlName="mobileOrder" type="number" step="1">
-              </mat-form-field>
-              <mat-form-field fxFlex>
-                <mat-label translate>widget-config.height</mat-label>
-                <input matInput formControlName="mobileHeight" type="number" min="1" max="10" step="1">
-              </mat-form-field>
-            </div>
+            <ng-template matExpansionPanelContent>
+              <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
+                   fxLayoutGap="8px">
+                <mat-form-field fxFlex>
+                  <mat-label translate>widget-config.order</mat-label>
+                  <input matInput formControlName="mobileOrder" type="number" step="1">
+                </mat-form-field>
+                <mat-form-field fxFlex>
+                  <mat-label translate>widget-config.height</mat-label>
+                  <input matInput formControlName="mobileHeight" type="number" min="1" max="10" step="1">
+                </mat-form-field>
+              </div>
+            </ng-template>
           </mat-expansion-panel>
         </fieldset>
         <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
