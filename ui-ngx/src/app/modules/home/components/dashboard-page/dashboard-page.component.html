@@ -148,7 +148,7 @@
       <mat-drawer-content fxLayout="column" fxLayoutAlign="center start">
         <section *ngIf="!widgetEditMode" class="tb-dashboard-title"
                  [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">
-          <h3 [fxShow]="!isEdit && displayTitle()">{{ dashboard.title }}</h3>
+          <h3 [fxShow]="!isEdit && displayTitle()">{{ translatedDashboardTitle }}</h3>
           <mat-form-field [fxShow]="isEdit" class="mat-block">
             <mat-label translate [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">dashboard.title</mat-label>
             <input matInput class="tb-dashboard-title"
