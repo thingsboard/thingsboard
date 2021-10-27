@@ -882,10 +882,15 @@ queue:
       sasl.mechanism: "${TB_QUEUE_KAFKA_CONFLUENT_SASL_MECHANISM:PLAIN}"
       sasl.config: "${TB_QUEUE_KAFKA_CONFLUENT_SASL_JAAS_CONFIG:org.apache.kafka.common.security.plain.PlainLoginModule required username=\"CLUSTER_API_KEY\" password=\"CLUSTER_API_SECRET\";}"
       security.protocol: "${TB_QUEUE_KAFKA_CONFLUENT_SECURITY_PROTOCOL:SASL_SSL}"
+    # Key-value properties for Kafka consumer per specific topic, e.g. tb_ota_package is a topic name for ota, tb_rule_engine.sq is a topic name for default SequentialByOriginator queue.
+    # Check TB_QUEUE_CORE_OTA_TOPIC and TB_QUEUE_RE_SQ_TOPIC params
     consumer-properties-per-topic:
       tb_ota_package:
         - key: max.poll.records
-          value: 10
+          value: "${TB_QUEUE_KAFKA_OTA_MAX_POLL_RECORDS:10}"
+#      tb_rule_engine.sq:
+#        - key: max.poll.records
+#          value: "${TB_QUEUE_KAFKA_SQ_MAX_POLL_RECORDS:1024}"
     other: # In this section you can specify custom parameters for Kafka consumer/producer and expose the env variables to configure outside
       - key: "request.timeout.ms" # refer to https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html#producerconfigs_request.timeout.ms
         value: "${TB_QUEUE_KAFKA_REQUEST_TIMEOUT_MS:30000}" # (30 seconds)
