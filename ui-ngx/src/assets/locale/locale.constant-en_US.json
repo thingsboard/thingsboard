@@ -963,7 +963,7 @@
         "lwm2m-security-config": {
           "identity": "Client Identity",
           "identity-required": "Client Identity is required.",
-          "identity-tooltip": "PSK identity is arbitrary PSK Identities of up to 128 bytes, as mandated in [RFC7925]. \n PSK identity MUST be first converted to a character string, and then encoded to octets using UTF-8 [UTF8].",
+          "identity-tooltip": "The PSK identifier is an arbitrary PSK identifier up to 128 bytes, as described in the standart [RFC7925].\nThe PSK identifier MUST first be converted to a character string and then encoded into octets using UTF-8.",
           "client-key": "Client Key",
           "client-key-required": "Client Key is required.",
           "client-key-tooltip": "{ count, plural, 1 {RPK public key or id should be in RFC7250 standard and encoded to Base64 format!} other {PSK key should be in RFC4279 standard and HexDec format: 32, 64, 128 characters!.} }",
