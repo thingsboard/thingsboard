@@ -47,6 +47,10 @@ server:
         key_alias: "${SSL_KEY_ALIAS:tomcat}"
         # Password used to access the key
         key_password: "${SSL_KEY_PASSWORD:thingsboard}"
+  # HTTP/2 support (takes effect only if server SSL is enabled)
+  http2:
+    # Enable/disable HTTP/2 support
+    enabled: "${HTTP2_ENABLED:true}"
 
 # Zookeeper connection parameters. Used for service discovery.
 zk:
