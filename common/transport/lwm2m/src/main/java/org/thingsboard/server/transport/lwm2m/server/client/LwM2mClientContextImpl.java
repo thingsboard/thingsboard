@@ -329,11 +329,6 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     }
 
     @Override
-    public void removeCredentials(TransportProtos.SessionInfoProto sessionInfo) {
-        //TODO: implement
-    }
-
-    @Override
     public void sendMsgsAfterSleeping(LwM2mClient lwM2MClient) {
         if (LwM2MClientState.REGISTERED.equals(lwM2MClient.getState())) {
             PowerMode powerMode = getPowerMode(lwM2MClient);
