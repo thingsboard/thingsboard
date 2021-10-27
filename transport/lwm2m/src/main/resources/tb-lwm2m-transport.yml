@@ -114,7 +114,7 @@ transport:
         # Server X509 Certificates support
         credentials:
           # Whether to enable LWM2M server X509 Certificate/RPK support
-          enabled: "${LWM2M_SERVER_CREDENTIALS_ENABLED:false}"
+          enabled: "${LWM2M_SERVER_CREDENTIALS_ENABLED:true}"
           # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
           type: "${LWM2M_SERVER_CREDENTIALS_TYPE:PEM}"
           # PEM server credentials
@@ -133,10 +133,10 @@ transport:
             store_file: "${LWM2M_SERVER_KEY_STORE:lwm2mserver.jks}"
             # Password used to access the key store
             store_password: "${LWM2M_SERVER_KEY_STORE_PASSWORD:server_ks_password}"
-            # Password used to access the key
-            key_password: "${LWM2M_SERVER_KEY_PASSWORD:server_key_password}"
             # Key alias
             key_alias: "${LWM2M_SERVER_KEY_ALIAS:server}"
+            # Password used to access the key
+            key_password: "${LWM2M_SERVER_KEY_PASSWORD:server_ks_password}"
         # Only Certificate_x509:
         skip_validity_check_for_client_cert: "${TB_LWM2M_SERVER_SECURITY_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
     bootstrap:
@@ -150,7 +150,7 @@ transport:
         # Bootstrap server X509 Certificates support
         credentials:
           # Whether to enable LWM2M bootstrap server X509 Certificate/RPK support
-          enabled: "${LWM2M_BS_CREDENTIALS_ENABLED:false}"
+          enabled: "${LWM2M_BS_CREDENTIALS_ENABLED:true}"
           # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
           type:  "${LWM2M_BS_CREDENTIALS_TYPE:PEM}"
           # PEM server credentials
@@ -169,15 +169,15 @@ transport:
             store_file: "${LWM2M_BS_KEY_STORE:lwm2mserver.jks}"
             # Password used to access the key store
             store_password: "${LWM2M_BS_KEY_STORE_PASSWORD:server_ks_password}"
-            # Password used to access the key
-            key_password: "${LWM2M_BS_KEY_PASSWORD:server_key_password}"
             # Key alias
             key_alias: "${LWM2M_BS_KEY_ALIAS:bootstrap}"
+            # Password used to access the key
+            key_password: "${LWM2M_BS_KEY_PASSWORD:server_ks_password}"
     security:
       # X509 trust certificates
       trust-credentials:
         # Whether to load X509 trust certificates
-        enabled: "${LWM2M_TRUST_CREDENTIALS_ENABLED:false}"
+        enabled: "${LWM2M_TRUST_CREDENTIALS_ENABLED:true}"
         # Trust certificates store type (PEM - pem certificates file; KEYSTORE - java keystore)
         type:  "${LWM2M_TRUST_CREDENTIALS_TYPE:PEM}"
         # PEM certificates

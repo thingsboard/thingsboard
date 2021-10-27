@@ -49,4 +49,9 @@ public class KeystoreSslCredentials extends AbstractSslCredentials {
         }
         return keyStore;
     }
+
+    @Override
+    protected void updateKeyAlias(String keyAlias) {
+        this.keyAlias = keyAlias;
+    }
 }

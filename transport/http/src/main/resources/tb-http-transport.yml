@@ -19,6 +19,34 @@ server:
   address: "${HTTP_BIND_ADDRESS:0.0.0.0}"
   # Server bind port
   port: "${HTTP_BIND_PORT:8081}"
+  # Server SSL configuration
+  ssl:
+    # Enable/disable SSL support
+    enabled: "${SSL_ENABLED:false}"
+    # Server SSL credentials
+    credentials:
+      # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
+      type:  "${SSL_CREDENTIALS_TYPE:PEM}"
+      # PEM server credentials
+      pem:
+        # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
+        cert_file: "${SSL_PEM_CERT:server.pem}"
+        # Path to the server certificate private key file (optional)
+        key_file: "${SSL_PEM_KEY:server_key.pem}"
+        # Server certificate private key password (optional)
+        key_password: "${SSL_PEM_KEY_PASSWORD:server_key_password}"
+      # Keystore server credentials
+      keystore:
+        # Type of the key store
+        type: "${SSL_KEY_STORE_TYPE:PKCS12}"
+        # Path to the key store that holds the SSL certificate
+        store_file: "${SSL_KEY_STORE:classpath:keystore/keystore.p12}"
+        # Password used to access the key store
+        store_password: "${SSL_KEY_STORE_PASSWORD:thingsboard}"
+        # Key alias
+        key_alias: "${SSL_KEY_ALIAS:tomcat}"
+        # Password used to access the key
+        key_password: "${SSL_KEY_PASSWORD:thingsboard}"
 
 # Zookeeper connection parameters. Used for service discovery.
 zk:

@@ -23,14 +23,30 @@ server:
   ssl:
     # Enable/disable SSL support
     enabled: "${SSL_ENABLED:false}"
-    # Path to the key store that holds the SSL certificate
-    key-store: "${SSL_KEY_STORE:classpath:keystore/keystore.p12}"
-    # Password used to access the key store
-    key-store-password: "${SSL_KEY_STORE_PASSWORD:thingsboard}"
-    # Type of the key store
-    key-store-type: "${SSL_KEY_STORE_TYPE:PKCS12}"
-    # Alias that identifies the key in the key store
-    key-alias: "${SSL_KEY_ALIAS:tomcat}"
+    # Server SSL credentials
+    credentials:
+      # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
+      type:  "${SSL_CREDENTIALS_TYPE:PEM}"
+      # PEM server credentials
+      pem:
+        # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
+        cert_file: "${SSL_PEM_CERT:server.pem}"
+        # Path to the server certificate private key file (optional)
+        key_file: "${SSL_PEM_KEY:server_key.pem}"
+        # Server certificate private key password (optional)
+        key_password: "${SSL_PEM_KEY_PASSWORD:server_key_password}"
+      # Keystore server credentials
+      keystore:
+        # Type of the key store
+        type: "${SSL_KEY_STORE_TYPE:PKCS12}"
+        # Path to the key store that holds the SSL certificate
+        store_file: "${SSL_KEY_STORE:classpath:keystore/keystore.p12}"
+        # Password used to access the key store
+        store_password: "${SSL_KEY_STORE_PASSWORD:thingsboard}"
+        # Key alias
+        key_alias: "${SSL_KEY_ALIAS:tomcat}"
+        # Password used to access the key
+        key_password: "${SSL_KEY_PASSWORD:thingsboard}"
   log_controller_error_stack_trace: "${HTTP_LOG_CONTROLLER_ERROR_STACK_TRACE:false}"
   ws:
     send_timeout: "${TB_SERVER_WS_SEND_TIMEOUT:5000}"
@@ -679,10 +695,10 @@ transport:
           store_file: "${COAP_DTLS_KEY_STORE:coapserver.jks}"
           # Password used to access the key store
           store_password: "${COAP_DTLS_KEY_STORE_PASSWORD:server_ks_password}"
-          # Password used to access the key
-          key_password: "${COAP_DTLS_KEY_PASSWORD:server_key_password}"
           # Key alias
           key_alias: "${COAP_DTLS_KEY_ALIAS:serveralias}"
+          # Password used to access the key
+          key_password: "${COAP_DTLS_KEY_PASSWORD:server_key_password}"
       x509:
         # Skip certificate validity check for client certificates.
         skip_validity_check_for_client_cert: "${TB_COAP_X509_DTLS_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
@@ -702,7 +718,7 @@ transport:
         # Server X509 Certificates support
         credentials:
           # Whether to enable LWM2M server X509 Certificate/RPK support
-          enabled: "${LWM2M_SERVER_CREDENTIALS_ENABLED:false}"
+          enabled: "${LWM2M_SERVER_CREDENTIALS_ENABLED:true}"
           # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
           type: "${LWM2M_SERVER_CREDENTIALS_TYPE:PEM}"
           # PEM server credentials
@@ -721,10 +737,10 @@ transport:
             store_file: "${LWM2M_SERVER_KEY_STORE:lwm2mserver.jks}"
             # Password used to access the key store
             store_password: "${LWM2M_SERVER_KEY_STORE_PASSWORD:server_ks_password}"
-            # Password used to access the key
-            key_password: "${LWM2M_SERVER_KEY_PASSWORD:server_key_password}"
             # Key alias
             key_alias: "${LWM2M_SERVER_KEY_ALIAS:server}"
+            # Password used to access the key
+            key_password: "${LWM2M_SERVER_KEY_PASSWORD:server_ks_password}"
         # Only Certificate_x509:
         skip_validity_check_for_client_cert: "${TB_LWM2M_SERVER_SECURITY_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
     bootstrap:
@@ -738,7 +754,7 @@ transport:
         # Bootstrap server X509 Certificates support
         credentials:
           # Whether to enable LWM2M bootstrap server X509 Certificate/RPK support
-          enabled: "${LWM2M_BS_CREDENTIALS_ENABLED:false}"
+          enabled: "${LWM2M_BS_CREDENTIALS_ENABLED:true}"
           # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
           type:  "${LWM2M_BS_CREDENTIALS_TYPE:PEM}"
           # PEM server credentials
@@ -757,15 +773,15 @@ transport:
             store_file: "${LWM2M_BS_KEY_STORE:lwm2mserver.jks}"
             # Password used to access the key store
             store_password: "${LWM2M_BS_KEY_STORE_PASSWORD:server_ks_password}"
-            # Password used to access the key
-            key_password: "${LWM2M_BS_KEY_PASSWORD:server_key_password}"
             # Key alias
             key_alias: "${LWM2M_BS_KEY_ALIAS:bootstrap}"
+            # Password used to access the key
+            key_password: "${LWM2M_BS_KEY_PASSWORD:server_ks_password}"
     security:
       # X509 trust certificates
       trust-credentials:
         # Whether to load X509 trust certificates
-        enabled: "${LWM2M_TRUST_CREDENTIALS_ENABLED:false}"
+        enabled: "${LWM2M_TRUST_CREDENTIALS_ENABLED:true}"
         # Trust certificates store type (PEM - pem certificates file; KEYSTORE - java keystore)
         type:  "${LWM2M_TRUST_CREDENTIALS_TYPE:PEM}"
         # PEM certificates

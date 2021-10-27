@@ -118,10 +118,10 @@ transport:
           store_file: "${COAP_DTLS_KEY_STORE:coapserver.jks}"
           # Password used to access the key store
           store_password: "${COAP_DTLS_KEY_STORE_PASSWORD:server_ks_password}"
-          # Password used to access the key
-          key_password: "${COAP_DTLS_KEY_PASSWORD:server_key_password}"
           # Key alias
           key_alias: "${COAP_DTLS_KEY_ALIAS:serveralias}"
+          # Password used to access the key
+          key_password: "${COAP_DTLS_KEY_PASSWORD:server_key_password}"
       x509:
         # Skip certificate validity check for client certificates.
         skip_validity_check_for_client_cert: "${TB_COAP_X509_DTLS_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"

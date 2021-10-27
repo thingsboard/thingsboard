@@ -71,6 +71,7 @@ public abstract class AbstractSslCredentials implements SslCredentials {
                     String alias = e.nextElement();
                     privateKeyEntry = tryGetPrivateKeyEntry(this.keyStore, alias, this.keyPasswordArray);
                     if (privateKeyEntry != null) {
+                        this.updateKeyAlias(alias);
                         break;
                     }
                 }
@@ -85,6 +86,11 @@ public abstract class AbstractSslCredentials implements SslCredentials {
                 this.publicKey = this.chain[0].getPublicKey();
             }
         }
+    }
+
+    @Override
+    public KeyStore getKeyStore() {
+        return this.keyStore;
     }
 
     @Override
@@ -123,11 +129,9 @@ public abstract class AbstractSslCredentials implements SslCredentials {
 
     protected abstract boolean canUse();
 
-    protected abstract String getKeyPassword();
-
-    protected abstract String getKeyAlias();
-
     protected abstract KeyStore loadKeyStore(boolean isPrivateKeyRequired, char[] keyPasswordArray) throws IOException, GeneralSecurityException;
+
+    protected abstract void updateKeyAlias(String keyAlias);
 
     private static X509Certificate[] asX509Certificates(Certificate[] certificates) {
         if (null == certificates || 0 == certificates.length) {

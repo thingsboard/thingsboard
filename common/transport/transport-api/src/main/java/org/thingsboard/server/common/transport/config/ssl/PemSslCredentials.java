@@ -17,6 +17,7 @@ package org.thingsboard.server.common.transport.config.ssl;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
@@ -48,10 +49,11 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode(callSuper = false)
 public class PemSslCredentials extends AbstractSslCredentials {
 
+    private static final String DEFAULT_KEY_ALIAS = "server";
+
     private String certFile;
     private String keyFile;
     private String keyPassword;
-    private final String keyAlias = "serveralias";
 
     @Override
     protected boolean canUse() {
@@ -125,8 +127,17 @@ public class PemSslCredentials extends AbstractSslCredentials {
             CertPath certPath = factory.generateCertPath(certificates);
             List<? extends Certificate> path = certPath.getCertificates();
             Certificate[] x509Certificates = path.toArray(new Certificate[0]);
-            keyStore.setKeyEntry(this.keyAlias, privateKey, keyPasswordArray, x509Certificates);
+            keyStore.setKeyEntry(DEFAULT_KEY_ALIAS, privateKey, keyPasswordArray, x509Certificates);
         }
         return keyStore;
+    }
+
+    @Override
+    public String getKeyAlias() {
+        return DEFAULT_KEY_ALIAS;
+    }
+
+    @Override
+    protected void updateKeyAlias(String keyAlias) {
     }
 }

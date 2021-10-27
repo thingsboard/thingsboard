@@ -19,6 +19,7 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -29,6 +30,12 @@ import java.security.cert.X509Certificate;
 public interface SslCredentials {
 
     void init(boolean trustsOnly) throws IOException, GeneralSecurityException;
+
+    KeyStore getKeyStore();
+
+    String getKeyPassword();
+
+    String getKeyAlias();
 
     PrivateKey getPrivateKey();
 
