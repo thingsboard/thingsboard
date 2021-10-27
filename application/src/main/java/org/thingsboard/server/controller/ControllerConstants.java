@@ -17,7 +17,6 @@ package org.thingsboard.server.controller;
 
 public class ControllerConstants {
 
-
     protected static final String NEW_LINE = "\n\n";
     protected static final int DEFAULT_PAGE_SIZE = 1000;
     protected static final String ENTITY_TYPE = "entityType";
@@ -32,6 +31,7 @@ public class ControllerConstants {
     protected static final String DASHBOARD_ID_PARAM_DESCRIPTION = "A string value representing the device id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     protected static final String RPC_ID_PARAM_DESCRIPTION = "A string value representing the rpc id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     protected static final String DEVICE_ID_PARAM_DESCRIPTION = "A string value representing the device id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
+    protected static final String ENTITY_VIEW_ID_PARAM_DESCRIPTION = "A string value representing the entity view id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     protected static final String DEVICE_PROFILE_ID_PARAM_DESCRIPTION = "A string value representing the device profile id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     protected static final String TENANT_PROFILE_ID_PARAM_DESCRIPTION = "A string value representing the tenant profile id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     protected static final String TENANT_ID_PARAM_DESCRIPTION = "A string value representing the tenant id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
@@ -56,6 +56,7 @@ public class ControllerConstants {
     protected static final String PAGE_SIZE_DESCRIPTION = "Maximum amount of entities in a one page";
     protected static final String PAGE_NUMBER_DESCRIPTION = "Sequence number of page starting from 0";
     protected static final String DEVICE_TYPE_DESCRIPTION = "Device type as the name of the device profile";
+    protected static final String ENTITY_VIEW_TYPE_DESCRIPTION = "Entity View type";
     protected static final String ASSET_TYPE_DESCRIPTION = "Asset type";
     protected static final String EDGE_TYPE_DESCRIPTION = "A string value representing the edge type. For example, 'default'";
     protected static final String RULE_CHAIN_TYPE_DESCRIPTION = "Rule chain type (CORE or EDGE)";
@@ -64,6 +65,7 @@ public class ControllerConstants {
     protected static final String WIDGET_BUNDLE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the widget bundle title.";
     protected static final String RPC_TEXT_SEARCH_DESCRIPTION = "Not implemented. Leave empty.";
     protected static final String DEVICE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the device name.";
+    protected static final String ENTITY_VIEW_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the entity view name.";
     protected static final String USER_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the user email.";
     protected static final String TENANT_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the tenant name.";
     protected static final String TENANT_PROFILE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on the tenant profile name.";
@@ -78,6 +80,8 @@ public class ControllerConstants {
     protected static final String CUSTOMER_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title, email, country, city";
     protected static final String RPC_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, expirationTime, request, response";
     protected static final String DEVICE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, deviceProfileName, label, customerTitle";
+    protected static final String ENTITY_VIEW_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type";
+    protected static final String ENTITY_VIEW_INFO_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, type, customerTitle";
     protected static final String USER_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, firstName, lastName, email";
     protected static final String TENANT_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, title, email, country, state, city, address, address2, zip, phone, email";
     protected static final String TENANT_PROFILE_SORT_PROPERTY_ALLOWABLE_VALUES = "createdTime, name, description, isDefault";
@@ -171,6 +175,46 @@ public class ControllerConstants {
             "   \"eventType\":\"DEBUG_RULE_NODE\",\n" + DEBUG_FILTER_OBJ + MARKDOWN_CODE_BLOCK_END;
     protected static final String EVENT_DEBUG_RULE_CHAIN_FILTER_OBJ = MARKDOWN_CODE_BLOCK_START + "{\n" +
             "   \"eventType\":\"DEBUG_RULE_CHAIN\",\n" + DEBUG_FILTER_OBJ + MARKDOWN_CODE_BLOCK_END;
+
+    protected static final String IS_BOOTSTRAP_SERVER_PARAM_DESCRIPTION = "A Boolean value representing the Server SecurityInfo for future Bootstrap client mode settings. Values: 'true' for Bootstrap Server; 'false' for Lwm2m Server. ";
+
+    protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION =
+                    "{\n" +
+                    "  \"device\": {\n" +
+                    "    \"name\": \"LwRpk00000000\",\n" +
+                    "    \"type\": \"lwm2mProfileRpk\"\n" +
+                    "  },\n" +
+                    "  \"credentials\": {\n" +
+                    "    \"id\": \"null\",\n" +
+                    "    \"createdTime\": 0,\n" +
+                    "    \"deviceId\": \"null\",\n" +
+                    "    \"credentialsType\": \"LWM2M_CREDENTIALS\",\n" +
+                    "    \"credentialsId\": \"LwRpk00000000\",\n" +
+                    "    \"credentialsValue\": {\n" +
+                    "      \"client\": {\n" +
+                    "        \"endpoint\": \"LwRpk00000000\",\n" +
+                    "        \"securityConfigClientMode\": \"RPK\",\n" +
+                    "        \"key\": \"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\"\n" +
+                    "      },\n" +
+                    "      \"bootstrap\": {\n" +
+                    "        \"bootstrapServer\": {\n" +
+                    "          \"securityMode\": \"RPK\",\n" +
+                    "          \"clientPublicKeyOrId\": \"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\",\n" +
+                    "          \"clientSecretKey\": \"MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgd9GAx7yZW37autew5KZykn4IgRpge/tZSjnudnZJnMahRANCAARQQHE2X9Fxgk2byaT3ULJVeggmJE5gOVdxJKorp7lsMfA5bhmI3aU2ddqXIXQnHDwxsDK2cMwRFfICNrlUQx5V\"\n" +
+                    "        },\n" +
+                    "        \"lwm2mServer\": {\n" +
+                    "          \"securityMode\": \"RPK\",\n" +
+                    "          \"clientPublicKeyOrId\": \"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEUEBxNl/RcYJNm8mk91CyVXoIJiROYDlXcSSqK6e5bDHwOW4ZiN2lNnXalyF0Jxw8MbAytnDMERXyAja5VEMeVQ==\",\n" +
+                    "          \"clientSecretKey\": \"MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgd9GAx7yZW37autew5KZykn4IgRpge/tZSjnudnZJnMahRANCAARQQHE2X9Fxgk2byaT3ULJVeggmJE5gOVdxJKorp7lsMfA5bhmI3aU2ddqXIXQnHDwxsDK2cMwRFfICNrlUQx5V\"\n" +
+                    "        }\n" +
+                    "      }\n" +
+                    "    }\n" +
+                    "  }\n" +
+                    "}";
+
+    protected static final String DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION_MARKDOWN =
+            MARKDOWN_CODE_BLOCK_START + DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION + MARKDOWN_CODE_BLOCK_END;
+
 
     protected static final String FILTER_VALUE_TYPE = NEW_LINE + "## Value Type and Operations" + NEW_LINE +
             "Provides a hint about the data type of the entity field that is defined in the filter key. " +
@@ -1359,4 +1403,122 @@ public class ControllerConstants {
 
     protected static final String DEVICE_PROFILE_ID = "deviceProfileId";
 
+    protected static final String MODEL_DESCRIPTION = "See the 'Model' tab for more details.";
+    protected static final String ENTITY_VIEW_DESCRIPTION = "Entity Views limit the degree of exposure of the Device or Asset telemetry and attributes to the Customers. " +
+            "Every Entity View references exactly one entity (device or asset) and defines telemetry and attribute keys that will be visible to the assigned Customer. " +
+            "As a Tenant Administrator you are able to create multiple EVs per Device or Asset and assign them to different Customers. ";
+    protected static final String ENTITY_VIEW_INFO_DESCRIPTION = "Entity Views Info extends the Entity View with customer title and 'is public' flag. " + ENTITY_VIEW_DESCRIPTION;
+
+    protected static final String ATTRIBUTES_SCOPE_DESCRIPTION = "A string value representing the attributes scope. For example, 'SERVER_SCOPE'.";
+    protected static final String ATTRIBUTES_KEYS_DESCRIPTION = "A string value representing the comma-separated list of attributes keys. For example, 'active,inactivityAlarmTime'.";
+    protected static final String ATTRIBUTES_SCOPE_ALLOWED_VALUES = "SERVER_SCOPE, CLIENT_SCOPE, SHARED_SCOPE";
+    protected static final String ATTRIBUTES_JSON_REQUEST_DESCRIPTION = "A string value representing the json object. For example, '{\"key\":\"value\"}'. See API call description for more details.";
+
+    protected static final String TELEMETRY_KEYS_BASE_DESCRIPTION = "A string value representing the comma-separated list of telemetry keys.";
+    protected static final String TELEMETRY_KEYS_DESCRIPTION = TELEMETRY_KEYS_BASE_DESCRIPTION + " If keys are not selected, the result will return all latest timeseries. For example, 'temperature,humidity'.";
+    protected static final String TELEMETRY_SCOPE_DESCRIPTION = "Value is deprecated, reserved for backward compatibility and not used in the API call implementation. Specify any scope for compatibility";
+    protected static final String TELEMETRY_JSON_REQUEST_DESCRIPTION = "A JSON with the telemetry values. See API call description for more details.";
+
+
+    protected static final String STRICT_DATA_TYPES_DESCRIPTION = "Enables/disables conversion of telemetry values to strings. Conversion is enabled by default. Set parameter to 'true' in order to disable the conversion.";
+    protected static final String INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION = "Referencing a non-existing entity Id or invalid entity type will cause an error. ";
+
+    protected static final String SAVE_ATTIRIBUTES_STATUS_OK = "Attribute from the request was created or updated. ";
+    protected static final String INVALID_STRUCTURE_OF_THE_REQUEST = "Invalid structure of the request";
+    protected static final String SAVE_ATTIRIBUTES_STATUS_BAD_REQUEST = INVALID_STRUCTURE_OF_THE_REQUEST + " or invalid attributes scope provided.";
+    protected static final String SAVE_ENTITY_ATTRIBUTES_STATUS_OK = "Platform creates an audit log event about entity attributes updates with action type 'ATTRIBUTES_UPDATED', " +
+            "and also sends event msg to the rule engine with msg type 'ATTRIBUTES_UPDATED'.";
+    protected static final String SAVE_ENTITY_ATTRIBUTES_STATUS_UNAUTHORIZED = "User is not authorized to save entity attributes for selected entity. Most likely, User belongs to different Customer or Tenant.";
+    protected static final String SAVE_ENTITY_ATTRIBUTES_STATUS_INTERNAL_SERVER_ERROR = "The exception was thrown during processing the request. " +
+            "Platform creates an audit log event about entity attributes updates with action type 'ATTRIBUTES_UPDATED' that includes an error stacktrace.";
+    protected static final String SAVE_ENTITY_TIMESERIES_STATUS_OK = "Timeseries from the request was created or updated. " +
+            "Platform creates an audit log event about entity timeseries updates with action type 'TIMESERIES_UPDATED'.";
+    protected static final String SAVE_ENTITY_TIMESERIES_STATUS_UNAUTHORIZED = "User is not authorized to save entity timeseries for selected entity. Most likely, User belongs to different Customer or Tenant.";
+    protected static final String SAVE_ENTITY_TIMESERIES_STATUS_INTERNAL_SERVER_ERROR = "The exception was thrown during processing the request. " +
+            "Platform creates an audit log event about entity timeseries updates with action type 'TIMESERIES_UPDATED' that includes an error stacktrace.";
+
+    protected static final String ENTITY_ATTRIBUTE_SCOPES = " List of possible attribute scopes depends on the entity type: " +
+            "\n\n * SERVER_SCOPE - supported for all entity types;" +
+            "\n * CLIENT_SCOPE - supported for devices;" +
+            "\n * SHARED_SCOPE - supported for devices. "+ "\n\n";
+
+    protected static final String ATTRIBUTE_DATA_EXAMPLE = "[\n" +
+            "  {\"key\": \"stringAttributeKey\", \"value\": \"value\", \"lastUpdateTs\": 1609459200000},\n" +
+            "  {\"key\": \"booleanAttributeKey\", \"value\": false, \"lastUpdateTs\": 1609459200001},\n" +
+            "  {\"key\": \"doubleAttributeKey\", \"value\": 42.2, \"lastUpdateTs\": 1609459200002},\n" +
+            "  {\"key\": \"longKeyExample\", \"value\": 73, \"lastUpdateTs\": 1609459200003},\n" +
+            "  {\"key\": \"jsonKeyExample\",\n" +
+            "    \"value\": {\n" +
+            "      \"someNumber\": 42,\n" +
+            "      \"someArray\": [1,2,3],\n" +
+            "      \"someNestedObject\": {\"key\": \"value\"}\n" +
+            "    },\n" +
+            "    \"lastUpdateTs\": 1609459200004\n" +
+            "  }\n" +
+            "]";
+
+    protected static final String LATEST_TS_STRICT_DATA_EXAMPLE = "{\n" +
+            "  \"stringTsKey\": [{ \"value\": \"value\", \"ts\": 1609459200000}],\n" +
+            "  \"booleanTsKey\": [{ \"value\": false, \"ts\": 1609459200000}],\n" +
+            "  \"doubleTsKey\": [{ \"value\": 42.2, \"ts\": 1609459200000}],\n" +
+            "  \"longTsKey\": [{ \"value\": 73, \"ts\": 1609459200000}],\n" +
+            "  \"jsonTsKey\": [{ \n" +
+            "    \"value\": {\n" +
+            "      \"someNumber\": 42,\n" +
+            "      \"someArray\": [1,2,3],\n" +
+            "      \"someNestedObject\": {\"key\": \"value\"}\n" +
+            "    }, \n" +
+            "    \"ts\": 1609459200000}]\n" +
+            "}\n";
+
+    protected static final String LATEST_TS_NON_STRICT_DATA_EXAMPLE = "{\n" +
+            "  \"stringTsKey\": [{ \"value\": \"value\", \"ts\": 1609459200000}],\n" +
+            "  \"booleanTsKey\": [{ \"value\": \"false\", \"ts\": 1609459200000}],\n" +
+            "  \"doubleTsKey\": [{ \"value\": \"42.2\", \"ts\": 1609459200000}],\n" +
+            "  \"longTsKey\": [{ \"value\": \"73\", \"ts\": 1609459200000}],\n" +
+            "  \"jsonTsKey\": [{ \"value\": \"{\\\"someNumber\\\": 42,\\\"someArray\\\": [1,2,3],\\\"someNestedObject\\\": {\\\"key\\\": \\\"value\\\"}}\", \"ts\": 1609459200000}]\n" +
+            "}\n";
+
+    protected static final String TS_STRICT_DATA_EXAMPLE = "{\n" +
+            "  \"temperature\": [\n" +
+            "    {\n" +
+            "      \"value\": 36.7,\n" +
+            "      \"ts\": 1609459200000\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"value\": 36.6,\n" +
+            "      \"ts\": 1609459201000\n" +
+            "    }\n" +
+            "  ]\n" +
+            "}";
+
+    protected static final String SAVE_ATTRIBUTES_REQUEST_PAYLOAD = "The request payload is a JSON object with key-value format of attributes to create or update. " +
+            "For example:\n\n"
+            + MARKDOWN_CODE_BLOCK_START
+            + "{\n" +
+            " \"stringKey\":\"value1\", \n" +
+            " \"booleanKey\":true, \n" +
+            " \"doubleKey\":42.0, \n" +
+            " \"longKey\":73, \n" +
+            " \"jsonKey\": {\n" +
+            "    \"someNumber\": 42,\n" +
+            "    \"someArray\": [1,2,3],\n" +
+            "    \"someNestedObject\": {\"key\": \"value\"}\n" +
+            " }\n" +
+            "}"
+            + MARKDOWN_CODE_BLOCK_END + "\n";
+
+    protected static final String SAVE_TIMESERIES_REQUEST_PAYLOAD = "The request payload is a JSON document with three possible formats:\n\n" +
+            "Simple format without timestamp. In such a case, current server time will be used: \n\n" +
+            MARKDOWN_CODE_BLOCK_START +
+            "{\"temperature\": 26}" +
+            MARKDOWN_CODE_BLOCK_END +
+            "\n\n Single JSON object with timestamp: \n\n" +
+            MARKDOWN_CODE_BLOCK_START +
+            "{\"ts\":1634712287000,\"values\":{\"temperature\":26, \"humidity\":87}}" +
+            MARKDOWN_CODE_BLOCK_END +
+            "\n\n JSON array with timestamps: \n\n" +
+            MARKDOWN_CODE_BLOCK_START +
+            "[{\"ts\":1634712287000,\"values\":{\"temperature\":26, \"humidity\":87}}, {\"ts\":1634712588000,\"values\":{\"temperature\":25, \"humidity\":88}}]" +
+            MARKDOWN_CODE_BLOCK_END ;
 }

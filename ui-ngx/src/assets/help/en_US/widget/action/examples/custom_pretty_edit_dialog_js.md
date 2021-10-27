@@ -1,6 +1,7 @@
 #### Function displaying dialog to edit a device or an asset
 
 ```javascript
+{:code-style="max-height: 400px;"}
 let $injector = widgetContext.$scope.$injector;
 let customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));
 let entityService = $injector.get(widgetContext.servicesMap.get('entityService'));
@@ -218,3 +219,6 @@ function EditEntityDialogController(instance) {
 }
 {:copy-code}
 ```
+
+<br>
+<br>

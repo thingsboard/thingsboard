@@ -20,6 +20,7 @@ A JavaScript function performing custom action.
 * Display alert dialog with entity information:
 
 ```javascript
+{:code-style="max-height: 300px;"}
 var title;
 var content;
 if (entityName) {
@@ -52,6 +53,7 @@ function showAlertDialog(title, content) {
 * Delete device after confirmation:
 
 ```javascript
+{:code-style="max-height: 300px;"}
 var $injector = widgetContext.$scope.$injector;
 var dialogs = $injector.get(widgetContext.servicesMap.get('dialogs'));
 var deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));

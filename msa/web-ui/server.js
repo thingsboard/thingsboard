@@ -83,10 +83,6 @@ var server;
               apiProxy.web(req, res);
             });
 
-            app.all('/assets/help/*/rulenode/**', (req, res) => {
-                apiProxy.web(req, res);
-            });
-
             server.on('upgrade', (req, socket, head) => {
               apiProxy.ws(req, socket, head);
             });

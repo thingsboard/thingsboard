@@ -57,7 +57,7 @@ self.onDataUpdated = function() {
 
  - Click the **Run** button on the **Widget Editor Toolbar** in order to see the result in **Widget preview** section.
 
-![image](${baseUrl}/images/user-guide/contribution/widgets/external-js-widget-sample.png)
+![image](${helpBaseUrl}/help/images/widget/editor/examples/external-js-widget-sample.png)
 
 In this example, the external JS library API was used that becomes available after injecting the corresponding URL in **Resources** section.
 

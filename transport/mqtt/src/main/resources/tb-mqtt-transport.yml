@@ -106,14 +106,28 @@ transport:
       bind_port: "${MQTT_SSL_BIND_PORT:8883}"
       # SSL protocol: See http://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#SSLContext
       protocol: "${MQTT_SSL_PROTOCOL:TLSv1.2}"
-      # Path to the key store that holds the SSL certificate
-      key_store: "${MQTT_SSL_KEY_STORE:mqttserver.jks}"
-      # Password used to access the key store
-      key_store_password: "${MQTT_SSL_KEY_STORE_PASSWORD:server_ks_password}"
-      # Password used to access the key
-      key_password: "${MQTT_SSL_KEY_PASSWORD:server_key_password}"
-      # Type of the key store
-      key_store_type: "${MQTT_SSL_KEY_STORE_TYPE:JKS}"
+      # Server SSL credentials
+      credentials:
+        # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
+        type:  "${MQTT_SSL_CREDENTIALS_TYPE:PEM}"
+        # PEM server credentials
+        pem:
+          # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
+          cert_file: "${MQTT_SSL_PEM_CERT:mqttserver.pem}"
+          # Path to the server certificate private key file (optional)
+          key_file: "${MQTT_SSL_PEM_KEY:mqttserver_key.pem}"
+          # Server certificate private key password (optional)
+          key_password: "${MQTT_SSL_PEM_KEY_PASSWORD:server_key_password}"
+        # Keystore server credentials
+        keystore:
+          # Type of the key store
+          type: "${MQTT_SSL_KEY_STORE_TYPE:JKS}"
+          # Path to the key store that holds the SSL certificate
+          store_file: "${MQTT_SSL_KEY_STORE:mqttserver.jks}"
+          # Password used to access the key store
+          store_password: "${MQTT_SSL_KEY_STORE_PASSWORD:server_ks_password}"
+          # Password used to access the key
+          key_password: "${MQTT_SSL_KEY_PASSWORD:server_key_password}"
       # Skip certificate validity check for client certificates.
       skip_validity_check_for_client_cert: "${MQTT_SSL_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
   sessions:

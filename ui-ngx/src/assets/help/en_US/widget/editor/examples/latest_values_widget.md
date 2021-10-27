@@ -37,7 +37,7 @@ The **Widget Editor** will open, pre-populated with the content of the default *
 
  - Click the **Run** button on the **Widget Editor Toolbar** in order to see the result in **Widget preview** section.
 
-![image](${baseUrl}/images/user-guide/contribution/widgets/latest-values-widget-sample.png)
+![image](${helpBaseUrl}/help/images/widget/editor/examples/latest-values-widget-sample.png)
 
 In this example, the **data** property of <span trigger-style="fontSize: 16px;" trigger-text="<b>subscription</b>" tb-help-popup="widget/editor/widget_js_subscription_object"></span> is assigned to the **$scope** and becomes accessible within the HTML template.
 

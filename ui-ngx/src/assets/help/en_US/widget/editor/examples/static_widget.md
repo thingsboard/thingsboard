@@ -58,7 +58,7 @@ self.onInit = function() {
 
  - Click the **Run** button on the **Widget Editor Toolbar** to see the resulting **Widget preview** section.
 
-![image](${baseUrl}/images/user-guide/contribution/widgets/static-widget-sample.png)
+![image](${helpBaseUrl}/help/images/widget/editor/examples/static-widget-sample.png)
 
 This is just a static HTML widget.  There is no subscription data and no special widget API was used.
 
