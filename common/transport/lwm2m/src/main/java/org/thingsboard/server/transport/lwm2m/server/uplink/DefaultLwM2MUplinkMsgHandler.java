@@ -160,7 +160,8 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
                                         LwM2mTransportContext context,
                                         TbLwM2MDtlsSessionStore sessionStore,
                                         LwM2mVersionedModelProvider modelProvider,
-                                        RegistrationStore registrationStore, TbLwM2mSecurityStore securityStore) {
+                                        RegistrationStore registrationStore,
+                                        TbLwM2mSecurityStore securityStore) {
         this.transportService = transportService;
         this.sessionManager = sessionManager;
         this.attributesService = attributesService;
