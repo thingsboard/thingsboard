@@ -134,18 +134,16 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     @Override
     public void setDeviceProfile(DeviceProfile deviceProfile) {
         super.setDeviceProfile(deviceProfile);
-        updateTopicFilters(deviceProfile);
-        updateAdaptor();
+        updateDeviceSessionConfiguration(deviceProfile);
     }
 
     @Override
     public void onDeviceProfileUpdate(TransportProtos.SessionInfoProto sessionInfo, DeviceProfile deviceProfile) {
         super.onDeviceProfileUpdate(sessionInfo, deviceProfile);
-        updateTopicFilters(deviceProfile);
-        updateAdaptor();
+        updateDeviceSessionConfiguration(deviceProfile);
     }
 
-    private void updateTopicFilters(DeviceProfile deviceProfile) {
+    private void updateDeviceSessionConfiguration(DeviceProfile deviceProfile) {
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
         if (transportConfiguration.getType().equals(DeviceTransportType.MQTT) &&
                 transportConfiguration instanceof MqttDeviceProfileTransportConfiguration) {
@@ -158,12 +156,14 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
                 ProtoTransportPayloadConfiguration protoTransportPayloadConfig = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
                 updateDynamicMessageDescriptors(protoTransportPayloadConfig);
                 jsonPayloadFormatCompatibilityEnabled = protoTransportPayloadConfig.isEnableCompatibilityWithJsonPayloadFormat();
-                useJsonPayloadFormatForDefaultDownlinkTopics = protoTransportPayloadConfig.isUseJsonPayloadFormatForDefaultDownlinkTopics();
+                useJsonPayloadFormatForDefaultDownlinkTopics = jsonPayloadFormatCompatibilityEnabled && protoTransportPayloadConfig.isUseJsonPayloadFormatForDefaultDownlinkTopics();
             }
         } else {
             telemetryTopicFilter = MqttTopicFilterFactory.getDefaultTelemetryFilter();
             attributesTopicFilter = MqttTopicFilterFactory.getDefaultAttributesFilter();
+            payloadType = TransportPayloadType.JSON;
         }
+        updateAdaptor();
     }
 
     private void updateDynamicMessageDescriptors(ProtoTransportPayloadConfiguration protoTransportPayloadConfig) {
@@ -176,17 +176,17 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     public MqttTransportAdaptor getAdaptor(TopicType topicType) {
         switch (topicType) {
             case V2:
-                return getProfileAdaptor();
+                return getDefaultAdaptor();
             case V2_JSON:
                 return context.getJsonMqttAdaptor();
             case V2_PROTO:
                 return context.getProtoMqttAdaptor();
             default:
-                return useJsonPayloadFormatForDefaultDownlinkTopics ? context.getJsonMqttAdaptor() : getProfileAdaptor();
+                return useJsonPayloadFormatForDefaultDownlinkTopics ? context.getJsonMqttAdaptor() : getDefaultAdaptor();
         }
     }
 
-    private MqttTransportAdaptor getProfileAdaptor() {
+    private MqttTransportAdaptor getDefaultAdaptor() {
         return isJsonPayloadType() ? context.getJsonMqttAdaptor() : context.getProtoMqttAdaptor();
     }
 

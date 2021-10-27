@@ -965,22 +965,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     @Override
     public void onGetAttributesResponse(TransportProtos.GetAttributeResponseMsg response) {
         log.trace("[{}] Received get attributes response", sessionId);
-        String topicBase;
+        String topicBase = attrReqTopicType.getAttributesRequestTopicBase();
         MqttTransportAdaptor adaptor = deviceSessionCtx.getAdaptor(attrReqTopicType);
-        switch (attrReqTopicType) {
-            case V2:
-                topicBase = MqttTopics.DEVICE_ATTRIBUTES_RESPONSE_SHORT_TOPIC_PREFIX;
-                break;
-            case V2_JSON:
-                topicBase = MqttTopics.DEVICE_ATTRIBUTES_RESPONSE_SHORT_JSON_TOPIC_PREFIX;
-                break;
-            case V2_PROTO:
-                topicBase = MqttTopics.DEVICE_ATTRIBUTES_RESPONSE_SHORT_PROTO_TOPIC_PREFIX;
-                break;
-            default:
-                topicBase = MqttTopics.DEVICE_ATTRIBUTES_RESPONSE_TOPIC_PREFIX;
-                break;
-        }
         try {
             adaptor.convertToPublish(deviceSessionCtx, response, topicBase).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
         } catch (Exception e) {
@@ -991,22 +977,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     @Override
     public void onAttributeUpdate(UUID sessionId, TransportProtos.AttributeUpdateNotificationMsg notification) {
         log.trace("[{}] Received attributes update notification to device", sessionId);
-        String topic;
+        String topic = attrSubTopicType.getAttributesSubTopic();
         MqttTransportAdaptor adaptor = deviceSessionCtx.getAdaptor(attrSubTopicType);
-        switch (attrSubTopicType) {
-            case V2:
-                topic = MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC;
-                break;
-            case V2_JSON:
-                topic = MqttTopics.DEVICE_ATTRIBUTES_SHORT_JSON_TOPIC;
-                break;
-            case V2_PROTO:
-                topic = MqttTopics.DEVICE_ATTRIBUTES_SHORT_PROTO_TOPIC;
-                break;
-            default:
-                topic = MqttTopics.DEVICE_ATTRIBUTES_TOPIC;
-                break;
-        }
         try {
             adaptor.convertToPublish(deviceSessionCtx, notification, topic).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
         } catch (Exception e) {
@@ -1023,22 +995,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     @Override
     public void onToDeviceRpcRequest(UUID sessionId, TransportProtos.ToDeviceRpcRequestMsg rpcRequest) {
         log.trace("[{}] Received RPC command to device", sessionId);
-        String baseTopic;
+        String baseTopic = rpcSubTopicType.getRpcRequestTopicBase();
         MqttTransportAdaptor adaptor = deviceSessionCtx.getAdaptor(rpcSubTopicType);
-        switch (rpcSubTopicType) {
-            case V2:
-                baseTopic = MqttTopics.DEVICE_RPC_REQUESTS_SHORT_TOPIC;
-                break;
-            case V2_JSON:
-                baseTopic = MqttTopics.DEVICE_RPC_REQUESTS_SHORT_JSON_TOPIC;
-                break;
-            case V2_PROTO:
-                baseTopic = MqttTopics.DEVICE_RPC_REQUESTS_SHORT_PROTO_TOPIC;
-                break;
-            default:
-                baseTopic = MqttTopics.DEVICE_RPC_REQUESTS_TOPIC;
-                break;
-        }
         try {
             adaptor.convertToPublish(deviceSessionCtx, rpcRequest, baseTopic).ifPresent(payload -> {
                 int msgId = ((MqttPublishMessage) payload).variableHeader().packetId();
@@ -1075,22 +1033,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     @Override
     public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg rpcResponse) {
         log.trace("[{}] Received RPC response from server", sessionId);
-        String baseTopic;
+        String baseTopic = toServerRpcSubTopicType.getRpcResponseTopicBase();
         MqttTransportAdaptor adaptor = deviceSessionCtx.getAdaptor(toServerRpcSubTopicType);
-        switch (toServerRpcSubTopicType) {
-            case V2:
-                baseTopic = MqttTopics.DEVICE_RPC_RESPONSE_SHORT_TOPIC;
-                break;
-            case V2_JSON:
-                baseTopic = MqttTopics.DEVICE_RPC_RESPONSE_SHORT_JSON_TOPIC;
-                break;
-            case V2_PROTO:
-                baseTopic = MqttTopics.DEVICE_RPC_RESPONSE_SHORT_PROTO_TOPIC;
-                break;
-            default:
-                baseTopic = MqttTopics.DEVICE_RPC_RESPONSE_TOPIC;
-                break;
-        }
         try {
             adaptor.convertToPublish(deviceSessionCtx, rpcResponse, baseTopic).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
         } catch (Exception e) {

@@ -40,7 +40,7 @@ public class BackwardCompatibilityAdaptor implements MqttTransportAdaptor {
         try {
             return protoAdaptor.convertToPostTelemetry(ctx, inbound);
         } catch (AdaptorException e) {
-            log.trace("failed to process post telemetry request msg: {} due to: ", inbound, e);
+            log.trace("[{}] failed to process post telemetry request msg: {} due to: ", ctx.getSessionId(), inbound, e);
             return jsonAdaptor.convertToPostTelemetry(ctx, inbound);
         }
     }
@@ -50,7 +50,7 @@ public class BackwardCompatibilityAdaptor implements MqttTransportAdaptor {
         try {
             return protoAdaptor.convertToPostAttributes(ctx, inbound);
         } catch (AdaptorException e) {
-            log.trace("failed to process post attributes request msg: {} due to: ", inbound, e);
+            log.trace("[{}] failed to process post attributes request msg: {} due to: ", ctx.getSessionId(), inbound, e);
             return jsonAdaptor.convertToPostAttributes(ctx, inbound);
         }
     }
@@ -60,7 +60,7 @@ public class BackwardCompatibilityAdaptor implements MqttTransportAdaptor {
         try {
             return protoAdaptor.convertToGetAttributes(ctx, inbound, topicBase);
         } catch (AdaptorException e) {
-            log.trace("failed to process get attributes request msg: {} due to: ", inbound, e);
+            log.trace("[{}] failed to process get attributes request msg: {} due to: ", ctx.getSessionId(), inbound, e);
             return jsonAdaptor.convertToGetAttributes(ctx, inbound, topicBase);
         }
     }
@@ -70,7 +70,7 @@ public class BackwardCompatibilityAdaptor implements MqttTransportAdaptor {
         try {
             return protoAdaptor.convertToDeviceRpcResponse(ctx, mqttMsg, topicBase);
         } catch (AdaptorException e) {
-            log.trace("failed to process to device rpc response msg: {} due to: ", mqttMsg, e);
+            log.trace("[{}] failed to process to device rpc response msg: {} due to: ", ctx.getSessionId(), mqttMsg, e);
             return jsonAdaptor.convertToDeviceRpcResponse(ctx, mqttMsg, topicBase);
         }
     }
@@ -80,7 +80,7 @@ public class BackwardCompatibilityAdaptor implements MqttTransportAdaptor {
         try {
             return protoAdaptor.convertToServerRpcRequest(ctx, mqttMsg, topicBase);
         } catch (AdaptorException e) {
-            log.trace("failed to process to server rpc request msg: {} due to: ", mqttMsg, e);
+            log.trace("[{}] failed to process to server rpc request msg: {} due to: ", ctx.getSessionId(), mqttMsg, e);
             return jsonAdaptor.convertToServerRpcRequest(ctx, mqttMsg, topicBase);
         }
     }
@@ -90,9 +90,15 @@ public class BackwardCompatibilityAdaptor implements MqttTransportAdaptor {
         try {
             return protoAdaptor.convertToClaimDevice(ctx, inbound);
         } catch (AdaptorException e) {
-            log.trace("failed to process claim device request msg: {} due to: ", inbound, e);
+            log.trace("[{}] failed to process claim device request msg: {} due to: ", ctx.getSessionId(), inbound, e);
             return jsonAdaptor.convertToClaimDevice(ctx, inbound);
         }
+    }
+
+    @Override
+    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.GetAttributeResponseMsg responseMsg, String topicBase) throws AdaptorException {
+        log.warn("[{}] invoked not implemented adaptor method! GetAttributeResponseMsg: {} TopicBase: {}", ctx.getSessionId(), responseMsg, topicBase);
+        return Optional.empty();
     }
 
     @Override
@@ -101,13 +107,43 @@ public class BackwardCompatibilityAdaptor implements MqttTransportAdaptor {
     }
 
     @Override
+    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.AttributeUpdateNotificationMsg notificationMsg, String topic) throws AdaptorException {
+        log.warn("[{}] invoked not implemented adaptor method! AttributeUpdateNotificationMsg: {} Topic: {}", ctx.getSessionId(), notificationMsg, topic);
+        return Optional.empty();
+    }
+
+    @Override
     public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.AttributeUpdateNotificationMsg notificationMsg) throws AdaptorException {
         return protoAdaptor.convertToGatewayPublish(ctx, deviceName, notificationMsg);
     }
 
     @Override
+    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.ToDeviceRpcRequestMsg rpcRequest, String topicBase) throws AdaptorException {
+        log.warn("[{}] invoked not implemented adaptor method! ToDeviceRpcRequestMsg: {} TopicBase: {}", ctx.getSessionId(), rpcRequest, topicBase);
+        return Optional.empty();
+    }
+
+    @Override
     public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.ToDeviceRpcRequestMsg rpcRequest) throws AdaptorException {
         return protoAdaptor.convertToGatewayPublish(ctx, deviceName, rpcRequest);
+    }
+
+    @Override
+    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.ToServerRpcResponseMsg rpcResponse, String topicBase) throws AdaptorException {
+        log.warn("[{}] invoked not implemented adaptor method! ToServerRpcResponseMsg: {} TopicBase: {}", ctx.getSessionId(), rpcResponse, topicBase);
+        return Optional.empty();
+    }
+
+    @Override
+    public TransportProtos.ProvisionDeviceRequestMsg convertToProvisionRequestMsg(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
+        log.warn("[{}] invoked not implemented adaptor method! MqttPublishMessage: {}", ctx.getSessionId(), inbound);
+        return null;
+    }
+
+    @Override
+    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.ProvisionDeviceResponseMsg provisionResponse) throws AdaptorException {
+        log.warn("[{}] invoked not implemented adaptor method! ProvisionDeviceResponseMsg: {}", ctx.getSessionId(), provisionResponse);
+        return Optional.empty();
     }
 
     @Override
