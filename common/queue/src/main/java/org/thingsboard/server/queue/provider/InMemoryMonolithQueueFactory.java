@@ -92,7 +92,7 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> createToRuleEngineMsgConsumer(TbRuleEngineQueueConfiguration configuration) {
-        return new InMemoryTbQueueConsumer<>(ruleEngineSettings.getTopic());
+        return new InMemoryTbQueueConsumer<>(configuration.getTopic());
     }
 
     @Override
