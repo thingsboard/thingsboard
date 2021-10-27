@@ -104,7 +104,7 @@
               [fillHeight]="true">
             </tb-protobuf-content>
             <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.deviceRpcRequestProtoSchema').hasError('required')">
-              {{ 'device-profile.rpc-request-proto-required' | translate}}
+              {{ 'device-profile.rpc-request-proto-schema-required' | translate}}
             </mat-error>
           </ng-container>
           <ng-container>

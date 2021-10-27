@@ -47,35 +47,50 @@
             </mat-error>
           </mat-form-field>
           <div *ngIf="protoPayloadType" fxLayout="column">
-            <mat-form-field fxFlex>
-              <mat-label translate>device-profile.telemetry-proto-schema</mat-label>
-              <textarea matInput required formControlName="deviceTelemetryProtoSchema" rows="5"></textarea>
+            <ng-container>
+              <tb-protobuf-content
+                fxFlex
+                formControlName="deviceTelemetryProtoSchema"
+                label="{{ 'device-profile.telemetry-proto-schema' | translate }}"
+                [fillHeight]="true">
+              </tb-protobuf-content>
               <mat-error *ngIf="coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceTelemetryProtoSchema').hasError('required')">
                 {{ 'device-profile.telemetry-proto-schema-required' | translate}}
               </mat-error>
-            </mat-form-field>
-            <mat-form-field fxFlex>
-              <mat-label translate>device-profile.attributes-proto-schema</mat-label>
-              <textarea matInput required formControlName="deviceAttributesProtoSchema" rows="5"></textarea>
+            </ng-container>
+            <ng-container>
+              <tb-protobuf-content
+                fxFlex
+                formControlName="deviceAttributesProtoSchema"
+                label="{{ 'device-profile.attributes-proto-schema' | translate }}"
+                [fillHeight]="true">
+              </tb-protobuf-content>
               <mat-error *ngIf="coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceAttributesProtoSchema').hasError('required')">
                 {{ 'device-profile.attributes-proto-schema-required' | translate}}
               </mat-error>
-            </mat-form-field>
-            <mat-form-field style="padding-bottom: 20px" fxFlex>
-              <mat-label translate>device-profile.rpc-request-proto-schema</mat-label>
-              <textarea matInput required formControlName="deviceRpcRequestProtoSchema" rows="5"></textarea>
+            </ng-container>
+            <ng-container>
+              <tb-protobuf-content
+                fxFlex
+                formControlName="deviceRpcRequestProtoSchema"
+                label="{{ 'device-profile.rpc-request-proto-schema' | translate }}"
+                [fillHeight]="true">
+              </tb-protobuf-content>
               <mat-error *ngIf="coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceRpcRequestProtoSchema').hasError('required')">
                 {{ 'device-profile.rpc-request-proto-schema-required' | translate}}
               </mat-error>
-              <mat-hint class="tb-hint" translate>device-profile.rpc-request-proto-schema-hint</mat-hint>
-            </mat-form-field>
-            <mat-form-field fxFlex>
-              <mat-label translate>device-profile.rpc-response-proto-schema</mat-label>
-              <textarea matInput required formControlName="deviceRpcResponseProtoSchema" rows="5"></textarea>
+            </ng-container>
+            <ng-container>
+              <tb-protobuf-content
+                fxFlex
+                formControlName="deviceRpcResponseProtoSchema"
+                label="{{ 'device-profile.rpc-response-proto-schema' | translate }}"
+                [fillHeight]="true">
+              </tb-protobuf-content>
               <mat-error *ngIf="coapTransportConfigurationFormGroup.get('coapDeviceTypeConfiguration.transportPayloadTypeConfiguration.deviceRpcResponseProtoSchema').hasError('required')">
                 {{ 'device-profile.rpc-response-proto-schema-required' | translate}}
               </mat-error>
-            </mat-form-field>
+            </ng-container>
           </div>
         </div>
       </fieldset>
