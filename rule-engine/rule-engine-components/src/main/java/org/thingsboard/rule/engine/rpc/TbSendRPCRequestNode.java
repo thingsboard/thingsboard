@@ -138,7 +138,11 @@ public class TbSendRPCRequestNode implements TbNode {
     }
 
     private String parseJsonData(JsonElement paramsEl) {
-        return paramsEl.isJsonPrimitive() ? paramsEl.getAsString() : gson.toJson(paramsEl);
+        if (paramsEl != null) {
+            return paramsEl.isJsonPrimitive() ? paramsEl.getAsString() : gson.toJson(paramsEl);
+        } else {
+            return null;
+        }
     }
 
 }
