@@ -16,9 +16,11 @@
 package org.thingsboard.server.transport.mqtt.rpc.sql;
 
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.transport.mqtt.rpc.AbstractMqttServerSideRpcProtoIntegrationTest;
+import org.thingsboard.server.transport.mqtt.rpc.AbstractMqttServerSideRpcDefaultIntegrationTest;
 
-
+/**
+ * Created by Valerii Sosliuk on 8/22/2017.
+ */
 @DaoSqlTest
-public class MqttServerSideRpcProtoSqlIntegrationTest extends AbstractMqttServerSideRpcProtoIntegrationTest {
+public class MqttServerSideRpcIntegrationTest extends AbstractMqttServerSideRpcDefaultIntegrationTest {
 }

@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
-public abstract class AbstractMqttAttributesRequestProtoIntegrationTest extends AbstractMqttAttributesIntegrationTest {
+public abstract class AbstractMqttAttributesRequestBackwardCompatibilityIntegrationTest extends AbstractMqttAttributesIntegrationTest {
 
     @After
     public void afterTest() throws Exception {
@@ -36,35 +36,42 @@ public abstract class AbstractMqttAttributesRequestProtoIntegrationTest extends 
     }
 
     @Test
-    public void testRequestAttributesValuesFromTheServer() throws Exception {
+    public void testRequestAttributesValuesFromTheServerWithEnabledJsonCompatibility() throws Exception {
         super.processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto",
-                TransportPayloadType.PROTOBUF, null, null, null, ATTRIBUTES_SCHEMA_STR, null, null, null, null, DeviceProfileProvisionType.DISABLED, false, false);
+                TransportPayloadType.PROTOBUF, null, null, null, ATTRIBUTES_SCHEMA_STR, null, null, null, null, DeviceProfileProvisionType.DISABLED, true, false);
         processProtoTestRequestAttributesValuesFromTheServer(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX);
     }
 
     @Test
-    public void testRequestAttributesValuesFromTheServerOnShortTopic() throws Exception {
+    public void testRequestAttributesValuesFromTheServerWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
         super.processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto",
-                TransportPayloadType.PROTOBUF, null, null, null, ATTRIBUTES_SCHEMA_STR, null, null, null, null, DeviceProfileProvisionType.DISABLED, false, false);
+                TransportPayloadType.PROTOBUF, null, null, null, ATTRIBUTES_SCHEMA_STR, null, null, null, null, DeviceProfileProvisionType.DISABLED, true, true);
+        processJsonTestRequestAttributesValuesFromTheServer(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX);
+    }
+
+    @Test
+    public void testRequestAttributesValuesFromTheServerOnShortTopicWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
+        super.processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto",
+                TransportPayloadType.PROTOBUF, null, null, null, ATTRIBUTES_SCHEMA_STR, null, null, null, null, DeviceProfileProvisionType.DISABLED, true, true);
         processProtoTestRequestAttributesValuesFromTheServer(MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_SHORT_TOPIC_PREFIX);
     }
 
     @Test
-    public void testRequestAttributesValuesFromTheServerOnShortProtoTopic() throws Exception {
+    public void testRequestAttributesValuesFromTheServerOnShortProtoTopicWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
         super.processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto",
-                TransportPayloadType.PROTOBUF, null, null, null, ATTRIBUTES_SCHEMA_STR, null, null, null, null, DeviceProfileProvisionType.DISABLED, false, false);
+                TransportPayloadType.PROTOBUF, null, null, null, ATTRIBUTES_SCHEMA_STR, null, null, null, null, DeviceProfileProvisionType.DISABLED, true, true);
         processProtoTestRequestAttributesValuesFromTheServer(MqttTopics.DEVICE_ATTRIBUTES_SHORT_PROTO_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_PROTO_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_SHORT_PROTO_TOPIC_PREFIX);
     }
 
     @Test
-    public void testRequestAttributesValuesFromTheServerGateway() throws Exception {
-        super.processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto", TransportPayloadType.PROTOBUF, null, null);
+    public void testRequestAttributesValuesFromTheServerGatewayWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
+        super.processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto", TransportPayloadType.PROTOBUF, null, null, true, true);
         processProtoTestGatewayRequestAttributesValuesFromTheServer();
     }
 
     @Test
-    public void testRequestAttributesValuesFromTheServerOnShortJsonTopic() throws Exception {
-        super.processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto", TransportPayloadType.PROTOBUF, null, null);
+    public void testRequestAttributesValuesFromTheServerOnShortJsonTopicWithEnabledJsonCompatibilityAndJsonDownlinks() throws Exception {
+        super.processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto", TransportPayloadType.PROTOBUF, null, null, true, true);
         processJsonTestRequestAttributesValuesFromTheServer(MqttTopics.DEVICE_ATTRIBUTES_SHORT_JSON_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_JSON_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_SHORT_JSON_TOPIC_PREFIX);
     }
 

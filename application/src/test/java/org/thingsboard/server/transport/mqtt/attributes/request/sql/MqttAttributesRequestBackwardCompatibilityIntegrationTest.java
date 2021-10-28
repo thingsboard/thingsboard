@@ -16,8 +16,8 @@
 package org.thingsboard.server.transport.mqtt.attributes.request.sql;
 
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.transport.mqtt.attributes.request.AbstractMqttAttributesRequestProtoIntegrationTest;
+import org.thingsboard.server.transport.mqtt.attributes.request.AbstractMqttAttributesRequestBackwardCompatibilityIntegrationTest;
 
 @DaoSqlTest
-public class MqttAttributesRequestProtoSqlIntegrationTest extends AbstractMqttAttributesRequestProtoIntegrationTest {
+public class MqttAttributesRequestBackwardCompatibilityIntegrationTest extends AbstractMqttAttributesRequestBackwardCompatibilityIntegrationTest {
 }

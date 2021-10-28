@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.mqtt.rpc.sql;
+package org.thingsboard.server.transport.mqtt.attributes.updates.sql;
 
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.transport.mqtt.rpc.AbstractMqttServerSideRpcJsonIntegrationTest;
+import org.thingsboard.server.transport.mqtt.attributes.updates.AbstractMqttAttributesUpdatesBackwardCompatibilityIntegrationTest;
 
 @DaoSqlTest
-public class MqttServerSideRpcJsonSqlIntegrationTest extends AbstractMqttServerSideRpcJsonIntegrationTest {
+public class MqttAttributesUpdatesBackwardCompatibilityIntegrationTest extends AbstractMqttAttributesUpdatesBackwardCompatibilityIntegrationTest {
 }

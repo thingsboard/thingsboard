@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.mqtt.telemetry.attributes.sql;
+package org.thingsboard.server.transport.mqtt.rpc.sql;
 
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.transport.mqtt.telemetry.attributes.AbstractMqttAttributesProtoIntegrationTest;
+import org.thingsboard.server.transport.mqtt.rpc.AbstractMqttServerSideRpcJsonIntegrationTest;
 
 @DaoSqlTest
-public class MqttAttributesSqlProtoIntegrationTest extends AbstractMqttAttributesProtoIntegrationTest {
+public class MqttServerSideRpcJsonIntegrationTest extends AbstractMqttServerSideRpcJsonIntegrationTest {
 }

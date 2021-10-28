@@ -55,6 +55,12 @@ public abstract class AbstractMqttAttributesProtoIntegrationTest extends Abstrac
     }
 
     @Test
+    public void testPushAttributesWithEnabledJsonBackwardCompatibility() throws Exception {
+        super.processBeforeTest("Test Post Attributes device", "Test Post Attributes gateway", TransportPayloadType.PROTOBUF, null, POST_DATA_ATTRIBUTES_TOPIC, true, false);
+        processJsonPayloadAttributesTest(POST_DATA_ATTRIBUTES_TOPIC, Arrays.asList("key1", "key2", "key3", "key4", "key5"), PAYLOAD_VALUES_STR.getBytes());
+    }
+
+    @Test
     public void testPushAttributesWithExplicitPresenceProtoKeys() throws Exception {
         super.processBeforeTest("Test Post Attributes device", "Test Post Attributes gateway", TransportPayloadType.PROTOBUF, null, POST_DATA_ATTRIBUTES_TOPIC);
         DynamicSchema attributesSchema = getDynamicSchema();
