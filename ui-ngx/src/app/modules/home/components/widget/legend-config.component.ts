@@ -76,6 +76,20 @@ export class LegendConfigComponent implements OnInit, OnDestroy, ControlValueAcc
       showAvg: [null, []],
       showTotal: [null, []]
     });
+    this.legendConfigForm.get('direction').valueChanges.subscribe((direction: LegendDirection) => {
+      this.onDirectionChanged(direction);
+    });
+  }
+
+  private onDirectionChanged(direction: LegendDirection) {
+    if (direction === LegendDirection.row) {
+      let position: LegendPosition = this.legendConfigForm.get('position').value;
+      if (position !== LegendPosition.bottom && position !== LegendPosition.top) {
+        position = LegendPosition.bottom;
+      }
+      this.legendConfigForm.patchValue({position}, {emitEvent: false}
+      );
+    }
   }
 
   ngOnDestroy(): void {
@@ -125,6 +139,7 @@ export class LegendConfigComponent implements OnInit, OnDestroy, ControlValueAcc
         showTotal: isDefined(this.legendSettings.showTotal) ? this.legendSettings.showTotal : false
       });
     }
+    this.onDirectionChanged(this.legendSettings.direction);
     this.createChangeSubscriptions();
   }
 
