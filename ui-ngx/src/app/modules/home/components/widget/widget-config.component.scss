@@ -85,6 +85,9 @@
         padding: 0 16px 8px;
       }
     }
+    .tb-widget-style {
+      margin-top: 16px;
+    }
   }
 }
 
@@ -128,10 +131,10 @@
           align-items: center;
         }
         .mat-expansion-panel-body{
-          padding: 0 0 16px;
+          padding: 0;
         }
         .tb-json-object-panel {
-          margin: 0;
+          margin: 0 0 8px;
         }
         .mat-checkbox-layout {
           margin: 5px 0;

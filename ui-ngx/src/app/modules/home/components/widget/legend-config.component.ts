@@ -14,14 +14,7 @@
 /// limitations under the License.
 ///
 
-import {
-  Component,
-  forwardRef,
-  Input,
-  OnDestroy,
-  OnInit,
-  ViewContainerRef
-} from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { isDefined } from '@core/utils';
 import {
@@ -32,6 +25,7 @@ import {
   legendPositionTranslationMap
 } from '@shared/models/widget.models';
 import { Subscription } from 'rxjs';
+
 // @dynamic
 @Component({
   selector: 'tb-legend-config',
@@ -49,7 +43,6 @@ export class LegendConfigComponent implements OnInit, OnDestroy, ControlValueAcc
 
   @Input() disabled: boolean;
 
-  legendSettings: LegendConfig;
   legendConfigForm: FormGroup;
   legendDirection = LegendDirection;
   legendDirections = Object.keys(LegendDirection);
@@ -58,12 +51,11 @@ export class LegendConfigComponent implements OnInit, OnDestroy, ControlValueAcc
   legendPositions = Object.keys(LegendPosition);
   legendPositionTranslations = legendPositionTranslationMap;
 
-  legendSettingsChangesSubscription: Subscription;
-
+  private legendSettingsFormChanges$: Subscription;
+  private legendSettingsFormDirectionChanges$: Subscription;
   private propagateChange = (_: any) => {};
 
-  constructor(public fb: FormBuilder,
-              public viewContainerRef: ViewContainerRef) {
+  constructor(private fb: FormBuilder) {
   }
 
   ngOnInit(): void {
@@ -76,9 +68,13 @@ export class LegendConfigComponent implements OnInit, OnDestroy, ControlValueAcc
       showAvg: [null, []],
       showTotal: [null, []]
     });
-    this.legendConfigForm.get('direction').valueChanges.subscribe((direction: LegendDirection) => {
-      this.onDirectionChanged(direction);
-    });
+    this.legendSettingsFormDirectionChanges$ = this.legendConfigForm.get('direction').valueChanges
+      .subscribe((direction: LegendDirection) => {
+        this.onDirectionChanged(direction);
+      });
+    this.legendSettingsFormChanges$ = this.legendConfigForm.valueChanges.subscribe(
+      () => this.legendConfigUpdated()
+    );
   }
 
   private onDirectionChanged(direction: LegendDirection) {
@@ -93,7 +89,14 @@ export class LegendConfigComponent implements OnInit, OnDestroy, ControlValueAcc
   }
 
   ngOnDestroy(): void {
-    this.removeChangeSubscriptions();
+    if (this.legendSettingsFormDirectionChanges$) {
+      this.legendSettingsFormDirectionChanges$.unsubscribe();
+      this.legendSettingsFormDirectionChanges$ = null;
+    }
+    if (this.legendSettingsFormChanges$) {
+      this.legendSettingsFormChanges$.unsubscribe();
+      this.legendSettingsFormChanges$ = null;
+    }
   }
 
   registerOnChange(fn: any): void {
@@ -112,39 +115,22 @@ export class LegendConfigComponent implements OnInit, OnDestroy, ControlValueAcc
     }
   }
 
-  private removeChangeSubscriptions() {
-    if (this.legendSettingsChangesSubscription) {
-      this.legendSettingsChangesSubscription.unsubscribe();
-      this.legendSettingsChangesSubscription = null;
-    }
-  }
-
-  private createChangeSubscriptions() {
-    this.legendSettingsChangesSubscription = this.legendConfigForm.valueChanges.subscribe(
-      () => this.legendConfigUpdated()
-    );
-  }
-
-  writeValue(obj: LegendConfig): void {
-    this.legendSettings = obj;
-    this.removeChangeSubscriptions();
-    if (this.legendSettings) {
+  writeValue(legendConfig: LegendConfig): void {
+    if (legendConfig) {
       this.legendConfigForm.patchValue({
-        direction: this.legendSettings.direction,
-        position: this.legendSettings.position,
-        sortDataKeys: isDefined(this.legendSettings.sortDataKeys) ? this.legendSettings.sortDataKeys : false,
-        showMin: isDefined(this.legendSettings.showMin) ? this.legendSettings.showMin : false,
-        showMax: isDefined(this.legendSettings.showMax) ? this.legendSettings.showMax : false,
-        showAvg: isDefined(this.legendSettings.showAvg) ? this.legendSettings.showAvg : false,
-        showTotal: isDefined(this.legendSettings.showTotal) ? this.legendSettings.showTotal : false
-      });
+        direction: legendConfig.direction,
+        position: legendConfig.position,
+        sortDataKeys: isDefined(legendConfig.sortDataKeys) ? legendConfig.sortDataKeys : false,
+        showMin: isDefined(legendConfig.showMin) ? legendConfig.showMin : false,
+        showMax: isDefined(legendConfig.showMax) ? legendConfig.showMax : false,
+        showAvg: isDefined(legendConfig.showAvg) ? legendConfig.showAvg : false,
+        showTotal: isDefined(legendConfig.showTotal) ? legendConfig.showTotal : false
+      }, {emitEvent: false});
     }
-    this.onDirectionChanged(this.legendSettings.direction);
-    this.createChangeSubscriptions();
+    this.onDirectionChanged(legendConfig.direction);
   }
 
   private legendConfigUpdated() {
-    this.legendSettings = this.legendConfigForm.value;
-    this.propagateChange(this.legendSettings);
+    this.propagateChange(this.legendConfigForm.value);
   }
 }
