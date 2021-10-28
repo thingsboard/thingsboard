@@ -35,22 +35,22 @@ public abstract class AbstractMqttAttributesUpdatesJsonIntegrationTest extends A
     }
 
     @Test
-    public void testSubscribeToAttributesUpdatesFromTheServer() throws Exception {
-        super.testSubscribeToAttributesUpdatesFromTheServer();
+    public void testJsonSubscribeToAttributesUpdatesFromTheServer() throws Exception {
+        super.testJsonSubscribeToAttributesUpdatesFromTheServer();
     }
 
     @Test
-    public void testSubscribeToAttributesUpdatesFromTheServerOnShortTopic() throws Exception {
-        super.testSubscribeToAttributesUpdatesFromTheServerOnShortTopic();
+    public void testJsonSubscribeToAttributesUpdatesFromTheServerOnShortTopic() throws Exception {
+        super.testJsonSubscribeToAttributesUpdatesFromTheServerOnShortTopic();
     }
 
     @Test
-    public void testSubscribeToAttributesUpdatesFromTheServerOnShortJsonTopic() throws Exception {
-        super.testSubscribeToAttributesUpdatesFromTheServerOnShortJsonTopic();
+    public void testJsonSubscribeToAttributesUpdatesFromTheServerOnShortJsonTopic() throws Exception {
+        super.testJsonSubscribeToAttributesUpdatesFromTheServerOnShortJsonTopic();
     }
 
     @Test
-    public void testSubscribeToAttributesUpdatesFromTheServerGateway() throws Exception {
-        processGatewayTestSubscribeToAttributesUpdates();
+    public void testJsonSubscribeToAttributesUpdatesFromTheServerGateway() throws Exception {
+        super.testJsonSubscribeToAttributesUpdatesFromTheServerGateway();
     }
 }

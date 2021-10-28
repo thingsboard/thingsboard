@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.device.claim.ClaimResponse;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
+import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
 
 import static org.junit.Assert.assertEquals;
@@ -200,6 +201,38 @@ public abstract class AbstractMqttClaimDeviceTest extends AbstractMqttIntegratio
         payloadBytes = payload.getBytes();
         failurePayloadBytes = failurePayload.getBytes();
         validateGatewayClaimResponse(deviceName, emptyPayload, client, failurePayloadBytes, payloadBytes);
+    }
+
+    protected void processProtoTestGatewayClaimDevice(String deviceName, boolean emptyPayload) throws Exception {
+        MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
+        byte[] failurePayloadBytes;
+        byte[] payloadBytes;
+        if (emptyPayload) {
+            payloadBytes = getGatewayClaimMsg(deviceName, 0, emptyPayload).toByteArray();
+        } else {
+            payloadBytes = getGatewayClaimMsg(deviceName, 60000, emptyPayload).toByteArray();
+        }
+        failurePayloadBytes = getGatewayClaimMsg(deviceName, 1, emptyPayload).toByteArray();
+
+        validateGatewayClaimResponse(deviceName, emptyPayload, client, failurePayloadBytes, payloadBytes);
+    }
+
+    private TransportApiProtos.GatewayClaimMsg getGatewayClaimMsg(String deviceName, long duration, boolean emptyPayload) {
+        TransportApiProtos.GatewayClaimMsg.Builder gatewayClaimMsgBuilder = TransportApiProtos.GatewayClaimMsg.newBuilder();
+        TransportApiProtos.ClaimDeviceMsg.Builder claimDeviceMsgBuilder = TransportApiProtos.ClaimDeviceMsg.newBuilder();
+        TransportApiProtos.ClaimDevice.Builder claimDeviceBuilder = TransportApiProtos.ClaimDevice.newBuilder();
+        if (!emptyPayload) {
+            claimDeviceBuilder.setSecretKey("value");
+        }
+        if (duration > 0) {
+            claimDeviceBuilder.setDurationMs(duration);
+        }
+        TransportApiProtos.ClaimDevice claimDevice = claimDeviceBuilder.build();
+        claimDeviceMsgBuilder.setClaimRequest(claimDevice);
+        claimDeviceMsgBuilder.setDeviceName(deviceName);
+        TransportApiProtos.ClaimDeviceMsg claimDeviceMsg = claimDeviceMsgBuilder.build();
+        gatewayClaimMsgBuilder.addMsg(claimDeviceMsg);
+        return gatewayClaimMsgBuilder.build();
     }
 
 }

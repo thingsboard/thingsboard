@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.mqtt.provision.sql;
+package org.thingsboard.server.transport.mqtt.claim.sql;
 
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.transport.mqtt.provision.AbstractMqttProvisionJsonDeviceTest;
+import org.thingsboard.server.transport.mqtt.claim.AbstractMqttClaimJsonDeviceTest;
 
 @DaoSqlTest
-public class MqttProvisionDeviceJsonSqlTest extends AbstractMqttProvisionJsonDeviceTest {
+public class MqttClaimDeviceJsonTest extends AbstractMqttClaimJsonDeviceTest {
 }
