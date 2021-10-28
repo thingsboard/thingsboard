@@ -26,7 +26,7 @@ public enum TopicType {
     V2_PROTO(MqttTopics.DEVICE_ATTRIBUTES_RESPONSE_SHORT_PROTO_TOPIC_PREFIX, MqttTopics.DEVICE_ATTRIBUTES_SHORT_PROTO_TOPIC, MqttTopics.DEVICE_RPC_REQUESTS_SHORT_PROTO_TOPIC, MqttTopics.DEVICE_RPC_RESPONSE_SHORT_PROTO_TOPIC);
 
     @Getter
-    private final String attributesRequestTopicBase;
+    private final String attributesResponseTopicBase;
 
     @Getter
     private final String attributesSubTopic;
@@ -38,7 +38,7 @@ public enum TopicType {
     private final String rpcResponseTopicBase;
 
     TopicType(String attributesRequestTopicBase, String attributesSubTopic, String rpcRequestTopicBase, String rpcResponseTopicBase) {
-        this.attributesRequestTopicBase = attributesRequestTopicBase;
+        this.attributesResponseTopicBase = attributesRequestTopicBase;
         this.attributesSubTopic = attributesSubTopic;
         this.rpcRequestTopicBase = rpcRequestTopicBase;
         this.rpcResponseTopicBase = rpcResponseTopicBase;

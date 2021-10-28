@@ -965,7 +965,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     @Override
     public void onGetAttributesResponse(TransportProtos.GetAttributeResponseMsg response) {
         log.trace("[{}] Received get attributes response", sessionId);
-        String topicBase = attrReqTopicType.getAttributesRequestTopicBase();
+        String topicBase = attrReqTopicType.getAttributesResponseTopicBase();
         MqttTransportAdaptor adaptor = deviceSessionCtx.getAdaptor(attrReqTopicType);
         try {
             adaptor.convertToPublish(deviceSessionCtx, response, topicBase).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
