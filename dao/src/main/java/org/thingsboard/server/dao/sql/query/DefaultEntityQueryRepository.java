@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.query.EntityFilterType;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.EntityListFilter;
 import org.thingsboard.server.common.data.query.EntityNameFilter;
+import org.thingsboard.server.common.data.query.EntityNameOrIdFilter;
 import org.thingsboard.server.common.data.query.EntitySearchQueryFilter;
 import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.EntityViewSearchQueryFilter;
@@ -236,6 +237,12 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         entityTableMap.put(EntityType.TENANT, "tenant");
         entityTableMap.put(EntityType.API_USAGE_STATE, SELECT_API_USAGE_STATE);
         entityTableMap.put(EntityType.EDGE, "edge");
+        entityTableMap.put(EntityType.RULE_CHAIN, "rule_chain");
+        entityTableMap.put(EntityType.WIDGETS_BUNDLE, "widgets_bundle");
+        entityTableMap.put(EntityType.TENANT_PROFILE, "tenant_profile");
+        entityTableMap.put(EntityType.DEVICE_PROFILE, "device_profile");
+        entityTableMap.put(EntityType.TB_RESOURCE, "resource");
+        entityTableMap.put(EntityType.OTA_PACKAGE, "ota_package");
     }
 
     public static EntityType[] RELATION_QUERY_ENTITY_TYPES = new EntityType[]{
@@ -441,7 +448,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 Optional<EntityKeyMapping> sortOrderMappingOpt = mappings.stream().filter(EntityKeyMapping::isSortOrder).findFirst();
                 if (sortOrderMappingOpt.isPresent()) {
                     EntityKeyMapping sortOrderMapping = sortOrderMappingOpt.get();
-                    String direction = sortOrder.getDirection() == EntityDataSortOrder.Direction.ASC ? "asc" : "desc";
+                    String direction = sortOrder.getDirection() == EntityDataSortOrder.Direction.ASC ? "asc" : "desc nulls last";
                     if (sortOrderMapping.getEntityKey().getType() == EntityKeyType.ENTITY_FIELD) {
                         dataQuery = String.format("%s order by %s %s, result.id %s", dataQuery, sortOrderMapping.getValueAlias(), direction, direction);
                     } else {
@@ -471,15 +478,26 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         String entityFieldsQuery = EntityKeyMapping.buildQuery(ctx, entityFieldsFilters, entityFilter.getType());
         String result = permissionQuery;
         if (!entityFilterQuery.isEmpty()) {
-            result += " and (" + entityFilterQuery + ")";
+            if (!result.isEmpty()) {
+                result += " and (" + entityFilterQuery + ")";
+            } else {
+                result = "(" + entityFilterQuery + ")";
+            }
         }
         if (!entityFieldsQuery.isEmpty()) {
-            result += " and (" + entityFieldsQuery + ")";
+            if (!result.isEmpty()) {
+                result += " and (" + entityFieldsQuery + ")";
+            } else {
+                result = "(" + entityFieldsQuery + ")";
+            }
         }
         return result;
     }
 
     private String buildPermissionQuery(QueryContext ctx, EntityFilter entityFilter) {
+        if (ctx.getTenantId().equals(TenantId.SYS_TENANT_ID)) {
+            return "";
+        }
         switch (entityFilter.getType()) {
             case RELATIONS_QUERY:
             case DEVICE_SEARCH_QUERY:
@@ -548,6 +566,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             case API_USAGE_STATE:
             case ENTITY_TYPE:
                 return "";
+            case ENTITY_NAME_OR_ID:
+                return entityNameOrIdQuery(ctx, (EntityNameOrIdFilter) entityFilter);
             default:
                 throw new RuntimeException("Not implemented!");
         }
@@ -759,7 +779,27 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
 
     private String entityNameQuery(QueryContext ctx, EntityNameFilter filter) {
         ctx.addStringParameter("entity_filter_name_filter", filter.getEntityNameFilter());
-        return "lower(e.search_text) like lower(concat(:entity_filter_name_filter, '%%'))";
+        return "lower(e.search_text) like lower(concat('%', :entity_filter_name_filter, '%'))";
+    }
+
+    private String entityNameOrIdQuery(QueryContext ctx, EntityNameOrIdFilter filter) {
+        String nameOrId = filter.getNameOrId();
+        if (StringUtils.isNotEmpty(nameOrId)) {
+            nameOrId = nameOrId.replaceAll("%", "\\\\%").replaceAll("_", "\\\\_");
+            ctx.addStringParameter("entity_id_or_search_text_filter", nameOrId);
+            String query = "";
+
+            String searchTextField = EntityKeyMapping.searchTextFields.get(filter.getEntityType());
+            query += "lower(e." + searchTextField + ") like lower(concat('%', :entity_id_or_search_text_filter, '%'))";
+
+            try {
+                UUID.fromString(nameOrId);
+                query += " or e.id = :entity_id_or_search_text_filter::uuid";
+            } catch (Exception ignored) {}
+
+            return query;
+        }
+        return "true";
     }
 
     private String typeQuery(QueryContext ctx, EntityFilter filter) {
@@ -787,7 +827,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         }
         ctx.addStringParameter("entity_filter_type_query_type", type);
         ctx.addStringParameter("entity_filter_type_query_name", name);
-        return "e.type = :entity_filter_type_query_type and lower(e.search_text) like lower(concat(:entity_filter_type_query_name, '%%'))";
+        return "e.type = :entity_filter_type_query_type and lower(e.search_text) like lower(concat('%', :entity_filter_type_query_name, '%'))";
     }
 
     private EntityType resolveEntityType(EntityFilter entityFilter) {
@@ -816,6 +856,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 return ((RelationsQueryFilter) entityFilter).getRootEntity().getEntityType();
             case API_USAGE_STATE:
                 return EntityType.API_USAGE_STATE;
+            case ENTITY_NAME_OR_ID:
+                return ((EntityNameOrIdFilter) entityFilter).getEntityType();
             default:
                 throw new RuntimeException("Not implemented!");
         }
