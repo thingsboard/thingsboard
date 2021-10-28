@@ -20,9 +20,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
+import org.thingsboard.server.common.data.device.profile.MqttTopics;
+import org.thingsboard.server.transport.mqtt.attributes.AbstractMqttAttributesIntegrationTest;
 
 @Slf4j
-public abstract class AbstractMqttAttributesUpdatesJsonIntegrationTest extends AbstractMqttAttributesUpdatesIntegrationTest {
+public abstract class AbstractMqttAttributesUpdatesJsonIntegrationTest extends AbstractMqttAttributesIntegrationTest {
 
     @Before
     public void beforeTest() throws Exception {
@@ -36,21 +38,21 @@ public abstract class AbstractMqttAttributesUpdatesJsonIntegrationTest extends A
 
     @Test
     public void testJsonSubscribeToAttributesUpdatesFromTheServer() throws Exception {
-        super.testJsonSubscribeToAttributesUpdatesFromTheServer();
+        processJsonTestSubscribeToAttributesUpdates(MqttTopics.DEVICE_ATTRIBUTES_TOPIC);
     }
 
     @Test
     public void testJsonSubscribeToAttributesUpdatesFromTheServerOnShortTopic() throws Exception {
-        super.testJsonSubscribeToAttributesUpdatesFromTheServerOnShortTopic();
+        processJsonTestSubscribeToAttributesUpdates(MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC);
     }
 
     @Test
     public void testJsonSubscribeToAttributesUpdatesFromTheServerOnShortJsonTopic() throws Exception {
-        super.testJsonSubscribeToAttributesUpdatesFromTheServerOnShortJsonTopic();
+        processJsonTestSubscribeToAttributesUpdates(MqttTopics.DEVICE_ATTRIBUTES_SHORT_JSON_TOPIC);
     }
 
     @Test
     public void testJsonSubscribeToAttributesUpdatesFromTheServerGateway() throws Exception {
-        super.testJsonSubscribeToAttributesUpdatesFromTheServerGateway();
+        processJsonGatewayTestSubscribeToAttributesUpdates();
     }
 }
