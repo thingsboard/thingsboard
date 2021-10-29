@@ -65,6 +65,7 @@ import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERT
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TRANSPORT_TYPE_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 
 @RestController
 @TbCoreComponent
@@ -186,7 +187,7 @@ public class DeviceProfileController extends BaseController {
     }
 
     @ApiOperation(value = "Create Or Update Device Profile (saveDeviceProfile)",
-            notes = "Create or update the Device Profile. When creating device profile, platform generates device profile id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address). " +
+            notes = "Create or update the Device Profile. When creating device profile, platform generates device profile id as " + UUID_WIKI_LINK +
                     "The newly created device profile id will be present in the response. " +
                     "Specify existing device profile id to update the device profile. " +
                     "Referencing non-existing device profile Id will cause 'Not Found' error. " + NEW_LINE +

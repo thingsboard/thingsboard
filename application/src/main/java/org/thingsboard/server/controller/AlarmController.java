@@ -66,6 +66,7 @@ import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_A
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 
 @RestController
 @TbCoreComponent
@@ -120,7 +121,7 @@ public class AlarmController extends BaseController {
 
     @ApiOperation(value = "Create or update Alarm (saveAlarm)",
             notes = "Creates or Updates the Alarm. " +
-                    "When creating alarm, platform generates Alarm Id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address). " +
+                    "When creating alarm, platform generates Alarm Id as " + UUID_WIKI_LINK +
                     "The newly created Alarm id will be present in the response. Specify existing Alarm id to update the alarm. " +
                     "Referencing non-existing Alarm Id will cause 'Not Found' error. " +
                     "\n\nPlatform also deduplicate the alarms based on the entity id of originator and alarm 'type'. " +
