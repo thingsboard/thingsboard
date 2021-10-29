@@ -25,14 +25,18 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.event.EventFilter;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 
+import java.sql.Time;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -118,22 +122,35 @@ public class BaseEventService implements EventService {
 
     @Override
     public void removeEvents(TenantId tenantId, EntityId entityId) {
-        PageData<Event> eventPageData;
         TimePageLink eventPageLink = new TimePageLink(1000);
-        do {
-            eventPageData = findEvents(tenantId, entityId, eventPageLink);
-            for (Event event : eventPageData.getData()) {
-                eventDao.removeById(tenantId, event.getUuidId());
-            }
-            if (eventPageData.hasNext()) {
-                eventPageLink = eventPageLink.nextPageLink();
-            }
-        } while (eventPageData.hasNext());
+        removeEventsByTypeAndPageLink(tenantId, entityId, null, eventPageLink);
     }
 
     @Override
     public void cleanupEvents(long ttl, long debugTtl) {
         eventDao.cleanupEvents(ttl, debugTtl);
+    }
+
+    @Override
+    public void removeEventsByTypeInPeriod(TenantId tenantId, EntityId entityId, String eventType, Long startTime, Long endTime) {
+        TimePageLink eventPageLink =
+                new TimePageLink(1000, 0, null, null, startTime, endTime);
+        removeEventsByTypeAndPageLink(tenantId, entityId, eventType, eventPageLink);
+    }
+
+    private void removeEventsByTypeAndPageLink(TenantId tenantId, EntityId entityId, String eventType, TimePageLink eventPageLink) {
+        PageData<Event> eventPageData;
+        do {
+            if (eventType == null)
+                eventPageData = findEvents(tenantId, entityId, eventPageLink);
+            else
+                eventPageData = findEvents(tenantId, entityId, eventType, eventPageLink);
+            List<UUID> eventsIds = eventPageData.getData().stream().map(IdBased::getUuidId).collect(Collectors.toList());
+            eventDao.removeAllByIds(eventsIds);
+            if (eventPageData.hasNext()) {
+                eventPageLink = eventPageLink.nextPageLink();
+            }
+        } while (eventPageData.hasNext());
     }
 
     private DataValidator<Event> eventValidator =

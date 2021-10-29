@@ -48,4 +48,5 @@ public interface EventService {
 
     void cleanupEvents(long ttl, long debugTtl);
 
+    void removeEventsByTypeInPeriod(TenantId tenantId, EntityId entityId, String eventType, Long startTime, Long endTime);
 }
