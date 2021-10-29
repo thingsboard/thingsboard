@@ -23,6 +23,7 @@ public class ControllerConstants {
     protected static final String CUSTOMER_ID = "customerId";
     protected static final String TENANT_ID = "tenantId";
     protected static final String DEVICE_ID = "deviceId";
+    protected static final String EDGE_ID = "edgeId";
     protected static final String RPC_ID = "rpcId";
     protected static final String ENTITY_ID = "entityId";
     protected static final String PAGE_DATA_PARAMETERS = "You can specify parameters to filter the results. " +
