@@ -2496,7 +2496,7 @@
     "domain-name": "Όνομα Domain",
     "help-link-base-url": "Base url για συνδέσμους βοηθείας",
     "enable-help-links": "Ενεργοποίηση συνδέσμων βοηθείας",
-    "error-verification-url": "Ένα όνομα domain δεν πρέπει να περιέχει σύμβολα '/' και ':'. Παράδειγμα: gprs.cloud",
+    "error-verification-url": "Ένα όνομα domain δεν πρέπει να περιέχει σύμβολα '/' και ':'. Παράδειγμα: thingsboard.io",
     "show-platform-name-version": "Εμφάνιση ονόματος και έκδοσης πλατφόρμας",
     "platform-name": "Όνομα πλατφόρμας",
     "platform-version": "Έκδοση πλατφόρμας",
