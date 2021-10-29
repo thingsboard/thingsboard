@@ -265,7 +265,7 @@ public class EventController extends BaseController {
             EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
             checkEntityId(entityId, Operation.DELETE);
 
-            eventService.removeEventsByTypeInPeriod(tenantId, entityId, eventType, startTime, endTime);
+            eventService.removeEvents(tenantId, entityId, eventType, startTime, endTime);
         } catch (Exception e) {
             throw handleException(e);
         }

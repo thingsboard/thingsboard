@@ -46,7 +46,8 @@ public interface EventService {
 
     void removeEvents(TenantId tenantId, EntityId entityId);
 
+    void removeEvents(TenantId tenantId, EntityId entityId, String eventType, Long startTime, Long endTime);
+
     void cleanupEvents(long ttl, long debugTtl);
 
-    void removeEventsByTypeInPeriod(TenantId tenantId, EntityId entityId, String eventType, Long startTime, Long endTime);
 }

@@ -32,7 +32,6 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 
-import java.sql.Time;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -122,35 +121,33 @@ public class BaseEventService implements EventService {
 
     @Override
     public void removeEvents(TenantId tenantId, EntityId entityId) {
-        TimePageLink eventPageLink = new TimePageLink(1000);
-        removeEventsByTypeAndPageLink(tenantId, entityId, null, eventPageLink);
+        removeEvents(tenantId, entityId, null, null, null);
+    }
+
+    @Override
+    public void removeEvents(TenantId tenantId, EntityId entityId, String eventType, Long startTime, Long endTime) {
+        TimePageLink eventsPageLink = new TimePageLink(1000, 0, null, null, startTime, endTime);
+        PageData<Event> eventsPageData;
+        do {
+            if (eventType == null) {
+                eventsPageData = findEvents(tenantId, entityId, eventsPageLink);
+            } else {
+                eventsPageData = findEvents(tenantId, entityId, eventType, eventsPageLink);
+            }
+
+            eventDao.removeAllByIds(eventsPageData.getData().stream()
+                    .map(IdBased::getUuidId)
+                    .collect(Collectors.toList()));
+
+            if (eventsPageData.hasNext()) {
+                eventsPageLink = eventsPageLink.nextPageLink();
+            }
+        } while (eventsPageData.hasNext());
     }
 
     @Override
     public void cleanupEvents(long ttl, long debugTtl) {
         eventDao.cleanupEvents(ttl, debugTtl);
-    }
-
-    @Override
-    public void removeEventsByTypeInPeriod(TenantId tenantId, EntityId entityId, String eventType, Long startTime, Long endTime) {
-        TimePageLink eventPageLink =
-                new TimePageLink(1000, 0, null, null, startTime, endTime);
-        removeEventsByTypeAndPageLink(tenantId, entityId, eventType, eventPageLink);
-    }
-
-    private void removeEventsByTypeAndPageLink(TenantId tenantId, EntityId entityId, String eventType, TimePageLink eventPageLink) {
-        PageData<Event> eventPageData;
-        do {
-            if (eventType == null)
-                eventPageData = findEvents(tenantId, entityId, eventPageLink);
-            else
-                eventPageData = findEvents(tenantId, entityId, eventType, eventPageLink);
-            List<UUID> eventsIds = eventPageData.getData().stream().map(IdBased::getUuidId).collect(Collectors.toList());
-            eventDao.removeAllByIds(eventsIds);
-            if (eventPageData.hasNext()) {
-                eventPageLink = eventPageLink.nextPageLink();
-            }
-        } while (eventPageData.hasNext());
     }
 
     private DataValidator<Event> eventValidator =
