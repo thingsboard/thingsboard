@@ -602,7 +602,7 @@ public class RuleChainController extends BaseController {
             notes = "Creates assignment of an existing rule chain to an instance of The Edge. " +
                     EDGE_ASSIGN_ASYNC_FIRST_STEP_DESCRIPTION +
                     "Second, remote edge service will receive a copy of assignment rule chain " +
-                    EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION + ". " +
+                    EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION +
                     "Third, once rule chain will be delivered to edge service, it's going to start processing messages locally. " +
                     "\n\nOnly rule chain with type 'EDGE' can be assigned to edge." + TENANT_AUTHORITY_PARAGRAPH,
             produces = MediaType.APPLICATION_JSON_VALUE)
@@ -643,7 +643,7 @@ public class RuleChainController extends BaseController {
             notes = "Clears assignment of the rule chain to the edge. " +
                     EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION +
                     "Second, remote edge service will receive an 'unassign' command to remove rule chain " +
-                    EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION + ". " +
+                    EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION +
                     "Third, once 'unassign' command will be delivered to edge service, it's going to remove rule chain locally." + TENANT_AUTHORITY_PARAGRAPH,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")

@@ -830,7 +830,7 @@ public class DashboardController extends BaseController {
             notes = "Creates assignment of an existing dashboard to an instance of The Edge. " +
                     EDGE_ASSIGN_ASYNC_FIRST_STEP_DESCRIPTION +
                     "Second, remote edge service will receive a copy of assignment dashboard " +
-                    EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION + ". " +
+                    EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION +
                     "Third, once dashboard will be delivered to edge service, it's going to be available for usage on remote edge instance." +
                     TENANT_AUTHORITY_PARAGRAPH,
             produces = MediaType.APPLICATION_JSON_VALUE)
@@ -871,7 +871,7 @@ public class DashboardController extends BaseController {
             notes = "Clears assignment of the dashboard to the edge. " +
                     EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION +
                     "Second, remote edge service will receive an 'unassign' command to remove dashboard " +
-                    EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION + ". " +
+                    EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION +
                     "Third, once 'unassign' command will be delivered to edge service, it's going to remove dashboard locally." +
                     TENANT_AUTHORITY_PARAGRAPH,
             produces = MediaType.APPLICATION_JSON_VALUE)
