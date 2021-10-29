@@ -399,6 +399,9 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
                     log.debug("[{}] Starting update to [{}{}] using binary", client.getEndpoint(), fwInfo.getTargetName(), fwInfo.getTargetVersion());
                     startUpdateUsingBinary(client, fwInfo);
                 }
+            } else {
+                log.debug("[{}] failed to update client: [{}], previous update failed.", client.getEndpoint(), fwInfo);
+                logService.log(client, "Failed to process firmware update: " + fwInfo + ". Previous update failed.");
             }
         } catch (Exception e) {
             log.info("[{}] failed to update client: {}", client.getEndpoint(), fwInfo, e);
@@ -424,6 +427,9 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
                         startUpdateUsingBinary(client, swInfo);
                     }
                 }
+            } else {
+                log.debug("[{}] failed to update client: [{}], previous update failed.", client.getEndpoint(), swInfo);
+                logService.log(client, "Failed to process software update: " + swInfo + ". Previous update failed.");
             }
         } catch (Exception e) {
             log.info("[{}] failed to update client: {}", client.getEndpoint(), swInfo, e);
