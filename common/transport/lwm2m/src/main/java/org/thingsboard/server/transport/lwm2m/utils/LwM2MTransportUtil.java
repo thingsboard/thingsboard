@@ -39,7 +39,7 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.device.data.lwm2m.BootstrapConfiguration;
+import org.thingsboard.server.common.data.device.profile.lwm2mTransportConfiguration.BootstrapConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.ota.OtaPackageKey;

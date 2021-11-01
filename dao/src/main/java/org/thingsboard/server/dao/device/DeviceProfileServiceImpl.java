@@ -28,6 +28,7 @@ import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import com.squareup.wire.schema.internal.parser.ProtoParser;
 import com.squareup.wire.schema.internal.parser.TypeElement;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.util.SecurityUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,16 +59,22 @@ import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTrans
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
+import org.thingsboard.server.common.data.device.profile.lwm2mTransportConfiguration.BootstrapConfiguration;
+import org.thingsboard.server.common.data.device.profile.lwm2mTransportConfiguration.BootstrapServerConfig;
+import org.thingsboard.server.common.data.device.profile.lwm2mTransportConfiguration.RPKBootstrapServerConfig;
+import org.thingsboard.server.common.data.device.profile.lwm2mTransportConfiguration.X509BootstrapServerConfig;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -411,7 +418,10 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                             }
                         }
                     } else if (transportConfiguration instanceof Lwm2mDeviceProfileTransportConfiguration) {
-//                        deviceCredentialsService.verifyLwm2mSecurityKeyDeviceProfile((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration);
+                        BootstrapConfiguration bootstrapConfiguration = ((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration).getBootstrap();
+                        validateLwm2mServersCredentialOfBootstrapForClient(bootstrapConfiguration.getBootstrapServer(), "Bootstrap Server");
+                        validateLwm2mServersCredentialOfBootstrapForClient(bootstrapConfiguration.getLwm2mServer(), "LwM2M Server");
+
                     }
 
                     List<DeviceProfileAlarm> profileAlarms = deviceProfile.getProfileData().getAlarms();
@@ -692,6 +702,43 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                     throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Field 'params' has invalid label!");
                 }
             }
+        }
+    }
+
+    private void validateLwm2mServersCredentialOfBootstrapForClient(BootstrapServerConfig bootstrapServerConfig, String server) {
+
+        switch (bootstrapServerConfig.getSecurityMode()) {
+            case NO_SEC:
+            case PSK:
+                break;
+            case RPK:
+                RPKBootstrapServerConfig rpkServerConfig = (RPKBootstrapServerConfig)  bootstrapServerConfig;
+                if (StringUtils.isEmpty(rpkServerConfig.getServerPublicKey())) {
+                    throw new DeviceCredentialsValidationException(server + " RPK public key must be specified!");
+                }
+                try {
+                    String pubkRpkSever = EncryptionUtil.pubkTrimNewLines(rpkServerConfig.getServerPublicKey());
+                    rpkServerConfig.setServerPublicKey(pubkRpkSever);
+                    SecurityUtil.publicKey.decode(rpkServerConfig.getDecodedCServerPublicKey());
+                } catch (Exception e) {
+                    throw new DeviceCredentialsValidationException(server + " RPK public key must be in standard [RFC7250] and then encoded to Base64 format!");
+                }
+                break;
+            case X509:
+                X509BootstrapServerConfig x509ServerCredentials = (X509BootstrapServerConfig) bootstrapServerConfig;
+//                X509BootstrapServerCredentials x509ServerCredentials = (X509BootstrapServerCredentials) bootstrapServerConfig;
+                if (StringUtils.isEmpty(x509ServerCredentials.getServerPublicKey())) {
+                    throw new DeviceCredentialsValidationException(server + " X509 public key must be specified!");
+                }
+
+                try {
+                    String certServer = EncryptionUtil.certTrimNewLines(x509ServerCredentials.getServerPublicKey());
+                    x509ServerCredentials.setServerPublicKey(certServer);
+                    SecurityUtil.publicKey.decode(x509ServerCredentials.getDecodedCServerPublicKey());
+                } catch (Exception e) {
+                    throw new DeviceCredentialsValidationException(server + " X509 public key must be in standard [RFC7250] and then encoded to Base64 format!");
+                }
+                break;
         }
     }
 

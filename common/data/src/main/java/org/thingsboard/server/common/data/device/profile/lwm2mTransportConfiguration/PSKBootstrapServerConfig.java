@@ -13,21 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.data.lwm2m;
+package org.thingsboard.server.common.data.device.profile.lwm2mTransportConfiguration;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Data;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
 
-@Data
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class ObjectAttributes {
+public class PSKBootstrapServerConfig extends AbstractBootstrapServerConfig {
 
-    private Long dim;
-    private String ver;
-    private Long pmin;
-    private Long pmax;
-    private Double gt;
-    private Double lt;
-    private Double st;
-
+    @Override
+    public LwM2MSecurityMode getSecurityMode() {
+        return LwM2MSecurityMode.PSK;
+    }
 }

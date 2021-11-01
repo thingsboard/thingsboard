@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.data.lwm2m;
+package org.thingsboard.server.common.data.device.profile.lwm2mTransportConfiguration;
 
-import lombok.Data;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
 
-import java.util.Map;
+public class RPKBootstrapServerConfig extends AbstractBootstrapServerConfig {
 
-@Data
-public class BootstrapConfiguration {
-
-    //TODO: define the objects;
-    private Map<String, Object> servers;
-    private Map<String, Object> lwm2mServer;
-    private Map<String, Object> bootstrapServer;
-
+    @Override
+    public LwM2MSecurityMode getSecurityMode() {
+        return LwM2MSecurityMode.RPK;
+    }
 }

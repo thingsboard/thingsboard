@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.data.lwm2m;
+package org.thingsboard.server.common.data.device.profile.lwm2mTransportConfiguration;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
-import java.util.Map;
-import java.util.Set;
-
 @Data
-public class TelemetryMappingConfiguration {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class ObjectAttributes {
 
-    private Map<String, String> keyName;
-    private Set<String> observe;
-    private Set<String> attribute;
-    private Set<String> telemetry;
-    private Map<String, ObjectAttributes> attributeLwm2m;
+    private Long dim;
+    private String ver;
+    private Long pmin;
+    private Long pmax;
+    private Double gt;
+    private Double lt;
+    private Double st;
 
 }

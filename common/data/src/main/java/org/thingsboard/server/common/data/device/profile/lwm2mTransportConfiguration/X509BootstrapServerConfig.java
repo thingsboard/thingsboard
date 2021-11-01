@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.lwm2m;
+package org.thingsboard.server.common.data.device.profile.lwm2mTransportConfiguration;
 
-import org.thingsboard.server.common.data.device.profile.lwm2mTransportConfiguration.BootstrapServerConfigDao;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
 
-public interface LwM2MService {
+public class X509BootstrapServerConfig extends AbstractBootstrapServerConfig {
 
-    BootstrapServerConfigDao getServerSecurityInfo(boolean bootstrapServer);
-
+    @Override
+    public LwM2MSecurityMode getSecurityMode() {
+        return LwM2MSecurityMode.X509;
+    }
 }

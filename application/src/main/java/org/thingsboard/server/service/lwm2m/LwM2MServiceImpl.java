@@ -17,10 +17,11 @@ package org.thingsboard.server.service.lwm2m;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base64;
 import org.eclipse.leshan.core.util.Hex;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
+import org.thingsboard.server.common.data.device.profile.lwm2mTransportConfiguration.BootstrapServerConfigDao;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MSecureServerConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportBootstrapConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
@@ -37,35 +38,39 @@ public class LwM2MServiceImpl implements LwM2MService {
     private final LwM2MTransportBootstrapConfig bootstrapConfig;
 
     @Override
-    public ServerSecurityConfig getServerSecurityInfo(boolean bootstrapServer) {
-        ServerSecurityConfig result = getServerSecurityConfig(bootstrapServer ? bootstrapConfig : serverConfig);
+    public BootstrapServerConfigDao getServerSecurityInfo(boolean bootstrapServer) {
+        BootstrapServerConfigDao result = getServerSecurityConfig(bootstrapServer ? bootstrapConfig : serverConfig);
         result.setBootstrapServerIs(bootstrapServer);
         return result;
     }
 
-    private ServerSecurityConfig getServerSecurityConfig(LwM2MSecureServerConfig serverConfig) {
-        ServerSecurityConfig bsServ = new ServerSecurityConfig();
+    private BootstrapServerConfigDao getServerSecurityConfig(LwM2MSecureServerConfig serverConfig) {
+        BootstrapServerConfigDao bsServ = new BootstrapServerConfigDao();
         bsServ.setServerId(serverConfig.getId());
         bsServ.setHost(serverConfig.getHost());
         bsServ.setPort(serverConfig.getPort());
         bsServ.setSecurityHost(serverConfig.getSecureHost());
         bsServ.setSecurityPort(serverConfig.getSecurePort());
-        bsServ.setServerPublicKey(getPublicKey(serverConfig));
+        byte[] publicKeyBase64 = getPublicKey(serverConfig);
+        if (publicKeyBase64 == null) {
+            bsServ.setServerPublicKey("");
+        } else {
+            bsServ.setServerPublicKey(Base64.encodeBase64String(getPublicKey(serverConfig)));
+        }
         return bsServ;
     }
 
-    private String getPublicKey(LwM2MSecureServerConfig config) {
+    private byte[] getPublicKey(LwM2MSecureServerConfig config) {
         try {
             KeyStore keyStore = serverConfig.getKeyStoreValue();
             if (keyStore != null) {
                 X509Certificate serverCertificate = (X509Certificate) serverConfig.getKeyStoreValue().getCertificate(config.getCertificateAlias());
-                return Hex.encodeHexString(serverCertificate.getPublicKey().getEncoded());
+                return serverCertificate.getPublicKey().getEncoded();
             }
         } catch (Exception e) {
             log.trace("Failed to fetch public key from key store!", e);
-
         }
-        return "";
+        return null;
     }
 }
 

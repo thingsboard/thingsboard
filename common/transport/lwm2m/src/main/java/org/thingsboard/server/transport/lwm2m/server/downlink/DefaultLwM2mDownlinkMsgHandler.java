@@ -61,7 +61,7 @@ import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.device.data.lwm2m.ObjectAttributes;
+import org.thingsboard.server.common.data.device.profile.lwm2mTransportConfiguration.ObjectAttributes;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;

@@ -17,9 +17,9 @@ package org.thingsboard.server.common.data.device.profile;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.device.data.lwm2m.BootstrapConfiguration;
-import org.thingsboard.server.common.data.device.data.lwm2m.OtherConfiguration;
-import org.thingsboard.server.common.data.device.data.lwm2m.TelemetryMappingConfiguration;
+import org.thingsboard.server.common.data.device.profile.lwm2mTransportConfiguration.BootstrapConfiguration;
+import org.thingsboard.server.common.data.device.profile.lwm2mTransportConfiguration.OtherConfiguration;
+import org.thingsboard.server.common.data.device.profile.lwm2mTransportConfiguration.TelemetryMappingConfiguration;
 
 @Data
 public class Lwm2mDeviceProfileTransportConfiguration implements DeviceProfileTransportConfiguration {

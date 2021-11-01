@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.device.data.lwm2m.OtherConfiguration;
+import org.thingsboard.server.common.data.device.profile.lwm2mTransportConfiguration.OtherConfiguration;
 import org.thingsboard.server.common.data.ota.OtaPackageKey;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;

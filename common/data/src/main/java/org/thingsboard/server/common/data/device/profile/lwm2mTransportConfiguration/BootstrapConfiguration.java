@@ -13,12 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.lwm2m;
+package org.thingsboard.server.common.data.device.profile.lwm2mTransportConfiguration;
 
-import org.thingsboard.server.common.data.device.profile.lwm2mTransportConfiguration.BootstrapServerConfigDao;
+import lombok.Data;
 
-public interface LwM2MService {
+import java.util.Map;
 
-    BootstrapServerConfigDao getServerSecurityInfo(boolean bootstrapServer);
+@Data
+public class BootstrapConfiguration {
 
+    //TODO: define the objects;
+    private Map<String, Object> servers;
+    private BootstrapServerConfig lwm2mServer;
+    private BootstrapServerConfig bootstrapServer;
 }
