@@ -15,31 +15,20 @@
  */
 package org.thingsboard.server.service.security.auth.rest;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
 
 @ApiModel
-public class LoginRequest {
+@Data
+public class LoginResponse {
 
-    private String username;
+    @ApiModelProperty(position = 1, required = true, value = "JWT token",
+            example = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0ZW5hbnRAdGhpbmdzYm9hcmQub3JnIi...")
+    private String token;
 
-    private String password;
+    @ApiModelProperty(position = 2, required = true, value = "Refresh token",
+            example = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0ZW5hbnRAdGhpbmdzYm9hcmQub3JnIi...")
+    private String refreshToken;
 
-    @JsonCreator
-    public LoginRequest(@JsonProperty("username") String username, @JsonProperty("password") String password) {
-        this.username = username;
-        this.password = password;
-    }
-
-    @ApiModelProperty(position = 1, required = true, value = "User email", example = "tenant@thingsboard.org")
-    public String getUsername() {
-        return username;
-    }
-
-    @ApiModelProperty(position = 2, required = true, value = "User password", example = "tenant")
-    public String getPassword() {
-        return password;
-    }
 }
