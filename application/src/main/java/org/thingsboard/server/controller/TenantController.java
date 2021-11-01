@@ -57,6 +57,7 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_ID_PA
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_INFO_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_TEXT_SEARCH_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 
 @RestController
 @TbCoreComponent
@@ -111,7 +112,7 @@ public class TenantController extends BaseController {
     }
 
     @ApiOperation(value = "Create Or update Tenant (saveTenant)",
-            notes = "Create or update the Tenant. When creating tenant, platform generates Tenant Id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address). " +
+            notes = "Create or update the Tenant. When creating tenant, platform generates Tenant Id as " + UUID_WIKI_LINK +
                     "Default Rule Chain and Device profile are also generated for the new tenants automatically. " +
                     "The newly created Tenant Id will be present in the response. " +
                     "Specify existing Tenant Id id to update the Tenant. " +

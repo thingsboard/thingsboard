@@ -62,6 +62,7 @@ import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_D
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 
 @Slf4j
 @RestController
@@ -131,7 +132,7 @@ public class TbResourceController extends BaseController {
     }
 
     @ApiOperation(value = "Create Or Update Resource (saveResource)",
-            notes = "Create or update the Resource. When creating the Resource, platform generates Resource id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address). " +
+            notes = "Create or update the Resource. When creating the Resource, platform generates Resource id as " + UUID_WIKI_LINK +
                     "The newly created Resource id will be present in the response. " +
                     "Specify existing Resource id to update the Resource. " +
                     "Referencing non-existing Resource Id will cause 'Not Found' error. " +

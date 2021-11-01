@@ -49,6 +49,7 @@ import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_A
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 import static org.thingsboard.server.controller.ControllerConstants.WIDGET_BUNDLE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.WIDGET_BUNDLE_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.WIDGET_BUNDLE_TEXT_SEARCH_DESCRIPTION;
@@ -79,7 +80,7 @@ public class WidgetsBundleController extends BaseController {
 
     @ApiOperation(value = "Create Or Update Widget Bundle (saveWidgetsBundle)",
             notes = "Create or update the Widget Bundle. " + WIDGET_BUNDLE_DESCRIPTION + " " +
-                    "When creating the bundle, platform generates Widget Bundle Id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address)). " +
+                    "When creating the bundle, platform generates Widget Bundle Id as " + UUID_WIKI_LINK +
                     "The newly created Widget Bundle Id will be present in the response. " +
                     "Specify existing Widget Bundle id to update the Widget Bundle. " +
                     "Referencing non-existing Widget Bundle Id will cause 'Not Found' error." +

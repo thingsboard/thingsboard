@@ -73,6 +73,18 @@
             {{ 'device-profile.mqtt-payload-type-required' | translate }}
           </mat-error>
         </mat-form-field>
+        <div *ngIf="protoPayloadType" style="padding-bottom: 20px">
+          <mat-checkbox formControlName="enableCompatibilityWithJsonPayloadFormat">
+            {{ 'device-profile.mqtt-enable-compatibility-with-json-payload-format' | translate }}
+          </mat-checkbox>
+          <div class="tb-hint" innerHTML="{{ 'device-profile.mqtt-enable-compatibility-with-json-payload-format-hint' | translate }}"></div>
+          <div *ngIf="compatibilityWithJsonPayloadFormatEnabled">
+            <mat-checkbox formControlName="useJsonPayloadFormatForDefaultDownlinkTopics">
+              {{ 'device-profile.mqtt-use-json-format-for-default-downlink-topics' | translate }}
+            </mat-checkbox>
+            <div class="tb-hint" innerHTML="{{ 'device-profile.mqtt-use-json-format-for-default-downlink-topics-hint' | translate }}"></div>
+          </div>
+        </div>
         <div *ngIf="protoPayloadType" fxLayout="column">
           <mat-form-field fxFlex>
             <mat-label translate>device-profile.telemetry-proto-schema</mat-label>

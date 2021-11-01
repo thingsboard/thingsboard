@@ -68,35 +68,7 @@ public abstract class AbstractMqttClaimProtoDeviceTest extends AbstractMqttClaim
     }
 
     protected void processTestGatewayClaimingDevice(String deviceName, boolean emptyPayload) throws Exception {
-        MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
-        byte[] failurePayloadBytes;
-        byte[] payloadBytes;
-        if (emptyPayload) {
-            payloadBytes = getGatewayClaimMsg(deviceName, 0, emptyPayload).toByteArray();
-        } else {
-            payloadBytes = getGatewayClaimMsg(deviceName, 60000, emptyPayload).toByteArray();
-        }
-        failurePayloadBytes = getGatewayClaimMsg(deviceName, 1, emptyPayload).toByteArray();
-
-        validateGatewayClaimResponse(deviceName, emptyPayload, client, failurePayloadBytes, payloadBytes);
-    }
-
-    private TransportApiProtos.GatewayClaimMsg getGatewayClaimMsg(String deviceName, long duration, boolean emptyPayload) {
-        TransportApiProtos.GatewayClaimMsg.Builder gatewayClaimMsgBuilder = TransportApiProtos.GatewayClaimMsg.newBuilder();
-        TransportApiProtos.ClaimDeviceMsg.Builder claimDeviceMsgBuilder = TransportApiProtos.ClaimDeviceMsg.newBuilder();
-        TransportApiProtos.ClaimDevice.Builder claimDeviceBuilder = TransportApiProtos.ClaimDevice.newBuilder();
-        if (!emptyPayload) {
-            claimDeviceBuilder.setSecretKey("value");
-        }
-        if (duration > 0) {
-            claimDeviceBuilder.setDurationMs(duration);
-        }
-        TransportApiProtos.ClaimDevice claimDevice = claimDeviceBuilder.build();
-        claimDeviceMsgBuilder.setClaimRequest(claimDevice);
-        claimDeviceMsgBuilder.setDeviceName(deviceName);
-        TransportApiProtos.ClaimDeviceMsg claimDeviceMsg = claimDeviceMsgBuilder.build();
-        gatewayClaimMsgBuilder.addMsg(claimDeviceMsg);
-        return gatewayClaimMsgBuilder.build();
+        processProtoTestGatewayClaimDevice(deviceName, emptyPayload);
     }
 
     private TransportApiProtos.ClaimDevice getClaimDevice(long duration, boolean emptyPayload) {

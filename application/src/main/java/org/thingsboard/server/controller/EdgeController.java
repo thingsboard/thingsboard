@@ -84,6 +84,7 @@ import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_D
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 
 @RestController
 @TbCoreComponent
@@ -149,7 +150,7 @@ public class EdgeController extends BaseController {
     }
 
     @ApiOperation(value = "Create Or Update Edge (saveEdge)",
-            notes = "Create or update the Edge. When creating edge, platform generates Edge Id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address). " +
+            notes = "Create or update the Edge. When creating edge, platform generates Edge Id as " + UUID_WIKI_LINK +
                     "The newly created edge id will be present in the response. " +
                     "Specify existing Edge id to update the edge. " +
                     "Referencing non-existing Edge Id will cause 'Not Found' error." +
@@ -452,17 +453,17 @@ public class EdgeController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Set root rule chain for provided edge (setRootRuleChain)",
+    @ApiOperation(value = "Set root rule chain for provided edge (setEdgeRootRuleChain)",
             notes = "Change root rule chain of the edge to the new provided rule chain. \n" +
                     "This operation will send a notification to update root rule chain on remote edge service." + TENANT_AUTHORITY_PARAGRAPH,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/{ruleChainId}/root", method = RequestMethod.POST)
     @ResponseBody
-    public Edge setRootRuleChain(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
-                                 @PathVariable(EDGE_ID) String strEdgeId,
-                                 @ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION, required = true)
-                                 @PathVariable("ruleChainId") String strRuleChainId) throws ThingsboardException {
+    public Edge setEdgeRootRuleChain(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
+                                     @PathVariable(EDGE_ID) String strEdgeId,
+                                     @ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION, required = true)
+                                     @PathVariable("ruleChainId") String strRuleChainId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
         checkParameter("ruleChainId", strRuleChainId);
         try {
@@ -736,6 +737,9 @@ public class EdgeController extends BaseController {
         edge.setEdgeLicenseKey(null);
     }
 
+    @ApiOperation(value = "Check edge license (checkInstance)",
+            notes = "Checks license request from edge service by forwarding request to license portal.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @RequestMapping(value = "/license/checkInstance", method = RequestMethod.POST)
     @ResponseBody
     public ResponseEntity<JsonNode> checkInstance(@RequestBody JsonNode request) throws ThingsboardException {
@@ -748,6 +752,9 @@ public class EdgeController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Activate edge instance (activateInstance)",
+            notes = "Activates edge license on license portal.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @RequestMapping(value = "/license/activateInstance", params = {"licenseSecret", "releaseDate"}, method = RequestMethod.POST)
     @ResponseBody
     public ResponseEntity<JsonNode> activateInstance(@RequestParam String licenseSecret,

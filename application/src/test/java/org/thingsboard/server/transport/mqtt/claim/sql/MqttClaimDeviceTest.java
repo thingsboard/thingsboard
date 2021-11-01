@@ -19,5 +19,5 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.mqtt.claim.AbstractMqttClaimDeviceTest;
 
 @DaoSqlTest
-public class MqttClaimDeviceSqlTest extends AbstractMqttClaimDeviceTest {
+public class MqttClaimDeviceTest extends AbstractMqttClaimDeviceTest {
 }

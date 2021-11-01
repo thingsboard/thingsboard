@@ -64,6 +64,7 @@ import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_D
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 
 @Slf4j
 @RestController
@@ -138,7 +139,7 @@ public class OtaPackageController extends BaseController {
     }
 
     @ApiOperation(value = "Create Or Update OTA Package Info (saveOtaPackageInfo)",
-            notes = "Create or update the OTA Package Info. When creating OTA Package Info, platform generates OTA Package id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address). " +
+            notes = "Create or update the OTA Package Info. When creating OTA Package Info, platform generates OTA Package id as " + UUID_WIKI_LINK +
                     "The newly created OTA Package id will be present in the response. " +
                     "Specify existing OTA Package id to update the OTA Package Info. " +
                     "Referencing non-existing OTA Package Id will cause 'Not Found' error. " +

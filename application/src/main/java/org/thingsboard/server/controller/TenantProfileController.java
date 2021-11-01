@@ -53,6 +53,7 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_PROFI
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_PROFILE_INFO_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_PROFILE_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_PROFILE_TEXT_SEARCH_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 
 @RestController
 @TbCoreComponent
@@ -110,7 +111,7 @@ public class TenantProfileController extends BaseController {
     }
 
     @ApiOperation(value = "Create Or update Tenant Profile (saveTenantProfile)",
-            notes = "Create or update the Tenant Profile. When creating tenant profile, platform generates Tenant Profile Id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address). " +
+            notes = "Create or update the Tenant Profile. When creating tenant profile, platform generates Tenant Profile Id as " + UUID_WIKI_LINK +
                     "The newly created Tenant Profile Id will be present in the response. " +
                     "Specify existing Tenant Profile Id id to update the Tenant Profile. " +
                     "Referencing non-existing Tenant Profile Id will cause 'Not Found' error. " +

@@ -84,6 +84,7 @@ import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_D
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 import static org.thingsboard.server.dao.asset.BaseAssetService.TB_SERVICE_QUEUE;
 
@@ -136,7 +137,7 @@ public class AssetController extends BaseController {
     }
 
     @ApiOperation(value = "Create Or Update Asset (saveAsset)",
-            notes = "Creates or Updates the Asset. When creating asset, platform generates Asset Id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address) " +
+            notes = "Creates or Updates the Asset. When creating asset, platform generates Asset Id as " + UUID_WIKI_LINK +
                     "The newly created Asset id will be present in the response. " +
                     "Specify existing Asset id to update the asset. " +
                     "Referencing non-existing Asset Id will cause 'Not Found' error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -542,7 +543,7 @@ public class AssetController extends BaseController {
             notes = "Creates assignment of an existing asset to an instance of The Edge. " +
                     EDGE_ASSIGN_ASYNC_FIRST_STEP_DESCRIPTION +
                     "Second, remote edge service will receive a copy of assignment asset " +
-                    EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION + ". " +
+                    EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION +
                     "Third, once asset will be delivered to edge service, it's going to be available for usage on remote edge instance.",
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
@@ -582,7 +583,7 @@ public class AssetController extends BaseController {
             notes = "Clears assignment of the asset to the edge. " +
                     EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION +
                     "Second, remote edge service will receive an 'unassign' command to remove asset " +
-                    EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION + ". " +
+                    EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION +
                     "Third, once 'unassign' command will be delivered to edge service, it's going to remove asset locally.",
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
