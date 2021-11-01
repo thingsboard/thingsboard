@@ -97,19 +97,22 @@ public class TbRuleEngineProcessingStrategyFactory {
                     ConcurrentMap<UUID, TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> toReprocess = new ConcurrentHashMap<>(initialTotalCount);
                     if (retryFailed) {
                         result.getFailedMap().forEach(toReprocess::put);
+                    } else if (log.isDebugEnabled() && !result.getFailedMap().isEmpty()) {
+                        log.debug("[{}] Skipped {} failed messages due to the processing strategy configuration", queueName, result.getFailedMap().size());
                     }
                     if (retryTimeout) {
                         result.getPendingMap().forEach(toReprocess::put);
+                    } else if (log.isDebugEnabled() && !result.getPendingMap().isEmpty()) {
+                        log.debug("[{}] Skipped {} timedOut messages due to the processing strategy configuration", queueName, result.getPendingMap().size());
                     }
                     if (retrySuccessful) {
                         result.getSuccessMap().forEach(toReprocess::put);
+                    } else if (log.isDebugEnabled() && !result.getSuccessMap().isEmpty()) {
+                        log.debug("[{}] Skipped {} successful messages due to the processing strategy configuration", queueName, result.getSuccessMap().size());
                     }
                     if (CollectionUtils.isEmpty(toReprocess)) {
-                        log.debug("[{}] Stopping the reprocessing logic due to reprocessing map is empty", queueName);
-                        if (retryFailed) {
-                            log.debug("[{}] Probably there are timedOut msgs, but the strategy is not set to reprocess them. Reprocess of the failed msgs is set", queueName);
-                        } else if (retryTimeout) {
-                            log.debug("[{}] Probably there are failed msgs, but the strategy is not set to reprocess them. Reprocess of the timedOut msgs is set", queueName);
+                        if (log.isDebugEnabled()) {
+                            log.debug("[{}] Stopping the reprocessing logic due to reprocessing map is empty", queueName);
                         }
                         return new TbRuleEngineProcessingDecision(true, null);
                     }
