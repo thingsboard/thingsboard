@@ -41,6 +41,7 @@ import org.thingsboard.server.transport.coap.callback.CoapDeviceAuthCallback;
 import org.thingsboard.server.transport.coap.callback.CoapOkCallback;
 import org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -48,11 +49,15 @@ import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static org.thingsboard.server.transport.coap.CoapTransportService.CONFIGURATION;
+import static org.thingsboard.server.transport.coap.CoapTransportService.CURRENT_TIMESTAMP;
+import static org.thingsboard.server.transport.coap.CoapTransportService.DEVICE_INFO;
+import static org.thingsboard.server.transport.coap.CoapTransportService.MEASUREMENTS;
+
 @Slf4j
 public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
 
-    private static final int MEASUREMENTS_POSITION = 2;
-    private static final String MEASUREMENTS = "m";
+    private static final int CHILD_RESOURCE_POSITION = 2;
 
     public CoapEfentoTransportResource(CoapTransportContext context, String name) {
         super(context, name);
@@ -63,7 +68,17 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
 
     @Override
     protected void processHandleGet(CoapExchange exchange) {
-        exchange.respond(CoAP.ResponseCode.METHOD_NOT_ALLOWED);
+        Exchange advanced = exchange.advanced();
+        Request request = advanced.getRequest();
+        List<String> uriPath = request.getOptions().getUriPath();
+        boolean validPath = uriPath.size() == CHILD_RESOURCE_POSITION && uriPath.get(1).equals(CURRENT_TIMESTAMP);
+        if (!validPath) {
+            exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
+        } else {
+            int dateInSec = (int) (System.currentTimeMillis() / 1000);
+            byte[] bytes = ByteBuffer.allocate(4).putInt(dateInSec).array();
+            exchange.respond(CoAP.ResponseCode.CONTENT, bytes);
+        }
     }
 
     @Override
@@ -71,11 +86,26 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
         Exchange advanced = exchange.advanced();
         Request request = advanced.getRequest();
         List<String> uriPath = request.getOptions().getUriPath();
-        boolean validPath = uriPath.size() == MEASUREMENTS_POSITION && uriPath.get(1).equals(MEASUREMENTS);
-        if (!validPath) {
+        if (uriPath.size() != CHILD_RESOURCE_POSITION) {
             exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
             return;
         }
+        String requestType = uriPath.get(1);
+        switch (requestType) {
+            case MEASUREMENTS:
+                processMeasurementsRequest(exchange, request);
+                break;
+            case DEVICE_INFO:
+            case CONFIGURATION:
+                exchange.respond(CoAP.ResponseCode.CREATED);
+                break;
+            default:
+                exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
+                break;
+        }
+    }
+
+    private void processMeasurementsRequest(CoapExchange exchange, Request request) {
         byte[] bytes = request.getPayload();
         try {
             MeasurementsProtos.ProtoMeasurements protoMeasurements = MeasurementsProtos.ProtoMeasurements.parseFrom(bytes);

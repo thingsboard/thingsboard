@@ -39,7 +39,10 @@ public class CoapTransportService implements TbTransportService {
     private static final String V1 = "v1";
     private static final String API = "api";
     private static final String EFENTO = "efento";
-    private static final String MEASUREMENTS = "m";
+    public static final String MEASUREMENTS = "m";
+    public static final String DEVICE_INFO = "i";
+    public static final String CONFIGURATION = "c";
+    public static final String CURRENT_TIMESTAMP = "t";
 
     @Autowired
     private CoapServerService coapServerService;
@@ -56,9 +59,11 @@ public class CoapTransportService implements TbTransportService {
         CoapResource api = new CoapResource(API);
         api.add(new CoapTransportResource(coapTransportContext, coapServerService, V1));
 
-        CoapResource efento = new CoapResource(EFENTO);
-        CoapEfentoTransportResource efentoMeasurementsTransportResource = new CoapEfentoTransportResource(coapTransportContext, MEASUREMENTS);
-        efento.add(efentoMeasurementsTransportResource);
+        CoapEfentoTransportResource efento = new CoapEfentoTransportResource(coapTransportContext, EFENTO);
+        efento.add(new CoapResource(MEASUREMENTS));
+        efento.add(new CoapResource(DEVICE_INFO));
+        efento.add(new CoapResource(CONFIGURATION));
+        efento.add(new CoapResource(CURRENT_TIMESTAMP));
         coapServer.add(api);
         coapServer.add(efento);
         coapServer.add(new OtaPackageTransportResource(coapTransportContext, OtaPackageType.FIRMWARE));
