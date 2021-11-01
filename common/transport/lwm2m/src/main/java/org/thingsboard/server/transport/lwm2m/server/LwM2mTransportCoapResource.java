@@ -151,7 +151,7 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
             }
             exchange.respond(response);
         } else {
-            log.trace("Ota packaged currentId: [{}], is not in this session.", currentId.toString());
+            log.trace("Ota packaged currentId: [{}] is not found.", currentId.toString());
         }
     }
 
