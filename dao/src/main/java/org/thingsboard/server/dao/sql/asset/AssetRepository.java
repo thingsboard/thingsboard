@@ -39,7 +39,7 @@ public interface AssetRepository extends PagingAndSortingRepository<AssetEntity,
     AssetInfoEntity findAssetInfoById(@Param("assetId") UUID assetId);
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<AssetEntity> findByTenantId(@Param("tenantId") UUID tenantId,
                                      @Param("textSearch") String textSearch,
                                      Pageable pageable);
@@ -48,14 +48,14 @@ public interface AssetRepository extends PagingAndSortingRepository<AssetEntity,
             "FROM AssetEntity a " +
             "LEFT JOIN CustomerEntity c on c.id = a.customerId " +
             "WHERE a.tenantId = :tenantId " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<AssetInfoEntity> findAssetInfosByTenantId(@Param("tenantId") UUID tenantId,
                                                    @Param("textSearch") String textSearch,
                                                    Pageable pageable);
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<AssetEntity> findByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
                                                   @Param("customerId") UUID customerId,
                                                   @Param("textSearch") String textSearch,
@@ -66,7 +66,7 @@ public interface AssetRepository extends PagingAndSortingRepository<AssetEntity,
             "LEFT JOIN CustomerEntity c on c.id = a.customerId " +
             "WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     Page<AssetInfoEntity> findAssetInfosByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
                                                                 @Param("customerId") UUID customerId,
                                                                 @Param("searchText") String searchText,
@@ -80,7 +80,7 @@ public interface AssetRepository extends PagingAndSortingRepository<AssetEntity,
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
             "AND a.type = :type " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<AssetEntity> findByTenantIdAndType(@Param("tenantId") UUID tenantId,
                                             @Param("type") String type,
                                             @Param("textSearch") String textSearch,
@@ -91,7 +91,7 @@ public interface AssetRepository extends PagingAndSortingRepository<AssetEntity,
             "LEFT JOIN CustomerEntity c on c.id = a.customerId " +
             "WHERE a.tenantId = :tenantId " +
             "AND a.type = :type " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<AssetInfoEntity> findAssetInfosByTenantIdAndType(@Param("tenantId") UUID tenantId,
                                                           @Param("type") String type,
                                                           @Param("textSearch") String textSearch,
@@ -100,7 +100,7 @@ public interface AssetRepository extends PagingAndSortingRepository<AssetEntity,
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId AND a.type = :type " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<AssetEntity> findByTenantIdAndCustomerIdAndType(@Param("tenantId") UUID tenantId,
                                                          @Param("customerId") UUID customerId,
                                                          @Param("type") String type,
@@ -113,7 +113,7 @@ public interface AssetRepository extends PagingAndSortingRepository<AssetEntity,
             "WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId " +
             "AND a.type = :type " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<AssetInfoEntity> findAssetInfosByTenantIdAndCustomerIdAndType(@Param("tenantId") UUID tenantId,
                                                                        @Param("customerId") UUID customerId,
                                                                        @Param("type") String type,
@@ -126,7 +126,7 @@ public interface AssetRepository extends PagingAndSortingRepository<AssetEntity,
     @Query("SELECT a FROM AssetEntity a, RelationEntity re WHERE a.tenantId = :tenantId " +
             "AND a.id = re.toId AND re.toType = 'ASSET' AND re.relationTypeGroup = 'EDGE' " +
             "AND re.relationType = 'Contains' AND re.fromId = :edgeId AND re.fromType = 'EDGE' " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     Page<AssetEntity> findByTenantIdAndEdgeId(@Param("tenantId") UUID tenantId,
                                               @Param("edgeId") UUID edgeId,
                                               @Param("searchText") String searchText,
@@ -136,7 +136,7 @@ public interface AssetRepository extends PagingAndSortingRepository<AssetEntity,
             "AND a.id = re.toId AND re.toType = 'ASSET' AND re.relationTypeGroup = 'EDGE' " +
             "AND re.relationType = 'Contains' AND re.fromId = :edgeId AND re.fromType = 'EDGE' " +
             "AND a.type = :type " +
-            "AND LOWER(a.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
+            "AND LOWER(a.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     Page<AssetEntity> findByTenantIdAndEdgeIdAndType(@Param("tenantId") UUID tenantId,
                                               @Param("edgeId") UUID edgeId,
                                               @Param("type") String type,
