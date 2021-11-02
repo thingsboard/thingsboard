@@ -21,6 +21,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.Request;
+import org.eclipse.californium.core.coap.Response;
 import org.eclipse.californium.core.network.Exchange;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
@@ -38,6 +39,7 @@ import org.thingsboard.server.gen.transport.coap.MeasurementsProtos;
 import org.thingsboard.server.transport.coap.AbstractCoapTransportResource;
 import org.thingsboard.server.transport.coap.CoapTransportContext;
 import org.thingsboard.server.transport.coap.callback.CoapDeviceAuthCallback;
+import org.thingsboard.server.transport.coap.callback.CoapEfentoCallback;
 import org.thingsboard.server.transport.coap.callback.CoapOkCallback;
 import org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils;
 
@@ -97,7 +99,11 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
                 break;
             case DEVICE_INFO:
             case CONFIGURATION:
-                exchange.respond(CoAP.ResponseCode.CREATED);
+                Response response = new Response(CoAP.ResponseCode.CREATED);
+                if (exchange.advanced().getRequest().isConfirmable()) {
+                    response.setAcknowledged(true);
+                    exchange.respond(response);
+                }
                 break;
             default:
                 exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
@@ -120,7 +126,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
                             List<EfentoMeasurements> efentoMeasurements = getEfentoMeasurements(protoMeasurements, sessionId);
                             transportService.process(sessionInfo,
                                     transportContext.getEfentoCoapAdaptor().convertToPostTelemetry(sessionId, efentoMeasurements),
-                                    new CoapOkCallback(exchange, CoAP.ResponseCode.CREATED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
+                                    new CoapEfentoCallback(exchange, CoAP.ResponseCode.CREATED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
                             reportSubscriptionInfo(sessionInfo, false, false);
                         } catch (AdaptorException e) {
                             log.error("[{}] Failed to decode Efento ProtoMeasurements: ", sessionId, e);
