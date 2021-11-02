@@ -34,6 +34,7 @@ import org.eclipse.leshan.server.security.BootstrapSecurityStore;
 import org.eclipse.leshan.server.security.SecurityChecker;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -81,15 +82,19 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
     public BootstrapSession begin(BootstrapRequest request, Identity clientIdentity) {
         boolean authorized;
         Iterator<SecurityInfo> securityInfos;
-        if (bsSecurityStore != null && securityChecker != null) {
-            if (clientIdentity.isSecure() && clientIdentity.isPSK()) {
-                securityInfos = bsSecurityStore.getAllByEndpoint(clientIdentity.getPskIdentity());
+        try {
+            if (bsSecurityStore != null && securityChecker != null) {
+                if (clientIdentity.isSecure() && clientIdentity.isPSK()) {
+                    securityInfos = bsSecurityStore.getAllByEndpoint(clientIdentity.getPskIdentity());
+                } else {
+                    securityInfos = bsSecurityStore.getAllByEndpoint(request.getEndpointName());
+                }
+                authorized = securityChecker.checkSecurityInfos(request.getEndpointName(), clientIdentity, securityInfos);
             } else {
-                securityInfos = bsSecurityStore.getAllByEndpoint(request.getEndpointName());
+                authorized = true;
             }
-            authorized = securityChecker.checkSecurityInfos(request.getEndpointName(), clientIdentity, securityInfos);
-        } else {
-            authorized = true;
+        } catch (LwM2MAuthException e) {
+            authorized = false;
         }
         DefaultBootstrapSession session = new DefaultBootstrapSession(request, clientIdentity, authorized);
         if (authorized) {
