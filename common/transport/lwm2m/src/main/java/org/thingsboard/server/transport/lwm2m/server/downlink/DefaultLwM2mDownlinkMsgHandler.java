@@ -369,6 +369,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
 
     private <R extends DownlinkRequest<T>, T extends LwM2mResponse> void handleDownlinkError(LwM2mClient client, R request, DownlinkRequestCallback<R, T> callback, Exception e) {
         log.trace("[{}] Received downlink error: {}.", client.getEndpoint(), e);
+        client.updateLastUplinkTime();
         executor.submit(() -> {
             if (e instanceof TimeoutException || e instanceof ClientSleepingException) {
                 log.trace("[{}] Received {}, client is probably sleeping", client.getEndpoint(), e.getClass().getSimpleName());
