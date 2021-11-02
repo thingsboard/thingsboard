@@ -80,7 +80,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
 
     @Override
     public BootstrapSession begin(BootstrapRequest request, Identity clientIdentity) {
-        boolean authorized;
+        boolean authorized = true;
         Iterator<SecurityInfo> securityInfos;
         try {
             if (bsSecurityStore != null && securityChecker != null) {
@@ -90,8 +90,6 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
                     securityInfos = bsSecurityStore.getAllByEndpoint(request.getEndpointName());
                 }
                 authorized = securityChecker.checkSecurityInfos(request.getEndpointName(), clientIdentity, securityInfos);
-            } else {
-                authorized = true;
             }
         } catch (LwM2MAuthException e) {
             authorized = false;
