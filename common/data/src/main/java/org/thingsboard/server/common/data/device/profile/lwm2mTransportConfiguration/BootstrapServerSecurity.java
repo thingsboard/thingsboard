@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
+package org.thingsboard.server.common.data.device.profile.lwm2mTransportConfiguration;
 
 import lombok.Data;
 
 @Data
-public class LwM2MBootstrapServers {
+public class BootstrapServerSecurity {
     private Integer shortId = 123;
     private Integer lifetime = 300;
     private Integer defaultMinPeriod = 1;

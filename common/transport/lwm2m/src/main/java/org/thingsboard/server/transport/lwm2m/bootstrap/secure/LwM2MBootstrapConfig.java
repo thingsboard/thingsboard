@@ -23,6 +23,7 @@ import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.request.BindingMode;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfig;
+import org.thingsboard.server.common.data.device.profile.lwm2mTransportConfiguration.BootstrapServerSecurity;
 
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
@@ -45,7 +46,7 @@ public class LwM2MBootstrapConfig implements Serializable {
      * */
     @Getter
     @Setter
-    private LwM2MBootstrapServers servers;
+    private BootstrapServerSecurity servers;
 
     /** -bootstrapServer, lwm2mServer
      * interface ServerSecurityConfig

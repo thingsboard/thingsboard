@@ -22,20 +22,20 @@ import org.eclipse.leshan.core.SecurityMode;
 @Slf4j
 @Data
 public class LwM2MServerBootstrap {
+    SecurityMode securityMode = SecurityMode.NO_SEC;
 
+        // AbstractLwM2MServerCredentialsWithKeys
     String clientPublicKeyOrId = "";
     String clientSecretKey = "";
-    String serverPublicKey = "";
+
+        // BootstrapServerConfig
     Integer clientHoldOffTime = 1;
     Integer bootstrapServerAccountTimeout = 0;
-
+    String serverPublicKey = "";
     String host = "0.0.0.0";
     Integer port = 0;
     String securityHost = "0.0.0.0";
     Integer securityPort = 0;
-
-    SecurityMode securityMode = SecurityMode.NO_SEC;
-
     Integer serverId = 123;
     boolean bootstrapServerIs = false;
 

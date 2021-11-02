@@ -17,13 +17,10 @@ package org.thingsboard.server.common.data.device.profile.lwm2mTransportConfigur
 
 import lombok.Data;
 
-import java.util.Map;
-
 @Data
 public class BootstrapConfiguration {
 
-    //TODO: define the objects;
-    private Map<String, Object> servers;
+    private BootstrapServerSecurity servers;
     private BootstrapServerConfig lwm2mServer;
     private BootstrapServerConfig bootstrapServer;
 }
