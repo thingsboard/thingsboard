@@ -15,25 +15,30 @@
  */
 package org.thingsboard.server.config;
 
-import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.TypeResolver;
-import com.fasterxml.jackson.databind.JsonNode;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.exception.ThingsboardCredentialsExpiredResponse;
 import org.thingsboard.server.exception.ThingsboardErrorResponse;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginResponse;
 import springfox.documentation.builders.ApiInfoBuilder;
+import springfox.documentation.builders.ExampleBuilder;
 import springfox.documentation.builders.OperationBuilder;
 import springfox.documentation.builders.RepresentationBuilder;
 import springfox.documentation.builders.RequestParameterBuilder;
 import springfox.documentation.builders.ResponseBuilder;
+import springfox.documentation.schema.Example;
 import springfox.documentation.service.ApiDescription;
 import springfox.documentation.service.ApiInfo;
 import springfox.documentation.service.ApiListing;
@@ -74,6 +79,7 @@ import static java.util.function.Predicate.not;
 import static springfox.documentation.builders.PathSelectors.any;
 import static springfox.documentation.builders.PathSelectors.regex;
 
+@Slf4j
 @Configuration
 public class SwaggerConfiguration {
 
@@ -100,44 +106,30 @@ public class SwaggerConfiguration {
     @Value("${swagger.version}")
     private String version;
 
-    @Autowired
-    private CachingOperationNameGenerator operationNames;
-
     @Bean
     public Docket thingsboardApi() {
         TypeResolver typeResolver = new TypeResolver();
-        final ResolvedType jsonNodeType =
-                typeResolver.resolve(
-                        JsonNode.class);
-        final ResolvedType stringType =
-                typeResolver.resolve(
-                        String.class);
-
         return new Docket(DocumentationType.OAS_30)
                 .groupName("thingsboard")
                 .apiInfo(apiInfo())
                 .additionalModels(
                         typeResolver.resolve(ThingsboardErrorResponse.class),
+                        typeResolver.resolve(ThingsboardCredentialsExpiredResponse.class),
                         typeResolver.resolve(LoginRequest.class),
                         typeResolver.resolve(LoginResponse.class)
                 )
-               /* .alternateTypeRules(
-                        new AlternateTypeRule(
-                                jsonNodeType,
-                                stringType))*/
                 .select()
                 .paths(apiPaths())
                 .paths(any())
                 .build()
                 .globalResponses(HttpMethod.GET,
-                        List.of(
-                            new ResponseBuilder()
-                                    .code("401")
-                                    .description("Unauthorized")
-                                    .representation(MediaType.APPLICATION_JSON)
-                                    .apply(classRepresentation(ThingsboardErrorResponse.class, true))
-                                    .build()
-                        )
+                        defaultErrorResponses(false)
+                )
+                .globalResponses(HttpMethod.POST,
+                        defaultErrorResponses(true)
+                )
+                .globalResponses(HttpMethod.DELETE,
+                        defaultErrorResponses(false)
                 )
                 .securitySchemes(newArrayList(httpLogin()))
                 .securityContexts(newArrayList(securityContext()))
@@ -146,15 +138,15 @@ public class SwaggerConfiguration {
 
     @Bean
     @Order(SwaggerPluginSupport.SWAGGER_PLUGIN_ORDER)
-    ApiListingScannerPlugin loginEndpointListingScanner() {
+    ApiListingScannerPlugin loginEndpointListingScanner(final CachingOperationNameGenerator operationNames) {
         return new ApiListingScannerPlugin() {
             @Override
             public List<ApiDescription> apply(DocumentationContext context) {
-                return List.of(loginEndpointApiDescription());
+                return List.of(loginEndpointApiDescription(operationNames));
             }
 
             @Override
-            public boolean supports(DocumentationType delimiter) {
+            public boolean supports(@NotNull DocumentationType delimiter) {
                 return DocumentationType.SWAGGER_2.equals(delimiter) || DocumentationType.OAS_30.equals(delimiter);
             }
         };
@@ -176,7 +168,7 @@ public class SwaggerConfiguration {
             }
 
             @Override
-            public boolean supports(DocumentationType delimiter) {
+            public boolean supports(@NotNull DocumentationType delimiter) {
                 return DocumentationType.SWAGGER_2.equals(delimiter) || DocumentationType.OAS_30.equals(delimiter);
             }
         };
@@ -199,6 +191,7 @@ public class SwaggerConfiguration {
                 .showCommonExtensions(false)
                 .supportedSubmitMethods(UiConfiguration.Constants.DEFAULT_SUBMIT_METHODS)
                 .validatorUrl(null)
+                .persistAuthorization(true)
                 .syntaxHighlightActivate(true)
                 .syntaxHighlightTheme("agate")
                 .build();
@@ -248,7 +241,7 @@ public class SwaggerConfiguration {
                 .build();
     }
 
-    private ApiDescription loginEndpointApiDescription() {
+    private ApiDescription loginEndpointApiDescription(final CachingOperationNameGenerator operationNames) {
         return new ApiDescription(null, "/api/auth/login", "Login method to get user JWT token data", "Login endpoint", Collections.singletonList(
                 new OperationBuilder(operationNames)
                         .summary("Login method to get user JWT token data")
@@ -257,7 +250,8 @@ public class SwaggerConfiguration {
                         .position(0)
                         .codegenMethodNameStem("loginPost")
                         .method(HttpMethod.POST)
-                        .notes("Login method to get user JWT token data.\n\nValue of the response **token** field can be used as JWT token value for authorization.")
+                        .notes("Login method used to authenticate user and get JWT token data.\n\nValue of the response **token** " +
+                                "field can be used as **X-Authorization** header value:\n\n`X-Authorization: Bearer $JWT_TOKEN_VALUE`.")
                         .requestParameters(
                                 List.of(
                                         new RequestParameterBuilder()
@@ -278,7 +272,8 @@ public class SwaggerConfiguration {
     }
 
     private Collection<Response> loginResponses() {
-        return List.of(
+        List<Response> responses = new ArrayList<>();
+        responses.add(
                 new ResponseBuilder()
                         .code("200")
                         .description("OK")
@@ -286,11 +281,82 @@ public class SwaggerConfiguration {
                         .apply(classRepresentation(LoginResponse.class, true)).
                         build()
         );
+        responses.addAll(loginErrorResponses());
+        return responses;
     }
 
     /** Helper methods **/
 
-    private Consumer<RepresentationBuilder> classRepresentation(Class clazz, boolean isResponse) {
+    private List<Response> defaultErrorResponses(boolean isPost) {
+        return List.of(
+                errorResponse("400", "Bad Request",
+                        ThingsboardErrorResponse.of(isPost ? "Invalid request body" : "Invalid UUID string: 123", ThingsboardErrorCode.BAD_REQUEST_PARAMS, HttpStatus.BAD_REQUEST)),
+                errorResponse("401", "Unauthorized",
+                        ThingsboardErrorResponse.of("Authentication failed", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)),
+                errorResponse("403", "Forbidden",
+                        ThingsboardErrorResponse.of("You don't have permission to perform this operation!",
+                        ThingsboardErrorCode.PERMISSION_DENIED, HttpStatus.FORBIDDEN)),
+                errorResponse("404", "Not Found",
+                        ThingsboardErrorResponse.of("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND, HttpStatus.NOT_FOUND)),
+                errorResponse("429", "Too Many Requests",
+                        ThingsboardErrorResponse.of("Too many requests for current tenant!",
+                        ThingsboardErrorCode.TOO_MANY_REQUESTS, HttpStatus.TOO_MANY_REQUESTS))
+        );
+    }
+
+    private List<Response> loginErrorResponses() {
+        return List.of(
+                errorResponse("401", "Unauthorized",
+                        List.of(
+                                errorExample("bad-credentials", "Bad credentials",
+                                    ThingsboardErrorResponse.of("Invalid username or password", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)),
+                                 errorExample("token-expired", "JWT token expired",
+                                    ThingsboardErrorResponse.of("Token has expired", ThingsboardErrorCode.JWT_TOKEN_EXPIRED, HttpStatus.UNAUTHORIZED)),
+                                errorExample("account-disabled", "Disabled account",
+                                    ThingsboardErrorResponse.of("User account is not active", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)),
+                                errorExample("account-locked", "Locked account",
+                                    ThingsboardErrorResponse.of("User account is locked due to security policy", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)),
+                                errorExample("authentication-failed", "General authentication error",
+                                    ThingsboardErrorResponse.of("Authentication failed", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED))
+                        )
+                ),
+                errorResponse("401 ", "Unauthorized (**Expired credentials**)",
+                        List.of(
+                                errorExample("credentials-expired", "Expired credentials",
+                                        ThingsboardCredentialsExpiredResponse.of("User password expired!", RandomStringUtils.randomAlphanumeric(30)))
+                        ), ThingsboardCredentialsExpiredResponse.class
+                )
+        );
+    }
+
+    private Response errorResponse(String code, String description, ThingsboardErrorResponse example) {
+        return errorResponse(code, description,  List.of(errorExample("error-code-" + code, description, example)));
+    }
+
+    private Response errorResponse(String code, String description, List<Example> examples) {
+        return errorResponse(code, description, examples, ThingsboardErrorResponse.class);
+    }
+
+    private Response errorResponse(String code, String description, List<Example> examples,
+                                   Class<? extends ThingsboardErrorResponse> errorResponseClass) {
+        return new ResponseBuilder()
+                .code(code)
+                .description(description)
+                .examples(examples)
+                .representation(MediaType.APPLICATION_JSON)
+                .apply(classRepresentation(errorResponseClass, true))
+                .build();
+    }
+
+    private Example errorExample(String id, String summary, ThingsboardErrorResponse example) {
+        return new ExampleBuilder()
+                .mediaType(MediaType.APPLICATION_JSON_VALUE)
+                .summary(summary)
+                .id(id)
+                .value(example).build();
+    }
+
+    private Consumer<RepresentationBuilder> classRepresentation(Class<?> clazz, boolean isResponse) {
         return r -> r.model(
                 m ->
                         m.referenceModel(ref ->
