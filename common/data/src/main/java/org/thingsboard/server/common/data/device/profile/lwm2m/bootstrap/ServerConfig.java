@@ -13,19 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.data.lwm2m;
+package org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.ServerCredentials;
-
-import java.util.Map;
 
 @Data
-public class BootstrapConfiguration {
-
-    //TODO: define the objects;
-    private Map<String, Object> servers;
-    private ServerCredentials lwm2mServer;
-    private ServerCredentials bootstrapServer;
-
+public class ServerConfig {
+    private Integer shortId = 123;
+    private Integer lifetime = 300;
+    private Integer defaultMinPeriod = 1;
+    private boolean notifIfDisabled = true;
+    private String binding = "U";
 }
