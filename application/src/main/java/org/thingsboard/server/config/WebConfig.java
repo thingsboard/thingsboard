@@ -17,7 +17,9 @@ package org.thingsboard.server.config;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.thingsboard.server.utils.MiscUtils;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
@@ -30,8 +32,9 @@ public class WebConfig {
     }
 
     @RequestMapping("/swagger-ui.html")
-    public void redirectSwagger(HttpServletResponse response) throws IOException {
-        response.sendRedirect("/swagger-ui/");
+    public void redirectSwagger(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String baseUrl = MiscUtils.constructBaseUrl(request);
+        response.sendRedirect(baseUrl + "/swagger-ui/");
     }
 
 }
