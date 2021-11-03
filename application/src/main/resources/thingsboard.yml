@@ -849,7 +849,7 @@ swagger:
   security_path_regex: "${SWAGGER_SECURITY_PATH_REGEX:/api/.*}"
   non_security_path_regex: "${SWAGGER_NON_SECURITY_PATH_REGEX:/api/(?:noauth|v1)/.*}"
   title: "${SWAGGER_TITLE:ThingsBoard REST API}"
-  description: "${SWAGGER_DESCRIPTION:For instructions how to authorize requests please visit <a href='http://thingsboard.io/docs/reference/rest-api/'>REST API documentation page</a>.}"
+  description: "${SWAGGER_DESCRIPTION: ThingsBoard open-source IoT platform REST API documentation.}"
   contact:
     name: "${SWAGGER_CONTACT_NAME:Thingsboard team}"
     url: "${SWAGGER_CONTACT_URL:http://thingsboard.io}"
