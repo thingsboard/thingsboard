@@ -82,12 +82,13 @@ public class LwM2MBootstrapConfig implements Serializable {
         server0.defaultMinPeriod = servers.getDefaultMinPeriod();
         server0.notifIfDisabled = servers.isNotifIfDisabled();
         server0.binding = BindingMode.parse(servers.getBinding());
-        configBs.servers.put(0, server0);
+//        configBs.servers.put(0, server0);
+//        this.lwm2mServer
         /* Security Configuration (object 0) as defined in LWM2M 1.0.x TS. Bootstrap instance = 0 */
-        this.bootstrapServer.setBootstrapServerIs(true);
-        configBs.security.put(0, setServerSecurity(this.lwm2mServer.getHost(), this.lwm2mServer.getPort(), this.lwm2mServer.getSecurityHost(), this.lwm2mServer.getSecurityPort(), this.bootstrapServer.isBootstrapServerIs(), this.bootstrapServer.getSecurityMode(), this.bootstrapServer.getClientPublicKeyOrId(), this.bootstrapServer.getServerPublicKey(), this.bootstrapServer.getClientSecretKey(), this.bootstrapServer.getServerId()));
+//        this.bootstrapServer.getServerConfig().setBootstrapServerIs(true);
+//        configBs.security.put(0, setServerSecurity(this.lwm2mServer.getHost(), this.lwm2mServer.getPort(), this.lwm2mServer.getSecurityHost(), this.lwm2mServer.getSecurityPort(), this.bootstrapServer.isBootstrapServerIs(), this.bootstrapServer.getSecurityMode(), this.bootstrapServer.getClientPublicKeyOrId(), this.bootstrapServer.getServerPublicKey(), this.bootstrapServer.getClientSecretKey(), this.bootstrapServer.getServerId()));
         /* Security Configuration (object 0) as defined in LWM2M 1.0.x TS. Server instance = 1 */
-        configBs.security.put(1, setServerSecurity(this.lwm2mServer.getHost(), this.lwm2mServer.getPort(), this.lwm2mServer.getSecurityHost(), this.lwm2mServer.getSecurityPort(), this.lwm2mServer.isBootstrapServerIs(), this.lwm2mServer.getSecurityMode(), this.lwm2mServer.getClientPublicKeyOrId(), this.lwm2mServer.getServerPublicKey(), this.lwm2mServer.getClientSecretKey(), this.lwm2mServer.getServerId()));
+//        configBs.security.put(1, setServerSecurity(this.lwm2mServer.getHost(), this.lwm2mServer.getPort(), this.lwm2mServer.getSecurityHost(), this.lwm2mServer.getSecurityPort(), this.lwm2mServer.isBootstrapServerIs(), this.lwm2mServer.getSecurityMode(), this.lwm2mServer.getClientPublicKeyOrId(), this.lwm2mServer.getServerPublicKey(), this.lwm2mServer.getClientSecretKey(), this.lwm2mServer.getServerId()));
         return configBs;
     }
 

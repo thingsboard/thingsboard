@@ -23,5 +23,5 @@ public class BootstrapServerSecurity {
     private Integer lifetime = 300;
     private Integer defaultMinPeriod = 1;
     private boolean notifIfDisabled = true;
-    private String binding = "UQ";
+    private String binding = "U";
 }

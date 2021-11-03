@@ -27,6 +27,10 @@ import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKServerCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKServerCredentials;
+import org.thingsboard.server.common.data.device.profile.lwm2mTransportConfiguration.BootstrapServerConfig;
 import org.thingsboard.server.common.data.device.profile.lwm2mTransportConfiguration.BootstrapServerSecurity;
 import org.thingsboard.server.common.data.device.profile.lwm2mTransportConfiguration.BootstrapConfiguration;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -127,14 +131,14 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
                 /* Use RPK only */
                 case PSK:
                     store.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(store.getEndpoint(),
-                            lwM2MBootstrapConfig.getBootstrapServer().getClientPublicKeyOrId(),
-                            Hex.decodeHex(lwM2MBootstrapConfig.getBootstrapServer().getClientSecretKey().toCharArray())));
+                            ((PSKServerCredentials)lwM2MBootstrapConfig.getBootstrapServer().getBootstrapClientCredentials()).getClientPublicKeyOrId(),
+                            Hex.decodeHex(((PSKServerCredentials)lwM2MBootstrapConfig.getBootstrapServer().getBootstrapClientCredentials()).getClientSecretKey().toCharArray())));
                     store.setSecurityMode(SecurityMode.PSK);
                     break;
                 case RPK:
                     try {
                         store.setSecurityInfo(SecurityInfo.newRawPublicKeyInfo(store.getEndpoint(),
-                                SecurityUtil.publicKey.decode(Hex.decodeHex(lwM2MBootstrapConfig.getBootstrapServer().getClientPublicKeyOrId().toCharArray()))));
+                                SecurityUtil.publicKey.decode(Hex.decodeHex(((RPKServerCredentials)lwM2MBootstrapConfig.getBootstrapServer().getBootstrapClientCredentials()).getClientPublicKeyOrId().toCharArray()))));
                         store.setSecurityMode(SecurityMode.RPK);
                         break;
                     } catch (IOException | GeneralSecurityException e) {
@@ -160,23 +164,23 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
         if (lwM2MBootstrapConfig != null) {
             BootstrapConfiguration bootstrapObject = getBootstrapParametersFromThingsboard(store.getDeviceProfile());
             lwM2MBootstrapConfig.setServers(JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getServers()), BootstrapServerSecurity.class));
-            LwM2MServerBootstrap bootstrapServerProfile = JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getBootstrapServer()), LwM2MServerBootstrap.class);
-            if (SecurityMode.NO_SEC != bootstrapServerProfile.getSecurityMode() && bootstrapServerProfile != null) {
-                bootstrapServerProfile.setSecurityHost(bootstrapServerProfile.getHost());
-                bootstrapServerProfile.setSecurityPort(bootstrapServerProfile.getPort());
-            }
-            LwM2MServerBootstrap profileLwm2mServer = JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getLwm2mServer()), LwM2MServerBootstrap.class);
-            if (SecurityMode.NO_SEC != profileLwm2mServer.getSecurityMode() && profileLwm2mServer != null) {
-                profileLwm2mServer.setSecurityHost(profileLwm2mServer.getHost());
-                profileLwm2mServer.setSecurityPort(profileLwm2mServer.getPort());
-            }
+            BootstrapServerConfig bootstrapServerProfile = JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getBootstrapServer()), BootstrapServerConfig.class);
+//            if (LwM2MSecurityMode.NO_SEC != bootstrapServerProfile.getSecurityMode() && bootstrapServerProfile != null) {
+//                bootstrapServerProfile.setSecurityHost(bootstrapServerProfile.getServerConfig().getHost());
+//                bootstrapServerProfile.getServerConfig().setSecurityPort(bootstrapServerProfile.getServerConfig().getPort());
+//            }
+            BootstrapServerConfig profileLwm2mServer = JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getLwm2mServer()), BootstrapServerConfig.class);
+//            if (SecurityMode.NO_SEC != profileLwm2mServer.getSecurityMode() && profileLwm2mServer != null) {
+//                profileLwm2mServer.getServerConfig().setSecurityHost(profileLwm2mServer.getServerConfig().getHost());
+//                profileLwm2mServer.getServerConfig().setSecurityPort(profileLwm2mServer.getServerConfig().getPort());
+//            }
             UUID sessionUUiD = UUID.randomUUID();
             TransportProtos.SessionInfoProto sessionInfo = helper.getValidateSessionInfo(store.getMsg(), sessionUUiD.getMostSignificantBits(), sessionUUiD.getLeastSignificantBits());
             bsSessions.put(store.getEndpoint(), sessionInfo);
             context.getTransportService().registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(null, null, null, sessionInfo, context.getTransportService()));
             if (this.getValidatedSecurityMode(lwM2MBootstrapConfig.getBootstrapServer(), bootstrapServerProfile, lwM2MBootstrapConfig.getLwm2mServer(), profileLwm2mServer)) {
-                lwM2MBootstrapConfig.setBootstrapServer(new LwM2MServerBootstrap(lwM2MBootstrapConfig.getBootstrapServer(), bootstrapServerProfile));
-                lwM2MBootstrapConfig.setLwm2mServer(new LwM2MServerBootstrap(lwM2MBootstrapConfig.getLwm2mServer(), profileLwm2mServer));
+                lwM2MBootstrapConfig.setBootstrapServer(new LwM2MServerBootstrap(lwM2MBootstrapConfig.getBootstrapServer().getBootstrapClientCredentials(), bootstrapServerProfile));
+                lwM2MBootstrapConfig.setLwm2mServer(new LwM2MServerBootstrap(lwM2MBootstrapConfig.getLwm2mServer().getBootstrapClientCredentials(), profileLwm2mServer));
                 String logMsg = String.format("%s: getParametersBootstrap: %s Access connect client with bootstrap server.", LOG_LWM2M_INFO, store.getEndpoint());
                 helper.sendParametersOnThingsboardTelemetry(helper.getKvStringtoThingsboard(LOG_LWM2M_TELEMETRY, logMsg), sessionInfo);
                 return lwM2MBootstrapConfig;
@@ -202,9 +206,9 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
      * @param profileLwm2mServer      - Bootstrap -> Security of lwm2mServer in profile
      * @return false if not sync between SecurityMode of Bootstrap credential and profile
      */
-    private boolean getValidatedSecurityMode(LwM2MServerBootstrap bootstrapFromCredential, LwM2MServerBootstrap bootstrapServerProfile, LwM2MServerBootstrap lwm2mFromCredential, LwM2MServerBootstrap profileLwm2mServer) {
-        return (bootstrapFromCredential.getSecurityMode().equals(bootstrapServerProfile.getSecurityMode()) &&
-                lwm2mFromCredential.getSecurityMode().equals(profileLwm2mServer.getSecurityMode()));
+    private boolean getValidatedSecurityMode(LwM2MServerBootstrap bootstrapFromCredential, BootstrapServerConfig bootstrapServerProfile, LwM2MServerBootstrap lwm2mFromCredential, BootstrapServerConfig profileLwm2mServer) {
+        return (bootstrapFromCredential.getSecurityMode().equals(SecurityMode.valueOf(bootstrapServerProfile.getSecurityMode().name())) &&
+                lwm2mFromCredential.getSecurityMode().equals(SecurityMode.valueOf(profileLwm2mServer.getSecurityMode().name())));
     }
 
     public TransportProtos.SessionInfoProto getSessionByEndpoint(String endpoint) {
