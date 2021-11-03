@@ -45,28 +45,30 @@ export const DEFAULT_PAGING_TRANSMISSION_WINDOW = 10000;
 
 export enum BingingMode {
   U = 'U',
-  UQ = 'UQ',
+  M = 'M',
+  H = 'H',
   T = 'T',
-  TQ = 'TQ',
   S = 'S',
-  SQ = 'SQ',
-  US = 'US',
-  TS = 'TS',
+  N = 'N',
+  UQ = 'UQ',
   UQS = 'UQS',
-  TQS = 'TQS'
+  TQ = 'TQ',
+  TQS = 'TQS',
+  SQ = 'SQ'
 }
 
 export const BingingModeTranslationsMap = new Map<BingingMode, string>(
   [
     [BingingMode.U, 'device-profile.lwm2m.binding-type.u'],
-    [BingingMode.UQ, 'device-profile.lwm2m.binding-type.uq'],
-    [BingingMode.US, 'device-profile.lwm2m.binding-type.us'],
-    [BingingMode.UQS, 'device-profile.lwm2m.binding-type.uqs'],
+    [BingingMode.M, 'device-profile.lwm2m.binding-type.m'],
+    [BingingMode.H, 'device-profile.lwm2m.binding-type.h'],
     [BingingMode.T, 'device-profile.lwm2m.binding-type.t'],
-    [BingingMode.TQ, 'device-profile.lwm2m.binding-type.tq'],
-    [BingingMode.TS, 'device-profile.lwm2m.binding-type.ts'],
-    [BingingMode.TQS, 'device-profile.lwm2m.binding-type.tqs'],
     [BingingMode.S, 'device-profile.lwm2m.binding-type.s'],
+    [BingingMode.N, 'device-profile.lwm2m.binding-type.n'],
+    [BingingMode.UQ, 'device-profile.lwm2m.binding-type.uq'],
+    [BingingMode.UQS, 'device-profile.lwm2m.binding-type.uqs'],
+    [BingingMode.TQ, 'device-profile.lwm2m.binding-type.tq'],
+    [BingingMode.TQS, 'device-profile.lwm2m.binding-type.tqs'],
     [BingingMode.SQ, 'device-profile.lwm2m.binding-type.sq']
   ]
 );

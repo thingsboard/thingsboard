@@ -51,7 +51,8 @@
   <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px" fxLayoutGap.xs="0px">
     <mat-form-field fxFlex>
       <mat-label>{{ 'device-profile.lwm2m.short-id' | translate }}</mat-label>
-      <input matInput type="number" min="1" max="65534" formControlName="serverId" required>
+      <input matInput type="number" min="1" max="65534" formControlName="serverId" required
+             matTooltip="{{ 'device-profile.lwm2m.short-id-tooltip' | translate  }}">
       <mat-error *ngIf="serverFormGroup.get('serverId').hasError('required')">
         {{ 'device-profile.lwm2m.short-id-required' | translate }}
       </mat-error>
