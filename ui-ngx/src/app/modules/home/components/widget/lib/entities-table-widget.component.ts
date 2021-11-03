@@ -44,7 +44,7 @@ import {
   createLabelFromDatasource,
   deepClone,
   hashCode,
-  isDefined, isNotEmptyStr,
+  isDefined,
   isNumber,
   isObject,
   isUndefined
@@ -80,6 +80,7 @@ import {
   getEntityValue,
   getRowStyleInfo,
   getTableCellButtonActions,
+  noDataMessage,
   prepareTableCellButtonActions,
   RowStyleInfo,
   TableCellButtonActionDescriptor,
@@ -142,6 +143,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   public columns: Array<EntityColumn> = [];
   public displayedColumns: string[] = [];
   public entityDatasource: EntityDatasource;
+  public noDataDisplayMessageText: string;
   private setCellButtonAction: boolean;
 
   private cellContentCache: Array<any> = [];
@@ -211,13 +213,6 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     this.ctx.updateWidgetParams();
   }
 
-  get noDataDisplayMessageText() {
-    const noDataDisplayMessage = this.ctx.widgetConfig.noDataDisplayMessage;
-    return isNotEmptyStr(noDataDisplayMessage)
-      ? this.utils.customTranslation(noDataDisplayMessage, noDataDisplayMessage)
-      : this.translate.instant('entity.no-entities-prompt');
-  }
-
   ngAfterViewInit(): void {
     fromEvent(this.searchInputField.nativeElement, 'keyup')
       .pipe(
@@ -281,6 +276,9 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     }
     this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
     this.pageLink.pageSize = this.displayPagination ? this.defaultPageSize : 1024;
+
+    this.noDataDisplayMessageText =
+      noDataMessage(this.widgetConfig.noDataDisplayMessage, 'entity.no-entities-prompt', this.utils, this.translate);
 
     const cssString = constructTableCssString(this.widgetConfig);
     const cssParser = new cssjs();

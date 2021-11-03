@@ -39,7 +39,7 @@ import {
   createLabelFromDatasource,
   deepClone,
   hashCode,
-  isDefined, isNotEmptyStr,
+  isDefined,
   isNumber,
   isObject,
   isUndefined
@@ -74,6 +74,7 @@ import {
   getColumnWidth,
   getRowStyleInfo,
   getTableCellButtonActions,
+  noDataMessage,
   prepareTableCellButtonActions,
   RowStyleInfo,
   TableCellButtonActionDescriptor,
@@ -166,6 +167,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   public columns: Array<EntityColumn> = [];
   public displayedColumns: string[] = [];
   public alarmsDatasource: AlarmsDatasource;
+  public noDataDisplayMessageText: string;
   private setCellButtonAction: boolean;
 
   private cellContentCache: Array<any> = [];
@@ -265,13 +267,6 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     }
   }
 
-  get noDataDisplayMessageText() {
-    const noDataDisplayMessage = this.ctx.widgetConfig.noDataDisplayMessage;
-    return isNotEmptyStr(noDataDisplayMessage)
-      ? this.utils.customTranslation(noDataDisplayMessage, noDataDisplayMessage)
-      : this.translate.instant('alarm.no-alarms-prompt');
-  }
-
   ngAfterViewInit(): void {
     fromEvent(this.searchInputField.nativeElement, 'keyup')
       .pipe(
@@ -363,6 +358,9 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.pageLink.statusList = alarmStatusList;
     this.pageLink.severityList = isDefined(this.widgetConfig.alarmSeverityList) ? this.widgetConfig.alarmSeverityList : [];
     this.pageLink.typeList = isDefined(this.widgetConfig.alarmTypeList) ? this.widgetConfig.alarmTypeList : [];
+
+    this.noDataDisplayMessageText =
+      noDataMessage(this.widgetConfig.noDataDisplayMessage, 'alarm.no-alarms-prompt', this.utils, this.translate);
 
     const cssString = constructTableCssString(this.widgetConfig);
     const cssParser = new cssjs();

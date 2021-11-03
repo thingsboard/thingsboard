@@ -141,6 +141,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   widgetErrorData: ExceptionData;
   loadingData: boolean;
   displayNoData = false;
+  noDataDisplayMessageText: string;
 
   displayLegend: boolean;
   legendConfig: LegendConfig;
@@ -359,13 +360,13 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     setTimeout(() => {
       this.dashboardWidget.updateWidgetParams();
     }, 0);
-  }
 
-  get noDataDisplayMessageText(): string {
     const noDataDisplayMessage = this.widget.config.noDataDisplayMessage;
-    return isNotEmptyStr(noDataDisplayMessage)
-      ? this.utils.customTranslation(noDataDisplayMessage, noDataDisplayMessage)
-      : this.translate.instant('widget.no-data');
+    if (isNotEmptyStr(noDataDisplayMessage)) {
+      this.noDataDisplayMessageText = this.utils.customTranslation(noDataDisplayMessage, noDataDisplayMessage);
+    } else {
+      this.noDataDisplayMessageText = this.translate.instant('widget.no-data');
+    }
   }
 
   ngAfterViewInit(): void {
