@@ -851,8 +851,8 @@ swagger:
   title: "${SWAGGER_TITLE:ThingsBoard REST API}"
   description: "${SWAGGER_DESCRIPTION: ThingsBoard open-source IoT platform REST API documentation.}"
   contact:
-    name: "${SWAGGER_CONTACT_NAME:Thingsboard team}"
-    url: "${SWAGGER_CONTACT_URL:http://thingsboard.io}"
+    name: "${SWAGGER_CONTACT_NAME:ThingsBoard team}"
+    url: "${SWAGGER_CONTACT_URL:https://thingsboard.io}"
     email: "${SWAGGER_CONTACT_EMAIL:info@thingsboard.io}"
   license:
     title: "${SWAGGER_LICENSE_TITLE:Apache License Version 2.0}"
