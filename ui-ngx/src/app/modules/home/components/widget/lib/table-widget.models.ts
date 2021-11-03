@@ -23,6 +23,8 @@ import { Direction, EntityDataSortOrder, EntityKey } from '@shared/models/query/
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { FormattedData } from '@home/components/widget/lib/maps/map-models';
+import { UtilsService } from '@core/services/utils.service';
+import { TranslateService } from '@ngx-translate/core';
 
 const tinycolor = tinycolor_;
 
@@ -350,6 +352,14 @@ function filterTableCellButtonAction(widgetContext: WidgetContext,
   } else {
     return true;
   }
+}
+
+export function noDataMessage(noDataDisplayMessage: string, defaultMessage: string,
+                              utils: UtilsService, translate: TranslateService): string {
+  if (isNotEmptyStr(noDataDisplayMessage)) {
+    return utils.customTranslation(noDataDisplayMessage, noDataDisplayMessage);
+  }
+  return translate.instant(defaultMessage);
 }
 
 export function constructTableCssString(widgetConfig: WidgetConfig): string {

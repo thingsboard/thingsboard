@@ -209,6 +209,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       titleStyle: [null, []],
       units: [null, []],
       decimals: [null, [Validators.min(0), Validators.max(15), Validators.pattern(/^\d*$/)]],
+      noDataDisplayMessage: [null, []],
       showLegend: [null, []],
       legendConfig: [null, []]
     });
@@ -411,6 +412,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
             },
             units: config.units,
             decimals: config.decimals,
+            noDataDisplayMessage: isDefined(config.noDataDisplayMessage) ? config.noDataDisplayMessage : '',
             showLegend: isDefined(config.showLegend) ? config.showLegend :
               this.widgetType === widgetType.timeseries,
             legendConfig: config.legendConfig || defaultLegendConfig(this.widgetType)
