@@ -42,6 +42,8 @@ import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalIn
 @Slf4j
 public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements HasName, HasTenantId, HasOtaPackage {
 
+    private static final long serialVersionUID = 6998485460273302018L;
+
     @ApiModelProperty(position = 3, value = "JSON object with Tenant Id that owns the profile.", readOnly = true)
     private TenantId tenantId;
     @NoXss
