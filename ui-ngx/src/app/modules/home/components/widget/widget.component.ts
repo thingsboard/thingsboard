@@ -279,6 +279,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.widgetContext.servicesMap = ServicesMap;
     this.widgetContext.isEdit = this.isEdit;
     this.widgetContext.isMobile = this.isMobile;
+    this.widgetContext.toastTargetId = this.toastTargetId;
 
     this.widgetContext.subscriptionApi = {
       createSubscription: this.createSubscription.bind(this),

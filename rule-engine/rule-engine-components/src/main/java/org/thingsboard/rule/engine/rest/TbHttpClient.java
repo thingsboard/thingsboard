@@ -182,7 +182,8 @@ public class TbHttpClient {
         HttpMethod method = HttpMethod.valueOf(config.getRequestMethod());
         HttpEntity<String> entity;
         if(HttpMethod.GET.equals(method) || HttpMethod.HEAD.equals(method) ||
-            HttpMethod.OPTIONS.equals(method) || HttpMethod.TRACE.equals(method)) {
+            HttpMethod.OPTIONS.equals(method) || HttpMethod.TRACE.equals(method) ||
+            config.isIgnoreRequestBody()) {
             entity = new HttpEntity<>(headers);
         } else {
             entity = new HttpEntity<>(msg.getData(), headers);

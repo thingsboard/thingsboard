@@ -92,14 +92,16 @@ export class MaterialIconSelectComponent extends PageComponent implements OnInit
   }
 
   openIconDialog() {
-    this.dialogs.materialIconPicker(this.materialIconFormGroup.get('icon').value).subscribe(
-      (icon) => {
-        if (icon) {
-          this.materialIconFormGroup.patchValue(
-            {icon}, {emitEvent: true}
-          );
+    if (!this.disabled) {
+      this.dialogs.materialIconPicker(this.materialIconFormGroup.get('icon').value).subscribe(
+        (icon) => {
+          if (icon) {
+            this.materialIconFormGroup.patchValue(
+              {icon}, {emitEvent: true}
+            );
+          }
         }
-      }
-    );
+      );
+    }
   }
 }

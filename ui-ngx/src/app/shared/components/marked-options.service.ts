@@ -21,6 +21,7 @@ import { DOCUMENT } from '@angular/common';
 import { WINDOW } from '@core/services/window.service';
 import { Tokenizer } from 'marked';
 import * as marked from 'marked';
+import { Clipboard } from '@angular/cdk/clipboard';
 
 const copyCodeBlock = '{:copy-code}';
 const codeStyleRegex = '^{:code-style="(.*)"}\n';
@@ -47,6 +48,7 @@ export class MarkedOptionsService extends MarkedOptions {
   private id = 1;
 
   constructor(private translate: TranslateService,
+              private clipboardService: Clipboard,
               @Inject(WINDOW) private readonly window: Window,
               @Inject(DOCUMENT) private readonly document: Document) {
     super();
@@ -162,7 +164,7 @@ export class MarkedOptionsService extends MarkedOptions {
     const copyWrapper = $('#codeWrapper' + id);
     if (copyWrapper.hasClass('noChars')) {
       const text = decodeURIComponent($('#copyCodeId' + id).text());
-      this.window.navigator.clipboard.writeText(text).then(() => {
+      if (this.clipboardService.copy(text)) {
         import('tooltipster').then(
           () => {
             if (!copyWrapper.hasClass('tooltipstered')) {
@@ -186,9 +188,8 @@ export class MarkedOptionsService extends MarkedOptions {
             }
             const tooltip = copyWrapper.tooltipster('instance');
             tooltip.open();
-          }
-        );
-      });
+          });
+      }
     }
   }
 }

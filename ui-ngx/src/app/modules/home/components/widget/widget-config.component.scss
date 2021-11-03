@@ -20,9 +20,6 @@
     .tb-advanced-widget-config {
       height: 100%;
     }
-    .tb-advanced-widget-config {
-      height: 100%;
-    }
     .tb-datasources {
 
       .handle {
@@ -69,6 +66,28 @@
         padding-left: 8px;
       }
     }
+    .fields-group {
+      padding: 0 16px 8px;
+      margin-bottom: 10px;
+      border: 1px groove rgba(0, 0, 0, .25);
+      border-radius: 4px;
+      legend {
+        color: rgba(0, 0, 0, .7);
+        width: fit-content;
+      }
+    }
+    .fields-group-slider {
+      padding: 0;
+      legend {
+        margin-left: 16px;
+      }
+      .tb-settings {
+        padding: 0 16px 8px;
+      }
+    }
+    .tb-widget-style {
+      margin-top: 16px;
+    }
   }
 }
 
@@ -94,6 +113,36 @@
       white-space: normal;
     }
     .mat-expansion-panel {
+      &.tb-settings {
+        box-shadow: none;
+        .mat-content {
+          overflow: visible;
+        }
+        .mat-expansion-panel-header {
+          padding: 0;
+          &:hover {
+            background: none;
+          }
+          .mat-expansion-indicator {
+            padding: 2px;
+          }
+        }
+        .mat-expansion-panel-header-description {
+          align-items: center;
+        }
+        .mat-expansion-panel-body{
+          padding: 0;
+        }
+        .tb-json-object-panel {
+          margin: 0 0 8px;
+        }
+        .mat-checkbox-layout {
+          margin: 5px 0;
+        }
+        .mat-checkbox-inner-container {
+          margin-right: 12px;
+        }
+      }
       &.tb-datasources {
         &.mat-expanded {
           overflow: visible;
@@ -151,6 +200,9 @@
           min-height: 32px;
         }
       }
+    }
+    .mat-slide-toggle-content {
+      white-space: normal;
     }
   }
 }
