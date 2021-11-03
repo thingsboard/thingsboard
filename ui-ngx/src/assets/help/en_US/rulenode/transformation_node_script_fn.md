@@ -5,7 +5,7 @@
 
 *function Transform(msg, metadata, msgType): {msg: object, metadata: object, msgType: string}*
 
-JavaScript function transforming input Message payload, Metadata or Message type.  
+The JavaScript function to transform input Message payload, Metadata and/or Message type to the output message.  
 
 **Parameters:**
 
@@ -29,11 +29,29 @@ All fields in resulting object are optional and will be taken from original mess
 
 ##### Examples
 
-* Change message type to `CUSTOM_REQUEST`:
+* Add sum of two fields ('a' and 'b') as a new field ('sum') of existing message:
 
 ```javascript
-return { msgType: 'CUSTOM_REQUEST' };
-{:copy-code}
+if(typeof msg.a !== "undefined" && typeof msg.b !== "undefined"){
+    msg.sum = msg.a + msg.b;
+}
+return {msg: msg};
+```
+
+* Transform value of the 'temperature' field from °F to °C:
+
+```javascript
+msg.temperature = (msg.temperature - 32) * 5 / 9;
+return {msg: msg};
+```
+
+* Replace the incoming message with the new message that contains only one field - count of properties in the original message:
+
+```javascript
+var newMsg = {
+    count: Object.keys(msg).length
+};
+return {msg: newMsg};
 ```
 
 <ul>

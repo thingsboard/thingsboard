@@ -29,6 +29,16 @@ Should return key/value object presenting style attributes.
 
 ##### Examples
 
+* Set color and font-weight table cell content:
+
+```javascript
+return {
+  color:'rgb(0, 132, 214)',
+  fontWeight: 600
+}
+{:copy-code}
+```
+
 * Set color depending on device temperature value:
 
 ```javascript

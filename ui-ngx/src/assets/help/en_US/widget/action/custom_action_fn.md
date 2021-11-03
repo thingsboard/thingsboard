@@ -17,67 +17,65 @@ A JavaScript function performing custom action.
 
 ##### Examples
 
-* Display alert dialog with entity information:
+<br>
 
-```javascript
-{:code-style="max-height: 300px;"}
-var title;
-var content;
-if (entityName) {
-    title = entityName + ' details';
-    content = '<b>Entity name</b>: ' + entityName;
-    if (additionalParams && additionalParams.entity) {
-        var entity = additionalParams.entity;
-        if (entity.id) {
-            content += '<br><b>Entity type</b>: ' + entity.id.entityType;
-        }
-        if (!isNaN(entity.temperature) && entity.temperature !== '') {
-            content += '<br><b>Temperature</b>: ' + entity.temperature + ' °C';
-        }
-    }
-} else {
-    title = 'No entity information available';
-    content = '<b>No entity information available</b>';
-}
+<div style="padding-left: 32px;"
+     tb-help-popup="widget/action/examples_custom_action/custom_action_display_alert"
+     tb-help-popup-placement="top"
+     [tb-help-popup-style]="{maxHeight: '50vh', maxWidth: '50vw'}"
+     trigger-style="font-size: 16px;"
+     trigger-text="Display alert dialog with entity information">
+</div>
 
-showAlertDialog(title, content);
- 
-function showAlertDialog(title, content) {
-    setTimeout(function() {
-      widgetContext.dialogs.alert(title, content).subscribe();
-    }, 100);
-}
-{:copy-code}
-```
+<br>
 
-* Delete device after confirmation:
+<div style="padding-left: 32px;"
+     tb-help-popup="widget/action/examples_custom_action/custom_action_delete_device_confirm"
+     tb-help-popup-placement="top"
+     [tb-help-popup-style]="{maxHeight: '50vh', maxWidth: '50vw'}"
+     trigger-style="font-size: 16px;"
+     trigger-text="Delete device after confirmation">
+</div>
 
-```javascript
-{:code-style="max-height: 300px;"}
-var $injector = widgetContext.$scope.$injector;
-var dialogs = $injector.get(widgetContext.servicesMap.get('dialogs'));
-var deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));
+<br>
 
-openDeleteDeviceDialog();
+<div style="padding-left: 32px;"
+     tb-help-popup="widget/action/examples_custom_action/custom_action_return_previous_state"
+     tb-help-popup-placement="top"
+     [tb-help-popup-style]="{maxHeight: '50vh', maxWidth: '50vw'}"
+     trigger-style="font-size: 16px;"
+     trigger-text="Return to the previous state">
+</div>
 
-function openDeleteDeviceDialog() {
-  var title = 'Are you sure you want to delete the device ' + entityName + '?';
-  var content = 'Be careful, after the confirmation, the device and all related data will become unrecoverable!';
-  dialogs.confirm(title, content, 'Cancel', 'Delete').subscribe(
-    function(result) {
-      if (result) {
-        deleteDevice();
-      }
-    }
-  );
-}
+<br>
 
-function deleteDevice() {
-  deviceService.deleteDevice(entityId.id).subscribe(
-    function() {
-      widgetContext.updateAliases();
-    }
-  );
-}
-{:copy-code}
-```
+<div style="padding-left: 32px;"
+     tb-help-popup="widget/action/examples_custom_action/custom_action_open_state_save_parameters"
+     tb-help-popup-placement="top"
+     [tb-help-popup-style]="{maxHeight: '50vh', maxWidth: '50vw'}"
+     trigger-style="font-size: 16px;"
+     trigger-text="Open state conditionally with saving particular state parameters">
+</div>
+
+<br>
+
+<div style="padding-left: 32px;"
+     tb-help-popup="widget/action/examples_custom_action/custom_action_back_first_and_open_state"
+     tb-help-popup-placement="top"
+     [tb-help-popup-style]="{maxHeight: '50vh', maxWidth: '50vw'}"
+     trigger-style="font-size: 16px;"
+     trigger-text="Go back to the first state, after this go to the target state">
+</div>
+
+<br>
+
+<div style="padding-left: 32px;"
+     tb-help-popup="widget/action/examples_custom_action/custom_action_copy_access_token"
+     tb-help-popup-placement="top"
+     [tb-help-popup-style]="{maxHeight: '50vh', maxWidth: '50vw'}"
+     trigger-style="font-size: 16px;"
+     trigger-text="Copy device access token to buffer">
+</div>
+
+<br>
+<br>

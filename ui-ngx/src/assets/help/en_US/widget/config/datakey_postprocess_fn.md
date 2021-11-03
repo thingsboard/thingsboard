@@ -54,6 +54,33 @@ if (prevOrigValue) {
 }
 {:copy-code}
 ```
+* Formatting data to time format
+
+```javascript
+if (value) {
+  return moment(value).format("DD/MM/YYYY HH:mm:ss");
+}
+return '';
+{:copy-code}
+```
+
+* Creates line-breaks for 0 values, when used in line chart
+
+```javascript
+if (value === 0) {
+  return null;
+} else {
+  return value;
+}
+{:copy-code}
+```
+
+* Display data point of the HTML value card under the condition
+
+```javascript
+return value ? '<div class="info"><b>Temperature: </b>'+value+' °C</div>' : '';
+{:copy-code}
+```
 
 <br>
 <br>
