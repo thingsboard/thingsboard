@@ -106,6 +106,28 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testSaveUserWithViolationOfFiledValidation() throws Exception {
+        loginSysAdmin();
+
+        Tenant tenant = new Tenant();
+        tenant.setTitle("My tenant");
+        Tenant savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+        Assert.assertNotNull(savedTenant);
+
+        String email = "tenant2@thingsboard.org";
+        User user = new User();
+        user.setAuthority(Authority.TENANT_ADMIN);
+        user.setTenantId(savedTenant.getId());
+        user.setEmail(email);
+        user.setFirstName(RandomStringUtils.randomAlphabetic(300));
+        user.setLastName("Downs");
+        doPost("/api/user", user).andExpect(statusReason(containsString("Validation error: length of first name must be equal or less than 255")));
+        user.setFirstName("Normal name");
+        user.setLastName(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/user", user).andExpect(statusReason(containsString("length of last name must be equal or less than 255")));
+    }
+
+    @Test
     public void testUpdateUserFromDifferentTenant() throws Exception {
         loginSysAdmin();
         Tenant tenant = new Tenant();

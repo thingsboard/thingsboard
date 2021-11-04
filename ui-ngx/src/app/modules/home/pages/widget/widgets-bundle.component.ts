@@ -48,7 +48,7 @@ export class WidgetsBundleComponent extends EntityComponent<WidgetsBundle> {
   buildForm(entity: WidgetsBundle): FormGroup {
     return this.fb.group(
       {
-        title: [entity ? entity.title : '', [Validators.required]],
+        title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
         image: [entity ? entity.image : ''],
         description: [entity  ? entity.description : '', Validators.maxLength(255)]
       }

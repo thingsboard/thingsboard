@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.objects.TelemetryEntityView;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 /**
@@ -44,9 +45,11 @@ public class EntityView extends SearchTextBasedWithAdditionalInfo<EntityViewId>
     private TenantId tenantId;
     private CustomerId customerId;
     @NoXss
+    @Length(fieldName = "name")
     @ApiModelProperty(position = 5, required = true, value = "Entity View name", example = "A4B72CCDFF33")
     private String name;
     @NoXss
+    @Length(fieldName = "type")
     @ApiModelProperty(position = 6, required = true, value = "Device Profile Name", example = "Temperature Sensor")
     private String type;
     @ApiModelProperty(position = 8, required = true, value = "Set of telemetry and attribute keys to expose via Entity View.")

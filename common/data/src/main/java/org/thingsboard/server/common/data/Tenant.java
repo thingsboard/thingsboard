@@ -23,6 +23,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @ApiModel
@@ -31,6 +32,7 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
 
     private static final long serialVersionUID = 8057243243859922101L;
 
+    @Length(fieldName = "title")
     @NoXss
     @ApiModelProperty(position = 3, value = "Title of the tenant", example = "Company A")
     private String title;
@@ -48,7 +50,7 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
     public Tenant(TenantId id) {
         super(id);
     }
-    
+
     public Tenant(Tenant tenant) {
         super(tenant);
         this.title = tenant.getTitle();

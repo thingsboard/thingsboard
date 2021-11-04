@@ -103,7 +103,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     };
     const form = this.fb.group(
       {
-        name: [entity ? entity.name : '', [Validators.required]],
+        name: [entity ? entity.name : '', [Validators.required, Validators.maxLength(255)]],
         type: [entity ? entity.type : null, [Validators.required]],
         image: [entity ? entity.image : null],
         transportType: [entity ? entity.transportType : null, [Validators.required]],

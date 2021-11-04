@@ -58,7 +58,7 @@ export class RuleChainComponent extends EntityComponent<RuleChain> {
   buildForm(entity: RuleChain): FormGroup {
     return this.fb.group(
       {
-        name: [entity ? entity.name : '', [Validators.required]],
+        name: [entity ? entity.name : '', [Validators.required, Validators.maxLength(255)]],
         debugMode: [entity ? entity.debugMode : false],
         additionalInfo: this.fb.group(
           {

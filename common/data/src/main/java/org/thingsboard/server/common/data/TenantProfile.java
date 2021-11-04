@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.ByteArrayInputStream;
@@ -42,6 +43,7 @@ public class TenantProfile extends SearchTextBased<TenantProfileId> implements H
     private static final long serialVersionUID = 3021989561267192281L;
 
     @NoXss
+    @Length(fieldName = "name")
     @ApiModelProperty(position = 3, value = "Name of the tenant profile", example = "High Priority Tenants")
     private String name;
     @NoXss

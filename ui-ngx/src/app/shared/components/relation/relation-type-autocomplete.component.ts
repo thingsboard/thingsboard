@@ -68,7 +68,7 @@ export class RelationTypeAutocompleteComponent implements ControlValueAccessor, 
               public translate: TranslateService,
               private fb: FormBuilder) {
     this.relationTypeFormGroup = this.fb.group({
-      relationType: [null, this.required ? [Validators.required] : []]
+      relationType: [null, this.required ? [Validators.required, Validators.maxLength(255)] : [Validators.maxLength(255)]]
     });
   }
 

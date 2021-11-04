@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -72,6 +73,13 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
         doPost("/api/tenantProfile", savedTenantProfile, TenantProfile.class);
         TenantProfile foundTenantProfile = doGet("/api/tenantProfile/"+savedTenantProfile.getId().getId().toString(), TenantProfile.class);
         Assert.assertEquals(foundTenantProfile.getName(), savedTenantProfile.getName());
+    }
+
+    @Test
+    public void testSaveTenantProfileWithViolationOfLengthValidation() throws Exception {
+        loginSysAdmin();
+        TenantProfile tenantProfile = this.createTenantProfile(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/tenantProfile", tenantProfile).andExpect(statusReason(containsString("length of name must be equal or less than 255")));
     }
 
     @Test

@@ -58,7 +58,7 @@ export class CustomerComponent extends ContactBasedComponent<Customer> {
   buildEntityForm(entity: Customer): FormGroup {
     return this.fb.group(
       {
-        title: [entity ? entity.title : '', [Validators.required]],
+        title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
         additionalInfo: this.fb.group(
           {
             description: [entity && entity.additionalInfo ? entity.additionalInfo.description : ''],

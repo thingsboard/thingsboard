@@ -21,6 +21,7 @@ import io.swagger.annotations.ApiModelProperty;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.Valid;
@@ -32,6 +33,7 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
 
     private TenantId tenantId;
     @NoXss
+    @Length(fieldName = "title")
     private String title;
     private String image;
     @Valid

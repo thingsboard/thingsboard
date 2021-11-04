@@ -104,6 +104,9 @@
         <mat-error *ngIf="entityForm.get('title').hasError('required')">
           {{ 'dashboard.title-required' | translate }}
         </mat-error>
+        <mat-error *ngIf="entityForm.get('title').hasError('maxlength')">
+          {{ 'dashboard.title-max-length' | translate }}
+        </mat-error>
       </mat-form-field>
       <div formGroupName="configuration" fxLayout="column">
         <mat-form-field class="mat-block">

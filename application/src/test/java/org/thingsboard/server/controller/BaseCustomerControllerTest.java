@@ -91,6 +91,28 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
     }
 
     @Test
+    public void testSaveCustomerWithViolationOfValidation() throws Exception {
+        Customer customer = new Customer();
+        customer.setTitle(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/customer", customer).andExpect(statusReason(containsString("length of title must be equal or less than 255")));
+        customer.setTitle("Normal title");
+        customer.setCity(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/customer", customer).andExpect(statusReason(containsString("length of city must be equal or less than 255")));
+        customer.setCity("Normal city");
+        customer.setCountry(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/customer", customer).andExpect(statusReason(containsString("length of country must be equal or less than 255")));
+        customer.setCountry("Ukraine");
+        customer.setPhone(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/customer", customer).andExpect(statusReason(containsString("length of phone must be equal or less than 255")));
+        customer.setPhone("+3892555554512");
+        customer.setState(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/customer", customer).andExpect(statusReason(containsString("length of state must be equal or less than 255")));
+        customer.setState("Normal state");
+        customer.setZip(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/customer", customer).andExpect(statusReason(containsString("length of zip or postal code must be equal or less than 255")));
+    }
+
+    @Test
     public void testUpdateCustomerFromDifferentTenant() throws Exception {
         Customer customer = new Customer();
         customer.setTitle("My customer");

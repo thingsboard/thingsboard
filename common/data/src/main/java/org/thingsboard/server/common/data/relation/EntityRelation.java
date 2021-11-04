@@ -22,6 +22,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.validation.Length;
 
 import java.io.Serializable;
 
@@ -37,6 +38,7 @@ public class EntityRelation implements Serializable {
 
     private EntityId from;
     private EntityId to;
+    @Length(fieldName = "type")
     private String type;
     private RelationTypeGroup typeGroup;
     private transient JsonNode additionalInfo;
