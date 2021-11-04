@@ -147,18 +147,22 @@ public class DefaultDataUpdateService implements DataUpdateService {
                     if (deviceProfile.getProfileData().has("alarms") &&
                             !deviceProfile.getProfileData().get("alarms").isNull()) {
                         boolean isUpdated = false;
-                        JsonNode array = deviceProfile.getProfileData().get("alarms");
-                        for (JsonNode node : array) {
-                            if (node.has("createRules")) {
-                                JsonNode createRules = node.get("createRules");
+                        JsonNode alarms = deviceProfile.getProfileData().get("alarms");
+                        for (JsonNode alarm : alarms) {
+                            if (alarm.has("createRules")) {
+                                JsonNode createRules = alarm.get("createRules");
                                 for (AlarmSeverity severity : AlarmSeverity.values()) {
                                     if (createRules.has(severity.name())) {
-                                        isUpdated = isUpdated || convertDeviceProfileAlarmRulesForVersion330(createRules.get(severity.name()).get("condition").get("spec"));
+                                        JsonNode spec = createRules.get(severity.name()).get("condition").get("spec");
+                                        if (convertDeviceProfileAlarmRulesForVersion330(spec))
+                                            isUpdated = true;
                                     }
                                 }
                             }
-                            if (node.has("clearRule") && !node.get("clearRule").isNull()) {
-                                isUpdated = isUpdated || convertDeviceProfileAlarmRulesForVersion330(node.get("clearRule").get("condition").get("spec"));
+                            if (alarm.has("clearRule") && !alarm.get("clearRule").isNull()) {
+                                JsonNode spec = alarm.get("clearRule").get("condition").get("spec");
+                                if (convertDeviceProfileAlarmRulesForVersion330(spec))
+                                    isUpdated = true;
                             }
                         }
                         if (isUpdated) {
