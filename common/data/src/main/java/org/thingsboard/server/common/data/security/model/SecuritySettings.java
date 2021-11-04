@@ -25,6 +25,8 @@ import java.io.Serializable;
 @Data
 public class SecuritySettings implements Serializable {
 
+    private static final long serialVersionUID = -1307613974597312465L;
+
     @ApiModelProperty(position = 1, value = "The user password policy object." )
     private UserPasswordPolicy passwordPolicy;
     @ApiModelProperty(position = 2, value = "Maximum number of failed login attempts allowed before user account is locked." )

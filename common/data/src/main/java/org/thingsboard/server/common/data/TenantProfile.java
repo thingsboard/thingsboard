@@ -39,6 +39,8 @@ import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalIn
 @Slf4j
 public class TenantProfile extends SearchTextBased<TenantProfileId> implements HasName {
 
+    private static final long serialVersionUID = 3021989561267192281L;
+
     @NoXss
     @ApiModelProperty(position = 3, value = "Name of the tenant profile", example = "High Priority Tenants")
     private String name;

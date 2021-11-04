@@ -24,6 +24,8 @@ import java.util.Optional;
  */
 public class BaseAttributeKvEntry implements AttributeKvEntry {
 
+    private static final long serialVersionUID = -6460767583563159407L;
+
     private final long lastUpdateTs;
     private final KvEntry kv;
 
