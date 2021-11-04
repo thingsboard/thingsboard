@@ -314,7 +314,7 @@ public abstract class BaseController {
         } else if (exception instanceof MessagingException) {
             return new ThingsboardException("Unable to send mail: " + exception.getMessage(), ThingsboardErrorCode.GENERAL);
         } else {
-            return new ThingsboardException(exception.getMessage(), ThingsboardErrorCode.GENERAL);
+            return new ThingsboardException(exception.getMessage(), exception, ThingsboardErrorCode.GENERAL);
         }
     }
 
