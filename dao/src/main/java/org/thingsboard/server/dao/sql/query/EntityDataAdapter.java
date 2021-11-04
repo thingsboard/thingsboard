@@ -79,7 +79,7 @@ public class EntityDataAdapter {
         return entityData;
     }
 
-    private static String convertValue(Object value) {
+    static String convertValue(Object value) {
         if (value != null) {
             String strVal = value.toString();
             // check number
