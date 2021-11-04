@@ -13,29 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.credentials.lwm2m;
+package org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.binary.Base64;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
 
-@Getter
-@Setter
-public class X509ClientCredentials extends AbstractLwM2MClientSecurityCredentials {
-
-    private String cert;
-
+public class X509LwM2MBootstrapServerCredential extends AbstractLwM2MBootstrapServerCredential {
     @Override
-    public LwM2MSecurityMode getSecurityConfigClientMode() {
+    public LwM2MSecurityMode getSecurityMode() {
         return LwM2MSecurityMode.X509;
-    }
-
-    @Override
-    public byte[] getDecoded() throws IllegalArgumentException, DecoderException {
-        if (securityInBytes == null && cert != null) {
-            securityInBytes = Base64.decodeBase64(cert.getBytes());
-        }
-        return securityInBytes;
     }
 }

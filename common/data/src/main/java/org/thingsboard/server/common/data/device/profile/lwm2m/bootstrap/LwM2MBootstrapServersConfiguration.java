@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.credentials.lwm2m;
+package org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
-@NoArgsConstructor
-public abstract class AbstractLwM2MClientCredentials implements LwM2MClientCredentials {
-    private String endpoint;
+@Data
+public class LwM2MBootstrapServersConfiguration {
+
+    //TODO
+    // List <LwM2MBootstrapServersConfiguration> LwM2MBootstrapServersConfigurations;
+    // LwM2MBootstrapServersConfiguration: Integer shortId, LwM2MBootstrapServerConfig serverConfig; LwM2MBootstrapServerCredential serverSecurity.
+
+    private LwM2MBootstrapServerConfig servers;
+    private LwM2MBootstrapServerCredential lwm2mServer;
+    private LwM2MBootstrapServerCredential bootstrapServer;
+
 }

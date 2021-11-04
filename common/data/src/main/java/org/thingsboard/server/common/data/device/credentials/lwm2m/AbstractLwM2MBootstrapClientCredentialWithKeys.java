@@ -16,22 +16,30 @@
 package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.SneakyThrows;
+import org.apache.commons.codec.binary.Base64;
 
-@JsonTypeInfo(
-        use = JsonTypeInfo.Id.NAME,
-        property = "securityMode")
-@JsonSubTypes({
-        @JsonSubTypes.Type(value = NoSecServerCredentials.class, name = "NO_SEC"),
-        @JsonSubTypes.Type(value = PSKServerCredentials.class, name = "PSK"),
-        @JsonSubTypes.Type(value = RPKServerCredentials.class, name = "RPK"),
-        @JsonSubTypes.Type(value = X509ServerCredentials.class, name = "X509")
-})
-@JsonIgnoreProperties(ignoreUnknown = true)
-public interface LwM2MServerCredentials {
+@Getter
+@Setter
+public abstract class AbstractLwM2MBootstrapClientCredentialWithKeys implements LwM2MBootstrapClientCredential {
+
+    private String clientPublicKeyOrId;
+    private String clientSecretKey;
 
     @JsonIgnore
-    LwM2MSecurityMode getSecurityMode();
+    public byte[] getDecodedClientPublicKeyOrId() {
+        return getDecoded(clientPublicKeyOrId);
+    }
+
+    @JsonIgnore
+    public byte[] getDecodedClientSecretKey() {
+        return getDecoded(clientSecretKey);
+    }
+
+    @SneakyThrows
+    private static byte[] getDecoded(String key) {
+        return Base64.decodeBase64(key.getBytes());
+    }
 }

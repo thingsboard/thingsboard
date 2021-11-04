@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.credentials.lwm2m;
+package org.thingsboard.server.common.data.device.profile.lwm2m;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.apache.commons.codec.DecoderException;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Data;
 
-public abstract class AbstractLwM2MClientSecurityCredentials extends AbstractLwM2MClientCredentials {
-    @Getter
-    @Setter
-    protected String key;
+@Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class ObjectAttributes {
 
-    protected byte[] securityInBytes;
+    private Long dim;
+    private String ver;
+    private Long pmin;
+    private Long pmax;
+    private Double gt;
+    private Double lt;
+    private Double st;
 
-    public abstract byte[] getDecoded() throws IllegalArgumentException, DecoderException;
 }

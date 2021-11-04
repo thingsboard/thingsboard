@@ -15,10 +15,13 @@
  */
 package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
-public class NoSecClientCredentials extends AbstractLwM2MClientCredentials {
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-    @Override
-    public LwM2MSecurityMode getSecurityConfigClientMode() {
-        return LwM2MSecurityMode.NO_SEC;
-    }
+@Getter
+@Setter
+@NoArgsConstructor
+public abstract class AbstractLwM2MClientCredential implements LwM2MClientCredential {
+    private String endpoint;
 }

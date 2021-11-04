@@ -13,13 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap;
+package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
-import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
+import lombok.Getter;
+import lombok.Setter;
+import org.apache.commons.codec.DecoderException;
 
-public class PSKServerCredentials extends AbstractServerCredentials{
-    @Override
-    public LwM2MSecurityMode getSecurityMode() {
-        return LwM2MSecurityMode.PSK;
-    }
+public abstract class AbstractLwM2MClientSecurityCredential extends AbstractLwM2MClientCredential {
+    @Getter
+    @Setter
+    protected String key;
+
+    protected byte[] securityInBytes;
+
+    public abstract byte[] getDecoded() throws IllegalArgumentException, DecoderException;
 }
