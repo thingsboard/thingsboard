@@ -78,7 +78,7 @@ public class TbRuleEngineProcessingStrategyFactory {
         @Override
         public TbRuleEngineProcessingDecision analyze(TbRuleEngineProcessingResult result) {
             if (result.isSuccess()) {
-                log.debug("[{}] The result of the msg pack processing is successful, going to proceed with processing of the following msgs", queueName);
+                log.trace("[{}] The result of the msg pack processing is successful, going to proceed with processing of the following msgs", queueName);
                 return new TbRuleEngineProcessingDecision(true, null);
             } else {
                 if (retryCount == 0) {
@@ -107,8 +107,8 @@ public class TbRuleEngineProcessingStrategyFactory {
                     }
                     if (retrySuccessful) {
                         result.getSuccessMap().forEach(toReprocess::put);
-                    } else if (log.isDebugEnabled() && !result.getSuccessMap().isEmpty()) {
-                        log.debug("[{}] Skipped {} successful messages due to the processing strategy configuration", queueName, result.getSuccessMap().size());
+                    } else if (log.isTraceEnabled() && !result.getSuccessMap().isEmpty()) {
+                        log.trace("[{}] Skipped {} successful messages due to the processing strategy configuration", queueName, result.getSuccessMap().size());
                     }
                     if (CollectionUtils.isEmpty(toReprocess)) {
                         if (log.isDebugEnabled()) {
