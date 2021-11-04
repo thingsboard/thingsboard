@@ -13,23 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.credentials.lwm2m;
+package org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap;
 
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.binary.Base64;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
 
-public class RPKClientCredentials extends AbstractLwM2MClientSecurityCredentials {
-
+public class NoSecLwM2MBootstrapServerCredential extends AbstractLwM2MBootstrapServerCredential {
     @Override
-    public LwM2MSecurityMode getSecurityConfigClientMode() {
-        return LwM2MSecurityMode.RPK;
-    }
-
-    @Override
-    public byte[] getDecoded() throws IllegalArgumentException, DecoderException {
-        if (securityInBytes == null) {
-            securityInBytes = Base64.decodeBase64(key.getBytes());
-        }
-        return securityInBytes;
+    public LwM2MSecurityMode getSecurityMode() {
+        return LwM2MSecurityMode.NO_SEC;
     }
 }

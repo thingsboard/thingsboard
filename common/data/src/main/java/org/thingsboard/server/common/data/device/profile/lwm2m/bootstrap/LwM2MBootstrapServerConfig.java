@@ -13,21 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.data.lwm2m;
+package org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
 @Data
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class ObjectAttributes {
-
-    private Long dim;
-    private String ver;
-    private Long pmin;
-    private Long pmax;
-    private Double gt;
-    private Double lt;
-    private Double st;
-
+public class LwM2MBootstrapServerConfig {
+    private Integer shortId = 123;
+    private Integer lifetime = 300;
+    private Integer defaultMinPeriod = 1;
+    private boolean notifIfDisabled = true;
+    private String binding = "U";
 }

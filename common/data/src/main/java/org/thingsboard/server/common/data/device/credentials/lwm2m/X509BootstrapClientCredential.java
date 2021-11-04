@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap;
+package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
-import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
+public class X509BootstrapClientCredential extends AbstractLwM2MBootstrapClientCredentialWithKeys {
 
-public class NoSecServerCredentials extends AbstractServerCredentials{
     @Override
     public LwM2MSecurityMode getSecurityMode() {
-        return LwM2MSecurityMode.NO_SEC;
+        return LwM2MSecurityMode.X509;
     }
 }

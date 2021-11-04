@@ -32,11 +32,11 @@ import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecServerCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecBootstrapClientCredential;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
@@ -121,13 +121,13 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
     protected ScheduledExecutorService executor;
     protected TbTestWebSocketClient wsClient;
     protected LwM2MTestClient client;
-    private final LwM2MBootstrapCredentials defaultBootstrapCredentials;
+    private final LwM2MBootstrapClientCredentials defaultBootstrapCredentials;
     private String[] resources;
     protected String endpoint;
 
     public AbstractLwM2MIntegrationTest() {
-        this.defaultBootstrapCredentials = new LwM2MBootstrapCredentials();
-        NoSecServerCredentials serverCredentials = new NoSecServerCredentials();
+        this.defaultBootstrapCredentials = new LwM2MBootstrapClientCredentials();
+        NoSecBootstrapClientCredential serverCredentials = new NoSecBootstrapClientCredential();
         this.defaultBootstrapCredentials.setBootstrapServer(serverCredentials);
         this.defaultBootstrapCredentials.setLwm2mServer(serverCredentials);
     }
@@ -164,7 +164,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
     }
 
     public void basicTestConnectionObserveTelemetry(Security security,
-                                                    LwM2MClientCredentials credentials,
+                                                    LwM2MClientCredential credentials,
                                                     NetworkConfig coapConfig,
                                                     String endpoint) throws Exception {
             createDeviceProfile(transportConfiguration);
@@ -219,7 +219,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         Assert.assertNotNull(deviceProfile);
     }
 
-    protected Device createDevice(LwM2MClientCredentials clientCredentials) throws Exception {
+    protected Device createDevice(LwM2MClientCredential clientCredentials) throws Exception {
         Device device = new Device();
         device.setName("Device A");
         device.setDeviceProfileId(deviceProfile.getId());
@@ -241,8 +241,8 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         return device;
     }
 
-    public NoSecClientCredentials createNoSecClientCredentials(String endpoint) {
-        NoSecClientCredentials clientCredentials = new NoSecClientCredentials();
+    public NoSecClientCredential createNoSecClientCredentials(String endpoint) {
+        NoSecClientCredential clientCredentials = new NoSecClientCredential();
         clientCredentials.setEndpoint(endpoint);
         return clientCredentials;
     }

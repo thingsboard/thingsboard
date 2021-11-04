@@ -15,31 +15,12 @@
  */
 package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.SneakyThrows;
-import org.apache.commons.codec.binary.Base64;
 
 @Getter
 @Setter
-public abstract class AbstractLwM2MServerCredentialsWithKeys implements LwM2MServerCredentials {
-
-    private String clientPublicKeyOrId;
-    private String clientSecretKey;
-
-    @JsonIgnore
-    public byte[] getDecodedClientPublicKeyOrId() {
-        return getDecoded(clientPublicKeyOrId);
-    }
-
-    @JsonIgnore
-    public byte[] getDecodedClientSecretKey() {
-        return getDecoded(clientSecretKey);
-    }
-
-    @SneakyThrows
-    private static byte[] getDecoded(String key) {
-        return Base64.decodeBase64(key.getBytes());
-    }
+public class LwM2MBootstrapClientCredentials {
+    private LwM2MBootstrapClientCredential bootstrapServer;
+    private LwM2MBootstrapClientCredential lwm2mServer;
 }

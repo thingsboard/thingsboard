@@ -15,13 +15,24 @@
  */
 package org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap;
 
-import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.SneakyThrows;
+import org.apache.commons.codec.binary.Base64;
+import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
 
-@Data
-public class ServerConfig {
-    private Integer shortId = 123;
-    private Integer lifetime = 300;
-    private Integer defaultMinPeriod = 1;
-    private boolean notifIfDisabled = true;
-    private String binding = "U";
+@Getter
+@Setter
+public abstract class AbstractLwM2MBootstrapServerCredential extends ServerSecurityConfig implements LwM2MBootstrapServerCredential {
+
+    @JsonIgnore
+    public byte[] getDecodedCServerPublicKey() {
+        return getDecoded(serverPublicKey);
+    }
+
+    @SneakyThrows
+    private static byte[] getDecoded(String key) {
+        return Base64.decodeBase64(key.getBytes());
+    }
 }

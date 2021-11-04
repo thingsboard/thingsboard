@@ -46,7 +46,7 @@ import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.device.data.lwm2m.BootstrapConfiguration;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBootstrapServersConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceTypeConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultCoapDeviceTypeConfiguration;
@@ -60,9 +60,9 @@ import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTrans
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
-import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.RPKServerCredentials;
-import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.ServerCredentials;
-import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.X509ServerCredentials;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.RPKLwM2MBootstrapServerCredential;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBootstrapServerCredential;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.X509LwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -418,9 +418,9 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                             }
                         }
                     } else if (transportConfiguration instanceof Lwm2mDeviceProfileTransportConfiguration) {
-                        BootstrapConfiguration bootstrapConfiguration = ((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration).getBootstrap();
-                        validateLwm2mServersCredentialOfBootstrapForClient(bootstrapConfiguration.getBootstrapServer(), "Bootstrap Server");
-                        validateLwm2mServersCredentialOfBootstrapForClient(bootstrapConfiguration.getLwm2mServer(), "LwM2M Server");
+                        LwM2MBootstrapServersConfiguration lwM2MBootstrapServersConfiguration = ((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration).getBootstrap();
+                        validateLwm2mServersCredentialOfBootstrapForClient(lwM2MBootstrapServersConfiguration.getBootstrapServer(), "Bootstrap Server");
+                        validateLwm2mServersCredentialOfBootstrapForClient(lwM2MBootstrapServersConfiguration.getLwm2mServer(), "LwM2M Server");
                     }
 
                     List<DeviceProfileAlarm> profileAlarms = deviceProfile.getProfileData().getAlarms();
@@ -704,13 +704,13 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
         }
     }
 
-    private void validateLwm2mServersCredentialOfBootstrapForClient(ServerCredentials bootstrapServerConfig, String server) {
+    private void validateLwm2mServersCredentialOfBootstrapForClient(LwM2MBootstrapServerCredential bootstrapServerConfig, String server) {
         switch (bootstrapServerConfig.getSecurityMode()) {
             case NO_SEC:
             case PSK:
                 break;
             case RPK:
-                RPKServerCredentials rpkServerCredentials = (RPKServerCredentials)  bootstrapServerConfig;
+                RPKLwM2MBootstrapServerCredential rpkServerCredentials = (RPKLwM2MBootstrapServerCredential)  bootstrapServerConfig;
                 if (StringUtils.isEmpty(rpkServerCredentials.getServerPublicKey())) {
                     throw new DeviceCredentialsValidationException(server + " RPK public key must be specified!");
                 }
@@ -723,8 +723,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                 }
                 break;
             case X509:
-                X509ServerCredentials x509ServerCredentials = (X509ServerCredentials) bootstrapServerConfig;
-//                X509BootstrapServerCredentials x509ServerCredentials = (X509BootstrapServerCredentials) bootstrapServerConfig;
+                X509LwM2MBootstrapServerCredential x509ServerCredentials = (X509LwM2MBootstrapServerCredential) bootstrapServerConfig;
                 if (StringUtils.isEmpty(x509ServerCredentials.getServerPublicKey())) {
                     throw new DeviceCredentialsValidationException(server + " X509 public key must be specified!");
                 }

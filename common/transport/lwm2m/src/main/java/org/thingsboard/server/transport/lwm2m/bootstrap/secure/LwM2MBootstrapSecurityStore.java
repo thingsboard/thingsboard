@@ -27,7 +27,7 @@ import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.device.data.lwm2m.BootstrapConfiguration;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBootstrapServersConfiguration;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
@@ -157,7 +157,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
     private LwM2MBootstrapConfig getParametersBootstrap(TbLwM2MSecurityInfo store) {
         LwM2MBootstrapConfig lwM2MBootstrapConfig = store.getBootstrapCredentialConfig();
         if (lwM2MBootstrapConfig != null) {
-            BootstrapConfiguration bootstrapObject = getBootstrapParametersFromThingsboard(store.getDeviceProfile());
+            LwM2MBootstrapServersConfiguration bootstrapObject = getBootstrapParametersFromThingsboard(store.getDeviceProfile());
             lwM2MBootstrapConfig.setServers(JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getServers()), LwM2MBootstrapServers.class));
             LwM2MServerBootstrap bootstrapServerProfile = JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getBootstrapServer()), LwM2MServerBootstrap.class);
             if (SecurityMode.NO_SEC != bootstrapServerProfile.getSecurityMode() && bootstrapServerProfile != null) {

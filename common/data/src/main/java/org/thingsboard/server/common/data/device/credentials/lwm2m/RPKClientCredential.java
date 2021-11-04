@@ -13,26 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap;
+package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.SneakyThrows;
+import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base64;
-import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
 
-@Getter
-@Setter
-public abstract class AbstractServerCredentials extends ServerSecurityConfig implements ServerCredentials {
+public class RPKClientCredential extends AbstractLwM2MClientSecurityCredential {
 
-    @JsonIgnore
-    public byte[] getDecodedCServerPublicKey() {
-        return getDecoded(serverPublicKey);
+    @Override
+    public LwM2MSecurityMode getSecurityConfigClientMode() {
+        return LwM2MSecurityMode.RPK;
     }
 
-    @SneakyThrows
-    private static byte[] getDecoded(String key) {
-        return Base64.decodeBase64(key.getBytes());
+    @Override
+    public byte[] getDecoded() throws IllegalArgumentException, DecoderException {
+        if (securityInBytes == null) {
+            securityInBytes = Base64.decodeBase64(key.getBytes());
+        }
+        return securityInBytes;
     }
 }

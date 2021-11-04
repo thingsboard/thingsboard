@@ -16,8 +16,8 @@
 package org.thingsboard.server.transport.lwm2m.security;
 
 import org.eclipse.leshan.core.util.Hex;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecServerCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecBootstrapClientCredential;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest;
 import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
@@ -75,7 +75,7 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
 
     protected LwM2MTestClient client;
 
-    private final LwM2MBootstrapCredentials defaultBootstrapCredentials;
+    private final LwM2MBootstrapClientCredentials defaultBootstrapCredentials;
 
     private final  String[] resources = new String[]{"1.xml", "2.xml", "3.xml", "5.xml", "9.xml"};
 
@@ -166,9 +166,9 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
             throw new RuntimeException(e);
         }
 
-        defaultBootstrapCredentials = new LwM2MBootstrapCredentials();
+        defaultBootstrapCredentials = new LwM2MBootstrapClientCredentials();
 
-        NoSecServerCredentials serverCredentials = new NoSecServerCredentials();
+        NoSecBootstrapClientCredential serverCredentials = new NoSecBootstrapClientCredential();
 
         defaultBootstrapCredentials.setBootstrapServer(serverCredentials);
         defaultBootstrapCredentials.setLwm2mServer(serverCredentials);

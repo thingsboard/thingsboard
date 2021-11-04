@@ -28,16 +28,16 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MServerCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKServerCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKServerCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ServerCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKBootstrapClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKBootstrapClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.X509BootstrapClientCredential;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -171,7 +171,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
         }
 
         String credentialsId = null;
-        LwM2MClientCredentials clientCredentials = lwM2MCredentials.getClient();
+        LwM2MClientCredential clientCredentials = lwM2MCredentials.getClient();
         switch (clientCredentials.getSecurityConfigClientMode()) {
             case NO_SEC:
             case RPK:
@@ -179,11 +179,11 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 credentialsId = clientCredentials.getEndpoint();
                 break;
             case PSK:
-                credentialsId = ((PSKClientCredentials) clientCredentials).getIdentity();
+                credentialsId = ((PSKClientCredential) clientCredentials).getIdentity();
                 break;
             case X509:
                 deviceCredentials.setCredentialsValue(JacksonUtil.toString(lwM2MCredentials));
-                X509ClientCredentials x509ClientConfig = (X509ClientCredentials) clientCredentials;
+                X509ClientCredential x509ClientConfig = (X509ClientCredential) clientCredentials;
                 if ((StringUtils.isNotBlank(x509ClientConfig.getCert()))) {
                     String sha3Hash = EncryptionUtil.getSha3Hash(x509ClientConfig.getCert());
                     credentialsId = sha3Hash;
@@ -203,31 +203,31 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
             throw new DeviceCredentialsValidationException("LwM2M credentials must be specified!");
         }
 
-        LwM2MClientCredentials clientCredentials = lwM2MCredentials.getClient();
+        LwM2MClientCredential clientCredentials = lwM2MCredentials.getClient();
         if (clientCredentials == null) {
             throw new DeviceCredentialsValidationException("LwM2M client credentials must be specified!");
         }
         validateLwM2MClientCredentials(clientCredentials);
 
-        LwM2MBootstrapCredentials bootstrapCredentials = lwM2MCredentials.getBootstrap();
+        LwM2MBootstrapClientCredentials bootstrapCredentials = lwM2MCredentials.getBootstrap();
         if (bootstrapCredentials == null) {
             throw new DeviceCredentialsValidationException("LwM2M bootstrap credentials must be specified!");
         }
 
-        LwM2MServerCredentials bootstrapServerCredentials = bootstrapCredentials.getBootstrapServer();
+        LwM2MBootstrapClientCredential bootstrapServerCredentials = bootstrapCredentials.getBootstrapServer();
         if (bootstrapServerCredentials == null) {
             throw new DeviceCredentialsValidationException("LwM2M bootstrap server credentials must be specified!");
         }
         validateServerCredentials(bootstrapServerCredentials, "Bootstrap server");
 
-        LwM2MServerCredentials lwm2mServerCredentials = bootstrapCredentials.getLwm2mServer();
-        if (lwm2mServerCredentials == null) {
+        LwM2MBootstrapClientCredential lwm2MBootstrapClientCredential = bootstrapCredentials.getLwm2mServer();
+        if (lwm2MBootstrapClientCredential == null) {
             throw new DeviceCredentialsValidationException("LwM2M lwm2m server credentials must be specified!");
         }
-        validateServerCredentials(lwm2mServerCredentials, "LwM2M server");
+        validateServerCredentials(lwm2MBootstrapClientCredential, "LwM2M server");
     }
 
-    private void validateLwM2MClientCredentials(LwM2MClientCredentials clientCredentials) {
+    private void validateLwM2MClientCredentials(LwM2MClientCredential clientCredentials) {
         if (StringUtils.isBlank(clientCredentials.getEndpoint())) {
             throw new DeviceCredentialsValidationException("LwM2M client endpoint must be specified!");
         }
@@ -236,7 +236,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
             case NO_SEC:
                 break;
             case PSK:
-                PSKClientCredentials pskCredentials = (PSKClientCredentials) clientCredentials;
+                PSKClientCredential pskCredentials = (PSKClientCredential) clientCredentials;
                 if (StringUtils.isBlank(pskCredentials.getIdentity())) {
                     throw new DeviceCredentialsValidationException("LwM2M client PSK identity must be specified!");
                 }
@@ -260,7 +260,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
 
                 break;
             case RPK:
-                RPKClientCredentials rpkCredentials = (RPKClientCredentials) clientCredentials;
+                RPKClientCredential rpkCredentials = (RPKClientCredential) clientCredentials;
                 if (StringUtils.isBlank(rpkCredentials.getKey())) {
                     throw new DeviceCredentialsValidationException("LwM2M client RPK key must be specified!");
                 }
@@ -274,7 +274,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 }
                 break;
             case X509:
-                X509ClientCredentials x509CCredentials = (X509ClientCredentials) clientCredentials;
+                X509ClientCredential x509CCredentials = (X509ClientCredential) clientCredentials;
                 if (StringUtils.isNotEmpty(x509CCredentials.getCert())) {
                     try {
                         String certClient = EncryptionUtil.certTrimNewLines(x509CCredentials.getCert());
@@ -288,12 +288,12 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
         }
     }
 
-    private void validateServerCredentials(LwM2MServerCredentials serverCredentials, String server) {
+    private void validateServerCredentials(LwM2MBootstrapClientCredential serverCredentials, String server) {
         switch (serverCredentials.getSecurityMode()) {
             case NO_SEC:
                 break;
             case PSK:
-                PSKServerCredentials pskCredentials = (PSKServerCredentials) serverCredentials;
+                PSKBootstrapClientCredential pskCredentials = (PSKBootstrapClientCredential) serverCredentials;
                 if (StringUtils.isBlank(pskCredentials.getClientPublicKeyOrId())) {
                     throw new DeviceCredentialsValidationException(server + " client PSK public key or id must be specified!");
                 }
@@ -317,7 +317,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 }
                 break;
             case RPK:
-                RPKServerCredentials rpkServerCredentials = (RPKServerCredentials) serverCredentials;
+                RPKBootstrapClientCredential rpkServerCredentials = (RPKBootstrapClientCredential) serverCredentials;
                 if (StringUtils.isEmpty(rpkServerCredentials.getClientPublicKeyOrId())) {
                     throw new DeviceCredentialsValidationException(server + " client RPK public key or id must be specified!");
                 }
@@ -342,7 +342,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 }
                 break;
             case X509:
-                X509ServerCredentials x509ServerCredentials = (X509ServerCredentials) serverCredentials;
+                X509BootstrapClientCredential x509ServerCredentials = (X509BootstrapClientCredential) serverCredentials;
                 if (StringUtils.isBlank(x509ServerCredentials.getClientPublicKeyOrId())) {
                     throw new DeviceCredentialsValidationException(server + " client X509 public key or id must be specified!");
                 }

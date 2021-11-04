@@ -13,17 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.data.lwm2m;
+package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.ServerConfig;
-import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.ServerCredentials;
+public class NoSecBootstrapClientCredential implements LwM2MBootstrapClientCredential {
 
-@Data
-public class BootstrapConfiguration {
-
-    private ServerConfig servers;
-    private ServerCredentials lwm2mServer;
-    private ServerCredentials bootstrapServer;
-
+    @Override
+    public LwM2MSecurityMode getSecurityMode() {
+        return LwM2MSecurityMode.NO_SEC;
+    }
 }

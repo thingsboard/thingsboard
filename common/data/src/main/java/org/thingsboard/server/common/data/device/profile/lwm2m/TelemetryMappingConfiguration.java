@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap;
+package org.thingsboard.server.common.data.device.profile.lwm2m;
 
-import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
+import lombok.Data;
+import org.thingsboard.server.common.data.device.profile.lwm2m.ObjectAttributes;
 
-public class RPKServerCredentials extends AbstractServerCredentials{
-    @Override
-    public LwM2MSecurityMode getSecurityMode() {
-        return LwM2MSecurityMode.RPK;
-    }
+import java.util.Map;
+import java.util.Set;
+
+@Data
+public class TelemetryMappingConfiguration {
+
+    private Map<String, String> keyName;
+    private Set<String> observe;
+    private Set<String> attribute;
+    private Set<String> telemetry;
+    private Map<String, ObjectAttributes> attributeLwm2m;
+
 }

@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredential;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;
@@ -135,7 +135,7 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         String endpoint = "WithoutFirmwareInfoDevice";
         setEndpoint(endpoint);
         createDeviceProfile(transportConfiguration);
-        NoSecClientCredentials credentials = createNoSecClientCredentials(endpoint);
+        NoSecClientCredential credentials = createNoSecClientCredentials(endpoint);
         final Device device = createDevice(credentials);
         createNewClient(SECURITY, COAP_CONFIG, false);
 
@@ -162,7 +162,7 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         String endpoint = "Ota5_Device";
         setEndpoint(endpoint);
         createDeviceProfile(OTA_TRANSPORT_CONFIGURATION);
-        NoSecClientCredentials credentials = createNoSecClientCredentials(endpoint);
+        NoSecClientCredential credentials = createNoSecClientCredentials(endpoint);
         final Device device = createDevice(credentials);
         createNewClient(SECURITY, COAP_CONFIG, false);
 
@@ -201,7 +201,7 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         String endpoint = "Ota9_Device";
         setEndpoint(endpoint);
         createDeviceProfile(OTA_TRANSPORT_CONFIGURATION);
-        NoSecClientCredentials credentials = createNoSecClientCredentials(endpoint);
+        NoSecClientCredential credentials = createNoSecClientCredentials(endpoint);
         final Device device = createDevice(credentials);
         createNewClient(SECURITY, COAP_CONFIG, false);
 
