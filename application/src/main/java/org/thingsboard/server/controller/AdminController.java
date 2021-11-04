@@ -103,7 +103,6 @@ public class AdminController extends BaseController {
             } else if (adminSettings.getKey().equals("sms")) {
                 smsService.updateSmsConfiguration();
             }
-
             return adminSettings;
         } catch (Exception e) {
             throw handleException(e);
