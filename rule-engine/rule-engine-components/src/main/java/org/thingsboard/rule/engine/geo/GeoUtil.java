@@ -45,24 +45,42 @@ public class GeoUtil {
     }
 
     public static synchronized boolean contains(String polygon, Coordinates coordinates) {
-        ShapeFactory.PolygonBuilder polygonBuilder = jtsCtx.getShapeFactory().polygon();
         JsonArray polygonArray = new JsonParser().parse(polygon).getAsJsonArray();
-        boolean first = true;
-        double firstLat = 0.0;
-        double firstLng = 0.0;
-        for (JsonElement jsonElement : polygonArray) {
-            double lat = jsonElement.getAsJsonArray().get(0).getAsDouble();
-            double lng = jsonElement.getAsJsonArray().get(1).getAsDouble();
-            if (first) {
-                firstLat = lat;
-                firstLng = lng;
-                first = false;
-            }
-            polygonBuilder.pointXY(jtsCtx.getShapeFactory().normX(lng), jtsCtx.getShapeFactory().normY(lat));
+
+        JsonArray arrayWithCoords = polygonArray;
+        JsonArray innerArray = polygonArray.get(0).getAsJsonArray();
+        if (!containsPrimitives(innerArray)) {
+            arrayWithCoords = innerArray;
         }
-        polygonBuilder.pointXY(jtsCtx.getShapeFactory().normX(firstLng), jtsCtx.getShapeFactory().normY(firstLat));
-        Shape shape = polygonBuilder.buildOrRect();
+
+        Shape shape = buildPolygonFromJsonCoords(arrayWithCoords);
         Point point = jtsCtx.getShapeFactory().pointXY(coordinates.getLongitude(), coordinates.getLatitude());
         return shape.relate(point).equals(SpatialRelation.CONTAINS);
+    }
+
+    private static Shape buildPolygonFromJsonCoords(JsonArray coordinates) {
+        ShapeFactory.PolygonBuilder polygonBuilder = jtsCtx.getShapeFactory().polygon();
+        boolean isFirst = true;
+        double firstLat = 0.0;
+        double firstLng = 0.0;
+        for (JsonElement element : coordinates) {
+            double lat = element.getAsJsonArray().get(0).getAsDouble();
+            double lng = element.getAsJsonArray().get(1).getAsDouble();
+            if (isFirst) {
+                firstLat = lat;
+                firstLng = lng;
+                isFirst = false;
+            }
+            polygonBuilder.pointXY(jtsCtx.getShapeFactory().normX(lng), jtsCtx.getShapeFactory().normX(lat));
+        }
+        polygonBuilder.pointXY(jtsCtx.getShapeFactory().normX(firstLng), jtsCtx.getShapeFactory().normX(firstLat));
+        return polygonBuilder.buildOrRect();
+    }
+
+    private static boolean containsPrimitives(JsonArray array) {
+        for (JsonElement element : array) {
+            return element.isJsonPrimitive();
+        }
+        return false;
     }
 }
