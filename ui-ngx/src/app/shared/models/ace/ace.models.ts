@@ -22,7 +22,7 @@ import { map, mergeMap, tap } from 'rxjs/operators';
 let aceDependenciesLoaded = false;
 let aceModule: any;
 
-export function loadAceDependencies(): Observable<any> {
+function loadAceDependencies(): Observable<any> {
   if (aceDependenciesLoaded) {
     return of(null);
   } else {
