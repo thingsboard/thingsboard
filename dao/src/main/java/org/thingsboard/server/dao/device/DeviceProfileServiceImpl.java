@@ -46,6 +46,7 @@ import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.device.data.lwm2m.BootstrapConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceTypeConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultCoapDeviceTypeConfiguration;
@@ -417,7 +418,9 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                             }
                         }
                     } else if (transportConfiguration instanceof Lwm2mDeviceProfileTransportConfiguration) {
-//                        deviceCredentialsService.verifyLwm2mSecurityKeyDeviceProfile((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration);
+                        BootstrapConfiguration bootstrapConfiguration = ((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration).getBootstrap();
+                        validateLwm2mServersCredentialOfBootstrapForClient(bootstrapConfiguration.getBootstrapServer(), "Bootstrap Server");
+                        validateLwm2mServersCredentialOfBootstrapForClient(bootstrapConfiguration.getLwm2mServer(), "LwM2M Server");
                     }
 
                     List<DeviceProfileAlarm> profileAlarms = deviceProfile.getProfileData().getAlarms();
