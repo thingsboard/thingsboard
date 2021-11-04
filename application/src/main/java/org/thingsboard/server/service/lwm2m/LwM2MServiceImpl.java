@@ -55,7 +55,7 @@ public class LwM2MServiceImpl implements LwM2MService {
         if (publicKeyBase64 == null) {
             bsServ.setServerPublicKey("");
         } else {
-            bsServ.setServerPublicKey(Base64.encodeBase64String(getPublicKey(serverConfig)));
+            bsServ.setServerPublicKey(Base64.encodeBase64String(publicKeyBase64));
         }
         return bsServ;
     }
