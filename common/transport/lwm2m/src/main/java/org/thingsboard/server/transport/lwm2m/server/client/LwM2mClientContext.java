@@ -57,11 +57,18 @@ public interface LwM2mClientContext {
 
     void update(LwM2mClient lwM2MClient);
 
-    void removeCredentials(TransportProtos.SessionInfoProto sessionInfo);
-
     void sendMsgsAfterSleeping(LwM2mClient lwM2MClient);
 
     boolean isComposite(LwM2mClient client);
 
+    void onUplink(LwM2mClient client);
+
     Long getRequestTimeout(LwM2mClient client);
+
+    boolean asleep(LwM2mClient client);
+
+    boolean awake(LwM2mClient client);
+
+    boolean isDownlinkAllowed(LwM2mClient client);
+
 }

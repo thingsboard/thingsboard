@@ -19,18 +19,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.rule.engine.api.RpcError;
+import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcRequest;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcResponse;
 import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
-import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.cluster.TbClusterService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -86,6 +87,10 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
 
     @Override
     public void sendRpcReplyToDevice(String serviceId, UUID sessionId, int requestId, String body) {
+        if (serviceId == null || serviceId.isEmpty()){
+            log.trace("sendRpcReplyToDevice: skipping message without serviceId [{}], sessionId[{}], requestId[{}], body[{}]", serviceId, sessionId, requestId, body);
+            return;
+        }
         TransportProtos.ToServerRpcResponseMsg responseMsg = TransportProtos.ToServerRpcResponseMsg.newBuilder()
                 .setRequestId(requestId)
                 .setPayload(body).build();
@@ -100,7 +105,7 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
     @Override
     public void sendRpcRequestToDevice(RuleEngineDeviceRpcRequest src, Consumer<RuleEngineDeviceRpcResponse> consumer) {
         ToDeviceRpcRequest request = new ToDeviceRpcRequest(src.getRequestUUID(), src.getTenantId(), src.getDeviceId(),
-                src.isOneway(), src.getExpirationTime(), new ToDeviceRpcRequestBody(src.getMethod(), src.getBody()), src.isPersisted());
+                src.isOneway(), src.getExpirationTime(), new ToDeviceRpcRequestBody(src.getMethod(), src.getBody()), src.isPersisted(), src.getRetries(), src.getAdditionalInfo());
         forwardRpcRequestToDeviceActor(request, response -> {
             if (src.isRestApiCall()) {
                 sendRpcResponseToTbCore(src.getOriginServiceId(), response);

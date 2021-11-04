@@ -14,10 +14,8 @@
 /// limitations under the License.
 ///
 
-export const LEN_MAX_PSK = 64;
+export const LEN_MAX_PSK = 128;
 export const LEN_MAX_PRIVATE_KEY = 134;
-export const LEN_MAX_PUBLIC_KEY_RPK = 182;
-export const LEN_MAX_PUBLIC_KEY_X509 = 3000;
 export const KEY_REGEXP_HEX_DEC = /^[-+]?[0-9A-Fa-f]+\.?[0-9A-Fa-f]*?$/;
 
 export enum Lwm2mSecurityType {
@@ -58,6 +56,20 @@ interface BootstrapSecurityConfig {
 export interface Lwm2mSecurityConfigModels {
   client: ClientSecurityConfig;
   bootstrap: BootstrapSecurityConfig;
+}
+
+
+export function getLwm2mSecurityConfigModelsDefault(): Lwm2mSecurityConfigModels {
+  return {
+    client: {
+      securityConfigClientMode: Lwm2mSecurityType.NO_SEC,
+      endpoint: ''
+    },
+    bootstrap: {
+      bootstrapServer: getDefaultServerSecurityConfig(),
+      lwm2mServer: getDefaultServerSecurityConfig()
+    }
+  };
 }
 
 export function getDefaultClientSecurityConfig(securityConfigMode: Lwm2mSecurityType, endPoint = ''): ClientSecurityConfig {

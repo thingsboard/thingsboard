@@ -124,8 +124,9 @@ export class ValueInputComponent implements OnInit, ControlValueAccessor {
   onValueTypeChanged() {
     if (this.valueType === ValueType.BOOLEAN) {
       this.modelValue = false;
-    } if (this.valueType === ValueType.JSON) {
+    } else if (this.valueType === ValueType.JSON) {
       this.modelValue = {};
+      this.inputForm.form.get('value').patchValue({});
     } else {
       this.modelValue = null;
     }

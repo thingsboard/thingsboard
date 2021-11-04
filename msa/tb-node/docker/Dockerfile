@@ -16,6 +16,8 @@
 
 FROM thingsboard/openjdk11
 
+RUN echo 'networkaddress.cache.ttl=60' >> /etc/java-11-openjdk/security/java.security
+
 COPY start-tb-node.sh ${pkg.name}.deb /tmp/
 
 RUN chmod a+x /tmp/*.sh \

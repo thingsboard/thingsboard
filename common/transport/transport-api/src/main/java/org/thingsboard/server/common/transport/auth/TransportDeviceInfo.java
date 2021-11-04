@@ -36,4 +36,6 @@ public class TransportDeviceInfo implements Serializable {
     private PowerMode powerMode;
     private String additionalInfo;
     private Long edrxCycle;
+    private Long psmActivityTimer;
+    private Long pagingTransmissionWindow;
 }

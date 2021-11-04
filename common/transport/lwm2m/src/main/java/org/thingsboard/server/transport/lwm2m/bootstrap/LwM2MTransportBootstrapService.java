@@ -19,13 +19,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.elements.util.SslContextUtil;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
+import org.eclipse.leshan.core.model.ObjectLoader;
+import org.eclipse.leshan.core.model.ObjectModel;
+import org.eclipse.leshan.core.model.StaticModel;
 import org.eclipse.leshan.server.bootstrap.BootstrapSessionManager;
 import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServer;
 import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServerBuilder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapSecurityStore;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MInMemoryBootstrapConfigStore;
+import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MInMemoryBootstrapConfigurationAdapter;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2mDefaultBootstrapSessionManager;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportBootstrapConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
@@ -38,6 +43,7 @@ import java.security.KeyStoreException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.X509Certificate;
+import java.util.List;
 
 import static org.thingsboard.server.transport.lwm2m.server.LwM2mNetworkConfig.getCoapConfig;
 
@@ -79,12 +85,14 @@ public class LwM2MTransportBootstrapService {
         builder.setCoapConfig(getCoapConfig(bootstrapConfig.getPort(), bootstrapConfig.getSecurePort(), serverConfig));
 
         /* Define model provider (Create Models )*/
+        List<ObjectModel> models = ObjectLoader.loadDefault();
+        builder.setModel(new StaticModel(models));
 
         /*  Create credentials */
         this.setServerWithCredentials(builder);
 
-//        /** Set securityStore with new ConfigStore */
-//        builder.setConfigStore(lwM2MInMemoryBootstrapConfigStore);
+        /* Set securityStore with new ConfigStore */
+        builder.setConfigStore(new LwM2MInMemoryBootstrapConfigurationAdapter(lwM2MInMemoryBootstrapConfigStore));
 
         /* SecurityStore */
         builder.setSecurityStore(lwM2MBootstrapSecurityStore);
@@ -107,49 +115,22 @@ public class LwM2MTransportBootstrapService {
     }
 
     private void setServerWithCredentials(LeshanBootstrapServerBuilder builder) {
-        try {
-            if (serverConfig.getKeyStoreValue() != null) {
-                KeyStore keyStoreServer = serverConfig.getKeyStoreValue();
-                if (this.setBuilderX509(builder)) {
-                    X509Certificate rootCAX509Cert = (X509Certificate) keyStoreServer.getCertificate(serverConfig.getRootCertificateAlias());
-                    if (rootCAX509Cert != null) {
-                        X509Certificate[] trustedCertificates = new X509Certificate[1];
-                        trustedCertificates[0] = rootCAX509Cert;
-                        builder.setTrustedCertificates(trustedCertificates);
-                    } else {
-                        /* by default trust all */
-                        builder.setTrustedCertificates(new X509Certificate[0]);
-                    }
-                }
+        if (this.bootstrapConfig.getSslCredentials() != null) {
+            SslCredentials sslCredentials = this.bootstrapConfig.getSslCredentials();
+            builder.setPublicKey(sslCredentials.getPublicKey());
+            builder.setPrivateKey(sslCredentials.getPrivateKey());
+            builder.setCertificateChain(sslCredentials.getCertificateChain());
+            if (this.serverConfig.getTrustSslCredentials() != null) {
+                builder.setTrustedCertificates(this.serverConfig.getTrustSslCredentials().getTrustedCertificates());
             } else {
                 /* by default trust all */
                 builder.setTrustedCertificates(new X509Certificate[0]);
-                log.info("Unable to load X509 files for BootStrapServer");
-                this.pskMode = true;
             }
-        } catch (KeyStoreException ex) {
-            log.error("[{}] Unable to load X509 files server", ex.getMessage());
+        } else {
+            /* by default trust all */
+            builder.setTrustedCertificates(new X509Certificate[0]);
+            log.info("Unable to load X509 files for BootStrapServer");
+            this.pskMode = true;
         }
     }
-
-    private boolean setBuilderX509(LeshanBootstrapServerBuilder builder) {
-        try {
-            X509Certificate[] certificateChain = SslContextUtil.asX509Certificates(serverConfig.getKeyStoreValue().getCertificateChain(this.bootstrapConfig.getCertificateAlias()));
-            X509Certificate serverCertificate = certificateChain[0];
-            PrivateKey privateKey = (PrivateKey) serverConfig.getKeyStoreValue().getKey(this.bootstrapConfig.getCertificateAlias(), serverConfig.getCertificatePassword() == null ? null : serverConfig.getCertificatePassword().toCharArray());
-            PublicKey publicKey = serverCertificate.getPublicKey();
-            if (privateKey != null && privateKey.getEncoded().length > 0 && publicKey != null && publicKey.getEncoded().length > 0) {
-                builder.setPublicKey(serverCertificate.getPublicKey());
-                builder.setPrivateKey(privateKey);
-                builder.setCertificateChain(certificateChain);
-                return true;
-            } else {
-                return false;
-            }
-        } catch (Exception ex) {
-            log.error("[{}] Unable to load KeyStore  files server", ex.getMessage());
-            return false;
-        }
-    }
-
 }

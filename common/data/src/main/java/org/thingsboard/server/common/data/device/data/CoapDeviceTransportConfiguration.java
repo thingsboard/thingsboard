@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Data
-public class CoapDeviceTransportConfiguration implements DeviceTransportConfiguration {
+public class CoapDeviceTransportConfiguration extends PowerSavingConfiguration implements DeviceTransportConfiguration {
 
     @JsonIgnore
     private Map<String, Object> properties = new HashMap<>();

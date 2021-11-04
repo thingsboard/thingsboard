@@ -15,13 +15,16 @@
  */
 package org.thingsboard.server.common.data;
 
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.EntityViewId;
 
 @Data
 public class EntityViewInfo extends EntityView {
 
+    @ApiModelProperty(position = 12, value = "Title of the Customer that owns the entity view.", readOnly = true)
     private String customerTitle;
+    @ApiModelProperty(position = 13, value = "Indicates special 'Public' Customer that is auto-generated to use the entity view on public dashboards.", readOnly = true)
     private boolean customerIsPublic;
 
     public EntityViewInfo() {

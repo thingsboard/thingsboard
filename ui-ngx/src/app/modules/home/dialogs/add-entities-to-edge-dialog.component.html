@@ -40,18 +40,18 @@
     </fieldset>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
-    <button mat-raised-button color="primary"
-            type="submit"
-            [disabled]="(isLoading$ | async) || addEntitiesToEdgeFormGroup.invalid
-            || !addEntitiesToEdgeFormGroup.dirty">
-      {{ 'action.assign' | translate }}
-    </button>
     <button mat-button color="primary"
             style="margin-right: 20px;"
             type="button"
             [disabled]="(isLoading$ | async)"
             (click)="cancel()">
       {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="(isLoading$ | async) || addEntitiesToEdgeFormGroup.invalid
+            || !addEntitiesToEdgeFormGroup.dirty">
+      {{ 'action.assign' | translate }}
     </button>
   </div>
 </form>

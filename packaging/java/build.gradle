@@ -15,19 +15,9 @@
  */
 import org.apache.tools.ant.filters.ReplaceTokens
 
-buildscript {
-    ext {
-        osPackageVersion = "8.3.0"
-    }
-    repositories {
-        jcenter()
-    }
-    dependencies {
-        classpath("com.netflix.nebula:gradle-ospackage-plugin:${osPackageVersion}")
-    }
+plugins {
+    id "nebula.ospackage" version "8.6.3"
 }
-
-apply plugin: "nebula.ospackage"
 
 buildDir = projectBuildDir
 version = projectVersion
@@ -176,24 +166,4 @@ buildDeb {
 
     link("${pkgInstallFolder}/bin/${pkgName}.yml", "${pkgInstallFolder}/conf/${pkgName}.yml")
     link("/etc/${pkgName}/conf", "${pkgInstallFolder}/conf")
-}
-
-task renameDeb(type: Copy) {
-    from("${buildDir}/") {
-        include '*.deb'
-        destinationDir file("${buildDir}/")
-        rename { String filename ->
-            "${pkgName}.deb"
-        }
-    }
-}
-
-task renameRpm(type: Copy) {
-    from("${buildDir}/") {
-        include '*.rpm'
-        destinationDir file("${buildDir}/")
-        rename { String filename ->
-            "${pkgName}.rpm"
-        }
-    }
 }

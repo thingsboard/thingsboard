@@ -26,6 +26,7 @@
   <mat-form-field class="mat-block">
     <mat-label translate>admin.aws-secret-access-key</mat-label>
     <input required type="password" matInput formControlName="secretAccessKey">
+    <tb-toggle-password matSuffix></tb-toggle-password>
     <mat-error *ngIf="awsSnsProviderConfigurationFormGroup.get('secretAccessKey').hasError('required')">
       {{ 'admin.aws-secret-access-key-required' | translate }}
     </mat-error>

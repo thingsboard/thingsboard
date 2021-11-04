@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { NgModule } from '@angular/core';
+import { NgModule, SecurityContext } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FooterComponent } from '@shared/components/footer.component';
 import { LogoComponent } from '@shared/components/logo.component';
@@ -78,6 +78,7 @@ import { DatetimePeriodComponent } from '@shared/components/time/datetime-period
 import { EnumToArrayPipe } from '@shared/pipe/enum-to-array.pipe';
 import { ClipboardModule } from 'ngx-clipboard';
 import { ValueInputComponent } from '@shared/components/value-input.component';
+import { MarkdownModule, MarkedOptions } from 'ngx-markdown';
 import { FullscreenDirective } from '@shared/components/fullscreen.directive';
 import { HighlightPipe } from '@shared/pipe/highlight.pipe';
 import { DashboardAutocompleteComponent } from '@shared/components/dashboard-autocomplete.component';
@@ -144,6 +145,21 @@ import { QuickTimeIntervalComponent } from '@shared/components/time/quick-time-i
 import { OtaPackageAutocompleteComponent } from '@shared/components/ota-package/ota-package-autocomplete.component';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { CopyButtonComponent } from '@shared/components/button/copy-button.component';
+import { TogglePasswordComponent } from '@shared/components/button/toggle-password.component';
+import { HelpPopupComponent } from '@shared/components/help-popup.component';
+import { TbPopoverComponent, TbPopoverDirective } from '@shared/components/popover.component';
+import { TbStringTemplateOutletDirective } from '@shared/components/directives/sring-template-outlet.directive';
+import { TbComponentOutletDirective} from '@shared/components/directives/component-outlet.directive';
+import { HelpMarkdownComponent } from '@shared/components/help-markdown.component';
+import { MarkedOptionsService } from '@shared/components/marked-options.service';
+import { TbPopoverService } from '@shared/components/popover.service';
+import { HELP_MARKDOWN_COMPONENT_TOKEN, SHARED_MODULE_TOKEN } from '@shared/components/tokens';
+import { TbMarkdownComponent } from '@shared/components/markdown.component';
+import { ProtobufContentComponent } from './components/protobuf-content.component';
+
+export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
+  return markedOptionsService;
+}
 
 @NgModule({
   providers: [
@@ -161,7 +177,10 @@ import { CopyButtonComponent } from '@shared/components/button/copy-button.compo
     {
       provide: MAT_DATE_LOCALE,
       useValue: 'en-GB'
-    }
+    },
+    { provide: HELP_MARKDOWN_COMPONENT_TOKEN, useValue: HelpMarkdownComponent },
+    { provide: SHARED_MODULE_TOKEN, useValue: SharedModule },
+    TbPopoverService
   ],
   declarations: [
     FooterComponent,
@@ -173,7 +192,14 @@ import { CopyButtonComponent } from '@shared/components/button/copy-button.compo
     MatChipDraggableDirective,
     TbHotkeysDirective,
     TbAnchorComponent,
+    TbPopoverComponent,
+    TbStringTemplateOutletDirective,
+    TbComponentOutletDirective,
+    TbPopoverDirective,
+    TbMarkdownComponent,
     HelpComponent,
+    HelpMarkdownComponent,
+    HelpPopupComponent,
     TbCheckboxComponent,
     TbSnackBarComponent,
     TbErrorComponent,
@@ -242,7 +268,9 @@ import { CopyButtonComponent } from '@shared/components/button/copy-button.compo
     ContactComponent,
     OtaPackageAutocompleteComponent,
     WidgetsBundleSearchComponent,
-    CopyButtonComponent
+    CopyButtonComponent,
+    TogglePasswordComponent,
+    ProtobufContentComponent
   ],
   imports: [
     CommonModule,
@@ -292,7 +320,16 @@ import { CopyButtonComponent } from '@shared/components/button/copy-button.compo
     NgxHmCarouselModule,
     DndModule,
     NgxFlowModule,
-    NgxFlowchartModule
+    NgxFlowchartModule,
+    // ngx-markdown
+    MarkdownModule.forRoot({
+      sanitize: SecurityContext.NONE,
+      markedOptions: {
+        provide: MarkedOptions,
+        useFactory: MarkedOptionsFactory,
+        deps: [MarkedOptionsService]
+      }
+    })
   ],
   exports: [
     FooterComponent,
@@ -304,7 +341,13 @@ import { CopyButtonComponent } from '@shared/components/button/copy-button.compo
     MatChipDraggableDirective,
     TbHotkeysDirective,
     TbAnchorComponent,
+    TbStringTemplateOutletDirective,
+    TbComponentOutletDirective,
+    TbPopoverDirective,
+    TbMarkdownComponent,
     HelpComponent,
+    HelpMarkdownComponent,
+    HelpPopupComponent,
     TbCheckboxComponent,
     TbErrorComponent,
     TbCheatSheetComponent,
@@ -384,6 +427,7 @@ import { CopyButtonComponent } from '@shared/components/button/copy-button.compo
     NgxHmCarouselModule,
     DndModule,
     NgxFlowchartModule,
+    MarkdownModule,
     ConfirmDialogComponent,
     AlertDialogComponent,
     TodoDialogComponent,
@@ -415,7 +459,9 @@ import { CopyButtonComponent } from '@shared/components/button/copy-button.compo
     ContactComponent,
     OtaPackageAutocompleteComponent,
     WidgetsBundleSearchComponent,
-    CopyButtonComponent
+    CopyButtonComponent,
+    TogglePasswordComponent,
+    ProtobufContentComponent
   ]
 })
 export class SharedModule { }

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.rpc;
 
+import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
@@ -54,5 +55,7 @@ public interface TbCoreDeviceRpcService {
      * @param response the RPC response
      */
     void processRpcResponseFromDeviceActor(FromDeviceRpcResponse response);
+
+    void processRemoveRpc(RemoveRpcActorMsg removeRpcMsg);
 
 }

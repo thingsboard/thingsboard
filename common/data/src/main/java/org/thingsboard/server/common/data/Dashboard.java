@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.annotations.ApiModelProperty;
 import org.thingsboard.server.common.data.id.DashboardId;
 
 public class Dashboard extends DashboardInfo {
@@ -41,6 +42,10 @@ public class Dashboard extends DashboardInfo {
         this.configuration = dashboard.getConfiguration();
     }
 
+    @ApiModelProperty(position = 9, value = "JSON object with main configuration of the dashboard: layouts, widgets, aliases, etc. " +
+            "The JSON structure of the dashboard configuration is quite complex. " +
+            "The easiest way to learn it is to export existing dashboard to JSON."
+            , dataType = "com.fasterxml.jackson.databind.JsonNode")
     public JsonNode getConfiguration() {
         return configuration;
     }

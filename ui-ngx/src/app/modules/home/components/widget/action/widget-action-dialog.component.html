@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form [formGroup]="widgetActionFormGroup" (ngSubmit)="save()" style="min-width: 480px;">
+<form [formGroup]="widgetActionFormGroup" (ngSubmit)="save()" style="width: 800px;">
   <mat-toolbar color="primary">
     <h2>{{ (isAdd ? 'widget-config.add-action' : 'widget-config.edit-action' ) | translate }}</h2>
     <span fxFlex></span>
@@ -54,6 +54,18 @@
       <tb-material-icon-select
         formControlName="icon">
       </tb-material-icon-select>
+      <mat-checkbox *ngIf="displayShowWidgetActionForm()" formControlName="useShowWidgetActionFunction" style="padding-bottom: 16px;">
+        {{ 'widget-config.show-hide-action-using-function' | translate }}
+      </mat-checkbox>
+      <tb-js-func *ngIf="displayShowWidgetActionForm() && widgetActionFormGroup.get('useShowWidgetActionFunction').value"
+        formControlName="showWidgetActionFunction"
+        [helpId]="getWidgetActionFunctionHelpId()"
+        [functionArgs]="['widgetContext', 'data']"
+        [globalVariables]="functionScopeVariables"
+        [validationArgs]="[]"
+        [resultType]="'boolean'"
+        [editorCompleter]="customActionEditorCompleter"
+      ></tb-js-func>
       <mat-form-field class="mat-block">
         <mat-label translate>widget-config.action-type</mat-label>
         <mat-select required formControlName="type">
@@ -134,45 +146,85 @@
         </ng-template>
         <ng-template [ngSwitchCase]="widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState ?
                                      widgetActionFormGroup.get('type').value : ''">
-          <mat-checkbox formControlName="openInSeparateDialog">
-            {{ 'widget-action.open-in-separate-dialog' | translate }}
-          </mat-checkbox>
-          <section *ngIf="actionTypeFormGroup.get('openInSeparateDialog').value">
-            <mat-form-field class="mat-block">
-              <mat-label translate>widget-action.dialog-title</mat-label>
-              <input matInput formControlName="dialogTitle">
-            </mat-form-field>
-            <mat-checkbox formControlName="dialogHideDashboardToolbar">
-              {{ 'widget-action.dialog-hide-dashboard-toolbar' | translate }}
-            </mat-checkbox>
-            <mat-form-field class="mat-block">
-              <mat-label translate>widget-action.dialog-width</mat-label>
-              <input type="number" min="1" max="100" step="1" matInput formControlName="dialogWidth">
-              <mat-error *ngIf="actionTypeFormGroup.get('dialogWidth').hasError('min')">
-                {{ 'widget-action.dialog-size-range-error' | translate }}
-              </mat-error>
-              <mat-error *ngIf="actionTypeFormGroup.get('dialogWidth').hasError('max')">
-                {{ 'widget-action.dialog-size-range-error' | translate }}
-              </mat-error>
-            </mat-form-field>
-            <mat-form-field class="mat-block">
-              <mat-label translate>widget-action.dialog-height</mat-label>
-              <input type="number" min="1" max="100" step="1" matInput formControlName="dialogHeight">
-              <mat-error *ngIf="actionTypeFormGroup.get('dialogHeight').hasError('min')">
-                {{ 'widget-action.dialog-size-range-error' | translate }}
-              </mat-error>
-              <mat-error *ngIf="actionTypeFormGroup.get('dialogHeight').hasError('max')">
-                {{ 'widget-action.dialog-size-range-error' | translate }}
-              </mat-error>
-            </mat-form-field>
+          <mat-form-field class="mat-block">
+            <mat-label translate>widget-action.state-display-type</mat-label>
+            <mat-select formControlName="stateDisplayType">
+              <mat-option *ngFor="let displayType of allStateDisplayTypes" [value]="displayType">
+                {{ stateDisplayTypeName(displayType) }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <section fxLayout="column" [formGroup]="stateDisplayTypeFormGroup" [ngSwitch]="actionTypeFormGroup.get('stateDisplayType').value">
+            <ng-template [ngSwitchCase]="'separateDialog'">
+              <mat-form-field class="mat-block">
+                <mat-label translate>widget-action.dialog-title</mat-label>
+                <input matInput formControlName="dialogTitle">
+              </mat-form-field>
+              <mat-checkbox formControlName="dialogHideDashboardToolbar">
+                {{ 'widget-action.dialog-hide-dashboard-toolbar' | translate }}
+              </mat-checkbox>
+              <mat-form-field class="mat-block">
+                <mat-label translate>widget-action.dialog-width</mat-label>
+                <input type="number" min="1" max="100" step="1" matInput formControlName="dialogWidth">
+                <mat-error *ngIf="stateDisplayTypeFormGroup.get('dialogWidth').hasError('min')">
+                  {{ 'widget-action.dialog-size-range-error' | translate }}
+                </mat-error>
+                <mat-error *ngIf="stateDisplayTypeFormGroup.get('dialogWidth').hasError('max')">
+                  {{ 'widget-action.dialog-size-range-error' | translate }}
+                </mat-error>
+              </mat-form-field>
+              <mat-form-field class="mat-block">
+                <mat-label translate>widget-action.dialog-height</mat-label>
+                <input type="number" min="1" max="100" step="1" matInput formControlName="dialogHeight">
+                <mat-error *ngIf="stateDisplayTypeFormGroup.get('dialogHeight').hasError('min')">
+                  {{ 'widget-action.dialog-size-range-error' | translate }}
+                </mat-error>
+                <mat-error *ngIf="stateDisplayTypeFormGroup.get('dialogHeight').hasError('max')">
+                  {{ 'widget-action.dialog-size-range-error' | translate }}
+                </mat-error>
+              </mat-form-field>
+            </ng-template>
+            <ng-template [ngSwitchCase]="'popover'">
+              <mat-form-field class="mat-block">
+                <mat-label translate>widget-action.popover-preferred-placement</mat-label>
+                <mat-select formControlName="popoverPreferredPlacement">
+                  <mat-option *ngFor="let placement of allPopoverPlacements" [value]="placement">
+                    {{ popoverPlacementName(placement) }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-checkbox formControlName="popoverHideOnClickOutside">
+                {{ 'widget-action.popover-hide-on-click-outside' | translate }}
+              </mat-checkbox>
+              <mat-checkbox formControlName="popoverHideDashboardToolbar">
+                {{ 'widget-action.popover-hide-dashboard-toolbar' | translate }}
+              </mat-checkbox>
+              <mat-form-field class="mat-block">
+                <mat-label translate>widget-action.popover-width</mat-label>
+                <input matInput formControlName="popoverWidth">
+              </mat-form-field>
+              <mat-form-field class="mat-block">
+                <mat-label translate>widget-action.popover-height</mat-label>
+                <input matInput formControlName="popoverHeight">
+              </mat-form-field>
+              <tb-json-object-edit
+                [editorStyle]="{minHeight: '100px'}"
+                label="{{ 'widget-action.popover-style' | translate }}"
+                formControlName="popoverStyle"
+              ></tb-json-object-edit>
+            </ng-template>
+            <ng-template [ngSwitchCase]="'normal'">
+            </ng-template>
           </section>
         </ng-template>
         <ng-template [ngSwitchCase]="widgetActionType.custom">
           <tb-js-func
             formControlName="customFunction"
             [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
+            [globalVariables]="functionScopeVariables"
             [validationArgs]="[]"
             [editorCompleter]="customActionEditorCompleter"
+            helpId="widget/action/custom_action_fn"
           ></tb-js-func>
         </ng-template>
         <ng-template [ngSwitchCase]="widgetActionType.customPretty">
@@ -197,7 +249,8 @@
     </button>
     <button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || widgetActionFormGroup.invalid || actionTypeFormGroup.invalid || (!widgetActionFormGroup.dirty && !actionTypeFormGroup.dirty)">
+            [disabled]="(isLoading$ | async) || widgetActionFormGroup.invalid || actionTypeFormGroup.invalid || stateDisplayTypeFormGroup?.invalid ||
+                    (!widgetActionFormGroup.dirty && !actionTypeFormGroup.dirty && !stateDisplayTypeFormGroup?.dirty)">
       {{ (isAdd  ? 'action.add' : 'action.save') | translate }}
     </button>
   </div>

@@ -28,7 +28,7 @@ import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import com.squareup.wire.schema.internal.parser.ProtoParser;
 import com.squareup.wire.schema.internal.parser.TypeElement;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
@@ -63,6 +63,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -72,6 +73,7 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.queue.QueueService;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -102,6 +104,9 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     private static String invalidSchemaProvidedMessage(String schemaName) {
         return "[Transport Configuration] invalid " + schemaName + " provided!";
     }
+
+    @Autowired(required = false)
+    private QueueService queueService;
 
     @Autowired
     private DeviceProfileDao deviceProfileDao;
@@ -162,7 +167,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
         }
         DeviceProfile savedDeviceProfile;
         try {
-            savedDeviceProfile = deviceProfileDao.save(deviceProfile.getTenantId(), deviceProfile);
+            savedDeviceProfile = deviceProfileDao.saveAndFlush(deviceProfile.getTenantId(), deviceProfile);
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_profile_name_unq_key")) {
@@ -248,8 +253,8 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
         log.trace("Executing findOrCreateDefaultDeviceProfile");
         DeviceProfile deviceProfile = findDeviceProfileByName(tenantId, name);
         if (deviceProfile == null) {
+            findOrCreateLock.lock();
             try {
-                findOrCreateLock.lock();
                 deviceProfile = findDeviceProfileByName(tenantId, name);
                 if (deviceProfile == null) {
                     deviceProfile = this.doCreateDefaultDeviceProfile(tenantId, name, name.equals("default"));
@@ -372,7 +377,14 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                             throw new DataValidationException("Another default device profile is present in scope of current tenant!");
                         }
                     }
-
+                    if (!StringUtils.isEmpty(deviceProfile.getDefaultQueueName()) && queueService != null){
+                        if(!queueService.getQueuesByServiceType(ServiceType.TB_RULE_ENGINE).contains(deviceProfile.getDefaultQueueName())){
+                            throw new DataValidationException("Device profile is referencing to non-existent queue!");
+                        }
+                    }
+                    if (deviceProfile.getProvisionType() == null) {
+                        deviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
+                    }
                     DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
                     transportConfiguration.validate();
                     if (transportConfiguration instanceof MqttDeviceProfileTransportConfiguration) {
@@ -381,6 +393,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                             ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration =
                                     (ProtoTransportPayloadConfiguration) mqttTransportConfiguration.getTransportPayloadTypeConfiguration();
                             validateProtoSchemas(protoTransportPayloadConfiguration);
+                            validateTelemetryDynamicMessageFields(protoTransportPayloadConfiguration);
                             validateRpcRequestDynamicMessageFields(protoTransportPayloadConfiguration);
                         }
                     } else if (transportConfiguration instanceof CoapDeviceProfileTransportConfiguration) {
@@ -392,6 +405,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                             if (transportPayloadTypeConfiguration instanceof ProtoTransportPayloadConfiguration) {
                                 ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
                                 validateProtoSchemas(protoTransportPayloadConfiguration);
+                                validateTelemetryDynamicMessageFields(protoTransportPayloadConfiguration);
                                 validateRpcRequestDynamicMessageFields(protoTransportPayloadConfiguration);
                             }
                         }
@@ -609,6 +623,33 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
 
             };
 
+    private void validateTelemetryDynamicMessageFields(ProtoTransportPayloadConfiguration protoTransportPayloadTypeConfiguration) {
+        String deviceTelemetryProtoSchema = protoTransportPayloadTypeConfiguration.getDeviceTelemetryProtoSchema();
+        Descriptors.Descriptor telemetryDynamicMessageDescriptor = protoTransportPayloadTypeConfiguration.getTelemetryDynamicMessageDescriptor(deviceTelemetryProtoSchema);
+        if (telemetryDynamicMessageDescriptor == null) {
+            throw new DataValidationException(invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA) + " Failed to get telemetryDynamicMessageDescriptor!");
+        } else {
+            List<Descriptors.FieldDescriptor> fields = telemetryDynamicMessageDescriptor.getFields();
+            if (CollectionUtils.isEmpty(fields)) {
+                throw new DataValidationException(invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA) + " " + telemetryDynamicMessageDescriptor.getName() + " fields is empty!");
+            } else if (fields.size() == 2) {
+                Descriptors.FieldDescriptor tsFieldDescriptor = telemetryDynamicMessageDescriptor.findFieldByName("ts");
+                Descriptors.FieldDescriptor valuesFieldDescriptor = telemetryDynamicMessageDescriptor.findFieldByName("values");
+                if (tsFieldDescriptor != null && valuesFieldDescriptor != null) {
+                    if (!Descriptors.FieldDescriptor.Type.MESSAGE.equals(valuesFieldDescriptor.getType())) {
+                        throw new DataValidationException(invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA) + " Field 'values' has invalid data type. Only message type is supported!");
+                    }
+                    if (!Descriptors.FieldDescriptor.Type.INT64.equals(tsFieldDescriptor.getType())) {
+                        throw new DataValidationException(invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA) + " Field 'ts' has invalid data type. Only int64 type is supported!");
+                    }
+                    if (!tsFieldDescriptor.hasOptionalKeyword()) {
+                        throw new DataValidationException(invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA) + " Field 'ts' has invalid label. Field 'ts' should have optional keyword!");
+                    }
+                }
+            }
+        }
+    }
+
     private void validateRpcRequestDynamicMessageFields(ProtoTransportPayloadConfiguration protoTransportPayloadTypeConfiguration) {
         DynamicMessage.Builder rpcRequestDynamicMessageBuilder = protoTransportPayloadTypeConfiguration.getRpcRequestDynamicMessageBuilder(protoTransportPayloadTypeConfiguration.getDeviceRpcRequestProtoSchema());
         Descriptors.Descriptor rpcRequestDynamicMessageDescriptor = rpcRequestDynamicMessageBuilder.getDescriptorForType();
@@ -645,7 +686,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                 throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Failed to get field descriptor for field: params!");
             } else {
                 if (paramsFieldDescriptor.isRepeated()) {
-                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + "Field 'params' has invalid label!");
+                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Field 'params' has invalid label!");
                 }
             }
         }

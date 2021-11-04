@@ -209,14 +209,32 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       titleStyle: [null, []],
       units: [null, []],
       decimals: [null, [Validators.min(0), Validators.max(15), Validators.pattern(/^\d*$/)]],
+      noDataDisplayMessage: [null, []],
       showLegend: [null, []],
       legendConfig: [null, []]
     });
+    this.widgetSettings.get('showTitle').valueChanges.subscribe((value: boolean) => {
+      if (value) {
+        this.widgetSettings.get('titleStyle').enable({emitEvent: false});
+        this.widgetSettings.get('titleTooltip').enable({emitEvent: false});
+        this.widgetSettings.get('showTitleIcon').enable({emitEvent: false});
+      } else {
+        this.widgetSettings.get('titleStyle').disable({emitEvent: false});
+        this.widgetSettings.get('titleTooltip').disable({emitEvent: false});
+        this.widgetSettings.get('showTitleIcon').patchValue(false);
+        this.widgetSettings.get('showTitleIcon').disable({emitEvent: false});
+      }
+    });
+
     this.widgetSettings.get('showTitleIcon').valueChanges.subscribe((value: boolean) => {
       if (value) {
         this.widgetSettings.get('titleIcon').enable({emitEvent: false});
+        this.widgetSettings.get('iconColor').enable({emitEvent: false});
+        this.widgetSettings.get('iconSize').enable({emitEvent: false});
       } else {
         this.widgetSettings.get('titleIcon').disable({emitEvent: false});
+        this.widgetSettings.get('iconColor').disable({emitEvent: false});
+        this.widgetSettings.get('iconSize').disable({emitEvent: false});
       }
     });
     this.widgetSettings.get('showLegend').valueChanges.subscribe((value: boolean) => {
@@ -228,11 +246,16 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     });
     this.layoutSettings = this.fb.group({
       mobileOrder: [null, [Validators.pattern(/^-?[0-9]+$/)]],
-      mobileHeight: [null, [Validators.min(1), Validators.max(10), Validators.pattern(/^\d*$/)]]
+      mobileHeight: [null, [Validators.min(1), Validators.max(10), Validators.pattern(/^\d*$/)]],
+      mobileHide: [false]
     });
     this.actionsSettings = this.fb.group({
       actionsData: [null, []]
     });
+  }
+
+  ngOnDestroy(): void {
+    this.removeChangeSubscriptions();
   }
 
   private removeChangeSubscriptions() {
@@ -375,7 +398,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
             iconColor: isDefined(config.iconColor) ? config.iconColor : 'rgba(0, 0, 0, 0.87)',
             iconSize: isDefined(config.iconSize) ? config.iconSize : '24px',
             titleTooltip: isDefined(config.titleTooltip) ? config.titleTooltip : '',
-            showTitle: config.showTitle,
+            showTitle: isDefined(config.showTitle) ? config.showTitle : false,
             dropShadow: isDefined(config.dropShadow) ? config.dropShadow : true,
             enableFullscreen: isDefined(config.enableFullscreen) ? config.enableFullscreen : true,
             backgroundColor: config.backgroundColor,
@@ -389,17 +412,32 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
             },
             units: config.units,
             decimals: config.decimals,
+            noDataDisplayMessage: isDefined(config.noDataDisplayMessage) ? config.noDataDisplayMessage : '',
             showLegend: isDefined(config.showLegend) ? config.showLegend :
               this.widgetType === widgetType.timeseries,
             legendConfig: config.legendConfig || defaultLegendConfig(this.widgetType)
           },
           {emitEvent: false}
         );
+        const showTitle: boolean = this.widgetSettings.get('showTitle').value;
+        if (showTitle) {
+          this.widgetSettings.get('titleTooltip').enable({emitEvent: false});
+          this.widgetSettings.get('titleStyle').enable({emitEvent: false});
+          this.widgetSettings.get('showTitleIcon').enable({emitEvent: false});
+        } else {
+          this.widgetSettings.get('titleTooltip').disable({emitEvent: false});
+          this.widgetSettings.get('titleStyle').disable({emitEvent: false});
+          this.widgetSettings.get('showTitleIcon').disable({emitEvent: false});
+        }
         const showTitleIcon: boolean = this.widgetSettings.get('showTitleIcon').value;
         if (showTitleIcon) {
           this.widgetSettings.get('titleIcon').enable({emitEvent: false});
+          this.widgetSettings.get('iconColor').enable({emitEvent: false});
+          this.widgetSettings.get('iconSize').enable({emitEvent: false});
         } else {
           this.widgetSettings.get('titleIcon').disable({emitEvent: false});
+          this.widgetSettings.get('iconColor').disable({emitEvent: false});
+          this.widgetSettings.get('iconSize').disable({emitEvent: false});
         }
         const showLegend: boolean = this.widgetSettings.get('showLegend').value;
         if (showLegend) {
@@ -502,7 +540,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           this.layoutSettings.patchValue(
             {
               mobileOrder: layout.mobileOrder,
-              mobileHeight: layout.mobileHeight
+              mobileHeight: layout.mobileHeight,
+              mobileHide: layout.mobileHide
             },
             {emitEvent: false}
           );
@@ -510,7 +549,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           this.layoutSettings.patchValue(
             {
               mobileOrder: null,
-              mobileHeight: null
+              mobileHeight: null,
+              mobileHide: false
             },
             {emitEvent: false}
           );
@@ -891,7 +931,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           };
         }
       } else if (this.widgetType !== widgetType.static && this.modelValue.isDataEnabled) {
-        if (!config.datasources || !config.datasources.length) {
+        if (!this.modelValue.typeParameters.datasourcesOptional && (!config.datasources || !config.datasources.length)) {
           return {
             datasources: {
               valid: false

@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>3.3.0-SNAPSHOT</version>
+        <version>3.3.2-SNAPSHOT</version>
         <artifactId>common</artifactId>
     </parent>
     <groupId>org.thingsboard.common</groupId>
@@ -82,22 +82,17 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-tcnative-boringssl-static</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
         </dependency>
         <dependency>
             <groupId>io.grpc</groupId>
-            <artifactId>grpc-netty</artifactId>
-            <exclusions>
-                <exclusion>
-                    <artifactId>netty-transport</artifactId>
-                    <groupId>io.netty</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>netty-common</artifactId>
-                    <groupId>io.netty</groupId>
-                </exclusion>
-            </exclusions>
+            <artifactId>grpc-netty-shaded</artifactId>
         </dependency>
         <dependency>
             <groupId>io.grpc</groupId>

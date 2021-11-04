@@ -24,6 +24,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
@@ -46,7 +47,7 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
-public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
+public abstract class BaseDeviceProfileServiceTest extends AbstractServiceTest {
 
     private IdComparator<DeviceProfile> idComparator = new IdComparator<>();
     private IdComparator<DeviceProfileInfo> deviceProfileInfoIdComparator = new IdComparator<>();
@@ -158,7 +159,7 @@ public class BaseDeviceProfileServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindOrCreateDeviceProfile() throws ExecutionException, InterruptedException {
-        ListeningExecutorService testExecutor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(100));
+        ListeningExecutorService testExecutor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(100, ThingsBoardThreadFactory.forName(getClass().getSimpleName() + "-test-scope")));
         try {
             List<ListenableFuture<DeviceProfile>> futures = new ArrayList<>();
             for (int i = 0; i < 50; i++) {

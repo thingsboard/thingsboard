@@ -45,9 +45,13 @@ public interface DashboardService {
 
     PageData<DashboardInfo> findDashboardsByTenantId(TenantId tenantId, PageLink pageLink);
 
+    PageData<DashboardInfo> findMobileDashboardsByTenantId(TenantId tenantId, PageLink pageLink);
+
     void deleteDashboardsByTenantId(TenantId tenantId);
 
     PageData<DashboardInfo> findDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink);
+
+    PageData<DashboardInfo> findMobileDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink);
 
     void unassignCustomerDashboards(TenantId tenantId, CustomerId customerId);
 

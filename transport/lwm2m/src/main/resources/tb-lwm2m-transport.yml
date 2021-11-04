@@ -87,7 +87,7 @@ redis:
 transport:
   sessions:
     inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:300000}"
-    report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:30000}"
+    report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:3000}"
   json:
     # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
     type_cast_enabled: "${JSON_TYPE_CAST_ENABLED:false}"
@@ -98,6 +98,9 @@ transport:
   # Enable/disable http/mqtt/coap transport protocols (has higher priority than certain protocol's 'enabled' property)
   api_enabled: "${TB_TRANSPORT_API_ENABLED:true}"
   # Local LwM2M transport parameters
+  log:
+    enabled: "${TB_TRANSPORT_LOG_ENABLED:true}"
+    max_length: "${TB_TRANSPORT_LOG_MAX_LENGTH:1024}"
   lwm2m:
     # Enable/disable lvm2m transport protocol.
     enabled: "${LWM2M_ENABLED:true}"
@@ -108,9 +111,33 @@ transport:
       security:
         bind_address: "${LWM2M_SECURITY_BIND_ADDRESS:0.0.0.0}"
         bind_port: "${LWM2M_SECURITY_BIND_PORT:5686}"
+        # Server X509 Certificates support
+        credentials:
+          # Whether to enable LWM2M server X509 Certificate/RPK support
+          enabled: "${LWM2M_SERVER_CREDENTIALS_ENABLED:true}"
+          # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
+          type: "${LWM2M_SERVER_CREDENTIALS_TYPE:PEM}"
+          # PEM server credentials
+          pem:
+            # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
+            cert_file: "${LWM2M_SERVER_PEM_CERT:lwm2mserver.pem}"
+            # Path to the server certificate private key file (optional)
+            key_file: "${LWM2M_SERVER_PEM_KEY:lwm2mserver_key.pem}"
+            # Server certificate private key password (optional)
+            key_password: "${LWM2M_SERVER_PEM_KEY_PASSWORD:server_key_password}"
+          # Keystore server credentials
+          keystore:
+            # Type of the key store
+            type: "${LWM2M_SERVER_KEY_STORE_TYPE:JKS}"
+            # Path to the key store that holds the SSL certificate
+            store_file: "${LWM2M_SERVER_KEY_STORE:lwm2mserver.jks}"
+            # Password used to access the key store
+            store_password: "${LWM2M_SERVER_KEY_STORE_PASSWORD:server_ks_password}"
+            # Key alias
+            key_alias: "${LWM2M_SERVER_KEY_ALIAS:server}"
+            # Password used to access the key
+            key_password: "${LWM2M_SERVER_KEY_PASSWORD:server_ks_password}"
         # Only Certificate_x509:
-        key_alias: "${LWM2M_SERVER_KEY_ALIAS:server}"
-        key_password: "${LWM2M_SERVER_KEY_PASSWORD:server_ks_password}"
         skip_validity_check_for_client_cert: "${TB_LWM2M_SERVER_SECURITY_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
     bootstrap:
       enable: "${LWM2M_ENABLED_BS:true}"
@@ -120,18 +147,51 @@ transport:
       security:
         bind_address: "${LWM2M_BS_SECURITY_BIND_ADDRESS:0.0.0.0}"
         bind_port: "${LWM2M_BS_SECURITY_BIND_PORT:5688}"
-        # Only Certificate_x509:
-        key_alias: "${LWM2M_BS_KEY_ALIAS:bootstrap}"
-        key_password: "${LWM2M_BS_KEY_PASSWORD:server_ks_password}"
+        # Bootstrap server X509 Certificates support
+        credentials:
+          # Whether to enable LWM2M bootstrap server X509 Certificate/RPK support
+          enabled: "${LWM2M_BS_CREDENTIALS_ENABLED:true}"
+          # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
+          type:  "${LWM2M_BS_CREDENTIALS_TYPE:PEM}"
+          # PEM server credentials
+          pem:
+            # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
+            cert_file: "${LWM2M_BS_PEM_CERT:lwm2mserver.pem}"
+            # Path to the server certificate private key file (optional)
+            key_file: "${LWM2M_BS_PEM_KEY:lwm2mserver_key.pem}"
+            # Server certificate private key password (optional)
+            key_password: "${LWM2M_BS_PEM_KEY_PASSWORD:server_key_password}"
+          # Keystore server credentials
+          keystore:
+            # Type of the key store
+            type: "${LWM2M_BS_KEY_STORE_TYPE:JKS}"
+            # Path to the key store that holds the SSL certificate
+            store_file: "${LWM2M_BS_KEY_STORE:lwm2mserver.jks}"
+            # Password used to access the key store
+            store_password: "${LWM2M_BS_KEY_STORE_PASSWORD:server_ks_password}"
+            # Key alias
+            key_alias: "${LWM2M_BS_KEY_ALIAS:bootstrap}"
+            # Password used to access the key
+            key_password: "${LWM2M_BS_KEY_PASSWORD:server_ks_password}"
     security:
-      # Certificate_x509:
-      # To get helps about files format and how to generate it, see: https://github.com/eclipse/leshan/wiki/Credential-files-format
-      # Create new X509 Certificates: common/transport/lwm2m/src/main/resources/credentials/shell/lwM2M_credentials.sh
-      key_store_type: "${LWM2M_KEYSTORE_TYPE:JKS}"
-      # key_store_path_file: "${KEY_STORE_PATH_FILE:/common/transport/lwm2m/src/main/resources/credentials/serverKeyStore.jks"
-      key_store: "${LWM2M_KEYSTORE:lwm2mserver.jks}"
-      key_store_password: "${LWM2M_KEYSTORE_PASSWORD:server_ks_password}"
-      root_alias: "${LWM2M_SERVER_ROOT_CA_ALIAS:rootca}"
+      # X509 trust certificates
+      trust-credentials:
+        # Whether to load X509 trust certificates
+        enabled: "${LWM2M_TRUST_CREDENTIALS_ENABLED:true}"
+        # Trust certificates store type (PEM - pem certificates file; KEYSTORE - java keystore)
+        type:  "${LWM2M_TRUST_CREDENTIALS_TYPE:PEM}"
+        # PEM certificates
+        pem:
+          # Path to the certificates file (holds trust certificates)
+          cert_file: "${LWM2M_TRUST_PEM_CERT:lwm2mserver.pem}"
+        # Keystore with trust certificates
+        keystore:
+          # Type of the key store
+          type: "${LWM2M_TRUST_KEY_STORE_TYPE:JKS}"
+          # Path to the key store that holds the X509 certificates
+          store_file: "${LWM2M_TRUST_KEY_STORE:lwm2mserver.jks}"
+          # Password used to access the key store
+          store_password: "${LWM2M_TRUST_KEY_STORE_PASSWORD:server_ks_password}"
       recommended_ciphers: "${LWM2M_RECOMMENDED_CIPHERS:false}"
       recommended_supported_groups: "${LWM2M_RECOMMENDED_SUPPORTED_GROUPS:true}"
     timeout: "${LWM2M_TIMEOUT:120000}"
@@ -140,8 +200,13 @@ transport:
     ota_pool_size: "${LWM2M_OTA_POOL_SIZE:10}"
     clean_period_in_sec: "${LWM2M_CLEAN_PERIOD_IN_SEC:2}"
     log_max_length: "${LWM2M_LOG_MAX_LENGTH:1024}"
+    psm_activity_timer: "${LWM2M_PSM_ACTIVITY_TIMER:10000}"
+    paging_transmission_window: "${LWM2M_PAGING_TRANSMISSION_WINDOW:10000}"
     # Use redis for Security and Registration stores
     redis.enabled: "${LWM2M_REDIS_ENABLED:false}"
+  stats:
+    enabled: "${TB_TRANSPORT_STATS_ENABLED:true}"
+    print-interval-ms: "${TB_TRANSPORT_STATS_PRINT_INTERVAL_MS:60000}"
 
 queue:
   type: "${TB_QUEUE_TYPE:kafka}" # kafka (Apache Kafka) or aws-sqs (AWS SQS) or pubsub (PubSub) or service-bus (Azure Service Bus) or rabbitmq (RabbitMQ)
@@ -151,6 +216,8 @@ queue:
     retries: "${TB_KAFKA_RETRIES:1}"
     batch.size: "${TB_KAFKA_BATCH_SIZE:16384}"
     linger.ms: "${TB_KAFKA_LINGER_MS:1}"
+    max.request.size: "${TB_KAFKA_MAX_REQUEST_SIZE:1048576}"
+    max.in.flight.requests.per.connection: "${TB_KAFKA_MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION:5}"
     buffer.memory: "${TB_BUFFER_MEMORY:33554432}"
     replication_factor: "${TB_QUEUE_KAFKA_REPLICATION_FACTOR:1}"
     use_confluent_cloud: "${TB_QUEUE_KAFKA_USE_CONFLUENT_CLOUD:false}"
@@ -159,7 +226,11 @@ queue:
       sasl.mechanism: "${TB_QUEUE_KAFKA_CONFLUENT_SASL_MECHANISM:PLAIN}"
       sasl.config: "${TB_QUEUE_KAFKA_CONFLUENT_SASL_JAAS_CONFIG:org.apache.kafka.common.security.plain.PlainLoginModule required username=\"CLUSTER_API_KEY\" password=\"CLUSTER_API_SECRET\";}"
       security.protocol: "${TB_QUEUE_KAFKA_CONFLUENT_SECURITY_PROTOCOL:SASL_SSL}"
-    other:
+    other: # In this section you can specify custom parameters for Kafka consumer/producer and expose the env variables to configure outside
+      - key: "request.timeout.ms" # refer to https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html#producerconfigs_request.timeout.ms
+        value: "${TB_QUEUE_KAFKA_REQUEST_TIMEOUT_MS:30000}" # (30 seconds)
+      - key: "session.timeout.ms" # refer to https://docs.confluent.io/platform/current/installation/configuration/consumer-configs.html#consumerconfigs_session.timeout.ms
+        value: "${TB_QUEUE_KAFKA_SESSION_TIMEOUT_MS:10000}" # (10 seconds)
     topic-properties:
       rule-engine: "${TB_QUEUE_KAFKA_RE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1}"
       core: "${TB_QUEUE_KAFKA_CORE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1}"

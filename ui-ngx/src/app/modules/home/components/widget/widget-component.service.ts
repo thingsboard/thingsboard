@@ -491,6 +491,9 @@ export class WidgetComponentService {
       if (isUndefined(result.typeParameters.dataKeysOptional)) {
         result.typeParameters.dataKeysOptional = false;
       }
+      if (isUndefined(result.typeParameters.datasourcesOptional)) {
+        result.typeParameters.datasourcesOptional = false;
+      }
       if (isUndefined(result.typeParameters.stateData)) {
         result.typeParameters.stateData = false;
       }

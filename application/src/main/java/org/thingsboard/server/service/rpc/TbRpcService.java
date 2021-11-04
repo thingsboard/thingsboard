@@ -31,7 +31,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.rpc.RpcService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.cluster.TbClusterService;
 
 @TbCoreComponent
 @Service
@@ -63,7 +63,7 @@ public class TbRpcService {
 
     private void pushRpcMsgToRuleEngine(TenantId tenantId, Rpc rpc) {
         TbMsg msg = TbMsg.newMsg("RPC_" + rpc.getStatus().name(), rpc.getDeviceId(), TbMsgMetaData.EMPTY, JacksonUtil.toString(rpc));
-        tbClusterService.pushMsgToRuleEngine(tenantId, rpc.getId(), msg, null);
+        tbClusterService.pushMsgToRuleEngine(tenantId, rpc.getDeviceId(), msg, null);
     }
 
     public Rpc findRpcById(TenantId tenantId, RpcId rpcId) {

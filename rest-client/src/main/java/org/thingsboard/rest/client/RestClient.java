@@ -57,6 +57,7 @@ import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
@@ -337,7 +338,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         addTimePageLinkToParam(params, pageLink);
 
         return restTemplate.exchange(
-                baseURL +  urlSecondPart + getTimeUrlParams(pageLink),
+                baseURL +  urlSecondPart + "&" + getTimeUrlParams(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<AlarmInfo>>() {
@@ -1131,11 +1132,8 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
     public Optional<Device> saveDeviceWithCredentials(Device device, DeviceCredentials credentials) {
         try {
-            Map<Class<?>, Object> deviceCredentials = new ConcurrentHashMap<>();
-            deviceCredentials.put(Device.class, device);
-            deviceCredentials.put(DeviceCredentials.class, credentials);
-//            return restTemplate.postForEntity(baseURL + "/api/lwm2m/device-credentials", deviceCredentials, Device.class).getBody();
-            ResponseEntity<Device> deviceOpt = restTemplate.postForEntity(baseURL + "/api/lwm2m/device-credentials", deviceCredentials, Device.class);
+            SaveDeviceWithCredentialsRequest request = new SaveDeviceWithCredentialsRequest(device, credentials);
+            ResponseEntity<Device> deviceOpt = restTemplate.postForEntity(baseURL + "/api/device-with-credentials", request, Device.class);
             return Optional.ofNullable(deviceOpt.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
@@ -1145,7 +1143,6 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
             }
         }
     }
-
 
     public PageData<Device> getTenantDevices(String type, PageLink pageLink) {
         Map<String, String> params = new HashMap<>();
@@ -1811,12 +1808,12 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public void handleOneWayDeviceRPCRequest(DeviceId deviceId, JsonNode requestBody) {
-        restTemplate.postForLocation(baseURL + "/api/plugins/rpc/oneway/{deviceId}", requestBody, deviceId.getId());
+        restTemplate.postForLocation(baseURL + "/api/rpc/oneway/{deviceId}", requestBody, deviceId.getId());
     }
 
     public JsonNode handleTwoWayDeviceRPCRequest(DeviceId deviceId, JsonNode requestBody) {
         return restTemplate.exchange(
-                baseURL + "/api/plugins/rpc/twoway/{deviceId}",
+                baseURL + "/api/rpc/twoway/{deviceId}",
                 HttpMethod.POST,
                 new HttpEntity<>(requestBody),
                 new ParameterizedTypeReference<JsonNode>() {
@@ -2034,7 +2031,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         params.put("useStrictDataTypes", Boolean.toString(useStrictDataTypes));
 
         StringBuilder urlBuilder = new StringBuilder(baseURL);
-        urlBuilder.append("/api/plugins/telemetry/{entityType}/{entityId}/values/timeseries?keys={keys}&interval={interval}&agg={agg}&useStrictDataTypes={useStrictDataTypes}&orderBy={orderBy}");
+        urlBuilder.append("/api/plugins/telemetry/{entityType}/{entityId}/values/timeseries?keys={keys}&interval={interval}&limit={limit}&agg={agg}&useStrictDataTypes={useStrictDataTypes}&orderBy={orderBy}");
 
         if (startTime != null) {
             urlBuilder.append("&startTs={startTs}");
@@ -2977,8 +2974,10 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         ).getBody();
     }
 
-    public OtaPackageInfo saveOtaPackageInfo(OtaPackageInfo otaPackageInfo) {
-        return restTemplate.postForEntity(baseURL + "/api/otaPackage", otaPackageInfo, OtaPackageInfo.class).getBody();
+    public OtaPackageInfo saveOtaPackageInfo(OtaPackageInfo otaPackageInfo, boolean isUrl) {
+        Map<String, String> params = new HashMap<>();
+        params.put("isUrl", Boolean.toString(isUrl));
+        return restTemplate.postForEntity(baseURL + "/api/otaPackage?isUrl={isUrl}", otaPackageInfo, OtaPackageInfo.class, params).getBody();
     }
 
     public OtaPackageInfo saveOtaPackageData(OtaPackageId otaPackageId, String checkSum, ChecksumAlgorithm checksumAlgorithm, MultipartFile file) throws Exception {

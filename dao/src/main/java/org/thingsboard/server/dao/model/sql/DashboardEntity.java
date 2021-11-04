@@ -68,6 +68,12 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements S
     @Column(name = ModelConstants.DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY)
     private String assignedCustomers;
 
+    @Column(name = ModelConstants.DASHBOARD_MOBILE_HIDE_PROPERTY)
+    private boolean mobileHide;
+
+    @Column(name = ModelConstants.DASHBOARD_MOBILE_ORDER_PROPERTY)
+    private Integer mobileOrder;
+
     @Type(type = "json")
     @Column(name = ModelConstants.DASHBOARD_CONFIGURATION_PROPERTY)
     private JsonNode configuration;
@@ -93,6 +99,8 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements S
                 log.error("Unable to serialize assigned customers to string!", e);
             }
         }
+        this.mobileHide = dashboard.isMobileHide();
+        this.mobileOrder = dashboard.getMobileOrder();
         this.configuration = dashboard.getConfiguration();
     }
 
@@ -122,6 +130,8 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements S
                 log.warn("Unable to parse assigned customers!", e);
             }
         }
+        dashboard.setMobileHide(mobileHide);
+        dashboard.setMobileOrder(mobileOrder);
         dashboard.setConfiguration(configuration);
         return dashboard;
     }

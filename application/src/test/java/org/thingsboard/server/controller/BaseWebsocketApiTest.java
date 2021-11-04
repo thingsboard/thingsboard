@@ -68,7 +68,7 @@ import java.util.concurrent.TimeUnit;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
-public class BaseWebsocketApiTest extends AbstractWebsocketTest {
+public abstract class BaseWebsocketApiTest extends AbstractWebsocketTest {
 
     private Tenant savedTenant;
     private User tenantAdmin;

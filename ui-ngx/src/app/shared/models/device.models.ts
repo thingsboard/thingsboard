@@ -30,7 +30,14 @@ import { AbstractControl, ValidationErrors } from '@angular/forms';
 import { OtaPackageId } from '@shared/models/id/ota-package-id';
 import { DashboardId } from '@shared/models/id/dashboard-id';
 import { DataType } from '@shared/models/constants';
-import { PowerMode } from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
+import {
+  getDefaultBootstrapServerSecurityConfig,
+  getDefaultBootstrapServersSecurityConfig,
+  getDefaultLwM2MServerSecurityConfig,
+  getDefaultProfileClientLwM2mSettingsConfig,
+  getDefaultProfileObserveAttrConfig,
+  PowerMode
+} from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
 
 export enum DeviceProfileType {
   DEFAULT = 'DEFAULT',
@@ -133,16 +140,16 @@ export const defaultTelemetrySchema =
   '\n' +
   'message SensorDataReading {\n' +
   '\n' +
-  '  double temperature = 1;\n' +
-  '  double humidity = 2;\n' +
+  '  optional double temperature = 1;\n' +
+  '  optional double humidity = 2;\n' +
   '  InnerObject innerObject = 3;\n' +
   '\n' +
   '  message InnerObject {\n' +
-  '    string key1 = 1;\n' +
-  '    bool key2 = 2;\n' +
-  '    double key3 = 3;\n' +
-  '    int32 key4 = 4;\n' +
-  '    string key5 = 5;\n' +
+  '    optional string key1 = 1;\n' +
+  '    optional bool key2 = 2;\n' +
+  '    optional double key3 = 3;\n' +
+  '    optional int32 key4 = 4;\n' +
+  '    optional string key5 = 5;\n' +
   '  }\n' +
   '}\n';
 
@@ -151,8 +158,8 @@ export const defaultAttributesSchema =
   'package attributes;\n' +
   '\n' +
   'message SensorConfiguration {\n' +
-  '  string firmwareVersion = 1;\n' +
-  '  string serialNumber = 2;\n' +
+  '  optional string firmwareVersion = 1;\n' +
+  '  optional string serialNumber = 2;\n' +
   '}';
 
 export const defaultRpcRequestSchema =
@@ -160,9 +167,9 @@ export const defaultRpcRequestSchema =
   'package rpc;\n' +
   '\n' +
   'message RpcRequestMsg {\n' +
-  '  string method = 1;\n' +
-  '  int32 requestId = 2;\n' +
-  '  string params = 3;\n' +
+  '  optional string method = 1;\n' +
+  '  optional int32 requestId = 2;\n' +
+  '  optional string params = 3;\n' +
   '}';
 
 export const defaultRpcResponseSchema =
@@ -170,7 +177,7 @@ export const defaultRpcResponseSchema =
   'package rpc;\n' +
   '\n' +
   'message RpcResponseMsg {\n' +
-  '  string payload = 1;\n' +
+  '  optional string payload = 1;\n' +
   '}';
 
 export const coapDeviceTypeTranslationMap = new Map<CoapTransportDeviceType, string>(
@@ -208,7 +215,7 @@ export const deviceTransportTypeConfigurationInfoMap = new Map<DeviceTransportTy
       DeviceTransportType.COAP,
       {
         hasProfileConfiguration: true,
-        hasDeviceConfiguration: false,
+        hasDeviceConfiguration: true,
       }
     ],
     [
@@ -240,8 +247,17 @@ export interface MqttDeviceProfileTransportConfiguration {
   deviceAttributesTopic?: string;
   transportPayloadTypeConfiguration?: {
     transportPayloadType?: TransportPayloadType;
+    enableCompatibilityWithJsonPayloadFormat?: boolean;
+    useJsonPayloadFormatForDefaultDownlinkTopics?: boolean;
   };
   [key: string]: any;
+}
+
+export interface CoapClientSetting {
+  powerMode?: PowerMode | null;
+  edrxCycle?: number;
+  pagingTransmissionWindow?: number;
+  psmActivityTimer?: number;
 }
 
 export interface CoapDeviceProfileTransportConfiguration {
@@ -252,6 +268,7 @@ export interface CoapDeviceProfileTransportConfiguration {
       [key: string]: any;
     };
   };
+  clientSettings?: CoapClientSetting;
 }
 
 export interface Lwm2mDeviceProfileTransportConfiguration {
@@ -344,7 +361,11 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
         const mqttTransportConfiguration: MqttDeviceProfileTransportConfiguration = {
           deviceTelemetryTopic: 'v1/devices/me/telemetry',
           deviceAttributesTopic: 'v1/devices/me/attributes',
-          transportPayloadTypeConfiguration: {transportPayloadType: TransportPayloadType.JSON}
+          transportPayloadTypeConfiguration: {
+            transportPayloadType: TransportPayloadType.JSON,
+            enableCompatibilityWithJsonPayloadFormat: false,
+            useJsonPayloadFormatForDefaultDownlinkTopics: false,
+          }
         };
         transportConfiguration = {...mqttTransportConfiguration, type: DeviceTransportType.MQTT};
         break;
@@ -353,12 +374,23 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
           coapDeviceTypeConfiguration: {
             coapDeviceType: CoapTransportDeviceType.DEFAULT,
             transportPayloadTypeConfiguration: {transportPayloadType: TransportPayloadType.JSON}
+          },
+          clientSettings: {
+            powerMode: PowerMode.DRX
           }
         };
         transportConfiguration = {...coapTransportConfiguration, type: DeviceTransportType.COAP};
         break;
       case DeviceTransportType.LWM2M:
-        const lwm2mTransportConfiguration: Lwm2mDeviceProfileTransportConfiguration = {};
+        const lwm2mTransportConfiguration: Lwm2mDeviceProfileTransportConfiguration = {
+          observeAttr: getDefaultProfileObserveAttrConfig(),
+          bootstrap: {
+            servers: getDefaultBootstrapServersSecurityConfig(),
+            bootstrapServer: getDefaultBootstrapServerSecurityConfig(),
+            lwm2mServer: getDefaultLwM2MServerSecurityConfig()
+          },
+          clientLwM2mSettings: getDefaultProfileClientLwM2mSettingsConfig()
+        };
         transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};
         break;
       case DeviceTransportType.SNMP:
@@ -387,11 +419,15 @@ export function createDeviceTransportConfiguration(type: DeviceTransportType): D
         transportConfiguration = {...mqttTransportConfiguration, type: DeviceTransportType.MQTT};
         break;
       case DeviceTransportType.COAP:
-        const coapTransportConfiguration: CoapDeviceTransportConfiguration = {};
+        const coapTransportConfiguration: CoapDeviceTransportConfiguration = {
+          powerMode: null
+        };
         transportConfiguration = {...coapTransportConfiguration, type: DeviceTransportType.COAP};
         break;
       case DeviceTransportType.LWM2M:
-        const lwm2mTransportConfiguration: Lwm2mDeviceTransportConfiguration = {};
+        const lwm2mTransportConfiguration: Lwm2mDeviceTransportConfiguration = {
+          powerMode: null
+        };
         transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};
         break;
       case DeviceTransportType.SNMP:
@@ -570,13 +606,17 @@ export interface MqttDeviceTransportConfiguration {
 }
 
 export interface CoapDeviceTransportConfiguration {
-  [key: string]: any;
+  powerMode?: PowerMode | null;
+  edrxCycle?: number;
+  pagingTransmissionWindow?: number;
+  psmActivityTimer?: number;
 }
 
 export interface Lwm2mDeviceTransportConfiguration {
   powerMode?: PowerMode | null;
   edrxCycle?: number;
-  [key: string]: any;
+  pagingTransmissionWindow?: number;
+  psmActivityTimer?: number;
 }
 
 export enum SnmpDeviceProtocolVersion {
@@ -682,6 +722,20 @@ export const credentialTypeNames = new Map<DeviceCredentialsType, string>(
   ]
 );
 
+export const credentialTypesByTransportType = new Map<DeviceTransportType, DeviceCredentialsType[]>(
+  [
+    [DeviceTransportType.DEFAULT, [
+      DeviceCredentialsType.ACCESS_TOKEN, DeviceCredentialsType.X509_CERTIFICATE, DeviceCredentialsType.MQTT_BASIC
+    ]],
+    [DeviceTransportType.MQTT, [
+      DeviceCredentialsType.ACCESS_TOKEN, DeviceCredentialsType.X509_CERTIFICATE, DeviceCredentialsType.MQTT_BASIC
+    ]],
+    [DeviceTransportType.COAP, [DeviceCredentialsType.ACCESS_TOKEN, DeviceCredentialsType.X509_CERTIFICATE]],
+    [DeviceTransportType.LWM2M, [DeviceCredentialsType.LWM2M_CREDENTIALS]],
+    [DeviceTransportType.SNMP, [DeviceCredentialsType.ACCESS_TOKEN]]
+  ]
+);
+
 export interface DeviceCredentials extends BaseData<DeviceCredentialsId> {
   deviceId: DeviceId;
   credentialsType: DeviceCredentialsType;
@@ -693,6 +747,14 @@ export interface DeviceCredentialMQTTBasic {
   clientId: string;
   userName: string;
   password: string;
+}
+
+export function getDeviceCredentialMQTTDefault(): DeviceCredentialMQTTBasic {
+  return {
+    clientId: '',
+    userName: '',
+    password: ''
+  };
 }
 
 export interface DeviceSearchQuery extends EntitySearchQuery {

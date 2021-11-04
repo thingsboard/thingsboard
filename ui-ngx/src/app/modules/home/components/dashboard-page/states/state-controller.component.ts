@@ -129,7 +129,8 @@ export abstract class StateControllerComponent implements IStateControllerCompon
   protected updateStateParam(newState: string, replaceCurrentHistoryUrl = false) {
     this.currentState = newState;
     if (this.syncStateWithQueryParam) {
-      const queryParams: Params = {state: this.currentState};
+      const state = this.currentState ? encodeURIComponent(this.currentState) : this.currentState;
+      const queryParams: Params = {state};
       this.ngZone.run(() => {
         this.router.navigate(
           [],

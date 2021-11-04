@@ -17,6 +17,8 @@ package org.thingsboard.server.service.ota;
 
 import com.google.common.util.concurrent.FutureCallback;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Required;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
@@ -48,14 +50,16 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToOtaPackageStateSer
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
+import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.cluster.TbClusterService;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -64,6 +68,7 @@ import static org.thingsboard.server.common.data.ota.OtaPackageKey.CHECKSUM;
 import static org.thingsboard.server.common.data.ota.OtaPackageKey.CHECKSUM_ALGORITHM;
 import static org.thingsboard.server.common.data.ota.OtaPackageKey.SIZE;
 import static org.thingsboard.server.common.data.ota.OtaPackageKey.STATE;
+import static org.thingsboard.server.common.data.ota.OtaPackageKey.TAG;
 import static org.thingsboard.server.common.data.ota.OtaPackageKey.TITLE;
 import static org.thingsboard.server.common.data.ota.OtaPackageKey.TS;
 import static org.thingsboard.server.common.data.ota.OtaPackageKey.URL;
@@ -76,7 +81,6 @@ import static org.thingsboard.server.common.data.ota.OtaPackageUtil.getTelemetry
 
 @Slf4j
 @Service
-@TbCoreComponent
 public class DefaultOtaPackageStateService implements OtaPackageStateService {
 
     private final TbClusterService tbClusterService;
@@ -86,17 +90,23 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
     private final RuleEngineTelemetryService telemetryService;
     private final TbQueueProducer<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> otaPackageStateMsgProducer;
 
-    public DefaultOtaPackageStateService(TbClusterService tbClusterService, OtaPackageService otaPackageService,
+    public DefaultOtaPackageStateService(@Lazy TbClusterService tbClusterService,
+                                         OtaPackageService otaPackageService,
                                          DeviceService deviceService,
                                          DeviceProfileService deviceProfileService,
-                                         RuleEngineTelemetryService telemetryService,
-                                         TbCoreQueueFactory coreQueueFactory) {
+                                         @Lazy RuleEngineTelemetryService telemetryService,
+                                         Optional<TbCoreQueueFactory> coreQueueFactory,
+                                         Optional<TbRuleEngineQueueFactory> reQueueFactory) {
         this.tbClusterService = tbClusterService;
         this.otaPackageService = otaPackageService;
         this.deviceService = deviceService;
         this.deviceProfileService = deviceProfileService;
         this.telemetryService = telemetryService;
-        this.otaPackageStateMsgProducer = coreQueueFactory.createToOtaPackageStateServiceMsgProducer();
+        if (coreQueueFactory.isPresent()) {
+            this.otaPackageStateMsgProducer = coreQueueFactory.get().createToOtaPackageStateServiceMsgProducer();
+        } else {
+            this.otaPackageStateMsgProducer = reQueueFactory.get().createToOtaPackageStateServiceMsgProducer();
+        }
     }
 
     @Override
@@ -246,6 +256,11 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
         List<TsKvEntry> telemetry = new ArrayList<>();
         telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(getTargetTelemetryKey(firmware.getType(), TITLE), firmware.getTitle())));
         telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(getTargetTelemetryKey(firmware.getType(), VERSION), firmware.getVersion())));
+
+        if (StringUtils.isNotEmpty(firmware.getTag())) {
+            telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(getTargetTelemetryKey(firmware.getType(), TAG), firmware.getTag())));
+        }
+
         telemetry.add(new BasicTsKvEntry(ts, new LongDataEntry(getTargetTelemetryKey(firmware.getType(), TS), ts)));
         telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(getTelemetryKey(firmware.getType(), STATE), OtaPackageUpdateStatus.QUEUED.name())));
 
@@ -273,18 +288,25 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
         telemetryService.saveAndNotify(tenantId, deviceId, Collections.singletonList(status), new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable Void tmp) {
-                log.trace("[{}] Success save telemetry with target firmware for device!", deviceId);
+                log.trace("[{}] Success save telemetry with target {} for device!", deviceId, otaPackage);
+                updateAttributes(device, otaPackage, ts, tenantId, deviceId, otaPackageType);
             }
 
             @Override
             public void onFailure(Throwable t) {
-                log.error("[{}] Failed to save telemetry with target firmware for device!", deviceId, t);
+                log.error("[{}] Failed to save telemetry with target {} for device!", deviceId, otaPackage, t);
+                updateAttributes(device, otaPackage, ts, tenantId, deviceId, otaPackageType);
             }
         });
+    }
 
+    private void updateAttributes(Device device, OtaPackageInfo otaPackage, long ts, TenantId tenantId, DeviceId deviceId, OtaPackageType otaPackageType) {
         List<AttributeKvEntry> attributes = new ArrayList<>();
         attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, TITLE), otaPackage.getTitle())));
         attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, VERSION), otaPackage.getVersion())));
+        if (StringUtils.isNotEmpty(otaPackage.getTag())) {
+            attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, TAG), otaPackage.getTag())));
+        }
         if (otaPackage.hasUrl()) {
             attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, URL), otaPackage.getUrl())));
             List<String> attrToRemove = new ArrayList<>();

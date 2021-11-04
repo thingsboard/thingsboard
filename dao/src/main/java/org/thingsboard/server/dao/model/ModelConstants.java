@@ -339,6 +339,8 @@ public class ModelConstants {
     public static final String DASHBOARD_IMAGE_PROPERTY = "image";
     public static final String DASHBOARD_CONFIGURATION_PROPERTY = "configuration";
     public static final String DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY = "assigned_customers";
+    public static final String DASHBOARD_MOBILE_HIDE_PROPERTY = "mobile_hide";
+    public static final String DASHBOARD_MOBILE_ORDER_PROPERTY = "mobile_order";
 
     public static final String DASHBOARD_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "dashboard_by_tenant_and_search_text";
 
@@ -497,6 +499,7 @@ public class ModelConstants {
     public static final String OTA_PACKAGE_TYPE_COLUMN = "type";
     public static final String OTA_PACKAGE_TILE_COLUMN = TITLE_PROPERTY;
     public static final String OTA_PACKAGE_VERSION_COLUMN = "version";
+    public static final String OTA_PACKAGE_TAG_COLUMN = "tag";
     public static final String OTA_PACKAGE_URL_COLUMN = "url";
     public static final String OTA_PACKAGE_FILE_NAME_COLUMN = "file_name";
     public static final String OTA_PACKAGE_CONTENT_TYPE_COLUMN = "content_type";
@@ -516,6 +519,7 @@ public class ModelConstants {
     public static final String RPC_REQUEST = "request";
     public static final String RPC_RESPONSE = "response";
     public static final String RPC_STATUS = "status";
+    public static final String RPC_ADDITIONAL_INFO = ADDITIONAL_INFO_PROPERTY;
 
     /**
      * Edge constants.

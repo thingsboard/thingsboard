@@ -18,10 +18,14 @@ package org.thingsboard.server.transport.lwm2m.server.rpc;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.ResponseCode;
+import org.eclipse.leshan.core.request.ReadCompositeRequest;
+import org.eclipse.leshan.core.response.ReadCompositeResponse;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
@@ -77,96 +81,89 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
     private final LwM2mUplinkMsgHandler uplinkHandler;
     private final LwM2mDownlinkMsgHandler downlinkHandler;
     private final LwM2MTelemetryLogService logService;
-    private final Map<UUID, Long> rpcSubscriptions = new ConcurrentHashMap<>();
 
     @Override
-    public void onToDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg rpcRequst, TransportProtos.SessionInfoProto sessionInfo) {
-        this.cleanupOldSessions();
-        UUID requestUUID = new UUID(rpcRequst.getRequestIdMSB(), rpcRequst.getRequestIdLSB());
-        log.debug("Received params: {}", rpcRequst.getParams());
-        // We use this map to protect from browser issue that the same command is sent twice.
-        // TODO: This is probably not the best place and should be moved to DeviceActor
-        if (!this.rpcSubscriptions.containsKey(requestUUID)) {
-            LwM2mOperationType operationType = LwM2mOperationType.fromType(rpcRequst.getMethodName());
-            if (operationType == null) {
-                this.sendErrorRpcResponse(sessionInfo, rpcRequst.getRequestId(), ResponseCode.METHOD_NOT_ALLOWED.getName(), "Unsupported operation type: " + rpcRequst.getMethodName());
-                return;
-            }
-            LwM2mClient client = clientContext.getClientBySessionInfo(sessionInfo);
-            if (client.getRegistration() == null) {
-                this.sendErrorRpcResponse(sessionInfo, rpcRequst.getRequestId(), ResponseCode.INTERNAL_SERVER_ERROR.getName(), "Registration is empty");
-                return;
-            }
-            try {
-                if (operationType.isHasObjectId()) {
-                    String objectId = getIdFromParameters(client, rpcRequst);
+    public void onToDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg rpcRequest, TransportProtos.SessionInfoProto sessionInfo) {
+        log.debug("Received params: {}", rpcRequest.getParams());
+        LwM2mOperationType operationType = LwM2mOperationType.fromType(rpcRequest.getMethodName());
+        if (operationType == null) {
+            this.sendErrorRpcResponse(sessionInfo, rpcRequest.getRequestId(), ResponseCode.METHOD_NOT_ALLOWED, "Unsupported operation type: " + rpcRequest.getMethodName());
+            return;
+        }
+        LwM2mClient client = clientContext.getClientBySessionInfo(sessionInfo);
+        if (client.getRegistration() == null) {
+            this.sendErrorRpcResponse(sessionInfo, rpcRequest.getRequestId(), ResponseCode.INTERNAL_SERVER_ERROR, "Registration is empty");
+            return;
+        }
+        try {
+            if (operationType.isHasObjectId()) {
+                String objectId = getIdFromParameters(client, rpcRequest);
+                switch (operationType) {
+                    case READ:
+                        sendReadRequest(client, rpcRequest, objectId);
+                        break;
+                    case OBSERVE:
+                        sendObserveRequest(client, rpcRequest, objectId);
+                        break;
+                    case DISCOVER:
+                        sendDiscoverRequest(client, rpcRequest, objectId);
+                        break;
+                    case EXECUTE:
+                        sendExecuteRequest(client, rpcRequest, objectId);
+                        break;
+                    case WRITE_ATTRIBUTES:
+                        sendWriteAttributesRequest(client, rpcRequest, objectId);
+                        break;
+                    case OBSERVE_CANCEL:
+                        sendCancelObserveRequest(client, rpcRequest, objectId);
+                        break;
+                    case DELETE:
+                        sendDeleteRequest(client, rpcRequest, objectId);
+                        break;
+                    case WRITE_UPDATE:
+                        sendWriteUpdateRequest(client, rpcRequest, objectId);
+                        break;
+                    case WRITE_REPLACE:
+                        sendWriteReplaceRequest(client, rpcRequest, objectId);
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Unsupported operation: " + operationType.name());
+                }
+            } else if (operationType.isComposite()) {
+                if (clientContext.isComposite(client)) {
                     switch (operationType) {
-                        case READ:
-                            sendReadRequest(client, rpcRequst, objectId);
+                        case READ_COMPOSITE:
+                            sendReadCompositeRequest(client, rpcRequest);
                             break;
-                        case OBSERVE:
-                            sendObserveRequest(client, rpcRequst, objectId);
-                            break;
-                        case DISCOVER:
-                            sendDiscoverRequest(client, rpcRequst, objectId);
-                            break;
-                        case EXECUTE:
-                            sendExecuteRequest(client, rpcRequst, objectId);
-                            break;
-                        case WRITE_ATTRIBUTES:
-                            sendWriteAttributesRequest(client, rpcRequst, objectId);
-                            break;
-                        case OBSERVE_CANCEL:
-                            sendCancelObserveRequest(client, rpcRequst, objectId);
-                            break;
-                        case DELETE:
-                            sendDeleteRequest(client, rpcRequst, objectId);
-                            break;
-                        case WRITE_UPDATE:
-                            sendWriteUpdateRequest(client, rpcRequst, objectId);
-                            break;
-                        case WRITE_REPLACE:
-                            sendWriteReplaceRequest(client, rpcRequst, objectId);
+                        case WRITE_COMPOSITE:
+                            sendWriteCompositeRequest(client, rpcRequest);
                             break;
                         default:
                             throw new IllegalArgumentException("Unsupported operation: " + operationType.name());
-                    }
-                } else if (operationType.isComposite()) {
-                    if (clientContext.isComposite(client)) {
-                        switch (operationType) {
-                            case READ_COMPOSITE:
-                                sendReadCompositeRequest(client, rpcRequst);
-                                break;
-                            case WRITE_COMPOSITE:
-                                sendWriteCompositeRequest(client, rpcRequst);
-                                break;
-                            default:
-                                throw new IllegalArgumentException("Unsupported operation: " + operationType.name());
-                        }
-                    } else {
-                        this.sendErrorRpcResponse(sessionInfo, rpcRequst.getRequestId(),
-                                ResponseCode.INTERNAL_SERVER_ERROR.getName(), "This device does not support Composite Operation");
                     }
                 } else {
-                    switch (operationType) {
-                        case OBSERVE_CANCEL_ALL:
-                            sendCancelAllObserveRequest(client, rpcRequst);
-                            break;
-                        case OBSERVE_READ_ALL:
-                            sendObserveAllRequest(client, rpcRequst);
-                            break;
-                        case DISCOVER_ALL:
-                            sendDiscoverAllRequest(client, rpcRequst);
-                            break;
-                        case FW_UPDATE:
-                            //TODO: implement and add break statement
-                        default:
-                            throw new IllegalArgumentException("Unsupported operation: " + operationType.name());
-                    }
+                    this.sendErrorRpcResponse(sessionInfo, rpcRequest.getRequestId(),
+                            ResponseCode.INTERNAL_SERVER_ERROR, "This device does not support Composite Operation");
                 }
-            } catch (IllegalArgumentException e) {
-                this.sendErrorRpcResponse(sessionInfo, rpcRequst.getRequestId(), ResponseCode.BAD_REQUEST.getName(), e.getMessage());
+            } else {
+                switch (operationType) {
+                    case OBSERVE_CANCEL_ALL:
+                        sendCancelAllObserveRequest(client, rpcRequest);
+                        break;
+                    case OBSERVE_READ_ALL:
+                        sendObserveAllRequest(client, rpcRequest);
+                        break;
+                    case DISCOVER_ALL:
+                        sendDiscoverAllRequest(client, rpcRequest);
+                        break;
+                    case FW_UPDATE:
+                        //TODO: implement and add break statement
+                    default:
+                        throw new IllegalArgumentException("Unsupported operation: " + operationType.name());
+                }
             }
+        } catch (IllegalArgumentException e) {
+            this.sendErrorRpcResponse(sessionInfo, rpcRequest.getRequestId(), ResponseCode.BAD_REQUEST, e.getMessage());
         }
     }
 
@@ -181,7 +178,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         String[] versionedIds = getIdsFromParameters(client, requestMsg);
         TbLwM2MReadCompositeRequest request = TbLwM2MReadCompositeRequest.builder().versionedIds(versionedIds).timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MReadCompositeCallback(uplinkHandler, logService, client, versionedIds);
-        var rpcCallback = new RpcReadResponseCompositeCallback(transportService, client, requestMsg, mainCallback);
+        var rpcCallback = new RpcReadResponseCompositeCallback<>(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendReadCompositeRequest(client, request, rpcCallback);
     }
 
@@ -297,14 +294,14 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
     private String[] getIdsFromParameters(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg rpcRequst) {
         RpcReadCompositeRequest requestParams = JacksonUtil.fromString(rpcRequst.getParams(), RpcReadCompositeRequest.class);
         if (requestParams.getKeys() != null && requestParams.getKeys().length > 0) {
-            Set targetIds = ConcurrentHashMap.newKeySet();
+            Set<String> targetIds = ConcurrentHashMap.newKeySet();
             for (String key : requestParams.getKeys()) {
                 String targetId = clientContext.getObjectIdByKeyNameFromProfile(client, key);
                 if (targetId != null) {
                     targetIds.add(targetId);
                 }
             }
-            return (String[]) targetIds.toArray(String[]::new);
+            return targetIds.toArray(String[]::new);
         } else if (requestParams.getIds() != null && requestParams.getIds().length > 0) {
             return requestParams.getIds();
         } else {
@@ -312,21 +309,10 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         }
     }
 
-    private void sendErrorRpcResponse(TransportProtos.SessionInfoProto sessionInfo, int requestId, String result, String error) {
-        String payload = JacksonUtil.toString(JacksonUtil.newObjectNode().put("result", result).put("error", error));
-        TransportProtos.ToDeviceRpcResponseMsg msg = TransportProtos.ToDeviceRpcResponseMsg.newBuilder().setRequestId(requestId).setPayload(payload).build();
+    private void sendErrorRpcResponse(TransportProtos.SessionInfoProto sessionInfo, int requestId, ResponseCode result, String error) {
+        String payload = JacksonUtil.toString(LwM2MRpcResponseBody.builder().result(result.getName()).error(error).build());
+        TransportProtos.ToDeviceRpcResponseMsg msg = TransportProtos.ToDeviceRpcResponseMsg.newBuilder().setRequestId(requestId).setError(payload).build();
         transportService.process(sessionInfo, msg, null);
-    }
-
-    private void cleanupOldSessions() {
-        log.debug("Before rpcSubscriptions.size(): [{}]", rpcSubscriptions.size());
-        if (rpcSubscriptions.size() > 0) {
-            long currentTime = System.currentTimeMillis();
-            Set<UUID> rpcSubscriptionsToRemove = rpcSubscriptions.entrySet().stream().filter(kv -> currentTime > kv.getValue()).map(Map.Entry::getKey).collect(Collectors.toSet());
-            log.debug("RpcSubscriptionsToRemove: [{}]", rpcSubscriptionsToRemove);
-            rpcSubscriptionsToRemove.forEach(rpcSubscriptions::remove);
-        }
-        log.debug("After rpcSubscriptions.size(): [{}]", rpcSubscriptions.size());
     }
 
     @Override

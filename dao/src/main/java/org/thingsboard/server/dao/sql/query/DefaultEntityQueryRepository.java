@@ -15,8 +15,10 @@
  */
 package org.thingsboard.server.dao.sql.query;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -114,7 +116,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             " WHEN entity.entity_type = 'DEVICE'" +
             " THEN (select customer_id from device where id = entity_id)" +
             " WHEN entity.entity_type = 'ENTITY_VIEW'" +
-            " THEN (select customer_id from entity_view where id = entity_id)" +
+            " THEN (select customer_id from entity_view where id = entity.entity_id)" +
             " WHEN entity.entity_type = 'EDGE'" +
             " THEN (select customer_id from edge where id = entity_id)" +
             " END as customer_id";
@@ -131,7 +133,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             " WHEN entity.entity_type = 'DEVICE'" +
             " THEN (select tenant_id from device where id = entity_id)" +
             " WHEN entity.entity_type = 'ENTITY_VIEW'" +
-            " THEN (select tenant_id from entity_view where id = entity_id)" +
+            " THEN (select tenant_id from entity_view where id = entity.entity_id)" +
             " WHEN entity.entity_type = 'EDGE'" +
             " THEN (select tenant_id from edge where id = entity_id)" +
             " END as tenant_id";
@@ -149,7 +151,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             " WHEN entity.entity_type = 'DEVICE'" +
             " THEN (select created_time from device where id = entity_id)" +
             " WHEN entity.entity_type = 'ENTITY_VIEW'" +
-            " THEN (select created_time from entity_view where id = entity_id)" +
+            " THEN (select created_time from entity_view where id = entity.entity_id)" +
             " WHEN entity.entity_type = 'EDGE'" +
             " THEN (select created_time from edge where id = entity_id)" +
             " END as created_time";
@@ -167,7 +169,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             " WHEN entity.entity_type = 'DEVICE'" +
             " THEN (select name from device where id = entity_id)" +
             " WHEN entity.entity_type = 'ENTITY_VIEW'" +
-            " THEN (select name from entity_view where id = entity_id)" +
+            " THEN (select name from entity_view where id = entity.entity_id)" +
             " WHEN entity.entity_type = 'EDGE'" +
             " THEN (select name from edge where id = entity_id)" +
             " END as name";
@@ -179,7 +181,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             " WHEN entity.entity_type = 'DEVICE'" +
             " THEN (select type from device where id = entity_id)" +
             " WHEN entity.entity_type = 'ENTITY_VIEW'" +
-            " THEN (select type from entity_view where id = entity_id)" +
+            " THEN (select type from entity_view where id = entity.entity_id)" +
             " WHEN entity.entity_type = 'EDGE'" +
             " THEN (select type from edge where id = entity_id)" +
             " ELSE entity.entity_type END as type";
@@ -197,7 +199,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             " WHEN entity.entity_type = 'DEVICE'" +
             " THEN (select label from device where id = entity_id)" +
             " WHEN entity.entity_type = 'ENTITY_VIEW'" +
-            " THEN (select name from entity_view where id = entity_id)" +
+            " THEN (select name from entity_view where id = entity.entity_id)" +
             " WHEN entity.entity_type = 'EDGE'" +
             " THEN (select label from edge where id = entity_id)" +
             " END as label";
@@ -215,7 +217,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             " WHEN entity.entity_type = 'DEVICE'" +
             " THEN (select additional_info from device where id = entity_id)" +
             " WHEN entity.entity_type = 'ENTITY_VIEW'" +
-            " THEN (select additional_info from entity_view where id = entity_id)" +
+            " THEN (select additional_info from entity_view where id = entity.entity_id)" +
             " WHEN entity.entity_type = 'EDGE'" +
             " THEN (select additional_info from edge where id = entity_id)" +
             " END as additional_info";
@@ -239,21 +241,37 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     public static EntityType[] RELATION_QUERY_ENTITY_TYPES = new EntityType[]{
             EntityType.TENANT, EntityType.CUSTOMER, EntityType.USER, EntityType.DASHBOARD, EntityType.ASSET, EntityType.DEVICE, EntityType.ENTITY_VIEW};
 
-    private static final String HIERARCHICAL_QUERY_TEMPLATE = " FROM (WITH RECURSIVE related_entities(from_id, from_type, to_id, to_type, relation_type, lvl) AS (" +
-            " SELECT from_id, from_type, to_id, to_type, relation_type, 1 as lvl" +
-            " FROM relation" +
+    private static final String HIERARCHICAL_QUERY_TEMPLATE = " FROM (WITH RECURSIVE related_entities(from_id, from_type, to_id, to_type, lvl, path) AS (" +
+            " SELECT from_id, from_type, to_id, to_type," +
+            "        1 as lvl," +
+            "        ARRAY[$in_id] as path" + // initial path
+            " FROM relation " +
             " WHERE $in_id = :relation_root_id and $in_type = :relation_root_type and relation_type_group = 'COMMON'" +
+            " GROUP BY from_id, from_type, to_id, to_type, lvl, path" +
             " UNION ALL" +
-            " SELECT r.from_id, r.from_type, r.to_id, r.to_type, r.relation_type, lvl + 1" +
+            " SELECT r.from_id, r.from_type, r.to_id, r.to_type," +
+            "        (re.lvl + 1) as lvl, " +
+            "        (re.path || ARRAY[r.$in_id]) as path" +
             " FROM relation r" +
             " INNER JOIN related_entities re ON" +
             " r.$in_id = re.$out_id and r.$in_type = re.$out_type and" +
-            " relation_type_group = 'COMMON' %s)" +
-            " SELECT re.$out_id entity_id, re.$out_type entity_type, max(re.lvl) lvl" +
-            " from related_entities re" +
+            " relation_type_group = 'COMMON' " +
+            " AND r.$in_id NOT IN (SELECT * FROM unnest(re.path)) " +
+            " %s" +
+            " GROUP BY r.from_id, r.from_type, r.to_id, r.to_type, (re.lvl + 1), (re.path || ARRAY[r.$in_id])" +
+            " )" +
+            " SELECT re.$out_id entity_id, re.$out_type entity_type, max(r_int.lvl) lvl" +
+            " from related_entities r_int" +
+            "  INNER JOIN relation re ON re.from_id = r_int.from_id AND re.from_type = r_int.from_type" +
+            "                         AND re.to_id = r_int.to_id AND re.to_type = r_int.to_type" +
+            "                         AND re.relation_type_group = 'COMMON'" +
             " %s GROUP BY entity_id, entity_type) entity";
     private static final String HIERARCHICAL_TO_QUERY_TEMPLATE = HIERARCHICAL_QUERY_TEMPLATE.replace("$in", "to").replace("$out", "from");
     private static final String HIERARCHICAL_FROM_QUERY_TEMPLATE = HIERARCHICAL_QUERY_TEMPLATE.replace("$in", "from").replace("$out", "to");
+
+    @Getter
+    @Value("${sql.relations.max_level:50}")
+    int maxLevelAllowed; //This value has to be reasonable small to prevent infinite recursion as early as possible
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
@@ -371,6 +389,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             } else {
                 entityTypeStr = "'" + entityType.name() + "'";
             }
+
             if (!StringUtils.isEmpty(entityFieldsSelection)) {
                 entityFieldsSelection = String.format("e.id id, %s entity_type, %s", entityTypeStr, entityFieldsSelection);
             } else {
@@ -424,10 +443,10 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                     EntityKeyMapping sortOrderMapping = sortOrderMappingOpt.get();
                     String direction = sortOrder.getDirection() == EntityDataSortOrder.Direction.ASC ? "asc" : "desc";
                     if (sortOrderMapping.getEntityKey().getType() == EntityKeyType.ENTITY_FIELD) {
-                        dataQuery = String.format("%s order by %s %s", dataQuery, sortOrderMapping.getValueAlias(), direction);
+                        dataQuery = String.format("%s order by %s %s, result.id %s", dataQuery, sortOrderMapping.getValueAlias(), direction, direction);
                     } else {
-                        dataQuery = String.format("%s order by %s %s, %s %s", dataQuery,
-                                sortOrderMapping.getSortOrderNumAlias(), direction, sortOrderMapping.getSortOrderStrAlias(), direction);
+                        dataQuery = String.format("%s order by %s %s, %s %s, result.id %s", dataQuery,
+                                sortOrderMapping.getSortOrderNumAlias(), direction, sortOrderMapping.getSortOrderStrAlias(), direction, direction);
                     }
                 }
             }
@@ -580,7 +599,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                     .append("nr.").append(fromOrTo).append("_type").append(" = re.").append(toOrFrom).append("_type");
 
             notExistsPart.append(")");
-            whereFilter += " and ( re.lvl = " + entityFilter.getMaxLevel() + " OR " + notExistsPart.toString() + ")";
+            whereFilter += " and ( r_int.lvl = " + entityFilter.getMaxLevel() + " OR " + notExistsPart.toString() + ")";
         }
         from = String.format(from, lvlFilter, whereFilter);
         String query = "( " + selectFields + from + ")";
@@ -659,7 +678,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                     .append(whereFilter.toString().replaceAll("re\\.", "nr\\."));
 
             notExistsPart.append(")");
-            whereFilter.append(" and ( re.lvl = ").append(entityFilter.getMaxLevel()).append(" OR ").append(notExistsPart.toString()).append(")");
+            whereFilter.append(" and ( r_int.lvl = ").append(entityFilter.getMaxLevel()).append(" OR ").append(notExistsPart.toString()).append(")");
         }
         from = String.format(from, lvlFilter, " WHERE " + whereFilter);
         return "( " + selectFields + from + ")";
@@ -693,8 +712,12 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         return whereFilter.toString();
     }
 
-    private String getLvlFilter(int maxLevel) {
-        return maxLevel > 0 ? ("and lvl <= " + (maxLevel - 1)) : "";
+    String getLvlFilter(int maxLevel) {
+        return "and re.lvl <= " + (getMaxLevel(maxLevel) - 1);
+    }
+
+    int getMaxLevel(int maxLevel) {
+        return (maxLevel <= 0 || maxLevel > this.maxLevelAllowed) ? this.maxLevelAllowed : maxLevel;
     }
 
     private String getQueryTemplate(EntitySearchDirection direction) {

@@ -59,7 +59,7 @@ public class SequentialTbRuleEngineSubmitStrategy extends AbstractTbRuleEngineSu
         int listSize = orderedMsgList.size();
         int idx = msgIdx.get();
         if (idx < listSize) {
-            IdMsgPair pair = orderedMsgList.get(idx);
+            IdMsgPair<TransportProtos.ToRuleEngineMsg> pair = orderedMsgList.get(idx);
             expectedMsgId = pair.uuid;
             if (log.isDebugEnabled()) {
                 log.debug("[{}] submitting [{}] message to rule engine", queueName, pair.msg);

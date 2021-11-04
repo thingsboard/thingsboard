@@ -30,7 +30,7 @@ import {
 import { FormattedData, MapProviders, TripAnimationSettings } from '@home/components/widget/lib/maps/map-models';
 import { addCondition, addGroupInfo, addToSchema, initSchema } from '@app/core/schema-utils';
 import { mapPolygonSchema, pathSchema, pointSchema, tripAnimationSchema } from '@home/components/widget/lib/maps/schemes';
-import { DomSanitizer } from '@angular/platform-browser';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import {
   findAngle, getProviderSchema,
@@ -70,13 +70,14 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
   mapWidget: MapWidgetInterface;
   historicalData: FormattedData[][];
   normalizationStep: number;
-  interpolatedTimeData = [];
+  interpolatedTimeData: {[time: number]: FormattedData}[] = [];
+  formattedInterpolatedTimeData: FormattedData[][] = [];
   widgetConfig: WidgetConfig;
   settings: TripAnimationSettings;
   mainTooltips = [];
   visibleTooltip = false;
   activeTrip: FormattedData;
-  label: string;
+  label: SafeHtml;
   minTime: number;
   maxTime: number;
   anchors: number[] = [];
@@ -117,6 +118,8 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
     const subscription = this.ctx.defaultSubscription;
     subscription.callbacks.onDataUpdated = () => {
       this.historicalData = parseArray(this.ctx.data).filter(arr => arr.length);
+      this.interpolatedTimeData.length = 0;
+      this.formattedInterpolatedTimeData.length = 0;
       if (this.historicalData.length) {
         this.calculateIntervals();
         this.timeUpdated(this.minTime);
@@ -146,6 +149,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
 
   timeUpdated(time: number) {
     this.currentTime = time;
+    // get point for each datasource associated with time
     const currentPosition = this.interpolatedTimeData
       .map(dataSource => dataSource[time]);
     for (let j = 0; j < this.interpolatedTimeData.length; j++) {
@@ -171,20 +175,20 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
         currentPosition[j] = this.calculateLastPoints(this.interpolatedTimeData[j], time);
       }
     }
-    this.calcLabel();
+    this.calcLabel(currentPosition);
     this.calcMainTooltip(currentPosition);
     if (this.mapWidget && this.mapWidget.map && this.mapWidget.map.map) {
-      const formattedInterpolatedTimeData = this.interpolatedTimeData.map(ds => _.values(ds));
-      this.mapWidget.map.updatePolylines(formattedInterpolatedTimeData, true);
+      this.mapWidget.map.updatePolylines(this.formattedInterpolatedTimeData, currentPosition, true);
       if (this.settings.showPolygon) {
-        this.mapWidget.map.updatePolygons(this.interpolatedTimeData);
+        this.mapWidget.map.updatePolygons(currentPosition);
       }
       if (this.settings.showPoints) {
-        this.mapWidget.map.updatePoints(formattedInterpolatedTimeData.map(ds => _.union(ds)), this.calcTooltip);
+        this.mapWidget.map.updatePoints(this.formattedInterpolatedTimeData, this.calcTooltip);
       }
       this.mapWidget.map.updateMarkers(currentPosition, true, (trip) => {
         this.activeTrip = trip;
         this.timeUpdated(this.currentTime);
+        this.cd.markForCheck();
       });
     }
   }
@@ -215,41 +219,44 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
       this.maxTime = dataSource[dataSource.length - 1]?.time || -Infinity;
       this.interpolatedTimeData[index] = this.interpolateArray(dataSource);
     });
+    this.formattedInterpolatedTimeData = this.interpolatedTimeData.map(ds => _.values(ds));
     if (!this.activeTrip) {
       this.activeTrip = this.interpolatedTimeData.map(dataSource => dataSource[this.minTime]).filter(ds => ds)[0];
     }
     if (this.useAnchors) {
       const anchorDate = Object.entries(_.union(this.interpolatedTimeData)[0]);
       this.anchors = anchorDate
-        .filter((data: [string, FormattedData]) => safeExecute(this.settings.pointAsAnchorFunction, [data[1], anchorDate, data[1].dsIndex]))
+        .filter((data: [string, FormattedData], tsIndex) => safeExecute(this.settings.pointAsAnchorFunction, [data[1],
+          this.formattedInterpolatedTimeData.map(ds => ds[tsIndex]), data[1].dsIndex]))
         .map(data => parseInt(data[0], 10));
     }
   }
 
-  calcTooltip = (point: FormattedData): string => {
+  calcTooltip = (point: FormattedData, points: FormattedData[]): string => {
     const data = point ? point : this.activeTrip;
     const tooltipPattern: string = this.settings.useTooltipFunction ?
-      safeExecute(this.settings.tooltipFunction, [data, this.historicalData, point.dsIndex]) : this.settings.tooltipPattern;
+      safeExecute(this.settings.tooltipFunction,
+        [data, points, point.dsIndex]) : this.settings.tooltipPattern;
     return parseWithTranslation.parseTemplate(tooltipPattern, data, true);
   }
 
   private calcMainTooltip(points: FormattedData[]): void {
     const tooltips = [];
     for (const point of points) {
-      tooltips.push(this.sanitizer.sanitize(SecurityContext.HTML, this.calcTooltip(point)));
+      tooltips.push(this.sanitizer.sanitize(SecurityContext.HTML, this.calcTooltip(point, points)));
     }
     this.mainTooltips = tooltips;
   }
 
-  calcLabel() {
-    const data = this.activeTrip;
+  calcLabel(points: FormattedData[]) {
+    const data = points[this.activeTrip.dsIndex];
     const labelText: string = this.settings.useLabelFunction ?
-      safeExecute(this.settings.labelFunction, [data, this.historicalData, data.dsIndex]) : this.settings.label;
-    this.label = (parseWithTranslation.parseTemplate(labelText, data, true));
+      safeExecute(this.settings.labelFunction, [data, points, data.dsIndex]) : this.settings.label;
+    this.label = this.sanitizer.bypassSecurityTrustHtml(parseWithTranslation.parseTemplate(labelText, data, true));
   }
 
-  interpolateArray(originData: FormattedData[]) {
-    const result = {};
+  interpolateArray(originData: FormattedData[]): {[time: number]: FormattedData} {
+    const result: {[time: number]: FormattedData} = {};
     const latKeyName = this.settings.latKeyName;
     const lngKeyName = this.settings.lngKeyName;
     for (const data of originData) {

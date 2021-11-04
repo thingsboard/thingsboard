@@ -246,7 +246,8 @@ export const digitalGaugeSettingsSchema: JsonSettingsSchema = {
               title: 'Color',
               type: 'string'
             }
-          }
+          },
+          required: ['color'],
         }
       },
       showTicks: {
