@@ -37,7 +37,7 @@ public interface TenantRepository extends PagingAndSortingRepository<TenantEntit
     TenantInfoEntity findTenantInfoById(@Param("tenantId") UUID tenantId);
 
     @Query("SELECT t FROM TenantEntity t WHERE t.region = :region " +
-            "AND LOWER(t.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+            "AND LOWER(t.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<TenantEntity> findByRegionNextPage(@Param("region") String region,
                                             @Param("textSearch") String textSearch,
                                             Pageable pageable);
@@ -46,7 +46,7 @@ public interface TenantRepository extends PagingAndSortingRepository<TenantEntit
             "FROM TenantEntity t " +
             "LEFT JOIN TenantProfileEntity p on p.id = t.tenantProfileId " +
             "WHERE t.region = :region " +
-            "AND LOWER(t.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+            "AND LOWER(t.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<TenantInfoEntity> findTenantInfoByRegionNextPage(@Param("region") String region,
                                                           @Param("textSearch") String textSearch,
                                                           Pageable pageable);
