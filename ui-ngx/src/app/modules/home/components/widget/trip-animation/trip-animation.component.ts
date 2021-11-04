@@ -29,11 +29,17 @@ import {
 } from '@angular/core';
 import { FormattedData, MapProviders, TripAnimationSettings } from '@home/components/widget/lib/maps/map-models';
 import { addCondition, addGroupInfo, addToSchema, initSchema } from '@app/core/schema-utils';
-import { mapPolygonSchema, pathSchema, pointSchema, tripAnimationSchema } from '@home/components/widget/lib/maps/schemes';
+import {
+  mapPolygonSchema,
+  pathSchema,
+  pointSchema,
+  tripAnimationSchema
+} from '@home/components/widget/lib/maps/schemes';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
 import {
-  findAngle, getProviderSchema,
+  findAngle,
+  getProviderSchema,
   getRatio,
   interpolateOnLineSegment,
   parseArray,
@@ -43,7 +49,7 @@ import {
 } from '@home/components/widget/lib/maps/common-maps-utils';
 import { JsonSettingsSchema, WidgetConfig } from '@shared/models/widget.models';
 import moment from 'moment';
-import { isUndefined } from '@core/utils';
+import { isDefined, isUndefined } from '@core/utils';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { MapWidgetInterface } from '@home/components/widget/lib/maps/map-widget.interface';
 
@@ -117,12 +123,17 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
     this.normalizationStep = this.settings.normalizationStep;
     const subscription = this.ctx.defaultSubscription;
     subscription.callbacks.onDataUpdated = () => {
-      this.historicalData = parseArray(this.ctx.data).filter(arr => arr.length);
+      this.historicalData = parseArray(this.ctx.data).map(item => this.clearIncorrectFirsLastDatapoint(item)).filter(arr => arr.length);
       this.interpolatedTimeData.length = 0;
       this.formattedInterpolatedTimeData.length = 0;
       if (this.historicalData.length) {
+        const prevMinTime = this.minTime;
+        const prevMaxTime = this.maxTime;
         this.calculateIntervals();
-        this.timeUpdated(this.minTime);
+        const currentTime = this.calculateCurrentTime(prevMinTime, prevMaxTime);
+        if (currentTime !== this.currentTime) {
+          this.timeUpdated(currentTime);
+        }
       }
       this.mapWidget.map.map?.invalidateSize();
       this.cd.detectChanges();
@@ -214,9 +225,15 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   calculateIntervals() {
+    let minTime = Infinity;
+    let maxTime = -Infinity;
+    this.historicalData.forEach((dataSource) => {
+      minTime = Math.min(dataSource[0].time, minTime);
+      maxTime = Math.max(dataSource[dataSource.length - 1].time, maxTime);
+    });
+    this.minTime = minTime;
+    this.maxTime = maxTime;
     this.historicalData.forEach((dataSource, index) => {
-      this.minTime = dataSource[0]?.time || Infinity;
-      this.maxTime = dataSource[dataSource.length - 1]?.time || -Infinity;
       this.interpolatedTimeData[index] = this.interpolateArray(dataSource);
     });
     this.formattedInterpolatedTimeData = this.interpolatedTimeData.map(ds => _.values(ds));
@@ -255,7 +272,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
     this.label = this.sanitizer.bypassSecurityTrustHtml(parseWithTranslation.parseTemplate(labelText, data, true));
   }
 
-  interpolateArray(originData: FormattedData[]): {[time: number]: FormattedData} {
+  private interpolateArray(originData: FormattedData[]): {[time: number]: FormattedData} {
     const result: {[time: number]: FormattedData} = {};
     const latKeyName = this.settings.latKeyName;
     const lngKeyName = this.settings.lngKeyName;
@@ -271,9 +288,56 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
     }
     const timeStamp = Object.keys(result);
     for (let i = 0; i < timeStamp.length - 1; i++) {
+      if (isUndefined(result[timeStamp[i + 1]][latKeyName]) || isUndefined(result[timeStamp[i + 1]][lngKeyName])) {
+        for (let j = i + 2; j < timeStamp.length - 1; j++) {
+          if (isDefined(result[timeStamp[j]][latKeyName]) || isDefined(result[timeStamp[j]][lngKeyName])) {
+            const ratio = getRatio(Number(timeStamp[i]), Number(timeStamp[j]), Number(timeStamp[i + 1]));
+            result[timeStamp[i + 1]] = {
+              ...interpolateOnLineSegment(result[timeStamp[i]], result[timeStamp[j]], latKeyName, lngKeyName, ratio),
+              ...result[timeStamp[i + 1]],
+            };
+            break;
+          }
+        }
+      }
       result[timeStamp[i]].rotationAngle += findAngle(result[timeStamp[i]], result[timeStamp[i + 1]], latKeyName, lngKeyName);
     }
     return result;
+  }
+
+  private calculateCurrentTime(minTime: number, maxTime: number): number {
+    if (minTime !== this.minTime || maxTime !== this.maxTime) {
+      if (this.minTime >= this.currentTime || isUndefined(this.currentTime)) {
+        return this.minTime;
+      } else if (this.maxTime <= this.currentTime) {
+        return this.maxTime;
+      } else {
+        return this.minTime + Math.ceil((this.currentTime - this.minTime) / this.normalizationStep) * this.normalizationStep;
+      }
+    }
+    return this.currentTime;
+  }
+
+  private clearIncorrectFirsLastDatapoint(dataSource: FormattedData[]): FormattedData[] {
+    const firstHistoricalDataIndexCoordinate = dataSource.findIndex(this.findFirstHistoricalDataIndexCoordinate);
+    if (firstHistoricalDataIndexCoordinate === -1) {
+      return [];
+    }
+    let lastIndex = dataSource.length - 1;
+    for (lastIndex; lastIndex > 0; lastIndex--) {
+      if (this.findFirstHistoricalDataIndexCoordinate(dataSource[lastIndex])) {
+        lastIndex++;
+        break;
+      }
+    }
+    if (firstHistoricalDataIndexCoordinate > 0 || lastIndex < dataSource.length) {
+      return dataSource.slice(firstHistoricalDataIndexCoordinate, lastIndex);
+    }
+    return dataSource;
+  }
+
+  private findFirstHistoricalDataIndexCoordinate = (item: FormattedData): boolean => {
+    return isDefined(item[this.settings.latKeyName]) && isDefined(item[this.settings.lngKeyName]);
   }
 }
 
