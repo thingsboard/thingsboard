@@ -17,6 +17,7 @@ package org.thingsboard.server.service.lwm2m;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base64;
 import org.eclipse.leshan.core.util.Hex;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
@@ -50,22 +51,26 @@ public class LwM2MServiceImpl implements LwM2MService {
         bsServ.setPort(serverConfig.getPort());
         bsServ.setSecurityHost(serverConfig.getSecureHost());
         bsServ.setSecurityPort(serverConfig.getSecurePort());
-        bsServ.setServerPublicKey(getPublicKey(serverConfig));
+        byte[] publicKeyBase64 = getPublicKey(serverConfig);
+        if (publicKeyBase64 == null) {
+            bsServ.setServerPublicKey("");
+        } else {
+            bsServ.setServerPublicKey(Base64.encodeBase64String(publicKeyBase64));
+        }
         return bsServ;
     }
 
-    private String getPublicKey(LwM2MSecureServerConfig config) {
+    private byte[] getPublicKey(LwM2MSecureServerConfig config) {
         try {
             KeyStore keyStore = serverConfig.getKeyStoreValue();
             if (keyStore != null) {
                 X509Certificate serverCertificate = (X509Certificate) serverConfig.getKeyStoreValue().getCertificate(config.getCertificateAlias());
-                return Hex.encodeHexString(serverCertificate.getPublicKey().getEncoded());
+                return serverCertificate.getPublicKey().getEncoded();
             }
         } catch (Exception e) {
             log.trace("Failed to fetch public key from key store!", e);
-
         }
-        return "";
+        return null;
     }
 }
 
