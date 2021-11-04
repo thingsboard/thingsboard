@@ -104,11 +104,29 @@
               </mat-error>
             </mat-form-field>
           </div>
+          <div class="input-field" *ngIf="key.settings.dataKeyValueType === 'select'">
+            <mat-form-field class="mat-block">
+              <mat-label>{{key.label}}</mat-label>
+              <mat-select formControlName="{{key.formId}}"
+                          [required]="key.settings.required"
+                          (focus)="key.isFocused = true;"
+                          (blur)="key.isFocused = false; inputChanged(source, key)">
+                <mat-option *ngFor="let option of key.settings.selectOptions"
+                            [value]="option.value"
+                            [disabled]="key.settings.isEditable === 'readonly'">
+                  {{ getCustomTranslationText(option.label ? option.label : option.value) }}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
+                {{ getErrorMessageText(key.settings, 'required') }}
+              </mat-error>
+            </mat-form-field>
+          </div>
         </div>
       </div>
     </fieldset>
     <div class="mat-padding" fxLayout="row" fxLayoutAlign="end center"
-         *ngIf="entityDetected && settings.showActionButtons">
+         [fxShow]="entityDetected && settings.showActionButtons">
       <button mat-button color="primary" type="button"
               (click)="discardAll()" style="max-height: 50px; margin-right:20px;"
               [disabled]="!multipleInputFormGroup.dirty">
@@ -122,7 +140,7 @@
     </div>
   </div>
   <div class="tb-multiple-input__errors" fxLayout="column" fxLayoutAlign="center center" style="height: 100%;"
-       *ngIf="!entityDetected || !isAllParametersValid">
+       *ngIf="(!entityDetected || !isAllParametersValid) && datasourceDetected">
     <div style="text-align: center; font-size: 18px; color: #a0a0a0;" [fxHide]="entityDetected">
       {{ 'widgets.input-widgets.no-entity-selected' | translate }}
     </div>

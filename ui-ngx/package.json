@@ -1,6 +1,6 @@
 {
   "name": "thingsboard",
-  "version": "3.3.1",
+  "version": "3.3.2",
   "scripts": {
     "ng": "ng",
     "start": "node --max_old_space_size=8048 ./node_modules/@angular/cli/bin/ng serve --host 0.0.0.0 --open",
@@ -8,7 +8,8 @@
     "build:prod": "ng build --prod --vendor-chunk",
     "test": "ng test",
     "lint": "ng lint",
-    "e2e": "ng e2e"
+    "e2e": "ng e2e",
+    "prepare": "patch-package"
   },
   "private": true,
   "dependencies": {
@@ -42,7 +43,7 @@
     "angular2-hotkeys": "^2.2.0",
     "canvas-gauges": "^2.1.7",
     "compass-sass-mixins": "^0.12.7",
-    "core-js": "^3.12.1",
+    "core-js": "^3.18.3",
     "date-fns": "^2.21.3",
     "flot": "git://github.com/thingsboard/flot.git#0.9-work",
     "flot.curvedlines": "git://github.com/MichaelZinsmaier/CurvedLines.git#master",
@@ -72,7 +73,7 @@
     "ngx-drag-drop": "^2.0.0",
     "ngx-flowchart": "git://github.com/thingsboard/ngx-flowchart.git#master",
     "ngx-hm-carousel": "^2.0.0-rc.1",
-    "ngx-markdown": "^10.1.1",
+    "ngx-markdown": "^11.1.3",
     "ngx-sharebuttons": "^8.0.5",
     "ngx-translate-messageformat-compiler": "^4.9.0",
     "objectpath": "^2.0.0",
@@ -135,10 +136,15 @@
     "karma-jasmine": "~4.0.0",
     "karma-jasmine-html-reporter": "^1.5.0",
     "ngrx-store-freeze": "^0.2.4",
+    "patch-package": "^6.4.7",
+    "postinstall-prepare": "^2.0.0",
     "protractor": "~7.0.0",
     "ts-node": "^9.0.0",
     "tslint": "~6.1.3",
     "typescript": "~4.0.3",
     "webpack": "^4.46.0"
+  },
+  "resolutions": {
+    "lodash": "~4.17.21"
   }
 }

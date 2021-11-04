@@ -81,7 +81,6 @@ export class MapWidgetController implements MapWidgetInterface {
         }
         parseWithTranslation.setTranslate(this.translate);
         this.map = new MapClass(this.ctx, $element, this.settings);
-        (this.ctx as any).mapInstance = this.map;
         this.map.saveMarkerLocation = this.setMarkerLocation;
         this.map.savePolygonLocation = this.savePolygonLocation;
         this.pageLink = {
@@ -335,7 +334,10 @@ export class MapWidgetController implements MapWidgetInterface {
         this.map.onResize();
     }
 
-    onDestroy() {
+    destroy() {
+      if (this.map) {
+        this.map.remove();
+      }
     }
 }
 

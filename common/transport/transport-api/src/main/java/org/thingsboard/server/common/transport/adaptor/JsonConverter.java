@@ -577,6 +577,14 @@ public class JsonConverter {
         return GSON.toJson(element);
     }
 
+    public static JsonObject toJsonObject(Object o) {
+        return (JsonObject) GSON.toJsonTree(o);
+    }
+
+    public static <T> T fromJson(JsonElement element, Class<T> type) {
+        return GSON.fromJson(element, type);
+    }
+
     public static void setTypeCastEnabled(boolean enabled) {
         isTypeCastEnabled = enabled;
     }

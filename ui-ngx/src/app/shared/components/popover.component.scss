@@ -1,0 +1,215 @@
+/**
+ * Copyright © 2016-2021 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import '../../../scss/mixins';
+
+$popover-arrow-width: 6;
+$popover-distance: $popover-arrow-width + 4;
+$zindex-popover: 1030;
+$popover-bg: #fff;
+$border-radius-base: 6px;
+$popover-close-button-size: 30px;
+$box-shadow-base: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08),
+0 9px 28px 8px rgba(0, 0, 0, 0.05), 0 0 8px rgba(0, 0, 0, 0.15);
+
+.tb-popover {
+  z-index: $zindex-popover;
+  font-weight: normal;
+  white-space: normal;
+  text-align: left;
+  cursor: auto;
+  user-select: text;
+  max-width: 100vw;
+  max-height: 100vh;
+
+  &::after {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.01);
+    content: '';
+  }
+
+  &-hidden {
+    display: none;
+  }
+
+  // Offset the popover to account for the popover arrow
+  &-placement-top,
+  &-placement-topLeft,
+  &-placement-topRight {
+    padding-bottom: $popover-distance + px;
+  }
+
+  &-placement-right,
+  &-placement-rightTop,
+  &-placement-rightBottom {
+    padding-left: $popover-distance + px;
+  }
+
+  &-placement-bottom,
+  &-placement-bottomLeft,
+  &-placement-bottomRight {
+    padding-top: $popover-distance + px;
+  }
+
+  &-placement-left,
+  &-placement-leftTop,
+  &-placement-leftBottom {
+    padding-right: $popover-distance + px;
+  }
+
+  &-inner {
+    background-color: $popover-bg;
+    background-clip: padding-box;
+    border-radius: $border-radius-base;
+    box-shadow: $box-shadow-base;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  &-close-button {
+    cursor: pointer;
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    padding: 0;
+    border: none;
+    text-align: center;
+    width: $popover-close-button-size;
+    height: $popover-close-button-size;
+    font-size: $popover-close-button-size;
+    color: #8e8e8e;
+    text-decoration: none;
+    font-weight: bold;
+    background: transparent;
+    z-index: 10;
+    &:hover {
+      color: #313131;
+    }
+  }
+
+  &-content {
+    width: 100%;
+    height: 100%;
+  }
+
+  &-inner-content {
+    padding: 12px 16px;
+    color: rgba(0, 0, 0, 0.85);
+    overflow: auto;
+    width: 100%;
+    height: 100%;
+  }
+
+  // Arrows
+  // .popover-arrow is outer, .popover-arrow:after is inner
+
+  &-arrow {
+    position: absolute;
+    display: block;
+    width: sqrt($popover-arrow-width * $popover-arrow-width * 2) + px;
+    height: sqrt($popover-arrow-width * $popover-arrow-width * 2) + px;
+    background: transparent;
+    border-style: solid;
+    border-width: (sqrt($popover-arrow-width * $popover-arrow-width * 2) / 2) + px;
+    transform: rotate(45deg);
+    z-index: 10;
+  }
+
+  &-placement-top > &-content > &-arrow,
+  &-placement-topLeft > &-content > &-arrow,
+  &-placement-topRight > &-content > &-arrow {
+    bottom: $popover-distance - $popover-arrow-width + 2.2 + px;
+    border-top-color: transparent;
+    border-right-color: $popover-bg;
+    border-bottom-color: $popover-bg;
+    border-left-color: transparent;
+    box-shadow: 3px 3px 7px rgba(0, 0, 0, 0.07);
+  }
+  &-placement-top > &-content > &-arrow {
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+  }
+  &-placement-topLeft > &-content > &-arrow {
+    left: 16px;
+  }
+  &-placement-topRight > &-content > &-arrow {
+    right: 16px;
+  }
+
+  &-placement-right > &-content > &-arrow,
+  &-placement-rightTop > &-content > &-arrow,
+  &-placement-rightBottom > &-content > &-arrow {
+    left: $popover-distance - $popover-arrow-width + 2 + px;
+    border-top-color: transparent;
+    border-right-color: transparent;
+    border-bottom-color: $popover-bg;
+    border-left-color: $popover-bg;
+    box-shadow: -3px 3px 7px rgba(0, 0, 0, 0.07);
+  }
+  &-placement-right > &-content > &-arrow {
+    top: 50%;
+    transform: translateY(-50%) rotate(45deg);
+  }
+  &-placement-rightTop > &-content > &-arrow {
+    top: 12px;
+  }
+  &-placement-rightBottom > &-content > &-arrow {
+    bottom: 12px;
+  }
+
+  &-placement-bottom > &-content > &-arrow,
+  &-placement-bottomLeft > &-content > &-arrow,
+  &-placement-bottomRight > &-content > &-arrow {
+    top: $popover-distance - $popover-arrow-width + 2 + px;
+    border-top-color: $popover-bg;
+    border-right-color: transparent;
+    border-bottom-color: transparent;
+    border-left-color: $popover-bg;
+    box-shadow: -2px -2px 5px rgba(0, 0, 0, 0.06);
+  }
+  &-placement-bottom > &-content > &-arrow {
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+  }
+  &-placement-bottomLeft > &-content > &-arrow {
+    left: 16px;
+  }
+  &-placement-bottomRight > &-content > &-arrow {
+    right: 16px;
+  }
+
+  &-placement-left > &-content > &-arrow,
+  &-placement-leftTop > &-content > &-arrow,
+  &-placement-leftBottom > &-content > &-arrow {
+    right: $popover-distance - $popover-arrow-width + 2 + px;
+    border-top-color: $popover-bg;
+    border-right-color: $popover-bg;
+    border-bottom-color: transparent;
+    border-left-color: transparent;
+    box-shadow: 3px -3px 7px rgba(0, 0, 0, 0.07);
+  }
+  &-placement-left > &-content > &-arrow {
+    top: 50%;
+    transform: translateY(-50%) rotate(45deg);
+  }
+  &-placement-leftTop > &-content > &-arrow {
+    top: 12px;
+  }
+  &-placement-leftBottom > &-content > &-arrow {
+    bottom: 12px;
+  }
+}

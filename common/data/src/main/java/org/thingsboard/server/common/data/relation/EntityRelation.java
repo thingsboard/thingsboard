@@ -17,6 +17,8 @@ package org.thingsboard.server.common.data.relation;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -25,6 +27,7 @@ import org.thingsboard.server.common.data.validation.Length;
 import java.io.Serializable;
 
 @Slf4j
+@ApiModel
 public class EntityRelation implements Serializable {
 
     private static final long serialVersionUID = 2807343040519543363L;
@@ -70,6 +73,7 @@ public class EntityRelation implements Serializable {
         this.additionalInfo = entityRelation.getAdditionalInfo();
     }
 
+    @ApiModelProperty(position = 1, value = "JSON object with [from] Entity Id.", readOnly = true)
     public EntityId getFrom() {
         return from;
     }
@@ -78,6 +82,7 @@ public class EntityRelation implements Serializable {
         this.from = from;
     }
 
+    @ApiModelProperty(position = 2, value = "JSON object with [to] Entity Id.", readOnly = true)
     public EntityId getTo() {
         return to;
     }
@@ -86,6 +91,7 @@ public class EntityRelation implements Serializable {
         this.to = to;
     }
 
+    @ApiModelProperty(position = 3, value = "String value of relation type.", example = "Contains")
     public String getType() {
         return type;
     }
@@ -94,6 +100,7 @@ public class EntityRelation implements Serializable {
         this.type = type;
     }
 
+    @ApiModelProperty(position = 4, value = "Represents the type group of the relation.", example = "COMMON")
     public RelationTypeGroup getTypeGroup() {
         return typeGroup;
     }
@@ -102,6 +109,7 @@ public class EntityRelation implements Serializable {
         this.typeGroup = typeGroup;
     }
 
+    @ApiModelProperty(position = 5, value = "Additional parameters of the relation", dataType = "com.fasterxml.jackson.databind.JsonNode")
     public JsonNode getAdditionalInfo() {
         return SearchTextBasedWithAdditionalInfo.getJson(() -> additionalInfo, () -> additionalInfoBytes);
     }

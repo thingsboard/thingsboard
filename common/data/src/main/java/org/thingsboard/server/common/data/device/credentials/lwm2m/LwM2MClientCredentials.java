@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -26,7 +27,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = NoSecClientCredentials.class, name = "NO_SEC"),
         @JsonSubTypes.Type(value = PSKClientCredentials.class, name = "PSK"),
         @JsonSubTypes.Type(value = RPKClientCredentials.class, name = "RPK"),
-        @JsonSubTypes.Type(value = X509ClientCredentials.class, name = "X509")})
+        @JsonSubTypes.Type(value = X509ClientCredentials.class, name = "X509")
+})
+@JsonIgnoreProperties(ignoreUnknown = true)
 public interface LwM2MClientCredentials {
 
     @JsonIgnore

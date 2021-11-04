@@ -54,6 +54,13 @@ public class DefaultTbCoreToTransportService implements TbCoreToTransportService
 
     @Override
     public void process(String nodeId, ToTransportMsg msg, Runnable onSuccess, Consumer<Throwable> onFailure) {
+        if (nodeId == null || nodeId.isEmpty()){
+            log.trace("process: skipping message without nodeId [{}], (ToTransportMsg) msg [{}]", nodeId, msg);
+            if (onSuccess != null) {
+                onSuccess.run();
+            }
+            return;
+        }
         TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_TRANSPORT, nodeId);
         UUID sessionId = new UUID(msg.getSessionIdMSB(), msg.getSessionIdLSB());
         log.trace("[{}][{}] Pushing session data to topic: {}", tpi.getFullTopicName(), sessionId, msg);

@@ -20,7 +20,7 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
-  fillPattern,
+  fillPattern, flatData,
   parseData,
   parseFunction,
   processPattern,
@@ -37,7 +37,7 @@ interface QrCodeWidgetSettings {
   qrCodeTextFunction: string;
 }
 
-type QrCodeTextFunction = (data: FormattedData) => string;
+type QrCodeTextFunction = (data: FormattedData[]) => string;
 
 @Component({
   selector: 'tb-qrcode-widget',
@@ -95,15 +95,15 @@ export class QrCodeWidgetComponent extends PageComponent implements OnInit, Afte
           data: []
         }
       ];
+    } else {
+      initialData = [];
     }
-    if (initialData) {
-      const data = parseData(initialData);
-      const dataSourceData = data[0];
-      const pattern = this.settings.useQrCodeTextFunction ?
-        safeExecute(this.qrCodeTextFunction, [dataSourceData]) : this.settings.qrCodeTextPattern;
-      const replaceInfo = processPattern(pattern, dataSourceData);
-      qrCodeText = fillPattern(pattern, replaceInfo, dataSourceData);
-    }
+    const data = parseData(initialData);
+    const pattern = this.settings.useQrCodeTextFunction ?
+      safeExecute(this.qrCodeTextFunction, [data]) : this.settings.qrCodeTextPattern;
+    const allData = flatData(data);
+    const replaceInfo = processPattern(pattern, allData);
+    qrCodeText = fillPattern(pattern, replaceInfo, allData);
     this.updateQrCodeText(qrCodeText);
   }
 

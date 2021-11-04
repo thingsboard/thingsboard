@@ -21,6 +21,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.service.security.AccessValidator;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -81,12 +82,32 @@ public abstract class AbstractMqttServerSideRpcDefaultIntegrationTest extends Ab
 
     @Test
     public void testServerMqttOneWayRpc() throws Exception {
-        processOneWayRpcTest();
+        processOneWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC);
+    }
+
+    @Test
+    public void testServerMqttOneWayRpcOnShortTopic() throws Exception {
+        processOneWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_TOPIC);
+    }
+
+    @Test
+    public void testServerMqttOneWayRpcOnShortJsonTopic() throws Exception {
+        processOneWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_JSON_TOPIC);
     }
 
     @Test
     public void testServerMqttTwoWayRpc() throws Exception {
-        processTwoWayRpcTest();
+        processJsonTwoWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_TOPIC);
+    }
+
+    @Test
+    public void testServerMqttTwoWayRpcOnShortTopic() throws Exception {
+        processJsonTwoWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_TOPIC);
+    }
+
+    @Test
+    public void testServerMqttTwoWayRpcOnShortJsonTopic() throws Exception {
+        processJsonTwoWayRpcTest(MqttTopics.DEVICE_RPC_REQUESTS_SUB_SHORT_JSON_TOPIC);
     }
 
     @Test
@@ -96,12 +117,12 @@ public abstract class AbstractMqttServerSideRpcDefaultIntegrationTest extends Ab
 
     @Test
     public void testGatewayServerMqttOneWayRpc() throws Exception {
-        processOneWayRpcTestGateway("Gateway Device OneWay RPC");
+        processJsonOneWayRpcTestGateway("Gateway Device OneWay RPC");
     }
 
     @Test
     public void testGatewayServerMqttTwoWayRpc() throws Exception {
-        processTwoWayRpcTestGateway("Gateway Device TwoWay RPC");
+        processJsonTwoWayRpcTestGateway("Gateway Device TwoWay RPC");
     }
 
 }

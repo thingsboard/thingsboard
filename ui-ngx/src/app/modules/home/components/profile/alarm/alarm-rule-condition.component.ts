@@ -26,9 +26,8 @@ import {
   Validators
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { deepClone, isUndefined } from '@core/utils';
+import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
-import { DatePipe } from '@angular/common';
 import { AlarmCondition, AlarmConditionType } from '@shared/models/device.models';
 import {
   AlarmRuleConditionDialogComponent,
@@ -73,8 +72,7 @@ export class AlarmRuleConditionComponent implements ControlValueAccessor, OnInit
 
   constructor(private dialog: MatDialog,
               private fb: FormBuilder,
-              private translate: TranslateService,
-              private datePipe: DatePipe) {
+              private translate: TranslateService) {
   }
 
   registerOnChange(fn: any): void {
@@ -102,7 +100,7 @@ export class AlarmRuleConditionComponent implements ControlValueAccessor, OnInit
 
   writeValue(value: AlarmCondition): void {
     this.modelValue = value;
-    if (this.modelValue !== null && isUndefined(this.modelValue?.spec)) {
+    if (this.modelValue !== null && !isDefinedAndNotNull(this.modelValue?.spec?.predicate)) {
       this.modelValue = Object.assign(this.modelValue, {spec: {type: AlarmConditionType.SIMPLE}});
     }
     this.updateConditionInfo();

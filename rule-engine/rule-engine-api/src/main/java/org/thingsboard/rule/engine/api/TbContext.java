@@ -217,12 +217,6 @@ public interface TbContext {
 
     EdgeEventService getEdgeEventService();
 
-    /**
-     * Js script executors call are completely asynchronous
-     * */
-    @Deprecated
-    ListeningExecutor getJsExecutor();
-
     ListeningExecutor getMailExecutor();
 
     ListeningExecutor getSmsExecutor();
@@ -251,7 +245,9 @@ public interface TbContext {
 
     CassandraCluster getCassandraCluster();
 
-    TbResultSetFuture submitCassandraTask(CassandraStatementTask task);
+    TbResultSetFuture submitCassandraReadTask(CassandraStatementTask task);
+
+    TbResultSetFuture submitCassandraWriteTask(CassandraStatementTask task);
 
     PageData<RuleNodeState> findRuleNodeStates(PageLink pageLink);
 

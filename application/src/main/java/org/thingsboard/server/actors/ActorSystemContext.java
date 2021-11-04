@@ -59,7 +59,8 @@ import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
-import org.thingsboard.server.dao.nosql.CassandraBufferedRateExecutor;
+import org.thingsboard.server.dao.nosql.CassandraBufferedRateReadExecutor;
+import org.thingsboard.server.dao.nosql.CassandraBufferedRateWriteExecutor;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.resource.ResourceService;
@@ -85,7 +86,6 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.rpc.TbRpcService;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
-import org.thingsboard.server.service.script.JsExecutorService;
 import org.thingsboard.server.service.script.JsInvokeService;
 import org.thingsboard.server.service.session.DeviceSessionCacheService;
 import org.thingsboard.server.service.sms.SmsExecutorService;
@@ -228,10 +228,6 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private JsInvokeService jsSandbox;
-
-    @Autowired
-    @Getter
-    private JsExecutorService jsExecutor;
 
     @Autowired
     @Getter
@@ -425,7 +421,11 @@ public class ActorSystemContext {
 
     @Autowired(required = false)
     @Getter
-    private CassandraBufferedRateExecutor cassandraBufferedRateExecutor;
+    private CassandraBufferedRateReadExecutor cassandraBufferedRateReadExecutor;
+
+    @Autowired(required = false)
+    @Getter
+    private CassandraBufferedRateWriteExecutor cassandraBufferedRateWriteExecutor;
 
     @Autowired(required = false)
     @Getter
@@ -491,22 +491,26 @@ public class ActorSystemContext {
     }
 
     public void persistDebugInput(TenantId tenantId, EntityId entityId, TbMsg tbMsg, String relationType) {
-        persistDebugAsync(tenantId, entityId, "IN", tbMsg, relationType, null);
+        persistDebugAsync(tenantId, entityId, "IN", tbMsg, relationType, null, null);
     }
 
     public void persistDebugInput(TenantId tenantId, EntityId entityId, TbMsg tbMsg, String relationType, Throwable error) {
-        persistDebugAsync(tenantId, entityId, "IN", tbMsg, relationType, error);
+        persistDebugAsync(tenantId, entityId, "IN", tbMsg, relationType, error, null);
+    }
+
+    public void persistDebugOutput(TenantId tenantId, EntityId entityId, TbMsg tbMsg, String relationType, Throwable error, String failureMessage) {
+        persistDebugAsync(tenantId, entityId, "OUT", tbMsg, relationType, error, failureMessage);
     }
 
     public void persistDebugOutput(TenantId tenantId, EntityId entityId, TbMsg tbMsg, String relationType, Throwable error) {
-        persistDebugAsync(tenantId, entityId, "OUT", tbMsg, relationType, error);
+        persistDebugAsync(tenantId, entityId, "OUT", tbMsg, relationType, error, null);
     }
 
     public void persistDebugOutput(TenantId tenantId, EntityId entityId, TbMsg tbMsg, String relationType) {
-        persistDebugAsync(tenantId, entityId, "OUT", tbMsg, relationType, null);
+        persistDebugAsync(tenantId, entityId, "OUT", tbMsg, relationType, null, null);
     }
 
-    private void persistDebugAsync(TenantId tenantId, EntityId entityId, String type, TbMsg tbMsg, String relationType, Throwable error) {
+    private void persistDebugAsync(TenantId tenantId, EntityId entityId, String type, TbMsg tbMsg, String relationType, Throwable error, String failureMessage) {
         if (checkLimits(tenantId, tbMsg, error)) {
             try {
                 Event event = new Event();
@@ -530,6 +534,8 @@ public class ActorSystemContext {
 
                 if (error != null) {
                     node = node.put("error", toString(error));
+                } else if (failureMessage != null) {
+                    node = node.put("error", failureMessage);
                 }
 
                 event.setBody(node);

@@ -81,17 +81,14 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
         return Arrays.asList(CertificateType.X_509, CertificateType.RAW_PUBLIC_KEY);
     }
 
+    @SuppressWarnings("deprecation")
     @PostConstruct
     public void init() {
         try {
             /* by default trust all */
             X509Certificate[] trustedCertificates = new X509Certificate[0];
-            if (config.getKeyStoreValue() != null) {
-                X509Certificate rootCAX509Cert = (X509Certificate) config.getKeyStoreValue().getCertificate(config.getRootCertificateAlias());
-                if (rootCAX509Cert != null) {
-                    trustedCertificates = new X509Certificate[1];
-                    trustedCertificates[0] = rootCAX509Cert;
-                }
+            if (config.getTrustSslCredentials() != null) {
+                trustedCertificates = config.getTrustSslCredentials().getTrustedCertificates();
             }
             staticCertificateVerifier = new StaticCertificateVerifier(trustedCertificates);
         } catch (Exception e) {

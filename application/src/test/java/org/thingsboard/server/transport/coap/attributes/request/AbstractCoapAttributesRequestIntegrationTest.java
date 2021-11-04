@@ -75,7 +75,7 @@ public abstract class AbstractCoapAttributesRequestIntegrationTest extends Abstr
 
         String keys = "attribute1,attribute2,attribute3,attribute4,attribute5";
         String featureTokenUrl = getFeatureTokenUrl(accessToken, FeatureType.ATTRIBUTES) + "?clientKeys=" + keys + "&sharedKeys=" + keys;
-        CoapClient client = getCoapClient(featureTokenUrl);
+        client = getCoapClient(featureTokenUrl);
 
         CoapResponse getAttributesResponse = client.setTimeout(CLIENT_REQUEST_TIMEOUT).get();
         validateResponse(getAttributesResponse);
@@ -83,7 +83,7 @@ public abstract class AbstractCoapAttributesRequestIntegrationTest extends Abstr
 
     protected void postAttributes() throws Exception {
         doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD, String.class, status().isOk());
-        CoapClient client = getCoapClient(FeatureType.ATTRIBUTES);
+        client = getCoapClient(FeatureType.ATTRIBUTES);
         CoapResponse coapResponse = client.setTimeout(CLIENT_REQUEST_TIMEOUT).post(POST_ATTRIBUTES_PAYLOAD.getBytes(), MediaTypeRegistry.APPLICATION_JSON);
         assertEquals(CoAP.ResponseCode.CREATED, coapResponse.getCode());
     }

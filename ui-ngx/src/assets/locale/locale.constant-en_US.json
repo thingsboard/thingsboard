@@ -1109,6 +1109,10 @@
         "mqtt-device-payload-type": "MQTT device payload",
         "mqtt-device-payload-type-json": "JSON",
         "mqtt-device-payload-type-proto": "Protobuf",
+        "mqtt-enable-compatibility-with-json-payload-format": "Enable compatibility with other payload formats.",
+        "mqtt-enable-compatibility-with-json-payload-format-hint": "When enabled, the platform will use a Protobuf payload format by default. If parsing fails, the platform will attempt to use JSON payload format. Useful for backward compatibility during firmware updates. For example, the initial release of the firmware uses Json, while the new release uses Protobuf. During the process of firmware update for the fleet of devices, it is required to support both Protobuf and JSON simultaneously. The compatibility mode introduces slight performance degradation, so it is recommended to disable this mode once all devices are updated.",
+        "mqtt-use-json-format-for-default-downlink-topics": "Use Json format for default downlink topics",
+        "mqtt-use-json-format-for-default-downlink-topics-hint": "When enabled, the platform will use Json payload format to push attributes and RPC via the following topics: <b>v1/devices/me/attributes/response/$request_id</b>, <b>v1/devices/me/attributes</b>, <b>v1/devices/me/rpc/request/$request_id</b>, <b>v1/devices/me/rpc/response/$request_id</b>. This setting does not impact attribute and rpc subscriptions sent using new (v2) topics: <b>v2/a/res/$request_id</b>, <b>v2/a</b>, <b>v2/r/req/$request_id</b>, <b>v2/r/res/$request_id</b>. Where <b>$request_id</b> is an integer request identifier.",
         "snmp-add-mapping": "Add SNMP mapping",
         "snmp-mapping-not-configured": "No mapping for OID to timeseries/telemetry configured",
         "snmp-timseries-or-attribute-name": "Timeseries/attribute name for mapping",
@@ -1793,6 +1797,8 @@
         "attributes-propagation-hint": "Entity View will automatically copy specified attributes from Target Entity each time you save or update this entity view. For performance reasons target entity attributes are not propagated to entity view on each attribute change. You can enable automatic propagation by configuring \"copy to view\" rule node in your rule chain and linking \"Post attributes\" and \"Attributes Updated\" messages to the new rule node.",
         "timeseries-data": "Timeseries data",
         "timeseries-data-hint": "Configure timeseries data keys of the target entity that will be accessible to the entity view. This timeseries data is read-only.",
+        "search": "Search entity views",
+        "selected-entity-views": "{ count, plural, 1 {1 entity view} other {# entity views} } selected",
         "make-public-entity-view-title": "Are you sure you want to make the entity view '{{entityViewName}}' public?",
         "make-public-entity-view-text": "After the confirmation the entity view and all its data will be made public and accessible by others.",
         "make-private-entity-view-title": "Are you sure you want to make the entity view '{{entityViewName}}' private?",
@@ -1840,7 +1846,8 @@
         "all-events": "All",
         "has-error": "Has error",
         "entity-id": "Entity Id",
-        "entity-type": "Entity type"
+        "entity-type": "Entity type",
+        "clear-filter": "Clear Filter"
     },
     "extension": {
         "extensions": "Extensions",
@@ -2186,7 +2193,8 @@
         "scroll-to-top": "Scroll to top"
     },
     "help": {
-        "goto-help-page": "Go to help page"
+        "goto-help-page": "Go to help page",
+        "show-help": "Show help"
     },
     "home": {
         "home": "Home",
@@ -2204,9 +2212,11 @@
         "column-title": "Title",
         "column-example": "Example value data",
         "column-key": "Attribute/telemetry key",
+        "credentials": "Credentials",
         "csv-delimiter": "CSV delimiter",
         "csv-first-line-header": "First line contains column names",
         "csv-update-data": "Update attributes/telemetry",
+        "details": "Details",
         "import-csv-number-columns-error": "A file should contain at least two columns",
         "import-csv-invalid-format-error": "Invalid file format. Line: '{{line}}'",
         "column-type": {
@@ -2220,6 +2230,25 @@
             "timeseries": "Timeseries",
             "entity-field": "Entity field",
             "access-token": "Access token",
+            "x509": "X.509",
+            "mqtt": {
+              "client-id": "MQTT client ID",
+              "user-name": "MQTT user name",
+              "password": "MQTT password"
+            },
+            "lwm2m": {
+              "client-endpoint": "LwM2M endpoint client name",
+              "security-config-mode": "LwM2M security config mode",
+              "client-identity": "LwM2M client identity",
+              "client-key": "LwM2M client key",
+              "client-cert": "LwM2M client public key",
+              "bootstrap-server-security-mode": "LwM2M bootstrap server security mode",
+              "bootstrap-server-secret-key": "LwM2M bootstrap server secret key",
+              "bootstrap-server-public-key-id": "LwM2M bootstrap server public key or id",
+              "lwm2m-server-security-mode": "LwM2M server security mode",
+              "lwm2m-server-secret-key": "LwM2M server secret key",
+              "lwm2m-server-public-key-id": "LwM2M server public key or id"
+            },
             "isgateway": "Is Gateway",
             "activity-time-from-gateway-device": "Activity time from gateway device",
             "description": "Description",
@@ -2309,6 +2338,10 @@
         "or": "or",
         "error": "Login error"
     },
+    "markdown": {
+        "copy-code": "Click to copy",
+        "copied": "Copied!"
+    },
     "ota-update": {
       "add": "Add package",
       "assign-firmware": "Assigned firmware",
@@ -2383,7 +2416,11 @@
         "profile": "Profile",
         "last-login-time": "Last Login",
         "change-password": "Change Password",
-        "current-password": "Current password"
+        "current-password": "Current password",
+        "copy-jwt-token": "Copy JWT token",
+        "valid-till": "Valid till {{expirationData}}",
+        "tokenCopiedSuccessMessage": "JWT token has been copied to clipboard",
+        "tokenCopiedWarnMessage": "JWT token is expired! Please, refresh the page."
     },
     "relation": {
         "relations": "Relations",
@@ -2937,12 +2974,33 @@
         "set-entity-from-widget": "Set entity from widget",
         "target-dashboard": "Target dashboard",
         "open-right-layout": "Open right dashboard layout (mobile view)",
+        "state-display-type": "Dashboard state display option",
+        "open-normal": "Normal",
         "open-in-separate-dialog": "Open in separate dialog",
+        "open-in-popover": "Open in popover",
         "dialog-title": "Dialog title",
         "dialog-hide-dashboard-toolbar": "Hide dashboard toolbar in dialog",
         "dialog-width": "Dialog width in percents relative to viewport width",
         "dialog-height": "Dialog height in percents relative to viewport height",
         "dialog-size-range-error": "Dialog size percent value should be in a range from 1 to 100.",
+        "popover-preferred-placement": "Preferred popover placement",
+        "popover-placement-top": "Top",
+        "popover-placement-topLeft": "Top left",
+        "popover-placement-topRight": "Top right",
+        "popover-placement-right": "Right",
+        "popover-placement-rightTop": "Right top",
+        "popover-placement-rightBottom": "Right bottom",
+        "popover-placement-bottom": "Bottom",
+        "popover-placement-bottomLeft": "Bottom left",
+        "popover-placement-bottomRight": "Bottom right",
+        "popover-placement-left": "Left",
+        "popover-placement-leftTop": "Left top",
+        "popover-placement-leftBottom": "Left bottom",
+        "popover-hide-on-click-outside": "Hide popover on outside click",
+        "popover-hide-dashboard-toolbar": "Hide dashboard toolbar in popover",
+        "popover-width": "Popover width in browser units (ex. 100px, 25vw)",
+        "popover-height": "Popover height in browser units (ex. 100px, 25vh)",
+        "popover-style": "Popover style",
         "open-new-browser-tab": "Open in a new browser tab",
         "mobile": {
           "action-type": "Mobile action type",
@@ -2998,7 +3056,7 @@
         "title": "Title",
         "title-tooltip": "Title Tooltip",
         "general-settings": "General settings",
-        "display-title": "Display title",
+        "display-title": "Display widget title",
         "drop-shadow": "Drop shadow",
         "enable-fullscreen": "Enable fullscreen",
         "background-color": "Background color",
@@ -3007,7 +3065,7 @@
         "margin": "Margin",
         "widget-style": "Widget style",
         "title-style": "Title style",
-        "mobile-mode-settings": "Mobile mode settings",
+        "mobile-mode-settings": "Mobile mode",
         "order": "Order",
         "height": "Height",
         "mobile-hide": "Hide widget in mobile mode",
@@ -3016,6 +3074,7 @@
         "timewindow": "Timewindow",
         "use-dashboard-timewindow": "Use dashboard timewindow",
         "display-timewindow": "Display timewindow",
+        "legend": "Legend",
         "display-legend": "Display legend",
         "datasources": "Datasources",
         "maximum-datasources": "Maximum { count, plural, 1 {1 datasource is allowed.} other {# datasources are allowed} }",
@@ -3036,15 +3095,20 @@
         "action-name-required": "Action name is required.",
         "action-name-not-unique": "Another action with the same name already exists.<br/>Action name should be unique within the same action source.",
         "action-icon": "Icon",
+        "show-hide-action-using-function": "Show/hide action using function",
         "action-type": "Type",
         "action-type-required": "Action type is required.",
         "edit-action": "Edit action",
         "delete-action": "Delete action",
         "delete-action-title": "Delete widget action",
         "delete-action-text": "Are you sure you want delete widget action with name '{{actionName}}'?",
+        "title-icon": "Title icon",
         "display-icon": "Display title icon",
         "icon-color": "Icon color",
-        "icon-size": "Icon size"
+        "icon-size": "Icon size",
+        "advanced-settings": "Advanced settings",
+        "data-settings": "Data settings",
+        "no-data-display-message": "\"No data to display\" alternative message"
     },
     "widget-type": {
         "import": "Import widget type",

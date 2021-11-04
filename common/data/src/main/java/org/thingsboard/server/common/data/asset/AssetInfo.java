@@ -15,13 +15,18 @@
  */
 package org.thingsboard.server.common.data.asset;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.AssetId;
 
+@ApiModel
 @Data
 public class AssetInfo extends Asset {
 
+    @ApiModelProperty(position = 9, value = "Title of the Customer that owns the asset.", readOnly = true)
     private String customerTitle;
+    @ApiModelProperty(position = 10, value = "Indicates special 'Public' Customer that is auto-generated to use the assets on public dashboards.", readOnly = true)
     private boolean customerIsPublic;
 
     public AssetInfo() {

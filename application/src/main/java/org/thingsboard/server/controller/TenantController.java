@@ -16,6 +16,8 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -41,27 +43,48 @@ import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import static org.thingsboard.server.controller.ControllerConstants.HOME_DASHBOARD;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_ID;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_INFO_SORT_PROPERTY_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_SORT_PROPERTY_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_TEXT_SEARCH_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
+
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
 @Slf4j
 public class TenantController extends BaseController {
 
+    private static final String TENANT_INFO_DESCRIPTION = "The Tenant Info object extends regular Tenant object and includes Tenant Profile name. ";
     @Autowired
     private InstallScripts installScripts;
 
     @Autowired
     private TenantService tenantService;
 
+    @ApiOperation(value = "Get Tenant (getTenantById)",
+            notes = "Fetch the Tenant object based on the provided Tenant Id. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/{tenantId}", method = RequestMethod.GET)
     @ResponseBody
-    public Tenant getTenantById(@PathVariable("tenantId") String strTenantId) throws ThingsboardException {
-        checkParameter("tenantId", strTenantId);
+    public Tenant getTenantById(
+            @ApiParam(value = TENANT_ID_PARAM_DESCRIPTION)
+            @PathVariable(TENANT_ID) String strTenantId) throws ThingsboardException {
+        checkParameter(TENANT_ID, strTenantId);
         try {
             TenantId tenantId = new TenantId(toUUID(strTenantId));
             Tenant tenant = checkTenantId(tenantId, Operation.READ);
-            if(!tenant.getAdditionalInfo().isNull()) {
+            if (!tenant.getAdditionalInfo().isNull()) {
                 processDashboardIdFromAdditionalInfo((ObjectNode) tenant.getAdditionalInfo(), HOME_DASHBOARD);
             }
             return tenant;
@@ -70,11 +93,16 @@ public class TenantController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get Tenant Info (getTenantInfoById)",
+            notes = "Fetch the Tenant Info object based on the provided Tenant Id. " +
+                    TENANT_INFO_DESCRIPTION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/info/{tenantId}", method = RequestMethod.GET)
     @ResponseBody
-    public TenantInfo getTenantInfoById(@PathVariable("tenantId") String strTenantId) throws ThingsboardException {
-        checkParameter("tenantId", strTenantId);
+    public TenantInfo getTenantInfoById(
+            @ApiParam(value = TENANT_ID_PARAM_DESCRIPTION)
+            @PathVariable(TENANT_ID) String strTenantId) throws ThingsboardException {
+        checkParameter(TENANT_ID, strTenantId);
         try {
             TenantId tenantId = new TenantId(toUUID(strTenantId));
             return checkTenantInfoId(tenantId, Operation.READ);
@@ -83,10 +111,19 @@ public class TenantController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Create Or update Tenant (saveTenant)",
+            notes = "Create or update the Tenant. When creating tenant, platform generates Tenant Id as " + UUID_WIKI_LINK +
+                    "Default Rule Chain and Device profile are also generated for the new tenants automatically. " +
+                    "The newly created Tenant Id will be present in the response. " +
+                    "Specify existing Tenant Id id to update the Tenant. " +
+                    "Referencing non-existing Tenant Id will cause 'Not Found' error." +
+                    SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/tenant", method = RequestMethod.POST)
     @ResponseBody
-    public Tenant saveTenant(@RequestBody Tenant tenant) throws ThingsboardException {
+    public Tenant saveTenant(
+            @ApiParam(value = "A JSON value representing the tenant.")
+            @RequestBody Tenant tenant) throws ThingsboardException {
         try {
             boolean newTenant = tenant.getId() == null;
 
@@ -107,11 +144,15 @@ public class TenantController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Delete Tenant (deleteTenant)",
+            notes = "Deletes the tenant, it's customers, rule chains, devices and all other related entities. Referencing non-existing tenant Id will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/tenant/{tenantId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public void deleteTenant(@PathVariable("tenantId") String strTenantId) throws ThingsboardException {
-        checkParameter("tenantId", strTenantId);
+    public void deleteTenant(
+            @ApiParam(value = TENANT_ID_PARAM_DESCRIPTION)
+            @PathVariable(TENANT_ID) String strTenantId) throws ThingsboardException {
+        checkParameter(TENANT_ID, strTenantId);
         try {
             TenantId tenantId = new TenantId(toUUID(strTenantId));
             Tenant tenant = checkTenantId(tenantId, Operation.DELETE);
@@ -124,14 +165,21 @@ public class TenantController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get Tenants (getTenants)", notes = "Returns a page of tenants registered in the platform. " + PAGE_DATA_PARAMETERS + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/tenants", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
-    public PageData<Tenant> getTenants(@RequestParam int pageSize,
-                                       @RequestParam int page,
-                                       @RequestParam(required = false) String textSearch,
-                                       @RequestParam(required = false) String sortProperty,
-                                       @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+    public PageData<Tenant> getTenants(
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+            @RequestParam int pageSize,
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+            @RequestParam int page,
+            @ApiParam(value = TENANT_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = TENANT_SORT_PROPERTY_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortProperty,
+            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         try {
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             return checkNotNull(tenantService.findTenants(pageLink));
@@ -140,14 +188,23 @@ public class TenantController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get Tenants Info (getTenants)", notes = "Returns a page of tenant info objects registered in the platform. "
+            + TENANT_INFO_DESCRIPTION + PAGE_DATA_PARAMETERS + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/tenantInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
-    public PageData<TenantInfo> getTenantInfos(@RequestParam int pageSize,
-                                               @RequestParam int page,
-                                               @RequestParam(required = false) String textSearch,
-                                               @RequestParam(required = false) String sortProperty,
-                                               @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+    public PageData<TenantInfo> getTenantInfos(
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+            @RequestParam int pageSize,
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+            @RequestParam int page,
+            @ApiParam(value = TENANT_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = TENANT_INFO_SORT_PROPERTY_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortProperty,
+            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+            @RequestParam(required = false) String sortOrder
+    ) throws ThingsboardException {
         try {
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             return checkNotNull(tenantService.findTenantInfos(pageLink));

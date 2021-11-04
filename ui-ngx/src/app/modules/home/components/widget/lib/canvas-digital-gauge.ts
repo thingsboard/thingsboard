@@ -276,7 +276,6 @@ export class CanvasDigitalGauge extends BaseGauge {
         }
       }
     }
-
     options.ticksValue = [];
     for (const tick of options.ticks) {
       if (tick !== null) {
@@ -401,10 +400,8 @@ export class CanvasDigitalGauge extends BaseGauge {
         const context = this.contextValueClone;
         // clear the cache
         context.clearRect(x, y, w, h);
-        context.save();
 
         context.drawImage(canvas.elementClone, x, y, w, h);
-        context.save();
 
         drawDigitalValue(context, options, this.elementValueClone.renderedValue);
 
@@ -427,10 +424,8 @@ export class CanvasDigitalGauge extends BaseGauge {
         const context = this.contextProgressClone;
         // clear the cache
         context.clearRect(x, y, w, h);
-        context.save();
 
         context.drawImage(this.elementValueClone, x, y, w, h);
-        context.save();
 
         if (Number(fixedProgress) > 0) {
           drawProgress(context, options, progress);
@@ -444,10 +439,8 @@ export class CanvasDigitalGauge extends BaseGauge {
 
       // clear the canvas
       canvas.context.clearRect(x, y, w, h);
-      canvas.context.save();
 
       canvas.context.drawImage(this.elementProgressClone, x, y, w, h);
-      canvas.context.save();
 
       // @ts-ignore
       super.draw();
@@ -755,6 +748,7 @@ function drawDigitalTitle(context: DigitalGaugeCanvasRenderingContext2D, options
   context.font = Drawings.font(options, 'Title', fontSizeFactor);
   context.lineWidth = 0;
   drawText(context, options, 'Title', options.title.toUpperCase(), textX, textY);
+  context.restore();
 }
 
 function drawDigitalLabel(context: DigitalGaugeCanvasRenderingContext2D, options: CanvasDigitalGaugeOptions) {
@@ -773,6 +767,7 @@ function drawDigitalLabel(context: DigitalGaugeCanvasRenderingContext2D, options
   context.font = Drawings.font(options, 'Label', fontSizeFactor);
   context.lineWidth = 0;
   drawText(context, options, 'Label', options.label, textX, textY);
+  context.restore();
 }
 
 function drawDigitalMinMax(context: DigitalGaugeCanvasRenderingContext2D, options: CanvasDigitalGaugeOptions) {
@@ -790,6 +785,7 @@ function drawDigitalMinMax(context: DigitalGaugeCanvasRenderingContext2D, option
   context.lineWidth = 0;
   drawText(context, options, 'MinMax', options.minValue + '', minX, minY);
   drawText(context, options, 'MinMax', options.maxValue + '', maxX, maxY);
+  context.restore();
 }
 
 function drawDigitalValue(context: DigitalGaugeCanvasRenderingContext2D, options: CanvasDigitalGaugeOptions, value: any) {
@@ -812,6 +808,7 @@ function drawDigitalValue(context: DigitalGaugeCanvasRenderingContext2D, options
   context.font = Drawings.font(options, 'Value', fontSizeFactor);
   context.lineWidth = 0;
   drawText(context, options, 'Value', text, textX, textY);
+  context.restore();
 }
 
 function getProgressColor(progress: number, colorsRange: DigitalGaugeColorRange[]): string {
@@ -820,7 +817,7 @@ function getProgressColor(progress: number, colorsRange: DigitalGaugeColorRange[
     return colorsRange[0].rgbString;
   }
 
-  for (let j = 0; j < colorsRange.length; j++) {
+  for (let j = 1; j < colorsRange.length; j++) {
     if (progress <= colorsRange[j].pct) {
       const lower = colorsRange[j - 1];
       const upper = colorsRange[j];
@@ -836,6 +833,7 @@ function getProgressColor(progress: number, colorsRange: DigitalGaugeColorRange[
       return color.toRgbString();
     }
   }
+  return colorsRange[colorsRange.length - 1].rgbString;
 }
 
 function drawArcGlow(context: DigitalGaugeCanvasRenderingContext2D,
@@ -944,6 +942,7 @@ function drawTickBar(context: DigitalGaugeCanvasRenderingContext2D, tickValues: 
 function drawProgress(context: DigitalGaugeCanvasRenderingContext2D,
                       options: CanvasDigitalGaugeOptions, progress: number) {
   let neonColor;
+  context.save();
   if (options.neonGlowBrightness) {
     context.currentColor = neonColor = getProgressColor(progress, options.neonColorsRange);
   } else {
@@ -1019,4 +1018,5 @@ function drawProgress(context: DigitalGaugeCanvasRenderingContext2D,
       true, options.colorTicks, options.tickWidth);
   }
 
+  context.restore();
 }

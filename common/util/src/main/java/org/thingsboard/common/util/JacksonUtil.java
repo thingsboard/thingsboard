@@ -118,4 +118,9 @@ public class JacksonUtil {
     public static <T> JsonNode valueToTree(T value) {
         return OBJECT_MAPPER.valueToTree(value);
     }
+
+    public static <T> T treeToValue(JsonNode tree, Class<T> type) throws JsonProcessingException {
+        return OBJECT_MAPPER.treeToValue(tree, type);
+    }
+
 }

@@ -57,6 +57,7 @@ import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
@@ -1131,11 +1132,8 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
     public Optional<Device> saveDeviceWithCredentials(Device device, DeviceCredentials credentials) {
         try {
-            Map<Class<?>, Object> deviceCredentials = new ConcurrentHashMap<>();
-            deviceCredentials.put(Device.class, device);
-            deviceCredentials.put(DeviceCredentials.class, credentials);
-//            return restTemplate.postForEntity(baseURL + "/api/lwm2m/device-credentials", deviceCredentials, Device.class).getBody();
-            ResponseEntity<Device> deviceOpt = restTemplate.postForEntity(baseURL + "/api/lwm2m/device-credentials", deviceCredentials, Device.class);
+            SaveDeviceWithCredentialsRequest request = new SaveDeviceWithCredentialsRequest(device, credentials);
+            ResponseEntity<Device> deviceOpt = restTemplate.postForEntity(baseURL + "/api/device-with-credentials", request, Device.class);
             return Optional.ofNullable(deviceOpt.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
@@ -1145,7 +1143,6 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
             }
         }
     }
-
 
     public PageData<Device> getTenantDevices(String type, PageLink pageLink) {
         Map<String, String> params = new HashMap<>();

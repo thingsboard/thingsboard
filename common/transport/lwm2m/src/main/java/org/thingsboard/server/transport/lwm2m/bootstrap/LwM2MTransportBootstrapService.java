@@ -27,6 +27,7 @@ import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServer;
 import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServerBuilder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapSecurityStore;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MInMemoryBootstrapConfigStore;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MInMemoryBootstrapConfigurationAdapter;
@@ -114,49 +115,22 @@ public class LwM2MTransportBootstrapService {
     }
 
     private void setServerWithCredentials(LeshanBootstrapServerBuilder builder) {
-        try {
-            if (serverConfig.getKeyStoreValue() != null) {
-                KeyStore keyStoreServer = serverConfig.getKeyStoreValue();
-                if (this.setBuilderX509(builder)) {
-                    X509Certificate rootCAX509Cert = (X509Certificate) keyStoreServer.getCertificate(serverConfig.getRootCertificateAlias());
-                    if (rootCAX509Cert != null) {
-                        X509Certificate[] trustedCertificates = new X509Certificate[1];
-                        trustedCertificates[0] = rootCAX509Cert;
-                        builder.setTrustedCertificates(trustedCertificates);
-                    } else {
-                        /* by default trust all */
-                        builder.setTrustedCertificates(new X509Certificate[0]);
-                    }
-                }
+        if (this.bootstrapConfig.getSslCredentials() != null) {
+            SslCredentials sslCredentials = this.bootstrapConfig.getSslCredentials();
+            builder.setPublicKey(sslCredentials.getPublicKey());
+            builder.setPrivateKey(sslCredentials.getPrivateKey());
+            builder.setCertificateChain(sslCredentials.getCertificateChain());
+            if (this.serverConfig.getTrustSslCredentials() != null) {
+                builder.setTrustedCertificates(this.serverConfig.getTrustSslCredentials().getTrustedCertificates());
             } else {
                 /* by default trust all */
                 builder.setTrustedCertificates(new X509Certificate[0]);
-                log.info("Unable to load X509 files for BootStrapServer");
-                this.pskMode = true;
             }
-        } catch (KeyStoreException ex) {
-            log.error("[{}] Unable to load X509 files server", ex.getMessage());
+        } else {
+            /* by default trust all */
+            builder.setTrustedCertificates(new X509Certificate[0]);
+            log.info("Unable to load X509 files for BootStrapServer");
+            this.pskMode = true;
         }
     }
-
-    private boolean setBuilderX509(LeshanBootstrapServerBuilder builder) {
-        try {
-            X509Certificate[] certificateChain = SslContextUtil.asX509Certificates(serverConfig.getKeyStoreValue().getCertificateChain(this.bootstrapConfig.getCertificateAlias()));
-            X509Certificate serverCertificate = certificateChain[0];
-            PrivateKey privateKey = (PrivateKey) serverConfig.getKeyStoreValue().getKey(this.bootstrapConfig.getCertificateAlias(), serverConfig.getCertificatePassword() == null ? null : serverConfig.getCertificatePassword().toCharArray());
-            PublicKey publicKey = serverCertificate.getPublicKey();
-            if (privateKey != null && privateKey.getEncoded().length > 0 && publicKey != null && publicKey.getEncoded().length > 0) {
-                builder.setPublicKey(serverCertificate.getPublicKey());
-                builder.setPrivateKey(privateKey);
-                builder.setCertificateChain(certificateChain);
-                return true;
-            } else {
-                return false;
-            }
-        } catch (Exception ex) {
-            log.error("[{}] Unable to load KeyStore  files server", ex.getMessage());
-            return false;
-        }
-    }
-
 }

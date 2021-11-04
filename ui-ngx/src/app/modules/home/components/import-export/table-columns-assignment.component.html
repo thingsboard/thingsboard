@@ -23,23 +23,28 @@
     </mat-cell>
   </ng-container>
   <ng-container matColumnDef="sampleData">
-    <mat-header-cell *matHeaderCellDef style="flex: 0 0 30%;" class="mat-column-sampleData"> {{ 'import.column-example' | translate }} </mat-header-cell>
+    <mat-header-cell *matHeaderCellDef class="mat-column-sampleData"> {{ 'import.column-example' | translate }} </mat-header-cell>
     <mat-cell *matCellDef="let column">
       {{column.sampleData}}
     </mat-cell>
   </ng-container>
   <ng-container matColumnDef="type">
-    <mat-header-cell *matHeaderCellDef style="flex: 0 0 40%" class="mat-column-type"> {{ 'import.column-type.column-type' | translate }} </mat-header-cell>
+    <mat-header-cell *matHeaderCellDef class="mat-column-type"> {{ 'import.column-type.column-type' | translate }} </mat-header-cell>
     <mat-cell *matCellDef="let column">
-      <mat-select matInput [(ngModel)]="column.type" (ngModelChange)="columnsUpdated()">
+      <mat-select [(ngModel)]="column.type" (ngModelChange)="columnsUpdated()">
         <mat-option *ngFor="let type of columnTypes" [value]="type.value" [disabled]="type.disabled">
           {{ columnTypesTranslations.get(type.value) | translate }}
         </mat-option>
+        <mat-optgroup label="{{ 'import.credentials' | translate }}" *ngIf="entityType === entityTypeDevice">
+          <mat-option *ngFor="let credential of columnDeviceCredentials" [value]="credential.value" [disabled]="credential.disabled">
+            {{ columnTypesTranslations.get(credential.value) | translate }}
+          </mat-option>
+        </mat-optgroup>
       </mat-select>
     </mat-cell>
   </ng-container>
   <ng-container matColumnDef="key">
-    <mat-header-cell *matHeaderCellDef style="flex: 0 0 30%"> {{ 'import.column-key' | translate }} </mat-header-cell>
+    <mat-header-cell *matHeaderCellDef class="mat-column-key"> {{ 'import.column-key' | translate }} </mat-header-cell>
     <mat-cell *matCellDef="let column">
       <mat-form-field floatLabel="always" hideRequiredMarker
                       *ngIf="isColumnTypeDiffers(column.type)">

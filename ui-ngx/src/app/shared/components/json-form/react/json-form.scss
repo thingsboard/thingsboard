@@ -190,6 +190,18 @@ $previewSize: 100px !default;
           font-size: 12px !important;
         }
       }
+      button.help-button {
+        background: rgba(220, 220, 220, .35);
+        padding: 4px;
+      }
+      div.help-button-loading {
+        pointer-events: none;
+        background: #f3f3f3;
+        border-radius: 50%;
+        display: flex;
+        place-content: center;
+        align-items: center;
+      }
     }
   }
 

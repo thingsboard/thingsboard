@@ -24,6 +24,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @PsqlDao
@@ -37,6 +38,7 @@ public class PsqlEventCleanupRepository extends JpaAbstractDaoListeningExecutorS
             stmt.setLong(1, otherEventsTtl);
             stmt.setLong(2, debugEventsTtl);
             stmt.setLong(3, 0);
+            stmt.setQueryTimeout((int) TimeUnit.HOURS.toSeconds(1));
             stmt.execute();
             printWarnings(stmt);
             try (ResultSet resultSet = stmt.getResultSet()){

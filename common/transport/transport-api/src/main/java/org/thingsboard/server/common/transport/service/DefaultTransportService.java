@@ -21,9 +21,11 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -96,6 +98,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -110,6 +113,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * Created by ashvayka on 17.10.18.
@@ -135,6 +139,10 @@ public class DefaultTransportService implements TransportService {
     private long clientSideRpcTimeout;
     @Value("${queue.transport.poll_interval}")
     private int notificationsPollDuration;
+    @Value("${transport.stats.enabled:false}")
+    private boolean statsEnabled;
+
+    private final Map<String, Number> statsMap = new LinkedHashMap<>();
 
     private final Gson gson = new Gson();
     private final TbTransportQueueFactory queueProvider;
@@ -900,7 +908,7 @@ public class DefaultTransportService implements TransportService {
                 transportResourceCache.update(tenantId, resourceType, resourceId);
                 sessions.forEach((id, mdRez) -> {
                     log.warn("ResourceUpdate - [{}] [{}]", id, mdRez);
-                    transportCallbackExecutor.submit(() -> mdRez.getListener().onResourceUpdate(Optional.ofNullable(msg)));
+                    transportCallbackExecutor.submit(() -> mdRez.getListener().onResourceUpdate(msg));
                 });
 
             } else if (toSessionMsg.hasResourceDeleteMsg()) {
@@ -911,7 +919,7 @@ public class DefaultTransportService implements TransportService {
                 transportResourceCache.evict(tenantId, resourceType, resourceId);
                 sessions.forEach((id, mdRez) -> {
                     log.warn("ResourceDelete - [{}] [{}]", id, mdRez);
-                    transportCallbackExecutor.submit(() -> mdRez.getListener().onResourceDelete(Optional.ofNullable(msg)));
+                    transportCallbackExecutor.submit(() -> mdRez.getListener().onResourceDelete(msg));
                 });
             } else {
                 //TODO: should we notify the device actor about missed session?
@@ -1166,5 +1174,20 @@ public class DefaultTransportService implements TransportService {
     @Override
     public boolean hasSession(TransportProtos.SessionInfoProto sessionInfo) {
         return sessions.containsKey(toSessionId(sessionInfo));
+    }
+
+    @Override
+    public void createGaugeStats(String statsName, AtomicInteger number) {
+        statsFactory.createGauge(StatsType.TRANSPORT + "." + statsName, number);
+        statsMap.put(statsName, number);
+    }
+
+    @Scheduled(fixedDelayString = "${transport.stats.print-interval-ms:60000}")
+    public void printStats() {
+        if (statsEnabled) {
+            String values = statsMap.entrySet().stream()
+                    .map(kv -> kv.getKey() + " [" + kv.getValue() + "]").collect(Collectors.joining(", "));
+            log.info("Transport Stats: {}", values);
+        }
     }
 }

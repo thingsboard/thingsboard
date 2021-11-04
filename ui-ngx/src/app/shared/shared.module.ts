@@ -146,7 +146,20 @@ import { OtaPackageAutocompleteComponent } from '@shared/components/ota-package/
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { CopyButtonComponent } from '@shared/components/button/copy-button.component';
 import { TogglePasswordComponent } from '@shared/components/button/toggle-password.component';
-import { markedOptionsFactory } from '@shared/components/markdown.factory';
+import { HelpPopupComponent } from '@shared/components/help-popup.component';
+import { TbPopoverComponent, TbPopoverDirective } from '@shared/components/popover.component';
+import { TbStringTemplateOutletDirective } from '@shared/components/directives/sring-template-outlet.directive';
+import { TbComponentOutletDirective} from '@shared/components/directives/component-outlet.directive';
+import { HelpMarkdownComponent } from '@shared/components/help-markdown.component';
+import { MarkedOptionsService } from '@shared/components/marked-options.service';
+import { TbPopoverService } from '@shared/components/popover.service';
+import { HELP_MARKDOWN_COMPONENT_TOKEN, SHARED_MODULE_TOKEN } from '@shared/components/tokens';
+import { TbMarkdownComponent } from '@shared/components/markdown.component';
+import { ProtobufContentComponent } from './components/protobuf-content.component';
+
+export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
+  return markedOptionsService;
+}
 
 @NgModule({
   providers: [
@@ -164,7 +177,10 @@ import { markedOptionsFactory } from '@shared/components/markdown.factory';
     {
       provide: MAT_DATE_LOCALE,
       useValue: 'en-GB'
-    }
+    },
+    { provide: HELP_MARKDOWN_COMPONENT_TOKEN, useValue: HelpMarkdownComponent },
+    { provide: SHARED_MODULE_TOKEN, useValue: SharedModule },
+    TbPopoverService
   ],
   declarations: [
     FooterComponent,
@@ -176,7 +192,14 @@ import { markedOptionsFactory } from '@shared/components/markdown.factory';
     MatChipDraggableDirective,
     TbHotkeysDirective,
     TbAnchorComponent,
+    TbPopoverComponent,
+    TbStringTemplateOutletDirective,
+    TbComponentOutletDirective,
+    TbPopoverDirective,
+    TbMarkdownComponent,
     HelpComponent,
+    HelpMarkdownComponent,
+    HelpPopupComponent,
     TbCheckboxComponent,
     TbSnackBarComponent,
     TbErrorComponent,
@@ -246,7 +269,8 @@ import { markedOptionsFactory } from '@shared/components/markdown.factory';
     OtaPackageAutocompleteComponent,
     WidgetsBundleSearchComponent,
     CopyButtonComponent,
-    TogglePasswordComponent
+    TogglePasswordComponent,
+    ProtobufContentComponent
   ],
   imports: [
     CommonModule,
@@ -302,7 +326,8 @@ import { markedOptionsFactory } from '@shared/components/markdown.factory';
       sanitize: SecurityContext.NONE,
       markedOptions: {
         provide: MarkedOptions,
-        useFactory: markedOptionsFactory
+        useFactory: MarkedOptionsFactory,
+        deps: [MarkedOptionsService]
       }
     })
   ],
@@ -316,7 +341,13 @@ import { markedOptionsFactory } from '@shared/components/markdown.factory';
     MatChipDraggableDirective,
     TbHotkeysDirective,
     TbAnchorComponent,
+    TbStringTemplateOutletDirective,
+    TbComponentOutletDirective,
+    TbPopoverDirective,
+    TbMarkdownComponent,
     HelpComponent,
+    HelpMarkdownComponent,
+    HelpPopupComponent,
     TbCheckboxComponent,
     TbErrorComponent,
     TbCheatSheetComponent,
@@ -429,7 +460,8 @@ import { markedOptionsFactory } from '@shared/components/markdown.factory';
     OtaPackageAutocompleteComponent,
     WidgetsBundleSearchComponent,
     CopyButtonComponent,
-    TogglePasswordComponent
+    TogglePasswordComponent,
+    ProtobufContentComponent
   ]
 })
 export class SharedModule { }

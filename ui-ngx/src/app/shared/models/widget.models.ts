@@ -24,6 +24,7 @@ import { DataKeyType } from './telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import * as moment_ from 'moment';
 import { EntityDataPageLink, EntityFilter, KeyFilter } from '@shared/models/query/query.models';
+import { PopoverPlacement } from '@shared/components/popover.models';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -121,6 +122,7 @@ export interface WidgetActionSource {
   name: string;
   value: string;
   multiple: boolean;
+  hasShowCondition?: boolean;
 }
 
 export const widgetActionSources: {[acionSourceId: string]: WidgetActionSource} = {
@@ -129,6 +131,7 @@ export const widgetActionSources: {[acionSourceId: string]: WidgetActionSource} 
       name: 'widget-action.header-button',
       value: 'headerButton',
       multiple: true,
+      hasShowCondition: true
     }
 };
 
@@ -149,6 +152,7 @@ export interface WidgetTypeParameters {
   useCustomDatasources?: boolean;
   maxDatasources?: number;
   maxDataKeys?: number;
+  datasourcesOptional?: boolean;
   dataKeysOptional?: boolean;
   stateData?: boolean;
   hasDataPageLink?: boolean;
@@ -454,6 +458,13 @@ export interface WidgetActionDescriptor extends CustomActionDescriptor {
   targetDashboardStateId?: string;
   openRightLayout?: boolean;
   openNewBrowserTab?: boolean;
+  openInPopover?: boolean;
+  popoverHideDashboardToolbar?: boolean;
+  popoverPreferredPlacement?: PopoverPlacement;
+  popoverHideOnClickOutside?: boolean;
+  popoverWidth?: string;
+  popoverHeight?: string;
+  popoverStyle?: { [klass: string]: any };
   openInSeparateDialog?: boolean;
   dialogTitle?: string;
   dialogHideDashboardToolbar?: boolean;
@@ -462,6 +473,8 @@ export interface WidgetActionDescriptor extends CustomActionDescriptor {
   setEntityId?: boolean;
   stateEntityParamName?: string;
   mobileAction?: WidgetMobileActionDescriptor;
+  useShowWidgetActionFunction?: boolean;
+  showWidgetActionFunction?: string;
 }
 
 export interface WidgetComparisonSettings {
@@ -496,6 +509,7 @@ export interface WidgetConfig {
   titleStyle?: {[klass: string]: any};
   units?: string;
   decimals?: number;
+  noDataDisplayMessage?: string;
   actions?: {[actionSourceId: string]: Array<WidgetActionDescriptor>};
   settings?: any;
   alarmSource?: Datasource;
