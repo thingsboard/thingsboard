@@ -154,15 +154,17 @@ public class DefaultDataUpdateService implements DataUpdateService {
                                 for (AlarmSeverity severity : AlarmSeverity.values()) {
                                     if (createRules.has(severity.name())) {
                                         JsonNode spec = createRules.get(severity.name()).get("condition").get("spec");
-                                        if (convertDeviceProfileAlarmRulesForVersion330(spec))
+                                        if (convertDeviceProfileAlarmRulesForVersion330(spec)) {
                                             isUpdated = true;
+                                        }
                                     }
                                 }
                             }
                             if (alarm.has("clearRule") && !alarm.get("clearRule").isNull()) {
                                 JsonNode spec = alarm.get("clearRule").get("condition").get("spec");
-                                if (convertDeviceProfileAlarmRulesForVersion330(spec))
+                                if (convertDeviceProfileAlarmRulesForVersion330(spec)) {
                                     isUpdated = true;
+                                }
                             }
                         }
                         if (isUpdated) {
