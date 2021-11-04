@@ -26,10 +26,12 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.exception.ThingsboardCredentialsExpiredResponse;
 import org.thingsboard.server.exception.ThingsboardErrorResponse;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginResponse;
 import springfox.documentation.builders.ApiInfoBuilder;
@@ -81,6 +83,7 @@ import static springfox.documentation.builders.PathSelectors.regex;
 
 @Slf4j
 @Configuration
+@TbCoreComponent
 public class SwaggerConfiguration {
 
     @Value("${swagger.api_path_regex}")
@@ -105,6 +108,8 @@ public class SwaggerConfiguration {
     private String licenseUrl;
     @Value("${swagger.version}")
     private String version;
+    @Value("${app.version:unknown}")
+    private String appVersion;
 
     @Bean
     public Docket thingsboardApi() {
@@ -231,13 +236,17 @@ public class SwaggerConfiguration {
     }
 
     private ApiInfo apiInfo() {
+        String apiVersion = version;
+        if (StringUtils.isEmpty(apiVersion)) {
+            apiVersion = appVersion;
+        }
         return new ApiInfoBuilder()
                 .title(title)
                 .description(description)
                 .contact(new Contact(contactName, contactUrl, contactEmail))
                 .license(licenseTitle)
                 .licenseUrl(licenseUrl)
-                .version(version)
+                .version(apiVersion)
                 .build();
     }
 
