@@ -17,10 +17,9 @@ package org.thingsboard.server.controller;
 
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -37,30 +36,20 @@ import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
-import org.thingsboard.server.data.search.EntitiesSearchRequest;
-import org.thingsboard.server.data.search.EntitySearchResult;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.query.EntitiesSearchService;
 import org.thingsboard.server.service.query.EntityQueryService;
 
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_DATA_QUERY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_COUNT_QUERY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_DATA_QUERY_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
-import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_ALLOWABLE_VALUES;
-import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
-@RequiredArgsConstructor
 public class EntityQueryController extends BaseController {
 
-    private final EntityQueryService entityQueryService;
-    private final EntitiesSearchService entitiesSearchService;
+    @Autowired
+    private EntityQueryService entityQueryService;
 
     private static final int MAX_PAGE_SIZE = 100;
 
@@ -129,72 +118,6 @@ public class EntityQueryController extends BaseController {
                 pageLink.setPageSize(MAX_PAGE_SIZE);
             }
             return entityQueryService.getKeysByQuery(getCurrentUser(), tenantId, query, isTimeseries, isAttributes);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
-
-    @ApiOperation(value = "Search entities (searchEntities)", notes = "Search entities with specified entity type by id or name within the whole platform. " +
-            "Searchable entity types are: CUSTOMER, USER, DEVICE, DEVICE_PROFILE, ASSET, ENTITY_VIEW, DASHBOARD, " +
-            "RULE_CHAIN, EDGE, OTA_PACKAGE, TB_RESOURCE, WIDGETS_BUNDLE, TENANT, TENANT_PROFILE." + NEW_LINE +
-            "The platform will search for entities, where a name contains the search text (case-insensitively), " +
-            "or if the search query is a valid UUID (e.g. 128e4d40-26b3-11ec-aaeb-c7661c54701e) then " +
-            "it will also search for an entity where id fully matches the query. If search query is empty " +
-            "then all entities will be returned (according to page number, page size and sorting)." + NEW_LINE +
-            "The returned result is a page of EntitySearchResult, which contains: " +
-            "entity id, entity fields represented as strings, tenant info and owner info. " +
-            "Returned entity fields are: name, type (will be present for USER, DEVICE, ASSET, ENTITY_VIEW, RULE_CHAIN, " +
-            "EDGE, OTA_PACKAGE, TB_RESOURCE entity types; in case of USER - the type is its authority), " +
-            "createdTime and lastActivityTime (will only be present for DEVICE and USER; for USER it is its last login time). " +
-            "Tenant info contains tenant's id and title; owner info contains the same info for an entity's owner " +
-            "(its customer, or if it is not a customer's entity - tenant)." + NEW_LINE +
-            "Example response value:\n" +
-            "{\n" +
-            "    \"data\": [\n" +
-            "        {\n" +
-            "            \"entityId\": {\n" +
-            "                \"entityType\": \"DEVICE\",\n" +
-            "                \"id\": \"48be0670-25c9-11ec-a618-8165eb6b112a\"\n" +
-            "            },\n" +
-            "            \"fields\": {\n" +
-            "                \"name\": \"Thermostat T1\",\n" +
-            "                \"createdTime\": \"1633430698071\",\n" +
-            "                \"lastActivityTime\": \"1635761085285\",\n" +
-            "                \"type\": \"thermostat\"\n" +
-            "            },\n" +
-            "            \"tenantInfo\": {\n" +
-            "                \"id\": {\n" +
-            "                    \"entityType\": \"TENANT\",\n" +
-            "                    \"id\": \"2ddd6120-25c9-11ec-a618-8165eb6b112a\"\n" +
-            "                },\n" +
-            "                \"name\": \"Tenant\"\n" +
-            "            },\n" +
-            "            \"ownerInfo\": {\n" +
-            "                \"id\": {\n" +
-            "                    \"entityType\": \"CUSTOMER\",\n" +
-            "                    \"id\": \"26cba800-eee3-11eb-9e2c-fb031bd4619c\"\n" +
-            "                },\n" +
-            "                \"name\": \"Customer A\"\n" +
-            "            }\n" +
-            "        }\n" +
-            "    ],\n" +
-            "    \"totalPages\": 1,\n" +
-            "    \"totalElements\": 1,\n" +
-            "    \"hasNext\": false\n" +
-            "}")
-    @PostMapping("/entities/search")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    public PageData<EntitySearchResult> searchEntities(@RequestBody EntitiesSearchRequest request,
-                                                       @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
-                                                       @RequestParam int page,
-                                                       @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
-                                                       @RequestParam int pageSize,
-                                                       @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = "name, type, createdTime, lastActivityTime, createdTime, tenantId, customerId", required = false)
-                                                       @RequestParam(required = false) String sortProperty,
-                                                       @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES, required = false)
-                                                       @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        try {
-            return entitiesSearchService.searchEntities(getCurrentUser(), request, createPageLink(pageSize, page, null, sortProperty, sortOrder));
         } catch (Exception e) {
             throw handleException(e);
         }
