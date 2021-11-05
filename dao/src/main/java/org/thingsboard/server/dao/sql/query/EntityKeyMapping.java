@@ -561,23 +561,25 @@ public class EntityKeyMapping {
                 stringOperationQuery = String.format("%s not like :%s or %s is null)", operationField, paramName, operationField);
                 break;
             case IN:
-                value = value.replaceAll("'","").replaceAll("\"", "");
                 stringOperationQuery = String.format("%s in (:%s))", operationField, paramName);
                 break;
             case NOT_IN:
-                value = value.replaceAll("'","").replaceAll("\"", "");
                 stringOperationQuery = String.format("%s not in (:%s))", operationField, paramName);
                 break;
         }
         switch (stringFilterPredicate.getOperation()) {
             case IN:
             case NOT_IN:
-                ctx.addStringListParameter(paramName, List.of(value.trim().split("\\s*,\\s*")));
+                ctx.addStringListParameter(paramName, getListValuesWithoutQuote(value));
                 break;
             default:
                 ctx.addStringParameter(paramName, value);
         }
         return String.format("((%s is not null and %s)", field, stringOperationQuery);
+    }
+
+    private List<String> getListValuesWithoutQuote(String value) {
+        return List.of(value.replaceAll("'", "").replaceAll("\"", "").trim().split("\\s*,\\s*"));
     }
 
     private String buildNumericPredicateQuery(QueryContext ctx, String field, NumericFilterPredicate numericFilterPredicate) {
