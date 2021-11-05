@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.thingsboard.common.util.ListeningExecutor;
@@ -33,6 +34,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -47,6 +49,7 @@ import org.thingsboard.server.dao.relation.RelationService;
 import java.util.Collections;
 import java.util.concurrent.Callable;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -150,6 +153,40 @@ public class TbCreateRelationNodeTest {
         verify(ctx).tellNext(msg, TbRelationTypes.SUCCESS);
     }
 
+    @Test
+    public void testCreateNewRelationAndChangeOriginator() throws TbNodeException {
+        init(createRelationNodeConfigWithChangeOriginator());
+
+        DeviceId deviceId = new DeviceId(Uuids.timeBased());
+
+        AssetId assetId = new AssetId(Uuids.timeBased());
+        Asset asset = new Asset();
+        asset.setId(assetId);
+
+        when(assetService.findAssetByTenantIdAndName(any(), eq("AssetName"))).thenReturn(asset);
+        when(assetService.findAssetByIdAsync(any(), eq(assetId))).thenReturn(Futures.immediateFuture(asset));
+
+        TbMsgMetaData metaData = new TbMsgMetaData();
+        metaData.putValue("name", "AssetName");
+        metaData.putValue("type", "AssetType");
+        msg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, deviceId, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
+
+        when(ctx.getRelationService().checkRelation(any(), eq(assetId), eq(deviceId), eq(RELATION_TYPE_CONTAINS), eq(RelationTypeGroup.COMMON)))
+                .thenReturn(Futures.immediateFuture(false));
+        when(ctx.getRelationService().saveRelationAsync(any(), eq(new EntityRelation(assetId, deviceId, RELATION_TYPE_CONTAINS, RelationTypeGroup.COMMON))))
+                .thenReturn(Futures.immediateFuture(true));
+
+        node.onMsg(ctx, msg);
+        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        ArgumentCaptor<String> typeCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<EntityId> originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
+        ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
+        ArgumentCaptor<String> dataCaptor = ArgumentCaptor.forClass(String.class);
+        verify(ctx).transformMsg(msgCaptor.capture(), typeCaptor.capture(), originatorCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
+
+        assertEquals(assetId, originatorCaptor.getValue());
+    }
+
     public void init(TbCreateRelationNodeConfiguration configuration) throws TbNodeException {
         ObjectMapper mapper = new ObjectMapper();
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(configuration));
@@ -179,6 +216,12 @@ public class TbCreateRelationNodeTest {
     private TbCreateRelationNodeConfiguration createRelationNodeConfigWithRemoveCurrentRelations() {
         TbCreateRelationNodeConfiguration configuration = createRelationNodeConfig();
         configuration.setRemoveCurrentRelations(true);
+        return configuration;
+    }
+
+    private TbCreateRelationNodeConfiguration createRelationNodeConfigWithChangeOriginator() {
+        TbCreateRelationNodeConfiguration configuration = createRelationNodeConfig();
+        configuration.setChangeOriginatorToRelatedEntity(true);
         return configuration;
     }
 }
