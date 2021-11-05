@@ -58,7 +58,7 @@ public enum Resource {
 
     public static Resource of(EntityType entityType) {
         for (Resource resource : Resource.values()) {
-            if (resource.getEntityType().get() == entityType) {
+            if (resource.getEntityType().orElse(null) == entityType) {
                 return resource;
             }
         }

@@ -17,78 +17,69 @@ package org.thingsboard.server.service.asset;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.asset.AssetService;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.importing.AbstractBulkImportService;
 import org.thingsboard.server.service.importing.BulkImportColumnType;
-import org.thingsboard.server.service.importing.BulkImportRequest;
-import org.thingsboard.server.service.importing.ImportedEntityInfo;
-import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.AccessControlService;
-import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.util.Map;
 import java.util.Optional;
 
 @Service
 @TbCoreComponent
+@RequiredArgsConstructor
 public class AssetBulkImportService extends AbstractBulkImportService<Asset> {
     private final AssetService assetService;
 
-    public AssetBulkImportService(TelemetrySubscriptionService tsSubscriptionService, TbTenantProfileCache tenantProfileCache,
-                                  AccessControlService accessControlService, AccessValidator accessValidator,
-                                  EntityActionService entityActionService, TbClusterService clusterService, AssetService assetService) {
-        super(tsSubscriptionService, tenantProfileCache, accessControlService, accessValidator, entityActionService, clusterService);
-        this.assetService = assetService;
-    }
-
     @Override
-    protected ImportedEntityInfo<Asset> saveEntity(BulkImportRequest importRequest, Map<BulkImportColumnType, String> fields, SecurityUser user) {
-        ImportedEntityInfo<Asset> importedEntityInfo = new ImportedEntityInfo<>();
-
-        Asset asset = new Asset();
-        asset.setTenantId(user.getTenantId());
-        setAssetFields(asset, fields);
-
-        Asset existingAsset = assetService.findAssetByTenantIdAndName(user.getTenantId(), asset.getName());
-        if (existingAsset != null && importRequest.getMapping().getUpdate()) {
-            importedEntityInfo.setOldEntity(new Asset(existingAsset));
-            importedEntityInfo.setUpdated(true);
-            existingAsset.update(asset);
-            asset = existingAsset;
-        }
-        asset = assetService.saveAsset(asset);
-
-        importedEntityInfo.setEntity(asset);
-        return importedEntityInfo;
-    }
-
-    private void setAssetFields(Asset asset, Map<BulkImportColumnType, String> fields) {
-        ObjectNode additionalInfo = (ObjectNode) Optional.ofNullable(asset.getAdditionalInfo()).orElseGet(JacksonUtil::newObjectNode);
+    protected void setEntityFields(Asset entity, Map<BulkImportColumnType, String> fields) {
+        ObjectNode additionalInfo = (ObjectNode) Optional.ofNullable(entity.getAdditionalInfo()).orElseGet(JacksonUtil::newObjectNode);
         fields.forEach((columnType, value) -> {
             switch (columnType) {
                 case NAME:
-                    asset.setName(value);
+                    entity.setName(value);
                     break;
                 case TYPE:
-                    asset.setType(value);
+                    entity.setType(value);
                     break;
                 case LABEL:
-                    asset.setLabel(value);
+                    entity.setLabel(value);
                     break;
                 case DESCRIPTION:
                     additionalInfo.set("description", new TextNode(value));
                     break;
             }
         });
-        asset.setAdditionalInfo(additionalInfo);
+        entity.setAdditionalInfo(additionalInfo);
+    }
+
+    @Override
+    protected Asset saveEntity(Asset entity, Map<BulkImportColumnType, String> fields) {
+        return assetService.saveAsset(entity);
+    }
+
+    @Override
+    protected Asset findOrCreateEntity(TenantId tenantId, String name) {
+        return Optional.ofNullable(assetService.findAssetByTenantIdAndName(tenantId, name))
+                .orElseGet(Asset::new);
+    }
+
+    @Override
+    protected void setOwners(Asset entity, SecurityUser user) {
+        entity.setTenantId(user.getTenantId());
+        entity.setCustomerId(user.getCustomerId());
+    }
+
+    @Override
+    protected EntityType getEntityType() {
+        return EntityType.ASSET;
     }
 
 }
