@@ -19,19 +19,21 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.cluster.TbClusterService;
-import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -47,6 +49,7 @@ import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.utils.CsvUtils;
 import org.thingsboard.server.utils.TypeCastUtil;
@@ -68,14 +71,17 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@RequiredArgsConstructor
-public abstract class AbstractBulkImportService<E extends BaseData<? extends EntityId>> {
-    protected final TelemetrySubscriptionService tsSubscriptionService;
-    protected final TbTenantProfileCache tenantProfileCache;
-    protected final AccessControlService accessControlService;
-    protected final AccessValidator accessValidator;
-    protected final EntityActionService entityActionService;
-    protected final TbClusterService clusterService;
+public abstract class AbstractBulkImportService<E extends HasId<? extends EntityId> & HasTenantId> {
+    @Autowired
+    private TelemetrySubscriptionService tsSubscriptionService;
+    @Autowired
+    private TbTenantProfileCache tenantProfileCache;
+    @Autowired
+    private AccessControlService accessControlService;
+    @Autowired
+    private AccessValidator accessValidator;
+    @Autowired
+    private EntityActionService entityActionService;
 
     private static ThreadPoolExecutor executor;
 
@@ -100,7 +106,7 @@ public abstract class AbstractBulkImportService<E extends BaseData<? extends Ent
         entitiesData.forEach(entityData -> DonAsynchron.submit(() -> {
                     SecurityContextHolder.setContext(securityContext);
 
-                    ImportedEntityInfo<E> importedEntityInfo = saveEntity(request, entityData.getFields(), user);
+                    ImportedEntityInfo<E> importedEntityInfo =  saveEntity(entityData.getFields(), user);
                     E entity = importedEntityInfo.getEntity();
 
                     onEntityImported.accept(importedEntityInfo);
@@ -127,12 +133,39 @@ public abstract class AbstractBulkImportService<E extends BaseData<? extends Ent
         return result;
     }
 
-    protected abstract ImportedEntityInfo<E> saveEntity(BulkImportRequest importRequest, Map<BulkImportColumnType, String> fields, SecurityUser user);
+    @SneakyThrows
+    private ImportedEntityInfo<E> saveEntity(Map<BulkImportColumnType, String> fields, SecurityUser user) {
+        ImportedEntityInfo<E> importedEntityInfo = new ImportedEntityInfo<>();
 
-    /*
-     * Attributes' values are firstly added to JsonObject in order to then make some type cast,
-     * because we get all values as strings from CSV
-     * */
+        E entity = findOrCreateEntity(user.getTenantId(), fields.get(BulkImportColumnType.NAME));
+        if (entity.getId() != null) {
+            importedEntityInfo.setOldEntity((E) entity.getClass().getConstructor(entity.getClass()).newInstance(entity));
+            importedEntityInfo.setUpdated(true);
+        } else {
+            setOwners(entity, user);
+        }
+
+        setEntityFields(entity, fields);
+        accessControlService.checkPermission(user, Resource.of(getEntityType()), Operation.WRITE, entity.getId(), entity);
+
+        E savedEntity = saveEntity(entity, fields);
+
+        importedEntityInfo.setEntity(savedEntity);
+        return importedEntityInfo;
+    }
+
+
+    protected abstract E findOrCreateEntity(TenantId tenantId, String name);
+
+    protected abstract void setOwners(E entity, SecurityUser user);
+
+    protected abstract void setEntityFields(E entity, Map<BulkImportColumnType, String> fields);
+
+    protected abstract E saveEntity(E entity, Map<BulkImportColumnType, String> fields);
+
+    protected abstract EntityType getEntityType();
+
+
     private void saveKvs(SecurityUser user, E entity, Map<ColumnMapping, ParsedValue> data) {
         Arrays.stream(BulkImportColumnType.values())
                 .filter(BulkImportColumnType::isKv)
