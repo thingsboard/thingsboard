@@ -132,8 +132,8 @@ public class BaseTimeseriesService implements TimeseriesService {
     }
 
     @Override
-    public void cleanup(long systemTtl, List<String> exclusiveKeys) {
-        timeseriesDao.cleanup(systemTtl, exclusiveKeys);
+    public void cleanup(long systemTtl, List<String> excludedKeys) {
+        timeseriesDao.cleanup(systemTtl, excludedKeys);
     }
 
     @Override

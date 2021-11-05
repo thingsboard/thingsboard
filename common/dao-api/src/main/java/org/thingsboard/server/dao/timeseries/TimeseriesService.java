@@ -55,5 +55,5 @@ public interface TimeseriesService {
 
     void cleanup(long systemTtl);
 
-    void cleanup(long systemTtl, List<String> exclusiveKeys);
+    void cleanup(long systemTtl, List<String> excludedKeys);
 }

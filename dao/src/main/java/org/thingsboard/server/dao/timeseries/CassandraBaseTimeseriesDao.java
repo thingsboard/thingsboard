@@ -297,7 +297,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     }
 
     @Override
-    public void cleanup(long systemTtl, List<String> exclusiveKeys) {
+    public void cleanup(long systemTtl, List<String> excludedKeys) {
         //Cleanup by TTL is native for Cassandra
     }
 

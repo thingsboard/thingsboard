@@ -41,11 +41,11 @@ public class TimeseriesCleanUpService extends AbstractCleanUpService {
     @Value("${sql.ttl.ts.enabled}")
     private boolean ttlTaskExecutionEnabled;
 
-    @Value("${sql.ttl.ts.exclusive_keys}")
-    private String exclusiveKeysStr;
+    @Value("${sql.ttl.ts.excluded_keys}")
+    private String excludedKeysStr;
 
     private final TimeseriesService timeseriesService;
-    private List<String> exclusiveKeys;
+    private List<String> excludedKeys;
 
     public TimeseriesCleanUpService(PartitionService partitionService, TimeseriesService timeseriesService) {
         super(partitionService);
@@ -54,16 +54,16 @@ public class TimeseriesCleanUpService extends AbstractCleanUpService {
 
     @PostConstruct
     public void init() {
-        exclusiveKeys = StringUtils.isEmpty(exclusiveKeysStr) ? null : new ArrayList<>(Arrays.asList(exclusiveKeysStr.trim().split("\\s*,\\s*")));
+        excludedKeys = StringUtils.isEmpty(excludedKeysStr) ? null : new ArrayList<>(Arrays.asList(excludedKeysStr.trim().split("\\s*,\\s*")));
     }
 
     @Scheduled(initialDelayString = "${sql.ttl.ts.execution_interval_ms}", fixedDelayString = "${sql.ttl.ts.execution_interval_ms}")
     public void cleanUp() {
         if (ttlTaskExecutionEnabled && isSystemTenantPartitionMine()) {
-            if (CollectionUtils.isEmpty(exclusiveKeys)) {
+            if (CollectionUtils.isEmpty(excludedKeys)) {
                 timeseriesService.cleanup(systemTtl);
             } else {
-                timeseriesService.cleanup(systemTtl, exclusiveKeys);
+                timeseriesService.cleanup(systemTtl, excludedKeys);
             }
         }
     }

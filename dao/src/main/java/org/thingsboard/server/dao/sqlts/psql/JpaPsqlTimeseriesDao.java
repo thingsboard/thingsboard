@@ -106,8 +106,8 @@ public class JpaPsqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDa
     }
 
     @Override
-    public void cleanup(long systemTtl, List<String> exclusiveKeys) {
-        super.cleanup(systemTtl, exclusiveKeys);
+    public void cleanup(long systemTtl, List<String> excludedKeys) {
+        super.cleanup(systemTtl, excludedKeys);
     }
 
     @Override

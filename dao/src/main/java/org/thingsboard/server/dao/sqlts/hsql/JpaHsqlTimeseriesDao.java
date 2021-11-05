@@ -62,7 +62,7 @@ public class JpaHsqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDa
     }
 
     @Override
-    public void cleanup(long systemTtl, List<String> exclusiveKeys) {
+    public void cleanup(long systemTtl, List<String> excludedKeys) {
 
     }
 
