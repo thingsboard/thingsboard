@@ -78,7 +78,7 @@ public class TbHttpClient {
     private AsyncRestTemplate httpClient;
     private Deque<ListenableFuture<ResponseEntity<String>>> pendingFutures;
 
-    TbHttpClient(TbRestApiCallNodeConfiguration config) throws TbNodeException {
+    TbHttpClient(TbRestApiCallNodeConfiguration config, EventLoopGroup eventLoopGroupShared) throws TbNodeException {
         try {
             this.config = config;
             if (config.getMaxParallelRequestsCount() > 0) {
@@ -139,8 +139,7 @@ public class TbHttpClient {
                 }
                 httpClient = new AsyncRestTemplate();
             } else {
-                this.eventLoopGroup = new NioEventLoopGroup();
-                Netty4ClientHttpRequestFactory nettyFactory = new Netty4ClientHttpRequestFactory(this.eventLoopGroup);
+                Netty4ClientHttpRequestFactory nettyFactory = new Netty4ClientHttpRequestFactory(getSharedOrCreateEventLoopGroup(eventLoopGroupShared));
                 nettyFactory.setSslContext(config.getCredentials().initSslContext());
                 nettyFactory.setReadTimeout(config.getReadTimeoutMs());
                 httpClient = new AsyncRestTemplate(nettyFactory);
@@ -148,6 +147,13 @@ public class TbHttpClient {
         } catch (SSLException | NoSuchAlgorithmException e) {
             throw new TbNodeException(e);
         }
+    }
+
+    EventLoopGroup getSharedOrCreateEventLoopGroup(EventLoopGroup eventLoopGroupShared) {
+        if (eventLoopGroupShared != null) {
+            return eventLoopGroupShared;
+        }
+        return this.eventLoopGroup = new NioEventLoopGroup();
     }
 
     private void checkSystemProxyProperties() throws TbNodeException {
@@ -176,7 +182,8 @@ public class TbHttpClient {
         HttpMethod method = HttpMethod.valueOf(config.getRequestMethod());
         HttpEntity<String> entity;
         if(HttpMethod.GET.equals(method) || HttpMethod.HEAD.equals(method) ||
-            HttpMethod.OPTIONS.equals(method) || HttpMethod.TRACE.equals(method)) {
+            HttpMethod.OPTIONS.equals(method) || HttpMethod.TRACE.equals(method) ||
+            config.isIgnoreRequestBody()) {
             entity = new HttpEntity<>(headers);
         } else {
             entity = new HttpEntity<>(msg.getData(), headers);

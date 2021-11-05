@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -33,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public abstract class BaseTbResourceControllerTest extends AbstractControllerTest {
@@ -96,6 +98,16 @@ public abstract class BaseTbResourceControllerTest extends AbstractControllerTes
 
         TbResource foundResource = doGet("/api/resource/" + savedResource.getId().getId().toString(), TbResource.class);
         Assert.assertEquals(foundResource.getTitle(), savedResource.getTitle());
+    }
+
+    @Test
+    public void saveResourceInfoWithViolationOfLengthValidation() throws Exception {
+        TbResource resource = new TbResource();
+        resource.setResourceType(ResourceType.JKS);
+        resource.setTitle(RandomStringUtils.randomAlphabetic(300));
+        resource.setFileName(DEFAULT_FILE_NAME);
+        resource.setData("Test Data");
+        doPost("/api/resource", resource).andExpect(statusReason(containsString("length of title must be equal or less than 255")));
     }
 
     @Test

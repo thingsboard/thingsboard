@@ -23,7 +23,7 @@ import {
   Input,
   NgZone,
   OnDestroy,
-  OnInit,
+  OnInit, Optional,
   StaticProvider,
   ViewChild,
   ViewContainerRef,
@@ -80,7 +80,11 @@ import { Observable, of, Subscription } from 'rxjs';
 import { FooterFabButtons } from '@shared/components/footer-fab-buttons.component';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { DashboardService } from '@core/http/dashboard.service';
-import { DashboardContextMenuItem, WidgetContextMenuItem } from '../../models/dashboard-component.models';
+import {
+  DashboardContextMenuItem,
+  IDashboardComponent,
+  WidgetContextMenuItem
+} from '../../models/dashboard-component.models';
 import { WidgetComponentService } from '../../components/widget/widget-component.service';
 import { FormBuilder } from '@angular/forms';
 import { ItemBufferService } from '@core/services/item-buffer.service';
@@ -167,6 +171,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   dashboard: Dashboard;
   dashboardConfiguration: DashboardConfiguration;
 
+  @Input()
+  parentDashboard?: IDashboardComponent = null;
+
   @ViewChild('dashboardContainer') dashboardContainer: ElementRef<HTMLElement>;
 
   prevDashboard: Dashboard;
@@ -176,6 +183,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   singlePageMode: boolean;
   forceFullscreen = this.authState.forceFullscreen;
 
+  readonly = false;
   isMobileApp = this.mobileService.isMobileApp();
   isFullscreen = false;
   isEdit = false;
@@ -200,6 +208,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   editingLayoutCtx: DashboardPageLayoutContext = null;
 
   thingsboardVersion: string = env.tbVersion;
+
+  translatedDashboardTitle: string;
 
   currentDashboardId: string;
   currentCustomerId: string;
@@ -309,12 +319,15 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private dialog: MatDialog,
               private translate: TranslateService,
               private ngZone: NgZone,
+              @Optional() @Inject('embeddedValue') private embeddedValue,
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
               private cd: ChangeDetectorRef,
               private sanitizer: DomSanitizer) {
     super(store);
-
+    if (isDefinedAndNotNull(embeddedValue)) {
+      this.embedded = embeddedValue;
+    }
   }
 
   ngOnInit() {
@@ -364,6 +377,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.reset();
 
     this.dashboard = data.dashboard;
+    this.translatedDashboardTitle = this.getTranslatedDashboardTitle();
     if (!this.embedded && this.dashboard.id) {
       this.setStateDashboardId = true;
     }
@@ -393,6 +407,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.widgetEditMode = data.widgetEditMode;
     this.singlePageMode = data.singlePageMode;
 
+    this.readonly = this.embedded || (this.singlePageMode && !this.widgetEditMode && !this.route.snapshot.queryParamMap.get('edit'))
+                    || this.forceFullscreen || this.isMobileApp || this.authUser.authority === Authority.CUSTOMER_USER;
+
     this.dashboardCtx.aliasController = new AliasController(this.utils,
       this.entityService,
       this.translate,
@@ -410,6 +427,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   private reset() {
     this.dashboard = null;
+    this.translatedDashboardTitle = null;
     this.dashboardConfiguration = null;
     this.dashboardLogoCache = undefined;
     this.prevDashboard = null;
@@ -504,6 +522,10 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     } else {
       return false;
     }
+  }
+
+  private getTranslatedDashboardTitle(): string {
+    return this.utils.customTranslation(this.dashboard.title, this.dashboard.title);
   }
 
   public displayExport(): boolean {
@@ -803,6 +825,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   public saveDashboard() {
+    this.translatedDashboardTitle = this.getTranslatedDashboardTitle();
     this.setEditMode(false, false);
     this.notifyDashboardUpdated();
   }
@@ -859,6 +882,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         if (revert) {
           this.dashboard = this.prevDashboard;
           this.dashboardLogoCache = undefined;
+          this.dashboardConfiguration = this.dashboard.configuration;
         }
       } else {
         this.resetHighlight();

@@ -32,13 +32,14 @@ import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadCo
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.mqtt.MqttTransportContext;
+import org.thingsboard.server.transport.mqtt.TopicType;
+import org.thingsboard.server.transport.mqtt.adaptors.BackwardCompatibilityAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.util.MqttTopicFilter;
 import org.thingsboard.server.transport.mqtt.util.MqttTopicFilterFactory;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
@@ -80,6 +81,9 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     private volatile Descriptors.Descriptor telemetryDynamicMessageDescriptor;
     private volatile Descriptors.Descriptor rpcResponseDynamicMessageDescriptor;
     private volatile DynamicMessage.Builder rpcRequestDynamicMessageBuilder;
+    private volatile MqttTransportAdaptor adaptor;
+    private volatile boolean jsonPayloadFormatCompatibilityEnabled;
+    private volatile boolean useJsonPayloadFormatForDefaultDownlinkTopics;
 
     @Getter
     @Setter
@@ -88,6 +92,7 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     public DeviceSessionCtx(UUID sessionId, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap, MqttTransportContext context) {
         super(sessionId, mqttQoSMap);
         this.context = context;
+        this.adaptor = context.getJsonMqttAdaptor();
     }
 
     public int nextMsgId() {
@@ -103,7 +108,7 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     }
 
     public MqttTransportAdaptor getPayloadAdaptor() {
-        return payloadType.equals(TransportPayloadType.JSON) ? context.getJsonMqttAdaptor() : context.getProtoMqttAdaptor();
+        return adaptor;
     }
 
     public boolean isJsonPayloadType() {
@@ -129,16 +134,16 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     @Override
     public void setDeviceProfile(DeviceProfile deviceProfile) {
         super.setDeviceProfile(deviceProfile);
-        updateTopicFilters(deviceProfile);
+        updateDeviceSessionConfiguration(deviceProfile);
     }
 
     @Override
     public void onDeviceProfileUpdate(TransportProtos.SessionInfoProto sessionInfo, DeviceProfile deviceProfile) {
         super.onDeviceProfileUpdate(sessionInfo, deviceProfile);
-        updateTopicFilters(deviceProfile);
+        updateDeviceSessionConfiguration(deviceProfile);
     }
 
-    private void updateTopicFilters(DeviceProfile deviceProfile) {
+    private void updateDeviceSessionConfiguration(DeviceProfile deviceProfile) {
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
         if (transportConfiguration.getType().equals(DeviceTransportType.MQTT) &&
                 transportConfiguration instanceof MqttDeviceProfileTransportConfiguration) {
@@ -148,20 +153,55 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
             telemetryTopicFilter = MqttTopicFilterFactory.toFilter(mqttConfig.getDeviceTelemetryTopic());
             attributesTopicFilter = MqttTopicFilterFactory.toFilter(mqttConfig.getDeviceAttributesTopic());
             if (TransportPayloadType.PROTOBUF.equals(payloadType)) {
-                updateDynamicMessageDescriptors(transportPayloadTypeConfiguration);
+                ProtoTransportPayloadConfiguration protoTransportPayloadConfig = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
+                updateDynamicMessageDescriptors(protoTransportPayloadConfig);
+                jsonPayloadFormatCompatibilityEnabled = protoTransportPayloadConfig.isEnableCompatibilityWithJsonPayloadFormat();
+                useJsonPayloadFormatForDefaultDownlinkTopics = jsonPayloadFormatCompatibilityEnabled && protoTransportPayloadConfig.isUseJsonPayloadFormatForDefaultDownlinkTopics();
             }
         } else {
             telemetryTopicFilter = MqttTopicFilterFactory.getDefaultTelemetryFilter();
             attributesTopicFilter = MqttTopicFilterFactory.getDefaultAttributesFilter();
+            payloadType = TransportPayloadType.JSON;
         }
+        updateAdaptor();
     }
 
-    private void updateDynamicMessageDescriptors(TransportPayloadTypeConfiguration transportPayloadTypeConfiguration) {
-        ProtoTransportPayloadConfiguration protoTransportPayloadConfig = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
+    private void updateDynamicMessageDescriptors(ProtoTransportPayloadConfiguration protoTransportPayloadConfig) {
         telemetryDynamicMessageDescriptor = protoTransportPayloadConfig.getTelemetryDynamicMessageDescriptor(protoTransportPayloadConfig.getDeviceTelemetryProtoSchema());
         attributesDynamicMessageDescriptor = protoTransportPayloadConfig.getAttributesDynamicMessageDescriptor(protoTransportPayloadConfig.getDeviceAttributesProtoSchema());
         rpcResponseDynamicMessageDescriptor = protoTransportPayloadConfig.getRpcResponseDynamicMessageDescriptor(protoTransportPayloadConfig.getDeviceRpcResponseProtoSchema());
         rpcRequestDynamicMessageBuilder = protoTransportPayloadConfig.getRpcRequestDynamicMessageBuilder(protoTransportPayloadConfig.getDeviceRpcRequestProtoSchema());
+    }
+
+    public MqttTransportAdaptor getAdaptor(TopicType topicType) {
+        switch (topicType) {
+            case V2:
+                return getDefaultAdaptor();
+            case V2_JSON:
+                return context.getJsonMqttAdaptor();
+            case V2_PROTO:
+                return context.getProtoMqttAdaptor();
+            default:
+                return useJsonPayloadFormatForDefaultDownlinkTopics ? context.getJsonMqttAdaptor() : getDefaultAdaptor();
+        }
+    }
+
+    private MqttTransportAdaptor getDefaultAdaptor() {
+        return isJsonPayloadType() ? context.getJsonMqttAdaptor() : context.getProtoMqttAdaptor();
+    }
+
+    private void updateAdaptor() {
+        if (isJsonPayloadType()) {
+            adaptor = context.getJsonMqttAdaptor();
+            jsonPayloadFormatCompatibilityEnabled = false;
+            useJsonPayloadFormatForDefaultDownlinkTopics = false;
+        } else {
+            if (jsonPayloadFormatCompatibilityEnabled) {
+                adaptor = new BackwardCompatibilityAdaptor(context.getProtoMqttAdaptor(), context.getJsonMqttAdaptor());
+            } else {
+                adaptor = context.getProtoMqttAdaptor();
+            }
+        }
     }
 
     public void addToQueue(MqttMessage msg) {

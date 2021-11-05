@@ -78,6 +78,9 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
   @Input()
   widgetEditMode: boolean;
 
+  @Input()
+  parentDashboard?: IDashboardComponent = null;
+
   @ViewChild('dashboard', {static: true}) dashboard: IDashboardComponent;
 
   private rxSubscriptions = new Array<Subscription>();

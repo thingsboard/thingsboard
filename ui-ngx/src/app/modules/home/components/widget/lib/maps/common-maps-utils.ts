@@ -16,7 +16,7 @@
 
 import { FormattedData, MapProviders, ReplaceInfo } from '@home/components/widget/lib/maps/map-models';
 import {
-  createLabelFromDatasource, deepClone,
+  createLabelFromDatasource,
   hashCode,
   isDefined,
   isDefinedAndNotNull,
@@ -127,7 +127,6 @@ export function aspectCache(imageUrl: string): Observable<number> {
 
 export type TranslateFunc = (key: string, defaultTranslation?: string) => string;
 
-const varsRegex = /\${([^}]*)}/g;
 const linkActionRegex = /<link-act name=['"]([^['"]*)['"]>([^<]*)<\/link-act>/g;
 const buttonActionRegex = /<button-act name=['"]([^['"]*)['"]>([^<]*)<\/button-act>/g;
 
@@ -304,7 +303,8 @@ export const parseWithTranslation = {
     if (this.translateFn) {
       return this.translateFn(key, defaultTranslation);
     } else {
-      throw console.error('Translate not assigned');
+      console.error('Translate not assigned');
+      throw Error('Translate not assigned');
     }
   },
   parseTemplate(template: string, data: object, forceTranslate = false): string {
@@ -318,7 +318,7 @@ export const parseWithTranslation = {
   }
 };
 
-export function parseData(input: DatasourceData[]): FormattedData[] {
+export function parseData(input: DatasourceData[], dataIndex?: number): FormattedData[] {
   return _(input).groupBy(el => el?.datasource.entityName + el?.datasource.entityType)
     .values().value().map((entityArray, i) => {
       const obj: FormattedData = {
@@ -330,12 +330,12 @@ export function parseData(input: DatasourceData[]): FormattedData[] {
         deviceType: null
       };
       entityArray.filter(el => el.data.length).forEach(el => {
-        const indexDate = el.data.length ? el.data.length - 1 : 0;
-        if (!obj.hasOwnProperty(el.dataKey.label) || el.data[indexDate][1] !== '') {
-          obj[el.dataKey.label] = el.data[indexDate][1];
-          obj[el.dataKey.label + '|ts'] = el.data[indexDate][0];
-          if (el.dataKey.label === 'type') {
-            obj.deviceType = el.data[indexDate][1];
+        const index = isDefined(dataIndex) ? dataIndex : el.data.length - 1;
+        if (!obj.hasOwnProperty(el.dataKey.label) || el.data[index][1] !== '') {
+          obj[el.dataKey.label] = el.data[index][1];
+          obj[el.dataKey.label + '|ts'] = el.data[index][0];
+          if (el.dataKey.label.toLowerCase() === 'type') {
+            obj.deviceType = el.data[index][1];
           }
         }
       });
@@ -360,28 +360,35 @@ export function flatData(input: FormattedData[]): FormattedData {
 }
 
 export function parseArray(input: DatasourceData[]): FormattedData[][] {
-  return _(input).groupBy(el => el?.datasource?.entityName)
-    .values().value().map((entityArray) =>
-      entityArray[0].data.map((el, i) => {
-        const obj: FormattedData = {
-          entityName: entityArray[0]?.datasource?.entityName,
-          entityId: entityArray[0]?.datasource?.entityId,
-          entityType: entityArray[0]?.datasource?.entityType,
-          $datasource: entityArray[0]?.datasource,
-          dsIndex: i,
-          time: el[0],
-          deviceType: null
-        };
-        entityArray.filter(e => e.data.length && e.data[i]).forEach(entity => {
-          obj[entity?.dataKey?.label] = entity?.data[i][1];
-          obj[entity?.dataKey?.label + '|ts'] = entity?.data[0][0];
-          if (entity?.dataKey?.label === 'type') {
-            obj.deviceType = entity?.data[0][1];
+  return _(input).groupBy(el => el.datasource.entityName)
+    .values().value().map((entityArray, dsIndex) => {
+      const timeDataMap: {[time: number]: FormattedData} = {};
+      entityArray.filter(e => e.data.length).forEach(entity => {
+        entity.data.forEach(tsData => {
+          const time = tsData[0];
+          const value = tsData[1];
+          let data = timeDataMap[time];
+          if (!data) {
+            data = {
+              entityName: entity.datasource.entityName,
+              entityId: entity.datasource.entityId,
+              entityType: entity.datasource.entityType,
+              $datasource: entity.datasource,
+              dsIndex,
+              time,
+              deviceType: null
+            };
+            timeDataMap[time] = data;
+          }
+          data[entity.dataKey.label] = value;
+          data[entity.dataKey.label + '|ts'] = time;
+          if (entity.dataKey.label.toLowerCase() === 'type') {
+            data.deviceType = value;
           }
         });
-        return obj;
-      })
-    );
+      });
+      return _.values(timeDataMap);
+    });
 }
 
 export function parseFunction(source: any, params: string[] = ['def']): (...args: any[]) => any {

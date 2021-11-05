@@ -245,7 +245,9 @@ public interface TbContext {
 
     CassandraCluster getCassandraCluster();
 
-    TbResultSetFuture submitCassandraTask(CassandraStatementTask task);
+    TbResultSetFuture submitCassandraReadTask(CassandraStatementTask task);
+
+    TbResultSetFuture submitCassandraWriteTask(CassandraStatementTask task);
 
     PageData<RuleNodeState> findRuleNodeStates(PageLink pageLink);
 

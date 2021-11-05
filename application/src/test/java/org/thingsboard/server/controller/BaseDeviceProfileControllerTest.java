@@ -22,6 +22,7 @@ import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import com.squareup.wire.schema.internal.parser.ProtoFileElement;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -107,6 +108,12 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         doPost("/api/deviceProfile", savedDeviceProfile, DeviceProfile.class);
         DeviceProfile foundDeviceProfile = doGet("/api/deviceProfile/"+savedDeviceProfile.getId().getId().toString(), DeviceProfile.class);
         Assert.assertEquals(savedDeviceProfile.getName(), foundDeviceProfile.getName());
+    }
+
+    @Test
+    public void saveDeviceProfileWithViolationOfValidation() throws Exception {
+        doPost("/api/deviceProfile", this.createDeviceProfile(RandomStringUtils.randomAlphabetic(300), null))
+                .andExpect(statusReason(containsString("length of name must be equal or less than 255")));
     }
 
     @Test

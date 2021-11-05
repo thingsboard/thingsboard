@@ -81,8 +81,8 @@ export class EntityViewComponent extends EntityComponent<EntityViewInfo> {
   buildForm(entity: EntityViewInfo): FormGroup {
     return this.fb.group(
       {
-        name: [entity ? entity.name : '', [Validators.required]],
-        type: [entity ? entity.type : null, [Validators.required]],
+        name: [entity ? entity.name : '', [Validators.required, Validators.maxLength(255)]],
+        type: [entity ? entity.type : null, Validators.required],
         entityId: [entity ? entity.entityId : null, [Validators.required]],
         startTimeMs: [entity ? entity.startTimeMs : null],
         endTimeMs: [entity ? entity.endTimeMs : null],

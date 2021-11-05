@@ -15,11 +15,14 @@
  */
 package org.thingsboard.server.common.data.kv;
 
+import org.thingsboard.server.common.data.validation.Length;
+
 import java.util.Objects;
 import java.util.Optional;
 
 public abstract class BasicKvEntry implements KvEntry {
 
+    @Length(fieldName = "attribute key")
     private final String key;
 
     protected BasicKvEntry(String key) {

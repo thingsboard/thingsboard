@@ -117,14 +117,17 @@ div.tb-editor-area-title-panel {
   font-size: .8rem;
   font-weight: 500;
 
+  & > * {
+    &:not(:last-child) {
+      margin-right: 4px;
+    }
+  }
+
   label {
     padding: 4px;
     color: #00acc1;
     background: rgba(220, 220, 220, .35);
     border-radius: 5px;
-    &:not(:last-child) {
-      margin-right: 4px;
-    }
   }
 
   button.mat-button, button.mat-icon-button, button.mat-icon-button.tb-mat-32 {
@@ -133,14 +136,15 @@ div.tb-editor-area-title-panel {
     min-width: 32px;
     min-height: 15px;
     padding: 4px;
-    margin: 0;
     font-size: .8rem;
     line-height: 15px;
-    color: #7b7b7b;
     background: rgba(220, 220, 220, .35);
-    &:not(:last-child) {
-      margin-right: 4px;
+    &:not(.tb-help-popup-button) {
+      color: #7b7b7b;
     }
+  }
+  .tb-help-popup-button-loading {
+    background: #f3f3f3;
   }
 }
 

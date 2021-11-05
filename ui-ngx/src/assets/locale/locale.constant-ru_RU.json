@@ -1262,7 +1262,11 @@
         "profile": "Профиль",
         "last-login-time": "Время последнего входа в систему",
         "change-password": "Изменить пароль",
-        "current-password": "Текущий пароль"
+        "current-password": "Текущий пароль",
+        "copy-jwt-token": "Копировать JWT токен",
+        "valid-till": "Действителен до {{expirationData}}",
+        "tokenCopiedMessage": "JWT токен скопирован в буфер обмена",
+        "tokenCopiedWarnMessage": "JWT токен недействителен! Перезагрузите страницу."
     },
     "relation": {
         "relations": "Отношения",
@@ -1627,7 +1631,7 @@
         "advanced": "Дополнительно",
         "title": "Название",
         "general-settings": "Общие настройки",
-        "display-title": "Показать название",
+        "display-title": "Показать название на виджете",
         "drop-shadow": "Тень",
         "enable-fullscreen": "Во весь экран",
         "background-color": "Цвет фона",
@@ -1636,7 +1640,7 @@
         "margin": "Margin",
         "widget-style": "Стиль виджета",
         "title-style": "Стиль названия",
-        "mobile-mode-settings": "Настройки мобильного режима",
+        "mobile-mode-settings": "Мобильный режим",
         "order": "Порядок",
         "height": "Высота",
         "units": "Специальный символ после значения",
@@ -1644,6 +1648,7 @@
         "timewindow": "Временное окно",
         "use-dashboard-timewindow": "Использовать временное окно дашборда",
         "display-timewindow": "Показывать временное окно",
+        "legend": "Легенда",
         "display-legend": "Показать легенду",
         "datasources": "Источники данных",
         "maximum-datasources": "Максимальной количество источников данных равно {{count}}",
@@ -1669,9 +1674,13 @@
         "delete-action": "Удалить действие",
         "delete-action-title": "Удалить действие виджета",
         "delete-action-text": "Вы точно хотите удалить действие виджета '{{actionName}}'?",
-        "display-icon": "Показывать иконку в названии",
+        "title-icon": "Иконка в названии виджета",
+        "display-icon": "Показывать иконку в названии виджета",
         "icon-color": "Цвет иконки",
-        "icon-size": "Размер иконки"
+        "icon-size": "Размер иконки",
+        "advanced-settings": "Расширенные настройки",
+        "data-settings": "Настройки данных",
+        "no-data-display-message": "\"Нет данных для отображения\" альтернативный текст"
     },
     "widget-type": {
         "import": "Импортировать тип виджета",

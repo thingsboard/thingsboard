@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -33,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public abstract class BaseRuleChainControllerTest extends AbstractControllerTest {
@@ -82,6 +84,13 @@ public abstract class BaseRuleChainControllerTest extends AbstractControllerTest
         doPost("/api/ruleChain", savedRuleChain, RuleChain.class);
         RuleChain foundRuleChain = doGet("/api/ruleChain/" + savedRuleChain.getId().getId().toString(), RuleChain.class);
         Assert.assertEquals(savedRuleChain.getName(), foundRuleChain.getName());
+    }
+
+    @Test
+    public void testSaveRuleChainWithViolationOfLengthValidation() throws Exception {
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setName(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/ruleChain", ruleChain).andExpect(statusReason(containsString("length of name must be equal or less than 255")));
     }
 
     @Test

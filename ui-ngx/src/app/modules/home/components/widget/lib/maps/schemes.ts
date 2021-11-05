@@ -431,11 +431,19 @@ export const commonMapSettingsSchema =
             condition: 'model.provider === "image-map"'
         },
         'showLabel',
-        'label',
-        'useLabelFunction',
+        {
+          key: 'useLabelFunction',
+          condition: 'model.showLabel === true'
+        },
+        {
+            key: 'label',
+            condition: 'model.showLabel === true && model.useLabelFunction !== true'
+        },
         {
             key: 'labelFunction',
-            type: 'javascript'
+            type: 'javascript',
+            helpId: 'widget/lib/map/label_fn',
+            condition: 'model.showLabel === true && model.useLabelFunction === true'
         },
         'showTooltip',
         {
@@ -451,17 +459,27 @@ export const commonMapSettingsSchema =
                     value: 'hover',
                     label: 'Show tooltip on hover'
                 }
-            ]
+            ],
+            condition: 'model.showTooltip === true'
         },
-        'autocloseTooltip',
+        {
+            key: 'autocloseTooltip',
+            condition: 'model.showTooltip === true'
+        },
+        {
+          key: 'useTooltipFunction',
+          condition: 'model.showTooltip === true'
+        },
         {
             key: 'tooltipPattern',
-            type: 'textarea'
+            type: 'textarea',
+            condition: 'model.showTooltip === true && model.useTooltipFunction !== true'
         },
-        'useTooltipFunction',
         {
             key: 'tooltipFunction',
-            type: 'javascript'
+            type: 'javascript',
+            helpId: 'widget/lib/map/tooltip_fn',
+            condition: 'model.showTooltip === true && model.useTooltipFunction === true'
         },
         {
             key: 'markerOffsetX',
@@ -474,6 +492,7 @@ export const commonMapSettingsSchema =
         {
             key: 'posFunction',
             type: 'javascript',
+            helpId: 'widget/lib/map/position_fn',
             condition: 'model.provider === "image-map"'
         },
         {
@@ -483,17 +502,25 @@ export const commonMapSettingsSchema =
         'useColorFunction',
         {
             key: 'colorFunction',
-            type: 'javascript'
+            type: 'javascript',
+            helpId: 'widget/lib/map/color_fn',
+            condition: 'model.useColorFunction === true'
         },
-        {
-            key: 'markerImage',
-            type: 'image'
-        },
-        'markerImageSize',
         'useMarkerImageFunction',
         {
+            key: 'markerImage',
+            type: 'image',
+            condition: 'model.useMarkerImageFunction !== true'
+        },
+        {
+            key: 'markerImageSize',
+            condition: 'model.useMarkerImageFunction !== true'
+        },
+        {
             key: 'markerImageFunction',
-            type: 'javascript'
+            type: 'javascript',
+            helpId: 'widget/lib/map/marker_image_fn',
+            condition: 'model.useMarkerImageFunction === true'
         },
         {
             key: 'markerImages',
@@ -502,7 +529,8 @@ export const commonMapSettingsSchema =
                     key: 'markerImages[]',
                     type: 'image'
                 }
-            ]
+            ],
+            condition: 'model.useMarkerImageFunction === true'
         }
     ]
 };
@@ -590,24 +618,36 @@ export const mapPolygonSchema =
             key: 'polygonColor',
             type: 'color'
         },
+        'usePolygonColorFunction',
+        {
+            key: 'polygonColorFunction',
+            helpId: 'widget/lib/map/polygon_color_fn',
+            type: 'javascript',
+            condition: 'model.usePolygonColorFunction === true'
+        },
         'polygonOpacity',
         {
             key: 'polygonStrokeColor',
             type: 'color'
         },
-        'polygonStrokeOpacity', 'polygonStrokeWeight', 'showPolygonTooltip',
+        'polygonStrokeOpacity',
+        'polygonStrokeWeight',
+        'showPolygonTooltip',
+        {
+          key: 'usePolygonTooltipFunction',
+          condition: 'model.showPolygonTooltip === true'
+        },
         {
             key: 'polygonTooltipPattern',
-            type: 'textarea'
-        }, 'usePolygonTooltipFunction', {
-            key: 'polygonTooltipFunction',
-            type: 'javascript'
+            type: 'textarea',
+            condition: 'model.showPolygonTooltip === true && model.usePolygonTooltipFunction !== true'
         },
-        'usePolygonColorFunction',
         {
-            key: 'polygonColorFunction',
-            type: 'javascript'
-        },
+            key: 'polygonTooltipFunction',
+            helpId: 'widget/lib/map/polygon_tooltip_fn',
+            type: 'javascript',
+            condition: 'model.showPolygonTooltip === true && model.usePolygonTooltipFunction === true'
+        }
     ]
 };
 
@@ -822,11 +862,18 @@ export const pathSchema =
         {
             key: 'color',
             type: 'color'
-        }, 'useColorFunction', {
+        },
+        'useColorFunction',
+        {
             key: 'colorFunction',
-            type: 'javascript'
-        }, 'strokeWeight', 'strokeOpacity',
-        'usePolylineDecorator', {
+            helpId: 'widget/lib/map/path_color_fn',
+            type: 'javascript',
+            condition: 'model.useColorFunction === true'
+        },
+        'strokeWeight',
+        'strokeOpacity',
+        'usePolylineDecorator',
+        {
             key: 'decoratorSymbol',
             type: 'rc-select',
             multiple: false,
@@ -837,16 +884,22 @@ export const pathSchema =
                 value: 'dash',
                 label: 'Dash'
             }]
-        }, 'decoratorSymbolSize', 'useDecoratorCustomColor', {
+        },
+        'decoratorSymbolSize',
+        'useDecoratorCustomColor',
+        {
             key: 'decoratorCustomColor',
             type: 'color'
-        }, {
+        },
+        {
             key: 'decoratorOffset',
             type: 'textarea'
-        }, {
+        },
+        {
             key: 'endDecoratorOffset',
             type: 'textarea'
-        }, {
+        },
+        {
             key: 'decoratorRepeat',
             type: 'textarea'
         }
@@ -856,7 +909,7 @@ export const pathSchema =
 export const pointSchema =
 {
     schema: {
-        title: 'Trip Animation Path Configuration',
+        title: 'Trip Animation Points Configuration',
         type: 'object',
         properties: {
             showPoints: {
@@ -908,13 +961,17 @@ export const pointSchema =
         'useColorPointFunction',
         {
           key: 'colorPointFunction',
-          type: 'javascript'
+          helpId: 'widget/lib/map/path_point_color_fn',
+          type: 'javascript',
+          condition: 'model.useColorPointFunction === true'
         },
         'pointSize',
         'usePointAsAnchor',
         {
             key: 'pointAsAnchorFunction',
-            type: 'javascript'
+            helpId: 'widget/lib/map/trip_point_as_anchor_fn',
+            type: 'javascript',
+            condition: 'model.usePointAsAnchor === true'
         },
         'pointTooltipOnRightPanel',
     ]
@@ -1077,36 +1134,85 @@ export const tripAnimationSchema = {
         },
         required: []
     },
-    form: ['normalizationStep', 'latKeyName', 'lngKeyName', 'showLabel', 'label', 'useLabelFunction', {
+    form: [
+      'normalizationStep',
+      'latKeyName',
+      'lngKeyName',
+      'showLabel',
+      {
+        key: 'useLabelFunction',
+        condition: 'model.showLabel === true'
+      },
+      {
+        key: 'label',
+        condition: 'model.showLabel === true && model.useLabelFunction !== true'
+      },
+      {
         key: 'labelFunction',
-        type: 'javascript'
-    }, 'showTooltip', {
+        type: 'javascript',
+        helpId: 'widget/lib/map/label_fn',
+        condition: 'model.showLabel === true && model.useLabelFunction === true'
+      },
+      'showTooltip',
+      {
         key: 'tooltipColor',
-        type: 'color'
-    }, {
+        type: 'color',
+        condition: 'model.showTooltip === true'
+      },
+      {
         key: 'tooltipFontColor',
-        type: 'color'
-    }, 'tooltipOpacity', {
+        type: 'color',
+        condition: 'model.showTooltip === true'
+      },
+      {
+        key: 'tooltipOpacity',
+        condition: 'model.showTooltip === true'
+      },
+      {
+        key: 'autocloseTooltip',
+        condition: 'model.showTooltip === true'
+      },
+      {
+        key: 'useTooltipFunction',
+        condition: 'model.showTooltip === true',
+      },
+      {
         key: 'tooltipPattern',
-        type: 'textarea'
-    }, 'useTooltipFunction', {
+        type: 'textarea',
+        condition: 'model.showTooltip === true && model.useTooltipFunction !== true'
+      },
+      {
         key: 'tooltipFunction',
-        type: 'javascript'
-    }, 'autocloseTooltip', {
+        type: 'javascript',
+        helpId: 'widget/lib/map/tooltip_fn',
+        condition: 'model.showTooltip === true && model.useTooltipFunction === true'
+      },
+      'rotationAngle',
+      'useMarkerImageFunction',
+      {
         key: 'markerImage',
-        type: 'image'
-    }, 'markerImageSize', 'rotationAngle', 'useMarkerImageFunction',
-    {
+        type: 'image',
+        condition: 'model.useMarkerImageFunction !== true'
+      },
+      {
+        key: 'markerImageSize',
+        condition: 'model.useMarkerImageFunction !== true'
+      },
+      {
         key: 'markerImageFunction',
-        type: 'javascript'
-    }, {
+        type: 'javascript',
+        helpId: 'widget/lib/map/marker_image_fn',
+        condition: 'model.useMarkerImageFunction === true'
+      },
+      {
         key: 'markerImages',
         items: [
             {
                 key: 'markerImages[]',
                 type: 'image'
             }
-        ]
+        ],
+        condition: 'model.useMarkerImageFunction === true'
     }]
 };
 

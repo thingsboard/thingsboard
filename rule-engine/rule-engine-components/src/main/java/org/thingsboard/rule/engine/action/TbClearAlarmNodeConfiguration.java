@@ -25,11 +25,7 @@ public class TbClearAlarmNodeConfiguration extends TbAbstractAlarmNodeConfigurat
     @Override
     public TbClearAlarmNodeConfiguration defaultConfiguration() {
         TbClearAlarmNodeConfiguration configuration = new TbClearAlarmNodeConfiguration();
-        configuration.setAlarmDetailsBuildJs("var details = {};\n" +
-                "if (metadata.prevAlarmDetails) {\n" +
-                "    details = JSON.parse(metadata.prevAlarmDetails);\n" +
-                "}\n" +
-                "return details;");
+        configuration.setAlarmDetailsBuildJs(ALARM_DETAILS_BUILD_JS_TEMPLATE);
         configuration.setAlarmType("General Alarm");
         return configuration;
     }

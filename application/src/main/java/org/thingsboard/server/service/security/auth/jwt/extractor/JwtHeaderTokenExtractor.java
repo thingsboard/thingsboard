@@ -30,7 +30,10 @@ public class JwtHeaderTokenExtractor implements TokenExtractor {
     public String extract(HttpServletRequest request) {
         String header = request.getHeader(ThingsboardSecurityConfiguration.JWT_TOKEN_HEADER_PARAM);
         if (StringUtils.isBlank(header)) {
-            throw new AuthenticationServiceException("Authorization header cannot be blank!");
+            header = request.getHeader(ThingsboardSecurityConfiguration.JWT_TOKEN_HEADER_PARAM_V2);
+            if (StringUtils.isBlank(header)) {
+                throw new AuthenticationServiceException("Authorization header cannot be blank!");
+            }
         }
 
         if (header.length() < HEADER_PREFIX.length()) {

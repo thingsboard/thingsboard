@@ -63,6 +63,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 @TbCoreComponent
@@ -70,6 +72,8 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
     protected final DeviceService deviceService;
     protected final DeviceCredentialsService deviceCredentialsService;
     protected final DeviceProfileService deviceProfileService;
+
+    private final Lock findOrCreateDeviceProfileLock = new ReentrantLock();
 
     public DeviceBulkImportService(TelemetrySubscriptionService tsSubscriptionService, TbTenantProfileCache tenantProfileCache,
                                    AccessControlService accessControlService, AccessValidator accessValidator,
@@ -106,9 +110,15 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
             throw new DeviceCredentialsValidationException("Invalid device credentials: " + e.getMessage());
         }
 
+        DeviceProfile deviceProfile;
         if (deviceCredentials.getCredentialsType() == DeviceCredentialsType.LWM2M_CREDENTIALS) {
-            setUpLwM2mDeviceProfile(user.getTenantId(), device);
+            deviceProfile = setUpLwM2mDeviceProfile(user.getTenantId(), device);
+        } else if (StringUtils.isNotEmpty(device.getType())) {
+            deviceProfile = deviceProfileService.findOrCreateDeviceProfile(user.getTenantId(), device.getType());
+        } else {
+            deviceProfile = deviceProfileService.findDefaultDeviceProfile(user.getTenantId());
         }
+        device.setDeviceProfileId(deviceProfile.getId());
 
         device = deviceService.saveDeviceWithCredentials(device, deviceCredentials);
 
@@ -215,36 +225,43 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
         credentials.setCredentialsValue(lwm2mCredentials.toString());
     }
 
-    private void setUpLwM2mDeviceProfile(TenantId tenantId, Device device) {
+    private DeviceProfile setUpLwM2mDeviceProfile(TenantId tenantId, Device device) {
         DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileByName(tenantId, device.getType());
         if (deviceProfile != null) {
             if (deviceProfile.getTransportType() != DeviceTransportType.LWM2M) {
                 deviceProfile.setTransportType(DeviceTransportType.LWM2M);
                 deviceProfile.getProfileData().setTransportConfiguration(new Lwm2mDeviceProfileTransportConfiguration());
                 deviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
-                device.setDeviceProfileId(deviceProfile.getId());
             }
         } else {
-            deviceProfile = new DeviceProfile();
-            deviceProfile.setTenantId(tenantId);
-            deviceProfile.setType(DeviceProfileType.DEFAULT);
-            deviceProfile.setName(device.getType());
-            deviceProfile.setTransportType(DeviceTransportType.LWM2M);
-            deviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
+            findOrCreateDeviceProfileLock.lock();
+            try {
+                deviceProfile = deviceProfileService.findDeviceProfileByName(tenantId, device.getType());
+                if (deviceProfile == null) {
+                    deviceProfile = new DeviceProfile();
+                    deviceProfile.setTenantId(tenantId);
+                    deviceProfile.setType(DeviceProfileType.DEFAULT);
+                    deviceProfile.setName(device.getType());
+                    deviceProfile.setTransportType(DeviceTransportType.LWM2M);
+                    deviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
 
-            DeviceProfileData deviceProfileData = new DeviceProfileData();
-            DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
-            DeviceProfileTransportConfiguration transportConfiguration = new Lwm2mDeviceProfileTransportConfiguration();
-            DisabledDeviceProfileProvisionConfiguration provisionConfiguration = new DisabledDeviceProfileProvisionConfiguration(null);
+                    DeviceProfileData deviceProfileData = new DeviceProfileData();
+                    DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();
+                    DeviceProfileTransportConfiguration transportConfiguration = new Lwm2mDeviceProfileTransportConfiguration();
+                    DisabledDeviceProfileProvisionConfiguration provisionConfiguration = new DisabledDeviceProfileProvisionConfiguration(null);
 
-            deviceProfileData.setConfiguration(configuration);
-            deviceProfileData.setTransportConfiguration(transportConfiguration);
-            deviceProfileData.setProvisionConfiguration(provisionConfiguration);
-            deviceProfile.setProfileData(deviceProfileData);
+                    deviceProfileData.setConfiguration(configuration);
+                    deviceProfileData.setTransportConfiguration(transportConfiguration);
+                    deviceProfileData.setProvisionConfiguration(provisionConfiguration);
+                    deviceProfile.setProfileData(deviceProfileData);
 
-            deviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
-            device.setDeviceProfileId(deviceProfile.getId());
+                    deviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
+                }
+            } finally {
+                findOrCreateDeviceProfileLock.unlock();
+            }
         }
+        return deviceProfile;
     }
 
     private void setValues(ObjectNode objectNode, Map<BulkImportColumnType, String> data, Collection<BulkImportColumnType> columns) {

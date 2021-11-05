@@ -31,7 +31,7 @@ import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
 import java.util.Arrays;
 import java.util.UUID;
 
-public class BaseOAuth2ConfigTemplateServiceTest extends AbstractServiceTest {
+public abstract class BaseOAuth2ConfigTemplateServiceTest extends AbstractServiceTest {
 
     @Autowired
     protected OAuth2ConfigTemplateService oAuth2ConfigTemplateService;

@@ -70,9 +70,9 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
   buildForm(entity: EdgeInfo): FormGroup {
     const form = this.fb.group(
       {
-        name: [entity ? entity.name : '', [Validators.required]],
-        type: [entity?.type ? entity.type : 'default', [Validators.required]],
-        label: [entity ? entity.label : ''],
+        name: [entity ? entity.name : '', [Validators.required, Validators.maxLength(255)]],
+        type: [entity?.type ? entity.type : 'default', [Validators.required, Validators.maxLength(255)]],
+        label: [entity ? entity.label : '', Validators.maxLength(255)],
         cloudEndpoint: [null, [Validators.required]],
         edgeLicenseKey: ['', [Validators.required]],
         routingKey: this.fb.control({value: entity ? entity.routingKey : null, disabled: true}),

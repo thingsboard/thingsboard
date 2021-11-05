@@ -16,6 +16,8 @@
 package org.thingsboard.server.common.data.rpc;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
@@ -24,15 +26,24 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+@ApiModel
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class Rpc extends BaseData<RpcId> implements HasTenantId {
+
+    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id.", readOnly = true)
     private TenantId tenantId;
+    @ApiModelProperty(position = 4, value = "JSON object with Device Id.", readOnly = true)
     private DeviceId deviceId;
+    @ApiModelProperty(position = 5, value = "Expiration time of the request.", readOnly = true)
     private long expirationTime;
+    @ApiModelProperty(position = 6, value = "The request body that will be used to send message to device.", readOnly = true)
     private JsonNode request;
+    @ApiModelProperty(position = 7, value = "The response from the device.", readOnly = true)
     private JsonNode response;
+    @ApiModelProperty(position = 8, value = "The current status of the RPC call.", readOnly = true)
     private RpcStatus status;
+    @ApiModelProperty(position = 9, value = "Additional info used in the rule engine to process the updates to the RPC state.", readOnly = true)
     private JsonNode additionalInfo;
 
     public Rpc() {
@@ -53,4 +64,17 @@ public class Rpc extends BaseData<RpcId> implements HasTenantId {
         this.status = rpc.getStatus();
         this.additionalInfo = rpc.getAdditionalInfo();
     }
+
+    @ApiModelProperty(position = 1, value = "JSON object with the rpc Id. Referencing non-existing rpc Id will cause error.")
+    @Override
+    public RpcId getId() {
+        return super.getId();
+    }
+
+    @ApiModelProperty(position = 2, value = "Timestamp of the rpc creation, in milliseconds", example = "1609459200000", readOnly = true)
+    @Override
+    public long getCreatedTime() {
+        return super.getCreatedTime();
+    }
+
 }

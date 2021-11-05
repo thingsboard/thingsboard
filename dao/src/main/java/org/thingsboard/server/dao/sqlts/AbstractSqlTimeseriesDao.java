@@ -74,6 +74,7 @@ public abstract class AbstractSqlTimeseriesDao extends BaseAbstractSqlTimeseries
             stmt.setObject(1, ModelConstants.NULL_UUID);
             stmt.setLong(2, systemTtl);
             stmt.setLong(3, 0);
+            stmt.setQueryTimeout((int) TimeUnit.HOURS.toSeconds(1));
             stmt.execute();
             printWarnings(stmt);
             try (ResultSet resultSet = stmt.getResultSet()) {

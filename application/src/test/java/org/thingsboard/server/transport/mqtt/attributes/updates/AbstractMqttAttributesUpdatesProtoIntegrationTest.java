@@ -21,8 +21,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
+import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.transport.mqtt.attributes.AbstractMqttAttributesIntegrationTest;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,7 +34,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 @Slf4j
-public abstract class AbstractMqttAttributesUpdatesProtoIntegrationTest extends AbstractMqttAttributesUpdatesIntegrationTest {
+public abstract class AbstractMqttAttributesUpdatesProtoIntegrationTest extends AbstractMqttAttributesIntegrationTest {
 
     @Before
     public void beforeTest() throws Exception {
@@ -45,103 +47,28 @@ public abstract class AbstractMqttAttributesUpdatesProtoIntegrationTest extends 
     }
 
     @Test
-    public void testSubscribeToAttributesUpdatesFromTheServer() throws Exception {
-        processTestSubscribeToAttributesUpdates();
+    public void testProtoSubscribeToAttributesUpdatesFromTheServer() throws Exception {
+        processProtoTestSubscribeToAttributesUpdates(MqttTopics.DEVICE_ATTRIBUTES_TOPIC);
     }
 
     @Test
-    public void testSubscribeToAttributesUpdatesFromTheServerGateway() throws Exception {
-        processGatewayTestSubscribeToAttributesUpdates();
+    public void testProtoSubscribeToAttributesUpdatesFromTheServerOnShortTopic() throws Exception {
+        processProtoTestSubscribeToAttributesUpdates(MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC);
     }
 
-    protected void validateUpdateAttributesResponse(TestMqttCallback callback) throws InvalidProtocolBufferException {
-        assertNotNull(callback.getPayloadBytes());
-        TransportProtos.AttributeUpdateNotificationMsg.Builder attributeUpdateNotificationMsgBuilder = TransportProtos.AttributeUpdateNotificationMsg.newBuilder();
-        List<TransportProtos.TsKvProto> tsKvProtoList = getTsKvProtoList();
-        attributeUpdateNotificationMsgBuilder.addAllSharedUpdated(tsKvProtoList);
-
-        TransportProtos.AttributeUpdateNotificationMsg expectedAttributeUpdateNotificationMsg = attributeUpdateNotificationMsgBuilder.build();
-        TransportProtos.AttributeUpdateNotificationMsg actualAttributeUpdateNotificationMsg = TransportProtos.AttributeUpdateNotificationMsg.parseFrom(callback.getPayloadBytes());
-
-        List<TransportProtos.KeyValueProto> actualSharedUpdatedList = actualAttributeUpdateNotificationMsg.getSharedUpdatedList().stream().map(TransportProtos.TsKvProto::getKv).collect(Collectors.toList());
-        List<TransportProtos.KeyValueProto> expectedSharedUpdatedList = expectedAttributeUpdateNotificationMsg.getSharedUpdatedList().stream().map(TransportProtos.TsKvProto::getKv).collect(Collectors.toList());
-
-        assertEquals(expectedSharedUpdatedList.size(), actualSharedUpdatedList.size());
-        assertTrue(actualSharedUpdatedList.containsAll(expectedSharedUpdatedList));
-
+    @Test
+    public void testProtoSubscribeToAttributesUpdatesFromTheServerOnShortJsonTopic() throws Exception {
+        processJsonTestSubscribeToAttributesUpdates(MqttTopics.DEVICE_ATTRIBUTES_SHORT_JSON_TOPIC);
     }
 
-    protected void validateDeleteAttributesResponse(TestMqttCallback callback) throws InvalidProtocolBufferException {
-        assertNotNull(callback.getPayloadBytes());
-        TransportProtos.AttributeUpdateNotificationMsg.Builder attributeUpdateNotificationMsgBuilder = TransportProtos.AttributeUpdateNotificationMsg.newBuilder();
-        attributeUpdateNotificationMsgBuilder.addSharedDeleted("attribute5");
-
-        TransportProtos.AttributeUpdateNotificationMsg expectedAttributeUpdateNotificationMsg = attributeUpdateNotificationMsgBuilder.build();
-        TransportProtos.AttributeUpdateNotificationMsg actualAttributeUpdateNotificationMsg = TransportProtos.AttributeUpdateNotificationMsg.parseFrom(callback.getPayloadBytes());
-
-        assertEquals(expectedAttributeUpdateNotificationMsg.getSharedDeletedList().size(), actualAttributeUpdateNotificationMsg.getSharedDeletedList().size());
-        assertEquals("attribute5", actualAttributeUpdateNotificationMsg.getSharedDeletedList().get(0));
-
+    @Test
+    public void testProtoSubscribeToAttributesUpdatesFromTheServerOnShortProtoTopic() throws Exception {
+        processProtoTestSubscribeToAttributesUpdates(MqttTopics.DEVICE_ATTRIBUTES_SHORT_PROTO_TOPIC);
     }
 
-    protected void validateGatewayUpdateAttributesResponse(TestMqttCallback callback) throws InvalidProtocolBufferException {
-        assertNotNull(callback.getPayloadBytes());
-
-        TransportProtos.AttributeUpdateNotificationMsg.Builder attributeUpdateNotificationMsgBuilder = TransportProtos.AttributeUpdateNotificationMsg.newBuilder();
-        List<TransportProtos.TsKvProto> tsKvProtoList = getTsKvProtoList();
-        attributeUpdateNotificationMsgBuilder.addAllSharedUpdated(tsKvProtoList);
-        TransportProtos.AttributeUpdateNotificationMsg expectedAttributeUpdateNotificationMsg = attributeUpdateNotificationMsgBuilder.build();
-
-        TransportApiProtos.GatewayAttributeUpdateNotificationMsg.Builder gatewayAttributeUpdateNotificationMsgBuilder = TransportApiProtos.GatewayAttributeUpdateNotificationMsg.newBuilder();
-        gatewayAttributeUpdateNotificationMsgBuilder.setDeviceName("Gateway Device Subscribe to attribute updates");
-        gatewayAttributeUpdateNotificationMsgBuilder.setNotificationMsg(expectedAttributeUpdateNotificationMsg);
-
-        TransportApiProtos.GatewayAttributeUpdateNotificationMsg expectedGatewayAttributeUpdateNotificationMsg = gatewayAttributeUpdateNotificationMsgBuilder.build();
-        TransportApiProtos.GatewayAttributeUpdateNotificationMsg actualGatewayAttributeUpdateNotificationMsg = TransportApiProtos.GatewayAttributeUpdateNotificationMsg.parseFrom(callback.getPayloadBytes());
-
-        assertEquals(expectedGatewayAttributeUpdateNotificationMsg.getDeviceName(), actualGatewayAttributeUpdateNotificationMsg.getDeviceName());
-
-        List<TransportProtos.KeyValueProto> actualSharedUpdatedList = actualGatewayAttributeUpdateNotificationMsg.getNotificationMsg().getSharedUpdatedList().stream().map(TransportProtos.TsKvProto::getKv).collect(Collectors.toList());
-        List<TransportProtos.KeyValueProto> expectedSharedUpdatedList = expectedGatewayAttributeUpdateNotificationMsg.getNotificationMsg().getSharedUpdatedList().stream().map(TransportProtos.TsKvProto::getKv).collect(Collectors.toList());
-
-        assertEquals(expectedSharedUpdatedList.size(), actualSharedUpdatedList.size());
-        assertTrue(actualSharedUpdatedList.containsAll(expectedSharedUpdatedList));
-
-    }
-
-    protected void validateGatewayDeleteAttributesResponse(TestMqttCallback callback) throws InvalidProtocolBufferException {
-        assertNotNull(callback.getPayloadBytes());
-        TransportProtos.AttributeUpdateNotificationMsg.Builder attributeUpdateNotificationMsgBuilder = TransportProtos.AttributeUpdateNotificationMsg.newBuilder();
-        attributeUpdateNotificationMsgBuilder.addSharedDeleted("attribute5");
-        TransportProtos.AttributeUpdateNotificationMsg attributeUpdateNotificationMsg = attributeUpdateNotificationMsgBuilder.build();
-
-        TransportApiProtos.GatewayAttributeUpdateNotificationMsg.Builder gatewayAttributeUpdateNotificationMsgBuilder = TransportApiProtos.GatewayAttributeUpdateNotificationMsg.newBuilder();
-        gatewayAttributeUpdateNotificationMsgBuilder.setDeviceName("Gateway Device Subscribe to attribute updates");
-        gatewayAttributeUpdateNotificationMsgBuilder.setNotificationMsg(attributeUpdateNotificationMsg);
-
-        TransportApiProtos.GatewayAttributeUpdateNotificationMsg expectedGatewayAttributeUpdateNotificationMsg = gatewayAttributeUpdateNotificationMsgBuilder.build();
-        TransportApiProtos.GatewayAttributeUpdateNotificationMsg actualGatewayAttributeUpdateNotificationMsg = TransportApiProtos.GatewayAttributeUpdateNotificationMsg.parseFrom(callback.getPayloadBytes());
-
-        assertEquals(expectedGatewayAttributeUpdateNotificationMsg.getDeviceName(), actualGatewayAttributeUpdateNotificationMsg.getDeviceName());
-
-        TransportProtos.AttributeUpdateNotificationMsg expectedAttributeUpdateNotificationMsg = expectedGatewayAttributeUpdateNotificationMsg.getNotificationMsg();
-        TransportProtos.AttributeUpdateNotificationMsg actualAttributeUpdateNotificationMsg = actualGatewayAttributeUpdateNotificationMsg.getNotificationMsg();
-
-        assertEquals(expectedAttributeUpdateNotificationMsg.getSharedDeletedList().size(), actualAttributeUpdateNotificationMsg.getSharedDeletedList().size());
-        assertEquals("attribute5", actualAttributeUpdateNotificationMsg.getSharedDeletedList().get(0));
-
-    }
-
-    protected byte[] getConnectPayloadBytes() {
-        TransportApiProtos.ConnectMsg connectProto = getConnectProto();
-        return connectProto.toByteArray();
-    }
-
-    private TransportApiProtos.ConnectMsg getConnectProto() {
-        TransportApiProtos.ConnectMsg.Builder builder = TransportApiProtos.ConnectMsg.newBuilder();
-        builder.setDeviceName("Gateway Device Subscribe to attribute updates");
-        builder.setDeviceType(TransportPayloadType.PROTOBUF.name());
-        return builder.build();
+    @Test
+    public void testProtoSubscribeToAttributesUpdatesFromTheServerGateway() throws Exception {
+        processProtoGatewayTestSubscribeToAttributesUpdates();
     }
 
 }

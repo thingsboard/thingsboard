@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
@@ -45,6 +47,23 @@ import org.thingsboard.server.service.security.permission.Resource;
 import java.util.Base64;
 import java.util.List;
 
+import static org.thingsboard.server.controller.ControllerConstants.LWM2M_OBJECT_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.LWM2M_OBJECT_SORT_PROPERTY_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_INFO_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_SORT_PROPERTY_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.RESOURCE_TEXT_SEARCH_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
+
 @Slf4j
 @RestController
 @TbCoreComponent
@@ -53,10 +72,12 @@ public class TbResourceController extends BaseController {
 
     public static final String RESOURCE_ID = "resourceId";
 
+    @ApiOperation(value = "Download Resource (downloadResource)", notes = "Download Resource based on the provided Resource Id." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/resource/{resourceId}/download", method = RequestMethod.GET)
     @ResponseBody
-    public ResponseEntity<org.springframework.core.io.Resource> downloadResource(@PathVariable(RESOURCE_ID) String strResourceId) throws ThingsboardException {
+    public ResponseEntity<org.springframework.core.io.Resource> downloadResource(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
+                                                                                 @PathVariable(RESOURCE_ID) String strResourceId) throws ThingsboardException {
         checkParameter(RESOURCE_ID, strResourceId);
         try {
             TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
@@ -74,10 +95,15 @@ public class TbResourceController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get Resource Info (getResourceInfoById)",
+            notes = "Fetch the Resource Info object based on the provided Resource Id. " +
+                    RESOURCE_INFO_DESCRIPTION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH,
+            produces = "application/json")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/resource/info/{resourceId}", method = RequestMethod.GET)
     @ResponseBody
-    public TbResourceInfo getResourceInfoById(@PathVariable(RESOURCE_ID) String strResourceId) throws ThingsboardException {
+    public TbResourceInfo getResourceInfoById(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
+                                              @PathVariable(RESOURCE_ID) String strResourceId) throws ThingsboardException {
         checkParameter(RESOURCE_ID, strResourceId);
         try {
             TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
@@ -87,10 +113,15 @@ public class TbResourceController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get Resource (getResourceById)",
+            notes = "Fetch the Resource object based on the provided Resource Id. " +
+                    RESOURCE_DESCRIPTION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH,
+            produces = "application/json")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/resource/{resourceId}", method = RequestMethod.GET)
     @ResponseBody
-    public TbResource getResourceById(@PathVariable(RESOURCE_ID) String strResourceId) throws ThingsboardException {
+    public TbResource getResourceById(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
+                                      @PathVariable(RESOURCE_ID) String strResourceId) throws ThingsboardException {
         checkParameter(RESOURCE_ID, strResourceId);
         try {
             TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
@@ -100,10 +131,19 @@ public class TbResourceController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Create Or Update Resource (saveResource)",
+            notes = "Create or update the Resource. When creating the Resource, platform generates Resource id as " + UUID_WIKI_LINK +
+                    "The newly created Resource id will be present in the response. " +
+                    "Specify existing Resource id to update the Resource. " +
+                    "Referencing non-existing Resource Id will cause 'Not Found' error. " +
+                    "\n\nResource combination of the title with the key is unique in the scope of tenant. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH,
+            produces = "application/json",
+            consumes = "application/json")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/resource", method = RequestMethod.POST)
     @ResponseBody
-    public TbResource saveResource(@RequestBody TbResource resource) throws ThingsboardException {
+    public TbResource saveResource(@ApiParam(value = "A JSON value representing the Resource.")
+                                   @RequestBody TbResource resource) throws ThingsboardException {
         boolean created = resource.getId() == null;
         try {
             resource.setTenantId(getTenantId());
@@ -120,13 +160,22 @@ public class TbResourceController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get Resource Infos (getResources)",
+            notes = "Returns a page of Resource Info objects owned by tenant or sysadmin. " +
+                    PAGE_DATA_PARAMETERS + RESOURCE_INFO_DESCRIPTION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH,
+            produces = "application/json")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/resource", method = RequestMethod.GET)
     @ResponseBody
-    public PageData<TbResourceInfo> getResources(@RequestParam int pageSize,
+    public PageData<TbResourceInfo> getResources(@ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+                                                 @RequestParam int pageSize,
+                                                 @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
                                                  @RequestParam int page,
+                                                 @ApiParam(value = RESOURCE_TEXT_SEARCH_DESCRIPTION)
                                                  @RequestParam(required = false) String textSearch,
+                                                 @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = RESOURCE_SORT_PROPERTY_ALLOWABLE_VALUES)
                                                  @RequestParam(required = false) String sortProperty,
+                                                 @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
                                                  @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         try {
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
@@ -140,13 +189,22 @@ public class TbResourceController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get LwM2M Objects (getLwm2mListObjectsPage)",
+            notes = "Returns a page of LwM2M objects parsed from Resources with type 'LWM2M_MODEL' owned by tenant or sysadmin. " +
+                    PAGE_DATA_PARAMETERS + LWM2M_OBJECT_DESCRIPTION + TENANT_AUTHORITY_PARAGRAPH,
+            produces = "application/json")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/resource/lwm2m/page", method = RequestMethod.GET)
     @ResponseBody
-    public List<LwM2mObject> getLwm2mListObjectsPage(@RequestParam int pageSize,
+    public List<LwM2mObject> getLwm2mListObjectsPage(@ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+                                                     @RequestParam int pageSize,
+                                                     @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
                                                      @RequestParam int page,
+                                                     @ApiParam(value = RESOURCE_TEXT_SEARCH_DESCRIPTION)
                                                      @RequestParam(required = false) String textSearch,
+                                                     @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = LWM2M_OBJECT_SORT_PROPERTY_ALLOWABLE_VALUES)
                                                      @RequestParam(required = false) String sortProperty,
+                                                     @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
                                                      @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         try {
             PageLink pageLink = new PageLink(pageSize, page, textSearch);
@@ -156,11 +214,18 @@ public class TbResourceController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get LwM2M Objects (getLwm2mListObjects)",
+            notes = "Returns a page of LwM2M objects parsed from Resources with type 'LWM2M_MODEL' owned by tenant or sysadmin. " +
+                    "You can specify parameters to filter the results. " + LWM2M_OBJECT_DESCRIPTION + TENANT_AUTHORITY_PARAGRAPH,
+            produces = "application/json")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/resource/lwm2m", method = RequestMethod.GET)
     @ResponseBody
-    public List<LwM2mObject> getLwm2mListObjects(@RequestParam String sortOrder,
+    public List<LwM2mObject> getLwm2mListObjects(@ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES, required = true)
+                                                 @RequestParam String sortOrder,
+                                                 @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = LWM2M_OBJECT_SORT_PROPERTY_ALLOWABLE_VALUES, required = true)
                                                  @RequestParam String sortProperty,
+                                                 @ApiParam(value = "LwM2M Object ids.", required = true)
                                                  @RequestParam(required = false) String[] objectIds) throws ThingsboardException {
         try {
             return checkNotNull(resourceService.findLwM2mObject(getTenantId(), sortOrder, sortProperty, objectIds));
@@ -169,10 +234,13 @@ public class TbResourceController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Delete Resource (deleteResource)",
+            notes = "Deletes the Resource. Referencing non-existing Resource Id will cause an error." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/resource/{resourceId}", method = RequestMethod.DELETE)
     @ResponseBody
-    public void deleteResource(@PathVariable("resourceId") String strResourceId) throws ThingsboardException {
+    public void deleteResource(@ApiParam(value = RESOURCE_ID_PARAM_DESCRIPTION)
+                               @PathVariable("resourceId") String strResourceId) throws ThingsboardException {
         checkParameter(RESOURCE_ID, strResourceId);
         try {
             TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
