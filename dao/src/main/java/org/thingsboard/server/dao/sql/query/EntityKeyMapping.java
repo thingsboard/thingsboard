@@ -578,8 +578,27 @@ public class EntityKeyMapping {
         return String.format("((%s is not null and %s)", field, stringOperationQuery);
     }
 
-    private List<String> getListValuesWithoutQuote(String value) {
-        return List.of(value.replaceAll("'", "").replaceAll("\"", "").trim().split("\\s*,\\s*"));
+    protected List<String> getListValuesWithoutQuote(String value) {
+        List<String> splitValues = List.of(value.trim().split("\\s*,\\s*"));
+        List<String> result = new ArrayList<>();
+        char lastWayInputValue = '#';
+        for (String str : splitValues) {
+            char startWith = str.charAt(0);
+            char endWith = str.charAt(str.length() - 1);
+
+            // if first value is not quote, so we return values after split
+            if (startWith != '\'' && startWith != '"') return splitValues;
+
+            // if value is not in quote, so we return values after split
+            if (startWith != endWith) return splitValues;
+
+            // if different way values, so don't replace quote and return values after split
+            if (lastWayInputValue != '#' && startWith != lastWayInputValue) return splitValues;
+
+            result.add(str.substring(1, str.length() - 1));
+            lastWayInputValue = startWith;
+        }
+        return result;
     }
 
     private String buildNumericPredicateQuery(QueryContext ctx, String field, NumericFilterPredicate numericFilterPredicate) {
