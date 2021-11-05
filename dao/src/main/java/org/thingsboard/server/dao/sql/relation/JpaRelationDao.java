@@ -157,7 +157,11 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     private boolean deleteRelationIfExists(RelationCompositeKey key) {
         boolean relationExistsBeforeDelete = relationRepository.existsById(key);
         if (relationExistsBeforeDelete) {
-            relationRepository.deleteById(key);
+            try {
+                relationRepository.deleteById(key);
+            } catch (ConcurrencyFailureException e) {
+                log.debug("[{}] Concurrency exception while deleting relation", key, e);
+            }
         }
         return relationExistsBeforeDelete;
     }
