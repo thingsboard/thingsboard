@@ -73,8 +73,8 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
         name: [entity ? entity.name : '', [Validators.required, Validators.maxLength(255)]],
         type: [entity?.type ? entity.type : 'default', [Validators.required, Validators.maxLength(255)]],
         label: [entity ? entity.label : '', Validators.maxLength(255)],
-        cloudEndpoint: [null, [Validators.required]],
-        edgeLicenseKey: ['', [Validators.required]],
+        cloudEndpoint: [null, [Validators.required, Validators.maxLength(255)]],
+        edgeLicenseKey: ['', [Validators.required, Validators.maxLength(30)]],
         routingKey: this.fb.control({value: entity ? entity.routingKey : null, disabled: true}),
         secret: this.fb.control({value: entity ? entity.secret : null, disabled: true}),
         additionalInfo: this.fb.group(

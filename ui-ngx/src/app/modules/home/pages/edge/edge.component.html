@@ -143,8 +143,8 @@
           <mat-error *ngIf="entityForm.get('edgeLicenseKey').hasError('required')">
             {{ 'edge.edge-license-key-required' | translate }}
           </mat-error>
-          <mat-error *ngIf="entityForm.get('type').hasError('maxlength')">
-            {{ 'edge.type-max-length' | translate }}
+          <mat-error *ngIf="entityForm.get('edgeLicenseKey').hasError('maxlength')">
+            {{ 'edge.edge-license-key-max-length' | translate }}
           </mat-error>
         </mat-form-field>
       </div>
@@ -155,6 +155,9 @@
           <input matInput formControlName="cloudEndpoint" required>
           <mat-error *ngIf="entityForm.get('cloudEndpoint').hasError('required')">
             {{ 'edge.cloud-endpoint-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="entityForm.get('cloudEndpoint').hasError('maxlength')">
+            {{ 'edge.cloud-endpoint-max-length' | translate }}
           </mat-error>
         </mat-form-field>
       </div>

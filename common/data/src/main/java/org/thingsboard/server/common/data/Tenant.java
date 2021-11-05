@@ -37,6 +37,7 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId {
     @ApiModelProperty(position = 3, value = "Title of the tenant", example = "Company A")
     private String title;
     @NoXss
+    @Length(fieldName = "region")
     @ApiModelProperty(position = 5, value = "Geo region of the tenant", example = "North America")
     private String region;
 
