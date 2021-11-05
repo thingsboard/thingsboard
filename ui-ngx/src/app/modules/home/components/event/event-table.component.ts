@@ -25,6 +25,7 @@ import { EventService } from '@core/http/event.service';
 import { DialogService } from '@core/services/dialog.service';
 import { DebugEventType, EventType } from '@shared/models/event.models';
 import { Overlay } from '@angular/cdk/overlay';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'tb-event-table',
@@ -84,7 +85,8 @@ export class EventTableComponent implements OnInit {
               private dialog: MatDialog,
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private http: HttpClient) {
   }
 
   ngOnInit() {
@@ -102,7 +104,8 @@ export class EventTableComponent implements OnInit {
       this.debugEventTypes,
       this.overlay,
       this.viewContainerRef,
-      this.cd
+      this.cd,
+      this.http
     );
   }
 

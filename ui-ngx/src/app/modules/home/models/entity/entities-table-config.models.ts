@@ -75,7 +75,7 @@ export interface HeaderActionDescriptor {
   icon: string;
   isMdiIcon?: boolean;
   isEnabled: () => boolean;
-  onAction: ($event: MouseEvent) => void;
+  onAction: ($event: MouseEvent, entity?) => void;
 }
 
 export type EntityTableColumnType = 'content' | 'action';
