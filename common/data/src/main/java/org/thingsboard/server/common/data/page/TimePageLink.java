@@ -17,8 +17,12 @@ package org.thingsboard.server.common.data.page;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @Data
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
 public class TimePageLink extends PageLink {
 
     private final Long startTime;
