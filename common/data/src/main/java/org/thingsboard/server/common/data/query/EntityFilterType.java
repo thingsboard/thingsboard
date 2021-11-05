@@ -29,8 +29,7 @@ public enum EntityFilterType {
     DEVICE_SEARCH_QUERY("deviceSearchQuery"),
     ENTITY_VIEW_SEARCH_QUERY("entityViewSearchQuery"),
     EDGE_SEARCH_QUERY("edgeSearchQuery"),
-    API_USAGE_STATE("apiUsageState"),
-    ENTITY_NAME_OR_ID("entityNameOrId");
+    API_USAGE_STATE("apiUsageState");
 
     private final String label;
 
