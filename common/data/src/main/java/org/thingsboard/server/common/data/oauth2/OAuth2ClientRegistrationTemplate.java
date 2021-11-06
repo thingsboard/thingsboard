@@ -62,7 +62,6 @@ public class OAuth2ClientRegistrationTemplate extends SearchTextBasedWithAdditio
     @Length(fieldName = "clientAuthenticationMethod")
     @ApiModelProperty(value = "Default client authentication method to use: 'BASIC' or 'POST'")
     private String clientAuthenticationMethod;
-    @Length(fieldName = "comment")
     @ApiModelProperty(value = "Comment for OAuth2 provider")
     private String comment;
     @Length(fieldName = "loginButtonIcon")
