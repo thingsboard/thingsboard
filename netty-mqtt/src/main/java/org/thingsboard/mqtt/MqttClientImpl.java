@@ -156,9 +156,11 @@ final class MqttClientImpl implements MqttClient {
                     if (callback != null) {
                         callback.connectionLost(e);
                     }
+                    pendingSubscriptions.forEach((id, mqttPendingSubscription) -> mqttPendingSubscription.onChannelClosed());
                     pendingSubscriptions.clear();
                     serverSubscriptions.clear();
                     subscriptions.clear();
+                    pendingServerUnsubscribes.forEach((id, mqttPendingServerUnsubscribes) -> mqttPendingServerUnsubscribes.onChannelClosed());
                     pendingServerUnsubscribes.clear();
                     qos2PendingIncomingPublishes.clear();
                     pendingPublishes.forEach((id, mqttPendingPublish) -> mqttPendingPublish.onChannelClosed());

@@ -21,7 +21,7 @@ import io.netty.util.concurrent.Promise;
 
 import java.util.function.Consumer;
 
-final class MqttPendingUnsubscription {
+final class MqttPendingUnsubscription{
 
     private final Promise<Void> future;
     private final String topic;
@@ -50,6 +50,10 @@ final class MqttPendingUnsubscription {
     }
 
     void onUnsubackReceived(){
+        this.retransmissionHandler.stop();
+    }
+
+    void onChannelClosed(){
         this.retransmissionHandler.stop();
     }
 }
