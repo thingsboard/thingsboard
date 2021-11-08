@@ -104,8 +104,7 @@ export class EventTableComponent implements OnInit {
       this.debugEventTypes,
       this.overlay,
       this.viewContainerRef,
-      this.cd,
-      this.http
+      this.cd
     );
   }
 

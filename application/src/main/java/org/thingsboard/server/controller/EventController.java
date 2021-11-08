@@ -242,7 +242,7 @@ public class EventController extends BaseController {
 
     @ApiOperation(value = "Clear Events (clearEvents)", notes = "Clears events for specified entity.")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/events/{entityType}/{entityId}/{eventType}/clear", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/events/{entityType}/{entityId}/{eventType}/clear", method = RequestMethod.POST)
     @ResponseStatus(HttpStatus.OK)
     public void clearEvents(
             @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
@@ -250,13 +250,14 @@ public class EventController extends BaseController {
             @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_ID) String strEntityId,
             @ApiParam(value = TENANT_ID_PARAM_DESCRIPTION, required = true)
-            @RequestParam("tenantId") String strTenantId,
-            @ApiParam(value = "A string value representing event type", example = "STATS", required = true)
             @PathVariable("eventType") String eventType,
             @ApiParam(value = EVENT_START_TIME_DESCRIPTION)
+            @RequestParam("tenantId") String strTenantId,
+            @ApiParam(value = "A string value representing event type", example = "STATS", required = true)
             @RequestParam(required = false) Long startTime,
             @ApiParam(value = EVENT_END_TIME_DESCRIPTION)
-            @RequestParam(required = false) Long endTime) throws ThingsboardException {
+            @RequestParam(required = false) Long endTime,
+            @RequestBody EventFilter eventFilter) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
         try {

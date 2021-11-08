@@ -44,5 +44,12 @@ export class EventService {
     return this.http.post<PageData<Event>>(`/api/events/${entityId.entityType}/${entityId.id}` +
       `${pageLink.toQuery()}&tenantId=${tenantId}`, {...filters, eventType}, defaultHttpOptionsFromConfig(config));
   }
-  
+
+  public clearEvents(entityId: EntityId, eventType: EventType | DebugEventType, filters: FilterEventBody, tenantId: string,
+                     startTime?: number, endTime?: number, config?: RequestConfig) {
+    return this.http.post(`/api/events/${entityId.entityType}/${entityId.id}/${eventType}/clear&tenantId=${tenantId}` +
+      (startTime ? `&startTime=${startTime}` : ``) + (endTime ? `&endTime=${endTime}` : ``), {...filters, eventType},
+      defaultHttpOptionsFromConfig(config));
+  }
+
 }

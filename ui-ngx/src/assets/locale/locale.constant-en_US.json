@@ -1853,7 +1853,7 @@
     "event": {
         "event-type": "Event type",
         "events-filter": "Events Filter",
-        "clean-events": "Clean Events",
+        "clean-events": "Clear Events",
         "type-error": "Error",
         "type-lc-event": "Lifecycle event",
         "type-stats": "Statistics",

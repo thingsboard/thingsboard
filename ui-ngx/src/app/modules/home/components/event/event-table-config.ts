@@ -48,7 +48,6 @@ import {
   EventFilterPanelData,
   FilterEntityColumn
 } from '@home/components/event/event-filter-panel.component';
-import { HttpClient } from '@angular/common/http';
 
 export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
@@ -83,8 +82,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
               private debugEventTypes: Array<DebugEventType> = null,
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
-              private cd: ChangeDetectorRef,
-              private http: HttpClient) {
+              private cd: ChangeDetectorRef) {
     super();
     this.loadDataOnInit = false;
     this.tableTitle = '';
@@ -143,7 +141,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
       icon: 'delete',
       isEnabled: () => true,
       onAction: ($event, entity) => {
-        this.http.delete(`/events/${entity.entityId.entityType}/${entity.entityId.id}/${entity.eventTypeValue}/clear`).subscribe();
+        this.eventService.clearEvents(entity.entityId, entity.eventType, entity.filterParams, entity.tenantId, , ).subscribe();
      }
     });
   }
