@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.rpc;
+package org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.device.profile.lwm2m.ObjectAttributes;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class RpcWriteAttributesRequest extends LwM2MRpcRequestHeader {
-
-    private ObjectAttributes attributes;
-
+public class LwM2MBootstrapServerConfig {
+    private Integer shortId = 123;
+    private Integer lifetime = 300;
+    private Integer defaultMinPeriod = 1;
+    private boolean notifIfDisabled = true;
+    private String binding = "U";
 }

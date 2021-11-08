@@ -15,21 +15,10 @@
  */
 package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.binary.Base64;
-
-public class RPKClientCredentials extends AbstractLwM2MClientSecurityCredentials {
+public class X509BootstrapClientCredential extends AbstractLwM2MBootstrapClientCredentialWithKeys {
 
     @Override
-    public LwM2MSecurityMode getSecurityConfigClientMode() {
-        return LwM2MSecurityMode.RPK;
-    }
-
-    @Override
-    public byte[] getDecoded() throws IllegalArgumentException, DecoderException {
-        if (securityInBytes == null) {
-            securityInBytes = Base64.decodeBase64(key.getBytes());
-        }
-        return securityInBytes;
+    public LwM2MSecurityMode getSecurityMode() {
+        return LwM2MSecurityMode.X509;
     }
 }

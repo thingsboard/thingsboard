@@ -13,29 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.credentials.lwm2m;
+package org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.apache.commons.codec.binary.Base64;
+import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
 
 @Getter
 @Setter
-public abstract class AbstractLwM2MServerCredentialsWithKeys implements LwM2MServerCredentials {
-
-    private String clientPublicKeyOrId;
-    private String clientSecretKey;
+public abstract class AbstractLwM2MBootstrapServerCredential extends ServerSecurityConfig implements LwM2MBootstrapServerCredential {
 
     @JsonIgnore
-    public byte[] getDecodedClientPublicKeyOrId() {
-        return getDecoded(clientPublicKeyOrId);
-    }
-
-    @JsonIgnore
-    public byte[] getDecodedClientSecretKey() {
-        return getDecoded(clientSecretKey);
+    public byte[] getDecodedCServerPublicKey() {
+        return getDecoded(serverPublicKey);
     }
 
     @SneakyThrows

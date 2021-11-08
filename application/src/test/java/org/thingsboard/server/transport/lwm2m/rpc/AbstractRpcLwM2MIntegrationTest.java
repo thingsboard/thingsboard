@@ -17,7 +17,7 @@ package org.thingsboard.server.transport.lwm2m.rpc;
 
 import org.junit.Before;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredential;
 import org.thingsboard.server.controller.TbTestWebSocketClient;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest;
@@ -178,7 +178,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
                 "}";
         createDeviceProfile(RPC_TRANSPORT_CONFIGURATION);
 
-        NoSecClientCredentials credentials =  createNoSecClientCredentials(endpoint);
+        NoSecClientCredential credentials =  createNoSecClientCredentials(endpoint);
         final Device device = createDevice(credentials);
         deviceId = device.getId().getId().toString();
 

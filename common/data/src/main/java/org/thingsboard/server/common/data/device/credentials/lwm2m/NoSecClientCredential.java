@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.rpc;
+package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.device.profile.lwm2m.ObjectAttributes;
+public class NoSecClientCredential extends AbstractLwM2MClientCredential {
 
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class RpcWriteAttributesRequest extends LwM2MRpcRequestHeader {
-
-    private ObjectAttributes attributes;
-
+    @Override
+    public LwM2MSecurityMode getSecurityConfigClientMode() {
+        return LwM2MSecurityMode.NO_SEC;
+    }
 }

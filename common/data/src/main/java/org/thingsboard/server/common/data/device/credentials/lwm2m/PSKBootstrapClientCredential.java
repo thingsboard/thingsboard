@@ -15,10 +15,10 @@
  */
 package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
-public class X509ServerCredentials extends AbstractLwM2MServerCredentialsWithKeys {
+public class PSKBootstrapClientCredential extends AbstractLwM2MBootstrapClientCredentialWithKeys {
 
     @Override
     public LwM2MSecurityMode getSecurityMode() {
-        return LwM2MSecurityMode.X509;
+        return LwM2MSecurityMode.PSK;
     }
 }

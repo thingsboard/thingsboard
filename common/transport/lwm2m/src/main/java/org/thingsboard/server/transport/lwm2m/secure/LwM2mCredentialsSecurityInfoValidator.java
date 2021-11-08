@@ -23,10 +23,10 @@ import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCredential;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg;
@@ -110,7 +110,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
             if (keyValue.equals(BOOTSTRAP)) {
                 result.setBootstrapCredentialConfig(credentials.getBootstrap());
                 if (LwM2MSecurityMode.PSK.equals(credentials.getClient().getSecurityConfigClientMode())) {
-                    PSKClientCredentials pskClientConfig = (PSKClientCredentials) credentials.getClient();
+                    PSKClientCredential pskClientConfig = (PSKClientCredential) credentials.getClient();
                     endpoint = StringUtils.isNotEmpty(pskClientConfig.getEndpoint()) ? pskClientConfig.getEndpoint() : endpoint;
                 }
                 result.setEndpoint(endpoint);
@@ -143,8 +143,8 @@ public class LwM2mCredentialsSecurityInfoValidator {
         result.setSecurityMode(NO_SEC);
     }
 
-    private void createClientSecurityInfoPSK(TbLwM2MSecurityInfo result, String endpoint, LwM2MClientCredentials clientCredentialsConfig) {
-        PSKClientCredentials pskConfig = (PSKClientCredentials) clientCredentialsConfig;
+    private void createClientSecurityInfoPSK(TbLwM2MSecurityInfo result, String endpoint, LwM2MClientCredential clientCredentialsConfig) {
+        PSKClientCredential pskConfig = (PSKClientCredential) clientCredentialsConfig;
         if (StringUtils.isNotEmpty(pskConfig.getIdentity())) {
             try {
                 if (pskConfig.getDecoded() != null && pskConfig.getDecoded().length > 0) {
@@ -162,8 +162,8 @@ public class LwM2mCredentialsSecurityInfoValidator {
         }
     }
 
-    private void createClientSecurityInfoRPK(TbLwM2MSecurityInfo result, String endpoint, LwM2MClientCredentials clientCredentialsConfig) {
-        RPKClientCredentials rpkConfig = (RPKClientCredentials) clientCredentialsConfig;
+    private void createClientSecurityInfoRPK(TbLwM2MSecurityInfo result, String endpoint, LwM2MClientCredential clientCredentialsConfig) {
+        RPKClientCredential rpkConfig = (RPKClientCredential) clientCredentialsConfig;
         try {
             if (rpkConfig.getDecoded() != null) {
                 PublicKey key = SecurityUtil.publicKey.decode(rpkConfig.getDecoded());
@@ -177,7 +177,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
         }
     }
 
-    private void createClientSecurityInfoX509(TbLwM2MSecurityInfo result, String endpoint, LwM2MClientCredentials clientCredentialsConfig) {
+    private void createClientSecurityInfoX509(TbLwM2MSecurityInfo result, String endpoint, LwM2MClientCredential clientCredentialsConfig) {
         result.setSecurityInfo(SecurityInfo.newX509CertInfo(endpoint));
         result.setSecurityMode(X509);
     }

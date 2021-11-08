@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.data.lwm2m;
+package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import org.apache.commons.codec.DecoderException;
 
-import java.util.Map;
-import java.util.Set;
+public abstract class AbstractLwM2MClientSecurityCredential extends AbstractLwM2MClientCredential {
+    @Getter
+    @Setter
+    protected String key;
 
-@Data
-public class TelemetryMappingConfiguration {
+    protected byte[] securityInBytes;
 
-    private Map<String, String> keyName;
-    private Set<String> observe;
-    private Set<String> attribute;
-    private Set<String> telemetry;
-    private Map<String, ObjectAttributes> attributeLwm2m;
-
+    public abstract byte[] getDecoded() throws IllegalArgumentException, DecoderException;
 }

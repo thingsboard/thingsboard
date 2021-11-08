@@ -15,10 +15,13 @@
  */
 package org.thingsboard.server.common.data.device.credentials.lwm2m;
 
-public class PSKServerCredentials extends AbstractLwM2MServerCredentialsWithKeys {
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-    @Override
-    public LwM2MSecurityMode getSecurityMode() {
-        return LwM2MSecurityMode.PSK;
-    }
+@Getter
+@Setter
+@NoArgsConstructor
+public abstract class AbstractLwM2MClientCredential implements LwM2MClientCredential {
+    private String endpoint;
 }

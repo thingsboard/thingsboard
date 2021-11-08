@@ -13,16 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.rpc;
+package org.thingsboard.server.common.data.device.profile.lwm2m;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.device.profile.lwm2m.ObjectAttributes;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class RpcWriteAttributesRequest extends LwM2MRpcRequestHeader {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class ObjectAttributes {
 
-    private ObjectAttributes attributes;
+    private Long dim;
+    private String ver;
+    private Long pmin;
+    private Long pmax;
+    private Double gt;
+    private Double lt;
+    private Double st;
 
 }
