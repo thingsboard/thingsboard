@@ -23,7 +23,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
-final class MqttPendingSubscription {
+final class MqttPendingSubscription{
 
     private final Promise<Void> future;
     private final String topic;
@@ -98,5 +98,9 @@ final class MqttPendingSubscription {
         boolean isOnce() {
             return once;
         }
+    }
+
+    void onChannelClosed(){
+        this.retransmissionHandler.stop();
     }
 }
