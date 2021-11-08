@@ -420,7 +420,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                     alarmDao.save(tenantId, alarm);
                 }
                 if (processed.incrementAndGet() % 1000 == 0) {
-                    log.info("{}: {} processed so far...", name, processed);
+                    log.info("{}: {} alarms processed so far...", name, processed);
                 }
             }
             if (alarms.hasNext()) {
