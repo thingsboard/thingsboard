@@ -46,10 +46,9 @@ export class EventService {
   }
 
   public clearEvents(entityId: EntityId, eventType: EventType | DebugEventType, filters: FilterEventBody, tenantId: string,
-                     startTime?: number, endTime?: number, config?: RequestConfig) {
+                     pageLink: TimePageLink, config?: RequestConfig) {
     return this.http.post(`/api/events/${entityId.entityType}/${entityId.id}/${eventType}/clear&tenantId=${tenantId}` +
-      (startTime ? `&startTime=${startTime}` : ``) + (endTime ? `&endTime=${endTime}` : ``), {...filters, eventType},
+      `${pageLink.toQuery()}`, {...filters, eventType},
       defaultHttpOptionsFromConfig(config));
   }
-
 }

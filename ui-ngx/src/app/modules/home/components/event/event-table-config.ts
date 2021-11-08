@@ -140,8 +140,8 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
       name: this.translate.instant('event.clean-events'),
       icon: 'delete',
       isEnabled: () => true,
-      onAction: ($event, entity) => {
-        this.eventService.clearEvents(entity.entityId, entity.eventType, entity.filterParams, entity.tenantId, , ).subscribe();
+      onAction: ($event, entity, pageLink: TimePageLink) => {
+        this.eventService.clearEvents(entity.entityId, entity.eventType, entity.filterParams, entity.tenantId, pageLink).subscribe();
      }
     });
   }
