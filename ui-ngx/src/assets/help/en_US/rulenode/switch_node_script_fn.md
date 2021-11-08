@@ -5,7 +5,7 @@
 
 *function Switch(msg, metadata, msgType): string[]*
 
-JavaScript function computing **an array of next Relation names** for incoming Message.
+JavaScript function computing **an array of Link names** to forward the incoming Message.
 
 **Parameters:**
 
@@ -13,8 +13,9 @@ JavaScript function computing **an array of next Relation names** for incoming M
 
 **Returns:**
 
-Should return an array of `string` values presenting **next Relation names** where Message should be routed.<br>
-If returned array is empty - message will not be routed to any Node and discarded.
+Should return an array of `string` values presenting **link names** that the Rule Engine should use to further route the incoming Message.<br>
+If the result is an empty array - message will not be routed to any Node and will be immediately 
+<a href="https://thingsboard.io/docs/user-guide/rule-engine-2-0/overview/#message-processing-result" target="_blank">acknowledged</a>.
 
 <div class="divider"></div>
 
@@ -24,7 +25,7 @@ If returned array is empty - message will not be routed to any Node and discarde
 <li>
 Forward all messages with <code>temperature</code> value greater than <code>30</code> to the <strong>'High temperature'</strong> chain,<br>
 with <code>temperature</code> value lower than <code>20</code> to the <strong>'Low temperature'</strong> chain and all other messages<br>
-to the <strong>'Normal temperature'</strong> chain:
+to the <strong>'Other'</strong> chain:
 </li>
 </ul>
 
@@ -34,10 +35,14 @@ if (msg.temperature > 30) {
 } else if (msg.temperature < 20) {
     return ['Low temperature'];
 } else {
-    return ['Normal temperature'];
+    return ['Other'];
 }
 {:copy-code}
 ```
+
+Example of the rule chain configuration:
+
+![image](${helpBaseUrl}/help/images/rulenode/examples/switch-node.png)
 
 <ul>
   <li>

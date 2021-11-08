@@ -5,7 +5,7 @@
 
 *function Filter(msg, metadata, msgType): boolean*
 
-JavaScript function evaluating **true/false** condition on incoming Message.
+JavaScript function defines a boolean expression based on the incoming Message and Metadata.
 
 **Parameters:**
 
@@ -13,16 +13,31 @@ JavaScript function evaluating **true/false** condition on incoming Message.
 
 **Returns:**
 
-Should return `boolean` value. If `true` - send Message via **True** chain, otherwise **False** chain is used.
+Must return a `boolean` value. If `true` - routes Message to subsequent rule nodes that are related via **True** link, 
+otherwise sends Message to rule nodes related via **False** link. 
+Uses 'Failure' link in case of any failures to evaluate the expression.
 
 <div class="divider"></div>
 
 ##### Examples
 
-* Forward all messages with `temperature` value greater than `20` to the **True** chain and all other messages to the **False** chain:
+* Forward all messages with `temperature` value greater than `20` to the **True** link and all other messages to the **False** link.
+  Assumes that incoming messages always contain the 'temperature' field:
 
 ```javascript
 return msg.temperature > 20;
+{:copy-code}
+```
+
+
+Example of the rule chain configuration:
+
+![image](${helpBaseUrl}/help/images/rulenode/examples/filter-node.png)
+
+* Same as above, but checks that the message has 'temperature' field to **avoid failures** on unexpected messages:
+
+```javascript
+return typeof msg.temperature !== 'undefined' && msg.temperature > 20;
 {:copy-code}
 ```
 

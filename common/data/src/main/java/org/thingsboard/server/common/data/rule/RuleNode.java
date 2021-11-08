@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.validation.Length;
 
 @ApiModel
 @Data
@@ -37,8 +38,10 @@ public class RuleNode extends SearchTextBasedWithAdditionalInfo<RuleNodeId> impl
 
     @ApiModelProperty(position = 3, value = "JSON object with the Rule Chain Id. ", readOnly = true)
     private RuleChainId ruleChainId;
+    @Length(fieldName = "type")
     @ApiModelProperty(position = 4, value = "Full Java Class Name of the rule node implementation. ", example = "com.mycompany.iot.rule.engine.ProcessingNode")
     private String type;
+    @Length(fieldName = "name")
     @ApiModelProperty(position = 5, value = "User defined name of the rule node. Used on UI and for logging. ", example = "Process sensor reading")
     private String name;
     @ApiModelProperty(position = 6, value = "Enable/disable debug. ", example = "false")

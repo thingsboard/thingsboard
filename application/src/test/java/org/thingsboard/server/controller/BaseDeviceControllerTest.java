@@ -115,6 +115,20 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void saveDeviceWithViolationOfValidation() throws Exception {
+        Device device = new Device();
+        device.setName(RandomStringUtils.randomAlphabetic(300));
+        device.setType("default");
+        doPost("/api/device", device).andExpect(statusReason(containsString("length of name must be equal or less than 255")));
+        device.setName("Normal Name");
+        device.setType(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/device", device).andExpect(statusReason(containsString("length of type must be equal or less than 255")));
+        device.setType("Normal type");
+        device.setLabel(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/device", device).andExpect(statusReason(containsString("length of label must be equal or less than 255")));
+    }
+
+    @Test
     public void testUpdateDeviceFromDifferentTenant() throws Exception {
         Device device = new Device();
         device.setName("My device");

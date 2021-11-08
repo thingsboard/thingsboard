@@ -17,6 +17,7 @@ package org.thingsboard.server.service.queue.processing;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -77,6 +78,7 @@ public class TbRuleEngineProcessingStrategyFactory {
         @Override
         public TbRuleEngineProcessingDecision analyze(TbRuleEngineProcessingResult result) {
             if (result.isSuccess()) {
+                log.trace("[{}] The result of the msg pack processing is successful, going to proceed with processing of the following msgs", queueName);
                 return new TbRuleEngineProcessingDecision(true, null);
             } else {
                 if (retryCount == 0) {
@@ -91,15 +93,28 @@ public class TbRuleEngineProcessingStrategyFactory {
                     log.debug("[{}] Skip reprocess of the rule engine pack due to max allowed failure percentage", queueName);
                     return new TbRuleEngineProcessingDecision(true, null);
                 } else {
+                    log.debug("[{}] The result of msg pack processing is unsuccessful, checking unprocessed msgs and going to reprocess them", queueName);
                     ConcurrentMap<UUID, TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> toReprocess = new ConcurrentHashMap<>(initialTotalCount);
                     if (retryFailed) {
                         result.getFailedMap().forEach(toReprocess::put);
+                    } else if (log.isDebugEnabled() && !result.getFailedMap().isEmpty()) {
+                        log.debug("[{}] Skipped {} failed messages due to the processing strategy configuration", queueName, result.getFailedMap().size());
                     }
                     if (retryTimeout) {
                         result.getPendingMap().forEach(toReprocess::put);
+                    } else if (log.isDebugEnabled() && !result.getPendingMap().isEmpty()) {
+                        log.debug("[{}] Skipped {} timedOut messages due to the processing strategy configuration", queueName, result.getPendingMap().size());
                     }
                     if (retrySuccessful) {
                         result.getSuccessMap().forEach(toReprocess::put);
+                    } else if (log.isTraceEnabled() && !result.getSuccessMap().isEmpty()) {
+                        log.trace("[{}] Skipped {} successful messages due to the processing strategy configuration", queueName, result.getSuccessMap().size());
+                    }
+                    if (CollectionUtils.isEmpty(toReprocess)) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("[{}] Stopping the reprocessing logic due to reprocessing map is empty", queueName);
+                        }
+                        return new TbRuleEngineProcessingDecision(true, null);
                     }
                     log.debug("[{}] Going to reprocess {} messages", queueName, toReprocess.size());
                     if (log.isTraceEnabled()) {

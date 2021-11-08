@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -87,6 +88,13 @@ public abstract class BaseWidgetsBundleControllerTest extends AbstractController
         WidgetsBundle foundWidgetsBundle = doGet("/api/widgetsBundle/" + savedWidgetsBundle.getId().getId().toString(), WidgetsBundle.class);
         Assert.assertEquals(foundWidgetsBundle.getTitle(), savedWidgetsBundle.getTitle());
     }
+
+     @Test
+     public void testSaveWidgetBundleWithViolationOfLengthValidation() throws Exception {
+         WidgetsBundle widgetsBundle = new WidgetsBundle();
+         widgetsBundle.setTitle(RandomStringUtils.randomAlphabetic(300));
+         doPost("/api/widgetsBundle", widgetsBundle).andExpect(statusReason(containsString("length of title must be equal or less than 255")));
+     }
 
     @Test
     public void testUpdateWidgetsBundleFromDifferentTenant() throws Exception {

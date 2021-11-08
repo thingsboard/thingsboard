@@ -23,6 +23,7 @@ import org.thingsboard.server.dao.util.HsqlDao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @HsqlDao
@@ -35,6 +36,7 @@ public class HsqlEventCleanupRepository extends JpaAbstractDaoListeningExecutorS
         try (Connection connection = dataSource.getConnection();
              PreparedStatement stmt = connection.prepareStatement("DELETE FROM event WHERE ts < ? AND event_type != 'DEBUG_RULE_NODE' AND event_type != 'DEBUG_RULE_CHAIN'")) {
             stmt.setLong(1, otherExpirationTime);
+            stmt.setQueryTimeout((int) TimeUnit.HOURS.toSeconds(1));
             stmt.execute();
         } catch (SQLException e) {
             log.error("SQLException occurred during events TTL task execution ", e);
@@ -43,6 +45,7 @@ public class HsqlEventCleanupRepository extends JpaAbstractDaoListeningExecutorS
         try (Connection connection = dataSource.getConnection();
              PreparedStatement stmt = connection.prepareStatement("DELETE FROM event WHERE ts < ? AND (event_type = 'DEBUG_RULE_NODE' OR event_type = 'DEBUG_RULE_CHAIN')")) {
             stmt.setLong(1, debugExpirationTime);
+            stmt.setQueryTimeout((int) TimeUnit.HOURS.toSeconds(1));
             stmt.execute();
         } catch (SQLException e) {
             log.error("SQLException occurred during events TTL task execution ", e);

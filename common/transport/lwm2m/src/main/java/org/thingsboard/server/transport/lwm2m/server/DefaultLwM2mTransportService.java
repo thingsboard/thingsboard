@@ -28,6 +28,7 @@ import org.eclipse.leshan.server.californium.registration.CaliforniumRegistratio
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MAuthorizer;
@@ -139,7 +140,11 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
     }
 
     private void setServerWithCredentials(LeshanServerBuilder builder, DtlsConnectorConfig.Builder dtlsConfig) {
-        if (config.getKeyStoreValue() != null && this.setBuilderX509(builder)) {
+        if (this.config.getSslCredentials() != null) {
+            SslCredentials sslCredentials = this.config.getSslCredentials();
+            builder.setPublicKey(sslCredentials.getPublicKey());
+            builder.setPrivateKey(sslCredentials.getPrivateKey());
+            builder.setCertificateChain(sslCredentials.getCertificateChain());
             dtlsConfig.setAdvancedCertificateVerifier(certificateVerifier);
             builder.setAuthorizer(authorizer);
             dtlsConfig.setSupportedCipherSuites(RPK_OR_X509_CIPHER_SUITES);
@@ -148,26 +153,6 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
             builder.setTrustedCertificates(new X509Certificate[0]);
             log.info("Unable to load X509 files for LWM2MServer");
             dtlsConfig.setSupportedCipherSuites(PSK_CIPHER_SUITES);
-        }
-    }
-
-    private boolean setBuilderX509(LeshanServerBuilder builder) {
-        try {
-            X509Certificate[] certificateChain = SslContextUtil.asX509Certificates(config.getKeyStoreValue().getCertificateChain(config.getCertificateAlias()));
-            X509Certificate serverCertificate = certificateChain[0];
-            PrivateKey privateKey = (PrivateKey) config.getKeyStoreValue().getKey(config.getCertificateAlias(), config.getCertificatePassword() == null ? null : config.getCertificatePassword().toCharArray());
-            PublicKey publicKey = serverCertificate.getPublicKey();
-            if (privateKey != null && privateKey.getEncoded().length > 0 && publicKey != null && publicKey.getEncoded().length > 0) {
-                builder.setPublicKey(serverCertificate.getPublicKey());
-                builder.setPrivateKey(privateKey);
-                builder.setCertificateChain(certificateChain);
-                return true;
-            } else {
-                return false;
-            }
-        } catch (Exception ex) {
-            log.error("[{}] Unable to load KeyStore  files server", ex.getMessage());
-            return false;
         }
     }
 

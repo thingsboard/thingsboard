@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @Data
@@ -31,12 +32,15 @@ public class BaseWidgetType extends BaseData<WidgetTypeId> implements HasTenantI
     @ApiModelProperty(position = 3, value = "JSON object with Tenant Id.", readOnly = true)
     private TenantId tenantId;
     @NoXss
+    @Length(fieldName = "bundleAlias")
     @ApiModelProperty(position = 4, value = "Reference to widget bundle", readOnly = true)
     private String bundleAlias;
     @NoXss
+    @Length(fieldName = "alias")
     @ApiModelProperty(position = 5, value = "Unique alias that is used in dashboards as a reference widget type", readOnly = true)
     private String alias;
     @NoXss
+    @Length(fieldName = "name")
     @ApiModelProperty(position = 6, value = "Widget name used in search and UI", readOnly = true)
     private String name;
 

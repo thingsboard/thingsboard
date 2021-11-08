@@ -66,9 +66,9 @@ export class AssetComponent extends EntityComponent<AssetInfo> {
   buildForm(entity: AssetInfo): FormGroup {
     return this.fb.group(
       {
-        name: [entity ? entity.name : '', [Validators.required]],
-        type: [entity ? entity.type : null, [Validators.required]],
-        label: [entity ? entity.label : ''],
+        name: [entity ? entity.name : '', [Validators.required, Validators.maxLength(255)]],
+        type: [entity ? entity.type : null, [Validators.required, Validators.maxLength(255)]],
+        label: [entity ? entity.label : '', Validators.maxLength(255)],
         additionalInfo: this.fb.group(
           {
             description: [entity && entity.additionalInfo ? entity.additionalInfo.description : ''],

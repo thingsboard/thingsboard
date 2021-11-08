@@ -24,6 +24,8 @@ import java.io.Serializable;
 @Data
 public class ClaimData implements Serializable {
 
+    private static final long serialVersionUID = -3922621193389915930L;
+
     private final String secretKey;
     private final long expirationTime;
 

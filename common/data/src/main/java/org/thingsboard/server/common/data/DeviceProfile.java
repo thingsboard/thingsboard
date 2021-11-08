@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.Valid;
@@ -42,14 +43,18 @@ import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalIn
 @Slf4j
 public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements HasName, HasTenantId, HasOtaPackage {
 
+    private static final long serialVersionUID = 6998485460273302018L;
+
     @ApiModelProperty(position = 3, value = "JSON object with Tenant Id that owns the profile.", readOnly = true)
     private TenantId tenantId;
     @NoXss
+    @Length(fieldName = "name")
     @ApiModelProperty(position = 4, value = "Unique Device Profile Name in scope of Tenant.", example = "Moisture Sensor")
     private String name;
     @NoXss
     @ApiModelProperty(position = 11, value = "Device Profile description. ")
     private String description;
+    @Length(fieldName = "image", max = 1000000)
     @ApiModelProperty(position = 12, value = "Either URL or Base64 data of the icon. Used in the mobile application to visualize set of device profiles in the grid view. ")
     private String image;
     private boolean isDefault;

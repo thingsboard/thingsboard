@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.Length;
 
 import java.util.List;
 
@@ -49,6 +50,7 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, Ha
     private CustomerId customerId;
 
     @ApiModelProperty(position = 6, required = true, value = "representing type of the Alarm", example = "High Temperature Alarm")
+    @Length(fieldName = "type")
     private String type;
     @ApiModelProperty(position = 7, required = true, value = "JSON object with alarm originator id")
     private EntityId originator;

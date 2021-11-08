@@ -43,6 +43,17 @@ return '';
 {:copy-code}
 ```
 
+* Present ticks in decimal format (1196 => 1,196.0):
+
+```javascript
+var value = value / 1;
+function numberWithCommas(x) {
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+return value ? numberWithCommas(value.toFixed(1)) : '';
+{:copy-code}
+```
+
 <ul>
 <li>
 To present axis ticks for true / false or 1 / 0 data.<br> 

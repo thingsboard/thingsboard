@@ -36,10 +36,10 @@ public interface EntityId extends HasUUID, Serializable { //NOSONAR, the constan
 
     UUID NULL_UUID = UUID.fromString("13814000-1dd2-11b2-8080-808080808080");
 
-    @ApiModelProperty(position = 1, required = true, value = "string", example = "784f394c-42b6-435a-983c-b7beff2784f9")
+    @ApiModelProperty(position = 1, required = true, value = "ID of the entity, time-based UUID v1", example = "784f394c-42b6-435a-983c-b7beff2784f9")
     UUID getId();
 
-    @ApiModelProperty(position = 2, required = true, value = "string", example = "DEVICE")
+    @ApiModelProperty(position = 2, required = true, example = "DEVICE")
     EntityType getEntityType();
 
     @JsonIgnore

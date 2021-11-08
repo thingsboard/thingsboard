@@ -23,6 +23,7 @@ import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @ApiModel
@@ -36,10 +37,13 @@ public class TbResourceInfo extends SearchTextBased<TbResourceId> implements Has
     @ApiModelProperty(position = 3, value = "JSON object with Tenant Id. Tenant Id of the resource can't be changed.", readOnly = true)
     private TenantId tenantId;
     @NoXss
+    @Length(fieldName = "title")
     @ApiModelProperty(position = 4, value = "Resource title.", example = "BinaryAppDataContainer id=19 v1.0")
     private String title;
     @ApiModelProperty(position = 5, value = "Resource type.", example = "LWM2M_MODEL", readOnly = true)
     private ResourceType resourceType;
+    @NoXss
+    @Length(fieldName = "resourceKey")
     @ApiModelProperty(position = 6, value = "Resource key.", example = "19_1.0", readOnly = true)
     private String resourceKey;
     @ApiModelProperty(position = 7, value = "Resource search text.", example = "19_1.0:binaryappdatacontainer", readOnly = true)

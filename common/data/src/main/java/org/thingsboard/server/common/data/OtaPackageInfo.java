@@ -27,6 +27,10 @@ import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
+import org.thingsboard.server.common.data.validation.Length;
+import org.thingsboard.server.common.data.validation.NoXss;
+import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 
 @ApiModel
 @Slf4j
@@ -42,22 +46,35 @@ public class OtaPackageInfo extends SearchTextBasedWithAdditionalInfo<OtaPackage
     private DeviceProfileId deviceProfileId;
     @ApiModelProperty(position = 5, value = "OTA Package type.", example = "FIRMWARE", readOnly = true)
     private OtaPackageType type;
+    @Length(fieldName = "title")
+    @NoXss
     @ApiModelProperty(position = 6, value = "OTA Package title.", example = "fw", readOnly = true)
     private String title;
+    @Length(fieldName = "version")
+    @NoXss
     @ApiModelProperty(position = 7, value = "OTA Package version.", example = "1.0", readOnly = true)
     private String version;
+    @Length(fieldName = "tag")
+    @NoXss
     @ApiModelProperty(position = 8, value = "OTA Package tag.", example = "fw_1.0", readOnly = true)
     private String tag;
+    @Length(fieldName = "url")
+    @NoXss
     @ApiModelProperty(position = 9, value = "OTA Package url.", example = "http://thingsboard.org/fw/1", readOnly = true)
     private String url;
     @ApiModelProperty(position = 10, value = "Indicates OTA Package 'has data'. Field is returned from DB ('true' if data exists or url is set).  If OTA Package 'has data' is 'false' we can not assign the OTA Package to the Device or Device Profile.", example = "true", readOnly = true)
     private boolean hasData;
+    @Length(fieldName = "file name")
+    @NoXss
     @ApiModelProperty(position = 11, value = "OTA Package file name.", example = "fw_1.0", readOnly = true)
     private String fileName;
+    @NoXss
+    @Length(fieldName = "contentType")
     @ApiModelProperty(position = 12, value = "OTA Package content type.", example = "APPLICATION_OCTET_STREAM", readOnly = true)
     private String contentType;
     @ApiModelProperty(position = 13, value = "OTA Package checksum algorithm.", example = "CRC32", readOnly = true)
     private ChecksumAlgorithm checksumAlgorithm;
+    @Length(fieldName = "checksum", max = 1020)
     @ApiModelProperty(position = 14, value = "OTA Package checksum.", example = "0xd87f7e0c", readOnly = true)
     private String checksum;
     @ApiModelProperty(position = 15, value = "OTA Package data size.", example = "8", readOnly = true)

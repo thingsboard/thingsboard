@@ -23,9 +23,8 @@ import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
-
-import java.util.Arrays;
 
 @ApiModel
 public class WidgetsBundle extends SearchTextBased<WidgetsBundleId> implements HasTenantId {
@@ -38,23 +37,27 @@ public class WidgetsBundle extends SearchTextBased<WidgetsBundleId> implements H
     private TenantId tenantId;
 
     @NoXss
+    @Length(fieldName = "alias")
     @Getter
     @Setter
     @ApiModelProperty(position = 4, value = "Unique alias that is used in widget types as a reference widget bundle", readOnly = true)
     private String alias;
 
     @NoXss
+    @Length(fieldName = "title")
     @Getter
     @Setter
     @ApiModelProperty(position = 5, value = "Title used in search and UI", readOnly = true)
     private String title;
 
+    @Length(fieldName = "image", max = 1000000)
     @Getter
     @Setter
     @ApiModelProperty(position = 6, value = "Base64 encoded thumbnail", readOnly = true)
     private String image;
 
     @NoXss
+    @Length(fieldName = "description")
     @Getter
     @Setter
     @ApiModelProperty(position = 7, value = "Description", readOnly = true)

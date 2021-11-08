@@ -71,7 +71,7 @@ public class RestJsonConverter {
     }
 
     private static KvEntry parseValue(String key, JsonNode value) {
-        if (!value.isObject()) {
+        if (!value.isContainerNode()) {
             if (value.isBoolean()) {
                 return new BooleanDataEntry(key, value.asBoolean());
             } else if (value.isNumber()) {

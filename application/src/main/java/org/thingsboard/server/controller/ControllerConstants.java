@@ -24,6 +24,7 @@ public class ControllerConstants {
     protected static final String CUSTOMER_ID = "customerId";
     protected static final String TENANT_ID = "tenantId";
     protected static final String DEVICE_ID = "deviceId";
+    protected static final String EDGE_ID = "edgeId";
     protected static final String RPC_ID = "rpcId";
     protected static final String ENTITY_ID = "entityId";
     protected static final String PAGE_DATA_PARAMETERS = "You can specify parameters to filter the results. " +
@@ -45,6 +46,7 @@ public class ControllerConstants {
     protected static final String OTA_PACKAGE_ID_PARAM_DESCRIPTION = "A string value representing the ota package id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     protected static final String ENTITY_TYPE_PARAM_DESCRIPTION = "A string value representing the entity type. For example, 'DEVICE'";
     protected static final String RULE_CHAIN_ID_PARAM_DESCRIPTION = "A string value representing the rule chain id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
+    protected static final String RULE_NODE_ID_PARAM_DESCRIPTION = "A string value representing the rule node id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     protected static final String WIDGET_BUNDLE_ID_PARAM_DESCRIPTION = "A string value representing the widget bundle id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     protected static final String WIDGET_TYPE_ID_PARAM_DESCRIPTION = "A string value representing the widget type id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     protected static final String RESOURCE_ID_PARAM_DESCRIPTION = "A string value representing the resource id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
@@ -129,9 +131,9 @@ public class ControllerConstants {
     protected static final String EVENT_END_TIME_DESCRIPTION = "Timestamp. Events with creation time after it won't be queried.";
 
     protected static final String EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION = "Unassignment works in async way - first, 'unassign' notification event pushed to edge queue on platform. ";
-    protected static final String EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION = "(Edge will receive this instantly, if it's currently connected, or once it's going to be connected to platform)";
+    protected static final String EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION = "(Edge will receive this instantly, if it's currently connected, or once it's going to be connected to platform). ";
     protected static final String EDGE_ASSIGN_ASYNC_FIRST_STEP_DESCRIPTION = "Assignment works in async way - first, notification event pushed to edge service queue on platform. ";
-    protected static final String EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION = "(Edge will receive this instantly, if it's currently connected, or once it's going to be connected to platform)";
+    protected static final String EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION = "(Edge will receive this instantly, if it's currently connected, or once it's going to be connected to platform). ";
 
     protected static final String MARKDOWN_CODE_BLOCK_START = "```json\n";
     protected static final String MARKDOWN_CODE_BLOCK_END = "\n```";

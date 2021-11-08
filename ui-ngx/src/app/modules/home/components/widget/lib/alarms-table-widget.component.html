@@ -136,7 +136,7 @@
       </table>
       <span [fxShow]="(alarmsDatasource.isEmpty() | async) && !alarmsDatasource.dataLoading"
             fxLayoutAlign="center center"
-            class="no-data-found" translate>alarm.no-alarms-prompt</span>
+            class="no-data-found">{{ noDataDisplayMessageText }}</span>
       <span [fxShow]="alarmsDatasource.dataLoading"
             fxLayoutAlign="center center"
             class="no-data-found">{{ 'common.loading' | translate }}</span>

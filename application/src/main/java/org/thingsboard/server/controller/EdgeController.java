@@ -453,17 +453,17 @@ public class EdgeController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Set root rule chain for provided edge (setRootRuleChain)",
+    @ApiOperation(value = "Set root rule chain for provided edge (setEdgeRootRuleChain)",
             notes = "Change root rule chain of the edge to the new provided rule chain. \n" +
                     "This operation will send a notification to update root rule chain on remote edge service." + TENANT_AUTHORITY_PARAGRAPH,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/{ruleChainId}/root", method = RequestMethod.POST)
     @ResponseBody
-    public Edge setRootRuleChain(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
-                                 @PathVariable(EDGE_ID) String strEdgeId,
-                                 @ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION, required = true)
-                                 @PathVariable("ruleChainId") String strRuleChainId) throws ThingsboardException {
+    public Edge setEdgeRootRuleChain(@ApiParam(value = EDGE_ID_PARAM_DESCRIPTION, required = true)
+                                     @PathVariable(EDGE_ID) String strEdgeId,
+                                     @ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION, required = true)
+                                     @PathVariable("ruleChainId") String strRuleChainId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
         checkParameter("ruleChainId", strRuleChainId);
         try {
@@ -737,6 +737,9 @@ public class EdgeController extends BaseController {
         edge.setEdgeLicenseKey(null);
     }
 
+    @ApiOperation(value = "Check edge license (checkInstance)",
+            notes = "Checks license request from edge service by forwarding request to license portal.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @RequestMapping(value = "/license/checkInstance", method = RequestMethod.POST)
     @ResponseBody
     public ResponseEntity<JsonNode> checkInstance(@RequestBody JsonNode request) throws ThingsboardException {
@@ -749,6 +752,9 @@ public class EdgeController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Activate edge instance (activateInstance)",
+            notes = "Activates edge license on license portal.",
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @RequestMapping(value = "/license/activateInstance", params = {"licenseSecret", "releaseDate"}, method = RequestMethod.POST)
     @ResponseBody
     public ResponseEntity<JsonNode> activateInstance(@RequestParam String licenseSecret,

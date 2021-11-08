@@ -5,7 +5,7 @@
 
 *function Generate(prevMsg, prevMetadata, prevMsgType): {msg: object, metadata: object, msgType: string}*
 
-JavaScript function generating new message using previous Message payload, Metadata and Message type as input arguments.
+JavaScript function generating new Message using previous Message payload, Metadata and Message type as input arguments.
 
 **Parameters:**
 
@@ -24,13 +24,13 @@ Should return the object with the following structure:
 
 ```javascript
 { 
-   msg?: {[key: string]: any},
-   metadata?: {[key: string]: string},
-   msgType?: string
+   msg: {[key: string]: any},
+   metadata: {[key: string]: string},
+   msgType: string
 }
 ```
 
-All fields in resulting object are optional and will be taken from previously generated Message if not specified.
+All fields in resulting object are mandatory.
 
 <div class="divider"></div>
 
@@ -39,14 +39,11 @@ All fields in resulting object are optional and will be taken from previously ge
 * Generate message of type `POST_TELEMETRY_REQUEST` with random `temperature` value from `18` to `32`:
 
 ```javascript
-var temperature = 18 + Math.random() * 14;
+var temperature = 18 + Math.random() * (32 - 18);
 // Round to at most 2 decimal places (optional)
 temperature = Math.round( temperature * 100 ) / 100;
 var msg = { temperature: temperature };
-var metadata = {};
-var msgType = "POST_TELEMETRY_REQUEST";
-
-return { msg: msg, metadata: metadata, msgType: msgType };
+return { msg: msg, metadata: {}, msgType: "POST_TELEMETRY_REQUEST" };
 {:copy-code}
 ```
 
@@ -62,9 +59,7 @@ and <strong>metadata</strong> with field <code>data</code> having value <code>40
 ```javascript
 var msg = { temp: 42, humidity: 77 };
 var metadata = { data: 40 };
-var msgType = "POST_TELEMETRY_REQUEST";
-
-return { msg: msg, metadata: metadata, msgType: msgType };
+return { msg: msg, metadata: metadata, msgType: "POST_TELEMETRY_REQUEST" };
 {:copy-code}
 ```
 
@@ -108,9 +103,8 @@ if (isDecrement === 'true') {
 
 var msg = { temperature: temperature };
 var metadata = { isDecrement: isDecrement };
-var msgType = "POST_TELEMETRY_REQUEST";
 
-return { msg: msg, metadata: metadata, msgType: msgType };
+return { msg: msg, metadata: metadata, msgType: "POST_TELEMETRY_REQUEST" };
 {:copy-code}
 ```
 

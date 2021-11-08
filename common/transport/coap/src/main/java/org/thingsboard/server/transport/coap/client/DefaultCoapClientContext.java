@@ -435,8 +435,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
             TbCoapObservationState attrs = state.getAttrs();
             if (attrs != null) {
                 try {
-                    boolean conRequest = AbstractSyncSessionCallback.isConRequest(state.getAttrs());
-                    Response response = state.getAdaptor().convertToPublish(conRequest, msg);
+                    Response response = state.getAdaptor().convertToPublish(msg);
                     respond(attrs.getExchange(), response, state.getContentFormat());
                 } catch (AdaptorException e) {
                     log.trace("Failed to reply due to error", e);
@@ -466,7 +465,8 @@ public class DefaultCoapClientContext implements CoapClientContext {
                 try {
                     boolean conRequest = AbstractSyncSessionCallback.isConRequest(state.getAttrs());
                     int requestId = getNextMsgId();
-                    Response response = state.getAdaptor().convertToPublish(conRequest, msg);
+                    Response response = state.getAdaptor().convertToPublish(msg);
+                    response.setConfirmable(conRequest);
                     response.setMID(requestId);
                     if (conRequest) {
                         response.addMessageObserver(new TbCoapMessageObserver(requestId, id -> awake(state), id -> asleep(state)));
@@ -527,7 +527,8 @@ public class DefaultCoapClientContext implements CoapClientContext {
             String error = null;
             boolean conRequest = AbstractSyncSessionCallback.isConRequest(state.getRpc());
             try {
-                Response response = state.getAdaptor().convertToPublish(conRequest, msg, state.getConfiguration().getRpcRequestDynamicMessageBuilder());
+                Response response = state.getAdaptor().convertToPublish(msg, state.getConfiguration().getRpcRequestDynamicMessageBuilder());
+                response.setConfirmable(conRequest);
                 int requestId = getNextMsgId();
                 response.setMID(requestId);
                 if (conRequest) {

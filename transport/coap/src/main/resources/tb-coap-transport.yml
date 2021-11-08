@@ -98,17 +98,33 @@ transport:
       bind_address: "${COAP_DTLS_BIND_ADDRESS:0.0.0.0}"
       # CoAP DTLS bind port
       bind_port: "${COAP_DTLS_BIND_PORT:5684}"
-      # Path to the key store that holds the certificate
-      key_store: "${COAP_DTLS_KEY_STORE:coapserver.jks}"
-      # Password used to access the key store
-      key_store_password: "${COAP_DTLS_KEY_STORE_PASSWORD:server_ks_password}"
-      # Password used to access the key
-      key_password: "${COAP_DTLS_KEY_PASSWORD:server_key_password}"
-      # Key alias
-      key_alias: "${COAP_DTLS_KEY_ALIAS:serveralias}"
-      # Skip certificate validity check for client certificates.
-      skip_validity_check_for_client_cert: "${COAP_DTLS_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
+      # Server DTLS credentials
+      credentials:
+        # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
+        type:  "${COAP_DTLS_CREDENTIALS_TYPE:PEM}"
+        # PEM server credentials
+        pem:
+          # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
+          cert_file: "${COAP_DTLS_PEM_CERT:coapserver.pem}"
+          # Path to the server certificate private key file (optional)
+          key_file: "${COAP_DTLS_PEM_KEY:coapserver_key.pem}"
+          # Server certificate private key password (optional)
+          key_password: "${COAP_DTLS_PEM_KEY_PASSWORD:server_key_password}"
+        # Keystore server credentials
+        keystore:
+          # Type of the key store
+          type: "${COAP_DTLS_KEY_STORE_TYPE:JKS}"
+          # Path to the key store that holds the SSL certificate
+          store_file: "${COAP_DTLS_KEY_STORE:coapserver.jks}"
+          # Password used to access the key store
+          store_password: "${COAP_DTLS_KEY_STORE_PASSWORD:server_ks_password}"
+          # Key alias
+          key_alias: "${COAP_DTLS_KEY_ALIAS:serveralias}"
+          # Password used to access the key
+          key_password: "${COAP_DTLS_KEY_PASSWORD:server_key_password}"
       x509:
+        # Skip certificate validity check for client certificates.
+        skip_validity_check_for_client_cert: "${TB_COAP_X509_DTLS_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
         dtls_session_inactivity_timeout: "${TB_COAP_X509_DTLS_SESSION_INACTIVITY_TIMEOUT:86400000}"
         dtls_session_report_timeout: "${TB_COAP_X509_DTLS_SESSION_REPORT_TIMEOUT:1800000}"
   sessions:

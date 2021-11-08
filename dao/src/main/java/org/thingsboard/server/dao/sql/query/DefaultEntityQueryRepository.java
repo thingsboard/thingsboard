@@ -389,6 +389,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             } else {
                 entityTypeStr = "'" + entityType.name() + "'";
             }
+
             if (!StringUtils.isEmpty(entityFieldsSelection)) {
                 entityFieldsSelection = String.format("e.id id, %s entity_type, %s", entityTypeStr, entityFieldsSelection);
             } else {
@@ -442,10 +443,10 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                     EntityKeyMapping sortOrderMapping = sortOrderMappingOpt.get();
                     String direction = sortOrder.getDirection() == EntityDataSortOrder.Direction.ASC ? "asc" : "desc";
                     if (sortOrderMapping.getEntityKey().getType() == EntityKeyType.ENTITY_FIELD) {
-                        dataQuery = String.format("%s order by %s %s", dataQuery, sortOrderMapping.getValueAlias(), direction);
+                        dataQuery = String.format("%s order by %s %s, result.id %s", dataQuery, sortOrderMapping.getValueAlias(), direction, direction);
                     } else {
-                        dataQuery = String.format("%s order by %s %s, %s %s", dataQuery,
-                                sortOrderMapping.getSortOrderNumAlias(), direction, sortOrderMapping.getSortOrderStrAlias(), direction);
+                        dataQuery = String.format("%s order by %s %s, %s %s, result.id %s", dataQuery,
+                                sortOrderMapping.getSortOrderNumAlias(), direction, sortOrderMapping.getSortOrderStrAlias(), direction, direction);
                     }
                 }
             }

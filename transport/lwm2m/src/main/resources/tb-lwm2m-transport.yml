@@ -111,9 +111,33 @@ transport:
       security:
         bind_address: "${LWM2M_SECURITY_BIND_ADDRESS:0.0.0.0}"
         bind_port: "${LWM2M_SECURITY_BIND_PORT:5686}"
+        # Server X509 Certificates support
+        credentials:
+          # Whether to enable LWM2M server X509 Certificate/RPK support
+          enabled: "${LWM2M_SERVER_CREDENTIALS_ENABLED:true}"
+          # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
+          type: "${LWM2M_SERVER_CREDENTIALS_TYPE:PEM}"
+          # PEM server credentials
+          pem:
+            # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
+            cert_file: "${LWM2M_SERVER_PEM_CERT:lwm2mserver.pem}"
+            # Path to the server certificate private key file (optional)
+            key_file: "${LWM2M_SERVER_PEM_KEY:lwm2mserver_key.pem}"
+            # Server certificate private key password (optional)
+            key_password: "${LWM2M_SERVER_PEM_KEY_PASSWORD:server_key_password}"
+          # Keystore server credentials
+          keystore:
+            # Type of the key store
+            type: "${LWM2M_SERVER_KEY_STORE_TYPE:JKS}"
+            # Path to the key store that holds the SSL certificate
+            store_file: "${LWM2M_SERVER_KEY_STORE:lwm2mserver.jks}"
+            # Password used to access the key store
+            store_password: "${LWM2M_SERVER_KEY_STORE_PASSWORD:server_ks_password}"
+            # Key alias
+            key_alias: "${LWM2M_SERVER_KEY_ALIAS:server}"
+            # Password used to access the key
+            key_password: "${LWM2M_SERVER_KEY_PASSWORD:server_ks_password}"
         # Only Certificate_x509:
-        key_alias: "${LWM2M_SERVER_KEY_ALIAS:server}"
-        key_password: "${LWM2M_SERVER_KEY_PASSWORD:server_ks_password}"
         skip_validity_check_for_client_cert: "${TB_LWM2M_SERVER_SECURITY_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
     bootstrap:
       enable: "${LWM2M_ENABLED_BS:true}"
@@ -123,18 +147,51 @@ transport:
       security:
         bind_address: "${LWM2M_BS_SECURITY_BIND_ADDRESS:0.0.0.0}"
         bind_port: "${LWM2M_BS_SECURITY_BIND_PORT:5688}"
-        # Only Certificate_x509:
-        key_alias: "${LWM2M_BS_KEY_ALIAS:bootstrap}"
-        key_password: "${LWM2M_BS_KEY_PASSWORD:server_ks_password}"
+        # Bootstrap server X509 Certificates support
+        credentials:
+          # Whether to enable LWM2M bootstrap server X509 Certificate/RPK support
+          enabled: "${LWM2M_BS_CREDENTIALS_ENABLED:true}"
+          # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
+          type:  "${LWM2M_BS_CREDENTIALS_TYPE:PEM}"
+          # PEM server credentials
+          pem:
+            # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
+            cert_file: "${LWM2M_BS_PEM_CERT:lwm2mserver.pem}"
+            # Path to the server certificate private key file (optional)
+            key_file: "${LWM2M_BS_PEM_KEY:lwm2mserver_key.pem}"
+            # Server certificate private key password (optional)
+            key_password: "${LWM2M_BS_PEM_KEY_PASSWORD:server_key_password}"
+          # Keystore server credentials
+          keystore:
+            # Type of the key store
+            type: "${LWM2M_BS_KEY_STORE_TYPE:JKS}"
+            # Path to the key store that holds the SSL certificate
+            store_file: "${LWM2M_BS_KEY_STORE:lwm2mserver.jks}"
+            # Password used to access the key store
+            store_password: "${LWM2M_BS_KEY_STORE_PASSWORD:server_ks_password}"
+            # Key alias
+            key_alias: "${LWM2M_BS_KEY_ALIAS:bootstrap}"
+            # Password used to access the key
+            key_password: "${LWM2M_BS_KEY_PASSWORD:server_ks_password}"
     security:
-      # Certificate_x509:
-      # To get helps about files format and how to generate it, see: https://github.com/eclipse/leshan/wiki/Credential-files-format
-      # Create new X509 Certificates: common/transport/lwm2m/src/main/resources/credentials/shell/lwM2M_credentials.sh
-      key_store_type: "${LWM2M_KEYSTORE_TYPE:JKS}"
-      # key_store_path_file: "${KEY_STORE_PATH_FILE:/common/transport/lwm2m/src/main/resources/credentials/serverKeyStore.jks"
-      key_store: "${LWM2M_KEYSTORE:lwm2mserver.jks}"
-      key_store_password: "${LWM2M_KEYSTORE_PASSWORD:server_ks_password}"
-      root_alias: "${LWM2M_SERVER_ROOT_CA_ALIAS:rootca}"
+      # X509 trust certificates
+      trust-credentials:
+        # Whether to load X509 trust certificates
+        enabled: "${LWM2M_TRUST_CREDENTIALS_ENABLED:true}"
+        # Trust certificates store type (PEM - pem certificates file; KEYSTORE - java keystore)
+        type:  "${LWM2M_TRUST_CREDENTIALS_TYPE:PEM}"
+        # PEM certificates
+        pem:
+          # Path to the certificates file (holds trust certificates)
+          cert_file: "${LWM2M_TRUST_PEM_CERT:lwm2mserver.pem}"
+        # Keystore with trust certificates
+        keystore:
+          # Type of the key store
+          type: "${LWM2M_TRUST_KEY_STORE_TYPE:JKS}"
+          # Path to the key store that holds the X509 certificates
+          store_file: "${LWM2M_TRUST_KEY_STORE:lwm2mserver.jks}"
+          # Password used to access the key store
+          store_password: "${LWM2M_TRUST_KEY_STORE_PASSWORD:server_ks_password}"
       recommended_ciphers: "${LWM2M_RECOMMENDED_CIPHERS:false}"
       recommended_supported_groups: "${LWM2M_RECOMMENDED_SUPPORTED_GROUPS:true}"
     timeout: "${LWM2M_TIMEOUT:120000}"

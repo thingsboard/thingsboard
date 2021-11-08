@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @ApiModel
@@ -41,6 +42,7 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
     @ApiModelProperty(position = 3, required = true, value = "JSON object with Tenant Id.", readOnly = true)
     private TenantId tenantId;
     @NoXss
+    @Length(fieldName = "name")
     @ApiModelProperty(position = 4, required = true, value = "Rule Chain name", example = "Humidity data processing")
     private String name;
     @ApiModelProperty(position = 5, value = "Rule Chain type. 'EDGE' rule chains are processing messages on the edge devices only.", example = "A4B72CCDFF33")

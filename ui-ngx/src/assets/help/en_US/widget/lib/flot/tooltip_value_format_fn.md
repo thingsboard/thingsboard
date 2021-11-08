@@ -36,5 +36,16 @@ return value.toFixed(2) + ' A';
 {:copy-code}
 ```
 
+* Present the datapoint value in decimal format (1196 => 1,196.0):
+
+```javascript
+var value = value / 1;
+function numberWithCommas(x) {
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+return value ? numberWithCommas(value.toFixed(1)) : '';
+{:copy-code}
+```
+
 <br>
 <br>

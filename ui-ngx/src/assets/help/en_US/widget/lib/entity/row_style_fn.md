@@ -27,6 +27,16 @@ Should return key/value object presenting style attributes.
 
 ##### Examples
 
+* Set color and font-weight table row:
+
+```javascript
+return {
+  color:'rgb(0, 132, 214)',
+  fontWeight: 600
+}
+{:copy-code}
+```
+
 * Set row background color depending on device type:
 
 ```javascript

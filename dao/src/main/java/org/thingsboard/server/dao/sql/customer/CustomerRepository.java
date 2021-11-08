@@ -30,7 +30,7 @@ import java.util.UUID;
 public interface CustomerRepository extends PagingAndSortingRepository<CustomerEntity, UUID> {
 
     @Query("SELECT c FROM CustomerEntity c WHERE c.tenantId = :tenantId " +
-            "AND LOWER(c.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+            "AND LOWER(c.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<CustomerEntity> findByTenantId(@Param("tenantId") UUID tenantId,
                                         @Param("textSearch") String textSearch,
                                         Pageable pageable);

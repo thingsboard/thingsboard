@@ -18,18 +18,19 @@ package org.thingsboard.server.service.device;
 import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
@@ -45,17 +46,10 @@ import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.importing.AbstractBulkImportService;
 import org.thingsboard.server.service.importing.BulkImportColumnType;
-import org.thingsboard.server.service.importing.BulkImportRequest;
-import org.thingsboard.server.service.importing.ImportedEntityInfo;
-import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.AccessControlService;
-import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.util.Collection;
 import java.util.EnumSet;
@@ -68,6 +62,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 @TbCoreComponent
+@RequiredArgsConstructor
 public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
     protected final DeviceService deviceService;
     protected final DeviceCredentialsService deviceCredentialsService;
@@ -75,33 +70,33 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
 
     private final Lock findOrCreateDeviceProfileLock = new ReentrantLock();
 
-    public DeviceBulkImportService(TelemetrySubscriptionService tsSubscriptionService, TbTenantProfileCache tenantProfileCache,
-                                   AccessControlService accessControlService, AccessValidator accessValidator,
-                                   EntityActionService entityActionService, TbClusterService clusterService,
-                                   DeviceService deviceService, DeviceCredentialsService deviceCredentialsService,
-                                   DeviceProfileService deviceProfileService) {
-        super(tsSubscriptionService, tenantProfileCache, accessControlService, accessValidator, entityActionService, clusterService);
-        this.deviceService = deviceService;
-        this.deviceCredentialsService = deviceCredentialsService;
-        this.deviceProfileService = deviceProfileService;
+    @Override
+    protected void setEntityFields(Device entity, Map<BulkImportColumnType, String> fields) {
+        ObjectNode additionalInfo = (ObjectNode) Optional.ofNullable(entity.getAdditionalInfo()).orElseGet(JacksonUtil::newObjectNode);
+        fields.forEach((columnType, value) -> {
+            switch (columnType) {
+                case NAME:
+                    entity.setName(value);
+                    break;
+                case TYPE:
+                    entity.setType(value);
+                    break;
+                case LABEL:
+                    entity.setLabel(value);
+                    break;
+                case DESCRIPTION:
+                    additionalInfo.set("description", new TextNode(value));
+                    break;
+                case IS_GATEWAY:
+                    additionalInfo.set("gateway", BooleanNode.valueOf(Boolean.parseBoolean(value)));
+                    break;
+            }
+            entity.setAdditionalInfo(additionalInfo);
+        });
     }
 
     @Override
-    protected ImportedEntityInfo<Device> saveEntity(BulkImportRequest importRequest, Map<BulkImportColumnType, String> fields, SecurityUser user) {
-        ImportedEntityInfo<Device> importedEntityInfo = new ImportedEntityInfo<>();
-
-        Device device = new Device();
-        device.setTenantId(user.getTenantId());
-        setDeviceFields(device, fields);
-
-        Device existingDevice = deviceService.findDeviceByTenantIdAndName(user.getTenantId(), device.getName());
-        if (existingDevice != null && importRequest.getMapping().getUpdate()) {
-            importedEntityInfo.setOldEntity(new Device(existingDevice));
-            importedEntityInfo.setUpdated(true);
-            existingDevice.updateDevice(device);
-            device = existingDevice;
-        }
-
+    protected Device saveEntity(Device entity, Map<BulkImportColumnType, String> fields) {
         DeviceCredentials deviceCredentials;
         try {
             deviceCredentials = createDeviceCredentials(fields);
@@ -112,42 +107,27 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
 
         DeviceProfile deviceProfile;
         if (deviceCredentials.getCredentialsType() == DeviceCredentialsType.LWM2M_CREDENTIALS) {
-            deviceProfile = setUpLwM2mDeviceProfile(user.getTenantId(), device);
-        } else if (StringUtils.isNotEmpty(device.getType())) {
-            deviceProfile = deviceProfileService.findOrCreateDeviceProfile(user.getTenantId(), device.getType());
+            deviceProfile = setUpLwM2mDeviceProfile(entity.getTenantId(), entity);
+        } else if (StringUtils.isNotEmpty(entity.getType())) {
+            deviceProfile = deviceProfileService.findOrCreateDeviceProfile(entity.getTenantId(), entity.getType());
         } else {
-            deviceProfile = deviceProfileService.findDefaultDeviceProfile(user.getTenantId());
+            deviceProfile = deviceProfileService.findDefaultDeviceProfile(entity.getTenantId());
         }
-        device.setDeviceProfileId(deviceProfile.getId());
+        entity.setDeviceProfileId(deviceProfile.getId());
 
-        device = deviceService.saveDeviceWithCredentials(device, deviceCredentials);
-
-        importedEntityInfo.setEntity(device);
-        return importedEntityInfo;
+        return deviceService.saveDeviceWithCredentials(entity, deviceCredentials);
     }
 
-    private void setDeviceFields(Device device, Map<BulkImportColumnType, String> fields) {
-        ObjectNode additionalInfo = (ObjectNode) Optional.ofNullable(device.getAdditionalInfo()).orElseGet(JacksonUtil::newObjectNode);
-        fields.forEach((columnType, value) -> {
-            switch (columnType) {
-                case NAME:
-                    device.setName(value);
-                    break;
-                case TYPE:
-                    device.setType(value);
-                    break;
-                case LABEL:
-                    device.setLabel(value);
-                    break;
-                case DESCRIPTION:
-                    additionalInfo.set("description", new TextNode(value));
-                    break;
-                case IS_GATEWAY:
-                    additionalInfo.set("gateway", BooleanNode.valueOf(Boolean.parseBoolean(value)));
-                    break;
-            }
-            device.setAdditionalInfo(additionalInfo);
-        });
+    @Override
+    protected Device findOrCreateEntity(TenantId tenantId, String name) {
+        return Optional.ofNullable(deviceService.findDeviceByTenantIdAndName(tenantId, name))
+                .orElseGet(Device::new);
+    }
+
+    @Override
+    protected void setOwners(Device entity, SecurityUser user) {
+        entity.setTenantId(user.getTenantId());
+        entity.setCustomerId(user.getCustomerId());
     }
 
     @SneakyThrows
@@ -271,6 +251,11 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
                 objectNode.set(column.getKey(), new TextNode(value));
             }
         }
+    }
+
+    @Override
+    protected EntityType getEntityType() {
+        return EntityType.DEVICE;
     }
 
 }

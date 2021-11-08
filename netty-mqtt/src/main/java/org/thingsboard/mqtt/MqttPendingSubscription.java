@@ -30,15 +30,16 @@ final class MqttPendingSubscription {
     private final Set<MqttPendingHandler> handlers = new HashSet<>();
     private final MqttSubscribeMessage subscribeMessage;
 
-    private final RetransmissionHandler<MqttSubscribeMessage> retransmissionHandler = new RetransmissionHandler<>();
+    private final RetransmissionHandler<MqttSubscribeMessage> retransmissionHandler;
 
     private boolean sent = false;
 
-    MqttPendingSubscription(Promise<Void> future, String topic, MqttSubscribeMessage message) {
+    MqttPendingSubscription(Promise<Void> future, String topic, MqttSubscribeMessage message, PendingOperation operation) {
         this.future = future;
         this.topic = topic;
         this.subscribeMessage = message;
 
+        this.retransmissionHandler = new RetransmissionHandler<>(operation);
         this.retransmissionHandler.setOriginalMessage(message);
     }
 
@@ -62,7 +63,7 @@ final class MqttPendingSubscription {
         return subscribeMessage;
     }
 
-    void addHandler(MqttHandler handler, boolean once){
+    void addHandler(MqttHandler handler, boolean once) {
         this.handlers.add(new MqttPendingHandler(handler, once));
     }
 
@@ -71,14 +72,14 @@ final class MqttPendingSubscription {
     }
 
     void startRetransmitTimer(EventLoop eventLoop, Consumer<Object> sendPacket) {
-        if(this.sent){ //If the packet is sent, we can start the retransmit timer
+        if (this.sent) { //If the packet is sent, we can start the retransmit timer
             this.retransmissionHandler.setHandle((fixedHeader, originalMessage) ->
                     sendPacket.accept(new MqttSubscribeMessage(fixedHeader, originalMessage.variableHeader(), originalMessage.payload())));
             this.retransmissionHandler.start(eventLoop);
         }
     }
 
-    void onSubackReceived(){
+    void onSubackReceived() {
         this.retransmissionHandler.stop();
     }
 
@@ -98,5 +99,9 @@ final class MqttPendingSubscription {
         boolean isOnce() {
             return once;
         }
+    }
+
+    void onChannelClosed() {
+        this.retransmissionHandler.stop();
     }
 }

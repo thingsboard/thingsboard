@@ -37,15 +37,15 @@ export abstract class ContactBasedComponent<T extends ContactBased<HasId>> exten
 
   buildForm(entity: T): FormGroup {
     const entityForm = this.buildEntityForm(entity);
-    entityForm.addControl('country', this.fb.control(entity ? entity.country : '', []));
-    entityForm.addControl('city', this.fb.control(entity ? entity.city : '', []));
-    entityForm.addControl('state', this.fb.control(entity ? entity.state : '', []));
+    entityForm.addControl('country', this.fb.control(entity ? entity.country : '', [Validators.maxLength(255)]));
+    entityForm.addControl('city', this.fb.control(entity ? entity.city : '', [Validators.maxLength(255)]));
+    entityForm.addControl('state', this.fb.control(entity ? entity.state : '', [Validators.maxLength(255)]));
     entityForm.addControl('zip', this.fb.control(entity ? entity.zip : '',
       this.zipValidators(entity ? entity.country : '')
     ));
     entityForm.addControl('address', this.fb.control(entity ? entity.address : '', []));
     entityForm.addControl('address2', this.fb.control(entity ? entity.address2 : '', []));
-    entityForm.addControl('phone', this.fb.control(entity ? entity.phone : '', []));
+    entityForm.addControl('phone', this.fb.control(entity ? entity.phone : '', [Validators.maxLength(255)]));
     entityForm.addControl('email', this.fb.control(entity ? entity.email : '', [Validators.email]));
     return entityForm;
   }
