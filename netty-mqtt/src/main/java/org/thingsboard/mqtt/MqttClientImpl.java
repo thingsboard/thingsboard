@@ -55,6 +55,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 
 /**
  * Represents an MqttClientImpl connected to a single MQTT server. Will try to keep the connection going at all times
@@ -160,6 +161,7 @@ final class MqttClientImpl implements MqttClient {
                     subscriptions.clear();
                     pendingServerUnsubscribes.clear();
                     qos2PendingIncomingPublishes.clear();
+                    pendingPublishes.forEach((id, mqttPendingPublish) -> mqttPendingPublish.onChannelClosed());
                     pendingPublishes.clear();
                     pendingSubscribeTopics.clear();
                     handlerToSubscribtion.clear();
@@ -366,20 +368,24 @@ final class MqttClientImpl implements MqttClient {
         ChannelFuture channelFuture = this.sendAndFlushPacket(message);
 
         if (channelFuture != null) {
-            pendingPublish.setSent(true);
-            if (channelFuture.cause() != null) {
-                this.pendingPublishes.remove(pendingPublish.getMessageId());
-                future.setFailure(channelFuture.cause());
-                return future;
-            }
-        }
-        if (pendingPublish.isSent() && pendingPublish.getQos() == MqttQoS.AT_MOST_ONCE) {
-            this.pendingPublishes.remove(pendingPublish.getMessageId());
-            pendingPublish.getFuture().setSuccess(null); //We don't get an ACK for QOS 0
-        } else if (pendingPublish.isSent()) {
-            pendingPublish.startPublishRetransmissionTimer(this.eventLoop.next(), this::sendAndFlushPacket);
+            channelFuture.addListener(result -> {
+                pendingPublish.setSent(true);
+                if (result.cause() != null) {
+                    pendingPublishes.remove(pendingPublish.getMessageId());
+                    future.setFailure(result.cause());
+                } else {
+                    if (pendingPublish.isSent() && pendingPublish.getQos() == MqttQoS.AT_MOST_ONCE) {
+                        pendingPublishes.remove(pendingPublish.getMessageId());
+                        pendingPublish.getFuture().setSuccess(null); //We don't get an ACK for QOS 0
+                    } else if (pendingPublish.isSent()) {
+                        pendingPublish.startPublishRetransmissionTimer(eventLoop.next(), MqttClientImpl.this::sendAndFlushPacket);
+                    } else {
+                        pendingPublishes.remove(pendingPublish.getMessageId());
+                    }
+                }
+            });
         } else {
-            this.pendingPublishes.remove(pendingPublish.getMessageId());
+            pendingPublishes.remove(pendingPublish.getMessageId());
         }
         return future;
     }
