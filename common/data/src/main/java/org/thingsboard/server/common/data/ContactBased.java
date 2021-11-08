@@ -44,6 +44,7 @@ public abstract class ContactBased<I extends UUIDBased> extends SearchTextBasedW
     @Length(fieldName = "phone")
     @NoXss
     protected String phone;
+    @Length(fieldName = "email")
     @NoXss
     protected String email;
 
