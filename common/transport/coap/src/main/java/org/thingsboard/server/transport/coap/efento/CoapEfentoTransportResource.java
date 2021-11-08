@@ -99,10 +99,9 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
                 break;
             case DEVICE_INFO:
             case CONFIGURATION:
-                Response response = new Response(CoAP.ResponseCode.CREATED);
+                //We respond only to confirmed requests in order to reduce battery consumption for Efento devices.
                 if (exchange.advanced().getRequest().isConfirmable()) {
-                    response.setAcknowledged(true);
-                    exchange.respond(response);
+                    exchange.respond(new Response(CoAP.ResponseCode.CREATED));
                 }
                 break;
             default:
