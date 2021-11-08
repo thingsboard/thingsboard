@@ -79,8 +79,8 @@ import { takeUntil } from 'rxjs/operators';
 })
 export class Lwm2mDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, Validator, OnDestroy {
 
+  public disabled = false;
   private requiredValue: boolean;
-  private disabled = false;
   private destroy$ = new Subject();
 
   bindingModeTypes = Object.values(BingingMode);

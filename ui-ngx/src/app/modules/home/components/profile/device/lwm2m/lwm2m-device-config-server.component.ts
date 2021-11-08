@@ -28,14 +28,17 @@ import {
 import {
   DEFAULT_PORT_BOOTSTRAP_NO_SEC,
   DEFAULT_PORT_SERVER_NO_SEC,
-  securityConfigMode,
-  securityConfigModeNames,
   ServerSecurityConfig
 } from './lwm2m-profile-config.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { Subject } from 'rxjs';
 import { mergeMap, takeUntil, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
+import {
+  Lwm2mPublicKeyOrIdTooltipTranslationsMap,
+  Lwm2mSecurityType,
+  Lwm2mSecurityTypeTranslationMap
+} from '@shared/models/lwm2m-security-config.models';
 
 @Component({
   selector: 'tb-profile-lwm2m-device-config-server',
@@ -56,15 +59,16 @@ import { Observable } from 'rxjs/internal/Observable';
 
 export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAccessor, Validator, OnDestroy {
 
-  private disabled = false;
+  public disabled = false;
   private destroy$ = new Subject();
 
   private isDataLoadedIntoCache = false;
 
   serverFormGroup: FormGroup;
-  securityConfigLwM2MType = securityConfigMode;
-  securityConfigLwM2MTypes = Object.keys(securityConfigMode);
-  credentialTypeLwM2MNamesMap = securityConfigModeNames;
+  securityConfigLwM2MType = Lwm2mSecurityType;
+  securityConfigLwM2MTypes = Object.keys(Lwm2mSecurityType);
+  credentialTypeLwM2MNamesMap = Lwm2mSecurityTypeTranslationMap;
+  publicKeyOrIdTooltipNamesMap = Lwm2mPublicKeyOrIdTooltipTranslationsMap;
   currentSecurityMode = null;
 
   @Input()
@@ -81,7 +85,7 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
       host: ['', Validators.required],
       port: [this.isBootstrapServer ? DEFAULT_PORT_BOOTSTRAP_NO_SEC : DEFAULT_PORT_SERVER_NO_SEC,
         [Validators.required, Validators.min(1), Validators.max(65535), Validators.pattern('[0-9]*')]],
-      securityMode: [securityConfigMode.NO_SEC],
+      securityMode: [Lwm2mSecurityType.NO_SEC],
       serverPublicKey: [''],
       clientHoldOffTime: ['', [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
       serverId: ['', [Validators.required, Validators.min(1), Validators.max(65534), Validators.pattern('[0-9]*')]],
@@ -136,16 +140,16 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
   registerOnTouched(fn: any): void {
   }
 
-  private updateValidate(securityMode: securityConfigMode): void {
+  private updateValidate(securityMode: Lwm2mSecurityType): void {
     switch (securityMode) {
-      case securityConfigMode.NO_SEC:
-      case securityConfigMode.PSK:
+      case Lwm2mSecurityType.NO_SEC:
+      case Lwm2mSecurityType.PSK:
         this.clearValidators();
         break;
-      case securityConfigMode.RPK:
+      case Lwm2mSecurityType.RPK:
         this.setValidators();
         break;
-      case securityConfigMode.X509:
+      case Lwm2mSecurityType.X509:
         this.setValidators();
         break;
     }
@@ -166,7 +170,7 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
     }
   }
 
-  private getLwm2mBootstrapSecurityInfo(securityMode = securityConfigMode.NO_SEC): Observable<ServerSecurityConfig> {
+  private getLwm2mBootstrapSecurityInfo(securityMode = Lwm2mSecurityType.NO_SEC): Observable<ServerSecurityConfig> {
     return this.deviceProfileService.getLwm2mBootstrapSecurityInfoBySecurityType(this.isBootstrapServer, securityMode).pipe(
       tap(() => this.isDataLoadedIntoCache = true)
     );
