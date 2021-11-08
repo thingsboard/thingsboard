@@ -15,6 +15,7 @@
 ///
 
 import { ValidatorFn, Validators } from '@angular/forms';
+import { Lwm2mSecurityType } from '@shared/models/lwm2m-security-config.models';
 
 export const PAGE_SIZE_LIMIT = 50;
 export const INSTANCES = 'instances';
@@ -95,22 +96,6 @@ export const AttributeNameTranslationMap = new Map<AttributeName, string>(
   ]
 );
 
-export enum securityConfigMode {
-  PSK = 'PSK',
-  RPK = 'RPK',
-  X509 = 'X509',
-  NO_SEC = 'NO_SEC'
-}
-
-export const securityConfigModeNames = new Map<securityConfigMode, string>(
-  [
-    [securityConfigMode.PSK, 'Pre-Shared Key'],
-    [securityConfigMode.RPK, 'Raw Public Key'],
-    [securityConfigMode.X509, 'X.509 Certificate'],
-    [securityConfigMode.NO_SEC, 'No Security']
-  ]
-);
-
 export enum PowerMode {
   PSM = 'PSM',
   DRX = 'DRX',
@@ -136,7 +121,7 @@ export interface BootstrapServersSecurityConfig {
 export interface ServerSecurityConfig {
   host?: string;
   port?: number;
-  securityMode: securityConfigMode;
+  securityMode: Lwm2mSecurityType;
   serverPublicKey?: string;
   clientHoldOffTime?: number;
   serverId?: number;
@@ -198,7 +183,7 @@ export function getDefaultBootstrapServerSecurityConfig(): ServerSecurityConfig 
     clientHoldOffTime: DEFAULT_CLIENT_HOLD_OFF_TIME,
     host: DEFAULT_LOCAL_HOST_NAME,
     port: DEFAULT_PORT_BOOTSTRAP_NO_SEC,
-    securityMode: securityConfigMode.NO_SEC,
+    securityMode: Lwm2mSecurityType.NO_SEC,
     serverId: DEFAULT_ID_BOOTSTRAP,
     serverPublicKey: ''
   };
