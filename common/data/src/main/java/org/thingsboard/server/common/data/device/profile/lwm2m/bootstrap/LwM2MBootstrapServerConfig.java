@@ -19,6 +19,9 @@ import lombok.Data;
 
 @Data
 public class LwM2MBootstrapServerConfig {
+
+    protected Integer shortServerId = 123;
+
     private Integer shortId = 123;
     private Integer lifetime = 300;
     private Integer defaultMinPeriod = 1;

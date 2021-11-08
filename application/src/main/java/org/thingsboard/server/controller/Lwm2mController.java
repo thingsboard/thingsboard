@@ -37,6 +37,7 @@ import org.thingsboard.server.service.lwm2m.LwM2MService;
 import org.thingsboard.server.service.lwm2m.LwM2MServiceImpl;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.thingsboard.server.controller.ControllerConstants.IS_BOOTSTRAP_SERVER_PARAM_DESCRIPTION;
@@ -61,13 +62,11 @@ public class Lwm2mController extends BaseController {
                     TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
             produces = "application/json")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/lwm2m/deviceProfile/bootstrap/{isBootstrapServer}", method = RequestMethod.GET)
+    @RequestMapping(value = "/lwm2m/deviceProfile/bootstrap", method = RequestMethod.GET)
     @ResponseBody
-    public ServerSecurityConfig getLwm2mBootstrapSecurityInfo(
-            @ApiParam(value = IS_BOOTSTRAP_SERVER_PARAM_DESCRIPTION)
-            @PathVariable(IS_BOOTSTRAP_SERVER) boolean bootstrapServer) throws ThingsboardException {
+    public ServerSecurityConfig [] getLwm2mBootstrapSecurityInfo() throws ThingsboardException {
         try {
-            return lwM2MService.getServerSecurityInfo(bootstrapServer);
+            return lwM2MService.getServerSecurityInfo();
         } catch (Exception e) {
             throw handleException(e);
         }

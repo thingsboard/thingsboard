@@ -26,6 +26,8 @@ import org.thingsboard.server.transport.lwm2m.config.LwM2MSecureServerConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportBootstrapConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 
+import java.util.List;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -36,10 +38,12 @@ public class LwM2MServiceImpl implements LwM2MService {
     private final LwM2MTransportBootstrapConfig bootstrapConfig;
 
     @Override
-    public ServerSecurityConfig getServerSecurityInfo(boolean bootstrapServer) {
-        ServerSecurityConfig result = getServerSecurityConfig(bootstrapServer ? bootstrapConfig : serverConfig);
-        result.setBootstrapServerIs(bootstrapServer);
-        return result;
+    public ServerSecurityConfig [] getServerSecurityInfo() {
+        ServerSecurityConfig bootstrapServer = getServerSecurityConfig(bootstrapConfig);
+        bootstrapServer.setBootstrapServerIs(true);
+        ServerSecurityConfig lwm2mServer = getServerSecurityConfig(serverConfig);
+        lwm2mServer.setBootstrapServerIs(false);
+        return new ServerSecurityConfig[] {bootstrapServer, lwm2mServer};
     }
 
     private ServerSecurityConfig getServerSecurityConfig(LwM2MSecureServerConfig serverConfig) {

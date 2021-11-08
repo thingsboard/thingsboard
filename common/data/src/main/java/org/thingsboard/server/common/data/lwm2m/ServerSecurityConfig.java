@@ -18,10 +18,14 @@ package org.thingsboard.server.common.data.lwm2m;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBootstrapServerConfig;
 
 @ApiModel
 @Data
-public class ServerSecurityConfig {
+public class ServerSecurityConfig extends LwM2MBootstrapServerConfig {
+
+    protected Integer shortServerId = 123;
+
     @ApiModelProperty(position = 1, value = "Is Bootstrap Server or Lwm2m Server", example = "true or false", readOnly = true)
     protected boolean bootstrapServerIs = true;
     @ApiModelProperty(position = 2, value = "Host for 'No Security' mode", example = "0.0.0.0", readOnly = true)

@@ -19,6 +19,6 @@ import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
 
 public interface LwM2MService {
 
-    ServerSecurityConfig getServerSecurityInfo(boolean bootstrapServer);
+    ServerSecurityConfig [] getServerSecurityInfo();
 
 }
