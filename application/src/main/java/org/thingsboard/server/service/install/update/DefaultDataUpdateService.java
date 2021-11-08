@@ -145,35 +145,38 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
                 @Override
                 protected void updateEntity(DeviceProfileEntity deviceProfile) {
-                    if (deviceProfile.getProfileData().has("alarms") &&
-                            !deviceProfile.getProfileData().get("alarms").isNull()) {
-                        boolean isUpdated = false;
-                        JsonNode alarms = deviceProfile.getProfileData().get("alarms");
-                        for (JsonNode alarm : alarms) {
-                            if (alarm.has("createRules")) {
-                                JsonNode createRules = alarm.get("createRules");
-                                for (AlarmSeverity severity : AlarmSeverity.values()) {
-                                    if (createRules.has(severity.name())) {
-                                        JsonNode spec = createRules.get(severity.name()).get("condition").get("spec");
-                                        if (convertDeviceProfileAlarmRulesForVersion330(spec)) {
-                                            isUpdated = true;
-                                        }
-                                    }
-                                }
-                            }
-                            if (alarm.has("clearRule") && !alarm.get("clearRule").isNull()) {
-                                JsonNode spec = alarm.get("clearRule").get("condition").get("spec");
-                                if (convertDeviceProfileAlarmRulesForVersion330(spec)) {
-                                    isUpdated = true;
-                                }
-                            }
-                        }
-                        if (isUpdated) {
-                            deviceProfileRepository.save(deviceProfile);
-                        }
+                    if (convertDeviceProfileForVersion330(deviceProfile.getProfileData())) {
+                        deviceProfileRepository.save(deviceProfile);
                     }
                 }
             };
+
+    boolean convertDeviceProfileForVersion330(JsonNode profileData) {
+        boolean isUpdated = false;
+        if (profileData.has("alarms") && !profileData.get("alarms").isNull()) {
+            JsonNode alarms = profileData.get("alarms");
+            for (JsonNode alarm : alarms) {
+                if (alarm.has("createRules")) {
+                    JsonNode createRules = alarm.get("createRules");
+                    for (AlarmSeverity severity : AlarmSeverity.values()) {
+                        if (createRules.has(severity.name())) {
+                            JsonNode spec = createRules.get(severity.name()).get("condition").get("spec");
+                            if (convertDeviceProfileAlarmRulesForVersion330(spec)) {
+                                isUpdated = true;
+                            }
+                        }
+                    }
+                }
+                if (alarm.has("clearRule") && !alarm.get("clearRule").isNull()) {
+                    JsonNode spec = alarm.get("clearRule").get("condition").get("spec");
+                    if (convertDeviceProfileAlarmRulesForVersion330(spec)) {
+                        isUpdated = true;
+                    }
+                }
+            }
+        }
+        return isUpdated;
+    }
 
     private final PaginatedUpdater<String, Tenant> tenantsDefaultRuleChainUpdater =
             new PaginatedUpdater<>() {
@@ -429,7 +432,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
         }
     }
 
-    private boolean convertDeviceProfileAlarmRulesForVersion330(JsonNode spec) {
+    boolean convertDeviceProfileAlarmRulesForVersion330(JsonNode spec) {
         if (spec != null) {
             if (spec.has("type") && spec.get("type").asText().equals("DURATION")) {
                 if (spec.has("value")) {
