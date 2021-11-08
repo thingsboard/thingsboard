@@ -368,6 +368,7 @@ final class MqttClientImpl implements MqttClient {
         if (channelFuture != null) {
             pendingPublish.setSent(true);
             if (channelFuture.cause() != null) {
+                this.pendingPublishes.remove(pendingPublish.getMessageId());
                 future.setFailure(channelFuture.cause());
                 return future;
             }
