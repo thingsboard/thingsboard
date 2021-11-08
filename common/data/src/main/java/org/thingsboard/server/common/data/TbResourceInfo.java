@@ -42,6 +42,8 @@ public class TbResourceInfo extends SearchTextBased<TbResourceId> implements Has
     private String title;
     @ApiModelProperty(position = 5, value = "Resource type.", example = "LWM2M_MODEL", readOnly = true)
     private ResourceType resourceType;
+    @NoXss
+    @Length(fieldName = "resourceKey")
     @ApiModelProperty(position = 6, value = "Resource key.", example = "19_1.0", readOnly = true)
     private String resourceKey;
     @ApiModelProperty(position = 7, value = "Resource search text.", example = "19_1.0:binaryappdatacontainer", readOnly = true)

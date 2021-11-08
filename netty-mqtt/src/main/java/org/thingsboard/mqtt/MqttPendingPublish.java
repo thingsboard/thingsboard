@@ -24,7 +24,7 @@ import io.netty.util.concurrent.Promise;
 
 import java.util.function.Consumer;
 
-final class MqttPendingPublish {
+final class MqttPendingPublish{
 
     private final int messageId;
     private final Promise<Void> future;
@@ -96,6 +96,11 @@ final class MqttPendingPublish {
     }
 
     void onPubcompReceived() {
+        this.pubrelRetransmissionHandler.stop();
+    }
+
+    void onChannelClosed(){
+        this.publishRetransmissionHandler.stop();
         this.pubrelRetransmissionHandler.stop();
     }
 }

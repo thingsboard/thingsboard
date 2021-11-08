@@ -79,6 +79,9 @@
                                           <mat-error *ngIf="domainInfo.get('name').hasError('pattern')">
                                             {{ 'admin.error-verification-url' | translate }}
                                           </mat-error>
+                                          <mat-error *ngIf="domainInfo.get('name').hasError('maxlength')">
+                                            {{ 'admin.domain-name-max-length' | translate }}
+                                          </mat-error>
                                         </mat-form-field>
                                       </div>
                                       <mat-error *ngIf="domainInfo.hasError('unique')">
@@ -246,6 +249,9 @@
                                       <mat-error *ngIf="registration.get('clientId').hasError('required')">
                                         {{ 'admin.oauth2.client-id-required' | translate }}
                                       </mat-error>
+                                      <mat-error *ngIf="registration.get('clientId').hasError('maxlength')">
+                                        {{ 'admin.oauth2.client-id-max-length' | translate }}
+                                      </mat-error>
                                     </mat-form-field>
 
                                     <mat-form-field fxFlex class="mat-block">
@@ -253,6 +259,9 @@
                                       <input matInput formControlName="clientSecret" required>
                                       <mat-error *ngIf="registration.get('clientSecret').hasError('required')">
                                         {{ 'admin.oauth2.client-secret-required' | translate }}
+                                      </mat-error>
+                                      <mat-error *ngIf="registration.get('clientSecret').hasError('maxlength')">
+                                        {{ 'admin.oauth2.client-secret-max-length' | translate }}
                                       </mat-error>
                                     </mat-form-field>
                                   </div>
@@ -426,17 +435,29 @@
                                                   *ngIf="registration.get('mapperConfig.basic.emailAttributeKey').hasError('required')">
                                                   {{ 'admin.oauth2.email-attribute-key-required' | translate }}
                                                 </mat-error>
+                                                <mat-error
+                                                  *ngIf="registration.get('mapperConfig.basic.emailAttributeKey').hasError('maxlength')">
+                                                  {{ 'admin.oauth2.email-attribute-key-max-length' | translate }}
+                                                </mat-error>
                                               </mat-form-field>
 
                                               <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
                                                 <mat-form-field fxFlex class="mat-block">
                                                   <mat-label translate>admin.oauth2.first-name-attribute-key</mat-label>
                                                   <input matInput formControlName="firstNameAttributeKey">
+                                                  <mat-error
+                                                    *ngIf="registration.get('mapperConfig.basic.firstNameAttributeKey').hasError('maxlength')">
+                                                    {{ 'admin.oauth2.first-name-attribute-key-max-length' | translate }}
+                                                  </mat-error>
                                                 </mat-form-field>
 
                                                 <mat-form-field fxFlex class="mat-block">
                                                   <mat-label translate>admin.oauth2.last-name-attribute-key</mat-label>
                                                   <input matInput formControlName="lastNameAttributeKey">
+                                                  <mat-error
+                                                    *ngIf="registration.get('mapperConfig.basic.lastNameAttributeKey').hasError('maxlength')">
+                                                    {{ 'admin.oauth2.last-name-attribute-key-max-length' | translate }}
+                                                  </mat-error>
                                                 </mat-form-field>
                                               </div>
 
@@ -460,18 +481,30 @@
                                                     *ngIf="registration.get('mapperConfig.basic.tenantNamePattern').hasError('required')">
                                                     {{ 'admin.oauth2.tenant-name-pattern-required' | translate }}
                                                   </mat-error>
+                                                  <mat-error
+                                                    *ngIf="registration.get('mapperConfig.basic.tenantNamePattern').hasError('maxlength')">
+                                                    {{ 'admin.oauth2.tenant-name-pattern-max-length' | translate }}
+                                                  </mat-error>
                                                 </mat-form-field>
                                               </div>
 
                                               <mat-form-field fxFlex class="mat-block">
                                                 <mat-label translate>admin.oauth2.customer-name-pattern</mat-label>
                                                 <input matInput formControlName="customerNamePattern">
+                                                <mat-error
+                                                  *ngIf="registration.get('mapperConfig.basic.customerNamePattern').hasError('maxlength')">
+                                                  {{ 'admin.oauth2.customer-name-pattern-max-length' | translate }}
+                                                </mat-error>
                                               </mat-form-field>
 
                                               <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
                                                 <mat-form-field fxFlex class="mat-block">
                                                   <mat-label translate>admin.oauth2.default-dashboard-name</mat-label>
                                                   <input matInput formControlName="defaultDashboardName">
+                                                  <mat-error
+                                                    *ngIf="registration.get('mapperConfig.basic.defaultDashboardName').hasError('maxlength')">
+                                                    {{ 'admin.oauth2.default-dashboard-name-max-length' | translate }}
+                                                  </mat-error>
                                                 </mat-form-field>
 
                                                 <mat-checkbox fxFlex formControlName="alwaysFullScreen" class="checkbox-row">
@@ -493,18 +526,28 @@
                                                   *ngIf="registration.get('mapperConfig.custom.url').hasError('pattern')">
                                                   {{ 'admin.oauth2.url-pattern' | translate }}
                                                 </mat-error>
+                                                <mat-error
+                                                  *ngIf="registration.get('mapperConfig.custom.url').hasError('maxlength')">
+                                                  {{ 'admin.oauth2.url-max-length' | translate }}
+                                                </mat-error>
                                               </mat-form-field>
 
                                               <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
                                                 <mat-form-field fxFlex class="mat-block">
                                                   <mat-label translate>common.username</mat-label>
                                                   <input matInput formControlName="username" autocomplete="new-username">
+                                                  <mat-error *ngIf="registration.get('mapperConfig.custom.username').hasError('maxlength')">
+                                                    {{ 'admin.oauth2.username-max-length' | translate }}
+                                                  </mat-error>
                                                 </mat-form-field>
 
                                                 <mat-form-field fxFlex class="mat-block">
                                                   <mat-label translate>common.password</mat-label>
                                                   <input matInput type="password" formControlName="password" autocomplete="new-password">
                                                   <tb-toggle-password matSuffix></tb-toggle-password>
+                                                  <mat-error *ngIf="registration.get('mapperConfig.custom.password').hasError('maxlength')">
+                                                    {{ 'admin.oauth2.password-max-length' | translate }}
+                                                  </mat-error>
                                                 </mat-form-field>
                                               </div>
                                             </section>

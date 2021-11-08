@@ -155,13 +155,18 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       tenantNamePattern = {value: null, disabled: true};
     }
     const basicGroup = this.fb.group({
-      emailAttributeKey: [mapperConfigBasic?.emailAttributeKey ? mapperConfigBasic.emailAttributeKey : 'email', Validators.required],
-      firstNameAttributeKey: [mapperConfigBasic?.firstNameAttributeKey ? mapperConfigBasic.firstNameAttributeKey : ''],
-      lastNameAttributeKey: [mapperConfigBasic?.lastNameAttributeKey ? mapperConfigBasic.lastNameAttributeKey : ''],
+      emailAttributeKey: [mapperConfigBasic?.emailAttributeKey ? mapperConfigBasic.emailAttributeKey : 'email',
+        [Validators.required, Validators.maxLength(31)]],
+      firstNameAttributeKey: [mapperConfigBasic?.firstNameAttributeKey ? mapperConfigBasic.firstNameAttributeKey : '',
+        Validators.maxLength(31)],
+      lastNameAttributeKey: [mapperConfigBasic?.lastNameAttributeKey ? mapperConfigBasic.lastNameAttributeKey : '',
+        Validators.maxLength(31)],
       tenantNameStrategy: [mapperConfigBasic?.tenantNameStrategy ? mapperConfigBasic.tenantNameStrategy : TenantNameStrategy.DOMAIN],
-      tenantNamePattern: [tenantNamePattern, Validators.required],
-      customerNamePattern: [mapperConfigBasic?.customerNamePattern ? mapperConfigBasic.customerNamePattern : null],
-      defaultDashboardName: [mapperConfigBasic?.defaultDashboardName ? mapperConfigBasic.defaultDashboardName : null],
+      tenantNamePattern: [tenantNamePattern, [Validators.required, Validators.maxLength(255)]],
+      customerNamePattern: [mapperConfigBasic?.customerNamePattern ? mapperConfigBasic.customerNamePattern : null,
+        Validators.maxLength(255)],
+      defaultDashboardName: [mapperConfigBasic?.defaultDashboardName ? mapperConfigBasic.defaultDashboardName : null,
+        Validators.maxLength(255)],
       alwaysFullScreen: [isDefinedAndNotNull(mapperConfigBasic?.alwaysFullScreen) ? mapperConfigBasic.alwaysFullScreen : false]
     });
 
@@ -178,9 +183,10 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
 
   private formCustomGroup(mapperConfigCustom?: MapperConfigCustom): FormGroup {
     return this.fb.group({
-      url: [mapperConfigCustom?.url ? mapperConfigCustom.url : null, [Validators.required, Validators.pattern(this.URL_REGEXP)]],
-      username: [mapperConfigCustom?.username ? mapperConfigCustom.username : null],
-      password: [mapperConfigCustom?.password ? mapperConfigCustom.password : null]
+      url: [mapperConfigCustom?.url ? mapperConfigCustom.url : null,
+        [Validators.required, Validators.pattern(this.URL_REGEXP), Validators.maxLength(255)]],
+      username: [mapperConfigCustom?.username ? mapperConfigCustom.username : null, Validators.maxLength(255)],
+      password: [mapperConfigCustom?.password ? mapperConfigCustom.password : null, Validators.maxLength(255)]
     });
   }
 
@@ -266,7 +272,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   private buildDomainInfoForm(domainInfo?: OAuth2DomainInfo): FormGroup {
     return this.fb.group({
       name: [domainInfo ? domainInfo.name : this.window.location.hostname, [
-        Validators.required,
+        Validators.required, Validators.maxLength(255),
         Validators.pattern(this.DOMAIN_AND_PORT_REGEXP)]],
       scheme: [domainInfo?.scheme ? domainInfo.scheme : DomainSchema.HTTPS, Validators.required]
     }, {validators: this.uniqueDomainValidator});
@@ -300,8 +306,8 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
       platforms: [registration?.platforms ? registration.platforms : []],
       loginButtonLabel: [registration?.loginButtonLabel ? registration.loginButtonLabel : null, Validators.required],
       loginButtonIcon: [registration?.loginButtonIcon ? registration.loginButtonIcon : null],
-      clientId: [registration?.clientId ? registration.clientId : '', Validators.required],
-      clientSecret: [registration?.clientSecret ? registration.clientSecret : '', Validators.required],
+      clientId: [registration?.clientId ? registration.clientId : '', [Validators.required, Validators.maxLength(255)]],
+      clientSecret: [registration?.clientSecret ? registration.clientSecret : '', [Validators.required, Validators.maxLength(2048)]],
       accessTokenUri: [registration?.accessTokenUri ? registration.accessTokenUri : '',
         [Validators.required,
           Validators.pattern(this.URL_REGEXP)]],

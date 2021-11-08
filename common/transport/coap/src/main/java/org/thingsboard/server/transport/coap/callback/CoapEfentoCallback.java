@@ -34,10 +34,9 @@ public class CoapEfentoCallback implements TransportServiceCallback<Void> {
 
     @Override
     public void onSuccess(Void msg) {
+        //We respond only to confirmed requests in order to reduce battery consumption for Efento devices.
         if (isConRequest()) {
-            Response response = new Response(onSuccessResponse);
-            response.setAcknowledged(true);
-            exchange.respond(response);
+            exchange.respond(new Response(onSuccessResponse));
         }
     }
 
