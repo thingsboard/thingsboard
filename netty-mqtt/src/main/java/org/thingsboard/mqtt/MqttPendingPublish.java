@@ -98,4 +98,9 @@ final class MqttPendingPublish {
     void onPubcompReceived() {
         this.pubrelRetransmissionHandler.stop();
     }
+
+    void onChannelClosed() {
+        this.publishRetransmissionHandler.stop();
+        this.pubrelRetransmissionHandler.stop();
+    }
 }
