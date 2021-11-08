@@ -26,7 +26,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @JsonPropertyOrder({ "alias", "name", "image", "description", "descriptor" })
 public class WidgetTypeDetails extends WidgetType {
 
-    @NoXss
+    @Length(fieldName = "image", max = 1000000)
     @ApiModelProperty(position = 8, value = "Base64 encoded thumbnail", readOnly = true)
     private String image;
     @NoXss
