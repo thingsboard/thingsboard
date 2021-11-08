@@ -20,28 +20,28 @@ import {
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
-import {DebugEventType, Event, EventType, FilterEventBody} from '@shared/models/event.models';
-import {TimePageLink} from '@shared/models/page/page-link';
-import {TranslateService} from '@ngx-translate/core';
-import {DatePipe} from '@angular/common';
-import {MatDialog} from '@angular/material/dialog';
-import {EntityId} from '@shared/models/id/entity-id';
-import {EventService} from '@app/core/http/event.service';
-import {EventTableHeaderComponent} from '@home/components/event/event-table-header.component';
-import {EntityTypeResource} from '@shared/models/entity-type.models';
-import {Observable} from 'rxjs';
-import {PageData} from '@shared/models/page/page-data';
-import {Direction} from '@shared/models/page/sort-order';
-import {DialogService} from '@core/services/dialog.service';
-import {ContentType} from '@shared/models/constants';
+import { DebugEventType, Event, EventType, FilterEventBody } from '@shared/models/event.models';
+import { TimePageLink } from '@shared/models/page/page-link';
+import { TranslateService } from '@ngx-translate/core';
+import { DatePipe } from '@angular/common';
+import { MatDialog } from '@angular/material/dialog';
+import { EntityId } from '@shared/models/id/entity-id';
+import { EventService } from '@app/core/http/event.service';
+import { EventTableHeaderComponent } from '@home/components/event/event-table-header.component';
+import { EntityTypeResource } from '@shared/models/entity-type.models';
+import { Observable } from 'rxjs';
+import { PageData } from '@shared/models/page/page-data';
+import { Direction } from '@shared/models/page/sort-order';
+import { DialogService } from '@core/services/dialog.service';
+import { ContentType } from '@shared/models/constants';
 import {
   EventContentDialogComponent,
   EventContentDialogData
 } from '@home/components/event/event-content-dialog.component';
-import {isEqual, sortObjectKeys} from '@core/utils';
-import {ConnectedPosition, Overlay, OverlayConfig, OverlayRef} from '@angular/cdk/overlay';
-import {ChangeDetectorRef, Injector, StaticProvider, ViewContainerRef} from '@angular/core';
-import {ComponentPortal} from '@angular/cdk/portal';
+import { isEqual, sortObjectKeys } from '@core/utils';
+import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
+import { ChangeDetectorRef, Injector, StaticProvider, ViewContainerRef } from '@angular/core';
+import { ComponentPortal } from '@angular/cdk/portal';
 import {
   EVENT_FILTER_PANEL_DATA,
   EventFilterPanelComponent,
@@ -140,8 +140,8 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
       name: this.translate.instant('event.clean-events'),
       icon: 'delete',
       isEnabled: () => true,
-      onAction: ($event, entity, pageLink: TimePageLink) => {
-        this.eventService.clearEvents(entity.entityId, entity.eventType, entity.filterParams, entity.tenantId, pageLink).subscribe(
+      onAction: ($event) => {
+        this.eventService.clearEvents(this.entityId, this.eventType, this.filterParams, this.tenantId, this.table.pageLink as TimePageLink).subscribe(
           () => {
             this.table.paginator.pageIndex = 0;
             this.table.updateData();
