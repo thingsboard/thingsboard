@@ -13,20 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host{
-  .fields-group {
-    padding: 8px;
-    margin: 10px 0;
-    border: 1px groove rgba(0, 0, 0, .25);
-    border-radius: 4px;
+package org.thingsboard.server.service.install.update;
 
-    legend {
-      color: rgba(0, 0, 0, .7);
-    }
+public interface CacheCleanupService {
 
-    .tb-hint {
-      padding: 0;
-      max-width: fit-content;
-    }
-  }
+    void clearCache(String fromVersion) throws Exception;
+
 }
