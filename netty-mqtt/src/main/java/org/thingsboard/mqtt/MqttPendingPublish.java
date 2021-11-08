@@ -24,7 +24,7 @@ import io.netty.util.concurrent.Promise;
 
 import java.util.function.Consumer;
 
-final class MqttPendingPublish{
+final class MqttPendingPublish {
 
     private final int messageId;
     private final Promise<Void> future;
@@ -32,19 +32,21 @@ final class MqttPendingPublish{
     private final MqttPublishMessage message;
     private final MqttQoS qos;
 
-    private final RetransmissionHandler<MqttPublishMessage> publishRetransmissionHandler = new RetransmissionHandler<>();
-    private final RetransmissionHandler<MqttMessage> pubrelRetransmissionHandler = new RetransmissionHandler<>();
+    private final RetransmissionHandler<MqttPublishMessage> publishRetransmissionHandler;
+    private final RetransmissionHandler<MqttMessage> pubrelRetransmissionHandler;
 
     private boolean sent = false;
 
-    MqttPendingPublish(int messageId, Promise<Void> future, ByteBuf payload, MqttPublishMessage message, MqttQoS qos) {
+    MqttPendingPublish(int messageId, Promise<Void> future, ByteBuf payload, MqttPublishMessage message, MqttQoS qos, PendingOperation operation) {
         this.messageId = messageId;
         this.future = future;
         this.payload = payload;
         this.message = message;
         this.qos = qos;
 
+        this.publishRetransmissionHandler = new RetransmissionHandler<>(operation);
         this.publishRetransmissionHandler.setOriginalMessage(message);
+        this.pubrelRetransmissionHandler = new RetransmissionHandler<>(operation);
     }
 
     int getMessageId() {
@@ -99,8 +101,11 @@ final class MqttPendingPublish{
         this.pubrelRetransmissionHandler.stop();
     }
 
-    void onChannelClosed(){
+    void onChannelClosed() {
         this.publishRetransmissionHandler.stop();
         this.pubrelRetransmissionHandler.stop();
+        if (payload != null) {
+            payload.release();
+        }
     }
 }

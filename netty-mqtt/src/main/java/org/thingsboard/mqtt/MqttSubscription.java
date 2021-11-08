@@ -28,10 +28,10 @@ final class MqttSubscription {
     private boolean called;
 
     MqttSubscription(String topic, MqttHandler handler, boolean once) {
-        if(topic == null){
+        if (topic == null) {
             throw new NullPointerException("topic");
         }
-        if(handler == null){
+        if (handler == null) {
             throw new NullPointerException("handler");
         }
         this.topic = topic;
@@ -56,7 +56,7 @@ final class MqttSubscription {
         return called;
     }
 
-    boolean matches(String topic){
+    boolean matches(String topic) {
         return this.topicRegex.matcher(topic).matches();
     }
 

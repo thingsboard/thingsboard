@@ -26,12 +26,13 @@ final class MqttPendingUnsubscription{
     private final Promise<Void> future;
     private final String topic;
 
-    private final RetransmissionHandler<MqttUnsubscribeMessage> retransmissionHandler = new RetransmissionHandler<>();
+    private final RetransmissionHandler<MqttUnsubscribeMessage> retransmissionHandler;
 
-    MqttPendingUnsubscription(Promise<Void> future, String topic, MqttUnsubscribeMessage unsubscribeMessage) {
+    MqttPendingUnsubscription(Promise<Void> future, String topic, MqttUnsubscribeMessage unsubscribeMessage, PendingOperation operation) {
         this.future = future;
         this.topic = topic;
 
+        this.retransmissionHandler = new RetransmissionHandler<>(operation);
         this.retransmissionHandler.setOriginalMessage(unsubscribeMessage);
     }
 
