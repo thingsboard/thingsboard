@@ -63,6 +63,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -382,6 +383,8 @@ public class DefaultDataUpdateService implements DataUpdateService {
     private final PaginatedUpdater<String, Tenant> tenantsAlarmsCustomerUpdater =
             new PaginatedUpdater<>() {
 
+                final AtomicLong processed = new AtomicLong();
+
                 @Override
                 protected String getName() {
                     return "Tenants alarms customer updater";
@@ -399,12 +402,12 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
                 @Override
                 protected void updateEntity(Tenant tenant) {
-                    updateTenantAlarmsCustomer(tenant.getId());
+                    updateTenantAlarmsCustomer(tenant.getId(), getName(), processed);
                 }
             };
 
-    private void updateTenantAlarmsCustomer(TenantId tenantId) {
-        AlarmQuery alarmQuery = new AlarmQuery(null, new TimePageLink(100), null, null, false);
+    private void updateTenantAlarmsCustomer(TenantId tenantId, String name, AtomicLong processed) {
+        AlarmQuery alarmQuery = new AlarmQuery(null, new TimePageLink(1000), null, null, false);
         PageData<AlarmInfo> alarms = alarmDao.findAlarms(tenantId, alarmQuery);
         boolean hasNext = true;
         while (hasNext) {
@@ -412,6 +415,9 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 if (alarm.getCustomerId() == null && alarm.getOriginator() != null) {
                     alarm.setCustomerId(entityService.fetchEntityCustomerId(tenantId, alarm.getOriginator()));
                     alarmDao.save(tenantId, alarm);
+                }
+                if (processed.incrementAndGet() % 1000 == 0) {
+                    log.info("{}: {} processed so far...", name, processed);
                 }
             }
             if (alarms.hasNext()) {
