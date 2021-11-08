@@ -34,7 +34,6 @@ import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -125,14 +124,14 @@ public class BaseEventService implements EventService {
     }
 
     @Override
-    public void removeEvents(TenantId tenantId, EntityId entityId, String eventType, Long startTime, Long endTime) {
+    public void removeEvents(TenantId tenantId, EntityId entityId, EventFilter eventFilter, Long startTime, Long endTime) {
         TimePageLink eventsPageLink = new TimePageLink(1000, 0, null, null, startTime, endTime);
         PageData<Event> eventsPageData;
         do {
-            if (eventType == null) {
+            if (eventFilter == null) {
                 eventsPageData = findEvents(tenantId, entityId, eventsPageLink);
             } else {
-                eventsPageData = findEvents(tenantId, entityId, eventType, eventsPageLink);
+                eventsPageData = findEventsByFilter(tenantId, entityId, eventFilter, eventsPageLink);
             }
 
             eventDao.removeAllByIds(eventsPageData.getData().stream()
