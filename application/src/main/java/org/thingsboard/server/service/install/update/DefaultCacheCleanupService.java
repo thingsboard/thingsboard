@@ -44,7 +44,7 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
             case "3.0.1":
                 log.info("Clear cache to upgrade from version 3.0.1 to 3.1.0 ...");
                 clearAllCaches();
-                break;
+                //do not break to show explicit calls for next versions
             case "3.1.1":
                 log.info("Clear cache to upgrade from version 3.1.1 to 3.2.0 ...");
                 clearCacheByName("devices");
