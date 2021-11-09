@@ -45,6 +45,9 @@
         <mat-error *ngIf="alarmFormGroup.get('alarmType').hasError('unique')">
           {{ 'device-profile.alarm-type-unique' | translate }}
         </mat-error>
+        <mat-error *ngIf="alarmFormGroup.get('alarmType').hasError('maxlength')">
+          {{ 'device-profile.alarm-type-max-length' | translate }}
+        </mat-error>
       </mat-form-field>
     </div>
     <mat-expansion-panel class="advanced-settings" [expanded]="false">
