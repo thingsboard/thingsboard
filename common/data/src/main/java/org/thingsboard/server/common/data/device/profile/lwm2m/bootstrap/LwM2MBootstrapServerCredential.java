@@ -25,10 +25,10 @@ import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurity
         use = JsonTypeInfo.Id.NAME,
         property = "securityMode")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = NoSecLwM2MBootstrapLwM2MServerCredential.class, name = "NO_SEC"),
-        @JsonSubTypes.Type(value = PSKLwM2MBootstrapLwM2MServerCredential.class, name = "PSK"),
-        @JsonSubTypes.Type(value = RPKLwM2MBootstrapLwM2MServerCredential.class, name = "RPK"),
-        @JsonSubTypes.Type(value = X509LwM2MBootstrapLwM2MServerCredential.class, name = "X509")
+        @JsonSubTypes.Type(value = NoSecLwM2MBootstrapServerCredential.class, name = "NO_SEC"),
+        @JsonSubTypes.Type(value = PSKLwM2MBootstrapServerCredential.class, name = "PSK"),
+        @JsonSubTypes.Type(value = RPKLwM2MBootstrapServerCredential.class, name = "RPK"),
+        @JsonSubTypes.Type(value = X509LwM2MBootstrapServerCredential.class, name = "X509")
 })
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface LwM2MBootstrapServerCredential {

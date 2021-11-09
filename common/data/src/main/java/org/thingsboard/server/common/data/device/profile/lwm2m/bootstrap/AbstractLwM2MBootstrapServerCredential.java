@@ -23,7 +23,7 @@ import org.apache.commons.codec.binary.Base64;
 
 @Getter
 @Setter
-public abstract class AbstractLwM2MBootstrapLwM2MServerCredential extends LwM2MServerSecurityConfig implements LwM2MBootstrapServerCredential {
+public abstract class AbstractLwM2MBootstrapServerCredential extends LwM2MServerSecurityConfig implements LwM2MBootstrapServerCredential {
 
     @JsonIgnore
     public byte[] getDecodedCServerPublicKey() {

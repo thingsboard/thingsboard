@@ -60,9 +60,9 @@ import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTrans
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
-import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.RPKLwM2MBootstrapLwM2MServerCredential;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.RPKLwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBootstrapServerCredential;
-import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.X509LwM2MBootstrapLwM2MServerCredential;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.X509LwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -419,8 +419,9 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                         }
                     } else if (transportConfiguration instanceof Lwm2mDeviceProfileTransportConfiguration) {
                         LwM2MBootstrapServersConfiguration lwM2MBootstrapServersConfiguration = ((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration).getBootstrap();
-                        validateLwm2mServersCredentialOfBootstrapForClient(lwM2MBootstrapServersConfiguration.getBootstrapServer(), "Bootstrap Server");
-                        validateLwm2mServersCredentialOfBootstrapForClient(lwM2MBootstrapServersConfiguration.getLwm2mServer(), "LwM2M Server");
+                        for (LwM2MBootstrapServerCredential bootstrapServerCredential : lwM2MBootstrapServersConfiguration.getServerConfiguration()) {
+                            validateLwm2mServersCredentialOfBootstrapForClient(bootstrapServerCredential);
+                        }
                     }
 
                     List<DeviceProfileAlarm> profileAlarms = deviceProfile.getProfileData().getAlarms();
@@ -704,13 +705,15 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
         }
     }
 
-    private void validateLwm2mServersCredentialOfBootstrapForClient(LwM2MBootstrapServerCredential bootstrapServerConfig, String server) {
+    private void validateLwm2mServersCredentialOfBootstrapForClient(LwM2MBootstrapServerCredential bootstrapServerConfig) {
+        String server;
         switch (bootstrapServerConfig.getSecurityMode()) {
             case NO_SEC:
             case PSK:
                 break;
             case RPK:
-                RPKLwM2MBootstrapLwM2MServerCredential rpkServerCredentials = (RPKLwM2MBootstrapLwM2MServerCredential)  bootstrapServerConfig;
+                RPKLwM2MBootstrapServerCredential rpkServerCredentials = (RPKLwM2MBootstrapServerCredential)  bootstrapServerConfig;
+                server = rpkServerCredentials.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";
                 if (StringUtils.isEmpty(rpkServerCredentials.getServerPublicKey())) {
                     throw new DeviceCredentialsValidationException(server + " RPK public key must be specified!");
                 }
@@ -723,7 +726,8 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                 }
                 break;
             case X509:
-                X509LwM2MBootstrapLwM2MServerCredential x509ServerCredentials = (X509LwM2MBootstrapLwM2MServerCredential) bootstrapServerConfig;
+                X509LwM2MBootstrapServerCredential x509ServerCredentials = (X509LwM2MBootstrapServerCredential) bootstrapServerConfig;
+                server = x509ServerCredentials.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";
                 if (StringUtils.isEmpty(x509ServerCredentials.getServerPublicKey())) {
                     throw new DeviceCredentialsValidationException(server + " X509 public key must be specified!");
                 }
