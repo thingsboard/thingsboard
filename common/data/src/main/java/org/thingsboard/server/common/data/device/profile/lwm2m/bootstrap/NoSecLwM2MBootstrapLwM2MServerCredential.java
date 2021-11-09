@@ -15,16 +15,11 @@
  */
 package org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap;
 
-import lombok.Data;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
 
-@Data
-public class LwM2MBootstrapServerConfig {
-
-    protected Integer shortServerId = 123;
-
-    private Integer shortId = 123;
-    private Integer lifetime = 300;
-    private Integer defaultMinPeriod = 1;
-    private boolean notifIfDisabled = true;
-    private String binding = "U";
+public class NoSecLwM2MBootstrapLwM2MServerCredential extends AbstractLwM2MBootstrapLwM2MServerCredential {
+    @Override
+    public LwM2MSecurityMode getSecurityMode() {
+        return LwM2MSecurityMode.NO_SEC;
+    }
 }

@@ -15,24 +15,11 @@
  */
 package org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.SneakyThrows;
-import org.apache.commons.codec.binary.Base64;
-import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
 
-@Getter
-@Setter
-public abstract class AbstractLwM2MBootstrapServerCredential extends ServerSecurityConfig implements LwM2MBootstrapServerCredential {
-
-    @JsonIgnore
-    public byte[] getDecodedCServerPublicKey() {
-        return getDecoded(serverPublicKey);
-    }
-
-    @SneakyThrows
-    private static byte[] getDecoded(String key) {
-        return Base64.decodeBase64(key.getBytes());
+public class RPKLwM2MBootstrapLwM2MServerCredential extends AbstractLwM2MBootstrapLwM2MServerCredential {
+    @Override
+    public LwM2MSecurityMode getSecurityMode() {
+        return LwM2MSecurityMode.RPK;
     }
 }

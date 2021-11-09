@@ -15,10 +15,10 @@
  */
 package org.thingsboard.server.service.lwm2m;
 
-import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MServerSecurityConfig;
 
 public interface LwM2MService {
 
-    ServerSecurityConfig [] getServerSecurityInfo();
+    LwM2MServerSecurityConfig getServerSecurityInfo(boolean bootstrapServer);
 
 }
