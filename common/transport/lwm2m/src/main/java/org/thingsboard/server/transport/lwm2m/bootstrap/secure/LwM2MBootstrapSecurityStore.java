@@ -158,34 +158,34 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
         LwM2MBootstrapConfig lwM2MBootstrapConfig = store.getBootstrapCredentialConfig();
         if (lwM2MBootstrapConfig != null) {
             LwM2MBootstrapServersConfiguration bootstrapObject = getBootstrapParametersFromThingsboard(store.getDeviceProfile());
-            lwM2MBootstrapConfig.setServers(JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getServers()), LwM2MBootstrapServers.class));
-            LwM2MServerBootstrap bootstrapServerProfile = JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getBootstrapServer()), LwM2MServerBootstrap.class);
-            if (SecurityMode.NO_SEC != bootstrapServerProfile.getSecurityMode() && bootstrapServerProfile != null) {
-                bootstrapServerProfile.setSecurityHost(bootstrapServerProfile.getHost());
-                bootstrapServerProfile.setSecurityPort(bootstrapServerProfile.getPort());
-            }
-            LwM2MServerBootstrap profileLwm2mServer = JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getLwm2mServer()), LwM2MServerBootstrap.class);
-            if (SecurityMode.NO_SEC != profileLwm2mServer.getSecurityMode() && profileLwm2mServer != null) {
-                profileLwm2mServer.setSecurityHost(profileLwm2mServer.getHost());
-                profileLwm2mServer.setSecurityPort(profileLwm2mServer.getPort());
-            }
-            UUID sessionUUiD = UUID.randomUUID();
-            TransportProtos.SessionInfoProto sessionInfo = helper.getValidateSessionInfo(store.getMsg(), sessionUUiD.getMostSignificantBits(), sessionUUiD.getLeastSignificantBits());
-            bsSessions.put(store.getEndpoint(), sessionInfo);
-            context.getTransportService().registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(null, null, null, sessionInfo, context.getTransportService()));
-            if (this.getValidatedSecurityMode(lwM2MBootstrapConfig.getBootstrapServer(), bootstrapServerProfile, lwM2MBootstrapConfig.getLwm2mServer(), profileLwm2mServer)) {
-                lwM2MBootstrapConfig.setBootstrapServer(new LwM2MServerBootstrap(lwM2MBootstrapConfig.getBootstrapServer(), bootstrapServerProfile));
-                lwM2MBootstrapConfig.setLwm2mServer(new LwM2MServerBootstrap(lwM2MBootstrapConfig.getLwm2mServer(), profileLwm2mServer));
-                String logMsg = String.format("%s: getParametersBootstrap: %s Access connect client with bootstrap server.", LOG_LWM2M_INFO, store.getEndpoint());
-                helper.sendParametersOnThingsboardTelemetry(helper.getKvStringtoThingsboard(LOG_LWM2M_TELEMETRY, logMsg), sessionInfo);
-                return lwM2MBootstrapConfig;
-            } else {
-                log.error(" [{}] Different values SecurityMode between of client and profile.", store.getEndpoint());
-                log.error("{} getParametersBootstrap: [{}] Different values SecurityMode between of client and profile.", LOG_LWM2M_ERROR, store.getEndpoint());
-                String logMsg = String.format("%s: getParametersBootstrap: %s Different values SecurityMode between of client and profile.", LOG_LWM2M_ERROR, store.getEndpoint());
-                helper.sendParametersOnThingsboardTelemetry(helper.getKvStringtoThingsboard(LOG_LWM2M_TELEMETRY, logMsg), sessionInfo);
-                return null;
-            }
+//            lwM2MBootstrapConfig.setServers(JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getServers()), LwM2MBootstrapServers.class));
+//            LwM2MServerBootstrap bootstrapServerProfile = JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getBootstrapServer()), LwM2MServerBootstrap.class);
+//            if (SecurityMode.NO_SEC != bootstrapServerProfile.getSecurityMode() && bootstrapServerProfile != null) {
+//                bootstrapServerProfile.setSecurityHost(bootstrapServerProfile.getHost());
+//                bootstrapServerProfile.setSecurityPort(bootstrapServerProfile.getPort());
+//            }
+//            LwM2MServerBootstrap profileLwm2mServer = JacksonUtil.fromString(JacksonUtil.toString(bootstrapObject.getLwm2mServer()), LwM2MServerBootstrap.class);
+//            if (SecurityMode.NO_SEC != profileLwm2mServer.getSecurityMode() && profileLwm2mServer != null) {
+//                profileLwm2mServer.setSecurityHost(profileLwm2mServer.getHost());
+//                profileLwm2mServer.setSecurityPort(profileLwm2mServer.getPort());
+//            }
+//            UUID sessionUUiD = UUID.randomUUID();
+//            TransportProtos.SessionInfoProto sessionInfo = helper.getValidateSessionInfo(store.getMsg(), sessionUUiD.getMostSignificantBits(), sessionUUiD.getLeastSignificantBits());
+//            bsSessions.put(store.getEndpoint(), sessionInfo);
+//            context.getTransportService().registerAsyncSession(sessionInfo, new LwM2mSessionMsgListener(null, null, null, sessionInfo, context.getTransportService()));
+//            if (this.getValidatedSecurityMode(lwM2MBootstrapConfig.getBootstrapServer(), bootstrapServerProfile, lwM2MBootstrapConfig.getLwm2mServer(), profileLwm2mServer)) {
+//                lwM2MBootstrapConfig.setBootstrapServer(new LwM2MServerBootstrap(lwM2MBootstrapConfig.getBootstrapServer(), bootstrapServerProfile));
+//                lwM2MBootstrapConfig.setLwm2mServer(new LwM2MServerBootstrap(lwM2MBootstrapConfig.getLwm2mServer(), profileLwm2mServer));
+//                String logMsg = String.format("%s: getParametersBootstrap: %s Access connect client with bootstrap server.", LOG_LWM2M_INFO, store.getEndpoint());
+//                helper.sendParametersOnThingsboardTelemetry(helper.getKvStringtoThingsboard(LOG_LWM2M_TELEMETRY, logMsg), sessionInfo);
+//                return lwM2MBootstrapConfig;
+//            } else {
+//                log.error(" [{}] Different values SecurityMode between of client and profile.", store.getEndpoint());
+//                log.error("{} getParametersBootstrap: [{}] Different values SecurityMode between of client and profile.", LOG_LWM2M_ERROR, store.getEndpoint());
+//                String logMsg = String.format("%s: getParametersBootstrap: %s Different values SecurityMode between of client and profile.", LOG_LWM2M_ERROR, store.getEndpoint());
+//                helper.sendParametersOnThingsboardTelemetry(helper.getKvStringtoThingsboard(LOG_LWM2M_TELEMETRY, logMsg), sessionInfo);
+//                return null;
+//            }
         }
         log.error("Unable to decode Json or Certificate for [{}]", store.getEndpoint());
         return null;
