@@ -19,6 +19,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.Valid;
@@ -32,6 +33,7 @@ public class DeviceProfileAlarm implements Serializable {
 
     @ApiModelProperty(position = 1, value = "String value representing the alarm rule id", example = "highTemperatureAlarmID")
     private String id;
+    @Length(fieldName = "alarm type")
     @NoXss
     @ApiModelProperty(position = 2, value = "String value representing type of the alarm", example = "High Temperature Alarm")
     private String alarmType;
