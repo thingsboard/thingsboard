@@ -319,6 +319,10 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         Registration registration = client.getRegistration();
         try {
             logService.log(client, String.format("[%s][%s] Sending request: %s to %s", registration.getId(), registration.getSocketAddress(), request.getClass().getSimpleName(), pathToStringFunction.apply(request)));
+            if (!callback.onSent(request)) {
+                return;
+            }
+
             context.getServer().send(registration, request, timeoutInMs, response -> {
                 executor.submit(() -> {
                     try {
@@ -330,7 +334,6 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                     }
                 });
             }, e -> handleDownlinkError(client, request, callback, e));
-            callback.onSent(request);
         } catch (Exception e) {
             handleDownlinkError(client, request, callback, e);
         }
@@ -366,6 +369,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
 
     private <R extends DownlinkRequest<T>, T extends LwM2mResponse> void handleDownlinkError(LwM2mClient client, R request, DownlinkRequestCallback<R, T> callback, Exception e) {
         log.trace("[{}] Received downlink error: {}.", client.getEndpoint(), e);
+        client.updateLastUplinkTime();
         executor.submit(() -> {
             if (e instanceof TimeoutException || e instanceof ClientSleepingException) {
                 log.trace("[{}] Received {}, client is probably sleeping", client.getEndpoint(), e.getClass().getSimpleName());
