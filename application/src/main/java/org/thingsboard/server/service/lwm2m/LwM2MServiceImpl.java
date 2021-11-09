@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MServerSecurityConfig;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MSecureServerConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportBootstrapConfig;
@@ -36,15 +36,15 @@ public class LwM2MServiceImpl implements LwM2MService {
     private final LwM2MTransportBootstrapConfig bootstrapConfig;
 
     @Override
-    public ServerSecurityConfig getServerSecurityInfo(boolean bootstrapServer) {
-        ServerSecurityConfig result = getServerSecurityConfig(bootstrapServer ? bootstrapConfig : serverConfig);
+    public LwM2MServerSecurityConfig getServerSecurityInfo(boolean bootstrapServer) {
+        LwM2MServerSecurityConfig result = getServerSecurityConfig(bootstrapServer ? bootstrapConfig : serverConfig);
         result.setBootstrapServerIs(bootstrapServer);
         return result;
     }
 
-    private ServerSecurityConfig getServerSecurityConfig(LwM2MSecureServerConfig serverConfig) {
-        ServerSecurityConfig bsServ = new ServerSecurityConfig();
-        bsServ.setServerId(serverConfig.getId());
+    private LwM2MServerSecurityConfig getServerSecurityConfig(LwM2MSecureServerConfig serverConfig) {
+        LwM2MServerSecurityConfig bsServ = new LwM2MServerSecurityConfig();
+        bsServ.setShortServerId(serverConfig.getId());
         bsServ.setHost(serverConfig.getHost());
         bsServ.setPort(serverConfig.getPort());
         bsServ.setSecurityHost(serverConfig.getSecureHost());

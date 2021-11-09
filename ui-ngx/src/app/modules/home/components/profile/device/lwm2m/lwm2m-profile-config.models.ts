@@ -15,6 +15,7 @@
 ///
 
 import { ValidatorFn, Validators } from '@angular/forms';
+import { Lwm2mSecurityType } from '@shared/models/lwm2m-security-config.models';
 
 export const PAGE_SIZE_LIMIT = 50;
 export const INSTANCES = 'instances';
@@ -32,7 +33,7 @@ export const DEFAULT_CLIENT_HOLD_OFF_TIME = 1;
 export const DEFAULT_LIFE_TIME = 300;
 export const DEFAULT_MIN_PERIOD = 1;
 export const DEFAULT_NOTIF_IF_DESIBLED = true;
-export const DEFAULT_BINDING = 'UQ';
+export const DEFAULT_BINDING = 'U';
 export const DEFAULT_BOOTSTRAP_SERVER_ACCOUNT_TIME_OUT = 0;
 export const INSTANCES_ID_VALUE_MIN = 0;
 export const INSTANCES_ID_VALUE_MAX = 65535;
@@ -45,28 +46,30 @@ export const DEFAULT_PAGING_TRANSMISSION_WINDOW = 10000;
 
 export enum BingingMode {
   U = 'U',
-  UQ = 'UQ',
+  M = 'M',
+  H = 'H',
   T = 'T',
-  TQ = 'TQ',
   S = 'S',
-  SQ = 'SQ',
-  US = 'US',
-  TS = 'TS',
+  N = 'N',
+  UQ = 'UQ',
   UQS = 'UQS',
-  TQS = 'TQS'
+  TQ = 'TQ',
+  TQS = 'TQS',
+  SQ = 'SQ'
 }
 
 export const BingingModeTranslationsMap = new Map<BingingMode, string>(
   [
     [BingingMode.U, 'device-profile.lwm2m.binding-type.u'],
-    [BingingMode.UQ, 'device-profile.lwm2m.binding-type.uq'],
-    [BingingMode.US, 'device-profile.lwm2m.binding-type.us'],
-    [BingingMode.UQS, 'device-profile.lwm2m.binding-type.uqs'],
+    [BingingMode.M, 'device-profile.lwm2m.binding-type.m'],
+    [BingingMode.H, 'device-profile.lwm2m.binding-type.h'],
     [BingingMode.T, 'device-profile.lwm2m.binding-type.t'],
-    [BingingMode.TQ, 'device-profile.lwm2m.binding-type.tq'],
-    [BingingMode.TS, 'device-profile.lwm2m.binding-type.ts'],
-    [BingingMode.TQS, 'device-profile.lwm2m.binding-type.tqs'],
     [BingingMode.S, 'device-profile.lwm2m.binding-type.s'],
+    [BingingMode.N, 'device-profile.lwm2m.binding-type.n'],
+    [BingingMode.UQ, 'device-profile.lwm2m.binding-type.uq'],
+    [BingingMode.UQS, 'device-profile.lwm2m.binding-type.uqs'],
+    [BingingMode.TQ, 'device-profile.lwm2m.binding-type.tq'],
+    [BingingMode.TQS, 'device-profile.lwm2m.binding-type.tqs'],
     [BingingMode.SQ, 'device-profile.lwm2m.binding-type.sq']
   ]
 );
@@ -90,22 +93,6 @@ export const AttributeNameTranslationMap = new Map<AttributeName, string>(
     [AttributeName.st, 'device-profile.lwm2m.attributes-name.step'],
     // [AttributeName.epmin, 'device-profile.lwm2m.attributes-name.min-evaluation-period'],
     // [AttributeName.epmax, 'device-profile.lwm2m.attributes-name.max-evaluation-period']
-  ]
-);
-
-export enum securityConfigMode {
-  PSK = 'PSK',
-  RPK = 'RPK',
-  X509 = 'X509',
-  NO_SEC = 'NO_SEC'
-}
-
-export const securityConfigModeNames = new Map<securityConfigMode, string>(
-  [
-    [securityConfigMode.PSK, 'Pre-Shared Key'],
-    [securityConfigMode.RPK, 'Raw Public Key'],
-    [securityConfigMode.X509, 'X.509 Certificate'],
-    [securityConfigMode.NO_SEC, 'No Security']
   ]
 );
 
@@ -134,7 +121,7 @@ export interface BootstrapServersSecurityConfig {
 export interface ServerSecurityConfig {
   host?: string;
   port?: number;
-  securityMode: securityConfigMode;
+  securityMode: Lwm2mSecurityType;
   serverPublicKey?: string;
   clientHoldOffTime?: number;
   serverId?: number;
@@ -196,7 +183,7 @@ export function getDefaultBootstrapServerSecurityConfig(): ServerSecurityConfig 
     clientHoldOffTime: DEFAULT_CLIENT_HOLD_OFF_TIME,
     host: DEFAULT_LOCAL_HOST_NAME,
     port: DEFAULT_PORT_BOOTSTRAP_NO_SEC,
-    securityMode: securityConfigMode.NO_SEC,
+    securityMode: Lwm2mSecurityType.NO_SEC,
     serverId: DEFAULT_ID_BOOTSTRAP,
     serverPublicKey: ''
   };

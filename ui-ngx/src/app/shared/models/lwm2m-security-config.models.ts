@@ -30,6 +30,29 @@ export const Lwm2mSecurityTypeTranslationMap = new Map<Lwm2mSecurityType, string
   ]
 );
 
+export const Lwm2mPublicKeyOrIdTooltipTranslationsMap = new Map<Lwm2mSecurityType, string>(
+  [
+    [Lwm2mSecurityType.PSK, 'device.lwm2m-security-config.client-publicKey-or-id-tooltip-psk'],
+    [Lwm2mSecurityType.RPK, 'device.lwm2m-security-config.client-publicKey-or-id-tooltip-rpk'],
+    [Lwm2mSecurityType.X509, 'device.lwm2m-security-config.client-publicKey-or-id-tooltip-x509']
+  ]
+);
+
+export const Lwm2mClientSecretKeyTooltipTranslationsMap = new Map<Lwm2mSecurityType, string>(
+  [
+    [Lwm2mSecurityType.PSK, 'device.lwm2m-security-config.client-secret-key-tooltip-psk'],
+    [Lwm2mSecurityType.RPK, 'device.lwm2m-security-config.client-secret-key-tooltip-prk'],
+    [Lwm2mSecurityType.X509, 'device.lwm2m-security-config.client-secret-key-tooltip-x509']
+  ]
+);
+
+export const Lwm2mClientKeyTooltipTranslationsMap = new Map<Lwm2mSecurityType, string>(
+  [
+    [Lwm2mSecurityType.PSK, 'device.lwm2m-security-config.client-secret-key-tooltip-psk'],
+    [Lwm2mSecurityType.RPK, 'device.lwm2m-security-config.client-secret-key-tooltip-prk']
+  ]
+);
+
 export interface ClientSecurityConfig {
   securityConfigClientMode: Lwm2mSecurityType;
   endpoint: string;

@@ -23,12 +23,18 @@ import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.request.BindingMode;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfig;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredential;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBootstrapServerCredential;
 
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @Data
 public class LwM2MBootstrapConfig implements Serializable {
+
+    List<LwM2MBootstrapServerCredential> serversConfiguration;
+    LwM2MBootstrapClientCredential bootstrapClientCredential;
     /*
       interface BootstrapSecurityConfig
         servers: BootstrapServersSecurityConfig,
@@ -67,6 +73,11 @@ public class LwM2MBootstrapConfig implements Serializable {
     @Getter
     @Setter
     private LwM2MServerBootstrap lwm2mServer;
+
+    public LwM2MBootstrapConfig(List<LwM2MBootstrapServerCredential> serversConfiguration, LwM2MBootstrapClientCredential bootstrapClientCredential) {
+        this.serversConfiguration = serversConfiguration;
+        this.bootstrapClientCredential = bootstrapClientCredential;
+    }
 
     @JsonIgnore
     public BootstrapConfig getLwM2MBootstrapConfig() {

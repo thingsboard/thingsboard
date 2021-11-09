@@ -30,12 +30,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MServerSecurityConfig;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.lwm2m.LwM2MService;
-import org.thingsboard.server.service.lwm2m.LwM2MServiceImpl;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.Map;
 
@@ -63,14 +61,14 @@ public class Lwm2mController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/lwm2m/deviceProfile/bootstrap/{isBootstrapServer}", method = RequestMethod.GET)
     @ResponseBody
-    public ServerSecurityConfig getLwm2mBootstrapSecurityInfo(
-            @ApiParam(value = IS_BOOTSTRAP_SERVER_PARAM_DESCRIPTION)
-            @PathVariable(IS_BOOTSTRAP_SERVER) boolean bootstrapServer) throws ThingsboardException {
-        try {
-            return lwM2MService.getServerSecurityInfo(bootstrapServer);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+    public LwM2MServerSecurityConfig getLwm2mBootstrapSecurityInfo(
+        @ApiParam(value = IS_BOOTSTRAP_SERVER_PARAM_DESCRIPTION)
+        @PathVariable(IS_BOOTSTRAP_SERVER) boolean bootstrapServer) throws ThingsboardException {
+            try {
+                return lwM2MService.getServerSecurityInfo(bootstrapServer);
+            } catch (Exception e) {
+                throw handleException(e);
+            }
     }
 
     @ApiOperation(hidden = true, value = "Save device with credentials (Deprecated)")

@@ -27,7 +27,7 @@ import {
 } from '@angular/forms';
 import {
   getDefaultClientSecurityConfig,
-  getDefaultServerSecurityConfig,
+  getDefaultServerSecurityConfig, Lwm2mClientKeyTooltipTranslationsMap,
   Lwm2mSecurityConfigModels,
   Lwm2mSecurityType,
   Lwm2mSecurityTypeTranslationMap
@@ -60,6 +60,7 @@ export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Va
   securityConfigLwM2MType = Lwm2mSecurityType;
   securityConfigLwM2MTypes = Object.keys(Lwm2mSecurityType);
   credentialTypeLwM2MNamesMap = Lwm2mSecurityTypeTranslationMap;
+  clientKeyTooltipNamesMap = Lwm2mClientKeyTooltipTranslationsMap;
 
   private destroy$ = new Subject();
   private propagateChange = (v: any) => {};

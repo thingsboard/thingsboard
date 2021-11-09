@@ -26,6 +26,8 @@ import {
   Validators
 } from '@angular/forms';
 import {
+  Lwm2mClientSecretKeyTooltipTranslationsMap,
+  Lwm2mPublicKeyOrIdTooltipTranslationsMap,
   Lwm2mSecurityType,
   Lwm2mSecurityTypeTranslationMap,
   ServerSecurityConfig
@@ -57,6 +59,8 @@ export class DeviceCredentialsLwm2mServerComponent implements OnDestroy, Control
   securityConfigLwM2MType = Lwm2mSecurityType;
   securityConfigLwM2MTypes = Object.values(Lwm2mSecurityType);
   lwm2mSecurityTypeTranslationMap = Lwm2mSecurityTypeTranslationMap;
+  publicKeyOrIdTooltipNamesMap = Lwm2mPublicKeyOrIdTooltipTranslationsMap;
+  clientSecretKeyTooltipNamesMap = Lwm2mClientSecretKeyTooltipTranslationsMap;
 
   private destroy$ = new Subject();
   private propagateChange = (v: any) => {};
