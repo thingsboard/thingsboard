@@ -20,11 +20,10 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.apache.commons.codec.binary.Base64;
-import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
 
 @Getter
 @Setter
-public abstract class AbstractLwM2MBootstrapServerCredential extends ServerSecurityConfig implements LwM2MBootstrapServerCredential {
+public abstract class AbstractLwM2MBootstrapServerCredential extends LwM2MServerSecurityConfig implements LwM2MBootstrapServerCredential {
 
     @JsonIgnore
     public byte[] getDecodedCServerPublicKey() {
