@@ -20,7 +20,7 @@ import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCr
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapConfig;
 
 @Data
-public class LwM2MCredentials {
+public class LwM2MClientCredentials {
     private LwM2MClientCredential client;
     private LwM2MBootstrapConfig bootstrap;
 }

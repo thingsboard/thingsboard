@@ -32,7 +32,7 @@ import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsRes
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
-import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MCredentials;
+import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MClientCredentials;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer;
@@ -48,6 +48,7 @@ import static org.eclipse.leshan.core.SecurityMode.PSK;
 import static org.eclipse.leshan.core.SecurityMode.RPK;
 import static org.eclipse.leshan.core.SecurityMode.X509;
 import static org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer.BOOTSTRAP;
+import static org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer.CLIENT;
 
 @Slf4j
 @Component
@@ -87,25 +88,23 @@ public class LwM2mCredentialsSecurityInfoValidator {
             log.error("Failed to await credentials!", e);
         }
 
-        TbLwM2MSecurityInfo securityInfo = resultSecurityStore[0];
+        return resultSecurityStore[0];
 
-        if (securityInfo.getSecurityMode() == null) {
-            throw new LwM2MAuthException();
-        }
-
-        return securityInfo;
+//        if ((CLIENT.equals(keyValue) && securityInfo.getSecurityMode() == null) ||
+//                (BOOTSTRAP.equals(keyValue) && securityInfo.getBootstrapCredentialConfig().getBootstrapServer()==null && securityInfo.getBootstrapCredentialConfig().getLwm2mServer()==null)){
+//            throw new LwM2MAuthException();
+//        }
+//
+//        return securityInfo;
     }
 
     /**
      * Create new SecurityInfo
-     * @param endpoint -
-     * @param jsonStr -
-     * @param keyValue -
      * @return SecurityInfo
      */
     private TbLwM2MSecurityInfo createSecurityInfo(String endpoint, String jsonStr, LwM2mTypeServer keyValue) {
         TbLwM2MSecurityInfo result = new TbLwM2MSecurityInfo();
-        LwM2MCredentials credentials = JacksonUtil.fromString(jsonStr, LwM2MCredentials.class);
+        LwM2MClientCredentials credentials = JacksonUtil.fromString(jsonStr, LwM2MClientCredentials.class);
         if (credentials != null) {
             if (keyValue.equals(BOOTSTRAP)) {
                 result.setBootstrapCredentialConfig(credentials.getBootstrap());
@@ -114,7 +113,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
                     endpoint = StringUtils.isNotEmpty(pskClientConfig.getEndpoint()) ? pskClientConfig.getEndpoint() : endpoint;
                 }
                 result.setEndpoint(endpoint);
-                result.setSecurityMode(credentials.getBootstrap().getBootstrapServer().getSecurityMode());
+//                result.setSecurityMode(credentials.getBootstrap().getBootstrapServer().getSecurityMode());
             } else {
                 result.setEndpoint(credentials.getClient().getEndpoint());
                 switch (credentials.getClient().getSecurityConfigClientMode()) {
