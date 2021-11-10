@@ -28,7 +28,7 @@ import { AttributeService } from '@core/http/attribute.service';
 import { AttributeData, AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType } from '@shared/models/entity-type.models';
-import { createLabelFromDatasource } from '@core/utils';
+import { createLabelFromDatasource, isDefinedAndNotNull } from '@core/utils';
 import { Observable } from 'rxjs';
 
 enum JsonInputWidgetMode {
@@ -63,9 +63,7 @@ export class JsonInputWidgetComponent extends PageComponent implements OnInit {
 
   labelValue: string;
 
-  entityDetected = false;
-  dataKeyDetected = false;
-  isValidParameter = false;
+  datasourceDetected = false;
   errorMessage: string;
 
   isFocused: boolean;
@@ -111,30 +109,26 @@ export class JsonInputWidgetComponent extends PageComponent implements OnInit {
   }
 
   private validateDatasources() {
-    if (this.datasource?.type === DatasourceType.entity) {
-      this.entityDetected = true;
-      if (this.datasource.dataKeys.length) {
-        this.dataKeyDetected = true;
-
-        if (this.settings.widgetMode === JsonInputWidgetMode.ATTRIBUTE) {
-          if (this.datasource.dataKeys[0].type === DataKeyType.attribute) {
-            if (this.settings.attributeScope === AttributeScope.SERVER_SCOPE || this.datasource.entityType === EntityType.DEVICE) {
-              this.isValidParameter = true;
-            } else {
-              this.errorMessage = 'widgets.input-widgets.not-allowed-entity';
-            }
-          } else {
-            this.errorMessage = 'widgets.input-widgets.no-attribute-selected';
+    this.datasourceDetected = isDefinedAndNotNull(this.datasource);
+    if (!this.datasourceDetected) {
+      return;
+    }
+    if (this.datasource.type === DatasourceType.entity) {
+      if (this.settings.widgetMode === JsonInputWidgetMode.ATTRIBUTE) {
+        if (this.datasource.dataKeys[0].type === DataKeyType.attribute) {
+          if (this.settings.attributeScope !== AttributeScope.SERVER_SCOPE && this.datasource.entityType !== EntityType.DEVICE) {
+            this.errorMessage = 'widgets.input-widgets.not-allowed-entity';
           }
         } else {
-          if (this.datasource.dataKeys[0].type === DataKeyType.timeseries) {
-            this.isValidParameter = true;
-          } else {
-            this.errorMessage = 'widgets.input-widgets.no-timeseries-selected';
-          }
+          this.errorMessage = 'widgets.input-widgets.no-attribute-selected';
         }
-
+      } else {
+        if (this.datasource.dataKeys[0].type !== DataKeyType.timeseries) {
+          this.errorMessage = 'widgets.input-widgets.no-timeseries-selected';
+        }
       }
+    } else {
+      this.errorMessage = 'widgets.input-widgets.no-entity-selected';
     }
   }
 
@@ -152,7 +146,7 @@ export class JsonInputWidgetComponent extends PageComponent implements OnInit {
   }
 
   private updateWidgetData(data: Array<DatasourceData>) {
-    if (this.isValidParameter) {
+    if (!this.errorMessage) {
       let value = {};
       if (data[0].data[0][1] !== '') {
         try {
