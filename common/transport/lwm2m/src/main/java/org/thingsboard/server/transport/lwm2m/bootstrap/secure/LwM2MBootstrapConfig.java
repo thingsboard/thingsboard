@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -31,10 +32,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Data
+@AllArgsConstructor
 public class LwM2MBootstrapConfig implements Serializable {
 
-    List<LwM2MBootstrapServerCredential> serversConfiguration;
-    LwM2MBootstrapClientCredential bootstrapClientCredential;
+    List<LwM2MBootstrapServerCredential> serverConfiguration;
     /*
       interface BootstrapSecurityConfig
         servers: BootstrapServersSecurityConfig,
@@ -49,9 +50,9 @@ public class LwM2MBootstrapConfig implements Serializable {
      *   notifIfDisabled: boolean,
      *   binding: string
      * */
-    @Getter
-    @Setter
-    private LwM2MBootstrapServers servers;
+//    @Getter
+//    @Setter
+//    private LwM2MBootstrapServers servers;
 
     /** -bootstrapServer, lwm2mServer
      * interface ServerSecurityConfig
@@ -68,15 +69,15 @@ public class LwM2MBootstrapConfig implements Serializable {
      * */
     @Getter
     @Setter
-    private LwM2MServerBootstrap bootstrapServer;
+    private LwM2MBootstrapClientCredential bootstrapServer;
 
     @Getter
     @Setter
-    private LwM2MServerBootstrap lwm2mServer;
+    private LwM2MBootstrapClientCredential lwm2mServer;
 
-    public LwM2MBootstrapConfig(List<LwM2MBootstrapServerCredential> serversConfiguration, LwM2MBootstrapClientCredential bootstrapClientCredential) {
-        this.serversConfiguration = serversConfiguration;
-        this.bootstrapClientCredential = bootstrapClientCredential;
+    public LwM2MBootstrapConfig(List<LwM2MBootstrapServerCredential> serverConfiguration, LwM2MBootstrapClientCredential bootstrapClientCredential) {
+        this.serverConfiguration = serverConfiguration;
+
     }
 
     @JsonIgnore
@@ -87,17 +88,17 @@ public class LwM2MBootstrapConfig implements Serializable {
         configBs.toDelete.add("/1");
         /* Server Configuration (object 1) as defined in LWM2M 1.0.x TS. */
         BootstrapConfig.ServerConfig server0 = new BootstrapConfig.ServerConfig();
-        server0.shortId = servers.getShortId();
-        server0.lifetime = servers.getLifetime();
-        server0.defaultMinPeriod = servers.getDefaultMinPeriod();
-        server0.notifIfDisabled = servers.isNotifIfDisabled();
-        server0.binding = BindingMode.parse(servers.getBinding());
+//        server0.shortId = servers.getShortId();
+//        server0.lifetime = servers.getLifetime();
+//        server0.defaultMinPeriod = servers.getDefaultMinPeriod();
+//        server0.notifIfDisabled = servers.isNotifIfDisabled();
+//        server0.binding = BindingMode.parse(servers.getBinding());
         configBs.servers.put(0, server0);
         /* Security Configuration (object 0) as defined in LWM2M 1.0.x TS. Bootstrap instance = 0 */
-        this.bootstrapServer.setBootstrapServerIs(true);
-        configBs.security.put(0, setServerSecurity(this.lwm2mServer.getHost(), this.lwm2mServer.getPort(), this.lwm2mServer.getSecurityHost(), this.lwm2mServer.getSecurityPort(), this.bootstrapServer.isBootstrapServerIs(), this.bootstrapServer.getSecurityMode(), this.bootstrapServer.getClientPublicKeyOrId(), this.bootstrapServer.getServerPublicKey(), this.bootstrapServer.getClientSecretKey(), this.bootstrapServer.getServerId()));
-        /* Security Configuration (object 0) as defined in LWM2M 1.0.x TS. Server instance = 1 */
-        configBs.security.put(1, setServerSecurity(this.lwm2mServer.getHost(), this.lwm2mServer.getPort(), this.lwm2mServer.getSecurityHost(), this.lwm2mServer.getSecurityPort(), this.lwm2mServer.isBootstrapServerIs(), this.lwm2mServer.getSecurityMode(), this.lwm2mServer.getClientPublicKeyOrId(), this.lwm2mServer.getServerPublicKey(), this.lwm2mServer.getClientSecretKey(), this.lwm2mServer.getServerId()));
+//        this.bootstrapServer.setBootstrapServerIs(true);
+//        configBs.security.put(0, setServerSecurity(this.lwm2mServer.getHost(), this.lwm2mServer.getPort(), this.lwm2mServer.getSecurityHost(), this.lwm2mServer.getSecurityPort(), this.bootstrapServer.isBootstrapServerIs(), this.bootstrapServer.getSecurityMode(), this.bootstrapServer.getClientPublicKeyOrId(), this.bootstrapServer.getServerPublicKey(), this.bootstrapServer.getClientSecretKey(), this.bootstrapServer.getServerId()));
+//        /* Security Configuration (object 0) as defined in LWM2M 1.0.x TS. Server instance = 1 */
+//        configBs.security.put(1, setServerSecurity(this.lwm2mServer.getHost(), this.lwm2mServer.getPort(), this.lwm2mServer.getSecurityHost(), this.lwm2mServer.getSecurityPort(), this.lwm2mServer.isBootstrapServerIs(), this.lwm2mServer.getSecurityMode(), this.lwm2mServer.getClientPublicKeyOrId(), this.lwm2mServer.getServerPublicKey(), this.lwm2mServer.getClientSecretKey(), this.lwm2mServer.getServerId()));
         return configBs;
     }
 

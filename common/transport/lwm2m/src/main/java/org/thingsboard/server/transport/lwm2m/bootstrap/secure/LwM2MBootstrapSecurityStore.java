@@ -71,6 +71,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
 
     @Override
     public Iterator<SecurityInfo> getAllByEndpoint(String endPoint) {
+        // TODO
         TbLwM2MSecurityInfo store = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfoByCredentialsId(endPoint, BOOTSTRAP);
         if (store.getBootstrapCredentialConfig() != null && store.getSecurityMode() != null) {
             /* add value to store  from BootstrapJson */
@@ -125,20 +126,20 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
             switch (lwM2MBootstrapConfig.getBootstrapServer().getSecurityMode()) {
                 /* Use RPK only */
                 case PSK:
-                    store.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(store.getEndpoint(),
-                            lwM2MBootstrapConfig.getBootstrapServer().getClientPublicKeyOrId(),
-                            Hex.decodeHex(lwM2MBootstrapConfig.getBootstrapServer().getClientSecretKey().toCharArray())));
+//                    store.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(store.getEndpoint(),
+//                            lwM2MBootstrapConfig.getBootstrapServer().getClientPublicKeyOrId(),
+//                            Hex.decodeHex(lwM2MBootstrapConfig.getBootstrapServer().getClientSecretKey().toCharArray())));
                     store.setSecurityMode(SecurityMode.PSK);
                     break;
                 case RPK:
-                    try {
-                        store.setSecurityInfo(SecurityInfo.newRawPublicKeyInfo(store.getEndpoint(),
-                                SecurityUtil.publicKey.decode(Hex.decodeHex(lwM2MBootstrapConfig.getBootstrapServer().getClientPublicKeyOrId().toCharArray()))));
-                        store.setSecurityMode(SecurityMode.RPK);
-                        break;
-                    } catch (IOException | GeneralSecurityException e) {
-                        log.error("Unable to decode Client public key for [{}]  [{}]", store.getEndpoint(), e.getMessage());
-                    }
+//                    try {
+////                        store.setSecurityInfo(SecurityInfo.newRawPublicKeyInfo(store.getEndpoint(),
+////                                SecurityUtil.publicKey.decode(Hex.decodeHex(lwM2MBootstrapConfig.getBootstrapServer().getClientPublicKeyOrId().toCharArray()))));
+////                        store.setSecurityMode(SecurityMode.RPK);
+//                        break;
+//                    } catch (IOException | GeneralSecurityException e) {
+//                        log.error("Unable to decode Client public key for [{}]  [{}]", store.getEndpoint(), e.getMessage());
+//                    }
                 case X509:
                     store.setSecurityInfo(SecurityInfo.newX509CertInfo(store.getEndpoint()));
                     store.setSecurityMode(SecurityMode.X509);

@@ -30,9 +30,9 @@ public class TbLwM2MSecurityInfo implements Serializable {
     private ValidateDeviceCredentialsResponse msg;
     private SecurityInfo securityInfo;
     private SecurityMode securityMode;
+    private DeviceProfile deviceProfile;
 
     /** bootstrap */
-    private DeviceProfile deviceProfile;
     private LwM2MBootstrapConfig bootstrapCredentialConfig;
     private String endpoint;
     private BootstrapConfig bootstrapConfig;

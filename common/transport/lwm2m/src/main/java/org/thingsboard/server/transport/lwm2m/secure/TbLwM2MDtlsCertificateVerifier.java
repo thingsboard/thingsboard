@@ -41,7 +41,7 @@ import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsRes
 import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
-import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MCredentials;
+import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MClientCredentials;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
 import org.thingsboard.server.transport.lwm2m.server.store.TbMainSecurityStore;
@@ -124,7 +124,7 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
                         }
                         ValidateDeviceCredentialsResponse msg = securityInfo != null ? securityInfo.getMsg() : null;
                         if (msg != null && org.thingsboard.server.common.data.StringUtils.isNotEmpty(msg.getCredentials())) {
-                            LwM2MCredentials credentials = JacksonUtil.fromString(msg.getCredentials(), LwM2MCredentials.class);
+                            LwM2MClientCredentials credentials = JacksonUtil.fromString(msg.getCredentials(), LwM2MClientCredentials.class);
                             if (!credentials.getClient().getSecurityConfigClientMode().equals(LwM2MSecurityMode.X509)) {
                                 continue;
                             }
