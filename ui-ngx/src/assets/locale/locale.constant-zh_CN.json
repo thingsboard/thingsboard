@@ -391,11 +391,7 @@
     "view-statistics": "查看统计信息",
     "alarm":"警告",
     "alarms-created": "创建警告数",
-    "alarms-created-hourly-activity":"Alarms created hourly activity",
-    "alarms-created-daily-activity": "Alarms created daily activity",
-    "alarms-created-monthly-activity": "Alarms created monthly activity",
-    "notifications": "通知",
-    "notifications-hourly-activity": "Notifications hourly activity"
+    "notifications": "通知"
   },
   "asset": {
     "add": "添加资产",
