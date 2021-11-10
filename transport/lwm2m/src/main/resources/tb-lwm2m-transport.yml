@@ -121,7 +121,7 @@ transport:
           pem:
             # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
             cert_file: "${LWM2M_SERVER_PEM_CERT:lwm2mserver.pem}"
-            # Path to the server certificate private key file (optional)
+            # Path to the server certificate private key file. Optional by default. Required if the private key is not present in server certificate file;
             key_file: "${LWM2M_SERVER_PEM_KEY:lwm2mserver_key.pem}"
             # Server certificate private key password (optional)
             key_password: "${LWM2M_SERVER_PEM_KEY_PASSWORD:server_key_password}"
@@ -157,7 +157,7 @@ transport:
           pem:
             # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
             cert_file: "${LWM2M_BS_PEM_CERT:lwm2mserver.pem}"
-            # Path to the server certificate private key file (optional)
+            # Path to the server certificate private key file. Optional by default. Required if the private key is not present in server certificate file;
             key_file: "${LWM2M_BS_PEM_KEY:lwm2mserver_key.pem}"
             # Server certificate private key password (optional)
             key_password: "${LWM2M_BS_PEM_KEY_PASSWORD:server_key_password}"
