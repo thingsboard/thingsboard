@@ -31,7 +31,7 @@ server:
       pem:
         # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
         cert_file: "${SSL_PEM_CERT:server.pem}"
-        # Path to the server certificate private key file (optional)
+        # Path to the server certificate private key file. Optional by default. Required if the private key is not present in server certificate file;
         key_file: "${SSL_PEM_KEY:server_key.pem}"
         # Server certificate private key password (optional)
         key_password: "${SSL_PEM_KEY_PASSWORD:server_key_password}"
@@ -54,7 +54,7 @@ server:
   log_controller_error_stack_trace: "${HTTP_LOG_CONTROLLER_ERROR_STACK_TRACE:false}"
   ws:
     send_timeout: "${TB_SERVER_WS_SEND_TIMEOUT:5000}"
-    ping_timeout: "${TB_SERVER_WS_PING_TIMEOUT:30000}"
+    ping_timeout: "${TB_SERVER_WS_PING_TIMEOUT:15000}"
     limits:
       # Limit the amount of sessions and subscriptions available on each server. Put values to zero to disable particular limitation
       max_sessions_per_tenant: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SESSIONS_PER_TENANT:0}"
@@ -644,7 +644,7 @@ transport:
       bind_address: "${MQTT_SSL_BIND_ADDRESS:0.0.0.0}"
       # MQTT SSL bind port
       bind_port: "${MQTT_SSL_BIND_PORT:8883}"
-      # SSL protocol: See http://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#SSLContext
+      # SSL protocol: See https://docs.oracle.com/en/java/javase/11/docs/specs/security/standard-names.html#sslcontext-algorithms
       protocol: "${MQTT_SSL_PROTOCOL:TLSv1.2}"
       # Server SSL credentials
       credentials:
@@ -654,7 +654,7 @@ transport:
         pem:
           # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
           cert_file: "${MQTT_SSL_PEM_CERT:mqttserver.pem}"
-          # Path to the server certificate private key file (optional)
+          # Path to the server certificate private key file. Optional by default. Required if the private key is not present in server certificate file;
           key_file: "${MQTT_SSL_PEM_KEY:mqttserver_key.pem}"
           # Server certificate private key password (optional)
           key_password: "${MQTT_SSL_PEM_KEY_PASSWORD:server_key_password}"
@@ -666,7 +666,9 @@ transport:
           store_file: "${MQTT_SSL_KEY_STORE:mqttserver.jks}"
           # Password used to access the key store
           store_password: "${MQTT_SSL_KEY_STORE_PASSWORD:server_ks_password}"
-          # Password used to access the key
+          # Optional alias of the private key; If not set, the platform will load the first private key from the keystore;
+          key_alias: "${MQTT_SSL_KEY_ALIAS:}"
+          # Optional password to access the private key. If not set, the platform will attempt to load the private keys that are not protected with the password;
           key_password: "${MQTT_SSL_KEY_PASSWORD:server_key_password}"
       # Skip certificate validity check for client certificates.
       skip_validity_check_for_client_cert: "${MQTT_SSL_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
@@ -694,7 +696,7 @@ transport:
         pem:
           # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
           cert_file: "${COAP_DTLS_PEM_CERT:coapserver.pem}"
-          # Path to the server certificate private key file (optional)
+          # Path to the server certificate private key file. Optional by default. Required if the private key is not present in server certificate file;
           key_file: "${COAP_DTLS_PEM_KEY:coapserver_key.pem}"
           # Server certificate private key password (optional)
           key_password: "${COAP_DTLS_PEM_KEY_PASSWORD:server_key_password}"
@@ -736,7 +738,7 @@ transport:
           pem:
             # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
             cert_file: "${LWM2M_SERVER_PEM_CERT:lwm2mserver.pem}"
-            # Path to the server certificate private key file (optional)
+            # Path to the server certificate private key file. Optional by default. Required if the private key is not present in server certificate file;
             key_file: "${LWM2M_SERVER_PEM_KEY:lwm2mserver_key.pem}"
             # Server certificate private key password (optional)
             key_password: "${LWM2M_SERVER_PEM_KEY_PASSWORD:server_key_password}"
@@ -772,7 +774,7 @@ transport:
           pem:
             # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
             cert_file: "${LWM2M_BS_PEM_CERT:lwm2mserver.pem}"
-            # Path to the server certificate private key file (optional)
+            # Path to the server certificate private key file. Optional by default. Required if the private key is not present in server certificate file;
             key_file: "${LWM2M_BS_PEM_KEY:lwm2mserver_key.pem}"
             # Server certificate private key password (optional)
             key_password: "${LWM2M_BS_PEM_KEY_PASSWORD:server_key_password}"
