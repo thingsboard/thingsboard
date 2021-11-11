@@ -78,7 +78,7 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
       if (this.ruleNode.component.type !== RuleNodeType.RULE_CHAIN) {
 
         this.ruleNodeFormGroup = this.fb.group({
-          name: [this.ruleNode.name, [Validators.required, Validators.pattern('(.|\\s)*\\S(.|\\s)*')]],
+          name: [this.ruleNode.name, [Validators.required, Validators.pattern('(.|\\s)*\\S(.|\\s)*'), Validators.maxLength(255)]],
           debugMode: [this.ruleNode.debugMode, []],
           configuration: [this.ruleNode.configuration, [Validators.required]],
           additionalInfo: this.fb.group(

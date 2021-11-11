@@ -21,6 +21,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.RuleChainId;
 
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,6 +38,7 @@ public class RuleChainMetaData {
     @ApiModelProperty(position = 2, required = true, value = "Index of the first rule node in the 'nodes' list")
     private Integer firstNodeIndex;
 
+    @Valid
     @ApiModelProperty(position = 3, required = true, value = "List of rule node JSON objects")
     private List<RuleNode> nodes;
 
