@@ -22,6 +22,6 @@ import java.util.List;
 @Data
 public class LwM2MBootstrapServersConfiguration {
 
-    List<LwM2MBootstrapServerCredential> serverConfiguration;
+    List<LwM2MBootstrapServerCredential> bootstrap;
 
 }

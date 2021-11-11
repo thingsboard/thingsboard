@@ -46,7 +46,6 @@ import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBootstrapServersConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceTypeConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultCoapDeviceTypeConfiguration;
@@ -418,8 +417,8 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                             }
                         }
                     } else if (transportConfiguration instanceof Lwm2mDeviceProfileTransportConfiguration) {
-                        LwM2MBootstrapServersConfiguration lwM2MBootstrapServersConfiguration = ((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration).getBootstrap();
-                        for (LwM2MBootstrapServerCredential bootstrapServerCredential : lwM2MBootstrapServersConfiguration.getServerConfiguration()) {
+                        List<LwM2MBootstrapServerCredential> lwM2MBootstrapServersConfigurations = ((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration).getBootstrap();
+                        for (LwM2MBootstrapServerCredential bootstrapServerCredential : lwM2MBootstrapServersConfigurations) {
                             validateLwm2mServersCredentialOfBootstrapForClient(bootstrapServerCredential);
                         }
                     }

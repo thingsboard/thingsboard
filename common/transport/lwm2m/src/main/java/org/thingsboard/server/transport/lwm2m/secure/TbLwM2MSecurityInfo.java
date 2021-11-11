@@ -28,12 +28,13 @@ import java.io.Serializable;
 @Data
 public class TbLwM2MSecurityInfo implements Serializable {
     private ValidateDeviceCredentialsResponse msg;
+    private DeviceProfile deviceProfile;
+    private String endpoint;
     private SecurityInfo securityInfo;
     private SecurityMode securityMode;
-    private DeviceProfile deviceProfile;
+
 
     /** bootstrap */
     private LwM2MBootstrapConfig bootstrapCredentialConfig;
-    private String endpoint;
     private BootstrapConfig bootstrapConfig;
 }

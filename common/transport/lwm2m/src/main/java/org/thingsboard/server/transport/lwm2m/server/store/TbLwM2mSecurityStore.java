@@ -22,6 +22,7 @@ import org.eclipse.leshan.server.security.SecurityInfo;
 import org.jetbrains.annotations.Nullable;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -71,7 +72,12 @@ public class TbLwM2mSecurityStore implements TbMainSecurityStore {
     public SecurityInfo getByIdentity(String pskIdentity) {
         SecurityInfo securityInfo = securityStore.getByIdentity(pskIdentity);
         if (securityInfo == null) {
-            securityInfo = fetchAndPutSecurityInfo(pskIdentity);
+            try {
+                securityInfo = fetchAndPutSecurityInfo(pskIdentity);
+            } catch (LwM2MAuthException e) {
+                log.info("Registration failed: FORBIDDEN, endpointId: [{}]", pskIdentity);
+                securityInfo = SecurityInfo.newPreSharedKeyInfo(pskIdentity, pskIdentity, new byte[]{0x00});
+            }
         }
         return securityInfo;
     }

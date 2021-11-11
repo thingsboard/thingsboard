@@ -34,6 +34,7 @@ import org.eclipse.leshan.server.security.BootstrapSecurityStore;
 import org.eclipse.leshan.server.security.SecurityChecker;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.transport.lwm2m.bootstrap.store.LwM2MBootstrapSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
 
 import java.util.ArrayList;
@@ -118,6 +119,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
             session.setModel(modelProvider.getObjectModel(session, tasks.supportedObjects));
 
         // set Requests to Send
+        log.info("tasks.requestsToSend = [{}]", tasks.requestsToSend);
         session.setRequests(tasks.requestsToSend);
 
         // prepare list where we will store Responses
