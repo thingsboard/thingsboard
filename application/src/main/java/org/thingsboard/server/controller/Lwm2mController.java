@@ -29,8 +29,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MServerSecurityConfigDefault;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MServerSecurityConfig;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.lwm2m.LwM2MService;
@@ -61,7 +61,7 @@ public class Lwm2mController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/lwm2m/deviceProfile/bootstrap/{isBootstrapServer}", method = RequestMethod.GET)
     @ResponseBody
-    public LwM2MServerSecurityConfig getLwm2mBootstrapSecurityInfo(
+    public LwM2MServerSecurityConfigDefault getLwm2mBootstrapSecurityInfo(
         @ApiParam(value = IS_BOOTSTRAP_SERVER_PARAM_DESCRIPTION)
         @PathVariable(IS_BOOTSTRAP_SERVER) boolean bootstrapServer) throws ThingsboardException {
             try {

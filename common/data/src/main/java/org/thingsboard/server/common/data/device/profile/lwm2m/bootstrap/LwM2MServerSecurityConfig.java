@@ -34,10 +34,6 @@ public class LwM2MServerSecurityConfig {
     protected String host;
     @ApiModelProperty(position = 4, value = "Port for  Lwm2m Server: 'No Security' mode: Lwm2m Server or Bootstrap Server", example = "'5685' or '5687'", readOnly = true)
     protected Integer port;
-    @ApiModelProperty(position = 5, value = "Host for 'Security' mode (DTLS)", example = "0.0.0.0", readOnly = true)
-    protected String securityHost;
-    @ApiModelProperty(position = 6, value = "Port for 'Security' mode (DTLS): Lwm2m Server or Bootstrap Server", example = "5686 or 5688", readOnly = true)
-    protected Integer securityPort;
     @ApiModelProperty(position = 7, value = "Client Hold Off Time. The number of seconds to wait before initiating a Client Initiated Bootstrap once the LwM2M Client has determined it should initiate this bootstrap mode. (This information is relevant for use with a Bootstrap-Server only.)", example = "1", readOnly = true)
     protected Integer clientHoldOffTime = 1;
     @ApiModelProperty(position = 8, value = "Server Public Key for 'Security' mode (DTLS): RPK or X509. Format: base64 encoded", example = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEAZ0pSaGKHk/GrDaUDnQZpeEdGwX7m3Ws+U/kiVat\n" +
