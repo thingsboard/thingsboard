@@ -20,11 +20,16 @@ import org.eclipse.californium.elements.util.SslContextUtil;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.californium.scandium.dtls.CertificateType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.ResourceUtils;
 import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
+import org.thingsboard.server.common.transport.config.ssl.SslCredentialsConfig;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 
 import java.io.IOException;
@@ -45,17 +50,15 @@ public class TbCoapDtlsSettings {
     @Value("${transport.coap.dtls.bind_port}")
     private Integer port;
 
-    @Value("${transport.coap.dtls.key_store}")
-    private String keyStoreFile;
+    @Bean
+    @ConfigurationProperties(prefix = "transport.coap.dtls.credentials")
+    public SslCredentialsConfig coapDtlsCredentials() {
+        return new SslCredentialsConfig("COAP DTLS Credentials", false);
+    }
 
-    @Value("${transport.coap.dtls.key_store_password}")
-    private String keyStorePassword;
-
-    @Value("${transport.coap.dtls.key_password}")
-    private String keyPassword;
-
-    @Value("${transport.coap.dtls.key_alias}")
-    private String keyAlias;
+    @Autowired
+    @Qualifier("coapDtlsCredentials")
+    private SslCredentialsConfig coapDtlsCredentialsConfig;
 
     @Value("${transport.coap.dtls.x509.skip_validity_check_for_client_cert:false}")
     private boolean skipValidityCheckForClientCert;
@@ -75,8 +78,9 @@ public class TbCoapDtlsSettings {
     public DtlsConnectorConfig dtlsConnectorConfig() throws UnknownHostException {
         DtlsConnectorConfig.Builder configBuilder = new DtlsConnectorConfig.Builder();
         configBuilder.setAddress(getInetSocketAddress());
-        String keyStoreFilePath = ResourceUtils.getUri(this, keyStoreFile);
-        SslContextUtil.Credentials serverCredentials = loadServerCredentials(keyStoreFilePath);
+        SslCredentials sslCredentials = this.coapDtlsCredentialsConfig.getCredentials();
+        SslContextUtil.Credentials serverCredentials =
+                new SslContextUtil.Credentials(sslCredentials.getPrivateKey(), null, sslCredentials.getCertificateChain());
         configBuilder.setServerOnly(true);
         configBuilder.setClientAuthenticationRequired(false);
         configBuilder.setClientAuthenticationWanted(true);
@@ -92,15 +96,6 @@ public class TbCoapDtlsSettings {
         configBuilder.setIdentity(serverCredentials.getPrivateKey(), serverCredentials.getCertificateChain(),
                 Collections.singletonList(CertificateType.X_509));
         return configBuilder.build();
-    }
-
-    private SslContextUtil.Credentials loadServerCredentials(String keyStoreFilePath) {
-        try {
-            return SslContextUtil.loadCredentials(keyStoreFilePath, keyAlias, keyStorePassword.toCharArray(),
-                    keyPassword.toCharArray());
-        } catch (GeneralSecurityException | IOException e) {
-            throw new RuntimeException("Failed to load serverCredentials due to: ", e);
-        }
     }
 
     private InetSocketAddress getInetSocketAddress() throws UnknownHostException {

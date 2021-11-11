@@ -37,7 +37,6 @@ public class TbMqttNodeConfiguration implements NodeConfiguration<TbMqttNodeConf
     public TbMqttNodeConfiguration defaultConfiguration() {
         TbMqttNodeConfiguration configuration = new TbMqttNodeConfiguration();
         configuration.setTopicPattern("my-topic");
-        configuration.setHost("localhost");
         configuration.setPort(1883);
         configuration.setConnectTimeoutSec(10);
         configuration.setCleanSession(true);

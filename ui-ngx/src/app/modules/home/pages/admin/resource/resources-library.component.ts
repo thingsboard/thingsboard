@@ -29,7 +29,7 @@ import {
   ResourceTypeMIMETypes,
   ResourceTypeTranslationMap
 } from '@shared/models/resource.models';
-import { pairwise, startWith, takeUntil } from 'rxjs/operators';
+import {filter, pairwise, startWith, takeUntil} from 'rxjs/operators';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 
 @Component({
@@ -57,16 +57,14 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
     super.ngOnInit();
     this.entityForm.get('resourceType').valueChanges.pipe(
       startWith(ResourceType.LWM2M_MODEL),
-      pairwise(),
+      filter(() => this.isAdd),
       takeUntil(this.destroy$)
-    ).subscribe(([previousType, type]) => {
-      if (previousType === this.resourceType.LWM2M_MODEL) {
-        this.entityForm.get('title').setValidators(Validators.required);
-        this.entityForm.get('title').updateValueAndValidity({emitEvent: false});
-      }
+    ).subscribe((type) => {
       if (type === this.resourceType.LWM2M_MODEL) {
-        this.entityForm.get('title').clearValidators();
-        this.entityForm.get('title').updateValueAndValidity({emitEvent: false});
+        this.entityForm.get('title').disable({emitEvent: false});
+        this.entityForm.patchValue({title: ''}, {emitEvent: false});
+      } else {
+        this.entityForm.get('title').enable({emitEvent: false})
       }
       this.entityForm.patchValue({
         data: null,
@@ -92,11 +90,8 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
   buildForm(entity: Resource): FormGroup {
     const form = this.fb.group(
       {
-        title: [entity ? entity.title : '', []],
-        resourceType: [{
-          value: entity?.resourceType ? entity.resourceType : ResourceType.LWM2M_MODEL,
-          disabled: !this.isAdd
-        }, [Validators.required]],
+        title: [entity ? entity.title : "", [Validators.required, Validators.maxLength(255)]],
+        resourceType: [entity?.resourceType ? entity.resourceType : ResourceType.LWM2M_MODEL, [Validators.required]],
         fileName: [entity ? entity.fileName : null, [Validators.required]],
       }
     );

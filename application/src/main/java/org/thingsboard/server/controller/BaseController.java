@@ -121,7 +121,7 @@ import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.action.RuleEngineEntityActionService;
+import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.edge.EdgeLicenseService;
 import org.thingsboard.server.service.edge.EdgeNotificationService;
@@ -147,17 +147,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_PAGE_SIZE;
+import static org.thingsboard.server.controller.ControllerConstants.INCORRECT_TENANT_ID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Slf4j
 @TbCoreComponent
 public abstract class BaseController {
 
-    public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
-    protected static final String DEFAULT_DASHBOARD = "defaultDashboardId";
-    protected static final String HOME_DASHBOARD = "homeDashboardId";
-
-    private static final int DEFAULT_PAGE_SIZE = 1000;
+    /*Swagger UI description*/
 
     private static final ObjectMapper json = new ObjectMapper();
 
@@ -279,7 +277,7 @@ public abstract class BaseController {
     protected EdgeLicenseService edgeLicenseService;
 
     @Autowired
-    protected RuleEngineEntityActionService ruleEngineEntityActionService;
+    protected EntityActionService entityActionService;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter
@@ -316,22 +314,30 @@ public abstract class BaseController {
         } else if (exception instanceof MessagingException) {
             return new ThingsboardException("Unable to send mail: " + exception.getMessage(), ThingsboardErrorCode.GENERAL);
         } else {
-            return new ThingsboardException(exception.getMessage(), ThingsboardErrorCode.GENERAL);
+            return new ThingsboardException(exception.getMessage(), exception, ThingsboardErrorCode.GENERAL);
         }
     }
 
     <T> T checkNotNull(T reference) throws ThingsboardException {
+        return checkNotNull(reference, "Requested item wasn't found!");
+    }
+
+    <T> T checkNotNull(T reference, String notFoundMessage) throws ThingsboardException {
         if (reference == null) {
-            throw new ThingsboardException("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
+            throw new ThingsboardException(notFoundMessage, ThingsboardErrorCode.ITEM_NOT_FOUND);
         }
         return reference;
     }
 
     <T> T checkNotNull(Optional<T> reference) throws ThingsboardException {
+        return checkNotNull(reference, "Requested item wasn't found!");
+    }
+
+    <T> T checkNotNull(Optional<T> reference, String notFoundMessage) throws ThingsboardException {
         if (reference.isPresent()) {
             return reference.get();
         } else {
-            throw new ThingsboardException("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND);
+            throw new ThingsboardException(notFoundMessage, ThingsboardErrorCode.ITEM_NOT_FOUND);
         }
     }
 
@@ -391,7 +397,7 @@ public abstract class BaseController {
         try {
             validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
             Tenant tenant = tenantService.findTenantById(tenantId);
-            checkNotNull(tenant);
+            checkNotNull(tenant, "Tenant with id [" + tenantId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.TENANT, operation, tenantId, tenant);
             return tenant;
         } catch (Exception e) {
@@ -403,7 +409,7 @@ public abstract class BaseController {
         try {
             validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
             TenantInfo tenant = tenantService.findTenantInfoById(tenantId);
-            checkNotNull(tenant);
+            checkNotNull(tenant, "Tenant with id [" + tenantId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.TENANT, operation, tenantId, tenant);
             return tenant;
         } catch (Exception e) {
@@ -415,7 +421,7 @@ public abstract class BaseController {
         try {
             validateId(tenantProfileId, "Incorrect tenantProfileId " + tenantProfileId);
             TenantProfile tenantProfile = tenantProfileService.findTenantProfileById(getTenantId(), tenantProfileId);
-            checkNotNull(tenantProfile);
+            checkNotNull(tenantProfile, "Tenant profile with id [" + tenantProfileId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.TENANT_PROFILE, operation);
             return tenantProfile;
         } catch (Exception e) {
@@ -431,7 +437,7 @@ public abstract class BaseController {
         try {
             validateId(customerId, "Incorrect customerId " + customerId);
             Customer customer = customerService.findCustomerById(getTenantId(), customerId);
-            checkNotNull(customer);
+            checkNotNull(customer, "Customer with id [" + customerId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.CUSTOMER, operation, customerId, customer);
             return customer;
         } catch (Exception e) {
@@ -443,7 +449,7 @@ public abstract class BaseController {
         try {
             validateId(userId, "Incorrect userId " + userId);
             User user = userService.findUserById(getCurrentUser().getTenantId(), userId);
-            checkNotNull(user);
+            checkNotNull(user, "User with id [" + userId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.USER, operation, userId, user);
             return user;
         } catch (Exception e) {
@@ -462,7 +468,9 @@ public abstract class BaseController {
 
     protected void checkEntityId(EntityId entityId, Operation operation) throws ThingsboardException {
         try {
-            checkNotNull(entityId);
+            if (entityId == null) {
+                throw new ThingsboardException("Parameter entityId can't be empty!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+            }
             validateId(entityId.getId(), "Incorrect entityId " + entityId);
             switch (entityId.getEntityType()) {
                 case ALARM:
@@ -528,7 +536,7 @@ public abstract class BaseController {
         try {
             validateId(deviceId, "Incorrect deviceId " + deviceId);
             Device device = deviceService.findDeviceById(getCurrentUser().getTenantId(), deviceId);
-            checkNotNull(device);
+            checkNotNull(device, "Device with id [" + deviceId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, operation, deviceId, device);
             return device;
         } catch (Exception e) {
@@ -540,7 +548,7 @@ public abstract class BaseController {
         try {
             validateId(deviceId, "Incorrect deviceId " + deviceId);
             DeviceInfo device = deviceService.findDeviceInfoById(getCurrentUser().getTenantId(), deviceId);
-            checkNotNull(device);
+            checkNotNull(device, "Device with id [" + deviceId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE, operation, deviceId, device);
             return device;
         } catch (Exception e) {
@@ -552,7 +560,7 @@ public abstract class BaseController {
         try {
             validateId(deviceProfileId, "Incorrect deviceProfileId " + deviceProfileId);
             DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileById(getCurrentUser().getTenantId(), deviceProfileId);
-            checkNotNull(deviceProfile);
+            checkNotNull(deviceProfile, "Device profile with id [" + deviceProfileId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.DEVICE_PROFILE, operation, deviceProfileId, deviceProfile);
             return deviceProfile;
         } catch (Exception e) {
@@ -564,7 +572,7 @@ public abstract class BaseController {
         try {
             validateId(entityViewId, "Incorrect entityViewId " + entityViewId);
             EntityView entityView = entityViewService.findEntityViewById(getCurrentUser().getTenantId(), entityViewId);
-            checkNotNull(entityView);
+            checkNotNull(entityView, "Entity view with id [" + entityViewId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.ENTITY_VIEW, operation, entityViewId, entityView);
             return entityView;
         } catch (Exception e) {
@@ -576,7 +584,7 @@ public abstract class BaseController {
         try {
             validateId(entityViewId, "Incorrect entityViewId " + entityViewId);
             EntityViewInfo entityView = entityViewService.findEntityViewInfoById(getCurrentUser().getTenantId(), entityViewId);
-            checkNotNull(entityView);
+            checkNotNull(entityView, "Entity view with id [" + entityViewId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.ENTITY_VIEW, operation, entityViewId, entityView);
             return entityView;
         } catch (Exception e) {
@@ -588,7 +596,7 @@ public abstract class BaseController {
         try {
             validateId(assetId, "Incorrect assetId " + assetId);
             Asset asset = assetService.findAssetById(getCurrentUser().getTenantId(), assetId);
-            checkNotNull(asset);
+            checkNotNull(asset, "Asset with id [" + assetId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.ASSET, operation, assetId, asset);
             return asset;
         } catch (Exception e) {
@@ -600,7 +608,7 @@ public abstract class BaseController {
         try {
             validateId(assetId, "Incorrect assetId " + assetId);
             AssetInfo asset = assetService.findAssetInfoById(getCurrentUser().getTenantId(), assetId);
-            checkNotNull(asset);
+            checkNotNull(asset, "Asset with id [" + assetId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.ASSET, operation, assetId, asset);
             return asset;
         } catch (Exception e) {
@@ -612,7 +620,7 @@ public abstract class BaseController {
         try {
             validateId(alarmId, "Incorrect alarmId " + alarmId);
             Alarm alarm = alarmService.findAlarmByIdAsync(getCurrentUser().getTenantId(), alarmId).get();
-            checkNotNull(alarm);
+            checkNotNull(alarm, "Alarm with id [" + alarmId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.ALARM, operation, alarmId, alarm);
             return alarm;
         } catch (Exception e) {
@@ -624,7 +632,7 @@ public abstract class BaseController {
         try {
             validateId(alarmId, "Incorrect alarmId " + alarmId);
             AlarmInfo alarmInfo = alarmService.findAlarmInfoByIdAsync(getCurrentUser().getTenantId(), alarmId).get();
-            checkNotNull(alarmInfo);
+            checkNotNull(alarmInfo, "Alarm with id [" + alarmId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.ALARM, operation, alarmId, alarmInfo);
             return alarmInfo;
         } catch (Exception e) {
@@ -636,7 +644,7 @@ public abstract class BaseController {
         try {
             validateId(widgetsBundleId, "Incorrect widgetsBundleId " + widgetsBundleId);
             WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleById(getCurrentUser().getTenantId(), widgetsBundleId);
-            checkNotNull(widgetsBundle);
+            checkNotNull(widgetsBundle, "Widgets bundle with id [" + widgetsBundleId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.WIDGETS_BUNDLE, operation, widgetsBundleId, widgetsBundle);
             return widgetsBundle;
         } catch (Exception e) {
@@ -648,7 +656,7 @@ public abstract class BaseController {
         try {
             validateId(widgetTypeId, "Incorrect widgetTypeId " + widgetTypeId);
             WidgetTypeDetails widgetTypeDetails = widgetTypeService.findWidgetTypeDetailsById(getCurrentUser().getTenantId(), widgetTypeId);
-            checkNotNull(widgetTypeDetails);
+            checkNotNull(widgetTypeDetails, "Widget type with id [" + widgetTypeId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.WIDGET_TYPE, operation, widgetTypeId, widgetTypeDetails);
             return widgetTypeDetails;
         } catch (Exception e) {
@@ -660,7 +668,7 @@ public abstract class BaseController {
         try {
             validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
             Dashboard dashboard = dashboardService.findDashboardById(getCurrentUser().getTenantId(), dashboardId);
-            checkNotNull(dashboard);
+            checkNotNull(dashboard, "Dashboard with id [" + dashboardId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.DASHBOARD, operation, dashboardId, dashboard);
             return dashboard;
         } catch (Exception e) {
@@ -672,7 +680,7 @@ public abstract class BaseController {
         try {
             validateId(edgeId, "Incorrect edgeId " + edgeId);
             Edge edge = edgeService.findEdgeById(getTenantId(), edgeId);
-            checkNotNull(edge);
+            checkNotNull(edge, "Edge with id [" + edgeId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.EDGE, operation, edgeId, edge);
             return edge;
         } catch (Exception e) {
@@ -684,7 +692,7 @@ public abstract class BaseController {
         try {
             validateId(edgeId, "Incorrect edgeId " + edgeId);
             EdgeInfo edge = edgeService.findEdgeInfoById(getCurrentUser().getTenantId(), edgeId);
-            checkNotNull(edge);
+            checkNotNull(edge, "Edge with id [" + edgeId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.EDGE, operation, edgeId, edge);
             return edge;
         } catch (Exception e) {
@@ -696,7 +704,7 @@ public abstract class BaseController {
         try {
             validateId(dashboardId, "Incorrect dashboardId " + dashboardId);
             DashboardInfo dashboardInfo = dashboardService.findDashboardInfoById(getCurrentUser().getTenantId(), dashboardId);
-            checkNotNull(dashboardInfo);
+            checkNotNull(dashboardInfo, "Dashboard with id [" + dashboardId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.DASHBOARD, operation, dashboardId, dashboardInfo);
             return dashboardInfo;
         } catch (Exception e) {
@@ -734,7 +742,7 @@ public abstract class BaseController {
     protected RuleChain checkRuleChain(RuleChainId ruleChainId, Operation operation) throws ThingsboardException {
         validateId(ruleChainId, "Incorrect ruleChainId " + ruleChainId);
         RuleChain ruleChain = ruleChainService.findRuleChainById(getCurrentUser().getTenantId(), ruleChainId);
-        checkNotNull(ruleChain);
+        checkNotNull(ruleChain, "Rule chain with id [" + ruleChainId + "] is not found");
         accessControlService.checkPermission(getCurrentUser(), Resource.RULE_CHAIN, operation, ruleChainId, ruleChain);
         return ruleChain;
     }
@@ -742,7 +750,7 @@ public abstract class BaseController {
     protected RuleNode checkRuleNode(RuleNodeId ruleNodeId, Operation operation) throws ThingsboardException {
         validateId(ruleNodeId, "Incorrect ruleNodeId " + ruleNodeId);
         RuleNode ruleNode = ruleChainService.findRuleNodeById(getTenantId(), ruleNodeId);
-        checkNotNull(ruleNode);
+        checkNotNull(ruleNode, "Rule node with id [" + ruleNodeId + "] is not found");
         checkRuleChain(ruleNode.getRuleChainId(), operation);
         return ruleNode;
     }
@@ -751,7 +759,7 @@ public abstract class BaseController {
         try {
             validateId(resourceId, "Incorrect resourceId " + resourceId);
             TbResource resource = resourceService.findResourceById(getCurrentUser().getTenantId(), resourceId);
-            checkNotNull(resource);
+            checkNotNull(resource, "Resource with id [" + resourceId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.TB_RESOURCE, operation, resourceId, resource);
             return resource;
         } catch (Exception e) {
@@ -763,7 +771,7 @@ public abstract class BaseController {
         try {
             validateId(resourceId, "Incorrect resourceId " + resourceId);
             TbResourceInfo resourceInfo = resourceService.findResourceInfoById(getCurrentUser().getTenantId(), resourceId);
-            checkNotNull(resourceInfo);
+            checkNotNull(resourceInfo, "Resource with id [" + resourceId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.TB_RESOURCE, operation, resourceId, resourceInfo);
             return resourceInfo;
         } catch (Exception e) {
@@ -775,7 +783,7 @@ public abstract class BaseController {
         try {
             validateId(otaPackageId, "Incorrect otaPackageId " + otaPackageId);
             OtaPackage otaPackage = otaPackageService.findOtaPackageById(getCurrentUser().getTenantId(), otaPackageId);
-            checkNotNull(otaPackage);
+            checkNotNull(otaPackage, "OTA package with id [" + otaPackageId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.OTA_PACKAGE, operation, otaPackageId, otaPackage);
             return otaPackage;
         } catch (Exception e) {
@@ -787,7 +795,7 @@ public abstract class BaseController {
         try {
             validateId(otaPackageId, "Incorrect otaPackageId " + otaPackageId);
             OtaPackageInfo otaPackageIn = otaPackageService.findOtaPackageInfoById(getCurrentUser().getTenantId(), otaPackageId);
-            checkNotNull(otaPackageIn);
+            checkNotNull(otaPackageIn, "OTA package with id [" + otaPackageId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.OTA_PACKAGE, operation, otaPackageId, otaPackageIn);
             return otaPackageIn;
         } catch (Exception e) {
@@ -799,7 +807,7 @@ public abstract class BaseController {
         try {
             validateId(rpcId, "Incorrect rpcId " + rpcId);
             Rpc rpc = rpcService.findById(getCurrentUser().getTenantId(), rpcId);
-            checkNotNull(rpc);
+            checkNotNull(rpc, "RPC with id [" + rpcId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.RPC, operation, rpcId, rpc);
             return rpc;
         } catch (Exception e) {
@@ -819,13 +827,7 @@ public abstract class BaseController {
 
     protected <E extends HasName, I extends EntityId> void logEntityAction(User user, I entityId, E entity, CustomerId customerId,
                                                                            ActionType actionType, Exception e, Object... additionalInfo) throws ThingsboardException {
-        if (customerId == null || customerId.isNullUid()) {
-            customerId = user.getCustomerId();
-        }
-        if (e == null) {
-            ruleEngineEntityActionService.pushEntityActionToRuleEngine(entityId, entity, user.getTenantId(), customerId, actionType, user, additionalInfo);
-        }
-        auditLogService.logEntityAction(user.getTenantId(), customerId, user.getId(), user.getName(), entityId, entity, actionType, e, additionalInfo);
+        entityActionService.logEntityAction(user, entityId, entity, customerId, actionType, e, additionalInfo);
     }
 
 
@@ -903,7 +905,7 @@ public abstract class BaseController {
         PageDataIterableByTenantIdEntityId<EdgeId> relatedEdgeIdsIterator =
                 new PageDataIterableByTenantIdEntityId<>(edgeService::findRelatedEdgeIdsByEntityId, tenantId, entityId, DEFAULT_PAGE_SIZE);
         List<EdgeId> result = new ArrayList<>();
-        for(EdgeId edgeId : relatedEdgeIdsIterator) {
+        for (EdgeId edgeId : relatedEdgeIdsIterator) {
             result.add(edgeId);
         }
         return result;

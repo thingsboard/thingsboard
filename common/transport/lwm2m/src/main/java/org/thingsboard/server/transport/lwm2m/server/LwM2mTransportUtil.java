@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -31,6 +32,7 @@ import org.eclipse.leshan.core.request.SimpleDownlinkRequest;
 import org.eclipse.leshan.core.request.WriteAttributesRequest;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.registration.Registration;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.data.lwm2m.BootstrapConfiguration;
@@ -286,8 +288,7 @@ public class LwM2mTransportUtil {
 
     private static Attribute[] createWriteAttributes(Object params, DefaultLwM2MUplinkMsgHandler serviceImpl, String target) {
         List<Attribute> attributeLists = new ArrayList<>();
-        ObjectMapper oMapper = new ObjectMapper();
-        Map<String, Object> map = oMapper.convertValue(params, ConcurrentHashMap.class);
+        Map<String, Object> map = JacksonUtil.convertValue(params, new TypeReference<>() {});
         map.forEach((k, v) -> {
             if (StringUtils.trimToNull(v.toString()) != null) {
                 Object attrValue = convertWriteAttributes(k, v, serviceImpl, target);
@@ -374,6 +375,7 @@ public class LwM2mTransportUtil {
         return lwm2mResourceValue;
     }
 
+    @SuppressWarnings("unchecked")
     public static Optional<String> contentToString(Object content) {
         try {
             String value = null;

@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.common.data.query;
 
+import io.swagger.annotations.ApiModel;
 import lombok.Getter;
 
 import java.util.Collections;
 import java.util.List;
 
+@ApiModel
 public class EntityCountQuery {
 
     @Getter

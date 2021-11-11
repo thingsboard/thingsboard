@@ -202,6 +202,11 @@
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
             <scope>test</scope>
@@ -209,6 +214,16 @@
         <dependency>
             <groupId>org.hsqldb</groupId>
             <artifactId>hsqldb</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>jdbc</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -227,6 +242,10 @@
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>rest</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.eclipse.leshan</groupId>
+            <artifactId>leshan-core</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -235,7 +254,14 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surfire.version}</version>
                 <configuration>
+                    <excludes>
+                        <exclude>**/sql/*Test.java</exclude>
+                        <exclude>**/sql/*/*Test.java</exclude>
+                        <exclude>**/psql/*Test.java</exclude>
+                        <exclude>**/nosql/*Test.java</exclude>
+                    </excludes>
                     <includes>
+                        <include>**/*Test.java</include>
                         <include>**/*TestSuite.java</include>
                     </includes>
                 </configuration>

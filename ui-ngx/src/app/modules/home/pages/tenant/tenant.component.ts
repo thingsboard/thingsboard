@@ -52,7 +52,7 @@ export class TenantComponent extends ContactBasedComponent<TenantInfo> {
   buildEntityForm(entity: TenantInfo): FormGroup {
     return this.fb.group(
       {
-        title: [entity ? entity.title : '', [Validators.required]],
+        title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
         tenantProfileId: [entity ? entity.tenantProfileId : null, [Validators.required]],
         additionalInfo: this.fb.group(
           {

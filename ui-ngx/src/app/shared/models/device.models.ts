@@ -247,6 +247,8 @@ export interface MqttDeviceProfileTransportConfiguration {
   deviceAttributesTopic?: string;
   transportPayloadTypeConfiguration?: {
     transportPayloadType?: TransportPayloadType;
+    enableCompatibilityWithJsonPayloadFormat?: boolean;
+    useJsonPayloadFormatForDefaultDownlinkTopics?: boolean;
   };
   [key: string]: any;
 }
@@ -359,7 +361,11 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
         const mqttTransportConfiguration: MqttDeviceProfileTransportConfiguration = {
           deviceTelemetryTopic: 'v1/devices/me/telemetry',
           deviceAttributesTopic: 'v1/devices/me/attributes',
-          transportPayloadTypeConfiguration: {transportPayloadType: TransportPayloadType.JSON}
+          transportPayloadTypeConfiguration: {
+            transportPayloadType: TransportPayloadType.JSON,
+            enableCompatibilityWithJsonPayloadFormat: false,
+            useJsonPayloadFormatForDefaultDownlinkTopics: false,
+          }
         };
         transportConfiguration = {...mqttTransportConfiguration, type: DeviceTransportType.MQTT};
         break;
@@ -741,6 +747,14 @@ export interface DeviceCredentialMQTTBasic {
   clientId: string;
   userName: string;
   password: string;
+}
+
+export function getDeviceCredentialMQTTDefault(): DeviceCredentialMQTTBasic {
+  return {
+    clientId: '',
+    userName: '',
+    password: ''
+  };
 }
 
 export interface DeviceSearchQuery extends EntitySearchQuery {

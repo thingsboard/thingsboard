@@ -19,13 +19,12 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
-import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
@@ -97,16 +96,22 @@ public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? s
     }
 
     @Override
-    public void onResourceUpdate(@NotNull Optional<TransportProtos.ResourceUpdateMsg> resourceUpdateMsgOpt) {
-        if (ResourceType.LWM2M_MODEL.name().equals(resourceUpdateMsgOpt.get().getResourceType())) {
+    public void onResourceUpdate(TransportProtos.ResourceUpdateMsg resourceUpdateMsgOpt) {
+        if (ResourceType.LWM2M_MODEL.name().equals(resourceUpdateMsgOpt.getResourceType())) {
             this.handler.onResourceUpdate(resourceUpdateMsgOpt);
         }
     }
 
     @Override
-    public void onResourceDelete(@NotNull Optional<TransportProtos.ResourceDeleteMsg> resourceDeleteMsgOpt) {
-        if (ResourceType.LWM2M_MODEL.name().equals(resourceDeleteMsgOpt.get().getResourceType())) {
+    public void onResourceDelete(TransportProtos.ResourceDeleteMsg resourceDeleteMsgOpt) {
+        if (ResourceType.LWM2M_MODEL.name().equals(resourceDeleteMsgOpt.getResourceType())) {
             this.handler.onResourceDelete(resourceDeleteMsgOpt);
         }
+    }
+
+    @Override
+    public void onDeviceDeleted(DeviceId deviceId) {
+        log.trace("[{}] Device on delete", deviceId);
+        this.handler.onDeviceDelete(deviceId);
     }
 }

@@ -105,7 +105,7 @@ public class AdminSettingsEdgeEventFetcher implements EdgeEventFetcher {
             Template template = freemarkerConfig.getTemplate(templatesName);
             if (template != null) {
                 String name = validateName(template.getName());
-                Map<String, String> mailTemplate = getMailTemplateFromFile(template.getRootTreeNode().toString());
+                Map<String, String> mailTemplate = getMailTemplateFromFile(template.toString());
                 if (mailTemplate != null) {
                     mailTemplates.put(name, mailTemplate);
                 } else {

@@ -323,6 +323,9 @@ export class AliasController implements IAliasController {
   }
 
   resolveDatasources(datasources: Array<Datasource>, singleEntity?: boolean): Observable<Array<Datasource>> {
+    if (!datasources || !datasources.length) {
+      return of([]);
+    }
     const toResolve = singleEntity ? [datasources[0]] : datasources;
     const observables = new Array<Observable<Datasource>>();
     toResolve.forEach((datasource) => {

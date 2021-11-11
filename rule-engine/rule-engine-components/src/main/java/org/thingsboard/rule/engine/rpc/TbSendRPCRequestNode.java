@@ -95,15 +95,8 @@ public class TbSendRPCRequestNode implements TbNode {
             tmp = msg.getMetaData().getValue(DataConstants.RETRIES);
             Integer retries = !StringUtils.isEmpty(tmp) ? Integer.parseInt(tmp) : null;
 
-            String params;
-            JsonElement paramsEl = json.get("params");
-            if (paramsEl.isJsonPrimitive()) {
-                params = paramsEl.getAsString();
-            } else {
-                params = gson.toJson(paramsEl);
-            }
-
-            String additionalInfo = gson.toJson(json.get(DataConstants.ADDITIONAL_INFO));
+            String params = parseJsonData(json.get("params"));
+            String additionalInfo = parseJsonData(json.get(DataConstants.ADDITIONAL_INFO));
 
             RuleEngineDeviceRpcRequest request = RuleEngineDeviceRpcRequest.builder()
                     .oneway(oneway)
@@ -142,6 +135,14 @@ public class TbSendRPCRequestNode implements TbNode {
         JsonObject json = new JsonObject();
         json.addProperty(name, body);
         return gson.toJson(json);
+    }
+
+    private String parseJsonData(JsonElement paramsEl) {
+        if (paramsEl != null) {
+            return paramsEl.isJsonPrimitive() ? paramsEl.getAsString() : gson.toJson(paramsEl);
+        } else {
+            return null;
+        }
     }
 
 }

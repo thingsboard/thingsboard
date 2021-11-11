@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-dashboard-page mat-content" [ngClass]="{'mobile-app': isMobileApp && !isEdit}" style="padding-top: 150px;"
+<div class="tb-dashboard-page mat-content" [ngClass]="{'mobile-app': isMobileApp && !isEdit}"
      fxFlex tb-fullscreen [fullscreen]="widgetEditMode || iframeMode || forceFullscreen || isFullscreen">
   <tb-hotkeys-cheatsheet #cheatSheetComponent></tb-hotkeys-cheatsheet>
   <section class="tb-dashboard-toolbar"
@@ -139,6 +139,7 @@
     </tb-dashboard-toolbar>
   </section>
   <section class="tb-dashboard-container tb-absolute-fill"
+           tb-toast toastTarget="dashboardRoot"
            #dashboardContainer
            [ngClass]="{ 'is-fullscreen': forceFullscreen,
            'tb-dashboard-toolbar-opened': toolbarOpened,
@@ -148,7 +149,7 @@
       <mat-drawer-content fxLayout="column" fxLayoutAlign="center start">
         <section *ngIf="!widgetEditMode" class="tb-dashboard-title"
                  [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">
-          <h3 [fxShow]="!isEdit && displayTitle()">{{ dashboard.title }}</h3>
+          <h3 [fxShow]="!isEdit && displayTitle()">{{ translatedDashboardTitle }}</h3>
           <mat-form-field [fxShow]="isEdit" class="mat-block">
             <mat-label translate [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">dashboard.title</mat-label>
             <input matInput class="tb-dashboard-title"
@@ -176,7 +177,8 @@
               [isEdit]="isEdit"
               [isEditingWidget]="isEditingWidget"
               [isMobile]="forceDashboardMobileMode"
-              [widgetEditMode]="widgetEditMode">
+              [widgetEditMode]="widgetEditMode"
+              [parentDashboard]="parentDashboard">
             </tb-dashboard-layout>
           </mat-drawer>
           <mat-drawer-content [fxShow]="layouts.main.show"
@@ -190,18 +192,18 @@
               [isEdit]="isEdit"
               [isEditingWidget]="isEditingWidget"
               [isMobile]="forceDashboardMobileMode"
-              [widgetEditMode]="widgetEditMode">
+              [widgetEditMode]="widgetEditMode"
+              [parentDashboard]="parentDashboard">
             </tb-dashboard-layout>
           </mat-drawer-content>
         </mat-drawer-container>
-        <section data-html2canvas-ignore fxLayout="row" class="layout-wrap tb-footer-buttons" fxLayoutAlign="start end">
-          <tb-footer-fab-buttons *ngIf="!embedded && !isMobileApp"
-                                 [fxShow]="!isAddingWidget && isEdit && !widgetEditMode"
+        <section data-html2canvas-ignore fxLayout="row" class="layout-wrap tb-footer-buttons" fxLayoutAlign="start end"
+                 *ngIf="!readonly">
+          <tb-footer-fab-buttons [fxShow]="!isAddingWidget && isEdit && !widgetEditMode"
                                  relative
                                  [footerFabButtons]="addWidgetFabButtons">
           </tb-footer-fab-buttons>
-          <button *ngIf="(isTenantAdmin() || isSystemAdmin()) && !forceFullscreen && !embedded && !isMobileApp"
-                  mat-fab color="accent" class="tb-btn-footer"
+          <button mat-fab color="accent" class="tb-btn-footer"
                   [ngClass]="{'tb-hide': !isEdit || isAddingWidget}"
                   [disabled]="isLoading$ | async"
                   (click)="saveDashboard()"
@@ -209,8 +211,7 @@
                   matTooltipPosition="above">
             <mat-icon>done</mat-icon>
           </button>
-          <button *ngIf="(isTenantAdmin() || isSystemAdmin()) && !forceFullscreen && !embedded && !isMobileApp"
-                  mat-fab color="accent" class="tb-btn-footer"
+          <button mat-fab color="accent" class="tb-btn-footer"
                   [ngClass]="{'tb-hide': isAddingWidget || (isLoading$ | async)}"
                   [disabled]="isLoading$ | async"
                   (click)="toggleDashboardEditMode()"
@@ -219,7 +220,7 @@
             <mat-icon>{{ isEdit ? 'close' : 'edit' }}</mat-icon>
           </button>
         </section>
-        <section data-html2canvas-ignore class="tb-powered-by-footer" [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">
+        <section *ngIf="!embedded" data-html2canvas-ignore class="tb-powered-by-footer" [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">
           <span>Powered by <a href="https://thingsboard.io" target="_blank">Thingsboard v.{{ thingsboardVersion }}</a></span>
         </section>
       </mat-drawer-content>

@@ -25,7 +25,7 @@ import {
   SubscriptionTimewindow
 } from '@shared/models/time/time.models';
 import { UtilsService } from '@core/services/utils.service';
-import { deepClone, isNumeric } from '@core/utils';
+import { deepClone, isNumber, isNumeric } from '@core/utils';
 import Timeout = NodeJS.Timeout;
 
 export declare type onAggregatedData = (data: SubscriptionData, detectChanges: boolean) => void;
@@ -92,20 +92,36 @@ declare type AggFunction = (aggData: AggData, value?: any) => void;
 
 const avg: AggFunction = (aggData: AggData, value?: any) => {
   aggData.count++;
-  aggData.sum += value;
-  aggData.aggValue = aggData.sum / aggData.count;
+  if (isNumber(value)) {
+    aggData.sum += value;
+    aggData.aggValue = aggData.sum / aggData.count;
+  } else {
+    aggData.aggValue = value;
+  }
 };
 
 const min: AggFunction = (aggData: AggData, value?: any) => {
-  aggData.aggValue = Math.min(aggData.aggValue, value);
+  if (isNumber(value)) {
+    aggData.aggValue = Math.min(aggData.aggValue, value);
+  } else {
+    aggData.aggValue = value;
+  }
 };
 
 const max: AggFunction = (aggData: AggData, value?: any) => {
-  aggData.aggValue = Math.max(aggData.aggValue, value);
+  if (isNumber(value)) {
+    aggData.aggValue = Math.max(aggData.aggValue, value);
+  } else {
+    aggData.aggValue = value;
+  }
 };
 
 const sum: AggFunction = (aggData: AggData, value?: any) => {
-  aggData.aggValue = aggData.aggValue + value;
+  if (isNumber(value)) {
+    aggData.aggValue = aggData.aggValue + value;
+  } else {
+    aggData.aggValue = value;
+  }
 };
 
 const count: AggFunction = (aggData: AggData) => {
@@ -308,7 +324,7 @@ export class DataAggregator {
           }
           aggKeyData.delete(aggTimestamp);
           this.updatedData = true;
-        } else if (aggTimestamp < this.endTs) {
+        } else if (aggTimestamp < this.endTs || this.noAggregation) {
           const kvPair: [number, any] = [aggTimestamp, aggData.aggValue];
           keyData.push(kvPair);
         }
@@ -409,7 +425,7 @@ export class DataAggregator {
   }
 
   private convertValue(val: string): any {
-    if (!this.noAggregation || val && isNumeric(val) && Number(val).toString() === val) {
+    if (val && isNumeric(val) && (!this.noAggregation || this.noAggregation && Number(val).toString() === val)) {
       return Number(val);
     }
     return val;

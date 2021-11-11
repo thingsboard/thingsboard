@@ -79,7 +79,8 @@
               "src/app/modules/home/components/widget/lib/maps/markers.scss",
               "node_modules/leaflet.markercluster/dist/MarkerCluster.css",
               "node_modules/leaflet.markercluster/dist/MarkerCluster.Default.css",
-              "node_modules/prismjs/themes/prism.css"
+              "node_modules/prismjs/themes/prism.css",
+              "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.css"
             ],
             "stylePreprocessorOptions": {
               "includePaths": [
@@ -92,8 +93,12 @@
               "node_modules/systemjs/dist/system.js",
               "node_modules/marked/lib/marked.js",
               "node_modules/prismjs/prism.js",
+              "node_modules/prismjs/components/prism-css.min.js",
               "node_modules/prismjs/components/prism-bash.min.js",
-              "node_modules/prismjs/components/prism-json.min.js"
+              "node_modules/prismjs/components/prism-json.min.js",
+              "node_modules/prismjs/components/prism-javascript.min.js",
+              "node_modules/prismjs/components/prism-typescript.min.js",
+              "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.js"
             ],
             "customWebpackConfig": {
               "path": "./extra-webpack.config.js"

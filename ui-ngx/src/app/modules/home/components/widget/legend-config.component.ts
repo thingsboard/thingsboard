@@ -14,32 +14,17 @@
 /// limitations under the License.
 ///
 
+import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { isDefined } from '@core/utils';
 import {
-  Component,
-  forwardRef,
-  Inject,
-  Injector,
-  Input,
-  OnDestroy,
-  OnInit,
-  StaticProvider,
-  ViewChild,
-  ViewContainerRef
-} from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { DOCUMENT } from '@angular/common';
-import { CdkOverlayOrigin, ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
-import { ComponentPortal } from '@angular/cdk/portal';
-import { MediaBreakpoints } from '@shared/models/constants';
-import { BreakpointObserver } from '@angular/cdk/layout';
-import { WINDOW } from '@core/services/window.service';
-import { deepClone } from '@core/utils';
-import { LegendConfig } from '@shared/models/widget.models';
-import {
-  LEGEND_CONFIG_PANEL_DATA,
-  LegendConfigPanelComponent,
-  LegendConfigPanelData
-} from '@home/components/widget/legend-config-panel.component';
+  LegendConfig,
+  LegendDirection,
+  legendDirectionTranslationMap,
+  LegendPosition,
+  legendPositionTranslationMap
+} from '@shared/models/widget.models';
+import { Subscription } from 'rxjs';
 
 // @dynamic
 @Component({
@@ -58,105 +43,60 @@ export class LegendConfigComponent implements OnInit, OnDestroy, ControlValueAcc
 
   @Input() disabled: boolean;
 
-  @ViewChild('legendConfigPanelOrigin') legendConfigPanelOrigin: CdkOverlayOrigin;
+  legendConfigForm: FormGroup;
+  legendDirection = LegendDirection;
+  legendDirections = Object.keys(LegendDirection);
+  legendDirectionTranslations = legendDirectionTranslationMap;
+  legendPosition = LegendPosition;
+  legendPositions = Object.keys(LegendPosition);
+  legendPositionTranslations = legendPositionTranslationMap;
 
-  innerValue: LegendConfig;
-
+  private legendSettingsFormChanges$: Subscription;
+  private legendSettingsFormDirectionChanges$: Subscription;
   private propagateChange = (_: any) => {};
 
-  constructor(private overlay: Overlay,
-              public viewContainerRef: ViewContainerRef,
-              public breakpointObserver: BreakpointObserver,
-              @Inject(DOCUMENT) private document: Document,
-              @Inject(WINDOW) private window: Window) {
+  constructor(private fb: FormBuilder) {
   }
 
   ngOnInit(): void {
+    this.legendConfigForm = this.fb.group({
+      direction: [null, []],
+      position: [null, []],
+      sortDataKeys: [null, []],
+      showMin: [null, []],
+      showMax: [null, []],
+      showAvg: [null, []],
+      showTotal: [null, []]
+    });
+    this.legendSettingsFormDirectionChanges$ = this.legendConfigForm.get('direction').valueChanges
+      .subscribe((direction: LegendDirection) => {
+        this.onDirectionChanged(direction);
+      });
+    this.legendSettingsFormChanges$ = this.legendConfigForm.valueChanges.subscribe(
+      () => this.legendConfigUpdated()
+    );
+  }
+
+  private onDirectionChanged(direction: LegendDirection) {
+    if (direction === LegendDirection.row) {
+      let position: LegendPosition = this.legendConfigForm.get('position').value;
+      if (position !== LegendPosition.bottom && position !== LegendPosition.top) {
+        position = LegendPosition.bottom;
+      }
+      this.legendConfigForm.patchValue({position}, {emitEvent: false}
+      );
+    }
   }
 
   ngOnDestroy(): void {
-  }
-
-  openEditMode() {
-    if (this.disabled) {
-      return;
+    if (this.legendSettingsFormDirectionChanges$) {
+      this.legendSettingsFormDirectionChanges$.unsubscribe();
+      this.legendSettingsFormDirectionChanges$ = null;
     }
-    const isGtSm = this.breakpointObserver.isMatched(MediaBreakpoints['gt-sm']);
-    const position = this.overlay.position();
-    const config = new OverlayConfig({
-      panelClass: 'tb-legend-config-panel',
-      backdropClass: 'cdk-overlay-transparent-backdrop',
-      hasBackdrop: isGtSm,
-    });
-    if (isGtSm) {
-      config.minWidth = '220px';
-      config.maxHeight = '300px';
-      const panelHeight = 220;
-      const panelWidth = 220;
-      const el = this.legendConfigPanelOrigin.elementRef.nativeElement;
-      const offset = el.getBoundingClientRect();
-      const scrollTop = this.window.pageYOffset || this.document.documentElement.scrollTop || this.document.body.scrollTop || 0;
-      const scrollLeft = this.window.pageXOffset || this.document.documentElement.scrollLeft || this.document.body.scrollLeft || 0;
-      const bottomY = offset.bottom - scrollTop;
-      const leftX = offset.left - scrollLeft;
-      let originX;
-      let originY;
-      let overlayX;
-      let overlayY;
-      const wHeight = this.document.documentElement.clientHeight;
-      const wWidth = this.document.documentElement.clientWidth;
-      if (bottomY + panelHeight > wHeight) {
-        originY = 'top';
-        overlayY = 'bottom';
-      } else {
-        originY = 'bottom';
-        overlayY = 'top';
-      }
-      if (leftX + panelWidth > wWidth) {
-        originX = 'end';
-        overlayX = 'end';
-      } else {
-        originX = 'start';
-        overlayX = 'start';
-      }
-      const connectedPosition: ConnectedPosition = {
-        originX,
-        originY,
-        overlayX,
-        overlayY
-      };
-      config.positionStrategy = position.flexibleConnectedTo(this.legendConfigPanelOrigin.elementRef)
-        .withPositions([connectedPosition]);
-    } else {
-      config.minWidth = '100%';
-      config.minHeight = '100%';
-      config.positionStrategy = position.global().top('0%').left('0%')
-        .right('0%').bottom('0%');
+    if (this.legendSettingsFormChanges$) {
+      this.legendSettingsFormChanges$.unsubscribe();
+      this.legendSettingsFormChanges$ = null;
     }
-
-    const overlayRef = this.overlay.create(config);
-
-    overlayRef.backdropClick().subscribe(() => {
-      overlayRef.dispose();
-    });
-
-    const injector = this._createLegendConfigPanelInjector(
-      overlayRef,
-      {
-        legendConfig: deepClone(this.innerValue),
-        legendConfigUpdated: this.legendConfigUpdated.bind(this)
-      }
-    );
-
-    overlayRef.attach(new ComponentPortal(LegendConfigPanelComponent, this.viewContainerRef, injector));
-  }
-
-  private _createLegendConfigPanelInjector(overlayRef: OverlayRef, data: LegendConfigPanelData): Injector {
-    const providers: StaticProvider[] = [
-      {provide: LEGEND_CONFIG_PANEL_DATA, useValue: data},
-      {provide: OverlayRef, useValue: overlayRef}
-    ];
-    return Injector.create({parent: this.viewContainerRef.injector, providers});
   }
 
   registerOnChange(fn: any): void {
@@ -168,14 +108,29 @@ export class LegendConfigComponent implements OnInit, OnDestroy, ControlValueAcc
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+    if (this.disabled) {
+      this.legendConfigForm.disable({emitEvent: false});
+    } else {
+      this.legendConfigForm.enable({emitEvent: false});
+    }
   }
 
-  writeValue(obj: LegendConfig): void {
-    this.innerValue = obj;
+  writeValue(legendConfig: LegendConfig): void {
+    if (legendConfig) {
+      this.legendConfigForm.patchValue({
+        direction: legendConfig.direction,
+        position: legendConfig.position,
+        sortDataKeys: isDefined(legendConfig.sortDataKeys) ? legendConfig.sortDataKeys : false,
+        showMin: isDefined(legendConfig.showMin) ? legendConfig.showMin : false,
+        showMax: isDefined(legendConfig.showMax) ? legendConfig.showMax : false,
+        showAvg: isDefined(legendConfig.showAvg) ? legendConfig.showAvg : false,
+        showTotal: isDefined(legendConfig.showTotal) ? legendConfig.showTotal : false
+      }, {emitEvent: false});
+    }
+    this.onDirectionChanged(legendConfig.direction);
   }
 
-  private legendConfigUpdated(legendConfig: LegendConfig) {
-    this.innerValue = legendConfig;
-    this.propagateChange(this.innerValue);
+  private legendConfigUpdated() {
+    this.propagateChange(this.legendConfigForm.value);
   }
 }

@@ -20,9 +20,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
+import org.thingsboard.server.common.data.device.profile.MqttTopics;
+import org.thingsboard.server.transport.mqtt.attributes.AbstractMqttAttributesIntegrationTest;
 
 @Slf4j
-public abstract class AbstractMqttAttributesRequestJsonIntegrationTest extends AbstractMqttAttributesRequestIntegrationTest {
+public abstract class AbstractMqttAttributesRequestJsonIntegrationTest extends AbstractMqttAttributesIntegrationTest {
 
     @Before
     public void beforeTest() throws Exception {
@@ -36,11 +38,21 @@ public abstract class AbstractMqttAttributesRequestJsonIntegrationTest extends A
 
     @Test
     public void testRequestAttributesValuesFromTheServer() throws Exception {
-        processTestRequestAttributesValuesFromTheServer();
+        processJsonTestRequestAttributesValuesFromTheServer(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX);
+    }
+
+    @Test
+    public void testRequestAttributesValuesFromTheServerOnShortTopic() throws Exception {
+        processJsonTestRequestAttributesValuesFromTheServer(MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_SHORT_TOPIC_PREFIX);
+    }
+
+    @Test
+    public void testRequestAttributesValuesFromTheServerOnShortJsonTopic() throws Exception {
+        processJsonTestRequestAttributesValuesFromTheServer(MqttTopics.DEVICE_ATTRIBUTES_SHORT_JSON_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_JSON_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_SHORT_JSON_TOPIC_PREFIX);
     }
 
     @Test
     public void testRequestAttributesValuesFromTheServerGateway() throws Exception {
-        processTestGatewayRequestAttributesValuesFromTheServer();
+        processJsonTestGatewayRequestAttributesValuesFromTheServer();
     }
 }

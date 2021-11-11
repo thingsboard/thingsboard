@@ -93,21 +93,20 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
     }
 
     @Override
-    public Response convertToPublish(boolean isConfirmable, TransportProtos.AttributeUpdateNotificationMsg msg) throws AdaptorException {
-        return getObserveNotification(isConfirmable, JsonConverter.toJson(msg));
+    public Response convertToPublish(TransportProtos.AttributeUpdateNotificationMsg msg) throws AdaptorException {
+        return getObserveNotification(JsonConverter.toJson(msg));
     }
 
     @Override
-    public Response convertToPublish(boolean isConfirmable, TransportProtos.ToDeviceRpcRequestMsg msg, DynamicMessage.Builder rpcRequestDynamicMessageBuilder) throws AdaptorException {
-        return getObserveNotification(isConfirmable, JsonConverter.toJson(msg, true));
+    public Response convertToPublish(TransportProtos.ToDeviceRpcRequestMsg msg, DynamicMessage.Builder rpcRequestDynamicMessageBuilder) throws AdaptorException {
+        return getObserveNotification(JsonConverter.toJson(msg, true));
     }
 
     @Override
-    public Response convertToPublish(boolean isConfirmable, TransportProtos.ToServerRpcResponseMsg msg) throws AdaptorException {
+    public Response convertToPublish(TransportProtos.ToServerRpcResponseMsg msg) throws AdaptorException {
         Response response = new Response(CoAP.ResponseCode.CONTENT);
         JsonElement result = JsonConverter.toJson(msg);
         response.setPayload(result.toString());
-        response.setConfirmable(isConfirmable);
         return response;
     }
 
@@ -122,11 +121,10 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
     }
 
     @Override
-    public Response convertToPublish(boolean isConfirmable, TransportProtos.GetAttributeResponseMsg msg) throws AdaptorException {
+    public Response convertToPublish(TransportProtos.GetAttributeResponseMsg msg) throws AdaptorException {
         if (msg.getSharedStateMsg()) {
             if (StringUtils.isEmpty(msg.getError())) {
                 Response response = new Response(CoAP.ResponseCode.CONTENT);
-                response.setConfirmable(isConfirmable);
                 TransportProtos.AttributeUpdateNotificationMsg notificationMsg = TransportProtos.AttributeUpdateNotificationMsg.newBuilder().addAllSharedUpdated(msg.getSharedAttributeListList()).build();
                 JsonObject result = JsonConverter.toJson(notificationMsg);
                 response.setPayload(result.toString());
@@ -139,7 +137,6 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
                 return new Response(CoAP.ResponseCode.NOT_FOUND);
             } else {
                 Response response = new Response(CoAP.ResponseCode.CONTENT);
-                response.setConfirmable(isConfirmable);
                 JsonObject result = JsonConverter.toJson(msg);
                 response.setPayload(result.toString());
                 return response;
@@ -147,10 +144,9 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
         }
     }
 
-    private Response getObserveNotification(boolean confirmable, JsonElement json) {
+    private Response getObserveNotification(JsonElement json) {
         Response response = new Response(CoAP.ResponseCode.CONTENT);
         response.setPayload(json.toString());
-        response.setConfirmable(confirmable);
         return response;
     }
 

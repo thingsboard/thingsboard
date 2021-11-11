@@ -15,25 +15,52 @@
  */
 package org.thingsboard.server.common.data.widget;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Getter;
+import lombok.Setter;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-import java.util.Arrays;
-
+@ApiModel
 public class WidgetsBundle extends SearchTextBased<WidgetsBundleId> implements HasTenantId {
 
     private static final long serialVersionUID = -7627368878362410489L;
 
+    @Getter
+    @Setter
+    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id.", readOnly = true)
     private TenantId tenantId;
+
     @NoXss
+    @Length(fieldName = "alias")
+    @Getter
+    @Setter
+    @ApiModelProperty(position = 4, value = "Unique alias that is used in widget types as a reference widget bundle", readOnly = true)
     private String alias;
+
     @NoXss
+    @Length(fieldName = "title")
+    @Getter
+    @Setter
+    @ApiModelProperty(position = 5, value = "Title used in search and UI", readOnly = true)
     private String title;
+
+    @Length(fieldName = "image", max = 1000000)
+    @Getter
+    @Setter
+    @ApiModelProperty(position = 6, value = "Base64 encoded thumbnail", readOnly = true)
     private String image;
+
     @NoXss
+    @Length(fieldName = "description")
+    @Getter
+    @Setter
+    @ApiModelProperty(position = 7, value = "Description", readOnly = true)
     private String description;
 
     public WidgetsBundle() {
@@ -53,41 +80,20 @@ public class WidgetsBundle extends SearchTextBased<WidgetsBundleId> implements H
         this.description = widgetsBundle.getDescription();
     }
 
-    public TenantId getTenantId() {
-        return tenantId;
+    @ApiModelProperty(position = 1, value = "JSON object with the Widget Bundle Id. " +
+            "Specify this field to update the Widget Bundle. " +
+            "Referencing non-existing Widget Bundle Id will cause error. " +
+            "Omit this field to create new Widget Bundle." )
+    @Override
+    public WidgetsBundleId getId() {
+        return super.getId();
     }
 
-    public void setTenantId(TenantId tenantId) {
-        this.tenantId = tenantId;
+    @ApiModelProperty(position = 2, value = "Timestamp of the Widget Bundle creation, in milliseconds", example = "1609459200000", readOnly = true)
+    @Override
+    public long getCreatedTime() {
+        return super.getCreatedTime();
     }
-
-    public String getAlias() {
-        return alias;
-    }
-
-    public void setAlias(String alias) {
-        this.alias = alias;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getImage() {
-        return image;
-    }
-
-    public void setImage(String image) {
-        this.image = image;
-    }
-
-    public String getDescription() { return description; }
-
-    public void setDescription(String description) { this.description = description; }
 
     @Override
     public String getSearchText() {

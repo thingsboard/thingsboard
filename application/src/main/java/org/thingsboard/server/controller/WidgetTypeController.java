@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,7 +28,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -42,16 +43,31 @@ import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.List;
 
+import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
+import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
+import static org.thingsboard.server.controller.ControllerConstants.WIDGET_TYPE_ID_PARAM_DESCRIPTION;
+
 @Slf4j
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
 public class WidgetTypeController extends BaseController {
 
+    private static final String WIDGET_TYPE_DESCRIPTION = "Widget Type represents the template for widget creation. Widget Type and Widget are similar to class and object in OOP theory.";
+    private static final String WIDGET_TYPE_DETAILS_DESCRIPTION = "Widget Type Details extend Widget Type and add image and description properties. " +
+            "Those properties are useful to edit the Widget Type but they are not required for Dashboard rendering. ";
+    private static final String WIDGET_TYPE_INFO_DESCRIPTION = "Widget Type Info is a lightweight object that represents Widget Type but does not contain the heavyweight widget descriptor JSON";
+
+
+    @ApiOperation(value = "Get Widget Type Details (getWidgetTypeById)",
+            notes = "Get the Widget Type Details based on the provided Widget Type Id. " + WIDGET_TYPE_DETAILS_DESCRIPTION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/widgetType/{widgetTypeId}", method = RequestMethod.GET)
     @ResponseBody
-    public WidgetTypeDetails getWidgetTypeById(@PathVariable("widgetTypeId") String strWidgetTypeId) throws ThingsboardException {
+    public WidgetTypeDetails getWidgetTypeById(
+            @ApiParam(value = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable("widgetTypeId") String strWidgetTypeId) throws ThingsboardException {
         checkParameter("widgetTypeId", strWidgetTypeId);
         try {
             WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
@@ -61,10 +77,21 @@ public class WidgetTypeController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Create Or Update Widget Type (saveWidgetType)",
+            notes = "Create or update the Widget Type. " + WIDGET_TYPE_DESCRIPTION + " " +
+                    "When creating the Widget Type, platform generates Widget Type Id as " + UUID_WIKI_LINK +
+                    "The newly created Widget Type Id will be present in the response. " +
+                    "Specify existing Widget Type id to update the Widget Type. " +
+                    "Referencing non-existing Widget Type Id will cause 'Not Found' error." +
+                    "\n\nWidget Type alias is unique in the scope of Widget Bundle. " +
+                    "Special Tenant Id '13814000-1dd2-11b2-8080-808080808080' is automatically used if the create request is sent by user with 'SYS_ADMIN' authority."
+                    + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/widgetType", method = RequestMethod.POST)
     @ResponseBody
-    public WidgetTypeDetails saveWidgetType(@RequestBody WidgetTypeDetails widgetTypeDetails) throws ThingsboardException {
+    public WidgetTypeDetails saveWidgetType(
+            @ApiParam(value = "A JSON value representing the Widget Type Details.", required = true)
+            @RequestBody WidgetTypeDetails widgetTypeDetails) throws ThingsboardException {
         try {
             if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
                 widgetTypeDetails.setTenantId(TenantId.SYS_TENANT_ID);
@@ -84,10 +111,14 @@ public class WidgetTypeController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Delete widget type (deleteWidgetType)",
+            notes = "Deletes the  Widget Type. Referencing non-existing Widget Type Id will cause an error." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/widgetType/{widgetTypeId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
-    public void deleteWidgetType(@PathVariable("widgetTypeId") String strWidgetTypeId) throws ThingsboardException {
+    public void deleteWidgetType(
+            @ApiParam(value = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable("widgetTypeId") String strWidgetTypeId) throws ThingsboardException {
         checkParameter("widgetTypeId", strWidgetTypeId);
         try {
             WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
@@ -101,11 +132,15 @@ public class WidgetTypeController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get all Widget types for specified Bundle (getBundleWidgetTypes)",
+            notes = "Returns an array of Widget Type objects that belong to specified Widget Bundle." + WIDGET_TYPE_DESCRIPTION + " " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/widgetTypes", params = {"isSystem", "bundleAlias"}, method = RequestMethod.GET)
     @ResponseBody
     public List<WidgetType> getBundleWidgetTypes(
+            @ApiParam(value = "System or Tenant", required = true)
             @RequestParam boolean isSystem,
+            @ApiParam(value = "Widget Bundle alias", required = true)
             @RequestParam String bundleAlias) throws ThingsboardException {
         try {
             TenantId tenantId;
@@ -120,11 +155,15 @@ public class WidgetTypeController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get all Widget types details for specified Bundle (getBundleWidgetTypes)",
+            notes = "Returns an array of Widget Type Details objects that belong to specified Widget Bundle." + WIDGET_TYPE_DETAILS_DESCRIPTION + " " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/widgetTypesDetails", params = {"isSystem", "bundleAlias"}, method = RequestMethod.GET)
     @ResponseBody
     public List<WidgetTypeDetails> getBundleWidgetTypesDetails(
+            @ApiParam(value = "System or Tenant", required = true)
             @RequestParam boolean isSystem,
+            @ApiParam(value = "Widget Bundle alias", required = true)
             @RequestParam String bundleAlias) throws ThingsboardException {
         try {
             TenantId tenantId;
@@ -139,11 +178,15 @@ public class WidgetTypeController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get Widget Type Info objects (getBundleWidgetTypesInfos)",
+            notes = "Get the Widget Type Info objects based on the provided parameters. " + WIDGET_TYPE_INFO_DESCRIPTION + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/widgetTypesInfos", params = {"isSystem", "bundleAlias"}, method = RequestMethod.GET)
     @ResponseBody
     public List<WidgetTypeInfo> getBundleWidgetTypesInfos(
+            @ApiParam(value = "System or Tenant", required = true)
             @RequestParam boolean isSystem,
+            @ApiParam(value = "Widget Bundle alias", required = true)
             @RequestParam String bundleAlias) throws ThingsboardException {
         try {
             TenantId tenantId;
@@ -158,12 +201,17 @@ public class WidgetTypeController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get Widget Type (getWidgetType)",
+            notes = "Get the Widget Type based on the provided parameters. " + WIDGET_TYPE_DESCRIPTION + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/widgetType", params = {"isSystem", "bundleAlias", "alias"}, method = RequestMethod.GET)
     @ResponseBody
     public WidgetType getWidgetType(
+            @ApiParam(value = "System or Tenant", required = true)
             @RequestParam boolean isSystem,
+            @ApiParam(value = "Widget Bundle alias", required = true)
             @RequestParam String bundleAlias,
+            @ApiParam(value = "Widget Type alias", required = true)
             @RequestParam String alias) throws ThingsboardException {
         try {
             TenantId tenantId;

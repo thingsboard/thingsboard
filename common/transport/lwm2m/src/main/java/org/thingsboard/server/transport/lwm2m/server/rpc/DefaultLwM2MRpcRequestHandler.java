@@ -18,6 +18,8 @@ package org.thingsboard.server.transport.lwm2m.server.rpc;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.ResponseCode;
+import org.eclipse.leshan.core.request.ReadCompositeRequest;
+import org.eclipse.leshan.core.response.ReadCompositeResponse;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
@@ -91,6 +93,12 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         LwM2mClient client = clientContext.getClientBySessionInfo(sessionInfo);
         if (client.getRegistration() == null) {
             this.sendErrorRpcResponse(sessionInfo, rpcRequest.getRequestId(), ResponseCode.INTERNAL_SERVER_ERROR, "Registration is empty");
+            return;
+        }
+        UUID rpcId = new UUID(rpcRequest.getRequestIdMSB(), rpcRequest.getRequestIdLSB());
+
+        if (rpcId.equals(client.getLastSentRpcId())) {
+            log.debug("[{}]][{}] Rpc has already sent!", client.getEndpoint(), rpcId);
             return;
         }
         try {
@@ -176,7 +184,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         String[] versionedIds = getIdsFromParameters(client, requestMsg);
         TbLwM2MReadCompositeRequest request = TbLwM2MReadCompositeRequest.builder().versionedIds(versionedIds).timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MReadCompositeCallback(uplinkHandler, logService, client, versionedIds);
-        var rpcCallback = new RpcReadResponseCompositeCallback(transportService, client, requestMsg, mainCallback);
+        var rpcCallback = new RpcReadResponseCompositeCallback<>(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendReadCompositeRequest(client, request, rpcCallback);
     }
 
@@ -292,14 +300,14 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
     private String[] getIdsFromParameters(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg rpcRequst) {
         RpcReadCompositeRequest requestParams = JacksonUtil.fromString(rpcRequst.getParams(), RpcReadCompositeRequest.class);
         if (requestParams.getKeys() != null && requestParams.getKeys().length > 0) {
-            Set targetIds = ConcurrentHashMap.newKeySet();
+            Set<String> targetIds = ConcurrentHashMap.newKeySet();
             for (String key : requestParams.getKeys()) {
                 String targetId = clientContext.getObjectIdByKeyNameFromProfile(client, key);
                 if (targetId != null) {
                     targetIds.add(targetId);
                 }
             }
-            return (String[]) targetIds.toArray(String[]::new);
+            return targetIds.toArray(String[]::new);
         } else if (requestParams.getIds() != null && requestParams.getIds().length > 0) {
             return requestParams.getIds();
         } else {

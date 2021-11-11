@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.sql.relation;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
@@ -156,18 +157,27 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     private boolean deleteRelationIfExists(RelationCompositeKey key) {
         boolean relationExistsBeforeDelete = relationRepository.existsById(key);
         if (relationExistsBeforeDelete) {
-            relationRepository.deleteById(key);
+            try {
+                relationRepository.deleteById(key);
+            } catch (ConcurrencyFailureException e) {
+                log.debug("[{}] Concurrency exception while deleting relation", key, e);
+            }
         }
         return relationExistsBeforeDelete;
     }
 
     @Override
     public boolean deleteOutboundRelations(TenantId tenantId, EntityId entity) {
-        boolean relationExistsBeforeDelete = relationRepository
-                .findAllByFromIdAndFromType(entity.getId(), entity.getEntityType().name())
-                .size() > 0;
-        if (relationExistsBeforeDelete) {
-            relationRepository.deleteByFromIdAndFromType(entity.getId(), entity.getEntityType().name());
+        boolean relationExistsBeforeDelete = false;
+        try {
+            relationExistsBeforeDelete = relationRepository
+                    .findAllByFromIdAndFromType(entity.getId(), entity.getEntityType().name())
+                    .size() > 0;
+            if (relationExistsBeforeDelete) {
+                relationRepository.deleteByFromIdAndFromType(entity.getId(), entity.getEntityType().name());
+            }
+        } catch (ConcurrencyFailureException e) {
+            log.debug("Concurrency exception while deleting relations [{}]", entity, e);
         }
         return relationExistsBeforeDelete;
     }

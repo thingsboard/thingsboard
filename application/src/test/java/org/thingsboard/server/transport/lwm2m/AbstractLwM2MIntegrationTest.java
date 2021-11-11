@@ -36,7 +36,10 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecServerCredentials;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
@@ -57,7 +60,6 @@ import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
 import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
-import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MCredentials;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -178,6 +180,8 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
     protected static final Security SECURITY = noSec("coap://localhost:" + PORT, 123);
     protected static final NetworkConfig COAP_CONFIG = new NetworkConfig().setString("COAP_PORT", Integer.toString(PORT));
 
+    private final LwM2MBootstrapCredentials defaultBootstrapCredentials;
+
     public AbstractLwM2MIntegrationTest() {
 // create client credentials
         try {
@@ -258,6 +262,13 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         } catch (GeneralSecurityException | IOException e) {
             throw new RuntimeException(e);
         }
+
+        defaultBootstrapCredentials = new LwM2MBootstrapCredentials();
+
+        NoSecServerCredentials serverCredentials = new NoSecServerCredentials();
+
+        defaultBootstrapCredentials.setBootstrapServer(serverCredentials);
+        defaultBootstrapCredentials.setLwm2mServer(serverCredentials);
     }
 
     @Before
@@ -314,9 +325,10 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         Assert.assertEquals(device.getId(), deviceCredentials.getDeviceId());
         deviceCredentials.setCredentialsType(DeviceCredentialsType.LWM2M_CREDENTIALS);
 
-        LwM2MCredentials credentials = new LwM2MCredentials();
+        LwM2MDeviceCredentials credentials = new LwM2MDeviceCredentials();
 
         credentials.setClient(clientCredentials);
+        credentials.setBootstrap(defaultBootstrapCredentials);
 
         deviceCredentials.setCredentialsValue(JacksonUtil.toString(credentials));
         doPost("/api/device/credentials", deviceCredentials).andExpect(status().isOk());
@@ -408,7 +420,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
             var tsValue = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("batteryLevel");
             Assert.assertEquals(42, Long.parseLong(tsValue.getValue()));
         } finally {
-            if(client != null) {
+            if (client != null) {
                 client.destroy();
             }
         }

@@ -32,6 +32,9 @@
                          || ruleNodeFormGroup.get('name').hasError('pattern')">
             {{ 'rulenode.name-required' | translate }}
           </mat-error>
+          <mat-error *ngIf="ruleNodeFormGroup.get('name').hasError('maxlength')">
+            {{ 'rulenode.name-max-length' | translate }}
+          </mat-error>
         </mat-form-field>
         <mat-checkbox formControlName="debugMode">
           {{ 'rulenode.debug-mode' | translate }}

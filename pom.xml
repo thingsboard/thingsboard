@@ -42,18 +42,18 @@
         <spring-boot.version>2.3.12.RELEASE</spring-boot.version>
         <spring.version>5.2.16.RELEASE</spring.version>
         <spring-redis.version>5.2.11.RELEASE</spring-redis.version>
-        <spring-security.version>5.4.4</spring-security.version>
+        <spring-security.version>5.4.7</spring-security.version>
         <spring-data-redis.version>2.4.3</spring-data-redis.version>
         <jedis.version>3.3.0</jedis.version>
         <jjwt.version>0.7.0</jjwt.version>
-        <slf4j.version>1.7.7</slf4j.version>
-        <logback.version>1.2.3</logback.version>
+        <slf4j.version>1.7.32</slf4j.version>
+        <logback.version>1.2.6</logback.version>
         <rat.version>0.10</rat.version>
         <cassandra.version>4.10.0</cassandra.version>
         <metrics.version>4.0.5</metrics.version>
         <cassandra-all.version>3.11.10</cassandra-all.version>
         <cassandra-driver-core.version>3.11.0</cassandra-driver-core.version>
-        <guava.version>28.2-jre</guava.version>
+        <guava.version>30.0-jre</guava.version>
         <caffeine.version>2.6.1</caffeine.version>
         <commons-lang3.version>3.4</commons-lang3.version>
         <commons-codec.version>1.15</commons-codec.version>
@@ -83,11 +83,11 @@
         <rabbitmq.version>4.8.0</rabbitmq.version>
         <surfire.version>2.19.1</surfire.version>
         <jar-plugin.version>3.0.2</jar-plugin.version>
-        <springfox-swagger.version>2.6.1</springfox-swagger.version>
-        <springfox-swagger-ui-rfc6570.version>1.0.0</springfox-swagger-ui-rfc6570.version>
+        <springfox-swagger.version>3.0.4</springfox-swagger.version>
+        <swagger-annotations.version>1.6.3</swagger-annotations.version>
         <spatial4j.version>0.7</spatial4j.version>
         <jts.version>1.15.0</jts.version>
-        <bouncycastle.version>1.64</bouncycastle.version>
+        <bouncycastle.version>1.67</bouncycastle.version>
         <winsw.version>2.0.1</winsw.version>
         <postgresql.driver.version>42.2.20</postgresql.driver.version>
         <sonar.exclusions>org/thingsboard/server/gen/**/*,
@@ -112,16 +112,16 @@
         <protobuf-dynamic.version>1.0.3TB</protobuf-dynamic.version>
         <wire-schema.version>3.4.0</wire-schema.version>
         <twilio.version>8.17.0</twilio.version>
-        <hibernate-validator.version>6.0.13.Final</hibernate-validator.version>
+        <hibernate-validator.version>6.0.20.Final</hibernate-validator.version>
         <javax.el.version>3.0.0</javax.el.version>
         <javax.validation-api.version>2.0.1.Final</javax.validation-api.version>
-        <antisamy.version>1.6.2</antisamy.version>
+        <antisamy.version>1.6.4</antisamy.version>
         <snmp4j.version>2.8.5</snmp4j.version>
         <!--         TEST SCOPE         -->
         <awaitility.version>4.1.0</awaitility.version>
         <cassandra-unit.version>4.3.1.0</cassandra-unit.version>
         <dbunit.version>2.7.2</dbunit.version>
-        <hsqldb.version>2.6.0</hsqldb.version>
+        <hsqldb.version>2.6.1</hsqldb.version>
         <java-websocket.version>1.5.2</java-websocket.version>
         <jupiter.version>5.6.3</jupiter.version> <!-- keep the same version as spring-boot-starter-test depend on jupiter-->
         <json-path.version>2.6.0</json-path.version>
@@ -187,8 +187,16 @@
                                                 <directory>src/main/resources</directory>
                                                 <excludes>
                                                     <exclude>logback.xml</exclude>
+                                                    <exclude>${pkg.name}.yml</exclude>
                                                 </excludes>
                                                 <filtering>false</filtering>
+                                            </resource>
+                                            <resource>
+                                                <directory>src/main/resources</directory>
+                                                <includes>
+                                                    <include>${pkg.name}.yml</include>
+                                                </includes>
+                                                <filtering>true</filtering>
                                             </resource>
                                         </resources>
                                     </configuration>
@@ -263,8 +271,16 @@
                                                 <directory>src/main/resources</directory>
                                                 <excludes>
                                                     <exclude>logback.xml</exclude>
+                                                    <exclude>${pkg.name}.yml</exclude>
                                                 </excludes>
                                                 <filtering>false</filtering>
+                                            </resource>
+                                            <resource>
+                                                <directory>src/main/resources</directory>
+                                                <includes>
+                                                    <include>${pkg.name}.yml</include>
+                                                </includes>
+                                                <filtering>true</filtering>
                                             </resource>
                                             <resource>
                                                 <directory>src/main/conf</directory>
@@ -510,8 +526,6 @@
                                     <task>build</task>
                                     <task>buildDeb</task>
                                     <task>buildRpm</task>
-                                    <task>renameDeb</task>
-                                    <task>renameRpm</task>
                                 </tasks>
                                 <args>
                                     <arg>-PpackagingDir=${main.dir}/packaging</arg>
@@ -642,7 +656,7 @@
                 <plugin>
                     <groupId>org.thingsboard</groupId>
                     <artifactId>gradle-maven-plugin</artifactId>
-                    <version>1.0.10</version>
+                    <version>1.0.11</version>
                 </plugin>
                 <plugin>
                     <groupId>com.github.eirslett</groupId>
@@ -1621,9 +1635,14 @@
                 <version>${curator.version}</version>
             </dependency>
             <dependency>
-                <groupId>io.springfox</groupId>
-                <artifactId>springfox-swagger2</artifactId>
+                <groupId>org.thingsboard</groupId>
+                <artifactId>springfox-boot-starter</artifactId>
                 <version>${springfox-swagger.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.swagger</groupId>
+                <artifactId>swagger-annotations</artifactId>
+                <version>${swagger-annotations.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.bouncycastle</groupId>
@@ -1639,6 +1658,17 @@
                 <groupId>org.hsqldb</groupId>
                 <artifactId>hsqldb</artifactId>
                 <version>${hsqldb.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${testcontainers.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>jdbc</artifactId>
+                <version>${testcontainers.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -1683,11 +1713,6 @@
                 <groupId>de.ruedigermoeller</groupId>
                 <artifactId>fst</artifactId>
                 <version>${fst.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.springfox.ui</groupId>
-                <artifactId>springfox-swagger-ui-rfc6570</artifactId>
-                <version>${springfox-swagger-ui-rfc6570.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.locationtech.spatial4j</groupId>

@@ -15,14 +15,21 @@
  */
 package org.thingsboard.server.common.data.event;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.thingsboard.server.common.data.StringUtils;
 
 @Data
+@ApiModel
 public class StatisticsEventFilter implements EventFilter {
-    private String server;
-    private Integer messagesProcessed;
-    private Integer errorsOccurred;
+
+    @ApiModelProperty(position = 1, value = "String value representing the server name, identifier or ip address where the platform is running", example = "ip-172-31-24-152")
+    protected String server;
+    @ApiModelProperty(position = 2, value = "The minimum number of successfully processed messages", example = "25")
+    protected Integer messagesProcessed;
+    @ApiModelProperty(position = 3, value = "The minimum number of errors occurred during messages processing", example = "30")
+    protected Integer errorsOccurred;
 
     @Override
     public EventType getEventType() {

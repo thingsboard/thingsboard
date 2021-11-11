@@ -15,10 +15,15 @@
  */
 package org.thingsboard.server.common.data.alarm;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
+@ApiModel
 public class AlarmInfo extends Alarm {
 
     private static final long serialVersionUID = 2807343093519543363L;
 
+    @ApiModelProperty(position = 17, value = "Alarm originator name", example = "Thermostat")
     private String originatorName;
 
     public AlarmInfo() {

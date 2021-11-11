@@ -31,6 +31,7 @@ import org.thingsboard.server.service.install.TsDatabaseSchemaService;
 import org.thingsboard.server.service.install.TsLatestDatabaseSchemaService;
 import org.thingsboard.server.service.install.migrate.EntitiesMigrateService;
 import org.thingsboard.server.service.install.migrate.TsLatestMigrateService;
+import org.thingsboard.server.service.install.update.CacheCleanupService;
 import org.thingsboard.server.service.install.update.DataUpdateService;
 
 @Service
@@ -74,6 +75,9 @@ public class ThingsboardInstallService {
     @Autowired
     private DataUpdateService dataUpdateService;
 
+    @Autowired
+    private CacheCleanupService cacheCleanupService;
+
     @Autowired(required = false)
     private EntitiesMigrateService entitiesMigrateService;
 
@@ -84,6 +88,8 @@ public class ThingsboardInstallService {
         try {
             if (isUpgrade) {
                 log.info("Starting ThingsBoard Upgrade from version {} ...", upgradeFromVersion);
+
+                cacheCleanupService.clearCache(upgradeFromVersion);
 
                 if ("2.5.0-cassandra".equals(upgradeFromVersion)) {
                     log.info("Migrating ThingsBoard entities data from cassandra to SQL database ...");
@@ -202,9 +208,14 @@ public class ThingsboardInstallService {
                             systemDataLoaderService.createOAuth2Templates();
                         case "3.3.0":
                             log.info("Upgrading ThingsBoard from version 3.3.0 to 3.3.1 ...");
+                        case "3.3.1":
+                            log.info("Upgrading ThingsBoard from version 3.3.1 to 3.3.2 ...");
                             log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();
                             break;
+
+                        //TODO update CacheCleanupService on the next version upgrade
+
                         default:
                             throw new RuntimeException("Unable to upgrade ThingsBoard, unsupported fromVersion: " + upgradeFromVersion);
 

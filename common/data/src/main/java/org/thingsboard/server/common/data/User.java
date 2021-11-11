@@ -17,15 +17,19 @@ package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
-
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
+@ApiModel
 @EqualsAndHashCode(callSuper = true)
 public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements HasName, HasTenantId, HasCustomerId {
 
@@ -36,8 +40,10 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
     private String email;
     private Authority authority;
     @NoXss
+    @Length(fieldName = "first name")
     private String firstName;
     @NoXss
+    @Length(fieldName = "last name")
     private String lastName;
 
     public User() {
@@ -58,6 +64,23 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
         this.lastName = user.getLastName();
     }
 
+
+    @ApiModelProperty(position = 1, value = "JSON object with the User Id. " +
+            "Specify this field to update the device. " +
+            "Referencing non-existing User Id will cause error. " +
+            "Omit this field to create new customer." )
+    @Override
+    public UserId getId() {
+        return super.getId();
+    }
+
+    @ApiModelProperty(position = 2, value = "Timestamp of the user creation, in milliseconds", example = "1609459200000", readOnly = true)
+    @Override
+    public long getCreatedTime() {
+        return super.getCreatedTime();
+    }
+
+    @ApiModelProperty(position = 3, value = "JSON object with the Tenant Id.", readOnly = true)
     public TenantId getTenantId() {
         return tenantId;
     }
@@ -66,6 +89,7 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
         this.tenantId = tenantId;
     }
 
+    @ApiModelProperty(position = 4, value = "JSON object with the Customer Id.", readOnly = true)
     public CustomerId getCustomerId() {
         return customerId;
     }
@@ -74,6 +98,7 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
         this.customerId = customerId;
     }
 
+    @ApiModelProperty(position = 5, required = true, value = "Email of the user", example = "user@example.com")
     public String getEmail() {
         return email;
     }
@@ -82,12 +107,14 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
         this.email = email;
     }
 
+    @ApiModelProperty(position = 6, readOnly = true, value = "Duplicates the email of the user, readonly", example = "user@example.com")
     @Override
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getName() {
         return email;
     }
 
+    @ApiModelProperty(position = 7, required = true, value = "Authority", example = "SYS_ADMIN, TENANT_ADMIN or CUSTOMER_USER")
     public Authority getAuthority() {
         return authority;
     }
@@ -96,6 +123,7 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
         this.authority = authority;
     }
 
+    @ApiModelProperty(position = 8, required = true, value = "First name of the user", example = "John")
     public String getFirstName() {
         return firstName;
     }
@@ -104,12 +132,19 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
         this.firstName = firstName;
     }
 
+    @ApiModelProperty(position = 9, required = true, value = "Last name of the user", example = "Doe")
     public String getLastName() {
         return lastName;
     }
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
+    }
+
+    @ApiModelProperty(position = 10, value = "Additional parameters of the user", dataType = "com.fasterxml.jackson.databind.JsonNode")
+    @Override
+    public JsonNode getAdditionalInfo() {
+        return super.getAdditionalInfo();
     }
 
     @Override

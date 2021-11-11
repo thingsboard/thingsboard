@@ -420,7 +420,15 @@ spec:
         backend:
           serviceName: tb-node
           servicePort: 8080
+      - path: /v3/.*
+        backend:
+          serviceName: tb-node
+          servicePort: 8080
       - path: /static/rulenode/.*
+        backend:
+          serviceName: tb-node
+          servicePort: 8080
+      - path: /assets/help/.*/rulenode/.*
         backend:
           serviceName: tb-node
           servicePort: 8080

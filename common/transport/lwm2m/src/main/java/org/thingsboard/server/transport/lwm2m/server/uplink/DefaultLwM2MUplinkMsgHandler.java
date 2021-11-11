@@ -36,6 +36,7 @@ import org.eclipse.leshan.core.response.ObserveResponse;
 import org.eclipse.leshan.core.response.ReadCompositeResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.server.registration.Registration;
+import org.eclipse.leshan.server.registration.RegistrationStore;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
@@ -46,6 +47,8 @@ import org.thingsboard.server.common.data.device.data.lwm2m.ObjectAttributes;
 import org.thingsboard.server.common.data.device.data.lwm2m.OtherConfiguration;
 import org.thingsboard.server.common.data.device.data.lwm2m.TelemetryMappingConfiguration;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageUtil;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
@@ -57,6 +60,7 @@ import org.thingsboard.server.transport.lwm2m.server.LwM2mOtaConvert;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mVersionedModelProvider;
 import org.thingsboard.server.transport.lwm2m.server.attributes.LwM2MAttributesService;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClientState;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClientStateException;
@@ -80,9 +84,9 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttrib
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttributesRequest;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MOtaUpdateService;
-import org.thingsboard.server.transport.lwm2m.server.rpc.LwM2MRpcRequestHandler;
 import org.thingsboard.server.transport.lwm2m.server.session.LwM2MSessionManager;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
+import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2mSecurityStore;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PostConstruct;
@@ -139,8 +143,10 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
     private final LwM2mTransportServerHelper helper;
     private final TbLwM2MDtlsSessionStore sessionStore;
     private final LwM2mClientContext clientContext;
-    private final LwM2MRpcRequestHandler rpcHandler;
     private final LwM2mDownlinkMsgHandler defaultLwM2MDownlinkMsgHandler;
+    private final LwM2mVersionedModelProvider modelProvider;
+    private final RegistrationStore registrationStore;
+    private final TbLwM2mSecurityStore securityStore;
 
     public DefaultLwM2MUplinkMsgHandler(TransportService transportService,
                                         LwM2MTransportServerConfig config,
@@ -150,9 +156,12 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
                                         LwM2MSessionManager sessionManager,
                                         @Lazy LwM2MOtaUpdateService otaService,
                                         @Lazy LwM2MAttributesService attributesService,
-                                        @Lazy LwM2MRpcRequestHandler rpcHandler,
                                         @Lazy LwM2mDownlinkMsgHandler defaultLwM2MDownlinkMsgHandler,
-                                        LwM2mTransportContext context, TbLwM2MDtlsSessionStore sessionStore) {
+                                        LwM2mTransportContext context,
+                                        TbLwM2MDtlsSessionStore sessionStore,
+                                        LwM2mVersionedModelProvider modelProvider,
+                                        RegistrationStore registrationStore,
+                                        TbLwM2mSecurityStore securityStore) {
         this.transportService = transportService;
         this.sessionManager = sessionManager;
         this.attributesService = attributesService;
@@ -161,10 +170,12 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
         this.helper = helper;
         this.clientContext = clientContext;
         this.logService = logService;
-        this.rpcHandler = rpcHandler;
         this.defaultLwM2MDownlinkMsgHandler = defaultLwM2MDownlinkMsgHandler;
         this.context = context;
         this.sessionStore = sessionStore;
+        this.modelProvider = modelProvider;
+        this.registrationStore = registrationStore;
+        this.securityStore = securityStore;
     }
 
     @PostConstruct
@@ -270,26 +281,27 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
      * @param observations - !!! Warn: if have not finishing unReg, then this operation will be finished on next Client`s connect
      */
     public void unReg(Registration registration, Collection<Observation> observations) {
-        executor.submit(() -> {
-            LwM2mClient client = clientContext.getClientByEndpoint(registration.getEndpoint());
-            try {
-                logService.log(client, LOG_LWM2M_INFO + ": Client unRegistration");
-                clientContext.unregister(client, registration);
-                SessionInfoProto sessionInfo = client.getSession();
-                if (sessionInfo != null) {
-                    sessionManager.deregister(sessionInfo);
-                    sessionStore.remove(registration.getEndpoint());
-                    log.info("Client close session: [{}] unReg [{}] name  [{}] profile ", registration.getId(), registration.getEndpoint(), sessionInfo.getDeviceType());
-                } else {
-                    log.error("Client close session: [{}] unReg [{}] name  [{}] sessionInfo ", registration.getId(), registration.getEndpoint(), null);
-                }
-            } catch (LwM2MClientStateException stateException) {
-                log.info("[{}] delete registration: [{}] {}.", registration.getEndpoint(), stateException.getState(), stateException.getMessage());
-            } catch (Throwable t) {
-                log.error("[{}] endpoint [{}] error Unable un registration.", registration.getEndpoint(), t);
-                logService.log(client, LOG_LWM2M_ERROR + String.format(": Client Unable un Registration, %s", t.getMessage()));
+        executor.submit(() -> doUnReg(registration, clientContext.getClientByEndpoint(registration.getEndpoint())));
+    }
+
+    private void doUnReg(Registration registration, LwM2mClient client) {
+        try {
+            logService.log(client, LOG_LWM2M_INFO + ": Client unRegistration");
+            clientContext.unregister(client, registration);
+            SessionInfoProto sessionInfo = client.getSession();
+            if (sessionInfo != null) {
+                sessionManager.deregister(sessionInfo);
+                sessionStore.remove(registration.getEndpoint());
+                log.info("Client close session: [{}] unReg [{}] name  [{}] profile ", registration.getId(), registration.getEndpoint(), sessionInfo.getDeviceType());
+            } else {
+                log.error("Client close session: [{}] unReg [{}] name  [{}] sessionInfo ", registration.getId(), registration.getEndpoint(), null);
             }
-        });
+        } catch (LwM2MClientStateException stateException) {
+            log.info("[{}] delete registration: [{}] {}.", registration.getEndpoint(), stateException.getState(), stateException.getMessage());
+        } catch (Throwable t) {
+            log.error("[{}] endpoint [{}] error Unable un registration.", registration.getEndpoint(), t);
+            logService.log(client, LOG_LWM2M_ERROR + String.format(": Client Unable un Registration, %s", t.getMessage()));
+        }
     }
 
     @Override
@@ -309,7 +321,7 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
     public void onUpdateValueAfterReadResponse(Registration registration, String path, ReadResponse response) {
         if (response.getContent() != null) {
             LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(registration.getEndpoint());
-            ObjectModel objectModelVersion = lwM2MClient.getObjectModel(path, this.config.getModelProvider());
+            ObjectModel objectModelVersion = lwM2MClient.getObjectModel(path, modelProvider);
             if (objectModelVersion != null) {
                 if (response.getContent() instanceof LwM2mObject) {
                     LwM2mObject lwM2mObject = (LwM2mObject) response.getContent();
@@ -388,15 +400,24 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
     }
 
     @Override
-    public void onResourceUpdate(Optional<TransportProtos.ResourceUpdateMsg> resourceUpdateMsgOpt) {
-        String idVer = resourceUpdateMsgOpt.get().getResourceKey();
-        clientContext.getLwM2mClients().forEach(e -> e.updateResourceModel(idVer, this.config.getModelProvider()));
+    public void onDeviceDelete(DeviceId deviceId) {
+        clearAndUnregister(clientContext.getClientByDeviceId(deviceId.getId()));
     }
 
     @Override
-    public void onResourceDelete(Optional<TransportProtos.ResourceDeleteMsg> resourceDeleteMsgOpt) {
-        String pathIdVer = resourceDeleteMsgOpt.get().getResourceKey();
-        clientContext.getLwM2mClients().forEach(e -> e.deleteResources(pathIdVer, this.config.getModelProvider()));
+    public void onResourceUpdate(TransportProtos.ResourceUpdateMsg resourceUpdateMsgOpt) {
+        String idVer = resourceUpdateMsgOpt.getResourceKey();
+        TenantId tenantId = new TenantId(new UUID(resourceUpdateMsgOpt.getTenantIdMSB(), resourceUpdateMsgOpt.getTenantIdLSB()));
+        modelProvider.evict(tenantId, idVer);
+        clientContext.getLwM2mClients().forEach(e -> e.updateResourceModel(idVer, modelProvider));
+    }
+
+    @Override
+    public void onResourceDelete(TransportProtos.ResourceDeleteMsg resourceDeleteMsgOpt) {
+        String pathIdVer = resourceDeleteMsgOpt.getResourceKey();
+        TenantId tenantId = new TenantId(new UUID(resourceDeleteMsgOpt.getTenantIdMSB(), resourceDeleteMsgOpt.getTenantIdLSB()));
+        modelProvider.evict(tenantId, pathIdVer);
+        clientContext.getLwM2mClients().forEach(e -> e.deleteResources(pathIdVer, modelProvider));
     }
 
     /**
@@ -544,7 +565,7 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
      */
     private void updateResourcesValue(LwM2mClient lwM2MClient, LwM2mResource lwM2mResource, String path) {
         Registration registration = lwM2MClient.getRegistration();
-        if (lwM2MClient.saveResourceValue(path, lwM2mResource, this.config.getModelProvider())) {
+        if (lwM2MClient.saveResourceValue(path, lwM2mResource, modelProvider)) {
             if (path.equals(convertObjectIdToVersionedId(FW_NAME_ID, registration))) {
                 otaService.onCurrentFirmwareNameUpdate(lwM2MClient, (String) lwM2mResource.getValue());
             } else if (path.equals(convertObjectIdToVersionedId(FW_3_VER_ID, registration))) {
@@ -879,8 +900,8 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
      */
     @Override
     public void onToTransportUpdateCredentials(SessionInfoProto sessionInfo, TransportProtos.ToTransportUpdateCredentialsProto updateCredentials) {
-        log.info("[{}] idList [{}] valueList updateCredentials", updateCredentials.getCredentialsIdList(), updateCredentials.getCredentialsValueList());
-        this.clientContext.removeCredentials(sessionInfo);
+        log.info("[{}] updateCredentials", sessionInfo);
+        clearAndUnregister(clientContext.getClientBySessionInfo(sessionInfo));
     }
 
     /**
@@ -956,5 +977,17 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
                 .setRpcSubscription(true)
                 .setLastActivityTime(System.currentTimeMillis())
                 .build(), TransportServiceCallback.EMPTY);
+    }
+
+    private void clearAndUnregister(LwM2mClient client) {
+        client.lock();
+        try {
+            Registration registration = client.getRegistration();
+            doUnReg(registration, client);
+            securityStore.remove(registration.getEndpoint(), registration.getId());
+            registrationStore.removeRegistration(registration.getId());
+        } finally {
+            client.unlock();
+        }
     }
 }

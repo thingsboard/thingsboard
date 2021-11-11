@@ -30,7 +30,7 @@ public class PskLwm2mIntegrationTest extends AbstractLwM2MIntegrationTest {
     @Test
     public void testConnectWithPSKAndObserveTelemetry() throws Exception {
         String pskIdentity = "SOME_PSK_ID";
-        String pskKey = "73656372657450534b";
+        String pskKey = "73656372657450534b73656372657450";
         PSKClientCredentials clientCredentials = new PSKClientCredentials();
         clientCredentials.setEndpoint(ENDPOINT);
         clientCredentials.setKey(pskKey);

@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -40,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
@@ -115,6 +117,24 @@ public abstract class BaseOtaPackageControllerTest extends AbstractControllerTes
 
         OtaPackageInfo foundFirmwareInfo = doGet("/api/otaPackage/info/" + savedFirmwareInfo.getId().getId().toString(), OtaPackageInfo.class);
         Assert.assertEquals(foundFirmwareInfo.getTitle(), savedFirmwareInfo.getTitle());
+    }
+
+    @Test
+    public void saveOtaPackageInfoWithViolationOfLengthValidation() throws Exception {
+        SaveOtaPackageInfoRequest firmwareInfo = new SaveOtaPackageInfoRequest();
+        firmwareInfo.setDeviceProfileId(deviceProfileId);
+        firmwareInfo.setType(FIRMWARE);
+        firmwareInfo.setTitle(RandomStringUtils.randomAlphabetic(300));
+        firmwareInfo.setVersion(VERSION);
+        firmwareInfo.setUsesUrl(false);
+        doPost("/api/otaPackage", firmwareInfo).andExpect(statusReason(containsString("length of title must be equal or less than 255")));
+        firmwareInfo.setTitle(TITLE);
+        firmwareInfo.setVersion(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/otaPackage", firmwareInfo).andExpect(statusReason(containsString("length of version must be equal or less than 255")));
+        firmwareInfo.setVersion(VERSION);
+        firmwareInfo.setUsesUrl(true);
+        firmwareInfo.setUrl(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/otaPackage", firmwareInfo).andExpect(statusReason(containsString("length of url must be equal or less than 255")));
     }
 
     @Test

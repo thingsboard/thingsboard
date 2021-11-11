@@ -48,6 +48,9 @@
         <mat-error *ngIf="entityForm.get('title').hasError('required')">
           {{ 'tenant.title-required' | translate }}
         </mat-error>
+        <mat-error *ngIf="entityForm.get('title').hasError('maxlength')">
+          {{ 'tenant.title-max-length' | translate }}
+        </mat-error>
       </mat-form-field>
       <tb-tenant-profile-autocomplete
         [selectDefaultProfile]="isAdd"

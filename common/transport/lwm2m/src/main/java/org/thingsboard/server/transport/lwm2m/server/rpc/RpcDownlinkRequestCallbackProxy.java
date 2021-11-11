@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.rpc;
 
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.request.exception.ClientSleepingException;
 import org.thingsboard.common.util.JacksonUtil;
@@ -26,8 +27,10 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.downlink.DownlinkRequestCallback;
 
+import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
+@Slf4j
 public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkRequestCallback<R, T> {
 
     private final TransportService transportService;
@@ -44,8 +47,20 @@ public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkR
     }
 
     @Override
-    public void onSent(R request) {
+    public boolean onSent(R request) {
+        client.lock();
+        try {
+            UUID rpcId = new UUID(this.request.getRequestIdMSB(), this.request.getRequestIdLSB());
+            if (rpcId.equals(client.getLastSentRpcId())) {
+                log.debug("[{}]][{}] Rpc has already sent!", client.getEndpoint(), rpcId);
+                return false;
+            }
+            client.setLastSentRpcId(rpcId);
+        } finally {
+            client.unlock();
+        }
         transportService.process(client.getSession(), this.request, RpcStatus.SENT, TransportServiceCallback.EMPTY);
+        return true;
     }
 
     @Override
@@ -67,7 +82,8 @@ public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkR
 
     @Override
     public void onError(String params, Exception e) {
-        if (e instanceof TimeoutException) {
+        if (e instanceof TimeoutException || e instanceof org.eclipse.leshan.core.request.exception.TimeoutException) {
+            client.setLastSentRpcId(null);
             transportService.process(client.getSession(), this.request, RpcStatus.TIMEOUT, TransportServiceCallback.EMPTY);
         } else if (!(e instanceof ClientSleepingException)) {
             sendRpcReplyOnError(e);

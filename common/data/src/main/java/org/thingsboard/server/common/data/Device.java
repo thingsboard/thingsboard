@@ -17,6 +17,9 @@ package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.device.data.DeviceData;
@@ -25,11 +28,14 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Optional;
 
+@ApiModel
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
 public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implements HasName, HasTenantId, HasCustomerId, HasOtaPackage {
@@ -39,10 +45,13 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
     private TenantId tenantId;
     private CustomerId customerId;
     @NoXss
+    @Length(fieldName = "name")
     private String name;
     @NoXss
+    @Length(fieldName = "type")
     private String type;
     @NoXss
+    @Length(fieldName = "label")
     private String label;
     private DeviceProfileId deviceProfileId;
     private transient DeviceData deviceData;
@@ -83,9 +92,26 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         this.setDeviceData(device.getDeviceData());
         this.setFirmwareId(device.getFirmwareId());
         this.setSoftwareId(device.getSoftwareId());
+        Optional.ofNullable(device.getAdditionalInfo()).ifPresent(this::setAdditionalInfo);
         return this;
     }
 
+    @ApiModelProperty(position = 1, value = "JSON object with the Device Id. " +
+            "Specify this field to update the Device. " +
+            "Referencing non-existing Device Id will cause error. " +
+            "Omit this field to create new Device." )
+    @Override
+    public DeviceId getId() {
+        return super.getId();
+    }
+
+    @ApiModelProperty(position = 2, value = "Timestamp of the device creation, in milliseconds", example = "1609459200000", readOnly = true)
+    @Override
+    public long getCreatedTime() {
+        return super.getCreatedTime();
+    }
+
+    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id. Use 'assignDeviceToTenant' to change the Tenant Id.", readOnly = true)
     public TenantId getTenantId() {
         return tenantId;
     }
@@ -94,6 +120,7 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         this.tenantId = tenantId;
     }
 
+    @ApiModelProperty(position = 4, value = "JSON object with Customer Id. Use 'assignDeviceToCustomer' to change the Customer Id.", readOnly = true)
     public CustomerId getCustomerId() {
         return customerId;
     }
@@ -102,6 +129,7 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         this.customerId = customerId;
     }
 
+    @ApiModelProperty(position = 5, required = true, value = "Unique Device Name in scope of Tenant", example = "A4B72CCDFF33")
     @Override
     public String getName() {
         return name;
@@ -111,6 +139,7 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         this.name = name;
     }
 
+    @ApiModelProperty(position = 6, required = true, value = "Device Profile Name", example = "Temperature Sensor")
     public String getType() {
         return type;
     }
@@ -119,6 +148,7 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         this.type = type;
     }
 
+    @ApiModelProperty(position = 7, required = true, value = "Label that may be used in widgets", example = "Room 234 Sensor")
     public String getLabel() {
         return label;
     }
@@ -127,6 +157,7 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         this.label = label;
     }
 
+    @ApiModelProperty(position = 8, required = true, value = "JSON object with Device Profile Id.")
     public DeviceProfileId getDeviceProfileId() {
         return deviceProfileId;
     }
@@ -135,6 +166,7 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         this.deviceProfileId = deviceProfileId;
     }
 
+    @ApiModelProperty(position = 9, value = "JSON object with content specific to type of transport in the device profile.")
     public DeviceData getDeviceData() {
         if (deviceData != null) {
             return deviceData;
@@ -167,6 +199,7 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         return getName();
     }
 
+    @ApiModelProperty(position = 10, value = "JSON object with Ota Package Id.")
     public OtaPackageId getFirmwareId() {
         return firmwareId;
     }
@@ -175,12 +208,19 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         this.firmwareId = firmwareId;
     }
 
+    @ApiModelProperty(position = 11, value = "JSON object with Ota Package Id.")
     public OtaPackageId getSoftwareId() {
         return softwareId;
     }
 
     public void setSoftwareId(OtaPackageId softwareId) {
         this.softwareId = softwareId;
+    }
+
+    @ApiModelProperty(position = 12, value = "Additional parameters of the device", dataType = "com.fasterxml.jackson.databind.JsonNode")
+    @Override
+    public JsonNode getAdditionalInfo() {
+        return super.getAdditionalInfo();
     }
 
     @Override

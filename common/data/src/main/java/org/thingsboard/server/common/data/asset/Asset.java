@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.common.data.asset;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasName;
@@ -23,8 +26,12 @@ import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
+import java.util.Optional;
+
+@ApiModel
 @EqualsAndHashCode(callSuper = true)
 public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements HasName, HasTenantId, HasCustomerId {
 
@@ -33,10 +40,13 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
     private TenantId tenantId;
     private CustomerId customerId;
     @NoXss
+    @Length(fieldName = "name")
     private String name;
     @NoXss
+    @Length(fieldName = "type")
     private String type;
     @NoXss
+    @Length(fieldName = "label")
     private String label;
 
     public Asset() {
@@ -56,6 +66,31 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
         this.label = asset.getLabel();
     }
 
+    public void update(Asset asset) {
+        this.tenantId = asset.getTenantId();
+        this.customerId = asset.getCustomerId();
+        this.name = asset.getName();
+        this.type = asset.getType();
+        this.label = asset.getLabel();
+        Optional.ofNullable(asset.getAdditionalInfo()).ifPresent(this::setAdditionalInfo);
+    }
+
+    @ApiModelProperty(position = 1, value = "JSON object with the asset Id. " +
+            "Specify this field to update the asset. " +
+            "Referencing non-existing asset Id will cause error. " +
+            "Omit this field to create new asset.")
+    @Override
+    public AssetId getId() {
+        return super.getId();
+    }
+
+    @ApiModelProperty(position = 2, value = "Timestamp of the asset creation, in milliseconds", example = "1609459200000", readOnly = true)
+    @Override
+    public long getCreatedTime() {
+        return super.getCreatedTime();
+    }
+
+    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id.", readOnly = true)
     public TenantId getTenantId() {
         return tenantId;
     }
@@ -64,6 +99,7 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
         this.tenantId = tenantId;
     }
 
+    @ApiModelProperty(position = 4, value = "JSON object with Customer Id. Use 'assignAssetToCustomer' to change the Customer Id.", readOnly = true)
     public CustomerId getCustomerId() {
         return customerId;
     }
@@ -72,6 +108,7 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
         this.customerId = customerId;
     }
 
+    @ApiModelProperty(position = 5, required = true, value = "Unique Asset Name in scope of Tenant", example = "Empire State Building")
     @Override
     public String getName() {
         return name;
@@ -81,6 +118,7 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
         this.name = name;
     }
 
+    @ApiModelProperty(position = 6, required = true, value = "Asset type", example = "Building")
     public String getType() {
         return type;
     }
@@ -89,6 +127,7 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
         this.type = type;
     }
 
+    @ApiModelProperty(position = 7, required = true, value = "Label that may be used in widgets", example = "NY Building")
     public String getLabel() {
         return label;
     }
@@ -100,6 +139,12 @@ public class Asset extends SearchTextBasedWithAdditionalInfo<AssetId> implements
     @Override
     public String getSearchText() {
         return getName();
+    }
+
+    @ApiModelProperty(position = 8, value = "Additional parameters of the asset", dataType = "com.fasterxml.jackson.databind.JsonNode")
+    @Override
+    public JsonNode getAdditionalInfo() {
+        return super.getAdditionalInfo();
     }
 
     @Override

@@ -17,30 +17,37 @@ package org.thingsboard.server.common.data;
 
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.UUIDBased;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @EqualsAndHashCode(callSuper = true)
 public abstract class ContactBased<I extends UUIDBased> extends SearchTextBasedWithAdditionalInfo<I> implements HasName {
-    
+
     private static final long serialVersionUID = 5047448057830660988L;
 
+    @Length(fieldName = "country")
     @NoXss
     protected String country;
+    @Length(fieldName = "state")
     @NoXss
     protected String state;
+    @Length(fieldName = "city")
     @NoXss
     protected String city;
     @NoXss
     protected String address;
     @NoXss
     protected String address2;
+    @Length(fieldName = "zip or postal code")
     @NoXss
     protected String zip;
+    @Length(fieldName = "phone")
     @NoXss
     protected String phone;
+    @Length(fieldName = "email")
     @NoXss
     protected String email;
-    
+
     public ContactBased() {
         super();
     }
@@ -48,7 +55,7 @@ public abstract class ContactBased<I extends UUIDBased> extends SearchTextBasedW
     public ContactBased(I id) {
         super(id);
     }
-    
+
     public ContactBased(ContactBased<I> contact) {
         super(contact);
         this.country = contact.getCountry();

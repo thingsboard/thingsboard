@@ -16,7 +16,7 @@
 
 import L, {
   FeatureGroup,
-  Icon, LatLng,
+  Icon,
   LatLngBounds,
   LatLngTuple,
   markerClusterGroup,
@@ -80,8 +80,13 @@ export default abstract class LeafletMap {
     updatePending = false;
     addMarkers: L.Marker[] = [];
     addPolygons: L.Polygon[] = [];
+  // tslint:disable-next-line:no-string-literal
     southWest = new L.LatLng(-Projection.SphericalMercator['MAX_LATITUDE'], -180);
+  // tslint:disable-next-line:no-string-literal
     northEast = new L.LatLng(Projection.SphericalMercator['MAX_LATITUDE'], 180);
+    mousePositionOnMap: L.LatLng;
+    addMarker: L.Control;
+    addPolygon: L.Control;
 
     protected constructor(public ctx: WidgetContext,
                           public $container: HTMLElement,
@@ -120,13 +125,11 @@ export default abstract class LeafletMap {
 
     addMarkerControl() {
         if (this.options.draggableMarker) {
-            let mousePositionOnMap: L.LatLng;
-            let addMarker: L.Control;
             this.map.on('mousemove', (e: L.LeafletMouseEvent) => {
-                mousePositionOnMap = e.latlng;
+                this.mousePositionOnMap = e.latlng;
             });
             const dragListener = (e: L.DragEndEvent) => {
-                if (e.type === 'dragend' && mousePositionOnMap) {
+                if (e.type === 'dragend' && this.mousePositionOnMap) {
                     const icon = L.icon({
                       iconRetinaUrl: 'marker-icon-2x.png',
                       iconUrl: 'marker-icon.png',
@@ -137,11 +140,11 @@ export default abstract class LeafletMap {
                       tooltipAnchor: [16, -28],
                       shadowSize: [41, 41]
                     });
-                    const customLatLng = this.convertToCustomFormat(mousePositionOnMap);
-                    mousePositionOnMap.lat = customLatLng[this.options.latKeyName];
-                    mousePositionOnMap.lng = customLatLng[this.options.lngKeyName];
+                    const customLatLng = this.convertToCustomFormat(this.mousePositionOnMap);
+                    this.mousePositionOnMap.lat = customLatLng[this.options.latKeyName];
+                    this.mousePositionOnMap.lng = customLatLng[this.options.lngKeyName];
 
-                    const newMarker = L.marker(mousePositionOnMap, { icon }).addTo(this.map);
+                    const newMarker = L.marker(this.mousePositionOnMap, { icon }).addTo(this.map);
                     this.addMarkers.push(newMarker);
                     const datasourcesList = document.createElement('div');
                     const header = document.createElement('p');
@@ -181,9 +184,9 @@ export default abstract class LeafletMap {
                     popup.setContent(datasourcesList);
                     newMarker.bindPopup(popup).openPopup();
                 }
-                addMarker.setPosition('topright');
+                this.addMarker.setPosition('topright');
             };
-            L.Control.AddMarker = L.Control.extend({
+            const addMarker = L.Control.extend({
                 onAdd() {
                     const img = L.DomUtil.create('img') as any;
                     img.src = `assets/add_location.svg`;
@@ -201,34 +204,31 @@ export default abstract class LeafletMap {
                 },
                 dragMarker: this.dragMarker
             } as any);
-            L.control.addMarker = (opts) => {
-                return new L.Control.AddMarker(opts);
+            const addMarkerControl = (opts) => {
+                return new addMarker(opts);
             };
-            addMarker = L.control.addMarker({ position: 'topright' }).addTo(this.map);
+            this.addMarker = addMarkerControl({ position: 'topright' }).addTo(this.map);
         }
     }
 
   addPolygonControl() {
     if (this.options.showPolygon && this.options.editablePolygon) {
-      let polygonPoints: L.LatLng[];
-      let addPolygon: L.Control;
-      let mousePositionOnMap: LatLng;
       this.map.on('mousemove', (e: L.LeafletMouseEvent) => {
-        mousePositionOnMap = e.latlng;
+        this.mousePositionOnMap = e.latlng;
       });
 
       const dragListener = (e: L.DragEndEvent) => {
         if (e.type === 'dragend') {
           const polygonOffset = this.options.provider === MapProviders.image ? 10 : 0.01;
 
-          let convert = this.convertToCustomFormat(mousePositionOnMap,polygonOffset);
-          mousePositionOnMap.lat = convert[this.options.latKeyName];
-          mousePositionOnMap.lng = convert[this.options.lngKeyName];
+          const convert = this.convertToCustomFormat(this.mousePositionOnMap, polygonOffset);
+          this.mousePositionOnMap.lat = convert[this.options.latKeyName];
+          this.mousePositionOnMap.lng = convert[this.options.lngKeyName];
 
-          const latlng1 = mousePositionOnMap;
-          const latlng2 = L.latLng(mousePositionOnMap.lat, mousePositionOnMap.lng + polygonOffset);
-          const latlng3 = L.latLng(mousePositionOnMap.lat - polygonOffset, mousePositionOnMap.lng);
-          polygonPoints = [latlng1, latlng2, latlng3];
+          const latlng1 = this.mousePositionOnMap;
+          const latlng2 = L.latLng(this.mousePositionOnMap.lat, this.mousePositionOnMap.lng + polygonOffset);
+          const latlng3 = L.latLng(this.mousePositionOnMap.lat - polygonOffset, this.mousePositionOnMap.lng);
+          const polygonPoints = [latlng1, latlng2, latlng3];
 
           const newPolygon = L.polygon(polygonPoints).addTo(this.map);
           this.addPolygons.push(newPolygon);
@@ -270,9 +270,9 @@ export default abstract class LeafletMap {
           popup.setContent(datasourcesList);
           newPolygon.bindPopup(popup).openPopup();
         }
-        addPolygon.setPosition('topright');
+        this.addPolygon.setPosition('topright');
       };
-      L.Control.AddPolygon = L.Control.extend({
+      const addPolygon = L.Control.extend({
         onAdd() {
           const img = L.DomUtil.create('img') as any;
           img.src = `assets/add_polygon.svg`;
@@ -290,10 +290,10 @@ export default abstract class LeafletMap {
         },
         dragPolygonVertex: this.dragPolygonVertex
       } as any);
-      L.control.addPolygon = (opts) => {
-        return new L.Control.AddPolygon(opts);
+      const addPolygonControl = (opts) => {
+        return new addPolygon(opts);
       };
-      addPolygon = L.control.addPolygon({ position: 'topright' }).addTo(this.map);
+      this.addPolygon = addPolygonControl({ position: 'topright' }).addTo(this.map);
     }
   }
 
@@ -315,6 +315,19 @@ export default abstract class LeafletMap {
 
     public setMap(map: L.Map) {
         this.map = map;
+        this.map.on('move', () => {
+          this.ctx.updatePopoverPositions();
+        });
+        this.map.on('zoomstart', () => {
+          this.ctx.setPopoversHidden(true);
+        });
+        this.map.on('zoomend', () => {
+          this.ctx.setPopoversHidden(false);
+          this.ctx.updatePopoverPositions();
+          setTimeout(() => {
+            this.ctx.updatePopoverPositions();
+          });
+        });
         if (this.options.useDefaultCenterPosition) {
           this.map.panTo(this.options.defaultCenterPosition);
           this.bounds = map.getBounds();
@@ -461,9 +474,10 @@ export default abstract class LeafletMap {
       this.showPolygon = showPolygon;
       if (this.map) {
         const data = this.ctx.data;
-        const formattedData = parseData(this.ctx.data);
+        const formattedData = parseData(data);
         if (drawRoutes) {
-          this.updatePolylines(parseArray(data), false);
+          const polyData = parseArray(data);
+          this.updatePolylines(polyData, formattedData, false);
         }
         if (showPolygon) {
           this.updatePolygons(formattedData, false);
@@ -620,7 +634,8 @@ export default abstract class LeafletMap {
       return polygon;
     }
 
-  updatePoints(pointsData: FormattedData[][], getTooltip: (point: FormattedData) => string) {
+  updatePoints(pointsData: FormattedData[][],
+               getTooltip: (point: FormattedData, points: FormattedData[]) => string) {
     if (pointsData.length) {
       if (this.points) {
         this.map.removeLayer(this.points);
@@ -629,21 +644,25 @@ export default abstract class LeafletMap {
     }
     let pointColor = this.options.pointColor;
     for (const pointsList of pointsData) {
-      pointsList.filter(pdata => !!this.convertPosition(pdata)).forEach(data => {
-        if (this.options.useColorPointFunction) {
-          pointColor = safeExecute(this.options.colorPointFunction, [data, pointsData, data.dsIndex]);
+      for (let tsIndex = 0; tsIndex < pointsList.length; tsIndex++) {
+        const pdata = pointsList[tsIndex];
+        if (!!this.convertPosition(pdata)) {
+          const dsData = pointsData.map(ds => ds[tsIndex]);
+          if (this.options.useColorPointFunction) {
+            pointColor = safeExecute(this.options.colorPointFunction, [pdata, dsData, pdata.dsIndex]);
+          }
+          const point = L.circleMarker(this.convertPosition(pdata), {
+            color: pointColor,
+            radius: this.options.pointSize
+          });
+          if (!this.options.pointTooltipOnRightPanel) {
+            point.on('click', () => getTooltip(pdata, dsData));
+          } else {
+            createTooltip(point, this.options, pdata.$datasource, getTooltip(pdata, dsData));
+          }
+          this.points.addLayer(point);
         }
-        const point = L.circleMarker(this.convertPosition(data), {
-          color: pointColor,
-          radius: this.options.pointSize
-        });
-        if (!this.options.pointTooltipOnRightPanel) {
-          point.on('click', () => getTooltip(data));
-        } else {
-          createTooltip(point, this.options, data.$datasource, getTooltip(data));
-        }
-        this.points.addLayer(point);
-      });
+      }
     }
     if (pointsData.length) {
       this.map.addLayer(this.points);
@@ -652,15 +671,15 @@ export default abstract class LeafletMap {
 
     // Polyline
 
-    updatePolylines(polyData: FormattedData[][], updateBounds = true, activePolyline?: FormattedData) {
+    updatePolylines(polyData: FormattedData[][], dsData: FormattedData[], updateBounds = true) {
         const keys: string[] = [];
-        polyData.forEach((dataSource: FormattedData[]) => {
-            const data = activePolyline || dataSource[0];
-            if (dataSource.length && data.entityName === dataSource[0].entityName) {
+        polyData.forEach((tsData: FormattedData[], index) => {
+            const data = dsData[index];
+            if (tsData.length && data.entityName === tsData[0].entityName) {
                 if (this.polylines.get(data.entityName)) {
-                    this.updatePolyline(data, dataSource, this.options, updateBounds);
+                    this.updatePolyline(data, tsData, dsData, this.options, updateBounds);
                 } else {
-                    this.createPolyline(data, dataSource, this.options, updateBounds);
+                    this.createPolyline(data, tsData, dsData, this.options, updateBounds);
                 }
                 keys.push(data.entityName);
             }
@@ -676,9 +695,9 @@ export default abstract class LeafletMap {
         });
     }
 
-    createPolyline(data: FormattedData, dataSources: FormattedData[], settings: PolylineSettings, updateBounds = true) {
+    createPolyline(data: FormattedData, tsData: FormattedData[], dsData: FormattedData[], settings: PolylineSettings, updateBounds = true) {
         const poly = new Polyline(this.map,
-            dataSources.map(el => this.convertPosition(el)).filter(el => !!el), data, dataSources, settings);
+          tsData.map(el => this.convertPosition(el)).filter(el => !!el), data, dsData, settings);
         if (updateBounds) {
           const bounds = poly.leafletPoly.getBounds();
           this.fitBounds(bounds);
@@ -686,10 +705,10 @@ export default abstract class LeafletMap {
         this.polylines.set(data.entityName, poly);
     }
 
-    updatePolyline(data: FormattedData, dataSources: FormattedData[], settings: PolylineSettings, updateBounds = true) {
+    updatePolyline(data: FormattedData, tsData: FormattedData[], dsData: FormattedData[], settings: PolylineSettings, updateBounds = true) {
         const poly = this.polylines.get(data.entityName);
         const oldBounds = poly.leafletPoly.getBounds();
-        poly.updatePolyline(dataSources.map(el => this.convertPosition(el)).filter(el => !!el), data, dataSources, settings);
+        poly.updatePolyline(tsData.map(el => this.convertPosition(el)).filter(el => !!el), data, dsData, settings);
         const newBounds = poly.leafletPoly.getBounds();
         if (updateBounds && oldBounds.toBBoxString() !== newBounds.toBBoxString()) {
             this.fitBounds(newBounds);
@@ -742,8 +761,8 @@ export default abstract class LeafletMap {
     if (e === undefined || (e.type !== 'editable:vertex:dragend' && e.type !== 'editable:vertex:deleted')) {
       return;
     }
-    if(this.options.provider !== MapProviders.image) {
-      for (let key in e.layer._latlngs[0]) {
+    if (this.options.provider !== MapProviders.image) {
+      for (const key of Object.keys(e.layer._latlngs[0])) {
         e.layer._latlngs[0][key] = checkLngLat(e.layer._latlngs[0][key], this.southWest, this.northEast);
       }
     }
@@ -774,6 +793,13 @@ export default abstract class LeafletMap {
       if (poly) {
         this.map.removeLayer(poly.leafletPoly);
         this.polygons.delete(name);
+      }
+    }
+
+    remove(): void {
+      if (this.map) {
+        this.map.remove();
+        this.map = null;
       }
     }
 }
