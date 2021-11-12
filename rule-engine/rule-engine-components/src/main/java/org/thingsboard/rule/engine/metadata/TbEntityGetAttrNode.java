@@ -88,12 +88,10 @@ public abstract class TbEntityGetAttrNode<T extends EntityId> implements TbNode 
 
 
     private void putAttributesAndTell(TbContext ctx, TbMsg msg, List<? extends KvEntry> attributes) {
-        List<String> attrProcessPattern = new ArrayList<>();
         Map<String, String> updConf = new HashMap<>();
         config.getAttrMapping().forEach((key, value) -> {
             String processPattern = TbNodeUtils.processPattern(key, msg);
             updConf.put(processPattern, value);
-            attrProcessPattern.add(processPattern);
         });
 
         attributes.forEach(r -> {
