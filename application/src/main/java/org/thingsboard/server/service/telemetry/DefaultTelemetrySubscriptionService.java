@@ -141,6 +141,37 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     @Override
+    public void saveWithoutLatestAndNotify(TenantId tenantId, CustomerId customerId, EntityId entityId, List<TsKvEntry> ts, long ttl, FutureCallback<Void> callback) {
+        checkInternalEntity(entityId);
+        boolean sysTenant = TenantId.SYS_TENANT_ID.equals(tenantId) || tenantId == null;
+        if (sysTenant || apiUsageStateService.getApiUsageState(tenantId).isDbStorageEnabled()) {
+            saveWithoutLatestAndNotifyInternal(tenantId, entityId, ts, ttl, new FutureCallback<Integer>() {
+                @Override
+                public void onSuccess(Integer result) {
+                    if (!sysTenant && result != null && result > 0) {
+                        apiUsageClient.report(tenantId, customerId, ApiUsageRecordKey.STORAGE_DP_COUNT, result);
+                    }
+                    callback.onSuccess(null);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    callback.onFailure(t);
+                }
+            });
+        } else {
+            callback.onFailure(new RuntimeException("DB storage writes are disabled due to API limits!"));
+        }
+    }
+
+    private void saveWithoutLatestAndNotifyInternal(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, long ttl, FutureCallback<Integer> callback) {
+        ListenableFuture<Integer> saveFuture = tsService.saveWithoutLatest(tenantId, entityId, ts, ttl);
+        addMainCallback(saveFuture, callback);
+        addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, ts));
+        // TODO: 12/11/2021 do we need entityView searching here?
+    }
+
+    @Override
     public void saveAndNotifyInternal(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, FutureCallback<Integer> callback) {
         saveAndNotifyInternal(tenantId, entityId, ts, 0L, callback);
     }

@@ -56,6 +56,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 public class BaseTimeseriesService implements TimeseriesService {
 
     private static final int INSERTS_PER_ENTRY = 3;
+    private static final int INSERTS_PER_ENTRY_WITHOUT_LATEST = 2;
     private static final int DELETES_PER_ENTRY = INSERTS_PER_ENTRY;
     public static final Function<List<Integer>, Integer> SUM_ALL_INTEGERS = new Function<List<Integer>, Integer>() {
         @Override
@@ -155,6 +156,18 @@ public class BaseTimeseriesService implements TimeseriesService {
     }
 
     @Override
+    public ListenableFuture<Integer> saveWithoutLatest(TenantId tenantId, EntityId entityId, List<TsKvEntry> tsKvEntries, long ttl) {
+        List<ListenableFuture<Integer>> futures = Lists.newArrayListWithExpectedSize(tsKvEntries.size() * INSERTS_PER_ENTRY_WITHOUT_LATEST);
+        for (TsKvEntry tsKvEntry : tsKvEntries) {
+            if (tsKvEntry == null) {
+                throw new IncorrectParameterException("Key value entry can't be null");
+            }
+            saveWithoutLatestAndRegisterFutures(tenantId, futures, entityId, tsKvEntry, ttl);
+        }
+        return Futures.transform(Futures.allAsList(futures), SUM_ALL_INTEGERS, MoreExecutors.directExecutor());
+    }
+
+    @Override
     public ListenableFuture<List<Void>> saveLatest(TenantId tenantId, EntityId entityId, List<TsKvEntry> tsKvEntries) {
         List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(tsKvEntries.size());
         for (TsKvEntry tsKvEntry : tsKvEntries) {
@@ -172,6 +185,14 @@ public class BaseTimeseriesService implements TimeseriesService {
         }
         futures.add(timeseriesDao.savePartition(tenantId, entityId, tsKvEntry.getTs(), tsKvEntry.getKey()));
         futures.add(Futures.transform(timeseriesLatestDao.saveLatest(tenantId, entityId, tsKvEntry), v -> 0, MoreExecutors.directExecutor()));
+        futures.add(timeseriesDao.save(tenantId, entityId, tsKvEntry, ttl));
+    }
+
+    private void saveWithoutLatestAndRegisterFutures(TenantId tenantId, List<ListenableFuture<Integer>> futures, EntityId entityId, TsKvEntry tsKvEntry, long ttl) {
+        if (entityId.getEntityType().equals(EntityType.ENTITY_VIEW)) {
+            throw new IncorrectParameterException("Telemetry data can't be stored for entity view. Read only");
+        }
+        futures.add(timeseriesDao.savePartition(tenantId, entityId, tsKvEntry.getTs(), tsKvEntry.getKey()));
         futures.add(timeseriesDao.save(tenantId, entityId, tsKvEntry, ttl));
     }
 

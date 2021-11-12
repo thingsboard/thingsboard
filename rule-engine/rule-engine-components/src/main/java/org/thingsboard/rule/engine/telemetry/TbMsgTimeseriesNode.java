@@ -48,7 +48,7 @@ import java.util.concurrent.TimeUnit;
         nodeDescription = "Saves timeseries data",
         nodeDetails = "Saves timeseries telemetry data based on configurable TTL parameter. Expects messages with 'POST_TELEMETRY_REQUEST' message type",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeTimeseriesConfig",
+        configDirective = "tbActionNodeCustomTimeseriesConfig",
         icon = "file_upload"
 )
 public class TbMsgTimeseriesNode implements TbNode {
@@ -94,7 +94,11 @@ public class TbMsgTimeseriesNode implements TbNode {
         if (ttl == 0L) {
             ttl = tenantProfileDefaultStorageTtl;
         }
-        ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), msg.getCustomerId(), msg.getOriginator(), tsKvEntryList, ttl, new TelemetryNodeCallback(ctx, msg));
+        if (config.isSkipLatestPersistence()) {
+            ctx.getTelemetryService().saveWithoutLatestAndNotify(ctx.getTenantId(), msg.getCustomerId(), msg.getOriginator(), tsKvEntryList, ttl, new TelemetryNodeCallback(ctx, msg));
+        } else {
+            ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), msg.getCustomerId(), msg.getOriginator(), tsKvEntryList, ttl, new TelemetryNodeCallback(ctx, msg));
+        }
     }
 
     public static long getTs(TbMsg msg) {
