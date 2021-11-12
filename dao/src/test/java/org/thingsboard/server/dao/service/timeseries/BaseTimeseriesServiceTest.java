@@ -45,6 +45,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -55,6 +57,7 @@ import static org.junit.Assert.assertNotNull;
 
 @Slf4j
 public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
+    static final int MAX_TIMEOUT = 30;
 
     private static final String STRING_KEY = "stringKey";
     private static final String LONG_KEY = "longKey";
@@ -495,13 +498,13 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         tsService.save(tenantId, deviceId, toTsEntry(ts, booleanKvEntry)).get();
     }
 
-    private void saveEntriesWithoutLatest(DeviceId deviceId, long ts) throws ExecutionException, InterruptedException {
-        TsKvEntry entry1 = toTsEntry(ts, stringKvEntry);
-        TsKvEntry entry2 = toTsEntry(ts, longKvEntry);
-        TsKvEntry entry3 = toTsEntry(ts, doubleKvEntry);
-        TsKvEntry entry4 = toTsEntry(ts, booleanKvEntry);
-        List<TsKvEntry> entries = new ArrayList<>(Arrays.asList(entry1, entry2, entry3, entry4));
-        tsService.saveWithoutLatest(tenantId, deviceId, entries, 0).get();
+    private void saveEntriesWithoutLatest(DeviceId deviceId, long ts) throws ExecutionException, InterruptedException, TimeoutException {
+        List<TsKvEntry> tsKvEntry = List.of(
+                toTsEntry(ts, stringKvEntry),
+                toTsEntry(ts, longKvEntry),
+                toTsEntry(ts, doubleKvEntry),
+                toTsEntry(ts, booleanKvEntry));
+        tsService.saveWithoutLatest(tenantId, deviceId, tsKvEntry, 0).get(MAX_TIMEOUT, TimeUnit.SECONDS);
     }
 
     private static TsKvEntry toTsEntry(long ts, KvEntry entry) {
