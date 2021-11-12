@@ -53,7 +53,6 @@ import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +60,7 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.verify;
@@ -129,7 +129,7 @@ public class TbGetRelatedAttributeNodeTest {
         when(userService.findUserByIdAsync(any(), eq(userId))).thenReturn(Futures.immediateFuture(user));
 
         when(ctx.getAttributesService()).thenReturn(attributesService);
-        when(attributesService.find(any(), eq(customerId), eq(SERVER_SCOPE), eq(Collections.singleton("${word}"))))
+        when(attributesService.find(any(), eq(customerId), eq(SERVER_SCOPE), anyCollection()))
                 .thenThrow(new IllegalStateException("something wrong"));
 
         node.onMsg(ctx, msg);
@@ -156,7 +156,7 @@ public class TbGetRelatedAttributeNodeTest {
 
         when(ctx.getAttributesService()).thenReturn(attributesService);
 
-        when(attributesService.find(any(), eq(customerId), eq(SERVER_SCOPE), eq(Collections.singleton("${word}"))))
+        when(attributesService.find(any(), eq(customerId), eq(SERVER_SCOPE), anyCollection()))
                 .thenReturn(Futures.immediateFailedFuture(new IllegalStateException("something wrong")));
 
         node.onMsg(ctx, msg);
@@ -277,7 +277,7 @@ public class TbGetRelatedAttributeNodeTest {
         List<TsKvEntry> timeseries = Lists.newArrayList(new BasicTsKvEntry(1L, new StringDataEntry("temperature", "highest")));
 
         when(ctx.getTimeseriesService()).thenReturn(timeseriesService);
-        when(timeseriesService.findLatest(any(), eq(customerId), eq(Collections.singleton("${word}"))))
+        when(timeseriesService.findLatest(any(), eq(customerId), anyCollection()))
                 .thenReturn(Futures.immediateFuture(timeseries));
 
         node.onMsg(ctx, msg);
@@ -289,7 +289,7 @@ public class TbGetRelatedAttributeNodeTest {
         List<AttributeKvEntry> attributes = Lists.newArrayList(new BaseAttributeKvEntry(new StringDataEntry("temperature", "high"), 1L));
 
         when(ctx.getAttributesService()).thenReturn(attributesService);
-        when(attributesService.find(any(), eq(customerId), eq(SERVER_SCOPE), eq(Collections.singleton("${word}"))))
+        when(attributesService.find(any(), eq(customerId), eq(SERVER_SCOPE), anyCollection()))
                 .thenReturn(Futures.immediateFuture(attributes));
 
         node.onMsg(ctx, msg);

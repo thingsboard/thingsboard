@@ -51,7 +51,6 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +58,7 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.verify;
@@ -69,11 +69,11 @@ import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 @RunWith(MockitoJUnitRunner.class)
 public class TbGetCustomerAttributeNodeTest {
 
+    private final RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
+    private final RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
     private TbGetCustomerAttributeNode node;
-
     @Mock
     private TbContext ctx;
-
     @Mock
     private AttributesService attributesService;
     @Mock
@@ -84,12 +84,8 @@ public class TbGetCustomerAttributeNodeTest {
     private AssetService assetService;
     @Mock
     private DeviceService deviceService;
-
     private TbMsg msg;
     private Map metaData;
-
-    private final RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
-    private final RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
 
     @Before
     public void init() throws TbNodeException {
@@ -121,7 +117,7 @@ public class TbGetCustomerAttributeNodeTest {
         when(userService.findUserByIdAsync(any(), eq(userId))).thenReturn(Futures.immediateFuture(user));
 
         when(ctx.getAttributesService()).thenReturn(attributesService);
-        when(attributesService.find(any(), eq(customerId), eq(SERVER_SCOPE), eq(Collections.singleton("${word}"))))
+        when(attributesService.find(any(), eq(customerId), eq(SERVER_SCOPE), anyCollection()))
                 .thenThrow(new IllegalStateException("something wrong"));
 
         node.onMsg(ctx, msg);
@@ -146,7 +142,7 @@ public class TbGetCustomerAttributeNodeTest {
         when(userService.findUserByIdAsync(any(), eq(userId))).thenReturn(Futures.immediateFuture(user));
 
         when(ctx.getAttributesService()).thenReturn(attributesService);
-        when(attributesService.find(any(), eq(customerId), eq(SERVER_SCOPE), eq(Collections.singleton("${word}"))))
+        when(attributesService.find(any(), eq(customerId), eq(SERVER_SCOPE), anyCollection()))
                 .thenReturn(Futures.immediateFailedFuture(new IllegalStateException("something wrong")));
 
         node.onMsg(ctx, msg);
@@ -256,7 +252,7 @@ public class TbGetCustomerAttributeNodeTest {
         List<TsKvEntry> timeseries = Lists.newArrayList(new BasicTsKvEntry(1L, new StringDataEntry("temperature", "highest")));
 
         when(ctx.getTimeseriesService()).thenReturn(timeseriesService);
-        when(timeseriesService.findLatest(any(), eq(customerId), eq(Collections.singleton("${word}"))))
+        when(timeseriesService.findLatest(any(), eq(customerId), anyCollection()))
                 .thenReturn(Futures.immediateFuture(timeseries));
 
         node.onMsg(ctx, msg);
@@ -268,7 +264,7 @@ public class TbGetCustomerAttributeNodeTest {
         List<AttributeKvEntry> attributes = Lists.newArrayList(new BaseAttributeKvEntry(new StringDataEntry("temperature", "high"), 1L));
 
         when(ctx.getAttributesService()).thenReturn(attributesService);
-        when(attributesService.find(any(), eq(customerId), eq(SERVER_SCOPE), eq(Collections.singleton("${word}"))))
+        when(attributesService.find(any(), eq(customerId), eq(SERVER_SCOPE), anyCollection()))
                 .thenReturn(Futures.immediateFuture(attributes));
 
         node.onMsg(ctx, msg);
