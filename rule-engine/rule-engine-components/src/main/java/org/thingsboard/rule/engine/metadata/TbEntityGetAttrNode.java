@@ -30,12 +30,14 @@ import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
-import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 
 @Slf4j
@@ -84,10 +86,29 @@ public abstract class TbEntityGetAttrNode<T extends EntityId> implements TbNode 
 
 
     private void putAttributesAndTell(TbContext ctx, TbMsg msg, List<? extends KvEntry> attributes) {
-        attributes.forEach(r -> {
-            String attrName = config.getAttrMapping().get(r.getKey());
-            msg.getMetaData().putValue(attrName, r.getValueAsString());
+        log.info("attr " + attributes.toString());
+        log.info("conf attr "  + config.getAttrMapping().toString());
+        List<String> attrProcessPattern = new ArrayList<>();
+        log.info("msg {}", msg);
+        log.info("result process {}", attrProcessPattern);
+        Map<String, String> updConf = new HashMap<>();
+        config.getAttrMapping().forEach((key, value) -> {
+            String processPattern = TbNodeUtils.processPattern(key, msg);
+            updConf.put(processPattern, value);
+            attrProcessPattern.add(processPattern);
         });
+
+        attributes.forEach(r -> {
+            log.info("r  {}", r);
+            log.info("rkey {}", r.getKey());
+            log.info("index  {}", attrProcessPattern.indexOf(r.getKey()));
+            log.info("getByKey {}", updConf.get(r.getKey()));
+            String attrName = updConf.get(r.getKey());
+            log.info("attrName {}", attrName);
+            msg.getMetaData().putValue(attrName, r.getValueAsString());
+            log.info(msg.getMetaData().toString());
+        });
+        log.info(msg.toString());
         ctx.tellSuccess(msg);
     }
 

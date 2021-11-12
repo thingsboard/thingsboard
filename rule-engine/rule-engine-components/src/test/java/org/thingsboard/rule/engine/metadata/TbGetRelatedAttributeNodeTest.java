@@ -42,12 +42,14 @@ import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 
@@ -66,14 +68,14 @@ import static org.mockito.Mockito.when;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
 import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 
-@RunWith(MockitoJUnitRunner.class)
-public class TbGetCustomerAttributeNodeTest {
-
-    private TbGetCustomerAttributeNode node;
-
+@RunWith(MockitoJUnitRunner.Silent.class)
+public class TbGetRelatedAttributeNodeTest {
+    private final CustomerId customerId = new CustomerId(Uuids.timeBased());
+    private final RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
+    private final RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
+    private TbGetRelatedAttributeNode node;
     @Mock
     private TbContext ctx;
-
     @Mock
     private AttributesService attributesService;
     @Mock
@@ -84,16 +86,16 @@ public class TbGetCustomerAttributeNodeTest {
     private AssetService assetService;
     @Mock
     private DeviceService deviceService;
-
+    @Mock
+    private RelationService relationService;
     private TbMsg msg;
-    private Map metaData;
-
-    private final RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
-    private final RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
+    private Map<String, String> metaData;
+    private EntityRelation entityRelation;
 
     @Before
     public void init() throws TbNodeException {
-        TbGetEntityAttrNodeConfiguration config = new TbGetEntityAttrNodeConfiguration();
+        TbGetRelatedAttrNodeConfiguration config = new TbGetRelatedAttrNodeConfiguration();
+        config = config.defaultConfiguration();
         Map<String, String> conf = new HashMap<>();
         conf.put("${word}", "result");
         config.setAttrMapping(conf);
@@ -104,16 +106,22 @@ public class TbGetCustomerAttributeNodeTest {
         metaData = new HashMap<>();
         metaData.putIfAbsent("word", "temperature");
 
-        node = new TbGetCustomerAttributeNode();
+        entityRelation = new EntityRelation();
+        entityRelation.setTo(customerId);
+        entityRelation.setType(EntityRelation.CONTAINS_TYPE);
+        when(ctx.getRelationService()).thenReturn(relationService);
+
+        node = new TbGetRelatedAttributeNode();
         node.init(null, nodeConfiguration);
     }
 
     @Test
     public void errorThrownIfCannotLoadAttributes() {
         UserId userId = new UserId(Uuids.timeBased());
-        CustomerId customerId = new CustomerId(Uuids.timeBased());
         User user = new User();
         user.setCustomerId(customerId);
+        entityRelation.setFrom(userId);
+        when(relationService.findByQuery(any(), any())).thenReturn(Futures.immediateFuture(List.of(entityRelation)));
 
         msg = TbMsg.newMsg("USER", userId, new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
@@ -136,9 +144,10 @@ public class TbGetCustomerAttributeNodeTest {
     @Test
     public void errorThrownIfCannotLoadAttributesAsync() {
         UserId userId = new UserId(Uuids.timeBased());
-        CustomerId customerId = new CustomerId(Uuids.timeBased());
         User user = new User();
         user.setCustomerId(customerId);
+        entityRelation.setFrom(userId);
+        when(relationService.findByQuery(any(), any())).thenReturn(Futures.immediateFuture(List.of(entityRelation)));
 
         msg = TbMsg.newMsg("USER", userId, new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
@@ -146,6 +155,7 @@ public class TbGetCustomerAttributeNodeTest {
         when(userService.findUserByIdAsync(any(), eq(userId))).thenReturn(Futures.immediateFuture(user));
 
         when(ctx.getAttributesService()).thenReturn(attributesService);
+
         when(attributesService.find(any(), eq(customerId), eq(SERVER_SCOPE), eq(Collections.singleton("${word}"))))
                 .thenReturn(Futures.immediateFailedFuture(new IllegalStateException("something wrong")));
 
@@ -161,9 +171,11 @@ public class TbGetCustomerAttributeNodeTest {
     @Test
     public void failedChainUsedIfCustomerCannotBeFound() {
         UserId userId = new UserId(Uuids.timeBased());
-        CustomerId customerId = new CustomerId(Uuids.timeBased());
         User user = new User();
         user.setCustomerId(customerId);
+        entityRelation.setFrom(customerId);
+        entityRelation.setTo(null);
+        when(relationService.findByQuery(any(), any())).thenReturn(Futures.immediateFuture(List.of(entityRelation)));
 
         msg = TbMsg.newMsg("USER", userId, new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
@@ -174,11 +186,14 @@ public class TbGetCustomerAttributeNodeTest {
         node.onMsg(ctx, msg);
         verify(ctx).tellNext(msg, FAILURE);
         assertTrue(msg.getMetaData().getData().isEmpty());
+
+        entityRelation.setTo(customerId);
     }
 
     @Test
     public void customerAttributeAddedInMetadata() {
-        CustomerId customerId = new CustomerId(Uuids.timeBased());
+        entityRelation.setFrom(customerId);
+        when(relationService.findByQuery(any(), any())).thenReturn(Futures.immediateFuture(List.of(entityRelation)));
         msg = TbMsg.newMsg("CUSTOMER", customerId, new TbMsgMetaData(metaData), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
         entityAttributeFetched(customerId);
     }
@@ -186,9 +201,10 @@ public class TbGetCustomerAttributeNodeTest {
     @Test
     public void usersCustomerAttributesFetched() {
         UserId userId = new UserId(Uuids.timeBased());
-        CustomerId customerId = new CustomerId(Uuids.timeBased());
         User user = new User();
         user.setCustomerId(customerId);
+        entityRelation.setFrom(userId);
+        when(relationService.findByQuery(any(), any())).thenReturn(Futures.immediateFuture(List.of(entityRelation)));
 
         msg = TbMsg.newMsg("USER", userId, new TbMsgMetaData(metaData), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
@@ -201,9 +217,10 @@ public class TbGetCustomerAttributeNodeTest {
     @Test
     public void assetsCustomerAttributesFetched() {
         AssetId assetId = new AssetId(Uuids.timeBased());
-        CustomerId customerId = new CustomerId(Uuids.timeBased());
         Asset asset = new Asset();
         asset.setCustomerId(customerId);
+        entityRelation.setFrom(assetId);
+        when(relationService.findByQuery(any(), any())).thenReturn(Futures.immediateFuture(List.of(entityRelation)));
 
         msg = TbMsg.newMsg("USER", assetId, new TbMsgMetaData(metaData), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
@@ -216,9 +233,10 @@ public class TbGetCustomerAttributeNodeTest {
     @Test
     public void deviceCustomerAttributesFetched() {
         DeviceId deviceId = new DeviceId(Uuids.timeBased());
-        CustomerId customerId = new CustomerId(Uuids.timeBased());
         Device device = new Device();
         device.setCustomerId(customerId);
+        entityRelation.setFrom(deviceId);
+        when(relationService.findByQuery(any(), any())).thenReturn(Futures.immediateFuture(List.of(entityRelation)));
 
         msg = TbMsg.newMsg("USER", deviceId, new TbMsgMetaData(metaData), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
@@ -230,7 +248,8 @@ public class TbGetCustomerAttributeNodeTest {
 
     @Test
     public void deviceCustomerTelemetryFetched() throws TbNodeException {
-        TbGetEntityAttrNodeConfiguration config = new TbGetEntityAttrNodeConfiguration();
+        TbGetRelatedAttrNodeConfiguration config = new TbGetRelatedAttrNodeConfiguration();
+        config = config.defaultConfiguration();
 
         Map<String, String> conf = new HashMap<>();
         conf.put("${word}", "result");
@@ -239,14 +258,16 @@ public class TbGetCustomerAttributeNodeTest {
         ObjectMapper mapper = new ObjectMapper();
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
-        node = new TbGetCustomerAttributeNode();
+        node = new TbGetRelatedAttributeNode();
         node.init(null, nodeConfiguration);
 
 
         DeviceId deviceId = new DeviceId(Uuids.timeBased());
-        CustomerId customerId = new CustomerId(Uuids.timeBased());
         Device device = new Device();
         device.setCustomerId(customerId);
+
+        entityRelation.setFrom(deviceId);
+        when(relationService.findByQuery(any(), any())).thenReturn(Futures.immediateFuture(List.of(entityRelation)));
 
         msg = TbMsg.newMsg("USER", deviceId, new TbMsgMetaData(metaData), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 

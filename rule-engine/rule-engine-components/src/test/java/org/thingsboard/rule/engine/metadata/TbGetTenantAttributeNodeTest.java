@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
@@ -66,10 +67,9 @@ import static org.mockito.Mockito.when;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
 import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 
-@RunWith(MockitoJUnitRunner.class)
-public class TbGetCustomerAttributeNodeTest {
-
-    private TbGetCustomerAttributeNode node;
+@RunWith(MockitoJUnitRunner.Silent.class)
+public class TbGetTenantAttributeNodeTest {
+    private TbGetTenantAttributeNode node;
 
     @Mock
     private TbContext ctx;
@@ -104,16 +104,16 @@ public class TbGetCustomerAttributeNodeTest {
         metaData = new HashMap<>();
         metaData.putIfAbsent("word", "temperature");
 
-        node = new TbGetCustomerAttributeNode();
+        node = new TbGetTenantAttributeNode();
         node.init(null, nodeConfiguration);
     }
 
     @Test
     public void errorThrownIfCannotLoadAttributes() {
         UserId userId = new UserId(Uuids.timeBased());
-        CustomerId customerId = new CustomerId(Uuids.timeBased());
+        TenantId tenantId = new TenantId(Uuids.timeBased());
         User user = new User();
-        user.setCustomerId(customerId);
+        user.setTenantId(tenantId);
 
         msg = TbMsg.newMsg("USER", userId, new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
@@ -121,7 +121,7 @@ public class TbGetCustomerAttributeNodeTest {
         when(userService.findUserByIdAsync(any(), eq(userId))).thenReturn(Futures.immediateFuture(user));
 
         when(ctx.getAttributesService()).thenReturn(attributesService);
-        when(attributesService.find(any(), eq(customerId), eq(SERVER_SCOPE), eq(Collections.singleton("${word}"))))
+        when(attributesService.find(any(), eq(tenantId), eq(SERVER_SCOPE), eq(Collections.singleton("${word}"))))
                 .thenThrow(new IllegalStateException("something wrong"));
 
         node.onMsg(ctx, msg);
@@ -136,9 +136,9 @@ public class TbGetCustomerAttributeNodeTest {
     @Test
     public void errorThrownIfCannotLoadAttributesAsync() {
         UserId userId = new UserId(Uuids.timeBased());
-        CustomerId customerId = new CustomerId(Uuids.timeBased());
+        TenantId tenantId = new TenantId(Uuids.timeBased());
         User user = new User();
-        user.setCustomerId(customerId);
+        user.setTenantId(tenantId);
 
         msg = TbMsg.newMsg("USER", userId, new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
@@ -146,7 +146,7 @@ public class TbGetCustomerAttributeNodeTest {
         when(userService.findUserByIdAsync(any(), eq(userId))).thenReturn(Futures.immediateFuture(user));
 
         when(ctx.getAttributesService()).thenReturn(attributesService);
-        when(attributesService.find(any(), eq(customerId), eq(SERVER_SCOPE), eq(Collections.singleton("${word}"))))
+        when(attributesService.find(any(), eq(tenantId), eq(SERVER_SCOPE), eq(Collections.singleton("${word}"))))
                 .thenReturn(Futures.immediateFailedFuture(new IllegalStateException("something wrong")));
 
         node.onMsg(ctx, msg);
@@ -178,54 +178,54 @@ public class TbGetCustomerAttributeNodeTest {
 
     @Test
     public void customerAttributeAddedInMetadata() {
-        CustomerId customerId = new CustomerId(Uuids.timeBased());
-        msg = TbMsg.newMsg("CUSTOMER", customerId, new TbMsgMetaData(metaData), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
-        entityAttributeFetched(customerId);
+        TenantId tenantId = new TenantId(Uuids.timeBased());
+        msg = TbMsg.newMsg("TENANT", tenantId, new TbMsgMetaData(metaData), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
+        entityAttributeFetched(tenantId);
     }
 
     @Test
     public void usersCustomerAttributesFetched() {
         UserId userId = new UserId(Uuids.timeBased());
-        CustomerId customerId = new CustomerId(Uuids.timeBased());
+        TenantId tenantId = new TenantId(Uuids.timeBased());
         User user = new User();
-        user.setCustomerId(customerId);
+        user.setTenantId(tenantId);
 
         msg = TbMsg.newMsg("USER", userId, new TbMsgMetaData(metaData), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
         when(ctx.getUserService()).thenReturn(userService);
         when(userService.findUserByIdAsync(any(), eq(userId))).thenReturn(Futures.immediateFuture(user));
 
-        entityAttributeFetched(customerId);
+        entityAttributeFetched(tenantId);
     }
 
     @Test
     public void assetsCustomerAttributesFetched() {
         AssetId assetId = new AssetId(Uuids.timeBased());
-        CustomerId customerId = new CustomerId(Uuids.timeBased());
+        TenantId tenantId = new TenantId(Uuids.timeBased());
         Asset asset = new Asset();
-        asset.setCustomerId(customerId);
+        asset.setTenantId(tenantId);
 
         msg = TbMsg.newMsg("USER", assetId, new TbMsgMetaData(metaData), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
         when(ctx.getAssetService()).thenReturn(assetService);
         when(assetService.findAssetByIdAsync(any(), eq(assetId))).thenReturn(Futures.immediateFuture(asset));
 
-        entityAttributeFetched(customerId);
+        entityAttributeFetched(tenantId);
     }
 
     @Test
     public void deviceCustomerAttributesFetched() {
         DeviceId deviceId = new DeviceId(Uuids.timeBased());
-        CustomerId customerId = new CustomerId(Uuids.timeBased());
+        TenantId tenantId = new TenantId(Uuids.timeBased());
         Device device = new Device();
-        device.setCustomerId(customerId);
+        device.setTenantId(tenantId);
 
         msg = TbMsg.newMsg("USER", deviceId, new TbMsgMetaData(metaData), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
         when(ctx.getDeviceService()).thenReturn(deviceService);
         when(deviceService.findDeviceByIdAsync(any(), eq(deviceId))).thenReturn(Futures.immediateFuture(device));
 
-        entityAttributeFetched(customerId);
+        entityAttributeFetched(tenantId);
     }
 
     @Test
@@ -239,14 +239,14 @@ public class TbGetCustomerAttributeNodeTest {
         ObjectMapper mapper = new ObjectMapper();
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
-        node = new TbGetCustomerAttributeNode();
+        node = new TbGetTenantAttributeNode();
         node.init(null, nodeConfiguration);
 
 
         DeviceId deviceId = new DeviceId(Uuids.timeBased());
-        CustomerId customerId = new CustomerId(Uuids.timeBased());
+        TenantId tenantId = new TenantId(Uuids.timeBased());
         Device device = new Device();
-        device.setCustomerId(customerId);
+        device.setTenantId(tenantId);
 
         msg = TbMsg.newMsg("USER", deviceId, new TbMsgMetaData(metaData), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
 
@@ -256,7 +256,7 @@ public class TbGetCustomerAttributeNodeTest {
         List<TsKvEntry> timeseries = Lists.newArrayList(new BasicTsKvEntry(1L, new StringDataEntry("temperature", "highest")));
 
         when(ctx.getTimeseriesService()).thenReturn(timeseriesService);
-        when(timeseriesService.findLatest(any(), eq(customerId), eq(Collections.singleton("${word}"))))
+        when(timeseriesService.findLatest(any(), eq(tenantId), eq(Collections.singleton("${word}"))))
                 .thenReturn(Futures.immediateFuture(timeseries));
 
         node.onMsg(ctx, msg);
@@ -264,7 +264,7 @@ public class TbGetCustomerAttributeNodeTest {
         assertEquals(msg.getMetaData().getValue("result"), "highest");
     }
 
-    private void entityAttributeFetched(CustomerId customerId) {
+    private void entityAttributeFetched(TenantId customerId) {
         List<AttributeKvEntry> attributes = Lists.newArrayList(new BaseAttributeKvEntry(new StringDataEntry("temperature", "high"), 1L));
 
         when(ctx.getAttributesService()).thenReturn(attributesService);
