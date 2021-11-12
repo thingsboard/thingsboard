@@ -23,9 +23,8 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -46,7 +45,9 @@ import java.util.concurrent.TimeUnit;
         name = "save timeseries",
         configClazz = TbMsgTimeseriesNodeConfiguration.class,
         nodeDescription = "Saves timeseries data",
-        nodeDetails = "Saves timeseries telemetry data based on configurable TTL parameter. Expects messages with 'POST_TELEMETRY_REQUEST' message type",
+        nodeDetails = "Saves timeseries telemetry data based on configurable TTL parameter. Expects messages with 'POST_TELEMETRY_REQUEST' message type. " +
+                "Timestamp in milliseconds will be taken from metadata.ts, otherwise 'now' timestamp will be applied. " +
+                "Allows stopping updating values for incoming keys in the latest ts_kv table if 'skipLatestPersistence' is set to true.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeCustomTimeseriesConfig",
         icon = "file_upload"
@@ -107,7 +108,7 @@ public class TbMsgTimeseriesNode implements TbNode {
         if (!StringUtils.isEmpty(tsStr)) {
             try {
                 ts = Long.parseLong(tsStr);
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException ignored) {
             }
         } else {
             ts = msg.getTs();
