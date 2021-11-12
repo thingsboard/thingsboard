@@ -17,7 +17,10 @@ package org.thingsboard.server.dao.service.timeseries;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -137,6 +140,19 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         List<TsKvEntry> entries = tsService.findLatest(tenantId, deviceId, Collections.singleton(STRING_KEY)).get();
         Assert.assertEquals(1, entries.size());
         Assert.assertEquals(toTsEntry(TS, stringKvEntry), entries.get(0));
+    }
+
+    @Test
+    public void testFindLatestWithoutLatestUpdate() throws Exception {
+        DeviceId deviceId = new DeviceId(Uuids.timeBased());
+
+        saveEntries(deviceId, TS - 2);
+        saveEntries(deviceId, TS - 1);
+        saveEntriesWithoutLatest(deviceId, TS);
+
+        List<TsKvEntry> entries = tsService.findLatest(tenantId, deviceId, Collections.singleton(STRING_KEY)).get();
+        Assert.assertEquals(1, entries.size());
+        Assert.assertEquals(toTsEntry(TS - 1, stringKvEntry), entries.get(0));
     }
 
     @Test
@@ -477,6 +493,15 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         tsService.save(tenantId, deviceId, toTsEntry(ts, longKvEntry)).get();
         tsService.save(tenantId, deviceId, toTsEntry(ts, doubleKvEntry)).get();
         tsService.save(tenantId, deviceId, toTsEntry(ts, booleanKvEntry)).get();
+    }
+
+    private void saveEntriesWithoutLatest(DeviceId deviceId, long ts) throws ExecutionException, InterruptedException {
+        TsKvEntry entry1 = toTsEntry(ts, stringKvEntry);
+        TsKvEntry entry2 = toTsEntry(ts, longKvEntry);
+        TsKvEntry entry3 = toTsEntry(ts, doubleKvEntry);
+        TsKvEntry entry4 = toTsEntry(ts, booleanKvEntry);
+        List<TsKvEntry> entries = new ArrayList<>(Arrays.asList(entry1, entry2, entry3, entry4));
+        tsService.saveWithoutLatest(tenantId, deviceId, entries, 0).get();
     }
 
     private static TsKvEntry toTsEntry(long ts, KvEntry entry) {
