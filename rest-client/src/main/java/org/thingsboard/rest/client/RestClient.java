@@ -38,6 +38,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rest.client.utils.RestJsonConverter;
 import org.thingsboard.server.common.data.AdminSettings;
@@ -159,7 +160,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     protected final String baseURL;
     private String token;
     private String refreshToken;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = JacksonUtil.OBJECT_MAPPER;
     private ExecutorService service = ThingsBoardExecutors.newWorkStealingPool(10, getClass());
 
     protected static final String ACTIVATE_TOKEN_REGEX = "/api/noauth/activate?activateToken=";

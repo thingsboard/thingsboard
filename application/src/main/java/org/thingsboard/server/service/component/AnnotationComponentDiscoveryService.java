@@ -27,6 +27,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.rule.engine.api.NodeDefinition;
 import org.thingsboard.rule.engine.api.RuleNode;
@@ -69,7 +70,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
 
     private Map<ComponentType, List<ComponentDescriptor>> edgeComponentsMap = new HashMap<>();
 
-    private ObjectMapper mapper = new ObjectMapper();
+    private ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
 
     private boolean isInstall() {
         return environment.acceptsProfiles(Profiles.of("install"));

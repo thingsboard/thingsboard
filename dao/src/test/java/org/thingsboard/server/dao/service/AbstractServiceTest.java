@@ -28,6 +28,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
@@ -84,7 +85,7 @@ import static org.junit.Assert.assertNotNull;
 @ComponentScan("org.thingsboard.server")
 public abstract class AbstractServiceTest {
 
-    protected ObjectMapper mapper = new ObjectMapper();
+    protected ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
 
     public static final TenantId SYSTEM_TENANT_ID = new TenantId(EntityId.NULL_UUID);
 

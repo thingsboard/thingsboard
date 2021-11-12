@@ -22,6 +22,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -44,7 +45,7 @@ import java.util.UUID;
 @Table(name = ModelConstants.DASHBOARD_COLUMN_FAMILY_NAME)
 public class DashboardInfoEntity extends BaseSqlEntity<DashboardInfo> implements SearchTextEntity<DashboardInfo> {
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = JacksonUtil.OBJECT_MAPPER;
     private static final JavaType assignedCustomersType =
             objectMapper.getTypeFactory().constructCollectionType(HashSet.class, ShortCustomerInfo.class);
 

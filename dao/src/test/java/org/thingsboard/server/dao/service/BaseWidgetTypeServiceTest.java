@@ -22,6 +22,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.widget.WidgetType;
@@ -67,7 +68,7 @@ public abstract class BaseWidgetTypeServiceTest extends AbstractServiceTest {
         widgetType.setTenantId(tenantId);
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
-        widgetType.setDescriptor(new ObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
+        widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
         WidgetTypeDetails savedWidgetType = widgetTypeService.saveWidgetType(widgetType);
 
         Assert.assertNotNull(savedWidgetType);
@@ -98,7 +99,7 @@ public abstract class BaseWidgetTypeServiceTest extends AbstractServiceTest {
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setTenantId(tenantId);
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
-        widgetType.setDescriptor(new ObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
+        widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
         try {
             widgetTypeService.saveWidgetType(widgetType);
         } finally {
@@ -111,7 +112,7 @@ public abstract class BaseWidgetTypeServiceTest extends AbstractServiceTest {
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setTenantId(tenantId);
         widgetType.setName("Widget Type");
-        widgetType.setDescriptor(new ObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
+        widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
         widgetTypeService.saveWidgetType(widgetType);
     }
 
@@ -126,7 +127,7 @@ public abstract class BaseWidgetTypeServiceTest extends AbstractServiceTest {
         widgetType.setTenantId(tenantId);
         widgetType.setName("Widget Type");
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
-        widgetType.setDescriptor(new ObjectMapper().readValue("{}", JsonNode.class));
+        widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{}", JsonNode.class));
         try {
             widgetTypeService.saveWidgetType(widgetType);
         } finally {
@@ -145,7 +146,7 @@ public abstract class BaseWidgetTypeServiceTest extends AbstractServiceTest {
         widgetType.setTenantId(new TenantId(Uuids.timeBased()));
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
-        widgetType.setDescriptor(new ObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
+        widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
         try {
             widgetTypeService.saveWidgetType(widgetType);
         } finally {
@@ -159,7 +160,7 @@ public abstract class BaseWidgetTypeServiceTest extends AbstractServiceTest {
         widgetType.setTenantId(tenantId);
         widgetType.setBundleAlias("some_alias");
         widgetType.setName("Widget Type");
-        widgetType.setDescriptor(new ObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
+        widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
         widgetTypeService.saveWidgetType(widgetType);
     }
 
@@ -174,7 +175,7 @@ public abstract class BaseWidgetTypeServiceTest extends AbstractServiceTest {
         widgetType.setTenantId(tenantId);
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
-        widgetType.setDescriptor(new ObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
+        widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
         WidgetTypeDetails savedWidgetType = widgetTypeService.saveWidgetType(widgetType);
         savedWidgetType.setTenantId(new TenantId(ModelConstants.NULL_UUID));
         try {
@@ -195,7 +196,7 @@ public abstract class BaseWidgetTypeServiceTest extends AbstractServiceTest {
         widgetType.setTenantId(tenantId);
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
-        widgetType.setDescriptor(new ObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
+        widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
         WidgetTypeDetails savedWidgetType = widgetTypeService.saveWidgetType(widgetType);
         savedWidgetType.setBundleAlias("some_alias");
         try {
@@ -216,7 +217,7 @@ public abstract class BaseWidgetTypeServiceTest extends AbstractServiceTest {
         widgetType.setTenantId(tenantId);
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
-        widgetType.setDescriptor(new ObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
+        widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
         WidgetTypeDetails savedWidgetType = widgetTypeService.saveWidgetType(widgetType);
         savedWidgetType.setAlias("some_alias");
         try {
@@ -237,7 +238,7 @@ public abstract class BaseWidgetTypeServiceTest extends AbstractServiceTest {
         widgetType.setTenantId(tenantId);
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
-        widgetType.setDescriptor(new ObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
+        widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
         WidgetTypeDetails savedWidgetType = widgetTypeService.saveWidgetType(widgetType);
         WidgetTypeDetails foundWidgetType = widgetTypeService.findWidgetTypeDetailsById(tenantId, savedWidgetType.getId());
         Assert.assertNotNull(foundWidgetType);
@@ -257,7 +258,7 @@ public abstract class BaseWidgetTypeServiceTest extends AbstractServiceTest {
         widgetType.setTenantId(tenantId);
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
-        widgetType.setDescriptor(new ObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
+        widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
         WidgetType savedWidgetType = new WidgetType(widgetTypeService.saveWidgetType(widgetType));
         WidgetType foundWidgetType = widgetTypeService.findWidgetTypeByTenantIdBundleAliasAndAlias(tenantId, savedWidgetsBundle.getAlias(), savedWidgetType.getAlias());
         Assert.assertNotNull(foundWidgetType);
@@ -277,7 +278,7 @@ public abstract class BaseWidgetTypeServiceTest extends AbstractServiceTest {
         widgetType.setTenantId(tenantId);
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
-        widgetType.setDescriptor(new ObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
+        widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
         WidgetType savedWidgetType = widgetTypeService.saveWidgetType(widgetType);
         WidgetType foundWidgetType = widgetTypeService.findWidgetTypeById(tenantId, savedWidgetType.getId());
         Assert.assertNotNull(foundWidgetType);
@@ -301,7 +302,7 @@ public abstract class BaseWidgetTypeServiceTest extends AbstractServiceTest {
             widgetType.setTenantId(tenantId);
             widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
             widgetType.setName("Widget Type " + i);
-            widgetType.setDescriptor(new ObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
+            widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
             widgetTypes.add(new WidgetType(widgetTypeService.saveWidgetType(widgetType)));
         }
 

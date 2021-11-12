@@ -24,6 +24,7 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.oauth2.OAuth2CustomMapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
@@ -38,18 +39,9 @@ import javax.servlet.http.HttpServletRequest;
 public class CustomOAuth2ClientMapper extends AbstractOAuth2ClientMapper implements OAuth2ClientMapper {
     private static final String PROVIDER_ACCESS_TOKEN = "provider-access-token";
 
-    private static final ObjectMapper json = new ObjectMapper();
+    private static final ObjectMapper json = JacksonUtil.OBJECT_MAPPER;
 
     private RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder();
-
-    @PostConstruct
-    public void init() {
-        // Register time module to parse Instant objects.
-        // com.fasterxml.jackson.databind.exc.InvalidDefinitionException:
-        // Java 8 date/time type `java.time.Instant` not supported by default:
-        // add Module "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" to enable handling
-        json.registerModule(new JavaTimeModule());
-    }
 
     @Override
     public SecurityUser getOrCreateUserByClientPrincipal(HttpServletRequest request, OAuth2AuthenticationToken token, String providerAccessToken, OAuth2Registration registration) {

@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
@@ -90,7 +91,7 @@ public class RuleChainController extends BaseController {
 
     private static final int DEFAULT_PAGE_SIZE = 1000;
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = JacksonUtil.OBJECT_MAPPER;
     public static final int TIMEOUT = 20;
 
     @Autowired

@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.EnumUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -56,7 +57,7 @@ import java.util.List;
 )
 public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConfiguration> {
 
-    private static ObjectMapper mapper = new ObjectMapper();
+    private static ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
     private List<String> relationTypes;
     private AlarmSeverity notDynamicAlarmSeverity;
 

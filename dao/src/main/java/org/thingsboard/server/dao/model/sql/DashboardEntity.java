@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -49,7 +50,7 @@ import java.util.UUID;
 @Table(name = ModelConstants.DASHBOARD_COLUMN_FAMILY_NAME)
 public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements SearchTextEntity<Dashboard> {
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = JacksonUtil.OBJECT_MAPPER;
     private static final JavaType assignedCustomersType =
             objectMapper.getTypeFactory().constructCollectionType(HashSet.class, ShortCustomerInfo.class);
 

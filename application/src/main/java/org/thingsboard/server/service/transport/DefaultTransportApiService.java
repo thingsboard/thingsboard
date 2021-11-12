@@ -116,7 +116,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DefaultTransportApiService implements TransportApiService {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
 
     private final TbDeviceProfileCache deviceProfileCache;
     private final TbTenantProfileCache tenantProfileCache;

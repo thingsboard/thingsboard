@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.socket.CloseStatus;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.DataConstants;
@@ -107,7 +108,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     private static final Aggregation DEFAULT_AGGREGATION = Aggregation.NONE;
     private static final int UNKNOWN_SUBSCRIPTION_ID = 0;
     private static final String PROCESSING_MSG = "[{}] Processing: {}";
-    private static final ObjectMapper jsonMapper = new ObjectMapper();
+    private static final ObjectMapper jsonMapper = JacksonUtil.OBJECT_MAPPER;
     private static final String FAILED_TO_FETCH_DATA = "Failed to fetch data!";
     private static final String FAILED_TO_FETCH_ATTRIBUTES = "Failed to fetch attributes!";
     private static final String SESSION_META_DATA_NOT_FOUND = "Session meta-data not found!";

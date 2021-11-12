@@ -22,6 +22,7 @@ import com.github.springtestdbunit.annotation.DatabaseSetup;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -183,7 +184,7 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
         event.setEntityId(deviceId);
         event.setUid(event.getId().getId().toString());
         event.setType(STATS);
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
         try {
             JsonNode jsonNode = mapper.readTree("{\"key\":\"value\"}");
             event.setBody(jsonNode);

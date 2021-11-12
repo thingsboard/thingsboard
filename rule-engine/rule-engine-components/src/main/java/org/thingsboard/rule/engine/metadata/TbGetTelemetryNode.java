@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -92,7 +93,7 @@ public class TbGetTelemetryNode implements TbNode {
         }
         aggregation = parseAggregationConfig(config.getAggregation());
 
-        mapper = new ObjectMapper();
+        mapper = JacksonUtil.OBJECT_MAPPER;
         mapper.configure(JsonWriteFeature.QUOTE_FIELD_NAMES.mappedFeature(), false);
         mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
     }

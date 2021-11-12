@@ -20,6 +20,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
@@ -36,7 +37,7 @@ import java.util.concurrent.ExecutorService;
 @Data
 public abstract class TransportContext {
 
-    protected final ObjectMapper mapper = new ObjectMapper();
+    protected final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
 
     @Autowired
     protected TransportService transportService;

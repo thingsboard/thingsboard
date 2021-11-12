@@ -27,6 +27,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -199,7 +200,7 @@ public abstract class BaseController {
 
     private static final int DEFAULT_PAGE_SIZE = 1000;
 
-    private static final ObjectMapper json = new ObjectMapper();
+    private static final ObjectMapper json = JacksonUtil.OBJECT_MAPPER;
 
     @Autowired
     private ThingsboardErrorResponseHandler errorResponseHandler;

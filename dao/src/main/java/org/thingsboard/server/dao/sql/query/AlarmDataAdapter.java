@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
@@ -46,7 +47,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AlarmDataAdapter {
 
-    private final static ObjectMapper mapper = new ObjectMapper();
+    private final static ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
 
     public static PageData<AlarmData> createAlarmData(EntityDataPageLink pageLink,
                                                       List<Map<String, Object>> rows,

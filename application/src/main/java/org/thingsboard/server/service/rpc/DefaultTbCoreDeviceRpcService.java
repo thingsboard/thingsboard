@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.actors.ActorSystemContext;
@@ -56,7 +57,7 @@ import java.util.function.Consumer;
 @TbCoreComponent
 public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
 
-    private static final ObjectMapper json = new ObjectMapper();
+    private static final ObjectMapper json = JacksonUtil.OBJECT_MAPPER;
 
     private final DeviceService deviceService;
     private final TbClusterService clusterService;

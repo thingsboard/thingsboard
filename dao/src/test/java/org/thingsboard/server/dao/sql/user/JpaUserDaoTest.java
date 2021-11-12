@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.springtestdbunit.annotation.DatabaseSetup;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -116,7 +117,7 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
         user.setEmail("user@thingsboard.org");
         user.setFirstName("Jackson");
         user.setLastName("Roberts");
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
         String additionalInfo = "{\"key\":\"value-100\"}";
         JsonNode jsonNode = mapper.readTree(additionalInfo);
         user.setAdditionalInfo(jsonNode);

@@ -130,7 +130,7 @@ public class UserController extends BaseController {
             SecurityUser securityUser = new SecurityUser(user, credentials.isEnabled(), principal);
             JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
             JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = JacksonUtil.OBJECT_MAPPER;
             ObjectNode tokenObject = objectMapper.createObjectNode();
             tokenObject.put("token", accessToken.getToken());
             tokenObject.put("refreshToken", refreshToken.getToken());

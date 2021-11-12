@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -68,7 +69,7 @@ import org.thingsboard.server.service.state.DeviceStateService;
 @Slf4j
 public abstract class BaseEdgeProcessor {
 
-    protected static final ObjectMapper mapper = new ObjectMapper();
+    protected static final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
 
     protected static final int DEFAULT_PAGE_SIZE = 1000;
 

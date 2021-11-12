@@ -25,6 +25,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
@@ -97,7 +98,7 @@ public class TbGetCustomerAttributeNodeTest {
         attrMapping.putIfAbsent("temperature", "tempo");
         config.setAttrMapping(attrMapping);
         config.setTelemetry(false);
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
         node = new TbGetCustomerAttributeNode();
@@ -231,7 +232,7 @@ public class TbGetCustomerAttributeNodeTest {
         attrMapping.putIfAbsent("temperature", "tempo");
         config.setAttrMapping(attrMapping);
         config.setTelemetry(true);
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
         node = new TbGetCustomerAttributeNode();

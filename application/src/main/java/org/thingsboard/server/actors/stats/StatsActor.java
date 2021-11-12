@@ -18,6 +18,7 @@ package org.thingsboard.server.actors.stats;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActor;
 import org.thingsboard.server.actors.TbActorCtx;
@@ -33,7 +34,7 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 @Slf4j
 public class StatsActor extends ContextAwareActor {
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
 
     public StatsActor(ActorSystemContext context) {
         super(context);
