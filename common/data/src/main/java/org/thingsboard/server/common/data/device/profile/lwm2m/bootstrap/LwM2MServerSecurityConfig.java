@@ -23,12 +23,15 @@ import lombok.Data;
 @Data
 public class LwM2MServerSecurityConfig {
 
-    @ApiModelProperty(position = 1, value = "Server short Id. Used as link to associate server Object Instance.\nThis identifier uniquely identifies each LwM2M Server configured for the LwM2M Client.\n" +
-            "This Resource MUST be set when the Bootstrap-Server Resource has a value of 'false'. \n" +
+    @ApiModelProperty(position = 1, value = "Server short Id. Used as link to associate server Object Instance. This identifier uniquely identifies each LwM2M Server configured for the LwM2M Client. " +
+            "This Resource MUST be set when the Bootstrap-Server Resource has a value of 'false'. " +
             "The values ID:0 and ID:65535 values MUST NOT be used for identifying the LwM2M Server.", example = "123", readOnly = true)
     protected Integer shortServerId = 123;
     /** Security -> ObjectId = 0 'LWM2M Security' */
-    @ApiModelProperty(position = 2, value = "Is Bootstrap Server or Lwm2m Server", example = "true or false", readOnly = true)
+    @ApiModelProperty(position = 2, value = "Is Bootstrap Server or Lwm2m Server. " +
+            "The LwM2M Client MAY be configured to use one or more LwM2M Server Account(s). " +
+            "The LwM2M Client MUST have at most one LwM2M Bootstrap-Server Account. " +
+            "(*) The LwM2M client MUST have at least one LwM2M server account after completing the boot sequence specified.", example = "true or false", readOnly = true)
     protected boolean bootstrapServerIs = false;
     @ApiModelProperty(position = 3, value = "Host for 'No Security' mode", example = "0.0.0.0", readOnly = true)
     protected String host;
@@ -45,15 +48,15 @@ public class LwM2MServerSecurityConfig {
     /** Config -> ObjectId = 1 'LwM2M Server' */
     @ApiModelProperty(position = 10, value = "Specify the lifetime of the registration in seconds.", example = "300", readOnly = true)
     private Integer lifetime = 300;
-    @ApiModelProperty(position = 11, value = "The default value the LwM2M Client should use for the Minimum Period of an Observation in the absence of this parameter being included in an Observation.\n" +
+    @ApiModelProperty(position = 11, value = "The default value the LwM2M Client should use for the Minimum Period of an Observation in the absence of this parameter being included in an Observation. " +
             "If this Resource doesn’t exist, the default value is 0.", example = "1", readOnly = true)
     private Integer defaultMinPeriod = 1;
     /** ResourceID=6 'Notification Storing When Disabled or Offline' */
-    @ApiModelProperty(position = 12, value = "If true, the LwM2M Client stores “Notify” operations to the LwM2M Server while the LwM2M Server account is disabled or the LwM2M Client is offline. After the LwM2M Server account is enabled or the LwM2M Client is online, the LwM2M Client reports the stored “Notify” operations to the Server.\n" +
-            "If false, the LwM2M Client discards all the “Notify” operations or temporarily disables the Observe function while the LwM2M Server is disabled or the LwM2M Client is offline.\n" +
+    @ApiModelProperty(position = 12, value = "If true, the LwM2M Client stores “Notify” operations to the LwM2M Server while the LwM2M Server account is disabled or the LwM2M Client is offline. After the LwM2M Server account is enabled or the LwM2M Client is online, the LwM2M Client reports the stored “Notify” operations to the Server. " +
+            "If false, the LwM2M Client discards all the “Notify” operations or temporarily disables the Observe function while the LwM2M Server is disabled or the LwM2M Client is offline. " +
             "The default value is true.", example = "true", readOnly = true)
     private boolean notifIfDisabled = true;
-    @ApiModelProperty(position = 14, value = "This Resource defines the transport binding configured for the LwM2M Client.\n" +
+    @ApiModelProperty(position = 14, value = "This Resource defines the transport binding configured for the LwM2M Client. " +
             "If the LwM2M Client supports the binding specified in this Resource, the LwM2M Client MUST use that transport for the Current Binding Mode.", example = "U", readOnly = true)
     private String binding = "U";
 }

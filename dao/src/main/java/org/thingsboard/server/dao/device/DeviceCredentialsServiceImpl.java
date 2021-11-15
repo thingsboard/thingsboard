@@ -48,6 +48,9 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_CREDENTIALS_CACHE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateString;
@@ -238,7 +241,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
             case PSK:
                 PSKClientCredential pskCredentials = (PSKClientCredential) clientCredentials;
                 if (StringUtils.isBlank(pskCredentials.getIdentity())) {
-                    throw new DeviceCredentialsValidationException("LwM2M client PSK identity must be specified!");
+                    throw new DeviceCredentialsValidationException("LwM2M client PSK identity must be specified and must be an utf8 string!");
                 }
                 // SecurityMode.NO_SEC.toString() == "NO_SEC";
                 if (pskCredentials.getIdentity().equals(SecurityMode.NO_SEC.toString())) {
@@ -295,7 +298,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
             case PSK:
                 PSKBootstrapClientCredential pskCredentials = (PSKBootstrapClientCredential) serverCredentials;
                 if (StringUtils.isBlank(pskCredentials.getClientPublicKeyOrId())) {
-                    throw new DeviceCredentialsValidationException(server + " client PSK public key or id must be specified!");
+                    throw new DeviceCredentialsValidationException(server + " client PSK public key or id must be specified and must be an utf8 string!");
                 }
 
                 // SecurityMode.NO_SEC.toString() == "NO_SEC";
