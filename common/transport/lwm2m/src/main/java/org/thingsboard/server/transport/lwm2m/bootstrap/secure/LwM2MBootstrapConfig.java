@@ -40,23 +40,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class LwM2MBootstrapConfig implements Serializable {
 
     List<LwM2MBootstrapServerCredential> serverConfiguration;
-    /*
-      interface BootstrapSecurityConfig
-        servers: BootstrapServersSecurityConfig,
-        bootstrapServer: ServerSecurityConfig,
-        lwm2mServer: ServerSecurityConfig
-      }
-     */
-    /** -servers
-     *   shortId: number,
-     *   lifetime: number,
-     *   defaultMinPeriod: number,
-     *   notifIfDisabled: boolean,
-     *   binding: string
-     * */
-//    @Getter
-//    @Setter
-//    private LwM2MBootstrapServers servers;
 
     /** -bootstrapServer, lwm2mServer
      * interface ServerSecurityConfig
@@ -91,56 +74,70 @@ public class LwM2MBootstrapConfig implements Serializable {
     @JsonIgnore
     public BootstrapConfig getLwM2MBootstrapConfig() {
         BootstrapConfig configBs = new BootstrapConfig();
-        AtomicInteger index = new AtomicInteger();
-        /** Delete old security/config objects in LwM2mDefaultBootstrapSessionManager -> initTasks */
-        configBs.toDelete.add("/0");
-        configBs.toDelete.add("/1");
-        serverConfiguration.forEach(serverCredential -> {
-            BootstrapConfig.ServerConfig serverConfig = new BootstrapConfig.ServerConfig();
-            serverConfig.shortId = ((AbstractLwM2MBootstrapServerCredential)serverCredential).getShortServerId();
-            serverConfig.lifetime = ((AbstractLwM2MBootstrapServerCredential)serverCredential).getLifetime();
-            serverConfig.defaultMinPeriod = ((AbstractLwM2MBootstrapServerCredential)serverCredential).getDefaultMinPeriod();
-            serverConfig.notifIfDisabled = ((AbstractLwM2MBootstrapServerCredential)serverCredential).isNotifIfDisabled();
-            serverConfig.binding = BindingMode.parse(((AbstractLwM2MBootstrapServerCredential)serverCredential).getBinding());
-            int k = index.get();
-            configBs.servers.put(k, serverConfig);
-            BootstrapConfig.ServerSecurity serverSecurity = setServerSecurity((AbstractLwM2MBootstrapServerCredential)serverCredential, serverCredential.getSecurityMode());
-            configBs.security.put(k, serverSecurity);
-            index.getAndIncrement();
+        configBs.autoIdForSecurityObject = true;
+        int id = 0;
+        for (LwM2MBootstrapServerCredential serverCredential : serverConfiguration) {
+            BootstrapConfig.ServerConfig serverConfig = setServerConfig((AbstractLwM2MBootstrapServerCredential) serverCredential);
+            configBs.servers.put(id, serverConfig);
+            BootstrapConfig.ServerSecurity serverSecurity = setServerSecurity((AbstractLwM2MBootstrapServerCredential) serverCredential, serverCredential.getSecurityMode());
+            configBs.security.put(id, serverSecurity);
+            id++;
+        }
+        /** in LwM2mDefaultBootstrapSessionManager -> initTasks
+         * Delete all security/config objects if update bootstrap server and lwm2m server
+         * if other: del or update only instances */
 
-        });
         return configBs;
     }
 
     private BootstrapConfig.ServerSecurity setServerSecurity(AbstractLwM2MBootstrapServerCredential serverCredential, LwM2MSecurityMode securityMode) {
         BootstrapConfig.ServerSecurity serverSecurity = new BootstrapConfig.ServerSecurity();
         String serverUri = "coap://";
-        byte[] publicKeyOrId = new byte[]{};;
-        byte[] secretKey = new byte[]{};;
+        byte[] publicKeyOrId = new byte[]{};
+        byte[] secretKey = new byte[]{};
+        byte[] serverPublicKey = new byte[]{};
         serverSecurity.serverId = serverCredential.getShortServerId();
+        log.info("serverId = [{}]", serverSecurity.serverId);
         serverSecurity.securityMode = SecurityMode.valueOf(securityMode.name());
         serverSecurity.bootstrapServer = serverCredential.isBootstrapServerIs();
         if (!LwM2MSecurityMode.NO_SEC.equals(securityMode)) {
-            serverUri = "coaps://";
+            AbstractLwM2MBootstrapClientCredentialWithKeys server;
             if (serverSecurity.bootstrapServer) {
-                publicKeyOrId = ((AbstractLwM2MBootstrapClientCredentialWithKeys)this.bootstrapServer).getDecodedClientPublicKeyOrId();
-                secretKey = ((AbstractLwM2MBootstrapClientCredentialWithKeys)this.bootstrapServer).getDecodedClientSecretKey();
+                server = (AbstractLwM2MBootstrapClientCredentialWithKeys) this.bootstrapServer;
 
             } else {
-                publicKeyOrId = ((AbstractLwM2MBootstrapClientCredentialWithKeys)this.lwm2mServer).getDecodedClientPublicKeyOrId();
-                secretKey = ((AbstractLwM2MBootstrapClientCredentialWithKeys)this.lwm2mServer).getDecodedClientSecretKey();
+                server = (AbstractLwM2MBootstrapClientCredentialWithKeys) this.lwm2mServer;
             }
-
+            serverUri = "coaps://";
+            if (LwM2MSecurityMode.PSK.equals(securityMode)) {
+                publicKeyOrId = server.getClientPublicKeyOrId().getBytes();
+                secretKey = Hex.decodeHex(server.getClientSecretKey().toCharArray());
+                log.info("publicKeyOrId  [{}]", new String(publicKeyOrId, StandardCharsets.UTF_8));
+            } else {
+                publicKeyOrId = server.getDecodedClientPublicKeyOrId();
+                secretKey = server.getDecodedClientSecretKey();
+                log.info("publicKeyOrId  [{}]", Hex.encodeHexString(publicKeyOrId));
+            }
+            serverPublicKey = serverCredential.getDecodedCServerPublicKey();
         }
+        log.info("secretKey [{}]", Hex.encodeHexString(secretKey));
         serverUri += (((serverCredential.getHost().equals("0.0.0.0") ? "localhost" : serverCredential.getHost()) + ":" + serverCredential.getPort()));
         log.info("serverSecurity.uri = [{}]", serverUri);
-        log.info("publicKeyOrId  [{}]", Hex.encodeHexString(publicKeyOrId));
-        log.info("secretKey [{}]", Hex.encodeHexString(secretKey));
-        log.info("server [{}]", Hex.encodeHexString(serverCredential.getDecodedCServerPublicKey()));
         serverSecurity.uri = serverUri;
         serverSecurity.publicKeyOrId = publicKeyOrId;
         serverSecurity.secretKey = secretKey;
-        serverSecurity.serverPublicKey = serverCredential.getDecodedCServerPublicKey();
+        serverSecurity.serverPublicKey = serverPublicKey;
+        log.info("server [{}]", Hex.encodeHexString(serverSecurity.serverPublicKey));
         return serverSecurity;
+    }
+
+    private BootstrapConfig.ServerConfig setServerConfig (AbstractLwM2MBootstrapServerCredential serverCredential) {
+        BootstrapConfig.ServerConfig serverConfig = new BootstrapConfig.ServerConfig();
+        serverConfig.shortId = serverCredential.getShortServerId();
+        serverConfig.lifetime = serverCredential.getLifetime();
+        serverConfig.defaultMinPeriod = serverCredential.getDefaultMinPeriod();
+        serverConfig.notifIfDisabled = serverCredential.isNotifIfDisabled();
+        serverConfig.binding = BindingMode.parse(serverCredential.getBinding());
+        return serverConfig;
     }
 }
