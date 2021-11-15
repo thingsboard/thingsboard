@@ -22,7 +22,9 @@ import { Lwm2mObserveAttrTelemetryResourcesComponent } from './lwm2m-observe-att
 import { Lwm2mAttributesDialogComponent } from './lwm2m-attributes-dialog.component';
 import { Lwm2mAttributesComponent } from './lwm2m-attributes.component';
 import { Lwm2mAttributesKeyListComponent } from './lwm2m-attributes-key-list.component';
+import { Lwm2mBootstrapConfigServersComponent } from '@home/components/profile/device/lwm2m/lwm2m-bootstrap-config-servers.component';
 import { Lwm2mDeviceConfigServerComponent } from './lwm2m-device-config-server.component';
+import { Lwm2mBootstrapAddConfigServerDialogComponent } from '@home/components/profile/device/lwm2m/lwm2m-bootstrap-add-config-server-dialog.component';
 import { Lwm2mObjectAddInstancesDialogComponent } from './lwm2m-object-add-instances-dialog.component';
 import { Lwm2mObjectAddInstancesListComponent } from './lwm2m-object-add-instances-list.component';
 import { CommonModule } from '@angular/common';
@@ -40,7 +42,9 @@ import { DeviceProfileCommonModule } from '@home/components/profile/device/commo
       Lwm2mAttributesDialogComponent,
       Lwm2mAttributesComponent,
       Lwm2mAttributesKeyListComponent,
+      Lwm2mBootstrapConfigServersComponent,
       Lwm2mDeviceConfigServerComponent,
+      Lwm2mBootstrapAddConfigServerDialogComponent,
       Lwm2mObjectAddInstancesDialogComponent,
       Lwm2mObjectAddInstancesListComponent,
       Lwm2mObserveAttrTelemetryInstancesComponent
@@ -58,7 +62,9 @@ import { DeviceProfileCommonModule } from '@home/components/profile/device/commo
     Lwm2mAttributesDialogComponent,
     Lwm2mAttributesComponent,
     Lwm2mAttributesKeyListComponent,
+    Lwm2mBootstrapConfigServersComponent,
     Lwm2mDeviceConfigServerComponent,
+    Lwm2mBootstrapAddConfigServerDialogComponent,
     Lwm2mObjectAddInstancesDialogComponent,
     Lwm2mObjectAddInstancesListComponent,
     Lwm2mObserveAttrTelemetryInstancesComponent

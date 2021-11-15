@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, EventEmitter, forwardRef, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -26,8 +26,7 @@ import {
   Validators
 } from '@angular/forms';
 import {
-  DEFAULT_PORT_BOOTSTRAP_NO_SEC,
-  DEFAULT_PORT_SERVER_NO_SEC,
+  BingingMode, BingingModeTranslationsMap,
   ServerSecurityConfig
 } from './lwm2m-profile-config.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
@@ -65,14 +64,16 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
   private isDataLoadedIntoCache = false;
 
   serverFormGroup: FormGroup;
+  bindingModeTypes = Object.values(BingingMode);
+  bindingModeTypeNamesMap = BingingModeTranslationsMap;
   securityConfigLwM2MType = Lwm2mSecurityType;
   securityConfigLwM2MTypes = Object.keys(Lwm2mSecurityType);
   credentialTypeLwM2MNamesMap = Lwm2mSecurityTypeTranslationMap;
   publicKeyOrIdTooltipNamesMap = Lwm2mPublicKeyOrIdTooltipTranslationsMap;
   currentSecurityMode = null;
 
-  @Input()
-  isBootstrapServer = false;
+  @Output()
+  removeServer = new EventEmitter();
 
   private propagateChange = (v: any) => { };
 
@@ -83,19 +84,29 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
   ngOnInit(): void {
     this.serverFormGroup = this.fb.group({
       host: ['', Validators.required],
-      port: [this.isBootstrapServer ? DEFAULT_PORT_BOOTSTRAP_NO_SEC : DEFAULT_PORT_SERVER_NO_SEC,
-        [Validators.required, Validators.min(1), Validators.max(65535), Validators.pattern('[0-9]*')]],
+      port: ['', [Validators.required, Validators.min(1), Validators.max(65535), Validators.pattern('[0-9]*')]],
       securityMode: [Lwm2mSecurityType.NO_SEC],
       serverPublicKey: [''],
       clientHoldOffTime: ['', [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
-      serverId: ['', [Validators.required, Validators.min(1), Validators.max(65534), Validators.pattern('[0-9]*')]],
+      shortServerId: ['', [Validators.required, Validators.min(1), Validators.max(65534), Validators.pattern('[0-9]*')]],
       bootstrapServerAccountTimeout: ['', [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
+      binding: [''],
+      lifetime: [null, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
+      notifIfDisabled: [],
+      defaultMinPeriod: [null, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
+      bootstrapServerIs: []
     });
     this.serverFormGroup.get('securityMode').valueChanges.pipe(
-      tap(securityMode => this.updateValidate(securityMode)),
+      tap((securityMode) => {
+        this.currentSecurityMode = securityMode;
+        this.updateValidate(securityMode);
+      }),
       mergeMap(securityMode => this.getLwm2mBootstrapSecurityInfo(securityMode)),
       takeUntil(this.destroy$)
     ).subscribe(serverSecurityConfig => {
+      if (this.currentSecurityMode !== Lwm2mSecurityType.NO_SEC) {
+        this.changeSecurityHostPortFields(serverSecurityConfig);
+      }
       this.serverFormGroup.patchValue(serverSecurityConfig, {emitEvent: false});
     });
     this.serverFormGroup.valueChanges.pipe(
@@ -114,8 +125,13 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
     if (serverData) {
       this.serverFormGroup.patchValue(serverData, {emitEvent: false});
       this.updateValidate(serverData.securityMode);
+      if (serverData.securityHost && serverData.securityPort) {
+        delete serverData.securityHost;
+        delete serverData.securityPort;
+        this.propagateChangeState(this.serverFormGroup.getRawValue());
+      }
     }
-    if (!this.isDataLoadedIntoCache){
+    if (!this.isDataLoadedIntoCache) {
       this.getLwm2mBootstrapSecurityInfo().subscribe(value => {
         if (!serverData) {
           this.serverFormGroup.patchValue(value);
@@ -171,9 +187,15 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
   }
 
   private getLwm2mBootstrapSecurityInfo(securityMode = Lwm2mSecurityType.NO_SEC): Observable<ServerSecurityConfig> {
-    return this.deviceProfileService.getLwm2mBootstrapSecurityInfoBySecurityType(this.isBootstrapServer, securityMode).pipe(
+    return this.deviceProfileService.getLwm2mBootstrapSecurityInfoBySecurityType(
+      this.serverFormGroup.get('bootstrapServerIs').value, securityMode).pipe(
       tap(() => this.isDataLoadedIntoCache = true)
     );
+  }
+
+  private changeSecurityHostPortFields(serverData: ServerSecurityConfig): void {
+    serverData.port = serverData.securityPort;
+    serverData.host = serverData.securityHost;
   }
 
   validate(): ValidationErrors | null {
