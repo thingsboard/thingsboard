@@ -25,6 +25,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -49,7 +50,7 @@ import java.util.regex.Pattern;
 @Slf4j
 public class AdminSettingsEdgeEventFetcher implements EdgeEventFetcher {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
 
     private final AdminSettingsService adminSettingsService;
     private final Configuration freemarkerConfig;

@@ -22,6 +22,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbEmail;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -80,7 +81,7 @@ public class TbMsgToEmailNodeTest {
         assertEquals("oreo", metadataCaptor.getValue().getValue("username"));
         assertNotSame(metaData, metadataCaptor.getValue());
 
-        TbEmail actual = new ObjectMapper().readValue(dataCaptor.getValue().getBytes(), TbEmail.class);
+        TbEmail actual = JacksonUtil.OBJECT_MAPPER.readValue(dataCaptor.getValue().getBytes(), TbEmail.class);
 
         TbEmail expected = TbEmail.builder()
                 .from("test@mail.org")
@@ -99,7 +100,7 @@ public class TbMsgToEmailNodeTest {
             config.setSubjectTemplate("Hi ${username} there");
             config.setBodyTemplate("${name} is to high. Current ${passed} and ${count}");
             config.setMailBodyType("false");
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
             TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
             emailNode = new TbMsgToEmailNode();

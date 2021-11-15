@@ -25,6 +25,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -188,7 +189,7 @@ public class TbCreateRelationNodeTest {
     }
 
     public void init(TbCreateRelationNodeConfiguration configuration) throws TbNodeException {
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(configuration));
 
         when(ctx.getDbCallbackExecutor()).thenReturn(dbExecutor);

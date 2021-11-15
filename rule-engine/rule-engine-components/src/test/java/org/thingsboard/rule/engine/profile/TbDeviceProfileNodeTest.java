@@ -25,6 +25,7 @@ import org.mockito.AdditionalAnswers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -82,7 +83,7 @@ import static org.mockito.Mockito.verify;
 @RunWith(MockitoJUnitRunner.class)
 public class TbDeviceProfileNodeTest {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
 
     private TbDeviceProfileNode node;
 

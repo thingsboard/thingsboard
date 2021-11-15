@@ -22,6 +22,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -378,7 +379,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
         ruleChainMetaData.setRuleChainId(savedRuleChain.getId());
 
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
 
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("name1");
@@ -419,7 +420,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
         ruleChainMetaData.setRuleChainId(savedRuleChain.getId());
 
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
 
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("name1");
@@ -460,7 +461,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
         ruleChainMetaData.setRuleChainId(savedRuleChain.getId());
 
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
 
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("name1");

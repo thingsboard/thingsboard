@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -107,7 +108,7 @@ public class CustomerController extends BaseController {
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             Customer customer = checkCustomerId(customerId, Operation.READ);
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = JacksonUtil.OBJECT_MAPPER;
             ObjectNode infoObject = objectMapper.createObjectNode();
             infoObject.put("title", customer.getTitle());
             infoObject.put(IS_PUBLIC, customer.isPublic());

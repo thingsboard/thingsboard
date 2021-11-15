@@ -35,6 +35,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.TenantId;
 
@@ -52,7 +53,7 @@ public class ElasticsearchAuditLogSink implements AuditLogSink {
     private static final String DATE_PLACEHOLDER = "@{DATE}";
     private static final String INDEX_TYPE = "audit_log";
 
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
 
     @Value("${audit-log.sink.index_pattern}")
     private String indexPattern;

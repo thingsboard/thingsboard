@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbEmail;
@@ -51,7 +52,7 @@ public class TbSendEmailNode implements TbNode {
 
     private static final String MAIL_PROP = "mail.";
     static final String SEND_EMAIL_TYPE = "SEND_EMAIL";
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = JacksonUtil.OBJECT_MAPPER;
 
     private TbSendEmailNodeConfiguration config;
     private JavaMailSenderImpl mailSender;

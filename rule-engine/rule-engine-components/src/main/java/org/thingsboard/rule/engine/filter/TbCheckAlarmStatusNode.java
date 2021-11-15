@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -47,7 +48,7 @@ import java.io.IOException;
         configDirective = "tbFilterNodeCheckAlarmStatusConfig")
 public class TbCheckAlarmStatusNode implements TbNode {
     private TbCheckAlarmStatusNodeConfig config;
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
 
     @Override
     public void init(TbContext tbContext, TbNodeConfiguration configuration) throws TbNodeException {

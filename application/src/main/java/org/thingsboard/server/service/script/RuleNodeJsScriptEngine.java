@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -43,7 +44,7 @@ import java.util.concurrent.ExecutionException;
 @Slf4j
 public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.ScriptEngine {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
     private final JsInvokeService sandboxService;
 
     private final UUID scriptId;

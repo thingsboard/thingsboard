@@ -26,6 +26,7 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -99,7 +100,7 @@ public class TbTransformMsgNodeTest {
     private void initWithScript() throws TbNodeException {
         TbTransformMsgNodeConfiguration config = new TbTransformMsgNodeConfiguration();
         config.setJsScript("scr");
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
         when(ctx.createJsScriptEngine("scr")).thenReturn(scriptEngine);

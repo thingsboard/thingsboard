@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
@@ -55,7 +56,7 @@ public class EntityActionService {
     private final TbClusterService tbClusterService;
     private final AuditLogService auditLogService;
 
-    private static final ObjectMapper json = new ObjectMapper();
+    private static final ObjectMapper json = JacksonUtil.OBJECT_MAPPER;
 
     public void pushEntityActionToRuleEngine(EntityId entityId, HasName entity, TenantId tenantId, CustomerId customerId,
                                              ActionType actionType, User user, Object... additionalInfo) {

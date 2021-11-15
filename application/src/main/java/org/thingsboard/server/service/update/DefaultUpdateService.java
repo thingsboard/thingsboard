@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -117,7 +118,7 @@ public class DefaultUpdateService implements UpdateService {
     Runnable checkUpdatesRunnable = () -> {
         try {
             log.trace("Executing check update method for instanceId [{}], platform [{}] and version [{}]", instanceId, platform, version);
-            ObjectNode request = new ObjectMapper().createObjectNode();
+            ObjectNode request = JacksonUtil.OBJECT_MAPPER.createObjectNode();
             request.put(PLATFORM_PARAM, platform);
             request.put(VERSION_PARAM, version);
             request.put(INSTANCE_ID_PARAM, instanceId.toString());

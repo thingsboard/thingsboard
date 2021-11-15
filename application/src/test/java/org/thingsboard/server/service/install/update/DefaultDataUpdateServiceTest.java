@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
+import org.thingsboard.common.util.JacksonUtil;
 
 import java.io.IOException;
 
@@ -34,7 +35,7 @@ import static org.mockito.BDDMockito.willCallRealMethod;
 @SpringBootTest(classes = DefaultDataUpdateService.class)
 class DefaultDataUpdateServiceTest {
 
-    ObjectMapper mapper = new ObjectMapper();
+    ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
 
     @MockBean
     DefaultDataUpdateService service;

@@ -18,10 +18,11 @@ package org.thingsboard.server.common.msg.queue;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
 
 @Slf4j
 public class RuleEngineException extends Exception {
-    protected static final ObjectMapper mapper = new ObjectMapper();
+    protected static final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
 
     public RuleEngineException(String message) {
         super(message != null ? message : "Unknown");

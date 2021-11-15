@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.EntityId;
 
 import java.io.IOException;
@@ -34,7 +35,7 @@ import java.io.IOException;
 @AllArgsConstructor
 public class EntityFieldsData {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
 
     static {
         SimpleModule entityFieldsModule = new SimpleModule("EntityFieldsModule", new Version(1, 0, 0, null, null, null));

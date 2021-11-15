@@ -28,6 +28,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
@@ -68,7 +69,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
 
     private static final String CLAIM_ATTRIBUTE_NAME = "claimingAllowed";
     private static final String CLAIM_DATA_ATTRIBUTE_NAME = "claimingData";
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
 
     @Autowired
     private TbClusterService clusterService;

@@ -38,6 +38,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbEmail;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -80,7 +81,7 @@ public class TbRestApiCallNodeTest {
     
     private void initWithConfig(TbRestApiCallNodeConfiguration config) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
+            ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
             TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
             restNode = new TbRestApiCallNode();
             restNode.init(ctx, nodeConfiguration);

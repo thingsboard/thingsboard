@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
@@ -148,7 +149,7 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
             publicCustomer.setTenantId(tenantId);
             publicCustomer.setTitle(PUBLIC_CUSTOMER_TITLE);
             try {
-                publicCustomer.setAdditionalInfo(new ObjectMapper().readValue("{ \"isPublic\": true }", JsonNode.class));
+                publicCustomer.setAdditionalInfo(JacksonUtil.OBJECT_MAPPER.readValue("{ \"isPublic\": true }", JsonNode.class));
             } catch (IOException e) {
                 throw new IncorrectParameterException("Unable to create public customer.", e);
             }

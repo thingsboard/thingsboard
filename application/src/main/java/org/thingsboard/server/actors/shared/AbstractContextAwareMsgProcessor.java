@@ -17,6 +17,7 @@ package org.thingsboard.server.actors.shared;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.common.msg.TbActorMsg;
@@ -28,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 public abstract class AbstractContextAwareMsgProcessor {
 
     protected final ActorSystemContext systemContext;
-    protected final ObjectMapper mapper = new ObjectMapper();
+    protected final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
 
     protected AbstractContextAwareMsgProcessor(ActorSystemContext systemContext) {
         super();

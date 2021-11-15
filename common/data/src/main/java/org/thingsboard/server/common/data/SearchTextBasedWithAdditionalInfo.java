@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.UUIDBased;
 
 import java.io.ByteArrayInputStream;
@@ -35,7 +36,7 @@ import java.util.function.Consumer;
 @Slf4j
 public abstract class SearchTextBasedWithAdditionalInfo<I extends UUIDBased> extends SearchTextBased<I> implements HasAdditionalInfo {
 
-    public static final ObjectMapper mapper = new ObjectMapper();
+    public static final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
     private transient JsonNode additionalInfo;
     @JsonIgnore
     private byte[] additionalInfoBytes;

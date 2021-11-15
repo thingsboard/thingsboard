@@ -22,6 +22,7 @@ import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -90,7 +91,7 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
     @Column(name = ModelConstants.ENTITY_VIEW_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
 
     public AbstractEntityViewEntity() {
         super();

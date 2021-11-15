@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.lang3.StringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -68,7 +69,7 @@ public class DatabaseHelper {
     public static final String ASSIGNED_CUSTOMERS = "assigned_customers";
     public static final String CONFIGURATION = "configuration";
 
-    public static final ObjectMapper objectMapper = new ObjectMapper();
+    public static final ObjectMapper objectMapper = JacksonUtil.OBJECT_MAPPER;
 
     public static void upgradeTo40_assignDashboards(Path dashboardsDump, DashboardService dashboardService, boolean sql) throws Exception {
         JavaType assignedCustomersType =

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.channel.EventLoopGroup;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
@@ -93,7 +94,7 @@ import java.util.function.Consumer;
 @Slf4j
 class DefaultTbContext implements TbContext {
 
-    public final static ObjectMapper mapper = new ObjectMapper();
+    public final static ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
 
     private final ActorSystemContext mainCtx;
     private final String ruleChainName;

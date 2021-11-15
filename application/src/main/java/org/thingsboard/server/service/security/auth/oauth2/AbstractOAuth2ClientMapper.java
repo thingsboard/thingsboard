@@ -25,6 +25,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.Tenant;
@@ -61,7 +62,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public abstract class AbstractOAuth2ClientMapper {
     private static final int DASHBOARDS_REQUEST_LIMIT = 10;
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = JacksonUtil.OBJECT_MAPPER;
 
     @Autowired
     private UserService userService;
