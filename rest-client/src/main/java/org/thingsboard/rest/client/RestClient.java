@@ -134,6 +134,7 @@ import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
 import org.thingsboard.server.common.data.widget.WidgetType;
+import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 
 import java.io.Closeable;
@@ -2423,11 +2424,11 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 }).getBody();
     }
 
-    public Optional<WidgetType> getWidgetTypeById(WidgetTypeId widgetTypeId) {
+    public Optional<WidgetTypeDetails> getWidgetTypeById(WidgetTypeId widgetTypeId) {
         try {
-            ResponseEntity<WidgetType> widgetType =
-                    restTemplate.getForEntity(baseURL + "/api/widgetType/{widgetTypeId}", WidgetType.class, widgetTypeId.getId());
-            return Optional.ofNullable(widgetType.getBody());
+            ResponseEntity<WidgetTypeDetails> widgetTypeDetails =
+                    restTemplate.getForEntity(baseURL + "/api/widgetType/{widgetTypeId}", WidgetTypeDetails.class, widgetTypeId.getId());
+            return Optional.ofNullable(widgetTypeDetails.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
                 return Optional.empty();
@@ -2437,8 +2438,8 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         }
     }
 
-    public WidgetType saveWidgetType(WidgetType widgetType) {
-        return restTemplate.postForEntity(baseURL + "/api/widgetType", widgetType, WidgetType.class).getBody();
+    public WidgetTypeDetails saveWidgetType(WidgetTypeDetails widgetTypeDetails) {
+        return restTemplate.postForEntity(baseURL + "/api/widgetType", widgetTypeDetails, WidgetTypeDetails.class).getBody();
     }
 
     public void deleteWidgetType(WidgetTypeId widgetTypeId) {
