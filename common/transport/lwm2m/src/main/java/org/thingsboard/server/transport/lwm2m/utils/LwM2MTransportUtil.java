@@ -39,7 +39,7 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBootstrapServersConfiguration;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.ota.OtaPackageKey;
@@ -181,7 +181,7 @@ public class LwM2MTransportUtil {
         }
     }
 
-    public static LwM2MBootstrapServersConfiguration getBootstrapParametersFromThingsboard(DeviceProfile deviceProfile) {
+    public static List<LwM2MBootstrapServerCredential> getBootstrapParametersFromThingsboard(DeviceProfile deviceProfile) {
         return toLwM2MClientProfile(deviceProfile).getBootstrap();
     }
 

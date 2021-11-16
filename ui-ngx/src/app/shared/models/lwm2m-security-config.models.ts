@@ -67,14 +67,9 @@ export interface ServerSecurityConfig {
   clientSecretKey?: string;
 }
 
-interface BootstrapSecurityConfig {
-  bootstrapServer: ServerSecurityConfig;
-  lwm2mServer: ServerSecurityConfig;
-}
-
 export interface Lwm2mSecurityConfigModels {
   client: ClientSecurityConfig;
-  bootstrap: BootstrapSecurityConfig;
+  bootstrap: Array<ServerSecurityConfig>;
 }
 
 
@@ -84,10 +79,9 @@ export function getLwm2mSecurityConfigModelsDefault(): Lwm2mSecurityConfigModels
       securityConfigClientMode: Lwm2mSecurityType.NO_SEC,
       endpoint: ''
     },
-    bootstrap: {
-      bootstrapServer: getDefaultServerSecurityConfig(),
-      lwm2mServer: getDefaultServerSecurityConfig()
-    }
+    bootstrap: [
+      getDefaultServerSecurityConfig()
+    ]
   };
 }
 

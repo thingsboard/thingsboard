@@ -16,26 +16,24 @@
 
 -->
 <div fxLayout="column">
-  <div class="tb-device-profile-alarms">
-    <div *ngFor="let alarmControl of alarmsFormArray().controls; trackBy: trackByAlarm;
-                 let $index = index; last as isLast;"
-         fxLayout="column" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
-      <tb-device-profile-alarm [formControl]="alarmControl"
-                               [expanded]="$index === 0"
-                               [deviceProfileId]="deviceProfileId"
-                               (removeAlarm)="removeAlarm($index)">
-      </tb-device-profile-alarm>
+  <mat-accordion multi="true">
+    <div *ngFor="let serverConfig of serverConfigsFromArray().controls; trackBy: trackByParams; let $index = index;">
+      <tb-profile-lwm2m-device-config-server
+        [formControl]="serverConfig"
+        (removeServer)="removeServerConfig($event, $index)">
+      </tb-profile-lwm2m-device-config-server>
     </div>
-  </div>
-  <div *ngIf="!alarmsFormArray().controls.length">
+  </mat-accordion>
+  <div *ngIf="!serverConfigsFromArray().controls.length" style="margin:32px 0">
       <span translate fxLayoutAlign="center center"
-            class="tb-prompt">device-profile.no-alarm-rules</span>
+            class="tb-prompt">device-profile.lwm2m.no-config-servers</span>
   </div>
   <div *ngIf="!disabled" style="padding-top: 16px;">
     <button mat-raised-button color="primary"
             type="button"
-            (click)="addAlarm()">
-      <span translate>device-profile.add-alarm-rule</span>
+            (click)="addServerConfig()">
+      <span>{{ (isBootstrapAdded() ? 'device-profile.lwm2m.add-lwm2m-server-config' :
+        'device-profile.lwm2m.add-server-config') | translate}}</span>
     </button>
   </div>
 </div>

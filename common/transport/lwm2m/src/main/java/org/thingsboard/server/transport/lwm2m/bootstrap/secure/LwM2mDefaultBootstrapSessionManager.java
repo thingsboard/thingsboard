@@ -16,13 +16,14 @@
 package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.request.BootstrapDiscoverRequest;
 import org.eclipse.leshan.core.request.BootstrapDownlinkRequest;
 import org.eclipse.leshan.core.request.BootstrapFinishRequest;
 import org.eclipse.leshan.core.request.BootstrapRequest;
 import org.eclipse.leshan.core.request.Identity;
+import org.eclipse.leshan.core.response.BootstrapDiscoverResponse;
 import org.eclipse.leshan.core.response.LwM2mResponse;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfigStore;
-import org.eclipse.leshan.server.bootstrap.BootstrapConfigStoreTaskProvider;
 import org.eclipse.leshan.server.bootstrap.BootstrapFailureCause;
 import org.eclipse.leshan.server.bootstrap.BootstrapSession;
 import org.eclipse.leshan.server.bootstrap.BootstrapTaskProvider;
@@ -34,12 +35,13 @@ import org.eclipse.leshan.server.security.BootstrapSecurityStore;
 import org.eclipse.leshan.server.security.SecurityChecker;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.transport.lwm2m.bootstrap.store.LwM2MBootstrapConfigStoreTaskProvider;
+import org.thingsboard.server.transport.lwm2m.bootstrap.store.LwM2MBootstrapSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_ERROR;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_INFO;
 
 @Slf4j
@@ -58,7 +60,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
      * @param bsSecurityStore the {@link BootstrapSecurityStore} used by default {@link SecurityChecker}.
      */
     public LwM2mDefaultBootstrapSessionManager(BootstrapSecurityStore bsSecurityStore, BootstrapConfigStore configStore, TransportService transportService) {
-        this(bsSecurityStore, new SecurityChecker(), new BootstrapConfigStoreTaskProvider(configStore),
+        this(bsSecurityStore, new SecurityChecker(), new LwM2MBootstrapConfigStoreTaskProvider(configStore),
                 new StandardBootstrapModelProvider());
         this.transportService = transportService;
     }
@@ -118,6 +120,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
             session.setModel(modelProvider.getObjectModel(session, tasks.supportedObjects));
 
         // set Requests to Send
+        log.info("tasks.requestsToSend = [{}]", tasks.requestsToSend);
         session.setRequests(tasks.requestsToSend);
 
         // prepare list where we will store Responses
@@ -162,14 +165,15 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
             // store response
             DefaultBootstrapSession session = (DefaultBootstrapSession) bsSession;
             session.getResponses().add(response);
-            this.sendLogs (bsSession.getEndpoint(),
-                    String.format("%s: %s %s receives success response %s for %s : %s", LOG_LWM2M_INFO,
-                            request.getClass().getSimpleName(), request.getPath().toString(), response.toString(), bsSession.toString(), request.toString()));
+            String msg = String.format("%s: %s %s receives success response %s for %s : %s", LOG_LWM2M_INFO,
+                    request.getClass().getSimpleName(), request.getPath().toString(), response.toString(), bsSession.toString(), request.toString());
+            this.sendLogs(bsSession.getEndpoint(), msg);
+
             // on success for NOT bootstrap finish request we send next request
             return BootstrapPolicy.continueWith(nextRequest(bsSession));
         } else {
             // on success for bootstrap finish request we stop the session
-            this.sendLogs (bsSession.getEndpoint(),
+            this.sendLogs(bsSession.getEndpoint(),
                     String.format("%s: %s receives success response for bootstrap finish request and stop the session: %s", LOG_LWM2M_INFO,
                             request.getClass().getSimpleName(), bsSession.toString()));
             return BootstrapPolicy.finished();
@@ -192,9 +196,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
         } else {
             // on response error for bootstrap finish request we stop the session
             this.sendLogs (bsSession.getEndpoint(),
-                    String.format("%s: %s %s error response %s for request %s bootstrap finish. Stop the session: %s", LOG_LWM2M_INFO,
-                            request.getClass().getSimpleName(),
-                            request.getPath().toString(), response.toString(), request.toString(), bsSession.toString()));
+                    String.format("%s: error response for request bootstrap finish. Stop the session: %s", LOG_LWM2M_ERROR, bsSession.toString()));
             return BootstrapPolicy.failed();
         }
     }

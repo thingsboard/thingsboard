@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.secure.credentials;
+package org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredential;
-import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapConfig;
 
+@ApiModel
 @Data
-public class LwM2MCredentials {
-    private LwM2MClientCredential client;
-    private LwM2MBootstrapConfig bootstrap;
+public class LwM2MServerSecurityConfigDefault extends LwM2MServerSecurityConfig {
+    @ApiModelProperty(position = 5, value = "Host for 'Security' mode (DTLS)", example = "0.0.0.0", readOnly = true)
+    protected String securityHost;
+    @ApiModelProperty(position = 6, value = "Port for 'Security' mode (DTLS): Lwm2m Server or Bootstrap Server", example = "5686 or 5688", readOnly = true)
+    protected Integer securityPort;
 }

@@ -96,6 +96,18 @@ export const AttributeNameTranslationMap = new Map<AttributeName, string>(
   ]
 );
 
+export enum ServerConfigType {
+  LWM2M = 'LWM2M',
+  BOOTSTRAP = 'BOOTSTRAP'
+}
+
+export const ServerConfigTypeTranslationMap = new Map<ServerConfigType, string>(
+  [
+    [ServerConfigType.LWM2M, 'device-profile.lwm2m.lwm2m-server'],
+    [ServerConfigType.BOOTSTRAP, 'device-profile.lwm2m.bootstrap-server']
+  ]
+);
+
 export enum PowerMode {
   PSM = 'PSM',
   DRX = 'DRX',
@@ -110,22 +122,21 @@ export const PowerModeTranslationMap = new Map<PowerMode, string>(
   ]
 );
 
-export interface BootstrapServersSecurityConfig {
-  shortId: number;
-  lifetime: number;
-  defaultMinPeriod: number;
-  notifIfDisabled: boolean;
-  binding: string;
-}
-
 export interface ServerSecurityConfig {
   host?: string;
   port?: number;
   securityMode: Lwm2mSecurityType;
+  securityHost?: string;
+  securityPort?: number;
   serverPublicKey?: string;
   clientHoldOffTime?: number;
-  serverId?: number;
+  shortServerId?: number;
   bootstrapServerAccountTimeout: number;
+  lifetime: number;
+  defaultMinPeriod: number;
+  notifIfDisabled: boolean;
+  binding: string;
+  bootstrapServerIs: boolean;
 }
 
 export interface ServerSecurityConfigInfo extends ServerSecurityConfig {
@@ -134,16 +145,10 @@ export interface ServerSecurityConfigInfo extends ServerSecurityConfig {
   bootstrapServerIs: boolean;
 }
 
-interface BootstrapSecurityConfig {
-  servers: BootstrapServersSecurityConfig;
-  bootstrapServer: ServerSecurityConfig;
-  lwm2mServer: ServerSecurityConfig;
-}
-
 export interface Lwm2mProfileConfigModels {
   clientLwM2mSettings: ClientLwM2mSettings;
   observeAttr: ObservableAttributes;
-  bootstrap: BootstrapSecurityConfig;
+  bootstrap: Array<ServerSecurityConfig>;
 }
 
 export interface ClientLwM2mSettings {
@@ -165,35 +170,6 @@ export interface ObservableAttributes {
   telemetry: string[];
   keyName: {};
   attributeLwm2m: AttributesNameValueMap;
-}
-
-export function getDefaultBootstrapServersSecurityConfig(): BootstrapServersSecurityConfig {
-  return {
-    shortId: DEFAULT_ID_SERVER,
-    lifetime: DEFAULT_LIFE_TIME,
-    defaultMinPeriod: DEFAULT_MIN_PERIOD,
-    notifIfDisabled: DEFAULT_NOTIF_IF_DESIBLED,
-    binding: DEFAULT_BINDING
-  };
-}
-
-export function getDefaultBootstrapServerSecurityConfig(): ServerSecurityConfig {
-  return {
-    bootstrapServerAccountTimeout: DEFAULT_BOOTSTRAP_SERVER_ACCOUNT_TIME_OUT,
-    clientHoldOffTime: DEFAULT_CLIENT_HOLD_OFF_TIME,
-    host: DEFAULT_LOCAL_HOST_NAME,
-    port: DEFAULT_PORT_BOOTSTRAP_NO_SEC,
-    securityMode: Lwm2mSecurityType.NO_SEC,
-    serverId: DEFAULT_ID_BOOTSTRAP,
-    serverPublicKey: ''
-  };
-}
-
-export function getDefaultLwM2MServerSecurityConfig(): ServerSecurityConfig {
-  const DefaultLwM2MServerSecurityConfig = getDefaultBootstrapServerSecurityConfig();
-  DefaultLwM2MServerSecurityConfig.port = DEFAULT_PORT_SERVER_NO_SEC;
-  DefaultLwM2MServerSecurityConfig.serverId = DEFAULT_ID_SERVER;
-  return DefaultLwM2MServerSecurityConfig;
 }
 
 export function getDefaultProfileObserveAttrConfig(): ObservableAttributes {

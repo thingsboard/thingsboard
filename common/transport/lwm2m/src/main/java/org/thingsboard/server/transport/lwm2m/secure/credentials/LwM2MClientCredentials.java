@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap;
+package org.thingsboard.server.transport.lwm2m.secure.credentials;
 
 import lombok.Data;
-
-import java.util.List;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredential;
+import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapConfig;
 
 @Data
-public class LwM2MBootstrapServersConfiguration {
-
-    List<LwM2MBootstrapServerCredential> bootstrap;
-
+public class LwM2MClientCredentials {
+    private LwM2MClientCredential client;
+    private LwM2MBootstrapConfig bootstrap;
 }
