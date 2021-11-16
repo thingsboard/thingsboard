@@ -31,6 +31,7 @@ import org.eclipse.leshan.server.bootstrap.BootstrapUtil;
 
 import java.net.InetSocketAddress;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.eclipse.leshan.server.bootstrap.BootstrapUtil.toWriteRequest;
 
@@ -46,6 +47,8 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
      */
     protected Map<Integer, Integer> securityInstances;
     protected Map<Integer, Integer> serverInstances;
+    protected Integer bootstrapServerIdOld;
+    protected Integer bootstrapServerIdNew;
 
     public LwM2MBootstrapConfigStoreTaskProvider(BootstrapConfigStore store) {
         this.store = store;
@@ -99,8 +102,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
                 findServerInstanceId(readResponse);
                 // create requests from config
                 tasks.requestsToSend = this.toRequests(config,
-                        config.contentFormat != null ? config.contentFormat : session.getContentFormat(),
-                        this.securityInstances.get(0));
+                        config.contentFormat != null ? config.contentFormat : session.getContentFormat());
             } else {
                 // create requests from config
                 tasks.requestsToSend = BootstrapUtil.toRequests(config,
@@ -116,6 +118,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
     }
 
     protected void findSecurityInstanceId(Link[] objectLinks) {
+        log.info("Object after discover: [{}]", objectLinks);
         this.securityInstances = new HashMap<>();
         for (Link link : objectLinks) {
             if (link.getUrl().startsWith("/0/")) {
@@ -147,10 +150,20 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
     }
 
     protected void findServerInstanceId(BootstrapReadResponse readResponse) {
-        serverInstances = new HashMap<>();
+        this.serverInstances = new HashMap<>();
         ((LwM2mObject) readResponse.getContent()).getInstances().values().forEach(instance -> {
             serverInstances.put(((Long) instance.getResource(0).getValue()).intValue(), instance.getId());
         });
+        if (this.securityInstances != null && this.securityInstances.size() > 0 && this.serverInstances != null && this.serverInstances.size() > 0) {
+            this.findBootstrapServerId();
+        }
+    }
+
+    protected void findBootstrapServerId() {
+        Map<Integer, Integer> filteredMap = this.serverInstances.entrySet()
+                .stream().filter(x -> !this.securityInstances.containsKey(x.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        this.bootstrapServerIdOld = filteredMap.keySet().stream().findFirst().get();
     }
 
     public BootstrapConfigStore getStore() {
@@ -172,8 +185,10 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
 
 
     public List<BootstrapDownlinkRequest<? extends LwM2mResponse>> toRequests(BootstrapConfig bootstrapConfig,
-                                                                                     ContentFormat contentFormat, int bootstrapSecurityInstanceId) {
+                                                                              ContentFormat contentFormat) {
         List<BootstrapDownlinkRequest<? extends LwM2mResponse>> requests = new ArrayList<>();
+        List<BootstrapDownlinkRequest<? extends LwM2mResponse>> requestsDelete = new ArrayList<>();
+        List<BootstrapDownlinkRequest<? extends LwM2mResponse>> requestsWrite = new ArrayList<>();
         boolean isBsServer = false;
         boolean isLwServer = false;
         /** Map<serverId, InstanceId> */
@@ -182,55 +197,53 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
         int id = 0;
         for (BootstrapConfig.ServerSecurity security : new TreeMap<>(bootstrapConfig.security).values()) {
             if (security.bootstrapServer) {
-                requests.add(toWriteRequest(bootstrapSecurityInstanceId, security, contentFormat));
+                requestsWrite.add(toWriteRequest(this.securityInstances.get(0), security, contentFormat));
                 isBsServer = true;
-                instances.put(security.serverId, bootstrapSecurityInstanceId);
+                this.bootstrapServerIdNew = security.serverId;
+                instances.put(security.serverId, this.securityInstances.get(0));
             } else {
-                if (id == bootstrapSecurityInstanceId) {
+                if (id == this.securityInstances.get(0)) {
                     id++;
                 }
-                requests.add(toWriteRequest(id, security, contentFormat));
+                requestsWrite.add(toWriteRequest(id, security, contentFormat));
                 instances.put(security.serverId, id);
+                isLwServer = true;
+                if (!isBsServer && this.securityInstances.containsKey(security.serverId) && id != this.securityInstances.get(security.serverId)) {
+                    requestsDelete.add(new BootstrapDeleteRequest("/0/" + this.securityInstances.get(security.serverId)));
+                }
                 id++;
             }
         }
         // handle server
         for (Map.Entry<Integer, BootstrapConfig.ServerConfig> server : bootstrapConfig.servers.entrySet()) {
             int securityInstanceId = instances.get(server.getValue().shortId);
-            requests.add(toWriteRequest(securityInstanceId, server.getValue(), contentFormat));
-            if (!isBsServer && this.serverInstances.containsKey(server.getValue().shortId) && securityInstanceId != this.serverInstances.get(server.getValue().shortId)){
-                requests.add(new BootstrapDeleteRequest("/0/" + securityInstanceId));
-                requests.add(new BootstrapDeleteRequest("/1/" + this.serverInstances.get(server.getValue().shortId)));
+            requestsWrite.add(toWriteRequest(securityInstanceId, server.getValue(), contentFormat));
+            if (!isLwServer && this.bootstrapServerIdNew != null && server.getValue().shortId == this.bootstrapServerIdNew &&
+                 (this.bootstrapServerIdNew != this.bootstrapServerIdOld || securityInstanceId != this.serverInstances.get(this.bootstrapServerIdOld))) {
+                    requestsDelete.add(new BootstrapDeleteRequest("/1/" + this.serverInstances.get(this.bootstrapServerIdOld)));
+
+            } else  {
+                if (!isBsServer && this.serverInstances.containsKey(server.getValue().shortId) && securityInstanceId != this.serverInstances.get(server.getValue().shortId)) {
+                    requestsDelete.add(new BootstrapDeleteRequest("/1/" + this.serverInstances.get(server.getValue().shortId)));
+                }
             }
-            isLwServer = true;
         }
         // handle acl
         for (Map.Entry<Integer, BootstrapConfig.ACLConfig> acl : bootstrapConfig.acls.entrySet()) {
-            requests.add(toWriteRequest(acl.getKey(), acl.getValue(), contentFormat));
+            requestsWrite.add(toWriteRequest(acl.getKey(), acl.getValue(), contentFormat));
         }
         // handle delete
         if (isBsServer & isLwServer) {
             requests.add(new BootstrapDeleteRequest("/0"));
             requests.add(new BootstrapDeleteRequest("/1"));
+        } else if (requestsDelete.size() > 0) {
+            requests.addAll(requestsDelete);
         }
-
+        // handle write
+        if (requestsWrite.size() > 0) {
+            requests.addAll(requestsWrite);
+        }
         return (requests);
-    }
-
-    private InetSocketAddress getSocketAddress(String uri) {
-//        String uri1 = "coap://localhost:5687";
-        if (uri.contains("coap://")) {
-            uri = uri.replace("coap://", "");
-        } else return null;
-        String[] uris = uri.split(":");
-        if (uris.length == 2) {
-            try {
-                return new InetSocketAddress(uris[0], Integer.parseInt(uris[1]));
-            } catch (Exception e) {
-                return null;
-            }
-
-        } else return null;
     }
 
     private void initSupportedObjectsDefault() {
