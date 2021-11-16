@@ -28,7 +28,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
-//import org.thingsboard.server.common.msg.gen.MsgProtos;
+import org.thingsboard.server.common.msg.gen.MsgProtos;
 import org.thingsboard.server.common.msg.queue.ServiceQueue;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
