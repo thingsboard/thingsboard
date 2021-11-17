@@ -49,7 +49,7 @@ import java.util.concurrent.TimeUnit;
                 "Timestamp in milliseconds will be taken from metadata.ts, otherwise 'now' timestamp will be applied. " +
                 "Allows stopping updating values for incoming keys in the latest ts_kv table if 'skipLatestPersistence' is set to true.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeCustomTimeseriesConfig",
+        configDirective = "tbActionNodeTimeseriesConfig",
         icon = "file_upload"
 )
 public class TbMsgTimeseriesNode implements TbNode {
