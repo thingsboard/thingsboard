@@ -46,6 +46,7 @@ import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceTypeConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultCoapDeviceTypeConfiguration;
@@ -59,6 +60,7 @@ import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTrans
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.AbstractLwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.RPKLwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.X509LwM2MBootstrapServerCredential;
@@ -418,6 +420,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                         }
                     } else if (transportConfiguration instanceof Lwm2mDeviceProfileTransportConfiguration) {
                         List<LwM2MBootstrapServerCredential> lwM2MBootstrapServersConfigurations = ((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration).getBootstrap();
+                        validateLwm2mServersConfigOfBootstrapForClient(lwM2MBootstrapServersConfigurations);
                         for (LwM2MBootstrapServerCredential bootstrapServerCredential : lwM2MBootstrapServersConfigurations) {
                             validateLwm2mServersCredentialOfBootstrapForClient(bootstrapServerCredential);
                         }
@@ -700,6 +703,32 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                 if (paramsFieldDescriptor.isRepeated()) {
                     throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Field 'params' has invalid label!");
                 }
+            }
+        }
+    }
+
+    private void validateLwm2mServersConfigOfBootstrapForClient(List<LwM2MBootstrapServerCredential> lwM2MBootstrapServersConfigurations) {
+        Set <String> uris = new HashSet<>();
+        for (LwM2MBootstrapServerCredential bootstrapServerCredential : lwM2MBootstrapServersConfigurations) {
+            AbstractLwM2MBootstrapServerCredential serverConfig = (AbstractLwM2MBootstrapServerCredential) bootstrapServerCredential;
+            String server = serverConfig.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server" + " shortServerId: " + serverConfig.getShortServerId() + ":";
+            if (serverConfig.getShortServerId() < 1 || serverConfig.getShortServerId() > 65534) {
+                throw new DeviceCredentialsValidationException(server + " ShortServerId must not be less than 1 and more than 65534!");
+            }
+            String uri = serverConfig.getHost() + ":" + serverConfig.getPort();
+            if (!uris.add(uri)){
+                throw new DeviceCredentialsValidationException(server + " \"Host + port\" value = "  + uri + ". This value must be a unique value for all servers!");
+            };
+            Integer port;
+            if (LwM2MSecurityMode.NO_SEC.equals(serverConfig.getSecurityMode())) {
+               port =  serverConfig.isBootstrapServerIs() ? 5687 : 5685;
+            }
+            else {
+                port =  serverConfig.isBootstrapServerIs() ? 5688 : 5686;
+            }
+            if (serverConfig.getPort() == null || serverConfig.getPort().intValue() != port) {
+                throw new DeviceCredentialsValidationException(server + " \"Port\" value = "  + serverConfig.getPort() + ". This value for security " + serverConfig.getSecurityMode().name() + " must be " + port + "!");
+
             }
         }
     }
