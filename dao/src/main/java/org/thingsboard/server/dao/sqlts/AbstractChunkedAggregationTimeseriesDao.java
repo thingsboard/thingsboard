@@ -146,7 +146,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
         return Futures.immediateFuture(DaoUtil.convertDataList(tsKvEntities));
     }
 
-    private ListenableFuture<Optional<TsKvEntry>> findAndAggregateAsync(EntityId entityId, String key, long startTs, long endTs, long ts, Aggregation aggregation) {
+    ListenableFuture<Optional<TsKvEntry>> findAndAggregateAsync(EntityId entityId, String key, long startTs, long endTs, long ts, Aggregation aggregation) {
         List<CompletableFuture<TsKvEntity>> entitiesFutures = new ArrayList<>();
         switchAggregation(entityId, key, startTs, endTs, aggregation, entitiesFutures);
         return Futures.transform(setFutures(entitiesFutures), entity -> {
