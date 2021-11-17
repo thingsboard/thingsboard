@@ -204,6 +204,9 @@ transport:
     paging_transmission_window: "${LWM2M_PAGING_TRANSMISSION_WINDOW:10000}"
     # Use redis for Security and Registration stores
     redis.enabled: "${LWM2M_REDIS_ENABLED:false}"
+    network_config:
+      - key: "PROTOCOL_STAGE_THREAD_COUNT"
+        value: "${LWM2M_PROTOCOL_STAGE_THREAD_COUNT:12}"
   stats:
     enabled: "${TB_TRANSPORT_STATS_ENABLED:true}"
     print-interval-ms: "${TB_TRANSPORT_STATS_PRINT_INTERVAL_MS:60000}"
