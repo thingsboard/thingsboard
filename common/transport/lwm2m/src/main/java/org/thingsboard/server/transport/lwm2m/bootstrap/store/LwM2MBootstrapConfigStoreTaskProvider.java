@@ -32,6 +32,7 @@ import org.eclipse.leshan.server.bootstrap.BootstrapUtil;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.eclipse.leshan.server.bootstrap.BootstrapUtil.toWriteRequest;
 
@@ -163,7 +164,9 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
         Map<Integer, Integer> filteredMap = this.serverInstances.entrySet()
                 .stream().filter(x -> !this.securityInstances.containsKey(x.getKey()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        this.bootstrapServerIdOld = filteredMap.keySet().stream().findFirst().get();
+        if (filteredMap.size() > 0) {
+            this.bootstrapServerIdOld = filteredMap.keySet().stream().findFirst().get();
+        }
     }
 
     public BootstrapConfigStore getStore() {
@@ -187,7 +190,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
     public List<BootstrapDownlinkRequest<? extends LwM2mResponse>> toRequests(BootstrapConfig bootstrapConfig,
                                                                               ContentFormat contentFormat) {
         List<BootstrapDownlinkRequest<? extends LwM2mResponse>> requests = new ArrayList<>();
-        List<BootstrapDownlinkRequest<? extends LwM2mResponse>> requestsDelete = new ArrayList<>();
+        Set<String> pathsDelete = new HashSet<>();
         List<BootstrapDownlinkRequest<? extends LwM2mResponse>> requestsWrite = new ArrayList<>();
         boolean isBsServer = false;
         boolean isLwServer = false;
@@ -209,7 +212,20 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
                 instances.put(security.serverId, id);
                 isLwServer = true;
                 if (!isBsServer && this.securityInstances.containsKey(security.serverId) && id != this.securityInstances.get(security.serverId)) {
-                    requestsDelete.add(new BootstrapDeleteRequest("/0/" + this.securityInstances.get(security.serverId)));
+                    pathsDelete.add("/0/" + this.securityInstances.get(security.serverId));
+                }
+                /**
+                 * If there is an instance in the serverInstances with serverId which we replace in the securityInstances
+                 */
+                // find serverId in securityInstances by id (instance)
+                Integer serverIdOld = null;
+                for (Map.Entry<Integer, Integer> entry : this.securityInstances.entrySet()) {
+                    if (entry.getValue().equals(id)) {
+                        serverIdOld = entry.getKey();
+                    }
+                }
+                if (!isBsServer && serverIdOld != null && this.serverInstances.containsKey(serverIdOld)) {
+                    pathsDelete.add("/1/" + this.serverInstances.get(serverIdOld));
                 }
                 id++;
             }
@@ -218,13 +234,14 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
         for (Map.Entry<Integer, BootstrapConfig.ServerConfig> server : bootstrapConfig.servers.entrySet()) {
             int securityInstanceId = instances.get(server.getValue().shortId);
             requestsWrite.add(toWriteRequest(securityInstanceId, server.getValue(), contentFormat));
-            if (!isLwServer && this.bootstrapServerIdNew != null && server.getValue().shortId == this.bootstrapServerIdNew &&
-                 (this.bootstrapServerIdNew != this.bootstrapServerIdOld || securityInstanceId != this.serverInstances.get(this.bootstrapServerIdOld))) {
-                    requestsDelete.add(new BootstrapDeleteRequest("/1/" + this.serverInstances.get(this.bootstrapServerIdOld)));
-
-            } else  {
-                if (!isBsServer && this.serverInstances.containsKey(server.getValue().shortId) && securityInstanceId != this.serverInstances.get(server.getValue().shortId)) {
-                    requestsDelete.add(new BootstrapDeleteRequest("/1/" + this.serverInstances.get(server.getValue().shortId)));
+            if (!isBsServer) {
+                /** Delete instance if bootstrapServerIdNew not equals bootstrapServerIdOld or securityInstanceBsIdNew not equals serverInstanceBsIdOld */
+                if (this.bootstrapServerIdNew != null && server.getValue().shortId == this.bootstrapServerIdNew &&
+                        (this.bootstrapServerIdNew != this.bootstrapServerIdOld || securityInstanceId != this.serverInstances.get(this.bootstrapServerIdOld))) {
+                    pathsDelete.add("/1/" + this.serverInstances.get(this.bootstrapServerIdOld));
+                /** Delete instance if serverIdNew is present in serverInstances and  securityInstanceIdOld by serverIdNew not equals serverInstanceIdOld */
+                } else if (this.serverInstances.containsKey(server.getValue().shortId) && securityInstanceId != this.serverInstances.get(server.getValue().shortId)) {
+                    pathsDelete.add("/1/" + this.serverInstances.get(server.getValue().shortId));
                 }
             }
         }
@@ -236,8 +253,8 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
         if (isBsServer & isLwServer) {
             requests.add(new BootstrapDeleteRequest("/0"));
             requests.add(new BootstrapDeleteRequest("/1"));
-        } else if (requestsDelete.size() > 0) {
-            requests.addAll(requestsDelete);
+        } else {
+            pathsDelete.forEach(pathDelete -> requests.add(new BootstrapDeleteRequest(pathDelete)));
         }
         // handle write
         if (requestsWrite.size() > 0) {
