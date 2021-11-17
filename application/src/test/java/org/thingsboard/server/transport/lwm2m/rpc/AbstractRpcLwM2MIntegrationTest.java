@@ -142,38 +142,46 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
                 "    ],\n" +
                 "    \"attributeLwm2m\": {}\n" +
                 "  },\n" +
-                "  \"bootstrap\": {\n" +
-                "    \"servers\": {\n" +
-                "      \"binding\": \"U\",\n" +
-                "      \"shortId\": 123,\n" +
-                "      \"lifetime\": 300,\n" +
-                "      \"notifIfDisabled\": true,\n" +
-                "      \"defaultMinPeriod\": 1\n" +
+                "  \"bootstrap\": [\n" +
+                "    {\n" +
+                "       \"host\": \"0.0.0.0\",\n" +
+                "       \"port\": 5687,\n" +
+                "       \"binding\": \"U\",\n" +
+                "       \"lifetime\": 300,\n" +
+                "       \"securityMode\": \"NO_SEC\",\n" +
+                "       \"shortServerId\": 111,\n" +
+                "       \"notifIfDisabled\": true,\n" +
+                "       \"serverPublicKey\": \"\",\n" +
+                "       \"defaultMinPeriod\": 1,\n" +
+                "       \"bootstrapServerIs\": true,\n" +
+                "       \"clientHoldOffTime\": 1,\n" +
+                "       \"bootstrapServerAccountTimeout\": 0\n" +
                 "    },\n" +
-                "    \"lwm2mServer\": {\n" +
-                "      \"host\": \"localhost\",\n" +
-                "      \"port\": 5686,\n" +
-                "      \"serverId\": 123,\n" +
-                "      \"serverPublicKey\": \"\",\n" +
-                "      \"bootstrapServerIs\": false,\n" +
-                "      \"clientHoldOffTime\": 1,\n" +
-                "      \"bootstrapServerAccountTimeout\": 0\n" +
-                "    },\n" +
-                "    \"bootstrapServer\": {\n" +
-                "      \"host\": \"localhost\",\n" +
-                "      \"port\": 5687,\n" +
-                "      \"serverId\": 111,\n" +
-                "      \"securityMode\": \"NO_SEC\",\n" +
-                "      \"serverPublicKey\": \"\",\n" +
-                "      \"bootstrapServerIs\": true,\n" +
-                "      \"clientHoldOffTime\": 1,\n" +
-                "      \"bootstrapServerAccountTimeout\": 0\n" +
+                "    {\n" +
+                "       \"host\": \"0.0.0.0\",\n" +
+                "       \"port\": 5685,\n" +
+                "       \"binding\": \"U\",\n" +
+                "       \"lifetime\": 300,\n" +
+                "       \"securityMode\": \"NO_SEC\",\n" +
+                "       \"shortServerId\": 123,\n" +
+                "       \"notifIfDisabled\": true,\n" +
+                "       \"serverPublicKey\": \"\",\n" +
+                "       \"defaultMinPeriod\": 1,\n" +
+                "       \"bootstrapServerIs\": false,\n" +
+                "       \"clientHoldOffTime\": 1,\n" +
+                "       \"bootstrapServerAccountTimeout\": 0\n" +
                 "    }\n" +
-                "  },\n" +
+                "  ],\n" +
                 "  \"clientLwM2mSettings\": {\n" +
-                "    \"clientOnlyObserveAfterConnect\": 1,\n" +
+                "    \"edrxCycle\": null,\n" +
+                "    \"powerMode\": \"DRX\",\n" +
+                "    \"fwUpdateResource\": null,\n" +
                 "    \"fwUpdateStrategy\": 1,\n" +
-                "    \"swUpdateStrategy\": 1\n" +
+                "    \"psmActivityTimer\": null,\n" +
+                "    \"swUpdateResource\": null,\n" +
+                "    \"swUpdateStrategy\": 1,\n" +
+                "    \"pagingTransmissionWindow\": null,\n" +
+                "    \"clientOnlyObserveAfterConnect\": 1\n" +
                 "  }\n" +
                 "}";
         createDeviceProfile(RPC_TRANSPORT_CONFIGURATION);
