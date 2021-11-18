@@ -89,7 +89,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
 
     private DeviceCredentials saveOrUpdate(TenantId tenantId, DeviceCredentials deviceCredentials) {
         if (deviceCredentials.getCredentialsType() == null) {
-            throw new DataValidationException("Device credentials type must be specified");
+            throw new DataValidationException("Device credentials type should be specified");
         }
         formatCredentials(deviceCredentials);
         log.trace("Executing updateDeviceCredentials [{}]", deviceCredentials);

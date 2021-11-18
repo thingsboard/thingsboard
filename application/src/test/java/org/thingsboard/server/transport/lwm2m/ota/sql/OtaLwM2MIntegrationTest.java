@@ -54,6 +54,7 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
 
     public static final int TIMEOUT = 30;
     private final String OTA_TRANSPORT_CONFIGURATION = "{\n" +
+            "  \"type\": \"LWM2M\",\n" +
             "  \"observeAttr\": {\n" +
             "    \"keyName\": {\n" +
             "      \"/5_1.0/0/3\": \"state\",\n" +
@@ -91,43 +92,47 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
             "    ],\n" +
             "    \"attributeLwm2m\": {}\n" +
             "  },\n" +
-            "  \"bootstrap\": {\n" +
-            "    \"servers\": {\n" +
-            "      \"binding\": \"UQ\",\n" +
-            "      \"shortId\": 123,\n" +
-            "      \"lifetime\": 300,\n" +
-            "      \"notifIfDisabled\": true,\n" +
-            "      \"defaultMinPeriod\": 1\n" +
+            "  \"bootstrap\": [\n" +
+            "    {\n" +
+            "       \"host\": \"0.0.0.0\",\n" +
+            "       \"port\": 5687,\n" +
+            "       \"binding\": \"U\",\n" +
+            "       \"lifetime\": 300,\n" +
+            "       \"securityMode\": \"NO_SEC\",\n" +
+            "       \"shortServerId\": 111,\n" +
+            "       \"notifIfDisabled\": true,\n" +
+            "       \"serverPublicKey\": \"\",\n" +
+            "       \"defaultMinPeriod\": 1,\n" +
+            "       \"bootstrapServerIs\": true,\n" +
+            "       \"clientHoldOffTime\": 1,\n" +
+            "       \"bootstrapServerAccountTimeout\": 0\n" +
             "    },\n" +
-            "    \"lwm2mServer\": {\n" +
-            "      \"host\": \"localhost\",\n" +
-            "      \"port\": 5685,\n" +
-            "      \"serverId\": 123,\n" +
-            "      \"securityMode\": \"NO_SEC\",\n" +
-            "      \"serverPublicKey\": \"\",\n" +
-            "      \"clientHoldOffTime\": 1,\n" +
-            "      \"bootstrapServerAccountTimeout\": 0\n" +
-            "    },\n" +
-            "    \"bootstrapServer\": {\n" +
-            "      \"host\": \"localhost\",\n" +
-            "      \"port\": 5687,\n" +
-            "      \"serverId\": 111,\n" +
-            "      \"securityMode\": \"NO_SEC\",\n" +
-            "      \"serverPublicKey\": \"\",\n" +
-            "      \"clientHoldOffTime\": 1,\n" +
-            "      \"bootstrapServerAccountTimeout\": 0\n" +
+            "    {\n" +
+            "       \"host\": \"0.0.0.0\",\n" +
+            "       \"port\": 5685,\n" +
+            "       \"binding\": \"U\",\n" +
+            "       \"lifetime\": 300,\n" +
+            "       \"securityMode\": \"NO_SEC\",\n" +
+            "       \"shortServerId\": 123,\n" +
+            "       \"notifIfDisabled\": true,\n" +
+            "       \"serverPublicKey\": \"\",\n" +
+            "       \"defaultMinPeriod\": 1,\n" +
+            "       \"bootstrapServerIs\": false,\n" +
+            "       \"clientHoldOffTime\": 1,\n" +
+            "       \"bootstrapServerAccountTimeout\": 0\n" +
             "    }\n" +
-            "  },\n" +
+            "  ],\n" +
             "  \"clientLwM2mSettings\": {\n" +
+            "    \"edrxCycle\": null,\n" +
+            "    \"powerMode\": \"DRX\",\n" +
+            "    \"fwUpdateResource\": null,\n" +
             "    \"fwUpdateStrategy\": 1,\n" +
+            "    \"psmActivityTimer\": null,\n" +
+            "    \"swUpdateResource\": null,\n" +
             "    \"swUpdateStrategy\": 1,\n" +
-            "    \"clientOnlyObserveAfterConnect\": 1,\n" +
-            "    \"powerMode\": \"PSM\",\n" +
-            "    \"fwUpdateResource\": \"\",\n" +
-            "    \"swUpdateResource\": \"\",\n" +
-            "    \"compositeOperationsSupport\": false\n" +
-            "  },\n" +
-            "  \"type\": \"LWM2M\"\n" +
+            "    \"pagingTransmissionWindow\": null,\n" +
+            "    \"clientOnlyObserveAfterConnect\": 1\n" +
+            "  }\n" +
             "}";
 
     @Test
