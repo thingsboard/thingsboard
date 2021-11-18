@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.ConcurrencyFailureException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
@@ -159,7 +160,7 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
         if (relationExistsBeforeDelete) {
             try {
                 relationRepository.deleteById(key);
-            } catch (ConcurrencyFailureException e) {
+            } catch (DataAccessException e) {
                 log.debug("[{}] Concurrency exception while deleting relation", key, e);
             }
         }
@@ -200,7 +201,7 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
         return (root, criteriaQuery, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             if (from != null) {
-                Predicate fromIdPredicate = criteriaBuilder.equal(root.get("fromId"),  from.getId());
+                Predicate fromIdPredicate = criteriaBuilder.equal(root.get("fromId"), from.getId());
                 predicates.add(fromIdPredicate);
                 Predicate fromEntityTypePredicate = criteriaBuilder.equal(root.get("fromType"), from.getEntityType().name());
                 predicates.add(fromEntityTypePredicate);
