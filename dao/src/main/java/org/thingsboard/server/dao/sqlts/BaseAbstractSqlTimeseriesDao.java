@@ -15,33 +15,24 @@
  */
 package org.thingsboard.server.dao.sqlts;
 
-import com.google.common.base.Function;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionary;
 import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionaryCompositeKey;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 import org.thingsboard.server.dao.sqlts.dictionary.TsKvDictionaryRepository;
 
-import javax.annotation.Nullable;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 @Slf4j
 public abstract class BaseAbstractSqlTimeseriesDao extends JpaAbstractDaoListeningExecutorService {
 
     private final ConcurrentMap<String, Integer> tsKvDictionaryMap = new ConcurrentHashMap<>();
-
     protected static final ReentrantLock tsCreationLock = new ReentrantLock();
-
     @Autowired
     protected TsKvDictionaryRepository dictionaryRepository;
 
@@ -81,19 +72,4 @@ public abstract class BaseAbstractSqlTimeseriesDao extends JpaAbstractDaoListeni
         return keyId;
     }
 
-    protected ListenableFuture<List<TsKvEntry>> getTskvEntriesFuture(ListenableFuture<List<Optional<TsKvEntry>>> future) {
-        return Futures.transform(future, new Function<List<Optional<TsKvEntry>>, List<TsKvEntry>>() {
-            @Nullable
-            @Override
-            public List<TsKvEntry> apply(@Nullable List<Optional<TsKvEntry>> results) {
-                if (results == null || results.isEmpty()) {
-                    return null;
-                }
-                return results.stream()
-                        .filter(Optional::isPresent)
-                        .map(Optional::get)
-                        .collect(Collectors.toList());
-            }
-        }, service);
-    }
 }
