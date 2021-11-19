@@ -38,23 +38,24 @@ public interface AggregationTimeseriesDao {
         if (query.getAggregation() == Aggregation.NONE) {
             return findAllAsyncWithLimit(tenantId, entityId, query);
         } else {
-            long step = getIntervalGreaterOrEqualsMinAggregationStep(query.getInterval());
-            long stepTs = query.getStartTs();
-            List<ListenableFuture<Optional<TsKvEntry>>> futures = findIntervals(tenantId, entityId, query, step, stepTs);
+            List<ListenableFuture<Optional<TsKvEntry>>> futures = findIntervals(tenantId, entityId, query);
             return getTskvEntriesFuture(Futures.allAsList(futures));
         }
     }
 
-    default List<ListenableFuture<Optional<TsKvEntry>>> findIntervals(TenantId tenantId, EntityId entityId, ReadTsKvQuery query, long step, long stepTs) {
+    default List<ListenableFuture<Optional<TsKvEntry>>> findIntervals(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
         List<ListenableFuture<Optional<TsKvEntry>>> futures = new ArrayList<>();
-        while (stepTs < query.getEndTs()) {
-            long startTs = stepTs;
-            long endTs = stepTs + step;
+        long endPeriod = query.getEndTs();
+        long startPeriod = query.getStartTs();
+        long step = query.getInterval();
+        while (startPeriod <= endPeriod) {
+            long startTs = startPeriod;
+            long endTs = Math.min(startPeriod + step, endPeriod + 1);
             long ts = getTsForReadTsKvQuery(startTs, endTs);
             ReadTsKvQuery subQuery = new BaseReadTsKvQuery(query.getKey(), startTs, endTs, ts, 1, query.getAggregation(), query.getOrder());
             ListenableFuture<Optional<TsKvEntry>> aggregateTsKvEntry = findAndAggregateAsync(tenantId, entityId, subQuery, toPartitionTs(startTs), toPartitionTs(endTs), query.getAggregation());
             futures.add(aggregateTsKvEntry);
-            stepTs = endTs;
+            startPeriod = endTs;
         }
         return futures;
     }
