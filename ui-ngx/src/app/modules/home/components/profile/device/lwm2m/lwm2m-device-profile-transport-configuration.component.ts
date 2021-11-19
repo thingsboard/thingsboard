@@ -237,7 +237,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateStrategy').updateValueAndValidity({onlySelf: true});
       this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateStrategy').updateValueAndValidity({onlySelf: true});
     }
-    this.cd.detectChanges();
+    this.cd.markForCheck();
   }
 
   private updateModel = (): void => {
