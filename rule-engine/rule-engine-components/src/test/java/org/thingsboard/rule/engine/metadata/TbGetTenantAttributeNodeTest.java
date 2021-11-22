@@ -15,260 +15,110 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Futures;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.RuleChainId;
-import org.thingsboard.server.common.data.id.RuleNodeId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.StringDataEntry;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgDataType;
-import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.dao.asset.AssetService;
-import org.thingsboard.server.dao.attributes.AttributesService;
-import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.server.dao.user.UserService;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyCollection;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.same;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
-import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
+@RunWith(MockitoJUnitRunner.class)
+public class TbGetTenantAttributeNodeTest extends AbstractAttributeNodeTest {
 
-@RunWith(MockitoJUnitRunner.Silent.class)
-public class TbGetTenantAttributeNodeTest {
-    private final RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
-    private final RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
-    private TbGetTenantAttributeNode node;
-    @Mock
-    private TbContext ctx;
-    @Mock
-    private AttributesService attributesService;
-    @Mock
-    private TimeseriesService timeseriesService;
-    @Mock
-    private UserService userService;
-    @Mock
-    private AssetService assetService;
-    @Mock
-    private DeviceService deviceService;
-    private TbMsg msg;
-    private Map metaData;
+    User user = new User();
+    Asset asset = new Asset();
+    Device device = new Device();
 
     @Before
-    public void init() throws TbNodeException {
+    public void initDataForTests() throws TbNodeException {
+        init(new TbGetTenantAttributeNode());
+        user.setTenantId(tenantId);
+        user.setId(new UserId(UUID.randomUUID()));
+
+        asset.setTenantId(tenantId);
+        asset.setId(new AssetId(UUID.randomUUID()));
+
+        device.setTenantId(tenantId);
+        device.setId(new DeviceId(UUID.randomUUID()));
+    }
+
+    @Override
+    protected TbEntityGetAttrNode getEmptyNode() {
+        return new TbGetTenantAttributeNode();
+    }
+
+    @Override
+    <T> T getTbNodeConfig() {
         TbGetEntityAttrNodeConfiguration config = new TbGetEntityAttrNodeConfiguration();
         Map<String, String> conf = new HashMap<>();
-        conf.put("${word}", "result");
+        conf.put(keyAttrConf, valueAttrConf);
         config.setAttrMapping(conf);
         config.setTelemetry(false);
-        ObjectMapper mapper = new ObjectMapper();
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        return (T) config;
+    }
 
-        metaData = new HashMap<>();
-        metaData.putIfAbsent("word", "temperature");
+    @Override
+    <T> T getTbNodeConfigFotTelemetry() {
+        TbGetEntityAttrNodeConfiguration config = new TbGetEntityAttrNodeConfiguration();
+        Map<String, String> conf = new HashMap<>();
+        conf.put(keyAttrConf, valueAttrConf);
+        config.setAttrMapping(conf);
+        config.setTelemetry(true);
+        return (T) config;
+    }
 
-        node = new TbGetTenantAttributeNode();
-        node.init(null, nodeConfiguration);
+    @Override
+    EntityId getEntityId() {
+        return tenantId;
     }
 
     @Test
     public void errorThrownIfCannotLoadAttributes() {
-        UserId userId = new UserId(Uuids.timeBased());
-        TenantId tenantId = new TenantId(Uuids.timeBased());
-        User user = new User();
-        user.setTenantId(tenantId);
-
-        msg = TbMsg.newMsg("USER", userId, new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
-
-        when(ctx.getUserService()).thenReturn(userService);
-        when(userService.findUserByIdAsync(any(), eq(userId))).thenReturn(Futures.immediateFuture(user));
-
-        when(ctx.getAttributesService()).thenReturn(attributesService);
-        when(attributesService.find(any(), eq(tenantId), eq(SERVER_SCOPE), anyCollection()))
-                .thenThrow(new IllegalStateException("something wrong"));
-
-        node.onMsg(ctx, msg);
-        final ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
-        verify(ctx).tellFailure(same(msg), captor.capture());
-
-        Throwable value = captor.getValue();
-        assertEquals("something wrong", value.getMessage());
-        assertTrue(msg.getMetaData().getData().isEmpty());
+        errorThrownIfCannotLoadAttributes(user);
     }
 
     @Test
     public void errorThrownIfCannotLoadAttributesAsync() {
-        UserId userId = new UserId(Uuids.timeBased());
-        TenantId tenantId = new TenantId(Uuids.timeBased());
-        User user = new User();
-        user.setTenantId(tenantId);
-
-        msg = TbMsg.newMsg("USER", userId, new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
-
-        when(ctx.getUserService()).thenReturn(userService);
-        when(userService.findUserByIdAsync(any(), eq(userId))).thenReturn(Futures.immediateFuture(user));
-
-        when(ctx.getAttributesService()).thenReturn(attributesService);
-        when(attributesService.find(any(), eq(tenantId), eq(SERVER_SCOPE), anyCollection()))
-                .thenReturn(Futures.immediateFailedFuture(new IllegalStateException("something wrong")));
-
-        node.onMsg(ctx, msg);
-        final ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
-        verify(ctx).tellFailure(same(msg), captor.capture());
-
-        Throwable value = captor.getValue();
-        assertEquals("something wrong", value.getMessage());
-        assertTrue(msg.getMetaData().getData().isEmpty());
+        errorThrownIfCannotLoadAttributesAsync(user);
     }
 
     @Test
     public void failedChainUsedIfCustomerCannotBeFound() {
-        UserId userId = new UserId(Uuids.timeBased());
-        CustomerId customerId = new CustomerId(Uuids.timeBased());
-        User user = new User();
-        user.setCustomerId(customerId);
-
-        msg = TbMsg.newMsg("USER", userId, new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
-
-        when(ctx.getUserService()).thenReturn(userService);
-        when(userService.findUserByIdAsync(any(), eq(userId))).thenReturn(Futures.immediateFuture(null));
-
-
-        node.onMsg(ctx, msg);
-        verify(ctx).tellNext(msg, FAILURE);
-        assertTrue(msg.getMetaData().getData().isEmpty());
+        failedChainUsedIfCustomerCannotBeFound(user);
     }
 
     @Test
     public void customerAttributeAddedInMetadata() {
-        TenantId tenantId = new TenantId(Uuids.timeBased());
-        msg = TbMsg.newMsg("TENANT", tenantId, new TbMsgMetaData(metaData), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
-        entityAttributeFetched(tenantId);
+        entityAttributeAddedInMetadata(tenantId, "TENANT");
     }
 
     @Test
     public void usersCustomerAttributesFetched() {
-        UserId userId = new UserId(Uuids.timeBased());
-        TenantId tenantId = new TenantId(Uuids.timeBased());
-        User user = new User();
-        user.setTenantId(tenantId);
-
-        msg = TbMsg.newMsg("USER", userId, new TbMsgMetaData(metaData), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
-
-        when(ctx.getUserService()).thenReturn(userService);
-        when(userService.findUserByIdAsync(any(), eq(userId))).thenReturn(Futures.immediateFuture(user));
-
-        entityAttributeFetched(tenantId);
+        usersCustomerAttributesFetched(user);
     }
 
     @Test
     public void assetsCustomerAttributesFetched() {
-        AssetId assetId = new AssetId(Uuids.timeBased());
-        TenantId tenantId = new TenantId(Uuids.timeBased());
-        Asset asset = new Asset();
-        asset.setTenantId(tenantId);
-
-        msg = TbMsg.newMsg("USER", assetId, new TbMsgMetaData(metaData), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
-
-        when(ctx.getAssetService()).thenReturn(assetService);
-        when(assetService.findAssetByIdAsync(any(), eq(assetId))).thenReturn(Futures.immediateFuture(asset));
-
-        entityAttributeFetched(tenantId);
+        assetsCustomerAttributesFetched(asset);
     }
 
     @Test
     public void deviceCustomerAttributesFetched() {
-        DeviceId deviceId = new DeviceId(Uuids.timeBased());
-        TenantId tenantId = new TenantId(Uuids.timeBased());
-        Device device = new Device();
-        device.setTenantId(tenantId);
-
-        msg = TbMsg.newMsg("USER", deviceId, new TbMsgMetaData(metaData), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
-
-        when(ctx.getDeviceService()).thenReturn(deviceService);
-        when(deviceService.findDeviceByIdAsync(any(), eq(deviceId))).thenReturn(Futures.immediateFuture(device));
-
-        entityAttributeFetched(tenantId);
+        deviceCustomerAttributesFetched(device);
     }
 
     @Test
     public void deviceCustomerTelemetryFetched() throws TbNodeException {
-        TbGetEntityAttrNodeConfiguration config = new TbGetEntityAttrNodeConfiguration();
-
-        Map<String, String> conf = new HashMap<>();
-        conf.put("${word}", "result");
-        config.setAttrMapping(conf);
-        config.setTelemetry(true);
-        ObjectMapper mapper = new ObjectMapper();
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
-
-        node = new TbGetTenantAttributeNode();
-        node.init(null, nodeConfiguration);
-
-
-        DeviceId deviceId = new DeviceId(Uuids.timeBased());
-        TenantId tenantId = new TenantId(Uuids.timeBased());
-        Device device = new Device();
-        device.setTenantId(tenantId);
-
-        msg = TbMsg.newMsg("USER", deviceId, new TbMsgMetaData(metaData), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
-
-        when(ctx.getDeviceService()).thenReturn(deviceService);
-        when(deviceService.findDeviceByIdAsync(any(), eq(deviceId))).thenReturn(Futures.immediateFuture(device));
-
-        List<TsKvEntry> timeseries = Lists.newArrayList(new BasicTsKvEntry(1L, new StringDataEntry("temperature", "highest")));
-
-        when(ctx.getTimeseriesService()).thenReturn(timeseriesService);
-        when(timeseriesService.findLatest(any(), eq(tenantId), anyCollection()))
-                .thenReturn(Futures.immediateFuture(timeseries));
-
-        node.onMsg(ctx, msg);
-        verify(ctx).tellSuccess(msg);
-        assertEquals(msg.getMetaData().getValue("result"), "highest");
-    }
-
-    private void entityAttributeFetched(TenantId customerId) {
-        List<AttributeKvEntry> attributes = Lists.newArrayList(new BaseAttributeKvEntry(new StringDataEntry("temperature", "high"), 1L));
-
-        when(ctx.getAttributesService()).thenReturn(attributesService);
-        when(attributesService.find(any(), eq(customerId), eq(SERVER_SCOPE), anyCollection()))
-                .thenReturn(Futures.immediateFuture(attributes));
-
-        node.onMsg(ctx, msg);
-        verify(ctx).tellSuccess(msg);
-        assertEquals(msg.getMetaData().getValue("result"), "high");
+        deviceCustomerTelemetryFetched(device);
     }
 }
