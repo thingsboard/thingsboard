@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, forwardRef, Input, OnDestroy } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -95,6 +95,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   constructor(private fb: FormBuilder,
+              private cd: ChangeDetectorRef,
               private deviceProfileService: DeviceProfileService) {
     this.lwm2mDeviceProfileFormGroup = this.fb.group({
       objectIds: [null],
@@ -236,6 +237,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateStrategy').updateValueAndValidity({onlySelf: true});
       this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateStrategy').updateValueAndValidity({onlySelf: true});
     }
+    this.cd.markForCheck();
   }
 
   private updateModel = (): void => {
