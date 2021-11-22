@@ -164,6 +164,32 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         Assert.assertEquals(toTsEntry(TS - 2, stringKvEntry), entries.get(1));
         Assert.assertEquals(toTsEntry(TS - 1, stringKvEntry), entries.get(2));
     }
+//
+//    @Test
+//    public void testFindByQueryOneMilisecondPeriod() throws Exception {
+//        DeviceId deviceId = new DeviceId(Uuids.timeBased());
+//
+//        saveEntries(deviceId, TS - 3);
+//        saveEntries(deviceId, TS - 2);
+//        saveEntries(deviceId, TS - 1);
+//
+//        List<ReadTsKvQuery> queries = new ArrayList<>();
+//        queries.add(new BaseReadTsKvQuery(STRING_KEY, TS, TS, 0, 1000, Aggregation.NONE, "ASC"));
+//
+//        List<TsKvEntry> entries = tsService.findAll(tenantId, deviceId, queries).get();
+//        Assert.assertEquals(3, entries.size());
+//        Assert.assertEquals(toTsEntry(TS - 3, stringKvEntry), entries.get(0));
+//        Assert.assertEquals(toTsEntry(TS - 2, stringKvEntry), entries.get(1));
+//        Assert.assertEquals(toTsEntry(TS - 1, stringKvEntry), entries.get(2));
+//
+//        EntityView entityView = saveAndCreateEntityView(deviceId, Arrays.asList(STRING_KEY));
+//
+//        entries = tsService.findAll(tenantId, entityView.getId(), queries).get();
+//        Assert.assertEquals(3, entries.size());
+//        Assert.assertEquals(toTsEntry(TS - 3, stringKvEntry), entries.get(0));
+//        Assert.assertEquals(toTsEntry(TS - 2, stringKvEntry), entries.get(1));
+//        Assert.assertEquals(toTsEntry(TS - 1, stringKvEntry), entries.get(2));
+//    }
 
     @Test
     public void testFindByQueryDescOrder() throws Exception {
