@@ -378,9 +378,13 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
             List<LwM2mClient> clients = clientContext.getLwM2mClients()
                     .stream().filter(e -> e.getProfileId() != null)
                     .filter(e -> e.getProfileId().equals(deviceProfile.getUuidId())).collect(Collectors.toList());
-            clients.forEach(client -> client.onDeviceProfileUpdate(deviceProfile));
+            clients.forEach(client -> {
+                this.securityStore.remove(client.getEndpoint(), client.getRegistration().getId());
+                client.onDeviceProfileUpdate(deviceProfile);
+            });
             if (clients.size() > 0) {
-                this.onDeviceProfileUpdate(clients, deviceProfile);
+                var oldProfile = clientContext.getProfile(deviceProfile.getUuidId());
+                this.onDeviceProfileUpdate(clients, oldProfile, deviceProfile);
             }
         } catch (Exception e) {
             log.warn("[{}] failed to update profile: {}", deviceProfile.getId(), deviceProfile);
@@ -392,6 +396,7 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
         try {
             LwM2mClient client = clientContext.getClientByDeviceId(device.getUuidId());
             if (client != null) {
+                this.securityStore.remove(client.getEndpoint(), client.getRegistration().getId());
                 this.onDeviceUpdate(client, device, deviceProfileOpt);
             }
         } catch (Exception e) {
@@ -645,7 +650,8 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
     }
 
     private void onDeviceUpdate(LwM2mClient lwM2MClient, Device device, Optional<DeviceProfile> deviceProfileOpt) {
-        deviceProfileOpt.ifPresent(deviceProfile -> this.onDeviceProfileUpdate(Collections.singletonList(lwM2MClient), deviceProfile));
+        var oldProfile = clientContext.getProfile(lwM2MClient.getProfileId());
+        deviceProfileOpt.ifPresent(deviceProfile -> this.onDeviceProfileUpdate(Collections.singletonList(lwM2MClient), oldProfile, deviceProfile));
         lwM2MClient.onDeviceUpdate(device, deviceProfileOpt);
     }
 
@@ -754,8 +760,7 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
     }
 
     //TODO: review and optimize the logic to minimize number of the requests to device.
-    private void onDeviceProfileUpdate(List<LwM2mClient> clients, DeviceProfile deviceProfile) {
-        var oldProfile = clientContext.getProfile(deviceProfile.getUuidId());
+    private void onDeviceProfileUpdate(List<LwM2mClient> clients, Lwm2mDeviceProfileTransportConfiguration oldProfile, DeviceProfile deviceProfile) {
         if (clientContext.profileUpdate(deviceProfile) != null) {
             // #1
             TelemetryMappingConfiguration oldTelemetryParams = oldProfile.getObserveAttr();
