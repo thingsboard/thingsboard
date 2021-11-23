@@ -55,7 +55,10 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
                 clearCacheByName("deviceProfiles");
                 clearCacheByName("tenantProfiles");
                 clearCacheByName("relations");
-
+                break;
+            case "3.3.2":
+                log.info("Clear cache to upgrade from version 3.3.2 to 3.3.3 ...");
+                clearAllCaches();
                 break;
             default:
                 throw new RuntimeException("Unable to update cache, unsupported fromVersion: " + fromVersion);
