@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.metadata;
 
 import com.google.common.util.concurrent.Futures;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,7 +41,7 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.Silent.class)
+@RunWith(MockitoJUnitRunner.class)
 public class TbGetRelatedAttributeNodeTest extends AbstractAttributeNodeTest {
     User user = new User();
     Asset asset = new Asset();
@@ -74,25 +75,24 @@ public class TbGetRelatedAttributeNodeTest extends AbstractAttributeNodeTest {
     }
 
     @Override
-    <T> T getTbNodeConfig() {
-        TbGetRelatedAttrNodeConfiguration config = new TbGetRelatedAttrNodeConfiguration();
-        config = config.defaultConfiguration();
-        Map<String, String> conf = new HashMap<>();
-        conf.put(keyAttrConf, valueAttrConf);
-        config.setAttrMapping(conf);
-        config.setTelemetry(false);
-        return (T) config;
+    TbGetEntityAttrNodeConfiguration getTbNodeConfig() {
+        return getConfig(false);
     }
 
     @Override
-    <T> T getTbNodeConfigFotTelemetry() {
+    TbGetEntityAttrNodeConfiguration getTbNodeConfigForTelemetry() {
+        return getConfig(true);
+    }
+
+    @NotNull
+    private TbGetEntityAttrNodeConfiguration getConfig(boolean isTelemetry) {
         TbGetRelatedAttrNodeConfiguration config = new TbGetRelatedAttrNodeConfiguration();
         config = config.defaultConfiguration();
         Map<String, String> conf = new HashMap<>();
         conf.put(keyAttrConf, valueAttrConf);
         config.setAttrMapping(conf);
-        config.setTelemetry(true);
-        return (T) config;
+        config.setTelemetry(isTelemetry);
+        return config;
     }
 
     @Override

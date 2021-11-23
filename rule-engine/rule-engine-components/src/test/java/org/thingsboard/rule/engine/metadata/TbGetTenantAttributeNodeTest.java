@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.google.common.util.concurrent.Futures;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,9 +29,11 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.UserId;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TbGetTenantAttributeNodeTest extends AbstractAttributeNodeTest {
@@ -58,42 +61,26 @@ public class TbGetTenantAttributeNodeTest extends AbstractAttributeNodeTest {
     }
 
     @Override
-    <T> T getTbNodeConfig() {
-        TbGetEntityAttrNodeConfiguration config = new TbGetEntityAttrNodeConfiguration();
-        Map<String, String> conf = new HashMap<>();
-        conf.put(keyAttrConf, valueAttrConf);
-        config.setAttrMapping(conf);
-        config.setTelemetry(false);
-        return (T) config;
-    }
-
-    @Override
-    <T> T getTbNodeConfigFotTelemetry() {
-        TbGetEntityAttrNodeConfiguration config = new TbGetEntityAttrNodeConfiguration();
-        Map<String, String> conf = new HashMap<>();
-        conf.put(keyAttrConf, valueAttrConf);
-        config.setAttrMapping(conf);
-        config.setTelemetry(true);
-        return (T) config;
-    }
-
-    @Override
     EntityId getEntityId() {
         return tenantId;
     }
 
     @Test
     public void errorThrownIfCannotLoadAttributes() {
+        mockFindUser(user);
         errorThrownIfCannotLoadAttributes(user);
     }
 
     @Test
     public void errorThrownIfCannotLoadAttributesAsync() {
+        mockFindUser(user);
         errorThrownIfCannotLoadAttributesAsync(user);
     }
 
     @Test
     public void failedChainUsedIfCustomerCannotBeFound() {
+        when(ctx.getUserService()).thenReturn(userService);
+        when(userService.findUserByIdAsync(any(), eq(user.getId()))).thenReturn(Futures.immediateFuture(null));
         failedChainUsedIfCustomerCannotBeFound(user);
     }
 
@@ -104,21 +91,25 @@ public class TbGetTenantAttributeNodeTest extends AbstractAttributeNodeTest {
 
     @Test
     public void usersCustomerAttributesFetched() {
+        mockFindUser(user);
         usersCustomerAttributesFetched(user);
     }
 
     @Test
     public void assetsCustomerAttributesFetched() {
+        mockFindAsset(asset);
         assetsCustomerAttributesFetched(asset);
     }
 
     @Test
     public void deviceCustomerAttributesFetched() {
+        mockFindDevice(device);
         deviceCustomerAttributesFetched(device);
     }
 
     @Test
     public void deviceCustomerTelemetryFetched() throws TbNodeException {
+        mockFindDevice(device);
         deviceCustomerTelemetryFetched(device);
     }
 }
