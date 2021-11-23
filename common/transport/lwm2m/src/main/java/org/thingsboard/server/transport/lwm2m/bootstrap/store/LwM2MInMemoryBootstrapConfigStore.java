@@ -73,6 +73,21 @@ public class LwM2MInMemoryBootstrapConfigStore extends InMemoryBootstrapConfigSt
     }
 
     public void addToStore(String endpoint, BootstrapConfig config) throws InvalidConfigurationException {
-        super.add(endpoint, config);
+        try {
+            super.add(endpoint, config);
+        } catch (InvalidConfigurationException e) {
+            if (e.getMessage().contains("no security entry for server instance:")) {
+                try {
+                    int instanceId = Integer.valueOf(e.getMessage().replace("no security entry for server instance:", "").trim());
+                    Integer serverShortId = config.servers.get(instanceId).shortId;
+                    if (config.security.entrySet().stream().filter(f -> f.getValue().serverId == serverShortId).findAny().isPresent()) {
+                        // TODO if this instance isBootstrap  validation without this instance  -> super.add(endpoint, config1);
+                        bootstrapByEndpoint.put(endpoint, config);
+                    }
+                } catch (NumberFormatException ex) {
+                    log.error(e.getMessage());
+                }
+            }
+        }
     }
 }
