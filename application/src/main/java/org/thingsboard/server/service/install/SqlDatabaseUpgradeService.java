@@ -471,18 +471,17 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                 break;
             case "3.3.2":
                 try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
-                    log.info("Updating device (section bootstrap) and device profile profile_data transport_type==LWM2M...");
+                    log.info("Updating schema ...");
                     schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.3.2", "schema_update_lwm2m_bootstrap.sql");
                     loadSql(schemaUpdateFile, conn);
-                    log.info("Updating device profile profile_data transport_type==LWM2M...");
+                    log.info("Updating server`s public key from HexDec to Base64 in profile for LWM2M...");
                     conn.createStatement().execute("call update_profile_bootstrap();");
-                    log.info("Device profile profile_data transport_type==LWM2M updated.");
-
-                    log.info("Updating device (section bootstrap) transport_type==LWM2M...");
+                    log.info("Server`s public key from HexDec to Base64 in profile for LWM2M updated.");
+                    log.info("Updating client`s public key and secret key from HexDec to Base64 for LWM2M...");
                     conn.createStatement().execute("call update_device_credentials_to_base64_and_bootstrap();");
-                    log.info("Device (section bootstrap) transport_type==LWM2M updated.");
-//                    conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3003003;");
-//                    log.info("Schema updated.");
+                    log.info("Client`s public key and secret key from HexDec to Base64 for LWM2M updated.");
+                    conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3003003;");
+                    log.info("Schema updated.");
                 } catch (Exception e) {
                     log.error("Failed updating schema!!!", e);
                 }

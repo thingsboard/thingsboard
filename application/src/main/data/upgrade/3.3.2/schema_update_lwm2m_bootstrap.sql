@@ -24,7 +24,7 @@ UPDATE device_profile
 SET profile_data = jsonb_set(
   profile_data,
   '{transportConfiguration, bootstrap}',
-  get_bootstrap_3_3_3(
+  get_bootstrap(
     profile_data::jsonb #> '{transportConfiguration,bootstrap}',
     subquery.publickey_bs,
     subquery.publickey_lw),
@@ -47,7 +47,7 @@ WHERE device_profile.id = subquery.id
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION get_bootstrap_3_3_3(bootstrap_in jsonb, publickey_bs text, publickey_lw text) RETURNS jsonb AS
+CREATE OR REPLACE FUNCTION get_bootstrap(bootstrap_in jsonb, publickey_bs text, publickey_lw text) RETURNS jsonb AS
 $$
 BEGIN
 
@@ -92,12 +92,12 @@ $$
 BEGIN
 
 UPDATE device_credentials
-SET credentials_value = get_device_and_bootstrap_3_3_3(credentials_value::text)
+SET credentials_value = get_device_and_bootstrap(credentials_value::text)
 WHERE credentials_type = 'LWM2M_CREDENTIALS';
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION get_device_and_bootstrap_3_3_3(IN credentials_value text, OUT credentials_value_new text)
+CREATE OR REPLACE FUNCTION get_device_and_bootstrap(IN credentials_value text, OUT credentials_value_new text)
   LANGUAGE plpgsql AS
 $$
 DECLARE
