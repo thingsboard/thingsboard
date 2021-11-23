@@ -21,12 +21,7 @@ import org.eclipse.leshan.core.request.BootstrapFinishRequest;
 import org.eclipse.leshan.core.request.BootstrapRequest;
 import org.eclipse.leshan.core.request.Identity;
 import org.eclipse.leshan.core.response.LwM2mResponse;
-import org.eclipse.leshan.server.bootstrap.BootstrapConfigStore;
-import org.eclipse.leshan.server.bootstrap.BootstrapFailureCause;
-import org.eclipse.leshan.server.bootstrap.BootstrapSession;
-import org.eclipse.leshan.server.bootstrap.BootstrapTaskProvider;
-import org.eclipse.leshan.server.bootstrap.DefaultBootstrapSession;
-import org.eclipse.leshan.server.bootstrap.DefaultBootstrapSessionManager;
+import org.eclipse.leshan.server.bootstrap.*;
 import org.eclipse.leshan.server.model.LwM2mBootstrapModelProvider;
 import org.eclipse.leshan.server.model.StandardBootstrapModelProvider;
 import org.eclipse.leshan.server.security.BootstrapSecurityStore;
@@ -36,11 +31,13 @@ import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.transport.lwm2m.bootstrap.store.LwM2MBootstrapConfigStoreTaskProvider;
 import org.thingsboard.server.transport.lwm2m.bootstrap.store.LwM2MBootstrapSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.*;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_ERROR;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_INFO;
 
 @Slf4j
 public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSessionManager {
@@ -208,7 +205,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
 
     @Override
     public void end(BootstrapSession bsSession) {
-        this.sendLogs(bsSession.getEndpoint(), String.format("%s: Bootstrap session finished...", LOG_LWM2M_INFO));
+        this.sendLogs(bsSession.getEndpoint(), String.format("%s: Bootstrap session finished.", LOG_LWM2M_INFO));
     }
 
     @Override
