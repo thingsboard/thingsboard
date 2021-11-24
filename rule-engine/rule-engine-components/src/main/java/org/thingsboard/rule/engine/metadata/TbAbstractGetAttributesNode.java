@@ -15,9 +15,6 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.json.JsonWriteFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
@@ -26,6 +23,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonParseException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -52,7 +50,7 @@ import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 
 public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeConfiguration, T extends EntityId> implements TbNode {
 
-    private static ObjectMapper mapper = new ObjectMapper();
+    private static ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER_WHERE_UNQUOTED_FIELD_NAMES;
 
     private static final String VALUE = "value";
     private static final String TS = "ts";
@@ -62,8 +60,6 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = loadGetAttributesNodeConfig(configuration);
-        mapper.configure(JsonWriteFeature.QUOTE_FIELD_NAMES.mappedFeature(), false);
-        mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
     }
 
     protected abstract C loadGetAttributesNodeConfig(TbNodeConfiguration configuration) throws TbNodeException;

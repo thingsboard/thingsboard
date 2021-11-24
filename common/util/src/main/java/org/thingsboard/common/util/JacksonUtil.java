@@ -15,7 +15,9 @@
  */
 package org.thingsboard.common.util;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.json.JsonWriteFeature;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,6 +33,11 @@ import java.util.Arrays;
 public class JacksonUtil {
 
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().registerModule(new JavaTimeModule());
+
+    public static final ObjectMapper OBJECT_MAPPER_WHERE_UNQUOTED_FIELD_NAMES = new ObjectMapper().
+            registerModule(new JavaTimeModule()).
+            configure(JsonWriteFeature.QUOTE_FIELD_NAMES.mappedFeature(), false).
+            configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
 
     public static <T> T convertValue(Object fromValue, Class<T> toValueType) {
         try {

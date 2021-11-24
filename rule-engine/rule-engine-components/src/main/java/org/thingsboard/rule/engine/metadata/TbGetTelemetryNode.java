@@ -15,8 +15,6 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.json.JsonWriteFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -93,9 +91,7 @@ public class TbGetTelemetryNode implements TbNode {
         }
         aggregation = parseAggregationConfig(config.getAggregation());
 
-        mapper = JacksonUtil.OBJECT_MAPPER;
-        mapper.configure(JsonWriteFeature.QUOTE_FIELD_NAMES.mappedFeature(), false);
-        mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+        mapper = JacksonUtil.OBJECT_MAPPER_WHERE_UNQUOTED_FIELD_NAMES;
     }
 
     Aggregation parseAggregationConfig(String aggName) {
