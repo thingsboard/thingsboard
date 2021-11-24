@@ -29,6 +29,7 @@ import org.eclipse.californium.scandium.dtls.HandshakeResultHandler;
 import org.eclipse.californium.scandium.dtls.x509.NewAdvancedCertificateVerifier;
 import org.eclipse.californium.scandium.dtls.x509.StaticCertificateVerifier;
 import org.eclipse.californium.scandium.util.ServerNames;
+import org.eclipse.leshan.core.util.SecurityUtil;
 import org.eclipse.leshan.server.security.NonUniqueSecurityInfoException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -56,6 +57,7 @@ import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer.CLIENT;
 
@@ -114,13 +116,28 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
                             cert.checkValidity();
                         }
 
+
+                        TbLwM2MSecurityInfo securityInfo = null;
+                        // verify if trust
+                        if (config.getTrustSslCredentials().getTrustedCertificates().length > 0) {
+                            if (searchIssuer(cert, config.getTrustSslCredentials().getTrustedCertificates()) != null) {
+                                String [] dns = cert.getSubjectX500Principal().getName().split(",");
+                                Optional <String> cn = (Arrays.stream(dns).filter(dn -> dn.contains("CN="))).findFirst();
+                                if (cn.isPresent() && cn.get().length()>3){
+                                    String endpoint = cn.get().split("=")[1];
+                                    securityInfo = securityInfoValidator.getEndpointSecurityInfoByCredentialsId(endpoint, CLIENT);
+                                }
+                            }
+                        }
+                        // if not trust or cert trust securityInfo == null
                         String strCert = SslUtil.getCertificateString(cert);
                         String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
-                        TbLwM2MSecurityInfo securityInfo;
-                        try {
-                            securityInfo = securityInfoValidator.getEndpointSecurityInfoByCredentialsId(sha3Hash, CLIENT);
-                        } catch (LwM2MAuthException e) {
-                            securityInfo = null;
+                        if (securityInfo == null) {
+                            try {
+                                securityInfo = securityInfoValidator.getEndpointSecurityInfoByCredentialsId(sha3Hash, CLIENT);
+                            } catch (LwM2MAuthException e) {
+                                log.trace("Failed find security info: {}", sha3Hash, e);
+                            }
                         }
                         ValidateDeviceCredentialsResponse msg = securityInfo != null ? securityInfo.getMsg() : null;
                         if (msg != null && org.thingsboard.server.common.data.StringUtils.isNotEmpty(msg.getCredentials())) {
@@ -131,7 +148,7 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
                             X509ClientCredential config = (X509ClientCredential) credentials.getClient();
                             String certBody = config.getCert();
                             String endpoint = config.getEndpoint();
-                            if (strCert.equals(certBody)) {
+                            if (certBody.isEmpty() || strCert.equals(certBody)) {
                                 x509CredentialsFound = true;
                                 DeviceProfile deviceProfile = msg.getDeviceProfile();
                                 if (msg.hasDeviceInfo() && deviceProfile != null) {
@@ -178,5 +195,30 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
     @Override
     public void setResultHandler(HandshakeResultHandler resultHandler) {
 
+    }
+
+    private static X509Certificate searchIssuer(X509Certificate certificate, X509Certificate[] certificates) {
+        X500Principal subject = certificate.getIssuerX500Principal();
+        for (int index = 0; index < certificates.length; ++index) {
+            X509Certificate trust = certificates[index];
+            if (trust != null && subject.equals(trust.getIssuerX500Principal())) {
+                if (verifyCertificate(certificate)) {
+                    return certificate;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean verifyCertificate(X509Certificate certificate) {
+        try {
+            // date
+            certificate.checkValidity();
+            // Validate X509.
+            SecurityUtil.certificate.decode(certificate.getEncoded());
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
