@@ -274,8 +274,8 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     public LwM2mClient getClientBySessionInfo(TransportProtos.SessionInfoProto sessionInfo) {
         LwM2mClient lwM2mClient = null;
         UUID sessionId = new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB());
-        Predicate<LwM2mClient> isClientFilter = c ->
-                sessionId.equals((new UUID(c.getSession().getSessionIdMSB(), c.getSession().getSessionIdLSB())));
+        Predicate<LwM2mClient> isClientFilter =
+                c -> c.getSession() != null && sessionId.equals((new UUID(c.getSession().getSessionIdMSB(), c.getSession().getSessionIdLSB())));
         if (this.lwM2mClientsByEndpoint.size() > 0) {
             lwM2mClient = this.lwM2mClientsByEndpoint.values().stream().filter(isClientFilter).findAny().orElse(null);
         }

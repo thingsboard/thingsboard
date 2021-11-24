@@ -31,7 +31,7 @@ server:
       pem:
         # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
         cert_file: "${SSL_PEM_CERT:server.pem}"
-        # Path to the server certificate private key file (optional)
+        # Path to the server certificate private key file. Optional by default. Required if the private key is not present in server certificate file;
         key_file: "${SSL_PEM_KEY:server_key.pem}"
         # Server certificate private key password (optional)
         key_password: "${SSL_PEM_KEY_PASSWORD:server_key_password}"
@@ -54,7 +54,7 @@ server:
   log_controller_error_stack_trace: "${HTTP_LOG_CONTROLLER_ERROR_STACK_TRACE:false}"
   ws:
     send_timeout: "${TB_SERVER_WS_SEND_TIMEOUT:5000}"
-    ping_timeout: "${TB_SERVER_WS_PING_TIMEOUT:30000}"
+    ping_timeout: "${TB_SERVER_WS_PING_TIMEOUT:15000}"
     limits:
       # Limit the amount of sessions and subscriptions available on each server. Put values to zero to disable particular limitation
       max_sessions_per_tenant: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SESSIONS_PER_TENANT:0}"
@@ -211,7 +211,7 @@ cassandra:
   init_retry_interval_ms: "${CASSANDRA_CLUSTER_INIT_RETRY_INTERVAL_MS:3000}"
   max_requests_per_connection_local: "${CASSANDRA_MAX_REQUESTS_PER_CONNECTION_LOCAL:32768}"
   max_requests_per_connection_remote: "${CASSANDRA_MAX_REQUESTS_PER_CONNECTION_REMOTE:32768}"
-  # Credential parameters #
+  # Credential parameters
   credentials: "${CASSANDRA_USE_CREDENTIALS:false}"
   # Specify your username
   username: "${CASSANDRA_USERNAME:}"
@@ -595,7 +595,7 @@ js:
   remote:
     # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
     max_errors: "${REMOTE_JS_SANDBOX_MAX_ERRORS:3}"
-    # Maximum time in seconds for black listed function to stay in 1:the list.
+    # Maximum time in seconds for black listed function to stay in the list.
     max_black_list_duration_sec: "${REMOTE_JS_SANDBOX_MAX_BLACKLIST_DURATION_SEC:60}"
     stats:
       enabled: "${TB_JS_REMOTE_STATS_ENABLED:false}"
@@ -644,7 +644,7 @@ transport:
       bind_address: "${MQTT_SSL_BIND_ADDRESS:0.0.0.0}"
       # MQTT SSL bind port
       bind_port: "${MQTT_SSL_BIND_PORT:8883}"
-      # SSL protocol: See http://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#SSLContext
+      # SSL protocol: See https://docs.oracle.com/en/java/javase/11/docs/specs/security/standard-names.html#sslcontext-algorithms
       protocol: "${MQTT_SSL_PROTOCOL:TLSv1.2}"
       # Server SSL credentials
       credentials:
@@ -654,7 +654,7 @@ transport:
         pem:
           # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
           cert_file: "${MQTT_SSL_PEM_CERT:mqttserver.pem}"
-          # Path to the server certificate private key file (optional)
+          # Path to the server certificate private key file. Optional by default. Required if the private key is not present in server certificate file;
           key_file: "${MQTT_SSL_PEM_KEY:mqttserver_key.pem}"
           # Server certificate private key password (optional)
           key_password: "${MQTT_SSL_PEM_KEY_PASSWORD:server_key_password}"
@@ -666,7 +666,9 @@ transport:
           store_file: "${MQTT_SSL_KEY_STORE:mqttserver.jks}"
           # Password used to access the key store
           store_password: "${MQTT_SSL_KEY_STORE_PASSWORD:server_ks_password}"
-          # Password used to access the key
+          # Optional alias of the private key; If not set, the platform will load the first private key from the keystore;
+          key_alias: "${MQTT_SSL_KEY_ALIAS:}"
+          # Optional password to access the private key. If not set, the platform will attempt to load the private keys that are not protected with the password;
           key_password: "${MQTT_SSL_KEY_PASSWORD:server_key_password}"
       # Skip certificate validity check for client certificates.
       skip_validity_check_for_client_cert: "${MQTT_SSL_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
@@ -694,7 +696,7 @@ transport:
         pem:
           # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
           cert_file: "${COAP_DTLS_PEM_CERT:coapserver.pem}"
-          # Path to the server certificate private key file (optional)
+          # Path to the server certificate private key file. Optional by default. Required if the private key is not present in server certificate file;
           key_file: "${COAP_DTLS_PEM_KEY:coapserver_key.pem}"
           # Server certificate private key password (optional)
           key_password: "${COAP_DTLS_PEM_KEY_PASSWORD:server_key_password}"
@@ -736,7 +738,7 @@ transport:
           pem:
             # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
             cert_file: "${LWM2M_SERVER_PEM_CERT:lwm2mserver.pem}"
-            # Path to the server certificate private key file (optional)
+            # Path to the server certificate private key file. Optional by default. Required if the private key is not present in server certificate file;
             key_file: "${LWM2M_SERVER_PEM_KEY:lwm2mserver_key.pem}"
             # Server certificate private key password (optional)
             key_password: "${LWM2M_SERVER_PEM_KEY_PASSWORD:server_key_password}"
@@ -772,7 +774,7 @@ transport:
           pem:
             # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
             cert_file: "${LWM2M_BS_PEM_CERT:lwm2mserver.pem}"
-            # Path to the server certificate private key file (optional)
+            # Path to the server certificate private key file. Optional by default. Required if the private key is not present in server certificate file;
             key_file: "${LWM2M_BS_PEM_KEY:lwm2mserver_key.pem}"
             # Server certificate private key password (optional)
             key_password: "${LWM2M_BS_PEM_KEY_PASSWORD:server_key_password}"
@@ -1030,8 +1032,8 @@ queue:
           # For RETRY_ALL, RETRY_FAILED, RETRY_TIMED_OUT, RETRY_FAILED_AND_TIMED_OUT
           retries: "${TB_QUEUE_RE_MAIN_PROCESSING_STRATEGY_RETRIES:3}" # Number of retries, 0 is unlimited
           failure-percentage: "${TB_QUEUE_RE_MAIN_PROCESSING_STRATEGY_FAILURE_PERCENTAGE:0}" # Skip retry if failures or timeouts are less then X percentage of messages;
-          pause-between-retries: "${TB_QUEUE_RE_MAIN_PROCESSING_STRATEGY_RETRY_PAUSE:3}"# Time in seconds to wait in consumer thread before retries;
-          max-pause-between-retries: "${TB_QUEUE_RE_MAIN_PROCESSING_STRATEGY_MAX_RETRY_PAUSE:3}"# Max allowed time in seconds for pause between retries.
+          pause-between-retries: "${TB_QUEUE_RE_MAIN_PROCESSING_STRATEGY_RETRY_PAUSE:3}" # Time in seconds to wait in consumer thread before retries;
+          max-pause-between-retries: "${TB_QUEUE_RE_MAIN_PROCESSING_STRATEGY_MAX_RETRY_PAUSE:3}" # Max allowed time in seconds for pause between retries.
       - name: "${TB_QUEUE_RE_HP_QUEUE_NAME:HighPriority}"
         topic: "${TB_QUEUE_RE_HP_TOPIC:tb_rule_engine.hp}"
         poll-interval: "${TB_QUEUE_RE_HP_POLL_INTERVAL_MS:25}"
@@ -1047,8 +1049,8 @@ queue:
           # For RETRY_ALL, RETRY_FAILED, RETRY_TIMED_OUT, RETRY_FAILED_AND_TIMED_OUT
           retries: "${TB_QUEUE_RE_HP_PROCESSING_STRATEGY_RETRIES:0}" # Number of retries, 0 is unlimited
           failure-percentage: "${TB_QUEUE_RE_HP_PROCESSING_STRATEGY_FAILURE_PERCENTAGE:0}" # Skip retry if failures or timeouts are less then X percentage of messages;
-          pause-between-retries: "${TB_QUEUE_RE_HP_PROCESSING_STRATEGY_RETRY_PAUSE:5}"# Time in seconds to wait in consumer thread before retries;
-          max-pause-between-retries: "${TB_QUEUE_RE_HP_PROCESSING_STRATEGY_MAX_RETRY_PAUSE:5}"# Max allowed time in seconds for pause between retries.
+          pause-between-retries: "${TB_QUEUE_RE_HP_PROCESSING_STRATEGY_RETRY_PAUSE:5}" # Time in seconds to wait in consumer thread before retries;
+          max-pause-between-retries: "${TB_QUEUE_RE_HP_PROCESSING_STRATEGY_MAX_RETRY_PAUSE:5}" # Max allowed time in seconds for pause between retries.
       - name: "${TB_QUEUE_RE_SQ_QUEUE_NAME:SequentialByOriginator}"
         topic: "${TB_QUEUE_RE_SQ_TOPIC:tb_rule_engine.sq}"
         poll-interval: "${TB_QUEUE_RE_SQ_POLL_INTERVAL_MS:25}"
@@ -1064,8 +1066,8 @@ queue:
           # For RETRY_ALL, RETRY_FAILED, RETRY_TIMED_OUT, RETRY_FAILED_AND_TIMED_OUT
           retries: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_RETRIES:3}" # Number of retries, 0 is unlimited
           failure-percentage: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_FAILURE_PERCENTAGE:0}" # Skip retry if failures or timeouts are less then X percentage of messages;
-          pause-between-retries: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_RETRY_PAUSE:5}"# Time in seconds to wait in consumer thread before retries;
-          max-pause-between-retries: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_MAX_RETRY_PAUSE:5}"# Max allowed time in seconds for pause between retries.
+          pause-between-retries: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_RETRY_PAUSE:5}" # Time in seconds to wait in consumer thread before retries;
+          max-pause-between-retries: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_MAX_RETRY_PAUSE:5}" # Max allowed time in seconds for pause between retries.
   transport:
     # For high priority notifications that require minimum latency and processing time
     notifications_topic: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_TOPIC:tb_transport.notifications}"

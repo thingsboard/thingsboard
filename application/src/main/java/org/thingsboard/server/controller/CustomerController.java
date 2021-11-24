@@ -60,6 +60,7 @@ import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_D
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 
 @RestController
 @TbCoreComponent
@@ -136,7 +137,7 @@ public class CustomerController extends BaseController {
     }
 
     @ApiOperation(value = "Create or update Customer (saveCustomer)",
-            notes = "Creates or Updates the Customer. When creating customer, platform generates Customer Id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address) " +
+            notes = "Creates or Updates the Customer. When creating customer, platform generates Customer Id as " + UUID_WIKI_LINK +
                     "The newly created Customer Id will be present in the response. " +
                     "Specify existing Customer Id to update the Customer. " +
                     "Referencing non-existing Customer Id will cause 'Not Found' error." + TENANT_AUTHORITY_PARAGRAPH)

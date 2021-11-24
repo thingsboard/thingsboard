@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.install.update;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
@@ -24,13 +25,13 @@ import org.springframework.stereotype.Service;
 
 import java.util.Objects;
 
+@RequiredArgsConstructor
 @Service
 @Profile("install")
 @Slf4j
 public class DefaultCacheCleanupService implements CacheCleanupService {
 
-    @Autowired
-    CacheManager cacheManager;
+    private final CacheManager cacheManager;
 
     /**
      * Cleanup caches that can not deserialize anymore due to schema upgrade or data update using sql scripts.
@@ -61,7 +62,7 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
                 clearAllCaches();
                 break;
             default:
-                throw new RuntimeException("Unable to update cache, unsupported fromVersion: " + fromVersion);
+                //Do nothing, since cache cleanup is optional.
         }
     }
 

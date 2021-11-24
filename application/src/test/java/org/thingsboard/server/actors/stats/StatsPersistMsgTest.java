@@ -15,31 +15,24 @@
  */
 package org.thingsboard.server.actors.stats;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.ToString;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.junit.jupiter.api.Test;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.TbActorMsg;
 
-@AllArgsConstructor
-@Getter
-@ToString
-public final class StatsPersistMsg implements TbActorMsg {
+import static org.assertj.core.api.Assertions.assertThat;
 
-    private final long messagesProcessed;
-    private final long errorsOccurred;
-    private final TenantId tenantId;
-    private final EntityId entityId;
+class StatsPersistMsgTest {
 
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.STATS_PERSIST_MSG;
+    @Test
+    void testIsEmpty() {
+        StatsPersistMsg emptyStats = new StatsPersistMsg(0, 0, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID);
+        assertThat(emptyStats.isEmpty()).isTrue();
     }
 
-    public boolean isEmpty() {
-        return messagesProcessed == 0 && errorsOccurred == 0;
+    @Test
+    void testNotEmpty() {
+        assertThat(new StatsPersistMsg(1, 0, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID).isEmpty()).isFalse();
+        assertThat(new StatsPersistMsg(0, 1, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID).isEmpty()).isFalse();
+        assertThat(new StatsPersistMsg(1, 1, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID).isEmpty()).isFalse();
     }
 
 }
