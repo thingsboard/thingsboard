@@ -26,7 +26,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonParseException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -53,7 +52,7 @@ import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 
 public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeConfiguration, T extends EntityId> implements TbNode {
 
-    private static ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    private static ObjectMapper mapper = new ObjectMapper();
 
     private static final String VALUE = "value";
     private static final String TS = "ts";
