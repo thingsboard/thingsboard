@@ -50,7 +50,7 @@ import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 
 public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeConfiguration, T extends EntityId> implements TbNode {
 
-    private static ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER_WHERE_UNQUOTED_FIELD_NAMES;
+    private static ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER_WITH_UNQUOTED_FIELD_NAMES;
 
     private static final String VALUE = "value";
     private static final String TS = "ts";

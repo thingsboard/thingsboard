@@ -32,12 +32,19 @@ import java.util.Arrays;
  */
 public class JacksonUtil {
 
-    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().registerModule(new JavaTimeModule());
+    public static final ObjectMapper OBJECT_MAPPER;
+    public static final ObjectMapper OBJECT_MAPPER_WITH_UNQUOTED_FIELD_NAMES;
 
-    public static final ObjectMapper OBJECT_MAPPER_WHERE_UNQUOTED_FIELD_NAMES = new ObjectMapper().
-            registerModule(new JavaTimeModule()).
-            configure(JsonWriteFeature.QUOTE_FIELD_NAMES.mappedFeature(), false).
-            configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+    static {
+        OBJECT_MAPPER = getNewObjectMapperWithJavaTimeModule();
+        OBJECT_MAPPER_WITH_UNQUOTED_FIELD_NAMES = getNewObjectMapperWithJavaTimeModule().
+                configure(JsonWriteFeature.QUOTE_FIELD_NAMES.mappedFeature(), false).
+                configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+    }
+
+    private static ObjectMapper getNewObjectMapperWithJavaTimeModule() {
+        return new ObjectMapper().registerModule(new JavaTimeModule());
+    }
 
     public static <T> T convertValue(Object fromValue, Class<T> toValueType) {
         try {
