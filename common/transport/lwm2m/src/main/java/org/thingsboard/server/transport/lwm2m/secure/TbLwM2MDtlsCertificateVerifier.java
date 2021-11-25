@@ -35,6 +35,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredential;
 import org.thingsboard.server.common.msg.EncryptionUtil;
@@ -57,7 +58,6 @@ import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import static org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer.CLIENT;
 
@@ -121,12 +121,8 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
                         // verify if trust
                         if (config.getTrustSslCredentials().getTrustedCertificates().length > 0) {
                             if (searchIssuer(cert, config.getTrustSslCredentials().getTrustedCertificates()) != null) {
-                                String [] dns = cert.getSubjectX500Principal().getName().split(",");
-                                Optional <String> cn = (Arrays.stream(dns).filter(dn -> dn.contains("CN="))).findFirst();
-                                if (cn.isPresent() && cn.get().length()>3){
-                                    String endpoint = cn.get().split("=")[1];
-                                    securityInfo = securityInfoValidator.getEndpointSecurityInfoByCredentialsId(endpoint, CLIENT);
-                                }
+                                String endpoint = config.getTrustSslCredentials().getValueFromSubjectNameByKey(cert.getSubjectX500Principal().getName(), "CN");
+                                securityInfo = StringUtils.isNotEmpty(endpoint) ? securityInfoValidator.getEndpointSecurityInfoByCredentialsId(endpoint, CLIENT) : null;
                             }
                         }
                         // if not trust or cert trust securityInfo == null

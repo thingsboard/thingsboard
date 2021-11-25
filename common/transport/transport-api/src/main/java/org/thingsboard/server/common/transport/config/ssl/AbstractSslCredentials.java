@@ -31,9 +31,11 @@ import java.security.UnrecoverableEntryException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 public abstract class AbstractSslCredentials implements SslCredentials {
@@ -113,6 +115,7 @@ public abstract class AbstractSslCredentials implements SslCredentials {
         return this.trusts;
     }
 
+
     @Override
     public TrustManagerFactory createTrustManagerFactory() throws NoSuchAlgorithmException, KeyStoreException {
         TrustManagerFactory tmFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
@@ -125,6 +128,15 @@ public abstract class AbstractSslCredentials implements SslCredentials {
         KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
         kmf.init(this.keyStore, this.keyPasswordArray);
         return kmf;
+    }
+
+
+    @Override
+    public String getValueFromSubjectNameByKey(String subjectName, String key) {
+        String[] dns = subjectName.split(",");
+        Optional<String> cn = (Arrays.stream(dns).filter(dn -> dn.contains(key + "="))).findFirst();
+        String value = cn.isPresent() ? cn.get().replace(key + "=", "") : null;
+        return StringUtils.isNotEmpty(value) ? value : null;
     }
 
     protected abstract boolean canUse();
