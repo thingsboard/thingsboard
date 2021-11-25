@@ -1307,6 +1307,14 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
                     notEqualStrings.add(operationName);
                     containsStrings.add(operationName);
                     break;
+                case IN:
+                    notEqualStrings.add(operationName);
+                    notContainsStrings.add(operationName);
+                    break;
+                case NOT_IN:
+                    notEqualStrings.add(operationName);
+                    notContainsStrings.add(operationName);
+                    break;
             }
         }
 
