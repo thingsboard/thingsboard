@@ -144,7 +144,7 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
                             X509ClientCredential config = (X509ClientCredential) credentials.getClient();
                             String certBody = config.getCert();
                             String endpoint = config.getEndpoint();
-                            if (certBody.isEmpty() || strCert.equals(certBody)) {
+                            if (StringUtils.isBlank(certBody) || strCert.equals(certBody)) {
                                 x509CredentialsFound = true;
                                 DeviceProfile deviceProfile = msg.getDeviceProfile();
                                 if (msg.hasDeviceInfo() && deviceProfile != null) {
