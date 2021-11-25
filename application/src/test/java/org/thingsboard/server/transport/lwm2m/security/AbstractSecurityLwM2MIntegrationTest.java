@@ -161,7 +161,7 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
             rootCAX509Cert = (X509Certificate) serverKeyStore.getCertificate("rootCA");
             serverX509Cert = (X509Certificate) serverKeyStore.getCertificate("server");
             serverX509CertSelfSigned = (X509Certificate) serverKeyStore.getCertificate("server_self_signed");
-            trustedCertificates[0] = rootCAX509Cert;
+            trustedCertificates[0] = serverX509Cert;
         } catch (GeneralSecurityException | IOException e) {
             throw new RuntimeException(e);
         }
