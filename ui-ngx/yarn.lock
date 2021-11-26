@@ -6444,7 +6444,7 @@ leaflet-rotatedmarker@^0.2.0:
   resolved "https://registry.yarnpkg.com/leaflet-rotatedmarker/-/leaflet-rotatedmarker-0.2.0.tgz#4467f49f98d1bfd56959bd9c6705203dd2601277"
   integrity sha1-RGf0n5jRv9VpWb2cZwUgPdJgEnc=
 
-leaflet.gridlayer.googlemutant@0.13.4:
+leaflet.gridlayer.googlemutant@^0.13.4:
   version "0.13.4"
   resolved "https://registry.yarnpkg.com/leaflet.gridlayer.googlemutant/-/leaflet.gridlayer.googlemutant-0.13.4.tgz#0add37d240c70c999e1f1d341208e6fea2372c40"
   integrity sha512-oC6xUSFJ9HP4WIupXakgiYckdBHuHQeSaxTXsVlcvcpfsuYoJ/HFIrz1bmK4Qr/qKO4fY1MDM6AoewU7Bph8ZQ==

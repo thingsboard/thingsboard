@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { defaultSettings, hereProviders, MapProviders, UnitedMapSettings } from './map-models';
+import { defaultSettings, FormattedData, hereProviders, MapProviders, UnitedMapSettings } from './map-models';
 import LeafletMap from './leaflet-map';
 import {
   commonMapSettingsSchema,
@@ -32,6 +32,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 import { providerClass } from '@home/components/widget/lib/maps/providers';
+import { isDefined } from '@core/utils';
+import L from 'leaflet';
+import { forkJoin, Observable, of } from 'rxjs';
+import { AttributeService } from '@core/http/attribute.service';
+import { EntityId } from '@shared/models/id/entity-id';
+import { AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 
 // @dynamic
 export class MapWidgetController implements MapWidgetInterface {
@@ -63,6 +69,10 @@ export class MapWidgetController implements MapWidgetInterface {
         }
         parseWithTranslation.setTranslate(this.translate);
         this.map = new MapClass(this.ctx, $element, this.settings);
+        (this.ctx as any).mapInstance = this.map;
+        this.map.saveMarkerLocation = this.setMarkerLocation;
+        this.map.savePolygonLocation = this.savePolygonLocation;
+        this.map.saveLocation = this.saveLocation;
         this.pageLink = {
           page: 0,
           pageSize: this.settings.mapPageSize,
@@ -158,6 +168,86 @@ export class MapWidgetController implements MapWidgetInterface {
         }, entityName, null, entityLabel);
     }
 
+    setMarkerLocation(e: FormattedData, lat?: number, lng?: number) {
+      let markerValue;
+      if (isDefined(lat) && isDefined(lng)) {
+        const point = lat != null && lng !== null ? L.latLng(lat, lng) : null;
+        markerValue = this.map.convertToCustomFormat(point);
+      } else if (this.settings.mapProvider !== MapProviders.image) {
+        markerValue = {
+          [this.settings.latKeyName]: e[this.settings.latKeyName],
+          [this.settings.lngKeyName]: e[this.settings.lngKeyName],
+        };
+      } else {
+        markerValue = {
+          [this.settings.xPosKeyName]: e[this.settings.xPosKeyName],
+          [this.settings.yPosKeyName]: e[this.settings.yPosKeyName],
+        };
+      }
+      return this.saveLocation(e, markerValue);
+    }
+
+    savePolygonLocation(e: FormattedData, coordinates?: Array<any>) {
+      let polygonValue;
+      if (isDefined(coordinates)) {
+        polygonValue = this.map.convertToPolygonFormat(coordinates);
+      } else {
+        polygonValue = {
+          [this.settings.polygonKeyName]: e[this.settings.polygonKeyName]
+        };
+      }
+      return this.saveLocation(e, polygonValue);
+    }
+
+    saveLocation(e: FormattedData, values: {[key: string]: any}): Observable<any> {
+      const attributeService = this.ctx.$injector.get(AttributeService);
+      const attributes = [];
+      const timeseries = [];
+
+      const entityId: EntityId = {
+        entityType: e.$datasource.entityType,
+        id: e.$datasource.entityId
+      };
+
+      for (const dataKeyName of Object.keys(values)) {
+        for (const key of e.$datasource.dataKeys) {
+          if (dataKeyName === key.name) {
+            const value = {
+              key: key.name,
+              value: values[dataKeyName]
+            };
+            if (key.type === DataKeyType.attribute) {
+              attributes.push(value);
+            } else if (key.type === DataKeyType.timeseries) {
+              timeseries.push(value);
+            }
+            break;
+          }
+        }
+      }
+
+      const observables: Observable<any>[] = [];
+      if (timeseries.length) {
+        observables.push(attributeService.saveEntityTimeseries(
+          entityId,
+          LatestTelemetry.LATEST_TELEMETRY,
+          timeseries
+        ));
+      }
+      if (attributes.length) {
+        observables.push(attributeService.saveEntityAttributes(
+          entityId,
+          AttributeScope.SERVER_SCOPE,
+          attributes
+        ));
+      }
+      if (observables.length) {
+        return forkJoin(observables);
+      } else {
+        return of(null);
+      }
+    }
+
     initSettings(settings: UnitedMapSettings, isEditMap?: boolean): UnitedMapSettings {
         const functionParams = ['data', 'dsData', 'dsIndex'];
         this.provider = settings.provider || this.mapProvider;
@@ -209,6 +299,7 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     destroy() {
+      (this.ctx as any).mapInstance = null;
       if (this.map) {
         this.map.remove();
       }
