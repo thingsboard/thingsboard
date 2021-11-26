@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -56,6 +56,15 @@ export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValu
 
   @Input()
   disabled: boolean;
+
+  public isBootstrapServerUpdateEnableValue: boolean;
+  @Input()
+  set isBootstrapServerUpdateEnable(value: boolean) {
+    this.isBootstrapServerUpdateEnableValue = value;
+    if (!value) {
+      this.removeBootstrapServerConfig();
+    }
+  }
 
   private valueChangeSubscription: Subscription = null;
 
@@ -138,7 +147,7 @@ export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValu
   }
 
   addServerConfig(): void {
-    const addDialogObs = this.isBootstrapAdded() ? of(false) :
+    const addDialogObs = (this.isBootstrapAdded() || !this.isBootstrapServerUpdateEnableValue) ? of(false) :
       this.matDialog.open<Lwm2mBootstrapAddConfigServerDialogComponent>(Lwm2mBootstrapAddConfigServerDialogComponent, {
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
@@ -176,6 +185,15 @@ export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValu
       }
     }
     return false;
+  }
+
+  private removeBootstrapServerConfig(): void {
+    if (this.bootstrapConfigServersFormGroup) {
+      const bootstrapServerIndex = this.serverConfigsFromArray().getRawValue().findIndex(server => server.bootstrapServerIs === true);
+      if (bootstrapServerIndex !== -1) {
+        this.serverConfigsFromArray().removeAt(bootstrapServerIndex);
+      }
+    }
   }
 
   private updateModel() {

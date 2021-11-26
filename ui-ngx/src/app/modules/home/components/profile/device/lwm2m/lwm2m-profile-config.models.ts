@@ -148,6 +148,7 @@ export interface ServerSecurityConfigInfo extends ServerSecurityConfig {
 export interface Lwm2mProfileConfigModels {
   clientLwM2mSettings: ClientLwM2mSettings;
   observeAttr: ObservableAttributes;
+  bootstrapServerUpdateEnable: boolean;
   bootstrap: Array<ServerSecurityConfig>;
 }
 

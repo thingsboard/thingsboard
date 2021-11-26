@@ -33,8 +33,12 @@
     </mat-tab>
     <mat-tab label="{{ 'device-profile.lwm2m.bootstrap-tab' | translate }}">
       <section [formGroup]="lwm2mDeviceProfileFormGroup">
+        <mat-checkbox formControlName="bootstrapServerUpdateEnable" style="margin-left:8px;margin-top:20px">
+          {{ 'device-profile.lwm2m.include-bootstrap-server' | translate }}
+        </mat-checkbox>
         <section style="padding: 20px 2px">
-          <tb-profile-lwm2m-bootstrap-config-servers formControlName="bootstrap">
+          <tb-profile-lwm2m-bootstrap-config-servers formControlName="bootstrap"
+                                                     [isBootstrapServerUpdateEnable]="isBootstrapServerUpdateEnable">
           </tb-profile-lwm2m-bootstrap-config-servers>
         </section>
       </section>
