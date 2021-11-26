@@ -29,6 +29,7 @@ public class Lwm2mDeviceProfileTransportConfiguration implements DeviceProfileTr
     private static final long serialVersionUID = 6257277825459600068L;
 
     private TelemetryMappingConfiguration observeAttr;
+    private boolean bootstrapServerUpdateEnable;
     private List<LwM2MBootstrapServerCredential> bootstrap;
     private OtherConfiguration clientLwM2mSettings;
 

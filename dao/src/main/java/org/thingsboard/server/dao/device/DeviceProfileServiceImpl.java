@@ -709,12 +709,16 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
 
     private void validateLwm2mServersConfigOfBootstrapForClient(List<LwM2MBootstrapServerCredential> lwM2MBootstrapServersConfigurations) {
         Set <String> uris = new HashSet<>();
+        Set <Integer> shortServerIds = new HashSet<>();
         for (LwM2MBootstrapServerCredential bootstrapServerCredential : lwM2MBootstrapServersConfigurations) {
             AbstractLwM2MBootstrapServerCredential serverConfig = (AbstractLwM2MBootstrapServerCredential) bootstrapServerCredential;
             String server = serverConfig.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server" + " shortServerId: " + serverConfig.getShortServerId() + ":";
             if (serverConfig.getShortServerId() < 1 || serverConfig.getShortServerId() > 65534) {
                 throw new DeviceCredentialsValidationException(server + " ShortServerId must not be less than 1 and more than 65534!");
             }
+            if (!shortServerIds.add(serverConfig.getShortServerId())){
+                throw new DeviceCredentialsValidationException(server + " \"Short server Id\" value = "  + serverConfig.getShortServerId() + ". This value must be a unique value for all servers!");
+            };
             String uri = serverConfig.getHost() + ":" + serverConfig.getPort();
             if (!uris.add(uri)){
                 throw new DeviceCredentialsValidationException(server + " \"Host + port\" value = "  + uri + ". This value must be a unique value for all servers!");

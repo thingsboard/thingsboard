@@ -32,7 +32,7 @@
     <button mat-raised-button color="primary"
             type="button"
             (click)="addServerConfig()">
-      <span>{{ (isBootstrapAdded() ? 'device-profile.lwm2m.add-lwm2m-server-config' :
+      <span>{{ ((isBootstrapAdded() || !isBootstrapServerUpdateEnableValue) ? 'device-profile.lwm2m.add-lwm2m-server-config' :
         'device-profile.lwm2m.add-server-config') | translate}}</span>
     </button>
   </div>
