@@ -24,6 +24,7 @@ import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
+import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.AbstractLwM2MBootstrapServerCredential;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapConfig;
@@ -36,6 +37,7 @@ import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -75,6 +77,18 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
             BootstrapConfig bsConfigNew = store.getBootstrapConfig();
             if (bsConfigNew != null) {
                 try {
+                    boolean bootstrapServerUpdateEnable = ((Lwm2mDeviceProfileTransportConfiguration)store.getDeviceProfile().getProfileData().getTransportConfiguration()).isBootstrapServerUpdateEnable();
+                    if (!bootstrapServerUpdateEnable) {
+                        Optional<Map.Entry<Integer, BootstrapConfig.ServerSecurity>> securities = bsConfigNew.security.entrySet().stream().filter(sec -> ((BootstrapConfig.ServerSecurity)sec.getValue()).bootstrapServer==true).findAny();
+                        if (securities.isPresent()) {
+                            bsConfigNew.security.entrySet().remove(securities.get());
+                            int serverSortId = securities.get().getValue().serverId;
+                            Optional<Map.Entry<Integer, BootstrapConfig.ServerConfig>> serverConfigs = bsConfigNew.servers.entrySet().stream().filter(serv -> ((BootstrapConfig.ServerConfig)serv.getValue()).shortId==serverSortId).findAny();
+                            if (serverConfigs.isPresent()) {
+                                bsConfigNew.servers.entrySet().remove(serverConfigs.get());
+                            }
+                        }
+                    }
                     for (String config : bootstrapConfigStore.getAll().keySet()) {
                         if (config.equals(endPoint)) {
                             bootstrapConfigStore.remove(config);
