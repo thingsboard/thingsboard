@@ -31,7 +31,7 @@ import {
   UnitedMapSettings
 } from './map-models';
 import { Marker } from './markers';
-import { forkJoin, Observable, of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { Polyline } from './polyline';
 import { Polygon } from './polygon';
 import { createTooltip } from '@home/components/widget/lib/maps/maps-utils';
@@ -50,9 +50,6 @@ import {
   SelectEntityDialogData
 } from '@home/components/widget/lib/maps/dialogs/select-entity-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
-import { AttributeService } from '@core/http/attribute.service';
-import { EntityId } from '@shared/models/id/entity-id';
-import { AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 
 export default abstract class LeafletMap {
 
@@ -85,6 +82,9 @@ export default abstract class LeafletMap {
     southWest = new L.LatLng(-Projection.SphericalMercator['MAX_LATITUDE'], -180);
   // tslint:disable-next-line:no-string-literal
     northEast = new L.LatLng(Projection.SphericalMercator['MAX_LATITUDE'], 180);
+    saveLocation: (e: FormattedData, values: {[key: string]: any}) => Observable<any>;
+    saveMarkerLocation: (e: FormattedData, lat?: number, lng?: number) => Observable<any>;
+    savePolygonLocation: (e: FormattedData, coordinates?: Array<any>) => Observable<any>;
 
     protected constructor(public ctx: WidgetContext,
                           public $container: HTMLElement,
@@ -342,55 +342,6 @@ export default abstract class LeafletMap {
           this.updatePending = false;
           this.updateData(this.drawRoutes, this.showPolygon);
         }
-    }
-
-    private saveLocation(e: FormattedData, values: {[key: string]: any}): Observable<any> {
-      const attributeService = this.ctx.$injector.get(AttributeService);
-      const attributes = [];
-      const timeseries = [];
-
-      const entityId: EntityId = {
-        entityType: e.$datasource.entityType,
-        id: e.$datasource.entityId
-      };
-
-      for (const dataKeyName of Object.keys(values)) {
-        for (const key of e.$datasource.dataKeys) {
-          if (dataKeyName === key.name) {
-            const value = {
-              key: key.name,
-              value: values[dataKeyName]
-            };
-            if (key.type === DataKeyType.attribute) {
-              attributes.push(value);
-            } else if (key.type === DataKeyType.timeseries) {
-              timeseries.push(value);
-            }
-            break;
-          }
-        }
-      }
-
-      const observables: Observable<any>[] = [];
-      if (timeseries.length) {
-        observables.push(attributeService.saveEntityTimeseries(
-          entityId,
-          LatestTelemetry.LATEST_TELEMETRY,
-          timeseries
-        ));
-      }
-      if (attributes.length) {
-        observables.push(attributeService.saveEntityAttributes(
-          entityId,
-          AttributeScope.SERVER_SCOPE,
-          attributes
-        ));
-      }
-      if (observables.length) {
-        return forkJoin(observables);
-      } else {
-        return of(null);
-      }
     }
 
     createLatLng(lat: number, lng: number): L.LatLng {
