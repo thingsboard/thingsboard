@@ -41,6 +41,7 @@ import { EdgesOverviewWidgetComponent } from '@home/components/widget/lib/edges-
 import { JsonInputWidgetComponent } from '@home/components/widget/lib/json-input-widget.component';
 import { QrCodeWidgetComponent } from '@home/components/widget/lib/qrcode-widget.component';
 import { MarkdownWidgetComponent } from '@home/components/widget/lib/markdown-widget.component';
+import { SelectEntityDialogComponent } from './lib/maps/dialogs/select-entity-dialog.component';
 
 @NgModule({
   declarations:
@@ -62,7 +63,8 @@ import { MarkdownWidgetComponent } from '@home/components/widget/lib/markdown-wi
       NavigationCardsWidgetComponent,
       NavigationCardWidgetComponent,
       QrCodeWidgetComponent,
-      MarkdownWidgetComponent
+      MarkdownWidgetComponent,
+      SelectEntityDialogComponent
     ],
   imports: [
     CommonModule,
