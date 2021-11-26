@@ -1419,6 +1419,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         height: dialogHeight
       }
     });
+    this.cd.markForCheck();
   }
 
   private elementClick($event: Event) {
