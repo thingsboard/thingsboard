@@ -177,8 +177,8 @@ public class RpcV2Controller extends AbstractRpcController {
             @RequestParam int pageSize,
             @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
-            @ApiParam(value = "Status of the RPC", required = true, allowableValues = RPC_STATUS_ALLOWABLE_VALUES)
-            @RequestParam RpcStatus rpcStatus,
+            @ApiParam(value = "Status of the RPC", allowableValues = RPC_STATUS_ALLOWABLE_VALUES)
+            @RequestParam(required = false) RpcStatus rpcStatus,
             @ApiParam(value = RPC_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
             @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = RPC_SORT_PROPERTY_ALLOWABLE_VALUES)
@@ -194,7 +194,12 @@ public class RpcV2Controller extends AbstractRpcController {
             accessValidator.validate(getCurrentUser(), Operation.RPC_CALL, deviceId, new HttpValidationCallback(response, new FutureCallback<>() {
                 @Override
                 public void onSuccess(@Nullable DeferredResult<ResponseEntity> result) {
-                    PageData<Rpc> rpcCalls = rpcService.findAllByDeviceIdAndStatus(tenantId, deviceId, rpcStatus, pageLink);
+                    PageData<Rpc> rpcCalls;
+                    if (rpcStatus != null) {
+                        rpcCalls = rpcService.findAllByDeviceIdAndStatus(tenantId, deviceId, rpcStatus, pageLink);
+                    } else {
+                        rpcCalls = rpcService.findAllByDeviceId(tenantId, deviceId, pageLink);
+                    }
                     response.setResult(new ResponseEntity<>(rpcCalls, HttpStatus.OK));
                 }
 

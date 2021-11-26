@@ -70,6 +70,7 @@ import {
 import { distinct, filter, map, switchMap, takeUntil } from 'rxjs/operators';
 import { AlarmDataListener } from '@core/api/alarm-data.service';
 import { RpcStatus } from '@shared/models/rpc.models';
+import { PageLink } from '@shared/models/page/page-link';
 
 const moment = moment_;
 
@@ -656,13 +657,13 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   sendOneWayCommand(method: string, params?: any, timeout?: number, persistent?: boolean,
-                    persistentPollingInterval?: number, requestUUID?: string): Observable<any> {
-    return this.sendCommand(true, method, params, timeout, persistent, persistentPollingInterval, requestUUID);
+                    persistentPollingInterval?: number, retries?: number, additionalInfo?: any, requestUUID?: string): Observable<any> {
+    return this.sendCommand(true, method, params, timeout, persistent, persistentPollingInterval, retries, additionalInfo, requestUUID);
   }
 
   sendTwoWayCommand(method: string, params?: any, timeout?: number, persistent?: boolean,
-                    persistentPollingInterval?: number, requestUUID?: string): Observable<any> {
-    return this.sendCommand(false, method, params, timeout, persistent, persistentPollingInterval, requestUUID);
+                    persistentPollingInterval?: number, retries?: number, additionalInfo?: any, requestUUID?: string): Observable<any> {
+    return this.sendCommand(false, method, params, timeout, persistent, persistentPollingInterval, retries, additionalInfo, requestUUID);
   }
 
   clearRpcError(): void {
@@ -679,7 +680,8 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   sendCommand(oneWayElseTwoWay: boolean, method: string, params?: any, timeout?: number,
-              persistent?: boolean, persistentPollingInterval?: number, requestUUID?: string): Observable<any> {
+              persistent?: boolean, persistentPollingInterval?: number, retries?: number,
+              additionalInfo?: any, requestUUID?: string): Observable<any> {
     if (!this.rpcEnabled) {
       return throwError(new Error('Rpc disabled!'));
     } else {
@@ -692,6 +694,8 @@ export class WidgetSubscription implements IWidgetSubscription {
         method,
         params,
         persistent,
+        retries,
+        additionalInfo,
         requestUUID
       };
       if (timeout && timeout > 0) {
@@ -775,6 +779,15 @@ export class WidgetSubscription implements IWidgetSubscription {
       }
       return rpcSubject.asObservable();
     }
+  }
+
+  subscribeForPersistentRequests(pageLink: PageLink, keyFilter: RpcStatus): Observable<any> {
+    if (!this.rpcEnabled) {
+      return throwError(new Error('Rpc disabled!'));
+    } else if (!this.targetDeviceId) {
+      return throwError(new Error('Target device is not set!'));
+    }
+    return this.ctx.deviceService.getPersistedRpcRequests(this.targetDeviceId, pageLink, keyFilter);
   }
 
   private extractRejectionErrorText(rejection: HttpErrorResponse) {

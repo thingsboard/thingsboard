@@ -31,7 +31,7 @@ import {
 import { EntitySubtype } from '@app/shared/models/entity-type.models';
 import { AuthService } from '@core/auth/auth.service';
 import { BulkImportRequest, BulkImportResult } from '@home/components/import-export/import-export.models';
-import { PersistentRpc } from '@shared/models/rpc.models';
+import { PersistentRpc, RpcStatus } from '@shared/models/rpc.models';
 
 @Injectable({
   providedIn: 'root'
@@ -141,6 +141,17 @@ export class DeviceService {
 
   public getPersistedRpc(rpcId: string, fullResponse = false, config?: RequestConfig): Observable<PersistentRpc> {
     return this.http.get<PersistentRpc>(`/api/rpc/persistent/${rpcId}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public deletePersistedRpc(rpcId: string, config?: RequestConfig) {
+    return this.http.delete<PersistentRpc>(`/api/rpc/persistent/${rpcId}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getPersistedRpcRequests(deviceId: string, pageLink: PageLink,
+                                 keyFilter: RpcStatus, config?: RequestConfig): Observable<PageData<PersistentRpc>> {
+    const rpcStatus = keyFilter ? '&rpcStatus=' + keyFilter : '';
+    return this.http.get<PageData<PersistentRpc>>(`/api/rpc/persistent/device/${deviceId}${pageLink.toQuery()}${rpcStatus}`,
+      defaultHttpOptionsFromConfig(config));
   }
 
   public findByQuery(query: DeviceSearchQuery,

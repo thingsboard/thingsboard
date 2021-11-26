@@ -21,6 +21,10 @@ import { LedIndicatorComponent } from '@home/components/widget/lib/rpc/led-indic
 import { RoundSwitchComponent } from '@home/components/widget/lib/rpc/round-switch.component';
 import { SwitchComponent } from '@home/components/widget/lib/rpc/switch.component';
 import { KnobComponent } from '@home/components/widget/lib/rpc/knob.component';
+import { PersistentTableComponent } from '@home/components/widget/lib/rpc/persistent-table.component';
+import { PersistentDetailsDialogComponent } from '@home/components/widget/lib/rpc/persistent-details-dialog.component';
+import { PersistentFilterPanelComponent } from '@home/components/widget/lib/rpc/persistent-filter-panel.component';
+import { PersistentAddDialogComponent } from '@home/components/widget/lib/rpc/persistent-add-dialog.component';
 
 @NgModule({
   declarations:
@@ -28,7 +32,11 @@ import { KnobComponent } from '@home/components/widget/lib/rpc/knob.component';
       LedIndicatorComponent,
       RoundSwitchComponent,
       SwitchComponent,
-      KnobComponent
+      KnobComponent,
+      PersistentTableComponent,
+      PersistentDetailsDialogComponent,
+      PersistentAddDialogComponent,
+      PersistentFilterPanelComponent
     ],
   imports: [
     CommonModule,
@@ -38,7 +46,10 @@ import { KnobComponent } from '@home/components/widget/lib/rpc/knob.component';
     LedIndicatorComponent,
     RoundSwitchComponent,
     SwitchComponent,
-    KnobComponent
+    KnobComponent,
+    PersistentTableComponent,
+    PersistentDetailsDialogComponent,
+    PersistentAddDialogComponent
   ]
 })
 export class RpcWidgetsModule { }

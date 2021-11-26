@@ -55,6 +55,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { AlarmDataService } from '@core/api/alarm-data.service';
 import { IDashboardController } from '@home/components/dashboard-page/dashboard-page.models';
 import { PopoverPlacement } from '@shared/components/popover.models';
+import { PageLink } from '@shared/models/page/page-link';
+import { PersistentRpc, RpcStatus } from '@shared/models/rpc.models';
 
 export interface TimewindowFunctions {
   onUpdateTimewindow: (startTimeMs: number, endTimeMs: number, interval?: number) => void;
@@ -71,9 +73,9 @@ export interface WidgetSubscriptionApi {
 
 export interface RpcApi {
   sendOneWayCommand: (method: string, params?: any, timeout?: number, persistent?: boolean,
-                      persistentPollingInterval?: number, requestUUID?: string) => Observable<any>;
+                      persistentPollingInterval?: number, retries?: number, additionalInfo?: any, requestUUID?: string) => Observable<any>;
   sendTwoWayCommand: (method: string, params?: any, timeout?: number, persistent?: boolean,
-                      persistentPollingInterval?: number, requestUUID?: string) => Observable<any>;
+                      persistentPollingInterval?: number, retries?: number, additionalInfo?: any, requestUUID?: string) => Observable<any>;
   completedCommand: () => void;
 }
 
@@ -287,6 +289,8 @@ export interface IWidgetSubscription {
   comparisonEnabled?: boolean;
   comparisonTimeWindow?: WidgetTimewindow;
 
+  persistentRequests?: PageData<PersistentRpc>;
+
   alarms?: PageData<AlarmData>;
   alarmSource?: Datasource;
 
@@ -313,10 +317,12 @@ export interface IWidgetSubscription {
   updateTimewindowConfig(newTimewindow: Timewindow): void;
 
   sendOneWayCommand(method: string, params?: any, timeout?: number, persistent?: boolean,
-                    persistentPollingInterval?: number, requestUUID?: string): Observable<any>;
+                    persistentPollingInterval?: number, retries?: number, additionalInfo?: any, requestUUID?: string): Observable<any>;
   sendTwoWayCommand(method: string, params?: any, timeout?: number, persistent?: boolean,
-                    persistentPollingInterval?: number, requestUUID?: string): Observable<any>;
+                    persistentPollingInterval?: number, retries?: number, additionalInfo?: any, requestUUID?: string): Observable<any>;
   clearRpcError(): void;
+
+  subscribeForPersistentRequests(pageLink: PageLink, keyFileter: RpcStatus): Observable<any>;
 
   subscribe(): void;
 

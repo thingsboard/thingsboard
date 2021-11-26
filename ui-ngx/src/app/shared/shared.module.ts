@@ -94,6 +94,7 @@ import { SocialSharePanelComponent } from '@shared/components/socialshare-panel.
 import { RelationTypeAutocompleteComponent } from '@shared/components/relation/relation-type-autocomplete.component';
 import { EntityListSelectComponent } from '@shared/components/entity/entity-list-select.component';
 import { JsonObjectEditComponent } from '@shared/components/json-object-edit.component';
+import { JsonObjectViewComponent, } from '@shared/components/json-object-view.component';
 import { FooterFabButtonsComponent } from '@shared/components/footer-fab-buttons.component';
 import { CircularProgressDirective } from '@shared/components/circular-progress.directive';
 import {
@@ -231,6 +232,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
     JsonObjectEditComponent,
+    JsonObjectViewComponent,
     JsonContentComponent,
     JsFuncComponent,
     FabTriggerDirective,
@@ -376,6 +378,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
     JsonObjectEditComponent,
+    JsonObjectViewComponent,
     JsonContentComponent,
     JsFuncComponent,
     FabTriggerDirective,
