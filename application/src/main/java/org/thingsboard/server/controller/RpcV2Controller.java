@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.springframework.web.server.ResponseStatusException;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -187,10 +188,15 @@ public class RpcV2Controller extends AbstractRpcController {
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         checkParameter("DeviceId", strDeviceId);
         try {
+            if (rpcStatus.equals(RpcStatus.DELETED)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "RpcStatus: DELETED");
+            }
+
             TenantId tenantId = getCurrentUser().getTenantId();
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             DeviceId deviceId = new DeviceId(UUID.fromString(strDeviceId));
             final DeferredResult<ResponseEntity> response = new DeferredResult<>();
+
             accessValidator.validate(getCurrentUser(), Operation.RPC_CALL, deviceId, new HttpValidationCallback(response, new FutureCallback<>() {
                 @Override
                 public void onSuccess(@Nullable DeferredResult<ResponseEntity> result) {
