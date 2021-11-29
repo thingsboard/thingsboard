@@ -150,7 +150,7 @@ public class LwM2MTransportUtil {
         if (path != null) {
             if (FW_STATE_ID.equals(path)) {
                 lwM2mOtaConvert.setCurrentType(STRING);
-                lwM2mOtaConvert.setValue(FirmwareUpdateState.fromStateFwByCode(((Long) value).intValue()).type);
+                lwM2mOtaConvert.setValue(FirmwareUpdateState.fromStateFwByCode(((Long) value).intValue()).getType());
                 return lwM2mOtaConvert;
             } else if (FW_RESULT_ID.equals(path)) {
                 lwM2mOtaConvert.setCurrentType(STRING);
@@ -158,11 +158,11 @@ public class LwM2MTransportUtil {
                 return lwM2mOtaConvert;
             } else if (SW_STATE_ID.equals(path)) {
                 lwM2mOtaConvert.setCurrentType(STRING);
-                lwM2mOtaConvert.setValue(SoftwareUpdateState.fromUpdateStateSwByCode(((Long) value).intValue()).type);
+                lwM2mOtaConvert.setValue(SoftwareUpdateState.fromUpdateStateSwByCode(((Long) value).intValue()).getType());
                 return lwM2mOtaConvert;
             } else if (SW_RESULT_ID.equals(path)) {
                 lwM2mOtaConvert.setCurrentType(STRING);
-                lwM2mOtaConvert.setValue(SoftwareUpdateResult.fromUpdateResultSwByCode(((Long) value).intValue()).type);
+                lwM2mOtaConvert.setValue(SoftwareUpdateResult.fromUpdateResultSwByCode(((Long) value).intValue()).getType());
                 return lwM2mOtaConvert;
             }
         }

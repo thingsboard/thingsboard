@@ -74,6 +74,8 @@ import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDA
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATING;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.VERIFIED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUtil.getAttributeKey;
+import static org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdateResult.UPDATE_SUCCESSFULLY;
+import static org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateResult.NOT_ENOUGH_STORAGE;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_TELEMETRY;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertObjectIdToVersionedId;
 
@@ -399,12 +401,12 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
                     log.debug("[{}] Starting update to [{}{}] using binary", client.getEndpoint(), fwInfo.getTargetName(), fwInfo.getTargetVersion());
                     startUpdateUsingBinary(client, fwInfo);
                 }
-            } else if (fwInfo.updateState != null) {
-                log.debug("[{}] failed to process firmware update: [{}]. Previous update failed.", client.getEndpoint(), fwInfo);
-                logService.log(client, "Failed to process firmware update: " + fwInfo + ". Previous update failed.");
+            } else if (fwInfo.getResult() != null && fwInfo.getResult().getCode() >  UPDATE_SUCCESSFULLY.getCode()) {
+                log.trace("[{}] Previous update failed. [{}]", client.getEndpoint(), fwInfo);
+                logService.log(client, "Previous update firmware failed. Result: " + fwInfo.getResult().name());
             }
         } catch (Exception e) {
-            log.info("[{}] failed to update client: {}", client.getEndpoint(), fwInfo, e);
+            log.error("[{}] failed to update client: {}", client.getEndpoint(), fwInfo, e);
             sendStateUpdateToTelemetry(client, fwInfo, OtaPackageUpdateStatus.FAILED, "Internal server error: " + e.getMessage());
         }
     }
@@ -427,9 +429,9 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
                         startUpdateUsingBinary(client, swInfo);
                     }
                 }
-            } else if (swInfo.updateState != null) {
-                log.debug("[{}] failed to update client: [{}], previous update failed.", client.getEndpoint(), swInfo);
-                logService.log(client, "Failed to process software update: " + swInfo + ". Previous update failed.");
+            } else if (swInfo.getResult() != null && swInfo.getResult().getCode() >= NOT_ENOUGH_STORAGE.getCode()) {
+                log.trace("[{}] Previous update failed. [{}]", client.getEndpoint(), swInfo);
+                logService.log(client, "Previous update software failed. Result: " + swInfo.getResult().name());
             }
         } catch (Exception e) {
             log.info("[{}] failed to update client: {}", client.getEndpoint(), swInfo, e);
