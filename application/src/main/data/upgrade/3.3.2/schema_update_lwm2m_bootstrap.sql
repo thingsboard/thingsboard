@@ -20,15 +20,15 @@ $$
 
 BEGIN
 
-UPDATE device_profile
-SET profile_data = jsonb_set(
-  profile_data,
-  '{transportConfiguration, bootstrap}',
-  get_bootstrap(
-    profile_data::jsonb #> '{transportConfiguration,bootstrap}',
-    subquery.publickey_bs,
-    subquery.publickey_lw),
-  true)
+  UPDATE device_profile
+  SET profile_data = jsonb_set(
+    profile_data,
+    '{transportConfiguration}',
+    get_bootstrap(
+        profile_data::jsonb #> '{transportConfiguration}',
+        subquery.publickey_bs,
+        subquery.publickey_lw),
+    true)
   FROM (
          SELECT id,
                 encode(
@@ -40,47 +40,58 @@ SET profile_data = jsonb_set(
          FROM device_profile
          WHERE transport_type = 'LWM2M'
        ) AS subquery
-WHERE device_profile.id = subquery.id
-  AND subquery.publickey_bs IS NOT NULL
-  AND subquery.publickey_lw IS NOT NULL;
+  WHERE device_profile.id = subquery.id
+    AND subquery.publickey_bs IS NOT NULL
+    AND subquery.publickey_lw IS NOT NULL;
 
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION get_bootstrap(bootstrap_in jsonb, publickey_bs text, publickey_lw text) RETURNS jsonb AS
+CREATE OR REPLACE FUNCTION get_bootstrap(transport_configuration_in jsonb, publickey_bs text,
+                                         publickey_lw text) RETURNS jsonb AS
 $$
-BEGIN
 
-RETURN json_build_array(
-  json_build_object('shortServerId', bootstrap_in::json #> '{bootstrapServer}' -> 'serverId',
-                    'securityMode', bootstrap_in::json #> '{bootstrapServer}' ->> 'securityMode',
-                    'binding', bootstrap_in::json #> '{servers}' ->> 'binding',
-                    'lifetime', bootstrap_in::json #> '{servers}' -> 'lifetime',
-                    'notifIfDisabled', bootstrap_in::json #> '{servers}' -> 'notifIfDisabled',
-                    'defaultMinPeriod', bootstrap_in::json #> '{servers}' -> 'defaultMinPeriod',
-                    'host', bootstrap_in::json #> '{bootstrapServer}' ->> 'host',
-                    'port', bootstrap_in::json #> '{bootstrapServer}' -> 'port',
-                    'serverPublicKey', publickey_bs,
-                    'bootstrapServerIs', true,
-                    'clientHoldOffTime', bootstrap_in::json #> '{bootstrapServer}' -> 'clientHoldOffTime',
-                    'bootstrapServerAccountTimeout',
-                    bootstrap_in::json #> '{bootstrapServer}' -> 'bootstrapServerAccountTimeout'
-    ),
-  json_build_object('shortServerId', bootstrap_in::json #> '{lwm2mServer}' -> 'serverId',
-                    'securityMode', bootstrap_in::json #> '{lwm2mServer}' ->> 'securityMode',
-                    'binding', bootstrap_in::json #> '{servers}' ->> 'binding',
-                    'lifetime', bootstrap_in::json #> '{servers}' -> 'lifetime',
-                    'notifIfDisabled', bootstrap_in::json #> '{servers}' -> 'notifIfDisabled',
-                    'defaultMinPeriod', bootstrap_in::json #> '{servers}' -> 'defaultMinPeriod',
-                    'host', bootstrap_in::json #> '{lwm2mServer}' ->> 'host',
-                    'port', bootstrap_in::json #> '{lwm2mServer}' -> 'port',
-                    'serverPublicKey', publickey_lw,
-                    'bootstrapServerIs', false,
-                    'clientHoldOffTime', bootstrap_in::json #> '{lwm2mServer}' -> 'clientHoldOffTime',
-                    'bootstrapServerAccountTimeout',
-                    bootstrap_in::json #> '{lwm2mServer}' -> 'bootstrapServerAccountTimeout'
-    )
-  );
+DECLARE
+  bootstrap_new jsonb;
+  bootstrap_in  jsonb;
+
+BEGIN
+  bootstrap_in := transport_configuration_in::jsonb #> '{bootstrap}';
+  bootstrap_new := json_build_array(
+    json_build_object('shortServerId', bootstrap_in::json #> '{bootstrapServer}' -> 'serverId',
+                      'securityMode', bootstrap_in::json #> '{bootstrapServer}' ->> 'securityMode',
+                      'binding', bootstrap_in::json #> '{servers}' ->> 'binding',
+                      'lifetime', bootstrap_in::json #> '{servers}' -> 'lifetime',
+                      'notifIfDisabled', bootstrap_in::json #> '{servers}' -> 'notifIfDisabled',
+                      'defaultMinPeriod', bootstrap_in::json #> '{servers}' -> 'defaultMinPeriod',
+                      'host', bootstrap_in::json #> '{bootstrapServer}' ->> 'host',
+                      'port', bootstrap_in::json #> '{bootstrapServer}' -> 'port',
+                      'serverPublicKey', publickey_bs,
+                      'bootstrapServerIs', true,
+                      'clientHoldOffTime', bootstrap_in::json #> '{bootstrapServer}' -> 'clientHoldOffTime',
+                      'bootstrapServerAccountTimeout',
+                      bootstrap_in::json #> '{bootstrapServer}' -> 'bootstrapServerAccountTimeout'
+      ),
+    json_build_object('shortServerId', bootstrap_in::json #> '{lwm2mServer}' -> 'serverId',
+                      'securityMode', bootstrap_in::json #> '{lwm2mServer}' ->> 'securityMode',
+                      'binding', bootstrap_in::json #> '{servers}' ->> 'binding',
+                      'lifetime', bootstrap_in::json #> '{servers}' -> 'lifetime',
+                      'notifIfDisabled', bootstrap_in::json #> '{servers}' -> 'notifIfDisabled',
+                      'defaultMinPeriod', bootstrap_in::json #> '{servers}' -> 'defaultMinPeriod',
+                      'host', bootstrap_in::json #> '{lwm2mServer}' ->> 'host',
+                      'port', bootstrap_in::json #> '{lwm2mServer}' -> 'port',
+                      'serverPublicKey', publickey_lw,
+                      'bootstrapServerIs', false,
+                      'clientHoldOffTime', bootstrap_in::json #> '{lwm2mServer}' -> 'clientHoldOffTime',
+                      'bootstrapServerAccountTimeout',
+                      bootstrap_in::json #> '{lwm2mServer}' -> 'bootstrapServerAccountTimeout'
+      )
+    );
+  RETURN jsonb_set(
+           transport_configuration_in,
+           '{bootstrap}',
+           bootstrap_new,
+           true) || '{"bootstrapServerUpdateEnable": true}';
 
 END ;
 $$ LANGUAGE plpgsql;
