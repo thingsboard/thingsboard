@@ -142,6 +142,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
                 "    ],\n" +
                 "    \"attributeLwm2m\": {}\n" +
                 "  },\n" +
+                "  \"bootstrapServerUpdateEnable\": true,\n" +
                 "  \"bootstrap\": [\n" +
                 "    {\n" +
                 "       \"host\": \"0.0.0.0\",\n" +

@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.request.Identity;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfig;
 import org.eclipse.leshan.server.bootstrap.BootstrapSession;
+import org.eclipse.leshan.server.bootstrap.ConfigurationChecker;
 import org.eclipse.leshan.server.bootstrap.InMemoryBootstrapConfigStore;
 import org.eclipse.leshan.server.bootstrap.InvalidConfigurationException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -36,6 +37,7 @@ public class LwM2MInMemoryBootstrapConfigStore extends InMemoryBootstrapConfigSt
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private final Lock readLock = readWriteLock.readLock();
     private final Lock writeLock = readWriteLock.writeLock();
+    protected final ConfigurationChecker configChecker = new LwM2MConfigurationChecker();
 
     @Override
     public BootstrapConfig get(String endpoint, Identity deviceIdentity, BootstrapSession session) {
@@ -73,6 +75,26 @@ public class LwM2MInMemoryBootstrapConfigStore extends InMemoryBootstrapConfigSt
     }
 
     public void addToStore(String endpoint, BootstrapConfig config) throws InvalidConfigurationException {
-        super.add(endpoint, config);
+
+        configChecker.verify(config);
+        // Check PSK identity uniqueness for bootstrap server:
+        PskByServer pskToAdd = getBootstrapPskIdentity(config);
+        if (pskToAdd != null) {
+            BootstrapConfig existingConfig = bootstrapByPskId.get(pskToAdd);
+            if (existingConfig != null) {
+                // check if this config will be replace by the new one.
+                BootstrapConfig previousConfig = bootstrapByEndpoint.get(endpoint);
+                if (previousConfig != existingConfig) {
+                    throw new InvalidConfigurationException(
+                            "Psk identity [%s] already used for this bootstrap server [%s]", pskToAdd.identity,
+                            pskToAdd.serverUrl);
+                }
+            }
+        }
+
+        bootstrapByEndpoint.put(endpoint, config);
+        if (pskToAdd != null) {
+            bootstrapByPskId.put(pskToAdd, config);
+        }
     }
 }

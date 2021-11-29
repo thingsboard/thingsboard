@@ -82,6 +82,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
             "    ],\n" +
             "    \"attributeLwm2m\": {}\n" +
             "  },\n" +
+            "  \"bootstrapServerUpdateEnable\": true,\n" +
             "  \"bootstrap\": [\n" +
             "    {\n" +
             "       \"host\": \"0.0.0.0\",\n" +
