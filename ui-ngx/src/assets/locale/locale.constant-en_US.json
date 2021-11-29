@@ -980,8 +980,8 @@
         "access-token": "Access token",
         "access-token-required": "Access token is required.",
         "access-token-invalid": "Access token length must be from 1 to 32 characters.",
-        "rsa-key": "RSA public key",
-        "rsa-key-required": "RSA public key is required.",
+        "certificate-pem-format": "Certificate in PEM format",
+        "certificate-pem-format-required": "Certificate is required.",
         "lwm2m-security-config": {
           "identity": "Client Identity",
           "identity-required": "Client Identity is required.",

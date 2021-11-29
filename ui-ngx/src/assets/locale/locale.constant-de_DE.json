@@ -699,8 +699,6 @@
     "access-token": "Zugangs-Token",
     "access-token-required": "Zugangs-Token ist erforderlich.",
     "access-token-invalid": "Die Länge des Zugangs-Tokens muss zwischen 1 und 32 Zeichen betragen.",
-    "rsa-key": "RSA öffentlicher Schlüssel",
-    "rsa-key-required": "RSA öffentlicher Schlüssel ist erforderlich.",
     "secret": "Geheimnis",
     "secret-required": "Geheimnis ist erforderlich.",
     "device-type": "Gerätetyp",
