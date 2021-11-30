@@ -492,12 +492,14 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
             boolean hasData = false;
             for (Object v : value) {
                 Object[] array = (Object[]) v;
-                dataBuilder.addTs((long) array[0]);
+                TbSubscriptionUpdateTsValue.Builder tsValueBuilder = TbSubscriptionUpdateTsValue.newBuilder();
+                tsValueBuilder.setTs((long) array[0]);
                 String strVal = (String) array[1];
                 if (strVal != null) {
                     hasData = true;
-                    dataBuilder.addValue(strVal);
+                    tsValueBuilder.setValue(strVal);
                 }
+                dataBuilder.addTsValue(tsValueBuilder.build());
             }
             if (!ignoreEmptyUpdates || hasData) {
                 builder.addData(dataBuilder.build());
