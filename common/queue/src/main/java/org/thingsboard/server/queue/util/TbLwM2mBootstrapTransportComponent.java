@@ -21,6 +21,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
-@ConditionalOnExpression("('${service.type:null}'=='tb-transport' || '${service.type:}'=='monolith')  && '${transport.lwm2m.enabled:false}'=='true'")
-public @interface TbLwM2mTransportComponent {
+@ConditionalOnExpression("('${service.type:null}'=='tb-transport' || '${service.type:}'=='monolith')  && '${transport.lwm2m.enabled:false}'=='true' && '${transport.lwm2m.bootstrap.enabled:false}'=='true'")
+public @interface TbLwM2mBootstrapTransportComponent {
 }

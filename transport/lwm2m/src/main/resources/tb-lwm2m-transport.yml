@@ -140,7 +140,7 @@ transport:
         # Only Certificate_x509:
         skip_validity_check_for_client_cert: "${TB_LWM2M_SERVER_SECURITY_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
     bootstrap:
-      enable: "${LWM2M_ENABLED_BS:true}"
+      enabled: "${LWM2M_ENABLED_BS:true}"
       id: "${LWM2M_SERVER_ID_BS:111}"
       bind_address: "${LWM2M_BS_BIND_ADDRESS:0.0.0.0}"
       bind_port: "${LWM2M_BS_BIND_PORT:5687}"

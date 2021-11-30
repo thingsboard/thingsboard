@@ -26,30 +26,38 @@ import org.thingsboard.server.transport.lwm2m.config.LwM2MSecureServerConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportBootstrapConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 
+import java.util.Optional;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true') || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
+@ConditionalOnExpression("('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core') && '${transport.lwm2m.enabled:false}'=='true'")
 public class LwM2MServiceImpl implements LwM2MService {
 
     private final LwM2MTransportServerConfig serverConfig;
-    private final LwM2MTransportBootstrapConfig bootstrapConfig;
+    private final Optional<LwM2MTransportBootstrapConfig> bootstrapConfig;
 
     @Override
     public LwM2MServerSecurityConfigDefault getServerSecurityInfo(boolean bootstrapServer) {
-        LwM2MServerSecurityConfigDefault result = getServerSecurityConfig(bootstrapServer ? bootstrapConfig : serverConfig);
-        result.setBootstrapServerIs(bootstrapServer);
-        return result;
+        LwM2MSecureServerConfig bsServerConfig = bootstrapServer ? bootstrapConfig.orElse(null) : serverConfig;
+        if (bsServerConfig!= null) {
+            LwM2MServerSecurityConfigDefault result = getServerSecurityConfig(bsServerConfig);
+            result.setBootstrapServerIs(bootstrapServer);
+            return result;
+        }
+        else {
+            return  null;
+        }
     }
 
-    private LwM2MServerSecurityConfigDefault getServerSecurityConfig(LwM2MSecureServerConfig serverConfig) {
+    private LwM2MServerSecurityConfigDefault getServerSecurityConfig(LwM2MSecureServerConfig bsServerConfig) {
         LwM2MServerSecurityConfigDefault bsServ = new LwM2MServerSecurityConfigDefault();
-        bsServ.setShortServerId(serverConfig.getId());
-        bsServ.setHost(serverConfig.getHost());
-        bsServ.setPort(serverConfig.getPort());
-        bsServ.setSecurityHost(serverConfig.getSecureHost());
-        bsServ.setSecurityPort(serverConfig.getSecurePort());
-        byte[] publicKeyBase64 = getPublicKey(serverConfig);
+        bsServ.setShortServerId(bsServerConfig.getId());
+        bsServ.setHost(bsServerConfig.getHost());
+        bsServ.setPort(bsServerConfig.getPort());
+        bsServ.setSecurityHost(bsServerConfig.getSecureHost());
+        bsServ.setSecurityPort(bsServerConfig.getSecurePort());
+        byte[] publicKeyBase64 = getPublicKey(bsServerConfig);
         if (publicKeyBase64 == null) {
             bsServ.setServerPublicKey("");
         } else {
