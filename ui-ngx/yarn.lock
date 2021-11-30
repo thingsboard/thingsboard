@@ -356,12 +356,12 @@
   dependencies:
     tslib "^2.2.0"
 
-"@angular/flex-layout@^11.0.0-beta.33":
-  version "11.0.0-beta.33"
-  resolved "https://registry.yarnpkg.com/@angular/flex-layout/-/flex-layout-11.0.0-beta.33.tgz#c2d08f90164701b66a62b8c4365b4e22c1e95789"
-  integrity sha512-unfhw3abZuKtdwQicRStHCYGbANPTHYg4WNRQk/RC5Mxq+4WOp4Q8HI7GqRHCGUYDCGUP7w1sU/oDt8f09nM8w==
+"@angular/flex-layout@^12.0.0-beta.35":
+  version "12.0.0-beta.35"
+  resolved "https://registry.yarnpkg.com/@angular/flex-layout/-/flex-layout-12.0.0-beta.35.tgz#b52c3c82608cbb92a119f8dcde2a5b98186fe558"
+  integrity sha512-nPi2MGDFuCacwWHqxF/G7lUJd2X99HbLjjUvKXnyLwyCIVgH1sfS52su2wYbVYWJRqAVAB2/VMlrtW8Khr8hDA==
   dependencies:
-    tslib "^2.0.0"
+    tslib "^2.1.0"
 
 "@angular/forms@^12.2.13":
   version "12.2.13"
@@ -2442,12 +2442,12 @@
   resolved "https://registry.yarnpkg.com/@juggle/resize-observer/-/resize-observer-3.3.1.tgz#b50a781709c81e10701004214340f25475a171a0"
   integrity sha512-zMM9Ds+SawiUkakS7y94Ymqx+S0ORzpG3frZirN3l+UlXUmSUR7hF4wxCVqW+ei94JzV5kt0uXBcoOEAuiydrw==
 
-"@mat-datetimepicker/core@~6.0.2":
-  version "6.0.2"
-  resolved "https://registry.yarnpkg.com/@mat-datetimepicker/core/-/core-6.0.2.tgz#c4f00fee4780e116ad0b685dcdf1014ad81301c5"
-  integrity sha512-cBzbg9GNOcV3eyhXa/44TTlBIy0t4Qgp1agSrhUoMucnFzhlIcF0LrUswOOQaldXDw1FQUQE5VQz4KSFjac8+g==
+"@mat-datetimepicker/core@~7.0.1":
+  version "7.0.1"
+  resolved "https://registry.yarnpkg.com/@mat-datetimepicker/core/-/core-7.0.1.tgz#dac547195f25d448cfeaa11e0384f59639065c5f"
+  integrity sha512-lTYFJYstVb5l5JuNwVVZeyMaDtkZIq+eKycUa+5aJBAPhjapwdJx6lHiaZODgydRNtzdw79pQcB00mufguv3ew==
   dependencies:
-    tslib "^2.0.0"
+    tslib "^2.3.0"
 
 "@material-ui/core@^4.11.4":
   version "4.11.4"
@@ -12586,6 +12586,11 @@ tslib@^2.0.0, tslib@^2.0.1:
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.0.2.tgz#462295631185db44b21b1ea3615b63cd1c038242"
   integrity sha512-wAH28hcEKwna96/UacuWaVspVLkg4x1aDM9JlzqaQTOFczCktkVAb5fmXChgandR1EraDPs2w8P+ozM+oafwxg==
+
+tslib@^2.1.0, tslib@^2.3.0:
+  version "2.3.1"
+  resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.3.1.tgz#e8a335add5ceae51aa261d32a490158ef042ef01"
+  integrity sha512-77EbyPPpMz+FRFRuAFlWMtmgUWGe9UOG2Z25NqCwiIjRhOf5iKGuzSe5P2w1laq+FkRy4p+PCuVkJSGkzTEKVw==
 
 tslib@^2.2.0:
   version "2.2.0"
