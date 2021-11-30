@@ -392,12 +392,14 @@ public class DefaultLwM2MUplinkMsgHandler extends LwM2MExecutorAwareService impl
     }
 
     @Override
-    public void onDeviceUpdate(SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
+    public void onDeviceUpdate(SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> newDeviceProfileOpt) {
         try {
             LwM2mClient client = clientContext.getClientByDeviceId(device.getUuidId());
             if (client != null) {
-                this.securityStore.remove(client.getEndpoint(), client.getRegistration().getId());
-                this.onDeviceUpdate(client, device, deviceProfileOpt);
+                if (newDeviceProfileOpt.isPresent()) {
+                    this.securityStore.remove(client.getEndpoint(), client.getRegistration().getId());
+                }
+                this.onDeviceUpdate(client, device, newDeviceProfileOpt);
             }
         } catch (Exception e) {
             log.warn("[{}] failed to update device: {}", device.getId(), device);
