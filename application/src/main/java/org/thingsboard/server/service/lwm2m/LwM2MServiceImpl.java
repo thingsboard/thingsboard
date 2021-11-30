@@ -39,7 +39,7 @@ public class LwM2MServiceImpl implements LwM2MService {
 
     @Override
     public LwM2MServerSecurityConfigDefault getServerSecurityInfo(boolean bootstrapServer) {
-        LwM2MSecureServerConfig bsServerConfig = bootstrapServer ? bootstrapConfig.isPresent() ? bootstrapConfig.get() : null : serverConfig;
+        LwM2MSecureServerConfig bsServerConfig = bootstrapServer ? bootstrapConfig.orElse(null) : serverConfig;
         if (bsServerConfig!= null) {
             LwM2MServerSecurityConfigDefault result = getServerSecurityConfig(bsServerConfig);
             result.setBootstrapServerIs(bootstrapServer);
