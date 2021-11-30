@@ -1545,28 +1545,28 @@
     prop-types "^15.7.2"
     react-is "^16.8.0 || ^17.0.0"
 
-"@ngrx/effects@^10.1.2":
-  version "10.1.2"
-  resolved "https://registry.yarnpkg.com/@ngrx/effects/-/effects-10.1.2.tgz#f1c9daa2e3e13aeb6af272cb52f6dff73d364d68"
-  integrity sha512-6pX6FEzLlqdbtFVMbCvscsaL6QC/L95e72JKj76Xz+8V77UTlpVsxWyMo7YU9pM4EXNpBGmOpMs2xKjfBfK05Q==
+"@ngrx/effects@^12.5.1":
+  version "12.5.1"
+  resolved "https://registry.yarnpkg.com/@ngrx/effects/-/effects-12.5.1.tgz#acd0ff86d8db514e47337508dde83cc98f7a3416"
+  integrity sha512-fVNGIIntYLRWW1XWe0os2XOv03L22S4WTkX0OPZ9O6ztwuaNq0yzxWN7UeAC6H385F+g0k76KwRV78zHyP0bfQ==
   dependencies:
     tslib "^2.0.0"
 
-"@ngrx/store-devtools@^10.1.2":
-  version "10.1.2"
-  resolved "https://registry.yarnpkg.com/@ngrx/store-devtools/-/store-devtools-10.1.2.tgz#1dba8c84df4b56a2b15d6abc01c3c378d1518830"
-  integrity sha512-HE681GuZ+lRgSXpgt7y7LKzsfu/+Tgy9yPZpaitvkhg+eCIjnN5Uvs1rWqETHYWnsKliW25yoqFUAVw+xb7hug==
+"@ngrx/store-devtools@^12.5.1":
+  version "12.5.1"
+  resolved "https://registry.yarnpkg.com/@ngrx/store-devtools/-/store-devtools-12.5.1.tgz#75f8ef9a4bf4a40d5343ff437651f0f3092914b5"
+  integrity sha512-SXMxVO3KzQUfB9G20gdNT5t/RcbtbaUySXLuH+b69z/eb34wH9AOYifdSdcEi8oqPjDrWYBq6a8Uh+yDHf9IfA==
   dependencies:
     tslib "^2.0.0"
 
-"@ngrx/store@^10.1.2":
-  version "10.1.2"
-  resolved "https://registry.yarnpkg.com/@ngrx/store/-/store-10.1.2.tgz#a41aee81ea7b7e4a9f927be560e6024830211efb"
-  integrity sha512-FUjN786ch4Qt9WgJ78ef7Yquq3mPCekgcWgZrs4ycZw1f+KdfTHLTk1bGDtO8A8CzOya5yTT7KhxbdVjbOS5ng==
+"@ngrx/store@^12.5.1":
+  version "12.5.1"
+  resolved "https://registry.yarnpkg.com/@ngrx/store/-/store-12.5.1.tgz#a7c21d7df1d017d2cb7e77804b210cc14bcf8786"
+  integrity sha512-NLVkHLVeZc7IboXSDZlFoq1QrupmwYTYKRHS6se7ZasAv/lrIjHWsVVdICKSVRBsHZYu3+dmCXmu+YgulP7iHw==
   dependencies:
     tslib "^2.0.0"
 
-"@ngtools/webpack@11.2.13", "@ngtools/webpack@~11.2.13":
+"@ngtools/webpack@11.2.13":
   version "11.2.13"
   resolved "https://registry.yarnpkg.com/@ngtools/webpack/-/webpack-11.2.13.tgz#dbd77deb37ab57fd98678bd637fe87693fd71f4f"
   integrity sha512-Wbv1zjLaS1zXcJ1wryYc6vhKWq8r/+ZrdN5SlRIf3xf7fwuTymbvL41SndUibssXir6s4vePYqZL241nkThx9g==
@@ -1574,6 +1574,11 @@
     "@angular-devkit/core" "11.2.13"
     enhanced-resolve "5.7.0"
     webpack-sources "2.2.0"
+
+"@ngtools/webpack@~12.2.13":
+  version "12.2.13"
+  resolved "https://registry.yarnpkg.com/@ngtools/webpack/-/webpack-12.2.13.tgz#44d711edfa39d175a2d655aa5c6f9968dfedcc35"
+  integrity sha512-krAwMyRqOaC1S0+IxAFid9F6A6ABip2DJ0tgCx26X+1Vw/d1GKtV9ZqDJFizMf5k1ywl9aBlhOazWpq5d6i+gw==
 
 "@ngx-translate/core@^13.0.0":
   version "13.0.0"
