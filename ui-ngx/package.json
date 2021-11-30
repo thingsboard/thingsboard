@@ -24,6 +24,7 @@
     "@angular/platform-browser": "^11.2.14",
     "@angular/platform-browser-dynamic": "^11.2.14",
     "@angular/router": "^11.2.14",
+    "@angular/service-worker": "^11.2.14",
     "@auth0/angular-jwt": "^5.0.2",
     "@date-io/date-fns": "^2.10.11",
     "@flowjs/flow.js": "^2.14.1",
