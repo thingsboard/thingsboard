@@ -41,7 +41,7 @@
     "@ngx-translate/http-loader": "^6.0.0",
     "ace-builds": "^1.4.12",
     "angular-gridster2": "~11.2.0",
-    "angular2-hotkeys": "^2.2.0",
+    "angular2-hotkeys": "^2.4.0",
     "canvas-gauges": "^2.1.7",
     "compass-sass-mixins": "^0.12.7",
     "core-js": "^3.18.3",

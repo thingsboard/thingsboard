@@ -2581,13 +2581,14 @@ angular-gridster2@~11.2.0:
   dependencies:
     tslib "^2.0.0"
 
-angular2-hotkeys@^2.2.0:
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/angular2-hotkeys/-/angular2-hotkeys-2.2.0.tgz#7b52ba99c42c56656360953ab79d776f583d1ab8"
-  integrity sha512-2O2wtPyscQU/PtyPc+TefSHAql0VI51rrKyIt87YAvBaGUZEj5PZG2QtC7kYI3sFhXYlvrNefUxXoehFjEVQAQ==
+angular2-hotkeys@^2.4.0:
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/angular2-hotkeys/-/angular2-hotkeys-2.4.0.tgz#b814ccc43bb55eddff103d2ccf42afd832e3ff9d"
+  integrity sha512-m1UHmPBCKNUoGDPbyfLxUcUXd7vn1welfpfCLv7hEM2HIYfEtFo158xx7l4mAufEeE5179uFJggSQcVwJennfg==
   dependencies:
     "@types/mousetrap" "^1.6.0"
     mousetrap "^1.6.0"
+    tslib "^2.0.0"
 
 ansi-colors@4.1.1:
   version "4.1.1"
