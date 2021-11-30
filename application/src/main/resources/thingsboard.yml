@@ -19,6 +19,8 @@ server:
   address: "${HTTP_BIND_ADDRESS:0.0.0.0}"
   # Server bind port
   port: "${HTTP_BIND_PORT:8080}"
+  # Server forward headers strategy
+  forward_headers_strategy: "${HTTP_FORWARD_HEADERS_STRATEGY:NONE}"
   # Server SSL configuration
   ssl:
     # Enable/disable SSL support
