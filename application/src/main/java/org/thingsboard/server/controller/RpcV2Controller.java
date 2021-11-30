@@ -225,7 +225,7 @@ public class RpcV2Controller extends AbstractRpcController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/persistent/{rpcId}", method = RequestMethod.DELETE)
     @ResponseBody
-    public void deleteResource(
+    public void deleteRpc(
             @ApiParam(value = RPC_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(RPC_ID) String strRpc) throws ThingsboardException {
         checkParameter("RpcId", strRpc);

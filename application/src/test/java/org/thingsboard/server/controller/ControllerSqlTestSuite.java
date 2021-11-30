@@ -30,7 +30,7 @@ import java.util.Arrays;
 //        "org.thingsboard.server.controller.sql.EntityQueryControllerSqlTest",
 //        "org.thingsboard.server.controller.sql.TbResourceControllerSqlTest",
 //        "org.thingsboard.server.controller.sql.DeviceProfileControllerSqlTest",
-        "org.thingsboard.server.controller.sql.*Test",
+        "org.thingsboard.server.controller.sql.RpcControllerTest",
         })
 public class ControllerSqlTestSuite {
 
