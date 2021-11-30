@@ -91,10 +91,6 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     private Integer securePort;
 
     @Getter
-    @Value("${transport.lwm2m.log_max_length:}")
-    private int logMaxLength;
-
-    @Getter
     @Value("${transport.lwm2m.psm_activity_timer:10000}")
     private long psmActivityTimer;
 
