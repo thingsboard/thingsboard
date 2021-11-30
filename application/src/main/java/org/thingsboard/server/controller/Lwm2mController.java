@@ -32,7 +32,7 @@ import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MServerSecurityConfigDefault;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
-import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.service.lwm2m.LwM2MService;
 
 import java.util.Map;
@@ -42,7 +42,7 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CU
 
 @Slf4j
 @RestController
-@TbCoreComponent
+@TbLwM2mTransportComponent
 @RequestMapping("/api")
 public class Lwm2mController extends BaseController {
 

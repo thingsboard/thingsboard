@@ -20,16 +20,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentialsConfig;
+import org.thingsboard.server.queue.util.TbLwM2mBootstrapTransportComponent;
 
 @Slf4j
 @Component
-@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true') || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
+@TbLwM2mBootstrapTransportComponent
 public class LwM2MTransportBootstrapConfig implements LwM2MSecureServerConfig {
 
     @Getter

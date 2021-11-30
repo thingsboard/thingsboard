@@ -18,38 +18,46 @@ package org.thingsboard.server.service.lwm2m;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MServerSecurityConfigDefault;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
+import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MSecureServerConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportBootstrapConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 
+import java.util.Optional;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true') || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
+@TbLwM2mTransportComponent
 public class LwM2MServiceImpl implements LwM2MService {
 
     private final LwM2MTransportServerConfig serverConfig;
-    private final LwM2MTransportBootstrapConfig bootstrapConfig;
+    private final Optional<LwM2MTransportBootstrapConfig> bootstrapConfig;
 
     @Override
     public LwM2MServerSecurityConfigDefault getServerSecurityInfo(boolean bootstrapServer) {
-        LwM2MServerSecurityConfigDefault result = getServerSecurityConfig(bootstrapServer ? bootstrapConfig : serverConfig);
-        result.setBootstrapServerIs(bootstrapServer);
-        return result;
+        LwM2MSecureServerConfig bsServerConfig = bootstrapServer ? bootstrapConfig.isPresent() ? bootstrapConfig.get() : null : serverConfig;
+        if (bsServerConfig!= null) {
+            LwM2MServerSecurityConfigDefault result = getServerSecurityConfig(bsServerConfig);
+            result.setBootstrapServerIs(bootstrapServer);
+            return result;
+        }
+        else {
+            return  null;
+        }
     }
 
-    private LwM2MServerSecurityConfigDefault getServerSecurityConfig(LwM2MSecureServerConfig serverConfig) {
+    private LwM2MServerSecurityConfigDefault getServerSecurityConfig(LwM2MSecureServerConfig bsServerConfig) {
         LwM2MServerSecurityConfigDefault bsServ = new LwM2MServerSecurityConfigDefault();
-        bsServ.setShortServerId(serverConfig.getId());
-        bsServ.setHost(serverConfig.getHost());
-        bsServ.setPort(serverConfig.getPort());
-        bsServ.setSecurityHost(serverConfig.getSecureHost());
-        bsServ.setSecurityPort(serverConfig.getSecurePort());
-        byte[] publicKeyBase64 = getPublicKey(serverConfig);
+        bsServ.setShortServerId(bsServerConfig.getId());
+        bsServ.setHost(bsServerConfig.getHost());
+        bsServ.setPort(bsServerConfig.getPort());
+        bsServ.setSecurityHost(bsServerConfig.getSecureHost());
+        bsServ.setSecurityPort(bsServerConfig.getSecurePort());
+        byte[] publicKeyBase64 = getPublicKey(bsServerConfig);
         if (publicKeyBase64 == null) {
             bsServ.setServerPublicKey("");
         } else {
