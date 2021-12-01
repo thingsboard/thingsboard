@@ -120,7 +120,7 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
                         TbLwM2MSecurityInfo securityInfo = null;
                         // verify if trust
                         if (config.getTrustSslCredentials().getTrustedCertificates().length > 0) {
-                            if (searchIssuer(cert, config.getTrustSslCredentials().getTrustedCertificates()) != null) {
+                            if (verifyIssuer(cert, config.getTrustSslCredentials().getTrustedCertificates()) != null) {
                                 String endpoint = config.getTrustSslCredentials().getValueFromSubjectNameByKey(cert.getSubjectX500Principal().getName(), "CN");
                                 securityInfo = StringUtils.isNotEmpty(endpoint) ? securityInfoValidator.getEndpointSecurityInfoByCredentialsId(endpoint, CLIENT) : null;
                             }
@@ -193,13 +193,16 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
 
     }
 
-    private static X509Certificate searchIssuer(X509Certificate certificate, X509Certificate[] certificates) {
-        X500Principal subject = certificate.getIssuerX500Principal();
-        for (int index = 0; index < certificates.length; ++index) {
-            X509Certificate trust = certificates[index];
-            if (trust != null && subject.equals(trust.getIssuerX500Principal())) {
-                if (verifyCertificate(certificate)) {
-                    return certificate;
+    private X509Certificate verifyIssuer(X509Certificate certificate, X509Certificate[] certificates) {
+        String issuerCN = config.getTrustSslCredentials().getValueFromSubjectNameByKey(certificate.getIssuerX500Principal().getName(), "CN");
+        if (!StringUtils.isBlank(issuerCN)) {
+            for (int index = 0; index < certificates.length; ++index) {
+                X509Certificate trust = certificates[index];
+                String trustCN = config.getTrustSslCredentials().getValueFromSubjectNameByKey(trust.getSubjectX500Principal().getName(), "CN");
+                if (!StringUtils.isBlank(trustCN) && issuerCN.length() > trustCN.length() && issuerCN.substring(issuerCN.length()-trustCN.length()).equals(trustCN)) {
+                    if (verifyCertificate(certificate)) {
+                        return certificate;
+                    }
                 }
             }
         }
