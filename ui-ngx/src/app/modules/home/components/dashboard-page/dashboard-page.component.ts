@@ -345,24 +345,26 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         this.runChangeDetection();
       }
     ));
-    this.rxSubscriptions.push(this.route.queryParamMap.subscribe(
-      (paramMap) => {
-        if (paramMap.has('reload')) {
-          this.dashboardCtx.aliasController.updateAliases();
-          setTimeout(() => {
-            this.mobileService.handleDashboardStateName(this.dashboardCtx.stateController.getCurrentStateName());
-            this.mobileService.onDashboardLoaded(this.layouts.right.show, this.isRightLayoutOpened);
-          });
+    if (this.syncStateWithQueryParam) {
+      this.rxSubscriptions.push(this.route.queryParamMap.subscribe(
+        (paramMap) => {
+          if (paramMap.has('reload')) {
+            this.dashboardCtx.aliasController.updateAliases();
+            setTimeout(() => {
+              this.mobileService.handleDashboardStateName(this.dashboardCtx.stateController.getCurrentStateName());
+              this.mobileService.onDashboardLoaded(this.layouts.right.show, this.isRightLayoutOpened);
+            });
+          }
         }
-      }
-    ));
+      ));
+    }
     this.rxSubscriptions.push(this.breakpointObserver
       .observe(MediaBreakpoints['gt-sm'])
       .subscribe((state: BreakpointState) => {
           this.isMobile = !state.matches;
         }
     ));
-    if (this.isMobileApp) {
+    if (this.isMobileApp && this.syncStateWithQueryParam) {
       this.mobileService.registerToggleLayoutFunction(() => {
         setTimeout(() => {
           this.toggleLayouts();
@@ -464,7 +466,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   ngOnDestroy(): void {
-    if (this.isMobileApp) {
+    if (this.isMobileApp && this.syncStateWithQueryParam) {
       this.mobileService.unregisterToggleLayoutFunction();
     }
     this.rxSubscriptions.forEach((subscription) => {

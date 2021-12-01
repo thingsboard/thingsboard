@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>3.3.2-SNAPSHOT</version>
+    <version>3.3.3-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
@@ -830,6 +830,7 @@
                             <exclude>src/.browserslistrc</exclude>
                             <exclude>**/yarn.lock</exclude>
                             <exclude>**/*.raw</exclude>
+                            <exclude>**/*.patch</exclude>
                             <exclude>**/apache/cassandra/io/**</exclude>
                             <exclude>.run/**</exclude>
                         </excludes>

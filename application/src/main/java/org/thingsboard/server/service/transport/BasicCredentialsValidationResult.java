@@ -13,20 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.tools;
+package org.thingsboard.server.service.transport;
 
-import lombok.Getter;
-import org.thingsboard.server.common.data.EntityType;
-
-/**
- * Created by ashvayka on 22.10.18.
- */
-public class TbRateLimitsException extends RuntimeException {
-    @Getter
-    private final EntityType entityType;
-
-    public TbRateLimitsException(EntityType entityType) {
-        super(entityType.name() + " rate limits reached!");
-        this.entityType = entityType;
-    }
-}
+enum BasicCredentialsValidationResult {HASH_MISMATCH, PASSWORD_MISMATCH, VALID}

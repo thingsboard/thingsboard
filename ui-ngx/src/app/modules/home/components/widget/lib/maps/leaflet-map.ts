@@ -14,23 +14,15 @@
 /// limitations under the License.
 ///
 
-import L, {
-  FeatureGroup,
-  Icon,
-  LatLngBounds,
-  LatLngTuple,
-  markerClusterGroup,
-  MarkerClusterGroup,
-  MarkerClusterGroupOptions, Projection
-} from 'leaflet';
+import L, { FeatureGroup, Icon, LatLngBounds, LatLngTuple, Projection } from 'leaflet';
 import tinycolor from 'tinycolor2';
 import 'leaflet-providers';
-import 'leaflet.markercluster/dist/leaflet.markercluster';
+import { MarkerClusterGroup, MarkerClusterGroupOptions } from 'leaflet.markercluster/dist/leaflet.markercluster';
+import '@geoman-io/leaflet-geoman-free';
 
 import {
   defaultSettings,
   FormattedData,
-  MapProviders,
   MapSettings,
   MarkerSettings,
   PolygonSettings,
@@ -42,9 +34,7 @@ import { Marker } from './markers';
 import { Observable, of } from 'rxjs';
 import { Polyline } from './polyline';
 import { Polygon } from './polygon';
-import {
-  createTooltip,
-} from '@home/components/widget/lib/maps/maps-utils';
+import { createTooltip } from '@home/components/widget/lib/maps/maps-utils';
 import {
   checkLngLat,
   createLoadingDiv,
@@ -54,6 +44,12 @@ import {
 } from '@home/components/widget/lib/maps/common-maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { deepClone, isDefinedAndNotNull, isEmptyStr, isString } from '@core/utils';
+import { TranslateService } from '@ngx-translate/core';
+import {
+  SelectEntityDialogComponent,
+  SelectEntityDialogData
+} from '@home/components/widget/lib/maps/dialogs/select-entity-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
 
 export default abstract class LeafletMap {
 
@@ -78,20 +74,24 @@ export default abstract class LeafletMap {
     drawRoutes: boolean;
     showPolygon: boolean;
     updatePending = false;
+    editPolygons = false;
+    selectedEntity: FormattedData;
     addMarkers: L.Marker[] = [];
     addPolygons: L.Polygon[] = [];
   // tslint:disable-next-line:no-string-literal
     southWest = new L.LatLng(-Projection.SphericalMercator['MAX_LATITUDE'], -180);
   // tslint:disable-next-line:no-string-literal
     northEast = new L.LatLng(Projection.SphericalMercator['MAX_LATITUDE'], 180);
-    mousePositionOnMap: L.LatLng;
-    addMarker: L.Control;
-    addPolygon: L.Control;
+    saveLocation: (e: FormattedData, values: {[key: string]: any}) => Observable<any>;
+    saveMarkerLocation: (e: FormattedData, lat?: number, lng?: number) => Observable<any>;
+    savePolygonLocation: (e: FormattedData, coordinates?: Array<any>) => Observable<any>;
 
     protected constructor(public ctx: WidgetContext,
                           public $container: HTMLElement,
                           options: UnitedMapSettings) {
         this.options = options;
+        this.editPolygons = options.showPolygon && options.editablePolygon;
+        L.Icon.Default.imagePath = '/';
     }
 
     public initSettings(options: MapSettings) {
@@ -102,16 +102,28 @@ export default abstract class LeafletMap {
             removeOutsideVisibleBounds,
             animate,
             chunkedLoading,
+            spiderfyOnMaxZoom,
             maxClusterRadius,
             maxZoom }: MapSettings = options;
         if (useClusterMarkers) {
+            // disabled marker cluster icon
+            (L as any).MarkerCluster = (L as any).MarkerCluster.extend({
+              options: { pmIgnore: true, ...L.Icon.prototype.options }
+            });
             const clusteringSettings: MarkerClusterGroupOptions = {
-                spiderfyOnMaxZoom: false,
+                spiderfyOnMaxZoom,
                 zoomToBoundsOnClick: zoomOnClick,
                 showCoverageOnHover,
                 removeOutsideVisibleBounds,
                 animate,
-                chunkedLoading
+                chunkedLoading,
+                pmIgnore: true,
+                spiderLegPolylineOptions: {
+                  pmIgnore: true
+                },
+                polygonOptions: {
+                  pmIgnore: true
+                }
             };
             if (maxClusterRadius && maxClusterRadius > 0) {
                 clusteringSettings.maxClusterRadius = Math.floor(maxClusterRadius);
@@ -119,183 +131,165 @@ export default abstract class LeafletMap {
             if (maxZoom && maxZoom >= 0 && maxZoom < 19) {
                 clusteringSettings.disableClusteringAtZoom = Math.floor(maxZoom);
             }
-            this.markersCluster = markerClusterGroup(clusteringSettings);
+            this.markersCluster = new MarkerClusterGroup(clusteringSettings);
         }
     }
 
-    addMarkerControl() {
-        if (this.options.draggableMarker) {
-            this.map.on('mousemove', (e: L.LeafletMouseEvent) => {
-                this.mousePositionOnMap = e.latlng;
-            });
-            const dragListener = (e: L.DragEndEvent) => {
-                if (e.type === 'dragend' && this.mousePositionOnMap) {
-                    const icon = L.icon({
-                      iconRetinaUrl: 'marker-icon-2x.png',
-                      iconUrl: 'marker-icon.png',
-                      shadowUrl: 'marker-shadow.png',
-                      iconSize: [25, 41],
-                      iconAnchor: [12, 41],
-                      popupAnchor: [1, -34],
-                      tooltipAnchor: [16, -28],
-                      shadowSize: [41, 41]
-                    });
-                    const customLatLng = this.convertToCustomFormat(this.mousePositionOnMap);
-                    this.mousePositionOnMap.lat = customLatLng[this.options.latKeyName];
-                    this.mousePositionOnMap.lng = customLatLng[this.options.lngKeyName];
-
-                    const newMarker = L.marker(this.mousePositionOnMap, { icon }).addTo(this.map);
-                    this.addMarkers.push(newMarker);
-                    const datasourcesList = document.createElement('div');
-                    const header = document.createElement('p');
-                    header.appendChild(document.createTextNode('Select entity:'));
-                    header.setAttribute('style', 'font-size: 14px; margin: 8px 0');
-                    datasourcesList.appendChild(header);
-                    this.datasources.forEach(ds => {
-                        const dsItem = document.createElement('p');
-                        dsItem.appendChild(document.createTextNode(ds.entityName));
-                        dsItem.setAttribute('style', 'font-size: 14px; margin: 8px 0; cursor: pointer');
-                        dsItem.onclick = () => {
-                            const updatedEnttity = { ...ds, ...customLatLng };
-                            this.saveMarkerLocation(updatedEnttity).subscribe(() => {
-                              this.map.removeLayer(newMarker);
-                              const markerIndex = this.addMarkers.indexOf(newMarker);
-                              if (markerIndex > -1) {
-                                this.addMarkers.splice(markerIndex, 1);
-                              }
-                              this.deleteMarker(ds.entityName);
-                              this.createMarker(ds.entityName, updatedEnttity, this.datasources, this.options);
-                            });
-                        };
-                        datasourcesList.appendChild(dsItem);
-                    });
-                    datasourcesList.appendChild(document.createElement('br'));
-                    const deleteBtn = document.createElement('a');
-                    deleteBtn.appendChild(document.createTextNode('Discard changes'));
-                    deleteBtn.onclick = () => {
-                        this.map.removeLayer(newMarker);
-                        const markerIndex = this.addMarkers.indexOf(newMarker);
-                        if (markerIndex > -1) {
-                          this.addMarkers.splice(markerIndex, 1);
-                        }
-                    };
-                    datasourcesList.appendChild(deleteBtn);
-                    const popup = L.popup();
-                    popup.setContent(datasourcesList);
-                    newMarker.bindPopup(popup).openPopup();
-                }
-                this.addMarker.setPosition('topright');
-            };
-            const addMarker = L.Control.extend({
-                onAdd() {
-                    const img = L.DomUtil.create('img') as any;
-                    img.src = `assets/add_location.svg`;
-                    img.style.width = '32px';
-                    img.style.height = '32px';
-                    img.title = 'Drag and drop to add marker';
-                    img.onclick = this.dragMarker;
-                    img.draggable = true;
-                    const draggableImg = new L.Draggable(img);
-                    draggableImg.enable();
-                    draggableImg.on('dragend', dragListener);
-                    return img;
-                },
-                onRemove() {
-                },
-                dragMarker: this.dragMarker
-            } as any);
-            const addMarkerControl = (opts) => {
-                return new addMarker(opts);
-            };
-            this.addMarker = addMarkerControl({ position: 'topright' }).addTo(this.map);
-        }
+    private selectEntityWithoutLocationDialog(shapes: L.PM.SUPPORTED_SHAPES): Observable<FormattedData> {
+      let entities;
+      switch (shapes) {
+        case 'Polygon':
+        case 'Rectangle':
+          entities = this.datasources.filter(pData => !this.isValidPolygonPosition(pData));
+          break;
+        case 'Marker':
+          entities = this.datasources.filter(mData => !this.convertPosition(mData));
+          break;
+        default:
+          return of(null);
+      }
+      if (entities.length === 1) {
+        return of(entities[0]);
+      }
+      const dialog = this.ctx.$injector.get(MatDialog);
+      return dialog.open<SelectEntityDialogComponent, SelectEntityDialogData, FormattedData>(SelectEntityDialogComponent,
+        {
+          disableClose: true,
+          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+          data: {
+            entities
+          }
+        }).afterClosed();
     }
 
-  addPolygonControl() {
-    if (this.options.showPolygon && this.options.editablePolygon) {
-      this.map.on('mousemove', (e: L.LeafletMouseEvent) => {
-        this.mousePositionOnMap = e.latlng;
+    private selectEntityWithoutLocation(type: string) {
+      this.selectEntityWithoutLocationDialog(type.substring(2)).subscribe((data) => {
+        if (data !== null) {
+          this.selectedEntity = data;
+          this.toggleDrawMode(type);
+        } else {
+          this.map.pm.Toolbar.toggleButton(type, false);
+        }
+      });
+    }
+
+    private toggleDrawMode(type: string) {
+      this.map.pm.Draw[type].toggle();
+    }
+
+    addEditControl() {
+      // Customize edit marker
+      if (this.options.draggableMarker) {
+        const actions = [{
+          text: L.PM.Utils.getTranslation('actions.cancel'),
+          onClick: () => this.toggleDrawMode('tbMarker')
+        }];
+
+        this.map.pm.Toolbar.copyDrawControl('Marker', {
+          name: 'tbMarker',
+          afterClick: () => this.selectEntityWithoutLocation('tbMarker'),
+          disabled: true,
+          actions
+        });
+      }
+
+      // Customize edit polygon
+      if (this.editPolygons) {
+        const rectangleActions = [
+          {
+            text: L.PM.Utils.getTranslation('actions.cancel'),
+            onClick: () => this.toggleDrawMode('tbRectangle')
+          }
+        ];
+
+        const polygonActions = [
+          'finish' as const,
+          'removeLastVertex' as const,
+          {
+            text: L.PM.Utils.getTranslation('actions.cancel'),
+            onClick: () => this.toggleDrawMode('tbPolygon')
+          }
+        ];
+
+        this.map.pm.Toolbar.copyDrawControl('Rectangle', {
+          name: 'tbRectangle',
+          afterClick: () => this.selectEntityWithoutLocation('tbRectangle'),
+          disabled: true,
+          actions: rectangleActions
+        });
+
+        this.map.pm.Toolbar.copyDrawControl('Polygon', {
+          name: 'tbPolygon',
+          afterClick: () => this.selectEntityWithoutLocation('tbPolygon'),
+          disabled: true,
+          actions: polygonActions
+        });
+      }
+
+      const translateService = this.ctx.$injector.get(TranslateService);
+      this.map.pm.setLang('en', translateService.instant('widgets.maps'), 'en');
+      this.map.pm.addControls({
+        position: 'topleft',
+        drawMarker: false,
+        drawCircle: false,
+        drawCircleMarker: false,
+        drawRectangle: false,
+        drawPolyline: false,
+        drawPolygon: false,
+        editMode: this.editPolygons,
+        cutPolygon: this.editPolygons,
+        rotateMode: this.editPolygons
       });
 
-      const dragListener = (e: L.DragEndEvent) => {
-        if (e.type === 'dragend') {
-          const polygonOffset = this.options.provider === MapProviders.image ? 10 : 0.01;
-
-          const convert = this.convertToCustomFormat(this.mousePositionOnMap, polygonOffset);
-          this.mousePositionOnMap.lat = convert[this.options.latKeyName];
-          this.mousePositionOnMap.lng = convert[this.options.lngKeyName];
-
-          const latlng1 = this.mousePositionOnMap;
-          const latlng2 = L.latLng(this.mousePositionOnMap.lat, this.mousePositionOnMap.lng + polygonOffset);
-          const latlng3 = L.latLng(this.mousePositionOnMap.lat - polygonOffset, this.mousePositionOnMap.lng);
-          const polygonPoints = [latlng1, latlng2, latlng3];
-
-          const newPolygon = L.polygon(polygonPoints).addTo(this.map);
-          this.addPolygons.push(newPolygon);
-          const datasourcesList = document.createElement('div');
-          const customLatLng = {[this.options.polygonKeyName]: this.convertToPolygonFormat(polygonPoints)};
-          const header = document.createElement('p');
-          header.appendChild(document.createTextNode('Select entity:'));
-          header.setAttribute('style', 'font-size: 14px; margin: 8px 0');
-          datasourcesList.appendChild(header);
-          this.datasources.forEach(ds => {
-            const dsItem = document.createElement('p');
-            dsItem.appendChild(document.createTextNode(ds.entityName));
-            dsItem.setAttribute('style', 'font-size: 14px; margin: 8px 0; cursor: pointer');
-            dsItem.onclick = () => {
-              const updatedEnttity = { ...ds, ...customLatLng };
-              this.savePolygonLocation(updatedEnttity).subscribe(() => {
-                this.map.removeLayer(newPolygon);
-                const polygonIndex = this.addPolygons.indexOf(newPolygon);
-                if (polygonIndex > -1) {
-                  this.addPolygons.splice(polygonIndex, 1);
-                }
-                this.deletePolygon(ds.entityName);
-              });
-            };
-            datasourcesList.appendChild(dsItem);
+      this.map.on('pm:create', (e) => {
+        if (e.shape === 'tbMarker') {
+          // @ts-ignore
+          this.saveLocation(this.selectedEntity, this.convertToCustomFormat(e.layer.getLatLng())).subscribe(() => {
           });
-          datasourcesList.appendChild(document.createElement('br'));
-          const deleteBtn = document.createElement('a');
-          deleteBtn.appendChild(document.createTextNode('Discard changes'));
-          deleteBtn.onclick = () => {
-            this.map.removeLayer(newPolygon);
-            const polygonIndex = this.addPolygons.indexOf(newPolygon);
-            if (polygonIndex > -1) {
-              this.addPolygons.splice(polygonIndex, 1);
-            }
-          };
-          datasourcesList.appendChild(deleteBtn);
-          const popup = L.popup();
-          popup.setContent(datasourcesList);
-          newPolygon.bindPopup(popup).openPopup();
+        } else if (e.shape === 'tbRectangle' || e.shape === 'tbPolygon') {
+          // @ts-ignore
+          this.saveLocation(this.selectedEntity, this.convertPolygonToCustomFormat(e.layer.getLatLngs()[0])).subscribe(() => {
+          });
         }
-        this.addPolygon.setPosition('topright');
-      };
-      const addPolygon = L.Control.extend({
-        onAdd() {
-          const img = L.DomUtil.create('img') as any;
-          img.src = `assets/add_polygon.svg`;
-          img.style.width = '32px';
-          img.style.height = '32px';
-          img.title = 'Drag and drop to add Polygon';
-          img.onclick = this.dragPolygonVertex;
-          img.draggable = true;
-          const draggableImg = new L.Draggable(img);
-          draggableImg.enable();
-          draggableImg.on('dragend', dragListener);
-          return img;
-        },
-        onRemove() {
-        },
-        dragPolygonVertex: this.dragPolygonVertex
-      } as any);
-      const addPolygonControl = (opts) => {
-        return new addPolygon(opts);
-      };
-      this.addPolygon = addPolygonControl({ position: 'topright' }).addTo(this.map);
+        // @ts-ignore
+        e.layer._pmTempLayer = true;
+        e.layer.remove();
+      });
+
+      this.map.on('pm:cut', (e) => {
+        // @ts-ignore
+        e.originalLayer.setLatLngs(e.layer.getLatLngs());
+        e.originalLayer.addTo(this.map);
+        // @ts-ignore
+        e.originalLayer._pmTempLayer = false;
+        const iterator = this.polygons.values();
+        let result = iterator.next();
+        while (!result.done && e.originalLayer !== result.value.leafletPoly) {
+          result = iterator.next();
+        }
+        // @ts-ignore
+        e.layer._pmTempLayer = true;
+        e.layer.remove();
+      });
+
+      this.map.on('pm:remove', (e) => {
+        if (e.shape === 'Marker') {
+          const iterator = this.markers.values();
+          let result = iterator.next();
+          while (!result.done && e.layer !== result.value.leafletMarker) {
+            result = iterator.next();
+          }
+          this.saveLocation(result.value.data, this.convertToCustomFormat(null)).subscribe(() => {});
+        } else if (e.shape === 'Polygon') {
+          const iterator = this.polygons.values();
+          let result = iterator.next();
+          while (!result.done && e.layer !== result.value.leafletPoly) {
+            result = iterator.next();
+          }
+          this.saveLocation(result.value.data, this.convertPolygonToCustomFormat(null)).subscribe(() => {});
+        }
+      });
     }
-  }
 
     public setLoading(loading: boolean) {
       if (this.loading !== loading) {
@@ -337,11 +331,10 @@ export default abstract class LeafletMap {
         if (this.options.disableScrollZooming) {
           this.map.scrollWheelZoom.disable();
         }
-        if (this.options.draggableMarker) {
-          this.addMarkerControl();
-        }
-        if (this.options.editablePolygon) {
-          this.addPolygonControl();
+        if (this.options.draggableMarker || this.editPolygons) {
+          this.addEditControl();
+        } else {
+          this.map.pm.disableDraw();
         }
         if (this.options.useClusterMarkers) {
           this.map.addLayer(this.markersCluster);
@@ -350,14 +343,6 @@ export default abstract class LeafletMap {
           this.updatePending = false;
           this.updateData(this.drawRoutes, this.showPolygon);
         }
-    }
-
-    public saveMarkerLocation(datasource: FormattedData, lat?: number, lng?: number): Observable<any> {
-      return of(null);
-    }
-
-    public savePolygonLocation(datasource: FormattedData, coordinates?: Array<[number, number]>): Observable<any> {
-      return of(null);
     }
 
     createLatLng(lat: number, lng: number): L.LatLng {
@@ -441,7 +426,7 @@ export default abstract class LeafletMap {
     }
 
     convertToCustomFormat(position: L.LatLng, offset = 0): object {
-      position = checkLngLat(position, this.southWest, this.northEast, offset);
+      position = position ? checkLngLat(position, this.southWest, this.northEast, offset) : {lat: null, lng: null} as L.LatLng;
 
       return {
         [this.options.latKeyName]: position.lat,
@@ -455,17 +440,18 @@ export default abstract class LeafletMap {
           if (point.length) {
             return this.convertToPolygonFormat(point);
           } else {
-            return [point.lat, point.lng];
+            const convertPoint = checkLngLat(point, this.southWest, this.northEast);
+            return [convertPoint.lat, convertPoint.lng];
           }
         });
-      } else {
-        return [];
       }
+      return [];
     }
 
-    convertPolygonToCustomFormat(expression: any[][]): object {
+    convertPolygonToCustomFormat(expression: any[][]): {[key: string]: any} {
+      const coordinate = expression ? this.convertToPolygonFormat(expression) : null;
       return {
-        [this.options.polygonKeyName] : this.convertToPolygonFormat(expression)
+        [this.options.polygonKeyName]: coordinate
       };
     }
 
@@ -484,7 +470,15 @@ export default abstract class LeafletMap {
         }
         this.updateMarkers(formattedData, false);
         this.updateBoundsInternal();
-        if (this.options.draggableMarker || this.options.editablePolygon) {
+        if (this.options.draggableMarker) {
+          const foundEntityWithoutLocation = formattedData.some(mData => !this.convertPosition(mData));
+          this.map.pm.Toolbar.setButtonDisabled('tbMarker', !foundEntityWithoutLocation);
+          this.datasources = formattedData;
+        }
+        if (this.editPolygons) {
+          const foundEntityWithoutPolygon = formattedData.some(pData => !this.isValidPolygonPosition(pData));
+          this.map.pm.Toolbar.setButtonDisabled('tbPolygon', !foundEntityWithoutPolygon);
+          this.map.pm.Toolbar.setButtonDisabled('tbRectangle', !foundEntityWithoutPolygon);
           this.datasources = formattedData;
         }
       } else {
@@ -577,10 +571,10 @@ export default abstract class LeafletMap {
     }
 
     dragMarker = (e, data = {} as FormattedData) => {
-        if (e.type !== 'dragend') {
+        if (e === undefined) {
           return;
         }
-        this.saveMarkerLocation({ ...data, ...this.convertToCustomFormat(e.target._latlng) }).subscribe();
+        this.saveLocation(data, this.convertToCustomFormat(e.target._latlng)).subscribe();
     }
 
     private createMarker(key: string, data: FormattedData, dataSources: FormattedData[], settings: MarkerSettings,
@@ -728,11 +722,15 @@ export default abstract class LeafletMap {
 
     // Polygon
 
+  isValidPolygonPosition(data: FormattedData): boolean {
+    return data && isDefinedAndNotNull(data[this.options.polygonKeyName]) && !isEmptyStr(data[this.options.polygonKeyName]);
+  }
+
   updatePolygons(polyData: FormattedData[], updateBounds = true) {
     const keys: string[] = [];
     this.polygonsData = deepClone(polyData);
     polyData.forEach((data: FormattedData) => {
-      if (data && isDefinedAndNotNull(data[this.options.polygonKeyName]) && !isEmptyStr(data[this.options.polygonKeyName])) {
+      if (this.isValidPolygonPosition(data)) {
         if (isString((data[this.options.polygonKeyName]))) {
           data[this.options.polygonKeyName] = JSON.parse(data[this.options.polygonKeyName]);
         }
@@ -758,15 +756,14 @@ export default abstract class LeafletMap {
   }
 
   dragPolygonVertex = (e?, data = {} as FormattedData) => {
-    if (e === undefined || (e.type !== 'editable:vertex:dragend' && e.type !== 'editable:vertex:deleted')) {
+    if (e === undefined) {
       return;
     }
-    if (this.options.provider !== MapProviders.image) {
-      for (const key of Object.keys(e.layer._latlngs[0])) {
-        e.layer._latlngs[0][key] = checkLngLat(e.layer._latlngs[0][key], this.southWest, this.northEast);
-      }
+    let coordinates = e.layer.getLatLngs();
+    if (coordinates.length === 1) {
+      coordinates = coordinates[0];
     }
-    this.savePolygonLocation({ ...data, ...this.convertPolygonToCustomFormat(e.layer._latlngs) }).subscribe();
+    this.saveLocation(data, this.convertPolygonToCustomFormat(coordinates)).subscribe(() => {});
   }
 
     createPolygon(polyData: FormattedData, dataSources: FormattedData[], settings: PolygonSettings, updateBounds = true) {

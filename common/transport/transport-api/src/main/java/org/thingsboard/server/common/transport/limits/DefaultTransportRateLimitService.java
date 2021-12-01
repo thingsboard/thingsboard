@@ -57,7 +57,7 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
     @Override
     public EntityType checkLimits(TenantId tenantId, DeviceId deviceId, int dataPoints) {
         if (!tenantAllowed.getOrDefault(tenantId, Boolean.TRUE)) {
-            return EntityType.TENANT;
+            return EntityType.API_USAGE_STATE;
         }
         if (!checkEntityRateLimit(dataPoints, getTenantRateLimits(tenantId))) {
             return EntityType.TENANT;
