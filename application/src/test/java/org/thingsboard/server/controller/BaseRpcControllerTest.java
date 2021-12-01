@@ -98,14 +98,6 @@ public abstract class BaseRpcControllerTest extends AbstractControllerTest {
         return doDelete("/api/rpc/persistent/" + rpcId).andReturn();
     }
 
-    private MvcResult getRpcByDeviceId(String deviceId) throws Exception {
-        String url = "/api/rpc/persistent/device/" + deviceId
-                + "?" + "page=0" + "&" +
-                "pageSize=" + Integer.MAX_VALUE + "&" +
-                "rpcStatus=" + RpcStatus.DELETED.name();
-        return doGet(url).andReturn();
-    }
-
     @Test
     public void testSaveRpc() throws Exception {
         Device device = createDefaultDevice();
@@ -123,7 +115,6 @@ public abstract class BaseRpcControllerTest extends AbstractControllerTest {
                 .asText();
         Rpc savedRpc = getRpcById(rpcId);
 
-        //Assertion
         Assert.assertNotNull(savedRpc);
         Assert.assertEquals(savedDevice.getId(), savedRpc.getDeviceId());
     }
@@ -153,7 +144,11 @@ public abstract class BaseRpcControllerTest extends AbstractControllerTest {
         JsonNode deleteResponse = JacksonUtil.fromString(res.getResponse().getContentAsString(), JsonNode.class);
         Assert.assertEquals(404, deleteResponse.get("status").asInt());
 
-        MvcResult byDeviceResult = getRpcByDeviceId(savedDevice.getUuidId().toString());
+        String url = "/api/rpc/persistent/device/" + savedDevice.getUuidId().toString()
+                + "?" + "page=0" + "&" +
+                "pageSize=" + Integer.MAX_VALUE + "&" +
+                "rpcStatus=" + RpcStatus.DELETED.name();
+        MvcResult byDeviceResult = doGet(url).andReturn();
         JsonNode byDeviceResponse = JacksonUtil.fromString(byDeviceResult.getResponse().getContentAsString(), JsonNode.class);
 
         Assert.assertEquals(500, byDeviceResponse.get("status").asInt());
@@ -183,10 +178,13 @@ public abstract class BaseRpcControllerTest extends AbstractControllerTest {
 
         MvcResult byDeviceResult = doGetAsync(url).andReturn();
 
-        String rpcs = byDeviceResult.getResponse().getContentAsString();
-        PageData<Rpc> byDeviceResponse = JacksonUtil.fromString(byDeviceResult.getResponse().getContentAsString(), new TypeReference<PageData<Rpc>>() {});
+        List<Rpc> byDeviceRpcs = JacksonUtil.fromString(
+                byDeviceResult
+                        .getResponse()
+                        .getContentAsString(),
+                new TypeReference<PageData<Rpc>>() {}
+        ).getData();
 
-        List<Rpc> byDeviceRpcs = byDeviceResponse.getData();
 
         boolean found = byDeviceRpcs.stream().anyMatch(r ->
                 r.getUuidId().toString().equals(rpcId)
