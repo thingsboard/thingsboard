@@ -199,7 +199,7 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
             for (int index = 0; index < certificates.length; ++index) {
                 X509Certificate trust = certificates[index];
                 String trustCN = config.getTrustSslCredentials().getValueFromSubjectNameByKey(trust.getSubjectX500Principal().getName(), "CN");
-                if (!StringUtils.isBlank(trustCN) && issuerCN.length() > trustCN.length() && issuerCN.substring(issuerCN.length()-trustCN.length()).equals(trustCN)) {
+                if (!StringUtils.isBlank(trustCN) && issuerCN.length() >= trustCN.length() && issuerCN.substring(issuerCN.length()-trustCN.length()).equals(trustCN)) {
                     if (verifyCertificate(certificate)) {
                         return certificate;
                     }
