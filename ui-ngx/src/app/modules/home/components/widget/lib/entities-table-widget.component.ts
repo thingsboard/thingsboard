@@ -217,7 +217,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     this.ctx.updateWidgetParams();
     if (this.displayPagination) {
       this.widgetResize$ = new ResizeObserver(() => {
-        const showHidePageSize = this.ctx.$container[0].offsetWidth < 450;
+        const showHidePageSize = this.ctx.$container[0].offsetWidth < 500;
         if (showHidePageSize !== this.hidePageSize) {
           this.hidePageSize = showHidePageSize;
           this.ctx.detectChanges();

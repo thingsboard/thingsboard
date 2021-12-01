@@ -262,7 +262,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
         () => this.pageLink.page = 0
       );
       this.widgetResize$ = new ResizeObserver(() => {
-        const showHidePageSize = this.ctx.$container[0].offsetWidth < 450;
+        const showHidePageSize = this.ctx.$container[0].offsetWidth < 500;
         if (showHidePageSize !== this.hidePageSize) {
           this.hidePageSize = showHidePageSize;
           this.ctx.detectChanges();
