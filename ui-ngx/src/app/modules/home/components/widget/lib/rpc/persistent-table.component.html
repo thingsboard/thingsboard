@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-table-widget tb-absolute-fill">
+<div #persistentWidgetContainer class="tb-table-widget tb-absolute-fill">
   <div fxFlex fxLayout="column" class="tb-absolute-fill">
     <div fxFlex class="table-container">
       <table mat-table [dataSource]="persistentDatasource"
@@ -120,6 +120,7 @@
                  [pageIndex]="pageLink.page"
                  [pageSize]="pageLink.pageSize"
                  [pageSizeOptions]="pageSizeOptions"
+                 [hidePageSize]="hidePageSize"
                  showFirstLastButtons></mat-paginator>
   </div>
 </div>

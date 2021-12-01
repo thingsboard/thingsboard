@@ -67,6 +67,7 @@ import {
   PERSISTENT_FILTER_PANEL_DATA, PersistentFilterPanelComponent, PersistentFilterPanelData
 } from '@home/components/widget/lib/rpc/persistent-filter-panel.component';
 import { PersistentAddDialogComponent } from '@home/components/widget/lib/rpc/persistent-add-dialog.component';
+import { ResizeObserver } from '@juggle/resize-observer';
 
 interface PersistentTableWidgetSettings extends TableWidgetSettings {
   defaultSortOrder: string;
@@ -97,6 +98,7 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
   @Input()
   ctx: WidgetContext;
 
+  @ViewChild('persistentWidgetContainer', {static: true}) persistentWidgetContainerRef: ElementRef;
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
 
@@ -111,6 +113,7 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
   private displayDetails = true;
   private allowDelete = true;
   private displayTableColumns: string[];
+  private widgetResize$: ResizeObserver;
 
   public persistentDatasource: PersistentDatasource;
   public noDataDisplayMessageText: string;
@@ -123,6 +126,7 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
   public pageSizeOptions;
   public actionCellButtonAction: PersistentTableWidgetActionDescriptor[] = [];
   public displayedColumns: string[];
+  public hidePageSize = false;
 
   constructor(protected store: Store<AppState>,
               private elementRef: ElementRef,
@@ -143,6 +147,22 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
     this.subscription = this.ctx.defaultSubscription;
     this.initializeConfig();
     this.ctx.updateWidgetParams();
+    if (this.displayPagination) {
+      this.widgetResize$ = new ResizeObserver(() => {
+        const showHidePageSize = this.ctx.$container[0].offsetWidth < 500;
+        if (showHidePageSize !== this.hidePageSize) {
+          this.hidePageSize = showHidePageSize;
+          this.ctx.detectChanges();
+        }
+      });
+      this.widgetResize$.observe(this.persistentWidgetContainerRef.nativeElement);
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.widgetResize$) {
+      this.widgetResize$.disconnect();
+    }
   }
 
   ngAfterViewInit(): void {
