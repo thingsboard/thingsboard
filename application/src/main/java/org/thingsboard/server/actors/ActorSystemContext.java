@@ -109,7 +109,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class ActorSystemContext {
 
-    protected final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    protected final ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     private final ConcurrentMap<TenantId, DebugTbRateLimits> debugPerTenantLimits = new ConcurrentHashMap<>();
 

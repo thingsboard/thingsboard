@@ -105,7 +105,7 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
-    private static final ObjectMapper objectMapper = JacksonUtil.OBJECT_MAPPER;
+    private static final ObjectMapper objectMapper = JacksonUtil.getObjectMapper();
     public static final String CUSTOMER_CRED = "customer";
     public static final String DEFAULT_DEVICE_TYPE = "default";
     public static final String ACTIVITY_STATE = "active";

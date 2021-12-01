@@ -38,7 +38,7 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
 
     static final String PREV_ALARM_DETAILS = "prevAlarmDetails";
 
-    private final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    private final ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     protected C config;
     private ScriptEngine buildDetailsJsEngine;

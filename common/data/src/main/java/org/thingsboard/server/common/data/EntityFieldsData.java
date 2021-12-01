@@ -35,7 +35,7 @@ import java.io.IOException;
 @AllArgsConstructor
 public class EntityFieldsData {
 
-    private static final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    private static final ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     static {
         SimpleModule entityFieldsModule = new SimpleModule("EntityFieldsModule", new Version(1, 0, 0, null, null, null));

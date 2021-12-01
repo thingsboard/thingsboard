@@ -52,7 +52,7 @@ public class TbSendEmailNode implements TbNode {
 
     private static final String MAIL_PROP = "mail.";
     static final String SEND_EMAIL_TYPE = "SEND_EMAIL";
-    private static final ObjectMapper MAPPER = JacksonUtil.OBJECT_MAPPER;
+    private static final ObjectMapper MAPPER = JacksonUtil.getObjectMapper();
 
     private TbSendEmailNodeConfiguration config;
     private JavaMailSenderImpl mailSender;

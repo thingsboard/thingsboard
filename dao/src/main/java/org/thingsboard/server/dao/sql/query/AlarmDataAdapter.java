@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AlarmDataAdapter {
 
-    private final static ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    private final static ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     public static PageData<AlarmData> createAlarmData(EntityDataPageLink pageLink,
                                                       List<Map<String, Object>> rows,

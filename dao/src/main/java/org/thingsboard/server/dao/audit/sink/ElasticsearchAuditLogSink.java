@@ -53,7 +53,7 @@ public class ElasticsearchAuditLogSink implements AuditLogSink {
     private static final String DATE_PLACEHOLDER = "@{DATE}";
     private static final String INDEX_TYPE = "audit_log";
 
-    private final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    private final ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     @Value("${audit-log.sink.index_pattern}")
     private String indexPattern;

@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
  */
 public class TbNodeUtils {
 
-    private static final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    private static final ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     private static final Pattern DATA_PATTERN = Pattern.compile("(\\$\\[)(.*?)(])");
 

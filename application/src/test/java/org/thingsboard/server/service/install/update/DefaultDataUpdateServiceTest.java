@@ -35,7 +35,7 @@ import static org.mockito.BDDMockito.willCallRealMethod;
 @SpringBootTest(classes = DefaultDataUpdateService.class)
 class DefaultDataUpdateServiceTest {
 
-    ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     @MockBean
     DefaultDataUpdateService service;

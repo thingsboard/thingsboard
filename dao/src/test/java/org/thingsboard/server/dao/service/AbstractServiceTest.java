@@ -85,7 +85,7 @@ import static org.junit.Assert.assertNotNull;
 @ComponentScan("org.thingsboard.server")
 public abstract class AbstractServiceTest {
 
-    protected ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    protected ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     public static final TenantId SYSTEM_TENANT_ID = new TenantId(EntityId.NULL_UUID);
 

@@ -36,7 +36,7 @@ import java.util.function.Consumer;
 @Slf4j
 public abstract class SearchTextBasedWithAdditionalInfo<I extends UUIDBased> extends SearchTextBased<I> implements HasAdditionalInfo {
 
-    public static final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    public static final ObjectMapper mapper = JacksonUtil.getObjectMapper();
     private transient JsonNode additionalInfo;
     @JsonIgnore
     private byte[] additionalInfoBytes;

@@ -57,7 +57,7 @@ import java.util.List;
 )
 public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConfiguration> {
 
-    private static ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    private static ObjectMapper mapper = JacksonUtil.getObjectMapper();
     private List<String> relationTypes;
     private AlarmSeverity notDynamicAlarmSeverity;
 

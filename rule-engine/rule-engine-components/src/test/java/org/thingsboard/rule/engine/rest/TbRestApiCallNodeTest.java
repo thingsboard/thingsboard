@@ -81,7 +81,7 @@ public class TbRestApiCallNodeTest {
     
     private void initWithConfig(TbRestApiCallNodeConfiguration config) {
         try {
-            ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+            ObjectMapper mapper = JacksonUtil.getObjectMapper();
             TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
             restNode = new TbRestApiCallNode();
             restNode.init(ctx, nodeConfiguration);

@@ -50,7 +50,7 @@ import java.util.regex.Pattern;
 @Slf4j
 public class AdminSettingsEdgeEventFetcher implements EdgeEventFetcher {
 
-    private static final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    private static final ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     private final AdminSettingsService adminSettingsService;
     private final Configuration freemarkerConfig;

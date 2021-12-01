@@ -70,7 +70,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
 
     private Map<ComponentType, List<ComponentDescriptor>> edgeComponentsMap = new HashMap<>();
 
-    private ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    private ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     private boolean isInstall() {
         return environment.acceptsProfiles(Profiles.of("install"));

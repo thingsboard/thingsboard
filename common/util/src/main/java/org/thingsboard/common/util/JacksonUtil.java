@@ -32,8 +32,8 @@ import java.util.Arrays;
  */
 public class JacksonUtil {
 
-    public static final ObjectMapper OBJECT_MAPPER;
-    public static final ObjectMapper OBJECT_MAPPER_WITH_UNQUOTED_FIELD_NAMES;
+    private static final ObjectMapper OBJECT_MAPPER;
+    private static final ObjectMapper OBJECT_MAPPER_WITH_UNQUOTED_FIELD_NAMES;
 
     static {
         OBJECT_MAPPER = getNewObjectMapperWithJavaTimeModule();
@@ -44,6 +44,14 @@ public class JacksonUtil {
 
     private static ObjectMapper getNewObjectMapperWithJavaTimeModule() {
         return new ObjectMapper().registerModule(new JavaTimeModule());
+    }
+
+    public static ObjectMapper getObjectMapper() {
+        return OBJECT_MAPPER;
+    }
+
+    public static ObjectMapper getObjectMapperWithUnquotedFieldNames() {
+        return OBJECT_MAPPER_WITH_UNQUOTED_FIELD_NAMES;
     }
 
     public static <T> T convertValue(Object fromValue, Class<T> toValueType) {

@@ -91,7 +91,7 @@ public class TbGetTelemetryNode implements TbNode {
         }
         aggregation = parseAggregationConfig(config.getAggregation());
 
-        mapper = JacksonUtil.OBJECT_MAPPER_WITH_UNQUOTED_FIELD_NAMES;
+        mapper = JacksonUtil.getObjectMapperWithUnquotedFieldNames();
     }
 
     Aggregation parseAggregationConfig(String aggName) {

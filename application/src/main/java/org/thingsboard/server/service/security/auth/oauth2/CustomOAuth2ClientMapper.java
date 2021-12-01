@@ -39,7 +39,7 @@ import javax.servlet.http.HttpServletRequest;
 public class CustomOAuth2ClientMapper extends AbstractOAuth2ClientMapper implements OAuth2ClientMapper {
     private static final String PROVIDER_ACCESS_TOKEN = "provider-access-token";
 
-    private static final ObjectMapper json = JacksonUtil.OBJECT_MAPPER;
+    private static final ObjectMapper json = JacksonUtil.getObjectMapper();
 
     private RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder();
 

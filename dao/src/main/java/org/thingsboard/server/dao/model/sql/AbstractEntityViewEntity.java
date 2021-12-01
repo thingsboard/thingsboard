@@ -91,7 +91,7 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
     @Column(name = ModelConstants.ENTITY_VIEW_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
-    private static final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    private static final ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     public AbstractEntityViewEntity() {
         super();

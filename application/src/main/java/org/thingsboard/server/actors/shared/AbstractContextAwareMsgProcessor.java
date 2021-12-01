@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 public abstract class AbstractContextAwareMsgProcessor {
 
     protected final ActorSystemContext systemContext;
-    protected final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    protected final ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     protected AbstractContextAwareMsgProcessor(ActorSystemContext systemContext) {
         super();

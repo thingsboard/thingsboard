@@ -81,7 +81,7 @@ public abstract class BaseWidgetTypeControllerTest extends AbstractControllerTes
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
-        widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
+        widgetType.setDescriptor(JacksonUtil.getObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
         WidgetTypeDetails savedWidgetType = doPost("/api/widgetType", widgetType, WidgetTypeDetails.class);
 
         Assert.assertNotNull(savedWidgetType);
@@ -106,7 +106,7 @@ public abstract class BaseWidgetTypeControllerTest extends AbstractControllerTes
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
-        widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
+        widgetType.setDescriptor(JacksonUtil.getObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
         WidgetTypeDetails savedWidgetType = doPost("/api/widgetType", widgetType, WidgetTypeDetails.class);
 
         loginDifferentTenant();
@@ -119,7 +119,7 @@ public abstract class BaseWidgetTypeControllerTest extends AbstractControllerTes
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
-        widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
+        widgetType.setDescriptor(JacksonUtil.getObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
         WidgetTypeDetails savedWidgetType = doPost("/api/widgetType", widgetType, WidgetTypeDetails.class);
         WidgetTypeDetails foundWidgetType = doGet("/api/widgetType/" + savedWidgetType.getId().getId().toString(), WidgetTypeDetails.class);
         Assert.assertNotNull(foundWidgetType);
@@ -131,7 +131,7 @@ public abstract class BaseWidgetTypeControllerTest extends AbstractControllerTes
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
-        widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
+        widgetType.setDescriptor(JacksonUtil.getObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
         WidgetTypeDetails savedWidgetType = doPost("/api/widgetType", widgetType, WidgetTypeDetails.class);
 
         doDelete("/api/widgetType/"+savedWidgetType.getId().getId().toString())
@@ -145,7 +145,7 @@ public abstract class BaseWidgetTypeControllerTest extends AbstractControllerTes
     public void testSaveWidgetTypeWithEmptyName() throws Exception {
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
-        widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
+        widgetType.setDescriptor(JacksonUtil.getObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
         doPost("/api/widgetType", widgetType)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Widgets type name should be specified")));
@@ -155,7 +155,7 @@ public abstract class BaseWidgetTypeControllerTest extends AbstractControllerTes
     public void testSaveWidgetTypeWithEmptyBundleAlias() throws Exception {
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setName("Widget Type");
-        widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
+        widgetType.setDescriptor(JacksonUtil.getObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
         doPost("/api/widgetType", widgetType)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Widgets type bundle alias should be specified")));
@@ -166,7 +166,7 @@ public abstract class BaseWidgetTypeControllerTest extends AbstractControllerTes
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
-        widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{}", JsonNode.class));
+        widgetType.setDescriptor(JacksonUtil.getObjectMapper().readValue("{}", JsonNode.class));
         doPost("/api/widgetType", widgetType)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Widgets type descriptor can't be empty")));
@@ -177,7 +177,7 @@ public abstract class BaseWidgetTypeControllerTest extends AbstractControllerTes
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setBundleAlias("some_alias");
         widgetType.setName("Widget Type");
-        widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
+        widgetType.setDescriptor(JacksonUtil.getObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
         doPost("/api/widgetType", widgetType)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Widget type is referencing to non-existent widgets bundle")));
@@ -188,7 +188,7 @@ public abstract class BaseWidgetTypeControllerTest extends AbstractControllerTes
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
-        widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
+        widgetType.setDescriptor(JacksonUtil.getObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
         WidgetTypeDetails savedWidgetType = doPost("/api/widgetType", widgetType, WidgetTypeDetails.class);
         savedWidgetType.setBundleAlias("some_alias");
         doPost("/api/widgetType", savedWidgetType)
@@ -202,7 +202,7 @@ public abstract class BaseWidgetTypeControllerTest extends AbstractControllerTes
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
-        widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
+        widgetType.setDescriptor(JacksonUtil.getObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
         WidgetTypeDetails savedWidgetType = doPost("/api/widgetType", widgetType, WidgetTypeDetails.class);
         savedWidgetType.setAlias("some_alias");
         doPost("/api/widgetType", savedWidgetType)
@@ -218,7 +218,7 @@ public abstract class BaseWidgetTypeControllerTest extends AbstractControllerTes
             WidgetTypeDetails widgetType = new WidgetTypeDetails();
             widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
             widgetType.setName("Widget Type " + i);
-            widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
+            widgetType.setDescriptor(JacksonUtil.getObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
             widgetTypes.add(new WidgetType(doPost("/api/widgetType", widgetType, WidgetTypeDetails.class)));
         }
 
@@ -236,7 +236,7 @@ public abstract class BaseWidgetTypeControllerTest extends AbstractControllerTes
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
-        widgetType.setDescriptor(JacksonUtil.OBJECT_MAPPER.readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
+        widgetType.setDescriptor(JacksonUtil.getObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
         WidgetTypeDetails savedWidgetType = doPost("/api/widgetType", widgetType, WidgetTypeDetails.class);
         WidgetType foundWidgetType = doGet("/api/widgetType?isSystem={isSystem}&bundleAlias={bundleAlias}&alias={alias}",
                 WidgetType.class, false, savedWidgetsBundle.getAlias(), savedWidgetType.getAlias());

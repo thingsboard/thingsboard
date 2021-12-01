@@ -160,7 +160,7 @@ public class TbChangeOriginatorNodeTest {
     public void init() throws TbNodeException {
         TbChangeOriginatorNodeConfiguration config = new TbChangeOriginatorNodeConfiguration();
         config.setOriginatorSource(TbChangeOriginatorNode.CUSTOMER_SOURCE);
-        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+        ObjectMapper mapper = JacksonUtil.getObjectMapper();
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
         when(ctx.getDbCallbackExecutor()).thenReturn(dbExecutor);

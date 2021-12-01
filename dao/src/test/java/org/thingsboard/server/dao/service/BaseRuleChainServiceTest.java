@@ -379,7 +379,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
         ruleChainMetaData.setRuleChainId(savedRuleChain.getId());
 
-        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+        ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("name1");
@@ -420,7 +420,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
         ruleChainMetaData.setRuleChainId(savedRuleChain.getId());
 
-        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+        ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("name1");
@@ -461,7 +461,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
         ruleChainMetaData.setRuleChainId(savedRuleChain.getId());
 
-        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+        ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("name1");

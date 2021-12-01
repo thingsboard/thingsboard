@@ -56,7 +56,7 @@ public class EntityActionService {
     private final TbClusterService tbClusterService;
     private final AuditLogService auditLogService;
 
-    private static final ObjectMapper json = JacksonUtil.OBJECT_MAPPER;
+    private static final ObjectMapper json = JacksonUtil.getObjectMapper();
 
     public void pushEntityActionToRuleEngine(EntityId entityId, HasName entity, TenantId tenantId, CustomerId customerId,
                                              ActionType actionType, User user, Object... additionalInfo) {

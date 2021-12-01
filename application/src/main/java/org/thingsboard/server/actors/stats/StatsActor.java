@@ -34,7 +34,7 @@ import org.thingsboard.server.common.msg.TbActorMsg;
 @Slf4j
 public class StatsActor extends ContextAwareActor {
 
-    private final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    private final ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     public StatsActor(ActorSystemContext context) {
         super(context);

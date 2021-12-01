@@ -117,7 +117,7 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
         user.setEmail("user@thingsboard.org");
         user.setFirstName("Jackson");
         user.setLastName("Roberts");
-        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+        ObjectMapper mapper = JacksonUtil.getObjectMapper();
         String additionalInfo = "{\"key\":\"value-100\"}";
         JsonNode jsonNode = mapper.readTree(additionalInfo);
         user.setAdditionalInfo(jsonNode);

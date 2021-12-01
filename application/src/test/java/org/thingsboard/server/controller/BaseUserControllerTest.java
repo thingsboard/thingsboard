@@ -77,7 +77,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
                 .andExpect(status().isSeeOther())
                 .andExpect(header().string(HttpHeaders.LOCATION, "/login/createPassword?activateToken=" + TestMailService.currentActivateToken));
 
-        JsonNode activateRequest = JacksonUtil.OBJECT_MAPPER.createObjectNode()
+        JsonNode activateRequest = JacksonUtil.getObjectMapper().createObjectNode()
                 .put("activateToken", TestMailService.currentActivateToken)
                 .put("password", "testPassword");
 
@@ -173,7 +173,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         User savedUser = createUserAndLogin(user, "testPassword1");
         logout();
 
-        JsonNode resetPasswordByEmailRequest = JacksonUtil.OBJECT_MAPPER.createObjectNode()
+        JsonNode resetPasswordByEmailRequest = JacksonUtil.getObjectMapper().createObjectNode()
                 .put("email", email);
 
         doPost("/api/noauth/resetPasswordByEmail", resetPasswordByEmailRequest)
@@ -183,7 +183,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
                 .andExpect(status().isSeeOther())
                 .andExpect(header().string(HttpHeaders.LOCATION, "/login/resetPassword?resetToken=" + TestMailService.currentResetPasswordToken));
 
-        JsonNode resetPasswordRequest = JacksonUtil.OBJECT_MAPPER.createObjectNode()
+        JsonNode resetPasswordRequest = JacksonUtil.getObjectMapper().createObjectNode()
                 .put("resetToken", TestMailService.currentResetPasswordToken)
                 .put("password", "testPassword2");
 

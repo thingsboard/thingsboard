@@ -62,7 +62,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public abstract class AbstractOAuth2ClientMapper {
     private static final int DASHBOARDS_REQUEST_LIMIT = 10;
 
-    private static final ObjectMapper objectMapper = JacksonUtil.OBJECT_MAPPER;
+    private static final ObjectMapper objectMapper = JacksonUtil.getObjectMapper();
 
     @Autowired
     private UserService userService;

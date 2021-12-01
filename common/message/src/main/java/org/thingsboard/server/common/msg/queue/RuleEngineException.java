@@ -22,7 +22,7 @@ import org.thingsboard.common.util.JacksonUtil;
 
 @Slf4j
 public class RuleEngineException extends Exception {
-    protected static final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    protected static final ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     public RuleEngineException(String message) {
         super(message != null ? message : "Unknown");

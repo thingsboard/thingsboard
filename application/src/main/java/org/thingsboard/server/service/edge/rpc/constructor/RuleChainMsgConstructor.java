@@ -42,7 +42,7 @@ import java.util.List;
 @TbCoreComponent
 public class RuleChainMsgConstructor {
 
-    private static final ObjectMapper objectMapper = JacksonUtil.OBJECT_MAPPER;
+    private static final ObjectMapper objectMapper = JacksonUtil.getObjectMapper();
 
     public RuleChainUpdateMsg constructRuleChainUpdatedMsg(RuleChainId edgeRootRuleChainId, UpdateMsgType msgType, RuleChain ruleChain) {
         RuleChainUpdateMsg.Builder builder = RuleChainUpdateMsg.newBuilder()

@@ -184,7 +184,7 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
         event.setEntityId(deviceId);
         event.setUid(event.getId().getId().toString());
         event.setType(STATS);
-        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+        ObjectMapper mapper = JacksonUtil.getObjectMapper();
         try {
             JsonNode jsonNode = mapper.readTree("{\"key\":\"value\"}");
             event.setBody(jsonNode);

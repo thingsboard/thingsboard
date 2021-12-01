@@ -86,7 +86,7 @@ import java.util.UUID;
 @Slf4j
 public class DefaultEdgeRequestsService implements EdgeRequestsService {
 
-    private static final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    private static final ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     private static final int DEFAULT_PAGE_SIZE = 1000;
 

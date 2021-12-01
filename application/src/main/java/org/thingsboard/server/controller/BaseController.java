@@ -158,7 +158,7 @@ public abstract class BaseController {
 
     /*Swagger UI description*/
 
-    private static final ObjectMapper json = JacksonUtil.OBJECT_MAPPER;
+    private static final ObjectMapper json = JacksonUtil.getObjectMapper();
 
     @Autowired
     private ThingsboardErrorResponseHandler errorResponseHandler;

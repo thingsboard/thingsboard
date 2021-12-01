@@ -44,7 +44,7 @@ import java.util.concurrent.ExecutionException;
 @Slf4j
 public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.ScriptEngine {
 
-    private static final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    private static final ObjectMapper mapper = JacksonUtil.getObjectMapper();
     private final JsInvokeService sandboxService;
 
     private final UUID scriptId;

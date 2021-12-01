@@ -118,7 +118,7 @@ public class DefaultUpdateService implements UpdateService {
     Runnable checkUpdatesRunnable = () -> {
         try {
             log.trace("Executing check update method for instanceId [{}], platform [{}] and version [{}]", instanceId, platform, version);
-            ObjectNode request = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+            ObjectNode request = JacksonUtil.getObjectMapper().createObjectNode();
             request.put(PLATFORM_PARAM, platform);
             request.put(VERSION_PARAM, version);
             request.put(INSTANCE_ID_PARAM, instanceId.toString());

@@ -575,7 +575,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
         ruleChainMetaData.setRuleChainId(ruleChain.getId());
 
-        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+        ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("name1");

@@ -57,7 +57,7 @@ import java.util.function.Consumer;
 @TbCoreComponent
 public class DefaultTbCoreDeviceRpcService implements TbCoreDeviceRpcService {
 
-    private static final ObjectMapper json = JacksonUtil.OBJECT_MAPPER;
+    private static final ObjectMapper json = JacksonUtil.getObjectMapper();
 
     private final DeviceService deviceService;
     private final TbClusterService clusterService;

@@ -161,7 +161,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     protected final String baseURL;
     private String token;
     private String refreshToken;
-    private final ObjectMapper objectMapper = JacksonUtil.OBJECT_MAPPER;
+    private final ObjectMapper objectMapper = JacksonUtil.getObjectMapper();
     private ExecutorService service = ThingsBoardExecutors.newWorkStealingPool(10, getClass());
 
     protected static final String ACTIVATE_TOKEN_REGEX = "/api/noauth/activate?activateToken=";

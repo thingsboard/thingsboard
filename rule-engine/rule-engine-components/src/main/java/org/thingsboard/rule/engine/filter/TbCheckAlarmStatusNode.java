@@ -48,7 +48,7 @@ import java.io.IOException;
         configDirective = "tbFilterNodeCheckAlarmStatusConfig")
 public class TbCheckAlarmStatusNode implements TbNode {
     private TbCheckAlarmStatusNodeConfig config;
-    private final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    private final ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     @Override
     public void init(TbContext tbContext, TbNodeConfiguration configuration) throws TbNodeException {

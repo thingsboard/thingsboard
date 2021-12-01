@@ -52,7 +52,7 @@ import static org.thingsboard.rule.engine.mail.TbSendEmailNode.SEND_EMAIL_TYPE;
 )
 public class TbMsgToEmailNode implements TbNode {
 
-    private static final ObjectMapper MAPPER = JacksonUtil.OBJECT_MAPPER;
+    private static final ObjectMapper MAPPER = JacksonUtil.getObjectMapper();
     private static final String IMAGES = "images";
     private static final String DYNAMIC = "dynamic";
 

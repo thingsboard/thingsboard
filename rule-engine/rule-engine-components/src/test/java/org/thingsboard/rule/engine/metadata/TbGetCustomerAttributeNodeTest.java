@@ -98,7 +98,7 @@ public class TbGetCustomerAttributeNodeTest {
         attrMapping.putIfAbsent("temperature", "tempo");
         config.setAttrMapping(attrMapping);
         config.setTelemetry(false);
-        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+        ObjectMapper mapper = JacksonUtil.getObjectMapper();
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
         node = new TbGetCustomerAttributeNode();
@@ -232,7 +232,7 @@ public class TbGetCustomerAttributeNodeTest {
         attrMapping.putIfAbsent("temperature", "tempo");
         config.setAttrMapping(attrMapping);
         config.setTelemetry(true);
-        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+        ObjectMapper mapper = JacksonUtil.getObjectMapper();
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
         node = new TbGetCustomerAttributeNode();

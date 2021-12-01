@@ -100,7 +100,7 @@ public class TbJsFilterNodeTest {
     private void initWithScript() throws TbNodeException {
         TbJsFilterNodeConfiguration config = new TbJsFilterNodeConfiguration();
         config.setJsScript("scr");
-        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+        ObjectMapper mapper = JacksonUtil.getObjectMapper();
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
 
         when(ctx.createJsScriptEngine("scr")).thenReturn(scriptEngine);

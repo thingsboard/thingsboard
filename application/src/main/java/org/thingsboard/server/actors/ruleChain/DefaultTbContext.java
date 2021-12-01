@@ -94,7 +94,7 @@ import java.util.function.Consumer;
 @Slf4j
 class DefaultTbContext implements TbContext {
 
-    public final static ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    public final static ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     private final ActorSystemContext mainCtx;
     private final String ruleChainName;

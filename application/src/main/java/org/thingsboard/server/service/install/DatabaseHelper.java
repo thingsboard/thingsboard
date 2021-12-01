@@ -69,7 +69,7 @@ public class DatabaseHelper {
     public static final String ASSIGNED_CUSTOMERS = "assigned_customers";
     public static final String CONFIGURATION = "configuration";
 
-    public static final ObjectMapper objectMapper = JacksonUtil.OBJECT_MAPPER;
+    public static final ObjectMapper objectMapper = JacksonUtil.getObjectMapper();
 
     public static void upgradeTo40_assignDashboards(Path dashboardsDump, DashboardService dashboardService, boolean sql) throws Exception {
         JavaType assignedCustomersType =

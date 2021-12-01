@@ -116,7 +116,7 @@ public class RuleChainController extends BaseController {
 
     private static final int DEFAULT_PAGE_SIZE = 1000;
 
-    private static final ObjectMapper objectMapper = JacksonUtil.OBJECT_MAPPER;
+    private static final ObjectMapper objectMapper = JacksonUtil.getObjectMapper();
     public static final int TIMEOUT = 20;
 
     private static final String RULE_CHAIN_DESCRIPTION = "The rule chain object is lightweight and contains general information about the rule chain. " +

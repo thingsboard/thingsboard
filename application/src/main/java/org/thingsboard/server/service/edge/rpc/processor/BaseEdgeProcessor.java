@@ -69,7 +69,7 @@ import org.thingsboard.server.service.state.DeviceStateService;
 @Slf4j
 public abstract class BaseEdgeProcessor {
 
-    protected static final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    protected static final ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     protected static final int DEFAULT_PAGE_SIZE = 1000;
 

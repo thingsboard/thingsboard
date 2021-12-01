@@ -36,7 +36,7 @@ import java.util.UUID;
 @TbCoreComponent
 public class DeviceMsgConstructor {
 
-    protected static final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    protected static final ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     public DeviceUpdateMsg constructDeviceUpdatedMsg(UpdateMsgType msgType, Device device, CustomerId customerId, String conflictName) {
         DeviceUpdateMsg.Builder builder = DeviceUpdateMsg.newBuilder()

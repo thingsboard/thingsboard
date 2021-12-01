@@ -45,7 +45,7 @@ import java.util.UUID;
 @Table(name = ModelConstants.DASHBOARD_COLUMN_FAMILY_NAME)
 public class DashboardInfoEntity extends BaseSqlEntity<DashboardInfo> implements SearchTextEntity<DashboardInfo> {
 
-    private static final ObjectMapper objectMapper = JacksonUtil.OBJECT_MAPPER;
+    private static final ObjectMapper objectMapper = JacksonUtil.getObjectMapper();
     private static final JavaType assignedCustomersType =
             objectMapper.getTypeFactory().constructCollectionType(HashSet.class, ShortCustomerInfo.class);
 

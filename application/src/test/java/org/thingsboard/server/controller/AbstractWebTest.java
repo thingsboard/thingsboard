@@ -96,7 +96,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @Slf4j
 public abstract class AbstractWebTest {
 
-    protected ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    protected ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     protected static final String TEST_TENANT_NAME = "TEST TENANT";
 
@@ -269,7 +269,7 @@ public abstract class AbstractWebTest {
         doGet("/api/noauth/activate?activateToken={activateToken}", TestMailService.currentActivateToken)
                 .andExpect(status().isSeeOther())
                 .andExpect(header().string(HttpHeaders.LOCATION, "/login/createPassword?activateToken=" + TestMailService.currentActivateToken));
-        return JacksonUtil.OBJECT_MAPPER.createObjectNode()
+        return JacksonUtil.getObjectMapper().createObjectNode()
                 .put("activateToken", TestMailService.currentActivateToken)
                 .put("password", password);
     }
@@ -553,7 +553,7 @@ public abstract class AbstractWebTest {
 
     protected <T> T readResponse(ResultActions result, TypeReference<T> type) throws Exception {
         byte[] content = result.andReturn().getResponse().getContentAsByteArray();
-        ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+        ObjectMapper mapper = JacksonUtil.getObjectMapper();
         return mapper.readerFor(type).readValue(content);
     }
 

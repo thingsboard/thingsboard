@@ -37,7 +37,7 @@ import java.util.concurrent.ExecutorService;
 @Data
 public abstract class TransportContext {
 
-    protected final ObjectMapper mapper = JacksonUtil.OBJECT_MAPPER;
+    protected final ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     @Autowired
     protected TransportService transportService;
