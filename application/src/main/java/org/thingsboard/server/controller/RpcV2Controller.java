@@ -241,6 +241,7 @@ public class RpcV2Controller extends AbstractRpcController {
                 }
 
                 rpcService.deleteRpc(getTenantId(), rpcId);
+                rpc.setStatus(RpcStatus.DELETED);
 
                 TbMsg msg = TbMsg.newMsg(RPC_DELETED, rpc.getDeviceId(), TbMsgMetaData.EMPTY, JacksonUtil.toString(rpc));
                 tbClusterService.pushMsgToRuleEngine(getTenantId(), rpc.getDeviceId(), msg, null);
