@@ -38,7 +38,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogService } from '@core/services/dialog.service';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
-import { fromEvent, merge } from 'rxjs';
+import { fromEvent, merge, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 import { EntityId } from '@shared/models/id/entity-id';
 import {
@@ -84,6 +84,8 @@ import {
 } from '@home/components/attribute/add-widget-to-dashboard-dialog.component';
 import { deepClone } from '@core/utils';
 import { Filters } from '@shared/models/query/query.models';
+import { MediaBreakpoints } from '@shared/models/constants';
+import { BreakpointObserver } from '@angular/cdk/layout';
 
 
 @Component({
@@ -171,6 +173,9 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
 
+  private breakpointObserverSubscription$: Subscription;
+  public hidePageSize = true;
+
   constructor(protected store: Store<AppState>,
               private attributeService: AttributeService,
               private telemetryWsService: TelemetryWebsocketService,
@@ -184,7 +189,8 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
               private dashboardUtils: DashboardUtilsService,
               private widgetService: WidgetService,
               private zone: NgZone,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private breakpointObserver: BreakpointObserver) {
     super(store);
     this.dirtyValue = !this.activeValue;
     const sortOrder: SortOrder = { property: 'key', direction: Direction.ASC };
@@ -193,6 +199,19 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   }
 
   ngOnInit() {
+    this.breakpointObserverSubscription$ = this.breakpointObserver
+      .observe(MediaBreakpoints['gt-xs']).subscribe(
+        () => {
+          this.hidePageSize = !this.breakpointObserver.isMatched(MediaBreakpoints['gt-xs']);
+          this.cd.detectChanges();
+        }
+      );
+  }
+
+  ngOnDestroy() {
+    if (this.breakpointObserverSubscription$) {
+      this.breakpointObserverSubscription$.unsubscribe();
+    }
   }
 
   attributeScopeChanged(attributeScope: TelemetryType) {

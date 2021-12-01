@@ -14,7 +14,16 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  Input,
+  OnInit,
+  ViewChild
+} from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { PageLink } from '@shared/models/page/page-link';
 import { MatPaginator } from '@angular/material/paginator';
@@ -26,7 +35,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { DialogService } from '@core/services/dialog.service';
 import { EntityRelationService } from '@core/http/entity-relation.service';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
-import { forkJoin, fromEvent, merge, Observable } from 'rxjs';
+import { forkJoin, fromEvent, merge, Observable, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 import {
   EntityRelation,
@@ -38,6 +47,8 @@ import {
 import { EntityId } from '@shared/models/id/entity-id';
 import { RelationsDatasource } from '../../models/datasource/relation-datasource';
 import { RelationDialogComponent, RelationDialogData } from '@home/components/relation/relation-dialog.component';
+import { MediaBreakpoints } from '@shared/models/constants';
+import { BreakpointObserver } from '@angular/cdk/layout';
 
 @Component({
   selector: 'tb-relation-table',
@@ -64,6 +75,9 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
   entityIdValue: EntityId;
 
   viewsInited = false;
+
+  private breakpointObserverSubscription$: Subscription;
+  public hidePageSize = true;
 
   @Input()
   set active(active: boolean) {
@@ -100,7 +114,9 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
               private entityRelationService: EntityRelationService,
               public translate: TranslateService,
               public dialog: MatDialog,
-              private dialogService: DialogService) {
+              private dialogService: DialogService,
+              private cd: ChangeDetectorRef,
+              private breakpointObserver: BreakpointObserver) {
     super(store);
     this.dirtyValue = !this.activeValue;
     const sortOrder: SortOrder = { property: 'type', direction: Direction.ASC };
@@ -111,6 +127,19 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
   }
 
   ngOnInit() {
+    this.breakpointObserverSubscription$ = this.breakpointObserver
+      .observe(MediaBreakpoints['gt-xs']).subscribe(
+        () => {
+          this.hidePageSize = !this.breakpointObserver.isMatched(MediaBreakpoints['gt-xs']);
+          this.cd.detectChanges();
+        }
+      );
+  }
+
+  ngOnDestroy() {
+    if (this.breakpointObserverSubscription$) {
+      this.breakpointObserverSubscription$.unsubscribe();
+    }
   }
 
   updateColumns() {

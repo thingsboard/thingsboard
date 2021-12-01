@@ -123,6 +123,7 @@ import {
 } from '@home/components/widget/lib/alarm-filter-panel.component';
 import { entityFields } from '@shared/models/entity.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { ResizeObserver } from '@juggle/resize-observer';
 
 interface AlarmsTableWidgetSettings extends TableWidgetSettings {
   alarmsTitle: string;
@@ -152,6 +153,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   @Input()
   ctx: WidgetContext;
 
+  @ViewChild('alarmWidgetContainer', {static: true}) alarmWidgetContainerRef: ElementRef;
   @ViewChild('searchInput') searchInputField: ElementRef;
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
@@ -168,6 +170,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   public displayedColumns: string[] = [];
   public alarmsDatasource: AlarmsDatasource;
   public noDataDisplayMessageText: string;
+  public hidePageSize = false;
   private setCellButtonAction: boolean;
 
   private cellContentCache: Array<any> = [];
@@ -177,6 +180,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   private settings: AlarmsTableWidgetSettings;
   private widgetConfig: WidgetConfig;
   private subscription: IWidgetSubscription;
+  private widgetResize$: ResizeObserver;
 
   private alarmsTitlePattern: string;
 
@@ -257,6 +261,14 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       this.widgetTimewindowChanged$ = this.ctx.defaultSubscription.widgetTimewindowChanged$.subscribe(
         () => this.pageLink.page = 0
       );
+      this.widgetResize$ = new ResizeObserver(() => {
+        const showHidePageSize = this.ctx.$container[0].offsetWidth < 450;
+        if (showHidePageSize !== this.hidePageSize) {
+          this.hidePageSize = showHidePageSize;
+          this.ctx.detectChanges();
+        }
+      });
+      this.widgetResize$.observe(this.alarmWidgetContainerRef.nativeElement);
     }
   }
 
@@ -264,6 +276,9 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     if (this.widgetTimewindowChanged$) {
       this.widgetTimewindowChanged$.unsubscribe();
       this.widgetTimewindowChanged$ = null;
+    }
+    if (this.widgetResize$) {
+      this.widgetResize$.disconnect();
     }
   }
 

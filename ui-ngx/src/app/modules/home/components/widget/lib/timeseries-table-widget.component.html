@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-table-widget tb-absolute-fill">
+<div #timeseriesWidgetContainer class="tb-table-widget tb-absolute-fill">
   <div fxFlex fxLayout="column" class="tb-absolute-fill">
     <mat-toolbar class="mat-table-toolbar" [fxShow]="textSearchMode">
       <div class="mat-toolbar-tools">
@@ -112,6 +112,7 @@
                          [pageIndex]="source.pageLink.page"
                          [pageSize]="source.pageLink.pageSize"
                          [pageSizeOptions]="pageSizeOptions"
+                         [hidePageSize]="hidePageSize"
                          showFirstLastButtons></mat-paginator>
         </ng-template>
       </mat-tab>

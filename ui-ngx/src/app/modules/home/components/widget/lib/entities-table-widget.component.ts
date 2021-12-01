@@ -107,6 +107,7 @@ import { sortItems } from '@shared/models/page/page-link';
 import { entityFields } from '@shared/models/entity.models';
 import { DatePipe } from '@angular/common';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { ResizeObserver } from '@juggle/resize-observer';
 
 interface EntitiesTableWidgetSettings extends TableWidgetSettings {
   entitiesTitle: string;
@@ -129,6 +130,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   @Input()
   ctx: WidgetContext;
 
+  @ViewChild('entitiesWidgetContainer', {static: true}) entitiesWidgetContainerRef: ElementRef;
   @ViewChild('searchInput') searchInputField: ElementRef;
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
@@ -144,6 +146,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   public displayedColumns: string[] = [];
   public entityDatasource: EntityDatasource;
   public noDataDisplayMessageText: string;
+  public hidePageSize = false;
   private setCellButtonAction: boolean;
 
   private cellContentCache: Array<any> = [];
@@ -153,6 +156,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   private settings: EntitiesTableWidgetSettings;
   private widgetConfig: WidgetConfig;
   private subscription: IWidgetSubscription;
+  private widgetResize$: ResizeObserver;
 
   private entitiesTitlePattern: string;
 
@@ -211,6 +215,22 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     this.initializeConfig();
     this.updateDatasources();
     this.ctx.updateWidgetParams();
+    if (this.displayPagination) {
+      this.widgetResize$ = new ResizeObserver(() => {
+        const showHidePageSize = this.ctx.$container[0].offsetWidth < 450;
+        if (showHidePageSize !== this.hidePageSize) {
+          this.hidePageSize = showHidePageSize;
+          this.ctx.detectChanges();
+        }
+      });
+      this.widgetResize$.observe(this.entitiesWidgetContainerRef.nativeElement);
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.widgetResize$) {
+      this.widgetResize$.disconnect();
+    }
   }
 
   ngAfterViewInit(): void {

@@ -64,6 +64,8 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { isDefined, isUndefined } from '@core/utils';
 import { HasUUID } from '@shared/models/id/has-uuid';
+import { MediaBreakpoints } from '@shared/models/constants';
+import { BreakpointObserver } from '@angular/cdk/layout';
 
 @Component({
   selector: 'tb-entities-table',
@@ -120,6 +122,9 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
   private updateDataSubscription: Subscription;
   private viewInited = false;
 
+  private breakpointObserverSubscription$: Subscription;
+  public hidePageSize = true;
+
   constructor(protected store: Store<AppState>,
               public route: ActivatedRoute,
               public translate: TranslateService,
@@ -127,7 +132,8 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
               private dialogService: DialogService,
               private domSanitizer: DomSanitizer,
               private cd: ChangeDetectorRef,
-              private componentFactoryResolver: ComponentFactoryResolver) {
+              private componentFactoryResolver: ComponentFactoryResolver,
+              private breakpointObserver: BreakpointObserver) {
     super(store);
   }
 
@@ -136,6 +142,19 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
       this.init(this.entitiesTableConfig);
     } else {
       this.init(this.route.snapshot.data.entitiesTableConfig);
+    }
+    this.breakpointObserverSubscription$ = this.breakpointObserver
+      .observe(MediaBreakpoints['gt-xs']).subscribe(
+        () => {
+          this.hidePageSize = !this.breakpointObserver.isMatched(MediaBreakpoints['gt-xs']);
+          this.cd.detectChanges();
+        }
+      );
+  }
+
+  ngOnDestroy() {
+    if (this.breakpointObserverSubscription$) {
+      this.breakpointObserverSubscription$.unsubscribe();
     }
   }
 

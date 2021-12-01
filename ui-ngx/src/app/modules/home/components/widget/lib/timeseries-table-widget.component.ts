@@ -71,6 +71,7 @@ import { SubscriptionEntityInfo } from '@core/api/widget-api.models';
 import { DatePipe } from '@angular/common';
 import { parseData } from '@home/components/widget/lib/maps/common-maps-utils';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { ResizeObserver } from '@juggle/resize-observer';
 
 export interface TimeseriesTableWidgetSettings extends TableWidgetSettings {
   showTimestamp: boolean;
@@ -115,6 +116,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   @Input()
   ctx: WidgetContext;
 
+  @ViewChild('timeseriesWidgetContainer', {static: true}) timeseriesWidgetContainerRef: ElementRef;
   @ViewChild('searchInput') searchInputField: ElementRef;
   @ViewChildren(MatPaginator) paginators: QueryList<MatPaginator>;
   @ViewChildren(MatSort) sorts: QueryList<MatSort>;
@@ -128,6 +130,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   public sources: TimeseriesTableSource[];
   public sourceIndex: number;
   public noDataDisplayMessageText: string;
+  public hidePageSize = false;
   private setCellButtonAction: boolean;
 
   private cellContentCache: Array<any> = [];
@@ -150,6 +153,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
 
   private subscriptions: Subscription[] = [];
   private widgetTimewindowChanged$: Subscription;
+  private widgetResize$: ResizeObserver;
 
   private searchAction: WidgetAction = {
     name: 'action.search',
@@ -190,6 +194,14 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
           });
         }
       );
+      this.widgetResize$ = new ResizeObserver(() => {
+        const showHidePageSize = this.ctx.$container[0].offsetWidth < 450;
+        if (showHidePageSize !== this.hidePageSize) {
+          this.hidePageSize = showHidePageSize;
+          this.ctx.detectChanges();
+        }
+      });
+      this.widgetResize$.observe(this.timeseriesWidgetContainerRef.nativeElement);
     }
   }
 
@@ -197,6 +209,9 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     if (this.widgetTimewindowChanged$) {
       this.widgetTimewindowChanged$.unsubscribe();
       this.widgetTimewindowChanged$ = null;
+    }
+    if (this.widgetResize$) {
+      this.widgetResize$.disconnect();
     }
   }
 
