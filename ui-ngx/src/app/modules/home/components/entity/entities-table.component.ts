@@ -64,8 +64,8 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { isDefined, isUndefined } from '@core/utils';
 import { HasUUID } from '@shared/models/id/has-uuid';
-import { MediaBreakpoints } from '@shared/models/constants';
-import { BreakpointObserver } from '@angular/cdk/layout';
+import { ResizeObserver } from '@juggle/resize-observer';
+import { hidePageSizePixelValue } from '@shared/models/constants';
 
 @Component({
   selector: 'tb-entities-table',
@@ -111,6 +111,8 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
   isDetailsOpen = false;
   detailsPanelOpened = new EventEmitter<boolean>();
 
+  @ViewChild('entitiesTableContainer', {static: true}) entitiesTableContainerRef: ElementRef;
+
   @ViewChild('entityTableHeader', {static: true}) entityTableHeaderAnchor: TbAnchorComponent;
 
   @ViewChild('searchInput') searchInputField: ElementRef;
@@ -122,8 +124,8 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
   private updateDataSubscription: Subscription;
   private viewInited = false;
 
-  private breakpointObserverSubscription$: Subscription;
-  public hidePageSize = true;
+  private widgetResize$: ResizeObserver;
+  public hidePageSize = false;
 
   constructor(protected store: Store<AppState>,
               public route: ActivatedRoute,
@@ -132,8 +134,7 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
               private dialogService: DialogService,
               private domSanitizer: DomSanitizer,
               private cd: ChangeDetectorRef,
-              private componentFactoryResolver: ComponentFactoryResolver,
-              private breakpointObserver: BreakpointObserver) {
+              private componentFactoryResolver: ComponentFactoryResolver) {
     super(store);
   }
 
@@ -143,18 +144,19 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
     } else {
       this.init(this.route.snapshot.data.entitiesTableConfig);
     }
-    this.breakpointObserverSubscription$ = this.breakpointObserver
-      .observe(MediaBreakpoints['gt-xs']).subscribe(
-        () => {
-          this.hidePageSize = !this.breakpointObserver.isMatched(MediaBreakpoints['gt-xs']);
-          this.cd.detectChanges();
-        }
-      );
+    this.widgetResize$ = new ResizeObserver(() => {
+      const showHidePageSize = this.entitiesTableContainerRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+      if (showHidePageSize !== this.hidePageSize) {
+        this.hidePageSize = showHidePageSize;
+        this.cd.detectChanges();
+      }
+    });
+    this.widgetResize$.observe(this.entitiesTableContainerRef.nativeElement);
   }
 
   ngOnDestroy() {
-    if (this.breakpointObserverSubscription$) {
-      this.breakpointObserverSubscription$.unsubscribe();
+    if (this.widgetResize$) {
+      this.widgetResize$.disconnect();
     }
   }
 

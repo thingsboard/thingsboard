@@ -14,7 +14,17 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  forwardRef,
+  Input,
+  OnDestroy,
+  OnInit,
+  ViewChild
+} from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { PageComponent } from '@shared/components/page.component';
@@ -43,6 +53,8 @@ import {
 } from '@home/components/widget/action/widget-action-dialog.component';
 import { deepClone } from '@core/utils';
 import { widgetType } from '@shared/models/widget.models';
+import { ResizeObserver } from '@juggle/resize-observer';
+import { hidePageSizePixelValue } from '@shared/models/constants';
 
 @Component({
   selector: 'tb-manage-widget-actions',
@@ -73,7 +85,10 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
 
   viewsInited = false;
   dirtyValue = false;
+  public hidePageSize = false;
+  private widgetResize$: ResizeObserver;
 
+  @ViewChild('manageActionWidgetContainer', {static: true}) manageActionWidgetContainerRef: ElementRef;
   @ViewChild('searchInput') searchInputField: ElementRef;
 
   @ViewChild(MatPaginator) paginator: MatPaginator;
@@ -85,7 +100,8 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
               private translate: TranslateService,
               private utils: UtilsService,
               private dialog: MatDialog,
-              private dialogs: DialogService) {
+              private dialogs: DialogService,
+              private cd: ChangeDetectorRef) {
     super(store);
     const sortOrder: SortOrder = { property: 'actionSourceName', direction: Direction.ASC };
     this.pageLink = new PageLink(10, 0, null, sortOrder);
@@ -94,9 +110,20 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
   }
 
   ngOnInit(): void {
+    this.widgetResize$ = new ResizeObserver(() => {
+      const showHidePageSize = this.manageActionWidgetContainerRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+      if (showHidePageSize !== this.hidePageSize) {
+        this.hidePageSize = showHidePageSize;
+        this.cd.detectChanges();
+      }
+    });
+    this.widgetResize$.observe(this.manageActionWidgetContainerRef.nativeElement);
   }
 
   ngOnDestroy(): void {
+    if (this.widgetResize$) {
+      this.widgetResize$.disconnect();
+    }
   }
 
   ngAfterViewInit() {

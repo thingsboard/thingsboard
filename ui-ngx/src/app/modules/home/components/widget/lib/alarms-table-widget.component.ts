@@ -124,6 +124,7 @@ import {
 import { entityFields } from '@shared/models/entity.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { hidePageSizePixelValue } from '@shared/models/constants';
 
 interface AlarmsTableWidgetSettings extends TableWidgetSettings {
   alarmsTitle: string;
@@ -262,7 +263,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
         () => this.pageLink.page = 0
       );
       this.widgetResize$ = new ResizeObserver(() => {
-        const showHidePageSize = this.ctx.$container[0].offsetWidth < 500;
+        const showHidePageSize = this.alarmWidgetContainerRef.nativeElement.offsetWidth < hidePageSizePixelValue;
         if (showHidePageSize !== this.hidePageSize) {
           this.hidePageSize = showHidePageSize;
           this.ctx.detectChanges();

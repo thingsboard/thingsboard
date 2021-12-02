@@ -72,6 +72,7 @@ import { DatePipe } from '@angular/common';
 import { parseData } from '@home/components/widget/lib/maps/common-maps-utils';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { hidePageSizePixelValue } from '@shared/models/constants';
 
 export interface TimeseriesTableWidgetSettings extends TableWidgetSettings {
   showTimestamp: boolean;
@@ -195,7 +196,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
         }
       );
       this.widgetResize$ = new ResizeObserver(() => {
-        const showHidePageSize = this.ctx.$container[0].offsetWidth < 500;
+        const showHidePageSize = this.timeseriesWidgetContainerRef.nativeElement.offsetWidth < hidePageSizePixelValue;
         if (showHidePageSize !== this.hidePageSize) {
           this.hidePageSize = showHidePageSize;
           this.ctx.detectChanges();
