@@ -68,6 +68,7 @@ import {
 } from '@home/components/widget/lib/rpc/persistent-filter-panel.component';
 import { PersistentAddDialogComponent } from '@home/components/widget/lib/rpc/persistent-add-dialog.component';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { hidePageSizePixelValue } from '@shared/models/constants';
 
 interface PersistentTableWidgetSettings extends TableWidgetSettings {
   defaultSortOrder: string;
@@ -149,7 +150,7 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
     this.ctx.updateWidgetParams();
     if (this.displayPagination) {
       this.widgetResize$ = new ResizeObserver(() => {
-        const showHidePageSize = this.ctx.$container[0].offsetWidth < 500;
+        const showHidePageSize = this.persistentWidgetContainerRef.nativeElement.offsetWidth < hidePageSizePixelValue;
         if (showHidePageSize !== this.hidePageSize) {
           this.hidePageSize = showHidePageSize;
           this.ctx.detectChanges();
