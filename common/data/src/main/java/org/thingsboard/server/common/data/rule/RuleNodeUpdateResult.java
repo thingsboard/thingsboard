@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.rule;
+package org.thingsboard.server.common.data.rule;
 
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.dao.Dao;
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 
-import java.util.List;
+import java.util.Map;
 
 /**
- * Created by igor on 3/12/18.
+ * Created by igor on 3/13/18.
  */
-public interface RuleNodeDao extends Dao<RuleNode> {
+@Data
+public class RuleNodeUpdateResult {
 
-    List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String type, String search);
+    private final JsonNode oldConfiguration;
+    private final RuleNode newRuleNode;
 }

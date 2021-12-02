@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -51,7 +51,11 @@ public final class TbMsgProcessingCtx implements Serializable {
     }
 
     public TbMsgProcessingCtx copy() {
-        return new TbMsgProcessingCtx(ruleNodeExecCounter.get());
+        if (stack == null || stack.isEmpty()) {
+            return new TbMsgProcessingCtx(ruleNodeExecCounter.get());
+        } else {
+            return new TbMsgProcessingCtx(ruleNodeExecCounter.get(), new LinkedList<>(stack));
+        }
     }
 
     public void push(RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
@@ -70,10 +74,7 @@ public final class TbMsgProcessingCtx implements Serializable {
         if (ctx.getStackCount() > 0) {
             LinkedList<TbMsgProcessingStackItem> stack = new LinkedList<>();
             for (MsgProtos.TbMsgProcessingStackItemProto item : ctx.getStackList()) {
-                stack.add(new TbMsgProcessingStackItem(
-                        new RuleChainId(new UUID(item.getRuleChainIdMSB(), item.getRuleChainIdLSB())),
-                        new RuleNodeId(new UUID(item.getRuleNodeIdMSB(), item.getRuleNodeIdLSB()))
-                ));
+                stack.add(TbMsgProcessingStackItem.fromProto(item));
             }
             return new TbMsgProcessingCtx(ruleNodeExecCounter, stack);
         } else {

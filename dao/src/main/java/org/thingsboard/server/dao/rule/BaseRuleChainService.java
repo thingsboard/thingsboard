@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -47,8 +47,11 @@ import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainData;
 import org.thingsboard.server.common.data.rule.RuleChainImportResult;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.common.data.rule.RuleChainOutputLabelsUsage;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.rule.RuleNodeUpdateResult;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -72,6 +75,7 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.DataConstants.TENANT;
 import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validateString;
 
 /**
  * Created by igor on 3/12/18.
@@ -130,13 +134,14 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     @Override
     @Transactional
-    public boolean saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData) {
+    public RuleChainUpdateResult saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData) {
         Validator.validateId(ruleChainMetaData.getRuleChainId(), "Incorrect rule chain id.");
         RuleChain ruleChain = findRuleChainById(tenantId, ruleChainMetaData.getRuleChainId());
         if (ruleChain == null) {
-            return false;
+            return RuleChainUpdateResult.failed();
         }
         ConstraintValidator.validateFields(ruleChainMetaData);
+        List<RuleNodeUpdateResult> updatedRuleNodes = new ArrayList<>();
 
         if (CollectionUtils.isNotEmpty(ruleChainMetaData.getConnections())) {
             validateCircles(ruleChainMetaData.getConnections());
@@ -161,11 +166,15 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         for (RuleNode existingNode : existingRuleNodes) {
             deleteEntityRelations(tenantId, existingNode.getId());
             Integer index = ruleNodeIndexMap.get(existingNode.getId());
+            RuleNode newRuleNode = null;
             if (index != null) {
-                toAddOrUpdate.add(ruleChainMetaData.getNodes().get(index));
+                newRuleNode = ruleChainMetaData.getNodes().get(index);
+                toAddOrUpdate.add(newRuleNode);
             } else {
+                updatedRuleNodes.add(new RuleNodeUpdateResult(existingNode.getConfiguration(), null));
                 toDelete.add(existingNode);
             }
+            updatedRuleNodes.add(new RuleNodeUpdateResult(existingNode.getConfiguration(), newRuleNode));
         }
         if (nodes != null) {
             for (RuleNode node : toAddOrUpdate) {
@@ -209,7 +218,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             }
         }
 
-        return true;
+        return RuleChainUpdateResult.successful(updatedRuleNodes);
     }
 
     private void validateCircles(List<NodeConnectionInfo> connectionInfos) {
@@ -650,6 +659,15 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         log.trace("Executing findAutoAssignToEdgeRuleChainsByTenantId, tenantId [{}], pageLink {}", tenantId, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         return ruleChainDao.findAutoAssignToEdgeRuleChainsByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
+    public List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String type, String search) {
+        log.trace("Executing findRuleNodes, tenantId [{}], type {}, search {}", tenantId, type, search);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateString(type, "Incorrect type of the rule node");
+        validateString(search, "Incorrect search text");
+        return ruleNodeDao.findRuleNodesByTenantIdAndType(tenantId, type, search);
     }
 
     private void checkRuleNodesAndDelete(TenantId tenantId, RuleChainId ruleChainId) {
