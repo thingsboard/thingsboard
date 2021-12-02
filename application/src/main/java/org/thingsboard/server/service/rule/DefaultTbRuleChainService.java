@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2016-2021 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.service.rule;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -11,6 +26,7 @@ import org.thingsboard.rule.engine.flow.TbRuleChainOutputNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainOutputNodeConfiguration;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -19,6 +35,7 @@ import org.thingsboard.server.common.data.rule.RuleChainOutputLabelsUsage;
 import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.rule.RuleNodeUpdateResult;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -40,6 +57,7 @@ import java.util.stream.Collectors;
 public class DefaultTbRuleChainService implements TbRuleChainService {
 
     private final RuleChainService ruleChainService;
+    private final RelationService relationService;
 
     @Override
     public Set<String> getRuleChainOutputLabels(TenantId tenantId, RuleChainId ruleChainId) {
@@ -122,8 +140,9 @@ public class DefaultTbRuleChainService implements TbRuleChainService {
                     if (!oldConf.getLabel().equals(newConf.getLabel())) {
                         String oldLabel = oldConf.getLabel();
                         String newLabel = newConf.getLabel();
-                        if (updatedLabels.containsKey(oldLabel)) {
+                        if (updatedLabels.containsKey(oldLabel) && !updatedLabels.get(oldLabel).equals(newLabel)) {
                             confusedLabels.add(oldLabel);
+                            log.warn("[{}][{}] Can't automatically rename the label from [{}] to [{}] due to conflict [{}]", tenantId, ruleChainId, oldLabel, newLabel, updatedLabels.get(oldLabel));
                         } else {
                             updatedLabels.put(oldLabel, newLabel);
                         }
@@ -134,12 +153,34 @@ public class DefaultTbRuleChainService implements TbRuleChainService {
                 }
             }
         }
-        // Remove all labels that are renamed to two or more different labels, since we don't which new label to use;
+        // Remove all output labels that are renamed to two or more different labels, since we don't which new label to use;
         confusedLabels.forEach(updatedLabels::remove);
-        // Remove all labels that are renamed to different new labels;
+        // Remove all output labels that are renamed but still present in the rule chain;
         newLabels.forEach(updatedLabels::remove);
         if (!oldLabels.equals(newLabels)) {
-            for (upda)
+            updateRelatedRuleChains(tenantId, ruleChainId, updatedLabels);
+        }
+    }
+
+    public void updateRelatedRuleChains(TenantId tenantId, RuleChainId ruleChainId, Map<String, String> labelsMap) {
+        List<RuleChainOutputLabelsUsage> usageList = getOutputLabelUsage(tenantId, ruleChainId);
+        for (RuleChainOutputLabelsUsage usage : usageList) {
+            labelsMap.forEach((oldLabel, newLabel) -> {
+                if (usage.getLabels().contains(oldLabel)) {
+                    renameOutgoingLinks(tenantId, usage.getRuleNodeId(), oldLabel, newLabel);
+                }
+            });
+        }
+    }
+
+    private void renameOutgoingLinks(TenantId tenantId, RuleNodeId ruleNodeId, String oldLabel, String newLabel) {
+        List<EntityRelation> relations = ruleChainService.getRuleNodeRelations(tenantId, ruleNodeId);
+        for (EntityRelation relation : relations) {
+            if (relation.getType().equals(oldLabel)) {
+                relationService.deleteRelation(tenantId, relation);
+                relation.setType(newLabel);
+                relationService.saveRelation(tenantId, relation);
+            }
         }
     }
 
