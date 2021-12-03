@@ -66,11 +66,11 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
                                                    @NotNull Map<String, Object> attributes) throws Exception {
                         try {
                             getCurrentUser();
-                            response.setStatusCode(HttpStatus.UNAUTHORIZED);
-                            return true;
                         } catch (ThingsboardException ex) {
                             return false;
                         }
+                        response.setStatusCode(HttpStatus.UNAUTHORIZED);
+                        return true;
                     }
 
                     @Override
