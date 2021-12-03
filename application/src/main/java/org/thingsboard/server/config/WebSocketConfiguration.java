@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.config;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -59,24 +60,23 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
                 .addInterceptors(new HttpSessionHandshakeInterceptor(), new HandshakeInterceptor() {
 
                     @Override
-                    public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler,
-                                                   Map<String, Object> attributes) throws Exception {
-                        SecurityUser user = null;
+                    public boolean beforeHandshake(@NotNull ServerHttpRequest request,
+                                                   @NotNull ServerHttpResponse response,
+                                                   @NotNull WebSocketHandler wsHandler,
+                                                   @NotNull Map<String, Object> attributes) throws Exception {
                         try {
-                            user = getCurrentUser();
-                        } catch (ThingsboardException ex) {
-                        }
-                        if (user == null) {
+                            getCurrentUser();
                             response.setStatusCode(HttpStatus.UNAUTHORIZED);
-                            return false;
-                        } else {
                             return true;
+                        } catch (ThingsboardException ex) {
+                            return false;
                         }
                     }
 
                     @Override
-                    public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler,
-                                               Exception exception) {
+                    public void afterHandshake(@NotNull ServerHttpRequest request,
+                                               @NotNull ServerHttpResponse response,
+                                               @NotNull WebSocketHandler wsHandler, Exception exception) {
                         //Do nothing
                     }
                 });
