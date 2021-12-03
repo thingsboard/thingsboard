@@ -193,6 +193,6 @@ public class DefaultTbRuleChainService implements TbRuleChainService {
     }
 
     private boolean isRuleNode(RuleNode ruleNode, Class<?> clazz) {
-        return ruleNode.getType().equals(clazz.getName());
+        return ruleNode != null && ruleNode.getType().equals(clazz.getName());
     }
 }

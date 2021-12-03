@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
@@ -668,6 +669,11 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         validateString(type, "Incorrect type of the rule node");
         validateString(search, "Incorrect search text");
         return ruleNodeDao.findRuleNodesByTenantIdAndType(tenantId, type, search);
+    }
+
+    @Override
+    public RuleNode saveRuleNode(TenantId tenantId, RuleNode ruleNode) {
+        return ruleNodeDao.save(tenantId, ruleNode);
     }
 
     private void checkRuleNodesAndDelete(TenantId tenantId, RuleChainId ruleChainId) {

@@ -91,4 +91,6 @@ public interface RuleChainService {
     PageData<RuleChain> findAutoAssignToEdgeRuleChainsByTenantId(TenantId tenantId, PageLink pageLink);
 
     List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String name, String toString);
+
+    RuleNode saveRuleNode(TenantId tenantId, RuleNode ruleNode);
 }
