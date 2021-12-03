@@ -334,11 +334,7 @@ public abstract class BaseController {
     }
 
     <T> T checkNotNull(Optional<T> reference, String notFoundMessage) throws ThingsboardException {
-        if (reference.isPresent()) {
-            return reference.get();
-        } else {
-            throw new ThingsboardException(notFoundMessage, ThingsboardErrorCode.ITEM_NOT_FOUND);
-        }
+        return reference.orElseThrow(()->new ThingsboardException(notFoundMessage, ThingsboardErrorCode.ITEM_NOT_FOUND));
     }
 
     void checkParameter(String name, String param) throws ThingsboardException {
