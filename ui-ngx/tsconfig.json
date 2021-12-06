@@ -23,7 +23,6 @@
       "src/typings/jquery.flot.typings.d.ts",
       "src/typings/jquery.jstree.typings.d.ts",
       "src/typings/split.js.typings.d.ts",
-      "node_modules/@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.d.ts",
       "src/typings/leaflet-geoman-extend.d.ts"
     ],
     "paths": {
