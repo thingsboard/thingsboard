@@ -11,6 +11,9 @@
       "schematics": {
         "@schematics/angular:component": {
           "style": "scss"
+        },
+        "@schematics/angular:application": {
+          "strict": true
         }
       },
       "architect": {
@@ -92,6 +95,7 @@
               "node_modules/tinycolor2/dist/tinycolor-min.js",
               "node_modules/split.js/dist/split.min.js",
               "node_modules/systemjs/dist/system.js",
+              "node_modules/systemjs-babel/dist/systemjs-babel.js",
               "node_modules/marked/lib/marked.js",
               "node_modules/prismjs/prism.js",
               "node_modules/prismjs/components/prism-css.min.js",
@@ -99,7 +103,7 @@
               "node_modules/prismjs/components/prism-json.min.js",
               "node_modules/prismjs/components/prism-javascript.min.js",
               "node_modules/prismjs/components/prism-typescript.min.js",
-              "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.js"
+              "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.min.js"
             ],
             "customWebpackConfig": {
               "path": "./extra-webpack.config.js"
@@ -130,7 +134,9 @@
               "jquery.terminal",
               "tooltipster",
               "jstree",
-              "qrcode"
+              "qrcode",
+              "wcwidth",
+              "leaflet-polylinedecorator"
             ]
           },
           "configurations": {
@@ -141,7 +147,14 @@
                   "with": "src/environments/environment.prod.ts"
                 }
               ],
-              "optimization": true,
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                },
+                "fonts": false
+              },
               "outputHashing": "all",
               "sourceMap": false,
               "namedChunks": false,
@@ -155,6 +168,21 @@
                   "maximumError": "12mb"
                 }
               ]
+            },
+            "development": {
+              "buildOptimizer": false,
+              "optimization": {
+                "scripts": false,
+                "styles": {
+                  "minify": false,
+                  "inlineCritical": false
+                },
+                "fonts": false
+              },
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true
             }
           }
         },
@@ -167,8 +195,12 @@
           "configurations": {
             "production": {
               "browserTarget": "thingsboard:build:production"
+            },
+            "development": {
+              "browserTarget": "thingsboard:build:development"
             }
-          }
+          },
+          "defaultConfiguration": "development"
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",

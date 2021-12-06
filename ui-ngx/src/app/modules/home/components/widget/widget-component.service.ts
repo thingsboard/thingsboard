@@ -44,6 +44,7 @@ import { SharedModule } from '@shared/shared.module';
 import { MODULES_MAP } from '@shared/public-api';
 import * as tinycolor_ from 'tinycolor2';
 import moment from 'moment';
+import { IModulesMap } from '@modules/common/modules-map.models';
 
 const tinycolor = tinycolor_;
 
@@ -64,7 +65,7 @@ export class WidgetComponentService {
   private editingWidgetType: WidgetType;
 
   constructor(@Inject(WINDOW) private window: Window,
-              @Optional() @Inject(MODULES_MAP) private modulesMap: {[key: string]: any},
+              @Optional() @Inject(MODULES_MAP) private modulesMap: IModulesMap,
               private dynamicComponentFactoryService: DynamicComponentFactoryService,
               private widgetService: WidgetService,
               private utils: UtilsService,

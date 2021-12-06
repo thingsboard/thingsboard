@@ -14,11 +14,16 @@
 /// limitations under the License.
 ///
 
-import { InjectionToken, Type } from '@angular/core';
-import { ComponentType } from '@angular/cdk/portal';
+import { ComplexFilterPredicateInfo, EntityKeyValueType } from '@shared/models/query/query.models';
 
-export const HELP_MARKDOWN_COMPONENT_TOKEN: InjectionToken<ComponentType<any>> =
-  new InjectionToken<ComponentType<any>>('HELP_MARKDOWN_COMPONENT_TOKEN');
+export interface ComplexFilterPredicateDialogData {
+  complexPredicate: ComplexFilterPredicateInfo;
+  key: string;
+  readonly: boolean;
+  isAdd: boolean;
+  valueType: EntityKeyValueType;
+  displayUserParameters: boolean;
+  allowUserDynamicSource: boolean;
+  onlyUserDynamicSource: boolean;
+}
 
-export const SHARED_MODULE_TOKEN: InjectionToken<Type<any>> =
-  new InjectionToken<Type<any>>('SHARED_MODULE_TOKEN');
