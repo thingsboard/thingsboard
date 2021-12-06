@@ -269,7 +269,7 @@ public final class TbMsg implements Serializable {
     }
 
     public TbMsgCallback getCallback() {
-        //May be null in case of deserialization;
+        // May be null in case of deserialization;
         if (callback != null) {
             return callback;
         } else {
@@ -287,5 +287,13 @@ public final class TbMsg implements Serializable {
 
     public TbMsgProcessingStackItem popFormStack() {
         return ctx.pop();
+    }
+
+    /**
+     * Checks if the message is still valid for processing. May be invalid if the message pack is timed-out or canceled.
+     * @return 'true' if message is valid for processing, 'false' otherwise.
+     */
+    public boolean isValid() {
+        return getCallback().isMsgValid();
     }
 }
