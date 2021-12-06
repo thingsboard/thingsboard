@@ -22,13 +22,16 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
@@ -57,6 +60,7 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -97,6 +101,12 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
     @Autowired
     @Lazy
     private TbTenantProfileCache tenantProfileCache;
+
+    @Autowired
+    private PaginatedRemover<CustomerId, Asset> customerAssetsUnasigner;
+
+    @Autowired
+    private PaginatedRemover<TenantId, Asset> tenantAssetsRemover;
 
     @Override
     public AssetInfo findAssetInfoById(TenantId tenantId, AssetId assetId) {
@@ -435,30 +445,35 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
                 }
             };
 
-    private PaginatedRemover<TenantId, Asset> tenantAssetsRemover =
-            new PaginatedRemover<TenantId, Asset>() {
+    @Bean
+    public PaginatedRemover<TenantId, Asset> tenantAssetsRemover() {
+        return new PaginatedRemover<>() {
 
-                @Override
-                protected PageData<Asset> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                    return assetDao.findAssetsByTenantId(id.getId(), pageLink);
-                }
+            @Override
+            protected PageData<Asset> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+                return assetDao.findAssetsByTenantId(id.getId(), pageLink);
+            }
 
-                @Override
-                protected void removeEntity(TenantId tenantId, Asset entity) {
-                    deleteAsset(tenantId, new AssetId(entity.getId().getId()));
-                }
-            };
+            @Override
+            protected void removeEntity(TenantId tenantId, Asset entity) {
+                deleteAsset(tenantId, new AssetId(entity.getId().getId()));
+            }
+        };
+    }
 
-    private PaginatedRemover<CustomerId, Asset> customerAssetsUnasigner = new PaginatedRemover<CustomerId, Asset>() {
+    @Bean
+    public PaginatedRemover<CustomerId, Asset> customerAssetsUnasigner() {
+        return new PaginatedRemover<>() {
 
-        @Override
-        protected PageData<Asset> findEntities(TenantId tenantId, CustomerId id, PageLink pageLink) {
-            return assetDao.findAssetsByTenantIdAndCustomerId(tenantId.getId(), id.getId(), pageLink);
-        }
+            @Override
+            protected PageData<Asset> findEntities(TenantId tenantId, CustomerId id, PageLink pageLink) {
+                return assetDao.findAssetsByTenantIdAndCustomerId(tenantId.getId(), id.getId(), pageLink);
+            }
 
-        @Override
-        protected void removeEntity(TenantId tenantId, Asset entity) {
-            unassignAssetFromCustomer(tenantId, new AssetId(entity.getId().getId()));
-        }
-    };
+            @Override
+            protected void removeEntity(TenantId tenantId, Asset entity) {
+                unassignAssetFromCustomer(tenantId, new AssetId(entity.getId().getId()));
+            }
+        };
+    }
 }

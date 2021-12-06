@@ -48,7 +48,7 @@ import org.thingsboard.server.service.edge.rpc.processor.UserEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.WidgetBundleEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.WidgetTypeEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.sync.EdgeRequestsService;
-import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.dao.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.GrpcCallbackExecutorService;
 
 @Component

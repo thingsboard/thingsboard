@@ -20,8 +20,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
@@ -46,6 +49,8 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
+
+import javax.annotation.PostConstruct;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -73,6 +78,9 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     @Autowired
     @Lazy
     private TbTenantProfileCache tenantProfileCache;
+
+    @Autowired
+    private PaginatedRemover<TenantId, DashboardInfo> tenantDashboardsRemover;
 
     @Override
     public Dashboard findDashboardById(TenantId tenantId, DashboardId dashboardId) {
@@ -316,19 +324,21 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
                 }
             };
 
-    private PaginatedRemover<TenantId, DashboardInfo> tenantDashboardsRemover =
-            new PaginatedRemover<TenantId, DashboardInfo>() {
+    @Bean
+    public PaginatedRemover<TenantId, DashboardInfo> tenantDashboardsRemover() {
+        return new PaginatedRemover<TenantId, DashboardInfo>() {
 
-        @Override
-        protected PageData<DashboardInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-            return dashboardInfoDao.findDashboardsByTenantId(id.getId(), pageLink);
-        }
+            @Override
+            protected PageData<DashboardInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+                return dashboardInfoDao.findDashboardsByTenantId(id.getId(), pageLink);
+            }
 
-        @Override
-        protected void removeEntity(TenantId tenantId, DashboardInfo entity) {
-            deleteDashboard(tenantId, new DashboardId(entity.getUuidId()));
-        }
-    };
+            @Override
+            protected void removeEntity(TenantId tenantId, DashboardInfo entity) {
+                deleteDashboard(tenantId, new DashboardId(entity.getUuidId()));
+            }
+        };
+    }
 
     private class CustomerDashboardsUnassigner extends PaginatedRemover<Customer, DashboardInfo> {
 

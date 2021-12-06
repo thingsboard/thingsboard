@@ -18,7 +18,11 @@ package org.thingsboard.server.dao.rpc;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -27,6 +31,8 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.dao.service.PaginatedRemover;
+
+import javax.annotation.PostConstruct;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
@@ -39,6 +45,9 @@ public class BaseRpcService implements RpcService {
     public static final String INCORRECT_RPC_ID = "Incorrect rpcId ";
 
     private final RpcDao rpcDao;
+
+    @Autowired
+    private PaginatedRemover<TenantId, Rpc> tenantRpcRemover;
 
     @Override
     public Rpc save(Rpc rpc) {
@@ -85,16 +94,18 @@ public class BaseRpcService implements RpcService {
         return rpcDao.findAllByDeviceId(tenantId, deviceId, rpcStatus, pageLink);
     }
 
-    private PaginatedRemover<TenantId, Rpc> tenantRpcRemover =
-            new PaginatedRemover<>() {
-                @Override
-                protected PageData<Rpc> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                    return rpcDao.findAllRpcByTenantId(id, pageLink);
-                }
+    @Bean
+    public PaginatedRemover<TenantId, Rpc> tenantRpcRemover() {
+        return new PaginatedRemover<>() {
+            @Override
+            protected PageData<Rpc> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+                return rpcDao.findAllRpcByTenantId(id, pageLink);
+            }
 
-                @Override
-                protected void removeEntity(TenantId tenantId, Rpc entity) {
-                    deleteRpc(tenantId, entity.getId());
-                }
-            };
+            @Override
+            protected void removeEntity(TenantId tenantId, Rpc entity) {
+                deleteRpc(tenantId, entity.getId());
+            }
+        };
+    }
 }

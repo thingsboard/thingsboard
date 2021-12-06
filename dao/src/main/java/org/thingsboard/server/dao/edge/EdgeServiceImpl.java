@@ -25,12 +25,15 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
@@ -64,6 +67,7 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.user.UserService;
 
 import javax.annotation.Nullable;
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -112,6 +116,12 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
 
     @Autowired
     private RelationService relationService;
+
+    @Autowired
+    private PaginatedRemover<TenantId, Edge> tenantEdgesRemover;
+
+    @Autowired
+    private PaginatedRemover<CustomerId, Edge> customerEdgeUnassigner;
 
     @Override
     public Edge findEdgeById(TenantId tenantId, EdgeId edgeId) {
@@ -432,33 +442,6 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
                 }
             };
 
-    private PaginatedRemover<TenantId, Edge> tenantEdgesRemover =
-            new PaginatedRemover<TenantId, Edge>() {
-
-                @Override
-                protected PageData<Edge> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                    return edgeDao.findEdgesByTenantId(id.getId(), pageLink);
-                }
-
-                @Override
-                protected void removeEntity(TenantId tenantId, Edge entity) {
-                    deleteEdge(tenantId, new EdgeId(entity.getUuidId()));
-                }
-            };
-
-    private PaginatedRemover<CustomerId, Edge> customerEdgeUnassigner = new PaginatedRemover<CustomerId, Edge>() {
-
-        @Override
-        protected PageData<Edge> findEntities(TenantId tenantId, CustomerId id, PageLink pageLink) {
-            return edgeDao.findEdgesByTenantIdAndCustomerId(tenantId.getId(), id.getId(), pageLink);
-        }
-
-        @Override
-        protected void removeEntity(TenantId tenantId, Edge entity) {
-            unassignEdgeFromCustomer(tenantId, new EdgeId(entity.getUuidId()));
-        }
-    };
-
     @Override
     public PageData<EdgeId> findRelatedEdgeIdsByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
         log.trace("[{}] Executing findRelatedEdgeIdsByEntityId [{}] [{}]", tenantId, entityId, pageLink);
@@ -558,5 +541,37 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
             }
         } while (pageData != null && pageData.hasNext());
         return result;
+    }
+
+    @Bean
+    public PaginatedRemover<TenantId, Edge> tenantEdgesRemover() {
+        return new PaginatedRemover<>() {
+
+            @Override
+            protected PageData<Edge> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+                return edgeDao.findEdgesByTenantId(id.getId(), pageLink);
+            }
+
+            @Override
+            protected void removeEntity(TenantId tenantId, Edge entity) {
+                deleteEdge(tenantId, new EdgeId(entity.getUuidId()));
+            }
+        };
+    }
+
+    @Bean
+    public PaginatedRemover<CustomerId, Edge> customerEdgeUnassigner() {
+        return new PaginatedRemover<>() {
+
+            @Override
+            protected PageData<Edge> findEntities(TenantId tenantId, CustomerId id, PageLink pageLink) {
+                return edgeDao.findEdgesByTenantIdAndCustomerId(tenantId.getId(), id.getId(), pageLink);
+            }
+
+            @Override
+            protected void removeEntity(TenantId tenantId, Edge entity) {
+                unassignEdgeFromCustomer(tenantId, new EdgeId(entity.getUuidId()));
+            }
+        };
     }
 }

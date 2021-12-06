@@ -19,8 +19,11 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -46,6 +49,8 @@ import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
+
+import javax.annotation.PostConstruct;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -103,6 +108,9 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
 
     @Autowired
     private RpcService rpcService;
+
+    @Autowired
+    private PaginatedRemover<String, Tenant> tenantsRemover;
 
     @Override
     public Tenant findTenantById(TenantId tenantId) {
@@ -214,17 +222,19 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
                 }
             };
 
-    private PaginatedRemover<String, Tenant> tenantsRemover =
-            new PaginatedRemover<String, Tenant>() {
+    @Bean
+    public PaginatedRemover<String, Tenant> tenantsRemover() {
+        return new PaginatedRemover<>() {
 
-                @Override
-                protected PageData<Tenant> findEntities(TenantId tenantId, String region, PageLink pageLink) {
-                    return tenantDao.findTenantsByRegion(tenantId, region, pageLink);
-                }
+            @Override
+            protected PageData<Tenant> findEntities(TenantId tenantId, String region, PageLink pageLink) {
+                return tenantDao.findTenantsByRegion(tenantId, region, pageLink);
+            }
 
-                @Override
-                protected void removeEntity(TenantId tenantId, Tenant entity) {
-                    deleteTenant(new TenantId(entity.getUuidId()));
-                }
-            };
+            @Override
+            protected void removeEntity(TenantId tenantId, Tenant entity) {
+                deleteTenant(new TenantId(entity.getUuidId()));
+            }
+        };
+    }
 }

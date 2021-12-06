@@ -28,6 +28,9 @@ import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import com.squareup.wire.schema.internal.parser.ProtoParser;
 import com.squareup.wire.schema.internal.parser.TypeElement;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Bean;
+import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.server.common.data.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,6 +78,7 @@ import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.queue.QueueService;
 
+import javax.annotation.PostConstruct;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -131,6 +135,9 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
 
     @Autowired
     private DashboardService dashboardService;
+
+    @Autowired
+    private PaginatedRemover<TenantId, DeviceProfile> tenantDeviceProfilesRemover;
 
     private final Lock findOrCreateLock = new ReentrantLock();
 
@@ -692,18 +699,20 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
         }
     }
 
-    private PaginatedRemover<TenantId, DeviceProfile> tenantDeviceProfilesRemover =
-            new PaginatedRemover<TenantId, DeviceProfile>() {
+    @Bean
+    public PaginatedRemover<TenantId, DeviceProfile> tenantDeviceProfilesRemover() {
+        return new PaginatedRemover<>() {
 
-                @Override
-                protected PageData<DeviceProfile> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                    return deviceProfileDao.findDeviceProfiles(id, pageLink);
-                }
+                    @Override
+                    protected PageData<DeviceProfile> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+                        return deviceProfileDao.findDeviceProfiles(id, pageLink);
+                    }
 
-                @Override
-                protected void removeEntity(TenantId tenantId, DeviceProfile entity) {
-                    removeDeviceProfile(tenantId, entity);
-                }
-            };
+                    @Override
+                    protected void removeEntity(TenantId tenantId, DeviceProfile entity) {
+                        removeDeviceProfile(tenantId, entity);
+                    }
+                };
+    }
 
 }

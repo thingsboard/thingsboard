@@ -23,16 +23,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
@@ -84,6 +87,7 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import javax.annotation.Nullable;
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -140,6 +144,12 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
     @Autowired
     private OtaPackageService otaPackageService;
+
+    @Autowired
+    private PaginatedRemover<TenantId, Device> tenantDevicesRemover;
+
+    @Autowired
+    private PaginatedRemover<CustomerId, Device> customerDeviceUnasigner;
 
     @Override
     public DeviceInfo findDeviceInfoById(TenantId tenantId, DeviceId deviceId) {
@@ -793,21 +803,25 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                 }
             };
 
-    private PaginatedRemover<TenantId, Device> tenantDevicesRemover =
-            new PaginatedRemover<TenantId, Device>() {
+    @Bean
+    public PaginatedRemover<TenantId, Device> tenantDevicesRemover() {
+        return new PaginatedRemover<TenantId, Device>() {
 
-                @Override
-                protected PageData<Device> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                    return deviceDao.findDevicesByTenantId(id.getId(), pageLink);
-                }
+            @Override
+            protected PageData<Device> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+                return deviceDao.findDevicesByTenantId(id.getId(), pageLink);
+            }
 
-                @Override
-                protected void removeEntity(TenantId tenantId, Device entity) {
-                    deleteDevice(tenantId, new DeviceId(entity.getUuidId()));
-                }
-            };
+            @Override
+            protected void removeEntity(TenantId tenantId, Device entity) {
+                deleteDevice(tenantId, new DeviceId(entity.getUuidId()));
+            }
+        };
+    }
 
-    private PaginatedRemover<CustomerId, Device> customerDeviceUnasigner = new PaginatedRemover<CustomerId, Device>() {
+    @Bean
+    public PaginatedRemover<CustomerId, Device> customerDeviceUnasigner() {
+        return new PaginatedRemover<CustomerId, Device>() {
 
         @Override
         protected PageData<Device> findEntities(TenantId tenantId, CustomerId id, PageLink pageLink) {
@@ -818,5 +832,6 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         protected void removeEntity(TenantId tenantId, Device entity) {
             unassignDeviceFromCustomer(tenantId, new DeviceId(entity.getUuidId()));
         }
-    };
+        };
+    }
 }

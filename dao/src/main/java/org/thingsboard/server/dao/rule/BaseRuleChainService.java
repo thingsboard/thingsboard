@@ -25,9 +25,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
@@ -59,6 +62,7 @@ import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -96,6 +100,9 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Autowired
     @Lazy
     private TbTenantProfileCache tenantProfileCache;
+
+    @Autowired
+    private PaginatedRemover<TenantId, RuleChain> tenantRuleChainsRemover;
 
     @Override
     @Transactional
@@ -723,18 +730,20 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 }
             };
 
-    private final PaginatedRemover<TenantId, RuleChain> tenantRuleChainsRemover =
-            new PaginatedRemover<>() {
+    @Bean
+    public PaginatedRemover<TenantId, RuleChain> tenantRuleChainsRemover() {
+        return new PaginatedRemover<>() {
 
-                @Override
-                protected PageData<RuleChain> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                    return ruleChainDao.findRuleChainsByTenantId(id.getId(), pageLink);
-                }
+                    @Override
+                    protected PageData<RuleChain> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+                        return ruleChainDao.findRuleChainsByTenantId(id.getId(), pageLink);
+                    }
 
-                @Override
-                protected void removeEntity(TenantId tenantId, RuleChain entity) {
-                    checkRuleNodesAndDelete(tenantId, entity.getId());
-                }
-            };
+                    @Override
+                    protected void removeEntity(TenantId tenantId, RuleChain entity) {
+                        checkRuleNodesAndDelete(tenantId, entity.getId());
+                    }
+                };
+    }
 
 }

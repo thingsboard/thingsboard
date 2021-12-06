@@ -49,7 +49,7 @@ import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.dao.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
 

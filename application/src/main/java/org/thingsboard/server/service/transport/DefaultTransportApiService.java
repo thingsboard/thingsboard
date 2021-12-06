@@ -93,7 +93,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509Ce
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
-import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.dao.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.service.resource.TbResourceService;

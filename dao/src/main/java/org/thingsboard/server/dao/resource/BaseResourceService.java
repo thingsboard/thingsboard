@@ -19,8 +19,12 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -38,6 +42,7 @@ import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
+import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,12 +53,14 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 @Service
 @Slf4j
 public class BaseResourceService implements ResourceService {
-
     public static final String INCORRECT_RESOURCE_ID = "Incorrect resourceId ";
     private final TbResourceDao resourceDao;
     private final TbResourceInfoDao resourceInfoDao;
     private final TenantDao tenantDao;
     private final TbTenantProfileCache tenantProfileCache;
+
+    @Autowired
+    private PaginatedRemover<TenantId, TbResource> tenantResourcesRemover;
 
     public BaseResourceService(TbResourceDao resourceDao, TbResourceInfoDao resourceInfoDao, TenantDao tenantDao, @Lazy TbTenantProfileCache tenantProfileCache) {
         this.resourceDao = resourceDao;
@@ -191,19 +198,21 @@ public class BaseResourceService implements ResourceService {
         }
     };
 
-    private PaginatedRemover<TenantId, TbResource> tenantResourcesRemover =
-            new PaginatedRemover<>() {
+    @Bean
+    public PaginatedRemover<TenantId, TbResource> tenantResourcesRemover() {
+        return new PaginatedRemover<>() {
 
-                @Override
-                protected PageData<TbResource> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                    return resourceDao.findAllByTenantId(id, pageLink);
-                }
+                    @Override
+                    protected PageData<TbResource> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+                        return resourceDao.findAllByTenantId(id, pageLink);
+                    }
 
-                @Override
-                protected void removeEntity(TenantId tenantId, TbResource entity) {
-                    deleteResource(tenantId, new TbResourceId(entity.getUuidId()));
-                }
-            };
+                    @Override
+                    protected void removeEntity(TenantId tenantId, TbResource entity) {
+                        deleteResource(tenantId, new TbResourceId(entity.getUuidId()));
+                    }
+                };
+    }
 
     protected Optional<ConstraintViolationException> extractConstraintViolationException(Exception t) {
         if (t instanceof ConstraintViolationException) {

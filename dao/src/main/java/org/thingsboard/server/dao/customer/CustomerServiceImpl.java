@@ -21,8 +21,11 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
@@ -46,6 +49,7 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.dao.user.UserService;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.Optional;
 
@@ -86,6 +90,9 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     @Autowired
     @Lazy
     private TbTenantProfileCache tenantProfileCache;
+
+    @Autowired
+    private PaginatedRemover<TenantId, Customer> customersByTenantRemover;
 
     @Override
     public Customer findCustomerById(TenantId tenantId, CustomerId customerId) {
@@ -221,17 +228,19 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
                 }
             };
 
-    private PaginatedRemover<TenantId, Customer> customersByTenantRemover =
-            new PaginatedRemover<TenantId, Customer>() {
+    @Bean
+    public PaginatedRemover<TenantId, Customer> customersByTenantRemover() {
+        return new PaginatedRemover<>() {
 
-                @Override
-                protected PageData<Customer> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                    return customerDao.findCustomersByTenantId(id.getId(), pageLink);
-                }
+            @Override
+            protected PageData<Customer> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+                return customerDao.findCustomersByTenantId(id.getId(), pageLink);
+            }
 
-                @Override
-                protected void removeEntity(TenantId tenantId, Customer entity) {
-                    deleteCustomer(tenantId, new CustomerId(entity.getUuidId()));
-                }
-            };
+            @Override
+            protected void removeEntity(TenantId tenantId, Customer entity) {
+                deleteCustomer(tenantId, new CustomerId(entity.getUuidId()));
+            }
+        };
+    }
 }

@@ -22,12 +22,16 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
@@ -53,6 +57,7 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
+import javax.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -84,6 +89,12 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     private final CustomerDao customerDao;
     private final TbTenantProfileCache tenantProfileCache;
     private final ApplicationEventPublisher eventPublisher;
+
+    @Autowired
+    private PaginatedRemover<TenantId, User> tenantAdminsRemover;
+
+    @Autowired
+    private PaginatedRemover<CustomerId, User> customerUsersRemover;
 
     public UserServiceImpl(UserDao userDao,
                            UserCredentialsDao userCredentialsDao,
@@ -496,29 +507,35 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
                 }
             };
 
-    private final PaginatedRemover<TenantId, User> tenantAdminsRemover = new PaginatedRemover<>() {
-        @Override
-        protected PageData<User> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-            return userDao.findTenantAdmins(id.getId(), pageLink);
-        }
+    @Bean
+    public PaginatedRemover<TenantId, User> tenantAdminsRemover() {
+        return new PaginatedRemover<>() {
+            @Override
+            protected PageData<User> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+                return userDao.findTenantAdmins(id.getId(), pageLink);
+            }
 
-        @Override
-        protected void removeEntity(TenantId tenantId, User entity) {
-            deleteUser(tenantId, new UserId(entity.getUuidId()));
-        }
-    };
+            @Override
+            protected void removeEntity(TenantId tenantId, User entity) {
+                deleteUser(tenantId, new UserId(entity.getUuidId()));
+            }
+        };
+    }
 
-    private final PaginatedRemover<CustomerId, User> customerUsersRemover = new PaginatedRemover<>() {
-        @Override
-        protected PageData<User> findEntities(TenantId tenantId, CustomerId id, PageLink pageLink) {
-            return userDao.findCustomerUsers(tenantId.getId(), id.getId(), pageLink);
+    @Bean
+    public PaginatedRemover<CustomerId, User> customerUsersRemover() {
+        return new PaginatedRemover<>() {
+            @Override
+            protected PageData<User> findEntities(TenantId tenantId, CustomerId id, PageLink pageLink) {
+                return userDao.findCustomerUsers(tenantId.getId(), id.getId(), pageLink);
 
-        }
+            }
 
-        @Override
-        protected void removeEntity(TenantId tenantId, User entity) {
-            deleteUser(tenantId, new UserId(entity.getUuidId()));
-        }
-    };
+            @Override
+            protected void removeEntity(TenantId tenantId, User entity) {
+                deleteUser(tenantId, new UserId(entity.getUuidId()));
+            }
+        };
+    }
 
 }

@@ -19,10 +19,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -37,6 +40,7 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 
+import javax.annotation.PostConstruct;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -54,6 +58,9 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
 
     @Autowired
     private CacheManager cacheManager;
+
+    @Autowired
+    private PaginatedRemover<String, TenantProfile> tenantProfilesRemover;
 
     @Cacheable(cacheNames = TENANT_PROFILE_CACHE, key = "{#tenantProfileId.id}")
     @Override
@@ -243,18 +250,19 @@ public class TenantProfileServiceImpl extends AbstractEntityService implements T
                 }
             };
 
-    private PaginatedRemover<String, TenantProfile> tenantProfilesRemover =
-            new PaginatedRemover<String, TenantProfile>() {
+    @Bean
+    public PaginatedRemover<String, TenantProfile> tenantProfilesRemover() {
+        return new PaginatedRemover<>() {
 
-                @Override
-                protected PageData<TenantProfile> findEntities(TenantId tenantId, String id, PageLink pageLink) {
-                    return tenantProfileDao.findTenantProfiles(tenantId, pageLink);
-                }
+            @Override
+            protected PageData<TenantProfile> findEntities(TenantId tenantId, String id, PageLink pageLink) {
+                return tenantProfileDao.findTenantProfiles(tenantId, pageLink);
+            }
 
-                @Override
-                protected void removeEntity(TenantId tenantId, TenantProfile entity) {
-                    removeTenantProfile(tenantId, entity.getId());
-                }
-            };
-
+            @Override
+            protected void removeEntity(TenantId tenantId, TenantProfile entity) {
+                removeTenantProfile(tenantId, entity.getId());
+            }
+        };
+    }
 }

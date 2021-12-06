@@ -23,12 +23,15 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
@@ -56,6 +59,7 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import javax.annotation.Nullable;
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -95,6 +99,12 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
 
     @Autowired
     private CacheManager cacheManager;
+
+    @Autowired
+    private PaginatedRemover<TenantId, EntityView> tenantEntityViewRemover;
+
+    @Autowired
+    private PaginatedRemover<CustomerId, EntityView> customerEntityViewsUnAssigner;
 
     @Caching(evict = {
             @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityView.tenantId, #entityView.entityId}"),
@@ -452,27 +462,33 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
                 }
             };
 
-    private PaginatedRemover<TenantId, EntityView> tenantEntityViewRemover = new PaginatedRemover<TenantId, EntityView>() {
-        @Override
-        protected PageData<EntityView> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-            return entityViewDao.findEntityViewsByTenantId(id.getId(), pageLink);
-        }
+    @Bean
+    public PaginatedRemover<TenantId, EntityView> tenantEntityViewRemover() {
+        return new PaginatedRemover<>() {
+            @Override
+            protected PageData<EntityView> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+                return entityViewDao.findEntityViewsByTenantId(id.getId(), pageLink);
+            }
 
-        @Override
-        protected void removeEntity(TenantId tenantId, EntityView entity) {
-            deleteEntityView(tenantId, new EntityViewId(entity.getUuidId()));
-        }
-    };
+            @Override
+            protected void removeEntity(TenantId tenantId, EntityView entity) {
+                deleteEntityView(tenantId, new EntityViewId(entity.getUuidId()));
+            }
+        };
+    }
 
-    private PaginatedRemover<CustomerId, EntityView> customerEntityViewsUnAssigner = new PaginatedRemover<CustomerId, EntityView>() {
-        @Override
-        protected PageData<EntityView> findEntities(TenantId tenantId, CustomerId id, PageLink pageLink) {
-            return entityViewDao.findEntityViewsByTenantIdAndCustomerId(tenantId.getId(), id.getId(), pageLink);
-        }
+    @Bean
+    public PaginatedRemover<CustomerId, EntityView> customerEntityViewsUnAssigner() {
+        return new PaginatedRemover<CustomerId, EntityView>() {
+            @Override
+            protected PageData<EntityView> findEntities(TenantId tenantId, CustomerId id, PageLink pageLink) {
+                return entityViewDao.findEntityViewsByTenantIdAndCustomerId(tenantId.getId(), id.getId(), pageLink);
+            }
 
-        @Override
-        protected void removeEntity(TenantId tenantId, EntityView entity) {
-            unassignEntityViewFromCustomer(tenantId, new EntityViewId(entity.getUuidId()));
-        }
-    };
+            @Override
+            protected void removeEntity(TenantId tenantId, EntityView entity) {
+                unassignEntityViewFromCustomer(tenantId, new EntityViewId(entity.getUuidId()));
+            }
+        };
+    }
 }

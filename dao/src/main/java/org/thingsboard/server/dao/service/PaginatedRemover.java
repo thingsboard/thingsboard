@@ -15,23 +15,64 @@
  */
 package org.thingsboard.server.dao.service;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.executors.DbCallbackExecutorService;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public abstract class PaginatedRemover<I, D extends IdBased<?>> {
-
     private static final int DEFAULT_LIMIT = 100;
+
+    @Autowired
+    protected DbCallbackExecutorService dbCallbackExecutor;
 
     public void removeEntities(TenantId tenantId, I id) {
         PageLink pageLink = new PageLink(DEFAULT_LIMIT);
         boolean hasNext = true;
         while (hasNext) {
             PageData<D> entities = findEntities(tenantId, id, pageLink);
-            for (D entity : entities.getData()) {
-                removeEntity(tenantId, entity);
+
+            if (dbCallbackExecutor != null) {
+
+                List<ListenableFuture<Void>> entityRemovingResults = new ArrayList<>();
+
+                for (D entity : entities.getData()) {
+                    entityRemovingResults.add(
+                            dbCallbackExecutor.executeAsync(
+                                    () -> removeEntity(tenantId, entity)
+                            )
+                    );
+                }
+
+                List<Throwable> exceptions = new ArrayList<>();
+
+                entityRemovingResults.forEach(e -> {
+                            try {
+                                e.get();
+                            } catch (InterruptedException | ExecutionException ex) {
+                                exceptions.add(
+                                        ex.getCause()
+                                );
+                            }
+                        }
+                );
+
+                if (!exceptions.isEmpty()) {
+                    throw new RuntimeException(exceptions.get(exceptions.size() - 1));
+                }
+            } else {
+                for (D entity : entities.getData()) {
+                    removeEntity(tenantId, entity);
+                }
             }
+
             hasNext = entities.hasNext();
         }
     }

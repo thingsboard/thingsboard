@@ -60,7 +60,7 @@ import org.thingsboard.server.service.edge.rpc.constructor.RuleChainMsgConstruct
 import org.thingsboard.server.service.edge.rpc.constructor.UserMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.WidgetTypeMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.WidgetsBundleMsgConstructor;
-import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.dao.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.service.state.DeviceStateService;

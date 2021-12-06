@@ -22,11 +22,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.OtaPackage;
@@ -48,6 +51,7 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
+import javax.annotation.PostConstruct;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
@@ -76,6 +80,9 @@ public class BaseOtaPackageService implements OtaPackageService {
     @Autowired
     @Lazy
     private TbTenantProfileCache tenantProfileCache;
+
+    @Autowired
+    private PaginatedRemover<TenantId, OtaPackageInfo> tenantOtaPackageRemover;
 
     @Override
     public OtaPackageInfo saveOtaPackageInfo(OtaPackageInfo otaPackageInfo, boolean isUrl) {
@@ -392,19 +399,21 @@ public class BaseOtaPackageService implements OtaPackageService {
 
     }
 
-    private PaginatedRemover<TenantId, OtaPackageInfo> tenantOtaPackageRemover =
-            new PaginatedRemover<>() {
+    @Bean
+    public PaginatedRemover<TenantId, OtaPackageInfo> tenantOtaPackageRemover() {
+        return new PaginatedRemover<>() {
 
-                @Override
-                protected PageData<OtaPackageInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                    return otaPackageInfoDao.findOtaPackageInfoByTenantId(id, pageLink);
-                }
+                    @Override
+                    protected PageData<OtaPackageInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+                        return otaPackageInfoDao.findOtaPackageInfoByTenantId(id, pageLink);
+                    }
 
-                @Override
-                protected void removeEntity(TenantId tenantId, OtaPackageInfo entity) {
-                    deleteOtaPackage(tenantId, entity.getId());
-                }
-            };
+                    @Override
+                    protected void removeEntity(TenantId tenantId, OtaPackageInfo entity) {
+                        deleteOtaPackage(tenantId, entity.getId());
+                    }
+                };
+    }
 
     protected Optional<ConstraintViolationException> extractConstraintViolationException(Exception t) {
         if (t instanceof ConstraintViolationException) {

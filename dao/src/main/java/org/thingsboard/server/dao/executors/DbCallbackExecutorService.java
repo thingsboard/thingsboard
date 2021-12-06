@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.executors;
+package org.thingsboard.server.dao.executors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;

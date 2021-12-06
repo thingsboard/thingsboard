@@ -18,7 +18,10 @@ package org.thingsboard.server.dao.widget;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
@@ -33,6 +36,7 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,6 +56,9 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
 
     @Autowired
     private WidgetTypeService widgetTypeService;
+
+    @Autowired
+    private PaginatedRemover<TenantId, WidgetsBundle> tenantWidgetsBundleRemover;
 
     @Override
     public WidgetsBundle findWidgetsBundleById(TenantId tenantId, WidgetsBundleId widgetsBundleId) {
@@ -200,18 +207,20 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
 
             };
 
-    private PaginatedRemover<TenantId, WidgetsBundle> tenantWidgetsBundleRemover =
-            new PaginatedRemover<TenantId, WidgetsBundle>() {
+    @Bean
+    public PaginatedRemover<TenantId, WidgetsBundle> tenantWidgetsBundleRemover() {
+        return new PaginatedRemover<TenantId, WidgetsBundle>() {
 
-                @Override
-                protected PageData<WidgetsBundle> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                    return widgetsBundleDao.findTenantWidgetsBundlesByTenantId(id.getId(), pageLink);
-                }
+                    @Override
+                    protected PageData<WidgetsBundle> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+                        return widgetsBundleDao.findTenantWidgetsBundlesByTenantId(id.getId(), pageLink);
+                    }
 
-                @Override
-                protected void removeEntity(TenantId tenantId, WidgetsBundle entity) {
-                    deleteWidgetsBundle(tenantId, new WidgetsBundleId(entity.getUuidId()));
-                }
-            };
+                    @Override
+                    protected void removeEntity(TenantId tenantId, WidgetsBundle entity) {
+                        deleteWidgetsBundle(tenantId, new WidgetsBundleId(entity.getUuidId()));
+                    }
+                };
 
+    }
 }
