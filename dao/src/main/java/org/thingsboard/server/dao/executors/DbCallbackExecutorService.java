@@ -22,7 +22,7 @@ import org.thingsboard.common.util.AbstractListeningExecutor;
 @Component
 public class DbCallbackExecutorService extends AbstractListeningExecutor {
 
-    @Value("${actors.rule.db_callback_thread_pool_size}")
+    @Value("${actors.rule.db_callback_thread_pool_size:50}")
     private int dbCallbackExecutorThreadPoolSize;
 
     @Override
