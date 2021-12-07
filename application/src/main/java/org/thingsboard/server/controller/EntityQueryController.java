@@ -152,7 +152,7 @@ public class EntityQueryController extends BaseController {
             "{\n" +
             "    \"data\": [\n" +
             "        {\n" +
-            "            \"entityId\": {\n" +
+            "            \"id\": {\n" +
             "                \"entityType\": \"DEVICE\",\n" +
             "                \"id\": \"48be0670-25c9-11ec-a618-8165eb6b112a\"\n" +
             "            },\n" +
