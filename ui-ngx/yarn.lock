@@ -6653,11 +6653,11 @@ ngx-drag-drop@^2.0.0:
   dependencies:
     tslib "^1.9.0"
 
-"ngx-flowchart@git://github.com/thingsboard/ngx-flowchart.git#master":
-  version "0.0.0"
-  resolved "git://github.com/thingsboard/ngx-flowchart.git#078bfd2cedeeab412dee922e8066a19be6da7278"
+"ngx-flowchart@git://github.com/thingsboard/ngx-flowchart.git#release/1.0.0":
+  version "0.0.1"
+  resolved "git://github.com/thingsboard/ngx-flowchart.git#aac96f7e0490a386d58864d7819873e7c63cbb48"
   dependencies:
-    tslib "^1.13.0"
+    tslib "^2.2.0"
 
 ngx-hm-carousel@^2.0.1:
   version "2.0.1"

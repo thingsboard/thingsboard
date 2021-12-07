@@ -69,7 +69,7 @@
     "ngx-color-picker": "^11.0.0",
     "ngx-daterangepicker-material": "^5.0.1",
     "ngx-drag-drop": "^2.0.0",
-    "ngx-flowchart": "git://github.com/thingsboard/ngx-flowchart.git#master",
+    "ngx-flowchart": "git://github.com/thingsboard/ngx-flowchart.git#release/1.0.0",
     "ngx-hm-carousel": "^2.0.1",
     "ngx-markdown": "^12.0.1",
     "ngx-sharebuttons": "^9.0.0",
