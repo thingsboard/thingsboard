@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.relation;
+package org.thingsboard.server.dao.sql.alarm;
 
-public enum RelationTypeGroup {
+import org.springframework.data.repository.CrudRepository;
+import org.thingsboard.server.dao.model.sql.EntityAlarmCompositeKey;
+import org.thingsboard.server.dao.model.sql.EntityAlarmEntity;
 
-    COMMON,
-    DASHBOARD,
-    RULE_CHAIN,
-    RULE_NODE,
-    EDGE,
-    EDGE_AUTO_ASSIGN_RULE_CHAIN
+import java.util.List;
+import java.util.UUID;
+
+public interface EntityAlarmRepository extends CrudRepository<EntityAlarmEntity, EntityAlarmCompositeKey> {
+
+    List<EntityAlarmEntity> findAllByAlarmId(UUID alarmId);
 
 }
