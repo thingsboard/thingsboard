@@ -117,7 +117,7 @@ public class EntitiesSearchServiceImpl implements EntitiesSearchService {
 
             EntitySearchResult entitySearchResult = new EntitySearchResult();
 
-            entitySearchResult.setEntityId(entityData.getEntityId());
+            entitySearchResult.setId(entityData.getEntityId());
             entitySearchResult.setFields(fields);
             setOwnerInfo(entitySearchResult, localOwnersCache);
 

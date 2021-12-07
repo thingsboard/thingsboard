@@ -25,7 +25,7 @@ import java.util.Map;
 
 @Data
 public class EntitySearchResult {
-    private EntityId entityId;
+    private EntityId id;
     private Map<String, String> fields;
 
     private EntityTenantInfo tenantInfo;
