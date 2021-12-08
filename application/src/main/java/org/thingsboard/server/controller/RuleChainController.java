@@ -361,7 +361,6 @@ public class RuleChainController extends BaseController {
             @ApiParam(value = "A JSON value representing the rule chain metadata.")
             @RequestBody RuleChainMetaData ruleChainMetaData,
             @ApiParam(value = "Update related rule nodes.")
-            //TODO: change default value to "false" before merge
             @RequestParam(value = "updateRelated", required = false, defaultValue = "true") boolean updateRelated
     ) throws ThingsboardException {
         try {
