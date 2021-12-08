@@ -13,33 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@mixin rule-node-colors {
-  &.tb-filter-type {
-    background-color: #f1e861;
-  }
+package org.thingsboard.rule.engine.flow;
 
-  &.tb-enrichment-type {
-    background-color: #cdf14e;
-  }
+import lombok.Data;
+import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.server.common.data.id.RuleChainId;
 
-  &.tb-transformation-type {
-    background-color: #79cef1;
-  }
+@Data
+public class TbRuleChainInputNodeConfiguration implements NodeConfiguration<TbRuleChainInputNodeConfiguration> {
 
-  &.tb-action-type {
-    background-color: #f1928f;
-  }
+    private String ruleChainId;
 
-  &.tb-external-type {
-    background-color: #fbc766;
-  }
-
-  &.tb-flow-type {
-    background-color: #d6c4f1;
-  }
-
-  &.tb-unknown-type {
-    background-color: #f16c29;
-  }
+    @Override
+    public TbRuleChainInputNodeConfiguration defaultConfiguration() {
+        return new TbRuleChainInputNodeConfiguration();
+    }
 
 }

@@ -20,7 +20,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.dao.model.sql.RelationEntity;
 import org.thingsboard.server.dao.model.sql.RuleChainEntity;
 
 import java.util.List;
@@ -58,6 +62,7 @@ public interface RuleChainRepository extends PagingAndSortingRepository<RuleChai
     Page<RuleChainEntity> findAutoAssignByTenantId(@Param("tenantId") UUID tenantId,
                                                    @Param("searchText") String searchText,
                                                    Pageable pageable);
+
 
     RuleChainEntity findByTenantIdAndTypeAndRootIsTrue(UUID tenantId, RuleChainType ruleChainType);
 

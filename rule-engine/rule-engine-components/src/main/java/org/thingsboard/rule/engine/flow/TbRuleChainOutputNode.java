@@ -16,8 +16,8 @@
 package org.thingsboard.rule.engine.flow;
 
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleNode;
-import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -27,30 +27,28 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import static org.thingsboard.common.util.DonAsynchron.withCallback;
-
 @Slf4j
 @RuleNode(
         type = ComponentType.FLOW,
-        name = "checkpoint",
-        configClazz = TbCheckpointNodeConfiguration.class,
-        nodeDescription = "transfers the message to another queue",
-        nodeDetails = "After successful transfer incoming message is automatically acknowledged. Queue name is configurable.",
+        name = "output",
+        configClazz = EmptyNodeConfiguration.class,
+        nodeDescription = "transfers the message to the caller rule chain",
+        nodeDetails = "Produces output of the rule chain processing. " +
+                "The output is forwarded to the caller rule chain, as an output of the corresponding \"input\" rule node. " +
+                "The output rule node name corresponds to the relation type of the output message, and it is used to forward messages to other rule nodes in the caller rule chain. ",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeCheckPointConfig"
+        configDirective = "tbFlowNodeRuleChainOutputConfig",
+        outEnabled = false
 )
-public class TbCheckpointNode implements TbNode {
-
-    private TbCheckpointNodeConfiguration config;
+public class TbRuleChainOutputNode implements TbNode {
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbCheckpointNodeConfiguration.class);
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        ctx.enqueueForTellNext(msg, config.getQueueName(), TbRelationTypes.SUCCESS, () -> ctx.ack(msg), error -> ctx.tellFailure(msg, error));
+        ctx.output(msg, ctx.getSelf().getName());
     }
 
     @Override

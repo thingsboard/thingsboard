@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.rule;
+package org.thingsboard.server.service.rule;
 
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainOutputLabelsUsage;
+import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
 
 import java.util.List;
+import java.util.Set;
 
-/**
- * Created by igor on 3/12/18.
- */
-public interface RuleNodeDao extends Dao<RuleNode> {
+public interface TbRuleChainService {
 
-    List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String type, String search);
+    Set<String> getRuleChainOutputLabels(TenantId tenantId, RuleChainId ruleChainId);
+
+    List<RuleChainOutputLabelsUsage> getOutputLabelUsage(TenantId tenantId, RuleChainId ruleChainId);
+
+    List<RuleChain> updateRelatedRuleChains(TenantId tenantId, RuleChainId ruleChainId, RuleChainUpdateResult result);
 }

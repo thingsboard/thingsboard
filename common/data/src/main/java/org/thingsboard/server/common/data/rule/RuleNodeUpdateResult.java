@@ -13,33 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@mixin rule-node-colors {
-  &.tb-filter-type {
-    background-color: #f1e861;
-  }
+package org.thingsboard.server.common.data.rule;
 
-  &.tb-enrichment-type {
-    background-color: #cdf14e;
-  }
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 
-  &.tb-transformation-type {
-    background-color: #79cef1;
-  }
+import java.util.Map;
 
-  &.tb-action-type {
-    background-color: #f1928f;
-  }
+/**
+ * Created by igor on 3/13/18.
+ */
+@Data
+public class RuleNodeUpdateResult {
 
-  &.tb-external-type {
-    background-color: #fbc766;
-  }
-
-  &.tb-flow-type {
-    background-color: #d6c4f1;
-  }
-
-  &.tb-unknown-type {
-    background-color: #f16c29;
-  }
+    private final RuleNode oldRuleNode;
+    private final RuleNode newRuleNode;
 
 }

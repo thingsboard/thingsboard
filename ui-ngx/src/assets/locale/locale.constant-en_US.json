@@ -2617,6 +2617,8 @@
         "type-external-details": "Interacts with external system",
         "type-rule-chain": "Rule Chain",
         "type-rule-chain-details": "Forwards incoming messages to specified Rule Chain",
+        "type-flow": "Flow",
+        "type-flow-details": "Organizes message flow",
         "type-input": "Input",
         "type-input-details": "Logical input of Rule Chain, forwards incoming messages to next related Rule Node",
         "type-unknown": "Unknown",

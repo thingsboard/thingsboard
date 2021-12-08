@@ -75,28 +75,16 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
       this.ruleNodeFormSubscription = null;
     }
     if (this.ruleNode) {
-      if (this.ruleNode.component.type !== RuleNodeType.RULE_CHAIN) {
-
-        this.ruleNodeFormGroup = this.fb.group({
-          name: [this.ruleNode.name, [Validators.required, Validators.pattern('(.|\\s)*\\S(.|\\s)*'), Validators.maxLength(255)]],
-          debugMode: [this.ruleNode.debugMode, []],
-          configuration: [this.ruleNode.configuration, [Validators.required]],
-          additionalInfo: this.fb.group(
-            {
-              description: [this.ruleNode.additionalInfo ? this.ruleNode.additionalInfo.description : ''],
-            }
-          )
-        });
-      } else {
-        this.ruleNodeFormGroup = this.fb.group({
-          targetRuleChainId: [this.ruleNode.targetRuleChainId, [Validators.required]],
-          additionalInfo: this.fb.group(
-            {
-              description: [this.ruleNode.additionalInfo ? this.ruleNode.additionalInfo.description : ''],
-            }
-          )
-        });
-      }
+      this.ruleNodeFormGroup = this.fb.group({
+        name: [this.ruleNode.name, [Validators.required, Validators.pattern('(.|\\s)*\\S(.|\\s)*'), Validators.maxLength(255)]],
+        debugMode: [this.ruleNode.debugMode, []],
+        configuration: [this.ruleNode.configuration, [Validators.required]],
+        additionalInfo: this.fb.group(
+          {
+            description: [this.ruleNode.additionalInfo ? this.ruleNode.additionalInfo.description : ''],
+          }
+        )
+      });
       this.ruleNodeFormSubscription = this.ruleNodeFormGroup.valueChanges.subscribe(() => {
         this.updateRuleNode();
       });
@@ -107,23 +95,8 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
 
   private updateRuleNode() {
     const formValue = this.ruleNodeFormGroup.value || {};
-
-    if (this.ruleNode.component.type === RuleNodeType.RULE_CHAIN) {
-      const targetRuleChainId: string = formValue.targetRuleChainId;
-      if (this.ruleNode.targetRuleChainId !== targetRuleChainId && targetRuleChainId) {
-        this.ruleChainService.getRuleChain(targetRuleChainId).subscribe(
-          (ruleChain) => {
-            this.ruleNode.name = ruleChain.name;
-            Object.assign(this.ruleNode, formValue);
-          }
-        );
-      } else {
-        Object.assign(this.ruleNode, formValue);
-      }
-    } else {
-      formValue.name = formValue.name.trim();
-      Object.assign(this.ruleNode, formValue);
-    }
+    formValue.name = formValue.name.trim();
+    Object.assign(this.ruleNode, formValue);
   }
 
   ngOnInit(): void {
@@ -141,20 +114,19 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
   }
 
   validate() {
-    if (this.ruleNode.component.type !== RuleNodeType.RULE_CHAIN) {
-      this.ruleNodeConfigComponent.validate();
-    }
+    this.ruleNodeConfigComponent.validate();
   }
 
   openRuleChain($event: Event) {
     if ($event) {
       $event.stopPropagation();
     }
-    if (this.ruleNode.targetRuleChainId) {
+    const ruleChainId = this.ruleNodeFormGroup.get('configuration')?.value?.ruleChainId;
+    if (ruleChainId) {
       if (this.ruleChainType === RuleChainType.EDGE) {
-        this.router.navigateByUrl(`/edgeManagement/ruleChains/${this.ruleNode.targetRuleChainId}`);
+        this.router.navigateByUrl(`/edgeManagement/ruleChains/${ruleChainId}`);
       } else {
-        this.router.navigateByUrl(`/ruleChains/${this.ruleNode.targetRuleChainId}`);
+        this.router.navigateByUrl(`/ruleChains/${ruleChainId}`);
       }
     }
   }

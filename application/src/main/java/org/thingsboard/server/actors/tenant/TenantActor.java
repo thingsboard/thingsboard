@@ -26,7 +26,9 @@ import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.actors.TbEntityActorId;
 import org.thingsboard.server.actors.TbEntityTypeActorIdPredicate;
 import org.thingsboard.server.actors.device.DeviceActorCreator;
+import org.thingsboard.server.actors.ruleChain.RuleChainInputMsg;
 import org.thingsboard.server.actors.ruleChain.RuleChainManagerActor;
+import org.thingsboard.server.actors.ruleChain.RuleChainOutputMsg;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.common.data.ApiUsageState;
@@ -168,6 +170,8 @@ public class TenantActor extends RuleChainManagerActor {
             case REMOVE_RPC_TO_DEVICE_ACTOR_MSG:
                 onToDeviceActorMsg((DeviceAwareMsg) msg, true);
                 break;
+            case RULE_CHAIN_INPUT_MSG:
+            case RULE_CHAIN_OUTPUT_MSG:
             case RULE_CHAIN_TO_RULE_CHAIN_MSG:
                 onRuleChainMsg((RuleChainAwareMsg) msg);
                 break;
