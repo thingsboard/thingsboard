@@ -475,10 +475,10 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.3.2", SCHEMA_UPDATE_SQL);
                     loadSql(schemaUpdateFile, conn);
                     try {
-                        conn.createStatement().execute("insert into entity_alarm(tenant_id, entity_id, created_time, type, customer_id, alarm_id, status, severity)" +
-                                " select tenant_id, originator_id, created_time, type, customer_id, id, status, severity from alarm;");
-                        conn.createStatement().execute("insert into entity_alarm(tenant_id, entity_id, created_time, type, customer_id, alarm_id, status, severity)" +
-                                " select a.tenant_id, r.from_id, created_time, type, customer_id, id, status, severity" +
+                        conn.createStatement().execute("insert into entity_alarm(tenant_id, entity_id, created_time, type, customer_id, alarm_id)" +
+                                " select tenant_id, originator_id, created_time, type, customer_id, id from alarm;");
+                        conn.createStatement().execute("insert into entity_alarm(tenant_id, entity_id, created_time, type, customer_id, alarm_id)" +
+                                " select a.tenant_id, r.from_id, created_time, type, customer_id, id" +
                                 " from alarm a inner join relation r on r.relation_type_group = 'ALARM' and r.relation_type = 'ANY' and a.id = r.to_id ON CONFLICT DO NOTHING;");
                         conn.createStatement().execute("delete from relation r where r.relation_type_group = 'ALARM';");
                     } catch (Exception e) {
