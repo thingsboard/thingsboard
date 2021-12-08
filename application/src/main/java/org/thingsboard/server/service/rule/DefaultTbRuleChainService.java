@@ -36,6 +36,7 @@ import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -111,7 +112,7 @@ public class DefaultTbRuleChainService implements TbRuleChainService {
         Set<RuleChainId> ruleChainIds = new HashSet<>();
         log.debug("[{}][{}] Going to update links in related rule chains", tenantId, ruleChainId);
         if (result.getUpdatedRuleNodes() == null || result.getUpdatedRuleNodes().isEmpty()) {
-            return null;
+            return Collections.emptyList();
         }
 
         Set<String> oldLabels = new HashSet<>();
