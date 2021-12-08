@@ -23,7 +23,6 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
 import org.thingsboard.rule.engine.flow.TbRuleChainOutputNode;
-import org.thingsboard.rule.engine.flow.TbRuleChainOutputNodeConfiguration;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -65,14 +64,7 @@ public class DefaultTbRuleChainService implements TbRuleChainService {
         Set<String> outputLabels = new TreeSet<>();
         for (RuleNode ruleNode : metaData.getNodes()) {
             if (isOutputRuleNode(ruleNode)) {
-                try {
-                    var configuration = JacksonUtil.treeToValue(ruleNode.getConfiguration(), TbRuleChainOutputNodeConfiguration.class);
-                    if (StringUtils.isNotEmpty(configuration.getLabel())) {
-                        outputLabels.add(configuration.getLabel());
-                    }
-                } catch (Exception e) {
-                    log.warn("[{}][{}] Failed to decode rule node configuration", tenantId, ruleChainId, e);
-                }
+                outputLabels.add(ruleNode.getName());
             }
         }
         return outputLabels;
@@ -130,16 +122,15 @@ public class DefaultTbRuleChainService implements TbRuleChainService {
         Set<String> confusedLabels = new HashSet<>();
         Map<String, String> updatedLabels = new HashMap<>();
         for (RuleNodeUpdateResult update : result.getUpdatedRuleNodes()) {
-            var node = update.getNewRuleNode();
-            if (isOutputRuleNode(node)) {
+            var oldNode = update.getOldRuleNode();
+            var newNode = update.getNewRuleNode();
+            if (isOutputRuleNode(newNode)) {
                 try {
-                    TbRuleChainOutputNodeConfiguration oldConf = JacksonUtil.treeToValue(update.getOldConfiguration(), TbRuleChainOutputNodeConfiguration.class);
-                    TbRuleChainOutputNodeConfiguration newConf = JacksonUtil.treeToValue(node.getConfiguration(), TbRuleChainOutputNodeConfiguration.class);
-                    oldLabels.add(oldConf.getLabel());
-                    newLabels.add(newConf.getLabel());
-                    if (!oldConf.getLabel().equals(newConf.getLabel())) {
-                        String oldLabel = oldConf.getLabel();
-                        String newLabel = newConf.getLabel();
+                    oldLabels.add(oldNode.getName());
+                    newLabels.add(newNode.getName());
+                    if (!oldNode.getName().equals(newNode.getName())) {
+                        String oldLabel = oldNode.getName();
+                        String newLabel = newNode.getName();
                         if (updatedLabels.containsKey(oldLabel) && !updatedLabels.get(oldLabel).equals(newLabel)) {
                             confusedLabels.add(oldLabel);
                             log.warn("[{}][{}] Can't automatically rename the label from [{}] to [{}] due to conflict [{}]", tenantId, ruleChainId, oldLabel, newLabel, updatedLabels.get(oldLabel));
@@ -149,7 +140,7 @@ public class DefaultTbRuleChainService implements TbRuleChainService {
 
                     }
                 } catch (Exception e) {
-                    log.warn("[{}][{}][{}] Failed to decode rule node configuration", tenantId, ruleChainId, node.getId(), e);
+                    log.warn("[{}][{}][{}] Failed to decode rule node configuration", tenantId, ruleChainId, newNode.getId(), e);
                 }
             }
         }

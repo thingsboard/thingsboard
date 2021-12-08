@@ -172,10 +172,10 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 newRuleNode = ruleChainMetaData.getNodes().get(index);
                 toAddOrUpdate.add(newRuleNode);
             } else {
-                updatedRuleNodes.add(new RuleNodeUpdateResult(existingNode.getConfiguration(), null));
+                updatedRuleNodes.add(new RuleNodeUpdateResult(existingNode, null));
                 toDelete.add(existingNode);
             }
-            updatedRuleNodes.add(new RuleNodeUpdateResult(existingNode.getConfiguration(), newRuleNode));
+            updatedRuleNodes.add(new RuleNodeUpdateResult(existingNode, newRuleNode));
         }
         if (nodes != null) {
             for (RuleNode node : toAddOrUpdate) {

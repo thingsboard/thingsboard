@@ -27,6 +27,7 @@ import java.util.Map;
 @Data
 public class RuleNodeUpdateResult {
 
-    private final JsonNode oldConfiguration;
+    private final RuleNode oldRuleNode;
     private final RuleNode newRuleNode;
+
 }

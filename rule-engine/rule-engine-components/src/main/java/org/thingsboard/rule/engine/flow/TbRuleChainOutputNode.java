@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.flow;
 
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -30,28 +31,24 @@ import org.thingsboard.server.common.msg.TbMsg;
 @RuleNode(
         type = ComponentType.FLOW,
         name = "output",
-        configClazz = TbRuleChainOutputNodeConfiguration.class,
+        configClazz = EmptyNodeConfiguration.class,
         nodeDescription = "transfers the message to the caller rule chain",
         nodeDetails = "Produces output of the rule chain processing. " +
                 "The output is forwarded to the caller rule chain, as an output of the corresponding \"input\" rule node. " +
-                "The rule node configuration contains the \"label\" parameter. " +
-                "This parameter corresponds to the relation type of the output message, and it is used to forward messages to other rule nodes in the caller rule chain. ",
+                "The output rule node name corresponds to the relation type of the output message, and it is used to forward messages to other rule nodes in the caller rule chain. ",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFlowNodeRuleChainOutputConfig",
         outEnabled = false
 )
 public class TbRuleChainOutputNode implements TbNode {
 
-    private TbRuleChainOutputNodeConfiguration config;
-
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbRuleChainOutputNodeConfiguration.class);
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        ctx.output(msg, config.getLabel());
+        ctx.output(msg, ctx.getSelf().getName());
     }
 
     @Override
