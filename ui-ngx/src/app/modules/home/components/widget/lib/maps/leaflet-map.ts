@@ -168,6 +168,7 @@ export default abstract class LeafletMap {
           this.selectedEntity = data;
           this.toggleDrawMode(type);
         } else {
+          // @ts-ignore
           this.map.pm.Toolbar.toggleButton(type, false);
         }
       });
