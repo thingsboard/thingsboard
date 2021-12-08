@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.rule;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,7 +22,6 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
 import org.thingsboard.rule.engine.flow.TbRuleChainOutputNode;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -37,9 +35,7 @@ import org.thingsboard.server.common.data.rule.RuleNodeUpdateResult;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.permission.Operation;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -111,10 +107,11 @@ public class DefaultTbRuleChainService implements TbRuleChainService {
     }
 
     @Override
-    public void updateRelatedRuleChains(TenantId tenantId, RuleChainId ruleChainId, RuleChainUpdateResult result) {
+    public List<RuleChain> updateRelatedRuleChains(TenantId tenantId, RuleChainId ruleChainId, RuleChainUpdateResult result) {
+        Set<RuleChainId> ruleChainIds = new HashSet<>();
         log.debug("[{}][{}] Going to update links in related rule chains", tenantId, ruleChainId);
         if (result.getUpdatedRuleNodes() == null || result.getUpdatedRuleNodes().isEmpty()) {
-            return;
+            return null;
         }
 
         Set<String> oldLabels = new HashSet<>();
@@ -149,19 +146,23 @@ public class DefaultTbRuleChainService implements TbRuleChainService {
         // Remove all output labels that are renamed but still present in the rule chain;
         newLabels.forEach(updatedLabels::remove);
         if (!oldLabels.equals(newLabels)) {
-            updateRelatedRuleChains(tenantId, ruleChainId, updatedLabels);
+            ruleChainIds.addAll(updateRelatedRuleChains(tenantId, ruleChainId, updatedLabels));
         }
+        return ruleChainIds.stream().map(id -> ruleChainService.findRuleChainById(tenantId, id)).collect(Collectors.toList());
     }
 
-    public void updateRelatedRuleChains(TenantId tenantId, RuleChainId ruleChainId, Map<String, String> labelsMap) {
+    public Set<RuleChainId> updateRelatedRuleChains(TenantId tenantId, RuleChainId ruleChainId, Map<String, String> labelsMap) {
+        Set<RuleChainId> updatedRuleChains = new HashSet<>();
         List<RuleChainOutputLabelsUsage> usageList = getOutputLabelUsage(tenantId, ruleChainId);
         for (RuleChainOutputLabelsUsage usage : usageList) {
             labelsMap.forEach((oldLabel, newLabel) -> {
                 if (usage.getLabels().contains(oldLabel)) {
+                    updatedRuleChains.add(usage.getRuleChainId());
                     renameOutgoingLinks(tenantId, usage.getRuleNodeId(), oldLabel, newLabel);
                 }
             });
         }
+        return updatedRuleChains;
     }
 
     private void renameOutgoingLinks(TenantId tenantId, RuleNodeId ruleNodeId, String oldLabel, String newLabel) {

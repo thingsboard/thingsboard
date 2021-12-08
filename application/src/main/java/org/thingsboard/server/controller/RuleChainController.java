@@ -77,6 +77,8 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -373,23 +375,33 @@ public class RuleChainController extends BaseController {
             RuleChainUpdateResult result = ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData);
             checkNotNull(result.isSuccess() ? true : null);
 
+            List<RuleChain> updatedRuleChains;
             if (updateRelated && result.isSuccess()) {
-                tbRuleChainService.updateRelatedRuleChains(tenantId, ruleChainMetaData.getRuleChainId(), result);
+                updatedRuleChains = tbRuleChainService.updateRelatedRuleChains(tenantId, ruleChainMetaData.getRuleChainId(), result);
+            } else {
+                updatedRuleChains = Collections.emptyList();
             }
 
             RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.loadRuleChainMetaData(tenantId, ruleChainMetaData.getRuleChainId()));
 
             if (RuleChainType.CORE.equals(ruleChain.getType())) {
                 tbClusterService.broadcastEntityStateChangeEvent(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.UPDATED);
+                updatedRuleChains.forEach(updatedRuleChain -> {
+                    tbClusterService.broadcastEntityStateChangeEvent(updatedRuleChain.getTenantId(), updatedRuleChain.getId(), ComponentLifecycleEvent.UPDATED);
+                });
             }
 
-            logEntityAction(ruleChain.getId(), ruleChain,
-                    null,
-                    ActionType.UPDATED, null, ruleChainMetaData);
+            logEntityAction(ruleChain.getId(), ruleChain, null, ActionType.UPDATED, null, ruleChainMetaData);
+            for (RuleChain updatedRuleChain : updatedRuleChains) {
+                RuleChainMetaData updatedRuleChainMetaData = checkNotNull(ruleChainService.loadRuleChainMetaData(tenantId, updatedRuleChain.getId()));
+                logEntityAction(updatedRuleChain.getId(), updatedRuleChain, null, ActionType.UPDATED, null, updatedRuleChainMetaData);
+            }
 
             if (RuleChainType.EDGE.equals(ruleChain.getType())) {
-                sendEntityNotificationMsg(ruleChain.getTenantId(),
-                        ruleChain.getId(), EdgeEventActionType.UPDATED);
+                sendEntityNotificationMsg(ruleChain.getTenantId(), ruleChain.getId(), EdgeEventActionType.UPDATED);
+                updatedRuleChains.forEach(updatedRuleChain -> {
+                    sendEntityNotificationMsg(updatedRuleChain.getTenantId(), updatedRuleChain.getId(), EdgeEventActionType.UPDATED);
+                });
             }
 
             return savedRuleChainMetaData;
