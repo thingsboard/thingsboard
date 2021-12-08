@@ -32,7 +32,7 @@ import { RuleChainsTableConfigResolver } from '@modules/home/pages/rulechain/rul
 import { from, Observable } from 'rxjs';
 import { BreadCrumbConfig, BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
 import {
-  ResolvedRuleChainMetaData,
+  RuleChainMetaData,
   RuleChain, RuleChainType
 } from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
@@ -56,14 +56,14 @@ export class RuleChainResolver implements Resolve<RuleChain> {
 }
 
 @Injectable()
-export class ResolvedRuleChainMetaDataResolver implements Resolve<ResolvedRuleChainMetaData> {
+export class RuleChainMetaDataResolver implements Resolve<RuleChainMetaData> {
 
   constructor(private ruleChainService: RuleChainService) {
   }
 
-  resolve(route: ActivatedRouteSnapshot): Observable<ResolvedRuleChainMetaData> {
+  resolve(route: ActivatedRouteSnapshot): Observable<RuleChainMetaData> {
     const ruleChainId = route.params.ruleChainId;
-    return this.ruleChainService.getResolvedRuleChainMetadata(ruleChainId);
+    return this.ruleChainService.getRuleChainMetadata(ruleChainId);
   }
 }
 
@@ -160,7 +160,7 @@ const routes: Routes = [
         },
         resolve: {
           ruleChain: RuleChainResolver,
-          ruleChainMetaData: ResolvedRuleChainMetaDataResolver,
+          ruleChainMetaData: RuleChainMetaDataResolver,
           ruleNodeComponents: RuleNodeComponentsResolver,
           tooltipster: TooltipsterResolver
         }
@@ -196,7 +196,7 @@ const routes: Routes = [
   providers: [
     RuleChainsTableConfigResolver,
     RuleChainResolver,
-    ResolvedRuleChainMetaDataResolver,
+    RuleChainMetaDataResolver,
     RuleNodeComponentsResolver,
     TooltipsterResolver,
     RuleChainImportGuard

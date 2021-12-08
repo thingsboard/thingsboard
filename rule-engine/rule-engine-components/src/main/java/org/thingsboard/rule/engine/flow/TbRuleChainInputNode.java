@@ -33,14 +33,18 @@ import java.util.UUID;
 
 @Slf4j
 @RuleNode(
-        type = ComponentType.ACTION,
-        name = "rule chain input",
+        type = ComponentType.FLOW,
+        name = "rule chain",
         configClazz = TbRuleChainInputNodeConfiguration.class,
         nodeDescription = "transfers the message to another rule chain",
         nodeDetails = "Allows to nest the rule chain similar to single rule node. " +
                 "The incoming message is forwarded to the input node of the specified target rule chain. " +
                 "The target rule chain may produce multiple labeled outputs. " +
                 "You may use the outputs to forward the results of processing to other rule nodes.",
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
+        configDirective = "tbFlowNodeRuleChainInputConfig",
+        relationTypes = {},
+        ruleChainNode = true,
         customRelations = true
 )
 public class TbRuleChainInputNode implements TbNode {
