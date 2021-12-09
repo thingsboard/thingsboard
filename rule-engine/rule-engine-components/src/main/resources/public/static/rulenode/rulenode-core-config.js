@@ -204,6 +204,7 @@ var EntityDetailsField;
     EntityDetailsField["TITLE"] = "TITLE";
     EntityDetailsField["COUNTRY"] = "COUNTRY";
     EntityDetailsField["STATE"] = "STATE";
+    EntityDetailsField["CITY"] = "CITY";
     EntityDetailsField["ZIP"] = "ZIP";
     EntityDetailsField["ADDRESS"] = "ADDRESS";
     EntityDetailsField["ADDRESS2"] = "ADDRESS2";
@@ -215,6 +216,7 @@ const entityDetailsTranslations = new Map([
     [EntityDetailsField.TITLE, 'tb.rulenode.entity-details-title'],
     [EntityDetailsField.COUNTRY, 'tb.rulenode.entity-details-country'],
     [EntityDetailsField.STATE, 'tb.rulenode.entity-details-state'],
+    [EntityDetailsField.CITY, 'tb.rulenode.entity-details-city'],
     [EntityDetailsField.ZIP, 'tb.rulenode.entity-details-zip'],
     [EntityDetailsField.ADDRESS, 'tb.rulenode.entity-details-address'],
     [EntityDetailsField.ADDRESS2, 'tb.rulenode.entity-details-address2'],
@@ -4105,6 +4107,7 @@ function addRuleNodeCoreLocaleEnglish(translate) {
                 'entity-details-title': 'Title',
                 'entity-details-country': 'Country',
                 'entity-details-state': 'State',
+                'entity-details-city': 'City',
                 'entity-details-zip': 'Zip',
                 'entity-details-address': 'Address',
                 'entity-details-address2': 'Address2',
