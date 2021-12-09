@@ -54,6 +54,8 @@ import static org.thingsboard.server.controller.ControllerConstants.RELATION_TYP
 @RequestMapping("/api")
 public class EntityRelationController extends BaseController {
 
+    // TODO: entityRelation notification about event from rule node
+
     public static final String TO_TYPE = "toType";
     public static final String FROM_ID = "fromId";
     public static final String FROM_TYPE = "fromType";

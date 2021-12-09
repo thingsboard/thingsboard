@@ -119,7 +119,7 @@ public class EntityActionService {
             case RELATION_ADD_OR_UPDATE:
                 msgType = DataConstants.ENTITY_RELATION_ADD_OR_UPDATE;
                 break;
-            case ENTITY_RELATION_DELETE:
+            case RELATION_DELETED:
                 msgType = DataConstants.ENTITY_RELATION_DELETE;
                 break;
         }
