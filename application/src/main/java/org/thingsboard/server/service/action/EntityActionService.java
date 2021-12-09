@@ -28,7 +28,6 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -36,6 +35,7 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -56,6 +56,7 @@ public class EntityActionService {
     private final AuditLogService auditLogService;
 
     private static final ObjectMapper json = new ObjectMapper();
+    // TODO: entityRelation notification about event from rule node
 
     public void pushEntityActionToRuleEngine(EntityId entityId, HasName entity, TenantId tenantId, CustomerId customerId,
                                              ActionType actionType, User user, Object... additionalInfo) {
@@ -115,7 +116,14 @@ public class EntityActionService {
             case UNASSIGNED_FROM_EDGE:
                 msgType = DataConstants.ENTITY_UNASSIGNED_FROM_EDGE;
                 break;
+            case RELATION_ADD_OR_UPDATE:
+                msgType = DataConstants.ENTITY_RELATION_ADD_OR_UPDATE;
+                break;
+            case ENTITY_RELATION_DELETE:
+                msgType = DataConstants.ENTITY_RELATION_DELETE;
+                break;
         }
+        log.error(msgType);
         if (!StringUtils.isEmpty(msgType)) {
             try {
                 TbMsgMetaData metaData = new TbMsgMetaData();
@@ -197,9 +205,15 @@ public class EntityActionService {
                         }
                         entityNode.put("startTs", extractParameter(Long.class, 1, additionalInfo));
                         entityNode.put("endTs", extractParameter(Long.class, 2, additionalInfo));
+                    } else if (actionType == ActionType.RELATION_ADD_OR_UPDATE || actionType == ActionType.RELATION_DELETED) {
+                        @SuppressWarnings("unchecked")
+                        EntityRelation relation = extractParameter(EntityRelation.class, 0, additionalInfo);
+                        entityNode = json.valueToTree(relation);
                     }
                 }
+                log.error("text: {}", entityNode.toString());
                 TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, customerId, metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));
+                log.error("tbMsg:\n{}", tbMsg);
                 if (tenantId.isNullUid()) {
                     if (entity instanceof HasTenantId) {
                         tenantId = ((HasTenantId) entity).getTenantId();

@@ -48,7 +48,9 @@ public enum ActionType {
     PROVISION_SUCCESS(false),
     PROVISION_FAILURE(false),
     ASSIGNED_TO_EDGE(false), // log edge name
-    UNASSIGNED_FROM_EDGE(false);
+    UNASSIGNED_FROM_EDGE(false),
+    ENTITY_RELATION_ADD_OR_UPDATE(false),
+    ENTITY_RELATION_DELETE(false);;
 
     private final boolean isRead;
 
