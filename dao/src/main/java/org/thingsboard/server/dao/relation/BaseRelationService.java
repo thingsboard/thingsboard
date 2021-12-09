@@ -563,10 +563,9 @@ public class BaseRelationService implements RelationService {
 
     @Override
     public List<EntityRelation> findRuleNodeToRuleChainRelations(TenantId tenantId, RuleChainType ruleChainType, int limit) {
-        log.trace("Executing findRuleNodeToRuleChainRelations, tenantId [{}] and limit {}",
-                tenantId, limit);
+        log.trace("Executing findRuleNodeToRuleChainRelations, tenantId [{}], ruleChainType {} and limit {}", tenantId, ruleChainType, limit);
         validateId(tenantId, "Invalid tenant id: " + tenantId);
-        return relationDao.findRuleNodeToRuleChainRelations(tenantId, ruleChainType, limit);
+        return relationDao.findRuleNodeToRuleChainRelations(ruleChainType, limit);
     }
 
     protected void validate(EntityRelation relation) {
