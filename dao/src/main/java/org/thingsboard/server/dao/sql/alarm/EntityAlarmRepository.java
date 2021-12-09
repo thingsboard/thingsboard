@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.alarm;
 
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sql.EntityAlarmCompositeKey;
 import org.thingsboard.server.dao.model.sql.EntityAlarmEntity;
 
@@ -26,4 +27,6 @@ public interface EntityAlarmRepository extends CrudRepository<EntityAlarmEntity,
 
     List<EntityAlarmEntity> findAllByAlarmId(UUID alarmId);
 
+    @Transactional
+    void deleteByEntityId(UUID id);
 }

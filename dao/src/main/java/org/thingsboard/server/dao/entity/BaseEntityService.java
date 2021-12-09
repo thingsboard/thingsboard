@@ -105,11 +105,6 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     private OtaPackageService otaPackageService;
 
     @Override
-    public void deleteEntityRelations(TenantId tenantId, EntityId entityId) {
-        super.deleteEntityRelations(tenantId, entityId);
-    }
-
-    @Override
     public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query) {
         log.trace("Executing countEntitiesByQuery, tenantId [{}], customerId [{}], query [{}]", tenantId, customerId, query);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);

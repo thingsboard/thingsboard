@@ -63,4 +63,6 @@ public interface AlarmService {
 
     PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, CustomerId customerId,
                                                         AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
+
+    void deleteEntityAlarmRelations(TenantId tenantId, EntityId entityId);
 }

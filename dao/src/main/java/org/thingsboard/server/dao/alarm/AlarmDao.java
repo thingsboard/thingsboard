@@ -64,4 +64,6 @@ public interface AlarmDao extends Dao<Alarm> {
     void createEntityAlarmRecord(EntityAlarm entityAlarm);
 
     List<EntityAlarm> findEntityAlarmRecords(TenantId tenantId, AlarmId id);
+
+    void deleteEntityAlarmRecords(TenantId tenantId, EntityId entityId);
 }
