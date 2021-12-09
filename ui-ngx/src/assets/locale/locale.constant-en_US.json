@@ -2587,6 +2587,7 @@
         "deselect-all-objects": "Deselect all nodes and connections",
         "delete-selected-objects": "Delete selected nodes and connections",
         "delete-selected": "Delete selected",
+        "create-nested-rulechain": "Create nested rule chain",
         "select-all": "Select all",
         "copy-selected": "Copy selected",
         "deselect-all": "Deselect all",

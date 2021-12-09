@@ -23,7 +23,7 @@ import { HomeComponentsModule } from '@modules/home/components/home-components.m
 import { RuleChainTabsComponent } from '@home/pages/rulechain/rulechain-tabs.component';
 import {
   AddRuleNodeDialogComponent,
-  AddRuleNodeLinkDialogComponent,
+  AddRuleNodeLinkDialogComponent, CreateNestedRuleChainDialogComponent,
   RuleChainPageComponent
 } from './rulechain-page.component';
 import { RuleNodeComponent } from '@home/pages/rulechain/rulenode.component';
@@ -44,7 +44,8 @@ import { RuleNodeConfigComponent } from './rule-node-config.component';
     LinkLabelsComponent,
     RuleNodeLinkComponent,
     AddRuleNodeLinkDialogComponent,
-    AddRuleNodeDialogComponent
+    AddRuleNodeDialogComponent,
+    CreateNestedRuleChainDialogComponent
   ],
   providers: [
     {

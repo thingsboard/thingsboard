@@ -54,7 +54,7 @@ import {
   FcRuleNode,
   FcRuleNodeType,
   getRuleNodeHelpLink,
-  LinkLabel,
+  LinkLabel, outputNodeClazz, ruleChainNodeClazz,
   RuleNode,
   RuleNodeComponentDescriptor,
   RuleNodeType,
@@ -405,6 +405,17 @@ export class RuleChainPageComponent extends PageComponent
           }, ['INPUT', 'SELECT', 'TEXTAREA'],
           this.translate.instant('rulenode.delete-selected-objects'))
       );
+      this.hotKeys.push(
+        new Hotkey('ctrl+r', (event: KeyboardEvent) => {
+            if (this.enableHotKeys && this.canCreateNestedRuleChain()) {
+              event.preventDefault();
+              this.createNestedRuleChain();
+              return false;
+            }
+            return true;
+          }, ['INPUT', 'SELECT', 'TEXTAREA'],
+          this.translate.instant('rulenode.create-nested-rulechain'))
+      );
     }
   }
 
@@ -684,6 +695,19 @@ export class RuleChainPageComponent extends PageComponent
           shortcut: 'Esc'
         }
       );
+      if (this.canCreateNestedRuleChain()) {
+        contextInfo.menuItems.push(
+          {
+            action: () => {
+              this.createNestedRuleChain();
+            },
+            enabled: true,
+            value: 'rulenode.create-nested-rulechain',
+            icon: 'settings_ethernet',
+            shortcut: 'M-R'
+          }
+        );
+      }
       contextInfo.menuItems.push(
         {
           action: () => {
@@ -816,6 +840,208 @@ export class RuleChainPageComponent extends PageComponent
       }
     );
     return contextInfo;
+  }
+
+  private canCreateNestedRuleChain(): boolean {
+    const selectedNodes = this.ruleChainCanvas.modelService.nodes.getSelectedNodes();
+    const selectedEdges = this.ruleChainCanvas.modelService.edges.getSelectedEdges();
+    if (selectedNodes.length > 1) {
+      const toIndexSet = new Set<number>();
+      selectedEdges.forEach((edge: FcRuleEdge) => {
+        const sourceNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(edge.source);
+        const destNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(edge.destination);
+        const fromIndex = selectedNodes.indexOf(sourceNode);
+        const toIndex = selectedNodes.indexOf(destNode);
+        if (fromIndex > -1 && toIndex > -1) {
+          toIndexSet.add(toIndex);
+        }
+      });
+      const noInputNodes = selectedNodes.filter((node, index) => !toIndexSet.has(index));
+      return noInputNodes.filter((node: FcRuleNode) => node.component.configurationDescriptor.nodeDefinition.inEnabled).length <= 1;
+    }
+    return false;
+  }
+
+  private createNestedRuleChain() {
+    const selectedNodes = this.ruleChainCanvas.modelService.nodes.getSelectedNodes();
+    const selectedEdges = this.ruleChainCanvas.modelService.edges.getSelectedEdges();
+    this.dialog.open<CreateNestedRuleChainDialogComponent, CreateNestedRuleChainDialogData,
+      RuleChain>(CreateNestedRuleChainDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        ruleChainType: this.ruleChainType
+      }
+    }).afterClosed().subscribe((ruleChain) => {
+      if (ruleChain) {
+        this.ruleChainCanvas.modelService.deselectAll();
+        const ruleChainMetaData: RuleChainMetaData = {
+          ruleChainId: ruleChain.id,
+          nodes: [],
+          connections: []
+        };
+        let outputEdges: FcRuleEdge[] = [];
+        let minX: number = null;
+        let maxX = 0;
+        let minY = null;
+        let maxY = 0;
+
+        selectedNodes.forEach((node: FcRuleNode) => {
+          const ruleNode: RuleNode = {
+            type: node.component.clazz,
+            name: node.name,
+            configuration: deepClone(node.configuration),
+            additionalInfo: node.additionalInfo ? deepClone(node.additionalInfo) : {},
+            debugMode: node.debugMode
+          };
+          if (minX === null) {
+            minX = node.x;
+          } else {
+            minX = Math.min(minX, node.x);
+          }
+          if (minY === null) {
+            minY = node.y;
+          } else {
+            minY = Math.min(minY, node.y);
+          }
+          maxX = Math.max(maxX, node.x);
+          maxY = Math.max(maxY, node.y);
+          ruleNode.additionalInfo.layoutX = Math.round(node.x);
+          ruleNode.additionalInfo.layoutY = Math.round(node.y);
+          ruleChainMetaData.nodes.push(ruleNode);
+          const outputConnectors = this.ruleChainCanvas.modelService.nodes.getConnectorsByType(node, FlowchartConstants.rightConnectorType);
+          outputConnectors.forEach(connector => {
+            const nodeOutputEdges = this.ruleChainCanvas.modelService.model.edges.filter(edge => edge.source === connector.id);
+            const outerEdges = nodeOutputEdges.filter(edge => {
+              const destNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(edge.destination);
+              return selectedNodes.indexOf(destNode) === -1;
+            });
+            outputEdges = outputEdges.concat(outerEdges);
+          });
+        });
+        const toIndexSet = new Set<number>();
+        selectedEdges.forEach((edge: FcRuleEdge) => {
+          const sourceNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(edge.source);
+          const destNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(edge.destination);
+          if (sourceNode.component.type !== RuleNodeType.INPUT) {
+            const fromIndex = selectedNodes.indexOf(sourceNode);
+            const toIndex = selectedNodes.indexOf(destNode);
+            if (fromIndex > -1 && toIndex > -1) {
+              const nodeConnection = {
+                fromIndex,
+                toIndex
+              } as NodeConnectionInfo;
+              edge.labels.forEach((label) => {
+                const newNodeConnection = deepClone(nodeConnection);
+                newNodeConnection.type = label;
+                ruleChainMetaData.connections.push(newNodeConnection);
+              });
+              toIndexSet.add(toIndex);
+            }
+          }
+        });
+        const noInputNodes = selectedNodes.filter((node, index) => !toIndexSet.has(index));
+        const possibleInputNodes = noInputNodes.filter((node: FcRuleNode) =>
+          node.component.configurationDescriptor.nodeDefinition.inEnabled);
+        let inputEdges: FcRuleEdge[] = [];
+        if (possibleInputNodes.length) {
+          const firstNode = possibleInputNodes[0];
+          const inputConnectors = this.ruleChainCanvas.modelService.nodes
+            .getConnectorsByType(firstNode, FlowchartConstants.leftConnectorType);
+          if (inputConnectors.length) {
+            const inputConnector = inputConnectors[0];
+            const nodeInputEdges = this.ruleChainCanvas.modelService.model.edges.filter(edge => edge.destination === inputConnector.id);
+            inputEdges = inputEdges.concat(nodeInputEdges);
+          }
+          ruleChainMetaData.firstNodeIndex = selectedNodes.indexOf(firstNode);
+        }
+        outputEdges.forEach((outputEdge) => {
+          const sourceNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(outputEdge.source);
+          const destNode = this.ruleChainCanvas.modelService.nodes.getNodeByConnectorId(outputEdge.destination);
+          const outputNode: RuleNode = {
+            type: outputNodeClazz,
+            name: outputEdge.label,
+            configuration: {},
+            additionalInfo: {},
+            debugMode: false
+          };
+          outputNode.additionalInfo.layoutX = Math.round(destNode.x);
+          outputNode.additionalInfo.layoutY = Math.round(destNode.y);
+          ruleChainMetaData.nodes.push(outputNode);
+          const fromIndex = selectedNodes.indexOf(sourceNode);
+          const toIndex = ruleChainMetaData.nodes.length - 1;
+          const nodeConnection = {
+            fromIndex,
+            toIndex
+          } as NodeConnectionInfo;
+          outputEdge.labels.forEach((label) => {
+            const newNodeConnection = deepClone(nodeConnection);
+            newNodeConnection.type = label;
+            ruleChainMetaData.connections.push(newNodeConnection);
+          });
+        });
+        const deltaX = Math.round(minX - 375);
+        const deltaY = Math.round(minY - 150);
+        ruleChainMetaData.nodes.forEach((node) => {
+          node.additionalInfo.layoutX -= deltaX;
+          node.additionalInfo.layoutY -= deltaY;
+        });
+        this.ruleChainService.saveRuleChainMetadata(ruleChainMetaData).subscribe(() => {
+          const component = this.ruleChainService.getRuleNodeComponentByClazz(this.ruleChainType, ruleChainNodeClazz);
+          const descriptor = ruleNodeTypeDescriptors.get(component.type);
+          let icon = descriptor.icon;
+          let iconUrl = null;
+          if (component.configurationDescriptor.nodeDefinition.icon) {
+            icon = component.configurationDescriptor.nodeDefinition.icon;
+          }
+          if (component.configurationDescriptor.nodeDefinition.iconUrl) {
+            iconUrl = component.configurationDescriptor.nodeDefinition.iconUrl;
+          }
+          const ruleChainNodeX = (minX + maxX) / 2;
+          const ruleChainNodeY = (minY + maxY) / 2;
+          const ruleChainInputId = (this.nextConnectorID++) + '';
+          const ruleChainOutputId = (this.nextConnectorID++) + '';
+          const ruleChainNode: FcRuleNode = {
+            name: ruleChain.name,
+            component,
+            id: 'rule-chain-node-' + this.nextNodeID++,
+            configuration: {
+              ruleChainId: ruleChain.id.id
+            },
+            debugMode: false,
+            x: Math.round(ruleChainNodeX),
+            y: Math.round(ruleChainNodeY),
+            nodeClass: descriptor.nodeClass,
+            icon,
+            iconUrl,
+            ruleChainType: this.ruleChainType,
+            connectors: [
+              {
+                type: FlowchartConstants.leftConnectorType,
+                id: ruleChainInputId
+              },
+              {
+                type: FlowchartConstants.rightConnectorType,
+                id: ruleChainOutputId
+              }
+            ]
+          };
+          this.ruleChainModel.nodes.push(ruleChainNode);
+          inputEdges.forEach((inputEdge) => {
+            inputEdge.destination = ruleChainInputId;
+          });
+          outputEdges.forEach((outputEdge) => {
+            outputEdge.source = ruleChainOutputId;
+            outputEdge.labels = [outputEdge.label];
+          });
+          selectedNodes.forEach((node) => {
+            this.ruleChainCanvas.modelService.nodes.delete(node);
+          });
+          this.onModelChanged();
+          this.updateRuleNodesHighlight();
+        });
+      }
+   });
   }
 
   onModelChanged() {
@@ -1498,3 +1724,73 @@ export class AddRuleNodeDialogComponent extends DialogComponent<AddRuleNodeDialo
     }
   }
 }
+
+export interface CreateNestedRuleChainDialogData {
+  ruleChainType: RuleChainType;
+}
+
+@Component({
+  selector: 'tb-create-nested-rulechain-dialog',
+  templateUrl: './create-nested-rulechain-dialog.component.html',
+  providers: [{provide: ErrorStateMatcher, useExisting: CreateNestedRuleChainDialogComponent}],
+  styleUrls: []
+})
+export class CreateNestedRuleChainDialogComponent extends DialogComponent<CreateNestedRuleChainDialogComponent, RuleChain>
+  implements OnInit, ErrorStateMatcher {
+
+  createNestedRuleChainFormGroup: FormGroup;
+
+  submitted = false;
+
+  constructor(protected store: Store<AppState>,
+              protected router: Router,
+              @Inject(MAT_DIALOG_DATA) public data: CreateNestedRuleChainDialogData,
+              @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
+              private fb: FormBuilder,
+              private ruleChainService: RuleChainService,
+              public dialogRef: MatDialogRef<CreateNestedRuleChainDialogComponent, RuleChain>) {
+    super(store, router, dialogRef);
+
+  }
+
+  ngOnInit(): void {
+    this.createNestedRuleChainFormGroup = this.fb.group(
+      {
+        name: ['', [Validators.required, Validators.maxLength(255)]],
+        additionalInfo: this.fb.group(
+          {
+            description: [''],
+          }
+        )
+      }
+    );
+  }
+
+  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+    const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
+    const customErrorState = !!(control && control.invalid && this.submitted);
+    return originalErrorState || customErrorState;
+  }
+
+  cancel(): void {
+    this.dialogRef.close(null);
+  }
+
+  add(): void {
+    this.submitted = true;
+    const ruleChain = {
+      name: this.createNestedRuleChainFormGroup.get('name').value,
+      debugMode: false,
+      type: this.data.ruleChainType,
+      additionalInfo: {
+        description: this.createNestedRuleChainFormGroup.get('additionalInfo').get('description').value
+      }
+    } as RuleChain;
+    this.ruleChainService.saveRuleChain(ruleChain).subscribe(
+      (savedRuleChain) => {
+        this.dialogRef.close(savedRuleChain);
+      }
+    );
+  }
+}
+
