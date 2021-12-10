@@ -142,12 +142,11 @@ public class EntityQueryController extends BaseController {
             "it will also search for an entity where id fully matches the query. If search query is empty " +
             "then all entities will be returned (according to page number, page size and sorting)." + NEW_LINE +
             "The returned result is a page of EntitySearchResult, which contains: " +
-            "entity id, entity fields represented as strings, tenant info and owner info. " +
-            "Returned entity fields are: name, type (will be present for USER, DEVICE, ASSET, ENTITY_VIEW, RULE_CHAIN, " +
+            "entity id, name, type (will be present for USER, DEVICE, ASSET, ENTITY_VIEW, RULE_CHAIN, " +
             "EDGE, OTA_PACKAGE, TB_RESOURCE entity types; in case of USER - the type is its authority), " +
-            "createdTime and lastActivityTime (will only be present for DEVICE and USER; for USER it is its last login time). " +
-            "Tenant info contains tenant's id and title; owner info contains the same info for an entity's owner " +
-            "(its customer, or if it is not a customer's entity - tenant)." + NEW_LINE +
+            "createdTime, lastActivityTime (will only be present for DEVICE and USER; for USER it is its last login time), " +
+            "tenant info (contains tenant's id and title) and owner info (contains owner's id and title " +
+            "(entity's customer, or if it is not a customer's entity - tenant)). " + NEW_LINE +
             "Example response value:\n" +
             "{\n" +
             "    \"data\": [\n" +
@@ -156,12 +155,10 @@ public class EntityQueryController extends BaseController {
             "                \"entityType\": \"DEVICE\",\n" +
             "                \"id\": \"48be0670-25c9-11ec-a618-8165eb6b112a\"\n" +
             "            },\n" +
-            "            \"fields\": {\n" +
-            "                \"name\": \"Thermostat T1\",\n" +
-            "                \"createdTime\": \"1633430698071\",\n" +
-            "                \"lastActivityTime\": \"1635761085285\",\n" +
-            "                \"type\": \"thermostat\"\n" +
-            "            },\n" +
+            "            \"name\": \"Thermostat T1\",\n" +
+            "            \"type\": \"thermostat\",\n" +
+            "            \"createdTime\": \"1633430698071\",\n" +
+            "            \"lastActivityTime\": \"1635761085285\",\n" +
             "            \"tenantInfo\": {\n" +
             "                \"id\": {\n" +
             "                    \"entityType\": \"TENANT\",\n" +
@@ -189,7 +186,7 @@ public class EntityQueryController extends BaseController {
                                                        @RequestParam int page,
                                                        @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
                                                        @RequestParam int pageSize,
-                                                       @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = "name, type, createdTime, lastActivityTime, createdTime, tenantId, customerId", required = false)
+                                                       @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = "name, type, createdTime, lastActivityTime, tenantId, customerId", required = false)
                                                        @RequestParam(required = false) String sortProperty,
                                                        @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES, required = false)
                                                        @RequestParam(required = false) String sortOrder) throws ThingsboardException {

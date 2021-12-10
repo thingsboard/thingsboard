@@ -118,8 +118,11 @@ public class EntitiesSearchServiceImpl implements EntitiesSearchService {
             EntitySearchResult entitySearchResult = new EntitySearchResult();
 
             entitySearchResult.setId(entityData.getEntityId());
-            entitySearchResult.setFields(fields);
-            setOwnerInfo(entitySearchResult, localOwnersCache);
+            entitySearchResult.setName(fields.get(NAME));
+            entitySearchResult.setType(fields.get(TYPE));
+            entitySearchResult.setCreatedTime(Optional.ofNullable(fields.get(CREATED_TIME)).map(Long::parseLong).orElse(null));
+            entitySearchResult.setLastActivityTime(Optional.ofNullable(fields.get(LAST_ACTIVITY_TIME)).map(Long::parseLong).orElse(null));
+            setOwnerInfo(entitySearchResult, fields.get(TENANT_ID), fields.get(CUSTOMER_ID), localOwnersCache);
 
             return entitySearchResult;
         });
@@ -160,11 +163,9 @@ public class EntitiesSearchServiceImpl implements EntitiesSearchService {
         return new EntityDataQuery(filter, entityDataPageLink, entityFields, latestValues, Collections.emptyList());
     }
 
-    private void setOwnerInfo(EntitySearchResult entitySearchResult, Map<EntityId, ContactBased<? extends EntityId>> localOwnersCache) {
-        Map<String, String> fields = entitySearchResult.getFields();
-
-        UUID tenantUuid = toUuid(fields.remove(TENANT_ID));
-        UUID customerUuid = toUuid(fields.remove(CUSTOMER_ID));
+    private void setOwnerInfo(EntitySearchResult result, String tenantIdStr, String customerIdStr, Map<EntityId, ContactBased<? extends EntityId>> localOwnersCache) {
+        UUID tenantUuid = toUuid(tenantIdStr);
+        UUID customerUuid = toUuid(customerIdStr);
 
         Tenant tenant = null;
         if (tenantUuid != null) {
@@ -179,10 +180,10 @@ public class EntitiesSearchServiceImpl implements EntitiesSearchService {
         }
 
         if (tenant != null) {
-            entitySearchResult.setTenantInfo(new EntitySearchResult.EntityTenantInfo(tenant.getId(), tenant.getName()));
+            result.setTenantInfo(new EntitySearchResult.EntityTenantInfo(tenant.getId(), tenant.getName()));
         }
         if (owner != null) {
-            entitySearchResult.setOwnerInfo(new EntitySearchResult.EntityOwnerInfo(owner.getId(), owner.getName()));
+            result.setOwnerInfo(new EntitySearchResult.EntityOwnerInfo(owner.getId(), owner.getName()));
         }
     }
 
