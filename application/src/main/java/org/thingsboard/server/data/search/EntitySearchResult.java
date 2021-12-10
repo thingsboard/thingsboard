@@ -21,12 +21,13 @@ import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.Map;
-
 @Data
 public class EntitySearchResult {
     private EntityId id;
-    private Map<String, String> fields;
+    private String name;
+    private String type;
+    private Long createdTime;
+    private Long lastActivityTime;
 
     private EntityTenantInfo tenantInfo;
     private EntityOwnerInfo ownerInfo;
