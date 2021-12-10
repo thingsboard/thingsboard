@@ -13,18 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.downlink;
+package org.thingsboard.server.transport.lwm2m.server.store;
 
-public interface DownlinkRequestCallback<R, T> {
+import org.thingsboard.server.transport.lwm2m.server.model.LwM2MModelConfig;
 
-    default boolean onSent(R request) {
-        return true;
+import java.util.Collections;
+import java.util.List;
+
+public class TbDummyLwM2MModelConfigStore implements TbLwM2MModelConfigStore {
+    @Override
+    public List<LwM2MModelConfig> getAll() {
+        return Collections.emptyList();
     }
 
-    void onSuccess(R request, T response);
+    @Override
+    public void put(LwM2MModelConfig modelConfig) {
 
-    void onValidationError(String params, String msg);
+    }
 
-    void onError(String params, Exception e);
+    @Override
+    public void remove(String endpoint) {
 
+    }
 }

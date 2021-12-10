@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.downlink;
+package org.thingsboard.server.transport.lwm2m.server.model;
 
-public interface DownlinkRequestCallback<R, T> {
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
-    default boolean onSent(R request) {
-        return true;
-    }
+public interface LwM2MModelConfigService {
 
-    void onSuccess(R request, T response);
+    void sendUpdates(LwM2mClient lwM2mClient);
 
-    void onValidationError(String params, String msg);
+    void sendUpdates(LwM2mClient lwM2mClient, LwM2MModelConfig modelConfig);
 
-    void onError(String params, Exception e);
+    void persistUpdates(String endpoint);
 
+    void removeUpdates(String endpoint);
 }
