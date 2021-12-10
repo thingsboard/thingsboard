@@ -72,6 +72,7 @@ import * as NgrxStore from '@ngrx/store';
 import * as RxJs from 'rxjs';
 import * as RxJsOperators from 'rxjs/operators';
 import * as TranslateCore from '@ngx-translate/core';
+import * as MatDateTimePicker from '@mat-datetimepicker/core';
 import * as _moment from 'moment';
 
 import * as TbCore from '@core/public-api';
@@ -348,6 +349,7 @@ class ModulesMap implements IModulesMap {
     rxjs: RxJs,
     'rxjs/operators': RxJsOperators,
     '@ngx-translate/core': TranslateCore,
+    '@mat-datetimepicker/core': MatDateTimePicker,
     moment: _moment,
 
     '@core/public-api': TbCore,
