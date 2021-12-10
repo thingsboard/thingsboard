@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
@@ -41,7 +42,6 @@ import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.cluster.TbClusterService;
 
 import java.util.List;
 import java.util.Map;
@@ -123,7 +123,6 @@ public class EntityActionService {
                 msgType = DataConstants.ENTITY_RELATION_DELETE;
                 break;
         }
-        log.error(msgType);
         if (!StringUtils.isEmpty(msgType)) {
             try {
                 TbMsgMetaData metaData = new TbMsgMetaData();
@@ -164,6 +163,13 @@ public class EntityActionService {
                     String strEdgeName = extractParameter(String.class, 2, additionalInfo);
                     metaData.putValue("unassignedEdgeId", strEdgeId);
                     metaData.putValue("unassignedEdgeName", strEdgeName);
+                } else if (actionType == ActionType.RELATION_ADD_OR_UPDATE || actionType == ActionType.RELATION_DELETED) {
+                    EntityRelation relation = extractParameter(EntityRelation.class, 0, additionalInfo);
+                    metaData.putValue("fromType", relation.getFrom().getEntityType().name());
+                    metaData.putValue("fromId", relation.getFrom().getId().toString());
+                    metaData.putValue("toType", relation.getTo().getEntityType().name());
+                    metaData.putValue("toId", relation.getTo().getId().toString());
+                    metaData.putValue("eventAuthor", entityId.getId().equals(relation.getFrom().getId()) ? "from" : "to");
                 }
                 ObjectNode entityNode;
                 if (entity != null) {
@@ -206,7 +212,6 @@ public class EntityActionService {
                         entityNode.put("startTs", extractParameter(Long.class, 1, additionalInfo));
                         entityNode.put("endTs", extractParameter(Long.class, 2, additionalInfo));
                     } else if (actionType == ActionType.RELATION_ADD_OR_UPDATE || actionType == ActionType.RELATION_DELETED) {
-                        @SuppressWarnings("unchecked")
                         EntityRelation relation = extractParameter(EntityRelation.class, 0, additionalInfo);
                         entityNode = json.valueToTree(relation);
                     }

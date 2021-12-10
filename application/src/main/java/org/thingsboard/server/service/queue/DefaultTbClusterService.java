@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EdgeUtils;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
@@ -66,6 +67,7 @@ import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -148,6 +150,7 @@ public class DefaultTbClusterService implements TbClusterService {
         } else {
             if (entityId.getEntityType().equals(EntityType.DEVICE)) {
                 tbMsg = transformMsg(tbMsg, deviceProfileCache.get(tenantId, new DeviceId(entityId.getId())));
+                if (tbMsg == null) return;
             } else if (entityId.getEntityType().equals(EntityType.DEVICE_PROFILE)) {
                 tbMsg = transformMsg(tbMsg, deviceProfileCache.get(tenantId, new DeviceProfileId(entityId.getId())));
             }
@@ -164,6 +167,11 @@ public class DefaultTbClusterService implements TbClusterService {
 
     private TbMsg transformMsg(TbMsg tbMsg, DeviceProfile deviceProfile) {
         if (deviceProfile != null) {
+            if (tbMsg.getType().equals(ActionType.ENTITY_RELATION_ADD_OR_UPDATE.name())
+                    || tbMsg.getType().equals(ActionType.ENTITY_RELATION_DELETE.name())) {
+                if (isDuplicateMessage(tbMsg, deviceProfile)) return null;
+            }
+
             RuleChainId targetRuleChainId = deviceProfile.getDefaultRuleChainId();
             String targetQueueName = deviceProfile.getDefaultQueueName();
             boolean isRuleChainTransform = targetRuleChainId != null && !targetRuleChainId.equals(tbMsg.getRuleChainId());
@@ -178,6 +186,22 @@ public class DefaultTbClusterService implements TbClusterService {
             }
         }
         return tbMsg;
+    }
+
+    private boolean isDuplicateMessage(TbMsg tbMsg, DeviceProfile deviceProfile) {
+        Map<String, String> metaData = tbMsg.getMetaData().getData();
+        if (metaData.get("fromType").equals(metaData.get("toType"))) {
+            if (metaData.get("eventAuthor").equals("to")) {
+                DeviceProfile deviceProfileFrom = deviceProfileCache.get(deviceProfile.getTenantId(), new DeviceId(UUID.fromString(metaData.get("fromId"))));
+                String defaultQueueName = deviceProfileFrom.getDefaultQueueName() == null ? "" : deviceProfile.getDefaultQueueName();
+                String fromQueueName = deviceProfile.getDefaultQueueName() == null ? "" : deviceProfileFrom.getDefaultQueueName();
+                if (deviceProfileFrom.getDefaultRuleChainId().equals(deviceProfile.getDefaultRuleChainId())
+                        && defaultQueueName.equals(fromQueueName)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Override
