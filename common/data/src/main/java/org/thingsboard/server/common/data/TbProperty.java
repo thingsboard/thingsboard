@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.kafka;
+package org.thingsboard.server.common.data;
 
 import lombok.Data;
 
@@ -21,7 +21,7 @@ import lombok.Data;
  * Created by ashvayka on 25.09.18.
  */
 @Data
-public class TbKafkaProperty {
+public class TbProperty {
 
     private String key;
     private String value;

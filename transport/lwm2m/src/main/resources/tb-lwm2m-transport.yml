@@ -203,6 +203,9 @@ transport:
     paging_transmission_window: "${LWM2M_PAGING_TRANSMISSION_WINDOW:10000}"
     # Use redis for Security and Registration stores
     redis.enabled: "${LWM2M_REDIS_ENABLED:false}"
+    network_config: # In this section you can specify custom parameters for LwM2M network configuration and expose the env variables to configure outside
+  #      - key: "PROTOCOL_STAGE_THREAD_COUNT"
+  #        value: "${LWM2M_PROTOCOL_STAGE_THREAD_COUNT:4}"
   stats:
     enabled: "${TB_TRANSPORT_STATS_ENABLED:true}"
     print-interval-ms: "${TB_TRANSPORT_STATS_PRINT_INTERVAL_MS:60000}"
