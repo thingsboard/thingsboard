@@ -40,6 +40,7 @@ import org.thingsboard.server.queue.TbQueueCallback;
 import java.util.UUID;
 
 public interface TbClusterService {
+    String RELATION_DIRECTION_MESSAGE_ORIGINATOR = "relationDirectionMsgOriginator";
 
     void pushMsgToCore(TopicPartitionInfo tpi, UUID msgKey, ToCoreMsg msg, TbQueueCallback callback);
 

@@ -117,5 +117,5 @@ public class DataConstants {
     public static final String MSG_SOURCE_KEY = "source";
 
     public static final String ENTITY_RELATION_ADD_OR_UPDATE = "ENTITY_RELATION_ADD_OR_UPDATE";
-    public static final String ENTITY_RELATION_DELETE = "ENTITY_RELATION_DELETE";
+    public static final String ENTITY_RELATION_DELETED = "ENTITY_RELATION_DELETED";
 }

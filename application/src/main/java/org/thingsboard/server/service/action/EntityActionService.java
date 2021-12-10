@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -120,7 +121,7 @@ public class EntityActionService {
                 msgType = DataConstants.ENTITY_RELATION_ADD_OR_UPDATE;
                 break;
             case RELATION_DELETED:
-                msgType = DataConstants.ENTITY_RELATION_DELETE;
+                msgType = DataConstants.ENTITY_RELATION_DELETED;
                 break;
         }
         if (!StringUtils.isEmpty(msgType)) {
@@ -165,11 +166,8 @@ public class EntityActionService {
                     metaData.putValue("unassignedEdgeName", strEdgeName);
                 } else if (actionType == ActionType.RELATION_ADD_OR_UPDATE || actionType == ActionType.RELATION_DELETED) {
                     EntityRelation relation = extractParameter(EntityRelation.class, 0, additionalInfo);
-                    metaData.putValue("fromType", relation.getFrom().getEntityType().name());
-                    metaData.putValue("fromId", relation.getFrom().getId().toString());
-                    metaData.putValue("toType", relation.getTo().getEntityType().name());
-                    metaData.putValue("toId", relation.getTo().getId().toString());
-                    metaData.putValue("eventAuthor", entityId.getId().equals(relation.getFrom().getId()) ? "from" : "to");
+                    metaData.putValue(tbClusterService.RELATION_DIRECTION_MESSAGE_ORIGINATOR,
+                            entityId.getId().equals(relation.getFrom().getId()) ? EntitySearchDirection.FROM.name() : EntitySearchDirection.TO.name());
                 }
                 ObjectNode entityNode;
                 if (entity != null) {

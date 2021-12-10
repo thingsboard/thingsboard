@@ -21,12 +21,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Device;
@@ -149,8 +153,14 @@ public class DefaultTbClusterService implements TbClusterService {
             }
         } else {
             if (entityId.getEntityType().equals(EntityType.DEVICE)) {
-                tbMsg = transformMsg(tbMsg, deviceProfileCache.get(tenantId, new DeviceId(entityId.getId())));
-                if (tbMsg == null) return;
+                DeviceProfile deviceProfile = deviceProfileCache.get(tenantId, new DeviceId(entityId.getId()));
+                if (tbMsg.getType().equals(ActionType.ENTITY_RELATION_ADD_OR_UPDATE.name())
+                        || tbMsg.getType().equals(ActionType.ENTITY_RELATION_DELETED.name())) {
+                    if (isDuplicateMessage(tbMsg, deviceProfile)) {
+                        return;
+                    }
+                }
+                tbMsg = transformMsg(tbMsg, deviceProfile);
             } else if (entityId.getEntityType().equals(EntityType.DEVICE_PROFILE)) {
                 tbMsg = transformMsg(tbMsg, deviceProfileCache.get(tenantId, new DeviceProfileId(entityId.getId())));
             }
@@ -167,11 +177,6 @@ public class DefaultTbClusterService implements TbClusterService {
 
     private TbMsg transformMsg(TbMsg tbMsg, DeviceProfile deviceProfile) {
         if (deviceProfile != null) {
-            if (tbMsg.getType().equals(ActionType.ENTITY_RELATION_ADD_OR_UPDATE.name())
-                    || tbMsg.getType().equals(ActionType.ENTITY_RELATION_DELETE.name())) {
-                if (isDuplicateMessage(tbMsg, deviceProfile)) return null;
-            }
-
             RuleChainId targetRuleChainId = deviceProfile.getDefaultRuleChainId();
             String targetQueueName = deviceProfile.getDefaultQueueName();
             boolean isRuleChainTransform = targetRuleChainId != null && !targetRuleChainId.equals(tbMsg.getRuleChainId());
@@ -189,10 +194,10 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     private boolean isDuplicateMessage(TbMsg tbMsg, DeviceProfile deviceProfile) {
-        Map<String, String> metaData = tbMsg.getMetaData().getData();
-        if (metaData.get("fromType").equals(metaData.get("toType"))) {
-            if (metaData.get("eventAuthor").equals("to")) {
-                DeviceProfile deviceProfileFrom = deviceProfileCache.get(deviceProfile.getTenantId(), new DeviceId(UUID.fromString(metaData.get("fromId"))));
+        EntityRelation entityRelation = JacksonUtil.fromString(tbMsg.getData(), EntityRelation.class);
+        if (entityRelation.getFrom().getEntityType().equals(entityRelation.getTo().getEntityType())) {
+            if (tbMsg.getMetaData().getValue(RELATION_DIRECTION_MESSAGE_ORIGINATOR).equals(EntitySearchDirection.TO.name())) {
+                DeviceProfile deviceProfileFrom = deviceProfileCache.get(deviceProfile.getTenantId(), new DeviceId(entityRelation.getFrom().getId()));
                 String defaultQueueName = deviceProfileFrom.getDefaultQueueName() == null ? "" : deviceProfile.getDefaultQueueName();
                 String fromQueueName = deviceProfile.getDefaultQueueName() == null ? "" : deviceProfileFrom.getDefaultQueueName();
                 if (deviceProfileFrom.getDefaultRuleChainId().equals(deviceProfile.getDefaultRuleChainId())
