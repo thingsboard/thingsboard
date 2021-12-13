@@ -794,7 +794,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
 
             try {
                 UUID.fromString(nameOrId);
-                query += " or e.id = :entity_id_or_search_text_filter::uuid";
+                query += " or e.id::text = :entity_id_or_search_text_filter";
             } catch (Exception ignored) {}
 
             return query;
