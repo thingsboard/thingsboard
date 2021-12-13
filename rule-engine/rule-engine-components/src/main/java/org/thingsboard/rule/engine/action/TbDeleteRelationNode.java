@@ -111,4 +111,8 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
         return ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), sdId.getFromId(), sdId.getToId(), relationType, RelationTypeGroup.COMMON);
     }
 
+    void pushMsgToRuleEngine(TbContext ctx, TbMsg msg, String queueName) {
+
+    }
+
 }

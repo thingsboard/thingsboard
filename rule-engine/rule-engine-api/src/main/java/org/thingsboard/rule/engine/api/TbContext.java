@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.api;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.netty.channel.EventLoopGroup;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
@@ -33,6 +34,7 @@ import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -153,6 +155,8 @@ public interface TbContext {
     TbMsg customerCreatedMsg(Customer customer, RuleNodeId ruleNodeId);
 
     TbMsg deviceCreatedMsg(Device device, RuleNodeId ruleNodeId);
+
+    TbMsg entityRelationCreatedOrUpdate(String queueName, EntityRelation relation, EntityId entityId) throws JsonProcessingException;
 
     TbMsg assetCreatedMsg(Asset asset, RuleNodeId ruleNodeId);
 

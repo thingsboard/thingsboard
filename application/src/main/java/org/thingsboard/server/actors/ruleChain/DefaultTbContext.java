@@ -51,10 +51,13 @@ import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.ServiceQueue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -310,6 +313,14 @@ class DefaultTbContext implements TbContext {
             }
         }
         return entityActionMsg(device, device.getId(), ruleNodeId, DataConstants.ENTITY_CREATED, queueName, ruleChainId);
+    }
+
+    @Override
+    public  TbMsg entityRelationCreatedOrUpdate(String queueName, EntityRelation relation, EntityId entityId) throws JsonProcessingException {
+        TbMsgMetaData metaData = new TbMsgMetaData();
+        metaData.putValue("relationDirectionMsgOriginator", entityId.getId().equals(relation.getFrom().getId()) ? EntitySearchDirection.FROM.name() : EntitySearchDirection.TO.name());
+        TbMsg tbMsg = TbMsg.newMsg(queueName, entityId, metaData, TbMsgDataType.JSON, mapper.writeValueAsString(relation));
+        return tbMsg;
     }
 
     public TbMsg assetCreatedMsg(Asset asset, RuleNodeId ruleNodeId) {
