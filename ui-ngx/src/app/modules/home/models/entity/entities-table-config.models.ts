@@ -125,7 +125,7 @@ export class DateEntityTableColumn<T extends BaseData<HasId>> extends EntityTabl
     super(key,
           title,
           width,
-          (entity, property) => datePipe.transform(entity[property], dateFormat),
+          (entity, property) => datePipe.transform(entity[property], dateFormat) || '',
           cellStyleFunction);
   }
 }
@@ -145,6 +145,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   defaultTimewindowInterval = historyInterval(DAY);
   entityType: EntityType = null;
   tableTitle = '';
+  hideTitleOnMobile = false;
   selectionEnabled = true;
   searchEnabled = true;
   addEnabled = true;

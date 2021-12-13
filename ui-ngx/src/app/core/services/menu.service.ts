@@ -105,6 +105,13 @@ export class MenuService {
       },
       {
         id: guid(),
+        name: 'admin.global-search',
+        type: 'link',
+        path: '/globalSearch',
+        icon: 'search'
+      },
+      {
+        id: guid(),
         name: 'admin.system-settings',
         type: 'toggle',
         path: '/settings',
@@ -176,6 +183,16 @@ export class MenuService {
             isMdiIcon: true,
             path: '/tenantProfiles'
           },
+        ]
+      },
+      {
+        name: 'admin.global-search',
+        places: [
+          {
+            name: 'admin.global-search',
+            icon: 'search',
+            path: '/globalSearch'
+          }
         ]
       },
       {

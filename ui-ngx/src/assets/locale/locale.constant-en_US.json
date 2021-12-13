@@ -160,6 +160,7 @@
         "domain-name-unique": "Domain name and protocol need to unique.",
         "domain-name-max-length": "Domain name should be less than 256",
         "error-verification-url": "A domain name shouldn't contain symbols '/' and ':'. Example: thingsboard.io",
+        "global-search": "Global Search",
         "oauth2": {
           "access-token-uri": "Access token URI",
           "access-token-uri-required": "Access token URI is required.",
@@ -1694,7 +1695,11 @@
         "list-of-edges": "{ count, plural, 1 {One edge} other {List of # edges} }",
         "edge-name-starts-with": "Edges whose names start with '{{prefix}}'",
         "type-tb-resource": "Resource",
-        "type-ota-package": "OTA package"
+        "type-tb-resources": "Resources",
+        "type-ota-package": "OTA package",
+        "type-ota-packages": "OTA packages",
+        "type-global-search": "Global Search",
+        "type-widgets-bundle": "Widgets bundle"
     },
     "entity-field": {
         "created-time": "Created time",
@@ -2785,6 +2790,20 @@
         "max-created-alarms": "Maximum number of alarms created (0 - unlimited)",
         "max-created-alarms-required": "Maximum number of alarms created is required.",
         "max-created-alarms-range": "Maximum number of alarms created can't be negative"
+    },
+    "global-search": {
+        "global-search": "Global Search",
+        "created-time": "Created time",
+        "last-activity-time": "Last activity time",
+        "id": "Id",
+        "entity-name": "Entity name",
+        "entity-type": "Type",
+        "tenant-name": "Tenant name",
+        "owner-name": "Owner name",
+        "no-data-text": "No data found",
+        "search-placeholder": "Search {{ type }}",
+        "copy-id": "Copy id",
+        "idCopiedMessage": "Id has been copied to clipboard"
     },
     "timeinterval": {
         "seconds-interval": "{ seconds, plural, 1 {1 second} other {# seconds} }",

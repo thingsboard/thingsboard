@@ -123,7 +123,8 @@
         "general-policy": "Загальна політика",
         "max-failed-login-attempts": "Максимальна кількість невдалих спроб входу, перш ніж обліковий запис заблоковано",
         "minimum-max-failed-login-attempts-range": "Максимальна кількість невдалих спроб входу не може бути негативною",
-        "user-lockout-notification-email": "У разі блокування облікового запису користувача, надішліть сповіщення на електронну пошту"
+        "user-lockout-notification-email": "У разі блокування облікового запису користувача, надішліть сповіщення на електронну пошту",
+        "global-search": "Глобальний пошук"
     },
     "alarm": {
         "alarm": "Сигнал тривоги",
@@ -960,7 +961,10 @@
         "type-integration": "Інтеграція",
         "type-integrations": "Інтеграції",
         "list-of-integrations": "{ count, plural, 1 {Одна інтеграція} other {Список # інтеграцій} }",
-        "integration-name-starts-with": "Інтеграції, імена яких починаються з '{{prefix}}'"
+        "integration-name-starts-with": "Інтеграції, імена яких починаються з '{{prefix}}'",
+        "type-tb-resources": "Ресурси",
+        "type-global-search": "Глобальний пошук",
+        "type-widgets-bundle": "Набори віджетів"
     },
     "entity-field": {
         "created-time": "Час створення",
@@ -2008,6 +2012,19 @@
         "tenant-required": "Необхідно вказати власника",
         "selected-tenants": "{ count, plural, 1 {1 власник} other {# власники} } вибрано",
         "search": "Пошук власників"
+    },
+    "global-search": {
+        "global-search": "Глобальний пошук",
+        "created-time": "Час створення",
+        "last-activity-time": "Час останньої активності",
+        "entity-name": "Ім'я сутності",
+        "entity-type": "Тип",
+        "tenant-name": "Ім'я користувача",
+        "owner-name": "Ім'я власника",
+        "no-data-text": "Данні не найдено",
+        "search-placeholder": "Пошук {{ type }}",
+        "copy-id": "Копіювати Id",
+        "idCopiedMessage": "Id скопійовано в буфер обміну"
     },
     "timeinterval": {
         "seconds-interval": "{ seconds, plural, 1 {1 секунда} other {# секунди} }",

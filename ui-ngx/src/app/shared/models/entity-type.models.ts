@@ -36,7 +36,8 @@ export enum EntityType {
   API_USAGE_STATE = 'API_USAGE_STATE',
   TB_RESOURCE = 'TB_RESOURCE',
   OTA_PACKAGE = 'OTA_PACKAGE',
-  RPC = 'RPC'
+  RPC = 'RPC',
+  GLOBAL_SEARCH = 'GLOBAL_SEARCH'
 }
 
 export enum AliasEntityType {
@@ -306,6 +307,13 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         search: 'ota-update.search',
         selectedEntities: 'ota-update.selected-package'
       }
+    ],
+    [
+      EntityType.GLOBAL_SEARCH,
+      {
+        type: 'entity.type-global-search',
+        noEntities: 'global-search.no-data-text'
+      }
     ]
   ]
 );
@@ -394,6 +402,12 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
       EntityType.OTA_PACKAGE,
       {
         helpLinkId: 'otaUpdates'
+      }
+    ],
+    [
+      EntityType.GLOBAL_SEARCH,
+      {
+        helpLinkId: 'globalSearch'
       }
     ]
   ]
