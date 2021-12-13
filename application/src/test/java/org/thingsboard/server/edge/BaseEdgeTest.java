@@ -217,14 +217,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
         testRpcCall();
 
-        //TODO fix the test with @voba
-        //2021-12-13 16:59:52,493 [main] WARN  o.t.edge.rpc.EdgeGrpcClient - We had reached maximum of termination attempts. Force closing channel
-        //2021-12-13 16:59:52,501 [grpc-default-executor-1] WARN  o.t.edge.rpc.EdgeGrpcClient - We had reached maximum of termination attempts. Force closing channel
-        //java.lang.AssertionError <3 internal lines>
-        //	at org.thingsboard.server.edge.BaseEdgeTest.testTimeseriesWithFailures(BaseEdgeTest.java:1146)
-        //	at org.thingsboard.server.edge.BaseEdgeTest.test(BaseEdgeTest.java:220)
-        //
-        //testTimeseriesWithFailures();
+        testTimeseriesWithFailures();
 
         testSendMessagesToCloud();
     }
