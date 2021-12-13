@@ -17,7 +17,6 @@
 import L, { LatLngExpression, LeafletMouseEvent } from 'leaflet';
 import { createTooltip } from './maps-utils';
 import { functionValueCalculator, parseWithTranslation, safeExecute } from './common-maps-utils';
-import 'leaflet-editable/src/Leaflet.Editable';
 import { FormattedData, PolygonSettings } from './map-models';
 
 export class Polygon {
@@ -37,14 +36,12 @@ export class Polygon {
           color: settings.polygonStrokeColor,
           weight: settings.polygonStrokeWeight,
           fillOpacity: settings.polygonOpacity,
-          opacity: settings.polygonStrokeOpacity
+          opacity: settings.polygonStrokeOpacity,
+          pmIgnore: !settings.editablePolygon
         }).addTo(this.map);
-        if (settings.editablePolygon) {
-            this.leafletPoly.enableEdit(this.map);
-            if (onDragendListener) {
-                this.leafletPoly.on('editable:vertex:dragend', e => onDragendListener(e, this.data));
-                this.leafletPoly.on('editable:vertex:deleted', e => onDragendListener(e, this.data));
-            }
+
+        if (settings.editablePolygon && onDragendListener) {
+          this.leafletPoly.on('pm:edit', (e) => onDragendListener(e, this.data));
         }
 
 
@@ -73,13 +70,7 @@ export class Polygon {
     updatePolygon(data: FormattedData, dataSources: FormattedData[], settings: PolygonSettings) {
       this.data = data;
       this.dataSources = dataSources;
-      if (settings.editablePolygon) {
-        this.leafletPoly.disableEdit();
-      }
       this.leafletPoly.setLatLngs(data[this.settings.polygonKeyName]);
-      if (settings.editablePolygon) {
-        this.leafletPoly.enableEdit(this.map);
-      }
       if (settings.showPolygonTooltip) {
         this.updateTooltip(this.data);
       }

@@ -107,9 +107,11 @@ import { ComponentType } from '@angular/cdk/portal';
 import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/embed-dashboard-dialog-token';
 import { MobileService } from '@core/services/mobile.service';
 import { DialogService } from '@core/services/dialog.service';
-import { DashboardPageComponent } from '@home/components/dashboard-page/dashboard-page.component';
 import { PopoverPlacement } from '@shared/components/popover.models';
 import { TbPopoverService } from '@shared/components/popover.service';
+import {
+  DASHBOARD_PAGE_COMPONENT_TOKEN
+} from '@home/components/tokens';
 
 @Component({
   selector: 'tb-widget',
@@ -141,6 +143,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   widgetErrorData: ExceptionData;
   loadingData: boolean;
   displayNoData = false;
+  noDataDisplayMessageText: string;
 
   displayLegend: boolean;
   legendConfig: LegendConfig;
@@ -182,6 +185,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               private renderer: Renderer2,
               private popoverService: TbPopoverService,
               @Inject(EMBED_DASHBOARD_DIALOG_TOKEN) private embedDashboardDialogComponent: ComponentType<any>,
+              @Inject(DASHBOARD_PAGE_COMPONENT_TOKEN) private dashboardPageComponent: ComponentType<any>,
               private widgetService: WidgetService,
               private resources: ResourcesService,
               private timeService: TimeService,
@@ -279,6 +283,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.widgetContext.servicesMap = ServicesMap;
     this.widgetContext.isEdit = this.isEdit;
     this.widgetContext.isMobile = this.isMobile;
+    this.widgetContext.toastTargetId = this.toastTargetId;
 
     this.widgetContext.subscriptionApi = {
       createSubscription: this.createSubscription.bind(this),
@@ -359,6 +364,13 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     setTimeout(() => {
       this.dashboardWidget.updateWidgetParams();
     }, 0);
+
+    const noDataDisplayMessage = this.widget.config.noDataDisplayMessage;
+    if (isNotEmptyStr(noDataDisplayMessage)) {
+      this.noDataDisplayMessageText = this.utils.customTranslation(noDataDisplayMessage, noDataDisplayMessage);
+    } else {
+      this.noDataDisplayMessageText = this.translate.instant('widget.no-data');
+    }
   }
 
   ngAfterViewInit(): void {
@@ -936,6 +948,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       options = {
         type: this.widget.type,
         stateData: this.typeParameters.stateData,
+        datasourcesOptional: this.typeParameters.datasourcesOptional,
         hasDataPageLink: this.typeParameters.hasDataPageLink,
         singleEntity: this.typeParameters.singleEntity,
         warnOnPageDataOverflow: this.typeParameters.warnOnPageDataOverflow,
@@ -1344,7 +1357,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         ]
       });
       const component = this.popoverService.displayPopover(trigger, this.renderer,
-        this.widgetContentContainer, DashboardPageComponent, preferredPlacement, hideOnClickOutside,
+        this.widgetContentContainer, this.dashboardPageComponent, preferredPlacement, hideOnClickOutside,
         injector,
         {
           embed: true,
@@ -1409,6 +1422,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         height: dialogHeight
       }
     });
+    this.cd.markForCheck();
   }
 
   private elementClick($event: Event) {

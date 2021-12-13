@@ -113,29 +113,27 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
     }
 
     @Override
-    public Response convertToPublish(boolean isConfirmable, TransportProtos.AttributeUpdateNotificationMsg msg) throws AdaptorException {
-        return getObserveNotification(isConfirmable, msg.toByteArray());
+    public Response convertToPublish(TransportProtos.AttributeUpdateNotificationMsg msg) throws AdaptorException {
+        return getObserveNotification(msg.toByteArray());
     }
 
     @Override
-    public Response convertToPublish(boolean isConfirmable, TransportProtos.ToDeviceRpcRequestMsg rpcRequest, DynamicMessage.Builder rpcRequestDynamicMessageBuilder) throws AdaptorException {
-        return getObserveNotification(isConfirmable, ProtoConverter.convertToRpcRequest(rpcRequest, rpcRequestDynamicMessageBuilder));
+    public Response convertToPublish(TransportProtos.ToDeviceRpcRequestMsg rpcRequest, DynamicMessage.Builder rpcRequestDynamicMessageBuilder) throws AdaptorException {
+        return getObserveNotification(ProtoConverter.convertToRpcRequest(rpcRequest, rpcRequestDynamicMessageBuilder));
     }
 
     @Override
-    public Response convertToPublish(boolean isConfirmable, TransportProtos.ToServerRpcResponseMsg msg) throws AdaptorException {
+    public Response convertToPublish(TransportProtos.ToServerRpcResponseMsg msg) throws AdaptorException {
         Response response = new Response(CoAP.ResponseCode.CONTENT);
-        response.setConfirmable(isConfirmable);
         response.setPayload(msg.toByteArray());
         return response;
     }
 
     @Override
-    public Response convertToPublish(boolean isConfirmable, TransportProtos.GetAttributeResponseMsg msg) throws AdaptorException {
+    public Response convertToPublish(TransportProtos.GetAttributeResponseMsg msg) throws AdaptorException {
         if (msg.getSharedStateMsg()) {
             if (StringUtils.isEmpty(msg.getError())) {
                 Response response = new Response(CoAP.ResponseCode.CONTENT);
-                response.setConfirmable(isConfirmable);
                 TransportProtos.AttributeUpdateNotificationMsg notificationMsg = TransportProtos.AttributeUpdateNotificationMsg.newBuilder().addAllSharedUpdated(msg.getSharedAttributeListList()).build();
                 response.setPayload(notificationMsg.toByteArray());
                 return response;
@@ -147,17 +145,15 @@ public class ProtoCoapAdaptor implements CoapTransportAdaptor {
                 return new Response(CoAP.ResponseCode.NOT_FOUND);
             } else {
                 Response response = new Response(CoAP.ResponseCode.CONTENT);
-                response.setConfirmable(isConfirmable);
                 response.setPayload(msg.toByteArray());
                 return response;
             }
         }
     }
 
-    private Response getObserveNotification(boolean confirmable, byte[] notification) {
+    private Response getObserveNotification(byte[] notification) {
         Response response = new Response(CoAP.ResponseCode.CONTENT);
         response.setPayload(notification);
-        response.setConfirmable(confirmable);
         return response;
     }
 

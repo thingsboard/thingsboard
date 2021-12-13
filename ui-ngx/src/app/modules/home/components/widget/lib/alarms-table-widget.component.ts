@@ -48,7 +48,7 @@ import cssjs from '@core/css/css';
 import { sortItems } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { CollectionViewer, DataSource, SelectionModel } from '@angular/cdk/collections';
-import { BehaviorSubject, forkJoin, fromEvent, merge, Observable } from 'rxjs';
+import { BehaviorSubject, forkJoin, fromEvent, merge, Observable, Subscription } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
 import { debounceTime, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
@@ -74,6 +74,7 @@ import {
   getColumnWidth,
   getRowStyleInfo,
   getTableCellButtonActions,
+  noDataMessage,
   prepareTableCellButtonActions,
   RowStyleInfo,
   TableCellButtonActionDescriptor,
@@ -166,6 +167,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   public columns: Array<EntityColumn> = [];
   public displayedColumns: string[] = [];
   public alarmsDatasource: AlarmsDatasource;
+  public noDataDisplayMessageText: string;
   private setCellButtonAction: boolean;
 
   private cellContentCache: Array<any> = [];
@@ -192,6 +194,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   private columnSelectionAvailability: {[key: string]: boolean} = {};
 
   private rowStylesInfo: RowStyleInfo;
+
+  private widgetTimewindowChanged$: Subscription;
 
   private searchAction: WidgetAction = {
     name: 'action.search',
@@ -248,6 +252,19 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.initializeConfig();
     this.updateAlarmSource();
     this.ctx.updateWidgetParams();
+
+    if (this.displayPagination) {
+      this.widgetTimewindowChanged$ = this.ctx.defaultSubscription.widgetTimewindowChanged$.subscribe(
+        () => this.pageLink.page = 0
+      );
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.widgetTimewindowChanged$) {
+      this.widgetTimewindowChanged$.unsubscribe();
+      this.widgetTimewindowChanged$ = null;
+    }
   }
 
   ngAfterViewInit(): void {
@@ -341,6 +358,9 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.pageLink.statusList = alarmStatusList;
     this.pageLink.severityList = isDefined(this.widgetConfig.alarmSeverityList) ? this.widgetConfig.alarmSeverityList : [];
     this.pageLink.typeList = isDefined(this.widgetConfig.alarmTypeList) ? this.widgetConfig.alarmTypeList : [];
+
+    this.noDataDisplayMessageText =
+      noDataMessage(this.widgetConfig.noDataDisplayMessage, 'alarm.no-alarms-prompt', this.utils, this.translate);
 
     const cssString = constructTableCssString(this.widgetConfig);
     const cssParser = new cssjs();

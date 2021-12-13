@@ -209,6 +209,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   thingsboardVersion: string = env.tbVersion;
 
+  translatedDashboardTitle: string;
+
   currentDashboardId: string;
   currentCustomerId: string;
   currentDashboardScope: DashboardPageScope;
@@ -343,24 +345,26 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         this.runChangeDetection();
       }
     ));
-    this.rxSubscriptions.push(this.route.queryParamMap.subscribe(
-      (paramMap) => {
-        if (paramMap.has('reload')) {
-          this.dashboardCtx.aliasController.updateAliases();
-          setTimeout(() => {
-            this.mobileService.handleDashboardStateName(this.dashboardCtx.stateController.getCurrentStateName());
-            this.mobileService.onDashboardLoaded(this.layouts.right.show, this.isRightLayoutOpened);
-          });
+    if (this.syncStateWithQueryParam) {
+      this.rxSubscriptions.push(this.route.queryParamMap.subscribe(
+        (paramMap) => {
+          if (paramMap.has('reload')) {
+            this.dashboardCtx.aliasController.updateAliases();
+            setTimeout(() => {
+              this.mobileService.handleDashboardStateName(this.dashboardCtx.stateController.getCurrentStateName());
+              this.mobileService.onDashboardLoaded(this.layouts.right.show, this.isRightLayoutOpened);
+            });
+          }
         }
-      }
-    ));
+      ));
+    }
     this.rxSubscriptions.push(this.breakpointObserver
       .observe(MediaBreakpoints['gt-sm'])
       .subscribe((state: BreakpointState) => {
           this.isMobile = !state.matches;
         }
     ));
-    if (this.isMobileApp) {
+    if (this.isMobileApp && this.syncStateWithQueryParam) {
       this.mobileService.registerToggleLayoutFunction(() => {
         setTimeout(() => {
           this.toggleLayouts();
@@ -375,6 +379,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.reset();
 
     this.dashboard = data.dashboard;
+    this.translatedDashboardTitle = this.getTranslatedDashboardTitle();
     if (!this.embedded && this.dashboard.id) {
       this.setStateDashboardId = true;
     }
@@ -424,6 +429,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   private reset() {
     this.dashboard = null;
+    this.translatedDashboardTitle = null;
     this.dashboardConfiguration = null;
     this.dashboardLogoCache = undefined;
     this.prevDashboard = null;
@@ -460,7 +466,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   ngOnDestroy(): void {
-    if (this.isMobileApp) {
+    if (this.isMobileApp && this.syncStateWithQueryParam) {
       this.mobileService.unregisterToggleLayoutFunction();
     }
     this.rxSubscriptions.forEach((subscription) => {
@@ -518,6 +524,10 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     } else {
       return false;
     }
+  }
+
+  private getTranslatedDashboardTitle(): string {
+    return this.utils.customTranslation(this.dashboard.title, this.dashboard.title);
   }
 
   public displayExport(): boolean {
@@ -817,6 +827,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   public saveDashboard() {
+    this.translatedDashboardTitle = this.getTranslatedDashboardTitle();
     this.setEditMode(false, false);
     this.notifyDashboardUpdated();
   }
@@ -873,6 +884,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         if (revert) {
           this.dashboard = this.prevDashboard;
           this.dashboardLogoCache = undefined;
+          this.dashboardConfiguration = this.dashboard.configuration;
         }
       } else {
         this.resetHighlight();

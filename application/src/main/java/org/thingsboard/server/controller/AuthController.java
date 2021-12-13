@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -50,13 +48,13 @@ import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.model.ActivateUserRequest;
-import org.thingsboard.server.service.security.model.ChangePasswordRequest;
-import org.thingsboard.server.service.security.model.ResetPasswordEmailRequest;
-import org.thingsboard.server.service.security.model.ResetPasswordRequest;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
+import org.thingsboard.server.service.security.model.ActivateUserRequest;
+import org.thingsboard.server.service.security.model.ChangePasswordRequest;
 import org.thingsboard.server.service.security.model.JwtTokenPair;
+import org.thingsboard.server.service.security.model.ResetPasswordEmailRequest;
+import org.thingsboard.server.service.security.model.ResetPasswordRequest;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;

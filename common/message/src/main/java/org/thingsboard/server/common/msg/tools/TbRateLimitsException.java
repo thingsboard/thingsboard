@@ -26,6 +26,7 @@ public class TbRateLimitsException extends RuntimeException {
     private final EntityType entityType;
 
     public TbRateLimitsException(EntityType entityType) {
+        super(entityType.name() + " rate limits reached!");
         this.entityType = entityType;
     }
 }

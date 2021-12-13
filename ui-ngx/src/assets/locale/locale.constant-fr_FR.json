@@ -1470,7 +1470,7 @@
         "rulechain-required": "Chaîne de règles requise",
         "rulechains": "Chaînes de règles",
         "select-rulechain": "Sélectionner la chaîne de règles",
-        "set-root": "Rend la chaîne de règles racine (root) ",
+        "set-root": "Rendre la chaîne de règles racine (root) ",
         "set-root-rulechain-text": "Après la confirmation, la chaîne de règles deviendra racine (root) et gérera tous les messages de transport entrants.",
         "set-root-rulechain-title": "Voulez-vous vraiment que la chaîne de règles '{{ruleChainName}} soit racine  (root) ?",
         "system": "Système",
@@ -1498,7 +1498,7 @@
         "edge-template-root": "Racine du modèle",
         "search": "Rechercher des chaînes de règles",
         "selected-rulechains": "{count, plural, 1 {1 rule chain} other {# rule chains} } sélectionné",
-        "open-rulechain": "Chaîne de règles ouverte",
+        "open-rulechain": "Ouvrir la Chaîne de règles",
         "assign-to-edge": "Attribuer à Bordure",
         "edge-rulechain": "Chaîne de règles Bordure",
         "unassign-rulechains-from-edge-title": "Voulez-vous vraiment annuler l'attribution de {count, plural, 1 {1 rulechain} other {# rulechains} }?"

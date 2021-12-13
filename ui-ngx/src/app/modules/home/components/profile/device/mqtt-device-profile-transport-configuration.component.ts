@@ -97,7 +97,9 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
           deviceTelemetryProtoSchema: [defaultTelemetrySchema, Validators.required],
           deviceAttributesProtoSchema: [defaultAttributesSchema, Validators.required],
           deviceRpcRequestProtoSchema: [defaultRpcRequestSchema, Validators.required],
-          deviceRpcResponseProtoSchema: [defaultRpcResponseSchema, Validators.required]
+          deviceRpcResponseProtoSchema: [defaultRpcResponseSchema, Validators.required],
+          enableCompatibilityWithJsonPayloadFormat: [false, Validators.required],
+          useJsonPayloadFormatForDefaultDownlinkTopics: [false, Validators.required]
         })
       }, {validator: this.uniqueDeviceTopicValidator}
     );
@@ -105,6 +107,14 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
       takeUntil(this.destroy$)
     ).subscribe(payloadType => {
       this.updateTransportPayloadBasedControls(payloadType, true);
+    });
+    this.mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.enableCompatibilityWithJsonPayloadFormat')
+      .valueChanges.pipe(takeUntil(this.destroy$)
+    ).subscribe(compatibilityWithJsonPayloadFormatEnabled => {
+      if (!compatibilityWithJsonPayloadFormatEnabled) {
+        this.mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.useJsonPayloadFormatForDefaultDownlinkTopics')
+          .patchValue(false, {emitEvent: false});
+      }
     });
     this.mqttDeviceProfileTransportConfigurationFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
@@ -132,6 +142,10 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
     return transportPayloadType === TransportPayloadType.PROTOBUF;
   }
 
+  get compatibilityWithJsonPayloadFormatEnabled(): boolean {
+    return this.mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.enableCompatibilityWithJsonPayloadFormat').value;
+  }
+
   writeValue(value: MqttDeviceProfileTransportConfiguration | null): void {
     if (isDefinedAndNotNull(value)) {
       this.mqttDeviceProfileTransportConfigurationFormGroup.patchValue(value, {emitEvent: false});
@@ -156,7 +170,9 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
         deviceTelemetryProtoSchema: defaultTelemetrySchema,
         deviceAttributesProtoSchema: defaultAttributesSchema,
         deviceRpcRequestProtoSchema: defaultRpcRequestSchema,
-        deviceRpcResponseProtoSchema: defaultRpcResponseSchema
+        deviceRpcResponseProtoSchema: defaultRpcResponseSchema,
+        enableCompatibilityWithJsonPayloadFormat: false,
+        useJsonPayloadFormatForDefaultDownlinkTopics: false
       }, {emitEvent: false});
     }
     if (type === TransportPayloadType.PROTOBUF && !this.disabled) {
@@ -164,11 +180,15 @@ export class MqttDeviceProfileTransportConfigurationComponent implements Control
       transportPayloadTypeForm.get('deviceAttributesProtoSchema').enable({emitEvent: false});
       transportPayloadTypeForm.get('deviceRpcRequestProtoSchema').enable({emitEvent: false});
       transportPayloadTypeForm.get('deviceRpcResponseProtoSchema').enable({emitEvent: false});
+      transportPayloadTypeForm.get('enableCompatibilityWithJsonPayloadFormat').enable({emitEvent: false});
+      transportPayloadTypeForm.get('useJsonPayloadFormatForDefaultDownlinkTopics').enable({emitEvent: false});
     } else {
       transportPayloadTypeForm.get('deviceTelemetryProtoSchema').disable({emitEvent: false});
       transportPayloadTypeForm.get('deviceAttributesProtoSchema').disable({emitEvent: false});
       transportPayloadTypeForm.get('deviceRpcRequestProtoSchema').disable({emitEvent: false});
       transportPayloadTypeForm.get('deviceRpcResponseProtoSchema').disable({emitEvent: false});
+      transportPayloadTypeForm.get('enableCompatibilityWithJsonPayloadFormat').disable({emitEvent: false});
+      transportPayloadTypeForm.get('useJsonPayloadFormatForDefaultDownlinkTopics').disable({emitEvent: false});
     }
   }
 

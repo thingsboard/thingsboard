@@ -31,7 +31,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
 @RuleNode(
-        type = ComponentType.ACTION,
+        type = ComponentType.FLOW,
         name = "checkpoint",
         configClazz = TbCheckpointNodeConfiguration.class,
         nodeDescription = "transfers the message to another queue",

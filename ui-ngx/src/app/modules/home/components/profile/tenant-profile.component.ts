@@ -59,7 +59,7 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
   buildForm(entity: TenantProfile): FormGroup {
     return this.fb.group(
       {
-        name: [entity ? entity.name : '', [Validators.required]],
+        name: [entity ? entity.name : '', [Validators.required, Validators.maxLength(255)]],
         isolatedTbCore: [entity ? entity.isolatedTbCore : false, []],
         isolatedTbRuleEngine: [entity ? entity.isolatedTbRuleEngine : false, []],
         profileData: [entity && !this.isAdd ? entity.profileData : {

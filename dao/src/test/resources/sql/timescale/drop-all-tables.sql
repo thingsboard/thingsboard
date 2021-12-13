@@ -1,4 +1,5 @@
 DROP TABLE IF EXISTS admin_settings;
+DROP TABLE IF EXISTS entity_alarm;
 DROP TABLE IF EXISTS alarm;
 DROP TABLE IF EXISTS asset;
 DROP TABLE IF EXISTS audit_log;

@@ -104,7 +104,7 @@
             </table>
             <span [fxShow]="source.timeseriesDatasource.isEmpty() | async"
                   fxLayoutAlign="center center"
-                  class="no-data-found" translate>widget.no-data-found</span>
+                  class="no-data-found">{{ noDataDisplayMessageText }}</span>
           </div>
           <mat-divider *ngIf="displayPagination"></mat-divider>
           <mat-paginator *ngIf="displayPagination"

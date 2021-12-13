@@ -105,8 +105,8 @@ export class DeviceWizardDialogComponent extends
               private fb: FormBuilder) {
     super(store, router, dialogRef);
     this.deviceWizardFormGroup = this.fb.group({
-        name: ['', Validators.required],
-        label: [''],
+        name: ['', [Validators.required, Validators.maxLength(255)]],
+        label: ['', Validators.maxLength(255)],
         gateway: [false],
         overwriteActivityTime: [false],
         addProfileType: [0],

@@ -29,6 +29,7 @@ import org.thingsboard.server.queue.memory.InMemoryStorage;
         "org.thingsboard.server.transport.*.attributes.request.sql.*Test",
         "org.thingsboard.server.transport.*.claim.sql.*Test",
         "org.thingsboard.server.transport.*.provision.sql.*Test",
+        "org.thingsboard.server.transport.*.credentials.sql.*Test",
         "org.thingsboard.server.transport.lwm2m.sql.*Test"
 })
 public class TransportSqlTestSuite {

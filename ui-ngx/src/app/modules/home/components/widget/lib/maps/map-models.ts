@@ -57,6 +57,7 @@ export type MapSettings = {
     showCoverageOnHover: boolean,
     animate: boolean,
     maxClusterRadius: number,
+    spiderfyOnMaxZoom: boolean,
     chunkedLoading: boolean,
     removeOutsideVisibleBounds: boolean,
     useCustomProvider: boolean,
@@ -178,7 +179,7 @@ export interface MapImage {
     update?: boolean;
 }
 
-export type TripAnimationSettings = {
+export interface TripAnimationSettings extends PolygonSettings {
     showPoints: boolean;
     pointColor: string;
     pointSize: number;
@@ -203,7 +204,7 @@ export type TripAnimationSettings = {
     labelFunction: GenericFunction;
     useColorPointFunction: boolean;
     colorPointFunction: GenericFunction;
-};
+}
 
 export type actionsHandler = ($event: Event, datasource: Datasource) => void;
 

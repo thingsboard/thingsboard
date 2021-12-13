@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.id.AdminSettingsId;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @ApiModel
@@ -29,6 +30,7 @@ public class AdminSettings extends BaseData<AdminSettingsId> {
     private static final long serialVersionUID = -7670322981725511892L;
 
     @NoXss
+    @Length(fieldName = "key")
     private String key;
     private transient JsonNode jsonValue;
     
@@ -58,7 +60,7 @@ public class AdminSettings extends BaseData<AdminSettingsId> {
         return super.getCreatedTime();
     }
 
-    @ApiModelProperty(position = 3, value = "The Administration Settings key, (e.g. 'general' or 'mail')")
+    @ApiModelProperty(position = 3, value = "The Administration Settings key, (e.g. 'general' or 'mail')", example = "mail")
     public String getKey() {
         return key;
     }

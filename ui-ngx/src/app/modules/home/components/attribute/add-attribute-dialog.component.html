@@ -36,6 +36,9 @@
         <mat-error *ngIf="attributeFormGroup.get('key').hasError('required')">
           {{ 'attribute.key-required' | translate }}
         </mat-error>
+        <mat-error *ngIf="attributeFormGroup.get('key').hasError('maxlength')">
+          {{ 'attribute.key-max-length' | translate }}
+        </mat-error>
       </mat-form-field>
       <tb-value-input
         formControlName="value"

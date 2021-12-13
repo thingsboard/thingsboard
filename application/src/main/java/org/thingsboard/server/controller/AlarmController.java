@@ -15,8 +15,11 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -49,17 +52,47 @@ import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.List;
 
+import static org.thingsboard.server.controller.ControllerConstants.ALARM_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.ALARM_INFO_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.ALARM_SORT_PROPERTY_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID;
+import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.ENTITY_TYPE;
+import static org.thingsboard.server.controller.ControllerConstants.ENTITY_TYPE_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
+
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
 public class AlarmController extends BaseController {
 
     public static final String ALARM_ID = "alarmId";
+    private static final String ALARM_SECURITY_CHECK = "If the user has the authority of 'Tenant Administrator', the server checks that the originator of alarm is owned by the same tenant. " +
+            "If the user has the authority of 'Customer User', the server checks that the originator of alarm belongs to the customer. ";
+    private static final String ALARM_QUERY_SEARCH_STATUS_DESCRIPTION = "A string value representing one of the AlarmSearchStatus enumeration value";
+    private static final String ALARM_QUERY_SEARCH_STATUS_ALLOWABLE_VALUES = "ANY, ACTIVE, CLEARED, ACK, UNACK";
+    private static final String ALARM_QUERY_STATUS_DESCRIPTION = "A string value representing one of the AlarmStatus enumeration value";
+    private static final String ALARM_QUERY_STATUS_ALLOWABLE_VALUES = "ACTIVE_UNACK, ACTIVE_ACK, CLEARED_UNACK, CLEARED_ACK";
+    private static final String ALARM_QUERY_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'startsWith' filter based on of next alarm fields: type, severity or status";
+    private static final String ALARM_QUERY_START_TIME_DESCRIPTION = "The start timestamp in milliseconds of the search time range over the Alarm class field: 'createdTime'.";
+    private static final String ALARM_QUERY_END_TIME_DESCRIPTION = "The end timestamp in milliseconds of the search time range over the Alarm class field: 'createdTime'.";
+    private static final String ALARM_QUERY_FETCH_ORIGINATOR_DESCRIPTION = "A boolean value to specify if the alarm originator name will be " +
+            "filled in the AlarmInfo object  field: 'originatorName' or will returns as null.";
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @ApiOperation(value = "Get Alarm (getAlarmById)",
+            notes = "Fetch the Alarm object based on the provided Alarm Id. " + ALARM_SECURITY_CHECK, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/{alarmId}", method = RequestMethod.GET)
     @ResponseBody
-    public Alarm getAlarmById(@PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
+    public Alarm getAlarmById(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION)
+                              @PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
         checkParameter(ALARM_ID, strAlarmId);
         try {
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
@@ -69,10 +102,14 @@ public class AlarmController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @ApiOperation(value = "Get Alarm Info (getAlarmInfoById)",
+            notes = "Fetch the Alarm Info object based on the provided Alarm Id. " +
+                    ALARM_SECURITY_CHECK + ALARM_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/info/{alarmId}", method = RequestMethod.GET)
     @ResponseBody
-    public AlarmInfo getAlarmInfoById(@PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
+    public AlarmInfo getAlarmInfoById(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION)
+                                      @PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
         checkParameter(ALARM_ID, strAlarmId);
         try {
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
@@ -82,10 +119,20 @@ public class AlarmController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @ApiOperation(value = "Create or update Alarm (saveAlarm)",
+            notes = "Creates or Updates the Alarm. " +
+                    "When creating alarm, platform generates Alarm Id as " + UUID_WIKI_LINK +
+                    "The newly created Alarm id will be present in the response. Specify existing Alarm id to update the alarm. " +
+                    "Referencing non-existing Alarm Id will cause 'Not Found' error. " +
+                    "\n\nPlatform also deduplicate the alarms based on the entity id of originator and alarm 'type'. " +
+                    "For example, if the user or system component create the alarm with the type 'HighTemperature' for device 'Device A' the new active alarm is created. " +
+                    "If the user tries to create 'HighTemperature' alarm for the same device again, the previous alarm will be updated (the 'end_ts' will be set to current timestamp). " +
+                    "If the user clears the alarm (see 'Clear Alarm(clearAlarm)'), than new alarm with the same type and same device may be created. " + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH
+            , produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm", method = RequestMethod.POST)
     @ResponseBody
-    public Alarm saveAlarm(@RequestBody Alarm alarm) throws ThingsboardException {
+    public Alarm saveAlarm(@ApiParam(value = "A JSON value representing the alarm.") @RequestBody Alarm alarm) throws ThingsboardException {
         try {
             alarm.setTenantId(getCurrentUser().getTenantId());
 
@@ -106,10 +153,12 @@ public class AlarmController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @ApiOperation(value = "Delete Alarm (deleteAlarm)",
+            notes = "Deletes the Alarm. Referencing non-existing Alarm Id will cause an error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/{alarmId}", method = RequestMethod.DELETE)
     @ResponseBody
-    public Boolean deleteAlarm(@PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
+    public Boolean deleteAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
         checkParameter(ALARM_ID, strAlarmId);
         try {
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
@@ -124,15 +173,19 @@ public class AlarmController extends BaseController {
             sendAlarmDeleteNotificationMsg(getTenantId(), alarmId, relatedEdgeIds, alarm);
 
             return alarmService.deleteAlarm(getTenantId(), alarmId);
-         } catch (Exception e) {
+        } catch (Exception e) {
             throw handleException(e);
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @ApiOperation(value = "Acknowledge Alarm (ackAlarm)",
+            notes = "Acknowledge the Alarm. " +
+                    "Once acknowledged, the 'ack_ts' field will be set to current timestamp and special rule chain event 'ALARM_ACK' will be generated. " +
+                    "Referencing non-existing Alarm Id will cause an error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/{alarmId}/ack", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public void ackAlarm(@PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
+    public void ackAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
         checkParameter(ALARM_ID, strAlarmId);
         try {
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
@@ -149,10 +202,14 @@ public class AlarmController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @ApiOperation(value = "Clear Alarm (clearAlarm)",
+            notes = "Clear the Alarm. " +
+                    "Once cleared, the 'clear_ts' field will be set to current timestamp and special rule chain event 'ALARM_CLEAR' will be generated. " +
+                    "Referencing non-existing Alarm Id will cause an error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/{alarmId}/clear", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public void clearAlarm(@PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
+    public void clearAlarm(@ApiParam(value = ALARM_ID_PARAM_DESCRIPTION) @PathVariable(ALARM_ID) String strAlarmId) throws ThingsboardException {
         checkParameter(ALARM_ID, strAlarmId);
         try {
             AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
@@ -169,21 +226,36 @@ public class AlarmController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @ApiOperation(value = "Get Alarms (getAlarms)",
+            notes = "Returns a page of alarms for the selected entity. Specifying both parameters 'searchStatus' and 'status' at the same time will cause an error. " +
+                    PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/{entityType}/{entityId}", method = RequestMethod.GET)
     @ResponseBody
     public PageData<AlarmInfo> getAlarms(
-            @PathVariable("entityType") String strEntityType,
-            @PathVariable("entityId") String strEntityId,
+            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, defaultValue = "DEVICE")
+            @PathVariable(ENTITY_TYPE) String strEntityType,
+            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable(ENTITY_ID) String strEntityId,
+            @ApiParam(value = ALARM_QUERY_SEARCH_STATUS_DESCRIPTION, allowableValues = ALARM_QUERY_SEARCH_STATUS_ALLOWABLE_VALUES)
             @RequestParam(required = false) String searchStatus,
+            @ApiParam(value = ALARM_QUERY_STATUS_DESCRIPTION, allowableValues = ALARM_QUERY_STATUS_ALLOWABLE_VALUES)
             @RequestParam(required = false) String status,
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
+            @ApiParam(value = ALARM_QUERY_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
+            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = ALARM_SORT_PROPERTY_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortProperty,
+            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder,
+            @ApiParam(value = ALARM_QUERY_START_TIME_DESCRIPTION)
             @RequestParam(required = false) Long startTime,
+            @ApiParam(value = ALARM_QUERY_END_TIME_DESCRIPTION)
             @RequestParam(required = false) Long endTime,
+            @ApiParam(value = ALARM_QUERY_FETCH_ORIGINATOR_DESCRIPTION)
             @RequestParam(required = false) Boolean fetchOriginator
     ) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
@@ -204,20 +276,35 @@ public class AlarmController extends BaseController {
             throw handleException(e);
         }
     }
-
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @ApiOperation(value = "Get All Alarms (getAllAlarms)",
+            notes = "Returns a page of alarms that belongs to the current user owner. " +
+                    "If the user has the authority of 'Tenant Administrator', the server returns alarms that belongs to the tenant of current user. " +
+                    "If the user has the authority of 'Customer User', the server returns alarms that belongs to the customer of current user. " +
+                    "Specifying both parameters 'searchStatus' and 'status' at the same time will cause an error. " +
+                    PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarms", method = RequestMethod.GET)
     @ResponseBody
     public PageData<AlarmInfo> getAllAlarms(
+            @ApiParam(value = ALARM_QUERY_SEARCH_STATUS_DESCRIPTION, allowableValues = ALARM_QUERY_SEARCH_STATUS_ALLOWABLE_VALUES)
             @RequestParam(required = false) String searchStatus,
+            @ApiParam(value = ALARM_QUERY_STATUS_DESCRIPTION, allowableValues = ALARM_QUERY_STATUS_ALLOWABLE_VALUES)
             @RequestParam(required = false) String status,
+            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
+            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
+            @ApiParam(value = ALARM_QUERY_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
+            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = ALARM_SORT_PROPERTY_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortProperty,
+            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder,
+            @ApiParam(value = ALARM_QUERY_START_TIME_DESCRIPTION)
             @RequestParam(required = false) Long startTime,
+            @ApiParam(value = ALARM_QUERY_END_TIME_DESCRIPTION)
             @RequestParam(required = false) Long endTime,
+            @ApiParam(value = ALARM_QUERY_FETCH_ORIGINATOR_DESCRIPTION)
             @RequestParam(required = false) Boolean fetchOriginator
     ) throws ThingsboardException {
         AlarmSearchStatus alarmSearchStatus = StringUtils.isEmpty(searchStatus) ? null : AlarmSearchStatus.valueOf(searchStatus);
@@ -239,13 +326,21 @@ public class AlarmController extends BaseController {
         }
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @ApiOperation(value = "Get Highest Alarm Severity (getHighestAlarmSeverity)",
+            notes = "Search the alarms by originator ('entityType' and entityId') and optional 'status' or 'searchStatus' filters and returns the highest AlarmSeverity(CRITICAL, MAJOR, MINOR, WARNING or INDETERMINATE). " +
+                    "Specifying both parameters 'searchStatus' and 'status' at the same time will cause an error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH
+            , produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm/highestSeverity/{entityType}/{entityId}", method = RequestMethod.GET)
     @ResponseBody
     public AlarmSeverity getHighestAlarmSeverity(
-            @PathVariable("entityType") String strEntityType,
-            @PathVariable("entityId") String strEntityId,
+            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, defaultValue = "DEVICE")
+            @PathVariable(ENTITY_TYPE) String strEntityType,
+            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable(ENTITY_ID) String strEntityId,
+            @ApiParam(value = ALARM_QUERY_SEARCH_STATUS_DESCRIPTION, allowableValues = ALARM_QUERY_SEARCH_STATUS_ALLOWABLE_VALUES)
             @RequestParam(required = false) String searchStatus,
+            @ApiParam(value = ALARM_QUERY_STATUS_DESCRIPTION, allowableValues = ALARM_QUERY_STATUS_ALLOWABLE_VALUES)
             @RequestParam(required = false) String status
     ) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);

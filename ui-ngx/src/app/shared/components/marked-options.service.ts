@@ -19,8 +19,13 @@ import { Inject, Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { DOCUMENT } from '@angular/common';
 import { WINDOW } from '@core/services/window.service';
+import { Tokenizer } from 'marked';
+import * as marked from 'marked';
+import { Clipboard } from '@angular/cdk/clipboard';
 
 const copyCodeBlock = '{:copy-code}';
+const codeStyleRegex = '^{:code-style="(.*)"}\n';
+const autoBlock = '{:auto}';
 const targetBlankBlock = '{:target=&quot;_blank&quot;}';
 
 // @dynamic
@@ -36,33 +41,68 @@ export class MarkedOptionsService extends MarkedOptions {
   pedantic = false;
   smartLists = true;
   smartypants = false;
+  mangle = false;
 
   private renderer2 = new MarkedRenderer();
 
   private id = 1;
 
   constructor(private translate: TranslateService,
+              private clipboardService: Clipboard,
               @Inject(WINDOW) private readonly window: Window,
               @Inject(DOCUMENT) private readonly document: Document) {
     super();
-    this.renderer.code = (code: string, language: string | undefined, isEscaped: boolean) => {
-      if (code.endsWith(copyCodeBlock)) {
-        code = code.substring(0, code.length - copyCodeBlock.length);
-        const content = checkLineNumbers(this.renderer2.code(code, language, isEscaped), code);
-        this.id++;
-        return this.wrapCopyCode(this.id, content, code);
-      } else {
-        return this.wrapDiv(checkLineNumbers(this.renderer2.code(code, language, isEscaped), code));
+    // @ts-ignore
+    const tokenizer: Tokenizer = {
+      autolink(src: string, mangle: (cap: string) => string): marked.Tokens.Link {
+        if (src.endsWith(copyCodeBlock)) {
+          return undefined;
+        } else {
+          // @ts-ignore
+          return false;
+        }
+      },
+      url(src: string, mangle: (cap: string) => string): marked.Tokens.Link {
+        if (src.endsWith(copyCodeBlock)) {
+          return undefined;
+        } else {
+          // @ts-ignore
+          return false;
+        }
       }
+    };
+    marked.use({tokenizer});
+    this.renderer.code = (code: string, language: string | undefined, isEscaped: boolean) => {
+      const codeContext = processCode(code);
+      if (codeContext.copyCode) {
+        const content = postProcessCodeContent(this.renderer2.code(codeContext.code, language, isEscaped), codeContext);
+        this.id++;
+        return this.wrapCopyCode(this.id, content, codeContext);
+      } else {
+        return this.wrapDiv(postProcessCodeContent(this.renderer2.code(codeContext.code, language, isEscaped), codeContext));
+      }
+    };
+    this.renderer.table = (header: string, body: string) => {
+      let autoLayout = false;
+      if (header.includes(autoBlock)) {
+        autoLayout = true;
+        header = header.replace(autoBlock, '');
+      }
+      let table = this.renderer2.table(header, body);
+      if (autoLayout) {
+        table = table.replace('<table', '<table class="auto"');
+      }
+      return table;
     };
     this.renderer.tablecell = (content: string, flags: {
       header: boolean;
       align: 'center' | 'left' | 'right' | null;
     }) => {
-      if (content.endsWith(copyCodeBlock)) {
-        content = content.substring(0, content.length - copyCodeBlock.length);
+      const codeContext = processCode(content);
+      codeContext.multiline = false;
+      if (codeContext.copyCode) {
         this.id++;
-        content = this.wrapCopyCode(this.id, content, content);
+        content = this.wrapCopyCode(this.id, codeContext.code, codeContext);
       }
       return this.renderer2.tablecell(content, flags);
     };
@@ -83,10 +123,14 @@ export class MarkedOptionsService extends MarkedOptions {
     return `<div>${content}</div>`;
   }
 
-  private wrapCopyCode(id: number, content: string, code: string): string {
+  private wrapCopyCode(id: number, content: string, context: CodeContext): string {
+    let copyCodeButtonClass = 'clipboard-btn';
+    if (context.multiline) {
+      copyCodeButtonClass += ' multiline';
+    }
     return `<div class="code-wrapper noChars" id="codeWrapper${id}" onClick="markdownCopyCode(${id})">${content}` +
-      `<span id="copyCodeId${id}" style="display: none;">${encodeURIComponent(code)}</span>` +
-      `<button class="clipboard-btn">\n` +
+      `<span id="copyCodeId${id}" style="display: none;">${encodeURIComponent(context.code)}</span>` +
+      `<button class="${copyCodeButtonClass}">\n` +
       `    <p>${this.translate.instant('markdown.copy-code')}</p>\n` +
       `    <div>\n` +
       `       <img src="/assets/copy-code-icon.svg" alt="${this.translate.instant('markdown.copy-code')}">\n` +
@@ -120,7 +164,7 @@ export class MarkedOptionsService extends MarkedOptions {
     const copyWrapper = $('#codeWrapper' + id);
     if (copyWrapper.hasClass('noChars')) {
       const text = decodeURIComponent($('#copyCodeId' + id).text());
-      this.window.navigator.clipboard.writeText(text).then(() => {
+      if (this.clipboardService.copy(text)) {
         import('tooltipster').then(
           () => {
             if (!copyWrapper.hasClass('tooltipstered')) {
@@ -144,17 +188,47 @@ export class MarkedOptionsService extends MarkedOptions {
             }
             const tooltip = copyWrapper.tooltipster('instance');
             tooltip.open();
-          }
-        );
-      });
+          });
+      }
     }
   }
 }
 
-function checkLineNumbers(content: string, code: string): string {
-  const lineCount = code.trim().split('\n').length;
-  if (lineCount < 2) {
-    content = content.replace('<pre>', '<pre class="no-line-numbers">');
+interface CodeContext {
+  copyCode: boolean;
+  multiline: boolean;
+  codeStyle?: string;
+  code: string;
+}
+
+function processCode(code: string): CodeContext {
+  const context: CodeContext = {
+    copyCode: false,
+    multiline: false,
+    code
+  };
+  if (context.code.endsWith(copyCodeBlock)) {
+    context.code = context.code.substring(0, context.code.length - copyCodeBlock.length);
+    context.copyCode = true;
   }
-  return content;
+  const codeStyleMatch = context.code.match(new RegExp(codeStyleRegex));
+  if (codeStyleMatch) {
+    context.codeStyle = codeStyleMatch[1];
+    context.code = context.code.replace(new RegExp(codeStyleRegex), '');
+  }
+  const lineCount = context.code.trim().split('\n').length;
+  context.multiline = lineCount > 1;
+  return context;
+}
+
+function postProcessCodeContent(content: string, context: CodeContext): string {
+  let replacement = '<pre ngNonBindable';
+  if (!context.multiline) {
+    replacement += ' class="no-line-numbers"';
+  }
+  if (context.codeStyle) {
+    replacement += ` style="${context.codeStyle}"`;
+  }
+  replacement += '>';
+  return content.replace('<pre>', replacement);
 }

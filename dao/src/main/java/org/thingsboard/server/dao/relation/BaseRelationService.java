@@ -30,8 +30,11 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationInfo;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
@@ -39,8 +42,10 @@ import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.service.ConstraintValidator;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -53,6 +58,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
 
 import static org.thingsboard.server.common.data.CacheConstants.RELATIONS_CACHE;
+import static org.thingsboard.server.dao.service.Validator.validateId;
 
 /**
  * Created by ashvayka on 28.04.17.
@@ -193,11 +199,11 @@ public class BaseRelationService implements RelationService {
             outboundRelations.addAll(relationDao.findAllByFrom(tenantId, entityId, typeGroup));
         }
 
-        for (EntityRelation relation : inboundRelations){
+        for (EntityRelation relation : inboundRelations) {
             delete(tenantId, cache, relation, true);
         }
 
-        for (EntityRelation relation : outboundRelations){
+        for (EntityRelation relation : outboundRelations) {
             delete(tenantId, cache, relation, false);
         }
 
@@ -555,10 +561,18 @@ public class BaseRelationService implements RelationService {
         }
     }
 
+    @Override
+    public List<EntityRelation> findRuleNodeToRuleChainRelations(TenantId tenantId, RuleChainType ruleChainType, int limit) {
+        log.trace("Executing findRuleNodeToRuleChainRelations, tenantId [{}], ruleChainType {} and limit {}", tenantId, ruleChainType, limit);
+        validateId(tenantId, "Invalid tenant id: " + tenantId);
+        return relationDao.findRuleNodeToRuleChainRelations(ruleChainType, limit);
+    }
+
     protected void validate(EntityRelation relation) {
         if (relation == null) {
             throw new DataValidationException("Relation type should be specified!");
         }
+        ConstraintValidator.validateFields(relation);
         validate(relation.getFrom(), relation.getTo(), relation.getType(), relation.getTypeGroup());
     }
 

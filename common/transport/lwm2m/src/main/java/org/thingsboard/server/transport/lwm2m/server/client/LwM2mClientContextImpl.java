@@ -88,7 +88,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     private final Map<String, LwM2mClient> lwM2mClientsByRegistrationId = new ConcurrentHashMap<>();
     private final Map<UUID, Lwm2mDeviceProfileTransportConfiguration> profiles = new ConcurrentHashMap<>();
 
-    @AfterStartUp
+    @AfterStartUp(order = Integer.MAX_VALUE - 1)
     public void init() {
         String nodeId = context.getNodeId();
         Set<LwM2mClient> fetchedClients = clientStore.getAll();
@@ -278,8 +278,8 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     public LwM2mClient getClientBySessionInfo(TransportProtos.SessionInfoProto sessionInfo) {
         LwM2mClient lwM2mClient = null;
         UUID sessionId = new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB());
-        Predicate<LwM2mClient> isClientFilter = c ->
-                sessionId.equals((new UUID(c.getSession().getSessionIdMSB(), c.getSession().getSessionIdLSB())));
+        Predicate<LwM2mClient> isClientFilter =
+                c -> c.getSession() != null && sessionId.equals((new UUID(c.getSession().getSessionIdMSB(), c.getSession().getSessionIdLSB())));
         if (this.lwM2mClientsByEndpoint.size() > 0) {
             lwM2mClient = this.lwM2mClientsByEndpoint.values().stream().filter(isClientFilter).findAny().orElse(null);
         }
@@ -326,11 +326,6 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         } finally {
             client.unlock();
         }
-    }
-
-    @Override
-    public void removeCredentials(TransportProtos.SessionInfoProto sessionInfo) {
-        //TODO: implement
     }
 
     @Override

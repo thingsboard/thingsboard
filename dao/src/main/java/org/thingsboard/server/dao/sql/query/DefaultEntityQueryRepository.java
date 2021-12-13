@@ -15,8 +15,10 @@
  */
 package org.thingsboard.server.dao.sql.query;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -223,7 +225,6 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     private static final String SELECT_API_USAGE_STATE = "(select aus.id, aus.created_time, aus.tenant_id, aus.entity_id, " +
             "coalesce((select title from tenant where id = aus.entity_id), (select title from customer where id = aus.entity_id)) as name " +
             "from api_usage_state as aus)";
-    static final int MAX_LEVEL_DEFAULT = 50; //This value has to be reasonable small to prevent infinite recursion as early as possible
 
     static {
         entityTableMap.put(EntityType.ASSET, "asset");
@@ -267,6 +268,10 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             " %s GROUP BY entity_id, entity_type) entity";
     private static final String HIERARCHICAL_TO_QUERY_TEMPLATE = HIERARCHICAL_QUERY_TEMPLATE.replace("$in", "to").replace("$out", "from");
     private static final String HIERARCHICAL_FROM_QUERY_TEMPLATE = HIERARCHICAL_QUERY_TEMPLATE.replace("$in", "from").replace("$out", "to");
+
+    @Getter
+    @Value("${sql.relations.max_level:50}")
+    int maxLevelAllowed; //This value has to be reasonable small to prevent infinite recursion as early as possible
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
@@ -384,6 +389,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             } else {
                 entityTypeStr = "'" + entityType.name() + "'";
             }
+
             if (!StringUtils.isEmpty(entityFieldsSelection)) {
                 entityFieldsSelection = String.format("e.id id, %s entity_type, %s", entityTypeStr, entityFieldsSelection);
             } else {
@@ -437,10 +443,10 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                     EntityKeyMapping sortOrderMapping = sortOrderMappingOpt.get();
                     String direction = sortOrder.getDirection() == EntityDataSortOrder.Direction.ASC ? "asc" : "desc";
                     if (sortOrderMapping.getEntityKey().getType() == EntityKeyType.ENTITY_FIELD) {
-                        dataQuery = String.format("%s order by %s %s", dataQuery, sortOrderMapping.getValueAlias(), direction);
+                        dataQuery = String.format("%s order by %s %s, result.id %s", dataQuery, sortOrderMapping.getValueAlias(), direction, direction);
                     } else {
-                        dataQuery = String.format("%s order by %s %s, %s %s", dataQuery,
-                                sortOrderMapping.getSortOrderNumAlias(), direction, sortOrderMapping.getSortOrderStrAlias(), direction);
+                        dataQuery = String.format("%s order by %s %s, %s %s, result.id %s", dataQuery,
+                                sortOrderMapping.getSortOrderNumAlias(), direction, sortOrderMapping.getSortOrderStrAlias(), direction, direction);
                     }
                 }
             }
@@ -711,7 +717,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     }
 
     int getMaxLevel(int maxLevel) {
-        return maxLevel > 0 ? maxLevel : MAX_LEVEL_DEFAULT;
+        return (maxLevel <= 0 || maxLevel > this.maxLevelAllowed) ? this.maxLevelAllowed : maxLevel;
     }
 
     private String getQueryTemplate(EntitySearchDirection direction) {

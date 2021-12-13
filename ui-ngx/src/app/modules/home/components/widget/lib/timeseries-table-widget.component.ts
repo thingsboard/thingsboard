@@ -59,6 +59,7 @@ import {
   getCellStyleInfo,
   getRowStyleInfo,
   getTableCellButtonActions,
+  noDataMessage,
   prepareTableCellButtonActions,
   RowStyleInfo,
   TableCellButtonActionDescriptor,
@@ -126,6 +127,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   public textSearch: string = null;
   public sources: TimeseriesTableSource[];
   public sourceIndex: number;
+  public noDataDisplayMessageText: string;
   private setCellButtonAction: boolean;
 
   private cellContentCache: Array<any> = [];
@@ -147,6 +149,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   private rowStylesInfo: RowStyleInfo;
 
   private subscriptions: Subscription[] = [];
+  private widgetTimewindowChanged$: Subscription;
 
   private searchAction: WidgetAction = {
     name: 'action.search',
@@ -176,6 +179,25 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.datasources = this.ctx.datasources;
     this.initialize();
     this.ctx.updateWidgetParams();
+
+    if (this.displayPagination) {
+      this.widgetTimewindowChanged$ = this.ctx.defaultSubscription.widgetTimewindowChanged$.subscribe(
+        () => {
+          this.sources.forEach((source) => {
+            if (this.displayPagination) {
+              source.pageLink.page = 0;
+            }
+          });
+        }
+      );
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.widgetTimewindowChanged$) {
+      this.widgetTimewindowChanged$.unsubscribe();
+      this.widgetTimewindowChanged$ = null;
+    }
   }
 
   ngAfterViewInit(): void {
@@ -230,6 +252,9 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
       this.defaultPageSize = pageSize;
     }
     this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
+
+    this.noDataDisplayMessageText =
+      noDataMessage(this.widgetConfig.noDataDisplayMessage, 'widget.no-data-found', this.utils, this.translate);
 
     let cssString = constructTableCssString(this.widgetConfig);
 

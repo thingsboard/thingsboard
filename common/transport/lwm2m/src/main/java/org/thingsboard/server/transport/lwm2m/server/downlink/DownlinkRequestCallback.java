@@ -17,7 +17,9 @@ package org.thingsboard.server.transport.lwm2m.server.downlink;
 
 public interface DownlinkRequestCallback<R, T> {
 
-    default void onSent(R request){};
+    default boolean onSent(R request){
+        return true;
+    };
 
     void onSuccess(R request, T response);
 

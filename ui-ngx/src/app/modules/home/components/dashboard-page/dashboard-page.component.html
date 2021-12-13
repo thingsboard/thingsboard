@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-dashboard-page mat-content" [ngClass]="{'mobile-app': isMobileApp && !isEdit}" tb-toast toastTarget="dashboardRoot"
+<div class="tb-dashboard-page mat-content" [ngClass]="{'mobile-app': isMobileApp && !isEdit}"
      fxFlex tb-fullscreen [fullscreen]="widgetEditMode || iframeMode || forceFullscreen || isFullscreen">
   <tb-hotkeys-cheatsheet #cheatSheetComponent></tb-hotkeys-cheatsheet>
   <section class="tb-dashboard-toolbar"
@@ -139,6 +139,7 @@
     </tb-dashboard-toolbar>
   </section>
   <section class="tb-dashboard-container tb-absolute-fill"
+           tb-toast toastTarget="dashboardRoot"
            #dashboardContainer
            [ngClass]="{ 'is-fullscreen': forceFullscreen,
            'tb-dashboard-toolbar-opened': toolbarOpened,
@@ -148,7 +149,7 @@
       <mat-drawer-content fxLayout="column" fxLayoutAlign="center start">
         <section *ngIf="!widgetEditMode" class="tb-dashboard-title"
                  [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">
-          <h3 [fxShow]="!isEdit && displayTitle()">{{ dashboard.title }}</h3>
+          <h3 [fxShow]="!isEdit && displayTitle()">{{ translatedDashboardTitle }}</h3>
           <mat-form-field [fxShow]="isEdit" class="mat-block">
             <mat-label translate [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">dashboard.title</mat-label>
             <input matInput class="tb-dashboard-title"

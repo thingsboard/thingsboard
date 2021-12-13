@@ -152,6 +152,7 @@ export interface WidgetTypeParameters {
   useCustomDatasources?: boolean;
   maxDatasources?: number;
   maxDataKeys?: number;
+  datasourcesOptional?: boolean;
   dataKeysOptional?: boolean;
   stateData?: boolean;
   hasDataPageLink?: boolean;
@@ -508,6 +509,7 @@ export interface WidgetConfig {
   titleStyle?: {[klass: string]: any};
   units?: string;
   decimals?: number;
+  noDataDisplayMessage?: string;
   actions?: {[actionSourceId: string]: Array<WidgetActionDescriptor>};
   settings?: any;
   alarmSource?: Datasource;

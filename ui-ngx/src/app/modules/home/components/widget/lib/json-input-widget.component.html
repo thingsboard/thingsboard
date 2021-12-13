@@ -22,7 +22,7 @@
         class="tb-json-input__form"
         [formGroup]="attributeUpdateFormGroup"
         (ngSubmit)="save()">
-      <div fxLayout="column" fxLayoutGap="10px" fxFlex *ngIf="entityDetected && isValidParameter && dataKeyDetected">
+      <div fxLayout="column" fxLayoutGap="10px" fxFlex *ngIf="datasourceDetected && !errorMessage; else errorContainer">
         <fieldset fxFlex>
           <tb-json-object-edit
             [editorStyle]="{minHeight: '100px'}"
@@ -51,19 +51,10 @@
         </div>
       </div>
 
-    <div fxLayout="column" fxLayoutAlign="center center" fxFlex *ngIf="!entityDetected || !dataKeyDetected || !isValidParameter">
-      <div class="tb-json-input__error"
-           *ngIf="!entityDetected">
-        {{ 'widgets.input-widgets.no-entity-selected' | translate }}
-      </div>
-      <div class="tb-json-input__error"
-           *ngIf="entityDetected && !dataKeyDetected">
-        {{ 'widgets.input-widgets.no-datakey-selected' | translate }}
-      </div>
-      <div class="tb-json-input__error"
-           *ngIf="dataKeyDetected && !isValidParameter">
+    <ng-template #errorContainer>
+      <div class="tb-json-input__error" fxLayout="column" fxLayoutAlign="center center" fxFlex>
         {{ errorMessage | translate }}
       </div>
-    </div>
+    </ng-template>
   </form>
 </div>

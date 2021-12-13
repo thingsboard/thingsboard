@@ -223,9 +223,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
             return;
         }
         transportService.process(DeviceTransportType.COAP, TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(credentials.get().getCredentialsId()).build(),
-                new CoapDeviceAuthCallback(exchange, (deviceCredentials, deviceProfile) -> {
-                    processRequest(exchange, type, request, deviceCredentials, deviceProfile);
-                }));
+                new CoapDeviceAuthCallback(exchange, (deviceCredentials, deviceProfile) -> processRequest(exchange, type, request, deviceCredentials, deviceProfile)));
     }
 
     private void processRequest(CoapExchange exchange, SessionMsgType type, Request request, ValidateDeviceCredentialsResponse deviceCredentials, DeviceProfile deviceProfile) {

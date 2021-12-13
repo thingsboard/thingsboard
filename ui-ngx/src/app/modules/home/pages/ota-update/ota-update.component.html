@@ -65,12 +65,18 @@
           <mat-error *ngIf="entityForm.get('title').hasError('required')">
             {{ 'ota-update.title-required' | translate }}
           </mat-error>
+          <mat-error *ngIf="entityForm.get('title').hasError('maxlength')">
+            {{ 'ota-update.title-max-length' | translate }}
+          </mat-error>
         </mat-form-field>
         <mat-form-field class="mat-block" fxFlex>
           <mat-label translate>ota-update.version</mat-label>
           <input matInput formControlName="version" type="text" required [readonly]="!isAdd">
           <mat-error *ngIf="entityForm.get('version').hasError('required')">
             {{ 'ota-update.version-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="entityForm.get('version').hasError('maxlength')">
+            {{ 'ota-update.version-max-length' | translate }}
           </mat-error>
         </mat-form-field>
       </div>
@@ -116,7 +122,8 @@
           </mat-checkbox>
         </section>
         <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayoutGap.sm="8px"
-             fxLayout.xs="column" fxLayout.md="column" *ngIf="!(isAdd && this.entityForm.get('generateChecksum').value)">
+             fxLayout.xs="column" fxLayout.md="column"
+             *ngIf="!(isAdd && this.entityForm.get('generateChecksum').value)">
           <mat-form-field class="mat-block" fxFlex="33">
             <mat-label translate>ota-update.checksum-algorithm</mat-label>
             <mat-select formControlName="checksumAlgorithm">
@@ -154,7 +161,8 @@
           <input matInput formControlName="url"
                  type="text"
                  [required]="entityForm.get('isURL').value">
-          <mat-error *ngIf="entityForm.get('url').hasError('required') || entityForm.get('url').hasError('pattern')" translate>
+          <mat-error *ngIf="entityForm.get('url').hasError('required') || entityForm.get('url').hasError('pattern')"
+                     translate>
             ota-update.direct-url-required
           </mat-error>
         </mat-form-field>

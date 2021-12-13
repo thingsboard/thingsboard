@@ -28,7 +28,7 @@ import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
-import org.thingsboard.server.transport.lwm2m.server.store.TbSecurityStore;
+import org.thingsboard.server.transport.lwm2m.server.store.TbMainSecurityStore;
 
 @Component
 @RequiredArgsConstructor
@@ -37,7 +37,7 @@ import org.thingsboard.server.transport.lwm2m.server.store.TbSecurityStore;
 public class TbLwM2MAuthorizer implements Authorizer {
 
     private final TbLwM2MDtlsSessionStore sessionStorage;
-    private final TbSecurityStore securityStore;
+    private final TbMainSecurityStore securityStore;
     private final SecurityChecker securityChecker = new SecurityChecker();
     private final LwM2mClientContext clientContext;
 
@@ -58,17 +58,16 @@ public class TbLwM2MAuthorizer implements Authorizer {
             // If session info is not found, this may be the trusted certificate, so we still need to check all other options below.
         }
         SecurityInfo expectedSecurityInfo = null;
-        if (securityStore != null) {
-            try {
-                expectedSecurityInfo = securityStore.getByEndpoint(registration.getEndpoint());
-            } catch (LwM2MAuthException e) {
-                log.info("Registration failed: FORBIDDEN, endpointId: [{}]", registration.getEndpoint());
-                return null;
-            }
+        try {
+            expectedSecurityInfo = securityStore.getByEndpoint(registration.getEndpoint());
+        } catch (LwM2MAuthException e) {
+            log.info("Registration failed: FORBIDDEN, endpointId: [{}]", registration.getEndpoint());
+            return null;
         }
         if (securityChecker.checkSecurityInfo(registration.getEndpoint(), senderIdentity, expectedSecurityInfo)) {
             return registration;
         } else {
+            securityStore.remove(registration.getEndpoint(), registration.getId());
             return null;
         }
     }

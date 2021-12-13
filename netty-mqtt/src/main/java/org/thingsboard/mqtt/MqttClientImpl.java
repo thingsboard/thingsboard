@@ -55,6 +55,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 
 /**
  * Represents an MqttClientImpl connected to a single MQTT server. Will try to keep the connection going at all times
@@ -155,11 +156,14 @@ final class MqttClientImpl implements MqttClient {
                     if (callback != null) {
                         callback.connectionLost(e);
                     }
+                    pendingSubscriptions.forEach((id, mqttPendingSubscription) -> mqttPendingSubscription.onChannelClosed());
                     pendingSubscriptions.clear();
                     serverSubscriptions.clear();
                     subscriptions.clear();
+                    pendingServerUnsubscribes.forEach((id, mqttPendingServerUnsubscribes) -> mqttPendingServerUnsubscribes.onChannelClosed());
                     pendingServerUnsubscribes.clear();
                     qos2PendingIncomingPublishes.clear();
+                    pendingPublishes.forEach((id, mqttPendingPublish) -> mqttPendingPublish.onChannelClosed());
                     pendingPublishes.clear();
                     pendingSubscribeTopics.clear();
                     handlerToSubscribtion.clear();
@@ -361,24 +365,30 @@ final class MqttClientImpl implements MqttClient {
         MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBLISH, false, qos, retain, 0);
         MqttPublishVariableHeader variableHeader = new MqttPublishVariableHeader(topic, getNewMessageId().messageId());
         MqttPublishMessage message = new MqttPublishMessage(fixedHeader, variableHeader, payload);
-        MqttPendingPublish pendingPublish = new MqttPendingPublish(variableHeader.packetId(), future, payload.retain(), message, qos);
+        MqttPendingPublish pendingPublish = new MqttPendingPublish(variableHeader.packetId(), future,
+                payload.retain(), message, qos, () -> !pendingPublishes.containsKey(variableHeader.packetId()));
         this.pendingPublishes.put(pendingPublish.getMessageId(), pendingPublish);
         ChannelFuture channelFuture = this.sendAndFlushPacket(message);
 
         if (channelFuture != null) {
-            pendingPublish.setSent(true);
-            if (channelFuture.cause() != null) {
-                future.setFailure(channelFuture.cause());
-                return future;
-            }
-        }
-        if (pendingPublish.isSent() && pendingPublish.getQos() == MqttQoS.AT_MOST_ONCE) {
-            this.pendingPublishes.remove(pendingPublish.getMessageId());
-            pendingPublish.getFuture().setSuccess(null); //We don't get an ACK for QOS 0
-        } else if (pendingPublish.isSent()) {
-            pendingPublish.startPublishRetransmissionTimer(this.eventLoop.next(), this::sendAndFlushPacket);
+            channelFuture.addListener(result -> {
+                pendingPublish.setSent(true);
+                if (result.cause() != null) {
+                    pendingPublishes.remove(pendingPublish.getMessageId());
+                    future.setFailure(result.cause());
+                } else {
+                    if (pendingPublish.isSent() && pendingPublish.getQos() == MqttQoS.AT_MOST_ONCE) {
+                        pendingPublishes.remove(pendingPublish.getMessageId());
+                        pendingPublish.getFuture().setSuccess(null); //We don't get an ACK for QOS 0
+                    } else if (pendingPublish.isSent()) {
+                        pendingPublish.startPublishRetransmissionTimer(eventLoop.next(), MqttClientImpl.this::sendAndFlushPacket);
+                    } else {
+                        pendingPublishes.remove(pendingPublish.getMessageId());
+                    }
+                }
+            });
         } else {
-            this.pendingPublishes.remove(pendingPublish.getMessageId());
+            pendingPublishes.remove(pendingPublish.getMessageId());
         }
         return future;
     }
@@ -462,7 +472,8 @@ final class MqttClientImpl implements MqttClient {
         MqttSubscribePayload payload = new MqttSubscribePayload(Collections.singletonList(subscription));
         MqttSubscribeMessage message = new MqttSubscribeMessage(fixedHeader, variableHeader, payload);
 
-        final MqttPendingSubscription pendingSubscription = new MqttPendingSubscription(future, topic, message);
+        final MqttPendingSubscription pendingSubscription = new MqttPendingSubscription(future, topic, message,
+                () -> !pendingSubscriptions.containsKey(variableHeader.messageId()));
         pendingSubscription.addHandler(handler, once);
         this.pendingSubscriptions.put(variableHeader.messageId(), pendingSubscription);
         this.pendingSubscribeTopics.add(topic);
@@ -480,7 +491,8 @@ final class MqttClientImpl implements MqttClient {
             MqttUnsubscribePayload payload = new MqttUnsubscribePayload(Collections.singletonList(topic));
             MqttUnsubscribeMessage message = new MqttUnsubscribeMessage(fixedHeader, variableHeader, payload);
 
-            MqttPendingUnsubscription pendingUnsubscription = new MqttPendingUnsubscription(promise, topic, message);
+            MqttPendingUnsubscription pendingUnsubscription = new MqttPendingUnsubscription(promise, topic, message,
+                    () -> !pendingServerUnsubscribes.containsKey(variableHeader.messageId()));
             this.pendingServerUnsubscribes.put(variableHeader.messageId(), pendingUnsubscription);
             pendingUnsubscription.startRetransmissionTimer(this.eventLoop.next(), this::sendAndFlushPacket);
 

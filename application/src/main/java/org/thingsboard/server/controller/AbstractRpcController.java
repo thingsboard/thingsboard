@@ -25,7 +25,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
@@ -34,10 +33,11 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
+import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
+import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.LocalRequestMetaData;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
 import org.thingsboard.server.service.security.AccessValidator;
@@ -60,7 +60,7 @@ public abstract class AbstractRpcController extends BaseController {
     protected TbCoreDeviceRpcService deviceRpcService;
 
     @Autowired
-    private AccessValidator accessValidator;
+    protected AccessValidator accessValidator;
 
     @Value("${server.rest.server_side_rpc.min_timeout:5000}")
     protected long minTimeout;

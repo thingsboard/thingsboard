@@ -42,7 +42,7 @@ export interface NavTreeEditCallbacks {
   nodeIsOpen?: (id: string) => boolean;
   nodeIsLoaded?: (id: string) => boolean;
   refreshNode?: (id: string) => void;
-  updateNode?: (id: string, newName: string) => void;
+  updateNode?: (id: string, newName: string, updatedData?: any) => void;
   createNode?: (parentId: string, node: NavTreeNode, pos: number | string) => void;
   deleteNode?: (id: string) => void;
   disableNode?: (id: string) => void;
@@ -76,19 +76,19 @@ export class NavTreeComponent implements OnInit {
   }
 
   @Input()
-  private loadNodes: LoadNodesCallback;
+  loadNodes: LoadNodesCallback;
 
   @Input()
-  private searchCallback: NodeSearchCallback;
+  searchCallback: NodeSearchCallback;
 
   @Input()
-  private onNodeSelected: NodeSelectedCallback;
+  onNodeSelected: NodeSelectedCallback;
 
   @Input()
-  private onNodesInserted: NodesInsertedCallback;
+  onNodesInserted: NodesInsertedCallback;
 
   @Input()
-  private editCallbacks: NavTreeEditCallbacks;
+  editCallbacks: NavTreeEditCallbacks;
 
   private treeElement: JSTree;
 
@@ -221,10 +221,13 @@ export class NavTreeComponent implements OnInit {
             }
           }
         };
-        this.editCallbacks.updateNode = (id, newName) => {
+        this.editCallbacks.updateNode = (id, newName, updatedData) => {
           const node: NavTreeNode = this.treeElement.jstree('get_node', id);
           if (node) {
             this.treeElement.jstree('rename_node', node, newName);
+          }
+          if (updatedData && node.data) {
+            Object.assign(node.data, updatedData);
           }
         };
         this.editCallbacks.createNode = (parentId, node, pos) => {

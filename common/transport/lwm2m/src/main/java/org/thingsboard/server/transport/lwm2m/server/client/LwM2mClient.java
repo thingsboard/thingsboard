@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
@@ -64,6 +65,7 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.g
 
 @Slf4j
 @EqualsAndHashCode(of = {"endpoint"})
+@ToString(of = "endpoint")
 public class LwM2mClient implements Serializable {
 
     private static final long serialVersionUID = 8793482946289222623L;
@@ -116,6 +118,10 @@ public class LwM2mClient implements Serializable {
 
     @Getter
     private final AtomicInteger retryAttempts;
+
+    @Getter
+    @Setter
+    private UUID lastSentRpcId;
 
     public Object clone() throws CloneNotSupportedException {
         return super.clone();

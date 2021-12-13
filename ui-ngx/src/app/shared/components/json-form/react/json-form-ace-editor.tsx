@@ -20,16 +20,15 @@ import Button from '@material-ui/core/Button';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
 import { IEditorProps } from 'react-ace/src/types';
 import { mergeMap } from 'rxjs/operators';
-import { loadAceDependencies } from '@shared/models/ace/ace.models';
+import { getAce } from '@shared/models/ace/ace.models';
 import { from } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { CircularProgress, IconButton } from '@material-ui/core';
 import { MouseEvent } from 'react';
 import { Help, HelpOutline } from '@material-ui/icons';
-import { position } from 'html2canvas/dist/types/css/property-descriptors/position';
 
 const ReactAce = React.lazy(() => {
-  return loadAceDependencies().pipe(
+  return getAce().pipe(
     mergeMap(() => {
       return from(import('react-ace'));
     })
@@ -205,9 +204,9 @@ class ThingsboardAceEditor extends React.Component<ThingsboardAceEditorProps, Th
                       </div>
                       <React.Suspense fallback={<div>Loading...</div>}>
                         <ReactAce  mode={this.props.mode}
+                                   theme={'textmate'}
                                    height={this.state.isFull ? '100%' : '150px'}
                                    width={this.state.isFull ? '100%' : '300px'}
-                                   theme='github'
                                    onChange={this.onValueChanged}
                                    onFocus={this.onFocus}
                                    onBlur={this.onBlur}

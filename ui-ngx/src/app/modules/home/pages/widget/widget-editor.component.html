@@ -21,7 +21,7 @@
     <mat-toolbar class="mat-elevation-z1 tb-edit-toolbar mat-hue-3" fxLayoutGap="16px" fxLayoutGap.lt-xl="8px">
       <mat-form-field floatLabel="always" hideRequiredMarker class="tb-widget-title">
         <mat-label></mat-label>
-        <input [disabled]="isReadOnly" matInput required
+        <input [disabled]="isReadOnly" matInput required maxlength="255"
                [(ngModel)]="widget.widgetName" (ngModelChange)="isDirty = true"
                placeholder="{{ 'widget.title' | translate }}"/>
       </mat-form-field>
@@ -251,6 +251,7 @@
                 <button mat-button (click)="beautifyJs()">
                   {{ 'widget.tidy' | translate }}
                 </button>
+                <span tb-help-popup="widget/editor/widget_js_fn" tb-help-popup-placement="top" [tb-help-popup-style]="{maxWidth: '1200px'}"></span>
                 <button mat-icon-button class="tb-mat-32"
                         (click)="javascriptFullscreen = !javascriptFullscreen"
                         matTooltip="{{(javascriptFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"

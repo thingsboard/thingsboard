@@ -22,27 +22,10 @@ import org.eclipse.leshan.core.util.Hex;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
+import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MSecureServerConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportBootstrapConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
-
-import java.math.BigInteger;
-import java.security.AlgorithmParameters;
-import java.security.GeneralSecurityException;
-import java.security.KeyFactory;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateEncodingException;
-import java.security.cert.X509Certificate;
-import java.security.spec.ECGenParameterSpec;
-import java.security.spec.ECParameterSpec;
-import java.security.spec.ECPoint;
-import java.security.spec.ECPublicKeySpec;
-import java.security.spec.KeySpec;
 
 @Slf4j
 @Service
@@ -72,10 +55,9 @@ public class LwM2MServerSecurityInfoRepository {
 
     private String getPublicKey(LwM2MSecureServerConfig config) {
         try {
-            KeyStore keyStore = serverConfig.getKeyStoreValue();
-            if (keyStore != null) {
-                X509Certificate serverCertificate = (X509Certificate) serverConfig.getKeyStoreValue().getCertificate(config.getCertificateAlias());
-                return Hex.encodeHexString(serverCertificate.getPublicKey().getEncoded());
+            SslCredentials sslCredentials = config.getSslCredentials();
+            if (sslCredentials != null) {
+                return Hex.encodeHexString(sslCredentials.getPublicKey().getEncoded());
             }
         } catch (Exception e) {
             log.trace("Failed to fetch public key from key store!", e);

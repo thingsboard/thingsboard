@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>3.3.2-SNAPSHOT</version>
+        <version>3.3.3-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
     <artifactId>application</artifactId>
@@ -250,8 +250,8 @@
             <artifactId>grpc-stub</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.springfox</groupId>
-            <artifactId>springfox-swagger2</artifactId>
+            <groupId>org.thingsboard</groupId>
+            <artifactId>springfox-boot-starter</artifactId>
         </dependency>
         <dependency>
             <groupId>com.sun.winsw</groupId>
@@ -325,10 +325,6 @@
             <artifactId>delight-nashorn-sandbox</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.springfox.ui</groupId>
-            <artifactId>springfox-swagger-ui-rfc6570</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.passay</groupId>
             <artifactId>passay</artifactId>
         </dependency>
@@ -348,6 +344,17 @@
         <resources>
             <resource>
                 <directory>${project.basedir}/src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>thingsboard.yml</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>thingsboard.yml</exclude>
+                </excludes>
             </resource>
         </resources>
         <plugins>

@@ -24,6 +24,7 @@ import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -45,6 +46,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
@@ -85,6 +87,32 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID;
+import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_INFO_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_NAME_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_SORT_PROPERTY_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_TEXT_SEARCH_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_TYPE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION_MARKDOWN;
+import static org.thingsboard.server.controller.ControllerConstants.EDGE_ASSIGN_ASYNC_FIRST_STEP_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.EDGE_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 
 @RestController
@@ -102,8 +130,9 @@ public class DeviceController extends BaseController {
 
     @ApiOperation(value = "Get Device (getDeviceById)",
             notes = "Fetch the Device object based on the provided Device Id. " +
-                    "If the user has the authority of 'Tenant Administrator', the server checks that the device is owned by the same tenant. " +
-                    "If the user has the authority of 'Customer User', the server checks that the device is assigned to the same customer.")
+                    "If the user has the authority of 'TENANT_ADMIN', the server checks that the device is owned by the same tenant. " +
+                    "If the user has the authority of 'CUSTOMER_USER', the server checks that the device is assigned to the same customer." +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/{deviceId}", method = RequestMethod.GET)
     @ResponseBody
@@ -121,7 +150,8 @@ public class DeviceController extends BaseController {
     @ApiOperation(value = "Get Device Info (getDeviceInfoById)",
             notes = "Fetch the Device Info object based on the provided Device Id. " +
                     "If the user has the authority of 'Tenant Administrator', the server checks that the device is owned by the same tenant. " +
-                    "If the user has the authority of 'Customer User', the server checks that the device is assigned to the same customer. " + DEVICE_INFO_DESCRIPTION)
+                    "If the user has the authority of 'Customer User', the server checks that the device is assigned to the same customer. " +
+                    DEVICE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/info/{deviceId}", method = RequestMethod.GET)
     @ResponseBody
@@ -137,11 +167,13 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Create Or Update Device (saveDevice)",
-            notes = "Create or update the Device. When creating device, platform generates Device Id as [time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address). " +
-            "Device credentials are also generated if not provided in the 'accessToken' request parameter. " +
-            "The newly created device id will be present in the response. " +
-            "Specify existing Device id to update the device. " +
-            "Referencing non-existing device Id will cause 'Not Found' error.")
+            notes = "Create or update the Device. When creating device, platform generates Device Id as " + UUID_WIKI_LINK +
+                    "Device credentials are also generated if not provided in the 'accessToken' request parameter. " +
+                    "The newly created device id will be present in the response. " +
+                    "Specify existing Device id to update the device. " +
+                    "Referencing non-existing device Id will cause 'Not Found' error." +
+                    "\n\nDevice name is unique in the scope of tenant. Use unique identifiers like MAC or IMEI for the device names and non-unique 'label' field for user-friendly visualization purposes."
+                    + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device", method = RequestMethod.POST)
     @ResponseBody
@@ -161,7 +193,7 @@ public class DeviceController extends BaseController {
 
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
 
-            onDeviceCreatedOrUpdated(savedDevice, oldDevice, !created);
+            onDeviceCreatedOrUpdated(savedDevice, oldDevice, !created, getCurrentUser());
 
             return savedDevice;
         } catch (Exception e) {
@@ -169,14 +201,45 @@ public class DeviceController extends BaseController {
                     null, created ? ActionType.ADDED : ActionType.UPDATED, e);
             throw handleException(e);
         }
-
     }
 
-    private void onDeviceCreatedOrUpdated(Device savedDevice, Device oldDevice, boolean updated) {
+    @ApiOperation(value = "Create Device (saveDevice) with credentials ",
+            notes = "Create or update the Device. When creating device, platform generates Device Id as " + UUID_WIKI_LINK +
+                    "Requires to provide the Device Credentials object as well. Useful to create device and credentials in one request. " +
+                    "You may find the example of LwM2M device and RPK credentials below: \n\n" +
+                    DEVICE_WITH_DEVICE_CREDENTIALS_PARAM_DESCRIPTION_MARKDOWN +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/device-with-credentials", method = RequestMethod.POST)
+    @ResponseBody
+    public Device saveDeviceWithCredentials(@ApiParam(value = "The JSON object with device and credentials. See method description above for example.")
+                                            @RequestBody SaveDeviceWithCredentialsRequest deviceAndCredentials) throws ThingsboardException {
+        Device device = checkNotNull(deviceAndCredentials.getDevice());
+        DeviceCredentials credentials = checkNotNull(deviceAndCredentials.getCredentials());
+        boolean created = device.getId() == null;
+        try {
+            device.setTenantId(getCurrentUser().getTenantId());
+            checkEntity(device.getId(), device, Resource.DEVICE);
+            Device savedDevice = deviceService.saveDeviceWithCredentials(device, credentials);
+            checkNotNull(savedDevice);
+            tbClusterService.onDeviceUpdated(savedDevice, device);
+            logEntityAction(savedDevice.getId(), savedDevice,
+                    savedDevice.getCustomerId(),
+                    device.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
+
+            return savedDevice;
+        } catch (Exception e) {
+            logEntityAction(emptyId(EntityType.DEVICE), device,
+                    null, created ? ActionType.ADDED : ActionType.UPDATED, e);
+            throw handleException(e);
+        }
+    }
+
+    private void onDeviceCreatedOrUpdated(Device savedDevice, Device oldDevice, boolean updated, SecurityUser user) {
         tbClusterService.onDeviceUpdated(savedDevice, oldDevice);
 
         try {
-            logEntityAction(savedDevice.getId(), savedDevice,
+            logEntityAction(user, savedDevice.getId(), savedDevice,
                     savedDevice.getCustomerId(),
                     updated ? ActionType.UPDATED : ActionType.ADDED, null);
         } catch (ThingsboardException e) {
@@ -185,7 +248,7 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Delete device (deleteDevice)",
-            notes = "Deletes the device, it's credentials and all the relations (from and to the device). Referencing non-existing device Id will cause an error.")
+            notes = "Deletes the device, it's credentials and all the relations (from and to the device). Referencing non-existing device Id will cause an error." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/device/{deviceId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
@@ -217,7 +280,7 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Assign device to customer (assignDeviceToCustomer)",
-            notes = "Creates assignment of the device to customer. Customer will be able to query device afterwards.")
+            notes = "Creates assignment of the device to customer. Customer will be able to query device afterwards." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer/{customerId}/device/{deviceId}", method = RequestMethod.POST)
     @ResponseBody
@@ -253,7 +316,7 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Unassign device from customer (unassignDeviceFromCustomer)",
-            notes = "Clears assignment of the device to customer. Customer will not be able to query device afterwards.")
+            notes = "Clears assignment of the device to customer. Customer will not be able to query device afterwards." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer/device/{deviceId}", method = RequestMethod.DELETE)
     @ResponseBody
@@ -289,7 +352,7 @@ public class DeviceController extends BaseController {
     @ApiOperation(value = "Make device publicly available (assignDeviceToPublicCustomer)",
             notes = "Device will be available for non-authorized (not logged-in) users. " +
                     "This is useful to create dashboards that you plan to share/embed on a publicly available website. " +
-                    "However, users that are logged-in and belong to different tenant will not be able to access the device.")
+                    "However, users that are logged-in and belong to different tenant will not be able to access the device." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer/public/device/{deviceId}", method = RequestMethod.POST)
     @ResponseBody
@@ -316,7 +379,7 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Get Device Credentials (getDeviceCredentialsByDeviceId)",
-            notes = "If during device creation there wasn't specified any credentials, platform generates random 'ACCESS_TOKEN' credentials.")
+            notes = "If during device creation there wasn't specified any credentials, platform generates random 'ACCESS_TOKEN' credentials." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/{deviceId}/credentials", method = RequestMethod.GET)
     @ResponseBody
@@ -342,7 +405,7 @@ public class DeviceController extends BaseController {
     @ApiOperation(value = "Update device credentials (updateDeviceCredentials)", notes = "During device creation, platform generates random 'ACCESS_TOKEN' credentials. " +
             "Use this method to update the device credentials. First use 'getDeviceCredentialsByDeviceId' to get the credentials id and value. " +
             "Then use current method to update the credentials type and value. It is not possible to create multiple device credentials for the same device. " +
-            "The structure of device credentials id and value is simple for the 'ACCESS_TOKEN' but is much more complex for the 'MQTT_BASIC' or 'LWM2M_CREDENTIALS'.")
+            "The structure of device credentials id and value is simple for the 'ACCESS_TOKEN' but is much more complex for the 'MQTT_BASIC' or 'LWM2M_CREDENTIALS'." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/device/credentials", method = RequestMethod.POST)
     @ResponseBody
@@ -371,7 +434,7 @@ public class DeviceController extends BaseController {
 
     @ApiOperation(value = "Get Tenant Devices (getTenantDevices)",
             notes = "Returns a page of devices owned by tenant. " +
-                    PAGE_DATA_PARAMETERS)
+                    PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/devices", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
@@ -403,7 +466,7 @@ public class DeviceController extends BaseController {
 
     @ApiOperation(value = "Get Tenant Device Infos (getTenantDeviceInfos)",
             notes = "Returns a page of devices info objects owned by tenant. " +
-                    PAGE_DATA_PARAMETERS + DEVICE_INFO_DESCRIPTION)
+                    PAGE_DATA_PARAMETERS + DEVICE_INFO_DESCRIPTION + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/deviceInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
@@ -414,7 +477,7 @@ public class DeviceController extends BaseController {
             @RequestParam int page,
             @ApiParam(value = DEVICE_TYPE_DESCRIPTION)
             @RequestParam(required = false) String type,
-            @ApiParam(value = DEVICE_PROFILE_ID_DESCRIPTION)
+            @ApiParam(value = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
             @RequestParam(required = false) String deviceProfileId,
             @ApiParam(value = DEVICE_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
@@ -441,7 +504,7 @@ public class DeviceController extends BaseController {
 
     @ApiOperation(value = "Get Tenant Device (getTenantDevice)",
             notes = "Requested device must be owned by tenant that the user belongs to. " +
-                    "Device name is an unique property of device. So it can be used to identify the device.")
+                    "Device name is an unique property of device. So it can be used to identify the device." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/devices", params = {"deviceName"}, method = RequestMethod.GET)
     @ResponseBody
@@ -458,13 +521,13 @@ public class DeviceController extends BaseController {
 
     @ApiOperation(value = "Get Customer Devices (getCustomerDevices)",
             notes = "Returns a page of devices objects assigned to customer. " +
-                    PAGE_DATA_PARAMETERS)
+                    PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/customer/{customerId}/devices", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<Device> getCustomerDevices(
             @ApiParam(value = CUSTOMER_ID_PARAM_DESCRIPTION, required = true)
-            @PathVariable("customerId") String strCustomerId,
+            @PathVariable(CUSTOMER_ID) String strCustomerId,
             @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
             @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
@@ -495,7 +558,7 @@ public class DeviceController extends BaseController {
 
     @ApiOperation(value = "Get Customer Device Infos (getCustomerDeviceInfos)",
             notes = "Returns a page of devices info objects assigned to customer. " +
-                    PAGE_DATA_PARAMETERS + DEVICE_INFO_DESCRIPTION)
+                    PAGE_DATA_PARAMETERS + DEVICE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/customer/{customerId}/deviceInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
@@ -508,7 +571,7 @@ public class DeviceController extends BaseController {
             @RequestParam int page,
             @ApiParam(value = DEVICE_TYPE_DESCRIPTION)
             @RequestParam(required = false) String type,
-            @ApiParam(value = DEVICE_PROFILE_ID_DESCRIPTION)
+            @ApiParam(value = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
             @RequestParam(required = false) String deviceProfileId,
             @ApiParam(value = DEVICE_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
@@ -536,7 +599,7 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Get Devices By Ids (getDevicesByIds)",
-            notes = "Requested devices must be owned by tenant or assigned to customer which user is performing the request. ")
+            notes = "Requested devices must be owned by tenant or assigned to customer which user is performing the request. " + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/devices", params = {"deviceIds"}, method = RequestMethod.GET)
     @ResponseBody
@@ -567,11 +630,13 @@ public class DeviceController extends BaseController {
     @ApiOperation(value = "Find related devices (findByQuery)",
             notes = "Returns all devices that are related to the specific entity. " +
                     "The entity id, relation type, device types, depth of the search, and other query parameters defined using complex 'DeviceSearchQuery' object. " +
-                    "See 'Model' tab of the Parameters for more info.")
+                    "See 'Model' tab of the Parameters for more info." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/devices", method = RequestMethod.POST)
     @ResponseBody
-    public List<Device> findByQuery(@RequestBody DeviceSearchQuery query) throws ThingsboardException {
+    public List<Device> findByQuery(
+            @ApiParam(value = "The device search query JSON")
+            @RequestBody DeviceSearchQuery query) throws ThingsboardException {
         checkNotNull(query);
         checkNotNull(query.getParameters());
         checkNotNull(query.getDeviceTypes());
@@ -593,7 +658,8 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Get Device Types (getDeviceTypes)",
-            notes = "Returns a set of unique device profile names based on devices that are either owned by the tenant or assigned to the customer which user is performing the request.")
+            notes = "Returns a set of unique device profile names based on devices that are either owned by the tenant or assigned to the customer which user is performing the request."
+                    + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/types", method = RequestMethod.GET)
     @ResponseBody
@@ -614,7 +680,7 @@ public class DeviceController extends BaseController {
                     "Once device is claimed, the customer becomes its owner and customer users may access device data as well as control the device. \n" +
                     "In order to enable claiming devices feature a system parameter security.claim.allowClaimingByDefault should be set to true, " +
                     "otherwise a server-side claimingAllowed attribute with the value true is obligatory for provisioned devices. \n" +
-                    "See official documentation for more details regarding claiming.")
+                    "See official documentation for more details regarding claiming." + CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('CUSTOMER_USER')")
     @RequestMapping(value = "/customer/device/{deviceName}/claim", method = RequestMethod.POST)
     @ResponseBody
@@ -672,7 +738,8 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Reclaim device (reClaimDevice)",
-            notes = "Reclaiming means the device will be unassigned from the customer and the device will be available for claiming again.")
+            notes = "Reclaiming means the device will be unassigned from the customer and the device will be available for claiming again."
+                    + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/customer/device/{deviceName}/claim", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
@@ -726,7 +793,7 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Assign device to tenant (assignDeviceToTenant)",
-            notes = "Creates assignment of the device to tenant. Thereafter tenant will be able to reassign the device to a customer.")
+            notes = "Creates assignment of the device to tenant. Thereafter tenant will be able to reassign the device to a customer." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/{tenantId}/device/{deviceId}", method = RequestMethod.POST)
     @ResponseBody
@@ -781,8 +848,11 @@ public class DeviceController extends BaseController {
 
     @ApiOperation(value = "Assign device to edge (assignDeviceToEdge)",
             notes = "Creates assignment of an existing device to an instance of The Edge. " +
-                    "The Edge is a software product for edge computing. " +
-                    "It allows bringing data analysis and management to the edge, while seamlessly synchronizing with the platform server (cloud). ")
+                    EDGE_ASSIGN_ASYNC_FIRST_STEP_DESCRIPTION +
+                    "Second, remote edge service will receive a copy of assignment device " +
+                    EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION +
+                    "Third, once device will be delivered to edge service, it's going to be available for usage on remote edge instance." + TENANT_AUTHORITY_PARAGRAPH,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/device/{deviceId}", method = RequestMethod.POST)
     @ResponseBody
@@ -820,7 +890,12 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Unassign device from edge (unassignDeviceFromEdge)",
-            notes = "Clears assignment of the device to the edge")
+            notes = "Clears assignment of the device to the edge. " +
+                    EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION +
+                    "Second, remote edge service will receive an 'unassign' command to remove device " +
+                    EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION +
+                    "Third, once 'unassign' command will be delivered to edge service, it's going to remove device locally." + TENANT_AUTHORITY_PARAGRAPH,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/device/{deviceId}", method = RequestMethod.DELETE)
     @ResponseBody
@@ -859,7 +934,7 @@ public class DeviceController extends BaseController {
 
     @ApiOperation(value = "Get devices assigned to edge (getEdgeDevices)",
             notes = "Returns a page of devices assigned to edge. " +
-                    PAGE_DATA_PARAMETERS)
+                    PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/edge/{edgeId}/devices", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
@@ -916,7 +991,7 @@ public class DeviceController extends BaseController {
             notes = "The platform gives an ability to load OTA (over-the-air) packages to devices. " +
                     "It can be done in two different ways: device scope or device profile scope." +
                     "In the response you will find the number of devices with specified device profile, but without previously defined device scope OTA package. " +
-                    "It can be useful when you want to define number of devices that will be affected with future OTA package")
+                    "It can be useful when you want to define number of devices that will be affected with future OTA package" + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/devices/count/{otaPackageType}/{deviceProfileId}", method = RequestMethod.GET)
     @ResponseBody
@@ -937,12 +1012,13 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Import the bulk of devices (processDevicesBulkImport)",
-            notes = "There's an ability to import the bulk of devices using the only .csv file.")
+            notes = "There's an ability to import the bulk of devices using the only .csv file." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @PostMapping("/device/bulk_import")
     public BulkImportResult<Device> processDevicesBulkImport(@RequestBody BulkImportRequest request) throws Exception {
-        return deviceBulkImportService.processBulkImport(request, getCurrentUser(), importedDeviceInfo -> {
-            onDeviceCreatedOrUpdated(importedDeviceInfo.getEntity(), importedDeviceInfo.getOldEntity(), importedDeviceInfo.isUpdated());
+        SecurityUser user = getCurrentUser();
+        return deviceBulkImportService.processBulkImport(request, user, importedDeviceInfo -> {
+            onDeviceCreatedOrUpdated(importedDeviceInfo.getEntity(), importedDeviceInfo.getOldEntity(), importedDeviceInfo.isUpdated(), user);
         });
     }
 
