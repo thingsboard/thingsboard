@@ -22,7 +22,6 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -59,20 +58,20 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
-import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.config.ThingsboardSecurityConfiguration;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
-import org.thingsboard.server.queue.memory.InMemoryStorage;
 import org.thingsboard.server.service.mail.TestMailService;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
@@ -83,6 +82,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -95,7 +95,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
 @Slf4j
-public abstract class AbstractWebTest extends AbstractInMemoryStorageTest{
+public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected ObjectMapper mapper = new ObjectMapper();
 
@@ -214,9 +214,27 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest{
         doDelete("/api/tenant/" + tenantId.getId().toString())
                 .andExpect(status().isOk());
 
+        verifyNoTenantsLeft();
+
         tenantProfileService.deleteTenantProfiles(TenantId.SYS_TENANT_ID);
 
         log.info("Executed web test teardown");
+    }
+
+    void verifyNoTenantsLeft() throws Exception {
+        List<Tenant> loadedTenants = new ArrayList<>();
+        PageLink pageLink = new PageLink(10);
+        PageData<Tenant> pageData;
+        do {
+            pageData = doGetTypedWithPageLink("/api/tenants?", new TypeReference<PageData<Tenant>>() {
+            }, pageLink);
+            loadedTenants.addAll(pageData.getData());
+            if (pageData.hasNext()) {
+                pageLink = pageLink.nextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        assertThat(loadedTenants).as("All tenants expected to be deleted, but some tenants left in the database").isEmpty();
     }
 
     protected void loginSysAdmin() throws Exception {
@@ -580,6 +598,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest{
     protected Edge constructEdge(String name, String type) {
         return constructEdge(tenantId, name, type);
     }
+
     protected Edge constructEdge(TenantId tenantId, String name, String type) {
         Edge edge = new Edge();
         edge.setTenantId(tenantId);
