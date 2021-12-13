@@ -157,8 +157,8 @@ public class EntityQueryController extends BaseController {
             "            },\n" +
             "            \"name\": \"Thermostat T1\",\n" +
             "            \"type\": \"thermostat\",\n" +
-            "            \"createdTime\": \"1633430698071\",\n" +
-            "            \"lastActivityTime\": \"1635761085285\",\n" +
+            "            \"createdTime\": 1633430698071,\n" +
+            "            \"lastActivityTime\": 1635761085285,\n" +
             "            \"tenantInfo\": {\n" +
             "                \"id\": {\n" +
             "                    \"entityType\": \"TENANT\",\n" +
