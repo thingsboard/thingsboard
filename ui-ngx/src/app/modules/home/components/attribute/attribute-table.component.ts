@@ -111,6 +111,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   pageLink: PageLink;
   textSearchMode = false;
   dataSource: AttributeDatasource;
+  hidePageSize = false;
 
   activeValue = false;
   dirtyValue = false;
@@ -129,10 +130,14 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   aliasController: IAliasController;
   private widgetDatasource: Datasource;
 
+  private widgetResize$: ResizeObserver;
+
   private disableAttributeScopeSelectionValue: boolean;
+
   get disableAttributeScopeSelection(): boolean {
     return this.disableAttributeScopeSelectionValue;
   }
+
   @Input()
   set disableAttributeScopeSelection(value: boolean) {
     this.disableAttributeScopeSelectionValue = coerceBooleanProperty(value);
@@ -168,14 +173,10 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   @Input()
   entityName: string;
 
-  @ViewChild('attributeTableContainer', {static: true}) attributeTableContainerRef: ElementRef;
   @ViewChild('searchInput') searchInputField: ElementRef;
 
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
-
-  public hidePageSize = false;
-  private widgetResize$: ResizeObserver;
 
   constructor(protected store: Store<AppState>,
               private attributeService: AttributeService,
@@ -190,7 +191,8 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
               private dashboardUtils: DashboardUtilsService,
               private widgetService: WidgetService,
               private zone: NgZone,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private elementRef: ElementRef) {
     super(store);
     this.dirtyValue = !this.activeValue;
     const sortOrder: SortOrder = { property: 'key', direction: Direction.ASC };
@@ -200,13 +202,13 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
 
   ngOnInit() {
     this.widgetResize$ = new ResizeObserver(() => {
-      const showHidePageSize = this.attributeTableContainerRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+      const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
       if (showHidePageSize !== this.hidePageSize) {
         this.hidePageSize = showHidePageSize;
-        this.cd.detectChanges();
+        this.cd.markForCheck();
       }
     });
-    this.widgetResize$.observe(this.attributeTableContainerRef.nativeElement);
+    this.widgetResize$.observe(this.elementRef.nativeElement);
   }
 
   ngOnDestroy() {

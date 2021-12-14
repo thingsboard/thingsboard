@@ -43,7 +43,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { BaseData, HasId } from '@shared/models/base-data';
 import { ActivatedRoute } from '@angular/router';
 import {
-  CellActionDescriptor, CellActionDescriptorType,
+  CellActionDescriptor,
+  CellActionDescriptorType,
   EntityActionTableColumn,
   EntityColumn,
   EntityTableColumn,
@@ -55,11 +56,7 @@ import { EntityTypeTranslation } from '@shared/models/entity-type.models';
 import { DialogService } from '@core/services/dialog.service';
 import { AddEntityDialogComponent } from './add-entity-dialog.component';
 import { AddEntityDialogData, EntityAction } from '@home/models/entity/entity-component.models';
-import {
-  calculateIntervalStartEndTime,
-  HistoryWindowType,
-  Timewindow
-} from '@shared/models/time/time.models';
+import { calculateIntervalStartEndTime, HistoryWindowType, Timewindow } from '@shared/models/time/time.models';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { isDefined, isUndefined } from '@core/utils';
@@ -100,6 +97,7 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
 
   defaultPageSize = 10;
   displayPagination = true;
+  hidePageSize = false;
   pageSizeOptions;
   pageLink: PageLink;
   textSearchMode = false;
@@ -110,8 +108,6 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
 
   isDetailsOpen = false;
   detailsPanelOpened = new EventEmitter<boolean>();
-
-  @ViewChild('entitiesTableContainer', {static: true}) entitiesTableContainerRef: ElementRef;
 
   @ViewChild('entityTableHeader', {static: true}) entityTableHeaderAnchor: TbAnchorComponent;
 
@@ -125,7 +121,6 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
   private viewInited = false;
 
   private widgetResize$: ResizeObserver;
-  public hidePageSize = false;
 
   constructor(protected store: Store<AppState>,
               public route: ActivatedRoute,
@@ -134,7 +129,8 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
               private dialogService: DialogService,
               private domSanitizer: DomSanitizer,
               private cd: ChangeDetectorRef,
-              private componentFactoryResolver: ComponentFactoryResolver) {
+              private componentFactoryResolver: ComponentFactoryResolver,
+              private elementRef: ElementRef) {
     super(store);
   }
 
@@ -145,13 +141,13 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
       this.init(this.route.snapshot.data.entitiesTableConfig);
     }
     this.widgetResize$ = new ResizeObserver(() => {
-      const showHidePageSize = this.entitiesTableContainerRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+      const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
       if (showHidePageSize !== this.hidePageSize) {
         this.hidePageSize = showHidePageSize;
-        this.cd.detectChanges();
+        this.cd.markForCheck();
       }
     });
-    this.widgetResize$.observe(this.entitiesTableContainerRef.nativeElement);
+    this.widgetResize$.observe(this.elementRef.nativeElement);
   }
 
   ngOnDestroy() {

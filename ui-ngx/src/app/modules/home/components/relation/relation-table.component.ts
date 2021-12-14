@@ -67,6 +67,7 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
   displayedColumns: string[];
   direction: EntitySearchDirection;
   pageLink: PageLink;
+  hidePageSize = false;
   textSearchMode = false;
   dataSource: RelationsDatasource;
 
@@ -77,7 +78,6 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
   viewsInited = false;
 
   private widgetResize$: ResizeObserver;
-  public hidePageSize = false;
 
   @Input()
   set active(active: boolean) {
@@ -105,7 +105,6 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
     }
   }
 
-  @ViewChild('relationTableContainer', {static: true}) relationTableContainerRef: ElementRef;
   @ViewChild('searchInput') searchInputField: ElementRef;
 
   @ViewChild(MatPaginator) paginator: MatPaginator;
@@ -116,7 +115,8 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
               public translate: TranslateService,
               public dialog: MatDialog,
               private dialogService: DialogService,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private elementRef: ElementRef) {
     super(store);
     this.dirtyValue = !this.activeValue;
     const sortOrder: SortOrder = { property: 'type', direction: Direction.ASC };
@@ -128,13 +128,13 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
 
   ngOnInit() {
     this.widgetResize$ = new ResizeObserver(() => {
-      const showHidePageSize = this.relationTableContainerRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+      const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
       if (showHidePageSize !== this.hidePageSize) {
         this.hidePageSize = showHidePageSize;
-        this.cd.detectChanges();
+        this.cd.markForCheck();
       }
     });
-    this.widgetResize$.observe(this.relationTableContainerRef.nativeElement);
+    this.widgetResize$.observe(this.elementRef.nativeElement);
   }
 
   ngOnDestroy() {

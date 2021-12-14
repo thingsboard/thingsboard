@@ -16,6 +16,7 @@
 
 import {
   AfterViewInit,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   Input,
@@ -117,7 +118,6 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   @Input()
   ctx: WidgetContext;
 
-  @ViewChild('timeseriesWidgetContainer', {static: true}) timeseriesWidgetContainerRef: ElementRef;
   @ViewChild('searchInput') searchInputField: ElementRef;
   @ViewChildren(MatPaginator) paginators: QueryList<MatPaginator>;
   @ViewChildren(MatSort) sorts: QueryList<MatSort>;
@@ -127,11 +127,11 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   public enableStickyAction = true;
   public pageSizeOptions;
   public textSearchMode = false;
+  public hidePageSize = false;
   public textSearch: string = null;
   public sources: TimeseriesTableSource[];
   public sourceIndex: number;
   public noDataDisplayMessageText: string;
-  public hidePageSize = false;
   private setCellButtonAction: boolean;
 
   private cellContentCache: Array<any> = [];
@@ -172,7 +172,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
               private utils: UtilsService,
               private translate: TranslateService,
               private domSanitizer: DomSanitizer,
-              private datePipe: DatePipe) {
+              private datePipe: DatePipe,
+              private cd: ChangeDetectorRef) {
     super(store);
   }
 
@@ -196,13 +197,13 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
         }
       );
       this.widgetResize$ = new ResizeObserver(() => {
-        const showHidePageSize = this.timeseriesWidgetContainerRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+        const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
         if (showHidePageSize !== this.hidePageSize) {
           this.hidePageSize = showHidePageSize;
-          this.ctx.detectChanges();
+          this.cd.markForCheck();
         }
       });
-      this.widgetResize$.observe(this.timeseriesWidgetContainerRef.nativeElement);
+      this.widgetResize$.observe(this.elementRef.nativeElement);
     }
   }
 

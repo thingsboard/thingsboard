@@ -46,13 +46,12 @@ import {
   WidgetActionsDatasource
 } from '@home/components/widget/action/manage-widget-actions.component.models';
 import { UtilsService } from '@core/services/utils.service';
-import { WidgetActionDescriptor, WidgetActionSource } from '@shared/models/widget.models';
+import { WidgetActionDescriptor, WidgetActionSource, widgetType } from '@shared/models/widget.models';
 import {
   WidgetActionDialogComponent,
   WidgetActionDialogData
 } from '@home/components/widget/action/widget-action-dialog.component';
 import { deepClone } from '@core/utils';
-import { widgetType } from '@shared/models/widget.models';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 
@@ -81,14 +80,14 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
   displayedColumns: string[];
   pageLink: PageLink;
   textSearchMode = false;
+  hidePageSize = false;
   dataSource: WidgetActionsDatasource;
 
   viewsInited = false;
   dirtyValue = false;
-  public hidePageSize = false;
+
   private widgetResize$: ResizeObserver;
 
-  @ViewChild('manageActionWidgetContainer', {static: true}) manageActionWidgetContainerRef: ElementRef;
   @ViewChild('searchInput') searchInputField: ElementRef;
 
   @ViewChild(MatPaginator) paginator: MatPaginator;
@@ -101,7 +100,8 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
               private utils: UtilsService,
               private dialog: MatDialog,
               private dialogs: DialogService,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private elementRef: ElementRef) {
     super(store);
     const sortOrder: SortOrder = { property: 'actionSourceName', direction: Direction.ASC };
     this.pageLink = new PageLink(10, 0, null, sortOrder);
@@ -111,13 +111,13 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
 
   ngOnInit(): void {
     this.widgetResize$ = new ResizeObserver(() => {
-      const showHidePageSize = this.manageActionWidgetContainerRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+      const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
       if (showHidePageSize !== this.hidePageSize) {
         this.hidePageSize = showHidePageSize;
-        this.cd.detectChanges();
+        this.cd.markForCheck();
       }
     });
-    this.widgetResize$.observe(this.manageActionWidgetContainerRef.nativeElement);
+    this.widgetResize$.observe(this.elementRef.nativeElement);
   }
 
   ngOnDestroy(): void {
