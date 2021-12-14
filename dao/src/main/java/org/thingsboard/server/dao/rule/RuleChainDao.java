@@ -81,5 +81,4 @@ public interface RuleChainDao extends Dao<RuleChain>, TenantEntityDao {
 
     Collection<RuleChain> findByTenantIdAndTypeAndName(TenantId tenantId, RuleChainType type, String name);
 
-    List<RuleChainOutputLabelsUsage> getOutputLabelUsage(UUID id, UUID id1);
 }
