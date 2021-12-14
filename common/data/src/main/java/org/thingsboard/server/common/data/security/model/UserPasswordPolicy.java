@@ -36,7 +36,7 @@ public class UserPasswordPolicy implements Serializable {
     @ApiModelProperty(position = 1, value = "Minimum number of special in the password." )
     private Integer minimumSpecialCharacters;
     @ApiModelProperty(position = 1, value = "Allow white-spaces")
-    private Boolean allowWhitespaces;
+    private Boolean allowWhitespaces = true;
 
     @ApiModelProperty(position = 1, value = "Password expiration period (days). Force expiration of the password." )
     private Integer passwordExpirationPeriodDays;
