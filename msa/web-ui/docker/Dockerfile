@@ -22,6 +22,7 @@ RUN chmod a+x /tmp/*.sh \
     && mv /tmp/start-web-ui.sh /usr/bin
 
 ENV NODE_ENV production
+ENV DOCKER_MODE true
 
 WORKDIR ${pkg.installFolder}
 
