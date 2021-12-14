@@ -165,6 +165,7 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
         return data.getData().stream().filter(item -> item.getEntityId().equals(entityId)).findFirst().orElse(null);
     }
 
+    @Override
     public synchronized void doUpdate(Map<EntityId, EntityData> newDataMap) {
         List<Integer> subIdsToCancel = new ArrayList<>();
         List<TbSubscription> subsToAdd = new ArrayList<>();

@@ -68,6 +68,8 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
 
     private final int maxEntitiesPerAlarmSubscription;
 
+    private final int maxAlarmQueriesPerRefreshInterval;
+
     @Getter
     @Setter
     private PageData<AlarmData> alarms;
@@ -75,18 +77,30 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     @Setter
     private boolean tooManyEntities;
 
+    private int alarmInvocationAttempts;
+
     public TbAlarmDataSubCtx(String serviceId, TelemetryWebSocketService wsService,
                              EntityService entityService, TbLocalSubscriptionService localSubscriptionService,
                              AttributesService attributesService, SubscriptionServiceStatistics stats, AlarmService alarmService,
-                             TelemetryWebSocketSessionRef sessionRef, int cmdId, int maxEntitiesPerAlarmSubscription) {
+                             TelemetryWebSocketSessionRef sessionRef, int cmdId,
+                             int maxEntitiesPerAlarmSubscription, int maxAlarmQueriesPerRefreshInterval) {
         super(serviceId, wsService, entityService, localSubscriptionService, attributesService, stats, sessionRef, cmdId);
         this.maxEntitiesPerAlarmSubscription = maxEntitiesPerAlarmSubscription;
+        this.maxAlarmQueriesPerRefreshInterval = maxAlarmQueriesPerRefreshInterval;
         this.alarmService = alarmService;
         this.entitiesMap = new LinkedHashMap<>();
         this.alarmsMap = new HashMap<>();
     }
 
     public void fetchAlarms() {
+        alarmInvocationAttempts++;
+        log.trace("[{}] Fetching alarms: {}", cmdId, alarmInvocationAttempts);
+        if (alarmInvocationAttempts <= maxAlarmQueriesPerRefreshInterval) {
+            doFetchAlarms();
+        }
+    }
+
+    private void doFetchAlarms() {
         AlarmDataUpdate update;
         if (!entitiesMap.isEmpty()) {
             long start = System.currentTimeMillis();
@@ -103,6 +117,8 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
     }
 
     public void fetchData() {
+        resetInvocationCounter();
+        log.trace("[{}] Fetching data: {}", cmdId, alarmInvocationAttempts);
         super.fetchData();
         entitiesMap.clear();
         tooManyEntities = data.hasNext();
@@ -222,7 +238,7 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
             }
         }
         if (shouldRefresh) {
-            fetchAlarms();
+            doFetchAlarms();
         }
     }
 
@@ -256,8 +272,19 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
         return true;
     }
 
+    public synchronized void checkAndResetInvocationCounter() {
+        boolean fetchNeeded = this.alarmInvocationAttempts > maxAlarmQueriesPerRefreshInterval;
+        resetInvocationCounter();
+        if (fetchNeeded) {
+            fetchAlarms();
+        } else {
+            cleanupOldAlarms();
+        }
+    }
+
     @Override
     protected synchronized void doUpdate(Map<EntityId, EntityData> newDataMap) {
+        resetInvocationCounter();
         entitiesMap.clear();
         tooManyEntities = data.hasNext();
         for (EntityData entityData : data.getData()) {
@@ -293,6 +320,10 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
         }
         subIdsToCancel.forEach(subId -> localSubscriptionService.cancelSubscription(getSessionId(), subId));
         subsToAdd.forEach(localSubscriptionService::addSubscription);
+    }
+
+    private void resetInvocationCounter() {
+        alarmInvocationAttempts = 0;
     }
 
     @Override
