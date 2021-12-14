@@ -561,6 +561,15 @@ message TbAttributeDeleteProto {
   repeated string keys = 7;
 }
 
+message TbTimeSeriesDeleteProto {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+  int64 tenantIdMSB = 4;
+  int64 tenantIdLSB = 5;
+  repeated string keys = 6;
+}
+
 message TbTimeSeriesUpdateProto {
   string entityType = 1;
   int64 entityIdMSB = 2;
@@ -614,6 +623,7 @@ message SubscriptionMgrMsgProto {
   TbAlarmSubscriptionProto alarmSub = 7;
   TbAlarmUpdateProto alarmUpdate = 8;
   TbAlarmDeleteProto alarmDelete = 9;
+  TbTimeSeriesDeleteProto tsDelete = 10;
 }
 
 message LocalSubscriptionServiceMsgProto {

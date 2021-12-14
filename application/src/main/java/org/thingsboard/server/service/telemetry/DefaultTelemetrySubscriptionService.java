@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
@@ -272,6 +273,13 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     @Override
+    public void deleteTimeseriesAndNotify(TenantId tenantId, EntityId entityId, List<String> keys, List<DeleteTsKvQuery> deleteTsKvQueries, FutureCallback<Void> callback) {
+        ListenableFuture<List<Void>> deleteFuture = tsService.remove(tenantId, entityId, deleteTsKvQueries);
+        addVoidCallback(deleteFuture, callback);
+        addWsCallback(deleteFuture, success -> onTimeSeriesDelete(tenantId, entityId, keys));
+    }
+
+    @Override
     public void saveAttrAndNotify(TenantId tenantId, EntityId entityId, String scope, String key, long value, FutureCallback<Void> callback) {
         saveAndNotify(tenantId, entityId, scope, Collections.singletonList(new BaseAttributeKvEntry(new LongDataEntry(key, value)
                 , System.currentTimeMillis())), callback);
@@ -333,6 +341,20 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
             }
         } else {
             TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toTimeseriesUpdateProto(tenantId, entityId, ts);
+            clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
+        }
+    }
+
+    private void onTimeSeriesDelete(TenantId tenantId, EntityId entityId, List<String> keys) {
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
+        if (currentPartitions.contains(tpi)) {
+            if (subscriptionManagerService.isPresent()) {
+                subscriptionManagerService.get().onTimeSeriesDelete(tenantId, entityId, keys, TbCallback.EMPTY);
+            } else {
+                log.warn("Possible misconfiguration because subscriptionManagerService is null!");
+            }
+        } else {
+            TransportProtos.ToCoreMsg toCoreMsg = TbSubscriptionUtils.toTimeseriesDeleteProto(tenantId, entityId, keys);
             clusterService.pushMsgToCore(tpi, entityId.getId(), toCoreMsg, null);
         }
     }

@@ -31,5 +31,7 @@ public class BaseDeleteTsKvQuery extends BaseTsKvQuery implements DeleteTsKvQuer
         this(key, startTs, endTs, false);
     }
 
-
+    public Boolean getRewriteLatestIfDeleted() {
+        return rewriteLatestIfDeleted;
+    }
 }
