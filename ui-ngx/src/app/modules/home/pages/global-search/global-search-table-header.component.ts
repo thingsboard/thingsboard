@@ -52,7 +52,7 @@ export class GlobalSearchTableHeaderComponent extends EntityTableHeaderComponent
               private translate: TranslateService) {
     super(store);
     this.entityFormGroup = this.fb.group({
-      entityType: [GlobalSearchEntityTypes.WIDGETS_BUNDLE],
+      entityType: [GlobalSearchEntityTypes.DEVICE],
       searchQuery: ''
     });
   }

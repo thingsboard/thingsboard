@@ -39,20 +39,20 @@ export class OwnerId implements EntityId {
 }
 
 export enum GlobalSearchEntityTypes {
-  WIDGETS_BUNDLE = EntityType.WIDGETS_BUNDLE,
-  TENANT = EntityType.TENANT,
+  DEVICE = EntityType.DEVICE,
+  ASSET = EntityType.ASSET,
+  RULE_CHAIN = EntityType.RULE_CHAIN,
+  DASHBOARD = EntityType.DASHBOARD,
+  DEVICE_PROFILE = EntityType.DEVICE_PROFILE,
   CUSTOMER = EntityType.CUSTOMER,
   USER = EntityType.USER,
-  DASHBOARD = EntityType.DASHBOARD,
-  ASSET = EntityType.ASSET,
-  DEVICE = EntityType.DEVICE,
-  RULE_CHAIN = EntityType.RULE_CHAIN,
   ENTITY_VIEW = EntityType.ENTITY_VIEW,
-  TENANT_PROFILE = EntityType.TENANT_PROFILE,
-  DEVICE_PROFILE = EntityType.DEVICE_PROFILE,
-  TB_RESOURCE = EntityType.TB_RESOURCE,
   OTA_PACKAGE = EntityType.OTA_PACKAGE,
-  EDGE = EntityType.EDGE
+  EDGE = EntityType.EDGE,
+  TB_RESOURCE = EntityType.TB_RESOURCE,
+  TENANT = EntityType.TENANT,
+  TENANT_PROFILE = EntityType.TENANT_PROFILE,
+  WIDGETS_BUNDLE = EntityType.WIDGETS_BUNDLE
 }
 
 export const GlobalSearchEntityTypesTranslation = new Map<GlobalSearchEntityTypes, string>(
