@@ -21,13 +21,10 @@ let _projectRoot = null;
 
 
 (async() => {
-    await fse.move(path.join(projectRoot(), 'target', 'thingsboard-js-executor-linux-x64'),
+    await fse.move(path.join(projectRoot(), 'target', 'thingsboard-js-executor-linux'),
                    path.join(targetPackageDir('linux'), 'bin', 'tb-js-executor'),
                    {overwrite: true});
-    await fse.move(path.join(projectRoot(), 'target', 'thingsboard-js-executor-linux-arm64'),
-                   path.join(targetPackageDir('linux'), 'bin-arm64', 'tb-js-executor'),
-                   {overwrite: true});
-    await fse.move(path.join(projectRoot(), 'target', 'thingsboard-js-executor-win-x64.exe'),
+    await fse.move(path.join(projectRoot(), 'target', 'thingsboard-js-executor-win.exe'),
                    path.join(targetPackageDir('windows'), 'bin', 'tb-js-executor.exe'),
                    {overwrite: true});
 })();
