@@ -16,13 +16,19 @@
 
 FROM thingsboard/base
 
-COPY start-web-ui.sh ${pkg.name}.deb /tmp/
+ARG TARGETPLATFORM
+
+COPY start-web-ui.sh ${pkg.name}.deb ${pkg.name}-arm64.deb /tmp/
 
 RUN chmod a+x /tmp/*.sh \
     && mv /tmp/start-web-ui.sh /usr/bin
 
-RUN yes | dpkg -i /tmp/${pkg.name}.deb
+RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; \
+    then yes | dpkg -i /tmp/${pkg.name}-arm64.deb; \
+    else yes | dpkg -i /tmp/${pkg.name}.deb; \
+    fi
 RUN rm /tmp/${pkg.name}.deb
+RUN rm /tmp/${pkg.name}-arm64.deb
 
 RUN systemctl --no-reload disable --now ${pkg.name}.service > /dev/null 2>&1 || :
 
