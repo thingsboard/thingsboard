@@ -69,6 +69,5 @@ public interface PermissionChecker<I extends EntityId, T extends HasTenantId> {
         }
     };
 
-    PermissionChecker allowReadPermissionChecker = new GenericPermissionChecker(Operation.READ, Operation.READ_TELEMETRY, Operation.READ_ATTRIBUTES);
 
 }
