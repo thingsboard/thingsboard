@@ -106,11 +106,6 @@ public class JpaRuleChainDao extends JpaAbstractSearchTextDao<RuleChainEntity, R
     }
 
     @Override
-    public List<RuleChainOutputLabelsUsage> getOutputLabelUsage(UUID tenantId, UUID ruleChainId) {
-        return null;
-    }
-
-    @Override
     public Long countByTenantId(TenantId tenantId) {
         return ruleChainRepository.countByTenantId(tenantId.getId());
     }
