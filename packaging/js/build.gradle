@@ -36,6 +36,12 @@ ospackage {
     user pkgUser
     permissionGroup pkgUser
 
+    // Copy the executable file
+    from("${buildDir}/package/linux/bin/${pkgName}") {
+        fileMode 0500
+        into "bin"
+    }
+
     // Copy the init file
     from("${buildDir}/package/linux/init/template") {
         fileMode 0500
@@ -72,16 +78,8 @@ buildRpm {
     preUninstall file("${buildDir}/control/rpm/prerm")
     postUninstall file("${buildDir}/control/rpm/postrm")
 
-    into pkgInstallFolder
-
     user pkgUser
     permissionGroup pkgUser
-
-    // Copy the executable file
-    from("${buildDir}/package/linux/bin/${pkgName}") {
-        fileMode 0500
-        into "bin"
-    }
 
     // Copy the system unit files
     from("${buildDir}/control/template.service") {
@@ -113,16 +111,8 @@ buildDeb {
     preUninstall file("${buildDir}/control/deb/prerm")
     postUninstall file("${buildDir}/control/deb/postrm")
 
-    into pkgInstallFolder
-
     user pkgUser
     permissionGroup pkgUser
-
-    // Copy the executable file
-    from("${buildDir}/package/linux/bin/${pkgName}") {
-        fileMode 0500
-        into "bin"
-    }
 
     // Copy the system unit files
     from("${buildDir}/control/template.service") {
@@ -136,46 +126,3 @@ buildDeb {
 
     link("/etc/${pkgName}/conf", "${pkgInstallFolder}/conf")
 }
-
-// Same as the buildRpm task
-task buildDebArm64(type: Deb) {
-
-    arch = "arm64"
-
-    archiveFileName = "${pkgName}-arm64.deb"
-
-    configurationFile("${pkgInstallFolder}/conf/${pkgName}.conf")
-    configurationFile("${pkgInstallFolder}/conf/custom-environment-variables.yml")
-    configurationFile("${pkgInstallFolder}/conf/default.yml")
-    configurationFile("${pkgInstallFolder}/conf/logger.js")
-
-    preInstall file("${buildDir}/control/deb/preinst")
-    postInstall file("${buildDir}/control/deb/postinst")
-    preUninstall file("${buildDir}/control/deb/prerm")
-    postUninstall file("${buildDir}/control/deb/postrm")
-
-    into pkgInstallFolder
-
-    user pkgUser
-    permissionGroup pkgUser
-
-    // Copy the executable file
-    from("${buildDir}/package/linux/bin-arm64/${pkgName}") {
-        fileMode 0500
-        into "bin"
-    }
-
-    // Copy the system unit files
-    from("${buildDir}/control/template.service") {
-        addParentDirs = false
-        fileMode 0644
-        into "/lib/systemd/system"
-        rename { String filename ->
-            "${pkgName}.service"
-        }
-    }
-
-    link("/etc/${pkgName}/conf", "${pkgInstallFolder}/conf")
-}
-
-buildDeb.finalizedBy buildDebArm64
