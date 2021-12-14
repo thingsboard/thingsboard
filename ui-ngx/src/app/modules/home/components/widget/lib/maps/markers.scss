@@ -29,6 +29,10 @@
   box-shadow: none;
 }
 
-.leaflet-container{
+.leaflet-container {
   background-color: white;
+}
+
+.leaflet-buttons-control-button.pm-disabled {
+  pointer-events: none;
 }

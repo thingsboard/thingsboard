@@ -14,18 +14,16 @@
 /// limitations under the License.
 ///
 
-import * as L from 'leaflet';
+import { ComplexFilterPredicateInfo, EntityKeyValueType } from '@shared/models/query/query.models';
 
-declare module 'leaflet' {
-
-    namespace Control {
-        class AddMarker extends L.Control { }
-        class AddPolygon extends L.Control { }
-    }
-
-    namespace control {
-        function addMarker(options): Control.AddMarker;
-        function addPolygon(options): Control.AddPolygon;
-    }
-
+export interface ComplexFilterPredicateDialogData {
+  complexPredicate: ComplexFilterPredicateInfo;
+  key: string;
+  readonly: boolean;
+  isAdd: boolean;
+  valueType: EntityKeyValueType;
+  displayUserParameters: boolean;
+  allowUserDynamicSource: boolean;
+  onlyUserDynamicSource: boolean;
 }
+

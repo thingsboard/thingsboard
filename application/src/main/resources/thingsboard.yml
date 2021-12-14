@@ -816,9 +816,11 @@ transport:
     downlink_pool_size: "${LWM2M_DOWNLINK_POOL_SIZE:10}"
     ota_pool_size: "${LWM2M_OTA_POOL_SIZE:10}"
     clean_period_in_sec: "${LWM2M_CLEAN_PERIOD_IN_SEC:2}"
-    log_max_length: "${LWM2M_LOG_MAX_LENGTH:1024}"
     # Use redis for Security and Registration stores
     redis.enabled: "${LWM2M_REDIS_ENABLED:false}"
+    network_config: # In this section you can specify custom parameters for LwM2M network configuration and expose the env variables to configure outside
+#      - key: "PROTOCOL_STAGE_THREAD_COUNT"
+#        value: "${LWM2M_PROTOCOL_STAGE_THREAD_COUNT:4}"
   snmp:
     enabled: "${SNMP_ENABLED:true}"
     response_processing:

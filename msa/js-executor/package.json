@@ -1,12 +1,12 @@
 {
   "name": "thingsboard-js-executor",
   "private": true,
-  "version": "3.3.2",
+  "version": "3.3.3",
   "description": "ThingsBoard JavaScript Executor Microservice",
   "main": "server.js",
   "bin": "server.js",
   "scripts": {
-    "install": "pkg -t node12-linux-x64,node12-win-x64 --out-path ./target . && node install.js",
+    "install": "pkg -t node12-linux-x64,node12-linux-arm64,node12-win-x64 --out-path ./target . && node install.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon server.js",
     "start-prod": "NODE_ENV=production nodemon server.js"

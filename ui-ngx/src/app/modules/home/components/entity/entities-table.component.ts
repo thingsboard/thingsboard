@@ -43,8 +43,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { BaseData, HasId } from '@shared/models/base-data';
 import { ActivatedRoute } from '@angular/router';
 import {
-  CellActionDescriptor,
-  CellActionDescriptorType,
+  CellActionDescriptor, CellActionDescriptorType,
   EntityActionTableColumn,
   EntityColumn,
   EntityTableColumn,
@@ -63,6 +62,7 @@ import { isDefined, isUndefined } from '@core/utils';
 import { HasUUID } from '@shared/models/id/has-uuid';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
+import { IEntitiesTableComponent } from '@home/models/entity/entity-table-component.models';
 
 @Component({
   selector: 'tb-entities-table',
@@ -70,7 +70,7 @@ import { hidePageSizePixelValue } from '@shared/models/constants';
   styleUrls: ['./entities-table.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class EntitiesTableComponent extends PageComponent implements AfterViewInit, OnInit, OnChanges {
+export class EntitiesTableComponent extends PageComponent implements IEntitiesTableComponent, AfterViewInit, OnInit, OnChanges {
 
   @Input()
   entitiesTableConfig: EntityTableConfig<BaseData<HasId>>;
