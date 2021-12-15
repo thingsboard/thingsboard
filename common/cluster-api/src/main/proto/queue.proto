@@ -405,6 +405,15 @@ message ProvisionDeviceResponseMsg {
   string credentialsValue = 3;
 }
 
+message GatewayDeviceUpdated {
+  string oldDeviceName = 1;
+  string newDeviceName = 2;
+}
+
+message GatewayDeviceDeleted {
+  string deviceName = 1;
+}
+
 enum ResponseStatus {
   UNKNOWN = 0;
   SUCCESS = 1;

@@ -647,6 +647,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     case MqttTopics.GATEWAY_ATTRIBUTES_TOPIC:
                     case MqttTopics.GATEWAY_RPC_TOPIC:
                     case MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC:
+                    case MqttTopics.GATEWAY_DEVICE_UPDATED_TOPIC:
+                    case MqttTopics.GATEWAY_DEVICE_DELETED_TOPIC:
                     case MqttTopics.DEVICE_PROVISION_RESPONSE_TOPIC:
                     case MqttTopics.DEVICE_FIRMWARE_RESPONSES_TOPIC:
                     case MqttTopics.DEVICE_FIRMWARE_ERROR_TOPIC:

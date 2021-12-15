@@ -18,15 +18,20 @@ package org.thingsboard.server.transport.mqtt.session;
 import io.netty.channel.ChannelFuture;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.GatewayDeviceDeleted;
+import org.thingsboard.server.gen.transport.TransportProtos.GatewayDeviceUpdated;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 
@@ -140,4 +145,34 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
         return message.fixedHeader().qosLevel().value() > 0;
     }
 
+    @Override
+    public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
+        log.trace("[{}] Received device update for device", sessionId);
+        try {
+            TransportDeviceInfo oldDeviceInfo = this.getDeviceInfo();
+            super.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
+            if (!oldDeviceInfo.getDeviceName().equals(sessionInfo.getDeviceName())) {
+                TransportProtos.GatewayDeviceUpdated gatewayDeviceUpdated = GatewayDeviceUpdated.newBuilder()
+                        .setOldDeviceName(oldDeviceInfo.getDeviceName())
+                        .setNewDeviceName(sessionInfo.getDeviceName())
+                        .build();
+                parent.getPayloadAdaptor().convertToPublish(this, gatewayDeviceUpdated).ifPresent(parent::writeAndFlush);
+            }
+        } catch (Exception e) {
+            log.trace("[{}] Failed to convert device updated to MQTT msg", sessionId, e);
+        }
+    }
+
+    @Override
+    public void onDeviceDeleted(DeviceId deviceId) {
+        log.trace("[{}] Received device deleted for device", sessionId);
+        try {
+            TransportProtos.GatewayDeviceDeleted gatewayDeviceDeleted = GatewayDeviceDeleted.newBuilder()
+                    .setDeviceName(this.deviceInfo.getDeviceName())
+                    .build();
+            parent.getPayloadAdaptor().convertToPublish(this, gatewayDeviceDeleted).ifPresent(parent::writeAndFlush);
+        } catch (Exception e) {
+            log.trace("[{}] Failed to convert device deleted to MQTT msg", sessionId, e);
+        }
+    }
 }

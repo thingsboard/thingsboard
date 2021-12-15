@@ -38,6 +38,8 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.CredentialsType;
+import org.thingsboard.server.gen.transport.TransportProtos.GatewayDeviceDeleted;
+import org.thingsboard.server.gen.transport.TransportProtos.GatewayDeviceUpdated;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueType;
@@ -430,6 +432,19 @@ public class JsonConverter {
 
     public static JsonObject toJson(ProvisionDeviceResponseMsg payload) {
         return toJson(payload, false, 0);
+    }
+
+    public static JsonObject toJson(GatewayDeviceUpdated payload) {
+        JsonObject result = new JsonObject();
+        result.addProperty("oldDeviceName", payload.getOldDeviceName());
+        result.addProperty("newDeviceName", payload.getNewDeviceName());
+        return result;
+    }
+
+    public static JsonObject toJson(GatewayDeviceDeleted payload) {
+        JsonObject result = new JsonObject();
+        result.addProperty("deviceName", payload.getDeviceName());
+        return result;
     }
 
     public static JsonObject toJson(ProvisionDeviceResponseMsg payload, int requestId) {

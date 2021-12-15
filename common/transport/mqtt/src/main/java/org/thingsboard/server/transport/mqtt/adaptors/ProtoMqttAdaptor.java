@@ -44,6 +44,13 @@ import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVIC
 @Slf4j
 public class ProtoMqttAdaptor implements MqttTransportAdaptor {
 
+    public static byte[] toBytes(ByteBuf inbound) {
+        byte[] bytes = new byte[inbound.readableBytes()];
+        int readerIndex = inbound.readerIndex();
+        inbound.getBytes(readerIndex, bytes);
+        return bytes;
+    }
+
     @Override
     public TransportProtos.PostTelemetryMsg convertToPostTelemetry(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
         DeviceSessionCtx deviceSessionCtx = (DeviceSessionCtx) ctx;
@@ -174,6 +181,16 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
     }
 
     @Override
+    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.GatewayDeviceUpdated gatewayDeviceUpdated) {
+        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_DEVICE_UPDATED_TOPIC, gatewayDeviceUpdated.toByteArray()));
+    }
+
+    @Override
+    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.GatewayDeviceDeleted gatewayDeviceDeleted) {
+        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_DEVICE_DELETED_TOPIC, gatewayDeviceDeleted.toByteArray()));
+    }
+
+    @Override
     public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, byte[] firmwareChunk, String requestId, int chunk, OtaPackageType firmwareType) throws AdaptorException {
         return Optional.of(createMqttPublishMsg(ctx, String.format(DEVICE_SOFTWARE_FIRMWARE_RESPONSES_TOPIC_FORMAT, firmwareType.getKeyPrefix(), requestId, chunk), firmwareChunk));
     }
@@ -207,13 +224,6 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
         builder.setRpcRequestMsg(rpcRequest);
         byte[] payloadBytes = builder.build().toByteArray();
         return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_RPC_TOPIC, payloadBytes));
-    }
-
-    public static byte[] toBytes(ByteBuf inbound) {
-        byte[] bytes = new byte[inbound.readableBytes()];
-        int readerIndex = inbound.readerIndex();
-        inbound.getBytes(readerIndex, bytes);
-        return bytes;
     }
 
     private int getRequestId(String topicName, String topic) {

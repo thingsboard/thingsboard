@@ -33,6 +33,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.event.annotation.AfterTestMethod;
+import org.springframework.test.context.event.annotation.BeforeTestMethod;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.mqtt.MqttClient;
 import org.thingsboard.mqtt.MqttClientConfig;
@@ -69,18 +71,20 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
     @Before
     public void createGateway() throws Exception {
         restClient.login("tenant@thingsboard.org", "tenant");
-        this.gatewayDevice = createGatewayDevice();
+        this.gatewayDevice = createGatewayDevice("mqtt_gateway");
         Optional<DeviceCredentials> gatewayDeviceCredentials = restClient.getDeviceCredentialsByDeviceId(gatewayDevice.getId());
         Assert.assertTrue(gatewayDeviceCredentials.isPresent());
         this.listener = new MqttMessageListener();
         this.mqttClient = getMqttClient(gatewayDeviceCredentials.get(), listener);
-        this.createdDevice = createDeviceThroughGateway(mqttClient, gatewayDevice);
+        this.createdDevice = createDeviceThroughGateway(mqttClient, gatewayDevice, "mqtt_device");
     }
 
     @After
     public void removeGateway() throws Exception {
-        restClient.getRestTemplate().delete(HTTPS_URL + "/api/device/" + this.gatewayDevice.getId());
-        restClient.getRestTemplate().delete(HTTPS_URL + "/api/device/" + this.createdDevice.getId());
+        restClient.deleteDevice(gatewayDevice.getId());
+        if (createdDevice != null) {
+            restClient.deleteDevice(createdDevice.getId());
+        }
         this.listener = null;
         this.mqttClient = null;
         this.createdDevice = null;
@@ -304,7 +308,37 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         Assert.assertEquals(clientResponse.toString(), serverResponse.getBody());
     }
 
-        private void checkAttribute(boolean client, String expectedValue) throws Exception{
+    @Test
+    public void deleteDeviceNotificationToGateway() throws Exception {
+        mqttClient.on("v1/gateway/device/deleted", listener, MqttQoS.AT_LEAST_ONCE).get();
+        TimeUnit.SECONDS.sleep(3);
+        String deviceName = createdDevice.getName();
+        restClient.deleteDevice(createdDevice.getId());
+        createdDevice = null;
+        MqttEvent event = listener.getEvents().poll(10, TimeUnit.SECONDS);
+        Assert.assertEquals(deviceName,
+                mapper.readValue(Objects.requireNonNull(event).getMessage(), JsonNode.class).get("deviceName").asText());
+    }
+
+    @Test
+    public void updateDeviceNotificationToGateway() throws Exception {
+        mqttClient.on("v1/gateway/device/updated", listener, MqttQoS.AT_LEAST_ONCE).get();
+        // Wait until subscription is processed
+        TimeUnit.SECONDS.sleep(3);
+        String oldName = createdDevice.getName();
+        String newName = oldName + "NewName";
+
+        createdDevice.setName(newName);
+        restClient.saveDevice(createdDevice);
+
+        MqttEvent event = listener.getEvents().poll(10, TimeUnit.SECONDS);
+        Assert.assertEquals(oldName,
+                mapper.readValue(Objects.requireNonNull(event).getMessage(), JsonNode.class).get("oldDeviceName").asText());
+        Assert.assertEquals(newName,
+                mapper.readValue(Objects.requireNonNull(event).getMessage(), JsonNode.class).get("newDeviceName").asText());
+    }
+
+    private void checkAttribute(boolean client, String expectedValue) throws Exception {
         JsonObject gatewayAttributesRequest = new JsonObject();
         int messageId = new Random().nextInt(100);
         gatewayAttributesRequest.addProperty("id", messageId);
@@ -328,8 +362,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         Assert.assertEquals(expectedValue, responseMessage.get("value").getAsString());
     }
 
-    private Device createDeviceThroughGateway(MqttClient mqttClient, Device gatewayDevice) throws Exception {
-        String deviceName = "mqtt_device";
+    private Device createDeviceThroughGateway(MqttClient mqttClient, Device gatewayDevice, String deviceName) throws Exception {
         mqttClient.publish("v1/gateway/connect", Unpooled.wrappedBuffer(createGatewayConnectPayload(deviceName).toString().getBytes())).get();
 
         TimeUnit.SECONDS.sleep(3);

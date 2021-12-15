@@ -23,6 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.GatewayDeviceDeleted;
+import org.thingsboard.server.gen.transport.TransportProtos.GatewayDeviceUpdated;
 import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionContext;
 
 import java.util.Optional;
@@ -149,5 +151,15 @@ public class BackwardCompatibilityAdaptor implements MqttTransportAdaptor {
     @Override
     public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, byte[] firmwareChunk, String requestId, int chunk, OtaPackageType firmwareType) throws AdaptorException {
         return protoAdaptor.convertToPublish(ctx, firmwareChunk, requestId, chunk, firmwareType);
+    }
+
+    @Override
+    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, GatewayDeviceUpdated gatewayDeviceUpdated) throws AdaptorException {
+        return protoAdaptor.convertToPublish(ctx, gatewayDeviceUpdated);
+    }
+
+    @Override
+    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, GatewayDeviceDeleted gatewayDeviceDeleted) throws AdaptorException {
+        return protoAdaptor.convertToPublish(ctx, gatewayDeviceDeleted);
     }
 }

@@ -30,6 +30,9 @@ public class MqttTopics {
     private static final String CLAIM = "/claim";
     private static final String SUB_TOPIC = "+";
     private static final String PROVISION = "/provision";
+    private static final String DEVICE = "/device";
+    private static final String UPDATED = "/updated";
+    private static final String DELETED = "/deleted";
     private static final String FIRMWARE = "/fw";
     private static final String SOFTWARE = "/sw";
     private static final String CHUNK = "/chunk/";
@@ -75,6 +78,8 @@ public class MqttTopics {
     public static final String GATEWAY_RPC_TOPIC = BASE_GATEWAY_API_TOPIC + RPC;
     public static final String GATEWAY_ATTRIBUTES_REQUEST_TOPIC = BASE_GATEWAY_API_TOPIC + ATTRIBUTES_REQUEST;
     public static final String GATEWAY_ATTRIBUTES_RESPONSE_TOPIC = BASE_GATEWAY_API_TOPIC + ATTRIBUTES_RESPONSE;
+    public static final String GATEWAY_DEVICE_UPDATED_TOPIC = BASE_GATEWAY_API_TOPIC + DEVICE + UPDATED;
+    public static final String GATEWAY_DEVICE_DELETED_TOPIC = BASE_GATEWAY_API_TOPIC + DEVICE + DELETED;
     // v2 topics
     public static final String BASE_DEVICE_API_TOPIC_V2 = "v2";
     public static final String REQUEST_ID_PATTERN = "(?<requestId>\\d+)";

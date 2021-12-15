@@ -27,6 +27,8 @@ import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GatewayDeviceDeleted;
+import org.thingsboard.server.gen.transport.TransportProtos.GatewayDeviceUpdated;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
@@ -77,6 +79,10 @@ public interface MqttTransportAdaptor {
     ProvisionDeviceRequestMsg convertToProvisionRequestMsg(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException;
 
     Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, ProvisionDeviceResponseMsg provisionResponse) throws AdaptorException;
+
+    Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, GatewayDeviceUpdated gatewayDeviceUpdated) throws AdaptorException;
+
+    Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, GatewayDeviceDeleted gatewayDeviceDeleted) throws AdaptorException;
 
     Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, byte[] firmwareChunk, String requestId, int chunk, OtaPackageType firmwareType) throws AdaptorException;
 

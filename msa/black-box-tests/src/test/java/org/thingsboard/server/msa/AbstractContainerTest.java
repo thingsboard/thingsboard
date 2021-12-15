@@ -103,12 +103,12 @@ public abstract class AbstractContainerTest {
         }
     };
 
-    protected Device createGatewayDevice() throws JsonProcessingException {
+    protected Device createGatewayDevice(String deviceName) throws JsonProcessingException {
         String isGateway = "{\"gateway\":true}";
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode additionalInfo = objectMapper.readTree(isGateway);
         Device gatewayDeviceTemplate = new Device();
-        gatewayDeviceTemplate.setName("mqtt_gateway");
+        gatewayDeviceTemplate.setName(deviceName);
         gatewayDeviceTemplate.setType("gateway");
         gatewayDeviceTemplate.setAdditionalInfo(additionalInfo);
         return restClient.saveDevice(gatewayDeviceTemplate);

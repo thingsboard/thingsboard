@@ -158,6 +158,16 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     }
 
     @Override
+    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.GatewayDeviceUpdated gatewayDeviceUpdated) {
+        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_DEVICE_UPDATED_TOPIC, JsonConverter.toJson(gatewayDeviceUpdated)));
+    }
+
+    @Override
+    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.GatewayDeviceDeleted gatewayDeviceDeleted) {
+        return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_DEVICE_DELETED_TOPIC, JsonConverter.toJson(gatewayDeviceDeleted)));
+    }
+
+    @Override
     public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, byte[] firmwareChunk, String requestId, int chunk, OtaPackageType firmwareType) {
         return Optional.of(createMqttPublishMsg(ctx, String.format(DEVICE_SOFTWARE_FIRMWARE_RESPONSES_TOPIC_FORMAT, firmwareType.getKeyPrefix(), requestId, chunk), firmwareChunk));
     }
