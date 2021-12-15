@@ -57,7 +57,6 @@ public class EntityActionService {
     private final AuditLogService auditLogService;
 
     private static final ObjectMapper json = new ObjectMapper();
-    // TODO: entityRelation notification about event from rule node
 
     public void pushEntityActionToRuleEngine(EntityId entityId, HasName entity, TenantId tenantId, CustomerId customerId,
                                              ActionType actionType, User user, Object... additionalInfo) {
