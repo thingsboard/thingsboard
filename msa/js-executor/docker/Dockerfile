@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM node:16.13.1-buster-slim
+FROM node:16.13.1-bullseye-slim
 
 COPY start-js-executor.sh /tmp/
 
