@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -56,6 +56,12 @@ export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValu
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  isTransportWasRunWithBootstrap: boolean;
+
+  @Output()
+  isTransportWasRunWithBootstrapChange = new EventEmitter<boolean>();
 
   public isBootstrapServerUpdateEnableValue: boolean;
   @Input()
@@ -147,7 +153,7 @@ export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValu
   }
 
   addServerConfig(): void {
-    const addDialogObs = (this.isBootstrapAdded() || !this.isBootstrapServerUpdateEnableValue) ? of(false) :
+    const addDialogObs = this.isBootstrapServerNotAvailable() ? of(false) :
       this.matDialog.open<Lwm2mBootstrapAddConfigServerDialogComponent>(Lwm2mBootstrapAddConfigServerDialogComponent, {
         disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
@@ -165,8 +171,16 @@ export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValu
         serverConfig.securityMode = Lwm2mSecurityType.NO_SEC;
         this.serverConfigsFromArray().push(this.fb.control(serverConfig));
         this.updateModel();
+      } else {
+        this.isTransportWasRunWithBootstrap = false;
+        this.isTransportWasRunWithBootstrapChange.emit(this.isTransportWasRunWithBootstrap);
       }
     });
+  }
+
+  updateIsTransportWasRunWithBootstrap(newValue: boolean): void {
+    this.isTransportWasRunWithBootstrap = newValue;
+    this.isTransportWasRunWithBootstrapChange.emit(this.isTransportWasRunWithBootstrap);
   }
 
   public validate(c: FormControl) {
@@ -177,7 +191,11 @@ export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValu
     };
   }
 
-  public isBootstrapAdded() {
+  public isBootstrapServerNotAvailable(): boolean {
+    return this.isBootstrapAdded() || !this.isBootstrapServerUpdateEnableValue || !this.isTransportWasRunWithBootstrap;
+  }
+
+  private isBootstrapAdded(): boolean {
     const serverConfigsArray =  this.serverConfigsFromArray().getRawValue();
     for (let i = 0; i < serverConfigsArray.length; i++) {
       if (serverConfigsArray[i].bootstrapServerIs) {

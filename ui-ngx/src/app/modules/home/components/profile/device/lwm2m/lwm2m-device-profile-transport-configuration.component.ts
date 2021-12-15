@@ -74,6 +74,7 @@ import { TranslateService } from '@ngx-translate/core';
 export class Lwm2mDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, Validator, OnDestroy {
 
   public disabled = false;
+  public isTransportWasRunWithBootstrap = true;
   public isBootstrapServerUpdateEnable: boolean;
   private requiredValue: boolean;
   private destroy$ = new Subject();
@@ -226,10 +227,16 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   private async defaultProfileConfig(): Promise<void> {
-    const lwm2m: ServerSecurityConfig = await this.deviceProfileService.getLwm2mBootstrapSecurityInfoBySecurityType(false).toPromise();
+    let lwm2m: ServerSecurityConfig;
+    let bootstrap: ServerSecurityConfig;
+    [bootstrap, lwm2m] = await Promise.all([
+      this.deviceProfileService.getLwm2mBootstrapSecurityInfoBySecurityType(true).toPromise(),
+      this.deviceProfileService.getLwm2mBootstrapSecurityInfoBySecurityType(false).toPromise(),
+    ]);
     if (lwm2m) {
       lwm2m.securityMode = Lwm2mSecurityType.NO_SEC;
     }
+    this.isTransportWasRunWithBootstrap = !!bootstrap;
     this.configurationValue.bootstrap = [lwm2m];
     this.lwm2mDeviceProfileFormGroup.patchValue({
       bootstrap: this.configurationValue.bootstrap
