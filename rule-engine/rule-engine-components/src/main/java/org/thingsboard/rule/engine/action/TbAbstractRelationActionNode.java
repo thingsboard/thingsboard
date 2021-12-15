@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.action;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -270,18 +269,6 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
             }
             return targetEntity;
         }
-
-        void pushEventToRuleEngineForEntityRelationCreateOrUpdate(String queueName, EntityRelation entityRelation, EntityId entityId) throws JsonProcessingException {
-            TbMsg tbMsg = ctx.entityRelationCreatedOrUpdate(queueName, entityRelation, entityId);
-
-        }
-
-        void sendEventToRuleEngine() {
-            ctx.enqueue(tbMsg, queueName,
-                    () -> log.trace("Pushed {} Updated message: {}", n),
-                    throwable -> log.warn("Failed to push {} Created message: {}", entityRelation.getFrom().getEntityType(), throwable));
-        }
-
     }
 
     @Data

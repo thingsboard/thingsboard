@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.action;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntityContainer;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -83,7 +85,7 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
     private ListenableFuture<Boolean> createRelationIfAbsent(TbContext ctx, TbMsg msg, EntityContainer entityContainer, String relationType) {
         SearchDirectionIds sdId = processSingleSearchDirection(msg, entityContainer);
         return Futures.transformAsync(deleteCurrentRelationsIfNeeded(ctx, msg, sdId, relationType), v ->
-                        checkRelationAndCreateIfAbsent(ctx, entityContainer, relationType, sdId),
+                        checkRelationAndCreateIfAbsent(ctx, entityContainer, relationType, sdId, msg.getQueueName()),
                 ctx.getDbCallbackExecutor());
     }
 
@@ -114,12 +116,12 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
         }, ctx.getDbCallbackExecutor());
     }
 
-    private ListenableFuture<Boolean> checkRelationAndCreateIfAbsent(TbContext ctx, EntityContainer entityContainer, String relationType, SearchDirectionIds sdId) {
+    private ListenableFuture<Boolean> checkRelationAndCreateIfAbsent(TbContext ctx, EntityContainer entityContainer, String relationType, SearchDirectionIds sdId, String queueName) {
         return Futures.transformAsync(checkRelation(ctx, sdId, relationType), relationPresent -> {
             if (relationPresent) {
                 return Futures.immediateFuture(true);
             }
-            return processCreateRelation(ctx, entityContainer, sdId, relationType);
+            return processCreateRelation(ctx, entityContainer, sdId, relationType, queueName);
         }, ctx.getDbCallbackExecutor());
     }
 
@@ -127,90 +129,104 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
         return ctx.getRelationService().checkRelation(ctx.getTenantId(), sdId.getFromId(), sdId.getToId(), relationType, RelationTypeGroup.COMMON);
     }
 
-    private ListenableFuture<Boolean> processCreateRelation(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId, String relationType) {
+    private ListenableFuture<Boolean> processCreateRelation(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId, String relationType, String queueName) {
         switch (entityContainer.getEntityType()) {
             case ASSET:
-                return processAsset(ctx, entityContainer, sdId, relationType);
+                return processAsset(ctx, entityContainer, sdId, relationType, queueName);
             case DEVICE:
-                return processDevice(ctx, entityContainer, sdId, relationType);
+                return processDevice(ctx, entityContainer, sdId, relationType, queueName);
             case CUSTOMER:
-                return processCustomer(ctx, entityContainer, sdId, relationType);
+                return processCustomer(ctx, entityContainer, sdId, relationType, queueName);
             case DASHBOARD:
-                return processDashboard(ctx, entityContainer, sdId, relationType);
+                return processDashboard(ctx, entityContainer, sdId, relationType, queueName);
             case ENTITY_VIEW:
-                return processView(ctx, entityContainer, sdId, relationType);
+                return processView(ctx, entityContainer, sdId, relationType, queueName);
             case EDGE:
-                return processEdge(ctx, entityContainer, sdId, relationType);
+                return processEdge(ctx, entityContainer, sdId, relationType, queueName);
             case TENANT:
-                return processTenant(ctx, entityContainer, sdId, relationType);
+                return processTenant(ctx, entityContainer, sdId, relationType, queueName);
         }
         return Futures.immediateFuture(true);
     }
 
-    private ListenableFuture<Boolean> processView(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId, String relationType) {
+    private ListenableFuture<Boolean> processView(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId, String relationType, String queueName) {
         return Futures.transformAsync(ctx.getEntityViewService().findEntityViewByIdAsync(ctx.getTenantId(), new EntityViewId(entityContainer.getEntityId().getId())), entityView -> {
             if (entityView != null) {
-                return processSave(ctx, sdId, relationType);
+                ListenableFuture<Boolean> processSave = processSave(ctx, sdId, relationType);
+                pushEventUpdateOrCreateRelation(ctx, entityContainer, sdId, relationType, queueName);
+                return processSave;
             } else {
                 return Futures.immediateFuture(true);
             }
         }, ctx.getDbCallbackExecutor());
     }
 
-    private ListenableFuture<Boolean> processEdge(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId, String relationType) {
+    private ListenableFuture<Boolean> processEdge(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId, String relationType, String queueName) {
         return Futures.transformAsync(ctx.getEdgeService().findEdgeByIdAsync(ctx.getTenantId(), new EdgeId(entityContainer.getEntityId().getId())), edge -> {
             if (edge != null) {
-                return processSave(ctx, sdId, relationType);
+                ListenableFuture<Boolean> processSave = processSave(ctx, sdId, relationType);
+                pushEventUpdateOrCreateRelation(ctx, entityContainer, sdId, relationType, queueName);
+                return processSave;
             } else {
                 return Futures.immediateFuture(true);
             }
         }, ctx.getDbCallbackExecutor());
     }
 
-    private ListenableFuture<Boolean> processDevice(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId, String relationType) {
+    private ListenableFuture<Boolean> processDevice(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId, String relationType, String queueName) {
         return Futures.transformAsync(ctx.getDeviceService().findDeviceByIdAsync(ctx.getTenantId(), new DeviceId(entityContainer.getEntityId().getId())), device -> {
             if (device != null) {
-                return processSave(ctx, sdId, relationType);
+                ListenableFuture<Boolean> processSave = processSave(ctx, sdId, relationType);
+                pushEventUpdateOrCreateRelation(ctx, entityContainer, sdId, relationType, queueName);
+                return processSave;
             } else {
                 return Futures.immediateFuture(true);
             }
         }, ctx.getDbCallbackExecutor());
     }
 
-    private ListenableFuture<Boolean> processAsset(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId, String relationType) {
+    private ListenableFuture<Boolean> processAsset(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId, String relationType, String queueName) {
         return Futures.transformAsync(ctx.getAssetService().findAssetByIdAsync(ctx.getTenantId(), new AssetId(entityContainer.getEntityId().getId())), asset -> {
             if (asset != null) {
-                return processSave(ctx, sdId, relationType);
+                ListenableFuture<Boolean> processSave = processSave(ctx, sdId, relationType);
+                pushEventUpdateOrCreateRelation(ctx, entityContainer, sdId, relationType, queueName);
+                return processSave;
             } else {
                 return Futures.immediateFuture(true);
             }
         }, ctx.getDbCallbackExecutor());
     }
 
-    private ListenableFuture<Boolean> processCustomer(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId, String relationType) {
+    private ListenableFuture<Boolean> processCustomer(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId, String relationType, String queueName) {
         return Futures.transformAsync(ctx.getCustomerService().findCustomerByIdAsync(ctx.getTenantId(), new CustomerId(entityContainer.getEntityId().getId())), customer -> {
             if (customer != null) {
-                return processSave(ctx, sdId, relationType);
+                ListenableFuture<Boolean> processSave = processSave(ctx, sdId, relationType);
+                pushEventUpdateOrCreateRelation(ctx, entityContainer, sdId, relationType, queueName);
+                return processSave;
             } else {
                 return Futures.immediateFuture(true);
             }
         }, ctx.getDbCallbackExecutor());
     }
 
-    private ListenableFuture<Boolean> processDashboard(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId, String relationType) {
+    private ListenableFuture<Boolean> processDashboard(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId, String relationType, String queueName) {
         return Futures.transformAsync(ctx.getDashboardService().findDashboardByIdAsync(ctx.getTenantId(), new DashboardId(entityContainer.getEntityId().getId())), dashboard -> {
             if (dashboard != null) {
-                return processSave(ctx, sdId, relationType);
+                ListenableFuture<Boolean> processSave = processSave(ctx, sdId, relationType);
+                pushEventUpdateOrCreateRelation(ctx, entityContainer, sdId, relationType, queueName);
+                return processSave;
             } else {
                 return Futures.immediateFuture(true);
             }
         }, ctx.getDbCallbackExecutor());
     }
 
-    private ListenableFuture<Boolean> processTenant(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId, String relationType) {
+    private ListenableFuture<Boolean> processTenant(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId, String relationType, String queueName) {
         return Futures.transformAsync(ctx.getTenantService().findTenantByIdAsync(ctx.getTenantId(), new TenantId(entityContainer.getEntityId().getId())), tenant -> {
             if (tenant != null) {
-                return processSave(ctx, sdId, relationType);
+                ListenableFuture<Boolean> processSave = processSave(ctx, sdId, relationType);
+                pushEventUpdateOrCreateRelation(ctx, entityContainer, sdId, relationType, queueName);
+                return processSave;
             } else {
                 return Futures.immediateFuture(true);
             }
@@ -219,6 +235,15 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
 
     private ListenableFuture<Boolean> processSave(TbContext ctx, SearchDirectionIds sdId, String relationType) {
         return ctx.getRelationService().saveRelationAsync(ctx.getTenantId(), new EntityRelation(sdId.getFromId(), sdId.getToId(), relationType, RelationTypeGroup.COMMON));
+    }
+
+    protected void pushEventUpdateOrCreateRelation(TbContext ctx, EntityContainer entityContainer, SearchDirectionIds sdId, String relationType, String queueName) throws JsonProcessingException {
+        EntityRelation entityRelation = ctx.getRelationService().getRelation(ctx.getTenantId(), sdId.getFromId(), sdId.getToId(), relationType, RelationTypeGroup.COMMON);
+        TbMsg tbMsg = ctx.entityRelationCreatedOrUpdate(queueName, entityRelation, entityContainer.getEntityId());
+        tbMsg = TbMsg.transformMsg(tbMsg, DataConstants.ENTITY_RELATION_ADD_OR_UPDATE);
+        ctx.enqueue(tbMsg, tbMsg.getQueueName(),
+                () -> log.trace("Pushed {} Updated message: {}", DataConstants.ENTITY_RELATION_ADD_OR_UPDATE, entityRelation),
+                throwable -> log.warn("Failed to push {} Created message: {}", entityRelation.getFrom().getEntityType(), throwable));
     }
 
 }

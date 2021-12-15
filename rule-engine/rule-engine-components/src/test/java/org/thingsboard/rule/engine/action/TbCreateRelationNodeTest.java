@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.action;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -51,6 +52,7 @@ import java.util.concurrent.Callable;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -96,7 +98,7 @@ public class TbCreateRelationNodeTest {
     }
 
     @Test
-    public void testCreateNewRelation() throws TbNodeException {
+    public void testCreateNewRelation() throws TbNodeException, JsonProcessingException {
         init(createRelationNodeConfig());
 
         DeviceId deviceId = new DeviceId(Uuids.timeBased());
@@ -112,6 +114,7 @@ public class TbCreateRelationNodeTest {
         metaData.putValue("name", "AssetName");
         metaData.putValue("type", "AssetType");
         msg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, deviceId, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
+        when(ctx.entityRelationCreatedOrUpdate(anyString(), any(), any())).thenReturn(msg);
 
         when(ctx.getRelationService().checkRelation(any(), eq(assetId), eq(deviceId), eq(RELATION_TYPE_CONTAINS), eq(RelationTypeGroup.COMMON)))
                 .thenReturn(Futures.immediateFuture(false));
@@ -123,7 +126,7 @@ public class TbCreateRelationNodeTest {
     }
 
     @Test
-    public void testDeleteCurrentRelationsCreateNewRelation() throws TbNodeException {
+    public void testDeleteCurrentRelationsCreateNewRelation() throws TbNodeException, JsonProcessingException {
         init(createRelationNodeConfigWithRemoveCurrentRelations());
 
         DeviceId deviceId = new DeviceId(Uuids.timeBased());
@@ -139,6 +142,7 @@ public class TbCreateRelationNodeTest {
         metaData.putValue("name", "AssetName");
         metaData.putValue("type", "AssetType");
         msg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, deviceId, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
+        when(ctx.entityRelationCreatedOrUpdate(anyString(), any(), any())).thenReturn(msg);
 
         EntityRelation relation = new EntityRelation();
         when(ctx.getRelationService().findByToAndTypeAsync(any(), eq(msg.getOriginator()), eq(RELATION_TYPE_CONTAINS), eq(RelationTypeGroup.COMMON)))
@@ -154,7 +158,7 @@ public class TbCreateRelationNodeTest {
     }
 
     @Test
-    public void testCreateNewRelationAndChangeOriginator() throws TbNodeException {
+    public void testCreateNewRelationAndChangeOriginator() throws TbNodeException, JsonProcessingException {
         init(createRelationNodeConfigWithChangeOriginator());
 
         DeviceId deviceId = new DeviceId(Uuids.timeBased());
@@ -170,6 +174,7 @@ public class TbCreateRelationNodeTest {
         metaData.putValue("name", "AssetName");
         metaData.putValue("type", "AssetType");
         msg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, deviceId, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
+        when(ctx.entityRelationCreatedOrUpdate(anyString(), any(), any())).thenReturn(msg);
 
         when(ctx.getRelationService().checkRelation(any(), eq(assetId), eq(deviceId), eq(RELATION_TYPE_CONTAINS), eq(RelationTypeGroup.COMMON)))
                 .thenReturn(Futures.immediateFuture(false));
