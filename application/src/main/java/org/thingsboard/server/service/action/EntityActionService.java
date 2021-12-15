@@ -213,9 +213,7 @@ public class EntityActionService {
                         entityNode = json.valueToTree(relation);
                     }
                 }
-                log.error("text: {}", entityNode.toString());
                 TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, customerId, metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));
-                log.error("tbMsg:\n{}", tbMsg);
                 if (tenantId.isNullUid()) {
                     if (entity instanceof HasTenantId) {
                         tenantId = ((HasTenantId) entity).getTenantId();
