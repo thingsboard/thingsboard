@@ -1345,7 +1345,7 @@
                 "tqs": "TQS: both TCP and SMS connections active; TCP in queue mode, SMS in standard mode (is not supported since LWM2M 1.1)",
                 "sq": "SQ: SMS connection in queue mode (is not supported since LWM2M 1.1)"
             },
-            "binding-tooltip": "Tis is the list in the\"binding\" resource of the LwM2M server object - /1/x/7.\nIndicates the supported binding modes in the LwM2M Client.\nThis value SHOULD be the same as the value in the “Supported Binding and Modes” resource in the Device Object (/3/0/16).\nWhile multiple transports are supported, only one transport binding can be used during the entire Transport Session.\nAs an example, when UDP and SMS are both supported, the LwM2M Client and the LwM2M Server can choose to communicate either over UDP or SMS during the entire Transport Session.",
+            "binding-tooltip": "This is the list in the\"binding\" resource of the LwM2M server object - /1/x/7.\nIndicates the supported binding modes in the LwM2M Client.\nThis value SHOULD be the same as the value in the “Supported Binding and Modes” resource in the Device Object (/3/0/16).\nWhile multiple transports are supported, only one transport binding can be used during the entire Transport Session.\nAs an example, when UDP and SMS are both supported, the LwM2M Client and the LwM2M Server can choose to communicate either over UDP or SMS during the entire Transport Session.",
             "bootstrap-server": "Bootstrap Server",
             "lwm2m-server": "LwM2M Server",
             "include-bootstrap-server": "Include Bootstrap Server updates",

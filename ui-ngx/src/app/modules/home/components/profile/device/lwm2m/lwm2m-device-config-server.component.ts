@@ -71,9 +71,13 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
   credentialTypeLwM2MNamesMap = Lwm2mSecurityTypeTranslationMap;
   publicKeyOrIdTooltipNamesMap = Lwm2mPublicKeyOrIdTooltipTranslationsMap;
   currentSecurityMode = null;
+  bootstrapDisabled = false;
 
   @Output()
   removeServer = new EventEmitter();
+
+  @Output()
+  isTransportWasRunWithBootstrapChange = new EventEmitter<boolean>();
 
   private propagateChange = (v: any) => { };
 
@@ -136,6 +140,11 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
         if (!serverData) {
           this.serverFormGroup.patchValue(value);
         }
+        if (!value && this.serverFormGroup.get('bootstrapServerIs').value === true) {
+          this.isTransportWasRunWithBootstrapChange.emit(false);
+          this.bootstrapDisabled = true;
+          this.serverFormGroup.get('securityMode').disable({emitEvent: false});
+        }
       });
     }
   }
@@ -150,6 +159,9 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
       this.serverFormGroup.disable({emitEvent: false});
     } else {
       this.serverFormGroup.enable({emitEvent: false});
+      if (this.bootstrapDisabled) {
+        this.serverFormGroup.get('securityMode').disable({emitEvent: false});
+      }
     }
   }
 

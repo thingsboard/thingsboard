@@ -84,20 +84,22 @@ export class DeviceProfileService {
     return this.getLwm2mBootstrapSecurityInfo(isBootstrapServer, config).pipe(
       map(securityConfig => {
         const serverSecurityConfigInfo = deepClone(securityConfig);
-        switch (securityMode) {
-          case Lwm2mSecurityType.PSK:
-            serverSecurityConfigInfo.port = serverSecurityConfigInfo.securityPort;
-            serverSecurityConfigInfo.host = serverSecurityConfigInfo.securityHost;
-            serverSecurityConfigInfo.serverPublicKey = '';
-            break;
-          case Lwm2mSecurityType.RPK:
-          case Lwm2mSecurityType.X509:
-            serverSecurityConfigInfo.port = serverSecurityConfigInfo.securityPort;
-            serverSecurityConfigInfo.host = serverSecurityConfigInfo.securityHost;
-            break;
-          case Lwm2mSecurityType.NO_SEC:
-            serverSecurityConfigInfo.serverPublicKey = '';
-            break;
+        if (serverSecurityConfigInfo) {
+          switch (securityMode) {
+            case Lwm2mSecurityType.PSK:
+              serverSecurityConfigInfo.port = serverSecurityConfigInfo.securityPort;
+              serverSecurityConfigInfo.host = serverSecurityConfigInfo.securityHost;
+              serverSecurityConfigInfo.serverPublicKey = '';
+              break;
+            case Lwm2mSecurityType.RPK:
+            case Lwm2mSecurityType.X509:
+              serverSecurityConfigInfo.port = serverSecurityConfigInfo.securityPort;
+              serverSecurityConfigInfo.host = serverSecurityConfigInfo.securityHost;
+              break;
+            case Lwm2mSecurityType.NO_SEC:
+              serverSecurityConfigInfo.serverPublicKey = '';
+              break;
+          }
         }
         return serverSecurityConfigInfo;
       })

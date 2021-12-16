@@ -20,7 +20,8 @@
     <div *ngFor="let serverConfig of serverConfigsFromArray().controls; trackBy: trackByParams; let $index = index;">
       <tb-profile-lwm2m-device-config-server
         [formControl]="serverConfig"
-        (removeServer)="removeServerConfig($event, $index)">
+        (removeServer)="removeServerConfig($event, $index)"
+        (isTransportWasRunWithBootstrapChange)="updateIsTransportWasRunWithBootstrap($event)">
       </tb-profile-lwm2m-device-config-server>
     </div>
   </mat-accordion>
@@ -32,8 +33,8 @@
     <button mat-raised-button color="primary"
             type="button"
             (click)="addServerConfig()">
-      <span>{{ ((isBootstrapAdded() || !isBootstrapServerUpdateEnableValue) ? 'device-profile.lwm2m.add-lwm2m-server-config' :
-        'device-profile.lwm2m.add-server-config') | translate}}</span>
+      <span>{{ (this.isBootstrapServerNotAvailable() ? 'device-profile.lwm2m.add-lwm2m-server-config' :
+        'device-profile.lwm2m.add-server-config') | translate }}</span>
     </button>
   </div>
 </div>

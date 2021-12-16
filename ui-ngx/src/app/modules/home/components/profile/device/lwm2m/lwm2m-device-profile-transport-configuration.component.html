@@ -33,12 +33,17 @@
     </mat-tab>
     <mat-tab label="{{ 'device-profile.lwm2m.bootstrap-tab' | translate }}">
       <section [formGroup]="lwm2mDeviceProfileFormGroup">
+        <div *ngIf="!isTransportWasRunWithBootstrap" style="padding:16px 0 0 8px;" fxLayout="row" fxLayoutAlign="start end">
+          <mat-icon color="warn" class="material-icons" style="margin-right:8px;">warning</mat-icon>
+          <span style="font-weight:500">LwM2M transport was run without bootstrap server</span>
+        </div>
         <mat-checkbox formControlName="bootstrapServerUpdateEnable" style="margin-left:8px;margin-top:20px">
           {{ 'device-profile.lwm2m.include-bootstrap-server' | translate }}
         </mat-checkbox>
         <section style="padding: 20px 2px">
           <tb-profile-lwm2m-bootstrap-config-servers formControlName="bootstrap"
-                                                     [isBootstrapServerUpdateEnable]="isBootstrapServerUpdateEnable">
+                                                     [isBootstrapServerUpdateEnable]="isBootstrapServerUpdateEnable"
+                                                     [(isTransportWasRunWithBootstrap)]="isTransportWasRunWithBootstrap">
           </tb-profile-lwm2m-bootstrap-config-servers>
         </section>
       </section>
