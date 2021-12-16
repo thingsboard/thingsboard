@@ -61,6 +61,7 @@ import org.thingsboard.server.queue.common.MultipleTbQueueCallbackWrapper;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
+import org.thingsboard.server.service.gateway_device.GatewayDeviceStateService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
@@ -91,6 +92,7 @@ public class DefaultTbClusterService implements TbClusterService {
     private final DataDecodingEncodingService encodingService;
     private final TbDeviceProfileCache deviceProfileCache;
     private final OtaPackageStateService otaPackageStateService;
+    private final GatewayDeviceStateService gatewayDeviceStateService;
 
     @Override
     public void pushMsgToCore(TenantId tenantId, EntityId entityId, ToCoreMsg msg, TbQueueCallback callback) {
@@ -405,6 +407,7 @@ public class DefaultTbClusterService implements TbClusterService {
         broadcastEntityStateChangeEvent(device.getTenantId(), device.getId(), created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
         sendDeviceStateServiceEvent(device.getTenantId(), device.getId(), created, !created, false);
         otaPackageStateService.update(device, old);
+        gatewayDeviceStateService.update(device, old);
         if (!created && notifyEdge) {
             sendNotificationMsgToEdgeService(device.getTenantId(), null, device.getId(), null, null, EdgeEventActionType.UPDATED);
         }

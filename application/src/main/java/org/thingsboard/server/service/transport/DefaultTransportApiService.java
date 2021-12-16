@@ -56,6 +56,7 @@ import org.thingsboard.server.common.data.ota.OtaPackageUtil;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.EncryptionUtil;
@@ -99,6 +100,7 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.service.resource.TbResourceService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -304,6 +306,17 @@ public class DefaultTransportApiService implements TransportApiService {
                     TbMsg tbMsg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, deviceId, customerId, metaData, TbMsgDataType.JSON, mapper.writeValueAsString(entityNode));
                     tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, null);
                 }
+
+                List<EntityRelation> currentLastConnectedGatewayRelationList = relationService.findByFromAndType(TenantId.SYS_TENANT_ID, device.getId(), DataConstants.LAST_CONNECTED_GATEWAY, RelationTypeGroup.COMMON);
+                EntityRelation lastConnectedGatewayRelation;
+                if (!currentLastConnectedGatewayRelationList.isEmpty()) {
+                    lastConnectedGatewayRelation = currentLastConnectedGatewayRelationList.get(0);
+                    lastConnectedGatewayRelation.setTo(gateway.getId());
+                } else {
+                    lastConnectedGatewayRelation = new EntityRelation(device.getId(), gateway.getId(), DataConstants.LAST_CONNECTED_GATEWAY);
+                }
+                relationService.saveRelationAsync(TenantId.SYS_TENANT_ID, lastConnectedGatewayRelation);
+
                 GetOrCreateDeviceFromGatewayResponseMsg.Builder builder = GetOrCreateDeviceFromGatewayResponseMsg.newBuilder()
                         .setDeviceInfo(getDeviceInfoProto(device));
                 DeviceProfile deviceProfile = deviceProfileCache.get(device.getTenantId(), device.getDeviceProfileId());
