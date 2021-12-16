@@ -714,8 +714,6 @@
         "no-keys-found": "Aucune clé trouvée",
         "public": "Public",
         "remove-alias": "Supprimer l'alias du dispositif",
-        "rsa-key": "Clé publique RSA",
-        "rsa-key-required": "La clé publique RSA est requise.",
         "secret": "Secret",
         "secret-required": "Code secret est requis.",
         "select-device": "Selectionner un dispositif",

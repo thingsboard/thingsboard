@@ -624,8 +624,6 @@
 		"access-token": "アクセストークン",
 		"access-token-required": "アクセストークンが必要です。",
 		"access-token-invalid": "アクセストークンの長さは、1〜32文字でなければなりません。",
-		"rsa-key": "RSA公開鍵",
-		"rsa-key-required": "RSA公開鍵が必要です。",
 		"secret": "秘密",
 		"secret-required": "秘密が必要です。",
 		"device-type": "デバイスタイプ",
