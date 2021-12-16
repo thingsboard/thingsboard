@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.rpc;
+package org.thingsboard.server.controller.sql;
 
-public enum RpcStatus {
-    QUEUED, SENT, DELIVERED, SUCCESSFUL, TIMEOUT, EXPIRED, FAILED, DELETED
+import org.thingsboard.server.controller.BaseRpcControllerTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
+
+@DaoSqlTest
+public class RpcControllerTest extends BaseRpcControllerTest {
 }
