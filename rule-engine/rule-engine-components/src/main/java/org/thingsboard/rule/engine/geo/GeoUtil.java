@@ -31,9 +31,12 @@ import org.locationtech.spatial4j.shape.impl.PointImpl;
 import org.locationtech.spatial4j.shape.jts.JtsGeometry;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class GeoUtil {
@@ -56,13 +59,15 @@ public class GeoUtil {
     }
 
     public static synchronized boolean contains(String polygonInString, Coordinates coordinates) {
-        JsonArray polygonArray = JSON_PARSER.parse(polygonInString).getAsJsonArray();
-        JsonArray arrayWithCoords = extractAllPolygonsCoordsToNewJson(polygonArray);
-        List<Polygon> polygons = extractPolygonsFrom(arrayWithCoords);
-        Map<Polygon, List<Polygon>> holes = getHolesForPolygons(polygons);
-        excludeHolesFromPolygonsList(polygons, holes);
+        JsonArray polygonsJson = normalizePolygonsJson(JSON_PARSER.parse(polygonInString).getAsJsonArray());
+        List<Polygon> polygons = buildPolygonsFromJson(polygonsJson);
 
-        return contains(polygons, holes, coordinates);
+        Map<Polygon, List<Polygon>> polygonsHoles = getPolygonsHoles(polygons);
+
+        Set<Polygon> allHoles = polygonsHoles.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
+        polygons.removeIf(allHoles::contains);
+
+        return contains(polygons, polygonsHoles, coordinates);
     }
 
     private static boolean contains(List<Polygon> polygons, Map<Polygon, List<Polygon>> holes, Coordinates coordinates) {
@@ -88,6 +93,88 @@ public class GeoUtil {
         return geometry.relate(point).equals(SpatialRelation.CONTAINS);
     }
 
+    private static JsonArray normalizePolygonsJson(JsonArray polygonsJsonArray) {
+        JsonArray result = new JsonArray();
+        normalizePolygonsJson(polygonsJsonArray, result);
+        return result;
+    }
+
+    private static void normalizePolygonsJson(JsonArray polygonsJsonArray, JsonArray result) {
+        for (JsonElement element : polygonsJsonArray) {
+            if (containsArrayWithPrimitives(element.getAsJsonArray())) {
+                result.add(element);
+            } else {
+                normalizePolygonsJson(element.getAsJsonArray(), result);
+            }
+        }
+    }
+
+    private static Map<Polygon, List<Polygon>> getPolygonsHoles(List<Polygon> polygons) {
+        Map<Polygon, List<Polygon>> polygonsHoles = new HashMap<>();
+
+        for (Polygon polygon : polygons) {
+            List<Polygon> holes = polygons.stream()
+                    .filter(another -> !another.equalsExact(polygon))
+                    .filter(another -> {
+                        JtsGeometry currentGeo = jtsCtx.getShapeFactory().makeShape(polygon);
+                        JtsGeometry anotherGeo = jtsCtx.getShapeFactory().makeShape(another);
+
+                        boolean currentContainsAnother = currentGeo
+                                .relate(anotherGeo)
+                                .equals(SpatialRelation.CONTAINS);
+
+                        boolean anotherWithinCurrent = anotherGeo
+                                .relate(currentGeo)
+                                .equals(SpatialRelation.WITHIN);
+
+                        return currentContainsAnother && anotherWithinCurrent;
+                    })
+                    .collect(Collectors.toList());
+
+            if (!holes.isEmpty()) {
+                polygonsHoles.put(polygon, holes);
+            }
+        }
+
+        return polygonsHoles;
+    }
+
+    private static List<Polygon> buildPolygonsFromJson(JsonArray polygonsJsonArray) {
+        List<Polygon> polygons = new LinkedList<>();
+
+        for (JsonElement polygonJsonArray : polygonsJsonArray) {
+            Polygon polygon = buildPolygonFromCoordinates(parseCoordinates(polygonJsonArray.getAsJsonArray()));
+            polygons.add(polygon);
+        }
+
+        return polygons;
+    }
+
+    private static Polygon buildPolygonFromCoordinates(List<Coordinate> coordinates) {
+        CoordinateSequence coordinateSequence = jtsCtx
+                .getShapeFactory()
+                .getGeometryFactory()
+                .getCoordinateSequenceFactory()
+                .create(coordinates.toArray(new Coordinate[0]));
+
+        return jtsCtx.getShapeFactory().getGeometryFactory().createPolygon(coordinateSequence);
+    }
+
+    private static List<Coordinate> parseCoordinates(JsonArray coordinatesJson) {
+        List<Coordinate> result = new ArrayList<>();
+
+        for (JsonElement coords : coordinatesJson) {
+            double x = coords.getAsJsonArray().get(0).getAsDouble();
+            double y = coords.getAsJsonArray().get(1).getAsDouble();
+            result.add(new Coordinate(x, y));
+        }
+
+        if (result.size() >= 3) {
+            result.add(result.get(0));
+        }
+
+        return result;
+    }
 
     private static boolean containsPrimitives(JsonArray array) {
         for (JsonElement element : array) {
@@ -107,106 +194,4 @@ public class GeoUtil {
         return true;
     }
 
-    private static void extractAllPolygonsCoordsFromJson(JsonArray polygonArray, JsonArray polygons) {
-        for (JsonElement element : polygonArray) {
-            if (containsArrayWithPrimitives(element.getAsJsonArray())) {
-                polygons.add(element);
-            }
-            else {
-                extractAllPolygonsCoordsFromJson(element.getAsJsonArray(), polygons);
-            }
-        }
-    }
-
-    private static JsonArray extractAllPolygonsCoordsToNewJson(JsonArray polygonArray) {
-        JsonArray result = new JsonArray();
-        extractAllPolygonsCoordsFromJson(polygonArray, result);
-        return result;
-    }
-
-    private static List<Coordinate> parseCoordinates(JsonArray coordinates) {
-        List<Coordinate> allCoords = new ArrayList<>();
-
-        for (JsonElement coords : coordinates) {
-            double x = coords.getAsJsonArray().get(0).getAsDouble();
-            double y = coords.getAsJsonArray().get(1).getAsDouble();
-            allCoords.add(new Coordinate(x, y));
-        }
-        allCoords.add(allCoords.get(0));
-
-        return allCoords;
-    }
-
-    private static Polygon buildPolygonFromCoordsList(List<Coordinate> coordinates) {
-        CoordinateSequence coordinateSequence = jtsCtx
-                .getShapeFactory()
-                .getGeometryFactory()
-                .getCoordinateSequenceFactory()
-                .create(coordinates.toArray(new Coordinate[0]));
-
-        return jtsCtx.getShapeFactory().getGeometryFactory().createPolygon(coordinateSequence);
-    }
-
-    private static List<Polygon> extractPolygonsFrom(JsonArray arrayWithCoords) {
-        List<Polygon> polygons = new ArrayList<>();
-
-        for (JsonElement coordinates : arrayWithCoords) {
-            List<Coordinate> coordinatesList = parseCoordinates(coordinates.getAsJsonArray());
-            Polygon polygon = buildPolygonFromCoordsList(coordinatesList);
-            polygons.add(polygon);
-        }
-        return polygons;
-    }
-
-    private static Map<Polygon, List<Polygon>> getHolesForPolygons(List<Polygon> polygons) {
-        Map<Polygon, List<Polygon>> holesForPolygons = new HashMap<>();
-
-        for (Polygon polygon : polygons) {
-            holesForPolygons.put(polygon, new ArrayList<>());
-        }
-
-        for (Polygon current : polygons) {
-            List<Polygon> withoutCurrent = polygons.stream()
-                    .filter(p -> !p.equalsExact(current))
-                    .collect(Collectors.toList());
-
-            for (Polygon another : withoutCurrent) {
-                JtsGeometry currentGeo = jtsCtx.getShapeFactory().makeShape(current);
-                JtsGeometry anotherGeo = jtsCtx.getShapeFactory().makeShape(another);
-
-                boolean currentContainsAnother = currentGeo
-                        .relate(anotherGeo)
-                        .equals(SpatialRelation.CONTAINS);
-
-                boolean anotherWithinCurrent = anotherGeo
-                        .relate(currentGeo)
-                        .equals(SpatialRelation.WITHIN);
-
-                if (currentContainsAnother && anotherWithinCurrent) {
-                    holesForPolygons.get(current).add(another);
-                }
-            }
-        }
-
-        for (Polygon polygon : polygons) {
-            List<Polygon> holes = holesForPolygons.get(polygon);
-            if (holes.isEmpty()) {
-                holesForPolygons.remove(polygon);
-            }
-        }
-
-        return holesForPolygons;
-    }
-
-    private static void excludeHolesFromPolygonsList(List<Polygon> polygons, Map<Polygon, List<Polygon>> holesForPolygons) {
-        List<Polygon> polygonsToExclude = new ArrayList<>();
-
-        for (Polygon polygon : polygons) {
-            if (!holesForPolygons.containsKey(polygon)) {
-                polygonsToExclude.add(polygon);
-            }
-        }
-
-        polygons.removeAll(polygonsToExclude);
-    }
 }
