@@ -175,7 +175,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
         if (isPositiveInteger(passwordPolicy.getMinimumSpecialCharacters())) {
             passwordRules.add(new CharacterRule(EnglishCharacterData.Special, passwordPolicy.getMinimumSpecialCharacters()));
         }
-        if (!passwordPolicy.getAllowWhitespaces()) {
+        if (passwordPolicy.getAllowWhitespaces() != null && !passwordPolicy.getAllowWhitespaces()) {
             passwordRules.add(new WhitespaceRule());
         }
         PasswordValidator validator = new PasswordValidator(passwordRules);
