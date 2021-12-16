@@ -2607,6 +2607,7 @@
         "deselect-all-objects": "Deselect all nodes and connections",
         "delete-selected-objects": "Delete selected nodes and connections",
         "delete-selected": "Delete selected",
+        "create-nested-rulechain": "Create nested rule chain",
         "select-all": "Select all",
         "copy-selected": "Copy selected",
         "deselect-all": "Deselect all",
@@ -2637,6 +2638,8 @@
         "type-external-details": "Interacts with external system",
         "type-rule-chain": "Rule Chain",
         "type-rule-chain-details": "Forwards incoming messages to specified Rule Chain",
+        "type-flow": "Flow",
+        "type-flow-details": "Organizes message flow",
         "type-input": "Input",
         "type-input-details": "Logical input of Rule Chain, forwards incoming messages to next related Rule Node",
         "type-unknown": "Unknown",
@@ -3258,7 +3261,40 @@
             "update-timeseries": "Update timeseries",
             "value": "Value"
         },
-        "invalid-qr-code-text": "Invalid input text for QR code. Input should have a string type"
+        "invalid-qr-code-text": "Invalid input text for QR code. Input should have a string type",
+        "maps": {
+            "select-entity": "Select entity",
+            "select-entity-hint": "Hint: after selection click at the map to set position",
+            "tooltips": {
+                "placeMarker": "Click to place marker",
+                "firstVertex": "Click to place first point",
+                "continueLine": "Click to continue drawing",
+                "finishLine": "Click any existing marker to finish",
+                "finishPoly": "Click first marker to finish and save",
+                "finishRect": "Click to finish and save",
+                "startCircle": "Click to place circle center",
+                "finishCircle": "Click to finish circle",
+                "placeCircleMarker": "Click to place circle marker"
+            },
+            "actions": {
+                "finish": "Finish",
+                "cancel": "Cancel",
+                "removeLastVertex": "Remove last point"
+            },
+            "buttonTitles": {
+                "drawMarkerButton": "Create marker",
+                "drawPolyButton": "Create polygon",
+                "drawLineButton": "Create Polyline",
+                "drawCircleButton": "Create Circle",
+                "drawRectButton": "Create rectangle",
+                "editButton": "Edit mode",
+                "dragButton": "Drag-drop mode",
+                "cutButton": "Cut polygon area",
+                "deleteButton": "Remove",
+                "drawCircleMarkerButton": "Create circle marker",
+                "rotateButton": "Rotate polygon"
+            }
+        }
     },
     "icon": {
         "icon": "Icon",

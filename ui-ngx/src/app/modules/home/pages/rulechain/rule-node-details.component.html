@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-details-buttons" *ngIf="!isAdd && ruleNode.component.type === ruleNodeType.RULE_CHAIN">
+<div class="tb-details-buttons" *ngIf="!isAdd && ruleNode.component?.configurationDescriptor?.nodeDefinition?.ruleChainNode">
   <button mat-raised-button color="primary"
           (click)="openRuleChain($event)">
     {{'rulechain.open-rulechain' | translate }}
@@ -23,7 +23,7 @@
 </div>
 <form [formGroup]="ruleNodeFormGroup" class="mat-padding">
   <fieldset [disabled]="(isLoading$ | async) || !isEdit || isReadOnly">
-    <section *ngIf="ruleNode.component.type !== ruleNodeType.RULE_CHAIN">
+    <section>
       <section fxLayout="column" fxLayout.gt-sm="row">
         <mat-form-field fxFlex class="mat-block">
           <mat-label translate>rulenode.name</mat-label>
@@ -43,22 +43,10 @@
       <tb-rule-node-config #ruleNodeConfigComponent
         formControlName="configuration"
         [ruleNodeId]="ruleNode.ruleNodeId?.id"
+        [ruleChainId]="ruleChainId"
+        [ruleChainType]="ruleChainType"
         [nodeDefinition]="ruleNode.component.configurationDescriptor.nodeDefinition">
       </tb-rule-node-config>
-      <div formGroupName="additionalInfo" fxLayout="column">
-        <mat-form-field class="mat-block">
-          <mat-label translate>rulenode.description</mat-label>
-          <textarea matInput formControlName="description" rows="2"></textarea>
-        </mat-form-field>
-      </div>
-    </section>
-    <section *ngIf="ruleNode.component.type === ruleNodeType.RULE_CHAIN">
-      <tb-entity-autocomplete required
-                              [excludeEntityIds]="[ruleChainId]"
-                              [entityType]="entityType.RULE_CHAIN"
-                              [entitySubtype]="ruleChainType"
-                              formControlName="targetRuleChainId">
-      </tb-entity-autocomplete>
       <div formGroupName="additionalInfo" fxLayout="column">
         <mat-form-field class="mat-block">
           <mat-label translate>rulenode.description</mat-label>

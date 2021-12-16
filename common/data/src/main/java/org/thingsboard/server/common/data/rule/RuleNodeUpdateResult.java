@@ -13,16 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue.kafka;
+package org.thingsboard.server.common.data.rule;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import org.thingsboard.server.common.data.id.RuleNodeId;
+
+import java.util.Map;
 
 /**
- * Created by ashvayka on 25.09.18.
+ * Created by igor on 3/13/18.
  */
 @Data
-public class TbKafkaProperty {
+public class RuleNodeUpdateResult {
 
-    private String key;
-    private String value;
+    private final RuleNode oldRuleNode;
+    private final RuleNode newRuleNode;
+
 }

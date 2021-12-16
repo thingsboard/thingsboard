@@ -15,11 +15,21 @@
  */
 package org.thingsboard.server.dao.sql.rule;
 
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.RuleNodeEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface RuleNodeRepository extends CrudRepository<RuleNodeEntity, UUID> {
+
+    @Query("SELECT r FROM RuleNodeEntity r WHERE r.ruleChainId in " +
+            "(select id from RuleChainEntity rc WHERE rc.tenantId = :tenantId) " +
+            "AND r.type = :ruleType AND LOWER(r.configuration) LIKE LOWER(CONCAT('%', :searchText, '%')) ")
+    List<RuleNodeEntity> findRuleNodesByTenantIdAndType(@Param("tenantId") UUID tenantId,
+                                                    @Param("ruleType") String ruleType,
+                                                    @Param("searchText") String searchText);
 
 }

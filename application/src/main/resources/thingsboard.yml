@@ -70,6 +70,7 @@ server:
     dynamic_page_link:
       refresh_interval: "${TB_SERVER_WS_DYNAMIC_PAGE_LINK_REFRESH_INTERVAL_SEC:60}"
       refresh_pool_size: "${TB_SERVER_WS_DYNAMIC_PAGE_LINK_REFRESH_POOL_SIZE:1}"
+      max_alarm_queries_per_refresh_interval: "${TB_SERVER_WS_MAX_ALARM_QUERIES_PER_REFRESH_INTERVAL:3}"
       max_per_user: "${TB_SERVER_WS_DYNAMIC_PAGE_LINK_MAX_PER_USER:10}"
     max_entities_per_data_subscription: "${TB_SERVER_WS_MAX_ENTITIES_PER_DATA_SUBSCRIPTION:10000}"
     max_entities_per_alarm_subscription: "${TB_SERVER_WS_MAX_ENTITIES_PER_ALARM_SUBSCRIPTION:10000}"
@@ -821,6 +822,9 @@ transport:
     paging_transmission_window: "${LWM2M_PAGING_TRANSMISSION_WINDOW:10000}"
     # Use redis for Security and Registration stores
     redis.enabled: "${LWM2M_REDIS_ENABLED:false}"
+    network_config: # In this section you can specify custom parameters for LwM2M network configuration and expose the env variables to configure outside
+#      - key: "PROTOCOL_STAGE_THREAD_COUNT"
+#        value: "${LWM2M_PROTOCOL_STAGE_THREAD_COUNT:4}"
   snmp:
     enabled: "${SNMP_ENABLED:true}"
     response_processing:

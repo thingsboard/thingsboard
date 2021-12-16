@@ -612,16 +612,6 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
         Assert.assertEquals(1, alarms.getData().size());
         Assert.assertEquals(created, alarms.getData().get(0));
 
-        List<EntityRelation> toAlarmRelations = relationService.findByTo(tenantId, created.getId(), RelationTypeGroup.ALARM);
-        Assert.assertEquals(1, toAlarmRelations.size());
-
-        List<EntityRelation> fromChildRelations = relationService.findByFrom(tenantId, childId, RelationTypeGroup.ALARM);
-        Assert.assertEquals(0, fromChildRelations.size());
-
-        List<EntityRelation> fromParentRelations = relationService.findByFrom(tenantId, parentId, RelationTypeGroup.ALARM);
-        Assert.assertEquals(1, fromParentRelations.size());
-
-
         Assert.assertTrue("Alarm was not deleted when expected", alarmService.deleteAlarm(tenantId, created.getId()).isSuccessful());
 
         Alarm fetched = alarmService.findAlarmByIdAsync(tenantId, created.getId()).get();
@@ -646,15 +636,6 @@ public abstract class BaseAlarmServiceTest extends AbstractServiceTest {
                 ).build()).get();
         Assert.assertNotNull(alarms.getData());
         Assert.assertEquals(0, alarms.getData().size());
-
-        toAlarmRelations = relationService.findByTo(tenantId, created.getId(), RelationTypeGroup.ALARM);
-        Assert.assertEquals(0, toAlarmRelations.size());
-
-        fromChildRelations = relationService.findByFrom(tenantId, childId, RelationTypeGroup.ALARM);
-        Assert.assertEquals(0, fromChildRelations.size());
-
-        fromParentRelations = relationService.findByFrom(tenantId, childId, RelationTypeGroup.ALARM);
-        Assert.assertEquals(0, fromParentRelations.size());
 
     }
 }

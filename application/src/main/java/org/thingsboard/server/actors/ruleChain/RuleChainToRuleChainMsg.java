@@ -31,31 +31,17 @@ import org.thingsboard.server.common.msg.queue.RuleEngineException;
  */
 @EqualsAndHashCode(callSuper = true)
 @ToString
-public final class RuleChainToRuleChainMsg extends TbRuleEngineActorMsg implements RuleChainAwareMsg {
+public final class RuleChainToRuleChainMsg extends TbToRuleChainActorMsg  {
 
-    @Getter
-    private final RuleChainId target;
     @Getter
     private final RuleChainId source;
     @Getter
     private final String fromRelationType;
 
     public RuleChainToRuleChainMsg(RuleChainId target, RuleChainId source, TbMsg tbMsg, String fromRelationType) {
-        super(tbMsg);
-        this.target = target;
+        super(tbMsg, target);
         this.source = source;
         this.fromRelationType = fromRelationType;
-    }
-
-    @Override
-    public void onTbActorStopped(TbActorStopReason reason) {
-        String message = reason == TbActorStopReason.STOPPED ? String.format("Rule chain [%s] stopped", target.getId()) : String.format("Failed to initialize rule chain [%s]!", target.getId());
-        msg.getCallback().onFailure(new RuleEngineException(message));
-    }
-
-    @Override
-    public RuleChainId getRuleChainId() {
-        return target;
     }
 
     @Override

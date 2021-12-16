@@ -26,8 +26,9 @@ import {
 import { DOCUMENT } from '@angular/common';
 import { forkJoin, Observable, ReplaySubject, throwError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
+import { IModulesMap } from '@modules/common/modules-map.models';
 
-declare const SystemJS;
+declare const System;
 
 @Injectable({
   providedIn: 'root'
@@ -63,23 +64,19 @@ export class ResourcesService {
     return this.loadResourceByType(fileType, url);
   }
 
-  public loadFactories(url: string, modulesMap: {[key: string]: any}): Observable<ComponentFactory<any>[]> {
+  public loadFactories(url: string, modulesMap: IModulesMap): Observable<ComponentFactory<any>[]> {
     if (this.loadedFactories[url]) {
       return this.loadedFactories[url].asObservable();
     }
+    modulesMap.init();
     const subject = new ReplaySubject<ComponentFactory<any>[]>();
     this.loadedFactories[url] = subject;
-    if (modulesMap) {
-      for (const moduleId of Object.keys(modulesMap)) {
-        SystemJS.set(moduleId, modulesMap[moduleId]);
-      }
-    }
-    SystemJS.import(url).then(
-      (module) => {
-        const modules = this.extractNgModules(module);
-        if (modules.length) {
-          import('@angular/compiler').then(
-            () => {
+    import('@angular/compiler').then(
+      () => {
+        System.import(url).then(
+          (module) => {
+            const modules = this.extractNgModules(module);
+            if (modules.length) {
               const tasks: Promise<ModuleWithComponentFactories<any>>[] = [];
               for (const m of modules) {
                 tasks.push(this.compiler.compileModuleAndAllComponentsAsync(m));
@@ -101,44 +98,41 @@ export class ResourcesService {
                 (e) => {
                   this.loadedFactories[url].error(new Error(`Unable to compile module from url: ${url}`));
                   delete this.loadedFactories[url];
-                });            }
-          );
-        } else {
-          this.loadedFactories[url].error(new Error(`Module '${url}' doesn't have default export!`));
-          delete this.loadedFactories[url];
-        }
-      },
-      (e) => {
-        this.loadedFactories[url].error(new Error(`Unable to load module from url: ${url}`));
-        delete this.loadedFactories[url];
+                });
+            } else {
+              this.loadedFactories[url].error(new Error(`Module '${url}' doesn't have default export!`));
+              delete this.loadedFactories[url];
+            }
+          },
+          (e) => {
+            this.loadedFactories[url].error(new Error(`Unable to load module from url: ${url}`));
+            delete this.loadedFactories[url];
+          }
+        );
       }
     );
     return subject.asObservable();
   }
 
-  public loadModules(url: string, modulesMap: {[key: string]: any}): Observable<Type<any>[]> {
+  public loadModules(url: string, modulesMap: IModulesMap): Observable<Type<any>[]> {
     if (this.loadedModules[url]) {
       return this.loadedModules[url].asObservable();
     }
+    modulesMap.init();
     const subject = new ReplaySubject<Type<any>[]>();
     this.loadedModules[url] = subject;
-    if (modulesMap) {
-      for (const moduleId of Object.keys(modulesMap)) {
-        SystemJS.set(moduleId, modulesMap[moduleId]);
-      }
-    }
-    SystemJS.import(url).then(
-      (module) => {
-        try {
-          let modules;
-          try {
-            modules = this.extractNgModules(module);
-          } catch (e) {
-            console.error(e);
-          }
-          if (modules && modules.length) {
-            import('@angular/compiler').then(
-              () => {
+    import('@angular/compiler').then(
+      () => {
+        System.import(url).then(
+          (module) => {
+            try {
+              let modules;
+              try {
+                modules = this.extractNgModules(module);
+              } catch (e) {
+                console.error(e);
+              }
+              if (modules && modules.length) {
                 const tasks: Promise<ModuleWithComponentFactories<any>>[] = [];
                 for (const m of modules) {
                   tasks.push(this.compiler.compileModuleAndAllComponentsAsync(m));
@@ -159,21 +153,21 @@ export class ResourcesService {
                     this.loadedModules[url].error(new Error(`Unable to compile module from url: ${url}`));
                     delete this.loadedModules[url];
                   });
+              } else {
+                this.loadedModules[url].error(new Error(`Module '${url}' doesn't have default export or not NgModule!`));
+                delete this.loadedModules[url];
               }
-            );
-          } else {
-            this.loadedModules[url].error(new Error(`Module '${url}' doesn't have default export or not NgModule!`));
+            } catch (e) {
+              this.loadedModules[url].error(new Error(`Unable to load module from url: ${url}`));
+              delete this.loadedModules[url];
+            }
+          },
+          (e) => {
+            this.loadedModules[url].error(new Error(`Unable to load module from url: ${url}`));
             delete this.loadedModules[url];
+            console.error(`Unable to load module from url: ${url}`, e);
           }
-        } catch (e) {
-          this.loadedModules[url].error(new Error(`Unable to load module from url: ${url}`));
-          delete this.loadedModules[url];
-        }
-      },
-      (e) => {
-        this.loadedModules[url].error(new Error(`Unable to load module from url: ${url}`));
-        delete this.loadedModules[url];
-        console.error(`Unable to load module from url: ${url}`, e);
+        );
       }
     );
     return subject.asObservable();
@@ -184,24 +178,23 @@ export class ResourcesService {
       let potentialModules = [module];
       let currentScanDepth = 0;
 
-      while(potentialModules.length && currentScanDepth < 10) {
-        let newPotentialModules = [];
-        for (const module of potentialModules) {
-          if (module && 'ɵmod' in module) {
-            modules.push(module);
+      while (potentialModules.length && currentScanDepth < 10) {
+        const newPotentialModules = [];
+        for (const potentialModule of potentialModules) {
+          if (potentialModule && ('ɵmod' in potentialModule)) {
+            modules.push(potentialModule);
           } else {
-            for (const k of Object.keys(module)) {
-              if(!this.isPrimitive(module[k])) {
-                newPotentialModules.push(module[k]);
+            for (const k of Object.keys(potentialModule)) {
+              if (!this.isPrimitive(potentialModule[k])) {
+                newPotentialModules.push(potentialModule[k]);
               }
             }
           }
         }
-
         potentialModules = newPotentialModules;
         currentScanDepth++;
       }
-    } catch(e) {
+    } catch (e) {
       console.log('Could not load NgModule', e);
     }
     return modules;
