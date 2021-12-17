@@ -20,7 +20,7 @@ import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.CoapDeviceType;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
@@ -33,7 +33,6 @@ import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadCo
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 
 import java.util.Arrays;
-import java.util.Collections;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -41,14 +40,15 @@ import static org.junit.Assert.assertTrue;
 @Slf4j
 public abstract class AbstractCoapTimeseriesProtoIntegrationTest extends AbstractCoapTimeseriesIntegrationTest {
 
-    @After
-    public void afterTest() throws Exception {
-        processAfterTest();
+    @Before
+    @Override
+    public void beforeTest() throws Exception {
+        //do nothing, processBeforeTest will be invoked in particular test methods with different parameters
     }
 
     @Test
     public void testPushTelemetry() throws Exception {
-        super.processBeforeTest("Test Post Telemetry device proto payload", CoapDeviceType.DEFAULT, TransportPayloadType.PROTOBUF);
+        processBeforeTest("Test Post Telemetry device proto payload", CoapDeviceType.DEFAULT, TransportPayloadType.PROTOBUF);
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
         assertTrue(transportConfiguration instanceof CoapDeviceProfileTransportConfiguration);
         CoapDeviceProfileTransportConfiguration coapDeviceProfileTransportConfiguration = (CoapDeviceProfileTransportConfiguration) transportConfiguration;
@@ -117,7 +117,7 @@ public abstract class AbstractCoapTimeseriesProtoIntegrationTest extends Abstrac
                 "    }\n" +
                 "  }\n" +
                 "}";
-        super.processBeforeTest("Test Post Telemetry device proto payload", CoapDeviceType.DEFAULT, TransportPayloadType.PROTOBUF, schemaStr, null, null, null, null, null, DeviceProfileProvisionType.DISABLED);
+        processBeforeTest("Test Post Telemetry device proto payload", CoapDeviceType.DEFAULT, TransportPayloadType.PROTOBUF, schemaStr, null, null, null, null, null, DeviceProfileProvisionType.DISABLED);
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
         assertTrue(transportConfiguration instanceof CoapDeviceProfileTransportConfiguration);
         CoapDeviceProfileTransportConfiguration coapDeviceProfileTransportConfiguration = (CoapDeviceProfileTransportConfiguration) transportConfiguration;
@@ -167,12 +167,12 @@ public abstract class AbstractCoapTimeseriesProtoIntegrationTest extends Abstrac
                 .setField(postTelemetryMsgDescriptor.findFieldByName("values"), valuesMsg)
                 .build();
 
-        processTestPostTelemetry(postTelemetryMsg.toByteArray(),  Arrays.asList("key1", "key2", "key3", "key4", "key5"), true, false);
+        processTestPostTelemetry(postTelemetryMsg.toByteArray(), Arrays.asList("key1", "key2", "key3", "key4", "key5"), true, false);
     }
 
     @Test
     public void testPushTelemetryWithExplicitPresenceProtoKeys() throws Exception {
-        super.processBeforeTest("Test Post Telemetry device proto payload", CoapDeviceType.DEFAULT, TransportPayloadType.PROTOBUF);
+        processBeforeTest("Test Post Telemetry device proto payload", CoapDeviceType.DEFAULT, TransportPayloadType.PROTOBUF);
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
         assertTrue(transportConfiguration instanceof CoapDeviceProfileTransportConfiguration);
         CoapDeviceProfileTransportConfiguration coapDeviceProfileTransportConfiguration = (CoapDeviceProfileTransportConfiguration) transportConfiguration;
@@ -239,7 +239,7 @@ public abstract class AbstractCoapTimeseriesProtoIntegrationTest extends Abstrac
                 "    }\n" +
                 "  }\n" +
                 "}";
-        super.processBeforeTest("Test Post Telemetry device proto payload", CoapDeviceType.DEFAULT, TransportPayloadType.PROTOBUF, schemaStr, null, null, null, null, null, DeviceProfileProvisionType.DISABLED);
+        processBeforeTest("Test Post Telemetry device proto payload", CoapDeviceType.DEFAULT, TransportPayloadType.PROTOBUF, schemaStr, null, null, null, null, null, DeviceProfileProvisionType.DISABLED);
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
         assertTrue(transportConfiguration instanceof CoapDeviceProfileTransportConfiguration);
         CoapDeviceProfileTransportConfiguration coapDeviceProfileTransportConfiguration = (CoapDeviceProfileTransportConfiguration) transportConfiguration;

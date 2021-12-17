@@ -642,8 +642,6 @@
         "access-token": "Piekļuves tokens",
         "access-token-required": "Piekļuves tokens ir nepieciešams.",
         "access-token-invalid": "Piekļuves tokena garumam ir jābūt no 1 līdz 32 rakstzīmēm.",
-        "rsa-key": "RSA publiskā atslēga",
-        "rsa-key-required": "RSA publiskā atslēga ir nepieciešama.",
         "secret": "Noslēpums",
         "secret-required": "Noslēpums ir nepieciešams.",
         "device-type": "Iekārtas tips",

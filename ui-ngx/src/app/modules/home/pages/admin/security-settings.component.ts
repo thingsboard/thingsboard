@@ -63,7 +63,8 @@ export class SecuritySettingsComponent extends PageComponent implements OnInit, 
           minimumDigits: [null, Validators.min(0)],
           minimumSpecialCharacters: [null, Validators.min(0)],
           passwordExpirationPeriodDays: [null, Validators.min(0)],
-          passwordReuseFrequencyDays: [null, Validators.min(0)]
+          passwordReuseFrequencyDays: [null, Validators.min(0)],
+          allowWhitespaces: [true]
         }
       )
     });
