@@ -95,6 +95,7 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.service.gateway_device.GatewayDeviceStateService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.service.resource.TbResourceService;
@@ -137,6 +138,7 @@ public class DefaultTransportApiService implements TransportApiService {
     private final TbResourceService resourceService;
     private final OtaPackageService otaPackageService;
     private final OtaPackageDataCache otaPackageDataCache;
+    private final GatewayDeviceStateService gatewayDeviceStateService;
 
     private final ConcurrentMap<String, ReentrantLock> deviceCreationLocks = new ConcurrentHashMap<>();
 
@@ -316,6 +318,8 @@ public class DefaultTransportApiService implements TransportApiService {
                     lastConnectedGatewayRelation = new EntityRelation(device.getId(), gateway.getId(), DataConstants.LAST_CONNECTED_GATEWAY);
                 }
                 relationService.saveRelationAsync(TenantId.SYS_TENANT_ID, lastConnectedGatewayRelation);
+
+                gatewayDeviceStateService.checkAndUpdateDeletedGatewayDevicesAttribute(device);
 
                 GetOrCreateDeviceFromGatewayResponseMsg.Builder builder = GetOrCreateDeviceFromGatewayResponseMsg.newBuilder()
                         .setDeviceInfo(getDeviceInfoProto(device));

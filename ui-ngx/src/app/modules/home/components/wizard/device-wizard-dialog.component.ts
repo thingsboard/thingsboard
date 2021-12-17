@@ -109,6 +109,7 @@ export class DeviceWizardDialogComponent extends
         label: ['', Validators.maxLength(255)],
         gateway: [false],
         overwriteActivityTime: [false],
+        handleDeviceRenaming: [false],
         addProfileType: [0],
         deviceProfileId: [null, Validators.required],
         newDeviceProfileTitle: [{value: null, disabled: true}],
@@ -326,6 +327,7 @@ export class DeviceWizardDialogComponent extends
       additionalInfo: {
         gateway: this.deviceWizardFormGroup.get('gateway').value,
         overwriteActivityTime: this.deviceWizardFormGroup.get('overwriteActivityTime').value,
+        handleDeviceRenaming: this.deviceWizardFormGroup.get('handleDeviceRenaming').value,
         description: this.deviceWizardFormGroup.get('description').value
       },
       customerId: null

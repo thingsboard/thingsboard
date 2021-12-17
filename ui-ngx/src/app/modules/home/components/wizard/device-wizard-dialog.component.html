@@ -103,9 +103,15 @@
               <mat-checkbox formControlName="gateway">
                 {{ 'device.is-gateway' | translate }}
               </mat-checkbox>
+            </div>
+            <div fxLayout="row" fxLayout.xs="column" style="padding-bottom: 16px;">
               <mat-checkbox *ngIf="deviceWizardFormGroup.get('gateway').value"
                             formControlName="overwriteActivityTime">
                 {{ 'device.overwrite-activity-time' | translate }}
+              </mat-checkbox>
+              <mat-checkbox *ngIf="deviceWizardFormGroup.get('gateway').value"
+                            formControlName="handleDeviceRenaming">
+                {{ 'device.handle-device-renaming' | translate }}
               </mat-checkbox>
             </div>
             <mat-form-field class="mat-block">

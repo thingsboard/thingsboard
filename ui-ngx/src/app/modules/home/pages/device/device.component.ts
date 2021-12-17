@@ -92,6 +92,7 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
           {
             gateway: [entity && entity.additionalInfo ? entity.additionalInfo.gateway : false],
             overwriteActivityTime: [entity && entity.additionalInfo ? entity.additionalInfo.overwriteActivityTime : false],
+            handleDeviceRenaming: [entity && entity.additionalInfo ? entity.additionalInfo.handleDeviceRenaming : false],
             description: [entity && entity.additionalInfo ? entity.additionalInfo.description : ''],
           }
         )
@@ -121,6 +122,7 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
       additionalInfo: {
         gateway: entity.additionalInfo ? entity.additionalInfo.gateway : false,
         overwriteActivityTime: entity.additionalInfo ? entity.additionalInfo.overwriteActivityTime : false,
+        handleDeviceRenaming: entity.additionalInfo ? entity.additionalInfo.handleDeviceRenaming : false,
         description: entity.additionalInfo ? entity.additionalInfo.description : ''
       }
     });
