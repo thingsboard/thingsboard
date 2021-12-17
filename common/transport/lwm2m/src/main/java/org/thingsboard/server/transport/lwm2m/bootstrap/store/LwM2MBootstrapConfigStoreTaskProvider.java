@@ -84,7 +84,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
                         this.initAfterBootstrapDiscover(discoverResponse);
                         findSecurityInstanceId(discoverResponse.getObjectLinks());
                     } else {
-                        log.info(
+                        log.warn(
                                 "Bootstrap Discover return error {} : to continue bootstrap session without autoIdForSecurityObject mode. {}",
                                 discoverResponse, session);
                     }
@@ -100,7 +100,13 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
                     return tasks;
                 }
                 BootstrapReadResponse readResponse = (BootstrapReadResponse) previousResponse.get(0);
-                findServerInstanceId(readResponse);
+                if (readResponse.isSuccess()) {
+                    findServerInstanceId(readResponse);
+                } else {
+                    log.warn(
+                            "Bootstrap ReadResponse return error {} : to continue bootstrap session without find Server Instance Id. {}",
+                            readResponse, session);
+                }
                 // create requests from config
                 tasks.requestsToSend = this.toRequests(config,
                         config.contentFormat != null ? config.contentFormat : session.getContentFormat());
