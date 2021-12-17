@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.TsValue;
 
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
@@ -84,18 +85,20 @@ public class EntityDataAdapter {
             String strVal = value.toString();
             // check number
             if (NumberUtils.isNumber(strVal)) {
-                try {
-                    long longVal = Long.parseLong(strVal);
-                    return Long.toString(longVal);
-                } catch (NumberFormatException ignored) {
-                }
-                try {
-                    double dblVal = Double.parseDouble(strVal);
-                    if (!Double.isInfinite(dblVal)) {
-                        return Double.toString(dblVal);
-                    }
-                } catch (NumberFormatException ignored) {
-                }
+//                try {
+//                    long longVal = Long.parseLong(strVal);
+//                    return Long.toString(longVal);
+//                } catch (NumberFormatException ignored) {
+//                }
+//                try {
+//                    double dblVal = Double.parseDouble(strVal);
+//                    if (!Double.isInfinite(dblVal)) {
+//                        return Double.toString(dblVal);
+//                    }
+//                } catch (NumberFormatException ignored) {
+//                }
+                BigDecimal bd = new BigDecimal(strVal);
+                return bd.toPlainString();
             }
             return strVal;
         } else {
