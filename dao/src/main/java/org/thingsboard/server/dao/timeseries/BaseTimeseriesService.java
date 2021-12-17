@@ -195,10 +195,10 @@ public class BaseTimeseriesService implements TimeseriesService {
     }
 
     @Override
-    public ListenableFuture<List<Void>> remove(TenantId tenantId, EntityId entityId, List<DeleteTsKvQuery> deleteTsKvQueries) {
+    public ListenableFuture<List<TsKvEntry>> remove(TenantId tenantId, EntityId entityId, List<DeleteTsKvQuery> deleteTsKvQueries) {
         validate(entityId);
         deleteTsKvQueries.forEach(BaseTimeseriesService::validate);
-        List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(deleteTsKvQueries.size() * DELETES_PER_ENTRY);
+        List<ListenableFuture<TsKvEntry>> futures = Lists.newArrayListWithExpectedSize(deleteTsKvQueries.size() * DELETES_PER_ENTRY);
         for (DeleteTsKvQuery tsKvQuery : deleteTsKvQueries) {
             deleteAndRegisterFutures(tenantId, futures, entityId, tsKvQuery);
         }
@@ -206,9 +206,9 @@ public class BaseTimeseriesService implements TimeseriesService {
     }
 
     @Override
-    public ListenableFuture<List<Void>> removeLatest(TenantId tenantId, EntityId entityId, Collection<String> keys) {
+    public ListenableFuture<List<TsKvEntry>> removeLatest(TenantId tenantId, EntityId entityId, Collection<String> keys) {
         validate(entityId);
-        List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(keys.size());
+        List<ListenableFuture<TsKvEntry>> futures = Lists.newArrayListWithExpectedSize(keys.size());
         for (String key : keys) {
             DeleteTsKvQuery query = new BaseDeleteTsKvQuery(key, 0, System.currentTimeMillis(), false);
             futures.add(timeseriesLatestDao.removeLatest(tenantId, entityId, query));
@@ -229,10 +229,10 @@ public class BaseTimeseriesService implements TimeseriesService {
         }, MoreExecutors.directExecutor());
     }
 
-    private void deleteAndRegisterFutures(TenantId tenantId, List<ListenableFuture<Void>> futures, EntityId entityId, DeleteTsKvQuery query) {
-        futures.add(timeseriesDao.remove(tenantId, entityId, query));
+    private void deleteAndRegisterFutures(TenantId tenantId, List<ListenableFuture<TsKvEntry>> futures, EntityId entityId, DeleteTsKvQuery query) {
+        futures.add(Futures.transform(timeseriesDao.remove(tenantId, entityId, query), v -> null, MoreExecutors.directExecutor()));
         futures.add(timeseriesLatestDao.removeLatest(tenantId, entityId, query));
-        futures.add(timeseriesDao.removePartition(tenantId, entityId, query));
+        futures.add(Futures.transform(timeseriesDao.removePartition(tenantId, entityId, query), v -> null, MoreExecutors.directExecutor()));
     }
 
     private static void validate(EntityId entityId) {

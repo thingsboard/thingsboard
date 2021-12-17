@@ -114,7 +114,7 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
     }
 
     @Override
-    public ListenableFuture<Void> removeLatest(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
+    public ListenableFuture<TsKvEntry> removeLatest(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
         ListenableFuture<TsKvEntry> latestEntryFuture = findLatest(tenantId, entityId, query.getKey());
 
         ListenableFuture<Boolean> booleanFuture = Futures.transform(latestEntryFuture, latestEntry -> {
@@ -134,12 +134,12 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
             return Futures.immediateFuture(null);
         }, readResultsProcessingExecutor);
 
-        final SimpleListenableFuture<Void> resultFuture = new SimpleListenableFuture<>();
+        final SimpleListenableFuture<TsKvEntry> resultFuture = new SimpleListenableFuture<>();
         Futures.addCallback(removedLatestFuture, new FutureCallback<Void>() {
             @Override
             public void onSuccess(@Nullable Void result) {
                 if (query.getRewriteLatestIfDeleted()) {
-                    ListenableFuture<Void> savedLatestFuture = Futures.transformAsync(booleanFuture, isRemove -> {
+                    ListenableFuture<TsKvEntry> savedLatestFuture = Futures.transformAsync(booleanFuture, isRemove -> {
                         if (isRemove) {
                             return getNewLatestEntryFuture(tenantId, entityId, query);
                         }
@@ -164,7 +164,7 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
         return resultFuture;
     }
 
-    private ListenableFuture<Void> getNewLatestEntryFuture(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
+    private ListenableFuture<TsKvEntry> getNewLatestEntryFuture(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
         long startTs = 0;
         long endTs = query.getStartTs() - 1;
         ReadTsKvQuery findNewLatestQuery = new BaseReadTsKvQuery(query.getKey(), startTs, endTs, endTs - startTs, 1,
@@ -173,7 +173,8 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
 
         return Futures.transformAsync(future, entryList -> {
             if (entryList.size() == 1) {
-                return saveLatest(tenantId, entityId, entryList.get(0));
+                TsKvEntry entry = entryList.get(0);
+                return Futures.transform(saveLatest(tenantId, entityId, entryList.get(0)), v -> entry, MoreExecutors.directExecutor());
             } else {
                 log.trace("Could not find new latest value for [{}], key - {}", entityId, query.getKey());
             }

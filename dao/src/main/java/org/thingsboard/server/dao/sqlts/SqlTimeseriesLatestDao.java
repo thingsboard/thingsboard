@@ -147,7 +147,7 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
     }
 
     @Override
-    public ListenableFuture<Void> removeLatest(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
+    public ListenableFuture<TsKvEntry> removeLatest(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
         return getRemoveLatestFuture(tenantId, entityId, query);
     }
 
@@ -175,11 +175,12 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
         return tsKvLatestRepository.findAllKeysByEntityIds(entityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
     }
 
-    private ListenableFuture<Void> getNewLatestEntryFuture(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
+    private ListenableFuture<TsKvEntry> getNewLatestEntryFuture(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
         ListenableFuture<List<TsKvEntry>> future = findNewLatestEntryFuture(tenantId, entityId, query);
         return Futures.transformAsync(future, entryList -> {
             if (entryList.size() == 1) {
-                return getSaveLatestFuture(entityId, entryList.get(0));
+                TsKvEntry entry = entryList.get(0);
+                return Futures.transform(getSaveLatestFuture(entityId, entry), v -> entry, MoreExecutors.directExecutor());
             } else {
                 log.trace("Could not find new latest value for [{}], key - {}", entityId, query.getKey());
             }
@@ -212,7 +213,7 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
         return Futures.immediateFuture(result);
     }
 
-    protected ListenableFuture<Void> getRemoveLatestFuture(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
+    protected ListenableFuture<TsKvEntry> getRemoveLatestFuture(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
         ListenableFuture<TsKvEntry> latestFuture = getFindLatestFuture(entityId, query.getKey());
 
         ListenableFuture<Boolean> booleanFuture = Futures.transform(latestFuture, tsKvEntry -> {
@@ -233,12 +234,12 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
             return Futures.immediateFuture(null);
         }, service);
 
-        final SimpleListenableFuture<Void> resultFuture = new SimpleListenableFuture<>();
+        final SimpleListenableFuture<TsKvEntry> resultFuture = new SimpleListenableFuture<>();
         Futures.addCallback(removedLatestFuture, new FutureCallback<Void>() {
             @Override
             public void onSuccess(@Nullable Void result) {
                 if (query.getRewriteLatestIfDeleted()) {
-                    ListenableFuture<Void> savedLatestFuture = Futures.transformAsync(booleanFuture, isRemove -> {
+                    ListenableFuture<TsKvEntry> savedLatestFuture = Futures.transformAsync(booleanFuture, isRemove -> {
                         if (isRemove) {
                             return getNewLatestEntryFuture(tenantId, entityId, query);
                         }

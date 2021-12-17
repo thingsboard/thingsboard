@@ -573,7 +573,7 @@ public class TelemetryController extends BaseController {
             for (String key : keys) {
                 deleteTsKvQueries.add(new BaseDeleteTsKvQuery(key, deleteFromTs, deleteToTs, rewriteLatestIfDeleted));
             }
-            tsSubService.deleteTimeseriesAndNotify(tenantId, entityId, keys, deleteTsKvQueries, new FutureCallback<>() {
+            tsSubService.deleteTimeseriesAndNotify(tenantId, entityId, keys, deleteTsKvQueries, rewriteLatestIfDeleted, new FutureCallback<>() {
                 @Override
                 public void onSuccess(@Nullable Void tmp) {
                     logTimeseriesDeleted(user, entityId, keys, deleteFromTs, deleteToTs, null);
