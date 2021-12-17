@@ -1,5 +1,6 @@
 package org.thingsboard.server.service.gateway_device;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
@@ -25,9 +26,10 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
@@ -36,12 +38,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class DefaultGatewayDeviceStateService implements GatewayDeviceStateService {
 
     private static final String RENAMED_GATEWAY_DEVICES = "renamedGatewayDevices";
-
+    private static final String DELETED_GATEWAY_DEVICES = "deletedGatewayDevices";
+    private final AttributesService attributesService;
+    private final RelationService relationService;
     @Lazy
     @Autowired
     private TelemetrySubscriptionService tsSubService;
-    private final AttributesService attributesService;
-    private final RelationService relationService;
 
     @Override
     public void update(Device device, Device oldDevice) {
@@ -61,10 +63,10 @@ public class DefaultGatewayDeviceStateService implements GatewayDeviceStateServi
                         } else {
                             AttributeKvEntry receivedRenamedGatewayDevicesAttribute = renamedGatewayDevicesList.get(0);
                             renamedGatewayDevicesNode = (ObjectNode) JacksonUtil.toJsonNode(receivedRenamedGatewayDevicesAttribute.getValueAsString());
-                            if (renamedGatewayDevicesNode.findValue(newDeviceName) != null) {
-                                // If new device name is the same like the first name
+                            if (renamedGatewayDevicesNode.findValue(newDeviceName) != null && oldDeviceName.equals(renamedGatewayDevicesNode.get(newDeviceName).asText())) {
+                                // If a new device name is the same like the first name or another device was renamed like some existing device
                                 renamedGatewayDevicesNode.remove(newDeviceName);
-                            } else if (renamedGatewayDevicesNode.findValue(oldDeviceName) == null) {
+                            } else {
 
                                 AtomicBoolean renamedFirstTime = new AtomicBoolean(true);
 
@@ -93,15 +95,31 @@ public class DefaultGatewayDeviceStateService implements GatewayDeviceStateServi
         List<EntityRelation> relationToGatewayList = relationService.findByFromAndType(TenantId.SYS_TENANT_ID, device.getId(), DataConstants.LAST_CONNECTED_GATEWAY, RelationTypeGroup.COMMON);
         if (!relationToGatewayList.isEmpty()) {
             EntityRelation relationToGateway = relationToGatewayList.get(0);
-            String deletedDeviceName = device.getName();
+            final String[] deletedDeviceName = {device.getName()};
             ListenableFuture<List<AttributeKvEntry>> renamedGatewayDevicesFuture = attributesService.find(device.getTenantId(), relationToGateway.getTo(), DataConstants.SHARED_SCOPE, Collections.singletonList("renamedGatewayDevices"));
             DonAsynchron.withCallback(renamedGatewayDevicesFuture, renamedGatewayDevicesList -> {
                 if (!renamedGatewayDevicesList.isEmpty()) {
-                    ObjectNode renamedGatewayDevicesNode = JacksonUtil.fromString(renamedGatewayDevicesList.get(0).getValueAsString(), ObjectNode.class);
-                    if (renamedGatewayDevicesNode != null && renamedGatewayDevicesNode.findValue(deletedDeviceName) != null) {
-                        renamedGatewayDevicesNode.remove(deletedDeviceName);
-                        KvEntry renamedGatewayDevicesKvEntry = new JsonDataEntry(RENAMED_GATEWAY_DEVICES, JacksonUtil.toString(renamedGatewayDevicesNode));
-                        saveGatewayDevicesAttribute(device, relationToGateway, renamedGatewayDevicesKvEntry);
+                    ObjectNode renamedGatewayDevicesNode = (ObjectNode) JacksonUtil.toJsonNode(renamedGatewayDevicesList.get(0).getValueAsString());
+                    if (renamedGatewayDevicesNode != null) {
+                        AtomicBoolean renamedListChanged = new AtomicBoolean(false);
+                        if (renamedGatewayDevicesNode.findValue(deletedDeviceName[0]) != null) {
+                            renamedGatewayDevicesNode.remove(deletedDeviceName[0]);
+                            renamedListChanged.set(true);
+                        } else {
+                            Map<String, String> renamedGatewayDevicesMap = JacksonUtil.OBJECT_MAPPER.convertValue(renamedGatewayDevicesNode, new TypeReference<>() {});
+                            renamedGatewayDevicesMap.forEach((key, value) -> {
+                                // If device was renamed earlier
+                                if (deletedDeviceName[0].equals(value)) {
+                                    renamedGatewayDevicesNode.remove(key);
+                                    deletedDeviceName[0] = key;
+                                    renamedListChanged.set(true);
+                                }
+                            });
+                        }
+                        if (renamedListChanged.get()) {
+                            KvEntry renamedGatewayDevicesKvEntry = new JsonDataEntry(RENAMED_GATEWAY_DEVICES, JacksonUtil.toString(renamedGatewayDevicesNode));
+                            saveGatewayDevicesAttribute(device, relationToGateway, renamedGatewayDevicesKvEntry);
+                        }
                     }
                 }
             }, e -> log.error("Cannot get gateway renamed devices attribute", e));
@@ -113,19 +131,19 @@ public class DefaultGatewayDeviceStateService implements GatewayDeviceStateServi
                 } else {
                     deletedGatewayDevicesNode = JacksonUtil.OBJECT_MAPPER.createArrayNode();
                 }
-                deletedGatewayDevicesNode.add(deletedDeviceName);
-                KvEntry renamedGatewayDevicesKvEntry = new JsonDataEntry(RENAMED_GATEWAY_DEVICES, JacksonUtil.toString(deletedGatewayDevicesNode));
-                saveGatewayDevicesAttribute(device, relationToGateway, renamedGatewayDevicesKvEntry);
+                deletedGatewayDevicesNode.add(deletedDeviceName[0]);
+                KvEntry deletedGatewayDevicesKvEntry = new JsonDataEntry(DELETED_GATEWAY_DEVICES, JacksonUtil.toString(deletedGatewayDevicesNode));
+                saveGatewayDevicesAttribute(device, relationToGateway, deletedGatewayDevicesKvEntry);
             }, e -> log.error("Cannot get gateway deleted devices attribute", e));
         }
     }
 
-    private void saveGatewayDevicesAttribute(Device device, EntityRelation relationToGateway, KvEntry renamedGatewayDevicesKvEntry) {
-        AttributeKvEntry attrKvEntry = new BaseAttributeKvEntry(System.currentTimeMillis(), renamedGatewayDevicesKvEntry);
+    private void saveGatewayDevicesAttribute(Device device, EntityRelation relationToGateway, KvEntry gatewayDevicesKvEntry) {
+        AttributeKvEntry attrKvEntry = new BaseAttributeKvEntry(System.currentTimeMillis(), gatewayDevicesKvEntry);
         tsSubService.saveAndNotify(device.getTenantId(), relationToGateway.getTo(), DataConstants.SHARED_SCOPE, List.of(attrKvEntry), true, new FutureCallback<Void>() {
             @Override
             public void onSuccess(@Nullable Void unused) {
-                log.trace("Attribute saved for gateway with ID [{}] and data [{}]", relationToGateway.getTo(), renamedGatewayDevicesKvEntry.getJsonValue());
+                log.trace("Attribute saved for gateway with ID [{}] and data [{}]", relationToGateway.getTo(), gatewayDevicesKvEntry.getJsonValue());
             }
 
             @Override
