@@ -124,7 +124,7 @@ $box-shadow-base: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0,
     height: sqrt($popover-arrow-width * $popover-arrow-width * 2) + px;
     background: transparent;
     border-style: solid;
-    border-width: (sqrt($popover-arrow-width * $popover-arrow-width * 2) / 2) + px;
+    border-width: (sqrt($popover-arrow-width * $popover-arrow-width * 2) * 0.5) + px;
     transform: rotate(45deg);
     z-index: 10;
   }

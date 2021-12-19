@@ -64,6 +64,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { isDefined, isUndefined } from '@core/utils';
 import { HasUUID } from '@shared/models/id/has-uuid';
+import { IEntitiesTableComponent } from '@home/models/entity/entity-table-component.models';
 
 @Component({
   selector: 'tb-entities-table',
@@ -71,7 +72,7 @@ import { HasUUID } from '@shared/models/id/has-uuid';
   styleUrls: ['./entities-table.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class EntitiesTableComponent extends PageComponent implements AfterViewInit, OnInit, OnChanges {
+export class EntitiesTableComponent extends PageComponent implements IEntitiesTableComponent, AfterViewInit, OnInit, OnChanges {
 
   @Input()
   entitiesTableConfig: EntityTableConfig<BaseData<HasId>>;

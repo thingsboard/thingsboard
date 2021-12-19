@@ -29,7 +29,7 @@ import java.util.UUID;
 
 @Value
 @EqualsAndHashCode(callSuper = true)
-@ToString(callSuper = true)
+@ToString(callSuper = true, exclude = "image")
 public class DeviceProfileInfo extends EntityInfo {
 
     @ApiModelProperty(position = 3, value = "Either URL or Base64 data of the icon. Used in the mobile application to visualize set of device profiles in the grid view. ")

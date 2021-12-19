@@ -28,7 +28,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 
 @Slf4j
 @RuleNode(
-        type = ComponentType.ACTION,
+        type = ComponentType.FLOW,
         name = "acknowledge",
         configClazz = EmptyNodeConfiguration.class,
         nodeDescription = "Acknowledges the incoming message",

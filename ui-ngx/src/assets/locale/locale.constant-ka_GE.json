@@ -684,8 +684,6 @@
     "access-token": "ტოკენი",
     "access-token-required": "ტოკენი სავალდებულოა",
     "access-token-invalid": "ტოკენის სიგრძე უნდა იყოს 1 დან 32 სიმბოლომდე",
-    "rsa-key": "ღია გასაღები RSA",
-    "rsa-key-required": "ღია გასაღები RSA  აუცილებელია",
     "secret": "საიდუმლო",
     "secret-required": "საიდუმლო აუცილებელია",
     "device-type": "მოწყობილობის ტიპი",

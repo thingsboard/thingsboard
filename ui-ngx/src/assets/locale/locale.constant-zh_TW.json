@@ -625,8 +625,6 @@
     "access-token": "存取令牌",
     "access-token-required": "需要存取令牌",
     "access-token-invalid": "存取令牌長度必須為1到32個字符。",
-    "rsa-key": "RSA公鑰",
-    "rsa-key-required": "需要RSA公鑰",
     "secret": "密鑰",
     "secret-required": "密鑰必填",
     "device-type": "設備類型",

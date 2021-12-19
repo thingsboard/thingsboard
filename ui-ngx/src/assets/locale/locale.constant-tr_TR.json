@@ -957,8 +957,6 @@
     "access-token": "Erişim şifresi",
     "access-token-required": "Erişim şifresi gerekli.",
     "access-token-invalid": "Erişim şifresi uzunluğu 1 ile 32 karakter arasında olmalıdır.",
-    "rsa-key": "RSA açık anahtarı",
-    "rsa-key-required": "RSA açık anahtarı gerekli.",
     "lwm2m-security-config": {
       "identity": "İstemci Kimliği",
       "identity-required": "İstemci Kimliği gerekli.",

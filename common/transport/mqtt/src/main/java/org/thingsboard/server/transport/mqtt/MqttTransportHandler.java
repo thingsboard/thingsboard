@@ -951,7 +951,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 @Override
                 public void onError(Throwable e) {
                     if (e instanceof TbRateLimitsException) {
-                        log.trace("[{}] Failed to submit session event", sessionId, e);
+                        log.trace("[{}] Failed to submit session event: {}", sessionId, e.getMessage());
                     } else {
                         log.warn("[{}] Failed to submit session event", sessionId, e);
                     }

@@ -870,8 +870,6 @@
     "access-token": "Dostopni žeton",
     "access-token-required": "Zahtevan je žeton za dostop.",
     "access-token-invalid": "Dolžina žetona za dostop mora biti od 1 do 32 znakov.",
-    "rsa-key": "Javni ključ RSA",
-    "rsa-key-required": "Potreben je javni ključ RSA.",
     "client-id": "Client ID",
     "client-id-pattern": "Contains invalid character.",
     "user-name": "User Name",
