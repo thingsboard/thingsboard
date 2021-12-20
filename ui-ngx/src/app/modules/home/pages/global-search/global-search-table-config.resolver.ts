@@ -56,6 +56,7 @@ export class GlobalSearchTableConfigResolver implements Resolve<EntityTableConfi
 
     this.config.columns.push(
       new DateEntityTableColumn<GlobalSearchInfo>('createdTime', 'global-search.created-time', this.datePipe, '150px'),
+      new DateEntityTableColumn<GlobalSearchInfo>('lastActivityTime', 'global-search.last-activity-time', this.datePipe, '150px'),
       new EntityTableColumn<GlobalSearchInfo>('id', 'global-search.id', '250px',
         (entity) => entity.id.id),
       new EntityTableColumn<GlobalSearchInfo>('name', 'global-search.entity-name', '20%'),
@@ -63,8 +64,7 @@ export class GlobalSearchTableConfigResolver implements Resolve<EntityTableConfi
       new EntityTableColumn<GlobalSearchInfo>('tenantInfo', 'global-search.tenant-name', '20%',
         (entity) => entity.tenantInfo ? entity.tenantInfo.name : '', () => ({}), false),
       new EntityTableColumn<GlobalSearchInfo>('ownerInfo', 'global-search.owner-name', '20%',
-        (entity) => entity.ownerInfo ? entity.ownerInfo.name : '', () => ({}), false),
-      new DateEntityTableColumn<GlobalSearchInfo>('lastActivityTime', 'global-search.last-activity-time', this.datePipe, '150px')
+        (entity) => entity.ownerInfo ? entity.ownerInfo.name : '', () => ({}), false)
     );
 
     this.config.cellActionDescriptors = [{
@@ -76,11 +76,6 @@ export class GlobalSearchTableConfigResolver implements Resolve<EntityTableConfi
         this.onDeviceIdCopied($event);
       }
     }];
-
-    this.config.componentsData = {
-      entityType: EntityType.DEVICE,
-      searchQuery: ''
-    };
 
     this.config.entitiesFetchFunction = pageLink =>
       this.entityService.searchEntitiesByQuery(this.config.componentsData, pageLink);
@@ -99,6 +94,11 @@ export class GlobalSearchTableConfigResolver implements Resolve<EntityTableConfi
 
   resolve(): EntityTableConfig<GlobalSearchInfo> {
     this.config.tableTitle = this.translate.instant('global-search.global-search');
+
+    this.config.componentsData = {
+      entityType: EntityType.DEVICE,
+      searchQuery: ''
+    };
 
     return this.config;
   }
