@@ -775,7 +775,7 @@ export default abstract class LeafletMap {
     if (coordinates.length === 1) {
       coordinates = coordinates[0];
     }
-    if (e.shape === 'Rectangle') {
+    if (e.shape === 'Rectangle' && coordinates.length === 1) {
       // @ts-ignore
       const bounds: L.LatLngBounds = e.layer.getBounds();
       const boundsArray = [bounds.getNorthWest(), bounds.getNorthEast(), bounds.getSouthWest(), bounds.getSouthEast()];
