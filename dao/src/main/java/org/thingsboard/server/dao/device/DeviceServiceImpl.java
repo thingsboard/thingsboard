@@ -336,12 +336,14 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         return savedDevice;
     }
 
+    @Transactional
     @Override
-    public void deleteDevice(TenantId tenantId, DeviceId deviceId) {
+    public void deleteDevice(final TenantId tenantId, final DeviceId deviceId) {
         log.trace("Executing deleteDevice [{}]", deviceId);
         validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
 
         Device device = deviceDao.findById(tenantId, deviceId.getId());
+        final String deviceName = device.getName();
         try {
             List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityIdAsync(device.getTenantId(), deviceId).get();
             if (entityViews != null && !entityViews.isEmpty()) {
@@ -358,10 +360,10 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
         }
         deleteEntityRelations(tenantId, deviceId);
 
-        removeDeviceFromCacheByName(tenantId, device.getName());
-        removeDeviceFromCacheById(tenantId, device.getId());
-
         deviceDao.removeById(tenantId, deviceId.getId());
+
+        removeDeviceFromCacheByName(tenantId, deviceName);
+        removeDeviceFromCacheById(tenantId, deviceId);
     }
 
     private void removeDeviceFromCacheByName(TenantId tenantId, String name) {
