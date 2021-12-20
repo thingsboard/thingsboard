@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -61,10 +62,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 /**
  * Created by ashvayka on 27.03.18.
@@ -255,7 +254,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
 
     @Override
     public void deleteLatestInternal(TenantId tenantId, EntityId entityId, List<String> keys, FutureCallback<Void> callback) {
-        ListenableFuture<List<TsKvEntry>> deleteFuture = tsService.removeLatest(tenantId, entityId, keys);
+        ListenableFuture<List<TsKvLatestRemovingResult>> deleteFuture = tsService.removeLatest(tenantId, entityId, keys);
         addVoidCallback(deleteFuture, callback);
     }
 
@@ -276,10 +275,10 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     @Override
-    public void deleteTimeseriesAndNotify(TenantId tenantId, EntityId entityId, List<String> keys, List<DeleteTsKvQuery> deleteTsKvQueries, boolean rewriteLatestIfDeleted, FutureCallback<Void> callback) {
-        ListenableFuture<List<TsKvEntry>> deleteFuture = tsService.remove(tenantId, entityId, deleteTsKvQueries);
+    public void deleteTimeseriesAndNotify(TenantId tenantId, EntityId entityId, List<String> keys, List<DeleteTsKvQuery> deleteTsKvQueries, FutureCallback<Void> callback) {
+        ListenableFuture<List<TsKvLatestRemovingResult>> deleteFuture = tsService.remove(tenantId, entityId, deleteTsKvQueries);
         addVoidCallback(deleteFuture, callback);
-        addWsCallback(deleteFuture, list -> onTimeSeriesDelete(tenantId, entityId, keys, list, rewriteLatestIfDeleted));
+        addWsCallback(deleteFuture, list -> onTimeSeriesDelete(tenantId, entityId, keys, list));
     }
 
     @Override
@@ -348,20 +347,24 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         }
     }
 
-    private void onTimeSeriesDelete(TenantId tenantId, EntityId entityId, List<String> keys, List<TsKvEntry> ts, boolean rewriteLatestIfDeleted) {
+    private void onTimeSeriesDelete(TenantId tenantId, EntityId entityId, List<String> keys, List<TsKvLatestRemovingResult> ts) {
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
         if (currentPartitions.contains(tpi)) {
             if (subscriptionManagerService.isPresent()) {
-                Set<String> updated;
-                if (rewriteLatestIfDeleted) {
-                    List<TsKvEntry> filteredTs = ts.stream().filter(Objects::nonNull).collect(Collectors.toList());
-                    subscriptionManagerService.get().onTimeSeriesUpdate(tenantId, entityId, ts, TbCallback.EMPTY);
-                    updated = filteredTs.stream().map(TsKvEntry::getKey).collect(Collectors.toSet());
-                } else {
-                    updated = Collections.emptySet();
-                }
+                List<TsKvEntry> updated = new ArrayList<>();
+                List<String> deleted = new ArrayList<>();
 
-                List<String> deleted = keys.stream().filter(key -> updated.isEmpty() || !updated.remove(key)).collect(Collectors.toList());
+                ts.stream().filter(Objects::nonNull).forEach(res -> {
+                    if (res.isRemoved()) {
+                        if (res.getData() != null) {
+                            updated.add(res.getData());
+                        } else {
+                            deleted.add(res.getKey());
+                        }
+                    }
+                });
+
+                subscriptionManagerService.get().onTimeSeriesUpdate(tenantId, entityId, updated, TbCallback.EMPTY);
                 subscriptionManagerService.get().onTimeSeriesDelete(tenantId, entityId, deleted, TbCallback.EMPTY);
             } else {
                 log.warn("Possible misconfiguration because subscriptionManagerService is null!");

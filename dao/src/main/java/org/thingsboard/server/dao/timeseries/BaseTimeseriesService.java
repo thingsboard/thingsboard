@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.kv.BaseDeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
+import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -195,10 +196,10 @@ public class BaseTimeseriesService implements TimeseriesService {
     }
 
     @Override
-    public ListenableFuture<List<TsKvEntry>> remove(TenantId tenantId, EntityId entityId, List<DeleteTsKvQuery> deleteTsKvQueries) {
+    public ListenableFuture<List<TsKvLatestRemovingResult>> remove(TenantId tenantId, EntityId entityId, List<DeleteTsKvQuery> deleteTsKvQueries) {
         validate(entityId);
         deleteTsKvQueries.forEach(BaseTimeseriesService::validate);
-        List<ListenableFuture<TsKvEntry>> futures = Lists.newArrayListWithExpectedSize(deleteTsKvQueries.size() * DELETES_PER_ENTRY);
+        List<ListenableFuture<TsKvLatestRemovingResult>> futures = Lists.newArrayListWithExpectedSize(deleteTsKvQueries.size() * DELETES_PER_ENTRY);
         for (DeleteTsKvQuery tsKvQuery : deleteTsKvQueries) {
             deleteAndRegisterFutures(tenantId, futures, entityId, tsKvQuery);
         }
@@ -206,9 +207,9 @@ public class BaseTimeseriesService implements TimeseriesService {
     }
 
     @Override
-    public ListenableFuture<List<TsKvEntry>> removeLatest(TenantId tenantId, EntityId entityId, Collection<String> keys) {
+    public ListenableFuture<List<TsKvLatestRemovingResult>> removeLatest(TenantId tenantId, EntityId entityId, Collection<String> keys) {
         validate(entityId);
-        List<ListenableFuture<TsKvEntry>> futures = Lists.newArrayListWithExpectedSize(keys.size());
+        List<ListenableFuture<TsKvLatestRemovingResult>> futures = Lists.newArrayListWithExpectedSize(keys.size());
         for (String key : keys) {
             DeleteTsKvQuery query = new BaseDeleteTsKvQuery(key, 0, System.currentTimeMillis(), false);
             futures.add(timeseriesLatestDao.removeLatest(tenantId, entityId, query));
@@ -229,7 +230,7 @@ public class BaseTimeseriesService implements TimeseriesService {
         }, MoreExecutors.directExecutor());
     }
 
-    private void deleteAndRegisterFutures(TenantId tenantId, List<ListenableFuture<TsKvEntry>> futures, EntityId entityId, DeleteTsKvQuery query) {
+    private void deleteAndRegisterFutures(TenantId tenantId, List<ListenableFuture<TsKvLatestRemovingResult>> futures, EntityId entityId, DeleteTsKvQuery query) {
         futures.add(Futures.transform(timeseriesDao.remove(tenantId, entityId, query), v -> null, MoreExecutors.directExecutor()));
         futures.add(timeseriesLatestDao.removeLatest(tenantId, entityId, query));
         futures.add(Futures.transform(timeseriesDao.removePartition(tenantId, entityId, query), v -> null, MoreExecutors.directExecutor()));

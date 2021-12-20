@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
+import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 
 import java.util.Collection;
@@ -43,9 +44,9 @@ public interface TimeseriesService {
 
     ListenableFuture<List<Void>> saveLatest(TenantId tenantId, EntityId entityId, List<TsKvEntry> tsKvEntry);
 
-    ListenableFuture<List<TsKvEntry>> remove(TenantId tenantId, EntityId entityId, List<DeleteTsKvQuery> queries);
+    ListenableFuture<List<TsKvLatestRemovingResult>> remove(TenantId tenantId, EntityId entityId, List<DeleteTsKvQuery> queries);
 
-    ListenableFuture<List<TsKvEntry>> removeLatest(TenantId tenantId, EntityId entityId, Collection<String> keys);
+    ListenableFuture<List<TsKvLatestRemovingResult>> removeLatest(TenantId tenantId, EntityId entityId, Collection<String> keys);
 
     ListenableFuture<Collection<String>> removeAllLatest(TenantId tenantId, EntityId entityId);
 

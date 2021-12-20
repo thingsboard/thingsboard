@@ -90,7 +90,7 @@ export class AttributeDatasource implements DataSource<AttributeData> {
     return this.getAllAttributes(entityId, attributesScope).pipe(
       map((data) => {
         let filteredData = [];
-        for(let key in filteredData) {
+        for(let key in data) {
           if(data[key]['value'] !== null) {
             filteredData.push(data[key]);
           }
