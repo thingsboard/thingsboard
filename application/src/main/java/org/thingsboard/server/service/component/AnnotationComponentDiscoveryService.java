@@ -268,7 +268,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
     private List<ComponentDescriptor> getComponents(Set<ComponentType> types, Map<ComponentType, List<ComponentDescriptor>> componentsMap) {
         return types.stream()
                 .filter(componentsMap::containsKey)
-                .flatMap(componentType -> componentsMap.get(componentType).stream())
+                .flatMap(type -> componentsMap.get(type).stream())
                 .collect(Collectors.toUnmodifiableList());
     }
 
