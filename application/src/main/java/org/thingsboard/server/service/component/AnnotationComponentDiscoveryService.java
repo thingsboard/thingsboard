@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -265,10 +266,10 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
     }
 
     private List<ComponentDescriptor> getComponents(Set<ComponentType> types, Map<ComponentType, List<ComponentDescriptor>> componentsMap) {
-        List<ComponentDescriptor> result = new ArrayList<>();
-        types.stream().filter(componentsMap::containsKey).forEach(type -> {
-            result.addAll(componentsMap.get(type));
-        });
-        return Collections.unmodifiableList(result);
+        return types.stream()
+                .filter(componentsMap::containsKey)
+                .flatMap(componentType -> componentsMap.get(componentType).stream())
+                .collect(Collectors.toUnmodifiableList());
     }
+
 }
