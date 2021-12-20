@@ -233,7 +233,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                 sessionManager.register(lwM2MClient.getSession());
                 this.initClientTelemetry(lwM2MClient);
                 this.initAttributes(lwM2MClient, true);
-                otaService.init(lwM2MClient);
+                otaService.init(lwM2MClient, true);
                 lwM2MClient.getRetryAttempts().set(0);
             } catch (LwM2MClientStateException stateException) {
                 if (LwM2MClientState.UNREGISTERED.equals(stateException.getState())) {
@@ -847,7 +847,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
             if (!newLwM2mSettings.getFwUpdateStrategy().equals(oldLwM2mSettings.getFwUpdateStrategy())
                     || (StringUtils.isNotEmpty(newLwM2mSettings.getFwUpdateResource()) &&
                     !newLwM2mSettings.getFwUpdateResource().equals(oldLwM2mSettings.getFwUpdateResource()))) {
-                clients.forEach(lwM2MClient -> otaService.onFirmwareStrategyUpdate(lwM2MClient, newLwM2mSettings));
+                clients.forEach(lwM2MClient -> otaService.onFirmwareStrategyUpdate(lwM2MClient, newLwM2mSettings, true));
             }
 
             if (!newLwM2mSettings.getSwUpdateStrategy().equals(oldLwM2mSettings.getSwUpdateStrategy())

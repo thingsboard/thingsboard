@@ -67,23 +67,12 @@ public abstract class LwM2MClientOtaInfo<Strategy, State, Result> {
         if (StringUtils.isEmpty(targetName) || StringUtils.isEmpty(targetVersion) || !isSupported()) {
             return false;
         } else {
-            String targetPackageId = getPackageId(targetName, targetVersion);
-            String currentPackageId = getPackageId(currentName, currentVersion);
-            if (StringUtils.isNotEmpty(failedPackageId) && failedPackageId.equals(targetPackageId)) {
+            if (isFailedPackage()) {
+                return false;
+            } else if (this.isPackageIdEqualsVersionSupported()) {
                 return false;
             } else {
-                if (targetPackageId.equals(currentPackageId)) {
-                    return false;
-                } else if (StringUtils.isNotEmpty(targetTag) && targetTag.equals(currentPackageId)) {
-                    return false;
-                } else if (StringUtils.isNotEmpty(currentVersion3)) {
-                    if (StringUtils.isNotEmpty(targetTag) && currentVersion3.contains(targetTag)) {
-                        return false;
-                    }
-                    return !currentVersion3.contains(targetPackageId);
-                } else {
-                    return true;
-                }
+                return true;
             }
         }
     }
@@ -91,6 +80,25 @@ public abstract class LwM2MClientOtaInfo<Strategy, State, Result> {
     @JsonIgnore
     public boolean isSupported() {
         return StringUtils.isNotEmpty(currentName) || StringUtils.isNotEmpty(currentVersion) || StringUtils.isNotEmpty(currentVersion3);
+    }
+
+    @JsonIgnore
+    public String getVersionSupported() {
+        return StringUtils.isNotEmpty(currentName) ? currentName : StringUtils.isNotEmpty(currentVersion) ? currentVersion :
+                StringUtils.isNotEmpty(currentVersion3) ? currentVersion3 : null;
+    }
+
+    @JsonIgnore
+    public boolean isPackageIdEqualsVersionSupported() {
+        String versionSupported = getVersionSupported();
+        return (StringUtils.isNotEmpty(targetTag) && StringUtils.isNotEmpty(versionSupported) &&  versionSupported.contains(targetTag));
+    }
+
+
+    @JsonIgnore
+    public boolean isFailedPackage() {
+        String targetPackageId = getPackageId(targetName, targetVersion);
+        return StringUtils.isNotEmpty(failedPackageId) && failedPackageId.equals(targetPackageId);
     }
 
     @JsonIgnore

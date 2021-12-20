@@ -339,7 +339,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
                         .setSendPendingRPC(TransportProtos.SendPendingRPCMsg.newBuilder().build())
                         .build();
                 context.getTransportService().process(persistentRpcRequestMsg, TransportServiceCallback.EMPTY);
-                otaUpdateService.init(lwM2MClient);
+                otaUpdateService.initAfterSleeping(lwM2MClient);
             }
         }
     }

@@ -22,17 +22,19 @@ import java.util.Optional;
 
 public interface LwM2MOtaUpdateService {
 
-    void init(LwM2mClient client);
+    void init(LwM2mClient client, boolean isRegistration);
+
+    void initAfterSleeping(LwM2mClient client);
 
     void forceFirmwareUpdate(LwM2mClient client);
 
-    void onTargetFirmwareUpdate(LwM2mClient client, String newFwTitle, String newFwVersion, Optional<String> newFwUrl, Optional<String> newFwTag);
+    void onTargetFirmwareUpdate(LwM2mClient client, String newFwTitle, String newFwVersion, Optional<String> newFwUrl, Optional<String> newFwTag, boolean isRegistration);
 
     void onTargetSoftwareUpdate(LwM2mClient client, String newSwTitle, String newSwVersion, Optional<String> newSwUrl, Optional<String> newSwTag);
 
     void onCurrentFirmwareNameUpdate(LwM2mClient client, String name);
 
-    void onFirmwareStrategyUpdate(LwM2mClient client, OtherConfiguration configuration);
+    void onFirmwareStrategyUpdate(LwM2mClient client, OtherConfiguration configuration, boolean isRegistration);
 
     void onCurrentSoftwareStrategyUpdate(LwM2mClient client, OtherConfiguration configuration);
 

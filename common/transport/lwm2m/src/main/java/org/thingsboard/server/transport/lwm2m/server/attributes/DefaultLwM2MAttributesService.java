@@ -168,7 +168,7 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
                 }
             }
             if (newFirmwareTitle != null || newFirmwareVersion != null) {
-                otaUpdateService.onTargetFirmwareUpdate(lwM2MClient, newFirmwareTitle, newFirmwareVersion, Optional.ofNullable(newFirmwareUrl), Optional.ofNullable(newFirmwareTag));
+                otaUpdateService.onTargetFirmwareUpdate(lwM2MClient, newFirmwareTitle, newFirmwareVersion, Optional.ofNullable(newFirmwareUrl), Optional.ofNullable(newFirmwareTag), false);
             }
             if (newSoftwareTitle != null || newSoftwareVersion != null) {
                 otaUpdateService.onTargetSoftwareUpdate(lwM2MClient, newSoftwareTitle, newSoftwareVersion, Optional.ofNullable(newSoftwareUrl), Optional.ofNullable(newSoftwareTag));
