@@ -22,11 +22,13 @@ import org.thingsboard.rule.engine.api.NodeConfiguration;
 public class TbMsgTimeseriesNodeConfiguration implements NodeConfiguration<TbMsgTimeseriesNodeConfiguration> {
 
     private long defaultTTL;
+    private boolean skipLatestPersistence;
 
     @Override
     public TbMsgTimeseriesNodeConfiguration defaultConfiguration() {
         TbMsgTimeseriesNodeConfiguration configuration = new TbMsgTimeseriesNodeConfiguration();
         configuration.setDefaultTTL(0L);
+        configuration.setSkipLatestPersistence(false);
         return configuration;
     }
 }

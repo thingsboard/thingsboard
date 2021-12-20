@@ -201,6 +201,15 @@
         }
       }
     }
+    .mat-slide {
+      margin: 8px 0;
+    }
+    .slide-block {
+      display: block;
+      &:not(:last-child) {
+        margin-bottom: 8px;
+      }
+    }
     .mat-slide-toggle-content {
       white-space: normal;
     }

@@ -66,6 +66,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleChainId> {
 
+    private static final String NA_RELATION_TYPE = "";
     private final TbActorRef parent;
     private final TbActorRef self;
     private final Map<RuleNodeId, RuleNodeCtx> nodeActors;
@@ -201,30 +202,55 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         TbMsg msg = envelope.getMsg();
         log.trace("[{}][{}] Processing message [{}]: {}", entityId, firstId, msg.getId(), msg);
         if (envelope.getRelationTypes() == null || envelope.getRelationTypes().isEmpty()) {
-            try {
-                checkActive(envelope.getMsg());
-                RuleNodeId targetId = msg.getRuleNodeId();
-                RuleNodeCtx targetCtx;
-                if (targetId == null) {
-                    targetCtx = firstNode;
-                    msg = msg.copyWithRuleChainId(entityId);
-                } else {
-                    targetCtx = nodeActors.get(targetId);
-                }
-                if (targetCtx != null) {
-                    log.trace("[{}][{}] Pushing message to target rule node", entityId, targetId);
-                    pushMsgToNode(targetCtx, msg, "");
-                } else {
-                    log.trace("[{}][{}] Rule node does not exist. Probably old message", entityId, targetId);
-                    msg.getCallback().onSuccess();
-                }
-            } catch (RuleNodeException rne) {
-                envelope.getMsg().getCallback().onFailure(rne);
-            } catch (Exception e) {
-                envelope.getMsg().getCallback().onFailure(new RuleEngineException(e.getMessage()));
-            }
+            onTellNext(msg, true);
         } else {
             onTellNext(envelope.getMsg(), envelope.getMsg().getRuleNodeId(), envelope.getRelationTypes(), envelope.getFailureMessage());
+        }
+    }
+
+    private void onTellNext(TbMsg msg, boolean useRuleNodeIdFromMsg) {
+        try {
+            checkActive(msg);
+            RuleNodeId targetId = useRuleNodeIdFromMsg ? msg.getRuleNodeId() : null;
+            RuleNodeCtx targetCtx;
+            if (targetId == null) {
+                targetCtx = firstNode;
+                msg = msg.copyWithRuleChainId(entityId);
+            } else {
+                targetCtx = nodeActors.get(targetId);
+            }
+            if (targetCtx != null) {
+                log.trace("[{}][{}] Pushing message to target rule node", entityId, targetId);
+                pushMsgToNode(targetCtx, msg, NA_RELATION_TYPE);
+            } else {
+                log.trace("[{}][{}] Rule node does not exist. Probably old message", entityId, targetId);
+                msg.getCallback().onSuccess();
+            }
+        } catch (RuleNodeException rne) {
+            msg.getCallback().onFailure(rne);
+        } catch (Exception e) {
+            msg.getCallback().onFailure(new RuleEngineException(e.getMessage()));
+        }
+    }
+
+    public void onRuleChainInputMsg(RuleChainInputMsg envelope) {
+        if (entityId.equals(envelope.getRuleChainId())) {
+            onTellNext(envelope.getMsg(), false);
+        } else {
+            parent.tell(envelope);
+        }
+    }
+
+    public void onRuleChainOutputMsg(RuleChainOutputMsg envelope) {
+        if (entityId.equals(envelope.getRuleChainId())) {
+            var originatorNodeId = envelope.getTargetRuleNodeId();
+            RuleNodeCtx ruleNodeCtx = nodeActors.get(originatorNodeId);
+            if (ruleNodeCtx != null && ruleNodeCtx.getSelf().isDebugMode()) {
+                systemContext.persistDebugOutput(tenantId, originatorNodeId, envelope.getMsg(), envelope.getRelationType());
+            }
+            onTellNext(envelope.getMsg(), originatorNodeId, Collections.singleton(envelope.getRelationType()), RuleNodeException.UNKNOWN);
+        } else {
+            parent.tell(envelope);
         }
     }
 
@@ -356,4 +382,5 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         RuleNode firstRuleNode = firstNode != null ? firstNode.getSelf() : null;
         return new RuleNodeException("Rule Chain is not active!  Failed to initialize.", ruleChainName, firstRuleNode);
     }
+
 }

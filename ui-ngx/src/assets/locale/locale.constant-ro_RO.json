@@ -675,8 +675,6 @@
         "access-token": "Token Acces",
         "access-token-required": "Tokenul de acces este necesar",
         "access-token-invalid": "Dimensiunea tokenului de acces trebuie să fie de 1-32 caractere",
-        "rsa-key": "Cheie RSA publică",
-        "rsa-key-required": "Cheia RSA publică key este necesară",
         "secret": "Cod Secret",
         "secret-required": "Codul secret este necesar",
         "device-type": "Tip Dispozitiv",

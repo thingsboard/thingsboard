@@ -19,8 +19,22 @@ package msgqueue;
 option java_package = "org.thingsboard.server.common.msg.gen";
 option java_outer_classname = "MsgProtos";
 
+// Stores message metadata as map of strings
 message TbMsgMetaDataProto {
     map<string, string> data = 1;
+}
+
+// Stores stack of nested (caller) rule chains
+message TbMsgProcessingStackItemProto {
+    int64 ruleChainIdMSB = 1;
+    int64 ruleChainIdLSB = 2;
+    int64 ruleNodeIdMSB = 3;
+    int64 ruleNodeIdLSB = 4;
+}
+
+message TbMsgProcessingCtxProto {
+    int32 ruleNodeExecCounter = 1;
+    repeated TbMsgProcessingStackItemProto stack = 2;
 }
 
 message TbMsgProto {
@@ -39,14 +53,17 @@ message TbMsgProto {
 
     TbMsgMetaDataProto metaData = 11;
 
-    //Transaction Data (12) was removed in 2.5
+    // Transaction Data (12) was removed in 2.5
 
     int32 dataType = 13;
     string data = 14;
 
     int64 ts = 15;
+    // Will be removed in 3.4. Moved to processing context
     int32 ruleNodeExecCounter = 16;
 
     int64 customerIdMSB = 17;
     int64 customerIdLSB = 18;
+
+    TbMsgProcessingCtxProto ctx = 19;
 }

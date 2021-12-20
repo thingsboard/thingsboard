@@ -56,6 +56,7 @@ import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.TbMsgProcessingStackItem;
 import org.thingsboard.server.common.msg.queue.ServiceQueue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -132,6 +133,25 @@ class DefaultTbContext implements TbContext {
     public void tellSelf(TbMsg msg, long delayMs) {
         //TODO: add persistence layer
         scheduleMsgWithDelay(new RuleNodeToSelfMsg(this, msg), delayMs, nodeCtx.getSelfActor());
+    }
+
+    @Override
+    public void input(TbMsg msg, RuleChainId ruleChainId) {
+        msg.pushToStack(nodeCtx.getSelf().getRuleChainId(), nodeCtx.getSelf().getId());
+        nodeCtx.getChainActor().tell(new RuleChainInputMsg(ruleChainId, msg));
+    }
+
+    @Override
+    public void output(TbMsg msg, String relationType) {
+        TbMsgProcessingStackItem item = msg.popFormStack();
+        if (item == null) {
+            ack(msg);
+        } else {
+            if (nodeCtx.getSelf().isDebugMode()) {
+                mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), msg, relationType);
+            }
+            nodeCtx.getChainActor().tell(new RuleChainOutputMsg(item.getRuleChainId(), item.getRuleNodeId(), relationType, msg));
+        }
     }
 
     @Override
