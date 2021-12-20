@@ -69,6 +69,8 @@ export default abstract class LeafletMap {
     loading = false;
     replaceInfoLabelMarker: Array<ReplaceInfo> = [];
     markerLabelText: string;
+    polygonLabelText: string;
+    replaceInfoLabelPolygon: Array<ReplaceInfo> = [];
     replaceInfoTooltipMarker: Array<ReplaceInfo> = [];
     markerTooltipText: string;
     drawRoutes: boolean;
@@ -248,8 +250,16 @@ export default abstract class LeafletMap {
           this.saveLocation(this.selectedEntity, this.convertToCustomFormat(e.layer.getLatLng())).subscribe(() => {
           });
         } else if (e.shape === 'tbRectangle' || e.shape === 'tbPolygon') {
-          // @ts-ignore
-          this.saveLocation(this.selectedEntity, this.convertPolygonToCustomFormat(e.layer.getLatLngs()[0])).subscribe(() => {
+          let coordinates;
+          if (e.shape === 'tbRectangle') {
+            // @ts-ignore
+            const bounds: L.LatLngBounds = e.layer.getBounds();
+            coordinates = [bounds.getNorthWest(), bounds.getSouthEast()];
+          } else {
+            // @ts-ignore
+            coordinates = e.layer.getLatLngs()[0];
+          }
+          this.saveLocation(this.selectedEntity, this.convertPolygonToCustomFormat(coordinates)).subscribe(() => {
           });
         }
         // @ts-ignore
@@ -281,7 +291,7 @@ export default abstract class LeafletMap {
             result = iterator.next();
           }
           this.saveLocation(result.value.data, this.convertToCustomFormat(null)).subscribe(() => {});
-        } else if (e.shape === 'Polygon') {
+        } else if (e.shape === 'Polygon' || e.shape === 'Rectangle') {
           const iterator = this.polygons.values();
           let result = iterator.next();
           while (!result.done && e.layer !== result.value.leafletPoly) {
@@ -333,6 +343,7 @@ export default abstract class LeafletMap {
           this.map.scrollWheelZoom.disable();
         }
         if (this.options.draggableMarker || this.editPolygons) {
+          map.pm.setGlobalOptions({ snappable: false } as L.PM.GlobalOptions);
           this.addEditControl();
         } else {
           this.map.pm.disableDraw();
@@ -763,6 +774,14 @@ export default abstract class LeafletMap {
     let coordinates = e.layer.getLatLngs();
     if (coordinates.length === 1) {
       coordinates = coordinates[0];
+    }
+    if (e.shape === 'Rectangle') {
+      // @ts-ignore
+      const bounds: L.LatLngBounds = e.layer.getBounds();
+      const boundsArray = [bounds.getNorthWest(), bounds.getNorthEast(), bounds.getSouthWest(), bounds.getSouthEast()];
+      if (coordinates.every(point => boundsArray.find(boundPoint => boundPoint.equals(point)) !== undefined)) {
+        coordinates = [bounds.getNorthWest(), bounds.getSouthEast()];
+      }
     }
     this.saveLocation(data, this.convertPolygonToCustomFormat(coordinates)).subscribe(() => {});
   }
