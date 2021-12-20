@@ -668,18 +668,18 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testSyncEdgeCE() throws Exception {
-        Edge edge = doPost("/api/edge", constructEdge("Test Sync Edge CE", "test"), Edge.class);
+    public void testSyncEdge() throws Exception {
+        Edge edge = doPost("/api/edge", constructEdge("Test Sync Edge", "test"), Edge.class);
 
         Device device = new Device();
-        device.setName("Test Sync Edge CE Device 1");
+        device.setName("Test Sync Edge Device 1");
         device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
         doPost("/api/edge/" + edge.getId().getId().toString()
                 + "/device/" + savedDevice.getId().getId().toString(), Device.class);
 
         Asset asset = new Asset();
-        asset.setName("Test Sync Edge CE Asset 1");
+        asset.setName("Test Sync Edge Asset 1");
         asset.setType("test");
         Asset savedAsset = doPost("/api/asset", asset, Asset.class);
         doPost("/api/edge/" + edge.getId().getId().toString()
