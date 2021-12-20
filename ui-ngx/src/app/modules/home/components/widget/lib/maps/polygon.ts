@@ -15,7 +15,7 @@
 ///
 
 import L, { LatLngExpression, LeafletMouseEvent } from 'leaflet';
-import { createTooltip } from './maps-utils';
+import { createTooltip, isCutPolygon } from './maps-utils';
 import {
   fillPattern,
   functionValueCalculator,
@@ -39,7 +39,7 @@ export class Polygon {
         const polygonColor = this.getPolygonColor(settings);
         const polygonStrokeColor = this.getPolygonStrokeColor(settings);
         const polyData = data[this.settings.polygonKeyName];
-        const polyConstructor = polyData.length > 2 ? L.polygon : L.rectangle;
+        const polyConstructor = isCutPolygon(polyData) || polyData.length > 2 ? L.polygon : L.rectangle;
         this.leafletPoly = polyConstructor(polyData, {
           fill: true,
           fillColor: polygonColor,
@@ -102,7 +102,7 @@ export class Polygon {
       this.data = data;
       this.dataSources = dataSources;
       const polyData = data[this.settings.polygonKeyName];
-      if (polyData.length > 2) {
+      if (isCutPolygon(polyData) || polyData.length > 2) {
         if (this.leafletPoly instanceof L.Rectangle) {
           this.map.removeLayer(this.leafletPoly);
           const polygonColor = this.getPolygonColor(settings);
