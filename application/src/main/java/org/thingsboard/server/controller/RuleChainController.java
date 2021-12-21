@@ -28,7 +28,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,6 +42,7 @@ import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -60,7 +60,9 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainData;
 import org.thingsboard.server.common.data.rule.RuleChainImportResult;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.common.data.rule.RuleChainOutputLabelsUsage;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
@@ -68,15 +70,19 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.InstallScripts;
+import org.thingsboard.server.service.rule.TbRuleChainService;
 import org.thingsboard.server.service.script.JsInvokeService;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -138,6 +144,9 @@ public class RuleChainController extends BaseController {
             + "\n\n Expected result JSON contains \"output\" and \"error\".";
 
     @Autowired
+    protected TbRuleChainService tbRuleChainService;
+
+    @Autowired
     private InstallScripts installScripts;
 
     @Autowired
@@ -164,6 +173,44 @@ public class RuleChainController extends BaseController {
         try {
             RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
             return checkRuleChain(ruleChainId, Operation.READ);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @ApiOperation(value = "Get Rule Chain output labels (getRuleChainOutputLabels)",
+            notes = "Fetch the unique labels for the \"output\" Rule Nodes that belong to the Rule Chain based on the provided Rule Chain Id. "
+                    + RULE_CHAIN_DESCRIPTION + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/ruleChain/{ruleChainId}/output/labels", method = RequestMethod.GET)
+    @ResponseBody
+    public Set<String> getRuleChainOutputLabels(
+            @ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION)
+            @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
+        checkParameter(RULE_CHAIN_ID, strRuleChainId);
+        try {
+            RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
+            checkRuleChain(ruleChainId, Operation.READ);
+            return tbRuleChainService.getRuleChainOutputLabels(getTenantId(), ruleChainId);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @ApiOperation(value = "Get output labels usage (getRuleChainOutputLabelsUsage)",
+            notes = "Fetch the list of rule chains and the relation types (labels) they use to process output of the current rule chain based on the provided Rule Chain Id. "
+                    + RULE_CHAIN_DESCRIPTION + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/ruleChain/{ruleChainId}/output/labels/usage", method = RequestMethod.GET)
+    @ResponseBody
+    public List<RuleChainOutputLabelsUsage> getRuleChainOutputLabelsUsage(
+            @ApiParam(value = RULE_CHAIN_ID_PARAM_DESCRIPTION)
+            @PathVariable(RULE_CHAIN_ID) String strRuleChainId) throws ThingsboardException {
+        checkParameter(RULE_CHAIN_ID, strRuleChainId);
+        try {
+            RuleChainId ruleChainId = new RuleChainId(toUUID(strRuleChainId));
+            checkRuleChain(ruleChainId, Operation.READ);
+            return tbRuleChainService.getOutputLabelUsage(getCurrentUser().getTenantId(), ruleChainId);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -310,7 +357,10 @@ public class RuleChainController extends BaseController {
     @ResponseBody
     public RuleChainMetaData saveRuleChainMetaData(
             @ApiParam(value = "A JSON value representing the rule chain metadata.")
-            @RequestBody RuleChainMetaData ruleChainMetaData) throws ThingsboardException {
+            @RequestBody RuleChainMetaData ruleChainMetaData,
+            @ApiParam(value = "Update related rule nodes.")
+            @RequestParam(value = "updateRelated", required = false, defaultValue = "true") boolean updateRelated
+    ) throws ThingsboardException {
         try {
             TenantId tenantId = getTenantId();
             if (debugPerTenantEnabled) {
@@ -322,20 +372,36 @@ public class RuleChainController extends BaseController {
             }
 
             RuleChain ruleChain = checkRuleChain(ruleChainMetaData.getRuleChainId(), Operation.WRITE);
-            checkNotNull(ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData) ? true : null);
+            RuleChainUpdateResult result = ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData);
+            checkNotNull(result.isSuccess() ? true : null);
+
+            List<RuleChain> updatedRuleChains;
+            if (updateRelated && result.isSuccess()) {
+                updatedRuleChains = tbRuleChainService.updateRelatedRuleChains(tenantId, ruleChainMetaData.getRuleChainId(), result);
+            } else {
+                updatedRuleChains = Collections.emptyList();
+            }
+
             RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.loadRuleChainMetaData(tenantId, ruleChainMetaData.getRuleChainId()));
 
             if (RuleChainType.CORE.equals(ruleChain.getType())) {
                 tbClusterService.broadcastEntityStateChangeEvent(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.UPDATED);
+                updatedRuleChains.forEach(updatedRuleChain -> {
+                    tbClusterService.broadcastEntityStateChangeEvent(updatedRuleChain.getTenantId(), updatedRuleChain.getId(), ComponentLifecycleEvent.UPDATED);
+                });
             }
 
-            logEntityAction(ruleChain.getId(), ruleChain,
-                    null,
-                    ActionType.UPDATED, null, ruleChainMetaData);
+            logEntityAction(ruleChain.getId(), ruleChain, null, ActionType.UPDATED, null, ruleChainMetaData);
+            for (RuleChain updatedRuleChain : updatedRuleChains) {
+                RuleChainMetaData updatedRuleChainMetaData = checkNotNull(ruleChainService.loadRuleChainMetaData(tenantId, updatedRuleChain.getId()));
+                logEntityAction(updatedRuleChain.getId(), updatedRuleChain, null, ActionType.UPDATED, null, updatedRuleChainMetaData);
+            }
 
             if (RuleChainType.EDGE.equals(ruleChain.getType())) {
-                sendEntityNotificationMsg(ruleChain.getTenantId(),
-                        ruleChain.getId(), EdgeEventActionType.UPDATED);
+                sendEntityNotificationMsg(ruleChain.getTenantId(), ruleChain.getId(), EdgeEventActionType.UPDATED);
+                updatedRuleChains.forEach(updatedRuleChain -> {
+                    sendEntityNotificationMsg(updatedRuleChain.getTenantId(), updatedRuleChain.getId(), EdgeEventActionType.UPDATED);
+                });
             }
 
             return savedRuleChainMetaData;
@@ -681,7 +747,7 @@ public class RuleChainController extends BaseController {
     }
 
     @ApiOperation(value = "Get Edge Rule Chains (getEdgeRuleChains)",
-        notes = "Returns a page of Rule Chains assigned to the specified edge. " + RULE_CHAIN_DESCRIPTION + PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
+            notes = "Returns a page of Rule Chains assigned to the specified edge. " + RULE_CHAIN_DESCRIPTION + PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/ruleChains", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody

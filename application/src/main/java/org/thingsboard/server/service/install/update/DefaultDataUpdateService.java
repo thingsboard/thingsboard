@@ -25,6 +25,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
+import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNode;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNodeConfiguration;
 import org.thingsboard.server.common.data.EntityView;
@@ -34,6 +36,8 @@ import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
@@ -43,8 +47,11 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.alarm.AlarmDao;
@@ -52,7 +59,9 @@ import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
+import org.thingsboard.server.dao.model.sql.RelationEntity;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.sql.device.DeviceProfileRepository;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -75,6 +84,9 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     @Autowired
     private TenantService tenantService;
+
+    @Autowired
+    private RelationService relationService;
 
     @Autowired
     private RuleChainService ruleChainService;
@@ -124,6 +136,10 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 tenantsAlarmsCustomerUpdater.updateEntities(null);
                 deviceProfileEntityDynamicConditionsUpdater.updateEntities(null);
                 updateOAuth2Params();
+                break;
+            case "3.3.2":
+                log.info("Updating data from version 3.3.2 to 3.3.3 ...");
+                updateNestedRuleChains();
                 break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
@@ -208,6 +224,74 @@ public class DefaultDataUpdateService implements DataUpdateService {
                     }
                 }
             };
+
+    private void updateNestedRuleChains() {
+        try {
+            var packSize = 1024;
+            var updated = 0;
+            boolean hasNext = true;
+            while (hasNext) {
+                List<EntityRelation> relations = relationService.findRuleNodeToRuleChainRelations(TenantId.SYS_TENANT_ID, RuleChainType.CORE, packSize);
+                hasNext = relations.size() == packSize;
+                for (EntityRelation relation : relations) {
+                    try {
+                        RuleNodeId sourceNodeId = new RuleNodeId(relation.getFrom().getId());
+                        RuleNode sourceNode = ruleChainService.findRuleNodeById(TenantId.SYS_TENANT_ID, sourceNodeId);
+                        if (sourceNode == null) {
+                            log.info("Skip processing of relation for non existing source rule node: [{}]", sourceNodeId);
+                            relationService.deleteRelation(TenantId.SYS_TENANT_ID, relation);
+                            continue;
+                        }
+                        RuleChainId sourceRuleChainId = sourceNode.getRuleChainId();
+                        RuleChainId targetRuleChainId = new RuleChainId(relation.getTo().getId());
+                        RuleChain targetRuleChain = ruleChainService.findRuleChainById(TenantId.SYS_TENANT_ID, targetRuleChainId);
+                        if (targetRuleChain == null) {
+                            log.info("Skip processing of relation for non existing target rule chain: [{}]", targetRuleChainId);
+                            relationService.deleteRelation(TenantId.SYS_TENANT_ID, relation);
+                            continue;
+                        }
+                        TenantId tenantId = targetRuleChain.getTenantId();
+                        RuleNode targetNode = new RuleNode();
+                        targetNode.setName(targetRuleChain.getName());
+                        targetNode.setRuleChainId(sourceRuleChainId);
+                        targetNode.setType(TbRuleChainInputNode.class.getName());
+                        TbRuleChainInputNodeConfiguration configuration = new TbRuleChainInputNodeConfiguration();
+                        configuration.setRuleChainId(targetRuleChain.getId().toString());
+                        targetNode.setConfiguration(JacksonUtil.valueToTree(configuration));
+                        targetNode.setAdditionalInfo(relation.getAdditionalInfo());
+                        targetNode.setDebugMode(false);
+                        targetNode = ruleChainService.saveRuleNode(tenantId, targetNode);
+
+                        EntityRelation sourceRuleChainToRuleNode = new EntityRelation();
+                        sourceRuleChainToRuleNode.setFrom(sourceRuleChainId);
+                        sourceRuleChainToRuleNode.setTo(targetNode.getId());
+                        sourceRuleChainToRuleNode.setType(EntityRelation.CONTAINS_TYPE);
+                        sourceRuleChainToRuleNode.setTypeGroup(RelationTypeGroup.RULE_CHAIN);
+                        relationService.saveRelation(tenantId, sourceRuleChainToRuleNode);
+
+                        EntityRelation sourceRuleNodeToTargetRuleNode = new EntityRelation();
+                        sourceRuleNodeToTargetRuleNode.setFrom(sourceNode.getId());
+                        sourceRuleNodeToTargetRuleNode.setTo(targetNode.getId());
+                        sourceRuleNodeToTargetRuleNode.setType(relation.getType());
+                        sourceRuleNodeToTargetRuleNode.setTypeGroup(RelationTypeGroup.RULE_NODE);
+                        sourceRuleNodeToTargetRuleNode.setAdditionalInfo(relation.getAdditionalInfo());
+                        relationService.saveRelation(tenantId, sourceRuleNodeToTargetRuleNode);
+
+                        //Delete old relation
+                        relationService.deleteRelation(tenantId, relation);
+                        updated++;
+                    } catch (Exception e) {
+                        log.info("Failed to update RuleNodeToRuleChainRelation: {}", relation, e);
+                    }
+                }
+                if (updated > 0) {
+                    log.info("RuleNodeToRuleChainRelations: {} entities updated so far...", updated);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Unable to update Tenant", e);
+        }
+    }
 
     private final PaginatedUpdater<String, Tenant> tenantsDefaultEdgeRuleChainUpdater =
             new PaginatedUpdater<>() {

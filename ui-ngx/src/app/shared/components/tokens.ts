@@ -21,4 +21,4 @@ export const HELP_MARKDOWN_COMPONENT_TOKEN: InjectionToken<ComponentType<any>> =
   new InjectionToken<ComponentType<any>>('HELP_MARKDOWN_COMPONENT_TOKEN');
 
 export const SHARED_MODULE_TOKEN: InjectionToken<Type<any>> =
-  new InjectionToken<Type<any>>('HELP_MARKDOWN_COMPONENT_TOKEN');
+  new InjectionToken<Type<any>>('SHARED_MODULE_TOKEN');

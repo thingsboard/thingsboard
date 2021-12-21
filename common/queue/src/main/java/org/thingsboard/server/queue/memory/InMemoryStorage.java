@@ -42,6 +42,10 @@ public final class InMemoryStorage {
         });
     }
 
+    public int getLagTotal() {
+        return storage.values().stream().map(BlockingQueue::size).reduce(0, Integer::sum);
+    }
+
     public static InMemoryStorage getInstance() {
         if (instance == null) {
             synchronized (InMemoryStorage.class) {

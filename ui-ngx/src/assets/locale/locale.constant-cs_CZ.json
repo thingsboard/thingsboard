@@ -954,8 +954,6 @@
         "access-token": "Přístupový token",
         "access-token-required": "Přístupový token je povinný.",
         "access-token-invalid": "Délka přístupového tokenu musí být od 1 do 32 znaků.",
-        "rsa-key": "RSA veřejný klíč",
-        "rsa-key-required": "RSA veřejný klíč je povinný.",
         "lwm2m-security-config": {
           "identity": "Identita klienta",
           "identity-required": "Identita klienta je povinná.",

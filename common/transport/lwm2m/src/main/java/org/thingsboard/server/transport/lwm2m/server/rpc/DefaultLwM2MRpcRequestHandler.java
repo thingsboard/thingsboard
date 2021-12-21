@@ -87,6 +87,12 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
                 return;
             }
             LwM2mClient client = clientContext.getClientBySessionInfo(sessionInfo);
+
+            if (client == null) {
+                log.warn("Missing client for session: [{}]", sessionInfo);
+                return;
+            }
+
             if (client.getRegistration() == null) {
                 this.sendErrorRpcResponse(sessionInfo, rpcRequest.getRequestId(), ResponseCode.INTERNAL_SERVER_ERROR, "Registration is empty");
                 return;

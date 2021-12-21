@@ -43,6 +43,7 @@ import java.sql.SQLSyntaxErrorException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.service.install.DatabaseHelper.ADDITIONAL_INFO;
 import static org.thingsboard.server.service.install.DatabaseHelper.ASSIGNED_CUSTOMERS;
@@ -469,6 +470,18 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     log.error("Failed updating schema!!!", e);
                 }
                 break;
+            case "3.3.2":
+                try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
+                    log.info("Updating schema ...");
+                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.3.2", SCHEMA_UPDATE_SQL);
+                    loadSql(schemaUpdateFile, conn);
+                    log.info("Updating schema settings...");
+                    conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3003003;");
+                    log.info("Schema updated.");
+                } catch (Exception e) {
+                    log.error("Failed updating schema!!!", e);
+                }
+                break;
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
         }
@@ -476,8 +489,23 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
 
     private void loadSql(Path sqlFile, Connection conn) throws Exception {
         String sql = new String(Files.readAllBytes(sqlFile), Charset.forName("UTF-8"));
-        conn.createStatement().execute(sql); //NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+        Statement st = conn.createStatement();
+        st.setQueryTimeout((int) TimeUnit.HOURS.toSeconds(3));
+        st.execute(sql);//NOSONAR, ignoring because method used to execute thingsboard database upgrade script
+        printWarnings(st);
         Thread.sleep(5000);
+    }
+
+    protected void printWarnings(Statement statement) throws SQLException {
+        SQLWarning warnings = statement.getWarnings();
+        if (warnings != null) {
+            log.info("{}", warnings.getMessage());
+            SQLWarning nextWarning = warnings.getNextWarning();
+            while (nextWarning != null) {
+                log.info("{}", nextWarning.getMessage());
+                nextWarning = nextWarning.getNextWarning();
+            }
+        }
     }
 
     protected boolean isOldSchema(Connection conn, long fromVersion) {
