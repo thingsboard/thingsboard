@@ -37,7 +37,12 @@
                      type="text"
                      (focus)="key.isFocused = true; focusInputElement($event)"
                      (blur)="key.isFocused = false; inputChanged(source, key)">
-              <mat-icon *ngIf="key.settings.icon" matPrefix>{{key.settings.icon}}</mat-icon>
+              <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon" matPrefix>
+                <mat-icon *ngIf="!key.settings.safeCustomIcon; else customToggleIcon">{{key.settings.icon}}</mat-icon>
+                <ng-template #customToggleIcon>
+                  <img class="mat-icon" [src]="key.settings.safeCustomIcon" alt="icon">
+                </ng-template>
+              </ng-container>
               <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
                 {{ getErrorMessageText(key.settings, 'required') }}
               </mat-error>
@@ -57,7 +62,12 @@
                      max="{{key.settings.maxValue}}"
                      (focus)="key.isFocused = true; focusInputElement($event)"
                      (blur)="key.isFocused = false; inputChanged(source, key)">
-              <mat-icon *ngIf="key.settings.icon" matPrefix>{{key.settings.icon}}</mat-icon>
+              <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon" matPrefix>
+                <mat-icon *ngIf="!key.settings.safeCustomIcon; else customToggleIcon">{{key.settings.icon}}</mat-icon>
+                <ng-template #customToggleIcon>
+                  <img class="mat-icon" [src]="key.settings.safeCustomIcon" alt="icon">
+                </ng-template>
+              </ng-container>
               <mat-error *ngIf="multipleInputFormGroup.get(key.formId).hasError('required')">
                 {{ getErrorMessageText(key.settings,'required') }}
               </mat-error>
@@ -77,7 +87,14 @@
           </div>
           <div class="input-field mat-block" *ngIf="key.settings.dataKeyValueType === 'booleanSwitch'">
             <mat-slide-toggle formControlName="{{key.formId}}"
+                              [labelPosition]="key.settings.slideToggleLabelPosition"
                               (change)="inputChanged(source, key)">
+              <ng-container *ngIf="key.settings.icon || key.settings.safeCustomIcon">
+                <mat-icon *ngIf="!key.settings.safeCustomIcon; else customToggleIcon">{{key.settings.icon}}</mat-icon>
+                <ng-template #customToggleIcon>
+                  <img class="mat-icon" [src]="key.settings.safeCustomIcon" alt="icon">
+                </ng-template>
+              </ng-container>
               <span class="label-wrapper">{{key.label}}</span>
             </mat-slide-toggle>
           </div>
