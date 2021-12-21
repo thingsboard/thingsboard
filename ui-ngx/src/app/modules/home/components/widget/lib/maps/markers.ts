@@ -33,6 +33,7 @@ import LeafletMap from './leaflet-map';
 
 export class Marker {
     leafletMarker: L.Marker;
+    labelOffset: L.LatLngTuple;
     tooltipOffset: L.LatLngTuple;
     markerOffset: L.LatLngTuple;
     tooltip: L.Popup;
@@ -49,9 +50,14 @@ export class Marker {
           isDefined(settings.markerOffsetY) ? settings.markerOffsetY : 1,
         ];
 
+        this.tooltipOffset = [
+          isDefined(settings.tooltipOffsetX) ? settings.tooltipOffsetX : 0,
+          isDefined(settings.tooltipOffsetY) ? settings.tooltipOffsetY : -1,
+        ];
+
         this.createMarkerIcon((iconInfo) => {
             this.leafletMarker.setIcon(iconInfo.icon);
-            this.tooltipOffset = [0, -iconInfo.size[1] * this.markerOffset[1] + 10];
+            this.labelOffset = [0, -iconInfo.size[1] * this.markerOffset[1] + 10];
             this.updateMarkerLabel(settings);
         });
 
@@ -111,7 +117,7 @@ export class Marker {
             }
             settings.labelText = fillPattern(this.map.markerLabelText, this.map.replaceInfoLabelMarker, this.data);
             this.leafletMarker.bindTooltip(`<div style="color: ${settings.labelColor};"><b>${settings.labelText}</b></div>`,
-                { className: 'tb-marker-label', permanent: true, direction: 'top', offset: this.tooltipOffset });
+                { className: 'tb-marker-label', permanent: true, direction: 'top', offset: this.labelOffset });
         }
     }
 
@@ -124,7 +130,7 @@ export class Marker {
     updateMarkerIcon(settings: MarkerSettings) {
         this.createMarkerIcon((iconInfo) => {
             this.leafletMarker.setIcon(iconInfo.icon);
-            this.tooltipOffset = [0, -iconInfo.size[1] * this.markerOffset[1] + 10];
+            this.labelOffset = [0, -iconInfo.size[1] * this.markerOffset[1] + 10];
             this.updateMarkerLabel(settings);
         });
     }
@@ -165,7 +171,7 @@ export class Marker {
                             iconUrl: currentImage.url,
                             iconSize: [width, height],
                             iconAnchor: [width * this.markerOffset[0], height * this.markerOffset[1]],
-                            popupAnchor: [0, -height]
+                            popupAnchor: [width * this.tooltipOffset[0], height * this.tooltipOffset[1]]
                         });
                         const iconInfo = {
                             size: [width, height],

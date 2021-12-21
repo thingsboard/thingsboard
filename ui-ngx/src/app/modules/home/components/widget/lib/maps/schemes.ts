@@ -343,14 +343,24 @@ export const commonMapSettingsSchema =
                 default: 'return {x: origXPos, y: origYPos};'
             },
             markerOffsetX: {
-                title: 'Marker X offset relative to position',
+                title: 'Marker X offset relative to position multiplied by marker width',
                 type: 'number',
                 default: 0.5
             },
             markerOffsetY: {
-                title: 'Marker Y offset relative to position',
+                title: 'Marker Y offset relative to position multiplied by marker height',
                 type: 'number',
                 default: 1
+            },
+            tooltipOffsetX: {
+                title: 'Tooltip X offset relative to marker anchor multiplied by marker width',
+                type: 'number',
+                default: 0
+            },
+            tooltipOffsetY: {
+                title: 'Tooltip Y offset relative to marker anchor multiplied by marker height',
+                type: 'number',
+                default: -1
             },
             color: {
                 title: 'Color',
@@ -482,13 +492,15 @@ export const commonMapSettingsSchema =
             condition: 'model.showTooltip === true && model.useTooltipFunction === true'
         },
         {
-            key: 'markerOffsetX',
-            condition: 'model.provider === "image-map"'
+            key: 'tooltipOffsetX',
+            condition: 'model.showTooltip === true'
         },
         {
-            key: 'markerOffsetY',
-            condition: 'model.provider === "image-map"'
+            key: 'tooltipOffsetY',
+            condition: 'model.showTooltip === true'
         },
+        'markerOffsetX',
+        'markerOffsetY',
         {
             key: 'posFunction',
             type: 'javascript',

@@ -104,6 +104,8 @@ export type MarkerSettings = {
     markerImageFunction?: MarkerImageFunction;
     markerOffsetX: number;
     markerOffsetY: number;
+    tooltipOffsetX: number;
+    tooltipOffsetY: number;
 };
 
 export interface FormattedData {
@@ -223,6 +225,8 @@ export const defaultSettings: any = {
     yPosKeyName: 'yPos',
     markerOffsetX: 0.5,
     markerOffsetY: 1,
+    tooltipOffsetX: 0,
+    tooltipOffsetY: -1,
     latKeyName: 'latitude',
     lngKeyName: 'longitude',
     polygonKeyName: 'coordinates',

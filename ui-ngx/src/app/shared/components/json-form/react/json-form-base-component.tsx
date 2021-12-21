@@ -67,10 +67,10 @@ export default ThingsboardBaseComponent => class<P extends JsonFormFieldProps>
     defaultValue() {
         let value = JsonFormUtils.selectOrSet(this.props.form.key, this.props.model);
         if (this.props.form.schema.type === 'boolean') {
-            if (typeof value !== 'boolean' && this.props.form.default) {
+            if (typeof value !== 'boolean' && typeof this.props.form.default === 'boolean') {
                 value = this.props.form.default;
             }
-            if (typeof value !== 'boolean' && this.props.form.schema && this.props.form.schema.default) {
+            if (typeof value !== 'boolean' && this.props.form.schema && typeof this.props.form.schema.default === 'boolean') {
                 value = this.props.form.schema.default;
             }
             if (typeof value !== 'boolean' &&
@@ -79,13 +79,13 @@ export default ThingsboardBaseComponent => class<P extends JsonFormFieldProps>
                 value = false;
             }
         } else if (this.props.form.schema.type === 'integer' || this.props.form.schema.type === 'number') {
-            if (typeof value !== 'number' && this.props.form.default) {
+            if (typeof value !== 'number' && typeof this.props.form.default === 'number') {
                 value = this.props.form.default;
             }
-            if (typeof value !== 'number' && this.props.form.schema && this.props.form.schema.default) {
+            if (typeof value !== 'number' && this.props.form.schema && typeof this.props.form.schema.default === 'number') {
                 value = this.props.form.schema.default;
             }
-            if (typeof value !== 'number' && this.props.form.titleMap && this.props.form.titleMap[0].value) {
+            if (typeof value !== 'number' && this.props.form.titleMap && typeof this.props.form.titleMap[0].value === 'number') {
                 value = this.props.form.titleMap[0].value;
             }
             if (value && typeof value === 'string') {
@@ -96,13 +96,13 @@ export default ThingsboardBaseComponent => class<P extends JsonFormFieldProps>
                 }
             }
         } else {
-            if (!value && this.props.form.default) {
+            if (!value && typeof this.props.form.default !== 'undefined') {
                 value = this.props.form.default;
             }
-            if (!value && this.props.form.schema && this.props.form.schema.default) {
+            if (!value && this.props.form.schema && typeof this.props.form.schema.default !== 'undefined') {
                 value = this.props.form.schema.default;
             }
-            if (!value && this.props.form.titleMap && this.props.form.titleMap[0].value) {
+            if (!value && this.props.form.titleMap && typeof this.props.form.titleMap[0].value !== 'undefined') {
                 value = this.props.form.titleMap[0].value;
             }
         }
