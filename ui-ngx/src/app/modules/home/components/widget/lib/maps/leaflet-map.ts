@@ -91,6 +91,7 @@ export default abstract class LeafletMap {
                           options: UnitedMapSettings) {
         this.options = options;
         this.editPolygons = options.showPolygon && options.editablePolygon;
+        L.Icon.Default.imagePath = '/';
     }
 
     public initSettings(options: MapSettings) {
@@ -167,6 +168,7 @@ export default abstract class LeafletMap {
           this.selectedEntity = data;
           this.toggleDrawMode(type);
         } else {
+          // @ts-ignore
           this.map.pm.Toolbar.toggleButton(type, false);
         }
       });

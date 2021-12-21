@@ -23,22 +23,12 @@ import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Valida
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import {
-  BooleanOperation, booleanOperationTranslationMap,
-  ComplexFilterPredicate, ComplexFilterPredicateInfo, ComplexOperation, complexOperationTranslationMap,
-  EntityKeyValueType,
-  FilterPredicateType, KeyFilterPredicateInfo
+  ComplexFilterPredicateInfo,
+  ComplexOperation,
+  complexOperationTranslationMap,
+  FilterPredicateType
 } from '@shared/models/query/query.models';
-
-export interface ComplexFilterPredicateDialogData {
-  complexPredicate: ComplexFilterPredicateInfo;
-  key: string;
-  readonly: boolean;
-  isAdd: boolean;
-  valueType: EntityKeyValueType;
-  displayUserParameters: boolean;
-  allowUserDynamicSource: boolean;
-  onlyUserDynamicSource: boolean;
-}
+import { ComplexFilterPredicateDialogData } from '@home/components/filter/filter-component.models';
 
 @Component({
   selector: 'tb-complex-filter-predicate-dialog',

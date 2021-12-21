@@ -105,7 +105,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             " a.propagate_relation_types as propagate_relation_types, " +
             " a.type as type," + SELECT_ORIGINATOR_NAME + ", ";
 
-    private static final String JOIN_RELATIONS = "left join relation r on r.relation_type_group = 'ALARM' and r.relation_type = 'ANY' and a.id = r.to_id and r.from_id in (:entity_ids)";
+    private static final String JOIN_ENTITY_ALARMS = "inner join entity_alarm ea on a.id = ea.alarm_id";
 
     protected final NamedParameterJdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
@@ -132,8 +132,8 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             StringBuilder joinPart = new StringBuilder();
             boolean addAnd = false;
             if (pageLink.isSearchPropagatedAlarms()) {
-                selectPart.append(" CASE WHEN r.from_id IS NULL THEN a.originator_id ELSE r.from_id END as entity_id ");
-                fromPart.append(JOIN_RELATIONS);
+                selectPart.append(" ea.entity_id as entity_id ");
+                fromPart.append(JOIN_ENTITY_ALARMS);
                 wherePart.append(buildPermissionsQuery(tenantId, customerId, ctx));
                 addAnd = true;
             } else {
@@ -145,7 +145,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                 sortPart.append(alarmFieldColumnMap.getOrDefault(sortOrderKey, sortOrderKey))
                         .append(" ").append(sortOrder.getDirection().name());
                 if (pageLink.isSearchPropagatedAlarms()) {
-                    wherePart.append(" and (a.originator_id in (:entity_ids) or r.from_id IS NOT NULL)");
+                    wherePart.append(" and ea.entity_id in (:entity_ids)");
                 } else {
                     addAndIfNeeded(wherePart, addAnd);
                     addAnd = true;
@@ -166,7 +166,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                 }
                 joinPart.append(" as e(id, priority)) e ");
                 if (pageLink.isSearchPropagatedAlarms()) {
-                    joinPart.append("on (r.from_id IS NULL and a.originator_id = e.id) or (r.from_id IS NOT NULL and r.from_id = e.id)");
+                    joinPart.append("on ea.entity_id = e.id");
                 } else {
                     joinPart.append("on a.originator_id = e.id");
                 }
@@ -188,6 +188,9 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                 addAnd = true;
                 ctx.addLongParameter("startTime", startTs);
                 wherePart.append("a.created_time >= :startTime");
+                if (pageLink.isSearchPropagatedAlarms()) {
+                    wherePart.append(" and ea.created_time >= :startTime");
+                }
             }
 
             if (endTs > 0) {
@@ -195,6 +198,9 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                 addAnd = true;
                 ctx.addLongParameter("endTime", endTs);
                 wherePart.append("a.created_time <= :endTime");
+                if (pageLink.isSearchPropagatedAlarms()) {
+                    wherePart.append(" and ea.created_time <= :endTime");
+                }
             }
 
             if (pageLink.getTypeList() != null && !pageLink.getTypeList().isEmpty()) {
@@ -202,6 +208,9 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                 addAnd = true;
                 ctx.addStringListParameter("alarmTypes", pageLink.getTypeList());
                 wherePart.append("a.type in (:alarmTypes)");
+                if (pageLink.isSearchPropagatedAlarms()) {
+                    wherePart.append(" and ea.alarm_type in (:alarmTypes)");
+                }
             }
 
             if (pageLink.getSeverityList() != null && !pageLink.getSeverityList().isEmpty()) {
@@ -279,7 +288,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
     private String buildPermissionsQuery(TenantId tenantId, CustomerId customerId, QueryContext ctx) {
         StringBuilder permissionsQuery = new StringBuilder();
         ctx.addUuidParameter("permissions_tenant_id", tenantId.getId());
-        permissionsQuery.append(" a.tenant_id = :permissions_tenant_id ");
+        permissionsQuery.append(" a.tenant_id = :permissions_tenant_id and ea.tenant_id = :permissions_tenant_id ");
 /*
       No need to check the customer id, because we already use entity id list that passed security check when we were evaluating the data query.
  */

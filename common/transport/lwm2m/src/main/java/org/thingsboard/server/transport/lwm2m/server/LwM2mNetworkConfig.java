@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.lwm2m.server;
 
 import org.eclipse.californium.core.network.config.NetworkConfig;
 import org.eclipse.californium.core.network.config.NetworkConfigDefaults;
+import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 
 import static org.eclipse.californium.core.network.config.NetworkConfigDefaults.DEFAULT_BLOCKWISE_STATUS_LIFETIME;
@@ -25,8 +26,8 @@ public class LwM2mNetworkConfig {
 
     public static NetworkConfig getCoapConfig(Integer serverPortNoSec, Integer serverSecurePort, LwM2MTransportServerConfig config) {
         NetworkConfig coapConfig = new NetworkConfig();
-        coapConfig.setInt(NetworkConfig.Keys.COAP_PORT,serverPortNoSec);
-        coapConfig.setInt(NetworkConfig.Keys.COAP_SECURE_PORT,serverSecurePort);
+        coapConfig.setInt(NetworkConfig.Keys.COAP_PORT, serverPortNoSec);
+        coapConfig.setInt(NetworkConfig.Keys.COAP_SECURE_PORT, serverSecurePort);
         /**
          Example:Property for large packet:
          #NetworkConfig config = new NetworkConfig();
@@ -104,6 +105,10 @@ public class LwM2mNetworkConfig {
         coapConfig.setInt(NetworkConfig.Keys.MAX_MESSAGE_SIZE, 1024);
 
         coapConfig.setInt(NetworkConfig.Keys.MAX_RETRANSMIT, 10);
+
+        if (!CollectionUtils.isEmpty(config.getNetworkConfig())) {
+            config.getNetworkConfig().forEach(p -> coapConfig.setString(p.getKey(), p.getValue()));
+        }
 
         return coapConfig;
     }

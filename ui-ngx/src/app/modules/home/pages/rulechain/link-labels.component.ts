@@ -25,7 +25,8 @@ import { MatAutocomplete, MatAutocompleteSelectedEvent } from '@angular/material
 import { MatChipInputEvent, MatChipList } from '@angular/material/chips';
 import { TranslateService } from '@ngx-translate/core';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
-import { map, mergeMap, share, startWith } from 'rxjs/operators';
+import { catchError, map, mergeMap, share, startWith } from 'rxjs/operators';
+import { RuleChainService } from '@core/http/rule-chain.service';
 
 @Component({
   selector: 'tb-link-labels',
@@ -68,6 +69,9 @@ export class LinkLabelsComponent implements ControlValueAccessor, OnInit, OnChan
   @Input()
   allowedLabels: {[label: string]: LinkLabel};
 
+  @Input()
+  sourceRuleChainId: string;
+
   linksFormGroup: FormGroup;
 
   modelValue: Array<string>;
@@ -86,7 +90,8 @@ export class LinkLabelsComponent implements ControlValueAccessor, OnInit, OnChan
 
   constructor(private fb: FormBuilder,
               public truncate: TruncatePipe,
-              public translate: TranslateService) {
+              public translate: TranslateService,
+              private ruleChainService: RuleChainService) {
     this.linksFormGroup = this.fb.group({
       label: [null]
     });
@@ -115,7 +120,7 @@ export class LinkLabelsComponent implements ControlValueAccessor, OnInit, OnChan
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (change.currentValue !== change.previousValue) {
-        if (['allowCustom', 'allowedLabels'].includes(propName)) {
+        if (['allowCustom', 'allowedLabels', 'sourceRuleChainId'].includes(propName)) {
           reloadLabels = true;
         }
       }
@@ -139,25 +144,50 @@ export class LinkLabelsComponent implements ControlValueAccessor, OnInit, OnChan
     this.labelsList.length = 0;
     this.labels.length = 0;
     this.modelValue = value;
-    for (const label of Object.keys(this.allowedLabels)) {
-      this.labelsList.push({name: this.allowedLabels[label].name, value: this.allowedLabels[label].value});
+    this.prepareLabelsList().subscribe((labelsList) => {
+      this.labelsList = labelsList;
+      if (value) {
+        value.forEach((label) => {
+          if (this.allowedLabels[label]) {
+            this.labels.push(deepClone(this.allowedLabels[label]));
+          } else {
+            this.labels.push({
+              name: label,
+              value: label
+            });
+          }
+        });
+      }
+      if (this.chipList && this.required) {
+        this.chipList.errorState = !this.labels.length;
+      }
+      this.linksFormGroup.get('label').patchValue('', {emitEvent: true});
+    });
+  }
+
+  prepareLabelsList(): Observable<Array<LinkLabel>> {
+    const labelsList: Array<LinkLabel> = [];
+    if (this.sourceRuleChainId) {
+      return this.ruleChainService.getRuleChainOutputLabels(this.sourceRuleChainId, {ignoreErrors: true}).pipe(
+        map((labels) => {
+          for (const label of labels) {
+            labelsList.push({
+              name: label,
+              value: label
+            });
+          }
+          return labelsList;
+        }),
+        catchError(() => {
+          return of(labelsList);
+        })
+      );
+    } else {
+      for (const label of Object.keys(this.allowedLabels)) {
+        labelsList.push({name: this.allowedLabels[label].name, value: this.allowedLabels[label].value});
+      }
+      return of(labelsList);
     }
-    if (value) {
-      value.forEach((label) => {
-        if (this.allowedLabels[label]) {
-          this.labels.push(deepClone(this.allowedLabels[label]));
-        } else {
-          this.labels.push({
-            name: label,
-            value: label
-          });
-        }
-      });
-    }
-    if (this.chipList && this.required) {
-      this.chipList.errorState = this.labels.length ? false : true;
-    }
-    this.linksFormGroup.get('label').patchValue('', {emitEvent: true});
   }
 
   displayLabelFn(label?: LinkLabel): string | undefined {
@@ -165,7 +195,7 @@ export class LinkLabelsComponent implements ControlValueAccessor, OnInit, OnChan
   }
 
   textIsNotEmpty(text: string): boolean {
-    return (text && text != null && text.length > 0) ? true : false;
+    return (text && text.length > 0);
   }
 
   createLinkLabel($event: Event, value: string) {

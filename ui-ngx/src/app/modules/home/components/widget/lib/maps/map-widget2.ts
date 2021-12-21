@@ -70,9 +70,9 @@ export class MapWidgetController implements MapWidgetInterface {
         parseWithTranslation.setTranslate(this.translate);
         this.map = new MapClass(this.ctx, $element, this.settings);
         (this.ctx as any).mapInstance = this.map;
-        this.map.saveMarkerLocation = this.setMarkerLocation;
-        this.map.savePolygonLocation = this.savePolygonLocation;
-        this.map.saveLocation = this.saveLocation;
+        this.map.saveMarkerLocation = this.setMarkerLocation.bind(this);
+        this.map.savePolygonLocation = this.savePolygonLocation.bind(this);
+        this.map.saveLocation = this.saveLocation.bind(this);
         this.pageLink = {
           page: 0,
           pageSize: this.settings.mapPageSize,

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { FcModel } from 'ngx-flowchart/dist/ngx-flowchart';
+import { FcModel } from 'ngx-flowchart';
 import { FcRuleEdge, FcRuleNode, FcRuleNodeType } from '@shared/models/rule-node.models';
 
 export interface FcRuleNodeTypeModel extends FcModel {

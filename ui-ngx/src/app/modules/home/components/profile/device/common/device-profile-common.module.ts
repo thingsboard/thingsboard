@@ -15,10 +15,10 @@
 ///
 
 import { NgModule } from '@angular/core';
-import { PowerModeSettingComponent } from './power-mode-setting.component';
+import { PowerModeSettingComponent } from '@home/components/profile/device/common/power-mode-setting.component';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
-import { TimeUnitSelectComponent } from './time-unit-select.component';
+import { TimeUnitSelectComponent } from '@home/components/profile/device/common/time-unit-select.component';
 
 @NgModule({
   declarations: [

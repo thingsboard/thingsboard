@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao;
+package org.thingsboard.server.common.data;
 
-import org.junit.extensions.cpsuite.ClasspathSuite;
-import org.junit.extensions.cpsuite.ClasspathSuite.ClassnameFilters;
-import org.junit.runner.RunWith;
+import lombok.Data;
 
-@RunWith(ClasspathSuite.class)
-@ClassnameFilters({
-        "org.thingsboard.server.dao.service.psql.*SqlTest",
-        "org.thingsboard.server.dao.service.attributes.psql.*SqlTest",
-        "org.thingsboard.server.dao.service.event.psql.*SqlTest",
-        "org.thingsboard.server.dao.service.timeseries.psql.*SqlTest"
-})
-public class PostgreSqlDaoServiceTestSuite {
+/**
+ * Created by ashvayka on 25.09.18.
+ */
+@Data
+public class TbProperty {
+
+    private String key;
+    private String value;
 }

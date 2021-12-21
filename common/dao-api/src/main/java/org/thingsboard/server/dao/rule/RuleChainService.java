@@ -28,7 +28,9 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainData;
 import org.thingsboard.server.common.data.rule.RuleChainImportResult;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.common.data.rule.RuleChainOutputLabelsUsage;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
 import org.thingsboard.server.common.data.rule.RuleNode;
 
 import java.util.List;
@@ -42,7 +44,7 @@ public interface RuleChainService {
 
     boolean setRootRuleChain(TenantId tenantId, RuleChainId ruleChainId);
 
-    boolean saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData);
+    RuleChainUpdateResult saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData);
 
     RuleChainMetaData loadRuleChainMetaData(TenantId tenantId, RuleChainId ruleChainId);
 
@@ -88,4 +90,7 @@ public interface RuleChainService {
 
     PageData<RuleChain> findAutoAssignToEdgeRuleChainsByTenantId(TenantId tenantId, PageLink pageLink);
 
+    List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String name, String toString);
+
+    RuleNode saveRuleNode(TenantId tenantId, RuleNode ruleNode);
 }

@@ -870,8 +870,6 @@
         "access-token": "억세스 토큰",
         "access-token-required": "액세스 토큰을 입력하세요.",
         "access-token-invalid": "액세스 토큰 길이는 1 - 32 자 여야합니다.",
-        "rsa-key": "RSA public key",
-        "rsa-key-required": "RSA public key 를 입력하세요.",
         "client-id": "클라이언트 ID",
         "client-id-pattern": "잘못된 문자가 포함되어 있습니다.",
         "user-name": "사용자 이름",
