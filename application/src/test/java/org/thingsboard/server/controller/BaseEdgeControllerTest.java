@@ -48,14 +48,16 @@ import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
+
+    public static final String EDGE_HOST = "localhost";
+    public static final int EDGE_PORT = 7070;
 
     private IdComparator<Edge> idComparator = new IdComparator<>();
 
@@ -68,7 +70,7 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         loginSysAdmin();
 
         Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
+        tenant.setTitle("My tenant for Edge");
         savedTenant = doPost("/api/tenant", tenant, Tenant.class);
         tenantId = savedTenant.getId();
         Assert.assertNotNull(savedTenant);
@@ -667,45 +669,45 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSyncEdge() throws Exception {
-        Edge edge = doPost("/api/edge", constructEdge("Test Edge", "test"), Edge.class);
+        Edge edge = doPost("/api/edge", constructEdge("Test Sync Edge", "test"), Edge.class);
 
         Device device = new Device();
-        device.setName("Edge Device 1");
+        device.setName("Test Sync Edge Device 1");
         device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
         doPost("/api/edge/" + edge.getId().getId().toString()
                 + "/device/" + savedDevice.getId().getId().toString(), Device.class);
 
         Asset asset = new Asset();
-        asset.setName("Edge Asset 1");
+        asset.setName("Test Sync Edge Asset 1");
         asset.setType("test");
         Asset savedAsset = doPost("/api/asset", asset, Asset.class);
         doPost("/api/edge/" + edge.getId().getId().toString()
                 + "/asset/" + savedAsset.getId().getId().toString(), Asset.class);
 
-        EdgeImitator edgeImitator = new EdgeImitator("localhost", 7070, edge.getRoutingKey(), edge.getSecret());
+        EdgeImitator edgeImitator = new EdgeImitator(EDGE_HOST, EDGE_PORT, edge.getRoutingKey(), edge.getSecret());
         edgeImitator.ignoreType(UserCredentialsUpdateMsg.class);
 
         edgeImitator.expectMessageAmount(11);
         edgeImitator.connect();
-        Assert.assertTrue(edgeImitator.waitForMessages());
+        assertThat(edgeImitator.waitForMessages()).as("await for messages on first connect").isTrue();
 
-        Assert.assertEquals(2, edgeImitator.findAllMessagesByType(RuleChainUpdateMsg.class).size()); // one msg during sync process, another from edge creation
-        Assert.assertEquals(1, edgeImitator.findAllMessagesByType(DeviceProfileUpdateMsg.class).size()); // one msg during sync process for 'default' device profile
-        Assert.assertEquals(1, edgeImitator.findAllMessagesByType(DeviceUpdateMsg.class).size()); // one msg once device assigned to edge
-        Assert.assertEquals(2, edgeImitator.findAllMessagesByType(AssetUpdateMsg.class).size()); // two msgs - one during sync process, and one more once asset assigned to edge
-        Assert.assertEquals(1, edgeImitator.findAllMessagesByType(UserUpdateMsg.class).size()); // one msg during sync process for tenant admin user
-        Assert.assertEquals(4, edgeImitator.findAllMessagesByType(AdminSettingsUpdateMsg.class).size());
+        assertThat(edgeImitator.findAllMessagesByType(RuleChainUpdateMsg.class)).as("one msg during sync process, another from edge creation").hasSize(2);
+        assertThat(edgeImitator.findAllMessagesByType(DeviceProfileUpdateMsg.class)).as("one msg during sync process for 'default' device profile").hasSize(1);
+        assertThat(edgeImitator.findAllMessagesByType(DeviceUpdateMsg.class)).as("one msg once device assigned to edge").hasSize(1);
+        assertThat(edgeImitator.findAllMessagesByType(AssetUpdateMsg.class)).as("two msgs - one during sync process, and one more once asset assigned to edge").hasSize(2);
+        assertThat(edgeImitator.findAllMessagesByType(UserUpdateMsg.class)).as("one msg during sync process for tenant admin user").hasSize(1);
+        assertThat(edgeImitator.findAllMessagesByType(AdminSettingsUpdateMsg.class)).as("admin setting update").hasSize(4);
 
         edgeImitator.expectMessageAmount(8);
         doPost("/api/edge/sync/" + edge.getId());
-        Assert.assertTrue(edgeImitator.waitForMessages());
+        assertThat(edgeImitator.waitForMessages()).as("await for messages after edge sync rest api call").isTrue();
 
-        Assert.assertEquals(1, edgeImitator.findAllMessagesByType(RuleChainUpdateMsg.class).size());
-        Assert.assertEquals(1, edgeImitator.findAllMessagesByType(DeviceProfileUpdateMsg.class).size());
-        Assert.assertEquals(1, edgeImitator.findAllMessagesByType(AssetUpdateMsg.class).size());
-        Assert.assertEquals(1, edgeImitator.findAllMessagesByType(UserUpdateMsg.class).size());
-        Assert.assertEquals(4, edgeImitator.findAllMessagesByType(AdminSettingsUpdateMsg.class).size());
+        assertThat(edgeImitator.findAllMessagesByType(RuleChainUpdateMsg.class)).as("rule chain msg").hasSize(1);
+        assertThat(edgeImitator.findAllMessagesByType(DeviceProfileUpdateMsg.class)).as("device profile msg").hasSize(1);
+        assertThat(edgeImitator.findAllMessagesByType(AssetUpdateMsg.class)).as("asset update msg").hasSize(1);
+        assertThat(edgeImitator.findAllMessagesByType(UserUpdateMsg.class)).as("user update msg").hasSize(1);
+        assertThat(edgeImitator.findAllMessagesByType(AdminSettingsUpdateMsg.class)).as("admin setting update msg").hasSize(4);
 
         edgeImitator.allowIgnoredTypes();
         try {

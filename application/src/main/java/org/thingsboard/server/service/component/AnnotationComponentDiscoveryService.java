@@ -152,24 +152,14 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
         try {
             scannedComponent.setType(type);
             Class<?> clazz = Class.forName(clazzName);
-            switch (type) {
-                case ENRICHMENT:
-                case FILTER:
-                case TRANSFORMATION:
-                case ACTION:
-                case EXTERNAL:
-                    RuleNode ruleNodeAnnotation = clazz.getAnnotation(RuleNode.class);
-                    scannedComponent.setName(ruleNodeAnnotation.name());
-                    scannedComponent.setScope(ruleNodeAnnotation.scope());
-                    NodeDefinition nodeDefinition = prepareNodeDefinition(ruleNodeAnnotation);
-                    ObjectNode configurationDescriptor = mapper.createObjectNode();
-                    JsonNode node = mapper.valueToTree(nodeDefinition);
-                    configurationDescriptor.set("nodeDefinition", node);
-                    scannedComponent.setConfigurationDescriptor(configurationDescriptor);
-                    break;
-                default:
-                    throw new RuntimeException(type + " is not supported yet!");
-            }
+            RuleNode ruleNodeAnnotation = clazz.getAnnotation(RuleNode.class);
+            scannedComponent.setName(ruleNodeAnnotation.name());
+            scannedComponent.setScope(ruleNodeAnnotation.scope());
+            NodeDefinition nodeDefinition = prepareNodeDefinition(ruleNodeAnnotation);
+            ObjectNode configurationDescriptor = mapper.createObjectNode();
+            JsonNode node = mapper.valueToTree(nodeDefinition);
+            configurationDescriptor.set("nodeDefinition", node);
+            scannedComponent.setConfigurationDescriptor(configurationDescriptor);
             scannedComponent.setClazz(clazzName);
             log.info("Processing scanned component: {}", scannedComponent);
         } catch (Exception e) {
@@ -200,6 +190,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
         nodeDefinition.setOutEnabled(nodeAnnotation.outEnabled());
         nodeDefinition.setRelationTypes(getRelationTypesWithFailureRelation(nodeAnnotation));
         nodeDefinition.setCustomRelations(nodeAnnotation.customRelations());
+        nodeDefinition.setRuleChainNode(nodeAnnotation.ruleChainNode());
         Class<? extends NodeConfiguration> configClazz = nodeAnnotation.configClazz();
         NodeConfiguration config = configClazz.getDeclaredConstructor().newInstance();
         NodeConfiguration defaultConfiguration = config.defaultConfiguration();

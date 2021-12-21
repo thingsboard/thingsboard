@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service;
+package org.thingsboard.server.common.data.rule;
 
-import org.springframework.test.context.TestPropertySource;
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.util.Map;
 
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@Inherited
-@Documented
-@TestPropertySource(locations = {"classpath:application-test.properties", "classpath:psql-test.properties"})
-public @interface DaoPostgreSqlTest {
+/**
+ * Created by igor on 3/13/18.
+ */
+@Data
+public class RuleNodeUpdateResult {
+
+    private final RuleNode oldRuleNode;
+    private final RuleNode newRuleNode;
+
 }

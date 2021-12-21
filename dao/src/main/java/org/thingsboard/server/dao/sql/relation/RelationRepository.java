@@ -15,11 +15,20 @@
  */
 package org.thingsboard.server.dao.sql.relation;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.model.sql.RelationCompositeKey;
 import org.thingsboard.server.dao.model.sql.RelationEntity;
+import org.thingsboard.server.dao.model.sql.RuleChainEntity;
 
 import java.util.List;
 import java.util.UUID;
@@ -48,6 +57,11 @@ public interface RelationRepository
     List<RelationEntity> findAllByFromIdAndFromType(UUID fromId,
                                                     String fromType);
 
+    @Query("SELECT r FROM RelationEntity r WHERE " +
+            "r.relationTypeGroup = 'RULE_NODE' AND r.toType = 'RULE_CHAIN' " +
+            "AND r.toId in (SELECT id from RuleChainEntity where type = :ruleChainType )")
+    List<RelationEntity> findRuleNodeToRuleChainRelations(@Param("ruleChainType") RuleChainType ruleChainType, Pageable page);
+
     @Transactional
     <S extends RelationEntity> S save(S entity);
 
@@ -56,4 +70,5 @@ public interface RelationRepository
 
     @Transactional
     void deleteByFromIdAndFromType(UUID fromId, String fromType);
+
 }

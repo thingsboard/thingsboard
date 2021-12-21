@@ -18,8 +18,8 @@ import { NgModule } from '@angular/core';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { SnmpDeviceProfileTransportConfigurationComponent } from '@home/components/profile/device/snpm/snmp-device-profile-transport-configuration.component';
-import { SnmpDeviceProfileCommunicationConfigComponent } from './snmp-device-profile-communication-config.component';
-import { SnmpDeviceProfileMappingComponent } from './snmp-device-profile-mapping.component';
+import { SnmpDeviceProfileCommunicationConfigComponent } from '@home/components/profile/device/snpm/snmp-device-profile-communication-config.component';
+import { SnmpDeviceProfileMappingComponent } from '@home/components/profile/device/snpm/snmp-device-profile-mapping.component';
 
 @NgModule({
   declarations: [

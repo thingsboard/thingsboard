@@ -106,8 +106,8 @@ class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {
     this.props.onIconClick(key, val, iconSelectedFn);
   }
 
-  onToggleFullscreen(element: HTMLElement, fullscreenFinishFn?: () => void) {
-    this.props.onToggleFullscreen(element, fullscreenFinishFn);
+  onToggleFullscreen(fullscreenFinishFn?: (el: Element) => void) {
+    this.props.onToggleFullscreen(fullscreenFinishFn);
   }
 
   onHelpClick(event: MouseEvent, helpId: string, helpVisibleFn: (visible: boolean) => void, helpReadyFn: (ready: boolean) => void) {
