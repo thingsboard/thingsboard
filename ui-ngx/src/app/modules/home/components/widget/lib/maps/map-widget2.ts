@@ -258,7 +258,7 @@ export class MapWidgetController implements MapWidgetInterface {
             settings.mapProviderHere = hereProviders[0];
           }
         }
-        const customOptions = {
+        const customOptions: Partial<UnitedMapSettings> = {
             provider: this.provider,
             mapUrl: settings?.mapImageUrl,
             labelFunction: parseFunction(settings.labelFunction, functionParams),

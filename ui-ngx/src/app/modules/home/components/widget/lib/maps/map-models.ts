@@ -17,13 +17,15 @@
 import { Datasource } from '@app/shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import tinycolor from 'tinycolor2';
+import { BaseIconOptions, Icon } from 'leaflet';
 
 export const DEFAULT_MAP_PAGE_SIZE = 16384;
 export const DEFAULT_ZOOM_LEVEL = 8;
 
 export type GenericFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
-export type MarkerImageFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
+export type MarkerImageFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => MarkerImageInfo;
 export type PosFuncton = (origXPos, origYPos) => { x, y };
+export type MarkerIconReadyFunction = (icon: MarkerIconInfo) => void;
 
 export type MapSettings = {
     draggableMarker: boolean;
@@ -51,7 +53,6 @@ export type MapSettings = {
     useDefaultCenterPosition?: boolean;
     gmDefaultMapType?: string;
     useLabelFunction: boolean;
-    icon?: any;
     zoomOnClick: boolean,
     maxZoom: number,
     showCoverageOnHover: boolean,
@@ -73,10 +74,22 @@ export enum MapProviders {
     tencent = 'tencent-map'
 }
 
+export type MarkerImageInfo = {
+    url: string;
+    size: number;
+    markerOffset?: [number, number];
+    tooltipOffset?: [number, number];
+};
+
+export type MarkerIconInfo = {
+    icon: Icon<BaseIconOptions>;
+    size: [number, number];
+};
+
 export type MarkerSettings = {
     tooltipPattern?: any;
     tooltipAction: { [name: string]: actionsHandler };
-    icon?: any;
+    icon?: MarkerIconInfo;
     showLabel?: boolean;
     label: string;
     labelColor: string;
@@ -91,7 +104,7 @@ export type MarkerSettings = {
     autocloseTooltip: boolean;
     showTooltipAction: string;
     useClusterMarkers: boolean;
-    currentImage?: string;
+    currentImage?: MarkerImageInfo;
     useMarkerImageFunction?: boolean;
     markerImages?: string[];
     markerImageSize: number;
