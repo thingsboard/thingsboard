@@ -104,6 +104,8 @@ export type MarkerSettings = {
     markerImageFunction?: MarkerImageFunction;
     markerOffsetX: number;
     markerOffsetY: number;
+    tooltipOffsetX: number;
+    tooltipOffsetY: number;
 };
 
 export interface FormattedData {
@@ -131,6 +133,11 @@ export type PolygonSettings = {
     polygonStrokeWeight: number;
     polygonStrokeColor: string;
     polygonColor: string;
+    showPolygonLabel?: boolean;
+    polygonLabel: string;
+    polygonLabelColor: string;
+    polygonLabelText: string;
+    usePolygonLabelFunction: boolean;
     showPolygonTooltip: boolean;
     autocloseTooltip: boolean;
     showTooltipAction: string;
@@ -139,8 +146,11 @@ export type PolygonSettings = {
     usePolygonTooltipFunction: boolean;
     polygonClick: { [name: string]: actionsHandler };
     usePolygonColorFunction: boolean;
+    usePolygonStrokeColorFunction: boolean;
     polygonTooltipFunction: GenericFunction;
     polygonColorFunction?: GenericFunction;
+    polygonStrokeColorFunction?: GenericFunction;
+    polygonLabelFunction?: GenericFunction;
     editablePolygon: boolean;
 };
 
@@ -215,6 +225,8 @@ export const defaultSettings: any = {
     yPosKeyName: 'yPos',
     markerOffsetX: 0.5,
     markerOffsetY: 1,
+    tooltipOffsetX: 0,
+    tooltipOffsetY: -1,
     latKeyName: 'latitude',
     lngKeyName: 'longitude',
     polygonKeyName: 'coordinates',
@@ -227,8 +239,10 @@ export const defaultSettings: any = {
     showPolygon: false,
     labelColor: '#000000',
     color: '#FE7569',
+    showPolygonLabel: false,
     polygonColor: '#0000ff',
     polygonStrokeColor: '#fe0001',
+    polygonLabelColor: '#000000',
     polygonOpacity: 0.5,
     polygonStrokeOpacity: 1,
     polygonStrokeWeight: 1,
