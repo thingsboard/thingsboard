@@ -73,9 +73,11 @@ public class GeoUtil {
     private static boolean contains(List<Polygon> polygons, Map<Polygon, List<Polygon>> holes, Coordinates coordinates) {
         for (Polygon polygon : polygons) {
             if (contains(polygon, coordinates)) {
-                for (Polygon hole : holes.get(polygon)) {
-                    if (contains(hole, coordinates)) {
-                        return false;
+                if (!holes.isEmpty()) {
+                    for (Polygon hole : holes.get(polygon)) {
+                        if (contains(hole, coordinates)) {
+                            return false;
+                        }
                     }
                 }
 
@@ -100,11 +102,15 @@ public class GeoUtil {
     }
 
     private static void normalizePolygonsJson(JsonArray polygonsJsonArray, JsonArray result) {
-        for (JsonElement element : polygonsJsonArray) {
-            if (containsArrayWithPrimitives(element.getAsJsonArray())) {
-                result.add(element);
-            } else {
-                normalizePolygonsJson(element.getAsJsonArray(), result);
+        if (containsArrayWithPrimitives(polygonsJsonArray)) {
+            result.add(polygonsJsonArray);
+        } else {
+            for (JsonElement element : polygonsJsonArray) {
+                if (containsArrayWithPrimitives(element.getAsJsonArray())) {
+                    result.add(element);
+                } else {
+                    normalizePolygonsJson(element.getAsJsonArray(), result);
+                }
             }
         }
     }
@@ -151,6 +157,16 @@ public class GeoUtil {
     }
 
     private static Polygon buildPolygonFromCoordinates(List<Coordinate> coordinates) {
+        if (coordinates.size() == 2) {
+            Coordinate a = coordinates.get(0);
+            Coordinate c = coordinates.get(1);
+            coordinates.clear();
+
+            Coordinate b = new Coordinate(a.x, c.y);
+            Coordinate d = new Coordinate(c.x, a.y);
+            coordinates.addAll(List.of(a, b, c, d, a));
+        }
+
         CoordinateSequence coordinateSequence = jtsCtx
                 .getShapeFactory()
                 .getGeometryFactory()
