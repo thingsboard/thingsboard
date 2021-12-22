@@ -100,10 +100,10 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
     @Override
     public PageData<EdgeEvent> findEdgeEvents(UUID tenantId, EdgeId edgeId, TimePageLink pageLink, boolean withTsUpdate) {
         List<SortOrder> sortOrders = new ArrayList<>();
-        sortOrders.add(new SortOrder("id", SortOrder.Direction.ASC));
         if (pageLink.getSortOrder() != null) {
             sortOrders.add(pageLink.getSortOrder());
         }
+        sortOrders.add(new SortOrder(DaoUtil.DEFAULT_SORT_PROPERTY, SortOrder.Direction.ASC));
         final Lock readWriteLock = readWriteLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
         readWriteLock.lock();
         try {
