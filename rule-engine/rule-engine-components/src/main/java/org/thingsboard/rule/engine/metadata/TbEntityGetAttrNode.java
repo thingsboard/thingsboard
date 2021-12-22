@@ -68,8 +68,6 @@ public abstract class TbEntityGetAttrNode<T extends EntityId> implements TbNode 
 
         Map<String, String> mappingsMap = new HashMap<>();
         config.getAttrMapping().forEach((key, value) -> {
-            log.info("key = {}, value = {}", key, value);
-            log.info(msg.toString());
             String processPatternKey = TbNodeUtils.processPattern(key, msg);
             String processPatternValue = TbNodeUtils.processPattern(value, msg);
             mappingsMap.put(processPatternKey, processPatternValue);
@@ -97,7 +95,6 @@ public abstract class TbEntityGetAttrNode<T extends EntityId> implements TbNode 
     private void putAttributesAndTell(TbContext ctx, TbMsg msg, List<? extends KvEntry> attributes, Map<String, String> map) {
         attributes.forEach(r -> {
             String attrName = map.get(r.getKey());
-            log.info("attrName = {}, value = {}", attrName, r.getValueAsString());
             msg.getMetaData().putValue(attrName, r.getValueAsString());
         });
         ctx.tellSuccess(msg);
