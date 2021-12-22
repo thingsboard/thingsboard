@@ -56,7 +56,9 @@ public class EntityKeyMapping {
     private static final Map<EntityType, Map<String, String>> aliases = new HashMap<>();
     private static final Map<EntityType, Map<String, String>> propertiesFunctions = new EnumMap<>(EntityType.class);
     public static final Map<EntityType, String> searchTextFields = new EnumMap<>(EntityType.class);
+    public static final Map<String, String> defaultSortOrders = new HashMap<>();
 
+    public static final String ID = "id";
     public static final String CREATED_TIME = "createdTime";
     public static final String ENTITY_TYPE = "entityType";
     public static final String NAME = "name";
@@ -80,17 +82,18 @@ public class EntityKeyMapping {
     public static final String AUTHORITY = "authority";
     public static final String RESOURCE_TYPE = "resourceType";
     public static final String LAST_ACTIVITY_TIME = "lastActivityTime";
+    public static final String TRANSPORT_TYPE = "transportType";
 
-    public static final List<String> typedEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME, TYPE, ADDITIONAL_INFO, TENANT_ID);
-    public static final List<String> commonEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME, ADDITIONAL_INFO);
+    public static final List<String> typedEntityFields = Arrays.asList(ID, CREATED_TIME, ENTITY_TYPE, NAME, TYPE, ADDITIONAL_INFO, TENANT_ID);
+    public static final List<String> commonEntityFields = Arrays.asList(ID, CREATED_TIME, ENTITY_TYPE, NAME, ADDITIONAL_INFO);
 
-    public static final List<String> dashboardEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, TITLE, TENANT_ID);
-    public static final List<String> labeledEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME, TYPE, LABEL, ADDITIONAL_INFO, TENANT_ID, CUSTOMER_ID);
-    public static final List<String> contactBasedEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, EMAIL, TITLE, COUNTRY, STATE, CITY, ADDRESS, ADDRESS_2, ZIP, PHONE, ADDITIONAL_INFO);
+    public static final List<String> dashboardEntityFields = Arrays.asList(ID, CREATED_TIME, ENTITY_TYPE, TITLE, TENANT_ID);
+    public static final List<String> labeledEntityFields = Arrays.asList(ID, CREATED_TIME, ENTITY_TYPE, NAME, TYPE, LABEL, ADDITIONAL_INFO, TENANT_ID, CUSTOMER_ID);
+    public static final List<String> contactBasedEntityFields = Arrays.asList(ID, CREATED_TIME, ENTITY_TYPE, EMAIL, TITLE, COUNTRY, STATE, CITY, ADDRESS, ADDRESS_2, ZIP, PHONE, ADDITIONAL_INFO);
 
-    public static final Set<String> apiUsageStateEntityFields = new HashSet<>(Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME));
+    public static final Set<String> apiUsageStateEntityFields = new HashSet<>(Arrays.asList(ID, CREATED_TIME, ENTITY_TYPE, NAME));
     public static final Set<String> commonEntityFieldsSet = new HashSet<>(commonEntityFields);
-    public static final Set<String> relationQueryEntityFieldsSet = new HashSet<>(Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME, TYPE, LABEL, FIRST_NAME, LAST_NAME, EMAIL, REGION, TITLE, COUNTRY, STATE, CITY, ADDRESS, ADDRESS_2, ZIP, PHONE, ADDITIONAL_INFO));
+    public static final Set<String> relationQueryEntityFieldsSet = new HashSet<>(Arrays.asList(ID, CREATED_TIME, ENTITY_TYPE, NAME, TYPE, LABEL, FIRST_NAME, LAST_NAME, EMAIL, REGION, TITLE, COUNTRY, STATE, CITY, ADDRESS, ADDRESS_2, ZIP, PHONE, ADDITIONAL_INFO));
 
     static {
         allowedEntityFieldMap.put(EntityType.DEVICE, new HashSet<>(labeledEntityFields));
@@ -104,10 +107,11 @@ public class EntityKeyMapping {
         allowedEntityFieldMap.put(EntityType.CUSTOMER, new HashSet<>(contactBasedEntityFields));
         allowedEntityFieldMap.get(EntityType.CUSTOMER).add(TENANT_ID);
 
-        allowedEntityFieldMap.put(EntityType.USER, new HashSet<>(Arrays.asList(CREATED_TIME, FIRST_NAME, LAST_NAME, EMAIL,
+        allowedEntityFieldMap.put(EntityType.USER, new HashSet<>(Arrays.asList(ID, CREATED_TIME, FIRST_NAME, LAST_NAME, EMAIL,
                 ADDITIONAL_INFO, AUTHORITY, TENANT_ID, CUSTOMER_ID)));
 
         allowedEntityFieldMap.put(EntityType.DEVICE_PROFILE, new HashSet<>(commonEntityFields));
+        allowedEntityFieldMap.get(EntityType.DEVICE_PROFILE).add(TRANSPORT_TYPE);
         allowedEntityFieldMap.get(EntityType.DEVICE_PROFILE).add(TENANT_ID);
 
         allowedEntityFieldMap.put(EntityType.DASHBOARD, new HashSet<>(dashboardEntityFields));
@@ -115,12 +119,13 @@ public class EntityKeyMapping {
         allowedEntityFieldMap.get(EntityType.RULE_CHAIN).add(TENANT_ID);
         allowedEntityFieldMap.get(EntityType.RULE_CHAIN).add(TYPE);
         allowedEntityFieldMap.put(EntityType.RULE_NODE, new HashSet<>(commonEntityFields));
-        allowedEntityFieldMap.put(EntityType.WIDGET_TYPE, new HashSet<>(Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME, TENANT_ID)));
-        allowedEntityFieldMap.put(EntityType.WIDGETS_BUNDLE, new HashSet<>(Arrays.asList(CREATED_TIME, ENTITY_TYPE, TITLE, TENANT_ID)));
+        allowedEntityFieldMap.put(EntityType.WIDGET_TYPE, new HashSet<>(Arrays.asList(ID, CREATED_TIME, ENTITY_TYPE, NAME, TENANT_ID)));
+        allowedEntityFieldMap.put(EntityType.WIDGETS_BUNDLE, new HashSet<>(Arrays.asList(ID, CREATED_TIME, ENTITY_TYPE, TITLE, TENANT_ID)));
         allowedEntityFieldMap.put(EntityType.API_USAGE_STATE, apiUsageStateEntityFields);
-        allowedEntityFieldMap.put(EntityType.TB_RESOURCE, Set.of(CREATED_TIME, ENTITY_TYPE, RESOURCE_TYPE, TITLE, TENANT_ID));
-        allowedEntityFieldMap.put(EntityType.OTA_PACKAGE, Set.of(CREATED_TIME, ENTITY_TYPE, TYPE, TITLE, TENANT_ID));
+        allowedEntityFieldMap.put(EntityType.TB_RESOURCE, Set.of(ID, CREATED_TIME, ENTITY_TYPE, RESOURCE_TYPE, TITLE, TENANT_ID));
+        allowedEntityFieldMap.put(EntityType.OTA_PACKAGE, Set.of(ID, CREATED_TIME, ENTITY_TYPE, TYPE, TITLE, TENANT_ID));
 
+        entityFieldColumnMap.put(ID, ModelConstants.ID_PROPERTY);
         entityFieldColumnMap.put(CREATED_TIME, ModelConstants.CREATED_TIME_PROPERTY);
         entityFieldColumnMap.put(ENTITY_TYPE, ModelConstants.ENTITY_TYPE_PROPERTY);
         entityFieldColumnMap.put(REGION, ModelConstants.TENANT_REGION_PROPERTY);
@@ -143,6 +148,7 @@ public class EntityKeyMapping {
         entityFieldColumnMap.put(CUSTOMER_ID, ModelConstants.CUSTOMER_ID_PROPERTY);
         entityFieldColumnMap.put(AUTHORITY, ModelConstants.USER_AUTHORITY_PROPERTY);
         entityFieldColumnMap.put(RESOURCE_TYPE, ModelConstants.RESOURCE_TYPE_COLUMN);
+        entityFieldColumnMap.put(TRANSPORT_TYPE, ModelConstants.DEVICE_PROFILE_TRANSPORT_TYPE_PROPERTY);
 
         Map<String, String> contactBasedAliases = new HashMap<>();
         contactBasedAliases.put(NAME, TITLE);
@@ -167,6 +173,7 @@ public class EntityKeyMapping {
         aliases.put(EntityType.USER, userEntityAliases);
         aliases.put(EntityType.TB_RESOURCE, Map.of(NAME, TITLE, TYPE, RESOURCE_TYPE));
         aliases.put(EntityType.OTA_PACKAGE, Map.of(NAME, TITLE));
+        aliases.put(EntityType.DEVICE_PROFILE, Map.of(TYPE, TRANSPORT_TYPE));
 
         propertiesFunctions.put(EntityType.USER, Map.of(
                 LAST_ACTIVITY_TIME, "cast(e.additional_info::json ->> 'lastLoginTs' as bigint)"
@@ -175,6 +182,8 @@ public class EntityKeyMapping {
         Arrays.stream(EntityType.values()).forEach(entityType -> {
             searchTextFields.put(entityType, ModelConstants.SEARCH_TEXT_PROPERTY);
         });
+
+        defaultSortOrders.put(LAST_ACTIVITY_TIME, CREATED_TIME);
     }
 
     private int index;

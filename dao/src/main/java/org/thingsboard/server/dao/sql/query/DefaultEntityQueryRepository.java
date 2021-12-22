@@ -449,11 +449,29 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 if (sortOrderMappingOpt.isPresent()) {
                     EntityKeyMapping sortOrderMapping = sortOrderMappingOpt.get();
                     String direction = sortOrder.getDirection() == EntityDataSortOrder.Direction.ASC ? "asc" : "desc nulls last";
+
                     if (sortOrderMapping.getEntityKey().getType() == EntityKeyType.ENTITY_FIELD) {
-                        dataQuery = String.format("%s order by %s %s, result.id %s", dataQuery, sortOrderMapping.getValueAlias(), direction, direction);
+                        dataQuery = String.format("%s order by %s %s", dataQuery, sortOrderMapping.getValueAlias(), direction);
                     } else {
-                        dataQuery = String.format("%s order by %s %s, %s %s, result.id %s", dataQuery,
-                                sortOrderMapping.getSortOrderNumAlias(), direction, sortOrderMapping.getSortOrderStrAlias(), direction, direction);
+                        dataQuery = String.format("%s order by %s %s, %s %s", dataQuery,
+                                sortOrderMapping.getSortOrderNumAlias(), direction, sortOrderMapping.getSortOrderStrAlias(), direction);
+                    }
+
+                    String defaultSortOrder = EntityKeyMapping.defaultSortOrders.get(sortOrderMapping.getEntityKey().getKey());
+                    EntityKeyMapping defaultSortOrderMapping;
+                    if (defaultSortOrder != null && (defaultSortOrderMapping = mappings.stream()
+                            .filter(mapping -> StringUtils.equals(mapping.getEntityKey().getKey(), defaultSortOrder))
+                            .findFirst().orElse(null)) != null) {
+                        if (defaultSortOrderMapping.getEntityKey().getType() == EntityKeyType.ENTITY_FIELD) {
+                            dataQuery += String.format(", %s %s", defaultSortOrderMapping.getValueAlias(), direction);
+                        } else {
+                            dataQuery += String.format(", %s %s, %s %s", defaultSortOrderMapping.getSortOrderNumAlias(), direction,
+                                    defaultSortOrderMapping.getSortOrderStrAlias(), direction);
+                        }
+                    }
+
+                    if (!sortOrderMapping.getEntityKey().getKey().equals("id") && !StringUtils.equals(defaultSortOrder, "id")) {
+                        dataQuery += ", result.id ASC";
                     }
                 }
             }
