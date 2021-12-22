@@ -15,25 +15,13 @@
  */
 package org.thingsboard.server.service.edge.rpc.fetch;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
-import org.thingsboard.server.common.data.edge.EdgeEventType;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EventId;
-import org.thingsboard.server.common.data.id.HasId;
-import org.thingsboard.server.common.data.id.HasUUID;
-import org.thingsboard.server.common.data.id.IdBased;
-import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.rule.RuleChain;
-import org.thingsboard.server.service.edge.rpc.EdgeEventUtils;
+import org.thingsboard.server.common.data.page.SortOrder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +31,7 @@ public abstract class BasePageableEdgeEventFetcher<T> implements EdgeEventFetche
 
     @Override
     public PageLink getPageLink(int pageSize) {
-        return new PageLink(pageSize);
+        return new PageLink(pageSize, 0, null, new SortOrder("createdTime", SortOrder.Direction.ASC));
     }
 
     @Override

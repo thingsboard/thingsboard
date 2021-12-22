@@ -16,29 +16,28 @@
 package org.thingsboard.server.dao.sql.edge;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.EdgeEventId;
 import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.edge.EdgeEventDao;
 import org.thingsboard.server.dao.model.sql.EdgeEventEntity;
-import org.thingsboard.server.dao.model.sql.EventEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -100,6 +99,11 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
 
     @Override
     public PageData<EdgeEvent> findEdgeEvents(UUID tenantId, EdgeId edgeId, TimePageLink pageLink, boolean withTsUpdate) {
+        List<SortOrder> sortOrders = new ArrayList<>();
+        sortOrders.add(new SortOrder("id", SortOrder.Direction.ASC));
+        if (pageLink.getSortOrder() != null) {
+            sortOrders.add(pageLink.getSortOrder());
+        }
         final Lock readWriteLock = readWriteLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
         readWriteLock.lock();
         try {
@@ -112,7 +116,7 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
                                         Objects.toString(pageLink.getTextSearch(), ""),
                                         pageLink.getStartTime(),
                                         pageLink.getEndTime(),
-                                        DaoUtil.toPageable(pageLink)));
+                                        DaoUtil.toPageable(pageLink, sortOrders)));
             } else {
                 return DaoUtil.toPageData(
                         edgeEventRepository
@@ -122,7 +126,7 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
                                         Objects.toString(pageLink.getTextSearch(), ""),
                                         pageLink.getStartTime(),
                                         pageLink.getEndTime(),
-                                        DaoUtil.toPageable(pageLink)));
+                                        DaoUtil.toPageable(pageLink, sortOrders)));
 
             }
         } finally {
