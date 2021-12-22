@@ -24,13 +24,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { DeviceService } from '@core/http/device.service';
-import {
-  PersistentRpc,
-  rpcStatusColors,
-  RpcStatus,
-  rpcStatusTranslation
-} from '@shared/models/rpc.models';
-import { isDefinedAndNotNull } from '@core/utils';
+import { PersistentRpc, RpcStatus, rpcStatusColors, rpcStatusTranslation } from '@shared/models/rpc.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { DialogService } from '@core/services/dialog.service';
 
@@ -82,7 +76,7 @@ export class PersistentDetailsDialogComponent extends DialogComponent<Persistent
         params: [''],
         retries: [''],
         response: [''],
-        additionalInfo: [null]
+        additionalInfo: ['']
       }
     );
     this.loadPersistentFields(data.persistentRequest);
@@ -90,35 +84,18 @@ export class PersistentDetailsDialogComponent extends DialogComponent<Persistent
   }
 
   loadPersistentFields(request: PersistentRpc) {
-    this.persistentFormGroup.get('rpcId')
-      .patchValue(this.translate.instant('widgets.persistent-table.details-title') + request.id.id);
-    this.persistentFormGroup.get('createdTime')
-      .patchValue(this.datePipe.transform(request.createdTime, 'yyyy-MM-dd HH:mm:ss'));
-    this.persistentFormGroup.get('expirationTime')
-      .patchValue(this.datePipe.transform(request.expirationTime, 'yyyy-MM-dd HH:mm:ss'));
-    this.persistentFormGroup.get('messageType')
-      .patchValue(this.translate.instant('widgets.persistent-table.message-types.' + request.request.oneway)
-      );
-    this.persistentFormGroup.get('status')
-      .patchValue(this.translate.instant(rpcStatusTranslation.get(request.status)));
-    this.persistentFormGroup.get('method')
-      .patchValue(request.request.body.method);
-    if (isDefinedAndNotNull(request.request.retries)) {
-      this.persistentFormGroup.get('retries')
-        .patchValue(request.request.retries);
-    }
-    if (isDefinedAndNotNull(request.response)) {
-      this.persistentFormGroup.get('response')
-        .patchValue(request.response);
-    }
-    if (isDefinedAndNotNull(request.request.body.params)) {
-      this.persistentFormGroup.get('params')
-        .patchValue(JSON.parse(request.request.body.params));
-    }
-    if (isDefinedAndNotNull(request.additionalInfo)) {
-      this.persistentFormGroup.get('additionalInfo')
-        .patchValue(request.additionalInfo);
-    }
+    this.persistentFormGroup.patchValue({
+      rpcId: this.translate.instant('widgets.persistent-table.details-title') + request.id.id,
+      createdTime: this.datePipe.transform(request.createdTime, 'yyyy-MM-dd HH:mm:ss'),
+      expirationTime: this.datePipe.transform(request.expirationTime, 'yyyy-MM-dd HH:mm:ss'),
+      messageType: this.translate.instant('widgets.persistent-table.message-types.' + request.request.oneway),
+      status: this.translate.instant(rpcStatusTranslation.get(request.status)),
+      method: request.request.body.method,
+      retries: request.request.retries || null,
+      response: request.response || null,
+      params: JSON.parse(request.request.body.params) || null,
+      additionalInfo: request.additionalInfo || null
+    }, {emitEvent: false});
   }
 
   ngOnInit(): void {
@@ -138,12 +115,10 @@ export class PersistentDetailsDialogComponent extends DialogComponent<Persistent
         this.translate.instant('action.yes')
       ).subscribe((res) => {
         if (res) {
-          if (res) {
-            this.deviceService.deletePersistedRpc(persistentRpc.id.id).subscribe(() => {
-              this.persistentUpdated = true;
-              this.close();
-            });
-          }
+          this.deviceService.deletePersistedRpc(persistentRpc.id.id).subscribe(() => {
+            this.persistentUpdated = true;
+            this.close();
+          });
         }
       });
     }

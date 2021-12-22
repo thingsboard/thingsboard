@@ -153,7 +153,7 @@ export class JsonObjectViewComponent implements OnInit {
           }, 2);
       }
     } catch (e) {
-      //
+      console.error(e);
     }
     if (this.jsonViewer) {
       this.jsonViewer.setValue(this.contentValue ? this.contentValue : '', -1);

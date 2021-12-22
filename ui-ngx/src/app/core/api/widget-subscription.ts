@@ -70,7 +70,6 @@ import {
 import { distinct, filter, map, switchMap, takeUntil } from 'rxjs/operators';
 import { AlarmDataListener } from '@core/api/alarm-data.service';
 import { RpcStatus } from '@shared/models/rpc.models';
-import { PageLink } from '@shared/models/page/page-link';
 
 const moment = moment_;
 
@@ -779,46 +778,6 @@ export class WidgetSubscription implements IWidgetSubscription {
       }
       return rpcSubject.asObservable();
     }
-  }
-
-  subscribeForPersistentRequests(pageLink: PageLink, keyFilter: RpcStatus): Observable<any> {
-    if (!this.rpcEnabled) {
-      return throwError(new Error('Rpc disabled!'));
-    } else if (!this.targetDeviceId) {
-      return throwError(new Error('Target device is not set!'));
-    }
-    const rpcSubject: Subject<any> = new Subject<any>();
-
-    this.ctx.deviceService.getPersistedRpcRequests(this.targetDeviceId, pageLink, keyFilter).subscribe(
-      (responseBody) => {
-        rpcSubject.next(responseBody);
-        rpcSubject.complete();
-      },
-      (rejection: HttpErrorResponse) => {
-        const index = this.executingSubjects.indexOf(rpcSubject);
-        if (index >= 0) {
-          this.executingSubjects.splice( index, 1 );
-        }
-        this.executingRpcRequest = this.executingSubjects.length > 0;
-        this.callbacks.rpcStateChanged(this);
-        if (!this.executingRpcRequest || rejection.status === 504) {
-          this.rpcRejection = rejection;
-          if (rejection.status === 504) {
-            this.rpcErrorText = 'Request Timeout.';
-          } else {
-            this.rpcErrorText =  'Error : ' + rejection.status + ' - ' + rejection.statusText;
-            const error = this.extractRejectionErrorText(rejection);
-            if (error) {
-              this.rpcErrorText += '</br>';
-              this.rpcErrorText += error;
-            }
-          }
-          this.callbacks.onRpcFailed(this);
-        }
-        rpcSubject.error(rejection);
-      }
-    );
-    return rpcSubject.asObservable();
   }
 
   private extractRejectionErrorText(rejection: HttpErrorResponse) {

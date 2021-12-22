@@ -15,6 +15,7 @@
 ///
 
 import {
+  ChangeDetectorRef,
   Component,
   ElementRef,
   Injector,
@@ -30,10 +31,11 @@ import { AppState } from '@core/core.state';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { WidgetConfig } from '@shared/models/widget.models';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
-import { BehaviorSubject, merge, Observable, of, ReplaySubject } from 'rxjs';
+import { BehaviorSubject, merge, Observable, of, ReplaySubject, Subject, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import {
-  constructTableCssString, noDataMessage,
+  constructTableCssString,
+  noDataMessage,
   TableCellButtonActionDescriptor,
   TableWidgetSettings
 } from '@home/components/widget/lib/table-widget.models';
@@ -45,9 +47,11 @@ import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import {
   PersistentRpc,
-  PersistentRpcData, RequestData,
+  PersistentRpcData,
+  RequestData,
   RpcStatus,
-  rpcStatusColors, rpcStatusTranslation
+  rpcStatusColors,
+  rpcStatusTranslation
 } from '@shared/models/rpc.models';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction, SortOrder, sortOrderFromString } from '@shared/models/page/sort-order';
@@ -64,11 +68,14 @@ import {
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
 import {
-  PERSISTENT_FILTER_PANEL_DATA, PersistentFilterPanelComponent, PersistentFilterPanelData
+  PERSISTENT_FILTER_PANEL_DATA,
+  PersistentFilterPanelComponent,
+  PersistentFilterPanelData
 } from '@home/components/widget/lib/rpc/persistent-filter-panel.component';
 import { PersistentAddDialogComponent } from '@home/components/widget/lib/rpc/persistent-add-dialog.component';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
+import { HttpErrorResponse } from '@angular/common/http';
 
 interface PersistentTableWidgetSettings extends TableWidgetSettings {
   defaultSortOrder: string;
@@ -99,7 +106,6 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
   @Input()
   ctx: WidgetContext;
 
-  @ViewChild('persistentWidgetContainer', {static: true}) persistentWidgetContainerRef: ElementRef;
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
 
@@ -110,7 +116,7 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
   private allowSendRequest = true;
   private defaultPageSize = 10;
   private defaultSortOrder = '-createdTime';
-  private rpcStatusFilter: RpcStatus | null = null;
+  private rpcStatusFilter: RpcStatus;
   private displayDetails = true;
   private allowDelete = true;
   private displayTableColumns: string[];
@@ -137,7 +143,8 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
               private translate: TranslateService,
               private dialogService: DialogService,
               private deviceService: DeviceService,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private cd: ChangeDetectorRef) {
     super(store);
   }
 
@@ -150,13 +157,13 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
     this.ctx.updateWidgetParams();
     if (this.displayPagination) {
       this.widgetResize$ = new ResizeObserver(() => {
-        const showHidePageSize = this.persistentWidgetContainerRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+        const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
         if (showHidePageSize !== this.hidePageSize) {
           this.hidePageSize = showHidePageSize;
-          this.ctx.detectChanges();
+          this.cd.markForCheck();
         }
       });
-      this.widgetResize$.observe(this.persistentWidgetContainerRef.nativeElement);
+      this.widgetResize$.observe(this.elementRef.nativeElement);
     }
   }
 
@@ -250,7 +257,7 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
       this.displayedColumns.push('actions');
     }
 
-    this.persistentDatasource = new PersistentDatasource(this.translate, this.subscription);
+    this.persistentDatasource = new PersistentDatasource(this.translate, this.subscription, this.ctx);
 
     const cssString = constructTableCssString(this.widgetConfig);
     const cssParser = new cssjs();
@@ -300,11 +307,9 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
         this.translate.instant('action.yes')
       ).subscribe((res) => {
         if (res) {
-          if (res) {
-            this.deviceService.deletePersistedRpc(persistentRpc.id.id).subscribe(() => {
-              this.reloadPersistentRequests();
-            });
-          }
+          this.deviceService.deletePersistedRpc(persistentRpc.id.id).subscribe(() => {
+            this.reloadPersistentRequests();
+          });
         }
       });
     }
@@ -345,7 +350,7 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
       }).afterClosed().subscribe(
       (requestData) => {
-        if (requestData.persistentUpdated) {
+        if (requestData) {
           this.sendRequests(requestData);
         }
       }
@@ -440,11 +445,16 @@ class PersistentDatasource implements DataSource<PersistentRpcData> {
   private persistentSubject = new BehaviorSubject<PersistentRpcData[]>([]);
   private pageDataSubject = new BehaviorSubject<PageData<PersistentRpcData>>(emptyPageData<PersistentRpcData>());
 
+  private rpcErrorText: string;
+  private executingSubjects: Array<Subject<any>>;
+  private executingRpcRequest = false;
+
   public dataLoading = true;
   public pageData$ = this.pageDataSubject.asObservable();
 
   constructor(private translate: TranslateService,
-              private subscription: IWidgetSubscription) {
+              private subscription: IWidgetSubscription,
+              private ctx: WidgetContext) {
   }
 
   connect(collectionViewer: CollectionViewer): Observable<PersistentRpcData[] | ReadonlyArray<PersistentRpcData>> {
@@ -462,11 +472,11 @@ class PersistentDatasource implements DataSource<PersistentRpcData> {
     this.pageDataSubject.next(pageData);
   }
 
-  loadPersistent(pageLink: PageLink, keyFilter: RpcStatus) {
+  loadPersistent(pageLink: PageLink, rpcStatusFilter: RpcStatus) {
     this.dataLoading = true;
 
     const result = new ReplaySubject<PageData<PersistentRpcData>>();
-    this.fetchEntities(pageLink, keyFilter).pipe(
+    this.fetchEntities(pageLink, rpcStatusFilter).pipe(
       catchError(() => of(emptyPageData<PersistentRpcData>())),
     ).subscribe(
       (pageData) => {
@@ -479,8 +489,81 @@ class PersistentDatasource implements DataSource<PersistentRpcData> {
     return result;
   }
 
-  fetchEntities(pageLink: PageLink, keyFilter: RpcStatus): Observable<PageData<PersistentRpcData>> {
-    return this.subscription.subscribeForPersistentRequests(pageLink, keyFilter);
+  fetchEntities(pageLink: PageLink, rpcStatusFilter: RpcStatus): Observable<PageData<PersistentRpcData>> {
+    if (!this.subscription.rpcEnabled) {
+      return throwError(new Error('Rpc disabled!'));
+    } else if (!this.subscription.targetDeviceId) {
+      return throwError(new Error('Target device is not set!'));
+    }
+    const rpcSubject: Subject<any> = new Subject<any>();
+
+    this.ctx.deviceService.getPersistedRpcRequests(this.subscription.targetDeviceId, pageLink, rpcStatusFilter).subscribe(
+      (responseBody) => {
+        rpcSubject.next(responseBody);
+        rpcSubject.complete();
+      },
+      (rejection: HttpErrorResponse) => {
+        this.rpcErrorText = null;
+        this.executingSubjects = [];
+
+        const index = this.executingSubjects.indexOf(rpcSubject);
+        if (index >= 0) {
+          this.executingSubjects.splice(index, 1);
+        }
+        this.executingRpcRequest = this.executingSubjects.length > 0;
+        this.subscription.options.callbacks.rpcStateChanged(this.subscription);
+        if (!this.executingRpcRequest || rejection.status === 504) {
+          this.subscription.rpcRejection = rejection;
+          if (rejection.status === 504) {
+            this.subscription.rpcErrorText = 'Request Timeout.';
+          } else {
+            this.subscription.rpcErrorText =  'Error : ' + rejection.status + ' - ' + rejection.statusText;
+            const error = this.extractRejectionErrorText(rejection);
+            if (error) {
+              this.subscription.rpcErrorText += '</br>';
+              this.subscription.rpcErrorText += error.message || '';
+            }
+          }
+          this.subscription.callbacks.onRpcFailed(this.subscription);
+        }
+        rpcSubject.error(rejection);
+      }
+    );
+    return rpcSubject.asObservable();
+  }
+
+  extractRejectionErrorText(rejection: HttpErrorResponse) {
+    let error = null;
+    if (rejection.error) {
+      error = rejection.error;
+      try {
+        error = rejection.error ? JSON.parse(rejection.error) : null;
+      } catch (e) {}
+    }
+    if (error && !error.message) {
+      error = this.prepareMessageFromData(error);
+    } else if (error && error.message) {
+      error = error.message;
+    }
+    return error;
+  }
+
+  prepareMessageFromData(data) {
+    if (typeof data === 'object' && data.constructor === ArrayBuffer) {
+      const msg = String.fromCharCode.apply(null, new Uint8Array(data));
+      try {
+        const msgObj = JSON.parse(msg);
+        if (msgObj.message) {
+          return msgObj.message;
+        } else {
+          return msg;
+        }
+      } catch (e) {
+        return msg;
+      }
+    } else {
+      return data;
+    }
   }
 
   isEmpty(): Observable<boolean> {

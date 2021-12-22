@@ -150,7 +150,7 @@ import { TogglePasswordComponent } from '@shared/components/button/toggle-passwo
 import { HelpPopupComponent } from '@shared/components/help-popup.component';
 import { TbPopoverComponent, TbPopoverDirective } from '@shared/components/popover.component';
 import { TbStringTemplateOutletDirective } from '@shared/components/directives/sring-template-outlet.directive';
-import { TbComponentOutletDirective} from '@shared/components/directives/component-outlet.directive';
+import { TbComponentOutletDirective } from '@shared/components/directives/component-outlet.directive';
 import { HelpMarkdownComponent } from '@shared/components/help-markdown.component';
 import { MarkedOptionsService } from '@shared/components/marked-options.service';
 import { TbPopoverService } from '@shared/components/popover.service';

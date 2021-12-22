@@ -79,7 +79,6 @@ export interface PersistentRpcData extends PersistentRpc {
 }
 
 export interface RequestData {
-  persistentUpdated: boolean;
   method?: string;
   oneWayElseTwoWay?: boolean;
   persistentPollingInterval?: number;

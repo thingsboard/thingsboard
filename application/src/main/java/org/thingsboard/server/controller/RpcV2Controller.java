@@ -188,7 +188,7 @@ public class RpcV2Controller extends AbstractRpcController {
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         checkParameter("DeviceId", strDeviceId);
         try {
-            if (rpcStatus.equals(RpcStatus.DELETED)) {
+            if (rpcStatus != null && rpcStatus.equals(RpcStatus.DELETED)) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "RpcStatus: DELETED");
             }
 

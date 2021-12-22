@@ -148,10 +148,12 @@ export class DeviceService {
   }
 
   public getPersistedRpcRequests(deviceId: string, pageLink: PageLink,
-                                 keyFilter: RpcStatus, config?: RequestConfig): Observable<PageData<PersistentRpc>> {
-    const rpcStatus = keyFilter ? '&rpcStatus=' + keyFilter : '';
-    return this.http.get<PageData<PersistentRpc>>(`/api/rpc/persistent/device/${deviceId}${pageLink.toQuery()}${rpcStatus}`,
-      defaultHttpOptionsFromConfig(config));
+                                 rpcStatus?: RpcStatus, config?: RequestConfig): Observable<PageData<PersistentRpc>> {
+    let url = `/api/rpc/persistent/device/${deviceId}${pageLink.toQuery()}`;
+    if (rpcStatus && rpcStatus.length) {
+      url += `&rpcStatus=${rpcStatus}`;
+    }
+    return this.http.get<PageData<PersistentRpc>>(url, defaultHttpOptionsFromConfig(config));
   }
 
   public findByQuery(query: DeviceSearchQuery,

@@ -32,7 +32,7 @@
     <fieldset [disabled]="isLoading$ | async">
       <div fxLayout="row" fxLayoutGap="6px">
         <mat-slide-toggle fxFlex class="mat-block" formControlName="oneWayElseTwoWay">
-          {{ 'widgets.persistent-table.message-types.' + persistentFormGroup.get('oneWayElseTwoWay').value | translate }}
+          {{ rpcMessageTypeText }}
         </mat-slide-toggle>
       </div>
       <div fxLayout="row wrap" fxLayout.xs="column" fxLayoutGap="6px">

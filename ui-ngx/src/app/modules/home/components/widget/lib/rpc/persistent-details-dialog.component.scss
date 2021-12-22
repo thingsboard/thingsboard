@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  .rpc-dialog ::ng-deep {
+:host ::ng-deep {
+  .rpc-dialog {
     .mat-expansion-panel-body {
       padding-bottom: 0 !important;
     }
@@ -23,6 +23,7 @@
       margin: 0 0 16px 0;
     }
   }
+
   .tb-audit-log-response-data {
     width: 100%;
     min-width: 400px;

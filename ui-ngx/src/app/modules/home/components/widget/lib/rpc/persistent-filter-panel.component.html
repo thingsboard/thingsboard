@@ -19,7 +19,7 @@
   <mat-form-field fxFlex class="mat-block" floatLabel="always">
     <mat-label translate>widgets.persistent-table.rpc-status-list</mat-label>
     <mat-select formControlName="rpcStatus"
-                placeholder="{{ !persistentFilterFormGroup.get('rpcStatus').value?.length ? ('widgets.persistent-table.any-status' | translate) : '' }}">
+                placeholder="{{ rpcSearchPlaceholder }}">
       <mat-option [value]="null">
         {{ 'widgets.persistent-table.rpc-search-status-all' | translate }}
       </mat-option>

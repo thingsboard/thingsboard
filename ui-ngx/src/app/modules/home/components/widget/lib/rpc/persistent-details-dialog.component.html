@@ -48,7 +48,7 @@
         <mat-form-field fxFlex class="mat-block">
           <mat-label translate>widgets.persistent-table.status</mat-label>
           <input matInput formControlName="status" readonly
-                 [ngStyle]="{fontWeight: 'bold', color: rpcStatusColorsMap.get((data.persistentRequest.status))}">
+                 [ngStyle]="{ fontWeight: 'bold', color: rpcStatusColorsMap.get(data.persistentRequest.status) }">
         </mat-form-field>
         <mat-form-field fxFlex class="mat-block">
           <mat-label translate>widgets.persistent-table.method</mat-label>

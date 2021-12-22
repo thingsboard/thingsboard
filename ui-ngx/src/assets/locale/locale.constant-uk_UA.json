@@ -2395,7 +2395,7 @@
             },
             "rpc-search-status-all": "ВСІ",
             "message-types": {
-                "false": "Двусторонній",
+                "false": "Двосторонній",
                 "true": "Односторонній"
             }
         }
