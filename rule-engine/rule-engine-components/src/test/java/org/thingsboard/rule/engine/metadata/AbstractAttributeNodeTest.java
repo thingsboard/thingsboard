@@ -72,7 +72,7 @@ public abstract class AbstractAttributeNodeTest {
     final RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
     final RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
     final String keyAttrConf = "${word}";
-    final String valueAttrConf = "result";
+    final String valueAttrConf = "${result}";
     @Mock
     TbContext ctx;
     @Mock
@@ -95,6 +95,7 @@ public abstract class AbstractAttributeNodeTest {
 
         metaData = new HashMap<>();
         metaData.putIfAbsent("word", "temperature");
+        metaData.putIfAbsent("result", "answer");
 
         this.node = node;
         this.node.init(null, nodeConfiguration);
@@ -181,7 +182,7 @@ public abstract class AbstractAttributeNodeTest {
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
-        assertEquals(msg.getMetaData().getValue("result"), "highest");
+        assertEquals(msg.getMetaData().getValue("answer"), "highest");
     }
 
     void entityAttributeFetched(EntityId entityId) {
@@ -193,7 +194,7 @@ public abstract class AbstractAttributeNodeTest {
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
-        assertEquals(msg.getMetaData().getValue("result"), "high");
+        assertEquals(msg.getMetaData().getValue("answer"), "high");
     }
 
     TbGetEntityAttrNodeConfiguration getTbNodeConfig() {
