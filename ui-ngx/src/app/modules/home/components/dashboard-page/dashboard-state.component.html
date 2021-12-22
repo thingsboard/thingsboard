@@ -15,5 +15,11 @@
     limitations under the License.
 
 -->
-<tb-markdown [data]="markdownText" [additionalCompileModules]="[ homeComponentsModule ]"
-             [context]="{ ctx: ctx }" lineNumbers fallbackToPlainMarkdown (click)="markdownClick($event)"></tb-markdown>
+<tb-dashboard-page
+  [embedded]="true"
+  [syncStateWithQueryParam]="false"
+  [hideToolbar]="true"
+  [currentState]="currentState"
+  [dashboard]="dashboard"
+  [parentDashboard]="parentDashboard">
+</tb-dashboard-page>
