@@ -118,4 +118,7 @@ public class DataConstants {
 
     public static final String ENTITY_RELATION_ADD_OR_UPDATE = "ENTITY_RELATION_ADD_OR_UPDATE";
     public static final String ENTITY_RELATION_DELETED = "ENTITY_RELATION_DELETED";
+    public static final String ENTITY_RELATIONS_DELETED = "ENTITY_RELATIONS_DELETED";
+
+    public static final String RELATION_DIRECTION_MSG_ORIGINATOR = "relationDirectionMsgOriginator";
 }

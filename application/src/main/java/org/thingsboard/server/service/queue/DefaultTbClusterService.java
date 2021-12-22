@@ -24,22 +24,19 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.cluster.TbClusterService;
-import org.thingsboard.server.common.data.EdgeUtils;
-import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
-import org.thingsboard.server.common.data.edge.EdgeEventType;
-import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.relation.EntitySearchDirection;
-import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -47,11 +44,15 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.FromDeviceRPCResponseProto;
@@ -68,10 +69,8 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -196,7 +195,7 @@ public class DefaultTbClusterService implements TbClusterService {
     private boolean isDuplicateMessage(TbMsg tbMsg, DeviceProfile deviceProfile) {
         EntityRelation entityRelation = JacksonUtil.fromString(tbMsg.getData(), EntityRelation.class);
         if (entityRelation.getFrom().getEntityType().equals(entityRelation.getTo().getEntityType())) {
-            if (tbMsg.getMetaData().getValue(RELATION_DIRECTION_MESSAGE_ORIGINATOR).equals(EntitySearchDirection.TO.name())) {
+            if (tbMsg.getMetaData().getValue(DataConstants.RELATION_DIRECTION_MSG_ORIGINATOR).equals(EntitySearchDirection.TO.name())) {
                 DeviceProfile deviceProfileFrom = deviceProfileCache.get(deviceProfile.getTenantId(), new DeviceId(entityRelation.getFrom().getId()));
                 String defaultQueueName = deviceProfileFrom.getDefaultQueueName() == null ? "" : deviceProfile.getDefaultQueueName();
                 String fromQueueName = deviceProfile.getDefaultQueueName() == null ? "" : deviceProfileFrom.getDefaultQueueName();
@@ -225,7 +224,7 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public void pushNotificationToTransport(String serviceId, ToTransportMsg response, TbQueueCallback callback) {
-        if (serviceId == null || serviceId.isEmpty()){
+        if (serviceId == null || serviceId.isEmpty()) {
             log.trace("pushNotificationToTransport: skipping message without serviceId [{}], (ToTransportMsg) response [{}]", serviceId, response);
             if (callback != null) {
                 callback.onSuccess(null); //callback that message already sent, no useful payload expected

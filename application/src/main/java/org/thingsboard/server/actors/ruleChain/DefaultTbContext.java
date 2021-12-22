@@ -57,7 +57,6 @@ import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.ServiceQueue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -86,6 +85,7 @@ import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -316,11 +316,31 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public  TbMsg entityRelationCreatedOrUpdate(String queueName, EntityRelation relation, EntityId entityId) throws JsonProcessingException {
+    public void entityRelationCreatedOrUpdated(String queueName, EntityRelation relation) {
+        boolean duplicateMessage = isDuplicateMessage(relation);
+
         TbMsgMetaData metaData = new TbMsgMetaData();
-        metaData.putValue("relationDirectionMsgOriginator", entityId.getId().equals(relation.getFrom().getId()) ? EntitySearchDirection.FROM.name() : EntitySearchDirection.TO.name());
-        TbMsg tbMsg = TbMsg.newMsg(queueName, entityId, metaData, TbMsgDataType.JSON, mapper.writeValueAsString(relation));
-        return tbMsg;
+        metaData.putValue(DataConstants.RELATION_DIRECTION_MSG_ORIGINATOR, EntitySearchDirection.FROM.name());
+//                entityId.getId().equals(relation.getFrom().getId()) ? EntitySearchDirection.FROM.name() : EntitySearchDirection.TO.name());
+        try {
+            TbMsg tbMsgFrom = TbMsg.newMsg(queueName, DataConstants.ENTITY_RELATION_ADD_OR_UPDATE, relation.getFrom(), metaData, mapper.writeValueAsString(relation));
+            TbMsg tbMsgTo = TbMsg.newMsg(queueName, DataConstants.ENTITY_RELATION_ADD_OR_UPDATE, relation.getTo(), metaData, mapper.writeValueAsString(relation));
+
+            enqueue(tbMsgFrom,
+                    () -> log.trace("[{}] Enqueued message {}!", DataConstants.ENTITY_RELATION_DELETED, relation),
+                    throwable -> log.warn("[{}] Failed to enqueue message {}", DataConstants.ENTITY_RELATION_DELETED, relation, throwable));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to process [entityRelationCreatedOrUpdated] msg: " + e);
+        }
+    }
+
+    private boolean isDuplicateMessage(EntityRelation relation) {
+        // TODO: 22.12.21 get from and to from the relation and check for isDuplicateMessage()
+//        if (relation.getFrom().getEntityType() == EntityType.DEVICE) {
+//            mainCtx.getDeviceProfileCache().get(getTenantId(), new DeviceId(relation.getFrom().getId()));
+//        }
+
+        return false;
     }
 
     public TbMsg assetCreatedMsg(Asset asset, RuleNodeId ruleNodeId) {

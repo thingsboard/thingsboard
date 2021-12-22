@@ -54,6 +54,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -114,7 +115,7 @@ public class TbCreateRelationNodeTest {
         metaData.putValue("name", "AssetName");
         metaData.putValue("type", "AssetType");
         msg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, deviceId, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
-        when(ctx.entityRelationCreatedOrUpdate(anyString(), any(), any())).thenReturn(msg);
+        doNothing().when(ctx).entityRelationCreatedOrUpdated(anyString(), any());
 
         when(ctx.getRelationService().checkRelation(any(), eq(assetId), eq(deviceId), eq(RELATION_TYPE_CONTAINS), eq(RelationTypeGroup.COMMON)))
                 .thenReturn(Futures.immediateFuture(false));
@@ -142,7 +143,7 @@ public class TbCreateRelationNodeTest {
         metaData.putValue("name", "AssetName");
         metaData.putValue("type", "AssetType");
         msg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, deviceId, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
-        when(ctx.entityRelationCreatedOrUpdate(anyString(), any(), any())).thenReturn(msg);
+        doNothing().when(ctx).entityRelationCreatedOrUpdated(anyString(), any());
 
         EntityRelation relation = new EntityRelation();
         when(ctx.getRelationService().findByToAndTypeAsync(any(), eq(msg.getOriginator()), eq(RELATION_TYPE_CONTAINS), eq(RelationTypeGroup.COMMON)))
@@ -174,7 +175,7 @@ public class TbCreateRelationNodeTest {
         metaData.putValue("name", "AssetName");
         metaData.putValue("type", "AssetType");
         msg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, deviceId, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
-        when(ctx.entityRelationCreatedOrUpdate(anyString(), any(), any())).thenReturn(msg);
+        doNothing().when(ctx).entityRelationCreatedOrUpdated(anyString(), any());
 
         when(ctx.getRelationService().checkRelation(any(), eq(assetId), eq(deviceId), eq(RELATION_TYPE_CONTAINS), eq(RelationTypeGroup.COMMON)))
                 .thenReturn(Futures.immediateFuture(false));

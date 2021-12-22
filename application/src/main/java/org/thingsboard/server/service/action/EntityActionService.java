@@ -122,6 +122,9 @@ public class EntityActionService {
             case RELATION_DELETED:
                 msgType = DataConstants.ENTITY_RELATION_DELETED;
                 break;
+            case RELATIONS_DELETED:
+                msgType = DataConstants.ENTITY_RELATIONS_DELETED;
+                break;
         }
         if (!StringUtils.isEmpty(msgType)) {
             try {
@@ -165,7 +168,7 @@ public class EntityActionService {
                     metaData.putValue("unassignedEdgeName", strEdgeName);
                 } else if (actionType == ActionType.RELATION_ADD_OR_UPDATE || actionType == ActionType.RELATION_DELETED) {
                     EntityRelation relation = extractParameter(EntityRelation.class, 0, additionalInfo);
-                    metaData.putValue(tbClusterService.RELATION_DIRECTION_MESSAGE_ORIGINATOR,
+                    metaData.putValue(DataConstants.RELATION_DIRECTION_MSG_ORIGINATOR,
                             entityId.getId().equals(relation.getFrom().getId()) ? EntitySearchDirection.FROM.name() : EntitySearchDirection.TO.name());
                 }
                 ObjectNode entityNode;
@@ -211,6 +214,8 @@ public class EntityActionService {
                     } else if (actionType == ActionType.RELATION_ADD_OR_UPDATE || actionType == ActionType.RELATION_DELETED) {
                         EntityRelation relation = extractParameter(EntityRelation.class, 0, additionalInfo);
                         entityNode = json.valueToTree(relation);
+                    } else if (actionType == ActionType.RELATIONS_DELETED) {
+                        // TODO: 22.12.21 ???
                     }
                 }
                 TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, customerId, metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));
