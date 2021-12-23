@@ -1,0 +1,372 @@
+{
+  "title": "Wind Turbine Dashboard",
+  "configuration": {
+    "widgets": {
+      "5066f535-8da2-0461-a6a6-42e6976af415": {
+        "isSystemType": true,
+        "bundleAlias": "analogue_gauges",
+        "typeAlias": "analogue_compass",
+        "type": "latest",
+        "title": "New widget",
+        "sizeX": 7,
+        "sizeY": 7,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "dataKeys": [
+                {
+                  "name": "windDirection",
+                  "type": "timeseries",
+                  "label": "windDirection",
+                  "color": "#305680",
+                  "settings": {},
+                  "_hash": 0.3380623823532556
+                }
+              ],
+              "entityAliasId": "55f13aa2-8e8c-ad71-a383-e8e7e0022c37"
+            }
+          ],
+          "timewindow": {
+            "realtime": {
+              "timewindowMs": 60000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgb(48, 86, 128)",
+          "padding": "8px",
+          "settings": {
+            "minorTicks": 22,
+            "needleCircleSize": 15,
+            "showBorder": true,
+            "borderOuterWidth": 10,
+            "colorPlate": "#305680",
+            "colorMajorTicks": "#f5f5f5",
+            "colorMinorTicks": "#ddd",
+            "colorNeedle": "#f44336",
+            "colorNeedleCircle": "#e8e8e8",
+            "colorBorder": "#ccc",
+            "majorTickFont": {
+              "family": "Roboto",
+              "style": "normal",
+              "weight": "500",
+              "color": "#ccc",
+              "size": 20
+            },
+            "animation": true,
+            "animationDuration": 500,
+            "animationRule": "cycle",
+            "animationTarget": "needle",
+            "majorTicks": [
+              "N",
+              "NE",
+              "E",
+              "SE",
+              "S",
+              "SW",
+              "W",
+              "NW"
+            ]
+          },
+          "title": "Wind direction",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "25px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": true,
+          "showLegend": false,
+          "actions": {}
+        },
+        "id": "5066f535-8da2-0461-a6a6-42e6976af415"
+      },
+      "dd51a106-a9e3-8a8d-fdae-4c6931ba91b5": {
+        "isSystemType": true,
+        "bundleAlias": "analogue_gauges",
+        "typeAlias": "analogue_compass",
+        "type": "latest",
+        "title": "New widget",
+        "sizeX": 7,
+        "sizeY": 7,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "dataKeys": [
+                {
+                  "name": "turbineDirection",
+                  "type": "timeseries",
+                  "label": "turbineDirection",
+                  "color": "#305680",
+                  "settings": {},
+                  "_hash": 0.43810061696497793
+                }
+              ],
+              "entityAliasId": "86805151-f48f-c867-1d94-459d7448b713"
+            }
+          ],
+          "timewindow": {
+            "realtime": {
+              "timewindowMs": 60000
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "#fff",
+          "color": "rgb(48, 86, 128)",
+          "padding": "8px",
+          "settings": {
+            "minorTicks": 22,
+            "needleCircleSize": 15,
+            "showBorder": true,
+            "borderOuterWidth": 10,
+            "colorPlate": "#305680",
+            "colorMajorTicks": "#f5f5f5",
+            "colorMinorTicks": "#ddd",
+            "colorNeedle": "#f44336",
+            "colorNeedleCircle": "#e8e8e8",
+            "colorBorder": "#ccc",
+            "majorTickFont": {
+              "family": "Roboto",
+              "style": "normal",
+              "weight": "500",
+              "color": "#ccc",
+              "size": 20
+            },
+            "animation": true,
+            "animationDuration": 500,
+            "animationRule": "cycle",
+            "animationTarget": "needle",
+            "majorTicks": [
+              "N",
+              "NE",
+              "E",
+              "SE",
+              "S",
+              "SW",
+              "W",
+              "NW"
+            ]
+          },
+          "title": "Turbine direction",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "25px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": true,
+          "showLegend": false,
+          "actions": {}
+        },
+        "id": "dd51a106-a9e3-8a8d-fdae-4c6931ba91b5"
+      },
+      "4357751a-edeb-ce91-aec8-2085a6e01c8c": {
+        "isSystemType": true,
+        "bundleAlias": "cards",
+        "typeAlias": "entities_table",
+        "type": "latest",
+        "title": "New widget",
+        "sizeX": 10,
+        "sizeY": 7,
+        "config": {
+          "timewindow": {
+            "realtime": {
+              "interval": 1000,
+              "timewindowMs": 86400000
+            },
+            "aggregation": {
+              "type": "NONE",
+              "limit": 200
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "4px",
+          "settings": {
+            "enableSearch": true,
+            "displayPagination": true,
+            "defaultPageSize": 10,
+            "defaultSortOrder": "entityName",
+            "displayEntityName": true,
+            "displayEntityType": true,
+            "entitiesTitle": "Wind Turbine components"
+          },
+          "title": "Wind Turbine components",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400,
+            "padding": "5px 10px 5px 10px"
+          },
+          "useDashboardTimewindow": false,
+          "showLegend": false,
+          "datasources": [
+            {
+              "type": "entity",
+              "dataKeys": [
+                {
+                  "name": "turbineDirection",
+                  "type": "timeseries",
+                  "label": "Turbine Direction",
+                  "color": "#2196f3",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "useCellContentFunction": false
+                  },
+                  "_hash": 0.5731594424166826
+                },
+                {
+                  "name": "windDirection",
+                  "type": "timeseries",
+                  "label": "Wind Direction",
+                  "color": "#4caf50",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "useCellContentFunction": false
+                  },
+                  "_hash": 0.14698883482952207
+                },
+                {
+                  "name": "spinFlag",
+                  "type": "timeseries",
+                  "label": "Rotation",
+                  "color": "#f44336",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "useCellContentFunction": false
+                  },
+                  "_hash": 0.10675684033792976
+                }
+              ],
+              "entityAliasId": "fb8a3f6c-aaab-d2c1-cfc8-69b1348d156a"
+            }
+          ],
+          "widgetStyle": {},
+          "actions": {}
+        },
+        "id": "4357751a-edeb-ce91-aec8-2085a6e01c8c"
+      }
+    },
+    "states": {
+      "default": {
+        "name": "Wind Turbine Dashboard",
+        "root": true,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "5066f535-8da2-0461-a6a6-42e6976af415": {
+                "sizeX": 7,
+                "sizeY": 7,
+                "row": 0,
+                "col": 0
+              },
+              "dd51a106-a9e3-8a8d-fdae-4c6931ba91b5": {
+                "sizeX": 7,
+                "sizeY": 7,
+                "row": 0,
+                "col": 7
+              },
+              "4357751a-edeb-ce91-aec8-2085a6e01c8c": {
+                "sizeX": 10,
+                "sizeY": 7,
+                "row": 0,
+                "col": 14
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "color": "rgba(0,0,0,0.870588)",
+              "columns": 24,
+              "margins": [
+                10,
+                10
+              ],
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": false,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70
+            }
+          }
+        }
+      }
+    },
+    "entityAliases": {
+      "fb8a3f6c-aaab-d2c1-cfc8-69b1348d156a": {
+        "id": "fb8a3f6c-aaab-d2c1-cfc8-69b1348d156a",
+        "alias": "Wind Turbine",
+        "filter": {
+          "type": "singleEntity",
+          "resolveMultiple": false,
+          "singleEntity": {
+            "entityType": "ASSET",
+            "id": "bfe484a0-79eb-11e8-9d6f-af866d0f1760"
+          }
+        }
+      },
+      "55f13aa2-8e8c-ad71-a383-e8e7e0022c37": {
+        "id": "55f13aa2-8e8c-ad71-a383-e8e7e0022c37",
+        "alias": "Wind Direction sensor",
+        "filter": {
+          "type": "singleEntity",
+          "resolveMultiple": false,
+          "singleEntity": {
+            "entityType": "DEVICE",
+            "id": "1449be20-79ec-11e8-9d6f-af866d0f1760"
+          }
+        }
+      },
+      "86805151-f48f-c867-1d94-459d7448b713": {
+        "id": "86805151-f48f-c867-1d94-459d7448b713",
+        "alias": "Rotating System",
+        "filter": {
+          "type": "singleEntity",
+          "resolveMultiple": false,
+          "singleEntity": {
+            "entityType": "DEVICE",
+            "id": "25990c30-79ec-11e8-9d6f-af866d0f1760"
+          }
+        }
+      }
+    },
+    "timewindow": {
+      "displayValue": "",
+      "selectedTab": 0,
+      "realtime": {
+        "interval": 1000,
+        "timewindowMs": 60000
+      },
+      "history": {
+        "historyType": 0,
+        "interval": 1000,
+        "timewindowMs": 60000,
+        "fixedTimewindow": {
+          "startTimeMs": 1528211316983,
+          "endTimeMs": 1528297716983
+        }
+      },
+      "aggregation": {
+        "type": "AVG",
+        "limit": 200
+      }
+    },
+    "settings": {
+      "stateControllerId": "entity",
+      "showTitle": false,
+      "showDashboardsSelect": true,
+      "showEntitiesSelect": true,
+      "showDashboardTimewindow": true,
+      "showDashboardExport": true,
+      "toolbarAlwaysOpen": true
+    }
+  },
+  "name": "Wind Turbine Dashboard"
+}
