@@ -76,6 +76,7 @@ export class StatesComponentDirective implements OnInit, OnDestroy, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     let reInitController = false;
+    let initController = false;
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
@@ -92,12 +93,15 @@ export class StatesComponentDirective implements OnInit, OnDestroy, OnChanges {
           this.stateControllerComponent.state = this.state;
         } else if (propName === 'currentState') {
           this.stateControllerComponent.currentState = this.currentState;
+          initController = true;
         } else if (propName === 'syncStateWithQueryParam') {
           this.stateControllerComponent.syncStateWithQueryParam = this.syncStateWithQueryParam;
         }
       }
     }
-    if (reInitController) {
+    if (initController) {
+      this.stateControllerComponent.init();
+    } else if (reInitController) {
       this.stateControllerComponent.reInit();
     }
   }
