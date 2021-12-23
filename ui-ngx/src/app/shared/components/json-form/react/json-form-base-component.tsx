@@ -16,6 +16,7 @@
 import * as React from 'react';
 import JsonFormUtils from './json-form-utils';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
+import { isDefinedAndNotNull } from '@core/utils';
 
 export default ThingsboardBaseComponent => class<P extends JsonFormFieldProps>
   extends React.Component<P, JsonFormFieldState> {
@@ -96,13 +97,13 @@ export default ThingsboardBaseComponent => class<P extends JsonFormFieldProps>
                 }
             }
         } else {
-            if (!value && typeof this.props.form.default !== 'undefined') {
+            if (!value && isDefinedAndNotNull(this.props.form.default)) {
                 value = this.props.form.default;
             }
-            if (!value && this.props.form.schema && typeof this.props.form.schema.default !== 'undefined') {
+            if (!value && this.props.form.schema && isDefinedAndNotNull(this.props.form.schema.default)) {
                 value = this.props.form.schema.default;
             }
-            if (!value && this.props.form.titleMap && typeof this.props.form.titleMap[0].value !== 'undefined') {
+            if (!value && this.props.form.titleMap && isDefinedAndNotNull(this.props.form.titleMap[0].value)) {
                 value = this.props.form.titleMap[0].value;
             }
         }
