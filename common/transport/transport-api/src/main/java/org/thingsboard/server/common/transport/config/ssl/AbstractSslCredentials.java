@@ -61,7 +61,7 @@ public abstract class AbstractSslCredentials implements SslCredentials {
             this.keyPasswordArray = keyPassword.toCharArray();
         }
         this.keyStore = this.loadKeyStore(trustsOnly, this.keyPasswordArray);
-        Set<X509Certificate> trustedCerts = getTrustedCerts(this.keyStore);
+        Set<X509Certificate> trustedCerts = getTrustedCerts(this.keyStore, trustsOnly);
         this.trusts = trustedCerts.toArray(new X509Certificate[0]);
         if (!trustsOnly) {
             PrivateKeyEntry privateKeyEntry = null;
@@ -181,7 +181,7 @@ public abstract class AbstractSslCredentials implements SslCredentials {
         return entry;
     }
 
-    private static Set<X509Certificate> getTrustedCerts(KeyStore ks) {
+    private static Set<X509Certificate> getTrustedCerts(KeyStore ks, boolean trustsOnly) {
         Set<X509Certificate> set = new HashSet<>();
         try {
             for (Enumeration<String> e = ks.aliases(); e.hasMoreElements(); ) {
@@ -189,13 +189,29 @@ public abstract class AbstractSslCredentials implements SslCredentials {
                 if (ks.isCertificateEntry(alias)) {
                     Certificate cert = ks.getCertificate(alias);
                     if (cert instanceof X509Certificate) {
-                        set.add((X509Certificate)cert);
+                        if (trustsOnly) {
+                            // is CA certificate
+                            if (((X509Certificate) cert).getBasicConstraints()>=0) {
+                                set.add((X509Certificate) cert);
+                            }
+                        } else {
+                            set.add((X509Certificate) cert);
+                        }
                     }
                 } else if (ks.isKeyEntry(alias)) {
                     Certificate[] certs = ks.getCertificateChain(alias);
                     if ((certs != null) && (certs.length > 0) &&
                             (certs[0] instanceof X509Certificate)) {
-                        set.add((X509Certificate)certs[0]);
+                        if (trustsOnly) {
+                            for (Certificate cert : certs) {
+                                // is CA certificate
+                                if (((X509Certificate) cert).getBasicConstraints()>=0) {
+                                    set.add((X509Certificate) cert);
+                                }
+                            }
+                        } else {
+                            set.add((X509Certificate)certs[0]);
+                        }
                     }
                 }
             }
@@ -205,3 +221,4 @@ public abstract class AbstractSslCredentials implements SslCredentials {
 
 
 }
+

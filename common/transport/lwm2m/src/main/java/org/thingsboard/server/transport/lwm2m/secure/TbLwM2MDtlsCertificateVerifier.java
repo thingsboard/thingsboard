@@ -218,10 +218,11 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
                         Collections.singleton(trustAnchor));
                 pkixParams.setRevocationEnabled(false);
                 result = cpv.validate(cp, pkixParams);
+                if (result != null)  return certificate;
             } catch (CertificateException | NoSuchAlgorithmException | InvalidAlgorithmParameterException | CertPathValidatorException e) {
                 e.printStackTrace();
             }
         }
-        return result != null ? certificate : null;
+        return null;
     }
 }
