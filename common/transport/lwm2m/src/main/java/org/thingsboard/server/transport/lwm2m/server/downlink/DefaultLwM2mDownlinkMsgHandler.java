@@ -300,14 +300,13 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                     String msgError = "";
                     if (resourceModelWrite.multiple) {
                         try {
-                            Map value = convertMultiResourceValuesFromRpcBody(request.getValue(), resourceModelWrite.type, request.getObjectId());
+                            Map<Integer, Object> value = convertMultiResourceValuesFromRpcBody(request.getValue(), resourceModelWrite.type, request.getObjectId());
                             downlink = new WriteRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(),
                                     value, resourceModelWrite.type);
                         } catch (Exception e) {
-                            msgError = "Resource id=" + resultIds.toString() + ", value = " + request.getValue() +
-                                    ", class = " + request.getValue().getClass().getSimpleName() + ". Format value is bad. Value for this Multi-Instance Resource must be in Json format!";
                         }
-                    } else {
+                    }
+                    if (downlink == null) {
                         try {
                             downlink = this.getWriteRequestSingleResource(resourceModelWrite.type, contentFormat,
                                     resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(), request.getValue());
@@ -319,15 +318,11 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                     if (downlink != null) {
                         sendSimpleRequest(client, downlink, request.getTimeout(), callback);
                     } else {
-                        if (msgError.isEmpty()) {
-                            msgError = "WriteRequest is null.";
-                        }
                         callback.onValidationError(toString(request), msgError);
                     }
                 } catch (Exception e) {
                     callback.onError(toString(request), e);
                 }
-
             } else {
                 callback.onValidationError(toString(request), "Resource " + request.getVersionedId() + " is not configured in the device profile!");
             }
@@ -378,7 +373,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                     if (resourceModelWrite != null) {
                         if (resourceModelWrite.multiple) {
                             try {
-                                Map value = convertMultiResourceValuesFromRpcBody(request.getValue(), resourceModelWrite.type, request.getObjectId());
+                                Map<Integer, Object> value = convertMultiResourceValuesFromRpcBody(request.getValue(), resourceModelWrite.type, request.getObjectId());
                                 downlink = new WriteRequest(WriteRequest.Mode.UPDATE, contentFormat, resultIds.getObjectId(),
                                         resultIds.getObjectInstanceId(), resultIds.getResourceId(),
                                         value, resourceModelWrite.type);
@@ -608,7 +603,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(versionedId));
         if (pathIds.isResource() || pathIds.isResourceInstance()) {
             ResourceModel resourceModel = client.getResourceModel(versionedId, modelProvider);
-            if (resourceModel!= null && (pathIds.isResourceInstance() || (pathIds.isResource() && !resourceModel.multiple))) {
+            if (resourceModel != null && (pathIds.isResourceInstance() || (pathIds.isResource() && !resourceModel.multiple))) {
                 if (OBJLNK.equals(resourceModel.type)) {
                     return ContentFormat.LINK;
                 } else if (OPAQUE.equals(resourceModel.type)) {
