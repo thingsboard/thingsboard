@@ -17,11 +17,11 @@ package org.thingsboard.server.service.ota;
 
 import com.google.common.util.concurrent.FutureCallback;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Required;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -51,8 +51,6 @@ import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
-import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.cluster.TbClusterService;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -302,14 +300,16 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
 
     private void updateAttributes(Device device, OtaPackageInfo otaPackage, long ts, TenantId tenantId, DeviceId deviceId, OtaPackageType otaPackageType) {
         List<AttributeKvEntry> attributes = new ArrayList<>();
+        List<String> attrToRemove = new ArrayList<>();
         attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, TITLE), otaPackage.getTitle())));
         attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, VERSION), otaPackage.getVersion())));
         if (StringUtils.isNotEmpty(otaPackage.getTag())) {
             attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, TAG), otaPackage.getTag())));
+        } else {
+            attrToRemove.add(getAttributeKey(otaPackageType, TAG));
         }
         if (otaPackage.hasUrl()) {
             attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, URL), otaPackage.getUrl())));
-            List<String> attrToRemove = new ArrayList<>();
 
             if (otaPackage.getDataSize() == null) {
                 attrToRemove.add(getAttributeKey(otaPackageType, SIZE));
@@ -328,14 +328,14 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
             } else {
                 attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, CHECKSUM), otaPackage.getChecksum())));
             }
-
-            remove(device, otaPackageType, attrToRemove);
         } else {
             attributes.add(new BaseAttributeKvEntry(ts, new LongDataEntry(getAttributeKey(otaPackageType, SIZE), otaPackage.getDataSize())));
             attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, CHECKSUM_ALGORITHM), otaPackage.getChecksumAlgorithm().name())));
             attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, CHECKSUM), otaPackage.getChecksum())));
-            remove(device, otaPackageType, Collections.singletonList(getAttributeKey(otaPackageType, URL)));
+            attrToRemove.add(getAttributeKey(otaPackageType, URL));
         }
+
+        remove(device, otaPackageType, attrToRemove);
 
         telemetryService.saveAndNotify(tenantId, deviceId, DataConstants.SHARED_SCOPE, attributes, new FutureCallback<>() {
             @Override
