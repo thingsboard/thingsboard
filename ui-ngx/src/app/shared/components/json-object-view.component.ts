@@ -127,7 +127,6 @@ export class JsonObjectViewComponent implements OnInit {
       newWidth = 8 * maxLineLength + 16;
     }
     if (this.heigthValue) {
-      // this.renderer.setStyle(editorElement, 'minHeight', newHeight.toString() + 'px');
       this.renderer.setStyle(editorElement, 'height', newHeight.toString() + 'px');
     }
     if (this.widthValue) {
