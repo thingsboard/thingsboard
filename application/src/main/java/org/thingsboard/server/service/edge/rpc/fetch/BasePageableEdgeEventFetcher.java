@@ -31,7 +31,7 @@ public abstract class BasePageableEdgeEventFetcher<T> implements EdgeEventFetche
 
     @Override
     public PageLink getPageLink(int pageSize) {
-        return new PageLink(pageSize, 0, null, new SortOrder("createdTime", SortOrder.Direction.ASC));
+        return new PageLink(pageSize);
     }
 
     @Override
