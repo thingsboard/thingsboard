@@ -29,7 +29,6 @@ import org.eclipse.californium.scandium.dtls.HandshakeResultHandler;
 import org.eclipse.californium.scandium.dtls.x509.NewAdvancedCertificateVerifier;
 import org.eclipse.californium.scandium.dtls.x509.StaticCertificateVerifier;
 import org.eclipse.californium.scandium.util.ServerNames;
-import org.eclipse.leshan.core.util.SecurityUtil;
 import org.eclipse.leshan.server.security.NonUniqueSecurityInfoException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -50,13 +49,23 @@ import org.thingsboard.server.transport.lwm2m.server.store.TbMainSecurityStore;
 
 import javax.annotation.PostConstruct;
 import javax.security.auth.x500.X500Principal;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.cert.CertPath;
+import java.security.cert.CertPathValidator;
+import java.security.cert.CertPathValidatorException;
+import java.security.cert.CertPathValidatorResult;
 import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateNotYetValidException;
+import java.security.cert.PKIXParameters;
+import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer.CLIENT;
@@ -120,7 +129,7 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
                         TbLwM2MSecurityInfo securityInfo = null;
                         // verify if trust
                         if (config.getTrustSslCredentials().getTrustedCertificates().length > 0) {
-                            if (verifyIssuer(cert, config.getTrustSslCredentials().getTrustedCertificates()) != null) {
+                            if (verifyTrust(cert, config.getTrustSslCredentials().getTrustedCertificates()) != null) {
                                 String endpoint = config.getTrustSslCredentials().getValueFromSubjectNameByKey(cert.getSubjectX500Principal().getName(), "CN");
                                 securityInfo = StringUtils.isNotEmpty(endpoint) ? securityInfoValidator.getEndpointSecurityInfoByCredentialsId(endpoint, CLIENT) : null;
                             }
@@ -193,31 +202,26 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
 
     }
 
-    private X509Certificate verifyIssuer(X509Certificate certificate, X509Certificate[] certificates) {
-        String issuerCN = config.getTrustSslCredentials().getValueFromSubjectNameByKey(certificate.getIssuerX500Principal().getName(), "CN");
-        if (!StringUtils.isBlank(issuerCN)) {
-            for (int index = 0; index < certificates.length; ++index) {
-                X509Certificate trust = certificates[index];
-                String trustCN = config.getTrustSslCredentials().getValueFromSubjectNameByKey(trust.getSubjectX500Principal().getName(), "CN");
-                if (!StringUtils.isBlank(trustCN) && issuerCN.length() >= trustCN.length() && issuerCN.substring(issuerCN.length()-trustCN.length()).equals(trustCN)) {
-                    if (verifyCertificate(certificate)) {
-                        return certificate;
-                    }
-                }
+    private X509Certificate verifyTrust(X509Certificate certificate, X509Certificate[] certificates) {
+        CertPathValidatorResult result = null;
+        for (int index = 0; index < certificates.length; ++index) {
+            X509Certificate caCert = certificates[index];
+
+            CertificateFactory cf = null;
+            try {
+                cf = CertificateFactory.getInstance("X.509");
+                CertPath cp = cf.generateCertPath(Arrays
+                        .asList(new X509Certificate[]{certificate}));
+                TrustAnchor trustAnchor = new TrustAnchor(caCert, null);
+                CertPathValidator cpv = CertPathValidator.getInstance("PKIX");
+                PKIXParameters pkixParams = new PKIXParameters(
+                        Collections.singleton(trustAnchor));
+                pkixParams.setRevocationEnabled(false);
+                result = cpv.validate(cp, pkixParams);
+            } catch (CertificateException | NoSuchAlgorithmException | InvalidAlgorithmParameterException | CertPathValidatorException e) {
+                e.printStackTrace();
             }
         }
-        return null;
-    }
-
-    private static boolean verifyCertificate(X509Certificate certificate) {
-        try {
-            // date
-            certificate.checkValidity();
-            // Validate X509.
-            SecurityUtil.certificate.decode(certificate.getEncoded());
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+        return result != null ? certificate : null;
     }
 }
