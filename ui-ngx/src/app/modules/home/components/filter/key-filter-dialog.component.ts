@@ -134,7 +134,7 @@ export class KeyFilterDialogComponent extends
             }
           );
         }
-        if (valueType === EntityKeyValueType.BOOLEAN) {
+        if (valueType === EntityKeyValueType.BOOLEAN && this.isConstantKeyType) {
           this.keyFilterFormGroup.get('value').clearValidators();
           this.keyFilterFormGroup.get('value').updateValueAndValidity();
         }
