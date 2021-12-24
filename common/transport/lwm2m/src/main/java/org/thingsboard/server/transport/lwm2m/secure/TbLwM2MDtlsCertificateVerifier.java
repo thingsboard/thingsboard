@@ -124,11 +124,9 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
                         if (!skipValidityCheckForClientCert) {
                             cert.checkValidity();
                         }
-
-
                         TbLwM2MSecurityInfo securityInfo = null;
                         // verify if trust
-                        if (config.getTrustSslCredentials().getTrustedCertificates().length > 0) {
+                        if (config.getTrustSslCredentials() != null && config.getTrustSslCredentials().getTrustedCertificates().length > 0) {
                             if (verifyTrust(cert, config.getTrustSslCredentials().getTrustedCertificates()) != null) {
                                 String endpoint = config.getTrustSslCredentials().getValueFromSubjectNameByKey(cert.getSubjectX500Principal().getName(), "CN");
                                 securityInfo = StringUtils.isNotEmpty(endpoint) ? securityInfoValidator.getEndpointSecurityInfoByCredentialsId(endpoint, CLIENT) : null;
@@ -203,25 +201,24 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
     }
 
     private X509Certificate verifyTrust(X509Certificate certificate, X509Certificate[] certificates) {
-        CertPathValidatorResult result = null;
-        for (int index = 0; index < certificates.length; ++index) {
-            X509Certificate caCert = certificates[index];
-
-            CertificateFactory cf = null;
-            try {
-                cf = CertificateFactory.getInstance("X.509");
-                CertPath cp = cf.generateCertPath(Arrays
-                        .asList(new X509Certificate[]{certificate}));
-                TrustAnchor trustAnchor = new TrustAnchor(caCert, null);
-                CertPathValidator cpv = CertPathValidator.getInstance("PKIX");
-                PKIXParameters pkixParams = new PKIXParameters(
-                        Collections.singleton(trustAnchor));
-                pkixParams.setRevocationEnabled(false);
-                result = cpv.validate(cp, pkixParams);
-                if (result != null)  return certificate;
-            } catch (CertificateException | NoSuchAlgorithmException | InvalidAlgorithmParameterException | CertPathValidatorException e) {
-                e.printStackTrace();
+        try {
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            CertPath cp = cf.generateCertPath(Arrays.asList(new X509Certificate[]{certificate}));
+            for (int index = 0; index < certificates.length; ++index) {
+                X509Certificate caCert = certificates[index];
+                try {
+                    TrustAnchor trustAnchor = new TrustAnchor(caCert, null);
+                    CertPathValidator cpv = CertPathValidator.getInstance("PKIX");
+                    PKIXParameters pkixParams = new PKIXParameters(
+                            Collections.singleton(trustAnchor));
+                    pkixParams.setRevocationEnabled(false);
+                    if (cpv.validate(cp, pkixParams) != null) return certificate;
+                } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException | CertPathValidatorException e) {
+                    log.trace("[{}]", e.getMessage());
+                }
             }
+        } catch (CertificateException e) {
+            e.printStackTrace();
         }
         return null;
     }
