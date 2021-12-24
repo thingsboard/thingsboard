@@ -23,6 +23,7 @@ import * as AngularFlexLayoutFlex from '@angular/flex-layout/flex';
 import * as AngularFlexLayoutGrid from '@angular/flex-layout/grid';
 import * as AngularFlexLayoutExtended from '@angular/flex-layout/extended';
 import * as AngularPlatformBrowser from '@angular/platform-browser';
+import * as AngularPlatformBrowserAnimations from '@angular/platform-browser/animations';
 import * as AngularRouter from '@angular/router';
 import * as AngularCdkCoercion from '@angular/cdk/coercion';
 import * as AngularCdkCollections from '@angular/cdk/collections';
@@ -30,6 +31,8 @@ import * as AngularCdkKeycodes from '@angular/cdk/keycodes';
 import * as AngularCdkLayout from '@angular/cdk/layout';
 import * as AngularCdkOverlay from '@angular/cdk/overlay';
 import * as AngularCdkPortal from '@angular/cdk/portal';
+import * as AngularCdkBidi from '@angular/cdk/bidi';
+import * as AngularCdkPlatform from '@angular/cdk/platform';
 import * as AngularMaterialAutocomplete from '@angular/material/autocomplete';
 import * as AngularMaterialBadge from '@angular/material/badge';
 import * as AngularMaterialBottomSheet from '@angular/material/bottom-sheet';
@@ -72,7 +75,9 @@ import * as NgrxStore from '@ngrx/store';
 import * as RxJs from 'rxjs';
 import * as RxJsOperators from 'rxjs/operators';
 import * as TranslateCore from '@ngx-translate/core';
+import * as MatDateTimePicker from '@mat-datetimepicker/core';
 import * as _moment from 'moment';
+import * as tslib from 'tslib';
 
 import * as TbCore from '@core/public-api';
 import * as TbShared from '@shared/public-api';
@@ -301,6 +306,7 @@ class ModulesMap implements IModulesMap {
     '@angular/flex-layout/grid': AngularFlexLayoutGrid,
     '@angular/flex-layout/extended': AngularFlexLayoutExtended,
     '@angular/platform-browser': AngularPlatformBrowser,
+    '@angular/platform-browser/animations': AngularPlatformBrowserAnimations,
     '@angular/router': AngularRouter,
     '@angular/cdk/coercion': AngularCdkCoercion,
     '@angular/cdk/collections': AngularCdkCollections,
@@ -308,6 +314,8 @@ class ModulesMap implements IModulesMap {
     '@angular/cdk/layout': AngularCdkLayout,
     '@angular/cdk/overlay': AngularCdkOverlay,
     '@angular/cdk/portal': AngularCdkPortal,
+    '@angular/cdk/bidi': AngularCdkBidi,
+    '@angular/cdk/platform': AngularCdkPlatform,
     '@angular/cdk/drag-drop': DragDropModule,
     '@angular/material/autocomplete': AngularMaterialAutocomplete,
     '@angular/material/badge': AngularMaterialBadge,
@@ -348,7 +356,9 @@ class ModulesMap implements IModulesMap {
     rxjs: RxJs,
     'rxjs/operators': RxJsOperators,
     '@ngx-translate/core': TranslateCore,
+    '@mat-datetimepicker/core': MatDateTimePicker,
     moment: _moment,
+    tslib,
 
     '@core/public-api': TbCore,
     '@shared/public-api': TbShared,

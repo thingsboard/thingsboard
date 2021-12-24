@@ -122,17 +122,17 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
             newFirmwareId = newDeviceProfile.getFirmwareId();
         }
         if (oldDevice != null) {
+            OtaPackageId oldFirmwareId = oldDevice.getFirmwareId();
+            if (oldFirmwareId == null) {
+                DeviceProfile oldDeviceProfile = deviceProfileService.findDeviceProfileById(oldDevice.getTenantId(), oldDevice.getDeviceProfileId());
+                oldFirmwareId = oldDeviceProfile.getFirmwareId();
+            }
             if (newFirmwareId != null) {
-                OtaPackageId oldFirmwareId = oldDevice.getFirmwareId();
-                if (oldFirmwareId == null) {
-                    DeviceProfile oldDeviceProfile = deviceProfileService.findDeviceProfileById(oldDevice.getTenantId(), oldDevice.getDeviceProfileId());
-                    oldFirmwareId = oldDeviceProfile.getFirmwareId();
-                }
                 if (!newFirmwareId.equals(oldFirmwareId)) {
                     // Device was updated and new firmware is different from previous firmware.
                     send(device.getTenantId(), device.getId(), newFirmwareId, System.currentTimeMillis(), FIRMWARE);
                 }
-            } else {
+            } else if (oldFirmwareId != null){
                 // Device was updated and new firmware is not set.
                 remove(device, FIRMWARE);
             }
@@ -149,17 +149,17 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
             newSoftwareId = newDeviceProfile.getSoftwareId();
         }
         if (oldDevice != null) {
+            OtaPackageId oldSoftwareId = oldDevice.getSoftwareId();
+            if (oldSoftwareId == null) {
+                DeviceProfile oldDeviceProfile = deviceProfileService.findDeviceProfileById(oldDevice.getTenantId(), oldDevice.getDeviceProfileId());
+                oldSoftwareId = oldDeviceProfile.getSoftwareId();
+            }
             if (newSoftwareId != null) {
-                OtaPackageId oldSoftwareId = oldDevice.getSoftwareId();
-                if (oldSoftwareId == null) {
-                    DeviceProfile oldDeviceProfile = deviceProfileService.findDeviceProfileById(oldDevice.getTenantId(), oldDevice.getDeviceProfileId());
-                    oldSoftwareId = oldDeviceProfile.getSoftwareId();
-                }
                 if (!newSoftwareId.equals(oldSoftwareId)) {
                     // Device was updated and new firmware is different from previous firmware.
                     send(device.getTenantId(), device.getId(), newSoftwareId, System.currentTimeMillis(), SOFTWARE);
                 }
-            } else {
+            } else if (oldSoftwareId != null){
                 // Device was updated and new firmware is not set.
                 remove(device, SOFTWARE);
             }

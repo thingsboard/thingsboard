@@ -16,8 +16,10 @@
 package org.thingsboard.server.common.data.kv;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class BaseReadTsKvQuery extends BaseTsKvQuery implements ReadTsKvQuery {
 
     private final long interval;

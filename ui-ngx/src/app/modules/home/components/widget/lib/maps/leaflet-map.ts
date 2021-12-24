@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import L, { FeatureGroup, Icon, LatLngBounds, LatLngTuple, Projection } from 'leaflet';
+import L, { FeatureGroup, LatLngBounds, LatLngTuple, Projection } from 'leaflet';
 import tinycolor from 'tinycolor2';
 import 'leaflet-providers';
 import { MarkerClusterGroup, MarkerClusterGroupOptions } from 'leaflet.markercluster/dist/leaflet.markercluster';
@@ -24,7 +24,7 @@ import {
   defaultSettings,
   FormattedData,
   MapSettings,
-  MarkerSettings,
+  MarkerSettings, MarkerIconInfo, MarkerImageInfo,
   PolygonSettings,
   PolylineSettings,
   ReplaceInfo,
@@ -64,11 +64,13 @@ export default abstract class LeafletMap {
     points: FeatureGroup;
     markersData: FormattedData[] = [];
     polygonsData: FormattedData[] = [];
-    defaultMarkerIconInfo: { size: number[], icon: Icon };
+    defaultMarkerIconInfo: MarkerIconInfo;
     loadingDiv: JQuery<HTMLElement>;
     loading = false;
     replaceInfoLabelMarker: Array<ReplaceInfo> = [];
     markerLabelText: string;
+    polygonLabelText: string;
+    replaceInfoLabelPolygon: Array<ReplaceInfo> = [];
     replaceInfoTooltipMarker: Array<ReplaceInfo> = [];
     markerTooltipText: string;
     drawRoutes: boolean;
@@ -248,8 +250,16 @@ export default abstract class LeafletMap {
           this.saveLocation(this.selectedEntity, this.convertToCustomFormat(e.layer.getLatLng())).subscribe(() => {
           });
         } else if (e.shape === 'tbRectangle' || e.shape === 'tbPolygon') {
-          // @ts-ignore
-          this.saveLocation(this.selectedEntity, this.convertPolygonToCustomFormat(e.layer.getLatLngs()[0])).subscribe(() => {
+          let coordinates;
+          if (e.shape === 'tbRectangle') {
+            // @ts-ignore
+            const bounds: L.LatLngBounds = e.layer.getBounds();
+            coordinates = [bounds.getNorthWest(), bounds.getSouthEast()];
+          } else {
+            // @ts-ignore
+            coordinates = e.layer.getLatLngs()[0];
+          }
+          this.saveLocation(this.selectedEntity, this.convertPolygonToCustomFormat(coordinates)).subscribe(() => {
           });
         }
         // @ts-ignore
@@ -281,7 +291,7 @@ export default abstract class LeafletMap {
             result = iterator.next();
           }
           this.saveLocation(result.value.data, this.convertToCustomFormat(null)).subscribe(() => {});
-        } else if (e.shape === 'Polygon') {
+        } else if (e.shape === 'Polygon' || e.shape === 'Rectangle') {
           const iterator = this.polygons.values();
           let result = iterator.next();
           while (!result.done && e.layer !== result.value.leafletPoly) {
@@ -333,6 +343,7 @@ export default abstract class LeafletMap {
           this.map.scrollWheelZoom.disable();
         }
         if (this.options.draggableMarker || this.editPolygons) {
+          map.pm.setGlobalOptions({ snappable: false } as L.PM.GlobalOptions);
           this.addEditControl();
         } else {
           this.map.pm.disableDraw();
@@ -525,16 +536,16 @@ export default abstract class LeafletMap {
       let m: Marker;
       rawMarkers.forEach(data => {
         if (data.rotationAngle || data.rotationAngle === 0) {
-          const currentImage = this.options.useMarkerImageFunction ?
+          const currentImage: MarkerImageInfo = this.options.useMarkerImageFunction ?
             safeExecute(this.options.markerImageFunction,
               [data, this.options.markerImages, markersData, data.dsIndex]) : this.options.currentImage;
           const style = currentImage ? 'background-image: url(' + currentImage.url + ');' : '';
-          this.options.icon = L.divIcon({
+          this.options.icon = { icon: L.divIcon({
             html: `<div class="arrow"
-                 style="transform: translate(-10px, -10px)
-                 rotate(${data.rotationAngle}deg);
-                 ${style}"><div>`
-          });
+               style="transform: translate(-10px, -10px)
+               rotate(${data.rotationAngle}deg);
+               ${style}"><div>`
+          }),  size: [30, 30]};
         } else {
           this.options.icon = null;
         }
@@ -763,6 +774,14 @@ export default abstract class LeafletMap {
     let coordinates = e.layer.getLatLngs();
     if (coordinates.length === 1) {
       coordinates = coordinates[0];
+    }
+    if (e.shape === 'Rectangle' && coordinates.length === 1) {
+      // @ts-ignore
+      const bounds: L.LatLngBounds = e.layer.getBounds();
+      const boundsArray = [bounds.getNorthWest(), bounds.getNorthEast(), bounds.getSouthWest(), bounds.getSouthEast()];
+      if (coordinates.every(point => boundsArray.find(boundPoint => boundPoint.equals(point)) !== undefined)) {
+        coordinates = [bounds.getNorthWest(), bounds.getSouthEast()];
+      }
     }
     this.saveLocation(data, this.convertPolygonToCustomFormat(coordinates)).subscribe(() => {});
   }

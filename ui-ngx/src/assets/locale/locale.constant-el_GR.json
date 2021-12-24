@@ -799,8 +799,6 @@
     "access-token": "Διακριτικό πρόσβασης",
     "access-token-required": "Απαιτείται διακριτικό πρόσβασης.",
     "access-token-invalid": "Access token length must be from 1 to 32 characters.",
-    "rsa-key": "RSA public key",
-    "rsa-key-required": "Απαιτείται RSA public key.",
     "secret": "Secret",
     "secret-required": "Απαιτείται secret.",
     "device-type": "Τύπος συσκευής",

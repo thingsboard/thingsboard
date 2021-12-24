@@ -29,7 +29,7 @@ public abstract class AbstractInsertRepository {
     private static final ThreadLocal<Pattern> PATTERN_THREAD_LOCAL = ThreadLocal.withInitial(() -> Pattern.compile(String.valueOf(Character.MIN_VALUE)));
     private static final String EMPTY_STR = "";
 
-    @Value("${sql.remove_null_chars}")
+    @Value("${sql.remove_null_chars:true}")
     private boolean removeNullChars;
 
     @Autowired

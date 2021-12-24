@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div tb-fullscreen [fullscreen]="widget.isFullscreen"
+<div #tbWidgetElement tb-fullscreen [fullscreen]="widget.isFullscreen"
      [fullscreenBackgroundStyle]="dashboardStyle"
      [fullscreenBackgroundImage]="backgroundImage"
      (fullscreenChanged)="onFullscreenChanged($event)"

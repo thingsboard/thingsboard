@@ -56,7 +56,7 @@ public abstract class AttributeKvInsertRepository {
     @Autowired
     private TransactionTemplate transactionTemplate;
 
-    @Value("${sql.remove_null_chars}")
+    @Value("${sql.remove_null_chars:true}")
     private boolean removeNullChars;
 
     protected void saveOrUpdate(List<AttributeKvEntity> entities) {

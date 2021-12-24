@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS entity_alarm (
 
 CREATE INDEX IF NOT EXISTS idx_alarm_tenant_status_created_time ON alarm(tenant_id, status, created_time DESC);
 CREATE INDEX IF NOT EXISTS idx_entity_alarm_created_time ON entity_alarm(tenant_id, entity_id, created_time DESC);
+CREATE INDEX IF NOT EXISTS idx_entity_alarm_alarm_id ON entity_alarm(alarm_id);
 
 INSERT INTO entity_alarm(tenant_id, entity_type, entity_id, created_time, alarm_type, customer_id, alarm_id)
 SELECT tenant_id,

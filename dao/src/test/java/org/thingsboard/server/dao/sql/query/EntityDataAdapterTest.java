@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao;
+package org.thingsboard.server.dao.sql.query;
 
-import org.junit.extensions.cpsuite.ClasspathSuite;
-import org.junit.extensions.cpsuite.ClasspathSuite.ClassnameFilters;
-import org.junit.runner.RunWith;
+import org.junit.Test;
 
-@RunWith(ClasspathSuite.class)
-@ClassnameFilters({
-        "org.thingsboard.server.dao.service.psql.*SqlTest",
-        "org.thingsboard.server.dao.service.attributes.psql.*SqlTest",
-        "org.thingsboard.server.dao.service.event.psql.*SqlTest",
-        "org.thingsboard.server.dao.service.timeseries.psql.*SqlTest"
-})
-public class PostgreSqlDaoServiceTestSuite {
+import static org.assertj.core.api.Assertions.assertThat;
+
+public class EntityDataAdapterTest {
+
+    @Test
+    public void testConvertValue() {
+        assertThat(EntityDataAdapter.convertValue("500")).isEqualTo("500");
+        assertThat(EntityDataAdapter.convertValue("500D")).isEqualTo("500D"); //do not convert to Double !!!
+    }
 }

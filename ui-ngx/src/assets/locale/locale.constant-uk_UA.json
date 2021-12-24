@@ -795,8 +795,6 @@
         "access-token": "Маркер доступу",
         "access-token-required": "Необхідно вказати маркер доступу.",
         "access-token-invalid": "Маркер доступу має бути від 1 до 32 символів.",
-        "rsa-key": "Публічний ключ RSA",
-        "rsa-key-required": "Необхідно вказати публічний ключ RSA.",
         "secret": "Секрет",
         "secret-required": "Необхідно вказати секрет.",
         "device-type": "Тип пристрою",
