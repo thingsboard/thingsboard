@@ -18,17 +18,19 @@ package org.thingsboard.server.common.data.kv;
 import lombok.Data;
 
 @Data
-public class BaseDeleteTsKvQuery extends BaseTsKvQuery implements DeleteTsKvQuery {
+public class TsKvLatestRemovingResult {
+    private String key;
+    private TsKvEntry data;
+    private boolean removed;
 
-    private final Boolean rewriteLatestIfDeleted;
-
-    public BaseDeleteTsKvQuery(String key, long startTs, long endTs, boolean rewriteLatestIfDeleted) {
-        super(key, startTs, endTs);
-        this.rewriteLatestIfDeleted = rewriteLatestIfDeleted;
+    public TsKvLatestRemovingResult(TsKvEntry data) {
+        this.key = data.getKey();
+        this.data = data;
+        this.removed = true;
     }
 
-    public BaseDeleteTsKvQuery(String key, long startTs, long endTs) {
-        this(key, startTs, endTs, false);
+    public TsKvLatestRemovingResult(String key, boolean removed) {
+        this.key = key;
+        this.removed = removed;
     }
-
 }
