@@ -182,9 +182,9 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         }
 
         var clientSettings = clientContext.getProfile(client.getProfileId()).getClientLwM2mSettings();
-        onFirmwareStrategyUpdate(client, clientSettings);
+        initFwStrategy(client, clientSettings);
         onCurrentSoftwareStrategyUpdate(client, clientSettings);
-        
+
         if (!attributesToFetch.isEmpty()) {
             var future = attributesService.getSharedAttributes(client, attributesToFetch);
             DonAsynchron.withCallback(future, attrs -> {
@@ -193,7 +193,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
                     Optional<String> newFwVersion = getAttributeValue(attrs, FIRMWARE_VERSION);
                     Optional<String> newFwTag = getAttributeValue(attrs, FIRMWARE_TAG);
                     Optional<String> newFwUrl = getAttributeValue(attrs, FIRMWARE_URL);
-                    if (newFwTitle.isPresent() && newFwVersion.isPresent()) {
+                    if (newFwTitle.isPresent() && newFwVersion.isPresent() && !isOtaDownloading(client) && !UPDATING.equals(fwInfo.status)) {
                         onTargetFirmwareUpdate(client, newFwTitle.get(), newFwVersion.get(), newFwUrl, newFwTag);
                     }
                 }
@@ -245,10 +245,14 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     @Override
     public void onFirmwareStrategyUpdate(LwM2mClient client, OtherConfiguration configuration) {
         log.debug("[{}] Current fw strategy: {}", client.getEndpoint(), configuration.getFwUpdateStrategy());
+        startFirmwareUpdateIfNeeded(client, initFwStrategy(client, configuration));
+    }
+
+    private LwM2MClientFwOtaInfo initFwStrategy(LwM2mClient client, OtherConfiguration configuration) {
         LwM2MClientFwOtaInfo fwInfo = getOrInitFwInfo(client);
         fwInfo.setStrategy(LwM2MFirmwareUpdateStrategy.fromStrategyFwByCode(configuration.getFwUpdateStrategy()));
         fwInfo.setBaseUrl(configuration.getFwUpdateResource());
-        startFirmwareUpdateIfNeeded(client, fwInfo);
+        return fwInfo;
     }
 
     @Override
@@ -308,6 +312,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         if (FirmwareUpdateResult.INITIAL.equals(result) && OtaPackageUpdateStatus.UPDATING.equals(fwInfo.getStatus())) {
             status = Optional.of(UPDATED);
             fwInfo.setRetryAttempts(0);
+            fwInfo.setFailedPackageId(null);
         }
 
         status.ifPresent(otaStatus -> {
@@ -388,6 +393,22 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         startSoftwareUpdateIfNeeded(client, fwInfo);
     }
 
+    @Override
+    public boolean isOtaDownloading(LwM2mClient client) {
+        String endpoint = client.getEndpoint();
+        LwM2MClientFwOtaInfo fwInfo = fwStates.get(endpoint);
+        LwM2MClientSwOtaInfo swInfo = swStates.get(endpoint);
+
+        if (fwInfo != null && (DOWNLOADING.equals(fwInfo.getStatus()))) {
+            return true;
+        }
+        if (swInfo != null && (DOWNLOADING.equals(swInfo.getStatus()))) {
+            return true;
+        }
+
+        return false;
+    }
+
     private void startFirmwareUpdateIfNeeded(LwM2mClient client, LwM2MClientFwOtaInfo fwInfo) {
         try {
             if (!fwInfo.isSupported() && fwInfo.isAssigned()) {
@@ -401,7 +422,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
                     log.debug("[{}] Starting update to [{}{}] using binary", client.getEndpoint(), fwInfo.getTargetName(), fwInfo.getTargetVersion());
                     startUpdateUsingBinary(client, fwInfo);
                 }
-            } else if (fwInfo.getResult() != null && fwInfo.getResult().getCode() >  UPDATE_SUCCESSFULLY.getCode()) {
+            } else if (fwInfo.getResult() != null && fwInfo.getResult().getCode() > UPDATE_SUCCESSFULLY.getCode()) {
                 log.trace("[{}] Previous update failed. [{}]", client.getEndpoint(), fwInfo);
                 logService.log(client, "Previous update firmware failed. Result: " + fwInfo.getResult().name());
             }

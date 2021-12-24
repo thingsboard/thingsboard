@@ -55,4 +55,6 @@ public interface LwM2MOtaUpdateService {
     void onCurrentSoftwareStateUpdate(LwM2mClient lwM2MClient, Long value);
 
     void onCurrentSoftwareResultUpdate(LwM2mClient client, Long result);
+
+    boolean isOtaDownloading(LwM2mClient client);
 }
