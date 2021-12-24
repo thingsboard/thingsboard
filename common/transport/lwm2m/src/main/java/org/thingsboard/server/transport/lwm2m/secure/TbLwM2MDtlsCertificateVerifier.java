@@ -214,11 +214,11 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
                     pkixParams.setRevocationEnabled(false);
                     if (cpv.validate(cp, pkixParams) != null) return certificate;
                 } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException | CertPathValidatorException e) {
-                    log.trace("[{}]", e.getMessage());
+                    log.trace("[{}]. [{}]", certificate.getSubjectDN(), e.getMessage());
                 }
             }
         } catch (CertificateException e) {
-            e.printStackTrace();
+            log.trace("[{}] certPath not valid. [{}]", certificate.getSubjectDN(), e.getMessage());
         }
         return null;
     }
