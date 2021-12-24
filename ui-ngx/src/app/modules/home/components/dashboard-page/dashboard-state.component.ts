@@ -67,7 +67,7 @@ export class DashboardStateComponent extends PageComponent implements OnInit, On
     this.parentDashboard = this.ctx.parentDashboard ?
       this.ctx.parentDashboard : this.ctx.dashboard;
     if (this.syncParentStateParams) {
-      this.stateSubscription = this.ctx.stateController.stateChanged().subscribe(() => {
+      this.stateSubscription = this.ctx.stateController.dashboardCtrl.dashboardCtx.stateChanged.subscribe(() => {
         this.updateCurrentState();
         this.cd.markForCheck();
       });

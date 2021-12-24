@@ -27,7 +27,7 @@ import { StateObject, StateParams } from '@app/core/api/widget-api.models';
 @Directive()
 export abstract class StateControllerComponent implements IStateControllerComponent, OnInit, OnDestroy {
 
-  private stateChangedSubject = new Subject();
+  private stateChangedSubject = new Subject<string>();
   stateObject: StateControllerState = [];
   dashboardCtrl: IDashboardController;
   preservedState: any;
@@ -109,7 +109,7 @@ export abstract class StateControllerComponent implements IStateControllerCompon
           const newState = this.decodeStateParam(paramMap.get('state'));
           if (this.currentState !== newState) {
             this.currentState = newState;
-            this.stateChangedSubject.next();
+            this.stateChangedSubject.next(this.currentState);
             if (this.inited) {
               this.onStateChanged();
             }
@@ -145,10 +145,10 @@ export abstract class StateControllerComponent implements IStateControllerCompon
           });
       });
     }
-    this.stateChangedSubject.next();
+    this.stateChangedSubject.next(this.currentState);
   }
 
-  public stateChanged(): Observable<any> {
+  public stateChanged(): Observable<string> {
     return this.stateChangedSubject.asObservable();
   }
 
@@ -167,7 +167,7 @@ export abstract class StateControllerComponent implements IStateControllerCompon
   public reInit() {
     this.preservedState = null;
     this.currentState = this.decodeStateParam(this.route.snapshot.queryParamMap.get('state'));
-    this.stateChangedSubject.next();
+    this.stateChangedSubject.next(this.currentState);
     this.init();
   }
 

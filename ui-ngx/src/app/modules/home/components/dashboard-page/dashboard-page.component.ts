@@ -233,6 +233,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     dashboardTimewindow: null,
     state: null,
     stateController: null,
+    stateChanged: null,
     aliasController: null,
     runChangeDetection: this.runChangeDetection.bind(this)
   };

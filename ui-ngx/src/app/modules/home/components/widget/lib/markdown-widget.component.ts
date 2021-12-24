@@ -33,6 +33,7 @@ import { hashCode, isNotEmptyStr } from '@core/utils';
 import cssjs from '@core/css/css';
 import { UtilsService } from '@core/services/utils.service';
 import { HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
+import { EntityDataPageLink } from '@shared/models/query/query.models';
 
 interface MarkdownWidgetSettings {
   markdownTextPattern: string;
@@ -81,6 +82,13 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
       cssParser.cssPreviewNamespace = this.markdownClass;
       cssParser.createStyleElement(this.markdownClass, cssString);
     }
+    const pageLink: EntityDataPageLink = {
+      page: 0,
+      pageSize: 16384,
+      textSearch: null,
+      dynamic: true
+    };
+    this.ctx.defaultSubscription.subscribeAllForPaginatedData(pageLink, null);
   }
 
   public onDataUpdated() {
