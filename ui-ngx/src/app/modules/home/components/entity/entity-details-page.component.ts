@@ -35,6 +35,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { deepClone, mergeDeep } from '@core/utils';
 import { BroadcastService } from '@core/services/broadcast.service';
 import { EntityDetailsPanelComponent } from '@home/components/entity/entity-details-panel.component';
+import { DialogService } from '@core/services/dialog.service';
 
 @Component({
   selector: 'tb-entity-details-page',
@@ -72,6 +73,7 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
               protected componentFactoryResolver: ComponentFactoryResolver,
               private broadcast: BroadcastService,
               private translate: TranslateService,
+              private dialogService: DialogService,
               protected store: Store<AppState>) {
     super(store, injector, cd, componentFactoryResolver);
     this.entitiesTableConfig = this.route.snapshot.data.entitiesTableConfig;
@@ -85,6 +87,11 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
     this.headerSubtitle = this.translate.instant(this.entitiesTableConfig.entityTranslations.details);
     super.init();
     this.entityComponent.isDetailsPage = true;
+    this.subscriptions.push(this.entityAction.subscribe((action) => {
+      if (action.action === 'delete') {
+        this.deleteEntity(action.event, action.entity);
+      }
+    }));
   }
 
   ngOnDestroy() {
@@ -150,5 +157,26 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
 
   confirmForm(): FormGroup {
     return this.detailsForm;
+  }
+
+  private deleteEntity($event: Event, entity: BaseData<HasId>) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialogService.confirm(
+      this.entitiesTableConfig.deleteEntityTitle(entity),
+      this.entitiesTableConfig.deleteEntityContent(entity),
+      this.translate.instant('action.no'),
+      this.translate.instant('action.yes'),
+      true
+    ).subscribe((result) => {
+      if (result) {
+        this.entitiesTableConfig.deleteEntity(entity.id).subscribe(
+          () => {
+            this.router.navigate(['../'], {relativeTo: this.route});
+          }
+        );
+      }
+    });
   }
 }
