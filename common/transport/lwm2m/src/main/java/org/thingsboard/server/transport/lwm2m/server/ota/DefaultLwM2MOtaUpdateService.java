@@ -183,7 +183,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
 
         var clientSettings = clientContext.getProfile(client.getProfileId()).getClientLwM2mSettings();
         initFwStrategy(client, clientSettings);
-        onCurrentSoftwareStrategyUpdate(client, clientSettings);
+        initSwStrategy(client, clientSettings);
 
         if (!attributesToFetch.isEmpty()) {
             var future = attributesService.getSharedAttributes(client, attributesToFetch);
@@ -258,10 +258,14 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     @Override
     public void onCurrentSoftwareStrategyUpdate(LwM2mClient client, OtherConfiguration configuration) {
         log.debug("[{}] Current sw strategy: {}", client.getEndpoint(), configuration.getSwUpdateStrategy());
+        startSoftwareUpdateIfNeeded(client, initSwStrategy(client, configuration));
+    }
+
+    private LwM2MClientSwOtaInfo initSwStrategy(LwM2mClient client, OtherConfiguration configuration) {
         LwM2MClientSwOtaInfo swInfo = getOrInitSwInfo(client);
         swInfo.setStrategy(LwM2MSoftwareUpdateStrategy.fromStrategySwByCode(configuration.getSwUpdateStrategy()));
         swInfo.setBaseUrl(configuration.getSwUpdateResource());
-        startSoftwareUpdateIfNeeded(client, swInfo);
+        return swInfo;
     }
 
     @Override
