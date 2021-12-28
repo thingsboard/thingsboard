@@ -622,7 +622,8 @@
         "enter-search": "Enter search",
         "created-time": "Created time",
         "loading": "Loading...",
-        "proceed": "Proceed"
+        "proceed": "Proceed",
+        "open-details-page": "Open details page"
     },
     "content-type": {
         "json": "Json",

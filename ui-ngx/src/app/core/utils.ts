@@ -20,6 +20,10 @@ import { finalize, share } from 'rxjs/operators';
 import { Datasource } from '@app/shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
+import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
+import { baseDetailsPageByEntityType } from '@shared/models/constants';
+import { EntityType } from '@shared/models/entity-type.models';
 
 const varsRegex = /\${([^}]*)}/g;
 
@@ -459,4 +463,14 @@ export function randomAlphanumeric(length: number): string {
     result += alphanumericCharacters.charAt(Math.floor(Math.random() * alphanumericCharactersLength));
   }
   return result;
+}
+
+export const entityDetailsPageBreadcrumbLabelFunction: BreadCrumbLabelFunction<EntityDetailsPageComponent>
+  = ((route, translate, component) => {
+  return component.entity?.name || component.headerSubtitle;
+});
+
+
+export function getEntityDetailsPageURL(id: string, entityType: EntityType): string {
+  return `${baseDetailsPageByEntityType.get(entityType)}/${id}`;
 }

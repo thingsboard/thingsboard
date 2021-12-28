@@ -15,8 +15,8 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { Resolve } from '@angular/router';
-import { TenantProfile } from '@shared/models/tenant.model';
+import { Resolve, Router } from '@angular/router';
+import { TenantInfo, TenantProfile } from '@shared/models/tenant.model';
 import {
   checkBoxCell,
   DateEntityTableColumn,
@@ -43,6 +43,7 @@ export class TenantProfilesTableConfigResolver implements Resolve<EntityTableCon
               private importExport: ImportExportService,
               private translate: TranslateService,
               private datePipe: DatePipe,
+              private router: Router,
               private dialogService: DialogService) {
 
     this.config.entityType = EntityType.TENANT_PROFILE;
@@ -117,6 +118,13 @@ export class TenantProfilesTableConfigResolver implements Resolve<EntityTableCon
     return actions;
   }
 
+  private openTenantProfile($event: Event, tenantProfile: TenantProfile) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.router.navigateByUrl(`tenantProfiles/${tenantProfile.id.id}`);
+  }
+
   setDefaultTenantProfile($event: Event, tenantProfile: TenantProfile) {
     if ($event) {
       $event.stopPropagation();
@@ -158,6 +166,9 @@ export class TenantProfilesTableConfigResolver implements Resolve<EntityTableCon
 
   onTenantProfileAction(action: EntityAction<TenantProfile>): boolean {
     switch (action.action) {
+      case 'open':
+        this.openTenantProfile(action.event, action.entity);
+        return true;
       case 'setDefault':
         this.setDefaultTenantProfile(action.event, action.entity);
         return true;

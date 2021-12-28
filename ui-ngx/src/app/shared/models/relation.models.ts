@@ -89,4 +89,5 @@ export interface EntityRelationInfo extends EntityRelation {
   toEntityTypeName?: string;
   toName: string;
   fromEntityTypeName?: string;
+  entityURL?: string;
 }
