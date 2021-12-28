@@ -19,8 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -40,20 +42,20 @@ import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.gen.transport.TransportProtos.*;
 import org.thingsboard.server.gen.transport.TransportProtos.LocalSubscriptionServiceMsgProto;
+import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmSubscriptionUpdateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionUpdateProto;
+import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionUpdateTsValue;
 import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionUpdateValueListProto;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
 import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.sub.AlarmSubscriptionUpdate;
@@ -323,6 +325,30 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
                 },
                 s -> (TbAttributeSubscriptionScope.ANY_SCOPE.equals(s.getScope()) || scope.equals(s.getScope().name())),
                 s -> {
+                    List<TsKvEntry> subscriptionUpdate = null;
+                    for (String key : keys) {
+                        if (s.isAllKeys() || s.getKeyStates().containsKey(key)) {
+                            if (subscriptionUpdate == null) {
+                                subscriptionUpdate = new ArrayList<>();
+                            }
+                            subscriptionUpdate.add(new BasicTsKvEntry(0, new StringDataEntry(key, null)));
+                        }
+                    }
+                    return subscriptionUpdate;
+                }, false);
+        callback.onSuccess();
+    }
+
+    @Override
+    public void onTimeSeriesDelete(TenantId tenantId, EntityId entityId, List<String> keys, TbCallback callback) {
+        onLocalTelemetrySubUpdate(entityId,
+                s -> {
+                    if (TbSubscriptionType.TIMESERIES.equals(s.getType())) {
+                        return (TbTimeseriesSubscription) s;
+                    } else {
+                        return null;
+                    }
+                }, s -> true, s -> {
                     List<TsKvEntry> subscriptionUpdate = null;
                     for (String key : keys) {
                         if (s.isAllKeys() || s.getKeyStates().containsKey(key)) {

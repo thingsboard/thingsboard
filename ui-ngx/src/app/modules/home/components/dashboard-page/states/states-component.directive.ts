@@ -28,6 +28,7 @@ import { DashboardState } from '@shared/models/dashboard.models';
 import { IDashboardController } from '@home/components/dashboard-page/dashboard-page.models';
 import { StatesControllerService } from '@home/components/dashboard-page/states/states-controller.service';
 import { IStateControllerComponent } from '@home/components/dashboard-page/states/state-controller.models';
+import { Subject } from 'rxjs';
 
 @Directive({
   // tslint:disable-next-line:directive-selector
@@ -62,6 +63,8 @@ export class StatesComponentDirective implements OnInit, OnDestroy, OnChanges {
   stateControllerComponentRef: ComponentRef<IStateControllerComponent>;
   stateControllerComponent: IStateControllerComponent;
 
+  private stateChangedSubject = new Subject<string>();
+
   constructor(private viewContainerRef: ViewContainerRef,
               private statesControllerService: StatesControllerService) {
   }
@@ -72,10 +75,12 @@ export class StatesComponentDirective implements OnInit, OnDestroy, OnChanges {
 
   ngOnDestroy(): void {
     this.destroy();
+    this.stateChangedSubject.complete();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     let reInitController = false;
+    let initController = false;
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
@@ -92,12 +97,15 @@ export class StatesComponentDirective implements OnInit, OnDestroy, OnChanges {
           this.stateControllerComponent.state = this.state;
         } else if (propName === 'currentState') {
           this.stateControllerComponent.currentState = this.currentState;
+          initController = true;
         } else if (propName === 'syncStateWithQueryParam') {
           this.stateControllerComponent.syncStateWithQueryParam = this.syncStateWithQueryParam;
         }
       }
     }
-    if (reInitController) {
+    if (initController) {
+      this.stateControllerComponent.init();
+    } else if (reInitController) {
       this.stateControllerComponent.reInit();
     }
   }
@@ -119,6 +127,10 @@ export class StatesComponentDirective implements OnInit, OnDestroy, OnChanges {
     this.stateControllerComponentRef = this.viewContainerRef.createComponent(stateControllerFactory);
     this.stateControllerComponent = this.stateControllerComponentRef.instance;
     this.dashboardCtrl.dashboardCtx.stateController = this.stateControllerComponent;
+    this.dashboardCtrl.dashboardCtx.stateChanged = this.stateChangedSubject.asObservable();
+    this.stateControllerComponent.stateChanged().subscribe((state) => {
+      this.stateChangedSubject.next(state);
+    });
     this.stateControllerComponent.preservedState = preservedState;
     this.stateControllerComponent.dashboardCtrl = this.dashboardCtrl;
     this.stateControllerComponent.stateControllerInstanceId = stateControllerInstanceId;

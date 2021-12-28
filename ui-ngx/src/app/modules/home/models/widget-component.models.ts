@@ -37,7 +37,7 @@ import {
   IStateController,
   IWidgetSubscription,
   IWidgetUtils,
-  RpcApi,
+  RpcApi, StateParams,
   SubscriptionEntityInfo,
   TimewindowFunctions,
   WidgetActionsApi,
@@ -81,6 +81,7 @@ import { Router } from '@angular/router';
 import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 import { FormattedData } from '@home/components/widget/lib/maps/map-models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
+import { EntityId } from '@shared/models/id/entity-id';
 
 export interface IWidgetAction {
   name: string;
@@ -544,4 +545,28 @@ export function toWidgetType(widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId:
     name: widgetInfo.widgetName,
     descriptor
   };
+}
+
+export function updateEntityParams(params: StateParams, targetEntityParamName?: string, targetEntityId?: EntityId,
+                                   entityName?: string, entityLabel?: string) {
+  if (targetEntityId) {
+    let targetEntityParams: StateParams;
+    if (targetEntityParamName && targetEntityParamName.length) {
+      targetEntityParams = params[targetEntityParamName];
+      if (!targetEntityParams) {
+        targetEntityParams = {};
+        params[targetEntityParamName] = targetEntityParams;
+        params.targetEntityParamName = targetEntityParamName;
+      }
+    } else {
+      targetEntityParams = params;
+    }
+    targetEntityParams.entityId = targetEntityId;
+    if (entityName) {
+      targetEntityParams.entityName = entityName;
+    }
+    if (entityLabel) {
+      targetEntityParams.entityLabel = entityLabel;
+    }
+  }
 }
