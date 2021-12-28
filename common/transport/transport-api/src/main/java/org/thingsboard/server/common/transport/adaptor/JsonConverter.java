@@ -313,16 +313,19 @@ public class JsonConverter {
         return result;
     }
 
-    public static JsonObject getJsonObjectForGateway(String deviceName, TransportProtos.GetAttributeResponseMsg
-            responseMsg) {
+    public static JsonObject getJsonObjectForGateway(
+            String deviceName,
+            TransportProtos.GetAttributeResponseMsg responseMsg,
+            boolean multipleAttrKeysRequested
+    ) {
         JsonObject result = new JsonObject();
         result.addProperty("id", responseMsg.getRequestId());
         result.addProperty(DEVICE_PROPERTY, deviceName);
         if (responseMsg.getClientAttributeListCount() > 0) {
-            addValues(result, responseMsg.getClientAttributeListList());
+            addValues(result, responseMsg.getClientAttributeListList(), multipleAttrKeysRequested);
         }
         if (responseMsg.getSharedAttributeListCount() > 0) {
-            addValues(result, responseMsg.getSharedAttributeListList());
+            addValues(result, responseMsg.getSharedAttributeListList(), multipleAttrKeysRequested);
         }
         return result;
     }
@@ -335,8 +338,8 @@ public class JsonConverter {
         return result;
     }
 
-    private static void addValues(JsonObject result, List<TransportProtos.TsKvProto> kvList) {
-        if (kvList.size() == 1) {
+    private static void addValues(JsonObject result, List<TransportProtos.TsKvProto> kvList, boolean multipleAttrKeysRequested) {
+        if (kvList.size() == 1 && !multipleAttrKeysRequested) {
             addValueToJson(result, "value", kvList.get(0).getKv());
         } else {
             JsonObject values;

@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.transport.mqtt.session.GatewayDeviceSessionCtx;
 import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionContext;
 
 import java.nio.charset.Charset;
@@ -123,7 +124,12 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
 
     @Override
     public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException {
-        return processConvertFromGatewayAttributeResponseMsg(ctx, deviceName, responseMsg);
+        JsonObject request = ((GatewayDeviceSessionCtx) ctx)
+                .getPendingAttributesRequests()
+                .getOrDefault(responseMsg.getRequestId(), new JsonObject());
+        boolean multipleAttrKeysRequested =
+                request.has("keys") && request.get("keys").getAsJsonArray().size() > 1;
+        return processConvertFromGatewayAttributeResponseMsg(ctx, deviceName, responseMsg, multipleAttrKeysRequested);
     }
 
     @Override
@@ -232,11 +238,11 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         }
     }
 
-    private Optional<MqttMessage> processConvertFromGatewayAttributeResponseMsg(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException {
+    private Optional<MqttMessage> processConvertFromGatewayAttributeResponseMsg(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg, boolean multipleAttrKeysRequested) throws AdaptorException {
         if (!StringUtils.isEmpty(responseMsg.getError())) {
             throw new AdaptorException(responseMsg.getError());
         } else {
-            JsonObject result = JsonConverter.getJsonObjectForGateway(deviceName, responseMsg);
+            JsonObject result = JsonConverter.getJsonObjectForGateway(deviceName, responseMsg, multipleAttrKeysRequested);
             return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC, result));
         }
     }

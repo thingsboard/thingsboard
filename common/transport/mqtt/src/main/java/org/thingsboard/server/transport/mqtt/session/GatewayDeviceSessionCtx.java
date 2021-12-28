@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.mqtt.session;
 
+import com.google.gson.JsonObject;
 import io.netty.channel.ChannelFuture;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,7 @@ import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 
@@ -134,6 +136,10 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
     @Override
     public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg toServerResponse) {
         // This feature is not supported in the TB IoT Gateway yet.
+    }
+
+    public Map<Integer, JsonObject> getPendingAttributesRequests() {
+        return parent.getPendingAttributesRequests();
     }
 
     private boolean isAckExpected(MqttMessage message) {
