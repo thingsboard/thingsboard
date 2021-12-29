@@ -40,6 +40,7 @@
         <jakarta.xml.bind-api.version>2.3.2</jakarta.xml.bind-api.version>
         <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
         <spring-boot.version>2.3.12.RELEASE</spring-boot.version>
+        <spring-data.version>2.3.9.RELEASE</spring-data.version>
         <spring.version>5.2.16.RELEASE</spring.version>
         <spring-redis.version>5.2.11.RELEASE</spring-redis.version>
         <spring-security.version>5.4.7</spring-security.version>
@@ -1129,6 +1130,11 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-data-jpa</artifactId>
                 <version>${spring-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.data</groupId>
+                <artifactId>spring-data-commons</artifactId>
+                <version>${spring-data.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.kafka</groupId>
