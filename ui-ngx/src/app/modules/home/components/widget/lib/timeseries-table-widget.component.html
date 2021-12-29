@@ -52,7 +52,7 @@
                 </mat-cell>
               </ng-container>
               <ng-container [matColumnDef]="h.index + ''" *ngFor="let h of source.header; trackBy: trackByColumnIndex;">
-                <mat-header-cell *matHeaderCellDef mat-sort-header> {{ h.dataKey.label }} </mat-header-cell>
+                <mat-header-cell *matHeaderCellDef mat-sort-header [disabled]="!h.sortable"> {{ h.dataKey.label }} </mat-header-cell>
                 <mat-cell *matCellDef="let row; let rowIndex = index"
                           [innerHTML]="cellContent(source, h.index, row, row[h.index], rowIndex)"
                           [ngStyle]="cellStyle(source, h.index, row, row[h.index], rowIndex)">
