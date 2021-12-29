@@ -753,7 +753,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     void processConnect(ChannelHandlerContext ctx, MqttConnectMessage msg) {
-        log.info("[{}] Processing connect msg for client: {}!", sessionId, msg.payload().clientIdentifier());
+        log.debug("[{}] Processing connect msg for client: {}!", sessionId, msg.payload().clientIdentifier());
         String userName = msg.payload().userName();
         String clientId = msg.payload().clientIdentifier();
         if (DataConstants.PROVISION.equals(userName) || DataConstants.PROVISION.equals(clientId)) {
@@ -771,7 +771,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private void processAuthTokenConnect(ChannelHandlerContext ctx, MqttConnectMessage connectMessage) {
         String userName = connectMessage.payload().userName();
-        log.info("[{}] Processing connect msg for client with user name: {}!", sessionId, userName);
+        log.debug("[{}] Processing connect msg for client with user name: {}!", sessionId, userName);
         TransportProtos.ValidateBasicMqttCredRequestMsg.Builder request = TransportProtos.ValidateBasicMqttCredRequestMsg.newBuilder()
                 .setClientId(connectMessage.payload().clientIdentifier());
         if (userName != null) {
@@ -917,7 +917,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     public void doDisconnect() {
         if (deviceSessionCtx.isConnected()) {
-            log.info("[{}] Client disconnected!", sessionId);
+            log.debug("[{}] Client disconnected!", sessionId);
             transportService.process(deviceSessionCtx.getSessionInfo(), DefaultTransportService.getSessionEventMsg(SessionEvent.CLOSED), null);
             transportService.deregisterSession(deviceSessionCtx.getSessionInfo());
             if (gatewaySessionHandler != null) {
@@ -944,7 +944,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     checkGatewaySession(sessionMetaData);
                     ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_ACCEPTED, connectMessage));
                     deviceSessionCtx.setConnected(true);
-                    log.info("[{}] Client connected!", sessionId);
+                    log.debug("[{}] Client connected!", sessionId);
                     transportService.getCallbackExecutor().execute(() -> processMsgQueue(ctx)); //this callback will execute in Producer worker thread and hard or blocking work have to be submitted to the separate thread.
                 }
 
