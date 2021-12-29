@@ -43,6 +43,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_SOFTWARE_FIRMWARE_RESPONSES_TOPIC_FORMAT;
@@ -124,11 +125,12 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
 
     @Override
     public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException {
-        JsonObject request = ((GatewayDeviceSessionCtx) ctx)
-                .getPendingAttributesRequests()
-                .getOrDefault(responseMsg.getRequestId(), new JsonObject());
+        Map<Integer, JsonObject> pendingAttributesRequests = ((GatewayDeviceSessionCtx) ctx).getPendingAttributesRequests();
+        int requestId = responseMsg.getRequestId();
+        JsonObject request = pendingAttributesRequests.getOrDefault(requestId, new JsonObject());
         boolean multipleAttrKeysRequested =
                 request.has("keys") && request.get("keys").getAsJsonArray().size() > 1;
+        pendingAttributesRequests.remove(requestId);
         return processConvertFromGatewayAttributeResponseMsg(ctx, deviceName, responseMsg, multipleAttrKeysRequested);
     }
 
