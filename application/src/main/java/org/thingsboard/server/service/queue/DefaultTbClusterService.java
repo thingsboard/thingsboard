@@ -401,13 +401,18 @@ public class DefaultTbClusterService implements TbClusterService {
     public void onDeviceUpdated(Device device, Device old, boolean notifyEdge) {
         var created = old == null;
         broadcastEntityChangeToTransport(device.getTenantId(), device.getId(), device, null);
-        if (old != null && (!device.getName().equals(old.getName()) || !device.getType().equals(old.getType()))) {
-            pushMsgToCore(new DeviceNameOrTypeUpdateMsg(device.getTenantId(), device.getId(), device.getName(), device.getType()), null);
+        if (old != null) {
+            boolean deviceNameChanged = !device.getName().equals(old.getName());
+            if (deviceNameChanged) {
+                gatewayDeviceStateService.update(device, old);
+            }
+            if (deviceNameChanged || !device.getType().equals(old.getType())) {
+                pushMsgToCore(new DeviceNameOrTypeUpdateMsg(device.getTenantId(), device.getId(), device.getName(), device.getType()), null);
+            }
         }
         broadcastEntityStateChangeEvent(device.getTenantId(), device.getId(), created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
         sendDeviceStateServiceEvent(device.getTenantId(), device.getId(), created, !created, false);
         otaPackageStateService.update(device, old);
-        gatewayDeviceStateService.update(device, old);
         if (!created && notifyEdge) {
             sendNotificationMsgToEdgeService(device.getTenantId(), null, device.getId(), null, null, EdgeEventActionType.UPDATED);
         }

@@ -95,11 +95,9 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
-import org.thingsboard.server.service.gateway_device.GatewayDeviceStateService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.service.resource.TbResourceService;
-import org.thingsboard.server.service.state.DeviceStateService;
 
 import java.util.List;
 import java.util.Optional;
@@ -130,7 +128,6 @@ public class DefaultTransportApiService implements TransportApiService {
     private final DeviceService deviceService;
     private final RelationService relationService;
     private final DeviceCredentialsService deviceCredentialsService;
-    private final DeviceStateService deviceStateService;
     private final DbCallbackExecutorService dbCallbackExecutorService;
     private final TbClusterService tbClusterService;
     private final DataDecodingEncodingService dataDecodingEncodingService;
@@ -138,7 +135,6 @@ public class DefaultTransportApiService implements TransportApiService {
     private final TbResourceService resourceService;
     private final OtaPackageService otaPackageService;
     private final OtaPackageDataCache otaPackageDataCache;
-    private final GatewayDeviceStateService gatewayDeviceStateService;
 
     private final ConcurrentMap<String, ReentrantLock> deviceCreationLocks = new ConcurrentHashMap<>();
 
@@ -318,8 +314,6 @@ public class DefaultTransportApiService implements TransportApiService {
                     lastConnectedGatewayRelation = new EntityRelation(device.getId(), gateway.getId(), DataConstants.LAST_CONNECTED_GATEWAY);
                 }
                 relationService.saveRelationAsync(TenantId.SYS_TENANT_ID, lastConnectedGatewayRelation);
-
-                gatewayDeviceStateService.checkAndUpdateDeletedGatewayDevicesAttribute(device);
 
                 GetOrCreateDeviceFromGatewayResponseMsg.Builder builder = GetOrCreateDeviceFromGatewayResponseMsg.newBuilder()
                         .setDeviceInfo(getDeviceInfoProto(device));

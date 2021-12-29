@@ -22,6 +22,4 @@ public interface GatewayDeviceStateService {
     void update(Device device, Device oldDevice);
 
     void delete(Device device);
-
-    void checkAndUpdateDeletedGatewayDevicesAttribute(Device device);
 }
