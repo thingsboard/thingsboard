@@ -13,21 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service;
+package org.thingsboard.server.transport.lwm2m.server.store;
 
-import org.springframework.test.context.TestPropertySource;
+import org.thingsboard.server.transport.lwm2m.server.model.LwM2MModelConfig;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.util.Collections;
+import java.util.List;
 
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@Inherited
-@Documented
-@TestPropertySource(locations = {"classpath:application-test.properties", "classpath:psql-test.properties"})
-public @interface DaoPostgreSqlTest {
+public class TbDummyLwM2MModelConfigStore implements TbLwM2MModelConfigStore {
+    @Override
+    public List<LwM2MModelConfig> getAll() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void put(LwM2MModelConfig modelConfig) {
+
+    }
+
+    @Override
+    public void remove(String endpoint) {
+
+    }
 }

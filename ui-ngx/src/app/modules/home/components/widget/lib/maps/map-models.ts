@@ -17,13 +17,15 @@
 import { Datasource } from '@app/shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import tinycolor from 'tinycolor2';
+import { BaseIconOptions, Icon } from 'leaflet';
 
 export const DEFAULT_MAP_PAGE_SIZE = 16384;
 export const DEFAULT_ZOOM_LEVEL = 8;
 
 export type GenericFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
-export type MarkerImageFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => string;
+export type MarkerImageFunction = (data: FormattedData, dsData: FormattedData[], dsIndex: number) => MarkerImageInfo;
 export type PosFuncton = (origXPos, origYPos) => { x, y };
+export type MarkerIconReadyFunction = (icon: MarkerIconInfo) => void;
 
 export type MapSettings = {
     draggableMarker: boolean;
@@ -51,7 +53,6 @@ export type MapSettings = {
     useDefaultCenterPosition?: boolean;
     gmDefaultMapType?: string;
     useLabelFunction: boolean;
-    icon?: any;
     zoomOnClick: boolean,
     maxZoom: number,
     showCoverageOnHover: boolean,
@@ -73,10 +74,22 @@ export enum MapProviders {
     tencent = 'tencent-map'
 }
 
+export type MarkerImageInfo = {
+    url: string;
+    size: number;
+    markerOffset?: [number, number];
+    tooltipOffset?: [number, number];
+};
+
+export type MarkerIconInfo = {
+    icon: Icon<BaseIconOptions>;
+    size: [number, number];
+};
+
 export type MarkerSettings = {
     tooltipPattern?: any;
     tooltipAction: { [name: string]: actionsHandler };
-    icon?: any;
+    icon?: MarkerIconInfo;
     showLabel?: boolean;
     label: string;
     labelColor: string;
@@ -91,7 +104,7 @@ export type MarkerSettings = {
     autocloseTooltip: boolean;
     showTooltipAction: string;
     useClusterMarkers: boolean;
-    currentImage?: string;
+    currentImage?: MarkerImageInfo;
     useMarkerImageFunction?: boolean;
     markerImages?: string[];
     markerImageSize: number;
@@ -104,6 +117,8 @@ export type MarkerSettings = {
     markerImageFunction?: MarkerImageFunction;
     markerOffsetX: number;
     markerOffsetY: number;
+    tooltipOffsetX: number;
+    tooltipOffsetY: number;
 };
 
 export interface FormattedData {
@@ -131,6 +146,11 @@ export type PolygonSettings = {
     polygonStrokeWeight: number;
     polygonStrokeColor: string;
     polygonColor: string;
+    showPolygonLabel?: boolean;
+    polygonLabel: string;
+    polygonLabelColor: string;
+    polygonLabelText: string;
+    usePolygonLabelFunction: boolean;
     showPolygonTooltip: boolean;
     autocloseTooltip: boolean;
     showTooltipAction: string;
@@ -139,8 +159,11 @@ export type PolygonSettings = {
     usePolygonTooltipFunction: boolean;
     polygonClick: { [name: string]: actionsHandler };
     usePolygonColorFunction: boolean;
+    usePolygonStrokeColorFunction: boolean;
     polygonTooltipFunction: GenericFunction;
     polygonColorFunction?: GenericFunction;
+    polygonStrokeColorFunction?: GenericFunction;
+    polygonLabelFunction?: GenericFunction;
     editablePolygon: boolean;
 };
 
@@ -215,6 +238,8 @@ export const defaultSettings: any = {
     yPosKeyName: 'yPos',
     markerOffsetX: 0.5,
     markerOffsetY: 1,
+    tooltipOffsetX: 0,
+    tooltipOffsetY: -1,
     latKeyName: 'latitude',
     lngKeyName: 'longitude',
     polygonKeyName: 'coordinates',
@@ -227,8 +252,10 @@ export const defaultSettings: any = {
     showPolygon: false,
     labelColor: '#000000',
     color: '#FE7569',
+    showPolygonLabel: false,
     polygonColor: '#0000ff',
     polygonStrokeColor: '#fe0001',
+    polygonLabelColor: '#000000',
     polygonOpacity: 0.5,
     polygonStrokeOpacity: 1,
     polygonStrokeWeight: 1,

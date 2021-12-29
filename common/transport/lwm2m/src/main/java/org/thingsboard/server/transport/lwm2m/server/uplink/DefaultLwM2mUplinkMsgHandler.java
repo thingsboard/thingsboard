@@ -86,6 +86,8 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MReadRequest
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttributesCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttributesRequest;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
+import org.thingsboard.server.transport.lwm2m.server.model.LwM2MModelConfig;
+import org.thingsboard.server.transport.lwm2m.server.model.LwM2MModelConfigService;
 import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MOtaUpdateService;
 import org.thingsboard.server.transport.lwm2m.server.session.LwM2MSessionManager;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
@@ -110,6 +112,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.common.util.CollectionsUtil.diffSets;
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_3_VER_ID;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_DELIVERY_METHOD;
@@ -151,6 +154,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     private final LwM2mVersionedModelProvider modelProvider;
     private final RegistrationStore registrationStore;
     private final TbLwM2mSecurityStore securityStore;
+    private final LwM2MModelConfigService modelConfigService;
 
     public DefaultLwM2mUplinkMsgHandler(TransportService transportService,
                                         LwM2MTransportServerConfig config,
@@ -165,7 +169,8 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                                         TbLwM2MDtlsSessionStore sessionStore,
                                         LwM2mVersionedModelProvider modelProvider,
                                         RegistrationStore registrationStore,
-                                        TbLwM2mSecurityStore securityStore) {
+                                        TbLwM2mSecurityStore securityStore,
+                                        LwM2MModelConfigService modelConfigService) {
         this.transportService = transportService;
         this.sessionManager = sessionManager;
         this.attributesService = attributesService;
@@ -180,6 +185,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
         this.modelProvider = modelProvider;
         this.registrationStore = registrationStore;
         this.securityStore = securityStore;
+        this.modelConfigService = modelConfigService;
     }
 
     @PostConstruct
@@ -780,7 +786,6 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     //TODO: review and optimize the logic to minimize number of the requests to device.
     private void onDeviceProfileUpdate(List<LwM2mClient> clients, Lwm2mDeviceProfileTransportConfiguration oldProfile, DeviceProfile deviceProfile) {
         if (clientContext.profileUpdate(deviceProfile) != null) {
-            // #1
             TelemetryMappingConfiguration oldTelemetryParams = oldProfile.getObserveAttr();
             Set<String> attributeSetOld = oldTelemetryParams.getAttribute();
             Set<String> telemetrySetOld = oldTelemetryParams.getTelemetry();
@@ -800,46 +805,42 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
             Set<String> observeToRemove = diffSets(observeNew, observeOld);
 
             Set<String> newObjectsToRead = new HashSet<>();
+            Set<String> newObjectsToCancelRead = new HashSet<>();
 
-            // #3.1
             if (!attributeSetOld.equals(attributeSetNew)) {
                 newObjectsToRead.addAll(diffSets(attributeSetOld, attributeSetNew));
+                newObjectsToCancelRead.addAll(diffSets(attributeSetNew, attributeSetOld));
+
             }
-            // #3.2
             if (!telemetrySetOld.equals(telemetrySetNew)) {
                 newObjectsToRead.addAll(diffSets(telemetrySetOld, telemetrySetNew));
+                newObjectsToCancelRead.addAll(diffSets(telemetrySetNew, telemetrySetOld));
             }
-            // #3.3
             if (!keyNameOld.equals(keyNameNew)) {
                 ParametersAnalyzeResult keyNameChange = this.getAnalyzerKeyName(keyNameOld, keyNameNew);
                 newObjectsToRead.addAll(keyNameChange.getPathPostParametersAdd());
             }
 
-            // #3.4, #6
-            if (!attributeLwm2mOld.equals(attributeLwm2mNew)) {
-                this.compareAndSendWriteAttributes(clients, attributeLwm2mOld, attributeLwm2mNew);
-            }
+            ParametersAnalyzeResult analyzerParameters = getAttributesAnalyzer(attributeLwm2mOld, attributeLwm2mNew);
 
-            // #4.1 add
-            if (!newObjectsToRead.isEmpty()) {
-                Set<String> newObjectsToReadButNotNewInObserve = diffSets(observeToAdd, newObjectsToRead);
-                // update value in Resources
-                for (String versionedId : newObjectsToReadButNotNewInObserve) {
-                    clients.forEach(client -> sendReadRequest(client, versionedId));
-                }
-            }
+            clients.forEach(client -> {
+                LwM2MModelConfig modelConfig = new LwM2MModelConfig(client.getEndpoint());
+                modelConfig.getToRead().addAll(diffSets(observeToAdd, newObjectsToRead));
+                modelConfig.getToCancelRead().addAll(newObjectsToCancelRead);
+                modelConfig.getToCancelObserve().addAll(observeToRemove);
+                modelConfig.getToObserve().addAll(observeToAdd);
 
-            // Calculating difference between old and new flags.
-            if (!observeToAdd.isEmpty()) {
-                for (String targetId : observeToAdd) {
-                    clients.forEach(client -> sendObserveRequest(client, targetId));
-                }
-            }
-            if (!observeToRemove.isEmpty()) {
-                for (String targetId : observeToRemove) {
-                    clients.forEach(client -> sendCancelObserveRequest(targetId, client));
-                }
-            }
+                Set<String> clientObjects = clientContext.getSupportedIdVerInClient(client);
+                Set<String> pathToAdd = analyzerParameters.getPathPostParametersAdd().stream().filter(target -> clientObjects.contains("/" + target.split(LWM2M_SEPARATOR_PATH)[1]))
+                        .collect(Collectors.toUnmodifiableSet());
+                modelConfig.getAttributesToAdd().putAll(pathToAdd.stream().collect(Collectors.toMap(t -> t, attributeLwm2mNew::get)));
+
+                Set<String> pathToRemove = analyzerParameters.getPathPostParametersDel().stream().filter(target -> clientObjects.contains("/" + target.split(LWM2M_SEPARATOR_PATH)[1]))
+                        .collect(Collectors.toUnmodifiableSet());
+                modelConfig.getAttributesToRemove().addAll(pathToRemove);
+
+                modelConfigService.sendUpdates(client, modelConfig);
+            });
 
             // update value in fwInfo
             OtherConfiguration newLwM2mSettings = newProfile.getClientLwM2mSettings();
@@ -858,13 +859,6 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
         }
     }
 
-    /**
-     * Returns new set with elements that are present in set B(new) but absent in set A(old).
-     */
-    private static <T> Set<T> diffSets(Set<T> a, Set<T> b) {
-        return b.stream().filter(p -> !a.contains(p)).collect(Collectors.toSet());
-    }
-
     private ParametersAnalyzeResult getAnalyzerKeyName(Map<String, String> keyNameOld, Map<String, String> keyNameNew) {
         ParametersAnalyzeResult analyzerParameters = new ParametersAnalyzeResult();
         Set<String> paths = keyNameNew.entrySet()
@@ -875,14 +869,10 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
         return analyzerParameters;
     }
 
-    /**
-     * #6.1 - send update WriteAttribute
-     * #6.2 - send empty WriteAttribute
-     */
-    private void compareAndSendWriteAttributes(List<LwM2mClient> clients, Map<String, ObjectAttributes> lwm2mAttributesOld, Map<String, ObjectAttributes> lwm2mAttributesNew) {
+    private ParametersAnalyzeResult getAttributesAnalyzer(Map<String, ObjectAttributes> attributeLwm2mOld, Map<String, ObjectAttributes> attributeLwm2mNew) {
         ParametersAnalyzeResult analyzerParameters = new ParametersAnalyzeResult();
-        Set<String> pathOld = lwm2mAttributesOld.keySet();
-        Set<String> pathNew = lwm2mAttributesNew.keySet();
+        Set<String> pathOld = attributeLwm2mOld.keySet();
+        Set<String> pathNew = attributeLwm2mNew.keySet();
         analyzerParameters.setPathPostParametersAdd(pathNew
                 .stream().filter(p -> !pathOld.contains(p)).collect(Collectors.toSet()));
         analyzerParameters.setPathPostParametersDel(pathOld
@@ -890,31 +880,13 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
         Set<String> pathCommon = pathNew
                 .stream().filter(pathOld::contains).collect(Collectors.toSet());
         Set<String> pathCommonChange = pathCommon
-                .stream().filter(p -> !lwm2mAttributesOld.get(p).equals(lwm2mAttributesNew.get(p))).collect(Collectors.toSet());
+                .stream().filter(p -> !attributeLwm2mOld.get(p).equals(attributeLwm2mNew.get(p))).collect(Collectors.toSet());
         analyzerParameters.getPathPostParametersAdd().addAll(pathCommonChange);
-        // #6
-        // #6.2
-        if (analyzerParameters.getPathPostParametersAdd().size() > 0) {
-            clients.forEach(client -> {
-                Set<String> clientObjects = clientContext.getSupportedIdVerInClient(client);
-                Set<String> pathSend = analyzerParameters.getPathPostParametersAdd().stream().filter(target -> clientObjects.contains("/" + target.split(LWM2M_SEPARATOR_PATH)[1]))
-                        .collect(Collectors.toUnmodifiableSet());
-                if (!pathSend.isEmpty()) {
-                    pathSend.forEach(target -> sendWriteAttributesRequest(client, target, lwm2mAttributesNew.get(target)));
-                }
-            });
-        }
-        // #6.2
-        if (analyzerParameters.getPathPostParametersDel().size() > 0) {
-            clients.forEach(client -> {
-                Set<String> clientObjects = clientContext.getSupportedIdVerInClient(client);
-                Set<String> pathSend = analyzerParameters.getPathPostParametersDel().stream().filter(target -> clientObjects.contains("/" + target.split(LWM2M_SEPARATOR_PATH)[1]))
-                        .collect(Collectors.toUnmodifiableSet());
-                if (!pathSend.isEmpty()) {
-                    pathSend.forEach(target -> sendWriteAttributesRequest(client, target, new ObjectAttributes()));
-                }
-            });
-        }
+        return analyzerParameters;
+    }
+
+    private void compareAndSetWriteAttributes(LwM2mClient client, ParametersAnalyzeResult analyzerParameters, Map<String, ObjectAttributes> lwm2mAttributesNew, LwM2MModelConfig modelConfig) {
+
     }
 
     /**

@@ -13,18 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao;
+package org.thingsboard.server.controller.sql;
 
-import org.junit.extensions.cpsuite.ClasspathSuite;
-import org.junit.extensions.cpsuite.ClasspathSuite.ClassnameFilters;
-import org.junit.runner.RunWith;
+import org.thingsboard.server.controller.BaseRpcControllerTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
-@RunWith(ClasspathSuite.class)
-@ClassnameFilters({
-        "org.thingsboard.server.dao.service.psql.*SqlTest",
-        "org.thingsboard.server.dao.service.attributes.psql.*SqlTest",
-        "org.thingsboard.server.dao.service.event.psql.*SqlTest",
-        "org.thingsboard.server.dao.service.timeseries.psql.*SqlTest"
-})
-public class PostgreSqlDaoServiceTestSuite {
+@DaoSqlTest
+public class RpcControllerTest extends BaseRpcControllerTest {
 }

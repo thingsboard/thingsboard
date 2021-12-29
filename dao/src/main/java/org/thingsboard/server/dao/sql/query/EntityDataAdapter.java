@@ -79,11 +79,11 @@ public class EntityDataAdapter {
         return entityData;
     }
 
-    private static String convertValue(Object value) {
+    static String convertValue(Object value) {
         if (value != null) {
             String strVal = value.toString();
             // check number
-            if (NumberUtils.isNumber(strVal)) {
+            if (strVal.length() > 0 && NumberUtils.isParsable(strVal)) {
                 try {
                     long longVal = Long.parseLong(strVal);
                     return Long.toString(longVal);

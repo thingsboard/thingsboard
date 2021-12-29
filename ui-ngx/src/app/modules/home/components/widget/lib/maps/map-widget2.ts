@@ -258,17 +258,20 @@ export class MapWidgetController implements MapWidgetInterface {
             settings.mapProviderHere = hereProviders[0];
           }
         }
-        const customOptions = {
+        const customOptions: Partial<UnitedMapSettings> = {
             provider: this.provider,
             mapUrl: settings?.mapImageUrl,
             labelFunction: parseFunction(settings.labelFunction, functionParams),
             tooltipFunction: parseFunction(settings.tooltipFunction, functionParams),
             colorFunction: parseFunction(settings.colorFunction, functionParams),
             colorPointFunction: parseFunction(settings.colorPointFunction, functionParams),
+            polygonLabelFunction: parseFunction(settings.polygonLabelFunction, functionParams),
             polygonColorFunction: parseFunction(settings.polygonColorFunction, functionParams),
+            polygonStrokeColorFunction: parseFunction(settings.polygonStrokeColorFunction, functionParams),
             polygonTooltipFunction: parseFunction(settings.polygonTooltipFunction, functionParams),
             markerImageFunction: parseFunction(settings.markerImageFunction, ['data', 'images', 'dsData', 'dsIndex']),
             labelColor: this.ctx.widgetConfig.color,
+            polygonLabelColor: this.ctx.widgetConfig.color,
             polygonKeyName: settings.polKeyName ? settings.polKeyName : settings.polygonKeyName,
             tooltipPattern: settings.tooltipPattern ||
                 '<b>${entityName}</b><br/><br/><b>Latitude:</b> ${' +

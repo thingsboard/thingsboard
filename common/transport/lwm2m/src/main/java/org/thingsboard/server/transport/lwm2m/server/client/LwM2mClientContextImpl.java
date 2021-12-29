@@ -25,8 +25,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.data.PowerMode;
-import org.thingsboard.server.common.data.device.profile.lwm2m.OtherConfiguration;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.lwm2m.OtherConfiguration;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.transport.TransportDeviceProfileCache;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
@@ -37,6 +37,7 @@ import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
+import org.thingsboard.server.transport.lwm2m.server.model.LwM2MModelConfigService;
 import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MOtaUpdateService;
 import org.thingsboard.server.transport.lwm2m.server.session.LwM2MSessionManager;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MClientStore;
@@ -70,6 +71,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     private final TbLwM2MClientStore clientStore;
     private final LwM2MSessionManager sessionManager;
     private final TransportDeviceProfileCache deviceProfileCache;
+    private final LwM2MModelConfigService modelConfigService;
 
     @Autowired
     @Lazy
@@ -250,6 +252,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 //                TODO: change tests to use new certificate.
 //                this.securityStore.remove(client.getEndpoint(), registration.getId());
                 clientStore.remove(client.getEndpoint());
+                modelConfigService.removeUpdates(client.getEndpoint());
                 UUID profileId = client.getProfileId();
                 if (profileId != null) {
                     Optional<LwM2mClient> otherClients = lwM2mClientsByRegistrationId.values().stream().filter(e -> e.getProfileId().equals(profileId)).findFirst();
@@ -327,6 +330,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         if (LwM2MClientState.REGISTERED.equals(lwM2MClient.getState())) {
             PowerMode powerMode = getPowerMode(lwM2MClient);
             if (PowerMode.PSM.equals(powerMode) || PowerMode.E_DRX.equals(powerMode)) {
+                modelConfigService.sendUpdates(lwM2MClient);
                 defaultLwM2MUplinkMsgHandler.initAttributes(lwM2MClient, false);
                 TransportProtos.TransportToDeviceActorMsg persistentRpcRequestMsg = TransportProtos.TransportToDeviceActorMsg
                         .newBuilder()

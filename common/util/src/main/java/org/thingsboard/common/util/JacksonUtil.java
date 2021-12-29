@@ -124,4 +124,13 @@ public class JacksonUtil {
     public static <T> T treeToValue(JsonNode tree, Class<T> type) throws JsonProcessingException {
         return OBJECT_MAPPER.treeToValue(tree, type);
     }
+
+    public static <T> byte[] writeValueAsBytes(T value) {
+        try {
+            return OBJECT_MAPPER.writeValueAsBytes(value);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("The given Json object value: "
+                    + value + " cannot be transformed to a String", e);
+        }
+    }
 }

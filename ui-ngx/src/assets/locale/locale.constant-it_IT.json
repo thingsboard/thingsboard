@@ -666,8 +666,6 @@
         "access-token": "Token di accesso",
         "access-token-required": "Token di accesso obbligatorio.",
         "access-token-invalid": "Il token di accesso deve avere una lunghezza compresa tra 1 e 32 caratteri.",
-        "rsa-key": "Chiave pubblica RSA",
-        "rsa-key-required": "Chiave pubblica RSA obbligatoria.",
         "secret": "Secret",
         "secret-required": "Secret obbligatorio.",
         "device-type": "Tipo dispositivo",
