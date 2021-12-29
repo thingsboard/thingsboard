@@ -146,6 +146,9 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     @Value("${server.ws.limits.max_subscriptions_per_public_user:0}")
     private int maxSubscriptionsPerPublicUser;
 
+    @Value("${server.ws.ping_timeout:30000}")
+    private long pingTimeout;
+
     private ConcurrentMap<TenantId, Set<String>> tenantSubscriptionsMap = new ConcurrentHashMap<>();
     private ConcurrentMap<CustomerId, Set<String>> customerSubscriptionsMap = new ConcurrentHashMap<>();
     private ConcurrentMap<UserId, Set<String>> regularUserSubscriptionsMap = new ConcurrentHashMap<>();
@@ -162,7 +165,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
         executor = ThingsBoardExecutors.newWorkStealingPool(50, getClass());
 
         pingExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("telemetry-web-socket-ping"));
-        pingExecutor.scheduleWithFixedDelay(this::sendPing, 10000, 10000, TimeUnit.MILLISECONDS);
+        pingExecutor.scheduleWithFixedDelay(this::sendPing, pingTimeout/3, pingTimeout/3, TimeUnit.MILLISECONDS);
     }
 
     @PreDestroy
