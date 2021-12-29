@@ -75,7 +75,6 @@ public class LwM2MInMemoryBootstrapConfigStore extends InMemoryBootstrapConfigSt
     }
 
     public void addToStore(String endpoint, BootstrapConfig config) throws InvalidConfigurationException {
-
         configChecker.verify(config);
         // Check PSK identity uniqueness for bootstrap server:
         PskByServer pskToAdd = getBootstrapPskIdentity(config);

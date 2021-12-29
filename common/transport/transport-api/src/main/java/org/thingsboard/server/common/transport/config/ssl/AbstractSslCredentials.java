@@ -115,7 +115,6 @@ public abstract class AbstractSslCredentials implements SslCredentials {
         return this.trusts;
     }
 
-
     @Override
     public TrustManagerFactory createTrustManagerFactory() throws NoSuchAlgorithmException, KeyStoreException {
         TrustManagerFactory tmFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
@@ -129,7 +128,6 @@ public abstract class AbstractSslCredentials implements SslCredentials {
         kmf.init(this.keyStore, this.keyPasswordArray);
         return kmf;
     }
-
 
     @Override
     public String getValueFromSubjectNameByKey(String subjectName, String key) {

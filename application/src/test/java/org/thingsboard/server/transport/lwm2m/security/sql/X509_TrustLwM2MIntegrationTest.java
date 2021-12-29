@@ -28,7 +28,6 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SHORT_SERVE
 
 public class X509_TrustLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTest {
 
-    @Ignore
     @Test
     public void testConnectAndObserveTelemetry() throws Exception {
         X509ClientCredential credentials = new X509ClientCredential();

@@ -25,6 +25,7 @@ import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mMultipleResource;
+import org.eclipse.leshan.core.node.LwM2mNode;
 import org.eclipse.leshan.core.node.LwM2mObject;
 import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.node.LwM2mPath;
@@ -323,19 +324,21 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
      */
     @Override
     public void onUpdateValueAfterReadResponse(Registration registration, String path, ReadResponse response) {
-        if (response.getContent() != null) {
+        LwM2mNode content = response.getContent();
+        if (content != null) {
             LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(registration.getEndpoint());
             ObjectModel objectModelVersion = lwM2MClient.getObjectModel(path, modelProvider);
             if (objectModelVersion != null) {
-                if (response.getContent() instanceof LwM2mObject) {
-                    LwM2mObject lwM2mObject = (LwM2mObject) response.getContent();
-                    this.updateObjectResourceValue(lwM2MClient, lwM2mObject, path, response.getCode().getCode());
-                } else if (response.getContent() instanceof LwM2mObjectInstance) {
-                    LwM2mObjectInstance lwM2mObjectInstance = (LwM2mObjectInstance) response.getContent();
-                    this.updateObjectInstanceResourceValue(lwM2MClient, lwM2mObjectInstance, path, response.getCode().getCode());
-                } else if (response.getContent() instanceof LwM2mResource) {
-                    LwM2mResource lwM2mResource = (LwM2mResource) response.getContent();
-                    this.updateResourcesValue(lwM2MClient, lwM2mResource, path, Mode.UPDATE, response.getCode().getCode());
+                int responseCode = response.getCode().getCode();
+                if (content instanceof LwM2mObject) {
+                    LwM2mObject lwM2mObject = (LwM2mObject) content;
+                    this.updateObjectResourceValue(lwM2MClient, lwM2mObject, path, responseCode);
+                } else if (content instanceof LwM2mObjectInstance) {
+                    LwM2mObjectInstance lwM2mObjectInstance = (LwM2mObjectInstance) content;
+                    this.updateObjectInstanceResourceValue(lwM2MClient, lwM2mObjectInstance, path, responseCode);
+                } else if (content instanceof LwM2mResource) {
+                    LwM2mResource lwM2mResource = (LwM2mResource) content;
+                    this.updateResourcesValue(lwM2MClient, lwM2mResource, path, Mode.UPDATE, responseCode);
                 }
             }
             if (clientContext.awake(lwM2MClient)) {
@@ -353,12 +356,13 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
             LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(registration.getEndpoint());
             response.getContent().forEach((k, v) -> {
                 if (v != null) {
+                    int responseCode = response.getCode().getCode();
                     if (v instanceof LwM2mObject) {
-                        this.updateObjectResourceValue(lwM2MClient, (LwM2mObject) v, k.toString(), response.getCode().getCode());
+                        this.updateObjectResourceValue(lwM2MClient, (LwM2mObject) v, k.toString(), responseCode);
                     } else if (v instanceof LwM2mObjectInstance) {
-                        this.updateObjectInstanceResourceValue(lwM2MClient, (LwM2mObjectInstance) v, k.toString(), response.getCode().getCode());
+                        this.updateObjectInstanceResourceValue(lwM2MClient, (LwM2mObjectInstance) v, k.toString(), responseCode);
                     } else if (v instanceof LwM2mResource) {
-                        this.updateResourcesValue(lwM2MClient, (LwM2mResource) v, k.toString(), Mode.UPDATE, response.getCode().getCode());
+                        this.updateResourcesValue(lwM2MClient, (LwM2mResource) v, k.toString(), Mode.UPDATE, responseCode);
                     }
                 }
             });
@@ -459,8 +463,6 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
             this.sendReadRequests(lwM2MClient, profile, supportedObjects);
             this.sendObserveRequests(lwM2MClient, profile, supportedObjects);
             this.sendWriteAttributeRequests(lwM2MClient, profile, supportedObjects);
-//            Removed. Used only for debug.
-//            this.sendDiscoverRequests(lwM2MClient, profile, supportedObjects);
         }
     }
 

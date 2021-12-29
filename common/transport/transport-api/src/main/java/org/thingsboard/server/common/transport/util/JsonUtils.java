@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.transport.util;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -57,8 +56,4 @@ public class JsonUtils {
         return jsonParser.parse(params);
     }
 
-    public static String writeValueAsString(Object value) throws JsonProcessingException {
-            return json.writeValueAsString(value);
-
-    }
 }

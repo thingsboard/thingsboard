@@ -107,7 +107,9 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
     @Override
     public boolean hasConfigFor(BootstrapSession session) {
         BootstrapTaskProvider.Tasks firstTasks = tasksProvider.getTasks(session, null);
-        if (firstTasks == null) return false;
+        if (firstTasks == null) {
+            return false;
+        }
         initTasks(session, firstTasks);
         return true;
     }

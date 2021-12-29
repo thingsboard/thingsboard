@@ -351,10 +351,10 @@ public class LwM2MTransportUtil {
         }
     }
 
-    public static Map convertMultiResourceValuesFromRpcBody(Object value, ResourceModel.Type type, String versionedId) throws Exception {
-            String valueJsonStr = JsonUtils.writeValueAsString(value);
-            JsonElement element = JsonUtils.parse(valueJsonStr);
-            return convertMultiResourceValuesFromJson(element, type, versionedId);
+    public static Map<Integer, Object> convertMultiResourceValuesFromRpcBody(Object value, ResourceModel.Type type, String versionedId) throws Exception {
+        String valueJsonStr = JacksonUtil.toString(value);
+        JsonElement element = JsonUtils.parse(valueJsonStr);
+        return convertMultiResourceValuesFromJson(element, type, versionedId);
     }
 
     public static Map convertMultiResourceValuesFromJson(JsonElement newValProto, ResourceModel.Type type, String versionedId)  throws Exception{
