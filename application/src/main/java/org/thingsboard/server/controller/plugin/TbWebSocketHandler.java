@@ -37,6 +37,7 @@ import org.thingsboard.server.config.WebSocketConfiguration;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
+import org.thingsboard.server.service.telemetry.DefaultTelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.SessionEvent;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketMsgEndpoint;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
@@ -56,6 +57,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import static org.thingsboard.server.service.telemetry.DefaultTelemetryWebSocketService.NUMBER_OF_PING_ATTEMPTS;
 
 @Service
 @TbCoreComponent
@@ -229,10 +232,11 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
 
         synchronized void sendPing(long currentTime) {
             try {
-                if (currentTime - lastActivityTime >= pingTimeout) {
+                long timeSinceLastActivity = currentTime - lastActivityTime;
+                if (timeSinceLastActivity >= pingTimeout) {
                     log.warn("[{}] Closing session due to ping timeout", session.getId());
                     closeSession(CloseStatus.SESSION_NOT_RELIABLE);
-                } else {
+                } else if (timeSinceLastActivity >= pingTimeout / NUMBER_OF_PING_ATTEMPTS) {
                     this.asyncRemote.sendPing(PING_MSG);
                 }
             } catch (Exception e) {
