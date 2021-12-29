@@ -73,6 +73,11 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
     }
 
     @Override
+    public boolean isDynamic() {
+        return query.getPageLink().isDynamic();
+    }
+
+    @Override
     protected synchronized void update() {
         PageData<EntityData> newData = findEntityData();
         Map<EntityId, EntityData> oldDataMap;
