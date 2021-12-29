@@ -47,8 +47,6 @@ public class RefreshTokenProcessingFilter extends AbstractAuthenticationProcessi
 
     private final ObjectMapper objectMapper;
 
-//    private final UserActiveSessionsLimitService sessionsLimitService;
-
     public RefreshTokenProcessingFilter(String defaultProcessUrl, AuthenticationSuccessHandler successHandler,
                                         AuthenticationFailureHandler failureHandler, ObjectMapper mapper) {
         super(defaultProcessUrl);
@@ -93,7 +91,6 @@ public class RefreshTokenProcessingFilter extends AbstractAuthenticationProcessi
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
                                               AuthenticationException failed) throws IOException, ServletException {
         SecurityContextHolder.clearContext();
-//        sessionsLimitService.decreaseCurrentActiveSessions();
         failureHandler.onAuthenticationFailure(request, response, failed);
     }
 }

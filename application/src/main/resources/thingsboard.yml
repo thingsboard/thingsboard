@@ -119,8 +119,8 @@ security:
     githubMapper:
       emailUrl: "${SECURITY_OAUTH2_GITHUB_MAPPER_EMAIL_URL_KEY:https://api.github.com/user/emails}"
   sessionsLimit:
-    machinesLimit: "${SECURITY_SESSION_LIMIT_MACHINES:0}"
-    oneMachineLimit: "${SECURITY_SESSION_LIMIT_ON_ONE_MACHINE:0}"
+    differentIpsLimit: "${SECURITY_SESSION_DIFFERENT_IPS_LIMIT:0}"
+    oneIpLimit: "${SECURITY_SESSION_ONE_IP_LIMIT:0}"
 
 # Usage statistics parameters
 usage:

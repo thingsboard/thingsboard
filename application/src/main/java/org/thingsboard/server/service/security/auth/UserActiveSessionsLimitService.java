@@ -15,9 +15,8 @@
  */
 package org.thingsboard.server.service.security.auth;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import org.jetbrains.annotations.NotNull;
+import lombok.NonNull;
+import org.apache.commons.collections4.map.ReferenceIdentityMap;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -39,23 +38,21 @@ public class UserActiveSessionsLimitService {
     private final CacheManager cacheManager;
     private Cache userActiveSessionsCache;
 
-    private final Long machinesLimit;
-    private final Long oneMachineLimit;
-    private JwtTokenFactory tokenFactory;
+    private final Long differentIpsLimit;
+    private final Long oneIpLimit;
+    private final JwtTokenFactory tokenFactory;
 
     public UserActiveSessionsLimitService(
             CacheManager cacheManager,
-            @Value("${security.sessionsLimit.machinesLimit}") Long machinesLimit,
-            @Value("${security.sessionsLimit.oneMachineLimit}") Long oneMachineLimit,
+            @Value("${security.sessionsLimit.differentIpsLimit}") Long differentIpsLimit,
+            @Value("${security.sessionsLimit.oneIpLimit}") Long oneIpLimit,
             JwtTokenFactory tokenFactory
     ) {
         this.cacheManager = cacheManager;
-        this.machinesLimit = machinesLimit;
-        this.oneMachineLimit = oneMachineLimit;
+        this.differentIpsLimit = differentIpsLimit;
+        this.oneIpLimit = oneIpLimit;
         this.tokenFactory = tokenFactory;
     }
-
-    // TODO: 10.12.21 REVIEW names
 
     @PostConstruct
     protected void initCache() {
@@ -63,97 +60,97 @@ public class UserActiveSessionsLimitService {
     }
 
     public boolean sessionIsValidFor(UserId userId, JwtToken token, String ip) {
-        if (machinesLimit == 0 && oneMachineLimit == 0)
+        if (differentIpsLimit == 0 && oneIpLimit == 0)
             return true;
 
-        Optional<String> tokenId = getTokenId(token);
+        String tokenId = getTokenId(token);
         List<String> validTokens = extractValidTokens(userId, ip);
 
-        // TODO: 10.12.21 REVIEW
-        return validTokens.contains(tokenId.orElseThrow(() -> new RuntimeException("No token id provided!")));
+        return validTokens.contains(tokenId);
     }
 
-    public void validateSessionFor(UserId userId, JwtToken token, String ip) {
-        Jws<Claims> claimsJws = tokenFactory.parseTokenClaims(token);
-        Optional<String> tokenId = Optional.ofNullable(claimsJws.getBody().get(JwtTokenFactory.TOKEN_ID)).map(Object::toString);
+    public void validateSessionFor(@NonNull UserId userId, @NonNull JwtToken token, @NonNull String ip) {
+        String tokenId = getTokenId(token);
 
-        Map<String, List<String>> loggedMachines = userActiveSessionsCache.get(
-                toKey(userId), Map.class
+        Map<String, List<String>> activeIps = userActiveSessionsCache.get(
+                toKey(userId), ReferenceIdentityMap::new
         );
 
-        if (loggedMachines == null) {
-            loggedMachines = new FixedSizeHashMap<>(machinesLimit);
+        if (activeIps == null) {
+            activeIps = new FixedSizeHashMap<>(differentIpsLimit);
         }
-        List<String> validTokens = loggedMachines.get(ip);
+        List<String> validTokens = activeIps.get(ip);
         if (validTokens == null) {
-            validTokens = new FixedSizeArrayList<>(oneMachineLimit);
+            validTokens = new FixedSizeArrayList<>(oneIpLimit);
         }
 
-        validTokens.add(tokenId.get());
-        loggedMachines.put(ip, validTokens);
+        validTokens.add(tokenId);
+        activeIps.put(ip, validTokens);
 
-        userActiveSessionsCache.put(toKey(userId), loggedMachines);
+        userActiveSessionsCache.put(toKey(userId), activeIps);
     }
 
-    public void invalidateSessionFor(UserId userId, JwtToken token, String ip) {
-        Optional<String> tokenId = getTokenId(token);
+    public void invalidateSessionFor(@NonNull UserId userId, @NonNull JwtToken token, @NonNull String ip) {
+        String tokenId = getTokenId(token);
 
-        var loggedMachines = getMachinesBy(userId);
-        long currentMachinesAmount = loggedMachines.size();
-        long currentSessionsAmount = getCurrentSessionsAmountOnMachine(userId, ip);
+        var activeIps = getIpsWithActiveSession(userId);
+        long activeIpsAmount = activeIps.size();
+        long currentSessionsAmount = getCurrentSessionsAmountForIp(userId, ip);
 
-        if (currentMachinesAmount > 0) {
+        if (activeIpsAmount > 0) {
             if (currentSessionsAmount > 0) {
-                List<String> validTokens = loggedMachines.get(ip);
-                validTokens.remove(tokenId.get());
+                List<String> validTokens = activeIps.get(ip);
+                validTokens.remove(tokenId);
             } else {
-                loggedMachines.remove(ip);
+                activeIps.remove(ip);
             }
 
-            userActiveSessionsCache.put(toKey(userId), loggedMachines);
+            userActiveSessionsCache.put(toKey(userId), activeIps);
         } else {
             userActiveSessionsCache.evictIfPresent(toKey(userId));
         }
     }
 
-    @NotNull
-    private Optional<String> getTokenId(JwtToken token) {
-        return Optional.ofNullable(tokenFactory.parseTokenClaims(token).getBody().get(JwtTokenFactory.TOKEN_ID))
-                .map(Object::toString);
+    private String getTokenId(JwtToken token) {
+        var extracted = tokenFactory
+                .parseTokenClaims(token)
+                .getBody()
+                .get(JwtTokenFactory.TOKEN_ID);
+        var tokenId = Optional.ofNullable(extracted).map(Object::toString);
+        if (tokenId.isEmpty()) {
+            throw new RuntimeException("No token id provided!");
+        }
+        return tokenId.get();
     }
 
-    private Long getCurrentSessionsAmountOnMachine(UserId userId, String ip) {
-        extractValidTokens(userId, ip);
-        List<String> tokens = extractValidTokens(userId, ip);
-
-        return (long) tokens.size();
+    private Long getCurrentSessionsAmountForIp(UserId userId, String ip) {
+        return (long) extractValidTokens(userId, ip).size();
     }
 
     private List<String> extractValidTokens(UserId userId, String ip) {
-        var loggedMachines = getMachinesBy(userId);
-        var validTokens = loggedMachines.get(ip);
+        var activeIps = getIpsWithActiveSession(userId);
+        var validTokens = activeIps.get(ip);
 
         if (validTokens == null) {
-            validTokens = new FixedSizeArrayList<>(oneMachineLimit);
-            loggedMachines.replace(ip, validTokens);
-            userActiveSessionsCache.put(toKey(userId), loggedMachines);
+            validTokens = new FixedSizeArrayList<>(oneIpLimit);
+            activeIps.replace(ip, validTokens);
+            userActiveSessionsCache.put(toKey(userId), activeIps);
         }
 
         return validTokens;
     }
 
-    @NotNull
-    private Map<String, List<String>> getMachinesBy(UserId userId) {
-        Map<String, List<String>> loggedMachines = userActiveSessionsCache.get(
-                toKey(userId), Map.class
+    private Map<String, List<String>> getIpsWithActiveSession(UserId userId) {
+        Map<String, List<String>> activeIps = userActiveSessionsCache.get(
+                toKey(userId), ReferenceIdentityMap::new
         );
 
-        if (loggedMachines == null) {
-            loggedMachines = new FixedSizeHashMap<>(machinesLimit);
-            userActiveSessionsCache.put(toKey(userId), loggedMachines);
+        if (activeIps == null) {
+            activeIps = new FixedSizeHashMap<>(differentIpsLimit);
+            userActiveSessionsCache.put(toKey(userId), activeIps);
         }
 
-        return loggedMachines;
+        return activeIps;
     }
 
 
@@ -164,13 +161,13 @@ public class UserActiveSessionsLimitService {
     private static class FixedSizeArrayList<T> extends ArrayList<T> {
         private final Long fixedSize;
 
-        public FixedSizeArrayList(Long fixedSize) {
+        public FixedSizeArrayList(@NonNull Long fixedSize) {
             super();
             this.fixedSize = fixedSize;
         }
 
         @Override
-        public boolean add(T t) {
+        public boolean add(@NonNull T t) {
             if (fixedSize == 0) return false;
             if (size() < fixedSize) {
                 return super.add(t);
@@ -184,13 +181,13 @@ public class UserActiveSessionsLimitService {
     private static class FixedSizeHashMap<K, V> extends LinkedHashMap<K, V> {
         private final Long fixedSize;
 
-        public FixedSizeHashMap(Long fixedSize) {
+        public FixedSizeHashMap(@NonNull Long fixedSize) {
             super();
             this.fixedSize = fixedSize;
         }
 
         @Override
-        public V put(@NotNull K key, @NotNull V value) {
+        public V put(@NonNull K key, @NonNull V value) {
             if (fixedSize == 0) return null;
 
             if (size() < fixedSize) {
