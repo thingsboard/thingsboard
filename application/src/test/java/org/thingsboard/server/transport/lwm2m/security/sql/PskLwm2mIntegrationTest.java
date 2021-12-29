@@ -31,7 +31,6 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SHORT_SERVE
 
 public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTest {
 
-    @Ignore
     @Test
     public void testConnectWithPSKAndObserveTelemetry() throws Exception {
         PSKClientCredential clientCredentials = new PSKClientCredential();

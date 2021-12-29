@@ -27,7 +27,6 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURITY;
 @Slf4j
 public class NoSecLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTest {
 
-    @Ignore
     @Test
     public void testConnectAndObserveTelemetry() throws Exception {
         NoSecClientCredential clientCredentials =  createNoSecClientCredentials(ENDPOINT);
