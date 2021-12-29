@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.action;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -44,6 +45,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -172,6 +174,7 @@ public class EntityActionService {
                             entityId.getId().equals(relation.getFrom().getId()) ? EntitySearchDirection.FROM.name() : EntitySearchDirection.TO.name());
                 }
                 ObjectNode entityNode;
+                List<EntityRelation> relations = new ArrayList<>();
                 if (entity != null) {
                     entityNode = json.valueToTree(entity);
                     if (entityId.getEntityType() == EntityType.DASHBOARD) {
@@ -215,20 +218,39 @@ public class EntityActionService {
                         EntityRelation relation = extractParameter(EntityRelation.class, 0, additionalInfo);
                         entityNode = json.valueToTree(relation);
                     } else if (actionType == ActionType.RELATIONS_DELETED) {
-                        // TODO: 22.12.21 ???
+                        relations = extractParameter(List.class, 0, additionalInfo);
                     }
                 }
-                TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, customerId, metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));
-                if (tenantId.isNullUid()) {
-                    if (entity instanceof HasTenantId) {
-                        tenantId = ((HasTenantId) entity).getTenantId();
+
+                if (!relations.isEmpty()) {
+                    for (EntityRelation relation : relations) {
+                        ObjectNode objectNode = json.valueToTree(relation);
+                        prepareAndPushMsgToRuleEngine(relation.getFrom(), entity, tenantId, customerId, msgType, metaData, objectNode);
+                        prepareAndPushMsgToRuleEngine(relation.getTo(), entity, tenantId, customerId, msgType, metaData, objectNode);
                     }
+                } else {
+                    prepareAndPushMsgToRuleEngine(entityId, entity, tenantId, customerId, msgType, metaData, entityNode);
                 }
-                tbClusterService.pushMsgToRuleEngine(tenantId, entityId, tbMsg, null);
             } catch (Exception e) {
                 log.warn("[{}] Failed to push entity action to rule engine: {}", entityId, actionType, e);
             }
         }
+    }
+
+    private void prepareAndPushMsgToRuleEngine(EntityId entityId,
+                                               HasName entity,
+                                               TenantId tenantId,
+                                               CustomerId customerId,
+                                               String msgType,
+                                               TbMsgMetaData metaData,
+                                               ObjectNode entityNode) throws JsonProcessingException {
+        TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, customerId, metaData, TbMsgDataType.JSON, json.writeValueAsString(entityNode));
+        if (tenantId.isNullUid()) {
+            if (entity instanceof HasTenantId) {
+                tenantId = ((HasTenantId) entity).getTenantId();
+            }
+        }
+        tbClusterService.pushMsgToRuleEngine(tenantId, entityId, tbMsg, null);
     }
 
     public  <E extends HasName, I extends EntityId> void logEntityAction(User user, I entityId, E entity, CustomerId customerId,

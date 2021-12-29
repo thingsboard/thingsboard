@@ -156,9 +156,8 @@ public class EntityRelationController extends BaseController {
         EntityId entityId = EntityIdFactory.getByTypeAndId(strType, strId);
         checkEntityId(entityId, Operation.WRITE);
         try {
-            // TODO: 22.12.21 check this later
-            relationService.deleteEntityRelations(getTenantId(), entityId);
-            logEntityAction(entityId, null, getCurrentUser().getCustomerId(), ActionType.RELATIONS_DELETED, null);
+            List<EntityRelation> entityRelations = relationService.removeRelations(getTenantId(), entityId);
+            logEntityAction(entityId, null, getCurrentUser().getCustomerId(), ActionType.RELATIONS_DELETED, null, entityRelations);
         } catch (Exception e) {
             logEntityAction(entityId, null, getCurrentUser().getCustomerId(), ActionType.RELATIONS_DELETED, e);
             throw handleException(e);

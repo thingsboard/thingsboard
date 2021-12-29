@@ -76,7 +76,7 @@ public interface RelationService {
 
     ListenableFuture<List<EntityRelationInfo>> findInfoByQuery(TenantId tenantId, EntityRelationsQuery query);
 
-    void removeRelations(TenantId tenantId, EntityId entityId);
+    List<EntityRelation> removeRelations(TenantId tenantId, EntityId entityId);
 
 //    TODO: This method may be useful for some validations in the future
 //    ListenableFuture<Boolean> checkRecursiveRelation(EntityId from, EntityId to);

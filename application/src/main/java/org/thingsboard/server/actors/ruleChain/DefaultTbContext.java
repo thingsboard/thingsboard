@@ -85,7 +85,6 @@ import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -316,29 +315,40 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public void entityRelationCreatedOrUpdated(String queueName, EntityRelation relation) {
-        boolean duplicateMessage = isDuplicateMessage(relation);
-
+    public void entityRelationEvent(String queueName, EntityRelation relation, String dataConstants) {
         TbMsgMetaData metaData = new TbMsgMetaData();
-        metaData.putValue(DataConstants.RELATION_DIRECTION_MSG_ORIGINATOR, EntitySearchDirection.FROM.name());
-//                entityId.getId().equals(relation.getFrom().getId()) ? EntitySearchDirection.FROM.name() : EntitySearchDirection.TO.name());
+        metaData.putValue(dataConstants, EntitySearchDirection.FROM.name());
         try {
-            TbMsg tbMsgFrom = TbMsg.newMsg(queueName, DataConstants.ENTITY_RELATION_ADD_OR_UPDATE, relation.getFrom(), metaData, mapper.writeValueAsString(relation));
-            TbMsg tbMsgTo = TbMsg.newMsg(queueName, DataConstants.ENTITY_RELATION_ADD_OR_UPDATE, relation.getTo(), metaData, mapper.writeValueAsString(relation));
-
+            TbMsg tbMsgFrom = TbMsg.newMsg(queueName, dataConstants, relation.getFrom(), metaData, mapper.writeValueAsString(relation));
             enqueue(tbMsgFrom,
-                    () -> log.trace("[{}] Enqueued message {}!", DataConstants.ENTITY_RELATION_DELETED, relation),
-                    throwable -> log.warn("[{}] Failed to enqueue message {}", DataConstants.ENTITY_RELATION_DELETED, relation, throwable));
+                    () -> log.trace("[{}] Enqueued message {}!", dataConstants, relation),
+                    throwable -> log.warn("[{}] Failed to enqueue message {}", dataConstants, relation, throwable));
+
+            TbMsg tbMsgTo = TbMsg.newMsg(queueName, dataConstants, relation.getTo(), metaData, mapper.writeValueAsString(relation));
+            if (!isDuplicateMessage(relation)) {
+                enqueue(tbMsgTo,
+                        () -> log.trace("[{}] Enqueued message {}!", dataConstants, relation),
+                        throwable -> log.warn("[{}] Failed to enqueue message {}", dataConstants, relation, throwable));
+            }
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to process [entityRelationCreatedOrUpdated] msg: " + e);
         }
     }
 
     private boolean isDuplicateMessage(EntityRelation relation) {
-        // TODO: 22.12.21 get from and to from the relation and check for isDuplicateMessage()
-//        if (relation.getFrom().getEntityType() == EntityType.DEVICE) {
-//            mainCtx.getDeviceProfileCache().get(getTenantId(), new DeviceId(relation.getFrom().getId()));
-//        }
+        if (relation.getFrom().getEntityType() == EntityType.DEVICE) {
+            if (relation.getFrom().getEntityType().equals(relation.getTo().getEntityType())) {
+                DeviceProfile deviceProfile = mainCtx.getDeviceProfileCache().get(getTenantId(), new DeviceId(relation.getTo().getId()));
+                DeviceProfile deviceProfileFrom = mainCtx.getDeviceProfileCache().get(deviceProfile.getTenantId(), new DeviceId(relation.getFrom().getId()));
+                String defaultQueueName = deviceProfileFrom.getDefaultQueueName() == null ? "" : deviceProfile.getDefaultQueueName();
+                String fromQueueName = deviceProfile.getDefaultQueueName() == null ? "" : deviceProfileFrom.getDefaultQueueName();
+                if (deviceProfileFrom.getDefaultRuleChainId().equals(deviceProfile.getDefaultRuleChainId())
+                        && defaultQueueName.equals(fromQueueName)) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
         return false;
     }

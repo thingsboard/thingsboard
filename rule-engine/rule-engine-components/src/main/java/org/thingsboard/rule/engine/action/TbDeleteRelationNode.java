@@ -124,7 +124,7 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
     }
 
     protected void pushDeleteRelationEventMessage(TbContext ctx, EntityRelation entityRelation, TbMsg tbMsg) {
-        ctx.entityRelationCreatedOrUpdated(tbMsg.getQueueName(), entityRelation);
+        ctx.entityRelationEvent(tbMsg.getQueueName(), entityRelation, DataConstants.ENTITY_RELATION_DELETED);
     }
 
 }

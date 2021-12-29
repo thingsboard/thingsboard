@@ -541,7 +541,7 @@ public class BaseRelationService implements RelationService {
     }
 
     @Override
-    public void removeRelations(TenantId tenantId, EntityId entityId) {
+    public List<EntityRelation> removeRelations(TenantId tenantId, EntityId entityId) {
         Cache cache = cacheManager.getCache(RELATIONS_CACHE);
 
         List<EntityRelation> relations = new ArrayList<>();
@@ -550,10 +550,13 @@ public class BaseRelationService implements RelationService {
             relations.addAll(findByTo(tenantId, entityId, relationTypeGroup));
         }
 
+        List<EntityRelation> result = new ArrayList<>();
         for (EntityRelation relation : relations) {
             cacheEviction(relation, cache);
-            deleteRelation(tenantId, relation);
+            boolean hasDeleted = deleteRelation(tenantId, relation);
+            if (hasDeleted) result.add(relation);
         }
+        return result;
     }
 
     protected void validate(EntityRelation relation) {
