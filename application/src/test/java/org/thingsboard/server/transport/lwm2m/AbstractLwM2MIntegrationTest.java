@@ -35,8 +35,8 @@ import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecBootstrapClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredential;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
@@ -57,6 +57,7 @@ import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
 import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
+
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
@@ -141,7 +142,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         this.defaultBootstrapCredentials.setLwm2mServer(serverCredentials);
     }
 
-    public void init ()  throws Exception{
+    public void init () throws Exception{
         executor = Executors.newScheduledThreadPool(10, ThingsBoardThreadFactory.forName("test-lwm2m-scheduled"));
         loginTenantAdmin();
 
@@ -167,46 +168,46 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
 
     @After
     public void after() {
-        executor.shutdownNow();
         wsClient.close();
         clientDestroy();
+        executor.shutdownNow();
     }
 
     public void basicTestConnectionObserveTelemetry(Security security,
                                                     LwM2MClientCredential credentials,
                                                     NetworkConfig coapConfig,
                                                     String endpoint) throws Exception {
-            createDeviceProfile(transportConfiguration);
-            Device device = createDevice(credentials);
+        createDeviceProfile(transportConfiguration);
+        Device device = createDevice(credentials);
 
-            SingleEntityFilter sef = new SingleEntityFilter();
-            sef.setSingleEntity(device.getId());
-            LatestValueCmd latestCmd = new LatestValueCmd();
-            latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "batteryLevel")));
-            EntityDataQuery edq = new EntityDataQuery(sef, new EntityDataPageLink(1, 0, null, null),
-                    Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+        SingleEntityFilter sef = new SingleEntityFilter();
+        sef.setSingleEntity(device.getId());
+        LatestValueCmd latestCmd = new LatestValueCmd();
+        latestCmd.setKeys(Collections.singletonList(new EntityKey(EntityKeyType.TIME_SERIES, "batteryLevel")));
+        EntityDataQuery edq = new EntityDataQuery(sef, new EntityDataPageLink(1, 0, null, null),
+                Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
 
-            EntityDataCmd cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
-            TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
-            wrapper.setEntityDataCmds(Collections.singletonList(cmd));
+        EntityDataCmd cmd = new EntityDataCmd(1, edq, null, latestCmd, null);
+        TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
+        wrapper.setEntityDataCmds(Collections.singletonList(cmd));
 
-            wsClient.send(mapper.writeValueAsString(wrapper));
-            wsClient.waitForReply();
+        wsClient.send(mapper.writeValueAsString(wrapper));
+        wsClient.waitForReply();
 
-            wsClient.registerWaitForUpdate();
-            this.endpoint = endpoint;
-            createNewClient (security, coapConfig, false);
-            String msg = wsClient.waitForUpdate();
+        wsClient.registerWaitForUpdate();
+        this.endpoint = endpoint;
+        createNewClient(security, coapConfig, false);
+        String msg = wsClient.waitForUpdate();
 
-            EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
-            Assert.assertEquals(1, update.getCmdId());
-            List<EntityData> eData = update.getUpdate();
-            Assert.assertNotNull(eData);
-            Assert.assertEquals(1, eData.size());
-            Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
-            Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES));
-            var tsValue = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("batteryLevel");
-            Assert.assertEquals(42, Long.parseLong(tsValue.getValue()));
+        EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        List<EntityData> eData = update.getUpdate();
+        Assert.assertNotNull(eData);
+        Assert.assertEquals(1, eData.size());
+        Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
+        Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES));
+        var tsValue = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("batteryLevel");
+        Assert.assertEquals(42, Long.parseLong(tsValue.getValue()));
     }
 
     protected void createDeviceProfile(String transportConfiguration) throws Exception {
@@ -256,15 +257,15 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         return clientCredentials;
     }
 
-    public void setResources (String[] resources) {
+    public void setResources(String[] resources) {
         this.resources = resources;
     }
 
-    public void setEndpoint (String endpoint) {
+    public void setEndpoint(String endpoint) {
         this.endpoint = endpoint;
     }
 
-    public void createNewClient (Security security, NetworkConfig coapConfig, boolean isRpc)  throws Exception {
+    public void createNewClient(Security security, NetworkConfig coapConfig, boolean isRpc) throws Exception {
         clientDestroy();
         client = new LwM2MTestClient(this.executor, this.endpoint);
         int clientPort = SocketUtils.findAvailableTcpPort();

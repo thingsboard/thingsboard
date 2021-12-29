@@ -19,7 +19,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.Link;
 import org.eclipse.leshan.core.node.LwM2mObject;
 import org.eclipse.leshan.core.node.LwM2mPath;
-import org.eclipse.leshan.core.request.*;
+import org.eclipse.leshan.core.request.BootstrapDeleteRequest;
+import org.eclipse.leshan.core.request.BootstrapDiscoverRequest;
+import org.eclipse.leshan.core.request.BootstrapDownlinkRequest;
+import org.eclipse.leshan.core.request.BootstrapReadRequest;
+import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.core.response.BootstrapDiscoverResponse;
 import org.eclipse.leshan.core.response.BootstrapReadResponse;
 import org.eclipse.leshan.core.response.LwM2mResponse;
@@ -29,10 +33,15 @@ import org.eclipse.leshan.server.bootstrap.BootstrapSession;
 import org.eclipse.leshan.server.bootstrap.BootstrapTaskProvider;
 import org.eclipse.leshan.server.bootstrap.BootstrapUtil;
 
-import java.net.InetSocketAddress;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.eclipse.leshan.server.bootstrap.BootstrapUtil.toWriteRequest;
 
@@ -57,7 +66,6 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
 
     @Override
     public Tasks getTasks(BootstrapSession session, List<LwM2mResponse> previousResponse) {
-
         BootstrapConfig config = store.get(session.getEndpoint(), session.getIdentity(), session);
         if (config == null) {
             return null;
@@ -72,7 +80,6 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
             Tasks tasks = new Tasks();
             if (this.supportedObjects == null) {
                 initSupportedObjectsDefault();
-
             }
             // add supportedObjects
             tasks.supportedObjects = this.supportedObjects;
@@ -114,7 +121,6 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
                 // create requests from config
                 tasks.requestsToSend = BootstrapUtil.toRequests(config,
                         config.contentFormat != null ? config.contentFormat : session.getContentFormat());
-
             }
             return tasks;
         }
@@ -133,18 +139,18 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
                     LwM2mPath path = new LwM2mPath(link.getUrl());
                     if (path.isObjectInstance()) {
                         if (link.getAttributes().containsKey("ssid")) {
-                            int serverId = Integer.valueOf(link.getAttributes().get("ssid"));
+                            int serverId = Integer.parseInt(link.getAttributes().get("ssid"));
                             if (!this.securityInstances.containsKey(serverId)) {
                                 this.securityInstances.put(serverId, path.getObjectInstanceId());
                             } else {
-                                log.error(String.format("Invalid lwm2mSecurityInstance by [{}]", path.getObjectInstanceId()));
+                                log.error("Invalid lwm2mSecurityInstance by [{}]", path.getObjectInstanceId());
                             }
                             this.securityInstances.put(Integer.valueOf(link.getAttributes().get("ssid")), path.getObjectInstanceId());
                         } else {
                             if (!this.securityInstances.containsKey(0)) {
                                 this.securityInstances.put(0, path.getObjectInstanceId());
                             } else {
-                                log.error(String.format("Invalid bootstrapSecurityInstance by [{}]", path.getObjectInstanceId()));
+                                log.error("Invalid bootstrapSecurityInstance by [{}]", path.getObjectInstanceId());
                             }
                         }
                     }
@@ -183,7 +189,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
         Link[] links = response.getObjectLinks();
         Arrays.stream(links).forEach(link -> {
             LwM2mPath path = new LwM2mPath(link.getUrl());
-            if (path != null && !path.isRoot() && path.getObjectId() < 3) {
+            if (!path.isRoot() && path.getObjectId() < 3) {
                 if (path.isObject()) {
                     String ver = link.getAttributes().get("ver") != null ? link.getAttributes().get("ver") : "1.0";
                     this.supportedObjects.put(path.getObjectId(), ver);
@@ -256,7 +262,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
             requestsWrite.add(toWriteRequest(acl.getKey(), acl.getValue(), contentFormat));
         }
         // handle delete
-        if (isBsServer & isLwServer) {
+        if (isBsServer && isLwServer) {
             requests.add(new BootstrapDeleteRequest("/0"));
             requests.add(new BootstrapDeleteRequest("/1"));
         } else {

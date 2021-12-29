@@ -86,7 +86,6 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
 
     private final TransportService transportService;
     private final LwM2mClientContext clientContext;
-    private final LwM2MTransportServerConfig config;
     private final LwM2mUplinkMsgHandler uplinkHandler;
     private final LwM2mDownlinkMsgHandler downlinkHandler;
     private final LwM2MTelemetryLogService logService;

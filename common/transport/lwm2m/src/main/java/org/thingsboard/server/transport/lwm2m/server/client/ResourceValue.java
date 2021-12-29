@@ -46,14 +46,13 @@ public class ResourceValue implements Serializable {
     public void updateLwM2mResource(LwM2mResource lwM2mResource, Mode mode) {
         if (lwM2mResource instanceof LwM2mSingleResource) {
             this.lwM2mResource = new TbLwM2MSingleResource(lwM2mResource.getId(), lwM2mResource.getValue(), lwM2mResource.getType());
-
         } else if (lwM2mResource instanceof LwM2mMultipleResource) {
             if (lwM2mResource.getInstances().values().size() > 0) {
                 Set <TbLwM2MResourceInstance> instancesSet = lwM2mResource.getInstances().values().stream().map(ResourceValue::toTbLwM2MResourceInstance).collect(Collectors.toSet());
                 if (Mode.REPLACE.equals(mode) && this.lwM2mResource != null) {
                     Map<Integer, LwM2mResourceInstance> oldInstances = this.lwM2mResource.getInstances();
                     oldInstances.values().forEach(v -> {
-                       if (instancesSet.stream().filter(vIns -> v.getId() == vIns.getId()).collect(Collectors.toList()).size() == 0){
+                       if (instancesSet.stream().noneMatch(vIns -> v.getId() == vIns.getId())){
                            instancesSet.add(toTbLwM2MResourceInstance(v));
                        }
                     });

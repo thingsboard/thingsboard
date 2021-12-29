@@ -330,7 +330,7 @@ public class LwM2mClient implements Serializable {
         Collection<LwM2mResource> resources = ConcurrentHashMap.newKeySet();
         Map<Integer, ResourceModel> resourceModels = modelProvider.getObjectModel(registration)
                 .getObjectModel(pathIds.getObjectId()).resources;
-        if (params != null && params instanceof Map && ((Map<?, ?>) params).size() > 0) {
+        if (params instanceof Map && ((Map) params).size() > 0) {
             Map paramsMap = (Map) params;
             resourceModels.forEach((resourceId, resourceModel) -> {
                 if (paramsMap.containsKey(String.valueOf(resourceId))) {
@@ -338,8 +338,8 @@ public class LwM2mClient implements Serializable {
                     LwM2mResource resource;
                     if (resourceModel.multiple) {
                         try {
-                            Map values = convertMultiResourceValuesFromRpcBody(value, resourceModel.type, pathRezIdVer);
-                            resource = LwM2mMultipleResource.newResource(resourceId, (Map<Integer, ?>) values, resourceModel.type);
+                            Map<Integer, Object> values = convertMultiResourceValuesFromRpcBody(value, resourceModel.type, pathRezIdVer);
+                            resource = LwM2mMultipleResource.newResource(resourceId, values, resourceModel.type);
                         } catch (Exception e) {
                             throw new IllegalArgumentException("Resource id=" + resourceId + ", class = " +
                                     value.getClass().getSimpleName() + ", value = " + value + " is bad. Value of Multi-Instance Resource must be in Json format!");

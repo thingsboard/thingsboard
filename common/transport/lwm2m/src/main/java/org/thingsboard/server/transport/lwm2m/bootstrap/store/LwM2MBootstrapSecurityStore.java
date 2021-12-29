@@ -68,7 +68,6 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
 
     @Override
     public Iterator<SecurityInfo> getAllByEndpoint(String endPoint) {
-        // TODO
         TbLwM2MSecurityInfo store = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfoByCredentialsId(endPoint, BOOTSTRAP);
         if (store.getBootstrapCredentialConfig() != null) {
             /* add value to store  from BootstrapJson */
@@ -79,7 +78,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
                 try {
                     boolean bootstrapServerUpdateEnable = ((Lwm2mDeviceProfileTransportConfiguration)store.getDeviceProfile().getProfileData().getTransportConfiguration()).isBootstrapServerUpdateEnable();
                     if (!bootstrapServerUpdateEnable) {
-                        Optional<Map.Entry<Integer, BootstrapConfig.ServerSecurity>> securities = bsConfigNew.security.entrySet().stream().filter(sec -> ((BootstrapConfig.ServerSecurity)sec.getValue()).bootstrapServer==true).findAny();
+                        Optional<Map.Entry<Integer, BootstrapConfig.ServerSecurity>> securities = bsConfigNew.security.entrySet().stream().filter(sec -> sec.getValue().bootstrapServer).findAny();
                         if (securities.isPresent()) {
                             bsConfigNew.security.entrySet().remove(securities.get());
                             int serverSortId = securities.get().getValue().serverId;
