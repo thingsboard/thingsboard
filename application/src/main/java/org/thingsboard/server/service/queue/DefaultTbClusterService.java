@@ -153,8 +153,8 @@ public class DefaultTbClusterService implements TbClusterService {
         } else {
             if (entityId.getEntityType().equals(EntityType.DEVICE)) {
                 DeviceProfile deviceProfile = deviceProfileCache.get(tenantId, new DeviceId(entityId.getId()));
-                if (tbMsg.getType().equals(ActionType.ENTITY_RELATION_ADD_OR_UPDATE.name())
-                        || tbMsg.getType().equals(ActionType.ENTITY_RELATION_DELETED.name())) {
+                if (tbMsg.getType().equals(DataConstants.ENTITY_RELATION_ADD_OR_UPDATE)
+                        || tbMsg.getType().equals(DataConstants.ENTITY_RELATION_DELETED)) {
                     if (isDuplicateMessage(tbMsg, deviceProfile)) {
                         return;
                     }

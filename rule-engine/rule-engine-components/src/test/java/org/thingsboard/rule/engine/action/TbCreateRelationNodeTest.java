@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.action;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -99,7 +98,7 @@ public class TbCreateRelationNodeTest {
     }
 
     @Test
-    public void testCreateNewRelation() throws TbNodeException, JsonProcessingException {
+    public void testCreateNewRelation() throws TbNodeException {
         init(createRelationNodeConfig());
 
         DeviceId deviceId = new DeviceId(Uuids.timeBased());
@@ -127,7 +126,7 @@ public class TbCreateRelationNodeTest {
     }
 
     @Test
-    public void testDeleteCurrentRelationsCreateNewRelation() throws TbNodeException, JsonProcessingException {
+    public void testDeleteCurrentRelationsCreateNewRelation() throws TbNodeException {
         init(createRelationNodeConfigWithRemoveCurrentRelations());
 
         DeviceId deviceId = new DeviceId(Uuids.timeBased());
@@ -159,7 +158,7 @@ public class TbCreateRelationNodeTest {
     }
 
     @Test
-    public void testCreateNewRelationAndChangeOriginator() throws TbNodeException, JsonProcessingException {
+    public void testCreateNewRelationAndChangeOriginator() throws TbNodeException {
         init(createRelationNodeConfigWithChangeOriginator());
 
         DeviceId deviceId = new DeviceId(Uuids.timeBased());
