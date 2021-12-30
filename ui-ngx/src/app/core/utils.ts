@@ -114,6 +114,10 @@ export function isNumeric(value: any): boolean {
   return (value - parseFloat(value) + 1) >= 0;
 }
 
+export function isBoolean(value: any): boolean {
+  return typeof value === 'boolean';
+}
+
 export function isString(value: any): boolean {
   return typeof value === 'string';
 }

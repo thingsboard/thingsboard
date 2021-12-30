@@ -87,6 +87,19 @@
             {{ 'dashboard.display-update-dashboard-image' | translate }}
           </mat-slide-toggle>
         </fieldset>
+        <mat-expansion-panel class="tb-settings">
+          <mat-expansion-panel-header>
+            <mat-panel-description fxLayoutAlign="end" translate>
+              dashboard.advanced-settings
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+          <ng-template matExpansionPanelContent>
+            <tb-css
+              label="{{ 'dashboard.dashboard-css' | translate }}"
+              formControlName="dashboardCss"
+            ></tb-css>
+          </ng-template>
+        </mat-expansion-panel>
       </div>
       <div *ngIf="gridSettings" [formGroup]="gridSettingsFormGroup" fxLayout="column">
         <fieldset class="fields-group" fxLayout="column" fxLayoutGap="8px">

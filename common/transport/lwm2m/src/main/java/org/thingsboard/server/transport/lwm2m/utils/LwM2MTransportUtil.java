@@ -352,39 +352,9 @@ public class LwM2MTransportUtil {
     }
 
     public static Map<Integer, Object> convertMultiResourceValuesFromRpcBody(Object value, ResourceModel.Type type, String versionedId) throws Exception {
-        String valueJsonStr = JacksonUtil.toString(value);
-        JsonElement element = JsonUtils.parse(valueJsonStr);
-        return convertMultiResourceValuesFromJson(element, type, versionedId);
-    }
-
-    public static Map convertMultiResourceValuesFromJson(JsonElement newValProto, ResourceModel.Type type, String versionedId)  throws Exception{
-        Map newValues = equalsMultiResourceValuesResourceType(type);
-        newValProto.getAsJsonObject().entrySet().forEach((obj) -> {
-            newValues.put(Integer.valueOf(obj.getKey()), LwM2mValueConverterImpl.getInstance().convertValue(obj.getValue().getAsString(),
-                    STRING, type, new LwM2mPath(fromVersionedIdToObjectId(versionedId))));
-        });
-        return newValues;
-    }
-
-    public static Map equalsMultiResourceValuesResourceType(ResourceModel.Type type) {
-        switch (type) {
-            case FLOAT:
-                return new HashMap<Integer, Float>();
-            case INTEGER:
-                return new HashMap<Integer, Integer>();
-            case STRING:
-                return new HashMap<Integer, String>();
-            case BOOLEAN:
-                return new HashMap<Integer, Boolean>();
-            case OPAQUE:
-                return new HashMap<Integer, byte[]>();
-            case TIME:
-                return new HashMap<Integer, Date>();
-            case OBJLNK:
-                return new HashMap<Integer, ObjectLink>();
-            default:
-                return null;
-        }
+            String valueJsonStr = JacksonUtil.toString(value);
+            JsonElement element = JsonUtils.parse(valueJsonStr);
+            return convertMultiResourceValuesFromJson(element, type, versionedId);
     }
 
     public static Object convertWriteAttributes(String type, Object value, DefaultLwM2mUplinkMsgHandler serviceImpl, String target) {

@@ -97,7 +97,8 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
           disabled: hideToolbar}, []],
         showUpdateDashboardImage: [
           {value: isUndefined(this.settings.showUpdateDashboardImage) ? true : this.settings.showUpdateDashboardImage,
-          disabled: hideToolbar}, []]
+          disabled: hideToolbar}, []],
+        dashboardCss: [isUndefined(this.settings.dashboardCss) ? '' : this.settings.dashboardCss, []],
       });
       this.settingsFormGroup.get('stateControllerId').valueChanges.subscribe(
         (stateControllerId: StateControllerId) => {

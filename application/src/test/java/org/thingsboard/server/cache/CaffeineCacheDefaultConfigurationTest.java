@@ -29,11 +29,11 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = CaffeineCacheDefaultConfigurationTestSuite.class, loader = SpringBootContextLoader.class)
+@ContextConfiguration(classes = CaffeineCacheDefaultConfigurationTest.class, loader = SpringBootContextLoader.class)
 @ComponentScan({"org.thingsboard.server.cache"})
 @EnableConfigurationProperties
 @Slf4j
-public class CaffeineCacheDefaultConfigurationTestSuite {
+public class CaffeineCacheDefaultConfigurationTest {
 
     @Autowired
     CaffeineCacheConfiguration caffeineCacheConfiguration;

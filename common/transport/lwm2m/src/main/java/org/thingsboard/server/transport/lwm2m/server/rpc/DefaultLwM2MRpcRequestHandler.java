@@ -276,11 +276,9 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
             ResourceModel resourceModel = client.getResourceModel(versionedId, modelProvider);
             if (resourceModel != null && resourceModel.multiple) {
                 try {
-                    Map value = convertMultiResourceValuesFromRpcBody(requestBody.getValue(), resourceModel.type, versionedId);
+                    Map<Integer, Object> value = convertMultiResourceValuesFromRpcBody(requestBody.getValue(), resourceModel.type, versionedId);
                     requestBody.setValue(value);
                 } catch (Exception e) {
-                    throw new IllegalArgumentException("Resource id=" + versionedId + ", class = " +
-                            requestBody.getValue().getClass().getSimpleName() + ", value = " + requestBody.getValue() + " is bad. Value of Multi-Instance Resource must be in Json format!");
                 }
             }
         }
@@ -302,7 +300,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
      */
     private void sendWriteCompositeRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, ContentFormat contentFormatComposite) {
         RpcWriteCompositeRequest rpcWriteCompositeRequest = JacksonUtil.fromString(requestMsg.getParams(), RpcWriteCompositeRequest.class);
-        Map validNodes = validateNodes(client, rpcWriteCompositeRequest.getNodes());
+        Map<String, Object> validNodes = validateNodes(client, rpcWriteCompositeRequest.getNodes());
         if (validNodes.size() > 0) {
             rpcWriteCompositeRequest.setNodes(validNodes);
             var mainCallback = new TbLwM2MWriteResponseCompositeCallback(uplinkHandler, logService, client, null);
@@ -313,22 +311,21 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         }
     }
 
-    private Map validateNodes(LwM2mClient client, Map nodes) {
-        Map newNodes = new LinkedHashMap();
+    private Map<String, Object> validateNodes(LwM2mClient client, Map<String, Object> nodes) {
+        Map<String, Object> newNodes = new LinkedHashMap<>();
         nodes.forEach((key, value) -> {
             String versionedId;
             try {
-                // validate key.toString()
-                LwM2mPath path = new LwM2mPath(fromVersionedIdToObjectId(key.toString()));
+                LwM2mPath path = new LwM2mPath(fromVersionedIdToObjectId(key));
                 if (path.isResource() || path.isResourceInstance()) {
-                    versionedId = key.toString();
+                    versionedId = key;
                 }
                 else {
                     throw new IllegalArgumentException(String.format("nodes: %s is not validate value. " +
                             "The WriteComposite operation is only used for SingleResources or/and ResourceInstance.", nodes.toString()));
                 }
             } catch (Exception e) {
-                versionedId = clientContext.getObjectIdByKeyNameFromProfile(client, key.toString());
+                versionedId = clientContext.getObjectIdByKeyNameFromProfile(client, key);
             }
             // validate value. Must be only primitive, not JsonObject or JsonArray
             try {

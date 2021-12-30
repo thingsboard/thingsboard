@@ -109,24 +109,6 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
     }
 
     /**
-     * id
-     * WriteReplace {"id":"/19/0/0","value":"0081"}..
-     */
-    @Test
-    public void testWriteReplaceValueMultipleResourceAsSingleResource_Result_BAD_REQUEST_Value_Multi_Instance_Resource_must_be_in_Json_format() throws Exception {
-        String objectInstanceIdVer_19 = (String) expectedObjectIdVerInstances.stream().filter(path -> ((String) path).contains("/" + BINARY_APP_DATA_CONTAINER)).findFirst().get();
-        String expectedPath = objectInstanceIdVer_19 + "/" + resourceId_0;
-        String expectedValue = "0081";
-        String actualResult = sendRPCWriteStringById("WriteReplace", expectedPath, expectedValue);
-        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
-        assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
-        String actualValues = rpcActualResult.get("error").asText();
-        String expected = "Value of Multi-Instance Resource must be in Json format!";
-        assertTrue(actualValues.contains(expected));
-    }
-
-
-    /**
      * bad: singleResource, operation="R" - only read
      * WriteReplace {"id":"/3/0/9","value":90}
      * {"result":"METHOD_NOT_ALLOWED"}
