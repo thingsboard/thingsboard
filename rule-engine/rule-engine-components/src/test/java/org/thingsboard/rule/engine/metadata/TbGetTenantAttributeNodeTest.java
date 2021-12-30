@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.util.concurrent.Futures;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,32 +36,33 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
-public class TbGetCustomerAttributeNodeTest extends AbstractAttributeNodeTest {
+public class TbGetTenantAttributeNodeTest extends AbstractAttributeNodeTest {
+
     User user = new User();
     Asset asset = new Asset();
     Device device = new Device();
 
     @Before
     public void initDataForTests() throws TbNodeException {
-        init(new TbGetCustomerAttributeNode());
-        user.setCustomerId(customerId);
+        init(new TbGetTenantAttributeNode());
+        user.setTenantId(tenantId);
         user.setId(new UserId(UUID.randomUUID()));
 
-        asset.setCustomerId(customerId);
+        asset.setTenantId(tenantId);
         asset.setId(new AssetId(UUID.randomUUID()));
 
-        device.setCustomerId(customerId);
-        device.setId(new DeviceId(Uuids.timeBased()));
+        device.setTenantId(tenantId);
+        device.setId(new DeviceId(UUID.randomUUID()));
     }
 
     @Override
     protected TbEntityGetAttrNode getEmptyNode() {
-        return new TbGetCustomerAttributeNode();
+        return new TbGetTenantAttributeNode();
     }
 
     @Override
     EntityId getEntityId() {
-        return customerId;
+        return tenantId;
     }
 
     @Test
@@ -86,7 +86,7 @@ public class TbGetCustomerAttributeNodeTest extends AbstractAttributeNodeTest {
 
     @Test
     public void customerAttributeAddedInMetadata() {
-        entityAttributeAddedInMetadata(customerId, "CUSTOMER");
+        entityAttributeAddedInMetadata(tenantId, "TENANT");
     }
 
     @Test
