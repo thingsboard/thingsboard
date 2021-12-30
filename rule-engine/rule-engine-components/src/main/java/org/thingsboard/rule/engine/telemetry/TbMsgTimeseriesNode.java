@@ -49,7 +49,7 @@ import java.util.concurrent.TimeUnit;
                 "Timestamp in milliseconds will be taken from metadata.ts, otherwise 'now' timestamp will be applied. " +
                 "Allows stopping updating values for incoming keys in the latest ts_kv table if 'skipLatestPersistence' is set to true.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeTimeseriesConfig",
+        configDirective = "tbActionNodeTimeseriesConfig!",
         icon = "file_upload"
 )
 public class TbMsgTimeseriesNode implements TbNode {
@@ -77,7 +77,7 @@ public class TbMsgTimeseriesNode implements TbNode {
             ctx.tellFailure(msg, new IllegalArgumentException("Unsupported msg type: " + msg.getType()));
             return;
         }
-        long ts = getTs(msg);
+        long ts = config.isSaveWithMsgTs() ? msg.getTs() : getTs(msg);
         String src = msg.getData();
         Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToTelemetry(new JsonParser().parse(src), ts);
         if (tsKvMap.isEmpty()) {
