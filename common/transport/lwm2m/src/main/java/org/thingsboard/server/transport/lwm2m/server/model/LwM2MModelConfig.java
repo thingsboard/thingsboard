@@ -20,7 +20,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.device.data.lwm2m.ObjectAttributes;
+import org.thingsboard.server.common.data.device.profile.lwm2m.ObjectAttributes;
 
 import java.util.HashSet;
 import java.util.Map;

@@ -18,18 +18,18 @@ package org.thingsboard.server.transport.lwm2m.server.adaptors;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 
 import java.util.Collection;
 import java.util.Random;
 
 @Slf4j
 @Component("LwM2MJsonAdaptor")
-@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true' )|| ('${service.type:null}'=='monolith' && '${transport.lwm2m.enabled}'=='true')")
+@TbLwM2mTransportComponent
 public class LwM2MJsonAdaptor implements LwM2MTransportAdaptor  {
 
     @Override

@@ -67,6 +67,8 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
 
   displayTransportConfiguration: boolean;
 
+  isTransportTypeChanged = false;
+
   serviceType = ServiceType.TB_RULE_ENGINE;
 
   deviceProfileId: EntityId;
@@ -158,6 +160,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     const deviceTransportType: DeviceTransportType = form.get('transportType').value;
     this.displayTransportConfiguration = deviceTransportType &&
       deviceTransportTypeConfigurationInfoMap.get(deviceTransportType).hasProfileConfiguration;
+    this.isTransportTypeChanged = true;
     let profileData: DeviceProfileData = form.getRawValue().profileData;
     if (!profileData) {
       profileData = {

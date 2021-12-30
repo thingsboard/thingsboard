@@ -726,7 +726,7 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
     public synchronized void start() {
         if (!started) {
             started = true;
-            cleanerTask = schedExecutor.scheduleAtFixedRate(new TbLwM2mRedisRegistrationStore.Cleaner(), cleanPeriod, cleanPeriod, TimeUnit.SECONDS);
+            cleanerTask = schedExecutor.scheduleAtFixedRate(new Cleaner(), cleanPeriod, cleanPeriod, TimeUnit.SECONDS);
         }
     }
 
