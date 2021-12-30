@@ -48,7 +48,6 @@ public class DefaultGatewayDeviceStateService implements GatewayDeviceStateServi
     private final static String DEVICE_RENAMED_METHOD_NAME = "gateway_device_renamed";
     private final static String DEVICE_DELETED_METHOD_NAME = "gateway_device_deleted";
 
-
     @Value("${server.rest.server_side_rpc.min_timeout:5000}")
     protected long minTimeout;
 
@@ -62,13 +61,10 @@ public class DefaultGatewayDeviceStateService implements GatewayDeviceStateServi
     @Autowired
     private TbCoreDeviceRpcService deviceRpcService;
 
-
     @Override
     public void update(Device device, Device oldDevice) {
-        List<EntityRelation> relationToGatewayList = relationService.findByFromAndType(TenantId.SYS_TENANT_ID, device.getId(), DataConstants.LAST_CONNECTED_GATEWAY, RelationTypeGroup.COMMON);
-        if (!relationToGatewayList.isEmpty()) {
-            EntityRelation relationToGateway = relationToGatewayList.get(0);
-            Device gatewayDevice = deviceService.findDeviceById(device.getTenantId(), (DeviceId) relationToGateway.getTo());
+        Device gatewayDevice = findGatewayDeviceByRelationFromDevice(device);
+        if (gatewayDevice != null) {
             ObjectNode renamedDeviceNode = JacksonUtil.newObjectNode();
             renamedDeviceNode.put(device.getName(), oldDevice.getName());
             ToDeviceRpcRequest rpcRequest = formDeviceToGatewayRPCRequest(gatewayDevice, renamedDeviceNode, DEVICE_RENAMED_METHOD_NAME);
@@ -81,10 +77,8 @@ public class DefaultGatewayDeviceStateService implements GatewayDeviceStateServi
 
     @Override
     public void delete(Device device) {
-        List<EntityRelation> relationToGatewayList = relationService.findByFromAndType(TenantId.SYS_TENANT_ID, device.getId(), DataConstants.LAST_CONNECTED_GATEWAY, RelationTypeGroup.COMMON);
-        if (!relationToGatewayList.isEmpty()) {
-            EntityRelation relationToGateway = relationToGatewayList.get(0);
-            Device gatewayDevice = deviceService.findDeviceById(device.getTenantId(), (DeviceId) relationToGateway.getTo());
+        Device gatewayDevice = findGatewayDeviceByRelationFromDevice(device);
+        if (gatewayDevice != null) {
             TextNode deletedDeviceNode = new TextNode(device.getName());
             ToDeviceRpcRequest rpcRequest = formDeviceToGatewayRPCRequest(gatewayDevice, deletedDeviceNode, DEVICE_DELETED_METHOD_NAME);
             deviceRpcService.processRestApiRpcRequest(rpcRequest, fromDeviceRpcResponse -> {
@@ -108,5 +102,14 @@ public class DefaultGatewayDeviceStateService implements GatewayDeviceStateServi
                 null,
                 null
         );
+    }
+
+    private Device findGatewayDeviceByRelationFromDevice(Device device) {
+        List<EntityRelation> relationToGatewayList = relationService.findByFromAndType(TenantId.SYS_TENANT_ID, device.getId(), DataConstants.LAST_CONNECTED_GATEWAY, RelationTypeGroup.COMMON);
+        if (!relationToGatewayList.isEmpty()) {
+            EntityRelation relationToGateway = relationToGatewayList.get(0);
+            return deviceService.findDeviceById(device.getTenantId(), (DeviceId) relationToGateway.getTo());
+        }
+        return null;
     }
 }
