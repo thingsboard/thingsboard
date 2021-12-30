@@ -26,6 +26,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by Valerii Sosliuk on 5/12/2017.
@@ -146,4 +148,12 @@ public class JacksonUtil {
         return OBJECT_MAPPER.treeToValue(tree, type);
     }
 
+    public static <T> byte[] writeValueAsBytes(T value) {
+        try {
+            return OBJECT_MAPPER.writeValueAsBytes(value);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("The given Json object value: "
+                    + value + " cannot be transformed to a String", e);
+        }
+    }
 }

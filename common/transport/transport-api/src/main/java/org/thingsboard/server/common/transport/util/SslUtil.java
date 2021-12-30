@@ -33,6 +33,6 @@ public class SslUtil {
 
     public static String getCertificateString(Certificate cert)
             throws CertificateEncodingException {
-        return EncryptionUtil.trimNewLines(Base64Utils.encodeToString(cert.getEncoded()));
+        return EncryptionUtil.certTrimNewLines(Base64Utils.encodeToString(cert.getEncoded()));
     }
 }

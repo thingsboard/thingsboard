@@ -14,20 +14,29 @@
 # limitations under the License.
 #
 
-FROM thingsboard/base
+FROM node:16.13.1-bullseye-slim
 
-COPY start-web-ui.sh ${pkg.name}.deb /tmp/
+COPY start-web-ui.sh /tmp/
 
 RUN chmod a+x /tmp/*.sh \
     && mv /tmp/start-web-ui.sh /usr/bin
 
-RUN yes | dpkg -i /tmp/${pkg.name}.deb
-RUN rm /tmp/${pkg.name}.deb
+ENV NODE_ENV production
+ENV DOCKER_MODE true
 
-RUN systemctl --no-reload disable --now ${pkg.name}.service > /dev/null 2>&1 || :
+WORKDIR ${pkg.installFolder}
 
-RUN chmod 555 ${pkg.installFolder}/bin/${pkg.name}
+COPY ["src/package.json", "src/yarn.lock", "./"]
 
-USER ${pkg.user}
+COPY package/linux/conf ./conf
+COPY package/linux/conf ./config
+COPY web ./web
+COPY src/server.js ./
+
+RUN chown -R node:node ${pkg.installFolder}
+
+RUN yarn install --production && yarn cache clean --all
+
+USER node
 
 CMD ["start-web-ui.sh"]

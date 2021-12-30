@@ -25,7 +25,6 @@ import com.google.protobuf.ByteString;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.common.data.ApiUsageState;
@@ -37,6 +36,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
@@ -106,6 +106,9 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.service.transport.BasicCredentialsValidationResult.PASSWORD_MISMATCH;
+import static org.thingsboard.server.service.transport.BasicCredentialsValidationResult.VALID;
 
 /**
  * Created by ashvayka on 05.10.18.
@@ -181,71 +184,89 @@ public class DefaultTransportApiService implements TransportApiService {
         //TODO: Make async and enable caching
         DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(credentialsId);
         if (credentials != null && credentials.getCredentialsType() == credentialsType) {
-            return getDeviceInfo(credentials.getDeviceId(), credentials);
+            return getDeviceInfo(credentials);
         } else {
             return getEmptyTransportApiResponseFuture();
         }
     }
 
     private ListenableFuture<TransportApiResponseMsg> validateCredentials(TransportProtos.ValidateBasicMqttCredRequestMsg mqtt) {
-        DeviceCredentials credentials = null;
-        if (!StringUtils.isEmpty(mqtt.getUserName())) {
-            credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(mqtt.getUserName());
-            if (credentials != null) {
-                if (credentials.getCredentialsType() == DeviceCredentialsType.ACCESS_TOKEN) {
-                    return getDeviceInfo(credentials.getDeviceId(), credentials);
-                } else if (credentials.getCredentialsType() == DeviceCredentialsType.MQTT_BASIC) {
-                    if (!checkMqttCredentials(mqtt, credentials)) {
-                        credentials = null;
-                    }
-                } else {
-                    return getEmptyTransportApiResponseFuture();
-                }
-            }
-            if (credentials == null) {
-                credentials = checkMqttCredentials(mqtt, EncryptionUtil.getSha3Hash("|", mqtt.getClientId(), mqtt.getUserName()));
-            }
-        }
-        if (credentials == null) {
+        DeviceCredentials credentials;
+        if (StringUtils.isEmpty(mqtt.getUserName())) {
             credentials = checkMqttCredentials(mqtt, EncryptionUtil.getSha3Hash(mqtt.getClientId()));
-        }
-        if (credentials != null) {
-            return getDeviceInfo(credentials.getDeviceId(), credentials);
+            if (credentials != null) {
+                return getDeviceInfo(credentials);
+            } else {
+                return getEmptyTransportApiResponseFuture();
+            }
         } else {
-            return getEmptyTransportApiResponseFuture();
+            credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(
+                    EncryptionUtil.getSha3Hash("|", mqtt.getClientId(), mqtt.getUserName()));
+            if (checkIsMqttCredentials(credentials)) {
+                var validationResult = validateMqttCredentials(mqtt, credentials);
+                if (VALID.equals(validationResult)) {
+                    return getDeviceInfo(credentials);
+                } else if (PASSWORD_MISMATCH.equals(validationResult)) {
+                    return getEmptyTransportApiResponseFuture();
+                } else {
+                    return validateUserNameCredentials(mqtt);
+                }
+            } else {
+                return validateUserNameCredentials(mqtt);
+            }
         }
     }
 
+    private ListenableFuture<TransportApiResponseMsg> validateUserNameCredentials(TransportProtos.ValidateBasicMqttCredRequestMsg mqtt) {
+        DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(mqtt.getUserName());
+        if (credentials != null) {
+            switch (credentials.getCredentialsType()) {
+                case ACCESS_TOKEN:
+                    return getDeviceInfo(credentials);
+                case MQTT_BASIC:
+                    if (VALID.equals(validateMqttCredentials(mqtt, credentials))) {
+                        return getDeviceInfo(credentials);
+                    } else {
+                        return getEmptyTransportApiResponseFuture();
+                    }
+            }
+        }
+        return getEmptyTransportApiResponseFuture();
+    }
+
+    private static boolean checkIsMqttCredentials(DeviceCredentials credentials) {
+        return credentials != null && DeviceCredentialsType.MQTT_BASIC.equals(credentials.getCredentialsType());
+    }
+
     private DeviceCredentials checkMqttCredentials(TransportProtos.ValidateBasicMqttCredRequestMsg clientCred, String credId) {
-        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(credId);
+        return checkMqttCredentials(clientCred, deviceCredentialsService.findDeviceCredentialsByCredentialsId(credId));
+    }
+
+    private DeviceCredentials checkMqttCredentials(TransportProtos.ValidateBasicMqttCredRequestMsg clientCred, DeviceCredentials deviceCredentials) {
         if (deviceCredentials != null && deviceCredentials.getCredentialsType() == DeviceCredentialsType.MQTT_BASIC) {
-            if (!checkMqttCredentials(clientCred, deviceCredentials)) {
-                return null;
-            } else {
+            if (VALID.equals(validateMqttCredentials(clientCred, deviceCredentials))) {
                 return deviceCredentials;
             }
         }
         return null;
     }
 
-    private boolean checkMqttCredentials(TransportProtos.ValidateBasicMqttCredRequestMsg clientCred, DeviceCredentials deviceCredentials) {
+    private BasicCredentialsValidationResult validateMqttCredentials(TransportProtos.ValidateBasicMqttCredRequestMsg clientCred, DeviceCredentials deviceCredentials) {
         BasicMqttCredentials dbCred = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(), BasicMqttCredentials.class);
         if (!StringUtils.isEmpty(dbCred.getClientId()) && !dbCred.getClientId().equals(clientCred.getClientId())) {
-            return false;
+            return BasicCredentialsValidationResult.HASH_MISMATCH;
         }
         if (!StringUtils.isEmpty(dbCred.getUserName()) && !dbCred.getUserName().equals(clientCred.getUserName())) {
-            return false;
+            return BasicCredentialsValidationResult.HASH_MISMATCH;
         }
         if (!StringUtils.isEmpty(dbCred.getPassword())) {
             if (StringUtils.isEmpty(clientCred.getPassword())) {
-                return false;
+                return BasicCredentialsValidationResult.PASSWORD_MISMATCH;
             } else {
-                if (!dbCred.getPassword().equals(clientCred.getPassword())) {
-                    return false;
-                }
+                return dbCred.getPassword().equals(clientCred.getPassword()) ? VALID : BasicCredentialsValidationResult.PASSWORD_MISMATCH;
             }
         }
-        return true;
+        return VALID;
     }
 
     private ListenableFuture<TransportApiResponseMsg> handle(GetOrCreateDeviceFromGatewayRequestMsg requestMsg) {
@@ -437,10 +458,10 @@ public class DefaultTransportApiService implements TransportApiService {
                 .build());
     }
 
-    private ListenableFuture<TransportApiResponseMsg> getDeviceInfo(DeviceId deviceId, DeviceCredentials credentials) {
-        return Futures.transform(deviceService.findDeviceByIdAsync(TenantId.SYS_TENANT_ID, deviceId), device -> {
+    private ListenableFuture<TransportApiResponseMsg> getDeviceInfo(DeviceCredentials credentials) {
+        return Futures.transform(deviceService.findDeviceByIdAsync(TenantId.SYS_TENANT_ID, credentials.getDeviceId()), device -> {
             if (device == null) {
-                log.trace("[{}] Failed to lookup device by id", deviceId);
+                log.trace("[{}] Failed to lookup device by id", credentials.getDeviceId());
                 return getEmptyTransportApiResponse();
             }
             try {
@@ -458,7 +479,7 @@ public class DefaultTransportApiService implements TransportApiService {
                 return TransportApiResponseMsg.newBuilder()
                         .setValidateCredResponseMsg(builder.build()).build();
             } catch (JsonProcessingException e) {
-                log.warn("[{}] Failed to lookup device by id", deviceId, e);
+                log.warn("[{}] Failed to lookup device by id", credentials.getDeviceId(), e);
                 return getEmptyTransportApiResponse();
             }
         }, MoreExecutors.directExecutor());

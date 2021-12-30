@@ -20,7 +20,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class RpcWriteReplaceRequest extends IdOrKeyRequest {
+public class RpcWriteReplaceRequest extends LwM2MRpcRequestHeader {
 
     private Object value;
 

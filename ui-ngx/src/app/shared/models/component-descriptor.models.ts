@@ -21,7 +21,8 @@ export enum ComponentType {
   FILTER = 'FILTER',
   TRANSFORMATION = 'TRANSFORMATION',
   ACTION = 'ACTION',
-  EXTERNAL = 'EXTERNAL'
+  EXTERNAL = 'EXTERNAL',
+  FLOW = 'FLOW'
 }
 
 export enum ComponentScope {

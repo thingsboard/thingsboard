@@ -210,6 +210,10 @@ public class ThingsboardInstallService {
                             log.info("Upgrading ThingsBoard from version 3.3.0 to 3.3.1 ...");
                         case "3.3.1":
                             log.info("Upgrading ThingsBoard from version 3.3.1 to 3.3.2 ...");
+                        case "3.3.2":
+                            log.info("Upgrading ThingsBoard from version 3.3.2 to 3.3.3 ...");
+                            databaseEntitiesUpgradeService.upgradeDatabase("3.3.2");
+                            dataUpdateService.updateData("3.3.2");
                             log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();
                             break;

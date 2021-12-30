@@ -15,15 +15,18 @@
  */
 package org.thingsboard.server.common.transport.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
+
 import java.util.List;
 
 public class JsonUtils {
 
     private static final JsonParser jsonParser = new JsonParser();
+    private static final ObjectMapper json = new ObjectMapper();
 
     public static JsonObject getJsonObject(List<KeyValueProto> tsKv) {
         JsonObject json = new JsonObject();
@@ -52,4 +55,5 @@ public class JsonUtils {
     public static JsonElement parse(String params) {
         return jsonParser.parse(params);
     }
+
 }

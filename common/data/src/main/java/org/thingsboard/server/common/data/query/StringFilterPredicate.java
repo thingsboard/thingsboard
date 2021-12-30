@@ -38,6 +38,8 @@ public class StringFilterPredicate implements SimpleKeyFilterPredicate<String> {
         STARTS_WITH,
         ENDS_WITH,
         CONTAINS,
-        NOT_CONTAINS
+        NOT_CONTAINS,
+        IN,
+        NOT_IN
     }
 }

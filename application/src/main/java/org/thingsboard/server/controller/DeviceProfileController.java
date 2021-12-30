@@ -219,7 +219,6 @@ public class DeviceProfileController extends BaseController {
                     isSoftwareChanged = true;
                 }
             }
-
             DeviceProfile savedDeviceProfile = checkNotNull(deviceProfileService.saveDeviceProfile(deviceProfile));
 
             tbClusterService.onDeviceProfileChange(savedDeviceProfile, null);

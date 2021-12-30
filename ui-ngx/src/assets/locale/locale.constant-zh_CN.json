@@ -1081,8 +1081,6 @@
     "password": "密码",
     "public": "公开",
     "remove-alias": "删除设备别名",
-    "rsa-key": "RSA公钥",
-    "rsa-key-required": "RSA公钥必填",
     "search": "查找设备",
     "secret": "密钥",
     "secret-required": "密钥必填",

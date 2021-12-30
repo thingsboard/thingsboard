@@ -57,6 +57,9 @@ export class RuleNodeLinkComponent implements ControlValueAccessor, OnInit {
   @Input()
   allowedLabels: {[label: string]: LinkLabel};
 
+  @Input()
+  sourceRuleChainId: string;
+
   ruleNodeLinkFormGroup: FormGroup;
 
   modelValue: FcRuleEdge;

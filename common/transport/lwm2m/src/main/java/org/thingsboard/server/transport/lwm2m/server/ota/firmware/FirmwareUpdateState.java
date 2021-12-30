@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.ota.firmware;
 
+import lombok.Getter;
+
 /**
  * /** State R
  * 0: Idle (before downloading or after successful updating)
@@ -28,8 +30,10 @@ public enum FirmwareUpdateState {
     DOWNLOADED(2, "Downloaded"),
     UPDATING(3, "Updating");
 
-    public int code;
-    public String type;
+    @Getter
+    private int code;
+    @Getter
+    private String type;
 
     FirmwareUpdateState(int code, String type) {
         this.code = code;

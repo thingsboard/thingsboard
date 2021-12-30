@@ -501,8 +501,9 @@ public final class EdgeGrpcSession implements Closeable {
 
     private ListenableFuture<List<Void>> updateQueueStartTs(Long newStartTs) {
         log.trace("[{}] updating QueueStartTs [{}][{}]", this.sessionId, edge.getId(), newStartTs);
-        newStartTs = ++newStartTs; // increments ts by 1 - next edge event search starts from current offset + 1
-        List<AttributeKvEntry> attributes = Collections.singletonList(new BaseAttributeKvEntry(new LongDataEntry(QUEUE_START_TS_ATTR_KEY, newStartTs), System.currentTimeMillis()));
+        List<AttributeKvEntry> attributes = Collections.singletonList(
+                new BaseAttributeKvEntry(
+                        new LongDataEntry(QUEUE_START_TS_ATTR_KEY, newStartTs), System.currentTimeMillis()));
         return ctx.getAttributesService().save(edge.getTenantId(), edge.getId(), DataConstants.SERVER_SCOPE, attributes);
     }
 

@@ -60,6 +60,12 @@ public class RuleChainActor extends ComponentActor<RuleChainId, RuleChainActorMe
             case RULE_CHAIN_TO_RULE_CHAIN_MSG:
                 processor.onRuleChainToRuleChainMsg((RuleChainToRuleChainMsg) msg);
                 break;
+            case RULE_CHAIN_INPUT_MSG:
+                processor.onRuleChainInputMsg((RuleChainInputMsg) msg);
+                break;
+            case RULE_CHAIN_OUTPUT_MSG:
+                processor.onRuleChainOutputMsg((RuleChainOutputMsg) msg);
+                break;
             case PARTITION_CHANGE_MSG:
                 processor.onPartitionChangeMsg((PartitionChangeMsg) msg);
                 break;

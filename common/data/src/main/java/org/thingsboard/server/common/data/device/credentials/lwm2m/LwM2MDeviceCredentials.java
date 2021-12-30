@@ -21,6 +21,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class LwM2MDeviceCredentials {
-    private LwM2MClientCredentials client;
-    private LwM2MBootstrapCredentials bootstrap;
+    private LwM2MClientCredential client;
+    private LwM2MBootstrapClientCredentials bootstrap;
 }
