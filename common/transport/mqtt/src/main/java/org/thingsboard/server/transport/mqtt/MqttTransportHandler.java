@@ -42,6 +42,7 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -894,7 +895,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private void checkGatewaySession(SessionMetaData sessionMetaData) {
         TransportDeviceInfo device = deviceSessionCtx.getDeviceInfo();
         try {
-            JsonNode infoNode = context.getMapper().readTree(device.getAdditionalInfo());
+            JsonNode infoNode = JacksonUtil.getObjectMapper().readTree(device.getAdditionalInfo());
             if (infoNode != null) {
                 JsonNode gatewayNode = infoNode.get("gateway");
                 if (gatewayNode != null && gatewayNode.asBoolean()) {

@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.mail;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -100,8 +99,7 @@ public class TbMsgToEmailNodeTest {
             config.setSubjectTemplate("Hi ${username} there");
             config.setBodyTemplate("${name} is to high. Current ${passed} and ${count}");
             config.setMailBodyType("false");
-            ObjectMapper mapper = JacksonUtil.getObjectMapper();
-            TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+            TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.getObjectMapper().valueToTree(config));
 
             emailNode = new TbMsgToEmailNode();
             emailNode.init(ctx, nodeConfiguration);

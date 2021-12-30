@@ -33,6 +33,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.http.ResponseEntity;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.mqtt.MqttClient;
 import org.thingsboard.mqtt.MqttClientConfig;
@@ -183,7 +184,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
 
         ResponseEntity sharedAttributesResponse = restClient.getRestTemplate()
                 .postForEntity(HTTPS_URL + "/api/plugins/telemetry/DEVICE/{deviceId}/SHARED_SCOPE",
-                        mapper.readTree(sharedAttributes.toString()), ResponseEntity.class,
+                        JacksonUtil.getObjectMapper().readTree(sharedAttributes.toString()), ResponseEntity.class,
                         createdDevice.getId());
         Assert.assertTrue(sharedAttributesResponse.getStatusCode().is2xxSuccessful());
         MqttEvent sharedAttributeEvent = listener.getEvents().poll(10, TimeUnit.SECONDS);
@@ -220,13 +221,13 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
 
         ResponseEntity sharedAttributesResponse = restClient.getRestTemplate()
                 .postForEntity(HTTPS_URL + "/api/plugins/telemetry/DEVICE/{deviceId}/SHARED_SCOPE",
-                        mapper.readTree(sharedAttributes.toString()), ResponseEntity.class,
+                        JacksonUtil.getObjectMapper().readTree(sharedAttributes.toString()), ResponseEntity.class,
                         createdDevice.getId());
         Assert.assertTrue(sharedAttributesResponse.getStatusCode().is2xxSuccessful());
 
         MqttEvent event = listener.getEvents().poll(10, TimeUnit.SECONDS);
         Assert.assertEquals(sharedAttributeValue,
-                mapper.readValue(Objects.requireNonNull(event).getMessage(), JsonNode.class).get("data").get(sharedAttributeName).asText());
+                JacksonUtil.getObjectMapper().readValue(Objects.requireNonNull(event).getMessage(), JsonNode.class).get("data").get(sharedAttributeName).asText());
 
         // Update the shared attribute value
         JsonObject updatedSharedAttributes = new JsonObject();
@@ -239,13 +240,13 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
 
         ResponseEntity updatedSharedAttributesResponse = restClient.getRestTemplate()
                 .postForEntity(HTTPS_URL + "/api/plugins/telemetry/DEVICE/{deviceId}/SHARED_SCOPE",
-                        mapper.readTree(updatedSharedAttributes.toString()), ResponseEntity.class,
+                        JacksonUtil.getObjectMapper().readTree(updatedSharedAttributes.toString()), ResponseEntity.class,
                         createdDevice.getId());
         Assert.assertTrue(updatedSharedAttributesResponse.getStatusCode().is2xxSuccessful());
 
         event = listener.getEvents().poll(10, TimeUnit.SECONDS);
         Assert.assertEquals(updatedSharedAttributeValue,
-                mapper.readValue(Objects.requireNonNull(event).getMessage(), JsonNode.class).get("data").get(sharedAttributeName).asText());
+                JacksonUtil.getObjectMapper().readValue(Objects.requireNonNull(event).getMessage(), JsonNode.class).get("data").get(sharedAttributeName).asText());
     }
 
     @Test
@@ -265,7 +266,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
             try {
                 return restClient.getRestTemplate()
                         .postForEntity(HTTPS_URL + "/api/rpc/twoway/{deviceId}",
-                                mapper.readTree(serverRpcPayload.toString()), String.class,
+                                JacksonUtil.getObjectMapper().readTree(serverRpcPayload.toString()), String.class,
                                 createdDevice.getId());
             } catch (IOException e) {
                 return ResponseEntity.badRequest().build();

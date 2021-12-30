@@ -20,6 +20,7 @@ import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.http.ResponseEntity;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.msa.AbstractContainerTest;
@@ -49,7 +50,7 @@ public class HttpClientTest extends AbstractContainerTest {
         WsClient wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
         ResponseEntity deviceTelemetryResponse = restClient.getRestTemplate()
                 .postForEntity(HTTPS_URL + "/api/v1/{credentialsId}/telemetry",
-                        mapper.readTree(createPayload().toString()),
+                        JacksonUtil.getObjectMapper().readTree(createPayload().toString()),
                         ResponseEntity.class,
                         deviceCredentials.getCredentialsId());
         Assert.assertTrue(deviceTelemetryResponse.getStatusCode().is2xxSuccessful());
@@ -77,14 +78,14 @@ public class HttpClientTest extends AbstractContainerTest {
         assertNotNull(accessToken);
 
         ResponseEntity deviceSharedAttributes = restClient.getRestTemplate()
-                .postForEntity(HTTPS_URL + "/api/plugins/telemetry/" + DEVICE + "/" + device.getId().toString() + "/attributes/" + SHARED_SCOPE, mapper.readTree(createPayload().toString()),
+                .postForEntity(HTTPS_URL + "/api/plugins/telemetry/" + DEVICE + "/" + device.getId().toString() + "/attributes/" + SHARED_SCOPE, JacksonUtil.getObjectMapper().readTree(createPayload().toString()),
                         ResponseEntity.class,
                         accessToken);
 
         Assert.assertTrue(deviceSharedAttributes.getStatusCode().is2xxSuccessful());
 
         ResponseEntity deviceClientsAttributes = restClient.getRestTemplate()
-                .postForEntity(HTTPS_URL + "/api/v1/" + accessToken + "/attributes/", mapper.readTree(createPayload().toString()),
+                .postForEntity(HTTPS_URL + "/api/v1/" + accessToken + "/attributes/", JacksonUtil.getObjectMapper().readTree(createPayload().toString()),
                         ResponseEntity.class,
                         accessToken);
 
@@ -99,15 +100,15 @@ public class HttpClientTest extends AbstractContainerTest {
 
         JsonNode all = allOptional.get();
         assertEquals(2, all.size());
-        assertEquals(mapper.readTree(createPayload().toString()), all.get("shared"));
-        assertEquals(mapper.readTree(createPayload().toString()), all.get("client"));
+        assertEquals(JacksonUtil.getObjectMapper().readTree(createPayload().toString()), all.get("shared"));
+        assertEquals(JacksonUtil.getObjectMapper().readTree(createPayload().toString()), all.get("client"));
 
         @SuppressWarnings("deprecation")
         Optional<JsonNode> sharedOptional = restClient.getAttributes(accessToken, null, "stringKey");
         assertTrue(sharedOptional.isPresent());
 
         JsonNode shared = sharedOptional.get();
-        assertEquals(shared.get("shared").get("stringKey"), mapper.readTree(createPayload().get("stringKey").toString()));
+        assertEquals(shared.get("shared").get("stringKey"), JacksonUtil.getObjectMapper().readTree(createPayload().get("stringKey").toString()));
         assertFalse(shared.has("client"));
 
         @SuppressWarnings("deprecation")
@@ -116,8 +117,8 @@ public class HttpClientTest extends AbstractContainerTest {
 
         JsonNode client = clientOptional.get();
         assertFalse(client.has("shared"));
-        assertEquals(mapper.readTree(createPayload().get("longKey").toString()), client.get("client").get("longKey"));
-        assertEquals(client.get("client").get("stringKey"), mapper.readTree(createPayload().get("stringKey").toString()));
+        assertEquals(JacksonUtil.getObjectMapper().readTree(createPayload().get("longKey").toString()), client.get("client").get("longKey"));
+        assertEquals(client.get("client").get("stringKey"), JacksonUtil.getObjectMapper().readTree(createPayload().get("stringKey").toString()));
 
         restClient.deleteDevice(device.getId());
     }

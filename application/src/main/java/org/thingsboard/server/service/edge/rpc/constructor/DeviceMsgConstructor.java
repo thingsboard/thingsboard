@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.edge.rpc.constructor;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
@@ -35,8 +34,6 @@ import java.util.UUID;
 @Component
 @TbCoreComponent
 public class DeviceMsgConstructor {
-
-    protected static final ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     public DeviceUpdateMsg constructDeviceUpdatedMsg(UpdateMsgType msgType, Device device, CustomerId customerId, String conflictName) {
         DeviceUpdateMsg.Builder builder = DeviceUpdateMsg.newBuilder()

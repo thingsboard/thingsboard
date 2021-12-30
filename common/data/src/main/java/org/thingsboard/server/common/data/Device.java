@@ -22,6 +22,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -173,7 +174,7 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         } else {
             if (deviceDataBytes != null) {
                 try {
-                    deviceData = mapper.readValue(new ByteArrayInputStream(deviceDataBytes), DeviceData.class);
+                    deviceData = JacksonUtil.getObjectMapper().readValue(new ByteArrayInputStream(deviceDataBytes), DeviceData.class);
                 } catch (IOException e) {
                     log.warn("Can't deserialize device data: ", e);
                     return null;
@@ -188,7 +189,7 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
     public void setDeviceData(DeviceData data) {
         this.deviceData = data;
         try {
-            this.deviceDataBytes = data != null ? mapper.writeValueAsBytes(data) : null;
+            this.deviceDataBytes = data != null ? JacksonUtil.getObjectMapper().writeValueAsBytes(data) : null;
         } catch (JsonProcessingException e) {
             log.warn("Can't serialize device data: ", e);
         }

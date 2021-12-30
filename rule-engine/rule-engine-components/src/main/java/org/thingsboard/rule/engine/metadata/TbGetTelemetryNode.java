@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -74,7 +73,6 @@ public class TbGetTelemetryNode implements TbNode {
     private TbGetTelemetryNodeConfiguration config;
     private List<String> tsKeyNames;
     private int limit;
-    private ObjectMapper mapper;
     private String fetchMode;
     private String orderByFetchAll;
     private Aggregation aggregation;
@@ -90,8 +88,6 @@ public class TbGetTelemetryNode implements TbNode {
             orderByFetchAll = ASC_ORDER;
         }
         aggregation = parseAggregationConfig(config.getAggregation());
-
-        mapper = JacksonUtil.getObjectMapperWithUnquotedFieldNames();
     }
 
     Aggregation parseAggregationConfig(String aggName) {
@@ -150,7 +146,7 @@ public class TbGetTelemetryNode implements TbNode {
     }
 
     private void process(List<TsKvEntry> entries, TbMsg msg, List<String> keys) {
-        ObjectNode resultNode = mapper.createObjectNode();
+        ObjectNode resultNode = JacksonUtil.getObjectMapperWithUnquotedFieldNames().createObjectNode();
         if (FETCH_MODE_ALL.equals(fetchMode)) {
             entries.forEach(entry -> processArray(resultNode, entry));
         } else {
@@ -173,14 +169,14 @@ public class TbGetTelemetryNode implements TbNode {
             ArrayNode arrayNode = (ArrayNode) node.get(entry.getKey());
             arrayNode.add(buildNode(entry));
         } else {
-            ArrayNode arrayNode = mapper.createArrayNode();
+            ArrayNode arrayNode = JacksonUtil.getObjectMapperWithUnquotedFieldNames().createArrayNode();
             arrayNode.add(buildNode(entry));
             node.set(entry.getKey(), arrayNode);
         }
     }
 
     private ObjectNode buildNode(TsKvEntry entry) {
-        ObjectNode obj = mapper.createObjectNode()
+        ObjectNode obj = JacksonUtil.getObjectMapperWithUnquotedFieldNames().createObjectNode()
                 .put("ts", entry.getTs());
         switch (entry.getDataType()) {
             case STRING:
@@ -197,7 +193,7 @@ public class TbGetTelemetryNode implements TbNode {
                 break;
             case JSON:
                 try {
-                    obj.set("value", mapper.readTree(entry.getJsonValue().get()));
+                    obj.set("value", JacksonUtil.getObjectMapperWithUnquotedFieldNames().readTree(entry.getJsonValue().get()));
                 } catch (IOException e) {
                     throw new JsonParseException("Can't parse jsonValue: " + entry.getJsonValue().get(), e);
                 }

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.audit.sink;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -52,8 +51,6 @@ public class ElasticsearchAuditLogSink implements AuditLogSink {
     private static final String TENANT_PLACEHOLDER = "@{TENANT}";
     private static final String DATE_PLACEHOLDER = "@{DATE}";
     private static final String INDEX_TYPE = "audit_log";
-
-    private final ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     @Value("${audit-log.sink.index_pattern}")
     private String indexPattern;
@@ -113,7 +110,7 @@ public class ElasticsearchAuditLogSink implements AuditLogSink {
     }
 
     private String createElasticJsonRecord(AuditLog auditLog) {
-        ObjectNode auditLogNode = mapper.createObjectNode();
+        ObjectNode auditLogNode = JacksonUtil.getObjectMapper().createObjectNode();
         auditLogNode.put("postDate", LocalDateTime.now().toString());
         auditLogNode.put("id", auditLog.getId().getId().toString());
         auditLogNode.put("entityName", auditLog.getEntityName());

@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
@@ -91,8 +90,6 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
     @Column(name = ModelConstants.ENTITY_VIEW_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
-    private static final ObjectMapper mapper = JacksonUtil.getObjectMapper();
-
     public AbstractEntityViewEntity() {
         super();
     }
@@ -115,7 +112,7 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
         this.type = entityView.getType();
         this.name = entityView.getName();
         try {
-            this.keys = mapper.writeValueAsString(entityView.getKeys());
+            this.keys = JacksonUtil.getObjectMapper().writeValueAsString(entityView.getKeys());
         } catch (IOException e) {
             log.error("Unable to serialize entity view keys!", e);
         }
@@ -167,7 +164,7 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
         entityView.setType(type);
         entityView.setName(name);
         try {
-            entityView.setKeys(mapper.readValue(keys, TelemetryEntityView.class));
+            entityView.setKeys(JacksonUtil.getObjectMapper().readValue(keys, TelemetryEntityView.class));
         } catch (IOException e) {
             log.error("Unable to read entity view keys!", e);
         }

@@ -16,7 +16,6 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -156,8 +155,6 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 public abstract class BaseController {
 
     /*Swagger UI description*/
-
-    private static final ObjectMapper json = JacksonUtil.getObjectMapper();
 
     @Autowired
     private ThingsboardErrorResponseHandler errorResponseHandler;
@@ -834,7 +831,7 @@ public abstract class BaseController {
 
     protected <E extends HasName> String entityToStr(E entity) {
         try {
-            return json.writeValueAsString(json.valueToTree(entity));
+            return JacksonUtil.getObjectMapper().writeValueAsString(JacksonUtil.getObjectMapper().valueToTree(entity));
         } catch (JsonProcessingException e) {
             log.warn("[{}] Failed to convert entity to string!", entity, e);
         }
@@ -845,7 +842,7 @@ public abstract class BaseController {
         try {
             if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) &&
                     !relation.getTo().getEntityType().equals(EntityType.EDGE)) {
-                sendNotificationMsgToEdgeService(tenantId, null, null, json.writeValueAsString(relation), EdgeEventType.RELATION, action);
+                sendNotificationMsgToEdgeService(tenantId, null, null, JacksonUtil.getObjectMapper().writeValueAsString(relation), EdgeEventType.RELATION, action);
             }
         } catch (Exception e) {
             log.warn("Failed to push relation to core: {}", relation, e);
@@ -866,7 +863,7 @@ public abstract class BaseController {
 
     protected void sendAlarmDeleteNotificationMsg(TenantId tenantId, EntityId entityId, List<EdgeId> edgeIds, Alarm alarm) {
         try {
-            sendDeleteNotificationMsg(tenantId, entityId, edgeIds, json.writeValueAsString(alarm));
+            sendDeleteNotificationMsg(tenantId, entityId, edgeIds, JacksonUtil.getObjectMapper().writeValueAsString(alarm));
         } catch (Exception e) {
             log.warn("Failed to push delete alarm msg to core: {}", alarm, e);
         }
@@ -874,7 +871,7 @@ public abstract class BaseController {
 
     protected void sendEntityAssignToCustomerNotificationMsg(TenantId tenantId, EntityId entityId, CustomerId customerId, EdgeEventActionType action) {
         try {
-            sendNotificationMsgToEdgeService(tenantId, null, entityId, json.writeValueAsString(customerId), null, action);
+            sendNotificationMsgToEdgeService(tenantId, null, entityId, JacksonUtil.getObjectMapper().writeValueAsString(customerId), null, action);
         } catch (Exception e) {
             log.warn("Failed to push assign/unassign to/from customer to core: {}", customerId, e);
         }

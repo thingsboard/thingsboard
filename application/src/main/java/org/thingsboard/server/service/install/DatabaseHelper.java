@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.install;
 
 import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -69,11 +68,9 @@ public class DatabaseHelper {
     public static final String ASSIGNED_CUSTOMERS = "assigned_customers";
     public static final String CONFIGURATION = "configuration";
 
-    public static final ObjectMapper objectMapper = JacksonUtil.getObjectMapper();
-
     public static void upgradeTo40_assignDashboards(Path dashboardsDump, DashboardService dashboardService, boolean sql) throws Exception {
         JavaType assignedCustomersType =
-                objectMapper.getTypeFactory().constructCollectionType(HashSet.class, ShortCustomerInfo.class);
+                JacksonUtil.getObjectMapper().getTypeFactory().constructCollectionType(HashSet.class, ShortCustomerInfo.class);
         try (CSVParser csvParser = new CSVParser(Files.newBufferedReader(dashboardsDump), CSV_DUMP_FORMAT.withFirstRecordAsHeader())) {
             csvParser.forEach(record -> {
                 String customerIdString = record.get(CUSTOMER_ID);
@@ -82,7 +79,7 @@ public class DatabaseHelper {
                 List<CustomerId> customerIds = new ArrayList<>();
                 if (!StringUtils.isEmpty(assignedCustomersString)) {
                     try {
-                        Set<ShortCustomerInfo> assignedCustomers = objectMapper.readValue(assignedCustomersString, assignedCustomersType);
+                        Set<ShortCustomerInfo> assignedCustomers = JacksonUtil.getObjectMapper().readValue(assignedCustomersString, assignedCustomersType);
                         assignedCustomers.forEach((customerInfo) -> {
                             CustomerId customerId = customerInfo.getCustomerId();
                             if (!customerId.isNullUid()) {

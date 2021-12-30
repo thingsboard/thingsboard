@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.device;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -69,7 +68,6 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
 
     private static final String CLAIM_ATTRIBUTE_NAME = "claimingAllowed";
     private static final String CLAIM_DATA_ATTRIBUTE_NAME = "claimingData";
-    private static final ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     @Autowired
     private TbClusterService clusterService;
@@ -133,7 +131,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
                     DataConstants.SERVER_SCOPE, CLAIM_DATA_ATTRIBUTE_NAME).get();
             if (claimDataAttr.isPresent()) {
                 try {
-                    ClaimData claimDataFromAttribute = mapper.readValue(claimDataAttr.get().getValueAsString(), ClaimData.class);
+                    ClaimData claimDataFromAttribute = JacksonUtil.getObjectMapper().readValue(claimDataAttr.get().getValueAsString(), ClaimData.class);
                     return new ClaimDataInfo(false, key, claimDataFromAttribute);
                 } catch (IOException e) {
                     log.warn("Failed to read Claim Data [{}] from attribute!", claimDataAttr, e);

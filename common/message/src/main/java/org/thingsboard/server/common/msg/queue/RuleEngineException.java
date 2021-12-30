@@ -16,21 +16,18 @@
 package org.thingsboard.server.common.msg.queue;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 
 @Slf4j
 public class RuleEngineException extends Exception {
-    protected static final ObjectMapper mapper = JacksonUtil.getObjectMapper();
-
     public RuleEngineException(String message) {
         super(message != null ? message : "Unknown");
     }
 
     public String toJsonString() {
         try {
-            return mapper.writeValueAsString(mapper.createObjectNode().put("message", getMessage()));
+            return JacksonUtil.getObjectMapper().writeValueAsString(JacksonUtil.getObjectMapper().createObjectNode().put("message", getMessage()));
         } catch (JsonProcessingException e) {
             log.warn("Failed to serialize exception ", e);
             throw new RuntimeException(e);

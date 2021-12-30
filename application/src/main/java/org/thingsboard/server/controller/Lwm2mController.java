@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
@@ -77,9 +76,8 @@ public class Lwm2mController extends BaseController {
     @RequestMapping(value = "/lwm2m/device-credentials", method = RequestMethod.POST)
     @ResponseBody
     public Device saveDeviceWithCredentials(@RequestBody Map<Class<?>, Object> deviceWithDeviceCredentials) throws ThingsboardException {
-        ObjectMapper mapper = JacksonUtil.getObjectMapper();
-        Device device = checkNotNull(mapper.convertValue(deviceWithDeviceCredentials.get(Device.class), Device.class));
-        DeviceCredentials credentials = checkNotNull(mapper.convertValue(deviceWithDeviceCredentials.get(DeviceCredentials.class), DeviceCredentials.class));
+        Device device = checkNotNull(JacksonUtil.getObjectMapper().convertValue(deviceWithDeviceCredentials.get(Device.class), Device.class));
+        DeviceCredentials credentials = checkNotNull(JacksonUtil.getObjectMapper().convertValue(deviceWithDeviceCredentials.get(DeviceCredentials.class), DeviceCredentials.class));
         return deviceController.saveDeviceWithCredentials(new SaveDeviceWithCredentialsRequest(device, credentials));
     }
 }

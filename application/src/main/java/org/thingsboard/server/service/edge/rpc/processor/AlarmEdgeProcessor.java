@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -76,7 +77,7 @@ public class AlarmEdgeProcessor extends BaseEdgeProcessor {
                     existentAlarm.setStatus(AlarmStatus.valueOf(alarmUpdateMsg.getStatus()));
                     existentAlarm.setAckTs(alarmUpdateMsg.getAckTs());
                     existentAlarm.setEndTs(alarmUpdateMsg.getEndTs());
-                    existentAlarm.setDetails(mapper.readTree(alarmUpdateMsg.getDetails()));
+                    existentAlarm.setDetails(JacksonUtil.getObjectMapper().readTree(alarmUpdateMsg.getDetails()));
                     alarmService.createOrUpdateAlarm(existentAlarm);
                     break;
                 case ALARM_ACK_RPC_MESSAGE:
@@ -86,7 +87,7 @@ public class AlarmEdgeProcessor extends BaseEdgeProcessor {
                     break;
                 case ALARM_CLEAR_RPC_MESSAGE:
                     if (existentAlarm != null) {
-                        alarmService.clearAlarm(tenantId, existentAlarm.getId(), mapper.readTree(alarmUpdateMsg.getDetails()), alarmUpdateMsg.getAckTs());
+                        alarmService.clearAlarm(tenantId, existentAlarm.getId(), JacksonUtil.getObjectMapper().readTree(alarmUpdateMsg.getDetails()), alarmUpdateMsg.getAckTs());
                     }
                     break;
                 case ENTITY_DELETED_RPC_MESSAGE:
@@ -136,7 +137,7 @@ public class AlarmEdgeProcessor extends BaseEdgeProcessor {
                 }
                 break;
             case DELETED:
-                Alarm alarm = mapper.convertValue(edgeEvent.getBody(), Alarm.class);
+                Alarm alarm = JacksonUtil.getObjectMapper().convertValue(edgeEvent.getBody(), Alarm.class);
                 AlarmUpdateMsg alarmUpdateMsg =
                         alarmMsgConstructor.constructAlarmUpdatedMsg(edge.getTenantId(), msgType, alarm);
                 downlinkMsg = DownlinkMsg.newBuilder()
@@ -154,8 +155,8 @@ public class AlarmEdgeProcessor extends BaseEdgeProcessor {
         switch (actionType) {
             case DELETED:
                 EdgeId edgeId = new EdgeId(new UUID(edgeNotificationMsg.getEdgeIdMSB(), edgeNotificationMsg.getEdgeIdLSB()));
-                Alarm alarm = mapper.readValue(edgeNotificationMsg.getBody(), Alarm.class);
-                saveEdgeEvent(tenantId, edgeId, EdgeEventType.ALARM, actionType, alarmId, mapper.valueToTree(alarm));
+                Alarm alarm = JacksonUtil.getObjectMapper().readValue(edgeNotificationMsg.getBody(), Alarm.class);
+                saveEdgeEvent(tenantId, edgeId, EdgeEventType.ALARM, actionType, alarmId, JacksonUtil.getObjectMapper().valueToTree(alarm));
                 break;
             default:
                 ListenableFuture<Alarm> alarmFuture = alarmService.findAlarmByIdAsync(tenantId, alarmId);

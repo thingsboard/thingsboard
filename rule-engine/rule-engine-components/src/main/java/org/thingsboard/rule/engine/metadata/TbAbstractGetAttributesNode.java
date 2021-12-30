@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -49,8 +48,6 @@ import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 
 public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeConfiguration, T extends EntityId> implements TbNode {
-
-    private static ObjectMapper mapper = JacksonUtil.getObjectMapperWithUnquotedFieldNames();
 
     private static final String VALUE = "value";
     private static final String TS = "ts";
@@ -154,7 +151,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
     }
 
     private void putValueWithTs(TbMsg msg, TsKvEntry r) {
-        ObjectNode value = mapper.createObjectNode();
+        ObjectNode value = JacksonUtil.getObjectMapperWithUnquotedFieldNames().createObjectNode();
         value.put(TS, r.getTs());
         switch (r.getDataType()) {
             case STRING:
@@ -171,7 +168,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
                 break;
             case JSON:
                 try {
-                    value.set(VALUE, mapper.readTree(r.getJsonValue().get()));
+                    value.set(VALUE, JacksonUtil.getObjectMapperWithUnquotedFieldNames().readTree(r.getJsonValue().get()));
                 } catch (IOException e) {
                     throw new JsonParseException("Can't parse jsonValue: " + r.getJsonValue().get(), e);
                 }

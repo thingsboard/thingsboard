@@ -23,6 +23,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -35,8 +36,6 @@ import org.thingsboard.server.common.data.validation.NoXss;
 import javax.validation.Valid;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-
-import static org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo.mapper;
 
 @ApiModel
 @Data
@@ -146,7 +145,7 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
         } else {
             if (profileDataBytes != null) {
                 try {
-                    profileData = mapper.readValue(new ByteArrayInputStream(profileDataBytes), DeviceProfileData.class);
+                    profileData = JacksonUtil.getObjectMapper().readValue(new ByteArrayInputStream(profileDataBytes), DeviceProfileData.class);
                 } catch (IOException e) {
                     log.warn("Can't deserialize device profile data: ", e);
                     return null;
@@ -161,7 +160,7 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
     public void setProfileData(DeviceProfileData data) {
         this.profileData = data;
         try {
-            this.profileDataBytes = data != null ? mapper.writeValueAsBytes(data) : null;
+            this.profileDataBytes = data != null ? JacksonUtil.getObjectMapper().writeValueAsBytes(data) : null;
         } catch (JsonProcessingException e) {
             log.warn("Can't serialize device profile data: ", e);
         }

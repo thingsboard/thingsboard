@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.filter;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -82,8 +81,7 @@ public class TbJsSwitchNodeTest {
     private void initWithScript() throws TbNodeException {
         TbJsSwitchNodeConfiguration config = new TbJsSwitchNodeConfiguration();
         config.setJsScript("scr");
-        ObjectMapper mapper = JacksonUtil.getObjectMapper();
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.getObjectMapper().valueToTree(config));
 
         when(ctx.createJsScriptEngine("scr")).thenReturn(scriptEngine);
 

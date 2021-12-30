@@ -18,6 +18,7 @@ package org.thingsboard.server.common.msg.queue;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.rule.RuleNode;
@@ -54,7 +55,7 @@ public class RuleNodeException extends RuleEngineException {
 
     public String toJsonString() {
         try {
-            return mapper.writeValueAsString(mapper.createObjectNode()
+            return JacksonUtil.getObjectMapper().writeValueAsString(JacksonUtil.getObjectMapper().createObjectNode()
                     .put("ruleNodeId", ruleNodeId.toString())
                     .put("ruleChainId", ruleChainId.toString())
                     .put("ruleNodeName", ruleNodeName)

@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.action;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Before;
@@ -189,8 +188,7 @@ public class TbCreateRelationNodeTest {
     }
 
     public void init(TbCreateRelationNodeConfiguration configuration) throws TbNodeException {
-        ObjectMapper mapper = JacksonUtil.getObjectMapper();
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(configuration));
+        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.getObjectMapper().valueToTree(configuration));
 
         when(ctx.getDbCallbackExecutor()).thenReturn(dbExecutor);
         when(ctx.getRelationService()).thenReturn(relationService);

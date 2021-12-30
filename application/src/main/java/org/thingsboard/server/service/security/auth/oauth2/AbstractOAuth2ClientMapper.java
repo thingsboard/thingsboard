@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.security.auth.oauth2;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -61,8 +60,6 @@ import java.util.concurrent.locks.ReentrantLock;
 @Slf4j
 public abstract class AbstractOAuth2ClientMapper {
     private static final int DASHBOARDS_REQUEST_LIMIT = 10;
-
-    private static final ObjectMapper objectMapper = JacksonUtil.getObjectMapper();
 
     @Autowired
     private UserService userService;
@@ -127,7 +124,7 @@ public abstract class AbstractOAuth2ClientMapper {
                     user.setFirstName(oauth2User.getFirstName());
                     user.setLastName(oauth2User.getLastName());
 
-                    ObjectNode additionalInfo = objectMapper.createObjectNode();
+                    ObjectNode additionalInfo = JacksonUtil.getObjectMapper().createObjectNode();
 
                     if (!StringUtils.isEmpty(oauth2User.getDefaultDashboardName())) {
                         Optional<DashboardId> dashboardIdOpt =

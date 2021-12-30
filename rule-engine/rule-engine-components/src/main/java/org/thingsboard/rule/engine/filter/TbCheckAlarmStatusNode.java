@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.filter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -48,7 +47,6 @@ import java.io.IOException;
         configDirective = "tbFilterNodeCheckAlarmStatusConfig")
 public class TbCheckAlarmStatusNode implements TbNode {
     private TbCheckAlarmStatusNodeConfig config;
-    private final ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     @Override
     public void init(TbContext tbContext, TbNodeConfiguration configuration) throws TbNodeException {
@@ -58,7 +56,7 @@ public class TbCheckAlarmStatusNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
         try {
-            Alarm alarm = mapper.readValue(msg.getData(), Alarm.class);
+            Alarm alarm = JacksonUtil.getObjectMapper().readValue(msg.getData(), Alarm.class);
 
             ListenableFuture<Alarm> latest = ctx.getAlarmService().findAlarmByIdAsync(ctx.getTenantId(), alarm.getId());
 

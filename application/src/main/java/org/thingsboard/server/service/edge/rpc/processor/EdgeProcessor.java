@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -47,7 +48,7 @@ public class EdgeProcessor extends BaseEdgeProcessor {
             ListenableFuture<Edge> edgeFuture;
             switch (actionType) {
                 case ASSIGNED_TO_CUSTOMER:
-                    CustomerId customerId = mapper.readValue(edgeNotificationMsg.getBody(), CustomerId.class);
+                    CustomerId customerId = JacksonUtil.getObjectMapper().readValue(edgeNotificationMsg.getBody(), CustomerId.class);
                     edgeFuture = edgeService.findEdgeByIdAsync(tenantId, edgeId);
                     Futures.addCallback(edgeFuture, new FutureCallback<Edge>() {
                         @Override
@@ -78,7 +79,7 @@ public class EdgeProcessor extends BaseEdgeProcessor {
                     }, dbCallbackExecutorService);
                     break;
                 case UNASSIGNED_FROM_CUSTOMER:
-                    CustomerId customerIdToDelete = mapper.readValue(edgeNotificationMsg.getBody(), CustomerId.class);
+                    CustomerId customerIdToDelete = JacksonUtil.getObjectMapper().readValue(edgeNotificationMsg.getBody(), CustomerId.class);
                     edgeFuture = edgeService.findEdgeByIdAsync(tenantId, edgeId);
                     Futures.addCallback(edgeFuture, new FutureCallback<Edge>() {
                         @Override

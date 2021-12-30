@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.edge;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Function;
@@ -88,8 +87,6 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
     public static final String INCORRECT_EDGE_ID = "Incorrect edgeId ";
-
-    private static final ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     private static final int DEFAULT_PAGE_SIZE = 1000;
 
@@ -519,7 +516,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     public String findMissingToRelatedRuleChains(TenantId tenantId, EdgeId edgeId) {
         List<RuleChain> edgeRuleChains = findEdgeRuleChains(tenantId, edgeId);
         List<RuleChainId> edgeRuleChainIds = edgeRuleChains.stream().map(IdBased::getId).collect(Collectors.toList());
-        ObjectNode result = mapper.createObjectNode();
+        ObjectNode result = JacksonUtil.getObjectMapper().createObjectNode();
         for (RuleChain edgeRuleChain : edgeRuleChains) {
             List<RuleChainConnectionInfo> connectionInfos =
                     ruleChainService.loadRuleChainMetaData(edgeRuleChain.getTenantId(), edgeRuleChain.getId()).getRuleChainConnections();
@@ -534,7 +531,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
                     }
                 }
                 if (!missingRuleChains.isEmpty()) {
-                    ArrayNode array = mapper.createArrayNode();
+                    ArrayNode array = JacksonUtil.getObjectMapper().createArrayNode();
                     for (String missingRuleChain : missingRuleChains) {
                         array.add(missingRuleChain);
                     }

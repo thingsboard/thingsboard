@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -75,7 +76,7 @@ public class RelationEdgeProcessor extends BaseEdgeProcessor {
             if (relationUpdateMsg.hasTypeGroup()) {
                 entityRelation.setTypeGroup(RelationTypeGroup.valueOf(relationUpdateMsg.getTypeGroup()));
             }
-            entityRelation.setAdditionalInfo(mapper.readTree(relationUpdateMsg.getAdditionalInfo()));
+            entityRelation.setAdditionalInfo(JacksonUtil.getObjectMapper().readTree(relationUpdateMsg.getAdditionalInfo()));
             switch (relationUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
                 case ENTITY_UPDATED_RPC_MESSAGE:
@@ -118,7 +119,7 @@ public class RelationEdgeProcessor extends BaseEdgeProcessor {
     }
 
     public DownlinkMsg processRelationToEdge(EdgeEvent edgeEvent, UpdateMsgType msgType) {
-        EntityRelation entityRelation = mapper.convertValue(edgeEvent.getBody(), EntityRelation.class);
+        EntityRelation entityRelation = JacksonUtil.getObjectMapper().convertValue(edgeEvent.getBody(), EntityRelation.class);
         RelationUpdateMsg relationUpdateMsg = relationMsgConstructor.constructRelationUpdatedMsg(msgType, entityRelation);
         return DownlinkMsg.newBuilder()
                 .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
@@ -127,7 +128,7 @@ public class RelationEdgeProcessor extends BaseEdgeProcessor {
     }
 
     public void processRelationNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) throws JsonProcessingException {
-        EntityRelation relation = mapper.readValue(edgeNotificationMsg.getBody(), EntityRelation.class);
+        EntityRelation relation = JacksonUtil.getObjectMapper().readValue(edgeNotificationMsg.getBody(), EntityRelation.class);
         if (!relation.getFrom().getEntityType().equals(EntityType.EDGE) &&
                 !relation.getTo().getEntityType().equals(EntityType.EDGE)) {
             Set<EdgeId> uniqueEdgeIds = new HashSet<>();
@@ -140,7 +141,7 @@ public class RelationEdgeProcessor extends BaseEdgeProcessor {
                             EdgeEventType.RELATION,
                             EdgeEventActionType.valueOf(edgeNotificationMsg.getAction()),
                             null,
-                            mapper.valueToTree(relation));
+                            JacksonUtil.getObjectMapper().valueToTree(relation));
                 }
             }
         }

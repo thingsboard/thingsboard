@@ -16,7 +16,6 @@
 package org.thingsboard.rest.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
@@ -163,7 +162,6 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     protected final String baseURL;
     private String token;
     private String refreshToken;
-    private final ObjectMapper objectMapper = JacksonUtil.getObjectMapper();
     private ExecutorService service = ThingsBoardExecutors.newWorkStealingPool(10, getClass());
 
     protected static final String ACTIVATE_TOKEN_REGEX = "/api/noauth/activate?activateToken=";
@@ -665,7 +663,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public void changePassword(String currentPassword, String newPassword) {
-        ObjectNode changePasswordRequest = objectMapper.createObjectNode();
+        ObjectNode changePasswordRequest = JacksonUtil.getObjectMapper().createObjectNode();
         changePasswordRequest.put("currentPassword", currentPassword);
         changePasswordRequest.put("newPassword", newPassword);
         restTemplate.postForLocation(baseURL + "/api/auth/changePassword", changePasswordRequest);
@@ -690,7 +688,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public void requestResetPasswordByEmail(String email) {
-        ObjectNode resetPasswordByEmailRequest = objectMapper.createObjectNode();
+        ObjectNode resetPasswordByEmailRequest = JacksonUtil.getObjectMapper().createObjectNode();
         resetPasswordByEmailRequest.put("email", email);
         restTemplate.postForLocation(baseURL + "/api/noauth/resetPasswordByEmail", resetPasswordByEmailRequest);
     }
@@ -700,7 +698,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public Optional<JsonNode> activateUser(UserId userId, String password, boolean sendActivationMail) {
-        ObjectNode activateRequest = objectMapper.createObjectNode();
+        ObjectNode activateRequest = JacksonUtil.getObjectMapper().createObjectNode();
         activateRequest.put("activateToken", getActivateToken(userId));
         activateRequest.put("password", password);
         try {

@@ -18,7 +18,6 @@ package org.thingsboard.server.msa;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -43,6 +42,7 @@ import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rest.client.RestClient;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
@@ -68,7 +68,6 @@ public abstract class AbstractContainerTest {
     protected static final String WSS_URL = "wss://localhost";
     protected static String TB_TOKEN;
     protected static RestClient restClient;
-    protected ObjectMapper mapper = new ObjectMapper();
 
     @BeforeClass
     public static void before() throws Exception {
@@ -105,8 +104,7 @@ public abstract class AbstractContainerTest {
 
     protected Device createGatewayDevice() throws JsonProcessingException {
         String isGateway = "{\"gateway\":true}";
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode additionalInfo = objectMapper.readTree(isGateway);
+        JsonNode additionalInfo = JacksonUtil.getObjectMapper().readTree(isGateway);
         Device gatewayDeviceTemplate = new Device();
         gatewayDeviceTemplate.setName("mqtt_gateway");
         gatewayDeviceTemplate.setType("gateway");

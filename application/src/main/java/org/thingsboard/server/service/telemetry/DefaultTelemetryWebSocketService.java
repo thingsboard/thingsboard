@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.telemetry;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -110,7 +109,6 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     private static final Aggregation DEFAULT_AGGREGATION = Aggregation.NONE;
     private static final int UNKNOWN_SUBSCRIPTION_ID = 0;
     private static final String PROCESSING_MSG = "[{}] Processing: {}";
-    private static final ObjectMapper jsonMapper = JacksonUtil.getObjectMapper();
     private static final String FAILED_TO_FETCH_DATA = "Failed to fetch data!";
     private static final String FAILED_TO_FETCH_ATTRIBUTES = "Failed to fetch attributes!";
     private static final String SESSION_META_DATA_NOT_FOUND = "Session meta-data not found!";
@@ -208,7 +206,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
         }
 
         try {
-            TelemetryPluginCmdsWrapper cmdsWrapper = jsonMapper.readValue(msg, TelemetryPluginCmdsWrapper.class);
+            TelemetryPluginCmdsWrapper cmdsWrapper = JacksonUtil.getObjectMapper().readValue(msg, TelemetryPluginCmdsWrapper.class);
             if (cmdsWrapper != null) {
                 if (cmdsWrapper.getAttrSubCmds() != null) {
                     cmdsWrapper.getAttrSubCmds().forEach(cmd -> {
@@ -778,7 +776,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
 
     private void sendWsMsg(TelemetryWebSocketSessionRef sessionRef, int cmdId, Object update) {
         try {
-            String msg = jsonMapper.writeValueAsString(update);
+            String msg = JacksonUtil.getObjectMapper().writeValueAsString(update);
             executor.submit(() -> {
                 try {
                     msgEndpoint.send(sessionRef, cmdId, msg);

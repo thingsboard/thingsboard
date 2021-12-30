@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.action;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -57,7 +56,6 @@ import java.util.List;
 )
 public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConfiguration> {
 
-    private static ObjectMapper mapper = JacksonUtil.getObjectMapper();
     private List<String> relationTypes;
     private AlarmSeverity notDynamicAlarmSeverity;
 
@@ -111,7 +109,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
 
     private Alarm getAlarmFromMessage(TbContext ctx, TbMsg msg) throws IOException {
         Alarm msgAlarm;
-        msgAlarm = mapper.readValue(msg.getData(), Alarm.class);
+        msgAlarm = JacksonUtil.getObjectMapper().readValue(msg.getData(), Alarm.class);
         msgAlarm.setTenantId(ctx.getTenantId());
         if (msgAlarm.getOriginator() == null) {
             msgAlarm.setOriginator(msg.getOriginator());

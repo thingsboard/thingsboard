@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.transform;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Before;
@@ -160,8 +159,7 @@ public class TbChangeOriginatorNodeTest {
     public void init() throws TbNodeException {
         TbChangeOriginatorNodeConfiguration config = new TbChangeOriginatorNodeConfiguration();
         config.setOriginatorSource(TbChangeOriginatorNode.CUSTOMER_SOURCE);
-        ObjectMapper mapper = JacksonUtil.getObjectMapper();
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.getObjectMapper().valueToTree(config));
 
         when(ctx.getDbCallbackExecutor()).thenReturn(dbExecutor);
 

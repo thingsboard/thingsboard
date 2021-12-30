@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.sql.event;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.springtestdbunit.annotation.DatabaseSetup;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -184,9 +183,8 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
         event.setEntityId(deviceId);
         event.setUid(event.getId().getId().toString());
         event.setType(STATS);
-        ObjectMapper mapper = JacksonUtil.getObjectMapper();
         try {
-            JsonNode jsonNode = mapper.readTree("{\"key\":\"value\"}");
+            JsonNode jsonNode = JacksonUtil.getObjectMapper().readTree("{\"key\":\"value\"}");
             event.setBody(jsonNode);
         } catch (IOException e) {
             log.error(e.getMessage(), e);

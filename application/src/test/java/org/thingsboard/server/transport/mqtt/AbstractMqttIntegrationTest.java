@@ -24,6 +24,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.junit.Assert;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
@@ -106,7 +107,7 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
         Device gateway = new Device();
         gateway.setName(gatewayName);
         gateway.setType("default");
-        ObjectNode additionalInfo = mapper.createObjectNode();
+        ObjectNode additionalInfo = JacksonUtil.getObjectMapper().createObjectNode();
         additionalInfo.put("gateway", true);
         gateway.setAdditionalInfo(additionalInfo);
 

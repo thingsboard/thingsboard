@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.edge.rpc.constructor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
@@ -41,8 +40,6 @@ import java.util.List;
 @Slf4j
 @TbCoreComponent
 public class RuleChainMsgConstructor {
-
-    private static final ObjectMapper objectMapper = JacksonUtil.getObjectMapper();
 
     public RuleChainUpdateMsg constructRuleChainUpdatedMsg(RuleChainId edgeRootRuleChainId, UpdateMsgType msgType, RuleChain ruleChain) {
         RuleChainUpdateMsg.Builder builder = RuleChainUpdateMsg.newBuilder()
@@ -125,7 +122,7 @@ public class RuleChainMsgConstructor {
                 .setTargetRuleChainIdMSB(ruleChainConnectionInfo.getTargetRuleChainId().getId().getMostSignificantBits())
                 .setTargetRuleChainIdLSB(ruleChainConnectionInfo.getTargetRuleChainId().getId().getLeastSignificantBits())
                 .setType(ruleChainConnectionInfo.getType())
-                .setAdditionalInfo(objectMapper.writeValueAsString(ruleChainConnectionInfo.getAdditionalInfo()))
+                .setAdditionalInfo(JacksonUtil.getObjectMapper().writeValueAsString(ruleChainConnectionInfo.getAdditionalInfo()))
                 .build();
     }
 
@@ -136,8 +133,8 @@ public class RuleChainMsgConstructor {
                 .setType(node.getType())
                 .setName(node.getName())
                 .setDebugMode(node.isDebugMode())
-                .setConfiguration(objectMapper.writeValueAsString(node.getConfiguration()))
-                .setAdditionalInfo(objectMapper.writeValueAsString(node.getAdditionalInfo()))
+                .setConfiguration(JacksonUtil.getObjectMapper().writeValueAsString(node.getConfiguration()))
+                .setAdditionalInfo(JacksonUtil.getObjectMapper().writeValueAsString(node.getAdditionalInfo()))
                 .build();
     }
 

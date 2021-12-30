@@ -16,7 +16,6 @@
 package org.thingsboard.server.actors.ruleChain;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.channel.EventLoopGroup;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
@@ -94,8 +93,6 @@ import java.util.function.Consumer;
  */
 @Slf4j
 class DefaultTbContext implements TbContext {
-
-    public final static ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     private final ActorSystemContext mainCtx;
     private final String ruleChainName;
@@ -367,7 +364,7 @@ class DefaultTbContext implements TbContext {
 
     public <E, I extends EntityId> TbMsg entityActionMsg(E entity, I id, RuleNodeId ruleNodeId, String action, String queueName, RuleChainId ruleChainId) {
         try {
-            return TbMsg.newMsg(queueName, action, id, getActionMetaData(ruleNodeId), mapper.writeValueAsString(mapper.valueToTree(entity)), ruleChainId, null);
+            return TbMsg.newMsg(queueName, action, id, getActionMetaData(ruleNodeId), JacksonUtil.getObjectMapper().writeValueAsString(JacksonUtil.getObjectMapper().valueToTree(entity)), ruleChainId, null);
         } catch (JsonProcessingException | IllegalArgumentException e) {
             throw new RuntimeException("Failed to process " + id.getEntityType().name().toLowerCase() + " " + action + " msg: " + e);
         }

@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,8 +83,6 @@ import static org.junit.Assert.assertNotNull;
 @Configuration
 @ComponentScan("org.thingsboard.server")
 public abstract class AbstractServiceTest {
-
-    protected ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     public static final TenantId SYSTEM_TENANT_ID = new TenantId(EntityId.NULL_UUID);
 
@@ -205,7 +202,7 @@ public abstract class AbstractServiceTest {
 //    }
 
     public JsonNode readFromResource(String resourceName) throws IOException {
-        return mapper.readTree(this.getClass().getClassLoader().getResourceAsStream(resourceName));
+        return JacksonUtil.getObjectMapper().readTree(this.getClass().getClassLoader().getResourceAsStream(resourceName));
     }
 
     @Bean

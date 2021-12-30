@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.model.sql;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
@@ -50,9 +49,8 @@ import java.util.UUID;
 @Table(name = ModelConstants.DASHBOARD_COLUMN_FAMILY_NAME)
 public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements SearchTextEntity<Dashboard> {
 
-    private static final ObjectMapper objectMapper = JacksonUtil.getObjectMapper();
     private static final JavaType assignedCustomersType =
-            objectMapper.getTypeFactory().constructCollectionType(HashSet.class, ShortCustomerInfo.class);
+            JacksonUtil.getObjectMapper().getTypeFactory().constructCollectionType(HashSet.class, ShortCustomerInfo.class);
 
     @Column(name = ModelConstants.DASHBOARD_TENANT_ID_PROPERTY)
     private UUID tenantId;
@@ -95,7 +93,7 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements S
         this.image = dashboard.getImage();
         if (dashboard.getAssignedCustomers() != null) {
             try {
-                this.assignedCustomers = objectMapper.writeValueAsString(dashboard.getAssignedCustomers());
+                this.assignedCustomers = JacksonUtil.getObjectMapper().writeValueAsString(dashboard.getAssignedCustomers());
             } catch (JsonProcessingException e) {
                 log.error("Unable to serialize assigned customers to string!", e);
             }
@@ -126,7 +124,7 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements S
         dashboard.setImage(image);
         if (!StringUtils.isEmpty(assignedCustomers)) {
             try {
-                dashboard.setAssignedCustomers(objectMapper.readValue(assignedCustomers, assignedCustomersType));
+                dashboard.setAssignedCustomers(JacksonUtil.getObjectMapper().readValue(assignedCustomers, assignedCustomersType));
             } catch (IOException e) {
                 log.warn("Unable to parse assigned customers!", e);
             }

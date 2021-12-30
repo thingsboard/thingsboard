@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -120,7 +121,7 @@ public class EntityEdgeProcessor extends BaseEdgeProcessor {
                     if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
                         for (EdgeId relatedEdgeId : pageData.getData()) {
                             try {
-                                CustomerId customerId = mapper.readValue(edgeNotificationMsg.getBody(), CustomerId.class);
+                                CustomerId customerId = JacksonUtil.getObjectMapper().readValue(edgeNotificationMsg.getBody(), CustomerId.class);
                                 ListenableFuture<Edge> future = edgeService.findEdgeByIdAsync(tenantId, relatedEdgeId);
                                 Futures.addCallback(future, new FutureCallback<>() {
                                     @Override

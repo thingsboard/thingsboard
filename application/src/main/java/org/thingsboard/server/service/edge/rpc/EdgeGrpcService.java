@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.edge.rpc;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import io.grpc.Server;
@@ -72,7 +71,6 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private final ConcurrentMap<EdgeId, Lock> sessionNewEventsLocks = new ConcurrentHashMap<>();
     private final Map<EdgeId, Boolean> sessionNewEvents = new HashMap<>();
     private final ConcurrentMap<EdgeId, ScheduledFuture<?>> sessionEdgeEventChecks = new ConcurrentHashMap<>();
-    private static final ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     @Value("${edges.rpc.port}")
     private int rpcPort;
@@ -160,7 +158,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     @Override
     public StreamObserver<RequestMsg> handleMsgs(StreamObserver<ResponseMsg> outputStream) {
-        return new EdgeGrpcSession(ctx, outputStream, this::onEdgeConnect, this::onEdgeDisconnect, mapper, sendDownlinkExecutorService).getInputStream();
+        return new EdgeGrpcSession(ctx, outputStream, this::onEdgeConnect, this::onEdgeDisconnect, JacksonUtil.getObjectMapper(), sendDownlinkExecutorService).getInputStream();
     }
 
     @Override

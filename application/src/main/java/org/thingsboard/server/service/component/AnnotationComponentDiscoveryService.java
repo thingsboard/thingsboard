@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.component;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,8 +68,6 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
     private Map<ComponentType, List<ComponentDescriptor>> coreComponentsMap = new HashMap<>();
 
     private Map<ComponentType, List<ComponentDescriptor>> edgeComponentsMap = new HashMap<>();
-
-    private ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     private boolean isInstall() {
         return environment.acceptsProfiles(Profiles.of("install"));
@@ -157,8 +154,8 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
             scannedComponent.setName(ruleNodeAnnotation.name());
             scannedComponent.setScope(ruleNodeAnnotation.scope());
             NodeDefinition nodeDefinition = prepareNodeDefinition(ruleNodeAnnotation);
-            ObjectNode configurationDescriptor = mapper.createObjectNode();
-            JsonNode node = mapper.valueToTree(nodeDefinition);
+            ObjectNode configurationDescriptor = JacksonUtil.getObjectMapper().createObjectNode();
+            JsonNode node = JacksonUtil.getObjectMapper().valueToTree(nodeDefinition);
             configurationDescriptor.set("nodeDefinition", node);
             scannedComponent.setConfigurationDescriptor(configurationDescriptor);
             scannedComponent.setClazz(clazzName);
@@ -195,7 +192,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
         Class<? extends NodeConfiguration> configClazz = nodeAnnotation.configClazz();
         NodeConfiguration config = configClazz.getDeclaredConstructor().newInstance();
         NodeConfiguration defaultConfiguration = config.defaultConfiguration();
-        nodeDefinition.setDefaultConfiguration(mapper.valueToTree(defaultConfiguration));
+        nodeDefinition.setDefaultConfiguration(JacksonUtil.getObjectMapper().valueToTree(defaultConfiguration));
         nodeDefinition.setUiResources(nodeAnnotation.uiResources());
         nodeDefinition.setConfigDirective(nodeAnnotation.configDirective());
         nodeDefinition.setIcon(nodeAnnotation.icon());

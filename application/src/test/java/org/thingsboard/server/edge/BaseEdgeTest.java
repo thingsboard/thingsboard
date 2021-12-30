@@ -19,7 +19,6 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.JsonObject;
 import com.google.protobuf.AbstractMessage;
@@ -349,7 +348,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
     }
 
     private void validateMailAdminSettings(AdminSettingsUpdateMsg adminSettingsUpdateMsg) throws JsonProcessingException {
-        JsonNode jsonNode = mapper.readTree(adminSettingsUpdateMsg.getJsonValue());
+        JsonNode jsonNode = JacksonUtil.getObjectMapper().readTree(adminSettingsUpdateMsg.getJsonValue());
         Assert.assertNotNull(jsonNode.get("mailFrom"));
         Assert.assertNotNull(jsonNode.get("smtpProtocol"));
         Assert.assertNotNull(jsonNode.get("smtpHost"));
@@ -358,7 +357,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
     }
 
     private void validateMailTemplatesAdminSettings(AdminSettingsUpdateMsg adminSettingsUpdateMsg) throws JsonProcessingException {
-        JsonNode jsonNode = mapper.readTree(adminSettingsUpdateMsg.getJsonValue());
+        JsonNode jsonNode = JacksonUtil.getObjectMapper().readTree(adminSettingsUpdateMsg.getJsonValue());
         Assert.assertNotNull(jsonNode.get("accountActivated"));
         Assert.assertNotNull(jsonNode.get("accountLockout"));
         Assert.assertNotNull(jsonNode.get("activation"));
@@ -575,22 +574,20 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
         ruleChainMetaData.setRuleChainId(ruleChain.getId());
 
-        ObjectMapper mapper = JacksonUtil.getObjectMapper();
-
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("name1");
         ruleNode1.setType("type1");
-        ruleNode1.setConfiguration(mapper.readTree("\"key1\": \"val1\""));
+        ruleNode1.setConfiguration(JacksonUtil.getObjectMapper().readTree("\"key1\": \"val1\""));
 
         RuleNode ruleNode2 = new RuleNode();
         ruleNode2.setName("name2");
         ruleNode2.setType("type2");
-        ruleNode2.setConfiguration(mapper.readTree("\"key2\": \"val2\""));
+        ruleNode2.setConfiguration(JacksonUtil.getObjectMapper().readTree("\"key2\": \"val2\""));
 
         RuleNode ruleNode3 = new RuleNode();
         ruleNode3.setName("name3");
         ruleNode3.setType("type3");
-        ruleNode3.setConfiguration(mapper.readTree("\"key3\": \"val3\""));
+        ruleNode3.setConfiguration(JacksonUtil.getObjectMapper().readTree("\"key3\": \"val3\""));
 
         List<RuleNode> ruleNodes = new ArrayList<>();
         ruleNodes.add(ruleNode1);
@@ -603,7 +600,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         ruleChainMetaData.addConnectionInfo(0, 2, "fail");
         ruleChainMetaData.addConnectionInfo(1, 2, "success");
 
-        ruleChainMetaData.addRuleChainConnectionInfo(2, edge.getRootRuleChainId(), "success", mapper.createObjectNode());
+        ruleChainMetaData.addRuleChainConnectionInfo(2, edge.getRootRuleChainId(), "success", JacksonUtil.getObjectMapper().createObjectNode());
 
         doPost("/api/ruleChain/metadata", ruleChainMetaData, RuleChainMetaData.class);
     }
@@ -934,7 +931,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         WidgetType widgetType = new WidgetType();
         widgetType.setName("Test Widget Type");
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
-        ObjectNode descriptor = mapper.createObjectNode();
+        ObjectNode descriptor = JacksonUtil.getObjectMapper().createObjectNode();
         descriptor.put("key", "value");
         widgetType.setDescriptor(descriptor);
         WidgetType savedWidgetType = doPost("/api/widgetType", widgetType, WidgetType.class);
@@ -982,7 +979,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         edgeImitator.expectMessageAmount(1);
         Device device = findDeviceByName("Edge Device 1");
         String timeseriesData = "{\"data\":{\"temperature\":25},\"ts\":" + System.currentTimeMillis() + "}";
-        JsonNode timeseriesEntityData = mapper.readTree(timeseriesData);
+        JsonNode timeseriesEntityData = JacksonUtil.getObjectMapper().readTree(timeseriesData);
         EdgeEvent edgeEvent = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.TIMESERIES_UPDATED, device.getId().getId(), EdgeEventType.DEVICE, timeseriesEntityData);
         edgeEventService.save(edgeEvent);
         clusterService.onEdgeEventUpdate(tenantId, edge.getId());
@@ -1020,7 +1017,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
     private void testAttributesUpdatedMsg(Device device) throws JsonProcessingException, InterruptedException {
         String attributesData = "{\"scope\":\"SERVER_SCOPE\",\"kv\":{\"key1\":\"value1\"}}";
-        JsonNode attributesEntityData = mapper.readTree(attributesData);
+        JsonNode attributesEntityData = JacksonUtil.getObjectMapper().readTree(attributesData);
         EdgeEvent edgeEvent1 = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.ATTRIBUTES_UPDATED, device.getId().getId(), EdgeEventType.DEVICE, attributesEntityData);
         edgeImitator.expectMessageAmount(1);
         edgeEventService.save(edgeEvent1);
@@ -1045,7 +1042,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
     private void testPostAttributesMsg(Device device) throws JsonProcessingException, InterruptedException {
         String postAttributesData = "{\"scope\":\"SERVER_SCOPE\",\"kv\":{\"key2\":\"value2\"}}";
-        JsonNode postAttributesEntityData = mapper.readTree(postAttributesData);
+        JsonNode postAttributesEntityData = JacksonUtil.getObjectMapper().readTree(postAttributesData);
         EdgeEvent edgeEvent = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.POST_ATTRIBUTES, device.getId().getId(), EdgeEventType.DEVICE, postAttributesEntityData);
         edgeImitator.expectMessageAmount(1);
         edgeEventService.save(edgeEvent);
@@ -1070,7 +1067,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
     private void testAttributesDeleteMsg(Device device) throws JsonProcessingException, InterruptedException {
         String deleteAttributesData = "{\"scope\":\"SERVER_SCOPE\",\"keys\":[\"key1\",\"key2\"]}";
-        JsonNode deleteAttributesEntityData = mapper.readTree(deleteAttributesData);
+        JsonNode deleteAttributesEntityData = JacksonUtil.getObjectMapper().readTree(deleteAttributesData);
         EdgeEvent edgeEvent = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.ATTRIBUTES_DELETED, device.getId().getId(), EdgeEventType.DEVICE, deleteAttributesEntityData);
         edgeImitator.expectMessageAmount(1);
         edgeEventService.save(edgeEvent);
@@ -1097,7 +1094,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
     private void testRpcCall() throws Exception {
         Device device = findDeviceByName("Edge Device 1");
 
-        ObjectNode body = mapper.createObjectNode();
+        ObjectNode body = JacksonUtil.getObjectMapper().createObjectNode();
         body.put("requestId", new Random().nextInt());
         body.put("requestUUID", Uuids.timeBased().toString());
         body.put("oneway", false);
@@ -1130,7 +1127,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         Device device = findDeviceByName("Edge Device 1");
         for (int idx = 1; idx <= numberOfTimeseriesToSend; idx++) {
             String timeseriesData = "{\"data\":{\"idx\":" + idx + "},\"ts\":" + System.currentTimeMillis() + "}";
-            JsonNode timeseriesEntityData = mapper.readTree(timeseriesData);
+            JsonNode timeseriesEntityData = JacksonUtil.getObjectMapper().readTree(timeseriesData);
             EdgeEvent edgeEvent = constructEdgeEvent(tenantId, edge.getId(), EdgeEventActionType.TIMESERIES_UPDATED,
                     device.getId().getId(), EdgeEventType.DEVICE, timeseriesEntityData);
             edgeEventService.save(edgeEvent);
@@ -1611,7 +1608,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
 
     private void sendAttributesRequest(Device device, String scope, String attributesDataStr, String expectedKey,
                                        String expectedValue, int expectedSize) throws Exception {
-        JsonNode attributesData = mapper.readTree(attributesDataStr);
+        JsonNode attributesData = JacksonUtil.getObjectMapper().readTree(attributesDataStr);
 
         doPost("/api/plugins/telemetry/DEVICE/" + device.getId().getId().toString() + "/attributes/" + scope,
                 attributesData);

@@ -16,8 +16,6 @@
 package org.thingsboard.server.service.security.auth.oauth2;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -31,7 +29,6 @@ import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
 import org.thingsboard.server.dao.oauth2.OAuth2User;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 
 @Service(value = "customOAuth2ClientMapper")
@@ -39,18 +36,7 @@ import javax.servlet.http.HttpServletRequest;
 public class CustomOAuth2ClientMapper extends AbstractOAuth2ClientMapper implements OAuth2ClientMapper {
     private static final String PROVIDER_ACCESS_TOKEN = "provider-access-token";
 
-    private static final ObjectMapper json = JacksonUtil.getObjectMapper();
-
     private RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder();
-
-    @PostConstruct
-    public void init() {
-        // Register time module to parse Instant objects.
-        // com.fasterxml.jackson.databind.exc.InvalidDefinitionException:
-        // Java 8 date/time type `java.time.Instant` not supported by default:
-        // add Module "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" to enable handling
-        json.registerModule(new JavaTimeModule());
-    }
 
     @Override
     public SecurityUser getOrCreateUserByClientPrincipal(HttpServletRequest request, OAuth2AuthenticationToken token, String providerAccessToken, OAuth2Registration registration) {
@@ -70,7 +56,7 @@ public class CustomOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
         RestTemplate restTemplate = restTemplateBuilder.build();
         String request;
         try {
-            request = json.writeValueAsString(token.getPrincipal());
+            request = JacksonUtil.getObjectMapper().writeValueAsString(token.getPrincipal());
         } catch (JsonProcessingException e) {
             log.error("Can't convert principal to JSON string", e);
             throw new RuntimeException("Can't convert principal to JSON string", e);

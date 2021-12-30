@@ -17,7 +17,6 @@ package org.thingsboard.rule.engine.action;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.commons.lang3.NotImplementedException;
@@ -393,8 +392,7 @@ public class TbAlarmNodeTest {
         config.setAlarmType("SomeType");
         config.setAlarmDetailsBuildJs("DETAILS");
         config.setDynamicSeverity(true);
-        ObjectMapper mapper = JacksonUtil.getObjectMapper();
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.getObjectMapper().valueToTree(config));
 
         when(ctx.createJsScriptEngine("DETAILS")).thenReturn(detailsJs);
 
@@ -454,8 +452,7 @@ public class TbAlarmNodeTest {
         config.setAlarmType("SomeType");
         config.setAlarmDetailsBuildJs("DETAILS");
         config.setDynamicSeverity(true);
-        ObjectMapper mapper = JacksonUtil.getObjectMapper();
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.getObjectMapper().valueToTree(config));
 
         when(ctx.createJsScriptEngine("DETAILS")).thenReturn(detailsJs);
 
@@ -512,8 +509,7 @@ public class TbAlarmNodeTest {
             config.setSeverity(CRITICAL.name());
             config.setAlarmType("SomeType");
             config.setAlarmDetailsBuildJs("DETAILS");
-            ObjectMapper mapper = JacksonUtil.getObjectMapper();
-            TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+            TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.getObjectMapper().valueToTree(config));
 
             when(ctx.createJsScriptEngine("DETAILS")).thenReturn(detailsJs);
 
@@ -533,8 +529,7 @@ public class TbAlarmNodeTest {
             TbClearAlarmNodeConfiguration config = new TbClearAlarmNodeConfiguration();
             config.setAlarmType("SomeType");
             config.setAlarmDetailsBuildJs("DETAILS");
-            ObjectMapper mapper = JacksonUtil.getObjectMapper();
-            TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+            TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.getObjectMapper().valueToTree(config));
 
             when(ctx.createJsScriptEngine("DETAILS")).thenReturn(detailsJs);
 

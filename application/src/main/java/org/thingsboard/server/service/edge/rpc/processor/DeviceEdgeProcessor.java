@@ -102,7 +102,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                                     "Creating a new device with random prefix and relate to this edge", tenantId, deviceName, edge.getId(), deviceUpdateMsg);
                             String newDeviceName = deviceUpdateMsg.getName() + "_" + RandomStringUtils.randomAlphabetic(15);
                             Device newDevice = createDevice(tenantId, edge, deviceUpdateMsg, newDeviceName);
-                            ObjectNode body = mapper.createObjectNode();
+                            ObjectNode body = JacksonUtil.getObjectMapper().createObjectNode();
                             body.put("conflictName", deviceName);
                             saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.ENTITY_MERGE_REQUEST, newDevice.getId(), body);
                             saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.CREDENTIALS_REQUEST, newDevice.getId(), null);
@@ -256,9 +256,9 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
     private void pushDeviceCreatedEventToRuleEngine(TenantId tenantId, Edge edge, Device device) {
         try {
             DeviceId deviceId = device.getId();
-            ObjectNode entityNode = mapper.valueToTree(device);
+            ObjectNode entityNode = JacksonUtil.getObjectMapper().valueToTree(device);
             TbMsg tbMsg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, deviceId, device.getCustomerId(),
-                    getActionTbMsgMetaData(edge, device.getCustomerId()), TbMsgDataType.JSON, mapper.writeValueAsString(entityNode));
+                    getActionTbMsgMetaData(edge, device.getCustomerId()), TbMsgDataType.JSON, JacksonUtil.getObjectMapper().writeValueAsString(entityNode));
             tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {

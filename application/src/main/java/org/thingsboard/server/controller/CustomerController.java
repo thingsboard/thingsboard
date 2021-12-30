@@ -16,7 +16,6 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -108,8 +107,7 @@ public class CustomerController extends BaseController {
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             Customer customer = checkCustomerId(customerId, Operation.READ);
-            ObjectMapper objectMapper = JacksonUtil.getObjectMapper();
-            ObjectNode infoObject = objectMapper.createObjectNode();
+            ObjectNode infoObject = JacksonUtil.getObjectMapper().createObjectNode();
             infoObject.put("title", customer.getTitle());
             infoObject.put(IS_PUBLIC, customer.isPublic());
             return infoObject;

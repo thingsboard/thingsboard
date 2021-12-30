@@ -17,7 +17,6 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwt;
@@ -97,8 +96,6 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 
 @Slf4j
 public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
-
-    protected ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     protected static final String TEST_TENANT_NAME = "TEST TENANT";
 
@@ -581,8 +578,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected <T> T readResponse(ResultActions result, TypeReference<T> type) throws Exception {
         byte[] content = result.andReturn().getResponse().getContentAsByteArray();
-        ObjectMapper mapper = JacksonUtil.getObjectMapper();
-        return mapper.readerFor(type).readValue(content);
+        return JacksonUtil.getObjectMapper().readerFor(type).readValue(content);
     }
 
     public class IdComparator<D extends HasId> implements Comparator<D> {

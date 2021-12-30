@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.transform;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Test;
@@ -100,8 +99,7 @@ public class TbTransformMsgNodeTest {
     private void initWithScript() throws TbNodeException {
         TbTransformMsgNodeConfiguration config = new TbTransformMsgNodeConfiguration();
         config.setJsScript("scr");
-        ObjectMapper mapper = JacksonUtil.getObjectMapper();
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.getObjectMapper().valueToTree(config));
 
         when(ctx.createJsScriptEngine("scr")).thenReturn(scriptEngine);
 

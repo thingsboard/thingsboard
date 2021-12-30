@@ -16,7 +16,6 @@
 package org.thingsboard.server.actors;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -109,8 +108,6 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Component
 public class ActorSystemContext {
-
-    protected final ObjectMapper mapper = JacksonUtil.getObjectMapper();
 
     private final ConcurrentMap<TenantId, DebugTbRateLimits> debugPerTenantLimits = new ConcurrentHashMap<>();
 
@@ -478,7 +475,7 @@ public class ActorSystemContext {
     }
 
     private JsonNode toBodyJson(String serviceId, ComponentLifecycleEvent event, Optional<Exception> e) {
-        ObjectNode node = mapper.createObjectNode().put("server", serviceId).put("event", event.name());
+        ObjectNode node = JacksonUtil.getObjectMapper().createObjectNode().put("server", serviceId).put("event", event.name());
         if (e.isPresent()) {
             node = node.put("success", false);
             node = node.put("error", toString(e.get()));
@@ -489,7 +486,7 @@ public class ActorSystemContext {
     }
 
     private JsonNode toBodyJson(String serviceId, String method, String body) {
-        return mapper.createObjectNode().put("server", serviceId).put("method", method).put("error", body);
+        return JacksonUtil.getObjectMapper().createObjectNode().put("server", serviceId).put("method", method).put("error", body);
     }
 
     public TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId) {
@@ -532,9 +529,9 @@ public class ActorSystemContext {
                 event.setEntityId(entityId);
                 event.setType(DataConstants.DEBUG_RULE_NODE);
 
-                String metadata = mapper.writeValueAsString(tbMsg.getMetaData().getData());
+                String metadata = JacksonUtil.getObjectMapper().writeValueAsString(tbMsg.getMetaData().getData());
 
-                ObjectNode node = mapper.createObjectNode()
+                ObjectNode node = JacksonUtil.getObjectMapper().createObjectNode()
                         .put("type", type)
                         .put("server", getServiceId())
                         .put("entityId", tbMsg.getOriginator().getId().toString())
@@ -596,7 +593,7 @@ public class ActorSystemContext {
         event.setEntityId(entityId);
         event.setType(DataConstants.DEBUG_RULE_CHAIN);
 
-        ObjectNode node = mapper.createObjectNode()
+        ObjectNode node = JacksonUtil.getObjectMapper().createObjectNode()
                 //todo: what fields are needed here?
                 .put("server", getServiceId())
                 .put("message", "Reached debug mode rate limit!");

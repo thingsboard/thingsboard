@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -315,7 +316,7 @@ public class TelemetryEdgeProcessor extends BaseEdgeProcessor {
                 log.warn("Unsupported edge event type [{}]", edgeEvent);
                 return null;
         }
-        return constructEntityDataProtoMsg(entityId, edgeEvent.getAction(), JsonUtils.parse(mapper.writeValueAsString(edgeEvent.getBody())));
+        return constructEntityDataProtoMsg(entityId, edgeEvent.getAction(), JsonUtils.parse(JacksonUtil.getObjectMapper().writeValueAsString(edgeEvent.getBody())));
     }
 
     private DownlinkMsg constructEntityDataProtoMsg(EntityId entityId, EdgeEventActionType actionType, JsonElement entityData) {

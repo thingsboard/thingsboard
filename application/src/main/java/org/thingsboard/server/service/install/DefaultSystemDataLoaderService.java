@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.install;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -105,7 +104,6 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
-    private static final ObjectMapper objectMapper = JacksonUtil.getObjectMapper();
     public static final String CUSTOMER_CRED = "customer";
     public static final String DEFAULT_DEVICE_TYPE = "default";
     public static final String ACTIVITY_STATE = "active";
@@ -233,7 +231,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     public void createAdminSettings() throws Exception {
         AdminSettings generalSettings = new AdminSettings();
         generalSettings.setKey("general");
-        ObjectNode node = objectMapper.createObjectNode();
+        ObjectNode node = JacksonUtil.getObjectMapper().createObjectNode();
         node.put("baseUrl", "http://localhost:8080");
         node.put("prohibitDifferentUrl", false);
         generalSettings.setJsonValue(node);
@@ -241,7 +239,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
         AdminSettings mailSettings = new AdminSettings();
         mailSettings.setKey("mail");
-        node = objectMapper.createObjectNode();
+        node = JacksonUtil.getObjectMapper().createObjectNode();
         node.put("mailFrom", "ThingsBoard <sysadmin@localhost.localdomain>");
         node.put("smtpProtocol", "smtp");
         node.put("smtpHost", "localhost");
@@ -513,7 +511,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         device.setDeviceProfileId(deviceProfileId);
         device.setName(name);
         if (description != null) {
-            ObjectNode additionalInfo = objectMapper.createObjectNode();
+            ObjectNode additionalInfo = JacksonUtil.getObjectMapper().createObjectNode();
             additionalInfo.put("description", description);
             device.setAdditionalInfo(additionalInfo);
         }
