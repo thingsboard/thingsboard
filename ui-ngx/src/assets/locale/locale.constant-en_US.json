@@ -2076,7 +2076,9 @@
            "greater-or-equal": "greater or equal",
            "less-or-equal": "less or equal",
            "and": "and",
-           "or": "or"
+           "or": "or",
+           "in": "in",
+           "not-in": "not in"
          },
          "ignore-case": "ignore case",
          "value": "Value",
