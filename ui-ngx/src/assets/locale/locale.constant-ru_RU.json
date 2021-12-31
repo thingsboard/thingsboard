@@ -678,8 +678,6 @@
         "access-token": "Токен",
         "access-token-required": "Токен обязателен.",
         "access-token-invalid": "Длина токена должна быть от 1 до 32 символов.",
-        "rsa-key": "Открытый ключ RSA",
-        "rsa-key-required": "Открытый ключ RSA обязателен.",
         "secret": "Секрет",
         "secret-required": "Секрет обязателен.",
         "device-type": "Тип устройства",

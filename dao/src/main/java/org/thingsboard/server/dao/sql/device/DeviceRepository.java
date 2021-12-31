@@ -19,7 +19,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.dao.model.sql.DeviceEntity;
@@ -83,7 +82,10 @@ public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID> {
             "LEFT JOIN CustomerEntity c on c.id = d.customerId " +
             "LEFT JOIN DeviceProfileEntity p on p.id = d.deviceProfileId " +
             "WHERE d.tenantId = :tenantId " +
-            "AND LOWER(d.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND (LOWER(d.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
+            "OR LOWER(d.label) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
+            "OR LOWER(p.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
+            "OR LOWER(c.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%')))")
     Page<DeviceInfoEntity> findDeviceInfosByTenantId(@Param("tenantId") UUID tenantId,
                                                      @Param("textSearch") String textSearch,
                                                      Pageable pageable);
@@ -132,7 +134,9 @@ public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID> {
             "LEFT JOIN DeviceProfileEntity p on p.id = d.deviceProfileId " +
             "WHERE d.tenantId = :tenantId " +
             "AND d.type = :type " +
-            "AND LOWER(d.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND (LOWER(d.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
+            "OR LOWER(d.label) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
+            "OR LOWER(c.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%')))")
     Page<DeviceInfoEntity> findDeviceInfosByTenantIdAndType(@Param("tenantId") UUID tenantId,
                                                             @Param("type") String type,
                                                             @Param("textSearch") String textSearch,
@@ -144,7 +148,9 @@ public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID> {
             "LEFT JOIN DeviceProfileEntity p on p.id = d.deviceProfileId " +
             "WHERE d.tenantId = :tenantId " +
             "AND d.deviceProfileId = :deviceProfileId " +
-            "AND LOWER(d.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
+            "AND (LOWER(d.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
+            "OR LOWER(d.label) LIKE LOWER(CONCAT('%', :textSearch, '%')) " +
+            "OR LOWER(c.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%')))")
     Page<DeviceInfoEntity> findDeviceInfosByTenantIdAndDeviceProfileId(@Param("tenantId") UUID tenantId,
                                                                        @Param("deviceProfileId") UUID deviceProfileId,
                                                                        @Param("textSearch") String textSearch,

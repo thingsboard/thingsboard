@@ -295,8 +295,7 @@
             <mat-panel-title translate>widget-config.data-settings</mat-panel-title>
           </mat-expansion-panel-header>
           <ng-template matExpansionPanelContent>
-            <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
-                 fxLayoutGap="8px">
+            <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px">
               <mat-form-field fxFlex>
                 <mat-label translate>widget-config.units</mat-label>
                 <input matInput formControlName="units">
@@ -320,13 +319,12 @@
   <mat-tab label="{{ 'widget-config.settings' | translate }}">
     <div class="mat-content mat-padding" fxLayout="column">
       <div [formGroup]="widgetSettings" fxLayout="column">
-        <fieldset class="fields-group" fxLayout="column">
+        <fieldset class="fields-group">
           <legend class="group-title" translate>widget-config.title</legend>
-          <mat-slide-toggle formControlName="showTitle" style="margin: 8px 0">
+          <mat-slide-toggle class="mat-slide" formControlName="showTitle">
             {{ 'widget-config.display-title' | translate }}
           </mat-slide-toggle>
-          <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
-               fxLayoutGap="8px">
+          <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px">
             <mat-form-field fxFlex>
               <mat-label translate>widget-config.title</mat-label>
               <input matInput formControlName="title">
@@ -336,13 +334,12 @@
               <input matInput formControlName="titleTooltip">
             </mat-form-field>
           </div>
-          <fieldset class="fields-group" fxLayout="column" fxLayoutGap="8px" style="margin: 0">
+          <fieldset class="fields-group" fxLayoutGap="8px" style="margin: 0">
             <legend class="group-title" translate>widget-config.title-icon</legend>
-            <mat-slide-toggle formControlName="showTitleIcon">
+            <mat-slide-toggle class="mat-slide"  formControlName="showTitleIcon">
               {{ 'widget-config.display-icon' | translate }}
             </mat-slide-toggle>
-            <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row wrap" fxLayoutAlign="start center"
-                 fxLayoutGap="8px">
+            <div fxLayout.xs="column" fxLayout="row wrap" fxLayoutGap="8px">
               <tb-material-icon-select fxFlex
                                        formControlName="titleIcon">
               </tb-material-icon-select>
@@ -374,12 +371,10 @@
               </ng-template>
           </mat-expansion-panel>
         </fieldset>
-        <fieldset class="fields-group" fxLayout="column">
+        <fieldset class="fields-group">
           <legend class="group-title" translate>widget-config.widget-style</legend>
-          <div fxLayout="column" fxLayoutAlign="center" fxLayout.gt-md="row" fxLayoutAlign.gt-md="start center"
-               fxFlex="100%" fxLayoutGap="8px" class="tb-widget-style">
-            <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
-                 fxLayoutGap="8px" fxFlex.gt-md>
+          <div fxLayout="column" fxLayout.gt-md="row wrap" fxFlex fxLayoutGap="8px" class="tb-widget-style">
+            <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px" fxFlex>
               <tb-color-input fxFlex
                               label="{{'widget-config.background-color' | translate}}"
                               icon="format_color_fill"
@@ -393,8 +388,7 @@
                               formControlName="color">
               </tb-color-input>
             </div>
-            <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
-                 fxLayoutGap="8px" fxFlex.gt-md>
+            <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px" fxFlex>
               <mat-form-field fxFlex>
                 <mat-label translate>widget-config.padding</mat-label>
                 <input matInput formControlName="padding">
@@ -405,10 +399,10 @@
               </mat-form-field>
             </div>
           </div>
-          <mat-slide-toggle formControlName="dropShadow" style="margin-bottom: 8px">
+          <mat-slide-toggle class="slide-block" formControlName="dropShadow">
             {{ 'widget-config.drop-shadow' | translate }}
           </mat-slide-toggle>
-          <mat-slide-toggle formControlName="enableFullscreen">
+          <mat-slide-toggle class="slide-block" formControlName="enableFullscreen">
             {{ 'widget-config.enable-fullscreen' | translate }}
           </mat-slide-toggle>
           <mat-expansion-panel class="tb-settings">
@@ -424,10 +418,14 @@
                 label="{{ 'widget-config.widget-style' | translate }}"
                 formControlName="widgetStyle"
               ></tb-json-object-edit>
+              <tb-css
+                label="{{ 'widget-config.widget-css' | translate }}"
+                formControlName="widgetCss"
+              ></tb-css>
             </ng-template>
           </mat-expansion-panel>
         </fieldset>
-        <fieldset class="fields-group fields-group-slider" fxLayout="column">
+        <fieldset class="fields-group fields-group-slider">
           <legend class="group-title" translate>widget-config.legend</legend>
           <mat-expansion-panel class="tb-settings">
             <mat-expansion-panel-header fxLayout="row wrap">
@@ -445,7 +443,7 @@
             </ng-template>
           </mat-expansion-panel>
         </fieldset>
-        <fieldset [formGroup]="layoutSettings" class="fields-group fields-group-slider" fxLayout="column">
+        <fieldset [formGroup]="layoutSettings" class="fields-group fields-group-slider">
           <legend class="group-title" translate>widget-config.mobile-mode-settings</legend>
           <mat-expansion-panel class="tb-settings">
             <mat-expansion-panel-header>
@@ -459,8 +457,7 @@
               </mat-panel-description>
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
-              <div fxLayout.xs="column" fxLayoutAlign.xs="center" fxLayout="row" fxLayoutAlign="start center"
-                   fxLayoutGap="8px">
+              <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px" fxFlex>
                 <mat-form-field fxFlex>
                   <mat-label translate>widget-config.order</mat-label>
                   <input matInput formControlName="mobileOrder" type="number" step="1">

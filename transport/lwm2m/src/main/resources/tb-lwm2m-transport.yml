@@ -97,10 +97,10 @@ transport:
     timeout: "${CLIENT_SIDE_RPC_TIMEOUT:60000}"
   # Enable/disable http/mqtt/coap transport protocols (has higher priority than certain protocol's 'enabled' property)
   api_enabled: "${TB_TRANSPORT_API_ENABLED:true}"
-  # Local LwM2M transport parameters
   log:
     enabled: "${TB_TRANSPORT_LOG_ENABLED:true}"
     max_length: "${TB_TRANSPORT_LOG_MAX_LENGTH:1024}"
+  # Local LwM2M transport parameters
   lwm2m:
     # Enable/disable lvm2m transport protocol.
     enabled: "${LWM2M_ENABLED:true}"
@@ -140,7 +140,7 @@ transport:
         # Only Certificate_x509:
         skip_validity_check_for_client_cert: "${TB_LWM2M_SERVER_SECURITY_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
     bootstrap:
-      enable: "${LWM2M_ENABLED_BS:true}"
+      enabled: "${LWM2M_ENABLED_BS:true}"
       id: "${LWM2M_SERVER_ID_BS:111}"
       bind_address: "${LWM2M_BS_BIND_ADDRESS:0.0.0.0}"
       bind_port: "${LWM2M_BS_BIND_PORT:5687}"
@@ -199,11 +199,13 @@ transport:
     downlink_pool_size: "${LWM2M_DOWNLINK_POOL_SIZE:10}"
     ota_pool_size: "${LWM2M_OTA_POOL_SIZE:10}"
     clean_period_in_sec: "${LWM2M_CLEAN_PERIOD_IN_SEC:2}"
-    log_max_length: "${LWM2M_LOG_MAX_LENGTH:1024}"
     psm_activity_timer: "${LWM2M_PSM_ACTIVITY_TIMER:10000}"
     paging_transmission_window: "${LWM2M_PAGING_TRANSMISSION_WINDOW:10000}"
     # Use redis for Security and Registration stores
     redis.enabled: "${LWM2M_REDIS_ENABLED:false}"
+    network_config: # In this section you can specify custom parameters for LwM2M network configuration and expose the env variables to configure outside
+  #      - key: "PROTOCOL_STAGE_THREAD_COUNT"
+  #        value: "${LWM2M_PROTOCOL_STAGE_THREAD_COUNT:4}"
   stats:
     enabled: "${TB_TRANSPORT_STATS_ENABLED:true}"
     print-interval-ms: "${TB_TRANSPORT_STATS_PRINT_INTERVAL_MS:60000}"

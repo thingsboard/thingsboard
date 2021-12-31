@@ -38,6 +38,7 @@
         <docker.name>tb-lwm2m-transport</docker.name>
         <pkg.logFolder>/var/log/${pkg.name}</pkg.logFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
+        <docker.push-arm-amd-image.phase>pre-integration-test</docker.push-arm-amd-image.phase>
     </properties>
 
     <dependencies>

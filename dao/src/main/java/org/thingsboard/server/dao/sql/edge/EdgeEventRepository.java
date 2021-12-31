@@ -30,7 +30,7 @@ public interface EdgeEventRepository extends PagingAndSortingRepository<EdgeEven
     @Query("SELECT e FROM EdgeEventEntity e WHERE " +
             "e.tenantId = :tenantId " +
             "AND e.edgeId = :edgeId " +
-            "AND (:startTime IS NULL OR e.createdTime >= :startTime) " +
+            "AND (:startTime IS NULL OR e.createdTime > :startTime) " +
             "AND (:endTime IS NULL OR e.createdTime <= :endTime) " +
             "AND LOWER(e.edgeEventType) LIKE LOWER(CONCAT('%', :textSearch, '%'))"
     )
@@ -44,7 +44,7 @@ public interface EdgeEventRepository extends PagingAndSortingRepository<EdgeEven
     @Query("SELECT e FROM EdgeEventEntity e WHERE " +
             "e.tenantId = :tenantId " +
             "AND e.edgeId = :edgeId " +
-            "AND (:startTime IS NULL OR e.createdTime >= :startTime) " +
+            "AND (:startTime IS NULL OR e.createdTime > :startTime) " +
             "AND (:endTime IS NULL OR e.createdTime <= :endTime) " +
             "AND e.edgeEventAction <> 'TIMESERIES_UPDATED' " +
             "AND LOWER(e.edgeEventType) LIKE LOWER(CONCAT('%', :textSearch, '%'))"

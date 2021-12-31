@@ -150,6 +150,7 @@ export type StateControllerHolder = () => IStateController;
 export interface IStateController {
   dashboardCtrl: IDashboardController;
   getStateParams(): StateParams;
+  stateChanged(): Observable<string>;
   getStateParamsByStateId(stateId: string): StateParams;
   openState(id: string, params?: StateParams, openRightLayout?: boolean): void;
   updateState(id?: string, params?: StateParams, openRightLayout?: boolean): void;

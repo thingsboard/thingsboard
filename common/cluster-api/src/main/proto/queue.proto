@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 syntax = "proto3";
+
 package transport;
 
 option java_package = "org.thingsboard.server.gen.transport";
@@ -560,6 +561,15 @@ message TbAttributeDeleteProto {
   repeated string keys = 7;
 }
 
+message TbTimeSeriesDeleteProto {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+  int64 tenantIdMSB = 4;
+  int64 tenantIdLSB = 5;
+  repeated string keys = 6;
+}
+
 message TbTimeSeriesUpdateProto {
   string entityType = 1;
   int64 entityIdMSB = 2;
@@ -581,8 +591,12 @@ message TbSubscriptionKetStateProto {
 
 message TbSubscriptionUpdateValueListProto {
   string key = 1;
-  repeated int64 ts = 2;
-  repeated string value = 3;
+  repeated TbSubscriptionUpdateTsValue tsValue = 2;
+}
+
+message TbSubscriptionUpdateTsValue {
+   int64 ts = 1;
+   optional string value = 2;
 }
 
 /**
@@ -609,6 +623,7 @@ message SubscriptionMgrMsgProto {
   TbAlarmSubscriptionProto alarmSub = 7;
   TbAlarmUpdateProto alarmUpdate = 8;
   TbAlarmDeleteProto alarmDelete = 9;
+  TbTimeSeriesDeleteProto tsDelete = 10;
 }
 
 message LocalSubscriptionServiceMsgProto {
