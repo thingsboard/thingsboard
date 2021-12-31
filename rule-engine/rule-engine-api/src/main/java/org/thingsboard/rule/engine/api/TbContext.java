@@ -155,7 +155,7 @@ public interface TbContext {
 
     TbMsg deviceCreatedMsg(Device device, RuleNodeId ruleNodeId);
 
-    void entityRelationEvent(String queueName, EntityRelation relation, String dataConstants);
+    void enqueueEntityRelationEvents(EntityRelation relation, String relationEventType);
 
     TbMsg assetCreatedMsg(Asset asset, RuleNodeId ruleNodeId);
 

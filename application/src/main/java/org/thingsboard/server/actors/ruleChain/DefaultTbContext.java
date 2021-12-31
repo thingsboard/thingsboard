@@ -315,34 +315,38 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public void entityRelationEvent(String queueName, EntityRelation relation, String dataConstants) {
+    public void enqueueEntityRelationEvents(EntityRelation relation, String relationEventType) {
         TbMsgMetaData metaData = new TbMsgMetaData();
-        metaData.putValue(dataConstants, EntitySearchDirection.FROM.name());
+        // TODO: 31.12.21 change EntitySearchDirection.FROM.name()
+        metaData.putValue(relationEventType, EntitySearchDirection.FROM.name());
         try {
-            TbMsg tbMsgFrom = TbMsg.newMsg(queueName, dataConstants, relation.getFrom(), metaData, mapper.writeValueAsString(relation));
-            enqueue(tbMsgFrom,
-                    () -> log.trace("[{}] Enqueued message {}!", dataConstants, relation),
-                    throwable -> log.warn("[{}] Failed to enqueue message {}", dataConstants, relation, throwable));
+            // TODO: 31.12.21 change MAIN queue usage
+            TbMsg tbMsgFrom = TbMsg.newMsg(ServiceQueue.MAIN, relationEventType, relation.getFrom(), metaData, mapper.writeValueAsString(relation));
+            processEnqueue(tbMsgFrom, relation, relationEventType);
 
-            TbMsg tbMsgTo = TbMsg.newMsg(queueName, dataConstants, relation.getTo(), metaData, mapper.writeValueAsString(relation));
+            TbMsg tbMsgTo = TbMsg.newMsg(ServiceQueue.MAIN, relationEventType, relation.getTo(), metaData, mapper.writeValueAsString(relation));
             if (!isDuplicateMessage(relation)) {
-                enqueue(tbMsgTo,
-                        () -> log.trace("[{}] Enqueued message {}!", dataConstants, relation),
-                        throwable -> log.warn("[{}] Failed to enqueue message {}", dataConstants, relation, throwable));
+                processEnqueue(tbMsgTo, relation, relationEventType);
             }
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to process [entityRelationCreatedOrUpdated] msg: " + e);
         }
     }
 
+    private void processEnqueue(TbMsg tbMsgFrom, EntityRelation relation, String relationEventType) {
+        enqueue(tbMsgFrom,
+                () -> log.trace("[{}] Enqueued message {}!", relationEventType, relation),
+                throwable -> log.warn("[{}] Failed to enqueue message {}", relationEventType, relation, throwable));
+    }
+
     private boolean isDuplicateMessage(EntityRelation relation) {
         if (relation.getFrom().getEntityType() == EntityType.DEVICE) {
             if (relation.getFrom().getEntityType().equals(relation.getTo().getEntityType())) {
-                DeviceProfile deviceProfile = mainCtx.getDeviceProfileCache().get(getTenantId(), new DeviceId(relation.getTo().getId()));
-                DeviceProfile deviceProfileFrom = mainCtx.getDeviceProfileCache().get(deviceProfile.getTenantId(), new DeviceId(relation.getFrom().getId()));
-                String defaultQueueName = deviceProfileFrom.getDefaultQueueName() == null ? "" : deviceProfile.getDefaultQueueName();
-                String fromQueueName = deviceProfile.getDefaultQueueName() == null ? "" : deviceProfileFrom.getDefaultQueueName();
-                if (deviceProfileFrom.getDefaultRuleChainId().equals(deviceProfile.getDefaultRuleChainId())
+                DeviceProfile deviceProfileFrom = getDeviceProfileByDeviceId(new DeviceId(relation.getFrom().getId()));
+                DeviceProfile deviceProfileTo = getDeviceProfileByDeviceId(new DeviceId(relation.getTo().getId()));
+                String defaultQueueName = deviceProfileFrom.getDefaultQueueName() == null ? "" : deviceProfileTo.getDefaultQueueName();
+                String fromQueueName = deviceProfileTo.getDefaultQueueName() == null ? "" : deviceProfileFrom.getDefaultQueueName();
+                if (deviceProfileFrom.getDefaultRuleChainId().equals(deviceProfileTo.getDefaultRuleChainId())
                         && defaultQueueName.equals(fromQueueName)) {
                     return true;
                 }
@@ -351,6 +355,10 @@ class DefaultTbContext implements TbContext {
         }
 
         return false;
+    }
+
+    private DeviceProfile getDeviceProfileByDeviceId(DeviceId deviceId) {
+        return mainCtx.getDeviceProfileCache().get(getTenantId(), deviceId);
     }
 
     public TbMsg assetCreatedMsg(Asset asset, RuleNodeId ruleNodeId) {
@@ -362,7 +370,7 @@ class DefaultTbContext implements TbContext {
         String queueName = ServiceQueue.MAIN;
         if (EntityType.DEVICE.equals(alarm.getOriginator().getEntityType())) {
             DeviceId deviceId = new DeviceId(alarm.getOriginator().getId());
-            DeviceProfile deviceProfile = mainCtx.getDeviceProfileCache().get(getTenantId(), deviceId);
+            DeviceProfile deviceProfile = getDeviceProfileByDeviceId(deviceId);
             if (deviceProfile == null) {
                 log.warn("[{}] Device profile is null!", deviceId);
                 ruleChainId = null;

@@ -553,8 +553,10 @@ public class BaseRelationService implements RelationService {
         List<EntityRelation> result = new ArrayList<>();
         for (EntityRelation relation : relations) {
             cacheEviction(relation, cache);
-            boolean hasDeleted = deleteRelation(tenantId, relation);
-            if (hasDeleted) result.add(relation);
+            boolean deleted = deleteRelation(tenantId, relation);
+            if (deleted) {
+                result.add(relation);
+            }
         }
         return result;
     }
