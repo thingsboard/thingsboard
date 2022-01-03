@@ -203,29 +203,4 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     public List<EntityRelation> findRuleNodeToRuleChainRelations(RuleChainType ruleChainType, int limit) {
         return DaoUtil.convertDataList(relationRepository.findRuleNodeToRuleChainRelations(ruleChainType, PageRequest.of(0, limit)));
     }
-
-    private Specification<RelationEntity> getEntityFieldsSpec(EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType childType) {
-        return (root, criteriaQuery, criteriaBuilder) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            if (from != null) {
-                Predicate fromIdPredicate = criteriaBuilder.equal(root.get("fromId"), from.getId());
-                predicates.add(fromIdPredicate);
-                Predicate fromEntityTypePredicate = criteriaBuilder.equal(root.get("fromType"), from.getEntityType().name());
-                predicates.add(fromEntityTypePredicate);
-            }
-            if (relationType != null) {
-                Predicate relationTypePredicate = criteriaBuilder.equal(root.get("relationType"), relationType);
-                predicates.add(relationTypePredicate);
-            }
-            if (typeGroup != null) {
-                Predicate typeGroupPredicate = criteriaBuilder.equal(root.get("relationTypeGroup"), typeGroup.name());
-                predicates.add(typeGroupPredicate);
-            }
-            if (childType != null) {
-                Predicate childTypePredicate = criteriaBuilder.equal(root.get("toType"), childType.name());
-                predicates.add(childTypePredicate);
-            }
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
-        };
-    }
 }
