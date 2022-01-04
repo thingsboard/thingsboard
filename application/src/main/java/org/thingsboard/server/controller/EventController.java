@@ -240,31 +240,27 @@ public class EventController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Clear Events (clearEvents)", notes = "Clears events for specified entity.")
+    @ApiOperation(value = "Clear Events (clearEvents)", notes = "Clears events by filter for specified entity.")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/events/{entityType}/{entityId}/clear", method = RequestMethod.POST)
     @ResponseStatus(HttpStatus.OK)
-    public void clearEvents(
-            @ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
-            @PathVariable(ENTITY_TYPE) String strEntityType,
-            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
-            @PathVariable(ENTITY_ID) String strEntityId,
-            @ApiParam(value = EVENT_START_TIME_DESCRIPTION)
-            @RequestParam("tenantId") String strTenantId,
-            @ApiParam(value = "A string value representing event type", example = "STATS", required = true)
-            @RequestParam(required = false) Long startTime,
-            @ApiParam(value = EVENT_END_TIME_DESCRIPTION)
-            @RequestParam(required = false) Long endTime,
-            @RequestBody EventFilter eventFilter) throws ThingsboardException {
+    public void clearEvents(@ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
+                            @PathVariable(ENTITY_TYPE) String strEntityType,
+                            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
+                            @PathVariable(ENTITY_ID) String strEntityId,
+                            @ApiParam(value = EVENT_START_TIME_DESCRIPTION)
+                            @RequestParam(required = false) Long startTime,
+                            @ApiParam(value = EVENT_END_TIME_DESCRIPTION)
+                            @RequestParam(required = false) Long endTime,
+                            @ApiParam(value = EVENT_FILTER_DEFINITION)
+                            @RequestBody EventFilter eventFilter) throws ThingsboardException {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
         try {
-            TenantId tenantId = new TenantId(toUUID(strTenantId));
-
             EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
-            checkEntityId(entityId, Operation.DELETE);
+            checkEntityId(entityId, Operation.WRITE);
 
-            eventService.removeEvents(tenantId, entityId, eventFilter, startTime, endTime);
+            eventService.removeEvents(getTenantId(), entityId, eventFilter, startTime, endTime);
         } catch (Exception e) {
             throw handleException(e);
         }
