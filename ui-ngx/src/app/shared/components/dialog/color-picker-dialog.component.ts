@@ -67,7 +67,7 @@ export class ColorPickerDialogComponent extends DialogComponent<ColorPickerDialo
   }
 
   cancel(): void {
-    this.dialogRef.close(null);
+    this.dialogRef.close(this.data.color);
   }
 
   select(): void {
