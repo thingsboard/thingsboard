@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.query.KeyFilterPredicate;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
 import org.thingsboard.server.common.msg.tools.SchedulerUtils;
+import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -115,7 +116,7 @@ class AlarmRuleState {
     }
 
     public AlarmEvalResult eval(DataSnapshot data) {
-        boolean active = isActive(data.getTs());
+        boolean active = isActive(data, data.getTs());
         switch (spec.getType()) {
             case SIMPLE:
                 return (active && eval(alarmRule.getCondition(), data)) ? AlarmEvalResult.TRUE : AlarmEvalResult.FALSE;
@@ -128,7 +129,7 @@ class AlarmRuleState {
         }
     }
 
-    private boolean isActive(long eventTs) {
+    private boolean isActive(DataSnapshot data, long eventTs) {
         if (eventTs == 0L) {
             eventTs = System.currentTimeMillis();
         }
@@ -138,10 +139,28 @@ class AlarmRuleState {
         switch (alarmRule.getSchedule().getType()) {
             case ANY_TIME:
                 return true;
-            case SPECIFIC_TIME:
-                return isActiveSpecific((SpecificTimeSchedule) alarmRule.getSchedule(), eventTs);
-            case CUSTOM:
-                return isActiveCustom((CustomTimeSchedule) alarmRule.getSchedule(), eventTs);
+            case SPECIFIC_TIME: {
+                SpecificTimeSchedule originalSchedule = (SpecificTimeSchedule) alarmRule.getSchedule();
+                EntityKeyValue dynamicValue = getDynamicValue(data, originalSchedule.getDynamicValue());
+
+                if (dynamicValue != null) {
+                    SpecificTimeSchedule schedule = JsonConverter.parse(dynamicValue.getJsonValue(), SpecificTimeSchedule.class);
+                    originalSchedule = schedule == null ? originalSchedule : schedule;
+                }
+
+                return isActiveSpecific(originalSchedule, eventTs);
+            }
+            case CUSTOM: {
+                CustomTimeSchedule originalSchedule = (CustomTimeSchedule) alarmRule.getSchedule();
+                EntityKeyValue dynamicValue = getDynamicValue(data, originalSchedule.getDynamicValue());
+
+                if (dynamicValue != null) {
+                    CustomTimeSchedule schedule = JsonConverter.parse(dynamicValue.getJsonValue(), CustomTimeSchedule.class);
+                    originalSchedule = schedule == null ? originalSchedule : schedule;
+                }
+
+                return isActiveCustom(originalSchedule, eventTs);
+            }
             default:
                 throw new RuntimeException("Unsupported schedule type: " + alarmRule.getSchedule().getType());
         }
@@ -236,7 +255,7 @@ class AlarmRuleState {
 
             if (repeating.getPredicate().getDynamicValue() != null &&
                     repeating.getPredicate().getDynamicValue().getSourceAttribute() != null) {
-                EntityKeyValue repeatingKeyValue = getDynamicPredicateValue(data, repeating.getPredicate().getDynamicValue());
+                EntityKeyValue repeatingKeyValue = getDynamicValue(data, repeating.getPredicate().getDynamicValue());
                 if (repeatingKeyValue != null) {
                     repeatingTimes = repeatingKeyValue.getLngValue();
                 }
@@ -257,7 +276,7 @@ class AlarmRuleState {
 
             if (duration.getPredicate().getDynamicValue() != null &&
                     duration.getPredicate().getDynamicValue().getSourceAttribute() != null) {
-                EntityKeyValue durationKeyValue = getDynamicPredicateValue(data, duration.getPredicate().getDynamicValue());
+                EntityKeyValue durationKeyValue = getDynamicValue(data, duration.getPredicate().getDynamicValue());
                 if (durationKeyValue != null) {
                     durationTimeInMs = timeUnit.toMillis(durationKeyValue.getLngValue());
                 }
@@ -276,7 +295,7 @@ class AlarmRuleState {
                 long requiredDurationInMs = resolveRequiredDurationInMs(dataSnapshot);
                 if (requiredDurationInMs > 0 && state.getLastEventTs() > 0 && ts > state.getLastEventTs()) {
                     long duration = state.getDuration() + (ts - state.getLastEventTs());
-                    if (isActive(ts)) {
+                    if (isActive(dataSnapshot, ts)) {
                         return duration > requiredDurationInMs ? AlarmEvalResult.TRUE : AlarmEvalResult.NOT_YET_TRUE;
                     } else {
                         return AlarmEvalResult.FALSE;
@@ -443,7 +462,7 @@ class AlarmRuleState {
     }
 
     private <T> T getPredicateValue(DataSnapshot data, FilterPredicateValue<T> value, AlarmConditionFilter filter, Function<EntityKeyValue, T> transformFunction) {
-        EntityKeyValue ekv = getDynamicPredicateValue(data, value.getDynamicValue());
+        EntityKeyValue ekv = getDynamicValue(data, value.getDynamicValue());
         if (ekv != null) {
             T result = transformFunction.apply(ekv);
             if (result != null) {
@@ -457,7 +476,7 @@ class AlarmRuleState {
         }
     }
 
-    private <T> EntityKeyValue getDynamicPredicateValue(DataSnapshot data, DynamicValue<T> value) {
+    private <T> EntityKeyValue getDynamicValue(DataSnapshot data, DynamicValue<T> value) {
         EntityKeyValue ekv = null;
         if (value != null) {
             switch (value.getSourceType()) {

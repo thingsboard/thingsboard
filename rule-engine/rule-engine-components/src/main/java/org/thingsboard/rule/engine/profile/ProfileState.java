@@ -27,6 +27,9 @@ import org.thingsboard.server.common.data.device.profile.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.device.profile.DurationAlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.RepeatingAlarmConditionSpec;
+import org.thingsboard.server.common.data.device.profile.CustomTimeSchedule;
+import org.thingsboard.server.common.data.device.profile.SpecificTimeSchedule;
+import org.thingsboard.server.common.data.device.profile.AlarmSchedule;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
 import org.thingsboard.server.common.data.query.DynamicValue;
@@ -77,6 +80,7 @@ class ProfileState {
                         addDynamicValuesRecursively(keyFilter.getPredicate(), entityKeys, ruleKeys);
                     }
                     addEntityKeysFromAlarmConditionSpec(alarmRule);
+                    addScheduleDynamicValues(alarmRule.getSchedule());
                 }));
                 if (alarm.getClearRule() != null) {
                     var clearAlarmKeys = alarmClearKeys.computeIfAbsent(alarm.getId(), id -> new HashSet<>());
@@ -88,6 +92,26 @@ class ProfileState {
                     addEntityKeysFromAlarmConditionSpec(alarm.getClearRule());
                 }
             }
+        }
+    }
+
+    private void addScheduleDynamicValues(AlarmSchedule schedule) {
+        DynamicValue<String> dynamicValue = null;
+        switch (schedule.getType()) {
+            case SPECIFIC_TIME:
+                SpecificTimeSchedule specSchedule = (SpecificTimeSchedule) schedule;
+                dynamicValue = specSchedule.getDynamicValue();
+                break;
+            case CUSTOM:
+                CustomTimeSchedule custSchedule = (CustomTimeSchedule) schedule;
+                dynamicValue = custSchedule.getDynamicValue();
+        }
+
+        if (dynamicValue != null) {
+            entityKeys.add(
+                    new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE,
+                            dynamicValue.getSourceAttribute())
+            );
         }
     }
 
