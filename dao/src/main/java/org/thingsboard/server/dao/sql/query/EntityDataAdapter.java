@@ -85,18 +85,6 @@ public class EntityDataAdapter {
             String strVal = value.toString();
             // check number
             if (NumberUtils.isNumber(strVal)) {
-//                try {
-//                    long longVal = Long.parseLong(strVal);
-//                    return Long.toString(longVal);
-//                } catch (NumberFormatException ignored) {
-//                }
-//                try {
-//                    double dblVal = Double.parseDouble(strVal);
-//                    if (!Double.isInfinite(dblVal)) {
-//                        return Double.toString(dblVal);
-//                    }
-//                } catch (NumberFormatException ignored) {
-//                }
                 BigDecimal bd = new BigDecimal(strVal);
                 return bd.toPlainString();
             }
