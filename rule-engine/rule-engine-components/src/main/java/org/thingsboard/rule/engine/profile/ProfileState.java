@@ -80,7 +80,10 @@ class ProfileState {
                         addDynamicValuesRecursively(keyFilter.getPredicate(), entityKeys, ruleKeys);
                     }
                     addEntityKeysFromAlarmConditionSpec(alarmRule);
-                    addScheduleDynamicValues(alarmRule.getSchedule());
+                    AlarmSchedule schedule = alarmRule.getSchedule();
+                    if (schedule != null) {
+                        addScheduleDynamicValues(schedule);
+                    }
                 }));
                 if (alarm.getClearRule() != null) {
                     var clearAlarmKeys = alarmClearKeys.computeIfAbsent(alarm.getId(), id -> new HashSet<>());
@@ -99,12 +102,13 @@ class ProfileState {
         DynamicValue<String> dynamicValue = null;
         switch (schedule.getType()) {
             case SPECIFIC_TIME:
-                SpecificTimeSchedule specSchedule = (SpecificTimeSchedule) schedule;
-                dynamicValue = specSchedule.getDynamicValue();
+                SpecificTimeSchedule specificTimeSchedule = (SpecificTimeSchedule) schedule;
+                dynamicValue = specificTimeSchedule.getDynamicValue();
                 break;
             case CUSTOM:
-                CustomTimeSchedule custSchedule = (CustomTimeSchedule) schedule;
-                dynamicValue = custSchedule.getDynamicValue();
+                CustomTimeSchedule customTimeSchedule = (CustomTimeSchedule) schedule;
+                dynamicValue = customTimeSchedule.getDynamicValue();
+                break;
         }
 
         if (dynamicValue != null) {

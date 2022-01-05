@@ -140,26 +140,30 @@ class AlarmRuleState {
             case ANY_TIME:
                 return true;
             case SPECIFIC_TIME: {
-                SpecificTimeSchedule originalSchedule = (SpecificTimeSchedule) alarmRule.getSchedule();
-                EntityKeyValue dynamicValue = getDynamicValue(data, originalSchedule.getDynamicValue());
+                SpecificTimeSchedule defaultSchedule = (SpecificTimeSchedule) alarmRule.getSchedule();
+                EntityKeyValue dynamicValue = getDynamicValue(data, defaultSchedule.getDynamicValue());
 
-                if (dynamicValue != null) {
-                    SpecificTimeSchedule schedule = JsonConverter.parse(dynamicValue.getJsonValue(), SpecificTimeSchedule.class);
-                    originalSchedule = schedule == null ? originalSchedule : schedule;
+                SpecificTimeSchedule schedule;
+                try {
+                    schedule = JsonConverter.parse(dynamicValue.getJsonValue(), SpecificTimeSchedule.class);
+                } catch (Exception e) {
+                    schedule = defaultSchedule;
                 }
 
-                return isActiveSpecific(originalSchedule, eventTs);
+                return isActiveSpecific(schedule, eventTs);
             }
             case CUSTOM: {
-                CustomTimeSchedule originalSchedule = (CustomTimeSchedule) alarmRule.getSchedule();
-                EntityKeyValue dynamicValue = getDynamicValue(data, originalSchedule.getDynamicValue());
+                CustomTimeSchedule defaultSchedule = (CustomTimeSchedule) alarmRule.getSchedule();
+                EntityKeyValue dynamicValue = getDynamicValue(data, defaultSchedule.getDynamicValue());
 
-                if (dynamicValue != null) {
-                    CustomTimeSchedule schedule = JsonConverter.parse(dynamicValue.getJsonValue(), CustomTimeSchedule.class);
-                    originalSchedule = schedule == null ? originalSchedule : schedule;
+                CustomTimeSchedule schedule;
+                try {
+                    schedule = JsonConverter.parse(dynamicValue.getJsonValue(), CustomTimeSchedule.class);
+                } catch (Exception e) {
+                    schedule = defaultSchedule;
                 }
 
-                return isActiveCustom(originalSchedule, eventTs);
+                return isActiveCustom(schedule, eventTs);
             }
             default:
                 throw new RuntimeException("Unsupported schedule type: " + alarmRule.getSchedule().getType());
