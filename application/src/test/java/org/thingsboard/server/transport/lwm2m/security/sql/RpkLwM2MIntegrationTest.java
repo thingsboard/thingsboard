@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.security.sql;
 
 import org.eclipse.leshan.client.object.Security;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCredential;
 import org.thingsboard.server.transport.lwm2m.security.AbstractSecurityLwM2MIntegrationTest;
@@ -29,6 +30,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SHORT_SERVE
 
 public class RpkLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTest {
 
+    @Ignore
     @Test
     public void testConnectWithRPKAndObserveTelemetry() throws Exception {
         RPKClientCredential rpkClientCredentials = new RPKClientCredential();
