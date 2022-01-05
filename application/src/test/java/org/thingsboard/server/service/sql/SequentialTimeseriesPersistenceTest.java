@@ -17,7 +17,6 @@ package org.thingsboard.server.service.sql;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
@@ -55,7 +54,6 @@ import java.util.concurrent.TimeoutException;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
-@Slf4j
 public class SequentialTimeseriesPersistenceTest extends AbstractControllerTest {
 
     static final int TIMEOUT = 30;
@@ -112,7 +110,7 @@ public class SequentialTimeseriesPersistenceTest extends AbstractControllerTest 
         List<Device> devices = List.of(deviceA, deviceB, deviceC, deviceD);
 
         for (int i = 0; i < 2; i++) {
-            int idx = i * (devices.size());
+            int idx = i * devices.size();
             saveLatestTsForAssetAndDevice(devices, asset, idx);
             checkDiffBetweenLatestTsForDevicesAndAsset(devices, asset);
         }
@@ -136,7 +134,7 @@ public class SequentialTimeseriesPersistenceTest extends AbstractControllerTest 
         return savedAsset;
     }
 
-    private void saveLatestTsForAssetAndDevice(List<Device> devices, Asset asset, int idx) throws ExecutionException, InterruptedException, TimeoutException {
+    void saveLatestTsForAssetAndDevice(List<Device> devices, Asset asset, int idx) throws ExecutionException, InterruptedException, TimeoutException {
         for (Device device : devices) {
             TbMsg tbMsg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(),
                     device.getId(),
@@ -185,7 +183,7 @@ public class SequentialTimeseriesPersistenceTest extends AbstractControllerTest 
     }
 
     @NotNull
-    private JsonObject getJsonObject(String key, long value, Optional<String> tsKvEntryOpt) {
+    JsonObject getJsonObject(String key, long value, Optional<String> tsKvEntryOpt) {
         JsonObject jsonObject = new JsonObject();
         if (tsKvEntryOpt.isPresent()) {
             jsonObject = new JsonParser().parse(tsKvEntryOpt.get()).getAsJsonObject();
@@ -194,7 +192,7 @@ public class SequentialTimeseriesPersistenceTest extends AbstractControllerTest 
         return jsonObject;
     }
 
-    private void saveTimeseries(EntityId entityId, TsKvEntry saveTsKvEntry) throws InterruptedException, ExecutionException, TimeoutException {
+    void saveTimeseries(EntityId entityId, TsKvEntry saveTsKvEntry) throws InterruptedException, ExecutionException, TimeoutException {
         timeseriesService.save(savedTenant.getId(), entityId, List.of(saveTsKvEntry), TTL).get(TIMEOUT, TimeUnit.SECONDS);
     }
 
