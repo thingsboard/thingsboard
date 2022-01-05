@@ -74,7 +74,7 @@ public class SequentialTimeseriesPersistenceTest extends AbstractControllerTest 
     @Before
     public void beforeTest() throws Exception {
         configuration = new TbMsgTimeseriesNodeConfiguration();
-        configuration.setIgnoreMetadataTs(true);
+        configuration.setUseServerTs(true);
 
         loginSysAdmin();
 
@@ -142,7 +142,7 @@ public class SequentialTimeseriesPersistenceTest extends AbstractControllerTest 
                     TbMsgDataType.JSON,
                     getTbMsgData(msgValue.get(idx)));
             saveDeviceTsEntry(device.getId(), tbMsg, msgValue.get(idx));
-            saveAssetTsEntry(asset, device.getName(), msgValue.get(idx), TbMsgTimeseriesNode.computeTs(tbMsg, configuration.isIgnoreMetadataTs()));
+            saveAssetTsEntry(asset, device.getName(), msgValue.get(idx), TbMsgTimeseriesNode.computeTs(tbMsg, configuration.isUseServerTs()));
             idx++;
         }
     }
@@ -172,7 +172,7 @@ public class SequentialTimeseriesPersistenceTest extends AbstractControllerTest 
     }
 
     void saveDeviceTsEntry(EntityId entityId, TbMsg tbMsg, long value) throws ExecutionException, InterruptedException, TimeoutException {
-        TsKvEntry tsKvEntry = new BasicTsKvEntry(TbMsgTimeseriesNode.computeTs(tbMsg, configuration.isIgnoreMetadataTs()), new LongDataEntry(TOTALIZER, value));
+        TsKvEntry tsKvEntry = new BasicTsKvEntry(TbMsgTimeseriesNode.computeTs(tbMsg, configuration.isUseServerTs()), new LongDataEntry(TOTALIZER, value));
         saveTimeseries(entityId, tsKvEntry);
     }
 

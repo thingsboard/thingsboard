@@ -23,14 +23,14 @@ public class TbMsgTimeseriesNodeConfiguration implements NodeConfiguration<TbMsg
 
     private long defaultTTL;
     private boolean skipLatestPersistence;
-    private boolean ignoreMetadataTs;
+    private boolean useServerTs;
 
     @Override
     public TbMsgTimeseriesNodeConfiguration defaultConfiguration() {
         TbMsgTimeseriesNodeConfiguration configuration = new TbMsgTimeseriesNodeConfiguration();
         configuration.setDefaultTTL(0L);
         configuration.setSkipLatestPersistence(false);
-        configuration.setIgnoreMetadataTs(false);
+        configuration.setUseServerTs(false);
         return configuration;
     }
 }
