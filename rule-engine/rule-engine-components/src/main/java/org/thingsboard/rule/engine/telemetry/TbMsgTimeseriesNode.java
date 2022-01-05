@@ -46,10 +46,15 @@ import java.util.concurrent.TimeUnit;
         configClazz = TbMsgTimeseriesNodeConfiguration.class,
         nodeDescription = "Saves timeseries data",
         nodeDetails = "Saves timeseries telemetry data based on configurable TTL parameter. Expects messages with 'POST_TELEMETRY_REQUEST' message type. " +
-                "Timestamp in milliseconds will be taken from metadata.ts, otherwise 'now' timestamp will be applied. " +
-                "Allows stopping updating values for incoming keys in the latest ts_kv table if 'skipLatestPersistence' is set to true.",
+                "Timestamp in milliseconds will be taken from metadata.ts, otherwise 'now' message timestamp will be applied. " +
+                "Allows stopping updating values for incoming keys in the latest ts_kv table if 'skipLatestPersistence' is set to true.\n " +
+                "Enable 'ignoreMetadataTs' param to ignore the timestamp that arrives from message metadata. " +
+                "Useful for all sorts of sequential processing if you merge messages from multiple sources (devices, assets, etc).\n" +
+                "For example, if you count number of messages from multiple devices into asset time-series value. " +
+                "Typically, you fetch the previous value of the counter, increment it and then save the value. " +
+                "If you use timestamp of the original message, the value may be ignored, since it has outdated timestamp comparing to the previous message.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "tbActionNodeTimeseriesConfig!",
+        configDirective = "tbActionNodeTimeseriesConfig",
         icon = "file_upload"
 )
 public class TbMsgTimeseriesNode implements TbNode {
@@ -102,8 +107,8 @@ public class TbMsgTimeseriesNode implements TbNode {
         }
     }
 
-    public static long computeTs(TbMsg msg, boolean saveWithMsgTs) {
-        return saveWithMsgTs ? System.currentTimeMillis() : getTs(msg);
+    public static long computeTs(TbMsg msg, boolean ignoreMetadataTs) {
+        return ignoreMetadataTs ? System.currentTimeMillis() : getTs(msg);
     }
 
     public static long getTs(TbMsg msg) {
