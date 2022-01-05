@@ -27,8 +27,6 @@ import org.thingsboard.server.common.data.device.profile.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.device.profile.DurationAlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.RepeatingAlarmConditionSpec;
-import org.thingsboard.server.common.data.device.profile.CustomTimeSchedule;
-import org.thingsboard.server.common.data.device.profile.SpecificTimeSchedule;
 import org.thingsboard.server.common.data.device.profile.AlarmSchedule;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
@@ -99,18 +97,7 @@ class ProfileState {
     }
 
     private void addScheduleDynamicValues(AlarmSchedule schedule) {
-        DynamicValue<String> dynamicValue = null;
-        switch (schedule.getType()) {
-            case SPECIFIC_TIME:
-                SpecificTimeSchedule specificTimeSchedule = (SpecificTimeSchedule) schedule;
-                dynamicValue = specificTimeSchedule.getDynamicValue();
-                break;
-            case CUSTOM:
-                CustomTimeSchedule customTimeSchedule = (CustomTimeSchedule) schedule;
-                dynamicValue = customTimeSchedule.getDynamicValue();
-                break;
-        }
-
+        DynamicValue<String> dynamicValue = schedule.getDynamicValue();
         if (dynamicValue != null) {
             entityKeys.add(
                     new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE,

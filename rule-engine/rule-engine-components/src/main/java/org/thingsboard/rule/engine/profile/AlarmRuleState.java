@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.device.profile.AlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
 import org.thingsboard.server.common.data.device.profile.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.CustomTimeSchedule;
+import org.thingsboard.server.common.data.device.profile.AlarmSchedule;
 import org.thingsboard.server.common.data.device.profile.CustomTimeScheduleItem;
 import org.thingsboard.server.common.data.device.profile.DurationAlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.RepeatingAlarmConditionSpec;
@@ -139,35 +140,27 @@ class AlarmRuleState {
         switch (alarmRule.getSchedule().getType()) {
             case ANY_TIME:
                 return true;
-            case SPECIFIC_TIME: {
-                SpecificTimeSchedule defaultSchedule = (SpecificTimeSchedule) alarmRule.getSchedule();
-                EntityKeyValue dynamicValue = getDynamicValue(data, defaultSchedule.getDynamicValue());
-
-                SpecificTimeSchedule schedule;
-                try {
-                    schedule = JsonConverter.parse(dynamicValue.getJsonValue(), SpecificTimeSchedule.class);
-                } catch (Exception e) {
-                    schedule = defaultSchedule;
-                }
-
-                return isActiveSpecific(schedule, eventTs);
-            }
-            case CUSTOM: {
-                CustomTimeSchedule defaultSchedule = (CustomTimeSchedule) alarmRule.getSchedule();
-                EntityKeyValue dynamicValue = getDynamicValue(data, defaultSchedule.getDynamicValue());
-
-                CustomTimeSchedule schedule;
-                try {
-                    schedule = JsonConverter.parse(dynamicValue.getJsonValue(), CustomTimeSchedule.class);
-                } catch (Exception e) {
-                    schedule = defaultSchedule;
-                }
-
-                return isActiveCustom(schedule, eventTs);
-            }
+            case SPECIFIC_TIME:
+                return isActiveSpecific((SpecificTimeSchedule) getSchedule(data, alarmRule), eventTs);
+            case CUSTOM:
+                return isActiveCustom((CustomTimeSchedule) getSchedule(data, alarmRule), eventTs);
             default:
                 throw new RuntimeException("Unsupported schedule type: " + alarmRule.getSchedule().getType());
         }
+    }
+
+    private AlarmSchedule getSchedule(DataSnapshot data, AlarmRule alarmRule) {
+        AlarmSchedule schedule = alarmRule.getSchedule();
+        EntityKeyValue dynamicValue = getDynamicValue(data, schedule.getDynamicValue());
+
+        if (dynamicValue != null) {
+            try {
+                return JsonConverter.parse(dynamicValue.getJsonValue(), alarmRule.getSchedule().getClass());
+            } catch (Exception e) {
+                log.trace("Failed to parse AlarmSchedule from dynamicValue: {}", dynamicValue.getJsonValue(), e);
+            }
+        }
+        return schedule;
     }
 
     private boolean isActiveSpecific(SpecificTimeSchedule schedule, long eventTs) {
@@ -252,7 +245,7 @@ class AlarmRuleState {
         long repeatingTimes = 0;
         AlarmConditionSpec alarmConditionSpec = getSpec();
         AlarmConditionSpecType specType = alarmConditionSpec.getType();
-        if(specType.equals(AlarmConditionSpecType.REPEATING)) {
+        if (specType.equals(AlarmConditionSpecType.REPEATING)) {
             RepeatingAlarmConditionSpec repeating = (RepeatingAlarmConditionSpec) spec;
 
             repeatingTimes = repeating.getPredicate().getDefaultValue();
@@ -272,7 +265,7 @@ class AlarmRuleState {
         long durationTimeInMs = 0;
         AlarmConditionSpec alarmConditionSpec = getSpec();
         AlarmConditionSpecType specType = alarmConditionSpec.getType();
-        if(specType.equals(AlarmConditionSpecType.DURATION)) {
+        if (specType.equals(AlarmConditionSpecType.DURATION)) {
             DurationAlarmConditionSpec duration = (DurationAlarmConditionSpec) spec;
             TimeUnit timeUnit = duration.getUnit();
 
