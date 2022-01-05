@@ -77,7 +77,7 @@ public class TbMsgTimeseriesNode implements TbNode {
             ctx.tellFailure(msg, new IllegalArgumentException("Unsupported msg type: " + msg.getType()));
             return;
         }
-        long ts = config.isSaveWithMsgTs() ? msg.getTs() : getTs(msg);
+        long ts = computeTs(msg, config.isIgnoreMetadataTs());
         String src = msg.getData();
         Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToTelemetry(new JsonParser().parse(src), ts);
         if (tsKvMap.isEmpty()) {
@@ -100,6 +100,10 @@ public class TbMsgTimeseriesNode implements TbNode {
         } else {
             ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), msg.getCustomerId(), msg.getOriginator(), tsKvEntryList, ttl, new TelemetryNodeCallback(ctx, msg));
         }
+    }
+
+    public static long computeTs(TbMsg msg, boolean saveWithMsgTs) {
+        return saveWithMsgTs ? System.currentTimeMillis() : getTs(msg);
     }
 
     public static long getTs(TbMsg msg) {
