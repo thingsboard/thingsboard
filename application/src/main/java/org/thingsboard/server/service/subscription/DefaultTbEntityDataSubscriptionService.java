@@ -499,6 +499,12 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         if (ctx != null) {
             ctx.cancelTasks();
             ctx.clearSubscriptions();
+            if (ctx.getSessionId() != null) {
+                Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.get(ctx.getSessionId());
+                if (sessionSubs != null) {
+                    sessionSubs.remove(ctx.getCmdId());
+                }
+            }
         }
     }
 

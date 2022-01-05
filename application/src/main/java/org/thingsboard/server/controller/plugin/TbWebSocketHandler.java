@@ -290,7 +290,6 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
                 log.trace("[{}] Failed to send msg", session.getId(), result.getException());
                 closeSession(CloseStatus.SESSION_NOT_RELIABLE);
             } else {
-                lastActivityTime = System.currentTimeMillis();
                 String msg = msgQueue.poll();
                 if (msg != null) {
                     sendMsgInternal(msg);
