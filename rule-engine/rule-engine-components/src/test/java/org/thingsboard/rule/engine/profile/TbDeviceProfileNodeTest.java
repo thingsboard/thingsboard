@@ -1246,14 +1246,11 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(Futures.immediateFuture(Collections.emptyList()));
         Mockito.when(alarmService.findLatestByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
                 .thenReturn(Futures.immediateFuture(null));
-        Mockito.when(alarmService.createOrUpdateAlarm(Mockito.any())).thenAnswer(AdditionalAnswers.returnsFirstArg());
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
         Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
                 .thenReturn(listListenableFutureInactiveSchedule);
 
         TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");
-        Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
-                .thenReturn(theMsg);
 
         ObjectNode data = mapper.createObjectNode();
         data.put("temperature", 35);
