@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.lwm2m;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.californium.core.network.config.NetworkConfig;
 import org.eclipse.leshan.client.object.Security;
@@ -66,6 +67,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Slf4j
 @DaoSqlTest
 public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
 
@@ -199,6 +201,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         createNewClient(security, coapConfig, false);
         String msg = wsClient.waitForUpdate();
 
+        log.info("msg5555: [{}]", msg);
         EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
         Assert.assertEquals(1, update.getCmdId());
         List<EntityData> eData = update.getUpdate();
