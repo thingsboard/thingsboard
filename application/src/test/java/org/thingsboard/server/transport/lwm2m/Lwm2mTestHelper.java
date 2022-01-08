@@ -55,6 +55,7 @@ public class Lwm2mTestHelper {
     public static final int resourceId_2 = 2;
     public static final int resourceId_3 = 3;
     public static final int resourceId_4 = 4;
+    public static final int resourceId_7 = 7;
     public static final int resourceId_8 = 8;
     public static final int resourceId_9 = 9;
     public static final int resourceId_11 = 11;

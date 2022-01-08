@@ -29,8 +29,8 @@ public class NoSecLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationT
 
     @Test
     public void testConnectAndObserveTelemetry() throws Exception {
-        NoSecClientCredential clientCredentials =  createNoSecClientCredentials(CLIENT_ENDPOINT_NO_SEC);
-        super.basicTestConnectionObserveTelemetry(SECURITY, clientCredentials, COAP_CONFIG, CLIENT_ENDPOINT_NO_SEC);
+        NoSecClientCredential clientCredentials =  createNoSecClientCredentials(CLIENT_ENDPOINT_TRUST);
+        super.basicTestConnectionObserveTelemetry(SECURITY, clientCredentials, COAP_CONFIG, CLIENT_ENDPOINT_TRUST);
     }
 
 }

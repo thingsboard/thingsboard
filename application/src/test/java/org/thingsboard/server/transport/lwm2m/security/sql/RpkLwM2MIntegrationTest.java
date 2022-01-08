@@ -30,17 +30,16 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SHORT_SERVE
 
 public class RpkLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTest {
 
-    @Ignore
     @Test
     public void testConnectWithRPKAndObserveTelemetry() throws Exception {
         RPKClientCredential rpkClientCredentials = new RPKClientCredential();
-        rpkClientCredentials.setEndpoint(CLIENT_ENDPOINT_RPK);
-        rpkClientCredentials.setKey(new String(Base64.encodeBase64(clientPrivateKeyFromCert.getEncoded())));
+        rpkClientCredentials.setEndpoint(CLIENT_ENDPOINT_TRUST);
+        rpkClientCredentials.setKey(new String(Base64.encodeBase64(clientPublicKeyFromCert.getEncoded())));
         Security security = rpk(SECURE_URI,
                 SHORT_SERVER_ID,
                 clientPublicKeyFromCert.getEncoded(),
                 clientPrivateKeyFromCert.getEncoded(),
                 serverPublicKeyFromCert.getEncoded());
-        super.basicTestConnectionObserveTelemetry(security, rpkClientCredentials, SECURE_COAP_CONFIG, CLIENT_ENDPOINT_RPK);
+        super.basicTestConnectionObserveTelemetry(security, rpkClientCredentials, SECURE_COAP_CONFIG, CLIENT_ENDPOINT_TRUST);
     }
 }

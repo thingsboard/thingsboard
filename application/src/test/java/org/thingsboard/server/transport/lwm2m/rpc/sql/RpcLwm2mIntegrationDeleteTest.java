@@ -26,6 +26,7 @@ import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_12;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceId_7;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceId_9;
 
 
@@ -74,18 +75,18 @@ public class RpcLwm2mIntegrationDeleteTest extends AbstractRpcLwM2MIntegrationTe
     }
 
 
-//    /**
-//     * delete resource
-//     * Delete {"id":"/3/0/9"}
-//     * {"result":"METHOD_NOT_ALLOWED"}
-//     */
-//    @Test
-//    public void testDeleteResourceByIdKey_Result_METHOD_NOT_ALLOWED() throws Exception {
-//        String expectedPath = objectIdVer_3 + "/" + objectInstanceId_0 + resourceId_9;
-//        String actualResult = sendRPCDeleteById(expectedPath);
-//        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
-//        assertEquals(ResponseCode.METHOD_NOT_ALLOWED.getName(), rpcActualResult.get("result").asText());
-//    }
+    /**
+     * delete resource
+     * Delete {"id":"/3/0/7"}
+     * {"result":"METHOD_NOT_ALLOWED"}
+     */
+    @Test
+    public void testDeleteResourceByIdKey_Result_METHOD_NOT_ALLOWED() throws Exception {
+        String expectedPath = objectIdVer_3 + "/" + objectInstanceId_0 + resourceId_7;
+        String actualResult = sendRPCDeleteById(expectedPath);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.METHOD_NOT_ALLOWED.getName(), rpcActualResult.get("result").asText());
+    }
 
 
     private String sendRPCDeleteById(String path) throws Exception {

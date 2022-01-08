@@ -67,9 +67,6 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
 
     // Client
     protected LwM2MTestClient client;
-    protected static final String CLIENT_ENDPOINT_NO_SEC = "deviceNoSec";
-    protected static final String CLIENT_ENDPOINT_PSK = "devicePSK";
-    protected static final String CLIENT_ENDPOINT_RPK = "deviceRPK";
     protected static final String CLIENT_ENDPOINT_NO_TRUST = "deviceAEndpoint";
     protected static final String CLIENT_ENDPOINT_TRUST = "LwX50900000000";
     protected static final String CLIENT_JKS_FOR_TEST = "lwm2mclient";
