@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.lwm2m.security.sql;
 
 import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.core.util.Hex;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCredential;
 import org.thingsboard.server.transport.lwm2m.security.AbstractSecurityLwM2MIntegrationTest;
@@ -33,13 +34,13 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
     @Test
     public void testConnectWithPSKAndObserveTelemetry() throws Exception {
         PSKClientCredential clientCredentials = new PSKClientCredential();
-        clientCredentials.setEndpoint(ENDPOINT);
+        clientCredentials.setEndpoint(CLIENT_ENDPOINT_NO_TRUST);
         clientCredentials.setKey(pskKey);
         clientCredentials.setIdentity(pskIdentity);
         Security security = psk(SECURE_URI,
                 SHORT_SERVER_ID,
                 pskIdentity.getBytes(StandardCharsets.UTF_8),
                 Hex.decodeHex(pskKey.toCharArray()));
-        super.basicTestConnectionObserveTelemetry(security, clientCredentials, SECURE_COAP_CONFIG, ENDPOINT);
+        super.basicTestConnectionObserveTelemetry(security, clientCredentials, SECURE_COAP_CONFIG, CLIENT_ENDPOINT_NO_TRUST);
     }
 }

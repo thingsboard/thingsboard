@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.security.sql;
 
 import lombok.extern.slf4j.Slf4j;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredential;
 import org.thingsboard.server.transport.lwm2m.security.AbstractSecurityLwM2MIntegrationTest;
@@ -28,8 +29,8 @@ public class NoSecLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationT
 
     @Test
     public void testConnectAndObserveTelemetry() throws Exception {
-        NoSecClientCredential clientCredentials =  createNoSecClientCredentials(ENDPOINT);
-        super.basicTestConnectionObserveTelemetry(SECURITY, clientCredentials, COAP_CONFIG, ENDPOINT);
+        NoSecClientCredential clientCredentials =  createNoSecClientCredentials(CLIENT_ENDPOINT_NO_SEC);
+        super.basicTestConnectionObserveTelemetry(SECURITY, clientCredentials, COAP_CONFIG, CLIENT_ENDPOINT_NO_SEC);
     }
 
 }
