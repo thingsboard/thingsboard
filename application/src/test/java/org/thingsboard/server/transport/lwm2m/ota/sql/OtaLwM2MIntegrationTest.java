@@ -138,8 +138,6 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
 
     @Test
     public void testFirmwareUpdateWithClientWithoutFirmwareOtaInfoFromProfile() throws Exception {
-//        String endpoint = "WithoutFirmwareInfoDevice";
-//        setEndpoint(endpoint);
         createDeviceProfile(transportConfiguration);
         NoSecClientCredential credentials = createNoSecClientCredentials(this.CLIENT_ENDPOINT_WITHOUT_FW_INFO);
         final Device device = createDevice(credentials);
@@ -165,8 +163,6 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
 
     @Test
     public void testFirmwareUpdateByObject5() throws Exception {
-//        String endpoint = "Ota5_Device";
-//        setEndpoint(endpoint);
         createDeviceProfile(OTA_TRANSPORT_CONFIGURATION);
         NoSecClientCredential credentials = createNoSecClientCredentials(this.CLIENT_ENDPOINT_OTA5);
         final Device device = createDevice(credentials);

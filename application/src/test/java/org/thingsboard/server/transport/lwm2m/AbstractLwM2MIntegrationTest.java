@@ -67,7 +67,6 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Slf4j
 @DaoSqlTest
 public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
 
@@ -135,7 +134,6 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
     protected LwM2MTestClient client;
     private final LwM2MBootstrapClientCredentials defaultBootstrapCredentials;
     private String[] resources;
-//    protected String endpoint;
 
     public AbstractLwM2MIntegrationTest() {
         this.defaultBootstrapCredentials = new LwM2MBootstrapClientCredentials();
@@ -197,11 +195,9 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         wsClient.waitForReply();
 
         wsClient.registerWaitForUpdate();
-//        this.endpoint = endpoint;
         createNewClient(security, coapConfig, false, endpoint);
         String msg = wsClient.waitForUpdate();
 
-        log.info("msg5555: [{}]", msg);
         EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
         Assert.assertEquals(1, update.getCmdId());
         List<EntityData> eData = update.getUpdate();
@@ -263,10 +259,6 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
     public void setResources(String[] resources) {
         this.resources = resources;
     }
-
-//    public void setEndpoint(String endpoint) {
-//        this.endpoint = endpoint;
-//    }
 
     public void createNewClient(Security security, NetworkConfig coapConfig, boolean isRpc, String endpoint) throws Exception {
         clientDestroy();

@@ -18,12 +18,10 @@ package org.thingsboard.server.transport.lwm2m.rpc;
 import org.junit.Before;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredential;
-import org.thingsboard.server.controller.TbTestWebSocketClient;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
@@ -53,8 +51,6 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
 
     protected String RPC_TRANSPORT_CONFIGURATION;
 
-    protected ScheduledExecutorService executor;
-    protected TbTestWebSocketClient wsClient;
     protected String deviceId;
     public Set expectedObjects;
     public Set expectedObjectIdVers;
@@ -73,7 +69,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
     protected String objectIdVer_50 = "/50";
     protected String objectIdVer_3303;
     protected static AtomicInteger endpointSequence = new AtomicInteger();
-    protected static String endpointRpcPref = "deviceEndpointRpc";
+    protected static String DEVICE_ENDPOINT_RPC_PREF = "deviceEndpointRpc";
 
     public AbstractRpcLwM2MIntegrationTest(){
         setResources(resources);
@@ -81,8 +77,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
 
     @Before
     public void beforeTest() throws Exception {
-        String endpoint = endpointRpcPref + endpointSequence.incrementAndGet();
-//        setEndpoint(endpoint);
+        String endpoint = DEVICE_ENDPOINT_RPC_PREF + endpointSequence.incrementAndGet();
         init();
         createNewClient (SECURITY, COAP_CONFIG, true, endpoint);
 

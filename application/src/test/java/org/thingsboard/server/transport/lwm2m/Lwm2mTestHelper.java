@@ -25,18 +25,16 @@ public class Lwm2mTestHelper {
     // Server
     public static final int SECURE_PORT = 5686;
     public static final int SECURE_PORT_BS = 5688;
-    public static final String HOST = "localhost";
-    public static final String HOST_BS = "localhost";
-    public static final NetworkConfig SECURE_COAP_CONFIG = new NetworkConfig().setString("COAP_SECURE_PORT", Integer.toString(SECURE_PORT));
-    public static final String ENDPOINT_SECURITY = "deviceAEndpoint";
-    public static final String SECURE_URI = "coaps://localhost:" + SECURE_PORT;
-
     public static final int PORT = 5685;
     public static final int PORT_BS = 5687;
+    public static final String HOST = "localhost";
+    public static final String HOST_BS = "localhost";
     public static final int SHORT_SERVER_ID = 123;
     public static final int SHORT_SERVER_ID_BS = 111;
 
-    public static final Security SECURITY = noSec("coap://localhost:" + PORT, SHORT_SERVER_ID);
+    public static final NetworkConfig SECURE_COAP_CONFIG = new NetworkConfig().setString("COAP_SECURE_PORT", Integer.toString(SECURE_PORT));
+    public static final String SECURE_URI = "coaps://" + HOST + ":" + SECURE_PORT;
+    public static final Security SECURITY = noSec("coap://"+ HOST +":" + PORT, SHORT_SERVER_ID);
     public static final NetworkConfig COAP_CONFIG = new NetworkConfig().setString("COAP_PORT", Integer.toString(PORT));
 
     // Models
@@ -67,5 +65,4 @@ public class Lwm2mTestHelper {
     public static final String resourceIdName_3_14 = "UtfOffset";
     public static final String resourceIdName_19_0_0 = "dataRead";
     public static final String resourceIdName_19_1_0 = "dataWrite";
-
 }
