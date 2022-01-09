@@ -73,6 +73,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
     protected String objectIdVer_50 = "/50";
     protected String objectIdVer_3303;
     protected static AtomicInteger endpointSequence = new AtomicInteger();
+    protected static String endpointRpcPref = "deviceEndpointRpc";
 
     public AbstractRpcLwM2MIntegrationTest(){
         setResources(resources);
@@ -80,9 +81,10 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
 
     @Before
     public void beforeTest() throws Exception {
-        setEndpoint("deviceEndpointRpc" + endpointSequence.incrementAndGet());
+        String endpoint = endpointRpcPref + endpointSequence.incrementAndGet();
+//        setEndpoint(endpoint);
         init();
-        createNewClient (SECURITY, COAP_CONFIG, true);
+        createNewClient (SECURITY, COAP_CONFIG, true, endpoint);
 
         expectedObjects = ConcurrentHashMap.newKeySet();
         expectedObjectIdVers = ConcurrentHashMap.newKeySet();

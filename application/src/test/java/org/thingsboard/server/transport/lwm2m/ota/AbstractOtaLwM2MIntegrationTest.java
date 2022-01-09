@@ -30,6 +30,9 @@ import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
 public abstract class AbstractOtaLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
     private final  String[] resources = new String[]{"3.xml", "5.xml", "9.xml"};
+    protected static final String CLIENT_ENDPOINT_WITHOUT_FW_INFO = "WithoutFirmwareInfoDevice";
+    protected static final String CLIENT_ENDPOINT_OTA5 = "Ota5_Device";
+    protected static final String CLIENT_ENDPOINT_OTA9 = "Ota9_Device";
 
     public AbstractOtaLwM2MIntegrationTest() {
         setResources(this.resources);

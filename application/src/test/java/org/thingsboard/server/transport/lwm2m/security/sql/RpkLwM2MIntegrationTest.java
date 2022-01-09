@@ -33,13 +33,13 @@ public class RpkLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
     @Test
     public void testConnectWithRPKAndObserveTelemetry() throws Exception {
         RPKClientCredential rpkClientCredentials = new RPKClientCredential();
-        rpkClientCredentials.setEndpoint(CLIENT_ENDPOINT_TRUST);
-        rpkClientCredentials.setKey(new String(Base64.encodeBase64(clientPublicKeyFromCert.getEncoded())));
+        rpkClientCredentials.setEndpoint(CLIENT_ENDPOINT_RPK);
+        rpkClientCredentials.setKey(new String(Base64.encodeBase64(clientPublicKeyFromCertTrust.getEncoded())));
         Security security = rpk(SECURE_URI,
                 SHORT_SERVER_ID,
-                clientPublicKeyFromCert.getEncoded(),
-                clientPrivateKeyFromCert.getEncoded(),
+                clientPublicKeyFromCertTrust.getEncoded(),
+                clientPrivateKeyFromCertTrust.getEncoded(),
                 serverPublicKeyFromCert.getEncoded());
-        super.basicTestConnectionObserveTelemetry(security, rpkClientCredentials, SECURE_COAP_CONFIG, CLIENT_ENDPOINT_TRUST);
+        super.basicTestConnectionObserveTelemetry(security, rpkClientCredentials, SECURE_COAP_CONFIG, CLIENT_ENDPOINT_RPK);
     }
 }

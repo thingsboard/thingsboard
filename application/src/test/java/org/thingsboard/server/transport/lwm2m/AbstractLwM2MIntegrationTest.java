@@ -135,7 +135,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
     protected LwM2MTestClient client;
     private final LwM2MBootstrapClientCredentials defaultBootstrapCredentials;
     private String[] resources;
-    protected String endpoint;
+//    protected String endpoint;
 
     public AbstractLwM2MIntegrationTest() {
         this.defaultBootstrapCredentials = new LwM2MBootstrapClientCredentials();
@@ -197,8 +197,8 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         wsClient.waitForReply();
 
         wsClient.registerWaitForUpdate();
-        this.endpoint = endpoint;
-        createNewClient(security, coapConfig, false);
+//        this.endpoint = endpoint;
+        createNewClient(security, coapConfig, false, endpoint);
         String msg = wsClient.waitForUpdate();
 
         log.info("msg5555: [{}]", msg);
@@ -264,13 +264,13 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         this.resources = resources;
     }
 
-    public void setEndpoint(String endpoint) {
-        this.endpoint = endpoint;
-    }
+//    public void setEndpoint(String endpoint) {
+//        this.endpoint = endpoint;
+//    }
 
-    public void createNewClient(Security security, NetworkConfig coapConfig, boolean isRpc) throws Exception {
+    public void createNewClient(Security security, NetworkConfig coapConfig, boolean isRpc, String endpoint) throws Exception {
         clientDestroy();
-        client = new LwM2MTestClient(this.executor, this.endpoint);
+        client = new LwM2MTestClient(this.executor, endpoint);
         int clientPort = SocketUtils.findAvailableTcpPort();
         client.init(security, coapConfig, clientPort, isRpc);
     }

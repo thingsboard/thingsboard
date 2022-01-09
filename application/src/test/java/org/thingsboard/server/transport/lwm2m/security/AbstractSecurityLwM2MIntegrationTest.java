@@ -27,7 +27,6 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 
 @DaoSqlTest
@@ -67,16 +66,22 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
 
     // Client
     protected LwM2MTestClient client;
-    protected static final String CLIENT_ENDPOINT_NO_TRUST = "deviceAEndpoint";
-    protected static final String CLIENT_ENDPOINT_TRUST = "LwX50900000000";
+    protected static final String CLIENT_ENDPOINT_NO_SEC = "LwNoSec00000000";
+    protected static final String CLIENT_ENDPOINT_PSK = "LwPsk00000000";
+    protected static final String CLIENT_ENDPOINT_RPK = "LwRpk00000000";
+    protected static final String CLIENT_ENDPOINT_X509_TRUST = "LwX50900000000";
+    protected static final String CLIENT_ENDPOINT_X509_TRUST_NO = "LwX509TrustNo";
     protected static final String CLIENT_JKS_FOR_TEST = "lwm2mclient";
     protected static final String CLIENT_STORE_PWD = "client_ks_password";
+    protected static final String CLIENT_ALIAS_CERT_TRUST = "client_alias_00000000";
+    protected static final String CLIENT_ALIAS_CERT_TRUST_NO = "client_alias_trust_no";
 
-    protected static final String CLIENT_CERT_ALIAS = "client_alias_00000000";
-
-    protected final X509Certificate clientX509Cert;         // client certificate signed by intermediate, rootCA with a good CN ("host name")
-    protected final PrivateKey clientPrivateKeyFromCert;    // client private key used for X509 and RPK
-    protected final PublicKey clientPublicKeyFromCert;      // client public key used for RPK
+    protected final X509Certificate clientX509CertTrust;         // client certificate signed by intermediate, rootCA with a good CN ("host name")
+    protected final PrivateKey clientPrivateKeyFromCertTrust;    // client private key used for X509 and RPK
+    protected final PublicKey clientPublicKeyFromCertTrust;      // client public key used for RPK
+    protected final X509Certificate clientX509CertTrustNo;         // client certificate signed by intermediate, rootCA with a good CN ("host name")
+    protected final PrivateKey clientPrivateKeyFromCertTrustNo;    // client private key used for X509 and RPK
+    protected final PublicKey clientPublicKeyFromCertTrustNo;      // client public key used for RPK
     private final  String[] resources = new String[]{"1.xml", "2.xml", "3.xml", "5.xml", "9.xml"};
 
 
@@ -87,7 +92,7 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
     public AbstractSecurityLwM2MIntegrationTest() {
         // create client credentials
         setResources(this.resources);
-        setEndpoint(CLIENT_ENDPOINT_NO_TRUST);
+//        setEndpoint(CLIENT_ENDPOINT_NO_TRUST);
         try {
 //             Get keys PSK
             this.pskIdentity = "SOME_PSK_ID";
@@ -122,13 +127,14 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
                 clientKeyStore.load(clientKeyStoreFile, clientKeyStorePwd);
             }
 
-            clientPrivateKeyFromCert = (PrivateKey) clientKeyStore.getKey(CLIENT_CERT_ALIAS, clientKeyStorePwd);
-            clientX509Cert = (X509Certificate) clientKeyStore.getCertificate(CLIENT_CERT_ALIAS);
-            clientPublicKeyFromCert = clientX509Cert.getPublicKey();
+            clientPrivateKeyFromCertTrust = (PrivateKey) clientKeyStore.getKey(CLIENT_ALIAS_CERT_TRUST, clientKeyStorePwd);
+            clientX509CertTrust = (X509Certificate) clientKeyStore.getCertificate(CLIENT_ALIAS_CERT_TRUST);
+            clientPublicKeyFromCertTrust = clientX509CertTrust != null ? clientX509CertTrust.getPublicKey() : null;
 
-//            clientX509CertWithBadCN = (X509Certificate) clientKeyStore.getCertificate("client_bad_cn");
-//            clientX509CertSelfSigned = (X509Certificate) clientKeyStore.getCertificate("client_self_signed");
-//            clientX509CertNotTrusted = (X509Certificate) clientKeyStore.getCertificate("client_not_trusted");
+            clientPrivateKeyFromCertTrustNo = (PrivateKey) clientKeyStore.getKey(CLIENT_ALIAS_CERT_TRUST_NO, clientKeyStorePwd);
+            clientX509CertTrustNo = (X509Certificate) clientKeyStore.getCertificate(CLIENT_ALIAS_CERT_TRUST_NO);
+            clientPublicKeyFromCertTrustNo = clientX509CertTrustNo != null ? clientX509CertTrustNo.getPublicKey() : null;
+
         } catch (GeneralSecurityException | IOException e) {
             throw new RuntimeException(e);
         }
