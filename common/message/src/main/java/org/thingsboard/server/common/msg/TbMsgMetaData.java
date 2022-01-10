@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Data
 public final class TbMsgMetaData implements Serializable {
 
-    public static final TbMsgMetaData EMPTY = new TbMsgMetaData(Collections.emptyMap());
+    public static final TbMsgMetaData EMPTY = new TbMsgMetaData(0);
 
     private final Map<String, String> data;
 
@@ -39,6 +39,13 @@ public final class TbMsgMetaData implements Serializable {
 
     public TbMsgMetaData(Map<String, String> data) {
         this.data = new ConcurrentHashMap<>(data);
+    }
+
+    /**
+     * Internal constructor to create immutable TbMsgMetaData.EMPTY
+     * */
+    private TbMsgMetaData(int ignored) {
+        this.data = Collections.emptyMap();
     }
 
     public String getValue(String key) {
