@@ -73,8 +73,44 @@
       </div>
     </section>
     <section *ngIf="alarmScheduleForm.get('type').value === alarmScheduleType.CUSTOM">
-      <div class="tb-small" style="margin-bottom: 0.5em" translate>device-profile.schedule-days</div>
-
+      <mat-expansion-panel class="device-profile-alarm" fxFlex>
+        <mat-expansion-panel-header>
+          <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+            <mat-panel-title>
+              <div fxLayout="row" fxFlex fxLayoutAlign="start center">
+                {{'filter.dynamic-value' | translate}}
+              </div>
+            </mat-panel-title>
+            <span fxFlex></span>
+          </div>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <div fxFlex [formGroup] = "alarmScheduleForm.get('dynamicValue')" fxLayout="column">
+            <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+              <div fxFlex="40" fxLayout="column">
+                <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block">
+                  <mat-label></mat-label>
+                  <mat-select formControlName="sourceType" placeholder="{{'filter.dynamic-source-type' | translate}}">
+                    <mat-option [value]="null">
+                      {{'filter.no-dynamic-value' | translate}}
+                    </mat-option>
+                    <mat-option *ngFor="let sourceType of dynamicValueSourceTypes" [value]="sourceType">
+                      {{dynamicValueSourceTypeTranslations.get(sourceType) | translate}}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+              <div fxFlex fxLayout="column">
+                <mat-form-field floatLabel="always" hideRequiredMarker class="mat-block source-attribute">
+                  <mat-label></mat-label>
+                  <input matInput formControlName="sourceAttribute" placeholder="{{'filter.source-attribute' | translate}}">
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+        </ng-template>
+      </mat-expansion-panel>
+      <div class="tb-small" style="margin-bottom: 0.5em; margin-top: 26px;" translate>device-profile.schedule-days</div>
       <div *ngFor="let day of allDays" fxLayout="column" formArrayName="items" fxLayoutGap="1em">
         <div fxLayout.xs="column" fxLayout="row" fxLayoutGap="8px" [formGroupName]="''+day" fxLayoutAlign="start center" fxLayoutAlign.xs="center start">
           <mat-checkbox formControlName="enabled" fxFlex="17" (change)="changeCustomScheduler($event, day)">

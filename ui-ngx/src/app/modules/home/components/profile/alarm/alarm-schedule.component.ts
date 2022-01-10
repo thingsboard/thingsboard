@@ -40,6 +40,12 @@ import {
 import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import { MatCheckboxChange } from '@angular/material/checkbox';
 import { getDefaultTimezone } from '@shared/models/time/time.models';
+import {
+  DynamicValueSourceType,
+  dynamicValueSourceTypeTranslationMap,
+  getDynamicSourcesForAllowUser
+} from '@shared/models/query/query.models';
+import { emit } from 'cluster';
 
 @Component({
   selector: 'tb-alarm-schedule',
@@ -64,7 +70,8 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
   alarmScheduleTypes = Object.keys(AlarmScheduleType);
   alarmScheduleType = AlarmScheduleType;
   alarmScheduleTypeTranslate = AlarmScheduleTypeTranslationMap;
-
+  dynamicValueSourceTypes: DynamicValueSourceType[] = getDynamicSourcesForAllowUser(false);
+  dynamicValueSourceTypeTranslations = dynamicValueSourceTypeTranslationMap;
   dayOfWeekTranslationsArray = dayOfWeekTranslations;
 
   allDays = Array(7).fill(0).map((x, i) => i);
@@ -91,8 +98,19 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
       daysOfWeek: this.fb.array(new Array(7).fill(false), this.validateDayOfWeeks),
       startsOn: [0, Validators.required],
       endsOn: [0, Validators.required],
-      items: this.fb.array(Array.from({length: 7}, (value, i) => this.defaultItemsScheduler(i)), this.validateItems)
+      items: this.fb.array(Array.from({length: 7}, (value, i) => this.defaultItemsScheduler(i)), this.validateItems),
+      dynamicValue:  this.fb.group({
+        sourceType: [null],
+        sourceAttribute: [null]
+      })
     });
+
+    this.alarmScheduleForm.get('dynamicValue.sourceType').valueChanges.subscribe((sourceType) => {
+      if (!sourceType) {
+        this.alarmScheduleForm.get('dynamicValue.sourceAttribute').patchValue('', {emitEvent:false});
+      }
+    })
+
     this.alarmScheduleForm.get('type').valueChanges.subscribe((type) => {
       const defaultTimezone = getDefaultTimezone();
       this.alarmScheduleForm.reset({type, items: this.defaultItems, timezone: defaultTimezone}, {emitEvent: false});
@@ -177,7 +195,11 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
           this.alarmScheduleForm.patchValue({
             type: this.modelValue.type,
             timezone: this.modelValue.timezone,
-            items: alarmDays
+            items: alarmDays,
+            dynamicValue: {
+              sourceAttribute: this.modelValue.dynamicValue.sourceAttribute,
+              sourceType: this.modelValue.dynamicValue.sourceType
+            }
           }, {emitEvent: false});
         }
         break;
