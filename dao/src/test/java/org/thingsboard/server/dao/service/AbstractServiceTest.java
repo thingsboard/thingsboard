@@ -86,7 +86,7 @@ public abstract class AbstractServiceTest {
 
     protected ObjectMapper mapper = new ObjectMapper();
 
-    public static final TenantId SYSTEM_TENANT_ID = new TenantId(EntityId.NULL_UUID);
+    public static final TenantId SYSTEM_TENANT_ID = TenantId.SYS_TENANT_ID;
 
     @Autowired
     protected UserService userService;

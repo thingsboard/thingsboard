@@ -73,7 +73,7 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
     public DeviceCredentials findDeviceCredentialsByCredentialsId(String credentialsId) {
         log.trace("Executing findDeviceCredentialsByCredentialsId [{}]", credentialsId);
         validateString(credentialsId, "Incorrect credentialsId " + credentialsId);
-        return deviceCredentialsDao.findByCredentialsId(new TenantId(EntityId.NULL_UUID), credentialsId);
+        return deviceCredentialsDao.findByCredentialsId(TenantId.SYS_TENANT_ID, credentialsId);
     }
 
     @Override
