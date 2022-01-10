@@ -27,6 +27,7 @@ import org.thingsboard.rule.engine.util.EntityContainer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -86,7 +87,10 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
                     ListenableFuture<Boolean> future = ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), entityRelation);
                     listenableFutureList.add(Futures.transform(future, res -> {
                         if (res) {
-                            pushDeleteRelationEventMessage(ctx, entityRelation, msg);
+                            pushDeleteRelationEventMessage(ctx,
+                                    entityRelation,
+                                    msg,
+                                    config.getDirection().equals(EntitySearchDirection.FROM.name()));
                         }
                         return res;
                     }, ctx.getDbCallbackExecutor()));
@@ -110,7 +114,7 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
                     if (relation != null) {
                         return Futures.transform(processSingleDeleteRelation(ctx, sdId, relationType), res -> {
                             if (res) {
-                                pushDeleteRelationEventMessage(ctx, relation, msg);
+                                pushDeleteRelationEventMessage(ctx, relation, msg, sdId.isOriginatorDirectionFrom());
                             }
                             return res;
                         }, ctx.getDbCallbackExecutor());
@@ -123,8 +127,8 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
         return ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), sdId.getFromId(), sdId.getToId(), relationType, RelationTypeGroup.COMMON);
     }
 
-    protected void pushDeleteRelationEventMessage(TbContext ctx, EntityRelation entityRelation, TbMsg tbMsg) {
-        ctx.enqueueEntityRelationEvents(entityRelation, DataConstants.ENTITY_RELATION_DELETED);
+    protected void pushDeleteRelationEventMessage(TbContext ctx, EntityRelation entityRelation, TbMsg tbMsg, boolean originatorDirectionFrom) {
+        ctx.enqueueEntityRelationEvents(entityRelation, DataConstants.ENTITY_RELATION_DELETED, tbMsg.getQueueName(), originatorDirectionFrom);
     }
 
 }

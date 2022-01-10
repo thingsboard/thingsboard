@@ -335,26 +335,25 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public void enqueueEntityRelationEvents(EntityRelation relation, String relationEventType) {
+    public void enqueueEntityRelationEvents(EntityRelation relation, String relationEventType, String queueName, boolean originatorDirectionFrom) {
         TbMsgMetaData metaData = new TbMsgMetaData();
-        // TODO: 31.12.21 change EntitySearchDirection.FROM.name()
-        metaData.putValue(relationEventType, EntitySearchDirection.FROM.name());
+        metaData.putValue(DataConstants.RELATION_DIRECTION_MSG_ORIGINATOR,
+                originatorDirectionFrom ? EntitySearchDirection.FROM.name() : EntitySearchDirection.TO.name());
         try {
-            // TODO: 31.12.21 change MAIN queue usage
-            TbMsg tbMsgFrom = TbMsg.newMsg(ServiceQueue.MAIN, relationEventType, relation.getFrom(), metaData, mapper.writeValueAsString(relation));
+            TbMsg tbMsgFrom = TbMsg.newMsg(queueName, relationEventType, relation.getFrom(), metaData, mapper.writeValueAsString(relation));
             processEnqueue(tbMsgFrom, relation, relationEventType);
 
-            TbMsg tbMsgTo = TbMsg.newMsg(ServiceQueue.MAIN, relationEventType, relation.getTo(), metaData, mapper.writeValueAsString(relation));
             if (!isDuplicateMessage(relation)) {
+                TbMsg tbMsgTo = TbMsg.newMsg(queueName, relationEventType, relation.getTo(), metaData, mapper.writeValueAsString(relation));
                 processEnqueue(tbMsgTo, relation, relationEventType);
             }
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to process [entityRelationCreatedOrUpdated] msg: " + e);
+            throw new RuntimeException("Failed to process [" + relationEventType + "] msg: " + e);
         }
     }
 
-    private void processEnqueue(TbMsg tbMsgFrom, EntityRelation relation, String relationEventType) {
-        enqueue(tbMsgFrom,
+    private void processEnqueue(TbMsg tbMsg, EntityRelation relation, String relationEventType) {
+        enqueue(tbMsg,
                 () -> log.trace("[{}] Enqueued message {}!", relationEventType, relation),
                 throwable -> log.warn("[{}] Failed to enqueue message {}", relationEventType, relation, throwable));
     }
@@ -371,9 +370,7 @@ class DefaultTbContext implements TbContext {
                     return true;
                 }
             }
-            return false;
         }
-
         return false;
     }
 
