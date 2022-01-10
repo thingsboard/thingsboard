@@ -124,7 +124,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     public void pushNotificationToEdge(TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg, TbCallback callback) {
         log.trace("Pushing notification to edge {}", edgeNotificationMsg);
         try {
-            TenantId tenantId = new TenantId(new UUID(edgeNotificationMsg.getTenantIdMSB(), edgeNotificationMsg.getTenantIdLSB()));
+            TenantId tenantId = TenantId.fromUUID(new UUID(edgeNotificationMsg.getTenantIdMSB(), edgeNotificationMsg.getTenantIdLSB()));
             EdgeEventType type = EdgeEventType.valueOf(edgeNotificationMsg.getType());
             switch (type) {
                 case EDGE:

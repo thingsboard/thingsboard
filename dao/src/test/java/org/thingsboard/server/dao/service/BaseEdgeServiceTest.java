@@ -100,7 +100,7 @@ public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
         Edge edge = new Edge();
         edge.setName("My edge");
         edge.setType("default");
-        edge.setTenantId(new TenantId(Uuids.timeBased()));
+        edge.setTenantId(TenantId.fromUUID(Uuids.timeBased()));
         edgeService.saveEdge(edge, true);
     }
 

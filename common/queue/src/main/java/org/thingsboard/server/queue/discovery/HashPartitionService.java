@@ -327,7 +327,7 @@ public class HashPartitionService implements PartitionService {
     }
 
     private TenantId getSystemOrIsolatedTenantId(TransportProtos.ServiceInfo serviceInfo) {
-        return new TenantId(new UUID(serviceInfo.getTenantIdMSB(), serviceInfo.getTenantIdLSB()));
+        return TenantId.fromUUID(new UUID(serviceInfo.getTenantIdMSB(), serviceInfo.getTenantIdLSB()));
     }
 
     private void addNode(Map<ServiceQueueKey, List<ServiceInfo>> queueServiceList, ServiceInfo instance) {

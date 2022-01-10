@@ -69,7 +69,7 @@ public class JpaTenantDaoTest extends AbstractJpaDaoTest {
 
     private void createTenant(String region, String title, int index) {
         Tenant tenant = new Tenant();
-        tenant.setId(new TenantId(Uuids.timeBased()));
+        tenant.setId(TenantId.fromUUID(Uuids.timeBased()));
         tenant.setRegion(region);
         tenant.setTitle(title + "_" + index);
         tenantDao.save(AbstractServiceTest.SYSTEM_TENANT_ID, tenant);

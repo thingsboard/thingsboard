@@ -180,7 +180,7 @@ public class BaseResourceService implements ResourceService {
                 throw new DataValidationException("Resource key should be specified!");
             }
             if (resource.getTenantId() == null) {
-                resource.setTenantId(new TenantId(ModelConstants.NULL_UUID));
+                resource.setTenantId(TenantId.fromUUID(ModelConstants.NULL_UUID));
             }
             if (!resource.getTenantId().getId().equals(ModelConstants.NULL_UUID)) {
                 Tenant tenant = tenantDao.findById(tenantId, resource.getTenantId().getId());

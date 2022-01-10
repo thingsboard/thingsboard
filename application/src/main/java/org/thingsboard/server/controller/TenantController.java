@@ -82,7 +82,7 @@ public class TenantController extends BaseController {
             @PathVariable(TENANT_ID) String strTenantId) throws ThingsboardException {
         checkParameter(TENANT_ID, strTenantId);
         try {
-            TenantId tenantId = new TenantId(toUUID(strTenantId));
+            TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
             Tenant tenant = checkTenantId(tenantId, Operation.READ);
             if (!tenant.getAdditionalInfo().isNull()) {
                 processDashboardIdFromAdditionalInfo((ObjectNode) tenant.getAdditionalInfo(), HOME_DASHBOARD);
@@ -104,7 +104,7 @@ public class TenantController extends BaseController {
             @PathVariable(TENANT_ID) String strTenantId) throws ThingsboardException {
         checkParameter(TENANT_ID, strTenantId);
         try {
-            TenantId tenantId = new TenantId(toUUID(strTenantId));
+            TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
             return checkTenantInfoId(tenantId, Operation.READ);
         } catch (Exception e) {
             throw handleException(e);
@@ -154,7 +154,7 @@ public class TenantController extends BaseController {
             @PathVariable(TENANT_ID) String strTenantId) throws ThingsboardException {
         checkParameter(TENANT_ID, strTenantId);
         try {
-            TenantId tenantId = new TenantId(toUUID(strTenantId));
+            TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
             Tenant tenant = checkTenantId(tenantId, Operation.DELETE);
             tenantService.deleteTenant(tenantId);
             tenantProfileCache.evict(tenantId);

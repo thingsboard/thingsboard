@@ -102,7 +102,7 @@ public class ApiUsageStateEntity extends BaseSqlEntity<ApiUsageState> implements
         ApiUsageState ur = new ApiUsageState(new ApiUsageStateId(this.getUuid()));
         ur.setCreatedTime(createdTime);
         if (tenantId != null) {
-            ur.setTenantId(new TenantId(tenantId));
+            ur.setTenantId(TenantId.fromUUID(tenantId));
         }
         if (entityId != null) {
             ur.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));

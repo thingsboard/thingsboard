@@ -68,7 +68,7 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
         long timeAfterEndTime = LocalDateTime.of(2016, Month.NOVEMBER, 1, 13, 30).toEpochSecond(ZoneOffset.UTC);
 
         CustomerId customerId = new CustomerId(Uuids.timeBased());
-        TenantId tenantId = new TenantId(Uuids.timeBased());
+        TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
         saveEventWithProvidedTime(timeBeforeStartTime, customerId, tenantId);
         Event savedEvent = saveEventWithProvidedTime(eventTime, customerId, tenantId);
         Event savedEvent2 = saveEventWithProvidedTime(eventTime+1, customerId, tenantId);
@@ -103,7 +103,7 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
         long timeAfterEndTime = LocalDateTime.of(2016, Month.NOVEMBER, 1, 13, 30).toEpochSecond(ZoneOffset.UTC);
 
         CustomerId customerId = new CustomerId(Uuids.timeBased());
-        TenantId tenantId = new TenantId(Uuids.timeBased());
+        TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
         saveEventWithProvidedTime(timeBeforeStartTime, customerId, tenantId);
         Event savedEvent = saveEventWithProvidedTime(eventTime, customerId, tenantId);
         Event savedEvent2 = saveEventWithProvidedTime(eventTime+1, customerId, tenantId);

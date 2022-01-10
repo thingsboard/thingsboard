@@ -110,7 +110,7 @@ public class RuleChainEntity extends BaseSqlEntity<RuleChain> implements SearchT
     public RuleChain toData() {
         RuleChain ruleChain = new RuleChain(new RuleChainId(this.getUuid()));
         ruleChain.setCreatedTime(createdTime);
-        ruleChain.setTenantId(new TenantId(tenantId));
+        ruleChain.setTenantId(TenantId.fromUUID(tenantId));
         ruleChain.setName(name);
         ruleChain.setType(type);
         if (firstRuleNodeId != null) {

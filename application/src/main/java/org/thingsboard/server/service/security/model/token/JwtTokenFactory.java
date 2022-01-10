@@ -126,7 +126,7 @@ public class JwtTokenFactory {
         securityUser.setUserPrincipal(principal);
         String tenantId = claims.get(TENANT_ID, String.class);
         if (tenantId != null) {
-            securityUser.setTenantId(new TenantId(UUID.fromString(tenantId)));
+            securityUser.setTenantId(TenantId.fromUUID(UUID.fromString(tenantId)));
         }
         String customerId = claims.get(CUSTOMER_ID, String.class);
         if (customerId != null) {

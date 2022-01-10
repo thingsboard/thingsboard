@@ -274,7 +274,7 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
         if (types != null && !types.isEmpty()) {
             list = new ArrayList<>();
             for (String type : types) {
-                list.add(new EntitySubtype(new TenantId(tenantId), EntityType.DEVICE, type));
+                list.add(new EntitySubtype(TenantId.fromUUID(tenantId), EntityType.DEVICE, type));
             }
         }
         return list;

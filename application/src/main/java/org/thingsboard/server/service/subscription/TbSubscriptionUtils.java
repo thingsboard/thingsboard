@@ -125,7 +125,7 @@ public class TbSubscriptionUtils {
                 .sessionId(subProto.getSessionId())
                 .subscriptionId(subProto.getSubscriptionId())
                 .entityId(EntityIdFactory.getByTypeAndUuid(subProto.getEntityType(), new UUID(subProto.getEntityIdMSB(), subProto.getEntityIdLSB())))
-                .tenantId(new TenantId(new UUID(subProto.getTenantIdMSB(), subProto.getTenantIdLSB())));
+                .tenantId(TenantId.fromUUID(new UUID(subProto.getTenantIdMSB(), subProto.getTenantIdLSB())));
 
         builder.scope(TbAttributeSubscriptionScope.valueOf(attributeSub.getScope()));
         builder.allKeys(attributeSub.getAllKeys());
@@ -142,7 +142,7 @@ public class TbSubscriptionUtils {
                 .sessionId(subProto.getSessionId())
                 .subscriptionId(subProto.getSubscriptionId())
                 .entityId(EntityIdFactory.getByTypeAndUuid(subProto.getEntityType(), new UUID(subProto.getEntityIdMSB(), subProto.getEntityIdLSB())))
-                .tenantId(new TenantId(new UUID(subProto.getTenantIdMSB(), subProto.getTenantIdLSB())));
+                .tenantId(TenantId.fromUUID(new UUID(subProto.getTenantIdMSB(), subProto.getTenantIdLSB())));
 
         builder.allKeys(telemetrySub.getAllKeys());
         Map<String, Long> keyStates = new HashMap<>();
@@ -161,7 +161,7 @@ public class TbSubscriptionUtils {
                 .sessionId(subProto.getSessionId())
                 .subscriptionId(subProto.getSubscriptionId())
                 .entityId(EntityIdFactory.getByTypeAndUuid(subProto.getEntityType(), new UUID(subProto.getEntityIdMSB(), subProto.getEntityIdLSB())))
-                .tenantId(new TenantId(new UUID(subProto.getTenantIdMSB(), subProto.getTenantIdLSB())));
+                .tenantId(TenantId.fromUUID(new UUID(subProto.getTenantIdMSB(), subProto.getTenantIdLSB())));
         builder.ts(alarmSub.getTs());
         return builder.build();
     }

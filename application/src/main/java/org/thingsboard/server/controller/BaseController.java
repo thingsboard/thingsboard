@@ -482,7 +482,7 @@ public abstract class BaseController {
                     checkCustomerId(new CustomerId(entityId.getId()), operation);
                     return;
                 case TENANT:
-                    checkTenantId(new TenantId(entityId.getId()), operation);
+                    checkTenantId(TenantId.fromUUID(entityId.getId()), operation);
                     return;
                 case TENANT_PROFILE:
                     checkTenantProfileId(new TenantProfileId(entityId.getId()), operation);

@@ -342,7 +342,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     @Test
     public void testSaveFirmwareWithInvalidTenant() {
         OtaPackage firmware = new OtaPackage();
-        firmware.setTenantId(new TenantId(Uuids.timeBased()));
+        firmware.setTenantId(TenantId.fromUUID(Uuids.timeBased()));
         firmware.setDeviceProfileId(deviceProfileId);
         firmware.setType(FIRMWARE);
         firmware.setTitle(TITLE);

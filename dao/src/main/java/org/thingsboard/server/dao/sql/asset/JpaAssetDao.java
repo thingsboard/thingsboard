@@ -182,7 +182,7 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
         if (types != null && !types.isEmpty()) {
             list = new ArrayList<>();
             for (String type : types) {
-                list.add(new EntitySubtype(new TenantId(tenantId), EntityType.ASSET, type));
+                list.add(new EntitySubtype(TenantId.fromUUID(tenantId), EntityType.ASSET, type));
             }
         }
         return list;

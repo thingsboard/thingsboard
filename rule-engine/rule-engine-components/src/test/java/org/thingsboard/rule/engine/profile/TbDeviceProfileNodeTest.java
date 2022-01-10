@@ -99,7 +99,7 @@ public class TbDeviceProfileNodeTest {
     @Mock
     private AttributesService attributesService;
 
-    private final TenantId tenantId = new TenantId(UUID.randomUUID());
+    private final TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
     private final DeviceId deviceId = new DeviceId(UUID.randomUUID());
     private final CustomerId customerId = new CustomerId(UUID.randomUUID());
     private final DeviceProfileId deviceProfileId = new DeviceProfileId(UUID.randomUUID());

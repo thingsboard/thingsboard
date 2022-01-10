@@ -149,7 +149,7 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
             widgetsBundle.setAlias(prefix + i);
             widgetsBundle.setTitle(prefix + i);
             widgetsBundle.setId(new WidgetsBundleId(Uuids.timeBased()));
-            widgetsBundle.setTenantId(new TenantId(tenantId));
+            widgetsBundle.setTenantId(TenantId.fromUUID(tenantId));
             widgetsBundleDao.save(AbstractServiceTest.SYSTEM_TENANT_ID, widgetsBundle);
         }
     }

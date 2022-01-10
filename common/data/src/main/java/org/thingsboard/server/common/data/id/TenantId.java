@@ -28,7 +28,7 @@ import java.util.UUID;
 public final class TenantId extends UUIDBased implements EntityId {
 
     @JsonIgnore
-    public static final TenantId SYS_TENANT_ID = new TenantId(EntityId.NULL_UUID);
+    public static final TenantId SYS_TENANT_ID = TenantId.fromUUID(EntityId.NULL_UUID);
 
     static final ConcurrentReferenceHashMap<UUID, TenantId> tenants = new ConcurrentReferenceHashMap<>(16, ReferenceType.SOFT);
 
@@ -39,6 +39,7 @@ public final class TenantId extends UUIDBased implements EntityId {
         return tenants.computeIfAbsent(id, TenantId::new);
     }
 
+    //default constructor is still available due to possible usage in extensions
     public TenantId(UUID id) {
         super(id);
     }

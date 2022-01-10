@@ -224,7 +224,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
 
                 @Override
                 protected void removeEntity(TenantId tenantId, Tenant entity) {
-                    deleteTenant(new TenantId(entity.getUuidId()));
+                    deleteTenant(TenantId.fromUUID(entity.getUuidId()));
                 }
             };
 }
