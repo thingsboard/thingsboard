@@ -20,9 +20,9 @@ export const entityIdHref = '<a href="https://github.com/thingsboard/thingsboard
 
 export const baseDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/base-data.ts#L22">Base data</a>';
 
-export const alarmDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/query/query.models.ts#L573">Alarm data</a>';
+export const alarmDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/fe38da0b34a60ac217c3b6df04d4c1a0959dfa88/ui-ngx/src/app/shared/models/query/query.models.ts#L772">Alarm data</a>';
 
-export const alarmDataQueryHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/query/query.models.ts#L558">Alarm data query</a>';
+export const alarmDataQueryHref = '<a href="https://github.com/thingsboard/thingsboard/blob/fe38da0b34a60ac217c3b6df04d4c1a0959dfa88/ui-ngx/src/app/shared/models/query/query.models.ts#L757">Alarm data query</a>';
 
 export const attributeScopeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/telemetry/telemetry.models.ts#L37">Attribute scope</a>';
 
@@ -64,41 +64,61 @@ export const dataSortOrderHref = '<a href="https://github.com/thingsboard/things
 
 export const userHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/user.model.ts#L23">User</a>';
 
-export const entityDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/query/query.models.ts#L567">Entity data</a>';
+export const entityDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/fe38da0b34a60ac217c3b6df04d4c1a0959dfa88/ui-ngx/src/app/shared/models/query/query.models.ts#L766">Entity data</a>';
 
-export const entityDataQueryHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/query/query.models.ts#L555">Entity Data Query</a>';
+export const entityDataQueryHref = '<a href="https://github.com/thingsboard/thingsboard/blob/fe38da0b34a60ac217c3b6df04d4c1a0959dfa88/ui-ngx/src/app/shared/models/query/query.models.ts#L754">Entity Data Query</a>';
 
 export const deviceCredentialsHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/device.models.ts#L50">DeviceCredentials</a>';
 
-export const entityFilterHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/query/query.models.ts#L487">Entity filter</a>';
+export const entityFilterHref = '<a href="https://github.com/thingsboard/thingsboard/blob/fe38da0b34a60ac217c3b6df04d4c1a0959dfa88/ui-ngx/src/app/shared/models/query/query.models.ts#L686">Entity filter</a>';
 
-export const entityInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/entity.models.ts#L20">Entity info</a>';
+export const entityInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/fe38da0b34a60ac217c3b6df04d4c1a0959dfa88/ui-ngx/src/app/shared/models/entity.models.ts#L23">Entity info</a>';
 
-export const aliasEntityTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/entity-type.models.ts#L51">Alias Entity Type</a>';
+export const aliasEntityTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/fe38da0b34a60ac217c3b6df04d4c1a0959dfa88/ui-ngx/src/app/shared/models/entity-type.models.ts#L42">Alias Entity Type</a>';
 
-export const aliasFilterTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/entity-type.models.ts#L51">Alias filter type</a>';
+export const aliasFilterTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/fe38da0b34a60ac217c3b6df04d4c1a0959dfa88/ui-ngx/src/app/shared/models/alias.models.ts#L22">Alias filter type</a>';
 
-export const entityAliasHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/alias.models.ts#L150">Entity alias</a>';
+export const entityAliasHref = '<a href="https://github.com/thingsboard/thingsboard/blob/fe38da0b34a60ac217c3b6df04d4c1a0959dfa88/ui-ngx/src/app/shared/models/alias.models.ts#L184">Entity alias</a>';
 
-export const dataKeyTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/telemetry/telemetry.models.ts#L27">Data key type</a>';
+export const dataKeyTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/fe38da0b34a60ac217c3b6df04d4c1a0959dfa88/ui-ngx/src/app/shared/models/telemetry/telemetry.models.ts#L37">Data key type</a>';
 
-export const subscriptionInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/core/api/widget-api.models.ts#L155">Subscription info</a>';
+export const subscriptionInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/fe38da0b34a60ac217c3b6df04d4c1a0959dfa88/ui-ngx/src/app/core/api/widget-api.models.ts#L169">Subscription info</a>';
 
-export const dataSourceHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/widget.models.ts#L257">Datasource</a>';
+export const dataSourceHref = '<a href="https://github.com/thingsboard/thingsboard/blob/fe38da0b34a60ac217c3b6df04d4c1a0959dfa88/ui-ngx/src/app/shared/models/widget.models.ts#L280">Datasource</a>';
 
-export const stateParamsHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/core/api/widget-api.models.ts#L129">State params</a>';
+export const stateParamsHref = '<a href="https://github.com/thingsboard/thingsboard/blob/fe38da0b34a60ac217c3b6df04d4c1a0959dfa88/ui-ngx/src/app/core/api/widget-api.models.ts#L140">State params</a>';
 
-export const aliasInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/core/api/widget-api.models.ts#L88">Alias info</a>';
+export const aliasInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/fe38da0b34a60ac217c3b6df04d4c1a0959dfa88/ui-ngx/src/app/core/api/widget-api.models.ts#L99">Alias info</a>';
 
-export const entityAliasFilterHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/alias.models.ts#L134">Entity alias filter</a>';
+export const entityAliasFilterHref = '<a href="https://github.com/thingsboard/thingsboard/blob/fe38da0b34a60ac217c3b6df04d4c1a0959dfa88/ui-ngx/src/app/shared/models/alias.models.ts#L168">Entity alias filter</a>';
 
-export const entityAliasFilterResultHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/alias.models.ts#L158">Entity alias filter result</a>';
+export const entityAliasFilterResultHref = '<a href="https://github.com/thingsboard/thingsboard/blob/fe38da0b34a60ac217c3b6df04d4c1a0959dfa88/ui-ngx/src/app/shared/models/alias.models.ts#L192">Entity alias filter result</a>';
 
-export const importEntityDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/entity.models.ts#L28">Import entity data</a>';
+export const importEntityDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/fe38da0b34a60ac217c3b6df04d4c1a0959dfa88/ui-ngx/src/app/shared/models/entity.models.ts#L36">Import entity data</a>';
 
-export const importEntitiesResultInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/shared/models/entity.models.ts#L42">Import entities result info</a>';
+export const importEntitiesResultInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/fe38da0b34a60ac217c3b6df04d4c1a0959dfa88/ui-ngx/src/app/shared/models/entity.models.ts#L63">Import entities result info</a>';
 
 export const customDialogComponentHref = '<a href="https://github.com/thingsboard/thingsboard/blob/master/ui-ngx/src/app/modules/home/components/widget/dialog/custom-dialog.component.ts#L48">CustomDialogComponent</a>';
+
+export const claimRequestHref = '<a href="https://github.com/thingsboard/thingsboard/blob/fe38da0b34a60ac217c3b6df04d4c1a0959dfa88/ui-ngx/src/app/shared/models/device.models.ts#L757">ClaimRequest</a>';
+
+export const claimResultHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/device.models.ts#L71">ClaimResult</a>';
+
+export const bulkImportRequestHref = '<a href="https://github.com/thingsboard/thingsboard/blob/501a0aec45ffa4a0887485a64545dd50e07a484a/ui-ngx/src/app/modules/home/components/import-export/import-export.models.ts#L123">BulkImportRequest</a>';
+
+export const bulkImportResultHref = '<a href="https://github.com/thingsboard/thingsboard/blob/501a0aec45ffa4a0887485a64545dd50e07a484a/ui-ngx/src/app/modules/home/components/import-export/import-export.models.ts#L133">BulkImportResult</a>';
+
+export const persistentRpcHref = '<a href="https://github.com/thingsboard/thingsboard/blob/501a0aec45ffa4a0887485a64545dd50e07a484a/ui-ngx/src/app/shared/models/rpc.models.ts#L29">PersistentRpc</a>';
+
+export const homeDashboardHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/shared/models/dashboard.models.ts#L117">HomeDashboard</a>';
+
+export const homeDashboardInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/shared/models/dashboard.models.ts#L121">HomeDashboardInfo</a>';
+
+export const entitiesKeysByQueryHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/shared/models/entity.models.ts#L83">EntitiesKeysByQuery</a>';
+
+export const dataKeyHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/shared/models/widget.models.ts#L254">DataKey</a>';
+
+export const edgeEventHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/shared/models/edge.models.ts#L161">EdgeEvent</a>';
 
 export const pageLinkArg: FunctionArg = {
   name: 'pageLink',
@@ -179,6 +199,16 @@ export const serviceCompletions: TbEditorCompletions = {
         ],
         return: observablePageDataReturnType(deviceInfoHref)
       },
+      getTenantDeviceInfosByDeviceProfileId: {
+        description: 'Get tenant device by device profile id',
+        meta: 'function',
+        args: [
+          pageLinkArg,
+          { name: 'deviceProfileId', type: 'string', description: 'Id of the device profile', optional: true},
+          requestConfigArg
+        ],
+        return: observablePageDataReturnType(deviceInfoHref)
+      },
       getCustomerDeviceInfos: {
         description: 'Get customer devices',
         meta: 'function',
@@ -186,6 +216,17 @@ export const serviceCompletions: TbEditorCompletions = {
           { name: 'customerId', type: 'string', description: 'Id of the customer'},
           pageLinkArg,
           { name: 'type', type: 'string', optional: true, description: 'Device type'},
+          requestConfigArg
+        ],
+        return: observablePageDataReturnType(deviceInfoHref)
+      },
+      getCustomerDeviceInfosByDeviceProfileId: {
+        description: 'Get customer device by device profile id',
+        meta: 'function',
+        args: [
+          { name: 'customerId', type: 'string', description: 'Id of the customer'},
+          pageLinkArg,
+          { name: 'deviceProfileId', type: 'string', description: 'Id of the device profile', optional: true},
           requestConfigArg
         ],
         return: observablePageDataReturnType(deviceInfoHref)
@@ -316,6 +357,16 @@ export const serviceCompletions: TbEditorCompletions = {
           description: `A command execution <code>Observable</code> of response body.`
         }
       },
+      getPersistedRpc: {
+        description: 'Get persisted rpc request',
+        meta: 'function',
+        args: [
+          { name: 'rpcId', type: 'string', description: 'Id of the rpc'},
+          { name: 'fullResponse', type: 'boolean', description: 'Full response (false by default)', optional: true},
+          requestConfigArg
+        ],
+        return: observableReturnType(persistentRpcHref)
+      },
       findByQuery: {
         description: 'Find devices by search query',
         meta: 'function',
@@ -342,9 +393,10 @@ export const serviceCompletions: TbEditorCompletions = {
         args: [
           { name: 'deviceName', type: 'string',
             description: 'Claiming device name'},
+          { name: 'claimRequest', type: claimRequestHref, description: 'ClaimRequest object'},
           requestConfigArg
         ],
-        return: observableReturnType('<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/device.models.ts#L71">ClaimResult</a>')
+        return: observableReturnType(claimResultHref)
       },
       unclaimDevice: {
         description: 'Send un-claim device request',
@@ -355,6 +407,46 @@ export const serviceCompletions: TbEditorCompletions = {
           requestConfigArg
         ],
         return: observableVoid()
+      },
+      assignDeviceToEdge: {
+        description: 'Assign device to Edge request',
+        meta: 'function',
+        args: [
+          { name: 'edgeId', type: 'string', description: 'Id of the edge'},
+          { name: 'deviceId', type: 'string', description: 'Id of the device'},
+          requestConfigArg
+        ],
+        return: observableReturnType(deviceHref)
+      },
+      unassignDeviceFromEdge: {
+        description: 'Unassign device from Edge request',
+        meta: 'function',
+        args: [
+          { name: 'edgeId', type: 'string', description: 'Id of the edge'},
+          { name: 'deviceId', type: 'string', description: 'Id of the device'},
+          requestConfigArg
+        ],
+        return: observableVoid()
+      },
+      getEdgeDevices: {
+        description: 'Get all edge devices',
+        meta: 'function',
+        args: [
+          { name: 'edgeId', type: 'string', description: 'Id of the edge'},
+          pageLinkArg,
+          { name: 'type', type: 'string', description: 'Edge type', optional: true },
+          requestConfigArg
+        ],
+        return: observablePageDataReturnType(deviceInfoHref)
+      },
+      bulkImportDevices: {
+        description: 'Bulk import devices request',
+        meta: 'function',
+        args: [
+          { name: 'entitiesData', type: bulkImportRequestHref, description: 'Entities data object'},
+          requestConfigArg
+        ],
+        return: observableReturnType(bulkImportResultHref)
       }
     }
   },
@@ -491,6 +583,46 @@ export const serviceCompletions: TbEditorCompletions = {
         ],
         return: observableReturnType(assetHref)
       },
+      assignAssetToEdge: {
+        description: 'Assign asset to Edge request',
+        meta: 'function',
+        args: [
+          { name: 'edgeId', type: 'string', description: 'Id of the edge' },
+          { name: 'assetId', type: 'string', description: 'Id of the asset' },
+          requestConfigArg
+        ],
+        return: observableReturnType(assetHref)
+      },
+      unassignAssetFromEdge: {
+        description: 'Unassign asset from Edge request',
+        meta: 'function',
+        args: [
+          { name: 'edgeId', type: 'string', description: 'Id of the edge' },
+          { name: 'assetId', type: 'string', description: 'Id of the asset' },
+          requestConfigArg
+        ],
+        return: observableVoid()
+      },
+      getEdgeAssets: {
+        description: 'Get all Edge assets',
+        meta: 'function',
+        args: [
+          { name: 'edgeId', type: 'string', description: 'Id of the edge' },
+          pageLinkArg,
+          { name: 'type', type: 'string', description: 'Asset type', optional: true },
+          requestConfigArg
+        ],
+        return: observablePageDataReturnType(assetInfoHref)
+      },
+      bulkImportAssets: {
+        description: 'Bulk import assets request',
+        meta: 'function',
+        args: [
+          { name: 'entitiesData', type: bulkImportRequestHref, description: 'Entities data object'},
+          requestConfigArg
+        ],
+        return: observableReturnType(bulkImportResultHref)
+      },
     },
   },
   entityViewService: {
@@ -604,6 +736,37 @@ export const serviceCompletions: TbEditorCompletions = {
           requestConfigArg
         ],
         return: observableArrayReturnType(entityViewHref)
+      },
+      assignEntityViewToEdge: {
+        description: 'Assign Entity View to Edge request',
+        meta: 'function',
+        args: [
+          { name: 'edgeId', type: 'string', description: 'Id of the edge' },
+          { name: 'entityViewId', type: 'string', description: 'Id of the entity view' },
+          requestConfigArg
+        ],
+        return: observableReturnType(entityViewHref)
+      },
+      unassignEntityViewFromEdge: {
+        description: 'Unassign Entity View from Edge request',
+        meta: 'function',
+        args: [
+          { name: 'edgeId', type: 'string', description: 'Id of the edge' },
+          { name: 'entityViewId', type: 'string', description: 'Id of the entity view' },
+          requestConfigArg
+        ],
+        return: observableVoid()
+      },
+      getEdgeEntityViews: {
+        description: 'Get all Entity Views',
+        meta: 'function',
+        args: [
+          { name: 'edgeId', type: 'string', description: 'Id of the edge' },
+          pageLinkArg,
+          { name: 'type', type: 'string', description: 'Entity View type', optional: true },
+          requestConfigArg
+        ],
+        return: observablePageDataReturnType(entityViewInfoHref)
       },
     }
   },
@@ -790,6 +953,34 @@ export const serviceCompletions: TbEditorCompletions = {
         ],
         return: observableReturnType(dashboardHref)
       },
+      getHomeDashboard: {
+        description: 'Get home dashboard',
+        meta: 'function',
+        args: [
+          requestConfigArg
+        ],
+        return: observableReturnType(homeDashboardHref)
+      },
+      getTenantHomeDashboardInfo: {
+        description: 'Get Tenant home dashboard info',
+        meta: 'function',
+        args: [
+          requestConfigArg
+        ],
+        return: observableReturnType(homeDashboardInfoHref)
+      },
+      setTenantHomeDashboardInfo: {
+        description: 'Set Tenant home dashboard info',
+        meta: 'function',
+        args: [
+          {name: 'homeDashboardInfo', type: homeDashboardInfoHref, description: 'Home dashboard info object'},
+          requestConfigArg
+        ],
+        return: {
+          type: `Observable&lt;any&gt;`,
+          description: `A command execution <code>Observable</code>.`
+        }
+      },
       getPublicDashboardLink: {
         description: 'Get public dashboard link',
         meta: 'function',
@@ -804,9 +995,39 @@ export const serviceCompletions: TbEditorCompletions = {
       getServerTimeDiff: {
         description: 'Get time difference',
         meta: 'function',
-        args: [
-        ],
+        args: [],
         return: observableReturnTypeVariable('number')
+      },
+      getEdgeDashboards: {
+        description: 'Get all Edge dashboards',
+        meta: 'function',
+        args: [
+          { name: 'edgeId', type: 'string', description: 'Id of the edge' },
+          pageLinkArg,
+          { name: 'type', type: 'string', description: 'Dashboard type', optional: true },
+          requestConfigArg
+        ],
+        return: observablePageDataReturnType(dashboardInfoHref)
+      },
+      assignDashboardToEdge: {
+        description: 'Assign Dashboard to Edge request',
+        meta: 'function',
+        args: [
+          { name: 'edgeId', type: 'string', description: 'Id of the edge' },
+          { name: 'dashboardId', type: 'string', description: 'Id of the dashboard' },
+          requestConfigArg
+        ],
+        return: observableReturnType(dashboardHref)
+      },
+      unassignDashboardFromEdge: {
+        description: 'Unassign Dashboard from Edge request',
+        meta: 'function',
+        args: [
+          { name: 'edgeId', type: 'string', description: 'Id of the edge' },
+          { name: 'dashboardId', type: 'string', description: 'Id of the dashboard' },
+          requestConfigArg
+        ],
+        return: observableVoid()
       },
     }
   },
@@ -878,7 +1099,7 @@ export const serviceCompletions: TbEditorCompletions = {
         meta: 'function',
         args: [
           {name: 'userId', type: 'string', description: 'Id of the user'},
-          {name: 'userCredentialsEnabled', type: 'boolean', description: 'User credentials enabled'},
+          {name: 'userCredentialsEnabled', type: 'boolean', description: 'User credentials enabled', optional: true},
           requestConfigArg
         ],
         return: observableReturnTypeVariable('any')
@@ -1060,6 +1281,8 @@ export const serviceCompletions: TbEditorCompletions = {
           {name: 'entityId', type: entityIdHref, description: 'Id of the entity'},
           {name: 'timeseries', type: `Array&lt;${attributeDataHref}&gt;>`, description: 'Array of the timeseries data'},
           {name: 'deleteAllDataForKeys', type: 'boolean', optional: true, description: 'Delete all data for keys'},
+          {name: 'startTs', type: 'number', optional: true, description: 'Start time in milliseconds'},
+          {name: 'endTs', type: 'number', optional: true, description: 'End time in milliseconds'},
           requestConfigArg
         ],
         return: observableReturnTypeVariable('any')
@@ -1094,11 +1317,32 @@ export const serviceCompletions: TbEditorCompletions = {
           {name: 'keys', type: `Array&lt;string&gt;`, description: 'Array of the keys'},
           {name: 'startTs', type: 'number', description: 'Start time in milliseconds'},
           {name: 'endTs', type: 'number', description: 'End time in milliseconds'},
-          {name: 'limit', type: 'number', description: 'Limit of values to receive for each key'},
-          {name: 'agg', type: aggregationTypeHref, description: 'Aggregation type'},
-          {name: 'interval', type: 'number', description: 'Aggregation interval'},
-          {name: 'orderBy', type: dataSortOrderHref, description: 'Data order by time'},
-          {name: 'useStrictDataTypes', type: 'boolean', description: 'If "false" all values will be returned as strings'},
+          {name: 'limit', type: 'number', description: 'Limit of values to receive for each key (100 by default)', optional: true},
+          {name: 'agg', type: aggregationTypeHref, description: 'Aggregation type (NONE by default)', optional: true},
+          {name: 'interval', type: 'number', description: 'Aggregation interval', optional: true},
+          {name: 'orderBy', type: dataSortOrderHref, description: 'Data order by time (DESC by default)', optional: true},
+          {
+            name: 'useStrictDataTypes',
+            type: 'boolean',
+            description: 'If "false" all values will be returned as strings (true by default)',
+            optional: true
+          },
+          requestConfigArg
+        ],
+        return: observableReturnTypeVariable(timeseriesDataHref)
+      },
+      getEntityTimeseriesLatest: {
+        description: 'Get entity timeseries latest',
+        meta: 'function',
+        args: [
+          {name: 'entityId', type: entityIdHref, description: 'Id of the entity'},
+          {name: 'keys', type: 'Array&lt;string&gt;', description: 'Timeseries keys'},
+          {
+            name: 'useStrictDataTypes',
+            type: 'boolean',
+            description: 'If "false" all values will be returned as strings (true by default)',
+            optional: true
+          },
           requestConfigArg
         ],
         return: observableReturnTypeVariable(timeseriesDataHref)
@@ -1151,6 +1395,25 @@ export const serviceCompletions: TbEditorCompletions = {
           requestConfigArg
         ],
         return: observablePageDataReturnType(entityDataHref)
+      },
+      findEntityKeysByQuery: {
+        description: 'Find entity keys by query',
+        meta: 'function',
+        args: [
+          {name: 'query', type: entityDataQueryHref, description: 'Entity data query'},
+          {
+            name: 'attributes', type: 'boolean',
+            description: 'Include all unique attribute keys to the result (by default true)',
+            optional: true
+          },
+          {
+            name: 'timeseries', type: 'boolean',
+            description: 'Include all unique time-series keys to the result (by default true)',
+            optional: true
+          },
+          requestConfigArg
+        ],
+        return: observablePageDataReturnType(entitiesKeysByQueryHref)
       },
       findAlarmDataByQuery: {
         description: 'Find alarm data by query',
@@ -1229,6 +1492,16 @@ export const serviceCompletions: TbEditorCompletions = {
           description: `An <code>Observable</code> of array of <code>string</code> variables.`
         }
       },
+      getEntityKeysByEntityFilter: {
+        description: 'Get entity keys by entity filter',
+        meta: 'function',
+        args: [
+          {name: 'filter', type: entityFilterHref, description: 'Filter for the entity'},
+          {name: 'types', type: `${dataKeyTypeHref}[]`, description: 'Datakey types'},
+          requestConfigArg
+        ],
+        return: observableArrayReturnType(dataKeyHref)
+      },
       createDatasourcesFromSubscriptionsInfo: {
         description: 'Create datasources from subscriptions info',
         meta: 'function',
@@ -1297,6 +1570,24 @@ export const serviceCompletions: TbEditorCompletions = {
           requestConfigArg
         ],
         return: observableReturnTypeVariable('any')
+      },
+      getAssignedToEdgeEntitiesByType: {
+        description: 'Assigned to edge entities by type',
+        meta: 'function',
+        args: [
+          {name: 'edgeId', type: 'string', description: 'Id of the edge'},
+          {name: 'entityType', type: entityTypeHref, description: 'Entity type'},
+          pageLinkArg
+        ],
+        return: observablePageDataReturnType('any')
+      },
+      getEdgeEventContent: {
+        description: 'Get edge event content',
+        meta: 'function',
+        args: [
+          {name: 'entity', type: edgeEventHref, description: 'Id of the edge'}
+        ],
+        return: observablePageDataReturnType('any')
       },
     }
   },
