@@ -182,7 +182,11 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
                     if (dataAsObject.get(key).isJsonPrimitive()) {
                         JsonPrimitive primitive = dataAsObject.get(key).getAsJsonPrimitive();
                         if (primitive.isNumber()) {
-                            stmtBuilder.setLong(i.get(), dataAsObject.get(key).getAsLong());
+                            if (dataAsObject.get(key).getAsString().contains(".")) {
+                                stmtBuilder.setDouble(i.get(), dataAsObject.get(key).getAsDouble());
+                            } else {
+                                stmtBuilder.setLong(i.get(), dataAsObject.get(key).getAsLong());
+                            }
                         } else if (primitive.isBoolean()) {
                             stmtBuilder.setBoolean(i.get(), dataAsObject.get(key).getAsBoolean());
                         } else if (primitive.isString()) {
