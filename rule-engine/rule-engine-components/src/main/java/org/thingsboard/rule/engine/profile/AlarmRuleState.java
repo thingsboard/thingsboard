@@ -182,7 +182,12 @@ class AlarmRuleState {
         for (CustomTimeScheduleItem item : schedule.getItems()) {
             if (item.getDayOfWeek() == dayOfWeek) {
                 if (item.isEnabled()) {
-                    return isActive(eventTs, zoneId, zdt, item.getStartsOn(), item.getEndsOn());
+                    long endsOn = item.getEndsOn();
+                    if (endsOn == 0) {
+                        // 24 hours in milliseconds
+                        endsOn = 86400000;
+                    }
+                    return isActive(eventTs, zoneId, zdt, item.getStartsOn(), endsOn);
                 } else {
                     return false;
                 }
