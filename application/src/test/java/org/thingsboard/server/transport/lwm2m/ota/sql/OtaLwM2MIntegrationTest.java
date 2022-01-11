@@ -200,8 +200,6 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
      * */
     @Test
     public void testSoftwareUpdateByObject9() throws Exception {
-//        String endpoint = "Ota9_Device";
-//        setEndpoint(endpoint);
         createDeviceProfile(OTA_TRANSPORT_CONFIGURATION);
         NoSecClientCredential credentials = createNoSecClientCredentials(this.CLIENT_ENDPOINT_OTA9);
         final Device device = createDevice(credentials);

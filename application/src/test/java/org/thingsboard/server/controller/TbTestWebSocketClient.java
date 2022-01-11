@@ -74,7 +74,7 @@ public class TbTestWebSocketClient extends WebSocketClient {
     }
 
     public String waitForUpdate() {
-        return waitForUpdate(TimeUnit.SECONDS.toMillis(8));
+        return waitForUpdate(TimeUnit.SECONDS.toMillis(3));
     }
 
     public String waitForUpdate(long ms) {

@@ -16,7 +16,6 @@
 package org.thingsboard.server.transport.lwm2m;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.californium.core.network.config.NetworkConfig;
 import org.eclipse.leshan.client.object.Security;
