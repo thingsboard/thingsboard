@@ -40,12 +40,6 @@ import {
 import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import { MatCheckboxChange } from '@angular/material/checkbox';
 import { getDefaultTimezone } from '@shared/models/time/time.models';
-import {
-  DynamicValueSourceType,
-  dynamicValueSourceTypeTranslationMap,
-  getDynamicSourcesForAllowUser
-} from '@shared/models/query/query.models';
-import { emit } from 'cluster';
 
 @Component({
   selector: 'tb-alarm-schedule',
@@ -70,8 +64,6 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
   alarmScheduleTypes = Object.keys(AlarmScheduleType);
   alarmScheduleType = AlarmScheduleType;
   alarmScheduleTypeTranslate = AlarmScheduleTypeTranslationMap;
-  dynamicValueSourceTypes: DynamicValueSourceType[] = getDynamicSourcesForAllowUser(false);
-  dynamicValueSourceTypeTranslations = dynamicValueSourceTypeTranslationMap;
   dayOfWeekTranslationsArray = dayOfWeekTranslations;
 
   allDays = Array(7).fill(0).map((x, i) => i);
@@ -99,17 +91,8 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
       startsOn: [0, Validators.required],
       endsOn: [0, Validators.required],
       items: this.fb.array(Array.from({length: 7}, (value, i) => this.defaultItemsScheduler(i)), this.validateItems),
-      dynamicValue:  this.fb.group({
-        sourceType: [null],
-        sourceAttribute: [null]
-      })
+      dynamicValue: [null]
     });
-
-    this.alarmScheduleForm.get('dynamicValue.sourceType').valueChanges.subscribe((sourceType) => {
-      if (!sourceType) {
-        this.alarmScheduleForm.get('dynamicValue.sourceAttribute').patchValue('', {emitEvent:false});
-      }
-    })
 
     this.alarmScheduleForm.get('type').valueChanges.subscribe((type) => {
       const defaultTimezone = getDefaultTimezone();
@@ -176,7 +159,8 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
           timezone: this.modelValue.timezone,
           daysOfWeek,
           startsOn: utcTimestampToTimeOfDay(this.modelValue.startsOn),
-          endsOn: utcTimestampToTimeOfDay(this.modelValue.endsOn)
+          endsOn: utcTimestampToTimeOfDay(this.modelValue.endsOn),
+          dynamicValue: this.modelValue.dynamicValue
         }, {emitEvent: false});
         break;
       case AlarmScheduleType.CUSTOM:
@@ -196,10 +180,7 @@ export class AlarmScheduleComponent implements ControlValueAccessor, Validator, 
             type: this.modelValue.type,
             timezone: this.modelValue.timezone,
             items: alarmDays,
-            dynamicValue: {
-              sourceAttribute: this.modelValue.dynamicValue.sourceAttribute,
-              sourceType: this.modelValue.dynamicValue.sourceType
-            }
+            dynamicValue: this.modelValue.dynamicValue
           }, {emitEvent: false});
         }
         break;
