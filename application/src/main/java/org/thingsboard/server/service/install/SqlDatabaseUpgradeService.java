@@ -476,6 +476,8 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.3.2", SCHEMA_UPDATE_SQL);
                     loadSql(schemaUpdateFile, conn);
                     log.info("Updating server`s public key from HexDec to Base64 in profile for LWM2M...");
+                    schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.3.2", "schema_update_lwm2m_bootstrap.sql");
+                    loadSql(schemaUpdateFile, conn);
                     conn.createStatement().execute("call update_profile_bootstrap();");
                     log.info("Server`s public key from HexDec to Base64 in profile for LWM2M updated.");
                     log.info("Updating client`s public key and secret key from HexDec to Base64 for LWM2M...");
