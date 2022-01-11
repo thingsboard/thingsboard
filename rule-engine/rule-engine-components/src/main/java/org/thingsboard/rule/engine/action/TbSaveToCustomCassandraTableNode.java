@@ -179,18 +179,19 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
                 if (key.equals(ENTITY_ID)) {
                     stmtBuilder.setUuid(i.get(), msg.getOriginator().getId());
                 } else if (dataAsObject.has(key)) {
-                    if (dataAsObject.get(key).isJsonPrimitive()) {
-                        JsonPrimitive primitive = dataAsObject.get(key).getAsJsonPrimitive();
+                    JsonElement dataKeyElement = dataAsObject.get(key);
+                    if (dataKeyElement.isJsonPrimitive()) {
+                        JsonPrimitive primitive = dataKeyElement.getAsJsonPrimitive();
                         if (primitive.isNumber()) {
-                            if (dataAsObject.get(key).getAsString().contains(".")) {
-                                stmtBuilder.setDouble(i.get(), dataAsObject.get(key).getAsDouble());
+                            if (primitive.getAsString().contains(".")) {
+                                stmtBuilder.setDouble(i.get(), primitive.getAsDouble());
                             } else {
-                                stmtBuilder.setLong(i.get(), dataAsObject.get(key).getAsLong());
+                                stmtBuilder.setLong(i.get(), primitive.getAsLong());
                             }
                         } else if (primitive.isBoolean()) {
-                            stmtBuilder.setBoolean(i.get(), dataAsObject.get(key).getAsBoolean());
+                            stmtBuilder.setBoolean(i.get(), primitive.getAsBoolean());
                         } else if (primitive.isString()) {
-                            stmtBuilder.setString(i.get(), dataAsObject.get(key).getAsString());
+                            stmtBuilder.setString(i.get(), primitive.getAsString());
                         } else {
                             stmtBuilder.setToNull(i.get());
                         }
