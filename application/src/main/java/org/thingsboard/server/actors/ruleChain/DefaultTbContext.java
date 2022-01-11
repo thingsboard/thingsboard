@@ -335,12 +335,23 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public void enqueueEntityRelationEvents(EntityRelation relation, String relationEventType, String queueName, boolean originatorDirectionFrom) {
-        TbMsgMetaData metaData = new TbMsgMetaData();
-        metaData.putValue(DataConstants.RELATION_DIRECTION_MSG_ORIGINATOR,
-                originatorDirectionFrom ? EntitySearchDirection.FROM.name() : EntitySearchDirection.TO.name());
+    public void enqueueEntityRelationEvents(EntityRelation relation, String relationEventType, boolean originatorDirectionFrom) {
         try {
-            TbMsg tbMsgFrom = TbMsg.newMsg(queueName, relationEventType, relation.getFrom(), metaData, mapper.writeValueAsString(relation));
+
+            EntityId from = relation.getFrom();
+
+            String queueNameFrom = null;
+            RuleChainId ruleChainIdFrom = null;
+            if (from.getEntityType() == EntityType.DEVICE) {
+                DeviceProfile deviceProfileFrom = getDeviceProfileByDeviceId(new DeviceId(from.getId()));
+                queueNameFrom = deviceProfileFrom.getDefaultQueueName();
+                ruleChainIdFrom = deviceProfileFrom.getDefaultRuleChainId();
+            }
+            TbMsgMetaData metaDataFrom = new TbMsgMetaData();
+            metaDataFrom.putValue(DataConstants.RELATION_DIRECTION_MSG_ORIGINATOR, EntitySearchDirection.FROM.name());
+
+
+            TbMsg tbMsgFrom = TbMsg.newMsg(queueNameFrom, relationEventType, relation.getFrom(), metaDataFrom, mapper.writeValueAsString(relation), ruleChainIdFrom, null);
             processEnqueue(tbMsgFrom, relation, relationEventType);
 
             if (!isDuplicateMessage(relation)) {
@@ -360,7 +371,7 @@ class DefaultTbContext implements TbContext {
 
     private boolean isDuplicateMessage(EntityRelation relation) {
         if (relation.getFrom().getEntityType() == EntityType.DEVICE) {
-            if (relation.getFrom().getEntityType().equals(relation.getTo().getEntityType())) {
+            if (relation.getFrom().getEntityType() == relation.getTo().getEntityType()) {
                 DeviceProfile deviceProfileFrom = getDeviceProfileByDeviceId(new DeviceId(relation.getFrom().getId()));
                 DeviceProfile deviceProfileTo = getDeviceProfileByDeviceId(new DeviceId(relation.getTo().getId()));
                 String defaultQueueName = deviceProfileFrom.getDefaultQueueName() == null ? "" : deviceProfileTo.getDefaultQueueName();

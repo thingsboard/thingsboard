@@ -89,7 +89,6 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
                         if (res) {
                             pushDeleteRelationEventMessage(ctx,
                                     entityRelation,
-                                    msg,
                                     config.getDirection().equals(EntitySearchDirection.FROM.name()));
                         }
                         return res;
@@ -114,7 +113,7 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
                     if (relation != null) {
                         return Futures.transform(processSingleDeleteRelation(ctx, sdId, relationType), res -> {
                             if (res) {
-                                pushDeleteRelationEventMessage(ctx, relation, msg, sdId.isOriginatorDirectionFrom());
+                                pushDeleteRelationEventMessage(ctx, relation, sdId.isOriginatorDirectionFrom());
                             }
                             return res;
                         }, ctx.getDbCallbackExecutor());
@@ -127,8 +126,8 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
         return ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), sdId.getFromId(), sdId.getToId(), relationType, RelationTypeGroup.COMMON);
     }
 
-    protected void pushDeleteRelationEventMessage(TbContext ctx, EntityRelation entityRelation, TbMsg tbMsg, boolean originatorDirectionFrom) {
-        ctx.enqueueEntityRelationEvents(entityRelation, DataConstants.ENTITY_RELATION_DELETED, tbMsg.getQueueName(), originatorDirectionFrom);
+    protected void pushDeleteRelationEventMessage(TbContext ctx, EntityRelation entityRelation, boolean originatorDirectionFrom) {
+        ctx.enqueueEntityRelationEvents(entityRelation, DataConstants.ENTITY_RELATION_DELETED, originatorDirectionFrom);
     }
 
 }

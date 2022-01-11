@@ -194,15 +194,14 @@ public class DefaultTbClusterService implements TbClusterService {
 
     private boolean isDuplicateMessage(TbMsg tbMsg, DeviceProfile deviceProfile) {
         EntityRelation entityRelation = JacksonUtil.fromString(tbMsg.getData(), EntityRelation.class);
-        if (entityRelation.getFrom().getEntityType().equals(entityRelation.getTo().getEntityType())) {
+        if (entityRelation.getFrom().getEntityType() == entityRelation.getTo().getEntityType()) {
             if (tbMsg.getMetaData().getValue(DataConstants.RELATION_DIRECTION_MSG_ORIGINATOR).equals(EntitySearchDirection.TO.name())) {
                 DeviceProfile deviceProfileFrom = deviceProfileCache.get(deviceProfile.getTenantId(), new DeviceId(entityRelation.getFrom().getId()));
-                String defaultQueueName = deviceProfileFrom.getDefaultQueueName() == null ? "" : deviceProfile.getDefaultQueueName();
-                String fromQueueName = deviceProfile.getDefaultQueueName() == null ? "" : deviceProfileFrom.getDefaultQueueName();
-                if (deviceProfileFrom.getDefaultRuleChainId().equals(deviceProfile.getDefaultRuleChainId())
-                        && defaultQueueName.equals(fromQueueName)) {
-                    return true;
-                }
+                String defaultQueueNameFrom = deviceProfileFrom.getDefaultQueueName() == null ? "" : deviceProfileFrom.getDefaultQueueName();
+
+                String defaultQueueNameTo = deviceProfile.getDefaultQueueName() == null ? "" : deviceProfile.getDefaultQueueName();
+                return deviceProfileFrom.getDefaultRuleChainId().equals(deviceProfile.getDefaultRuleChainId())
+                        && defaultQueueNameFrom.equals(defaultQueueNameTo);
             }
         }
         return false;

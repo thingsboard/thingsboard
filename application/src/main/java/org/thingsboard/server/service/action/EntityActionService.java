@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
@@ -216,10 +217,12 @@ public class EntityActionService {
                 if (relations != null) {
                     for (EntityRelation relation : relations) {
                         ObjectNode objectNode = json.valueToTree(relation);
-                        metaData.putValue(DataConstants.RELATION_DIRECTION_MSG_ORIGINATOR,
-                                getRelationDirectionValue(entityId, relation));
-                        prepareAndPushMsgToRuleEngine(relation.getFrom(), entity, tenantId, customerId, msgType, metaData, objectNode);
-                        prepareAndPushMsgToRuleEngine(relation.getTo(), entity, tenantId, customerId, msgType, metaData, objectNode);
+
+                        TbMsgMetaData metaDataFrom = prepareRelationMetadata(metaData, EntitySearchDirection.FROM);
+                        prepareAndPushMsgToRuleEngine(relation.getFrom(), entity, tenantId, customerId, msgType, metaDataFrom, objectNode);
+
+                        TbMsgMetaData metaDataTo = prepareRelationMetadata(metaData, EntitySearchDirection.TO);
+                        prepareAndPushMsgToRuleEngine(relation.getTo(), entity, tenantId, customerId, msgType, metaDataTo, objectNode);
                     }
                 } else {
                     prepareAndPushMsgToRuleEngine(entityId, entity, tenantId, customerId, msgType, metaData, entityNode);
@@ -228,6 +231,13 @@ public class EntityActionService {
                 log.warn("[{}] Failed to push entity action to rule engine: {}", entityId, actionType, e);
             }
         }
+    }
+
+    @NotNull
+    private TbMsgMetaData prepareRelationMetadata(TbMsgMetaData metaData, EntitySearchDirection direction) {
+        TbMsgMetaData metaDataCopy = metaData.copy();
+        metaDataCopy.putValue(DataConstants.RELATION_DIRECTION_MSG_ORIGINATOR, direction.name());
+        return metaDataCopy;
     }
 
     private String getRelationDirectionValue(EntityId entityId, EntityRelation relation) {
