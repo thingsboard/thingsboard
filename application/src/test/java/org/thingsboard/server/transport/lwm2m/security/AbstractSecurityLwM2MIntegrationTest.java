@@ -62,7 +62,7 @@ protected final X509Certificate serverX509Cert;                                 
     protected final X509Certificate clientX509CertTrustNo;         // client certificate signed by intermediate, rootCA with a good CN ("host name")
     protected final PrivateKey clientPrivateKeyFromCertTrustNo;    // client private key used for X509 and RPK
     protected final PublicKey clientPublicKeyFromCertTrustNo;      // client public key used for RPK
-    private final  String[] resources = new String[]{"1.xml", "2.xml", "3.xml", "5.xml", "9.xml"};
+    private final  String[] RESOURCES_SECURITY = new String[]{"1.xml", "2.xml", "3.xml", "5.xml", "9.xml"};
 
 
     private final LwM2MBootstrapClientCredentials defaultBootstrapCredentials;
@@ -71,7 +71,7 @@ protected final X509Certificate serverX509Cert;                                 
 
     public AbstractSecurityLwM2MIntegrationTest() {
         // create client credentials
-        setResources(this.resources);
+        setResources(this.RESOURCES_SECURITY);
         try {
             // Get certificates from key store
             char[] clientKeyStorePwd = CLIENT_STORE_PWD.toCharArray();

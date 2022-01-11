@@ -27,18 +27,18 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_0;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_1;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceIdName_19_0_0;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceIdName_19_1_0;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceIdName_3_14;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceIdName_3_9;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceId_0;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceId_1;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceId_11;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceId_14;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceId_2;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceId_9;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_0;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_1;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_19_0_0;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_19_1_0;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_3_14;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_3_9;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_0;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_1;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_11;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_14;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_2;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_9;
 
 
 public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest {
@@ -96,11 +96,11 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
      */
     @Test
     public void testReadMultipleResourceById_Result_CONTENT_Value_IsLwM2mMultipleResource() throws Exception {
-       String expectedIdVer = objectInstanceIdVer_3 +"/" + resourceId_11 ;
+       String expectedIdVer = objectInstanceIdVer_3 +"/" + RESOURCE_ID_11;
         String actualResult = sendRPCById(expectedIdVer);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-        String expected = "LwM2mMultipleResource [id=" + resourceId_11 + ", values={";
+        String expected = "LwM2mMultipleResource [id=" + RESOURCE_ID_11 + ", values={";
         assertTrue(rpcActualResult.get("value").asText().contains(expected));
     }
 
@@ -109,11 +109,11 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
      */
     @Test
     public void testReadSingleResourceById_Result_CONTENT_Value_IsLwM2mSingleResource() throws Exception {
-         String expectedIdVer = objectInstanceIdVer_3 +"/" + resourceId_14 ;
+         String expectedIdVer = objectInstanceIdVer_3 +"/" + RESOURCE_ID_14;
         String actualResult = sendRPCById(expectedIdVer);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-        String expected = "LwM2mSingleResource [id=" + resourceId_14 + ", value=";
+        String expected = "LwM2mSingleResource [id=" + RESOURCE_ID_14 + ", value=";
         assertTrue(rpcActualResult.get("value").asText().contains(expected));
     }
 
@@ -122,11 +122,11 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
      */
     @Test
     public void testReadSingleResourceByKey_Result_CONTENT_Value_IsLwM2mSingleResource() throws Exception {
-        String expectedKey = resourceIdName_3_14 ;
+        String expectedKey = RESOURCE_ID_NAME_3_14;
         String actualResult = sendRPCByKey(expectedKey);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-        String expected = "LwM2mSingleResource [id=" + resourceId_14 + ", value=";
+        String expected = "LwM2mSingleResource [id=" + RESOURCE_ID_14 + ", value=";
         assertTrue(rpcActualResult.get("value").asText().contains(expected));
     }
 
@@ -137,16 +137,16 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
     public void testReadCompositeSingleResourceByIds_Result_CONTENT_Value_IsObjectIsLwM2mSingleResourceIsLwM2mMultipleResource() throws Exception {
         String expectedIdVer_1 = (String) expectedObjectIdVers.stream().filter(path -> (!((String)path).contains("/" + BINARY_APP_DATA_CONTAINER) && ((String)path).contains("/" + SERVER))).findFirst().get();
         String objectId_1 = pathIdVerToObjectId(expectedIdVer_1);
-        String expectedIdVer3_0_1 = objectInstanceIdVer_3 + "/" +  resourceId_1;
-        String expectedIdVer3_0_11 = objectInstanceIdVer_3 + "/" +  resourceId_11;
+        String expectedIdVer3_0_1 = objectInstanceIdVer_3 + "/" + RESOURCE_ID_1;
+        String expectedIdVer3_0_11 = objectInstanceIdVer_3 + "/" + RESOURCE_ID_11;
         String objectInstanceId_3 = pathIdVerToObjectId(objectInstanceIdVer_3);
         String expectedIds = "[\"" + expectedIdVer_1 + "\", \"" + expectedIdVer3_0_1 + "\", \"" + expectedIdVer3_0_11 + "\"]";
         String actualResult = sendCompositeRPCByIds(expectedIds);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
         String expected1 = objectId_1 + "=LwM2mObject [id=" + new LwM2mPath(objectId_1).getObjectId() + ", instances={";
-        String expected3_0_1 = objectInstanceId_3 + "/" +  resourceId_1 + "=LwM2mSingleResource [id=" + resourceId_1 + ", value=";
-        String expected3_0_11 = objectInstanceId_3 + "/" +  resourceId_11 + "=LwM2mMultipleResource [id=" + resourceId_11 + ", values={";
+        String expected3_0_1 = objectInstanceId_3 + "/" + RESOURCE_ID_1 + "=LwM2mSingleResource [id=" + RESOURCE_ID_1 + ", value=";
+        String expected3_0_11 = objectInstanceId_3 + "/" + RESOURCE_ID_11 + "=LwM2mMultipleResource [id=" + RESOURCE_ID_11 + ", values={";
         String actualValues = rpcActualResult.get("value").asText();
         assertTrue(actualValues.contains(expected1));
         assertTrue(actualValues.contains(expected3_0_1));
@@ -159,8 +159,8 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
     @Test
     public void testReadCompositeSingleResourceByIds_Result_CONTENT_Value_IsObjectInstanceIsLwM2mSingleResource() throws Exception {
         String expectedIdVer3_0 = objectInstanceIdVer_3;
-        String expectedIdVer1_0_1 = objectInstanceIdVer_1 + "/" + resourceId_1;
-        String expectedIdVer1_0_2 = objectInstanceIdVer_1 + "/" + resourceId_2;
+        String expectedIdVer1_0_1 = objectInstanceIdVer_1 + "/" + RESOURCE_ID_1;
+        String expectedIdVer1_0_2 = objectInstanceIdVer_1 + "/" + RESOURCE_ID_2;
         String expectedIds = "[\"" + expectedIdVer1_0_1 + "\", \"" + expectedIdVer1_0_2 + "\", \"" + expectedIdVer3_0 + "\"]";
         String actualResult = sendCompositeRPCByIds(expectedIds);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
@@ -169,8 +169,8 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
         LwM2mPath path = new LwM2mPath(objectInstanceId_3);
         String expected3_0 = objectInstanceId_3 + "=LwM2mObjectInstance [id=" + path.getObjectInstanceId() + ", resources={";
         String objectInstanceId_1 = pathIdVerToObjectId(objectInstanceIdVer_1);
-        String expected1_0_1 = objectInstanceId_1 + "/" +  resourceId_1 + "=LwM2mSingleResource [id=" + resourceId_1 + ", value=";
-        String expected1_0_2 = objectInstanceId_1 + "/" +  resourceId_2 + "=null";
+        String expected1_0_1 = objectInstanceId_1 + "/" + RESOURCE_ID_1 + "=LwM2mSingleResource [id=" + RESOURCE_ID_1 + ", value=";
+        String expected1_0_2 = objectInstanceId_1 + "/" + RESOURCE_ID_2 + "=null";
         String actualValues = rpcActualResult.get("value").asText();
         assertTrue(actualValues.contains(expected3_0));
         assertTrue(actualValues.contains(expected1_0_1));
@@ -182,20 +182,20 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
      */
     @Test
     public void testReadCompositeSingleResourceByKeys_Result_CONTENT_Value_3_0_IsLwM2mSingleResource_19_0_0_AND_19_0_1_Null() throws Exception {
-        String expectedKey3_0_9 = resourceIdName_3_9;
-        String expectedKey3_0_14 = resourceIdName_3_14;
-        String expectedKey19_0_0 = resourceIdName_19_0_0;
-        String expectedKey19_1_0 = resourceIdName_19_1_0;
+        String expectedKey3_0_9 = RESOURCE_ID_NAME_3_9;
+        String expectedKey3_0_14 = RESOURCE_ID_NAME_3_14;
+        String expectedKey19_0_0 = RESOURCE_ID_NAME_19_0_0;
+        String expectedKey19_1_0 = RESOURCE_ID_NAME_19_1_0;
         String expectedKeys = "[\"" + expectedKey3_0_9 + "\", \"" + expectedKey3_0_14 + "\", \"" + expectedKey19_0_0 + "\", \"" + expectedKey19_1_0 + "\"]";
         String actualResult = sendCompositeRPCByKeys(expectedKeys);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
         String objectInstanceId_3 = pathIdVerToObjectId(objectInstanceIdVer_3);
         String objectId_19 = pathIdVerToObjectId(objectIdVer_19);
-        String expected3_0_9 = objectInstanceId_3 + "/" + resourceId_9 + "=LwM2mSingleResource [id=" + resourceId_9 + ", value=";
-        String expected3_0_14 = objectInstanceId_3 + "/" + resourceId_14 + "=LwM2mSingleResource [id=" + resourceId_14 + ", value=";
-        String expected19_0_0 = objectId_19 + "/" + objectInstanceId_0 + "/" + resourceId_0 + "=null";
-        String expected19_1_0 = objectId_19 + "/" + objectInstanceId_1 + "/" + resourceId_0 + "=null";
+        String expected3_0_9 = objectInstanceId_3 + "/" + RESOURCE_ID_9 + "=LwM2mSingleResource [id=" + RESOURCE_ID_9 + ", value=";
+        String expected3_0_14 = objectInstanceId_3 + "/" + RESOURCE_ID_14 + "=LwM2mSingleResource [id=" + RESOURCE_ID_14 + ", value=";
+        String expected19_0_0 = objectId_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0 + "=null";
+        String expected19_1_0 = objectId_19 + "/" + OBJECT_INSTANCE_ID_1 + "/" + RESOURCE_ID_0 + "=null";
         String actualValues = rpcActualResult.get("value").asText();
         assertTrue(actualValues.contains(expected3_0_9));
         assertTrue(actualValues.contains(expected3_0_14));

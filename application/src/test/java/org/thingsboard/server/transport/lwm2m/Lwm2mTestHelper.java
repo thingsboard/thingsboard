@@ -43,26 +43,26 @@ public class Lwm2mTestHelper {
     public static final int TEMPERATURE_SENSOR = 3303;
 
     // Ids in Client
-    public static final int objectId_0 = 0;
-    public static final int objectInstanceId_0 = 0;
-    public static final int objectInstanceId_1 = 1;
-    public static final int objectInstanceId_2 = 2;
-    public static final int objectInstanceId_12 = 12;
-    public static final int resourceId_0 = 0;
-    public static final int resourceId_1 = 1;
-    public static final int resourceId_2 = 2;
-    public static final int resourceId_3 = 3;
-    public static final int resourceId_4 = 4;
-    public static final int resourceId_7 = 7;
-    public static final int resourceId_8 = 8;
-    public static final int resourceId_9 = 9;
-    public static final int resourceId_11 = 11;
-    public static final int resourceId_14 = 14;
-    public static final int resourceId_15= 15;
-    public static final int resourceInstanceId_2 = 2;
+    public static final int OBJECT_ID_0 = 0;
+    public static final int OBJECT_INSTANCE_ID_0 = 0;
+    public static final int OBJECT_INSTANCE_ID_1 = 1;
+    public static final int OBJECT_INSTANCE_ID_2 = 2;
+    public static final int OBJECT_INSTANCE_ID_12 = 12;
+    public static final int RESOURCE_ID_0 = 0;
+    public static final int RESOURCE_ID_1 = 1;
+    public static final int RESOURCE_ID_2 = 2;
+    public static final int RESOURCE_ID_3 = 3;
+    public static final int RESOURCE_ID_4 = 4;
+    public static final int RESOURCE_ID_7 = 7;
+    public static final int RESOURCE_ID_8 = 8;
+    public static final int RESOURCE_ID_9 = 9;
+    public static final int RESOURCE_ID_11 = 11;
+    public static final int RESOURCE_ID_14 = 14;
+    public static final int RESOURCE_ID_15 = 15;
+    public static final int RESOURCE_INSTANCE_ID_2 = 2;
 
-    public static final String resourceIdName_3_9 = "batteryLevel";
-    public static final String resourceIdName_3_14 = "UtfOffset";
-    public static final String resourceIdName_19_0_0 = "dataRead";
-    public static final String resourceIdName_19_1_0 = "dataWrite";
+    public static final String RESOURCE_ID_NAME_3_9 = "batteryLevel";
+    public static final String RESOURCE_ID_NAME_3_14 = "UtfOffset";
+    public static final String RESOURCE_ID_NAME_19_0_0 = "dataRead";
+    public static final String RESOURCE_ID_NAME_19_1_0 = "dataWrite";
 }

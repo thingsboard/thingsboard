@@ -69,7 +69,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DaoSqlTest
 public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
 
-    protected String transportConfiguration = "{\n" +
+    protected final String TRANSPORT_CONFIGURATION = "{\n" +
             "  \"type\": \"LWM2M\",\n" +
             "  \"observeAttr\": {\n" +
             "    \"keyName\": {\n" +
@@ -176,7 +176,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
                                                     LwM2MClientCredential credentials,
                                                     NetworkConfig coapConfig,
                                                     String endpoint) throws Exception {
-        createDeviceProfile(transportConfiguration);
+        createDeviceProfile(TRANSPORT_CONFIGURATION);
         Device device = createDevice(credentials);
 
         SingleEntityFilter sef = new SingleEntityFilter();

@@ -138,7 +138,7 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
 
     @Test
     public void testFirmwareUpdateWithClientWithoutFirmwareOtaInfoFromProfile() throws Exception {
-        createDeviceProfile(transportConfiguration);
+        createDeviceProfile(TRANSPORT_CONFIGURATION);
         NoSecClientCredential credentials = createNoSecClientCredentials(this.CLIENT_ENDPOINT_WITHOUT_FW_INFO);
         final Device device = createDevice(credentials);
         createNewClient(SECURITY, COAP_CONFIG, false, this.CLIENT_ENDPOINT_WITHOUT_FW_INFO);
