@@ -41,9 +41,10 @@ import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { forkJoin, fromEvent, merge, Observable, of, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { BaseData, HasId } from '@shared/models/base-data';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, QueryParamsHandling, Router } from '@angular/router';
 import {
-  CellActionDescriptor, CellActionDescriptorType,
+  CellActionDescriptor,
+  CellActionDescriptorType,
   EntityActionTableColumn,
   EntityColumn,
   EntityTableColumn,
@@ -55,14 +56,10 @@ import { EntityTypeTranslation } from '@shared/models/entity-type.models';
 import { DialogService } from '@core/services/dialog.service';
 import { AddEntityDialogComponent } from './add-entity-dialog.component';
 import { AddEntityDialogData, EntityAction } from '@home/models/entity/entity-component.models';
-import {
-  calculateIntervalStartEndTime,
-  HistoryWindowType,
-  Timewindow
-} from '@shared/models/time/time.models';
+import { calculateIntervalStartEndTime, HistoryWindowType, Timewindow } from '@shared/models/time/time.models';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
-import { isDefined, isUndefined } from '@core/utils';
+import { isDefined, isEmptyStr, isUndefined } from '@core/utils';
 import { HasUUID } from '@shared/models/id/has-uuid';
 import { IEntitiesTableComponent } from '@home/models/entity/entity-table-component.models';
 
@@ -101,6 +98,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   displayPagination = true;
   pageSizeOptions;
   pageLink: PageLink;
+  persistentPageLinkMode = true;
   textSearchMode = false;
   timewindow: Timewindow;
   dataSource: EntitiesDataSource<BaseData<HasId>>;
@@ -117,7 +115,6 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
 
-  private sortSubscription: Subscription;
   private updateDataSubscription: Subscription;
   private viewInited = false;
 
@@ -128,6 +125,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
               private dialogService: DialogService,
               private domSanitizer: DomSanitizer,
               private cd: ChangeDetectorRef,
+              private router: Router,
               private componentFactoryResolver: ComponentFactoryResolver) {
     super(store);
   }
@@ -196,16 +194,19 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
 
     this.columnsUpdated();
 
+    const routerQueryParams = this.route.snapshot.queryParams;
+
     let sortOrder: SortOrder = null;
-    if (this.entitiesTableConfig.defaultSortOrder) {
+    if (this.entitiesTableConfig.defaultSortOrder || routerQueryParams.hasOwnProperty('direction') || routerQueryParams.hasOwnProperty('property')) {
       sortOrder = {
-        property: this.entitiesTableConfig.defaultSortOrder.property,
-        direction: this.entitiesTableConfig.defaultSortOrder.direction
+        property: routerQueryParams?.property || this.entitiesTableConfig.defaultSortOrder.property,
+        direction: routerQueryParams?.direction || this.entitiesTableConfig.defaultSortOrder.direction
       };
     }
 
     this.displayPagination = this.entitiesTableConfig.displayPagination;
     this.defaultPageSize = this.entitiesTableConfig.defaultPageSize;
+    this.persistentPageLinkMode = this.entitiesTableConfig.persistentPageLinkMode;
     this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
 
     if (this.entitiesTableConfig.useTimePageLink) {
@@ -217,6 +218,16 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
       this.pageLink = new PageLink(10, 0, null, sortOrder);
     }
     this.pageLink.pageSize = this.displayPagination ? this.defaultPageSize : MAX_SAFE_PAGE_SIZE;
+    if (routerQueryParams.hasOwnProperty('page')) {
+      this.pageLink.page = routerQueryParams.page;
+    }
+    if (routerQueryParams.hasOwnProperty('pageSize')) {
+      this.pageLink.pageSize = routerQueryParams.pageSize;
+    }
+    if (routerQueryParams.hasOwnProperty('textSearch') && !isEmptyStr(routerQueryParams.textSearch)) {
+      this.textSearchMode = true;
+      this.pageLink.textSearch = decodeURI(routerQueryParams.textSearch);
+    }
     this.dataSource = this.entitiesTableConfig.dataSource(this.dataLoaded.bind(this));
     if (this.entitiesTableConfig.onLoadAction) {
       this.entitiesTableConfig.onLoadAction(this.route);
@@ -238,9 +249,14 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
         debounceTime(150),
         distinctUntilChanged(),
         tap(() => {
+          const queryParams: any = {
+            textSearch: encodeURI(this.pageLink.textSearch) || null
+          };
           if (this.displayPagination) {
             this.paginator.pageIndex = 0;
+            queryParams.page = null;
           }
+          this.updatedRouterQueryParams(queryParams);
           this.updateData();
         })
       )
@@ -251,23 +267,42 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   }
 
   private updatePaginationSubscriptions() {
-    if (this.sortSubscription) {
-      this.sortSubscription.unsubscribe();
-      this.sortSubscription = null;
-    }
     if (this.updateDataSubscription) {
       this.updateDataSubscription.unsubscribe();
       this.updateDataSubscription = null;
     }
+    let paginatorSubscription$: Observable<object>;
+    const sortSubscription$: Observable<object> = this.sort.sortChange.asObservable().pipe(
+      map((data) => {
+        const direction = data.direction.toUpperCase();
+        const queryParams: any = {
+          direction: this.entitiesTableConfig?.defaultSortOrder?.direction === direction ? null : direction,
+          property: this.entitiesTableConfig?.defaultSortOrder?.property === data.active ? null : data.active
+        };
+        if (this.displayPagination) {
+          queryParams.page = null;
+          this.paginator.pageIndex = 0;
+        }
+        return queryParams;
+      })
+    );
     if (this.displayPagination) {
-      this.sortSubscription = this.sort.sortChange.subscribe(() => this.paginator.pageIndex = 0);
+      paginatorSubscription$ = this.paginator.page.asObservable().pipe(
+        map((data) => {
+          return {
+            page: data.pageIndex === 0 ? null : data.pageIndex,
+            pageSize: data.pageSize === this.defaultPageSize ? null : data.pageSize
+          };
+        })
+      );
     }
-    this.updateDataSubscription = ((this.displayPagination ? merge(this.sort.sortChange, this.paginator.page)
-      : this.sort.sortChange) as Observable<any>)
-      .pipe(
-        tap(() => this.updateData())
-      )
-      .subscribe();
+    this.updateDataSubscription = ((this.displayPagination ? merge(sortSubscription$, paginatorSubscription$)
+      : sortSubscription$) as Observable<any>).pipe(
+      tap((queryParams) => {
+        this.updatedRouterQueryParams(queryParams);
+        this.updateData();
+      })
+    ).subscribe();
   }
 
   addEnabled() {
@@ -451,9 +486,14 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   exitFilterMode() {
     this.textSearchMode = false;
     this.pageLink.textSearch = null;
+    const queryParams: any = {
+      textSearch: null
+    };
     if (this.displayPagination) {
       this.paginator.pageIndex = 0;
+      queryParams.page = null;
     }
+    this.updatedRouterQueryParams(queryParams);
     this.updateData();
   }
 
@@ -468,6 +508,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     const sortable = this.sort.sortables.get(this.entitiesTableConfig.defaultSortOrder.property);
     this.sort.active = sortable.id;
     this.sort.direction = this.entitiesTableConfig.defaultSortOrder.direction === Direction.ASC ? 'asc' : 'desc';
+    this.updatedRouterQueryParams({}, 'preserve');
     if (update) {
       this.updateData();
     }
@@ -587,4 +628,13 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     return entity.id.id;
   }
 
+  protected updatedRouterQueryParams(queryParams: object, queryParamsHandling: QueryParamsHandling = 'merge') {
+    if (this.persistentPageLinkMode) {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams,
+        queryParamsHandling
+      });
+    }
+  }
 }

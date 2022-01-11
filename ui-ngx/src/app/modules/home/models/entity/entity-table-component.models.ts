@@ -50,6 +50,7 @@ export interface IEntitiesTableComponent {
   displayPagination: boolean;
   pageSizeOptions: number[];
   pageLink: PageLink;
+  persistentPageLinkMode: boolean;
   textSearchMode: boolean;
   timewindow: Timewindow;
   dataSource: EntitiesDataSource<BaseData<HasId>>;

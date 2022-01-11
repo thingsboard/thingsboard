@@ -52,11 +52,13 @@ export class AuditLogTableConfig extends EntityTableConfig<AuditLog, TimePageLin
               public entityId: EntityId = null,
               public userId: UserId = null,
               public customerId: CustomerId = null,
-              updateOnInit = true) {
+              updateOnInit = true,
+              persistentPageLinkMode = false) {
     super();
     this.loadDataOnInit = updateOnInit;
     this.tableTitle = '';
     this.useTimePageLink = true;
+    this.persistentPageLinkMode = persistentPageLinkMode;
     this.detailsPanelEnabled = false;
     this.selectionEnabled = false;
     this.searchEnabled = true;
