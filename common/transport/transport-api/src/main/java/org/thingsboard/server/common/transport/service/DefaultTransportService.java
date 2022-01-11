@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
@@ -124,6 +123,15 @@ import java.util.stream.Collectors;
 public class DefaultTransportService implements TransportService {
 
     public static final String OVERWRITE_ACTIVITY_TIME = "overwriteActivityTime";
+    public static final String SESSION_EXPIRED_MESSAGE = "Session has expired due to last activity time!";
+    public static final TransportProtos.SessionEventMsg SESSION_EVENT_MSG_OPEN = getSessionEventMsg(TransportProtos.SessionEvent.OPEN);
+    public static final TransportProtos.SessionEventMsg SESSION_EVENT_MSG_CLOSED = getSessionEventMsg(TransportProtos.SessionEvent.CLOSED);
+    public static final TransportProtos.SessionCloseNotificationProto SESSION_CLOSE_NOTIFICATION_PROTO = TransportProtos.SessionCloseNotificationProto.newBuilder()
+            .setMessage(SESSION_EXPIRED_MESSAGE).build();
+    public static final TransportProtos.SubscribeToAttributeUpdatesMsg SUBSCRIBE_TO_ATTRIBUTE_UPDATES_ASYNC_MSG = TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder()
+            .setSessionType(TransportProtos.SessionType.ASYNC).build();
+    public static final TransportProtos.SubscribeToRPCMsg SUBSCRIBE_TO_RPC_ASYNC_MSG = TransportProtos.SubscribeToRPCMsg.newBuilder()
+            .setSessionType(TransportProtos.SessionType.ASYNC).build();
 
     private final AtomicInteger atomicTs = new AtomicInteger(0);
 
@@ -267,9 +275,7 @@ public class DefaultTransportService implements TransportService {
 
     @Override
     public SessionMetaData registerAsyncSession(TransportProtos.SessionInfoProto sessionInfo, SessionMsgListener listener) {
-        SessionMetaData newValue = new SessionMetaData(sessionInfo, TransportProtos.SessionType.ASYNC, listener);
-        SessionMetaData oldValue = sessions.putIfAbsent(toSessionId(sessionInfo), newValue);
-        return oldValue != null ? oldValue : newValue;
+        return sessions.computeIfAbsent(toSessionId(sessionInfo), (x) -> new SessionMetaData(sessionInfo, TransportProtos.SessionType.ASYNC, listener));
     }
 
     @Override
@@ -719,12 +725,8 @@ public class DefaultTransportService implements TransportService {
                     }
                     sessions.remove(uuid);
                     sessionsToRemove.add(uuid);
-                    process(sessionInfo, getSessionEventMsg(TransportProtos.SessionEvent.CLOSED), null);
-                    TransportProtos.SessionCloseNotificationProto sessionCloseNotificationProto = TransportProtos.SessionCloseNotificationProto
-                            .newBuilder()
-                            .setMessage("Session has expired due to last activity time!")
-                            .build();
-                    sessionMD.getListener().onRemoteSessionCloseCommand(uuid, sessionCloseNotificationProto);
+                    process(sessionInfo, SESSION_EVENT_MSG_CLOSED, null);
+                    sessionMD.getListener().onRemoteSessionCloseCommand(uuid, SESSION_CLOSE_NOTIFICATION_PROTO);
                 }
             } else {
                 if (lastActivityTime > sessionAD.getLastReportedActivityTime()) {
@@ -1018,7 +1020,7 @@ public class DefaultTransportService implements TransportService {
         return new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
     }
 
-    public static TransportProtos.SessionEventMsg getSessionEventMsg(TransportProtos.SessionEvent event) {
+    private static TransportProtos.SessionEventMsg getSessionEventMsg(TransportProtos.SessionEvent event) {
         return TransportProtos.SessionEventMsg.newBuilder()
                 .setSessionType(TransportProtos.SessionType.ASYNC)
                 .setEvent(event).build();

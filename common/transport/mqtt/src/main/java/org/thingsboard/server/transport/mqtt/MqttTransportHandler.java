@@ -65,7 +65,6 @@ import org.thingsboard.server.common.transport.service.SessionMetaData;
 import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.SessionEvent;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
@@ -102,6 +101,8 @@ import static io.netty.handler.codec.mqtt.MqttMessageType.UNSUBACK;
 import static io.netty.handler.codec.mqtt.MqttQoS.AT_LEAST_ONCE;
 import static io.netty.handler.codec.mqtt.MqttQoS.AT_MOST_ONCE;
 import static io.netty.handler.codec.mqtt.MqttQoS.FAILURE;
+import static org.thingsboard.server.common.transport.service.DefaultTransportService.SESSION_EVENT_MSG_CLOSED;
+import static org.thingsboard.server.common.transport.service.DefaultTransportService.SESSION_EVENT_MSG_OPEN;
 
 /**
  * @author Andrew Shvayka
@@ -929,7 +930,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     public void doDisconnect() {
         if (deviceSessionCtx.isConnected()) {
             log.debug("[{}] Client disconnected!", sessionId);
-            transportService.process(deviceSessionCtx.getSessionInfo(), DefaultTransportService.getSessionEventMsg(SessionEvent.CLOSED), null);
+            transportService.process(deviceSessionCtx.getSessionInfo(), SESSION_EVENT_MSG_CLOSED, null);
             transportService.deregisterSession(deviceSessionCtx.getSessionInfo());
             if (gatewaySessionHandler != null) {
                 gatewaySessionHandler.onGatewayDisconnect();
@@ -948,7 +949,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             deviceSessionCtx.setDeviceInfo(msg.getDeviceInfo());
             deviceSessionCtx.setDeviceProfile(msg.getDeviceProfile());
             deviceSessionCtx.setSessionInfo(SessionInfoCreator.create(msg, context, sessionId));
-            transportService.process(deviceSessionCtx.getSessionInfo(), DefaultTransportService.getSessionEventMsg(SessionEvent.OPEN), new TransportServiceCallback<Void>() {
+            transportService.process(deviceSessionCtx.getSessionInfo(), SESSION_EVENT_MSG_OPEN, new TransportServiceCallback<Void>() {
                 @Override
                 public void onSuccess(Void msg) {
                     SessionMetaData sessionMetaData = transportService.registerAsyncSession(deviceSessionCtx.getSessionInfo(), MqttTransportHandler.this);
