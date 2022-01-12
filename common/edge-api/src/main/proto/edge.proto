@@ -333,6 +333,8 @@ message WidgetTypeUpdateMsg {
   optional string name = 6;
   optional string descriptorJson = 7;
   bool isSystem = 8;
+  string image = 9;
+  string description = 10;
 }
 
 message AdminSettingsUpdateMsg {
