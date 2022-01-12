@@ -14,7 +14,17 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  forwardRef,
+  Input,
+  OnDestroy,
+  OnInit,
+  ViewChild
+} from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { PageComponent } from '@shared/components/page.component';
@@ -36,13 +46,14 @@ import {
   WidgetActionsDatasource
 } from '@home/components/widget/action/manage-widget-actions.component.models';
 import { UtilsService } from '@core/services/utils.service';
-import { WidgetActionDescriptor, WidgetActionSource } from '@shared/models/widget.models';
+import { WidgetActionDescriptor, WidgetActionSource, widgetType } from '@shared/models/widget.models';
 import {
   WidgetActionDialogComponent,
   WidgetActionDialogData
 } from '@home/components/widget/action/widget-action-dialog.component';
 import { deepClone } from '@core/utils';
-import { widgetType } from '@shared/models/widget.models';
+import { ResizeObserver } from '@juggle/resize-observer';
+import { hidePageSizePixelValue } from '@shared/models/constants';
 
 @Component({
   selector: 'tb-manage-widget-actions',
@@ -69,10 +80,13 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
   displayedColumns: string[];
   pageLink: PageLink;
   textSearchMode = false;
+  hidePageSize = false;
   dataSource: WidgetActionsDatasource;
 
   viewsInited = false;
   dirtyValue = false;
+
+  private widgetResize$: ResizeObserver;
 
   @ViewChild('searchInput') searchInputField: ElementRef;
 
@@ -85,7 +99,9 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
               private translate: TranslateService,
               private utils: UtilsService,
               private dialog: MatDialog,
-              private dialogs: DialogService) {
+              private dialogs: DialogService,
+              private cd: ChangeDetectorRef,
+              private elementRef: ElementRef) {
     super(store);
     const sortOrder: SortOrder = { property: 'actionSourceName', direction: Direction.ASC };
     this.pageLink = new PageLink(10, 0, null, sortOrder);
@@ -94,9 +110,20 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
   }
 
   ngOnInit(): void {
+    this.widgetResize$ = new ResizeObserver(() => {
+      const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+      if (showHidePageSize !== this.hidePageSize) {
+        this.hidePageSize = showHidePageSize;
+        this.cd.markForCheck();
+      }
+    });
+    this.widgetResize$.observe(this.elementRef.nativeElement);
   }
 
   ngOnDestroy(): void {
+    if (this.widgetResize$) {
+      this.widgetResize$.disconnect();
+    }
   }
 
   ngAfterViewInit() {

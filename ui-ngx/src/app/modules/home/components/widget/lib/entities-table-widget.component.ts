@@ -16,6 +16,7 @@
 
 import {
   AfterViewInit,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   Injector,
@@ -107,6 +108,8 @@ import { sortItems } from '@shared/models/page/page-link';
 import { entityFields } from '@shared/models/entity.models';
 import { DatePipe } from '@angular/common';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { ResizeObserver } from '@juggle/resize-observer';
+import { hidePageSizePixelValue } from '@shared/models/constants';
 
 interface EntitiesTableWidgetSettings extends TableWidgetSettings {
   entitiesTitle: string;
@@ -140,6 +143,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   public pageLink: EntityDataPageLink;
   public sortOrderProperty: string;
   public textSearchMode = false;
+  public hidePageSize = false;
   public columns: Array<EntityColumn> = [];
   public displayedColumns: string[] = [];
   public entityDatasource: EntityDatasource;
@@ -153,6 +157,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   private settings: EntitiesTableWidgetSettings;
   private widgetConfig: WidgetConfig;
   private subscription: IWidgetSubscription;
+  private widgetResize$: ResizeObserver;
 
   private entitiesTitlePattern: string;
 
@@ -193,7 +198,8 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
               private utils: UtilsService,
               private datePipe: DatePipe,
               private translate: TranslateService,
-              private domSanitizer: DomSanitizer) {
+              private domSanitizer: DomSanitizer,
+              private cd: ChangeDetectorRef) {
     super(store);
     this.pageLink = {
       page: 0,
@@ -211,6 +217,22 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     this.initializeConfig();
     this.updateDatasources();
     this.ctx.updateWidgetParams();
+    if (this.displayPagination) {
+      this.widgetResize$ = new ResizeObserver(() => {
+        const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+        if (showHidePageSize !== this.hidePageSize) {
+          this.hidePageSize = showHidePageSize;
+          this.cd.markForCheck();
+        }
+      });
+      this.widgetResize$.observe(this.elementRef.nativeElement);
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.widgetResize$) {
+      this.widgetResize$.disconnect();
+    }
   }
 
   ngAfterViewInit(): void {
