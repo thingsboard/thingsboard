@@ -30,6 +30,10 @@ public interface Dao<T> {
 
     ListenableFuture<T> findByIdAsync(TenantId tenantId, UUID id);
 
+    boolean existsById(TenantId tenantId, UUID id);
+
+    ListenableFuture<Boolean> existsByIdAsync(TenantId tenantId, UUID id);
+
     T save(TenantId tenantId, T t);
 
     boolean removeById(TenantId tenantId, UUID id);
