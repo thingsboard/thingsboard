@@ -119,7 +119,7 @@ export class AuditLogTableComponent implements OnInit {
       }
       updateOnInit = true;
     }
-    const persistentPageLinkMode = !!this.route.snapshot.data.isPage;
+    const pageMode = !!this.route.snapshot.data.isPage;
     this.auditLogTableConfig = new AuditLogTableConfig(
       this.auditLogService,
       this.translate,
@@ -130,7 +130,7 @@ export class AuditLogTableComponent implements OnInit {
       this.userIdValue,
       this.customerIdValue,
       updateOnInit,
-      persistentPageLinkMode
+      pageMode
     );
   }
 

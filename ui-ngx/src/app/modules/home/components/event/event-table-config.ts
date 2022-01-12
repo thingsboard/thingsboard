@@ -92,7 +92,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     this.searchEnabled = false;
     this.addEnabled = false;
     this.entitiesDeleteEnabled = false;
-    this.persistentPageLinkMode = false;
+    this.pageMode = false;
 
     this.headerComponent = EventTableHeaderComponent;
 

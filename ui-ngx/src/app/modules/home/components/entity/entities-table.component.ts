@@ -98,7 +98,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   displayPagination = true;
   pageSizeOptions;
   pageLink: PageLink;
-  persistentPageLinkMode = true;
+  pageMode = true;
   textSearchMode = false;
   timewindow: Timewindow;
   dataSource: EntitiesDataSource<BaseData<HasId>>;
@@ -206,7 +206,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
 
     this.displayPagination = this.entitiesTableConfig.displayPagination;
     this.defaultPageSize = this.entitiesTableConfig.defaultPageSize;
-    this.persistentPageLinkMode = this.entitiesTableConfig.persistentPageLinkMode;
+    this.pageMode = this.entitiesTableConfig.pageMode;
     this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
 
     if (this.entitiesTableConfig.useTimePageLink) {
@@ -640,7 +640,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   }
 
   protected updatedRouterParamsAndData(queryParams: object, queryParamsHandling: QueryParamsHandling = 'merge') {
-    if (this.persistentPageLinkMode) {
+    if (this.pageMode) {
       this.router.navigate([], {
         relativeTo: this.route,
         queryParams,
