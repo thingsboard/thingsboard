@@ -1137,7 +1137,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
             clusterService.onEdgeEventUpdate(tenantId, edge.getId());
         }
 
-        Assert.assertTrue(edgeImitator.waitForMessages(60));
+        Assert.assertTrue(edgeImitator.waitForMessages(120));
 
         List<EntityDataProto> allTelemetryMsgs = edgeImitator.findAllMessagesByType(EntityDataProto.class);
         Assert.assertEquals(numberOfTimeseriesToSend, allTelemetryMsgs.size());
