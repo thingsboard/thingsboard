@@ -22,8 +22,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
 import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
-import { baseDetailsPageByEntityType } from '@shared/models/constants';
-import { EntityType } from '@shared/models/entity-type.models';
+import { EntityType, baseDetailsPageByEntityType } from '@shared/models/entity-type.models';
 
 const varsRegex = /\${([^}]*)}/g;
 

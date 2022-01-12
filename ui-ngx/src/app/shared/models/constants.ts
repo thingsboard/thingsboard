@@ -16,7 +16,6 @@
 
 import { InjectionToken } from '@angular/core';
 import { IModulesMap } from '@modules/common/modules-map.models';
-import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
 
 export const Constants = {
   serverErrorCode: {
@@ -137,22 +136,6 @@ export const HelpLinks = {
     ruleNodePushToEdge: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#push-to-edge'
   }
 };
-
-export const baseDetailsPageByEntityType = new Map<EntityType, string>([
-  [EntityType.TENANT, '/tenants'],
-  [EntityType.TENANT_PROFILE, '/tenantProfiles'],
-  [EntityType.CUSTOMER, '/customers'],
-  [EntityType.USER, '/users'],
-  [EntityType.DASHBOARD, '/dashboards'],
-  [EntityType.ASSET, '/assets'],
-  [EntityType.DEVICE, '/devices'],
-  [EntityType.DEVICE_PROFILE, '/deviceProfiles'],
-  [EntityType.RULE_CHAIN, '/ruleChains'],
-  [EntityType.EDGE, '/edgeInstances'],
-  [EntityType.ENTITY_VIEW, '/entityViews'],
-  [EntityType.TB_RESOURCE, '/settings/resources-library'],
-  [EntityType.OTA_PACKAGE, '/otaUpdates']
-]);
 
 export interface ValueTypeData {
   name: string;
