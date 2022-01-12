@@ -21,6 +21,10 @@ import { EntitiesTableComponent } from '../../components/entity/entities-table.c
 import { Authority } from '@shared/models/authority.enum';
 import { TenantsTableConfigResolver } from '@modules/home/pages/tenant/tenants-table-config.resolver';
 import { UsersTableConfigResolver } from '../user/users-table-config.resolver';
+import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
+import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
+import { entityDetailsPageBreadcrumbLabelFunction } from '@core/utils';
+import { BreadCrumbConfig } from '@shared/components/breadcrumb';
 
 const routes: Routes = [
   {
@@ -44,19 +48,58 @@ const routes: Routes = [
         }
       },
       {
-        path: ':tenantId/users',
-        component: EntitiesTableComponent,
+        path: ':entityId',
+        component: EntityDetailsPageComponent,
+        canDeactivate: [ConfirmOnExitGuard],
         data: {
+          breadcrumb: {
+            labelFunction: entityDetailsPageBreadcrumbLabelFunction,
+            icon: 'supervisor_account'
+          } as BreadCrumbConfig<EntityDetailsPageComponent>,
           auth: [Authority.SYS_ADMIN],
-          title: 'user.tenant-admins',
+          title: 'tenant.tenants'
+        },
+        resolve: {
+          entitiesTableConfig: TenantsTableConfigResolver
+        }
+      },
+      {
+        path: ':tenantId/users',
+        data: {
           breadcrumb: {
             label: 'user.tenant-admins',
             icon: 'account_circle'
           }
         },
-        resolve: {
-          entitiesTableConfig: UsersTableConfigResolver
-        }
+        children: [
+          {
+            path: '',
+            component: EntitiesTableComponent,
+            data: {
+              auth: [Authority.SYS_ADMIN],
+              title: 'user.tenant-admins'
+            },
+            resolve: {
+              entitiesTableConfig: UsersTableConfigResolver
+            }
+          },
+          {
+            path: ':entityId',
+            component: EntityDetailsPageComponent,
+            canDeactivate: [ConfirmOnExitGuard],
+            data: {
+              breadcrumb: {
+                labelFunction: entityDetailsPageBreadcrumbLabelFunction,
+                icon: 'account_circle'
+              } as BreadCrumbConfig<EntityDetailsPageComponent>,
+              auth: [Authority.SYS_ADMIN],
+              title: 'user.tenant-admins'
+            },
+            resolve: {
+              entitiesTableConfig: UsersTableConfigResolver
+            }
+          }
+        ]
       }
     ]
   }

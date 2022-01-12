@@ -87,6 +87,13 @@ export class TenantsTableConfigResolver implements Resolve<EntityTableConfig<Ten
     return this.config;
   }
 
+  private openTenant($event: Event, tenant: TenantInfo) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.router.navigateByUrl(`${this.router.url}/${tenant.id.id}`);
+  }
+
   manageTenantAdmins($event: Event, tenant: TenantInfo) {
     if ($event) {
       $event.stopPropagation();
@@ -96,6 +103,9 @@ export class TenantsTableConfigResolver implements Resolve<EntityTableConfig<Ten
 
   onTenantAction(action: EntityAction<TenantInfo>): boolean {
     switch (action.action) {
+      case 'open':
+        this.openTenant(action.event, action.entity);
+        return true;
       case 'manageTenantAdmins':
         this.manageTenantAdmins(action.event, action.entity);
         return true;

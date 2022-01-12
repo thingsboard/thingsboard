@@ -31,12 +31,13 @@ import { OtaPackageInfo, OtaUpdateTranslation, OtaUpdateType } from '@shared/mod
 import { OtaPackageService } from '@core/http/ota-package.service';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
-import { emptyPageData } from "@shared/models/page/page-data";
+import { emptyPageData } from '@shared/models/page/page-data';
+import { getEntityDetailsPageURL } from '@core/utils';
 
 @Component({
   selector: 'tb-ota-package-autocomplete',
   templateUrl: './ota-package-autocomplete.component.html',
-  styleUrls: [],
+  styleUrls: ['./ota-package-autocomplete.component.scss'],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => OtaPackageAutocompleteComponent),
@@ -64,6 +65,9 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
   @Input()
   useFullEntityId = false;
 
+  @Input()
+  showDetailsPageLink = false;
+
   private requiredValue: boolean;
 
   get required(): boolean {
@@ -83,6 +87,7 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
   filteredPackages: Observable<Array<OtaPackageInfo>>;
 
   searchText = '';
+  packageURL: string;
 
   private dirty = false;
 
@@ -166,6 +171,7 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
       if (packageId !== '') {
         this.entityService.getEntity(EntityType.OTA_PACKAGE, packageId, {ignoreLoading: true, ignoreErrors: true}).subscribe(
           (entity) => {
+            this.packageURL = getEntityDetailsPageURL(entity.id.id, EntityType.OTA_PACKAGE);
             this.modelValue = this.useFullEntityId ? entity.id : entity.id.id;
             this.otaPackageFormGroup.get('packageId').patchValue(entity, {emitEvent: false});
           },

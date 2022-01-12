@@ -370,6 +370,13 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
       });
   }
 
+  private openEdge($event: Event, edge: Edge) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.router.navigateByUrl(`${this.router.url}/${edge.id.id}`);
+  }
+
   makePublic($event: Event, edge: Edge) {
     if ($event) {
       $event.stopPropagation();
@@ -520,6 +527,9 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
 
   onEdgeAction(action: EntityAction<EdgeInfo>): boolean {
     switch (action.action) {
+      case 'open':
+        this.openEdge(action.event, action.entity);
+        return true;
       case 'makePublic':
         this.makePublic(action.event, action.entity);
         return true;

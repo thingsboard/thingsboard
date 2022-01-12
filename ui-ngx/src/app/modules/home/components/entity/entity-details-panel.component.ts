@@ -88,15 +88,15 @@ export class EntityDetailsPanelComponent extends PageComponent implements AfterV
   entity: BaseData<HasId>;
   editingEntity: BaseData<HasId>;
 
-  private currentEntityId: HasId;
-  private subscriptions: Subscription[] = [];
-  private viewInited = false;
-  private pendingTabs: MatTab[];
+  protected currentEntityId: HasId;
+  protected subscriptions: Subscription[] = [];
+  protected viewInited = false;
+  protected pendingTabs: MatTab[];
 
   constructor(protected store: Store<AppState>,
-              private injector: Injector,
-              private cd: ChangeDetectorRef,
-              private componentFactoryResolver: ComponentFactoryResolver) {
+              protected injector: Injector,
+              protected cd: ChangeDetectorRef,
+              protected componentFactoryResolver: ComponentFactoryResolver) {
     super(store);
   }
 
@@ -139,7 +139,7 @@ export class EntityDetailsPanelComponent extends PageComponent implements AfterV
     return this.isEditValue;
   }
 
-  private init() {
+  protected init() {
     this.translations = this.entitiesTableConfig.entityTranslations;
     this.resources = this.entitiesTableConfig.entityResources;
     this.buildEntityComponent();

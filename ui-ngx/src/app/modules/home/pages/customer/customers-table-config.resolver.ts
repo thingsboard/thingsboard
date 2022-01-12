@@ -137,6 +137,13 @@ export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<C
     return this.config;
   }
 
+  private openCustomer($event: Event, customer: Customer) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.router.navigateByUrl(`${this.router.url}/${customer.id.id}`);
+  }
+
   manageCustomerUsers($event: Event, customer: Customer) {
     if ($event) {
       $event.stopPropagation();
@@ -174,6 +181,9 @@ export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<C
 
   onCustomerAction(action: EntityAction<Customer>): boolean {
     switch (action.action) {
+      case 'open':
+        this.openCustomer(action.event, action.entity);
+        return true;
       case 'manageUsers':
         this.manageCustomerUsers(action.event, action.entity);
         return true;

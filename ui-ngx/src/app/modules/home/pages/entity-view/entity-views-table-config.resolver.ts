@@ -333,6 +333,13 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
       });
   }
 
+  private openEntityView($event: Event, entityView: EntityView) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.router.navigateByUrl(`${this.router.url}/${entityView.id.id}`);
+  }
+
   makePublic($event: Event, entityView: EntityView) {
     if ($event) {
       $event.stopPropagation();
@@ -437,6 +444,9 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
 
   onEntityViewAction(action: EntityAction<EntityViewInfo>): boolean {
     switch (action.action) {
+      case 'open':
+        this.openEntityView(action.event, action.entity);
+        return true;
       case 'makePublic':
         this.makePublic(action.event, action.entity);
         return true;

@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { Resolve } from '@angular/router';
+import { Resolve, Router } from '@angular/router';
 import {
   checkBoxCell,
   DateEntityTableColumn,
@@ -53,6 +53,7 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
               private translate: TranslateService,
               private datePipe: DatePipe,
               private dialogService: DialogService,
+              private router: Router,
               private dialog: MatDialog) {
 
     this.config.entityType = EntityType.DEVICE_PROFILE;
@@ -178,6 +179,13 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
     );
   }
 
+  private openDeviceProfile($event: Event, deviceProfile: DeviceProfile) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.router.navigateByUrl(`deviceProfiles/${deviceProfile.id.id}`);
+  }
+
   importDeviceProfile($event: Event) {
     this.importExport.importDeviceProfile().subscribe(
       (deviceProfile) => {
@@ -197,6 +205,9 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
 
   onDeviceProfileAction(action: EntityAction<DeviceProfile>): boolean {
     switch (action.action) {
+      case 'open':
+        this.openDeviceProfile(action.event, action.entity);
+        return true;
       case 'setDefault':
         this.setDefaultDeviceProfile(action.event, action.entity);
         return true;

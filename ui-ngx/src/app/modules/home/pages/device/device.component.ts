@@ -36,6 +36,7 @@ import { EntityTableConfig } from '@home/models/entity/entities-table-config.mod
 import { Subject } from 'rxjs';
 import { OtaUpdateType } from '@shared/models/ota-package.models';
 import { distinctUntilChanged } from 'rxjs/operators';
+import { getEntityDetailsPageURL } from '@core/utils';
 
 @Component({
   selector: 'tb-device',
