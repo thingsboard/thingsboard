@@ -120,6 +120,86 @@ export const dataKeyHref = '<a href="https://github.com/thingsboard/thingsboard/
 
 export const edgeEventHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/shared/models/edge.models.ts#L161">EdgeEvent</a>';
 
+export const alarmServiceHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/alarm.service.ts#L74">AlarmService</a>';
+
+export const alarmHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/shared/models/alarm.models.ts#L89">Alarm</a>';
+
+export const alarmInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/shared/models/alarm.models.ts#L104">AlarmInfo</a>';
+
+export const alarmQueryHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/shared/models/alarm.models.ts#L202">AlarmQuery</a>';
+
+export const alarmSearchStatusHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/shared/models/alarm.models.ts#L42">AlarmSearchStatus</a>';
+
+export const alarmStatusHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/shared/models/alarm.models.ts#L35">AlarmStatus</a>';
+
+export const alarmSeverityHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/shared/models/alarm.models.ts#L27">AlarmSeverity</a>';
+
+export const otaPackageServiceHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/core/http/ota-package.service.ts#L40">OtaPackageService</a>';
+
+export const otaPackageInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/shared/models/ota-package.models.ts#L88">OtaPackageInfo</a>';
+
+export const otaUpdateTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/shared/models/ota-package.models.ts#L44">OtaUpdateType</a>';
+
+export const otaPackageHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/shared/models/ota-package.models.ts#L106">OtaPackage</a>';
+
+export const fileHref = '<a href="https://github.com/microsoft/TypeScript/blob/852b1c2b73236ed1df41b397bc4ce7378b3158da/lib/lib.dom.d.ts#L5212">File</a>';
+
+export const checksumAlgorithmHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/shared/models/ota-package.models.ts#L22">ChecksumAlgorithm</a>';
+
+export const otaPagesIdsHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/shared/models/ota-package.models.ts#L83">OtaPagesIds</a>';
+
+export const deviceProfileServiceHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/core/http/device-profile.service.ts#L38">DeviceProfileService</a>';
+
+export const deviceProfileHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/shared/models/device.models.ts#L558">DeviceProfile</a>';
+
+export const sortOrderHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/shared/models/page/sort-order.ts#L18">SortOrder</a>';
+
+export const objectLwm2mHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/modules/home/components/profile/device/lwm2m/lwm2m-profile-config.models.ts#L220">ObjectLwM2M</a>';
+
+export const serverSecurityConfigInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/modules/home/components/profile/device/lwm2m/lwm2m-profile-config.models.ts#L142">ServerSecurityConfigInfo</a>';
+
+export const lwm2mSecurityTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/shared/models/lwm2m-security-config.models.ts#L17">Lwm2mSecurityType</a>';
+
+export const serverSecurityConfigHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/shared/models/lwm2m-security-config.models.ts#L64">ServerSecurityConfig</a>';
+
+export const deviceProfileInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/shared/models/device.models.ts#L576">DeviceProfileInfo</a>';
+
+export const deviceTransportTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/shared/models/device.models.ts#L44">DeviceTransportType</a>';
+
+export const broadcastServiceTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/core/services/broadcast.service.ts#L25">BroadcastService</a>';
+
+export const broadcastListenerHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/core/services/broadcast.models.ts#L27">BroadcastListener</a>';
+
+export const subscriptionHref = '<a href="https://github.com/ReactiveX/rxjs/blob/fdfc8acf74acc314be7184fbfbc2089294c9253d/src/internal/Subscription.ts#L18">Subscription</a>';
+
+export const utilsServiceHref = '<a href="https://github.com/thingsboard/thingsboard/blob/3df6155adf4b3bc5117f7e8f2776524e1d6ed93a/ui-ngx/src/app/core/services/utils.service.ts#L87">UtilsService</a>';
+
+export const exceptionDataHref = '<a href="https://github.com/thingsboard/thingsboard/blob/1f0d6ad92afe1d3538d2cb661bbc617744d7d0ca/ui-ngx/src/app/shared/models/error.models.ts#L18">ExceptionData</a>';
+
+export const keyInfoHref = '<a href="https://github.com/thingsboard/thingsboard/blob/db6c1075ebc3fea0fb72478fb485f2f67c385a8c/ui-ngx/src/app/shared/models/widget.models.ts#L244">KeyInfo</a>';
+
+export const importExportServiceHref = '<a href="https://github.com/thingsboard/thingsboard/blob/db6c1075ebc3fea0fb72478fb485f2f67c385a8c/ui-ngx/src/app/modules/home/components/import-export/import-export.service.ts#L68">ImportExportService</a>';
+
+export const dashboardLayoutIdHref = '<a href="https://github.com/thingsboard/thingsboard/blob/db6c1075ebc3fea0fb72478fb485f2f67c385a8c/ui-ngx/src/app/shared/models/dashboard.models.ts#L72">DashboardLayoutId</a>';
+
+export const widgetHref = '<a href="https://github.com/thingsboard/thingsboard/blob/db6c1075ebc3fea0fb72478fb485f2f67c385a8c/ui-ngx/src/app/shared/models/widget.models.ts#L526">Widget</a>';
+
+export const importWidgetResultHref = '<a href="https://github.com/thingsboard/thingsboard/blob/db6c1075ebc3fea0fb72478fb485f2f67c385a8c/ui-ngx/src/app/modules/home/components/import-export/import-export.models.ts#L21">ImportWidgetResult</a>';
+
+export const widgetTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/db6c1075ebc3fea0fb72478fb485f2f67c385a8c/ui-ngx/src/app/shared/models/widget.models.ts#L179">WidgetType</a>';
+
+export const widgetsBundleHref = '<a href="https://github.com/thingsboard/thingsboard/blob/db6c1075ebc3fea0fb72478fb485f2f67c385a8c/ui-ngx/src/app/shared/models/widgets-bundle.model.ts#L21">WidgetsBundle</a>';
+
+export const ruleChainTypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/db6c1075ebc3fea0fb72478fb485f2f67c385a8c/ui-ngx/src/app/shared/models/rule-chain.models.ts#L87">RuleChainType</a>';
+
+export const ruleChainImportHref = '<a href="https://github.com/thingsboard/thingsboard/blob/db6c1075ebc3fea0fb72478fb485f2f67c385a8c/ui-ngx/src/app/shared/models/rule-chain.models.ts#L43">RuleChainImport</a>';
+
+export const tenantProfileHref = '<a href="https://github.com/thingsboard/thingsboard/blob/6306a27909246b49424b10b9eb29a6768fd1f5ce/ui-ngx/src/app/shared/models/tenant.model.ts#L103">TenantProfile</a>';
+
+export const entitySubtypeHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/entity-type.models.ts#L295">EntitySubtype</a>';
+
+export const assetSearchQueryHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/asset.models.ts#L37">AssetSearchQuery</a>';
+
 export const pageLinkArg: FunctionArg = {
   name: 'pageLink',
   type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/page/page-link.ts#L68">PageLink</a>',
@@ -179,6 +259,13 @@ export function observablePageDataReturnType(objectType: string): FunctionArgTyp
   return {
     type: `Observable&lt;${pageDataHref}&lt;${objectType}&gt;&gt;`,
     description: `An <code>Observable</code> of page result as a <code>${pageDataHref}</code> holding array of <code>${objectType}</code> objects.`
+  };
+}
+
+export function arrayReturnType(objectType: string): FunctionArgType {
+  return {
+    type: `Array&lt;${objectType}&gt;`,
+    description: `An <code>Array</code> of <code>${objectType}</code>.`
   };
 }
 
@@ -282,7 +369,7 @@ export const serviceCompletions: TbEditorCompletions = {
         args: [
           requestConfigArg
         ],
-        return: observableArrayReturnType('<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/entity-type.models.ts#L295">EntitySubtype</a>')
+        return: observableArrayReturnType(entitySubtypeHref)
       },
       getDeviceCredentials: {
         description: 'Get device credentials by device id',
@@ -528,7 +615,7 @@ export const serviceCompletions: TbEditorCompletions = {
         args: [
           requestConfigArg
         ],
-        return: observableArrayReturnType('<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/entity-type.models.ts#L295">EntitySubtype</a>')
+        return: observableArrayReturnType(entitySubtypeHref)
       },
       makeAssetPublic: {
         description: 'Make asset public (available from public dashboard)',
@@ -562,11 +649,7 @@ export const serviceCompletions: TbEditorCompletions = {
         description: 'Find assets by search query',
         meta: 'function',
         args: [
-          {
-            name: 'query',
-            type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/asset.models.ts#L37">AssetSearchQuery</a>',
-            description: 'Asset search query object'
-          },
+          { name: 'query', type: assetSearchQueryHref, description: 'Asset search query object' },
           requestConfigArg
         ],
         return: observableArrayReturnType(assetHref)
@@ -694,7 +777,7 @@ export const serviceCompletions: TbEditorCompletions = {
         args: [
           requestConfigArg
         ],
-        return: observableArrayReturnType('<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/entity-type.models.ts#L295">EntitySubtype</a>')
+        return: observableArrayReturnType(entitySubtypeHref)
       },
       makeEntityViewPublic: {
         description: 'Make entity view public (available from public dashboard)',
@@ -728,11 +811,7 @@ export const serviceCompletions: TbEditorCompletions = {
         description: 'Find entities view by search query',
         meta: 'function',
         args: [
-          {
-            name: 'query',
-            type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/asset.models.ts#L37">AssetSearchQuery</a>',
-            description: 'Entity view search query object'
-          },
+          { name: 'query', type: assetSearchQueryHref, description: 'Entity view search query object' },
           requestConfigArg
         ],
         return: observableArrayReturnType(entityViewHref)
@@ -1585,9 +1664,831 @@ export const serviceCompletions: TbEditorCompletions = {
         description: 'Get edge event content',
         meta: 'function',
         args: [
-          {name: 'entity', type: edgeEventHref, description: 'Id of the edge'}
+          {name: 'entity', type: edgeEventHref, description: 'Entity object'}
         ],
         return: observablePageDataReturnType('any')
+      },
+    }
+  },
+  alarmService: {
+    description: 'Alarm Service API<br>' +
+      `See ${alarmServiceHref} for API reference.`,
+    meta: 'service',
+    type: alarmServiceHref,
+    children: {
+      getAlarm: {
+        description: 'Get alarm by id',
+        meta: 'function',
+        args: [
+          {name: 'alarmId', type: 'string', description: 'Id of the alarm'},
+          requestConfigArg
+        ],
+        return: observableReturnType(alarmHref)
+      },
+      getAlarmInfo: {
+        description: 'Get alarm info by id',
+        meta: 'function',
+        args: [
+          {name: 'alarmId', type: 'string', description: 'Id of the alarm'},
+          requestConfigArg
+        ],
+        return: observableReturnType(alarmInfoHref)
+      },
+      saveAlarm: {
+        description: 'Save alarm',
+        meta: 'function',
+        args: [
+          {name: 'alarm', type: alarmHref, description: 'Alarm object to save'},
+          requestConfigArg
+        ],
+        return: observableReturnType(alarmHref)
+      },
+      ackAlarm: {
+        description: 'Acknowledge alarm by id',
+        meta: 'function',
+        args: [
+          {name: 'alarmId', type: 'string', description: 'Id of the alarm'},
+          requestConfigArg
+        ],
+        return: observableVoid()
+      },
+      clearAlarm: {
+        description: 'Clear alarm by id',
+        meta: 'function',
+        args: [
+          {name: 'alarmId', type: 'string', description: 'Id of the alarm'},
+          requestConfigArg
+        ],
+        return: observableVoid()
+      },
+      deleteAlarm: {
+        description: 'Delete alarm by id',
+        meta: 'function',
+        args: [
+          {name: 'alarmId', type: 'string', description: 'Id of the alarm'},
+          requestConfigArg
+        ],
+        return: observableVoid()
+      },
+      getAlarms: {
+        description: 'Get alarms by query',
+        meta: 'function',
+        args: [
+          {name: 'query', type: alarmQueryHref, description: 'Alarm data query'},
+          requestConfigArg
+        ],
+        return: observablePageDataReturnType(alarmInfoHref)
+      },
+      getHighestAlarmSeverity: {
+        description: 'Get highest alarm severity',
+        meta: 'function',
+        args: [
+          {name: 'entityId', type: entityIdHref, description: 'Id of the entity'},
+          {name: 'alarmSearchStatus', type: alarmSearchStatusHref, description: 'Alarm search status'},
+          {name: 'alarmStatus', type: alarmStatusHref, description: 'Alarm status'},
+          requestConfigArg
+        ],
+        return: observableReturnType(alarmSeverityHref)
+      },
+    }
+  },
+  otaPackageService: {
+    description: 'Ota Package Service API<br>' +
+      `See ${otaPackageServiceHref} for API reference.`,
+    meta: 'service',
+    type: otaPackageServiceHref,
+    children: {
+      getOtaPackages: {
+        description: 'Get OTA package info',
+        meta: 'function',
+        args: [
+          pageLinkArg,
+          requestConfigArg
+        ],
+        return: observablePageDataReturnType(otaPackageInfoHref)
+      },
+      getOtaPackagesInfoByDeviceProfileId: {
+        description: 'Get OTA package info by device profile id',
+        meta: 'function',
+        args: [
+          pageLinkArg,
+          {name: 'deviceProfileId', type: 'string', description: 'Id of the device profile'},
+          {name: 'type', type: otaUpdateTypeHref, description: 'OTA package type'},
+          requestConfigArg
+        ],
+        return: observablePageDataReturnType(otaPackageInfoHref)
+      },
+      getOtaPackage: {
+        description: 'Get OTA package by OTA package id',
+        meta: 'function',
+        args: [
+          {name: 'otaPackageId', type: 'string', description: 'Id of the OTA package'},
+          requestConfigArg
+        ],
+        return: observableReturnType(otaPackageHref)
+      },
+      getOtaPackageInfo: {
+        description: 'Get OTA package info by OTA package id',
+        meta: 'function',
+        args: [
+          {name: 'otaPackageId', type: 'string', description: 'Id of the OTA package'},
+          requestConfigArg
+        ],
+        return: observableReturnType(otaPackageInfoHref)
+      },
+      downloadOtaPackage: {
+        description: 'Download OTA package',
+        meta: 'function',
+        args: [
+          {name: 'otaPackageId', type: 'string', description: 'Id of the OTA package'}
+        ],
+        return: observableReturnType('any')
+      },
+      saveOtaPackage: {
+        description: 'Save OTA package',
+        meta: 'function',
+        args: [
+          {name: 'otaPackage', type: otaPackageHref, description: 'OTA package'},
+          requestConfigArg
+        ],
+        return: observableReturnType(otaPackageHref)
+      },
+      saveOtaPackageInfo: {
+        description: 'Save OTA package info',
+        meta: 'function',
+        args: [
+          {name: 'otaPackageInfo', type: otaPackageInfoHref, description: 'OTA package info object'},
+          requestConfigArg
+        ],
+        return: observableReturnType(otaPackageHref)
+      },
+      uploadOtaPackageFile: {
+        description: 'Upload OTA package file',
+        meta: 'function',
+        args: [
+          {name: 'otaPackageId', type: 'string', description: 'Id of the OTA package'},
+          {name: 'file', type: fileHref, description: 'Provides information about files and allows JavaScript in a web page to access their content'},
+          {name: 'checksumAlgorithm', type: checksumAlgorithmHref, description: 'Checksum algorithm'},
+          {name: 'checksum', type: 'string', description: 'Checksum', optional: true},
+          requestConfigArg
+        ],
+        return: observableReturnType('any')
+      },
+      deleteOtaPackage: {
+        description: 'Delete OTA package by package id',
+        meta: 'function',
+        args: [
+          {name: 'otaPackageId', type: 'string', description: 'Id of the OTA package'},
+          requestConfigArg
+        ],
+        return: observableVoid()
+      },
+      countUpdateDeviceAfterChangePackage: {
+        description: 'Count update device after change package',
+        meta: 'function',
+        args: [
+          {name: 'type', type: otaUpdateTypeHref, description: 'OTA package type'},
+          {name: 'entityId', type: entityIdHref, description: 'Id of the entity'},
+          requestConfigArg
+        ],
+        return: observableReturnType('number')
+      },
+      confirmDialogUpdatePackage: {
+        description: 'Confirm Dialog update package',
+        meta: 'function',
+        args: [
+          {name: 'entity', type: `${baseDataHref}&lt;${entityIdHref}&gt;&${otaPagesIdsHref}`, description: 'Entity'},
+          {name: 'originEntity', type: `${baseDataHref}&lt;${entityIdHref}&gt;&${otaPagesIdsHref}`, description: 'Origin entity'}
+        ],
+        return: observableReturnType('boolean')
+      },
+    }
+  },
+  deviceProfilesService: {
+    description: 'Device Profile Service API<br>' +
+      `See ${deviceProfileServiceHref} for API reference.`,
+    meta: 'service',
+    type: deviceProfileServiceHref,
+    children: {
+      getDeviceProfiles: {
+        description: 'Get device profiles',
+        meta: 'function',
+        args: [
+          pageLinkArg,
+          requestConfigArg
+        ],
+        return: observablePageDataReturnType(deviceProfileHref)
+      },
+      getDeviceProfile: {
+        description: 'Get device profile by profile id',
+        meta: 'function',
+        args: [
+          {name: 'deviceProfileId', type: 'string', description: 'Id of the device profile'},
+          requestConfigArg
+        ],
+        return: observableReturnType(deviceProfileHref)
+      },
+      getLwm2mObjects: {
+        description: 'Get Lwm2m object',
+        meta: 'function',
+        args: [
+          {name: 'sortOrder', type: sortOrderHref, description: 'Sort order object'},
+          {name: 'objectIds', type: 'string[]', description: 'Array of object ids'},
+          requestConfigArg
+        ],
+        return: observableArrayReturnType(objectLwm2mHref)
+      },
+      getLwm2mBootstrapSecurityInfo: {
+        description: 'Get Lwm2m bootstrap security info',
+        meta: 'function',
+        args: [
+          {name: 'isBootstrapServer', type: 'boolean', description: 'Is bootstrap server'},
+          requestConfigArg
+        ],
+        return: observableReturnType(serverSecurityConfigInfoHref)
+      },
+      getLwm2mBootstrapSecurityInfoBySecurityType: {
+        description: 'Get Lwm2m bootstrap security info by security type',
+        meta: 'function',
+        args: [
+          {name: 'isBootstrapServer', type: 'boolean', description: 'Is bootstrap server'},
+          {name: 'securityMode', type: lwm2mSecurityTypeHref, description: `Security mode (by default ${lwm2mSecurityTypeHref}.NO_SEC)`},
+          requestConfigArg
+        ],
+        return: observableReturnType(serverSecurityConfigHref)
+      },
+      getLwm2mObjectsPage: {
+        description: 'Get Lwm2m objects',
+        meta: 'function',
+        args: [
+          pageLinkArg,
+          requestConfigArg
+        ],
+        return: observableArrayReturnType(objectLwm2mHref)
+      },
+      saveDeviceProfileAndConfirmOtaChange: {
+        description: 'Save device profile and confirm OTA change',
+        meta: 'function',
+        args: [
+          {name: 'originDeviceProfile', type: deviceProfileHref, description: 'Origin device profile object'},
+          {name: 'deviceProfile', type: deviceProfileHref, description: 'Device profile object'},
+          requestConfigArg
+        ],
+        return: observableReturnType(deviceProfileHref)
+      },
+      saveDeviceProfile: {
+        description: 'Save device profile',
+        meta: 'function',
+        args: [
+          {name: 'deviceProfile', type: deviceProfileHref, description: 'Device profile object'},
+          requestConfigArg
+        ],
+        return: observableReturnType(deviceProfileHref)
+      },
+      deleteDeviceProfile: {
+        description: 'Delete device profile',
+        meta: 'function',
+        args: [
+          {name: 'deviceProfileId', type: 'string', description: 'Id of the device profile'},
+          requestConfigArg
+        ],
+        return: observableVoid()
+      },
+      setDefaultDeviceProfile: {
+        description: 'Set default device profile',
+        meta: 'function',
+        args: [
+          {name: 'deviceProfileId', type: 'string', description: 'Id of the device profile'},
+          requestConfigArg
+        ],
+        return: observableReturnType(deviceProfileHref)
+      },
+      getDefaultDeviceProfileInfo: {
+        description: 'Get default device profile info',
+        meta: 'function',
+        args: [
+          requestConfigArg
+        ],
+        return: observableReturnType(deviceProfileInfoHref)
+      },
+      getDeviceProfileInfos: {
+        description: 'Get device profile infos',
+        meta: 'function',
+        args: [
+          pageLinkArg,
+          {name: 'transportType', type: deviceTransportTypeHref, description: 'Device transport type', optional: true},
+          requestConfigArg
+        ],
+        return: observablePageDataReturnType(deviceProfileInfoHref)
+      },
+      getDeviceProfileDevicesAttributesKeys: {
+        description: 'Get device profile attributes keys by device profile id',
+        meta: 'function',
+        args: [
+          {name: 'deviceProfileId', type: 'string', description: 'Id of the device profile', optional: true},
+          requestConfigArg
+        ],
+        return: observableArrayReturnType('string')
+      },
+      getDeviceProfileDevicesTimeseriesKeys: {
+        description: 'Get device profile timeseries keys by device profile id',
+        meta: 'function',
+        args: [
+          {name: 'deviceProfileId', type: 'string', description: 'Id of the device profile', optional: true},
+          requestConfigArg
+        ],
+        return: observableArrayReturnType('string')
+      },
+    }
+  },
+  broadcastService: {
+    description: 'Broadcast Service API<br>' +
+      `See ${broadcastServiceTypeHref} for API reference`,
+    meta: 'service',
+    type: broadcastServiceTypeHref,
+    children: {
+      broadcast: {
+        description: 'Broadcast',
+        meta: 'function',
+        args: [
+          {name: 'name', type: 'string', description: 'Name'},
+          {name: '...args', type: 'Array&lt;any&gt;', description: 'Arguments'}
+        ],
+        return: observableVoid()
+      },
+      on: {
+        description: 'Subscribe for broadcast by name',
+        meta: 'function',
+        args: [
+          {name: 'name', type: 'string', description: 'Name'},
+          {name: 'listener', type: broadcastListenerHref, description: 'Broadcast listener'}
+        ],
+        return: {
+          type: subscriptionHref,
+          description: `An <code>${subscriptionHref}</code>.`
+        }
+      },
+    }
+  },
+  utils: {
+    description: 'Utils Service API<br>' +
+      `See ${utilsServiceHref} for API reference.`,
+    meta: 'service',
+    type: utilsServiceHref,
+    children: {
+      getPredefinedFunctionsList: {
+        description: 'Get predefined function list',
+        meta: 'function',
+        args: [],
+        return: arrayReturnType('string')
+      },
+      getPredefinedFunctionBody: {
+        description: 'Get predefined function body',
+        meta: 'function',
+        args: [
+          {name: 'func', type: 'string', description: 'Function'},
+        ],
+        return: {
+          type: 'string',
+          description: 'Returns predefined function'
+        }
+      },
+      getDefaultDatasource: {
+        description: 'Get default datasource',
+        meta: 'function',
+        args: [
+          {name: 'dataKeySchema', type: 'any', description: 'Data key schema'},
+        ],
+        return: {
+          type: `${dataSourceHref}`,
+          description: `${dataSourceHref} object`
+        }
+      },
+      initDefaultAlarmDataKeys: {
+        description: 'Initialize default alarm data keys',
+        meta: 'function',
+        args: [],
+        return: {
+          type: 'void'
+        }
+      },
+      getDefaultAlarmDataKeys: {
+        description: 'Get default alarm data keys',
+        meta: 'function',
+        args: [],
+        return: arrayReturnType(dataKeyHref)
+      },
+      generateObjectFromJsonSchema: {
+        description: 'Generate object from JSON schema',
+        meta: 'function',
+        args: [
+          {name: 'schema', type: 'any', description: 'JSON schema'},
+        ],
+        return: {
+          type: 'any',
+          description: `Returns generated object`
+        }
+      },
+      processWidgetException: {
+        description: 'Process widget exception',
+        meta: 'function',
+        args: [
+          {name: 'exception', type: 'any', description: 'Exception'},
+        ],
+        return: {
+          type: exceptionDataHref,
+          description: exceptionDataHref
+        }
+      },
+      parseException: {
+        description: 'Parse exception',
+        meta: 'function',
+        args: [
+          {name: 'exception', type: 'any', description: 'Exception'},
+          {name: 'lineOffset', type: 'number', description: 'Number of offsets line'},
+        ],
+        return: {
+          type: exceptionDataHref,
+          description: exceptionDataHref
+        }
+      },
+      customTranslation: {
+        description: 'Custom translation',
+        meta: 'function',
+        args: [
+          {name: 'translationValue', type: 'string', description: 'Translation value'},
+          {name: 'defaultValue', type: 'string', description: 'Default value'},
+        ],
+        return: {
+          type: 'string',
+          description: 'Returns translated string'
+        }
+      },
+      doTranslate: {
+        description: 'Translate',
+        meta: 'function',
+        args: [
+          {name: 'translationValue', type: 'string', description: 'Translation value'},
+          {name: 'defaultValue', type: 'string', description: 'Default value'},
+          {name: 'prefix', type: 'string', description: 'Prefix', optional: true},
+        ],
+        return: {
+          type: 'string',
+          description: 'Returns translated string'
+        }
+      },
+      guid: {
+        description: 'Generate unique id',
+        meta: 'function',
+        args: [],
+        return: {
+          type: 'string',
+          description: 'Returns unique id'
+        }
+      },
+      validateDatasources: {
+        description: 'Validate datasources',
+        meta: 'function',
+        args: [
+          {name: 'datasources', type: `Array&lt;${dataSourceHref}&gt;`, description: 'Array of datasources'},
+        ],
+        return: {
+          type: `Array&lt;${dataSourceHref}&gt;`
+        }
+      },
+      getMaterialIcons: {
+        description: 'Get material icons',
+        meta: 'function',
+        args: [],
+        return: observableArrayReturnType('string')
+      },
+      getCommonMaterialIcons: {
+        description: 'Get common material icons',
+        meta: 'function',
+        args: [],
+        return: {
+          type: 'Array&lt;string&gt;',
+          description: 'Returns array of material icons'
+        }
+      },
+      getMaterialColor: {
+        description: 'Get material color by index',
+        meta: 'function',
+        args: [
+          {name: 'index', type: 'number', description: 'Color index'},
+        ],
+        return: {
+          type: 'string',
+          description: 'Returns material color'
+        }
+      },
+      createKey: {
+        description: 'Create key',
+        meta: 'function',
+        args: [
+          {name: 'keyInfo', type: keyInfoHref, description: 'Key info object'},
+          {name: 'type', type: dataKeyTypeHref, description: 'Data key type'},
+          {name: 'index', type: 'number', description: 'Index number (by default -1)', optional: true},
+        ],
+        return: {
+          type: dataKeyHref,
+          description: 'Returns data key'
+        }
+      },
+      createLabelFromDatasource: {
+        description: 'Create label from datasource',
+        meta: 'function',
+        args: [
+          {name: 'datasource', type: dataSourceHref, description: 'Datasource'},
+          {name: 'pattern', type: 'string', description: 'Pattern'},
+        ],
+        return: {
+          type: 'string',
+          description: 'Returns created label'
+        }
+      },
+      generateColors: {
+        description: 'Generate colors',
+        meta: 'function',
+        args: [
+          {name: 'datasource', type: `Array&lt;${dataSourceHref}&gt;`, description: 'Array of datasource'}
+        ],
+        return: {
+          type: 'void'
+        }
+      },
+      currentPerfTime: {
+        description: 'Get current performance time',
+        meta: 'function',
+        args: [],
+        return: {
+          type: 'number',
+          description: 'Returns performance time'
+        }
+      },
+      getQueryParam: {
+        description: 'Get query parameter',
+        meta: 'function',
+        args: [
+          {name: 'name', type: 'string', description: 'Name of query parameter'}
+        ],
+        return: {
+          type: 'string',
+          description: 'Returns query parameter'
+        }
+      },
+      removeQueryParams: {
+        description: 'Delete query parameters',
+        meta: 'function',
+        args: [
+          {name: 'keys', type: 'Array&lt;string&gt;', description: 'Array of keys query parameter'}
+        ],
+        return: {
+          type: 'void'
+        }
+      },
+      updateQueryParam: {
+        description: 'Update query parameter',
+        meta: 'function',
+        args: [
+          {name: 'name', type: 'string', description: 'Name of query parameter'},
+          {name: 'value', type: 'string|null', description: 'Value of query parameter'}
+        ],
+        return: {
+          type: 'void'
+        }
+      },
+      updateUrlQueryString: {
+        description: 'Update url query string',
+        meta: 'function',
+        args: [
+          {name: 'urlQueryString', type: 'string', description: 'New url query'},
+          {name: 'name', type: 'string', description: 'Name of query parameter'},
+          {name: 'value', type: 'string|null', description: 'Value of query parameter'}
+        ],
+        return: {
+          type: 'string',
+          description: 'Returns updated query parameter'
+        }
+      },
+      baseUrl: {
+        description: 'Get base url',
+        meta: 'function',
+        args: [],
+        return: {
+          type: 'string',
+          description: 'Returns base url'
+        }
+      },
+      deepClone: {
+        description: 'Deep clone &lt;T&gt;',
+        meta: 'function',
+        args: [
+          {name: 'target', type: 'T', description: 'Target'},
+          {name: 'ignoreFields', type: 'string[]', description: 'Array of ignored fields'}
+        ],
+        return: {
+          type: 'T',
+          description: 'Returns cloned attribute'
+        }
+      },
+      isUndefined: {
+        description: 'Check for undefined',
+        meta: 'function',
+        args: [
+          {name: 'value', type: 'any', description: 'Any of value'}
+        ],
+        return: {
+          type: 'boolean'
+        }
+      },
+      isDefined: {
+        description: 'Check for defined',
+        meta: 'function',
+        args: [
+          {name: 'value', type: 'any', description: 'Any of value'}
+        ],
+        return: {
+          type: 'boolean'
+        }
+      },
+      defaultValue: {
+        description: 'Default value',
+        meta: 'function',
+        args: [
+          {name: 'value', type: 'any', description: 'Any of value'},
+          {name: 'defaultValue', type: 'any', description: 'Any of default value'}
+        ],
+        return: {
+          type: 'any',
+          description: 'Returns default value if value undefined or null'
+        }
+      },
+    }
+  },
+  importExport: {
+    description: 'Import Export Service API<br>' +
+      `See ${importExportServiceHref} for API reference.`,
+    meta: 'service',
+    type: importExportServiceHref,
+    children: {
+      exportDashboard: {
+        description: 'Export dashboard',
+        meta: 'function',
+        args: [
+          {name: 'dashboardId', type: 'string', description: 'Id of the dashboard'}
+        ],
+        return: {
+          type: 'void'
+        }
+      },
+      importDashboard: {
+        description: 'Import dashboard',
+        meta: 'function',
+        args: [],
+        return: observableReturnType(dashboardHref)
+      },
+      exportWidget: {
+        description: 'Export widget',
+        meta: 'function',
+        args: [
+          {name: 'dashboard', type: dashboardHref, description: 'Dashboard'},
+          {name: 'sourceState', type: 'string', description: 'Source state'},
+          {name: 'sourceLayout', type: dashboardLayoutIdHref, description: 'Source layout'},
+          {name: 'widget', type: widgetHref, description: 'Source layout'}
+        ],
+        return: {
+          type: 'void'
+        }
+      },
+      importWidget: {
+        description: 'Import widget',
+        meta: 'function',
+        args: [
+          {name: 'dashboard', type: dashboardHref, description: 'Dashboard'},
+          {name: 'targetState', type: 'string', description: 'Target state'},
+          {name: 'targetLayoutFunction', type: `() => Observable&lt;${dashboardLayoutIdHref}&gt;`, description: 'Target layout function'},
+          {name: 'onAliasesUpdateFunction', type: '() => void', description: 'On aliases update function'},
+          {name: 'onFiltersUpdateFunction', type: '() => void', description: 'On filter update function'}
+        ],
+        return: observableReturnType(importWidgetResultHref)
+      },
+      exportWidgetType: {
+        description: 'Export widget type',
+        meta: 'function',
+        args: [
+          {name: 'widgetTypeId', type: 'string', description: 'Id of the widget type'}
+        ],
+        return: {
+          type: 'void'
+        }
+      },
+      importWidgetType: {
+        description: 'Import widget type',
+        meta: 'function',
+        args: [
+          {name: 'bundleAlias', type: 'string', description: 'Bundle alias'}
+        ],
+        return: observableReturnType(widgetTypeHref)
+      },
+      exportWidgetsBundle: {
+        description: 'Export widget bundle',
+        meta: 'function',
+        args: [
+          {name: 'widgetsBundleId', type: 'string', description: 'Id of the widget bundle'}
+        ],
+        return: {
+          type: 'void'
+        }
+      },
+      importWidgetsBundle: {
+        description: 'Import widget bundle',
+        meta: 'function',
+        args: [],
+        return: observableReturnType(widgetsBundleHref)
+      },
+      bulkImportEntities: {
+        description: 'Bulk import entities',
+        meta: 'function',
+        args: [
+          {name: 'entitiesData', type: bulkImportRequestHref, description: 'Entities data'},
+          {name: 'entityType', type: entityTypeHref, description: 'Entity type'},
+          requestConfigArg
+        ],
+        return: observableReturnType(bulkImportResultHref)
+      },
+      importEntities: {
+        description: 'Import entities',
+        meta: 'function',
+        args: [
+          {name: 'entitiesData', type: importEntityDataHref + '[]', description: 'Entities data'},
+          {name: 'entityType', type: entityTypeHref, description: 'Entity type'},
+          {name: 'updateData', type: 'boolean', description: 'Update data'},
+          {name: 'importEntityCompleted', type: '() => void', description: 'Import entity completed function'},
+          requestConfigArg
+        ],
+        return: observableReturnType(importEntitiesResultInfoHref)
+      },
+      exportRuleChain: {
+        description: 'Export rule chain',
+        meta: 'function',
+        args: [
+          {name: 'ruleChainId', type: 'string', description: 'Id of the rule chain'}
+        ],
+        return: {
+          type: 'void'
+        }
+      },
+      importRuleChain: {
+        description: 'Import rule chain',
+        meta: 'function',
+        args: [
+          {name: 'expectedRuleChainType', type: ruleChainTypeHref, description: 'Rule chain type'},
+        ],
+        return: observableReturnType(ruleChainImportHref)
+      },
+      exportDeviceProfile: {
+        description: 'Export device profile',
+        meta: 'function',
+        args: [
+          {name: 'deviceProfileId', type: 'string', description: 'Id of the device profile'}
+        ],
+        return: {
+          type: 'void'
+        }
+      },
+      importDeviceProfile: {
+        description: 'Import device profile',
+        meta: 'function',
+        args: [],
+        return: observableReturnType(deviceProfileHref)
+      },
+      exportTenantProfile: {
+        description: 'Export tenant profile',
+        meta: 'function',
+        args: [
+          {name: 'tenantProfileId', type: 'string', description: 'Id of the tenant profile'}
+        ],
+        return: {
+          type: 'void'
+        }
+      },
+      importTenantProfile: {
+        description: 'Import tenant profile',
+        meta: 'function',
+        args: [],
+        return: observableReturnType(tenantProfileHref)
+      },
+      exportJSZip: {
+        description: 'Export JS zip',
+        meta: 'function',
+        args: [
+          {name: 'data', type: 'object', description: 'Data'},
+          {name: 'filename', type: 'string', description: 'File name'}
+        ],
+        return: {
+          type: 'void'
+        }
       },
     }
   },
