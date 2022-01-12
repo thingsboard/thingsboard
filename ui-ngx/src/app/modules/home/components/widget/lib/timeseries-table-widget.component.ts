@@ -91,6 +91,7 @@ interface TimeseriesRow {
 interface TimeseriesHeader {
   index: number;
   dataKey: DataKey;
+  sortable: boolean;
 }
 
 interface TimeseriesTableSource {
@@ -325,10 +326,12 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
         for (let a = 0; a < datasource.dataKeys.length; a++ ) {
           const dataKey = datasource.dataKeys[a];
           const keySettings: TableWidgetDataKeySettings = dataKey.settings;
+          const sortable = !dataKey.usePostProcessing;
           const index = a + 1;
           source.header.push({
             index,
-            dataKey
+            dataKey,
+            sortable
           });
           source.displayedColumns.push(index + '');
           source.rowDataTemplate[dataKey.label] = null;

@@ -346,6 +346,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
           label: 'entityName',
           def: 'entityName',
           title: entityNameColumnTitle,
+          sortable: true,
           entityKey: {
             key: 'name',
             type: EntityKeyType.ENTITY_FIELD
@@ -369,6 +370,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
           label: 'entityLabel',
           def: 'entityLabel',
           title: entityLabelColumnTitle,
+          sortable: true,
           entityKey: {
             key: 'label',
             type: EntityKeyType.ENTITY_FIELD
@@ -392,6 +394,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
           label: 'entityType',
           def: 'entityType',
           title: this.translate.instant('entity.entity-type'),
+          sortable: true,
           entityKey: {
             key: 'entityType',
             type: EntityKeyType.ENTITY_FIELD
@@ -425,6 +428,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         dataKey.label = this.utils.customTranslation(dataKey.label, dataKey.label);
         dataKey.title = dataKey.label;
         dataKey.def = 'def' + this.columns.length;
+        dataKey.sortable = !dataKey.usePostProcessing;
         const keySettings: TableWidgetDataKeySettings = dataKey.settings;
         if (dataKey.type === DataKeyType.entityField &&
           !isDefined(keySettings.columnWidth) || keySettings.columnWidth === '0px') {
