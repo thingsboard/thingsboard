@@ -16,7 +16,7 @@
 
 import { Injectable } from '@angular/core';
 
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
 import {
   DateEntityTableColumn,
   EntityTableColumn,
@@ -30,7 +30,7 @@ import { UserService } from '@core/http/user.service';
 import { UserComponent } from '@modules/home/pages/user/user.component';
 import { CustomerService } from '@core/http/customer.service';
 import { map, mergeMap, take, tap } from 'rxjs/operators';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { Authority } from '@shared/models/authority.enum';
 import { CustomerId } from '@shared/models/id/customer-id';
 import { MatDialog } from '@angular/material/dialog';
@@ -50,6 +50,7 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { TenantService } from '@app/core/http/tenant.service';
 import { TenantId } from '@app/shared/models/id/tenant-id';
 import { UserTabsComponent } from '@home/pages/user/user-tabs.component';
+import { isDefinedAndNotNull } from '@core/utils';
 
 export interface UsersTableRouteData {
   authority: Authority;
@@ -72,6 +73,7 @@ export class UsersTableConfigResolver implements Resolve<EntityTableConfig<User>
               private customerService: CustomerService,
               private translate: TranslateService,
               private datePipe: DatePipe,
+              private router: Router,
               private dialog: MatDialog) {
 
     this.config.entityType = EntityType.USER;
@@ -117,9 +119,14 @@ export class UsersTableConfigResolver implements Resolve<EntityTableConfig<User>
         }
         this.updateActionCellDescriptors(auth);
       }),
-      mergeMap(() => this.authority === Authority.TENANT_ADMIN ?
-        this.tenantService.getTenant(this.tenantId) :
-        this.customerService.getCustomer(this.customerId)),
+      mergeMap(() => {
+        if (this.authority === Authority.TENANT_ADMIN) {
+          return this.tenantService.getTenant(this.tenantId);
+        } else if (isDefinedAndNotNull(this.customerId)) {
+          return this.customerService.getCustomer(this.customerId);
+        }
+        return of({title: ''});
+      }),
       map((parentEntity) => {
         if (this.authority === Authority.TENANT_ADMIN) {
           this.config.tableTitle = parentEntity.title + ': ' + this.translate.instant('user.tenant-admins');
@@ -165,6 +172,13 @@ export class UsersTableConfigResolver implements Resolve<EntityTableConfig<User>
         authority: this.authority
       }
     }).afterClosed();
+  }
+
+  private openUser($event: Event, user: User) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.router.navigateByUrl(`${this.router.url}/${user.id.id}`);
   }
 
   loginAsUser($event: Event, user: User) {
@@ -224,6 +238,9 @@ export class UsersTableConfigResolver implements Resolve<EntityTableConfig<User>
 
   onUserAction(action: EntityAction<User>): boolean {
     switch (action.action) {
+      case 'open':
+        this.openUser(action.event, action.entity);
+        return true;
       case 'loginAsUser':
         this.loginAsUser(action.event, action.entity);
         return true;

@@ -28,6 +28,7 @@ public class TbMqttNodeConfiguration implements NodeConfiguration<TbMqttNodeConf
     private int port;
     private int connectTimeoutSec;
     private String clientId;
+    private boolean appendClientIdSuffix;
 
     private boolean cleanSession;
     private boolean ssl;

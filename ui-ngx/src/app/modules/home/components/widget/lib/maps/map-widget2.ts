@@ -18,6 +18,7 @@ import { defaultSettings, FormattedData, hereProviders, MapProviders, UnitedMapS
 import LeafletMap from './leaflet-map';
 import {
   commonMapSettingsSchema,
+  editorSettingSchema,
   mapPolygonSchema,
   markerClusteringSettingsSchema,
   markerClusteringSettingsSchemaLeaflet,
@@ -115,6 +116,8 @@ export class MapWidgetController implements MapWidgetInterface {
                     `model.useClusterMarkers === true && model.provider !== "image-map"`)]);
             addToSchema(schema, clusteringSchema);
             addGroupInfo(schema, 'Markers Clustering Settings');
+            addToSchema(schema, addCondition(editorSettingSchema, '(model.editablePolygon === true || model.draggableMarker === true)'));
+            addGroupInfo(schema, 'Editor settings');
         }
         return schema;
     }

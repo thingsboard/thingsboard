@@ -119,6 +119,7 @@
     <mat-paginator [length]="dataSource.total() | async"
                    [pageIndex]="pageLink.page"
                    [pageSize]="pageLink.pageSize"
-                   [pageSizeOptions]="[10, 20, 30]"></mat-paginator>
+                   [pageSizeOptions]="[10, 20, 30]"
+                   [hidePageSize]="hidePageSize"></mat-paginator>
   </div>
 </div>

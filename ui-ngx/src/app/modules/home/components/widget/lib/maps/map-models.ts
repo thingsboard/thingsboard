@@ -192,6 +192,15 @@ export type PolylineSettings = {
     strokeWeightFunction: GenericFunction;
 };
 
+export interface EditorSettings {
+    snappable: boolean;
+    initDragMode: boolean;
+    hideAllControlButton: boolean;
+    hideDrawControlButton: boolean;
+    hideEditControlButton: boolean;
+    hideRemoveControlButton: boolean;
+}
+
 export interface HistorySelectSettings {
     buttonColor: string;
 }
@@ -231,7 +240,7 @@ export interface TripAnimationSettings extends PolygonSettings {
 
 export type actionsHandler = ($event: Event, datasource: Datasource) => void;
 
-export type UnitedMapSettings = MapSettings & PolygonSettings & MarkerSettings & PolylineSettings & TripAnimationSettings;
+export type UnitedMapSettings = MapSettings & PolygonSettings & MarkerSettings & PolylineSettings & TripAnimationSettings & EditorSettings;
 
 export const defaultSettings: any = {
     xPosKeyName: 'xPos',
@@ -271,7 +280,13 @@ export const defaultSettings: any = {
     draggableMarker: false,
     editablePolygon: false,
     fitMapBounds: true,
-    mapPageSize: DEFAULT_MAP_PAGE_SIZE
+    mapPageSize: DEFAULT_MAP_PAGE_SIZE,
+    snappable: false,
+    initDragMode: false,
+    hideAllControlButton: false,
+    hideDrawControlButton: false,
+    hideEditControlButton: false,
+    hideRemoveControlButton: false
 };
 
 export const hereProviders = [

@@ -219,7 +219,7 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
                        val: tinycolor.ColorFormats.RGBA,
                        colorSelectedFn: (color: tinycolor.ColorFormats.RGBA) => void) {
     this.dialogs.colorPicker(tinycolor(val).toRgbString()).subscribe((color) => {
-      if (colorSelectedFn) {
+      if (color && colorSelectedFn) {
         colorSelectedFn(tinycolor(color).toRgb());
       }
     });

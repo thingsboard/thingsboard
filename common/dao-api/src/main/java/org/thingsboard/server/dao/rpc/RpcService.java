@@ -35,5 +35,7 @@ public interface RpcService {
 
     ListenableFuture<Rpc> findRpcByIdAsync(TenantId tenantId, RpcId id);
 
+    PageData<Rpc> findAllByDeviceId(TenantId tenantId, DeviceId deviceId, PageLink pageLink);
+
     PageData<Rpc> findAllByDeviceIdAndStatus(TenantId tenantId, DeviceId deviceId, RpcStatus rpcStatus, PageLink pageLink);
 }

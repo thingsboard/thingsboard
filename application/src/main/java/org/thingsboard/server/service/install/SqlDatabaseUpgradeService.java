@@ -475,12 +475,30 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     log.info("Updating schema ...");
                     schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.3.2", SCHEMA_UPDATE_SQL);
                     loadSql(schemaUpdateFile, conn);
-                    log.info("Updating server`s public key from HexDec to Base64 in profile for LWM2M...");
-                    conn.createStatement().execute("call update_profile_bootstrap();");
-                    log.info("Server`s public key from HexDec to Base64 in profile for LWM2M updated.");
-                    log.info("Updating client`s public key and secret key from HexDec to Base64 for LWM2M...");
-                    conn.createStatement().execute("call update_device_credentials_to_base64_and_bootstrap();");
-                    log.info("Client`s public key and secret key from HexDec to Base64 for LWM2M updated.");
+                    try {
+                        conn.createStatement().execute("insert into entity_alarm(tenant_id, entity_id, created_time, alarm_type, customer_id, alarm_id)" +
+                                " select tenant_id, originator_id, created_time, type, customer_id, id from alarm;");
+                        conn.createStatement().execute("insert into entity_alarm(tenant_id, entity_id, created_time, alarm_type, customer_id, alarm_id)" +
+                                " select a.tenant_id, r.from_id, created_time, type, customer_id, id" +
+                                " from alarm a inner join relation r on r.relation_type_group = 'ALARM' and r.relation_type = 'ANY' and a.id = r.to_id ON CONFLICT DO NOTHING;");
+                        conn.createStatement().execute("delete from relation r where r.relation_type_group = 'ALARM';");
+                    } catch (Exception e) {
+                        log.error("Failed to update alarm relations!!!", e);
+                    }
+
+                    log.info("Updating lwm2m device profiles ...");
+                    try {
+                        schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.3.2", "schema_update_lwm2m_bootstrap.sql");
+                        loadSql(schemaUpdateFile, conn);
+                        log.info("Updating server`s public key from HexDec to Base64 in profile for LWM2M...");
+                        conn.createStatement().execute("call update_profile_bootstrap();");
+                        log.info("Server`s public key from HexDec to Base64 in profile for LWM2M updated.");
+                        log.info("Updating client`s public key and secret key from HexDec to Base64 for LWM2M...");
+                        conn.createStatement().execute("call update_device_credentials_to_base64_and_bootstrap();");
+                        log.info("Client`s public key and secret key from HexDec to Base64 for LWM2M updated.");
+                    } catch (Exception e) {
+                        log.error("Failed to update lwm2m profiles!!!", e);
+                    }
                     log.info("Updating schema settings...");
                     conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = 3003003;");
                     log.info("Schema updated.");

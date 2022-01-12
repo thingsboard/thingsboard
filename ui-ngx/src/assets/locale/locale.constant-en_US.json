@@ -622,7 +622,8 @@
         "enter-search": "Enter search",
         "created-time": "Created time",
         "loading": "Loading...",
-        "proceed": "Proceed"
+        "proceed": "Proceed",
+        "open-details-page": "Open details page"
     },
     "content-type": {
         "json": "Json",
@@ -3269,6 +3270,48 @@
             "value": "Value"
         },
         "invalid-qr-code-text": "Invalid input text for QR code. Input should have a string type",
+        "persistent-table": {
+            "rpc-id": "RPC ID",
+            "message-type": "Message type",
+            "method": "Method",
+            "params": "Params",
+            "created-time": "Created time",
+            "expiration-time": "Expiration time",
+            "retries": "Retries",
+            "status": "Status",
+            "filter": "Filter",
+            "refresh": "Refresh",
+            "add": "Add RPC request",
+            "details": "Details",
+            "delete": "Delete",
+            "delete-request-title": "Delete Persistent RPC request",
+            "delete-request-text": "Are you sure you want to delete request?",
+            "details-title": "Details RPC ID: ",
+            "additional-info": "Additional info",
+            "response": "Response",
+            "any-status": "Any status",
+            "rpc-status-list": "RPC status list",
+            "no-request-prompt": "No request to display",
+            "send-request": "Send request",
+            "add-title": "Create Persistent RPC request",
+            "method-error": "Method is required.",
+            "timeout-error": "Min timeout value is 5000 (5 seconds).",
+            "white-space-error": "White space is not allowed.",
+            "rpc-status": {
+                "QUEUED": "QUEUED",
+                "SENT": "SENT",
+                "DELIVERED": "DELIVERED",
+                "SUCCESSFUL": "SUCCESSFUL",
+                "TIMEOUT": "TIMEOUT",
+                "EXPIRED": "EXPIRED",
+                "FAILED": "FAILED"
+            },
+            "rpc-search-status-all": "ALL",
+            "message-types": {
+                "false": "Two-way",
+                "true": "One-way"
+            }
+        },
         "maps": {
             "select-entity": "Select entity",
             "select-entity-hint": "Hint: after selection click at the map to set position",

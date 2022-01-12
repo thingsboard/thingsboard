@@ -19,6 +19,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class AuditLogLevelFilter {
@@ -28,7 +29,7 @@ public class AuditLogLevelFilter {
     public AuditLogLevelFilter(Map<String, String> mask) {
         entityTypeMask.clear();
         mask.forEach((entityTypeStr, logLevelMaskStr) -> {
-            EntityType entityType = EntityType.valueOf(entityTypeStr.toUpperCase());
+            EntityType entityType = EntityType.valueOf(entityTypeStr.toUpperCase(Locale.ENGLISH));
             AuditLogLevelMask logLevelMask = AuditLogLevelMask.valueOf(logLevelMaskStr.toUpperCase());
             entityTypeMask.put(entityType, logLevelMask);
         });

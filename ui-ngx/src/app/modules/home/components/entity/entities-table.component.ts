@@ -61,6 +61,8 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { isDefined, isEmptyStr, isUndefined } from '@core/utils';
 import { HasUUID } from '@shared/models/id/has-uuid';
+import { ResizeObserver } from '@juggle/resize-observer';
+import { hidePageSizePixelValue } from '@shared/models/constants';
 import { IEntitiesTableComponent } from '@home/models/entity/entity-table-component.models';
 
 @Component({
@@ -96,6 +98,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
 
   defaultPageSize = 10;
   displayPagination = true;
+  hidePageSize = false;
   pageSizeOptions;
   pageLink: PageLink;
   pageMode = true;
@@ -118,6 +121,8 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   private updateDataSubscription: Subscription;
   private viewInited = false;
 
+  private widgetResize$: ResizeObserver;
+
   constructor(protected store: Store<AppState>,
               public route: ActivatedRoute,
               public translate: TranslateService,
@@ -126,7 +131,8 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
               private domSanitizer: DomSanitizer,
               private cd: ChangeDetectorRef,
               private router: Router,
-              private componentFactoryResolver: ComponentFactoryResolver) {
+              private componentFactoryResolver: ComponentFactoryResolver,
+              private elementRef: ElementRef) {
     super(store);
   }
 
@@ -135,6 +141,20 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
       this.init(this.entitiesTableConfig);
     } else {
       this.init(this.route.snapshot.data.entitiesTableConfig);
+    }
+    this.widgetResize$ = new ResizeObserver(() => {
+      const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+      if (showHidePageSize !== this.hidePageSize) {
+        this.hidePageSize = showHidePageSize;
+        this.cd.markForCheck();
+      }
+    });
+    this.widgetResize$.observe(this.elementRef.nativeElement);
+  }
+
+  ngOnDestroy() {
+    if (this.widgetResize$) {
+      this.widgetResize$.disconnect();
     }
   }
 
