@@ -46,7 +46,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
-import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -66,7 +66,7 @@ public class BaseOtaPackageService implements OtaPackageService {
     public static final String INCORRECT_OTA_PACKAGE_ID = "Incorrect otaPackageId ";
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
 
-    private final TenantDao tenantDao;
+    private final TenantService tenantService;
     private final DeviceProfileDao deviceProfileDao;
     private final OtaPackageDao otaPackageDao;
     private final OtaPackageInfoDao otaPackageInfoDao;
@@ -357,7 +357,8 @@ public class BaseOtaPackageService implements OtaPackageService {
         if (otaPackageInfo.getTenantId() == null) {
             throw new DataValidationException("OtaPackage should be assigned to tenant!");
         } else {
-            Tenant tenant = tenantDao.findById(otaPackageInfo.getTenantId(), otaPackageInfo.getTenantId().getId());
+            Tenant tenant = tenantService.findTenantById(otaPackageInfo.getTenantId());
+            // TODO: 12.01.22 Instead of finding and checking for null need to create and use tenantService.exists()
             if (tenant == null) {
                 throw new DataValidationException("OtaPackage is referencing to non-existent tenant!");
             }

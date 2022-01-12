@@ -52,7 +52,7 @@ import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
-import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -87,7 +87,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     private EntityViewDao entityViewDao;
 
     @Autowired
-    private TenantDao tenantDao;
+    private TenantService tenantService;
 
     @Autowired
     private CustomerDao customerDao;
@@ -432,7 +432,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
                     if (entityView.getTenantId() == null) {
                         throw new DataValidationException("Entity view should be assigned to tenant!");
                     } else {
-                        Tenant tenant = tenantDao.findById(tenantId, entityView.getTenantId().getId());
+                        Tenant tenant = tenantService.findTenantById(entityView.getTenantId());
                         if (tenant == null) {
                             throw new DataValidationException("Entity view is referencing to non-existent tenant!");
                         }

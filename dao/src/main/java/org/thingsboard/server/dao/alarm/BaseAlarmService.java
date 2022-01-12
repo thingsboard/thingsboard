@@ -51,7 +51,7 @@ import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
-import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
@@ -81,7 +81,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     private AlarmDao alarmDao;
 
     @Autowired
-    private TenantDao tenantDao;
+    private TenantService tenantService;
 
     @Autowired
     private EntityService entityService;
@@ -430,7 +430,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                     if (alarm.getTenantId() == null) {
                         throw new DataValidationException("Alarm should be assigned to tenant!");
                     } else {
-                        Tenant tenant = tenantDao.findById(alarm.getTenantId(), alarm.getTenantId().getId());
+                        Tenant tenant = tenantService.findTenantById(alarm.getTenantId());
                         if (tenant == null) {
                             throw new DataValidationException("Alarm is referencing to non-existent tenant!");
                         }

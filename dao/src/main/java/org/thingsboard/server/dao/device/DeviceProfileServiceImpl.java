@@ -81,7 +81,7 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
-import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.QueueService;
 
 import java.util.Arrays;
@@ -127,7 +127,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     private DeviceService deviceService;
 
     @Autowired
-    private TenantDao tenantDao;
+    private TenantService tenantService;
 
     @Autowired
     private CacheManager cacheManager;
@@ -375,7 +375,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                     if (deviceProfile.getTenantId() == null) {
                         throw new DataValidationException("Device profile should be assigned to tenant!");
                     } else {
-                        Tenant tenant = tenantDao.findById(deviceProfile.getTenantId(), deviceProfile.getTenantId().getId());
+                        Tenant tenant = tenantService.findTenantById(deviceProfile.getTenantId());
                         if (tenant == null) {
                             throw new DataValidationException("Device profile is referencing to non-existent tenant!");
                         }

@@ -59,7 +59,7 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
-import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -94,7 +94,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     private RuleNodeDao ruleNodeDao;
 
     @Autowired
-    private TenantDao tenantDao;
+    private TenantService tenantService;
 
     @Autowired
     @Lazy
@@ -726,7 +726,8 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     if (ruleChain.getTenantId() == null || ruleChain.getTenantId().isNullUid()) {
                         throw new DataValidationException("Rule chain should be assigned to tenant!");
                     }
-                    Tenant tenant = tenantDao.findById(tenantId, ruleChain.getTenantId().getId());
+                    Tenant tenant = tenantService.findTenantById(ruleChain.getTenantId());
+                    // TODO: 12.01.22 Instead of finding and checking for null need to create and use tenantService.exists()
                     if (tenant == null) {
                         throw new DataValidationException("Rule chain is referencing to non-existent tenant!");
                     }

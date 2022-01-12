@@ -45,7 +45,7 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
-import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -62,7 +62,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     private DashboardInfoDao dashboardInfoDao;
 
     @Autowired
-    private TenantDao tenantDao;
+    private TenantService tenantService;
 
     @Autowired
     private CustomerDao customerDao;
@@ -308,7 +308,8 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
                     if (dashboard.getTenantId() == null) {
                         throw new DataValidationException("Dashboard should be assigned to tenant!");
                     } else {
-                        Tenant tenant = tenantDao.findById(tenantId, dashboard.getTenantId().getId());
+                        Tenant tenant = tenantService.findTenantById(dashboard.getTenantId());
+                        // FIXME: 12.01.22
                         if (tenant == null) {
                             throw new DataValidationException("Dashboard is referencing to non-existent tenant!");
                         }

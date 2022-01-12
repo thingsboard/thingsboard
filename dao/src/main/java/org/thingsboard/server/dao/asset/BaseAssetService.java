@@ -55,7 +55,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
-import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -86,7 +86,7 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
     private AssetDao assetDao;
 
     @Autowired
-    private TenantDao tenantDao;
+    private TenantService tenantService;
 
     @Autowired
     private CustomerDao customerDao;
@@ -416,7 +416,8 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
                     if (asset.getTenantId() == null) {
                         throw new DataValidationException("Asset should be assigned to tenant!");
                     } else {
-                        Tenant tenant = tenantDao.findById(tenantId, asset.getTenantId().getId());
+                        Tenant tenant = tenantService.findTenantById(asset.getTenantId());
+                        // FIXME: 12.01.22
                         if (tenant == null) {
                             throw new DataValidationException("Asset is referencing to non-existent tenant!");
                         }

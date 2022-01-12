@@ -31,7 +31,7 @@ import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
-import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +48,7 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
     private WidgetsBundleDao widgetsBundleDao;
 
     @Autowired
-    private TenantDao tenantDao;
+    private TenantService tenantService;
 
     @Autowired
     private WidgetTypeService widgetTypeService;
@@ -162,7 +162,8 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
                         widgetsBundle.setTenantId(new TenantId(ModelConstants.NULL_UUID));
                     }
                     if (!widgetsBundle.getTenantId().getId().equals(ModelConstants.NULL_UUID)) {
-                        Tenant tenant = tenantDao.findById(tenantId, widgetsBundle.getTenantId().getId());
+                        Tenant tenant = tenantService.findTenantById(widgetsBundle.getTenantId());
+                        // TODO: 12.01.22 Instead of finding and checking for null need to create and use tenantService.exists()
                         if (tenant == null) {
                             throw new DataValidationException("Widgets bundle is referencing to non-existent tenant!");
                         }

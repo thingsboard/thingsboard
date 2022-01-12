@@ -36,7 +36,7 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
-import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.List;
 import java.util.Optional;
@@ -52,13 +52,13 @@ public class BaseResourceService implements ResourceService {
     public static final String INCORRECT_RESOURCE_ID = "Incorrect resourceId ";
     private final TbResourceDao resourceDao;
     private final TbResourceInfoDao resourceInfoDao;
-    private final TenantDao tenantDao;
+    private final TenantService tenantService;
     private final TbTenantProfileCache tenantProfileCache;
 
-    public BaseResourceService(TbResourceDao resourceDao, TbResourceInfoDao resourceInfoDao, TenantDao tenantDao, @Lazy TbTenantProfileCache tenantProfileCache) {
+    public BaseResourceService(TbResourceDao resourceDao, TbResourceInfoDao resourceInfoDao, TenantService tenantService, @Lazy TbTenantProfileCache tenantProfileCache) {
         this.resourceDao = resourceDao;
         this.resourceInfoDao = resourceInfoDao;
-        this.tenantDao = tenantDao;
+        this.tenantService = tenantService;
         this.tenantProfileCache = tenantProfileCache;
     }
 
@@ -183,7 +183,8 @@ public class BaseResourceService implements ResourceService {
                 resource.setTenantId(new TenantId(ModelConstants.NULL_UUID));
             }
             if (!resource.getTenantId().getId().equals(ModelConstants.NULL_UUID)) {
-                Tenant tenant = tenantDao.findById(tenantId, resource.getTenantId().getId());
+                Tenant tenant = tenantService.findTenantById(resource.getTenantId());
+                // TODO: 12.01.22 Instead of finding and checking for null need to create and use tenantService.exists()
                 if (tenant == null) {
                     throw new DataValidationException("Resource is referencing to non-existent tenant!");
                 }

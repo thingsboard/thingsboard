@@ -81,7 +81,7 @@ import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
-import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -117,7 +117,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     private DeviceDao deviceDao;
 
     @Autowired
-    private TenantDao tenantDao;
+    private TenantService tenantService;
 
     @Autowired
     private CustomerDao customerDao;
@@ -741,7 +741,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                     if (device.getTenantId() == null) {
                         throw new DataValidationException("Device should be assigned to tenant!");
                     } else {
-                        Tenant tenant = tenantDao.findById(device.getTenantId(), device.getTenantId().getId());
+                        Tenant tenant = tenantService.findTenantById(device.getTenantId());
                         if (tenant == null) {
                             throw new DataValidationException("Device is referencing to non-existent tenant!");
                         }
