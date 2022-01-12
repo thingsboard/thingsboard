@@ -31,12 +31,12 @@ import {
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { MAX_SAFE_PAGE_SIZE, PageLink, TimePageLink } from '@shared/models/page/page-link';
+import { MAX_SAFE_PAGE_SIZE, PageLink, PageQueryParam, TimePageLink } from '@shared/models/page/page-link';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
+import { MatSort, SortDirection } from '@angular/material/sort';
 import { EntitiesDataSource } from '@home/models/datasource/entity-datasource';
-import { catchError, debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, skip, tap } from 'rxjs/operators';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { forkJoin, fromEvent, merge, Observable, of, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -194,7 +194,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
 
     this.columnsUpdated();
 
-    const routerQueryParams = this.route.snapshot.queryParams;
+    const routerQueryParams: PageQueryParam = this.route.snapshot.queryParams;
 
     let sortOrder: SortOrder = null;
     if (this.entitiesTableConfig.defaultSortOrder || routerQueryParams.hasOwnProperty('direction') || routerQueryParams.hasOwnProperty('property')) {
@@ -219,10 +219,10 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     }
     this.pageLink.pageSize = this.displayPagination ? this.defaultPageSize : MAX_SAFE_PAGE_SIZE;
     if (routerQueryParams.hasOwnProperty('page')) {
-      this.pageLink.page = routerQueryParams.page;
+      this.pageLink.page = Number(routerQueryParams.page);
     }
     if (routerQueryParams.hasOwnProperty('pageSize')) {
-      this.pageLink.pageSize = routerQueryParams.pageSize;
+      this.pageLink.pageSize = Number(routerQueryParams.pageSize);
     }
     if (routerQueryParams.hasOwnProperty('textSearch') && !isEmptyStr(routerQueryParams.textSearch)) {
       this.textSearchMode = true;
@@ -249,18 +249,32 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
         debounceTime(150),
         distinctUntilChanged(),
         tap(() => {
-          const queryParams: any = {
+          const queryParams: PageQueryParam = {
             textSearch: encodeURI(this.pageLink.textSearch) || null
           };
           if (this.displayPagination) {
             this.paginator.pageIndex = 0;
             queryParams.page = null;
           }
-          this.updatedRouterQueryParams(queryParams);
-          this.updateData();
+          this.updatedRouterParamsAndData(queryParams);
         })
       )
       .subscribe();
+
+    this.route.queryParams.pipe(skip(1)).subscribe((params: PageQueryParam) => {
+      this.paginator.pageIndex = Number(params.page) || 0;
+      this.paginator.pageSize = Number(params.pageSize) || this.defaultPageSize;
+      this.sort.active = params.property || this.entitiesTableConfig.defaultSortOrder.property;
+      this.sort.direction = (params.direction || this.entitiesTableConfig.defaultSortOrder.direction).toLowerCase() as SortDirection;
+      if (params.hasOwnProperty('textSearch') && !isEmptyStr(params.textSearch)) {
+        this.textSearchMode = true;
+        this.pageLink.textSearch = decodeURI(params.textSearch);
+      } else {
+        this.textSearchMode = false;
+        this.pageLink.textSearch = null;
+      }
+      this.updateData();
+    });
 
     this.updatePaginationSubscriptions();
     this.viewInited = true;
@@ -275,8 +289,8 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     const sortSubscription$: Observable<object> = this.sort.sortChange.asObservable().pipe(
       map((data) => {
         const direction = data.direction.toUpperCase();
-        const queryParams: any = {
-          direction: this.entitiesTableConfig?.defaultSortOrder?.direction === direction ? null : direction,
+        const queryParams: PageQueryParam = {
+          direction: (this.entitiesTableConfig?.defaultSortOrder?.direction === direction ? null : direction) as Direction,
           property: this.entitiesTableConfig?.defaultSortOrder?.property === data.active ? null : data.active
         };
         if (this.displayPagination) {
@@ -297,10 +311,9 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
       );
     }
     this.updateDataSubscription = ((this.displayPagination ? merge(sortSubscription$, paginatorSubscription$)
-      : sortSubscription$) as Observable<any>).pipe(
+      : sortSubscription$) as Observable<PageQueryParam>).pipe(
       tap((queryParams) => {
-        this.updatedRouterQueryParams(queryParams);
-        this.updateData();
+        this.updatedRouterParamsAndData(queryParams);
       })
     ).subscribe();
   }
@@ -486,15 +499,14 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   exitFilterMode() {
     this.textSearchMode = false;
     this.pageLink.textSearch = null;
-    const queryParams: any = {
+    const queryParams: PageQueryParam = {
       textSearch: null
     };
     if (this.displayPagination) {
       this.paginator.pageIndex = 0;
       queryParams.page = null;
     }
-    this.updatedRouterQueryParams(queryParams);
-    this.updateData();
+    this.updatedRouterParamsAndData(queryParams);
   }
 
   resetSortAndFilter(update: boolean = true, preserveTimewindow: boolean = false) {
@@ -508,9 +520,8 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     const sortable = this.sort.sortables.get(this.entitiesTableConfig.defaultSortOrder.property);
     this.sort.active = sortable.id;
     this.sort.direction = this.entitiesTableConfig.defaultSortOrder.direction === Direction.ASC ? 'asc' : 'desc';
-    this.updatedRouterQueryParams({}, 'preserve');
     if (update) {
-      this.updateData();
+      this.updatedRouterParamsAndData({}, 'preserve');
     }
   }
 
@@ -628,13 +639,15 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     return entity.id.id;
   }
 
-  protected updatedRouterQueryParams(queryParams: object, queryParamsHandling: QueryParamsHandling = 'merge') {
+  protected updatedRouterParamsAndData(queryParams: object, queryParamsHandling: QueryParamsHandling = 'merge') {
     if (this.persistentPageLinkMode) {
       this.router.navigate([], {
         relativeTo: this.route,
         queryParams,
         queryParamsHandling
       });
+    } else {
+      this.updateData();
     }
   }
 }
