@@ -29,6 +29,7 @@ import org.eclipse.californium.scandium.dtls.HandshakeResultHandler;
 import org.eclipse.californium.scandium.dtls.x509.NewAdvancedCertificateVerifier;
 import org.eclipse.californium.scandium.dtls.x509.StaticCertificateVerifier;
 import org.eclipse.californium.scandium.util.ServerNames;
+import org.eclipse.leshan.core.util.SecurityUtil;
 import org.eclipse.leshan.server.security.NonUniqueSecurityInfoException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -43,18 +44,28 @@ import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MClientCredentials;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
 import org.thingsboard.server.transport.lwm2m.server.store.TbMainSecurityStore;
 
 import javax.annotation.PostConstruct;
 import javax.security.auth.x500.X500Principal;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.cert.CertPath;
+import java.security.cert.CertPathValidator;
+import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateNotYetValidException;
+import java.security.cert.PKIXParameters;
+import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer.CLIENT;
@@ -69,7 +80,6 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
     private final LwM2MTransportServerConfig config;
     private final LwM2mCredentialsSecurityInfoValidator securityInfoValidator;
     private final TbMainSecurityStore securityStore;
-    private final TbLwM2MCertificateVerifier certificateVerifier;
 
     @SuppressWarnings("deprecation")
     private StaticCertificateVerifier staticCertificateVerifier;
@@ -114,9 +124,26 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
                         if (!skipValidityCheckForClientCert) {
                             cert.checkValidity();
                         }
+
+
+                        TbLwM2MSecurityInfo securityInfo = null;
+                        // verify if trust
+                        if (config.getTrustSslCredentials() != null && config.getTrustSslCredentials().getTrustedCertificates().length > 0) {
+                            if (verifyTrust(cert, config.getTrustSslCredentials().getTrustedCertificates()) != null) {
+                                String endpoint = config.getTrustSslCredentials().getValueFromSubjectNameByKey(cert.getSubjectX500Principal().getName(), "CN");
+                                securityInfo = StringUtils.isNotEmpty(endpoint) ? securityInfoValidator.getEndpointSecurityInfoByCredentialsId(endpoint, CLIENT) : null;
+                            }
+                        }
+                        // if not trust or cert trust securityInfo == null
                         String strCert = SslUtil.getCertificateString(cert);
                         String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
-                        TbLwM2MSecurityInfo securityInfo = certificateVerifier.verifyCertificate(cert, sha3Hash, CLIENT);
+                        if (securityInfo == null) {
+                            try {
+                                securityInfo = securityInfoValidator.getEndpointSecurityInfoByCredentialsId(sha3Hash, CLIENT);
+                            } catch (LwM2MAuthException e) {
+                                log.trace("Failed find security info: {}", sha3Hash, e);
+                            }
+                        }
                         ValidateDeviceCredentialsResponse msg = securityInfo != null ? securityInfo.getMsg() : null;
                         if (msg != null && org.thingsboard.server.common.data.StringUtils.isNotEmpty(msg.getCredentials())) {
                             LwM2MClientCredentials credentials = JacksonUtil.fromString(msg.getCredentials(), LwM2MClientCredentials.class);
@@ -173,5 +200,28 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
     @Override
     public void setResultHandler(HandshakeResultHandler resultHandler) {
 
+    }
+
+    private X509Certificate verifyTrust(X509Certificate certificate, X509Certificate[] certificates) {
+        try {
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            CertPath cp = cf.generateCertPath(Arrays.asList(new X509Certificate[]{certificate}));
+            for (int index = 0; index < certificates.length; ++index) {
+                X509Certificate caCert = certificates[index];
+                try {
+                    TrustAnchor trustAnchor = new TrustAnchor(caCert, null);
+                    CertPathValidator cpv = CertPathValidator.getInstance("PKIX");
+                    PKIXParameters pkixParams = new PKIXParameters(
+                            Collections.singleton(trustAnchor));
+                    pkixParams.setRevocationEnabled(false);
+                    if (cpv.validate(cp, pkixParams) != null) return certificate;
+                } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException | CertPathValidatorException e) {
+                    log.trace("[{}]. [{}]", certificate.getSubjectDN(), e.getMessage());
+                }
+            }
+        } catch (CertificateException e) {
+            log.trace("[{}] certPath not valid. [{}]", certificate.getSubjectDN(), e.getMessage());
+        }
+        return null;
     }
 }
