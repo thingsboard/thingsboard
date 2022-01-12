@@ -40,7 +40,7 @@ import {
   TooltipsterResolver
 } from '@home/pages/rulechain/rulechain-routing.module';
 import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
-import { entityDetailsPageBreadcrumbLabelFunction } from '@core/utils';
+import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
 
 const routes: Routes = [
   {

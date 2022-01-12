@@ -23,7 +23,7 @@ import { TenantsTableConfigResolver } from '@modules/home/pages/tenant/tenants-t
 import { UsersTableConfigResolver } from '../user/users-table-config.resolver';
 import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
-import { entityDetailsPageBreadcrumbLabelFunction } from '@core/utils';
+import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
 import { BreadCrumbConfig } from '@shared/components/breadcrumb';
 
 const routes: Routes = [

@@ -30,7 +30,7 @@ import { dashboardBreadcumbLabelFunction, DashboardResolver } from '@home/pages/
 import { EdgesTableConfigResolver } from '@home/pages/edge/edges-table-config.resolver';
 import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
-import { entityDetailsPageBreadcrumbLabelFunction } from '@core/utils';
+import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
 
 const routes: Routes = [
   {
