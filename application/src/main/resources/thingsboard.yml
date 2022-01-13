@@ -620,12 +620,12 @@ transport:
     enabled: "${TB_TRANSPORT_LOG_ENABLED:true}"
     max_length: "${TB_TRANSPORT_LOG_MAX_LENGTH:1024}"
   rate_limits:
-    # Maximum number of simultaneous connections from a single ip address
-    max_connections_per_ip: "${TB_TRANSPORT_MAX_CONNECTIONS_PER_IP:50}"
+    # Enable or disable generic rate limits. Device and Tenant specific rate limits are controlled in Tenant Profile.
+    ip_limits_enabled: "${TB_TRANSPORT_IP_RATE_LIMITS_ENABLED:false}"
     # Maximum number of connect attempts with invalid credentials
     max_wrong_credentials_per_ip: "${TB_TRANSPORT_MAX_WRONG_CREDENTIALS_PER_IP:10}"
     # Timeout to expire block IP addresses
-    ip_block_timeout: "${TB_TRANSPORT_IP_BLOCK_TIMEOUT:10000}"
+    ip_block_timeout: "${TB_TRANSPORT_IP_BLOCK_TIMEOUT:60000}"
   # Local HTTP transport parameters
   http:
     enabled: "${HTTP_ENABLED:true}"

@@ -20,7 +20,6 @@ import com.google.gson.JsonParseException;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.handler.codec.haproxy.HAProxyMessage;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttConnAckVariableHeader;
 import io.netty.handler.codec.mqtt.MqttConnectMessage;
@@ -823,7 +822,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                         }
                     });
         } catch (Exception e) {
-            context.onAuthFailed(address);
+            context.onAuthFailure(address);
             ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_NOT_AUTHORIZED, connectMessage));
             log.trace("[{}] X509 auth failure: {}", sessionId, address, e);
             ctx.close();
@@ -935,10 +934,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private void onValidateDeviceResponse(ValidateDeviceCredentialsResponse msg, ChannelHandlerContext ctx, MqttConnectMessage connectMessage) {
         if (!msg.hasDeviceInfo()) {
-            context.onAuthFailed(address);
+            context.onAuthFailure(address);
             ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_NOT_AUTHORIZED, connectMessage));
             ctx.close();
         } else {
+            context.onAuthSuccess(address);
             deviceSessionCtx.setDeviceInfo(msg.getDeviceInfo());
             deviceSessionCtx.setDeviceProfile(msg.getDeviceProfile());
             deviceSessionCtx.setSessionInfo(SessionInfoCreator.create(msg, context, sessionId));

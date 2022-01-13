@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.transport.limits;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.EntityType;
@@ -25,14 +26,13 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
-import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.common.transport.TransportTenantProfileCache;
 import org.thingsboard.server.common.transport.profile.TenantProfileUpdateResult;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -49,8 +49,16 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
     private final ConcurrentMap<TenantId, Set<DeviceId>> tenantDevices = new ConcurrentHashMap<>();
     private final ConcurrentMap<TenantId, EntityTransportRateLimits> perTenantLimits = new ConcurrentHashMap<>();
     private final ConcurrentMap<DeviceId, EntityTransportRateLimits> perDeviceLimits = new ConcurrentHashMap<>();
+    private final Map<InetAddress, InetAddressRateLimitStats> ipMap = new ConcurrentHashMap<>();
 
     private final TransportTenantProfileCache tenantProfileCache;
+
+    @Value("${transport.rate_limits.ip_limits_enabled:false}")
+    private boolean ipRateLimitsEnabled;
+    @Value("${transport.rate_limits.max_wrong_credentials_per_ip:10}")
+    private int maxWrongCredentialsPerIp;
+    @Value("${transport.rate_limits.ip_block_timeout:60000}")
+    private long ipBlockTimeout;
 
     public DefaultTransportRateLimitService(TransportTenantProfileCache tenantProfileCache) {
         this.tenantProfileCache = tenantProfileCache;
@@ -118,16 +126,73 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
         tenantAllowed.put(tenantId, allowed);
     }
 
-    private Set<InetAddress> blockedAddresses = new HashSet<>();
-
     @Override
     public boolean checkAddress(InetSocketAddress address) {
-        return !blockedAddresses.contains(address.getAddress());
+        if (!ipRateLimitsEnabled) {
+            return true;
+        }
+        var stats = ipMap.computeIfAbsent(address.getAddress(), a -> new InetAddressRateLimitStats());
+        return !stats.isBlocked() || (stats.getLastActivityTs() + ipBlockTimeout < System.currentTimeMillis());
     }
 
     @Override
-    public void onAuthFailed(InetSocketAddress address) {
-        blockedAddresses.add(address.getAddress());
+    public void onAuthSuccess(InetSocketAddress address) {
+        if (!ipRateLimitsEnabled) {
+            return;
+        }
+
+        var stats = ipMap.computeIfAbsent(address.getAddress(), a -> new InetAddressRateLimitStats());
+        stats.getLock().lock();
+        try {
+            stats.setLastActivityTs(System.currentTimeMillis());
+            stats.setFailureCount(0);
+            if (stats.isBlocked()) {
+                stats.setBlocked(false);
+                log.info("[{}] IP address un-blocked due to correct credentials.", address.getAddress());
+            }
+        } finally {
+            stats.getLock().unlock();
+        }
+    }
+
+    @Override
+    public void onAuthFailure(InetSocketAddress address) {
+        if (!ipRateLimitsEnabled) {
+            return;
+        }
+
+        var stats = ipMap.computeIfAbsent(address.getAddress(), a -> new InetAddressRateLimitStats());
+        stats.getLock().lock();
+        try {
+            stats.setLastActivityTs(System.currentTimeMillis());
+            int failureCount = stats.getFailureCount() + 1;
+            stats.setFailureCount(failureCount);
+            if (failureCount >= maxWrongCredentialsPerIp) {
+                log.info("[{}] IP address blocked due to constantly wrong credentials.", address.getAddress());
+                stats.setBlocked(true);
+            }
+        } finally {
+            stats.getLock().unlock();
+        }
+    }
+
+    @Override
+    public void invalidateRateLimitsIpTable(long sessionInactivityTimeout) {
+        if (!ipRateLimitsEnabled) {
+            return;
+        }
+        long currentTime = System.currentTimeMillis();
+        long expTime = currentTime - Math.max(sessionInactivityTimeout, ipBlockTimeout);
+        for (var entry : ipMap.entrySet()) {
+            var stats = entry.getValue();
+            if (stats.getLastActivityTs() < expTime) {
+                log.debug("[{}] IP address removed due to session inactivity timeout.", entry.getKey());
+                ipMap.remove(entry.getKey());
+            } else if (stats.isBlocked() && (stats.getLastActivityTs() + ipBlockTimeout < currentTime)) {
+                log.info("[{}] IP address unblocked due ip block timeout.", entry.getKey());
+                stats.setBlocked(false);
+            }
+        }
     }
 
     private <T extends EntityId> void mergeLimits(T entityId, EntityTransportRateLimits newRateLimits,

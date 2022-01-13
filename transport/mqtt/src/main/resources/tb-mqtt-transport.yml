@@ -149,6 +149,15 @@ transport:
   stats:
     enabled: "${TB_TRANSPORT_STATS_ENABLED:true}"
     print-interval-ms: "${TB_TRANSPORT_STATS_PRINT_INTERVAL_MS:60000}"
+  client_side_rpc:
+    timeout: "${CLIENT_SIDE_RPC_TIMEOUT:60000}"
+  rate_limits:
+    # Enable or disable generic rate limits. Device and Tenant specific rate limits are controlled in Tenant Profile.
+    ip_limits_enabled: "${TB_TRANSPORT_IP_RATE_LIMITS_ENABLED:false}"
+    # Maximum number of connect attempts with invalid credentials
+    max_wrong_credentials_per_ip: "${TB_TRANSPORT_MAX_WRONG_CREDENTIALS_PER_IP:10}"
+    # Timeout to expire block IP addresses
+    ip_block_timeout: "${TB_TRANSPORT_IP_BLOCK_TIMEOUT:60000}"
 
 
 queue:

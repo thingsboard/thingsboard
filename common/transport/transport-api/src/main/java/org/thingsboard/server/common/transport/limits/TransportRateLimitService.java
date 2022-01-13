@@ -38,5 +38,10 @@ public interface TransportRateLimitService {
 
     boolean checkAddress(InetSocketAddress address);
 
-    void onAuthFailed(InetSocketAddress address);
+    void onAuthSuccess(InetSocketAddress address);
+
+    void onAuthFailure(InetSocketAddress address);
+
+    void invalidateRateLimitsIpTable(long sessionInactivityTimeout);
+
 }

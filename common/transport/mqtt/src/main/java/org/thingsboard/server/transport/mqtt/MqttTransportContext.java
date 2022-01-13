@@ -23,15 +23,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
-import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.net.InetSocketAddress;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -94,12 +91,16 @@ public class MqttTransportContext extends TransportContext {
         connectionsCounter.decrementAndGet();
     }
 
-    public boolean checkAddress(InetSocketAddress address){
+    public boolean checkAddress(InetSocketAddress address) {
         return rateLimitService.checkAddress(address);
     }
 
-    public void onAuthFailed(InetSocketAddress address){
-        rateLimitService.onAuthFailed(address);
+    public void onAuthSuccess(InetSocketAddress address) {
+        rateLimitService.onAuthSuccess(address);
+    }
+
+    public void onAuthFailure(InetSocketAddress address) {
+        rateLimitService.onAuthFailure(address);
     }
 
 }
