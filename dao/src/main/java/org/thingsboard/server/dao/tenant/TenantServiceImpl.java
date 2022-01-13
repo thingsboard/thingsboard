@@ -20,6 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +50,7 @@ import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
+import static org.thingsboard.server.common.data.CacheConstants.TENANTS_CACHE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service
@@ -104,6 +107,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
     private RpcService rpcService;
 
     @Override
+    @Cacheable(cacheNames = TENANTS_CACHE, key = "#tenantId", condition = "#tenantId!=null")
     public Tenant findTenantById(TenantId tenantId) {
         log.trace("Executing findTenantById [{}]", tenantId);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
@@ -126,6 +130,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = TENANTS_CACHE, key = "#tenant.id", condition = "#tenant.id!=null")
     public Tenant saveTenant(Tenant tenant) {
         log.trace("Executing saveTenant [{}]", tenant);
         tenant.setRegion(DEFAULT_TENANT_REGION);
@@ -144,6 +149,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = TENANTS_CACHE, key = "#tenantId", condition = "#tenantId!=null")
     public void deleteTenant(TenantId tenantId) {
         log.trace("Executing deleteTenant [{}]", tenantId);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);

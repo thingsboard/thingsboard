@@ -407,6 +407,9 @@ caffeine:
     tenantProfiles:
       timeToLiveInMinutes: "${CACHE_SPECS_TENANT_PROFILES_TTL:1440}"
       maxSize: "${CACHE_SPECS_TENANT_PROFILES_MAX_SIZE:10000}"
+    tenants:
+      timeToLiveInMinutes: "${CACHE_SPECS_TENANTS_TTL:1440}"
+      maxSize: "${CACHE_SPECS_TENANTS_MAX_SIZE:10000}"
     deviceProfiles:
       timeToLiveInMinutes: "${CACHE_SPECS_DEVICE_PROFILES_TTL:1440}"
       maxSize: "${CACHE_SPECS_DEVICE_PROFILES_MAX_SIZE:10000}"
