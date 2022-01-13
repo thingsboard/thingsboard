@@ -68,7 +68,7 @@ public class TbMsgPackCallback implements TbMsgCallback {
 
     @Override
     public boolean isMsgValid() {
-        return !ctx.isComplete();
+        return !ctx.isCanceled();
     }
 
     @Override
