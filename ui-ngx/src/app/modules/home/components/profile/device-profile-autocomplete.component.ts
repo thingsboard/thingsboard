@@ -284,7 +284,6 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
     const idValue = deviceProfile && deviceProfile.id ? new DeviceProfileId(deviceProfile.id.id) : null;
     if (!entityIdEquals(this.modelValue, idValue)) {
       this.modelValue = idValue;
-      this.deviceProfileURL = getEntityDetailsPageURL(this.modelValue.id, this.modelValue.entityType);
       this.propagateChange(this.modelValue);
       this.deviceProfileChanged.emit(deviceProfile);
     }

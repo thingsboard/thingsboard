@@ -128,7 +128,6 @@ export class TenantProfileAutocompleteComponent implements ControlValueAccessor,
         (profile) => {
           if (profile) {
             this.modelValue = new TenantProfileId(profile.id.id);
-            this.tenantProfileURL = getEntityDetailsPageURL(this.modelValue.id, this.modelValue.entityType);
             this.selectTenantProfileFormGroup.get('tenantProfile').patchValue(profile, {emitEvent: false});
             this.propagateChange(this.modelValue);
           }
