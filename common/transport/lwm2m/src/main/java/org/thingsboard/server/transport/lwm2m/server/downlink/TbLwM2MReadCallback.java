@@ -35,7 +35,6 @@ public class TbLwM2MReadCallback extends TbLwM2MUplinkTargetedCallback<ReadReque
     @Override
     public void onSuccess(ReadRequest request, ReadResponse response) {
         logForBadResponse(response.getCode().getCode(), responseToString(response), request.getClass().getSimpleName());
-        super.onSuccess(request, response);
         handler.onUpdateValueAfterReadResponse(client.getRegistration(), versionedId, response);
     }
 
