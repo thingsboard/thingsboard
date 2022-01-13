@@ -198,7 +198,7 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
                 if (pathIdVer != null) {
                     // #1.1
                     if (lwM2MClient.getSharedAttributes().containsKey(pathIdVer)) {
-                        if (tsKvProto.getTs() >= lwM2MClient.getSharedAttributes().get(pathIdVer).getTs()) {
+                        if (tsKvProto.getTs() > lwM2MClient.getSharedAttributes().get(pathIdVer).getTs()) {
                             lwM2MClient.getSharedAttributes().put(pathIdVer, tsKvProto);
                             attributesUpdate.put(pathIdVer, tsKvProto);
                         }
