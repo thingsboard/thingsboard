@@ -47,6 +47,7 @@ import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MClientCred
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
 import org.thingsboard.server.transport.lwm2m.server.store.TbMainSecurityStore;
+import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer;
 
 import javax.annotation.PostConstruct;
 import javax.security.auth.x500.X500Principal;
@@ -80,6 +81,7 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
     private final LwM2MTransportServerConfig config;
     private final LwM2mCredentialsSecurityInfoValidator securityInfoValidator;
     private final TbMainSecurityStore securityStore;
+    private final TbLwM2MCertificateVerifier certificateVerifier;
 
     @SuppressWarnings("deprecation")
     private StaticCertificateVerifier staticCertificateVerifier;
@@ -125,25 +127,9 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
                             cert.checkValidity();
                         }
 
-
-                        TbLwM2MSecurityInfo securityInfo = null;
-                        // verify if trust
-                        if (config.getTrustSslCredentials() != null && config.getTrustSslCredentials().getTrustedCertificates().length > 0) {
-                            if (verifyTrust(cert, config.getTrustSslCredentials().getTrustedCertificates()) != null) {
-                                String endpoint = config.getTrustSslCredentials().getValueFromSubjectNameByKey(cert.getSubjectX500Principal().getName(), "CN");
-                                securityInfo = StringUtils.isNotEmpty(endpoint) ? securityInfoValidator.getEndpointSecurityInfoByCredentialsId(endpoint, CLIENT) : null;
-                            }
-                        }
-                        // if not trust or cert trust securityInfo == null
                         String strCert = SslUtil.getCertificateString(cert);
                         String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
-                        if (securityInfo == null) {
-                            try {
-                                securityInfo = securityInfoValidator.getEndpointSecurityInfoByCredentialsId(sha3Hash, CLIENT);
-                            } catch (LwM2MAuthException e) {
-                                log.trace("Failed find security info: {}", sha3Hash, e);
-                            }
-                        }
+                        TbLwM2MSecurityInfo securityInfo = certificateVerifier.verifyCertificate(cert, sha3Hash, CLIENT);
                         ValidateDeviceCredentialsResponse msg = securityInfo != null ? securityInfo.getMsg() : null;
                         if (msg != null && org.thingsboard.server.common.data.StringUtils.isNotEmpty(msg.getCredentials())) {
                             LwM2MClientCredentials credentials = JacksonUtil.fromString(msg.getCredentials(), LwM2MClientCredentials.class);
@@ -200,28 +186,5 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
     @Override
     public void setResultHandler(HandshakeResultHandler resultHandler) {
 
-    }
-
-    private X509Certificate verifyTrust(X509Certificate certificate, X509Certificate[] certificates) {
-        try {
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            CertPath cp = cf.generateCertPath(Arrays.asList(new X509Certificate[]{certificate}));
-            for (int index = 0; index < certificates.length; ++index) {
-                X509Certificate caCert = certificates[index];
-                try {
-                    TrustAnchor trustAnchor = new TrustAnchor(caCert, null);
-                    CertPathValidator cpv = CertPathValidator.getInstance("PKIX");
-                    PKIXParameters pkixParams = new PKIXParameters(
-                            Collections.singleton(trustAnchor));
-                    pkixParams.setRevocationEnabled(false);
-                    if (cpv.validate(cp, pkixParams) != null) return certificate;
-                } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException | CertPathValidatorException e) {
-                    log.trace("[{}]. [{}]", certificate.getSubjectDN(), e.getMessage());
-                }
-            }
-        } catch (CertificateException e) {
-            log.trace("[{}] certPath not valid. [{}]", certificate.getSubjectDN(), e.getMessage());
-        }
-        return null;
     }
 }
