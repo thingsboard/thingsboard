@@ -31,14 +31,13 @@ public class X509_NoTrustLwM2MIntegrationTest extends AbstractSecurityLwM2MInteg
     @Test
     public void testConnectWithCertAndObserveTelemetry() throws Exception {
         X509ClientCredential credentials = new X509ClientCredential();
-        credentials.setEndpoint(ENDPOINT);
-        credentials.setCert(SslUtil.getCertificateString(clientX509CertNotTrusted));
+        credentials.setEndpoint(CLIENT_ENDPOINT_X509_TRUST_NO);
+        credentials.setCert(SslUtil.getCertificateString(clientX509CertTrustNo));
         Security security = x509(SECURE_URI,
                 SHORT_SERVER_ID,
-                clientX509CertNotTrusted.getEncoded(),
-                clientPrivateKeyFromCert.getEncoded(),
+                clientX509CertTrustNo.getEncoded(),
+                clientPrivateKeyFromCertTrustNo.getEncoded(),
                 serverX509Cert.getEncoded());
-        super.basicTestConnectionObserveTelemetry(security, credentials, SECURE_COAP_CONFIG, ENDPOINT);
+        super.basicTestConnectionObserveTelemetry(security, credentials, SECURE_COAP_CONFIG, CLIENT_ENDPOINT_X509_TRUST_NO);
     }
-
 }

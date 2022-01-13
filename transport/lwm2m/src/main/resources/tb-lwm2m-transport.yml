@@ -114,7 +114,7 @@ transport:
         # Server X509 Certificates support
         credentials:
           # Whether to enable LWM2M server X509 Certificate/RPK support
-          enabled: "${LWM2M_SERVER_CREDENTIALS_ENABLED:true}"
+          enabled: "${LWM2M_SERVER_CREDENTIALS_ENABLED:false}"
           # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
           type: "${LWM2M_SERVER_CREDENTIALS_TYPE:PEM}"
           # PEM server credentials
@@ -150,7 +150,7 @@ transport:
         # Bootstrap server X509 Certificates support
         credentials:
           # Whether to enable LWM2M bootstrap server X509 Certificate/RPK support
-          enabled: "${LWM2M_BS_CREDENTIALS_ENABLED:true}"
+          enabled: "${LWM2M_BS_CREDENTIALS_ENABLED:false}"
           # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
           type:  "${LWM2M_BS_CREDENTIALS_TYPE:PEM}"
           # PEM server credentials
@@ -177,19 +177,19 @@ transport:
       # X509 trust certificates
       trust-credentials:
         # Whether to load X509 trust certificates
-        enabled: "${LWM2M_TRUST_CREDENTIALS_ENABLED:true}"
+        enabled: "${LWM2M_TRUST_CREDENTIALS_ENABLED:false}"
         # Trust certificates store type (PEM - pem certificates file; KEYSTORE - java keystore)
         type:  "${LWM2M_TRUST_CREDENTIALS_TYPE:PEM}"
         # PEM certificates
         pem:
           # Path to the certificates file (holds trust certificates)
-          cert_file: "${LWM2M_TRUST_PEM_CERT:lwm2mserver.pem}"
+          cert_file: "${LWM2M_TRUST_PEM_CERT:lwm2mtruststorechain.pem}"
         # Keystore with trust certificates
         keystore:
           # Type of the key store
           type: "${LWM2M_TRUST_KEY_STORE_TYPE:JKS}"
           # Path to the key store that holds the X509 certificates
-          store_file: "${LWM2M_TRUST_KEY_STORE:lwm2mserver.jks}"
+          store_file: "${LWM2M_TRUST_KEY_STORE:lwm2mtruststorechain.jks}"
           # Password used to access the key store
           store_password: "${LWM2M_TRUST_KEY_STORE_PASSWORD:server_ks_password}"
       recommended_ciphers: "${LWM2M_RECOMMENDED_CIPHERS:false}"

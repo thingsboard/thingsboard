@@ -31,8 +31,8 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_0;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resourceId_2;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_0;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_2;
 
 
 public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegrationTest {
@@ -141,7 +141,7 @@ public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegration
      */
     @Test
     public void testDiscoverObjectInstanceAbsentInObject_Return_NOT_FOUND() throws Exception {
-        String expected = objectIdVer_2 + "/" + objectInstanceId_0;
+        String expected = objectIdVer_2 + "/" + OBJECT_INSTANCE_ID_0;
         String actualResult = sendDiscover(expected);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.NOT_FOUND.getName(), rpcActualResult.get("result").asText());
@@ -152,7 +152,7 @@ public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegration
      */
     @Test
     public void testDiscoverResourceAbsentInObject_Return_NOT_FOUND() throws Exception {
-         String expected = objectIdVer_2 + "/" + objectInstanceId_0 + "/" + resourceId_2;
+         String expected = objectIdVer_2 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_2;
         String actualResult = sendDiscover(expected);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.NOT_FOUND.getName(), rpcActualResult.get("result").asText());

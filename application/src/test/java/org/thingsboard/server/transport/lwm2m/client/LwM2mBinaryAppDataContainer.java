@@ -66,8 +66,7 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
      * "value":4
      * },
      */
-//    private String data = "InNlcnZpY2VJZCI6Ik1ldGVyIiwNCiJzZXJ2aWNlRGF0YSI6ew0KImN1cnJlbnRSZWFkaW5nIjoiNDYuMyIsDQoic2lnbmFsU3RyZW5ndGgiOjE2LA0KImRhaWx5QWN0aXZpdHlUaW1lIjo1NzA2DQo=";
-//    private byte[] data;
+
     Map<Integer, byte[]> data;
     private Integer priority = 0;
     private Time timestamp;
@@ -83,7 +82,6 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
         try {
             if (id != null) this.setId(id);
             executorService.scheduleWithFixedDelay(() ->
-//                    fireResourcesChange(0, 2), 5000, 5000, TimeUnit.MILLISECONDS);
                     fireResourcesChange(0, 2), 1800000, 1800000, TimeUnit.MILLISECONDS); // 30 MIN
         } catch (Throwable e) {
             log.error("[{}]Throwable", e.toString());
@@ -93,15 +91,11 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
 
     @Override
     public ReadResponse read(ServerIdentity identity, int resourceId) {
-//        log.warn("Read on Location resource /[{}]/[{}]/[{}]", getModel().id, getId(), resourceId);
         try {
             switch (resourceId) {
                 case 0:
-//                    log.warn("Read on Location resource /[{}]/[{}]/[{}]", getModel().id, getId(), resourceId);
                     ReadResponse response = ReadResponse.success(resourceId, getData(), ResourceModel.Type.OPAQUE);
-//                    log.warn("Response [{}]", response);
                     return response;
-
                 case 1:
                     return ReadResponse.success(resourceId, getPriority());
                 case 2:
@@ -168,7 +162,6 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
     }
 
     private String getDataFormat() {
-//        return  this.dataFormat == null ? "base64" : this.dataFormat;
         return this.dataFormat == null ? "OPAQUE" : this.dataFormat;
     }
 
@@ -188,7 +181,6 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
         return this.timestamp != null ? this.timestamp : new Time(new Date().getTime());
     }
 
-//    fireResourcesChange(resourceId);
     private boolean setData(LwM2mResource value, boolean replace) {
         try {
             if (value instanceof LwM2mMultipleResource) {
@@ -208,7 +200,6 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
     }
 
     private Map<Integer, byte[]> getData() {
-//        this.data.put(23, new byte[]{0,0, 2,3});
         return data;
     }
 
