@@ -30,6 +30,7 @@ import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -73,6 +74,10 @@ public class MqttTransportContext extends TransportContext {
     @Value("${transport.mqtt.timeout:10000}")
     private long timeout;
 
+    @Getter
+    @Value("${transport.mqtt.proxy_enabled:false}")
+    private boolean proxyEnabled;
+
     private final AtomicInteger connectionsCounter = new AtomicInteger();
 
     @PostConstruct
@@ -88,4 +93,13 @@ public class MqttTransportContext extends TransportContext {
     public void channelUnregistered() {
         connectionsCounter.decrementAndGet();
     }
+
+    public boolean checkAddress(InetSocketAddress address){
+        return rateLimitService.checkAddress(address);
+    }
+
+    public void onAuthFailed(InetSocketAddress address){
+        rateLimitService.onAuthFailed(address);
+    }
+
 }

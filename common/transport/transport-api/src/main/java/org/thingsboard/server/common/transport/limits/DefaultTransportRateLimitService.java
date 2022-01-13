@@ -30,6 +30,8 @@ import org.thingsboard.server.common.transport.TransportTenantProfileCache;
 import org.thingsboard.server.common.transport.profile.TenantProfileUpdateResult;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -114,6 +116,18 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
     @Override
     public void update(TenantId tenantId, boolean allowed) {
         tenantAllowed.put(tenantId, allowed);
+    }
+
+    private Set<InetAddress> blockedAddresses = new HashSet<>();
+
+    @Override
+    public boolean checkAddress(InetSocketAddress address) {
+        return !blockedAddresses.contains(address.getAddress());
+    }
+
+    @Override
+    public void onAuthFailed(InetSocketAddress address) {
+        blockedAddresses.add(address.getAddress());
     }
 
     private <T extends EntityId> void mergeLimits(T entityId, EntityTransportRateLimits newRateLimits,

@@ -88,6 +88,9 @@ transport:
   mqtt:
     bind_address: "${MQTT_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${MQTT_BIND_PORT:1883}"
+    # Enable proxy protocol support. Disabled by default. If enabled, supports both v1 and v2.
+    # Useful to get the real IP address of the client in the logs and for rate limits.
+    proxy_enabled: "${MQTT_PROXY_PROTOCOL_ENABLED:false}"
     timeout: "${MQTT_TIMEOUT:10000}"
     msg_queue_size_per_device_limit: "${MQTT_MSG_QUEUE_SIZE_PER_DEVICE_LIMIT:100}" # messages await in the queue before device connected state. This limit works on low level before TenantProfileLimits mechanism
     netty:
