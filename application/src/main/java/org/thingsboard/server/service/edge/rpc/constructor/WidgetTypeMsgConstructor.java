@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
-import org.thingsboard.server.common.data.widget.WidgetType;
+import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.WidgetTypeUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -28,25 +28,31 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 @TbCoreComponent
 public class WidgetTypeMsgConstructor {
 
-    public WidgetTypeUpdateMsg constructWidgetTypeUpdateMsg(UpdateMsgType msgType, WidgetType widgetType) {
+    public WidgetTypeUpdateMsg constructWidgetTypeUpdateMsg(UpdateMsgType msgType, WidgetTypeDetails widgetTypeDetails) {
         WidgetTypeUpdateMsg.Builder builder = WidgetTypeUpdateMsg.newBuilder()
                 .setMsgType(msgType)
-                .setIdMSB(widgetType.getId().getId().getMostSignificantBits())
-                .setIdLSB(widgetType.getId().getId().getLeastSignificantBits());
-        if (widgetType.getBundleAlias() != null) {
-            builder.setBundleAlias(widgetType.getBundleAlias());
+                .setIdMSB(widgetTypeDetails.getId().getId().getMostSignificantBits())
+                .setIdLSB(widgetTypeDetails.getId().getId().getLeastSignificantBits());
+        if (widgetTypeDetails.getBundleAlias() != null) {
+            builder.setBundleAlias(widgetTypeDetails.getBundleAlias());
         }
-        if (widgetType.getAlias() != null) {
-            builder.setAlias(widgetType.getAlias());
+        if (widgetTypeDetails.getAlias() != null) {
+            builder.setAlias(widgetTypeDetails.getAlias());
         }
-        if (widgetType.getName() != null) {
-            builder.setName(widgetType.getName());
+        if (widgetTypeDetails.getName() != null) {
+            builder.setName(widgetTypeDetails.getName());
         }
-        if (widgetType.getDescriptor() != null) {
-            builder.setDescriptorJson(JacksonUtil.toString(widgetType.getDescriptor()));
+        if (widgetTypeDetails.getDescriptor() != null) {
+            builder.setDescriptorJson(JacksonUtil.toString(widgetTypeDetails.getDescriptor()));
         }
-        if (widgetType.getTenantId().equals(TenantId.SYS_TENANT_ID)) {
+        if (widgetTypeDetails.getTenantId().equals(TenantId.SYS_TENANT_ID)) {
             builder.setIsSystem(true);
+        }
+        if (widgetTypeDetails.getImage() != null) {
+            builder.setImage(widgetTypeDetails.getImage());
+        }
+        if (widgetTypeDetails.getDescription() != null) {
+            builder.setDescription(widgetTypeDetails.getDescription());
         }
         return builder.build();
     }
