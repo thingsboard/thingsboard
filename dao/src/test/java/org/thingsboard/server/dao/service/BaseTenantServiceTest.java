@@ -18,6 +18,12 @@ package org.thingsboard.server.dao.service;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -27,15 +33,25 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 
 public abstract class BaseTenantServiceTest extends AbstractServiceTest {
     
     private IdComparator<Tenant> idComparator = new IdComparator<>();
+
+    @SpyBean
+    protected TenantDao tenantDao;
+
+    @Autowired
+    CacheManager cacheManager;
 
     @Test
     public void testSaveTenant() {
@@ -274,5 +290,70 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         tenant.setTitle("Tenant");
         tenant.setTenantProfileId(isolatedTenantProfile.getId());
         tenantService.saveTenant(tenant);
+    }
+
+    @Test
+    public void testGettingTenantAddItToCache() {
+        Tenant tenant = new Tenant();
+        tenant.setTitle("My tenant");
+        Tenant savedTenant = tenantService.saveTenant(tenant);
+
+        Mockito.reset(tenantDao);
+        Objects.requireNonNull(cacheManager.getCache(CacheConstants.TENANTS_CACHE), "Tenant cache manager is null").evict(savedTenant.getId());
+
+        Mockito.verify(tenantDao, Mockito.times(0)).findById(any(), any());
+        tenantService.findTenantById(savedTenant.getId());
+        Mockito.verify(tenantDao, Mockito.times(1)).findById(eq(savedTenant.getId()), eq(savedTenant.getId().getId()));
+
+        Cache.ValueWrapper cachedTenant =
+                Objects.requireNonNull(cacheManager.getCache(CacheConstants.TENANTS_CACHE), "Cache manager is null!").get(savedTenant.getId());
+        Assert.assertNotNull("Getting an existing Tenant doesn't add it to the cache!", cachedTenant);
+
+        for (int i = 0; i < 100; i++) {
+            tenantService.findTenantById(savedTenant.getId());
+        }
+        Mockito.verify(tenantDao, Mockito.times(1)).findById(eq(savedTenant.getId()), eq(savedTenant.getId().getId()));
+
+        tenantService.deleteTenant(savedTenant.getId());
+    }
+
+    @Test
+    public void testUpdatingExistingTenantEvictCache() {
+        Tenant tenant = new Tenant();
+        tenant.setTitle("My tenant");
+        Tenant savedTenant = tenantService.saveTenant(tenant);
+
+        Cache.ValueWrapper cachedTenant =
+                Objects.requireNonNull(cacheManager.getCache(CacheConstants.TENANTS_CACHE), "Cache manager is null!").get(savedTenant.getId());
+        Assert.assertNotNull("Saving a Tenant doesn't add it to the cache!", cachedTenant);
+
+        savedTenant.setTitle("My new tenant");
+        savedTenant = tenantService.saveTenant(savedTenant);
+
+        Mockito.reset(tenantDao);
+
+        cachedTenant = Objects.requireNonNull(cacheManager.getCache(CacheConstants.TENANTS_CACHE), "Cache manager is null!").get(savedTenant.getId());
+        Assert.assertNull("Updating a Tenant doesn't evict the cache!", cachedTenant);
+
+        Mockito.verify(tenantDao, Mockito.times(0)).findById(any(), any());
+        tenantService.findTenantById(savedTenant.getId());
+        Mockito.verify(tenantDao, Mockito.times(1)).findById(eq(savedTenant.getId()), eq(savedTenant.getId().getId()));
+
+        tenantService.deleteTenant(savedTenant.getId());
+    }
+
+    @Test
+    public void testRemovingTenantEvictCache() {
+        Tenant tenant = new Tenant();
+        tenant.setTitle("My tenant");
+        Tenant savedTenant = tenantService.saveTenant(tenant);
+
+        Cache.ValueWrapper cachedTenant =
+                Objects.requireNonNull(cacheManager.getCache(CacheConstants.TENANTS_CACHE), "Cache manager is null!").get(savedTenant.getId());
+        Assert.assertNotNull("Saving a Tenant doesn't add it to the cache!", cachedTenant);
+
+        tenantService.deleteTenant(savedTenant.getId());
+        cachedTenant = Objects.requireNonNull(cacheManager.getCache(CacheConstants.TENANTS_CACHE), "Cache manager is null!").get(savedTenant.getId());
+        Assert.assertNull("Removing a Tenant doesn't evict the cache!", cachedTenant);
     }
 }
