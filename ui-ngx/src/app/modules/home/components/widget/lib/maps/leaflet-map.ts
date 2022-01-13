@@ -494,12 +494,12 @@ export default abstract class LeafletMap {
         }
         this.updateMarkers(formattedData, false);
         this.updateBoundsInternal();
-        if (this.options.draggableMarker) {
+        if (this.options.draggableMarker && !this.options.hideDrawControlButton) {
           const foundEntityWithoutLocation = formattedData.some(mData => !this.convertPosition(mData));
           this.map.pm.Toolbar.setButtonDisabled('tbMarker', !foundEntityWithoutLocation);
           this.datasources = formattedData;
         }
-        if (this.editPolygons) {
+        if (this.editPolygons && !this.options.hideDrawControlButton) {
           const foundEntityWithoutPolygon = formattedData.some(pData => !this.isValidPolygonPosition(pData));
           this.map.pm.Toolbar.setButtonDisabled('tbPolygon', !foundEntityWithoutPolygon);
           this.map.pm.Toolbar.setButtonDisabled('tbRectangle', !foundEntityWithoutPolygon);

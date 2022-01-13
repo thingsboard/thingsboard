@@ -33,6 +33,7 @@ export type MapSettings = {
     posFunction: PosFuncton;
     defaultZoomLevel?: number;
     disableScrollZooming?: boolean;
+    disableZoomControl?: boolean;
     minZoomLevel?: number;
     useClusterMarkers: boolean;
     latKeyName?: string;
