@@ -112,6 +112,9 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
         this.changeSecurityHostPortFields(serverSecurityConfig);
       }
       this.serverFormGroup.patchValue(serverSecurityConfig, {emitEvent: false});
+      if (this.currentSecurityMode === Lwm2mSecurityType.X509) {
+        this.serverFormGroup.get('serverPublicKey').patchValue(serverSecurityConfig.serverCertificate, {emitEvent: false});
+      }
     });
     this.serverFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
