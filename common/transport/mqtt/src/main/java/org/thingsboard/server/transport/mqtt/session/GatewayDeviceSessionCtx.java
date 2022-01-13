@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.transport.mqtt.session;
 
-import com.google.gson.JsonObject;
 import io.netty.channel.ChannelFuture;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +27,6 @@ import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 
@@ -82,7 +80,10 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
     @Override
     public void onGetAttributesResponse(TransportProtos.GetAttributeResponseMsg response) {
         try {
-            parent.getPayloadAdaptor().convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), response).ifPresent(parent::writeAndFlush);
+            boolean multipleAttrKeysReq = isMultipleAttributeKeysRequested(response.getRequestId());
+            parent.getPayloadAdaptor()
+                    .convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), response, multipleAttrKeysReq)
+                    .ifPresent(parent::writeAndFlush);
         } catch (Exception e) {
             log.trace("[{}] Failed to convert device attributes response to MQTT msg", sessionId, e);
         }
@@ -138,8 +139,8 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
         // This feature is not supported in the TB IoT Gateway yet.
     }
 
-    public Map<Integer, JsonObject> getPendingAttributesRequests() {
-        return parent.getPendingAttributesRequests();
+    public boolean isMultipleAttributeKeysRequested(int requestId) {
+        return parent.isMultipleAttributeKeysRequested(requestId);
     }
 
     private boolean isAckExpected(MqttMessage message) {

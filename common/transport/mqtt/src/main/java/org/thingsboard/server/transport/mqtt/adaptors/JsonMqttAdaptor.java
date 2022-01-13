@@ -125,13 +125,12 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
 
     @Override
     public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException {
-        Map<Integer, JsonObject> pendingAttributesRequests = ((GatewayDeviceSessionCtx) ctx).getPendingAttributesRequests();
-        int requestId = responseMsg.getRequestId();
-        JsonObject request = pendingAttributesRequests.getOrDefault(requestId, new JsonObject());
-        boolean multipleAttrKeysRequested =
-                request.has("keys") && request.get("keys").getAsJsonArray().size() > 1;
-        pendingAttributesRequests.remove(requestId);
-        return processConvertFromGatewayAttributeResponseMsg(ctx, deviceName, responseMsg, multipleAttrKeysRequested);
+        return convertToGatewayPublish(ctx, deviceName, responseMsg, false);
+    }
+
+    @Override
+    public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg, boolean multipleAttributeKeysRequested) throws AdaptorException {
+        return processConvertFromGatewayAttributeResponseMsg(ctx, deviceName, responseMsg, multipleAttributeKeysRequested);
     }
 
     @Override

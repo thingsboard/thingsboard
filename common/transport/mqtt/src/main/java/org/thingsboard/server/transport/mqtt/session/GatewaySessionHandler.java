@@ -108,8 +108,11 @@ public class GatewaySessionHandler {
         return new ConcurrentReferenceHashMap<>(16, ReferenceType.WEAK);
     }
 
-    public Map<Integer, JsonObject> getPendingAttributesRequests () {
-        return pendingAttributesRequests;
+    public boolean isMultipleAttributeKeysRequested(int requestId) {
+        JsonObject request = pendingAttributesRequests.getOrDefault(requestId, new JsonObject());
+        boolean multipleAttributeKeysRequested = request.has("keys") && request.get("keys").getAsJsonArray().size() > 1;
+        pendingAttributesRequests.remove(requestId);
+        return multipleAttributeKeysRequested;
     }
 
     public void onDeviceConnect(MqttPublishMessage mqttMsg) throws AdaptorException {
