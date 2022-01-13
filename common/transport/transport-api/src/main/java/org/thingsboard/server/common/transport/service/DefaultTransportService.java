@@ -957,7 +957,7 @@ public class DefaultTransportService implements TransportService {
             if ((md.getSessionInfo().getDeviceIdMSB() == deviceIdMSB && md.getSessionInfo().getDeviceIdLSB() == deviceIdLSB)) {
                 DeviceProfile newDeviceProfile;
                 if (md.getSessionInfo().getDeviceProfileIdMSB() != deviceProfileIdMSB
-                        && md.getSessionInfo().getDeviceProfileIdLSB() != deviceProfileIdLSB) {
+                        || md.getSessionInfo().getDeviceProfileIdLSB() != deviceProfileIdLSB) {
                     //TODO: if transport types are different - we should close the session.
                     newDeviceProfile = deviceProfileCache.get(new DeviceProfileId(new UUID(deviceProfileIdMSB, deviceProfileIdLSB)));
                 } else {
