@@ -475,7 +475,7 @@ public class ActorSystemContext {
     }
 
     private JsonNode toBodyJson(String serviceId, ComponentLifecycleEvent event, Optional<Exception> e) {
-        ObjectNode node = JacksonUtil.getObjectMapper().createObjectNode().put("server", serviceId).put("event", event.name());
+        ObjectNode node = JacksonUtil.newObjectNode().put("server", serviceId).put("event", event.name());
         if (e.isPresent()) {
             node = node.put("success", false);
             node = node.put("error", toString(e.get()));
@@ -529,7 +529,7 @@ public class ActorSystemContext {
                 event.setEntityId(entityId);
                 event.setType(DataConstants.DEBUG_RULE_NODE);
 
-                String metadata = JacksonUtil.getObjectMapper().writeValueAsString(tbMsg.getMetaData().getData());
+                String metadata = JacksonUtil.toString(tbMsg.getMetaData().getData());
 
                 ObjectNode node = JacksonUtil.getObjectMapper().createObjectNode()
                         .put("type", type)
