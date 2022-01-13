@@ -88,6 +88,9 @@ transport:
   mqtt:
     bind_address: "${MQTT_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${MQTT_BIND_PORT:1883}"
+    # Enable proxy protocol support. Disabled by default. If enabled, supports both v1 and v2.
+    # Useful to get the real IP address of the client in the logs and for rate limits.
+    proxy_enabled: "${MQTT_PROXY_PROTOCOL_ENABLED:false}"
     timeout: "${MQTT_TIMEOUT:10000}"
     msg_queue_size_per_device_limit: "${MQTT_MSG_QUEUE_SIZE_PER_DEVICE_LIMIT:100}" # messages await in the queue before device connected state. This limit works on low level before TenantProfileLimits mechanism
     netty:
@@ -146,6 +149,15 @@ transport:
   stats:
     enabled: "${TB_TRANSPORT_STATS_ENABLED:true}"
     print-interval-ms: "${TB_TRANSPORT_STATS_PRINT_INTERVAL_MS:60000}"
+  client_side_rpc:
+    timeout: "${CLIENT_SIDE_RPC_TIMEOUT:60000}"
+  rate_limits:
+    # Enable or disable generic rate limits. Device and Tenant specific rate limits are controlled in Tenant Profile.
+    ip_limits_enabled: "${TB_TRANSPORT_IP_RATE_LIMITS_ENABLED:false}"
+    # Maximum number of connect attempts with invalid credentials
+    max_wrong_credentials_per_ip: "${TB_TRANSPORT_MAX_WRONG_CREDENTIALS_PER_IP:10}"
+    # Timeout to expire block IP addresses
+    ip_block_timeout: "${TB_TRANSPORT_IP_BLOCK_TIMEOUT:60000}"
 
 
 queue:
