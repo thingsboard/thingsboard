@@ -41,7 +41,7 @@ import { alarmFields } from '@shared/models/alarm.models';
 import { materialColors } from '@app/shared/models/material.models';
 import { WidgetInfo } from '@home/models/widget-component.models';
 import jsonSchemaDefaults from 'json-schema-defaults';
-import materialIconsCodepoints from '!raw-loader!material-design-icons/iconfont/codepoints';
+import materialIconsCodepoints from '!raw-loader!./material-icons-codepoints.raw';
 import { Observable, of, ReplaySubject } from 'rxjs';
 
 const i18nRegExp = new RegExp(`{${i18nPrefix}:[^{}]+}`, 'g');

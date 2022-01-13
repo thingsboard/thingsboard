@@ -1311,3 +1311,61 @@ export const providerSets: { [key: string]: IProvider } = {
     name: 'image-map'
   }
 };
+
+export const editorSettingSchema =
+  {
+    schema: {
+      title: 'Editor settings',
+      type: 'object',
+      properties: {
+        snappable: {
+          title: 'Enable snapping to other vertices for precision drawing',
+          type: 'boolean',
+          default: false
+        },
+        initDragMode: {
+          title: 'Initialize map in draggable mode',
+          type: 'boolean',
+          default: false
+        },
+        hideAllControlButton: {
+          title: 'Hide all button',
+          type: 'boolean',
+          default: false
+        },
+        hideDrawControlButton: {
+          title: 'Hide draw buttons',
+          type: 'boolean',
+          default: false
+        },
+        hideEditControlButton: {
+          title: 'Hide edit buttons',
+          type: 'boolean',
+          default: false
+        },
+        hideRemoveControlButton: {
+          title: 'Hide remove button',
+          type: 'boolean',
+          default: false
+        },
+      },
+      required: []
+    },
+    form: [
+      'snappable',
+      'initDragMode',
+      'hideAllControlButton',
+      {
+        key: 'hideDrawControlButton',
+        condition: 'model.hideAllControlButton == false'
+      },
+      {
+        key: 'hideEditControlButton',
+        condition: 'model.hideAllControlButton == false'
+      },
+      {
+        key: 'hideRemoveControlButton',
+        condition: 'model.hideAllControlButton == false'
+      }
+    ]
+  };

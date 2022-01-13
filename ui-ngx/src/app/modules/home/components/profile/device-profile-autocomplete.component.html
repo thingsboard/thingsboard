@@ -38,6 +38,13 @@
           (click)="editDeviceProfile($event)">
     <mat-icon class="material-icons">edit</mat-icon>
   </button>
+  <button *ngIf="showDetailsPageLink && selectDeviceProfileFormGroup.get('deviceProfile').value && disabled"
+          type="button"
+          matSuffix mat-button mat-icon-button aria-label="Open device profile">
+    <a [routerLink]=deviceProfileURL>
+      <mat-icon class="material-icons">open_in_new</mat-icon>
+    </a>
+  </button>
   <mat-autocomplete
     class="tb-autocomplete"
     (closed)="onPanelClosed()"

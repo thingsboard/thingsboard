@@ -33,12 +33,13 @@ import { ENTER } from '@angular/cdk/keycodes';
 import { TenantProfile } from '@shared/models/tenant.model';
 import { MatDialog } from '@angular/material/dialog';
 import { TenantProfileDialogComponent, TenantProfileDialogData } from './tenant-profile-dialog.component';
-import { emptyPageData } from "@shared/models/page/page-data";
+import { emptyPageData } from '@shared/models/page/page-data';
+import { getEntityDetailsPageURL } from '@core/utils';
 
 @Component({
   selector: 'tb-tenant-profile-autocomplete',
   templateUrl: './tenant-profile-autocomplete.component.html',
-  styleUrls: [],
+  styleUrls: ['./tenant-profile-autocomplete.component.scss'],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => TenantProfileAutocompleteComponent),
@@ -66,6 +67,9 @@ export class TenantProfileAutocompleteComponent implements ControlValueAccessor,
   @Input()
   disabled: boolean;
 
+  @Input()
+  showDetailsPageLink = false;
+
   @Output()
   tenantProfileUpdated = new EventEmitter<TenantProfileId>();
 
@@ -74,6 +78,7 @@ export class TenantProfileAutocompleteComponent implements ControlValueAccessor,
   filteredTenantProfiles: Observable<Array<EntityInfoData>>;
 
   searchText = '';
+  tenantProfileURL: string;
 
   private dirty = false;
 
@@ -123,6 +128,7 @@ export class TenantProfileAutocompleteComponent implements ControlValueAccessor,
         (profile) => {
           if (profile) {
             this.modelValue = new TenantProfileId(profile.id.id);
+            this.tenantProfileURL = getEntityDetailsPageURL(this.modelValue.id, this.modelValue.entityType);
             this.selectTenantProfileFormGroup.get('tenantProfile').patchValue(profile, {emitEvent: false});
             this.propagateChange(this.modelValue);
           }
@@ -133,6 +139,11 @@ export class TenantProfileAutocompleteComponent implements ControlValueAccessor,
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
+    if (this.disabled) {
+      this.selectTenantProfileFormGroup.disable();
+    } else {
+      this.selectTenantProfileFormGroup.enable();
+    }
   }
 
   writeValue(value: TenantProfileId | null): void {
@@ -141,6 +152,7 @@ export class TenantProfileAutocompleteComponent implements ControlValueAccessor,
       this.tenantProfileService.getTenantProfileInfo(value.id).subscribe(
         (profile) => {
           this.modelValue = new TenantProfileId(profile.id.id);
+          this.tenantProfileURL = getEntityDetailsPageURL(this.modelValue.id, this.modelValue.entityType);
           this.selectTenantProfileFormGroup.get('tenantProfile').patchValue(profile, {emitEvent: false});
         }
       );
