@@ -17,7 +17,7 @@ package org.thingsboard.server.transport.lwm2m.server.downlink;
 
 import lombok.Builder;
 import lombok.Getter;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType;
+import org.thingsboard.server.transport.lwm2m.server.LwM2MOperationType;
 
 import java.util.Set;
 
@@ -32,8 +32,8 @@ public class TbLwM2MObserveAllRequest implements TbLwM2MDownlinkRequest<Set<Stri
     }
 
     @Override
-    public LwM2mOperationType getType() {
-        return LwM2mOperationType.OBSERVE_READ_ALL;
+    public LwM2MOperationType getType() {
+        return LwM2MOperationType.OBSERVE_READ_ALL;
     }
 
 

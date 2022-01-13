@@ -596,6 +596,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         ToDeviceRpcRequestMetadata md = toDeviceRpcPendingMap.get(responseMsg.getRequestId());
 
         if (md != null) {
+            JsonNode response = null;
             if (status.equals(RpcStatus.DELIVERED)) {
                 if (md.getMsg().getMsg().isOneway()) {
                     toDeviceRpcPendingMap.remove(responseMsg.getRequestId());
@@ -611,13 +612,14 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                 if (maxRpcRetries <= md.getRetries()) {
                     toDeviceRpcPendingMap.remove(responseMsg.getRequestId());
                     status = RpcStatus.FAILED;
+                    response = JacksonUtil.newObjectNode().put("error", "There was a Timeout and all retry attempts have been exhausted. Retry attempts set: " + maxRpcRetries);
                 } else {
                     md.setRetries(md.getRetries() + 1);
                 }
             }
 
             if (md.getMsg().getMsg().isPersisted()) {
-                systemContext.getTbRpcService().save(tenantId, new RpcId(rpcId), status, null);
+                systemContext.getTbRpcService().save(tenantId, new RpcId(rpcId), status, response);
             }
             if (status != RpcStatus.SENT) {
                 sendNextPendingRequest(context);
@@ -871,6 +873,9 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     void restoreSessions() {
+        if (systemContext.isLocalCacheType()) {
+            return;
+        }
         log.debug("[{}] Restoring sessions from cache", deviceId);
         DeviceSessionsCacheEntry sessionsDump = null;
         try {
@@ -905,6 +910,9 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     private void dumpSessions() {
+        if (systemContext.isLocalCacheType()) {
+            return;
+        }
         log.debug("[{}] Dumping sessions: {}, rpc subscriptions: {}, attribute subscriptions: {} to cache", deviceId, sessions.size(), rpcSubscriptions.size(), attributeSubscriptions.size());
         List<SessionSubscriptionInfoProto> sessionsList = new ArrayList<>(sessions.size());
         sessions.forEach((uuid, sessionMD) -> {

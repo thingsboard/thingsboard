@@ -32,8 +32,11 @@ import java.util.Properties;
 
 /**
  * Created by Valerii Sosliuk on 6/24/2017.
+ *
+ * Deprecated. Use PostgreSqlInitializer class instead
  */
 @Slf4j
+@Deprecated
 public class CustomSqlUnit extends ExternalResource {
 
     private final List<String> sqlFiles;

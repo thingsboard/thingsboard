@@ -58,15 +58,9 @@ public interface RelationRepository
                                                     String fromType);
 
     @Query("SELECT r FROM RelationEntity r WHERE " +
-            "r.fromId in (SELECT id from RuleNodeEntity where ruleChainId in " +
-            "(SELECT id from RuleChainEntity where tenantId = :tenantId and type = :ruleChainType ))" +
-            "AND r.fromType = 'RULE_NODE' " +
-            "AND r.toType = 'RULE_CHAIN' " +
-            "AND r.relationTypeGroup = 'RULE_NODE'")
-    List<RelationEntity> findRuleNodeToRuleChainRelations(
-            @Param("tenantId") UUID tenantId,
-            @Param("ruleChainType") RuleChainType ruleChainType,
-            Pageable page);
+            "r.relationTypeGroup = 'RULE_NODE' AND r.toType = 'RULE_CHAIN' " +
+            "AND r.toId in (SELECT id from RuleChainEntity where type = :ruleChainType )")
+    List<RelationEntity> findRuleNodeToRuleChainRelations(@Param("ruleChainType") RuleChainType ruleChainType, Pageable page);
 
     @Transactional
     <S extends RelationEntity> S save(S entity);

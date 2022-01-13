@@ -36,10 +36,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.ScriptEngine;
-import org.thingsboard.rule.engine.flow.TbRuleChainOutputNode;
-import org.thingsboard.rule.engine.flow.TbRuleChainOutputNodeConfiguration;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
 import org.thingsboard.server.common.data.DataConstants;
@@ -71,7 +68,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.event.EventService;
-import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.InstallScripts;
 import org.thingsboard.server.service.rule.TbRuleChainService;
@@ -81,6 +77,8 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -361,7 +359,6 @@ public class RuleChainController extends BaseController {
             @ApiParam(value = "A JSON value representing the rule chain metadata.")
             @RequestBody RuleChainMetaData ruleChainMetaData,
             @ApiParam(value = "Update related rule nodes.")
-            //TODO: change default value to "false" before merge
             @RequestParam(value = "updateRelated", required = false, defaultValue = "true") boolean updateRelated
     ) throws ThingsboardException {
         try {
@@ -378,23 +375,33 @@ public class RuleChainController extends BaseController {
             RuleChainUpdateResult result = ruleChainService.saveRuleChainMetaData(tenantId, ruleChainMetaData);
             checkNotNull(result.isSuccess() ? true : null);
 
+            List<RuleChain> updatedRuleChains;
             if (updateRelated && result.isSuccess()) {
-                tbRuleChainService.updateRelatedRuleChains(tenantId, ruleChainMetaData.getRuleChainId(), result);
+                updatedRuleChains = tbRuleChainService.updateRelatedRuleChains(tenantId, ruleChainMetaData.getRuleChainId(), result);
+            } else {
+                updatedRuleChains = Collections.emptyList();
             }
 
             RuleChainMetaData savedRuleChainMetaData = checkNotNull(ruleChainService.loadRuleChainMetaData(tenantId, ruleChainMetaData.getRuleChainId()));
 
             if (RuleChainType.CORE.equals(ruleChain.getType())) {
                 tbClusterService.broadcastEntityStateChangeEvent(ruleChain.getTenantId(), ruleChain.getId(), ComponentLifecycleEvent.UPDATED);
+                updatedRuleChains.forEach(updatedRuleChain -> {
+                    tbClusterService.broadcastEntityStateChangeEvent(updatedRuleChain.getTenantId(), updatedRuleChain.getId(), ComponentLifecycleEvent.UPDATED);
+                });
             }
 
-            logEntityAction(ruleChain.getId(), ruleChain,
-                    null,
-                    ActionType.UPDATED, null, ruleChainMetaData);
+            logEntityAction(ruleChain.getId(), ruleChain, null, ActionType.UPDATED, null, ruleChainMetaData);
+            for (RuleChain updatedRuleChain : updatedRuleChains) {
+                RuleChainMetaData updatedRuleChainMetaData = checkNotNull(ruleChainService.loadRuleChainMetaData(tenantId, updatedRuleChain.getId()));
+                logEntityAction(updatedRuleChain.getId(), updatedRuleChain, null, ActionType.UPDATED, null, updatedRuleChainMetaData);
+            }
 
             if (RuleChainType.EDGE.equals(ruleChain.getType())) {
-                sendEntityNotificationMsg(ruleChain.getTenantId(),
-                        ruleChain.getId(), EdgeEventActionType.UPDATED);
+                sendEntityNotificationMsg(ruleChain.getTenantId(), ruleChain.getId(), EdgeEventActionType.UPDATED);
+                updatedRuleChains.forEach(updatedRuleChain -> {
+                    sendEntityNotificationMsg(updatedRuleChain.getTenantId(), updatedRuleChain.getId(), EdgeEventActionType.UPDATED);
+                });
             }
 
             return savedRuleChainMetaData;

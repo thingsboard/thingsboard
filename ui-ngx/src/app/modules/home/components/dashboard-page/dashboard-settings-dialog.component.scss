@@ -30,4 +30,33 @@
   .mat-slide-toggle-content {
     white-space: normal;
   }
+  .mat-expansion-panel {
+    &.tb-settings {
+      box-shadow: none;
+      .mat-content {
+        overflow: visible;
+      }
+      .mat-expansion-panel-header {
+        padding: 0;
+        &:hover {
+          background: none;
+        }
+        .mat-expansion-indicator {
+          padding: 2px;
+        }
+      }
+      .mat-expansion-panel-header-description {
+        align-items: center;
+      }
+      .mat-expansion-panel-body{
+        padding: 0;
+      }
+      .tb-css-content-panel {
+        margin: 0 0 8px;
+      }
+    }
+    .mat-expansion-panel-content {
+      font: inherit;
+    }
+  }
 }

@@ -38,6 +38,8 @@ export abstract class EntityComponent<T extends BaseData<HasId>,
 
   isEditValue: boolean;
 
+  isDetailsPage = false;
+
   @Input()
   set entitiesTableConfig(entitiesTableConfig: C) {
     this.setEntitiesTableConfig(entitiesTableConfig);

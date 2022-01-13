@@ -27,8 +27,9 @@ import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
-import java.util.List;
+import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -73,6 +74,21 @@ public class JpaTenantDaoTest extends AbstractJpaDaoTest {
         tenant.setRegion(region);
         tenant.setTitle(title + "_" + index);
         tenantDao.save(AbstractServiceTest.SYSTEM_TENANT_ID, tenant);
+    }
+
+    @Test
+    @DatabaseSetup("classpath:dbunit/empty_dataset.xml")
+    public void testIsExistsTenantById() {
+        final UUID uuid = Uuids.timeBased();
+        final TenantId tenantId = new TenantId(uuid);
+        assertThat(tenantDao.existsById(tenantId, uuid)).as("Is tenant exists before save").isFalse();
+
+        final Tenant tenant = new Tenant();
+        tenant.setId(tenantId);
+        tenant.setTitle("Tenant " + uuid);
+        tenantDao.save(AbstractServiceTest.SYSTEM_TENANT_ID, tenant);
+
+        assertThat(tenantDao.existsById(tenantId, uuid)).as("Is tenant exists after save").isTrue();
     }
 
 }

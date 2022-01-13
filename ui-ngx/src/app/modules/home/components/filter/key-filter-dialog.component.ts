@@ -134,6 +134,10 @@ export class KeyFilterDialogComponent extends
             }
           );
         }
+        if (valueType === EntityKeyValueType.BOOLEAN && this.isConstantKeyType) {
+          this.keyFilterFormGroup.get('value').clearValidators();
+          this.keyFilterFormGroup.get('value').updateValueAndValidity();
+        }
       });
 
       this.keyFilterFormGroup.get('key.type').valueChanges.pipe(
@@ -148,7 +152,7 @@ export class KeyFilterDialogComponent extends
           this.showAutocomplete = false;
         }
         if (this.data.telemetryKeysOnly) {
-          if (type === EntityKeyType.CONSTANT) {
+          if (type === EntityKeyType.CONSTANT && (this.keyFilterFormGroup.get('valueType').value !== EntityKeyValueType.BOOLEAN)) {
             this.keyFilterFormGroup.get('value').setValidators(Validators.required);
             this.keyFilterFormGroup.get('value').updateValueAndValidity();
           } else {

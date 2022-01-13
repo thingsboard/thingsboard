@@ -31,9 +31,6 @@ import { OtaPackageId } from '@shared/models/id/ota-package-id';
 import { DashboardId } from '@shared/models/id/dashboard-id';
 import { DataType } from '@shared/models/constants';
 import {
-  getDefaultBootstrapServerSecurityConfig,
-  getDefaultBootstrapServersSecurityConfig,
-  getDefaultLwM2MServerSecurityConfig,
   getDefaultProfileClientLwM2mSettingsConfig,
   getDefaultProfileObserveAttrConfig,
   PowerMode
@@ -384,11 +381,7 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
       case DeviceTransportType.LWM2M:
         const lwm2mTransportConfiguration: Lwm2mDeviceProfileTransportConfiguration = {
           observeAttr: getDefaultProfileObserveAttrConfig(),
-          bootstrap: {
-            servers: getDefaultBootstrapServersSecurityConfig(),
-            bootstrapServer: getDefaultBootstrapServerSecurityConfig(),
-            lwm2mServer: getDefaultLwM2MServerSecurityConfig()
-          },
+          bootstrap: [],
           clientLwM2mSettings: getDefaultProfileClientLwM2mSettingsConfig()
         };
         transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};

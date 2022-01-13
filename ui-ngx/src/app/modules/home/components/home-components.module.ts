@@ -141,6 +141,13 @@ import { WidgetContainerComponent } from '@home/components/widget/widget-contain
 import { SnmpDeviceProfileTransportModule } from '@home/components/profile/device/snpm/snmp-device-profile-transport.module';
 import { DeviceCredentialsModule } from '@home/components/device/device-credentials.module';
 import { DeviceProfileCommonModule } from '@home/components/profile/device/common/device-profile-common.module';
+import {
+  COMPLEX_FILTER_PREDICATE_DIALOG_COMPONENT_TOKEN,
+  DASHBOARD_PAGE_COMPONENT_TOKEN,
+  HOME_COMPONENTS_MODULE_TOKEN
+} from '@home/components/tokens';
+import { DashboardStateComponent } from '@home/components/dashboard-page/dashboard-state.component';
+import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
 
 @NgModule({
   declarations:
@@ -149,6 +156,7 @@ import { DeviceProfileCommonModule } from '@home/components/profile/device/commo
       AddEntityDialogComponent,
       DetailsPanelComponent,
       EntityDetailsPanelComponent,
+      EntityDetailsPageComponent,
       AuditLogTableComponent,
       AuditLogDetailsDialogComponent,
       EventContentDialogComponent,
@@ -248,6 +256,7 @@ import { DeviceProfileCommonModule } from '@home/components/profile/device/commo
       TwilioSmsProviderConfigurationComponent,
       DashboardToolbarComponent,
       DashboardPageComponent,
+      DashboardStateComponent,
       DashboardLayoutComponent,
       EditWidgetComponent,
       DashboardWidgetSelectComponent,
@@ -275,6 +284,7 @@ import { DeviceProfileCommonModule } from '@home/components/profile/device/commo
     AddEntityDialogComponent,
     DetailsPanelComponent,
     EntityDetailsPanelComponent,
+    EntityDetailsPageComponent,
     AuditLogTableComponent,
     EventTableComponent,
     EdgeDownlinkTableHeaderComponent,
@@ -359,6 +369,7 @@ import { DeviceProfileCommonModule } from '@home/components/profile/device/commo
     TwilioSmsProviderConfigurationComponent,
     DashboardToolbarComponent,
     DashboardPageComponent,
+    DashboardStateComponent,
     DashboardLayoutComponent,
     EditWidgetComponent,
     DashboardWidgetSelectComponent,
@@ -375,7 +386,10 @@ import { DeviceProfileCommonModule } from '@home/components/profile/device/commo
     WidgetComponentService,
     CustomDialogService,
     ImportExportService,
-    {provide: EMBED_DASHBOARD_DIALOG_TOKEN, useValue: EmbedDashboardDialogComponent}
+    {provide: EMBED_DASHBOARD_DIALOG_TOKEN, useValue: EmbedDashboardDialogComponent},
+    {provide: COMPLEX_FILTER_PREDICATE_DIALOG_COMPONENT_TOKEN, useValue: ComplexFilterPredicateDialogComponent},
+    {provide: DASHBOARD_PAGE_COMPONENT_TOKEN, useValue: DashboardPageComponent},
+    {provide: HOME_COMPONENTS_MODULE_TOKEN, useValue: HomeComponentsModule }
   ]
 })
 export class HomeComponentsModule { }

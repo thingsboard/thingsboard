@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 const CompressionPlugin = require("compression-webpack-plugin");
-const TerserPlugin = require("terser-webpack-plugin");
+const JavaScriptOptimizerPlugin = require("@angular-devkit/build-angular/src/webpack/plugins/javascript-optimizer-plugin").JavaScriptOptimizerPlugin;
 const webpack = require("webpack");
 const dirTree = require("directory-tree");
 const ngWebpack = require('@ngtools/webpack');
@@ -52,7 +52,10 @@ module.exports = (config, options) => {
     })
   );
   config.plugins.push(
-    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/)
+    new webpack.IgnorePlugin({
+      resourceRegExp: /^\.\/locale$/,
+      contextRegExp: /moment$/,
+    })
   );
 
   if (config.mode === 'production') {
@@ -62,11 +65,10 @@ module.exports = (config, options) => {
     angularCompilerOptions.emitNgModuleScope = true;
     config.plugins.splice(index, 1);
     config.plugins.push(new ngWebpack.ivy.AngularWebpackPlugin(angularCompilerOptions));
-    const terserPluginOptions = config.optimization.minimizer[1].options;
-    delete terserPluginOptions.terserOptions.compress.global_defs.ngJitMode;
-    terserPluginOptions.terserOptions.compress.side_effects = false;
+    const javascriptOptimizerOptions = config.optimization.minimizer[1].options;
+    delete javascriptOptimizerOptions.define.ngJitMode;
     config.optimization.minimizer.splice(1, 1);
-    config.optimization.minimizer.push(new TerserPlugin(terserPluginOptions));
+    config.optimization.minimizer.push(new JavaScriptOptimizerPlugin(javascriptOptimizerOptions));
   }
   return config;
 };

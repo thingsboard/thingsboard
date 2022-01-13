@@ -18,14 +18,17 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.node.codec.LwM2mValueConverter;
 import org.eclipse.leshan.core.request.ContentFormat;
+import org.eclipse.leshan.core.request.WriteRequest.Mode;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.server.common.data.Device;
@@ -41,7 +44,9 @@ import org.thingsboard.server.transport.lwm2m.config.LwM2mVersion;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -54,16 +59,18 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LWM2M_OBJECT_VERSION_DEFAULT;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertObjectIdToVersionedId;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.equalsResourceTypeGetSimpleName;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.getVerFromPathIdVerOrId;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertMultiResourceValuesFromRpcBody;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertObjectIdToVersionedId;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.equalsResourceTypeGetSimpleName;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fromVersionedIdToObjectId;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.getVerFromPathIdVerOrId;
 
 @Slf4j
 @EqualsAndHashCode(of = {"endpoint"})
+@ToString(of = "endpoint")
 public class LwM2mClient implements Serializable {
 
     private static final long serialVersionUID = 8793482946289222623L;
@@ -97,11 +104,10 @@ public class LwM2mClient implements Serializable {
     @Getter
     private Long psmActivityTimer;
     @Getter
-    private Long edrxCycle;
-    @Getter
     private Long pagingTransmissionWindow;
     @Getter
-    @Setter
+    private Long edrxCycle;
+    @Getter
     private Registration registration;
     @Getter
     @Setter
@@ -114,6 +120,10 @@ public class LwM2mClient implements Serializable {
 
     private boolean firstEdrxDownlink = true;
 
+    @Getter
+    private Set<ContentFormat> clientSupportContentFormats;
+    @Getter
+    private ContentFormat defaultContentFormat;
     @Getter
     private final AtomicInteger retryAttempts;
 
@@ -145,6 +155,12 @@ public class LwM2mClient implements Serializable {
         this.edrxCycle = credentials.getDeviceInfo().getEdrxCycle();
         this.psmActivityTimer = credentials.getDeviceInfo().getPsmActivityTimer();
         this.pagingTransmissionWindow = credentials.getDeviceInfo().getPagingTransmissionWindow();
+    }
+
+    public void setRegistration(Registration registration) {
+        this.registration = registration;
+        this.clientSupportContentFormats = clientSupportContentFormat(registration);
+        this.defaultContentFormat = calculateDefaultContentFormat(registration);
     }
 
     public void lock() {
@@ -210,20 +226,26 @@ public class LwM2mClient implements Serializable {
                 .build();
     }
 
-    public boolean saveResourceValue(String pathRezIdVer, LwM2mResource rez, LwM2mModelProvider modelProvider) {
-        if (this.resources.get(pathRezIdVer) != null && this.resources.get(pathRezIdVer).getResourceModel() != null) {
-            this.resources.get(pathRezIdVer).setLwM2mResource(rez);
+    public boolean saveResourceValue(String pathRezIdVer, LwM2mResource resource, LwM2mModelProvider modelProvider, Mode mode) {
+        if (this.resources.get(pathRezIdVer) != null && this.resources.get(pathRezIdVer).getResourceModel() != null &&
+                resourceEqualsModel(resource, this.resources.get(pathRezIdVer).getResourceModel())) {
+            this.resources.get(pathRezIdVer).updateLwM2mResource(resource, mode);
             return true;
         } else {
             LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRezIdVer));
             ResourceModel resourceModel = modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
-            if (resourceModel != null) {
-                this.resources.put(pathRezIdVer, new ResourceValue(rez, resourceModel));
+            if (resourceModel != null && resourceEqualsModel(resource, resourceModel)) {
+                this.resources.put(pathRezIdVer, new ResourceValue(resource, resourceModel));
                 return true;
             } else {
                 return false;
             }
         }
+    }
+
+    private boolean resourceEqualsModel(LwM2mResource resource, ResourceModel resourceModel) {
+        return ((!resourceModel.multiple && resource instanceof LwM2mSingleResource) ||
+                (resourceModel.multiple && resource instanceof LwM2mMultipleResource));
     }
 
     public Object getResourceValue(String pathRezIdVer, String pathRezId) {
@@ -260,7 +282,7 @@ public class LwM2mClient implements Serializable {
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer));
         String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
         String verRez = getVerFromPathIdVerOrId(pathIdVer);
-        return verRez == null || verRez.equals(verSupportedObject) ? modelProvider.getObjectModel(registration)
+        return verRez != null && verRez.equals(verSupportedObject) ? modelProvider.getObjectModel(registration)
                 .getResourceModel(pathIds.getObjectId(), pathIds.getResourceId()) : null;
     }
 
@@ -277,9 +299,10 @@ public class LwM2mClient implements Serializable {
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer));
         String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
         String verRez = getVerFromPathIdVerOrId(pathIdVer);
-        return verRez == null || verRez.equals(verSupportedObject) ? modelProvider.getObjectModel(registration)
+        return verRez != null && verRez.equals(verSupportedObject) ? modelProvider.getObjectModel(registration)
                 .getObjectModel(pathIds.getObjectId()) : null;
     }
+
 
     public Collection<LwM2mResource> getNewResourceForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
                                                                LwM2mValueConverter converter) {
@@ -297,31 +320,64 @@ public class LwM2mClient implements Serializable {
         return resources;
     }
 
+    /**
+     * The instance must have all the resources that have the property
+     * <Mandatory>Mandatory</Mandatory>
+     */
     public Collection<LwM2mResource> getNewResourcesForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
                                                                 LwM2mValueConverter converter) {
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRezIdVer));
         Collection<LwM2mResource> resources = ConcurrentHashMap.newKeySet();
         Map<Integer, ResourceModel> resourceModels = modelProvider.getObjectModel(registration)
                 .getObjectModel(pathIds.getObjectId()).resources;
-        resourceModels.forEach((resId, resourceModel) -> {
-            if (((Map) params).containsKey(String.valueOf(resId))) {
-                Object value = ((Map) params).get((String.valueOf(resId)));
-                resources.add(LwM2mSingleResource.newResource(resId,
-                        converter.convertValue(value, equalsResourceTypeGetSimpleName(value), resourceModel.type, pathIds), resourceModel.type));
-
-            }
-        });
+        if (params instanceof Map && ((Map) params).size() > 0) {
+            Map paramsMap = (Map) params;
+            resourceModels.forEach((resourceId, resourceModel) -> {
+                if (paramsMap.containsKey(String.valueOf(resourceId))) {
+                    Object value = paramsMap.get((String.valueOf(resourceId)));
+                    LwM2mResource resource;
+                    if (resourceModel.multiple) {
+                        try {
+                            Map<Integer, Object> values = convertMultiResourceValuesFromRpcBody(value, resourceModel.type, pathRezIdVer);
+                            resource = LwM2mMultipleResource.newResource(resourceId, values, resourceModel.type);
+                        } catch (Exception e) {
+                            throw new IllegalArgumentException("Resource id=" + resourceId + ", class = " +
+                                    value.getClass().getSimpleName() + ", value = " + value + " is bad. Value of Multi-Instance Resource must be in Json format!");
+                        }
+                    } else {
+                        Object valueRez = value instanceof Integer ? ((Integer) value).longValue() : value;
+                        resource = LwM2mSingleResource.newResource(resourceId,
+                                converter.convertValue(valueRez, equalsResourceTypeGetSimpleName(value), resourceModel.type, pathIds), resourceModel.type);
+                    }
+                    if (resource != null) {
+                        resources.add(resource);
+                    } else if (resourceModel.operations.isWritable() && resourceModel.mandatory) {
+                        throw new IllegalArgumentException("Resource id=" + resourceId + " is mandatory. The value of this resource must not be null.");
+                    }
+                } else if (resourceModel.operations.isWritable() && resourceModel.mandatory) {
+                    throw new IllegalArgumentException("Resource id=" + resourceId + " is mandatory. The value of this resource must not be null.");
+                }
+            });
+        } else if (params == null) {
+            throw new IllegalArgumentException("The value of this resource must not be null.");
+        } else {
+            throw new IllegalArgumentException("The value of this resource must be in Map format and size > 0");
+        }
         return resources;
     }
 
-    public void isValidObjectVersion(String path) {
+    public String isValidObjectVersion(String path) {
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(path));
         String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
-        String verRez = getVerFromPathIdVerOrId(path);
-        if ((verRez != null && !verRez.equals(verSupportedObject)) ||
-                (verRez == null && !LWM2M_OBJECT_VERSION_DEFAULT.equals(verSupportedObject))) {
-            throw new IllegalArgumentException(String.format("Specified resource id %s is not valid version! Must be version: %s", path, verSupportedObject));
+        if (verSupportedObject == null) {
+            return String.format("Specified object id %s absent in the list supported objects of the client or is security object!", pathIds.getObjectId());
+        } else {
+            String verRez = getVerFromPathIdVerOrId(path);
+            if (verRez == null || !verRez.equals(verSupportedObject)) {
+                return String.format("Specified resource id %s is not valid version! Must be version: %s", path, verSupportedObject);
+            }
         }
+        return "";
     }
 
     /**
@@ -363,12 +419,27 @@ public class LwM2mClient implements Serializable {
                 .collect(Collectors.toSet());
     }
 
-    public ContentFormat getDefaultContentFormat() {
+    private ContentFormat calculateDefaultContentFormat(Registration registration) {
         if (registration == null) {
             return ContentFormat.DEFAULT;
-        } else {
-            return LwM2mVersion.fromVersionStr(registration.getLwM2mVersion()).getContentFormat();
+        } else{
+            return LwM2mVersion.fromVersion(registration.getLwM2mVersion()).getContentFormat();
         }
+    }
+
+    static private Set<ContentFormat> clientSupportContentFormat(Registration registration) {
+        Set<ContentFormat> contentFormats = new HashSet<>();
+        contentFormats.add(ContentFormat.DEFAULT);
+        String code = Arrays.stream(registration.getObjectLinks()).filter(link -> link.getUrl().equals("/")).findFirst().get().getAttributes().get("ct");
+        if (code != null) {
+            Set<ContentFormat> codes = Stream.of(code.replaceAll("\"", "").split(" ", -1))
+                    .map(String::trim)
+                    .map(Integer::parseInt)
+                    .map(ContentFormat::fromCode)
+                    .collect(Collectors.toSet());
+            contentFormats.addAll(codes);
+        }
+        return contentFormats;
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {

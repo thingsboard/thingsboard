@@ -418,10 +418,14 @@
                 label="{{ 'widget-config.widget-style' | translate }}"
                 formControlName="widgetStyle"
               ></tb-json-object-edit>
+              <tb-css
+                label="{{ 'widget-config.widget-css' | translate }}"
+                formControlName="widgetCss"
+              ></tb-css>
             </ng-template>
           </mat-expansion-panel>
         </fieldset>
-        <fieldset class="fields-group fields-group-slider">
+        <fieldset class="fields-group fields-group-slider" *ngIf="showLegendFieldset">
           <legend class="group-title" translate>widget-config.legend</legend>
           <mat-expansion-panel class="tb-settings">
             <mat-expansion-panel-header fxLayout="row wrap">

@@ -15,6 +15,7 @@
 ///
 
 import { InjectionToken } from '@angular/core';
+import { IModulesMap } from '@modules/common/modules-map.models';
 
 export const Constants = {
   serverErrorCode: {
@@ -99,7 +100,8 @@ export const HelpLinks = {
     ruleNodeSaveAttributes: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#save-attributes-node',
     ruleNodeSaveTimeseries: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#save-timeseries-node',
     ruleNodeSaveToCustomTable: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#save-to-custom-table',
-    ruleNodeRuleChain: helpBaseUrl + '/docs/user-guide/ui/rule-chains/',
+    ruleNodeRuleChain: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/flow-nodes/#rule-chain-node',
+    ruleNodeOutputNode: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/flow-nodes/#output-node',
     ruleNodeAwsSns: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#aws-sns-node',
     ruleNodeAwsSqs: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#aws-sqs-node',
     ruleNodeKafka: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#kafka-node',
@@ -122,7 +124,7 @@ export const HelpLinks = {
     rulechains: helpBaseUrl + '/docs/user-guide/ui/rule-chains',
     resources: helpBaseUrl + '/docs/user-guide/ui/resources',
     dashboards: helpBaseUrl + '/docs/user-guide/ui/dashboards',
-    otaUpdates: helpBaseUrl + '/docs/user-guide/ui/ota-updates',
+    otaUpdates: helpBaseUrl + '/docs/user-guide/ota-updates',
     widgetsBundles: helpBaseUrl + '/docs/user-guide/ui/widget-library#bundles',
     widgetsConfig:  helpBaseUrl + '/docs/user-guide/ui/dashboards#widget-configuration',
     widgetsConfigTimeseries:  helpBaseUrl + '/docs/user-guide/ui/dashboards#timeseries',
@@ -241,7 +243,8 @@ export const contentTypesMap = new Map<ContentType, ContentTypeData>(
   ]
 );
 
+export const hidePageSizePixelValue = 550;
 export const customTranslationsPrefix = 'custom.';
 export const i18nPrefix = 'i18n';
 
-export const MODULES_MAP = new InjectionToken<{[key: string]: any}>('ModulesMap');
+export const MODULES_MAP = new InjectionToken<IModulesMap>('ModulesMap');

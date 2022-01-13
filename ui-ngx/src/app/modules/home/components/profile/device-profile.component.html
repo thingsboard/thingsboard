@@ -18,6 +18,12 @@
 <div class="tb-details-buttons" fxLayout.xs="column" *ngIf="!standalone">
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'open')"
+          [fxShow]="!isEdit && !isDetailsPage">
+    {{'common.open-details-page' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'export')"
           [fxShow]="!isEdit">
     {{'device-profile.export' | translate }}
@@ -73,12 +79,14 @@
       </tb-queue-type-list>
       <tb-ota-package-autocomplete
         [useFullEntityId]="true"
+        [showDetailsPageLink]="true"
         [type]="otaUpdateType.FIRMWARE"
         [deviceProfileId]="deviceProfileId?.id"
         formControlName="firmwareId">
       </tb-ota-package-autocomplete>
       <tb-ota-package-autocomplete
         [useFullEntityId]="true"
+        [showDetailsPageLink]="true"
         [type]="otaUpdateType.SOFTWARE"
         [deviceProfileId]="deviceProfileId?.id"
         formControlName="softwareId">
@@ -138,6 +146,7 @@
             <ng-template matExpansionPanelContent>
               <tb-device-profile-transport-configuration
                 formControlName="transportConfiguration"
+                [isAdd] = "isTransportTypeChanged"
                 required>
               </tb-device-profile-transport-configuration>
             </ng-template>

@@ -109,8 +109,11 @@ export class BooleanFilterPredicateComponent implements ControlValueAccessor, Va
   }
 
   private updateModel() {
-    const predicate: BooleanFilterPredicate = this.booleanFilterPredicateFormGroup.getRawValue();
-    predicate.type = FilterPredicateType.BOOLEAN;
+    let predicate: BooleanFilterPredicate = null;
+    if (this.booleanFilterPredicateFormGroup.valid) {
+      predicate = this.booleanFilterPredicateFormGroup.getRawValue();
+      predicate.type = FilterPredicateType.BOOLEAN;
+    }
     this.propagateChange(predicate);
   }
 

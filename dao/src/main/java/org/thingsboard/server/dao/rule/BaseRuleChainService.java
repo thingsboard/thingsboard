@@ -28,7 +28,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
@@ -48,7 +47,6 @@ import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainData;
 import org.thingsboard.server.common.data.rule.RuleChainImportResult;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
-import org.thingsboard.server.common.data.rule.RuleChainOutputLabelsUsage;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
 import org.thingsboard.server.common.data.rule.RuleNode;
@@ -172,10 +170,10 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 newRuleNode = ruleChainMetaData.getNodes().get(index);
                 toAddOrUpdate.add(newRuleNode);
             } else {
-                updatedRuleNodes.add(new RuleNodeUpdateResult(existingNode.getConfiguration(), null));
+                updatedRuleNodes.add(new RuleNodeUpdateResult(existingNode, null));
                 toDelete.add(existingNode);
             }
-            updatedRuleNodes.add(new RuleNodeUpdateResult(existingNode.getConfiguration(), newRuleNode));
+            updatedRuleNodes.add(new RuleNodeUpdateResult(existingNode, newRuleNode));
         }
         if (nodes != null) {
             for (RuleNode node : toAddOrUpdate) {

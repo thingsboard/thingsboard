@@ -337,6 +337,13 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
     });
   }
 
+  private openAsset($event: Event, asset: Asset) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.router.navigateByUrl(`${this.router.url}/${asset.id.id}`);
+  }
+
   addAssetsToCustomer($event: Event) {
     if ($event) {
       $event.stopPropagation();
@@ -461,6 +468,9 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
 
   onAssetAction(action: EntityAction<AssetInfo>): boolean {
     switch (action.action) {
+      case 'open':
+        this.openAsset(action.event, action.entity);
+        return true;
       case 'makePublic':
         this.makePublic(action.event, action.entity);
         return true;

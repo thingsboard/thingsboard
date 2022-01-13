@@ -106,7 +106,7 @@ public abstract class BaseEdgeEventServiceTest extends AbstractServiceTest {
         EdgeId edgeId = new EdgeId(Uuids.timeBased());
         DeviceId deviceId = new DeviceId(Uuids.timeBased());
         TenantId tenantId = new TenantId(Uuids.timeBased());
-        TimePageLink pageLink = new TimePageLink(1);
+        TimePageLink pageLink = new TimePageLink(1, 0, null, new SortOrder("createdTime", SortOrder.Direction.ASC));
 
         EdgeEvent edgeEventWithTsUpdate = generateEdgeEvent(tenantId, edgeId, deviceId, EdgeEventActionType.TIMESERIES_UPDATED);
         edgeEventService.save(edgeEventWithTsUpdate);

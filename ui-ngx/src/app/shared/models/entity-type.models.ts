@@ -399,6 +399,22 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
   ]
 );
 
+export const baseDetailsPageByEntityType = new Map<EntityType, string>([
+  [EntityType.TENANT, '/tenants'],
+  [EntityType.TENANT_PROFILE, '/tenantProfiles'],
+  [EntityType.CUSTOMER, '/customers'],
+  [EntityType.USER, '/users'],
+  [EntityType.DASHBOARD, '/dashboards'],
+  [EntityType.ASSET, '/assets'],
+  [EntityType.DEVICE, '/devices'],
+  [EntityType.DEVICE_PROFILE, '/deviceProfiles'],
+  [EntityType.RULE_CHAIN, '/ruleChains'],
+  [EntityType.EDGE, '/edgeInstances'],
+  [EntityType.ENTITY_VIEW, '/entityViews'],
+  [EntityType.TB_RESOURCE, '/settings/resources-library'],
+  [EntityType.OTA_PACKAGE, '/otaUpdates']
+]);
+
 export interface EntitySubtype {
   tenantId: TenantId;
   entityType: EntityType;

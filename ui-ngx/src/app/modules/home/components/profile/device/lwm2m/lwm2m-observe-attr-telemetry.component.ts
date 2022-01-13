@@ -185,13 +185,13 @@ export class Lwm2mObserveAttrTelemetryComponent implements ControlValueAccessor,
    * If the Object field “Mandatory” is “Mandatory” and the Object field “Instances” is “Single” then -
    * the number of Object Instance MUST be 1.
    * 1. <MultipleInstances> == Multiple (true), <Mandatory>  == Optional  (false) -
-   *   Object Instance ID MIN_ID=0 MAX_ID=65535 (может ни одного не быть)
+   *   Object Instance ID MIN_ID=0 MAX_ID=65535 (there may be none)
    * 2. <MultipleInstances> == Multiple (true), <Mandatory>  == Mandatory (true) -
-   *   Object Instance ID MIN_ID=0 MAX_ID=65535 (min один обязательный)
+   *   Object Instance ID MIN_ID=0 MAX_ID=65535 (min one mandatory)
    * 3. <MultipleInstances> == Single   (false), <Mandatory> == Optional  (false) -
-   *   Object Instance ID cnt_max = 1 cnt_min = 0 (может ни одного не быть)
+   *   Object Instance ID cnt_max = 1 cnt_min = 0 (there may be none )
    * 4. <MultipleInstances> == Single   (false), <Mandatory> == Mandatory (true) -
-   *   Object Instance ID cnt_max = cnt_min = 1 (всегда есть один)
+   *   Object Instance ID cnt_max = cnt_min = 1 (there must always be one)
    */
 
   addInstances = ($event: Event, control: AbstractControl): void => {

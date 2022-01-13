@@ -47,6 +47,10 @@ export class TbMarkdownComponent implements OnChanges {
 
   @Input() data: string | undefined;
 
+  @Input() context: any;
+
+  @Input() additionalCompileModules: Type<any>[];
+
   @Input() markdownClass: string | undefined;
 
   @Input() style: { [klass: string]: any } = {};
@@ -94,6 +98,10 @@ export class TbMarkdownComponent implements OnChanges {
     this.markdownContainer.clear();
     const parent = this;
     let readyObservable: Observable<void>;
+    let compileModules = [this.sharedModule];
+    if (this.additionalCompileModules) {
+      compileModules = compileModules.concat(this.additionalCompileModules);
+    }
     this.dynamicComponentFactoryService.createDynamicComponentFactory(
       class TbMarkdownInstance {
         ngOnDestroy(): void {
@@ -101,7 +109,7 @@ export class TbMarkdownComponent implements OnChanges {
         }
       },
       template,
-      [this.sharedModule],
+      compileModules,
       true
     ).subscribe((factory) => {
       this.tbMarkdownInstanceComponentFactory = factory;
@@ -109,6 +117,11 @@ export class TbMarkdownComponent implements OnChanges {
       try {
         this.tbMarkdownInstanceComponentRef =
           this.markdownContainer.createComponent(this.tbMarkdownInstanceComponentFactory, 0, injector);
+        if (this.context) {
+          for (const propName of Object.keys(this.context)) {
+            this.tbMarkdownInstanceComponentRef.instance[propName] = this.context[propName];
+          }
+        }
         this.tbMarkdownInstanceComponentRef.instance.style = this.style;
         this.handlePlugins(this.tbMarkdownInstanceComponentRef.location.nativeElement);
         this.markdownService.highlight(this.tbMarkdownInstanceComponentRef.location.nativeElement);

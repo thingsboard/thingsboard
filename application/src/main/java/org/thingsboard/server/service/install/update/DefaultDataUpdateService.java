@@ -139,7 +139,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 break;
             case "3.3.2":
                 log.info("Updating data from version 3.3.2 to 3.3.3 ...");
-                nestedRuleNodeUpdater.updateEntities(null);
+                updateNestedRuleChains();
                 break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
@@ -225,73 +225,73 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 }
             };
 
-    private final PaginatedUpdater<String, Tenant> nestedRuleNodeUpdater =
-            new PaginatedUpdater<>() {
-
-                @Override
-                protected String getName() {
-                    return "Tenants nested rule chain updater";
-                }
-
-                @Override
-                protected boolean forceReportTotal() {
-                    return true;
-                }
-
-                @Override
-                protected PageData<Tenant> findEntities(String region, PageLink pageLink) {
-                    return tenantService.findTenants(pageLink);
-                }
-
-                @Override
-                protected void updateEntity(Tenant tenant) {
+    private void updateNestedRuleChains() {
+        try {
+            var packSize = 1024;
+            var updated = 0;
+            boolean hasNext = true;
+            while (hasNext) {
+                List<EntityRelation> relations = relationService.findRuleNodeToRuleChainRelations(TenantId.SYS_TENANT_ID, RuleChainType.CORE, packSize);
+                hasNext = relations.size() == packSize;
+                for (EntityRelation relation : relations) {
                     try {
-                        var tenantId = tenant.getId();
-                        var packSize = 1024;
-                        boolean hasNext = true;
-                        while (hasNext) {
-                            List<EntityRelation> relations = relationService.findRuleNodeToRuleChainRelations(tenantId, RuleChainType.CORE, packSize);
-                            hasNext = relations.size() == packSize;
-                            for (EntityRelation relation : relations) {
-
-                                RuleNode sourceNode = ruleChainService.findRuleNodeById(tenantId, new RuleNodeId(relation.getFrom().getId()));
-                                RuleChainId sourceRuleChainId = sourceNode.getRuleChainId();
-                                RuleChain targetRuleChain = ruleChainService.findRuleChainById(tenantId, new RuleChainId(relation.getTo().getId()));
-                                RuleNode targetNode = new RuleNode();
-                                targetNode.setName(targetRuleChain.getName());
-                                targetNode.setRuleChainId(sourceRuleChainId);
-                                targetNode.setType(TbRuleChainInputNode.class.getName());
-                                TbRuleChainInputNodeConfiguration configuration = new TbRuleChainInputNodeConfiguration();
-                                configuration.setRuleChainId(targetRuleChain.getId().toString());
-                                targetNode.setConfiguration(JacksonUtil.valueToTree(configuration));
-                                targetNode.setAdditionalInfo(relation.getAdditionalInfo());
-                                targetNode.setDebugMode(false);
-                                targetNode = ruleChainService.saveRuleNode(tenantId, targetNode);
-
-                                EntityRelation sourceRuleChainToRuleNode = new EntityRelation();
-                                sourceRuleChainToRuleNode.setFrom(sourceRuleChainId);
-                                sourceRuleChainToRuleNode.setTo(targetNode.getId());
-                                sourceRuleChainToRuleNode.setType(EntityRelation.CONTAINS_TYPE);
-                                sourceRuleChainToRuleNode.setTypeGroup(RelationTypeGroup.RULE_CHAIN);
-                                relationService.saveRelation(tenantId, sourceRuleChainToRuleNode);
-
-                                EntityRelation sourceRuleNodeToTargetRuleNode = new EntityRelation();
-                                sourceRuleNodeToTargetRuleNode.setFrom(sourceNode.getId());
-                                sourceRuleNodeToTargetRuleNode.setTo(targetNode.getId());
-                                sourceRuleNodeToTargetRuleNode.setType(relation.getType());
-                                sourceRuleNodeToTargetRuleNode.setTypeGroup(RelationTypeGroup.RULE_NODE);
-                                sourceRuleNodeToTargetRuleNode.setAdditionalInfo(relation.getAdditionalInfo());
-                                relationService.saveRelation(tenantId, sourceRuleNodeToTargetRuleNode);
-
-                                //Delete old relation
-                                relationService.deleteRelation(tenantId, relation);
-                            }
+                        RuleNodeId sourceNodeId = new RuleNodeId(relation.getFrom().getId());
+                        RuleNode sourceNode = ruleChainService.findRuleNodeById(TenantId.SYS_TENANT_ID, sourceNodeId);
+                        if (sourceNode == null) {
+                            log.info("Skip processing of relation for non existing source rule node: [{}]", sourceNodeId);
+                            relationService.deleteRelation(TenantId.SYS_TENANT_ID, relation);
+                            continue;
                         }
+                        RuleChainId sourceRuleChainId = sourceNode.getRuleChainId();
+                        RuleChainId targetRuleChainId = new RuleChainId(relation.getTo().getId());
+                        RuleChain targetRuleChain = ruleChainService.findRuleChainById(TenantId.SYS_TENANT_ID, targetRuleChainId);
+                        if (targetRuleChain == null) {
+                            log.info("Skip processing of relation for non existing target rule chain: [{}]", targetRuleChainId);
+                            relationService.deleteRelation(TenantId.SYS_TENANT_ID, relation);
+                            continue;
+                        }
+                        TenantId tenantId = targetRuleChain.getTenantId();
+                        RuleNode targetNode = new RuleNode();
+                        targetNode.setName(targetRuleChain.getName());
+                        targetNode.setRuleChainId(sourceRuleChainId);
+                        targetNode.setType(TbRuleChainInputNode.class.getName());
+                        TbRuleChainInputNodeConfiguration configuration = new TbRuleChainInputNodeConfiguration();
+                        configuration.setRuleChainId(targetRuleChain.getId().toString());
+                        targetNode.setConfiguration(JacksonUtil.valueToTree(configuration));
+                        targetNode.setAdditionalInfo(relation.getAdditionalInfo());
+                        targetNode.setDebugMode(false);
+                        targetNode = ruleChainService.saveRuleNode(tenantId, targetNode);
+
+                        EntityRelation sourceRuleChainToRuleNode = new EntityRelation();
+                        sourceRuleChainToRuleNode.setFrom(sourceRuleChainId);
+                        sourceRuleChainToRuleNode.setTo(targetNode.getId());
+                        sourceRuleChainToRuleNode.setType(EntityRelation.CONTAINS_TYPE);
+                        sourceRuleChainToRuleNode.setTypeGroup(RelationTypeGroup.RULE_CHAIN);
+                        relationService.saveRelation(tenantId, sourceRuleChainToRuleNode);
+
+                        EntityRelation sourceRuleNodeToTargetRuleNode = new EntityRelation();
+                        sourceRuleNodeToTargetRuleNode.setFrom(sourceNode.getId());
+                        sourceRuleNodeToTargetRuleNode.setTo(targetNode.getId());
+                        sourceRuleNodeToTargetRuleNode.setType(relation.getType());
+                        sourceRuleNodeToTargetRuleNode.setTypeGroup(RelationTypeGroup.RULE_NODE);
+                        sourceRuleNodeToTargetRuleNode.setAdditionalInfo(relation.getAdditionalInfo());
+                        relationService.saveRelation(tenantId, sourceRuleNodeToTargetRuleNode);
+
+                        //Delete old relation
+                        relationService.deleteRelation(tenantId, relation);
+                        updated++;
                     } catch (Exception e) {
-                        log.error("Unable to update Tenant", e);
+                        log.info("Failed to update RuleNodeToRuleChainRelation: {}", relation, e);
                     }
                 }
-            };
+                if (updated > 0) {
+                    log.info("RuleNodeToRuleChainRelations: {} entities updated so far...", updated);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Unable to update Tenant", e);
+        }
+    }
 
     private final PaginatedUpdater<String, Tenant> tenantsDefaultEdgeRuleChainUpdater =
             new PaginatedUpdater<>() {

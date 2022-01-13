@@ -37,6 +37,7 @@
     </ng-template>
     <ng-template [ngSwitchCase]="deviceTransportType.LWM2M">
       <tb-profile-lwm2m-device-transport-configuration
+        [isAdd]="isAdd"
         [required]="required"
         formControlName="configuration">
       </tb-profile-lwm2m-device-transport-configuration>

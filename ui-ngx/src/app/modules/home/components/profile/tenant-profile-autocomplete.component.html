@@ -38,6 +38,13 @@
           (click)="editTenantProfile($event)">
     <mat-icon class="material-icons">edit</mat-icon>
   </button>
+  <button *ngIf="showDetailsPageLink && selectTenantProfileFormGroup.get('tenantProfile').value && disabled"
+          type="button"
+          matSuffix mat-button mat-icon-button aria-label="Open device profile">
+    <a [routerLink]=tenantProfileURL>
+      <mat-icon class="material-icons">open_in_new</mat-icon>
+    </a>
+  </button>
   <mat-autocomplete
     class="tb-autocomplete"
     #tenantProfileAutocomplete="matAutocomplete"

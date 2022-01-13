@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
@@ -161,7 +162,7 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
         if (relationExistsBeforeDelete) {
             try {
                 relationRepository.deleteById(key);
-            } catch (ConcurrencyFailureException e) {
+            } catch (DataAccessException e) {
                 log.debug("[{}] Concurrency exception while deleting relation", key, e);
             }
         }
@@ -199,8 +200,8 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     }
 
     @Override
-    public List<EntityRelation> findRuleNodeToRuleChainRelations(TenantId tenantId, RuleChainType ruleChainType, int limit) {
-        return DaoUtil.convertDataList(relationRepository.findRuleNodeToRuleChainRelations(tenantId.getId(), ruleChainType, PageRequest.of(0, limit)));
+    public List<EntityRelation> findRuleNodeToRuleChainRelations(RuleChainType ruleChainType, int limit) {
+        return DaoUtil.convertDataList(relationRepository.findRuleNodeToRuleChainRelations(ruleChainType, PageRequest.of(0, limit)));
     }
 
     private Specification<RelationEntity> getEntityFieldsSpec(EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType childType) {

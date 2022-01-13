@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 import * as React from 'react';
-import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
+import { createTheme, ThemeProvider } from '@material-ui/core/styles';
 import thingsboardTheme from './styles/thingsboardTheme';
 import ThingsboardSchemaForm from './json-form-schema-form';
 import { JsonFormProps } from './json-form.models';
 
-const tbTheme = createMuiTheme(thingsboardTheme);
+const tbTheme = createTheme(thingsboardTheme);
 
 class ReactSchemaForm extends React.Component<JsonFormProps, {}> {
 

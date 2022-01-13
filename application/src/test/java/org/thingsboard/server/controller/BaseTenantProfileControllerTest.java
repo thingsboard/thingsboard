@@ -47,13 +47,6 @@ public abstract class BaseTenantProfileControllerTest extends AbstractController
     @Autowired
     private TenantProfileService tenantProfileService;
 
-    @After
-    @Override
-    public void teardown() throws Exception {
-        super.teardown();
-        tenantProfileService.deleteTenantProfiles(TenantId.SYS_TENANT_ID);
-    }
-
     @Test
     public void testSaveTenantProfile() throws Exception {
         loginSysAdmin();
