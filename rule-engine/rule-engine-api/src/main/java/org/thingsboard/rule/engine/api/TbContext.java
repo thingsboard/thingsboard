@@ -174,7 +174,7 @@ public interface TbContext {
 
     TbMsg deviceCreatedMsg(Device device, RuleNodeId ruleNodeId);
 
-    void enqueueEntityRelationEvents(EntityRelation relation, String relationEventType, boolean originatorDirectionFrom);
+    void enqueueEntityRelationEvents(EntityRelation relation, String relationEventType);
 
     TbMsg assetCreatedMsg(Asset asset, RuleNodeId ruleNodeId);
 

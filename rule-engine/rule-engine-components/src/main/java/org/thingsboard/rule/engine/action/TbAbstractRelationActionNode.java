@@ -32,6 +32,7 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntityContainer;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DashboardInfo;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
@@ -54,6 +55,7 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.user.UserService;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -143,6 +145,24 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
 
     protected String processPattern(TbMsg msg, String pattern) {
         return TbNodeUtils.processPattern(pattern, msg);
+    }
+
+    protected void pushDeleteRelationEventMessage(TbContext ctx, EntityRelation entityRelation) {
+        ctx.enqueueEntityRelationEvents(entityRelation, DataConstants.ENTITY_RELATION_DELETED);
+    }
+
+    protected List<ListenableFuture<Boolean>> deleteRelationsAndPushEventMessages(TbContext ctx, List<EntityRelation> relations) {
+        List<ListenableFuture<Boolean>> list = new ArrayList<>();
+        for (EntityRelation entityRelation : relations) {
+            ListenableFuture<Boolean> future = ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), entityRelation);
+            list.add(Futures.transform(future, res -> {
+                if (res) {
+                    pushDeleteRelationEventMessage(ctx, entityRelation);
+                }
+                return res;
+            }, ctx.getDbCallbackExecutor()));
+        }
+        return list;
     }
 
     @Data

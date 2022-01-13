@@ -24,14 +24,10 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntityContainer;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -82,19 +78,8 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
             if (entityRelations.isEmpty()) {
                 return Futures.immediateFuture(true);
             } else {
-                List<ListenableFuture<Boolean>> listenableFutureList = new ArrayList<>();
-                for (EntityRelation entityRelation : entityRelations) {
-                    ListenableFuture<Boolean> future = ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), entityRelation);
-                    listenableFutureList.add(Futures.transform(future, res -> {
-                        if (res) {
-                            pushDeleteRelationEventMessage(ctx,
-                                    entityRelation,
-                                    config.getDirection().equals(EntitySearchDirection.FROM.name()));
-                        }
-                        return res;
-                    }, ctx.getDbCallbackExecutor()));
-                }
-                return Futures.transformAsync(Futures.allAsList(listenableFutureList), booleans -> {
+                List<ListenableFuture<Boolean>> list = deleteRelationsAndPushEventMessages(ctx, entityRelations);
+                return Futures.transformAsync(Futures.allAsList(list), booleans -> {
                     for (Boolean bool : booleans) {
                         if (!bool) {
                             return Futures.immediateFuture(false);
@@ -113,7 +98,7 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
                     if (relation != null) {
                         return Futures.transform(processSingleDeleteRelation(ctx, sdId, relationType), res -> {
                             if (res) {
-                                pushDeleteRelationEventMessage(ctx, relation, sdId.isOriginatorDirectionFrom());
+                                pushDeleteRelationEventMessage(ctx, relation);
                             }
                             return res;
                         }, ctx.getDbCallbackExecutor());
@@ -124,10 +109,6 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
 
     private ListenableFuture<Boolean> processSingleDeleteRelation(TbContext ctx, SearchDirectionIds sdId, String relationType) {
         return ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), sdId.getFromId(), sdId.getToId(), relationType, RelationTypeGroup.COMMON);
-    }
-
-    protected void pushDeleteRelationEventMessage(TbContext ctx, EntityRelation entityRelation, boolean originatorDirectionFrom) {
-        ctx.enqueueEntityRelationEvents(entityRelation, DataConstants.ENTITY_RELATION_DELETED, originatorDirectionFrom);
     }
 
 }

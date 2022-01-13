@@ -197,9 +197,8 @@ public class DefaultTbClusterService implements TbClusterService {
         if (entityRelation.getFrom().getEntityType() == entityRelation.getTo().getEntityType()) {
             if (tbMsg.getMetaData().getValue(DataConstants.RELATION_DIRECTION_MSG_ORIGINATOR).equals(EntitySearchDirection.TO.name())) {
                 DeviceProfile deviceProfileFrom = deviceProfileCache.get(deviceProfile.getTenantId(), new DeviceId(entityRelation.getFrom().getId()));
-                String defaultQueueNameFrom = deviceProfileFrom.getDefaultQueueName() == null ? "" : deviceProfileFrom.getDefaultQueueName();
-
-                String defaultQueueNameTo = deviceProfile.getDefaultQueueName() == null ? "" : deviceProfile.getDefaultQueueName();
+                String defaultQueueNameFrom = deviceProfileFrom.getDefaultQueueName();
+                String defaultQueueNameTo = deviceProfile.getDefaultQueueName();
                 return deviceProfileFrom.getDefaultRuleChainId().equals(deviceProfile.getDefaultRuleChainId())
                         && defaultQueueNameFrom.equals(defaultQueueNameTo);
             }

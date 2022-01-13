@@ -1,0 +1,189 @@
+package org.thingsboard.server.service.action;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgDataType;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.audit.AuditLogService;
+import org.thingsboard.server.queue.TbQueueProducer;
+import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
+import org.thingsboard.server.service.profile.TbDeviceProfileCache;
+import org.thingsboard.server.service.queue.DefaultTbClusterService;
+
+import java.util.List;
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+
+@RunWith(MockitoJUnitRunner.class)
+public class EntityActionServiceTest {
+    public static final String CUSTOMER_ID = "customerId";
+    public static final int WANTED_NUMBER_OF_INVOCATIONS_FOR_NOT_DUPLICATED_MSG = 2;
+    public static final int WANTED_NUMBER_OF_INVOCATIONS_FOR_DUPLICATED_MSG = 1;
+    public static final String DEFAULT_QUEUE_NAME = "Main";
+
+    EntityActionService actionService;
+
+    @Mock
+    AuditLogService auditLogService;
+    @Mock
+    TbQueueProducerProvider producerProvider;
+    @Mock
+    PartitionService partitionService;
+    @Mock
+    TbDeviceProfileCache deviceProfileCache;
+    @Mock
+    TbQueueProducer queueProducer;
+    @Spy
+    @InjectMocks
+    DefaultTbClusterService clusterService;
+
+    DeviceProfile deviceProfile;
+
+    TenantId tenantId = new TenantId(UUID.randomUUID());
+    CustomerId customerId = new CustomerId(UUID.randomUUID());
+
+    @Before
+    public void init() {
+        actionService = new EntityActionService(clusterService, auditLogService);
+        deviceProfile = new DeviceProfile();
+        deviceProfile.setDefaultQueueName(DEFAULT_QUEUE_NAME);
+        deviceProfile.setTenantId(tenantId);
+        deviceProfile.setDefaultRuleChainId(new RuleChainId(UUID.randomUUID()));
+
+        when(deviceProfileCache.get(any(TenantId.class), any(DeviceId.class))).thenReturn(deviceProfile);
+        when(producerProvider.getRuleEngineMsgProducer()).thenReturn(queueProducer);
+        doNothing().when(queueProducer).send(any(), any(), any());
+    }
+
+    @Test
+    public void testPushEntityActionToRuleEngine_whenActionTypeEqualsRelationAddOrUpdate_thenSendTwoEvent() throws JsonProcessingException {
+        EntityRelation relation = new EntityRelation();
+        relation.setFrom(new DeviceId(UUID.randomUUID()));
+        relation.setTo(new AssetId(UUID.randomUUID()));
+
+        pushEventAndVerify(relation, WANTED_NUMBER_OF_INVOCATIONS_FOR_NOT_DUPLICATED_MSG, ActionType.RELATION_ADD_OR_UPDATE);
+    }
+
+    @Test
+    public void testPushEntityActionToRuleEngine_whenActionTypeEqualsRelationDeleted_thenSendTwoEvent() throws JsonProcessingException {
+        EntityRelation relation = new EntityRelation();
+        relation.setFrom(new DeviceId(UUID.randomUUID()));
+        relation.setTo(new AssetId(UUID.randomUUID()));
+
+        pushEventAndVerify(relation, WANTED_NUMBER_OF_INVOCATIONS_FOR_NOT_DUPLICATED_MSG, ActionType.RELATION_DELETED);
+    }
+
+    @Test
+    public void testPushEntityActionToRuleEngine_whenActionTypeEqualsRelationAddOrUpdate_thenSendOneEvent() throws JsonProcessingException {
+        EntityRelation relation = new EntityRelation();
+        relation.setFrom(new DeviceId(UUID.randomUUID()));
+        relation.setTo(new DeviceId(UUID.randomUUID()));
+        pushEventAndVerify(relation, WANTED_NUMBER_OF_INVOCATIONS_FOR_DUPLICATED_MSG, ActionType.RELATION_ADD_OR_UPDATE);
+    }
+
+    @Test
+    public void testPushEntityActionToRuleEngine_whenActionTypeEqualsRelationDeleted_thenSendOneEvent() throws JsonProcessingException {
+        EntityRelation relation = new EntityRelation();
+        relation.setFrom(new DeviceId(UUID.randomUUID()));
+        relation.setTo(new DeviceId(UUID.randomUUID()));
+        pushEventAndVerify(relation, WANTED_NUMBER_OF_INVOCATIONS_FOR_DUPLICATED_MSG, ActionType.RELATION_DELETED);
+    }
+
+    void pushEventAndVerify(EntityRelation relation, int wantedNumberOfInvocations, ActionType actionType) throws JsonProcessingException {
+        actionService.pushEntityActionToRuleEngine(relation.getFrom(),
+                null,
+                tenantId,
+                customerId,
+                actionType,
+                null,
+                relation);
+
+        actionService.pushEntityActionToRuleEngine(relation.getTo(),
+                null,
+                tenantId,
+                customerId,
+                actionType,
+                null,
+                relation);
+
+        verifyMetadataTbMsg(relation, actionType);
+        verify(partitionService, times(wantedNumberOfInvocations)).resolve(any(), anyString(), any(), any());
+    }
+
+    private void verifyMetadataTbMsg(EntityRelation relation, ActionType actionType) throws JsonProcessingException {
+        String msgType = getMsgType(actionType);
+        String data = JacksonUtil.OBJECT_MAPPER.writeValueAsString(JacksonUtil.valueToTree(relation));
+
+        TbMsg tbMsgFrom = getTbMsg(EntitySearchDirection.FROM, msgType, relation.getFrom(), data);
+        TbMsg tbMsgTo = getTbMsg(EntitySearchDirection.TO, msgType, relation.getTo(), data);
+
+        ArgumentCaptor<TbMsg> argumentCaptorTbMsg = ArgumentCaptor.forClass(TbMsg.class);
+        verify(clusterService, times(2)).pushMsgToRuleEngine(any(), any(), argumentCaptorTbMsg.capture(), any());
+        List<TbMsg> allValuesTbMsg = argumentCaptorTbMsg.getAllValues();
+        checkTbMsgMetadata(tbMsgFrom, tbMsgTo, allValuesTbMsg);
+    }
+
+    private void checkTbMsgMetadata(TbMsg tbMsgFrom, TbMsg tbMsgTo, List<TbMsg> allValuesTbMsg) {
+        boolean hasFromMetadata = false;
+        boolean hasToMetadata = false;
+        for (TbMsg tbMsg : allValuesTbMsg) {
+            if (tbMsg.getMetaData().equals(tbMsgFrom.getMetaData())) {
+                hasFromMetadata = true;
+            } else if (tbMsg.getMetaData().equals(tbMsgTo.getMetaData())) {
+                hasToMetadata = true;
+            }
+        }
+        Assert.assertTrue(hasFromMetadata);
+        Assert.assertTrue(hasToMetadata);
+    }
+
+    @NotNull
+    private TbMsg getTbMsg(EntitySearchDirection direction, String msgType, EntityId relation, String data) {
+        TbMsgMetaData metaDataFrom = new TbMsgMetaData();
+        metaDataFrom.putValue(DataConstants.RELATION_DIRECTION_MSG_ORIGINATOR, direction.name());
+        metaDataFrom.putValue(CUSTOMER_ID, customerId.getId().toString());
+        return TbMsg.newMsg(msgType, relation, customerId, metaDataFrom, TbMsgDataType.JSON, data);
+    }
+
+
+    @NotNull
+    private String getMsgType(ActionType actionType) {
+        if (actionType == ActionType.RELATION_ADD_OR_UPDATE) {
+            return DataConstants.ENTITY_RELATION_ADD_OR_UPDATE;
+        } else if (actionType == ActionType.RELATION_DELETED) {
+            return DataConstants.ENTITY_RELATION_DELETED;
+        }
+        return "";
+    }
+
+}

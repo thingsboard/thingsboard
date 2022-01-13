@@ -335,11 +335,9 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public void enqueueEntityRelationEvents(EntityRelation relation, String relationEventType, boolean originatorDirectionFrom) {
+    public void enqueueEntityRelationEvents(EntityRelation relation, String relationEventType) {
         try {
-
             EntityId from = relation.getFrom();
-
             String queueNameFrom = null;
             RuleChainId ruleChainIdFrom = null;
             if (from.getEntityType() == EntityType.DEVICE) {
@@ -350,12 +348,27 @@ class DefaultTbContext implements TbContext {
             TbMsgMetaData metaDataFrom = new TbMsgMetaData();
             metaDataFrom.putValue(DataConstants.RELATION_DIRECTION_MSG_ORIGINATOR, EntitySearchDirection.FROM.name());
 
-
-            TbMsg tbMsgFrom = TbMsg.newMsg(queueNameFrom, relationEventType, relation.getFrom(), metaDataFrom, mapper.writeValueAsString(relation), ruleChainIdFrom, null);
+            TbMsg tbMsgFrom = TbMsg.newMsg(queueNameFrom, relationEventType, from, metaDataFrom, mapper.writeValueAsString(relation), ruleChainIdFrom, null);
             processEnqueue(tbMsgFrom, relation, relationEventType);
 
-            if (!isDuplicateMessage(relation)) {
-                TbMsg tbMsgTo = TbMsg.newMsg(queueName, relationEventType, relation.getTo(), metaData, mapper.writeValueAsString(relation));
+            EntityId to = relation.getTo();
+            String queueNameTo = null;
+            RuleChainId ruleChainIdTo = null;
+
+            boolean isDuplicate = false;
+            if (to.getEntityType() == EntityType.DEVICE) {
+                DeviceProfile deviceProfileTo = getDeviceProfileByDeviceId(new DeviceId(from.getId()));
+                queueNameTo = deviceProfileTo.getDefaultQueueName();
+                ruleChainIdTo = deviceProfileTo.getDefaultRuleChainId();
+
+                if (from.getEntityType() == EntityType.DEVICE && queueNameTo.equals(queueNameFrom) && ruleChainIdTo.equals(ruleChainIdFrom)) {
+                    isDuplicate = true;
+                }
+            }
+            if (!isDuplicate) {
+                TbMsgMetaData metaDataTo = new TbMsgMetaData();
+                metaDataTo.putValue(DataConstants.RELATION_DIRECTION_MSG_ORIGINATOR, EntitySearchDirection.TO.name());
+                TbMsg tbMsgTo = TbMsg.newMsg(queueNameTo, relationEventType, to, metaDataTo, mapper.writeValueAsString(relation), ruleChainIdTo, null);
                 processEnqueue(tbMsgTo, relation, relationEventType);
             }
         } catch (JsonProcessingException e) {
@@ -367,22 +380,6 @@ class DefaultTbContext implements TbContext {
         enqueue(tbMsg,
                 () -> log.trace("[{}] Enqueued message {}!", relationEventType, relation),
                 throwable -> log.warn("[{}] Failed to enqueue message {}", relationEventType, relation, throwable));
-    }
-
-    private boolean isDuplicateMessage(EntityRelation relation) {
-        if (relation.getFrom().getEntityType() == EntityType.DEVICE) {
-            if (relation.getFrom().getEntityType() == relation.getTo().getEntityType()) {
-                DeviceProfile deviceProfileFrom = getDeviceProfileByDeviceId(new DeviceId(relation.getFrom().getId()));
-                DeviceProfile deviceProfileTo = getDeviceProfileByDeviceId(new DeviceId(relation.getTo().getId()));
-                String defaultQueueName = deviceProfileFrom.getDefaultQueueName() == null ? "" : deviceProfileTo.getDefaultQueueName();
-                String fromQueueName = deviceProfileTo.getDefaultQueueName() == null ? "" : deviceProfileFrom.getDefaultQueueName();
-                if (deviceProfileFrom.getDefaultRuleChainId().equals(deviceProfileTo.getDefaultRuleChainId())
-                        && defaultQueueName.equals(fromQueueName)) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     private DeviceProfile getDeviceProfileByDeviceId(DeviceId deviceId) {
