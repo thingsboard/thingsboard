@@ -18,6 +18,12 @@
 <div class="tb-details-buttons" fxLayout.xs="column">
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'open')"
+          [fxShow]="!isEdit && !isDetailsPage">
+    {{'common.open-details-page' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'makePublic')"
           [fxShow]="!isEdit && deviceScope === 'tenant' && !isAssignedToCustomer(entity) && !entity?.customerIsPublic">
     {{'device.make-public' | translate }}
@@ -97,6 +103,7 @@
         [selectDefaultProfile]="isAdd"
         required
         formControlName="deviceProfileId"
+        [showDetailsPageLink]="true"
         (deviceProfileUpdated)="onDeviceProfileUpdated()"
         (deviceProfileChanged)="onDeviceProfileChanged($event)">
       </tb-device-profile-autocomplete>

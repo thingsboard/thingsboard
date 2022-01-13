@@ -257,7 +257,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                 final TbRuleEngineProcessingStrategy ackStrategy = getAckStrategy(configuration);
                 submitStrategy.init(msgs);
                 while (!stopped) {
-                    TbMsgPackProcessingContext ctx = new TbMsgPackProcessingContext(configuration.getName(), submitStrategy);
+                    TbMsgPackProcessingContext ctx = new TbMsgPackProcessingContext(configuration.getName(), submitStrategy, ackStrategy.isSkipTimeoutMsgs());
                     submitStrategy.submitAttempt((id, msg) -> submitExecutor.submit(() -> submitMessage(configuration, stats, ctx, id, msg)));
 
                     final boolean timeout = !ctx.await(configuration.getPackProcessingTimeout(), TimeUnit.MILLISECONDS);

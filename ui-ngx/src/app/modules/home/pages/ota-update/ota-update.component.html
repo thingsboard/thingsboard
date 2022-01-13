@@ -17,6 +17,12 @@
 -->
 <div class="tb-details-buttons" fxLayout.xs="column">
   <button mat-raised-button color="primary" fxFlex.xs
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'open')"
+          [fxShow]="!isEdit && !isDetailsPage">
+    {{'common.open-details-page' | translate }}
+  </button>
+  <button mat-raised-button color="primary" fxFlex.xs
           [disabled]="(isLoading$ | async) || !(entity?.hasData && !entity?.url)"
           (click)="onEntityAction($event, 'uploadPackage')"
           [fxShow]="!isEdit">
@@ -92,7 +98,8 @@
         [hint]="'ota-update.chose-compatible-device-profile'"
         [editProfileEnabled]="false"
         [addNewProfile]="false"
-        [selectDefaultProfile]="true">
+        [showDetailsPageLink]="true"
+        [selectDefaultProfile]="isAdd">
       </tb-device-profile-autocomplete>
       <mat-form-field class="mat-block">
         <mat-label translate>ota-update.package-type</mat-label>

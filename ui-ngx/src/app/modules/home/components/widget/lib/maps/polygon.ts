@@ -23,7 +23,7 @@ import {
   processPattern,
   safeExecute
 } from './common-maps-utils';
-import { FormattedData, MarkerSettings, PolygonSettings } from './map-models';
+import { FormattedData, PolygonSettings, UnitedMapSettings } from './map-models';
 
 export class Polygon {
 
@@ -32,7 +32,7 @@ export class Polygon {
     data: FormattedData;
     dataSources: FormattedData[];
 
-    constructor(public map, data: FormattedData, dataSources: FormattedData[], private settings: PolygonSettings,
+    constructor(public map, data: FormattedData, dataSources: FormattedData[], private settings: UnitedMapSettings,
                 private onDragendListener?) {
         this.dataSources = dataSources;
         this.data = data;
@@ -47,7 +47,8 @@ export class Polygon {
           weight: settings.polygonStrokeWeight,
           fillOpacity: settings.polygonOpacity,
           opacity: settings.polygonStrokeOpacity,
-          pmIgnore: !settings.editablePolygon
+          pmIgnore: !settings.editablePolygon,
+          snapIgnore: !settings.snappable
         }).addTo(this.map);
 
         this.updateLabel(settings);

@@ -130,7 +130,7 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
   setDisabledState(isDisabled: boolean){
     this.disabled = isDisabled;
     if (this.disabled){
-      this.provisionConfigurationFormGroup.disable();
+      this.provisionConfigurationFormGroup.disable({emitEvent: false});
     } else {
       if (this.provisionConfigurationFormGroup.get('type').value !== DeviceProvisionType.DISABLED) {
         this.provisionConfigurationFormGroup.enable({emitEvent: false});

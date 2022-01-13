@@ -39,6 +39,7 @@ public class TbMsgPackProcessingContext {
 
     private final String queueName;
     private final TbRuleEngineSubmitStrategy submitStrategy;
+    private final boolean skipTimeoutMsgsPossible;
     @Getter
     private final boolean profilerEnabled;
     private final AtomicInteger pendingCount;
@@ -53,12 +54,13 @@ public class TbMsgPackProcessingContext {
     private final ConcurrentMap<TenantId, RuleEngineException> exceptionsMap = new ConcurrentHashMap<>();
 
     private final ConcurrentMap<UUID, RuleNodeInfo> lastRuleNodeMap = new ConcurrentHashMap<>();
-    @Getter
-    private volatile boolean complete = false;
 
-    public TbMsgPackProcessingContext(String queueName, TbRuleEngineSubmitStrategy submitStrategy) {
+    private volatile boolean canceled = false;
+
+    public TbMsgPackProcessingContext(String queueName, TbRuleEngineSubmitStrategy submitStrategy, boolean skipTimeoutMsgsPossible) {
         this.queueName = queueName;
         this.submitStrategy = submitStrategy;
+        this.skipTimeoutMsgsPossible = skipTimeoutMsgsPossible;
         this.profilerEnabled = log.isDebugEnabled();
         this.pendingMap = submitStrategy.getPendingMap();
         this.pendingCount = new AtomicInteger(pendingMap.size());
@@ -151,9 +153,13 @@ public class TbMsgPackProcessingContext {
     }
 
     public void cleanup() {
-        complete = true;
+        canceled = true;
         pendingMap.clear();
         successMap.clear();
         failedMap.clear();
+    }
+
+    public boolean isCanceled() {
+        return skipTimeoutMsgsPossible && canceled;
     }
 }

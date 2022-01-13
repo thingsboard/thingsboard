@@ -62,9 +62,9 @@ import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.eclipse.leshan.core.LwM2mId.SOFTWARE_MANAGEMENT;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.TEMPERATURE_SENSOR;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_0;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_1;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.objectInstanceId_12;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_0;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_1;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_12;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resources;
 
 
@@ -99,12 +99,12 @@ public class LwM2MTestClient {
         initializer.setInstancesForObject(FIRMWARE, fwLwM2MDevice = new FwLwM2MDevice());
         initializer.setInstancesForObject(SOFTWARE_MANAGEMENT, swLwM2MDevice = new SwLwM2MDevice());
         initializer.setClassForObject(ACCESS_CONTROL, DummyInstanceEnabler.class);
-        initializer.setInstancesForObject(BINARY_APP_DATA_CONTAINER, lwM2MBinaryAppDataContainer = new LwM2mBinaryAppDataContainer(executor, objectInstanceId_0),
-                new LwM2mBinaryAppDataContainer(executor, objectInstanceId_1));
+        initializer.setInstancesForObject(BINARY_APP_DATA_CONTAINER, lwM2MBinaryAppDataContainer = new LwM2mBinaryAppDataContainer(executor, OBJECT_INSTANCE_ID_0),
+                new LwM2mBinaryAppDataContainer(executor, OBJECT_INSTANCE_ID_1));
         locationParams = new LwM2MLocationParams();
         locationParams.getPos();
-        initializer.setInstancesForObject(LOCATION, new LwM2mLocation(locationParams.getLatitude(), locationParams.getLongitude(), locationParams.getScaleFactor(), executor, objectInstanceId_0));
-        initializer.setInstancesForObject(TEMPERATURE_SENSOR, lwM2MTemperatureSensor = new LwM2mTemperatureSensor(executor, objectInstanceId_0), new LwM2mTemperatureSensor(executor, objectInstanceId_12));
+        initializer.setInstancesForObject(LOCATION, new LwM2mLocation(locationParams.getLatitude(), locationParams.getLongitude(), locationParams.getScaleFactor(), executor, OBJECT_INSTANCE_ID_0));
+        initializer.setInstancesForObject(TEMPERATURE_SENSOR, lwM2MTemperatureSensor = new LwM2mTemperatureSensor(executor, OBJECT_INSTANCE_ID_0), new LwM2mTemperatureSensor(executor, OBJECT_INSTANCE_ID_12));
 
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
         dtlsConfig.setRecommendedCipherSuitesOnly(true);
@@ -130,16 +130,6 @@ public class LwM2MTestClient {
                                                       ObservationStore store) {
                 CoapEndpoint.Builder builder = new CoapEndpoint.Builder();
                 DtlsConnectorConfig.Builder dtlsConfigBuilder = new DtlsConnectorConfig.Builder(dtlsConfig);
-
-                // tricks to be able to change psk information on the fly
-//                AdvancedPskStore pskStore = dtlsConfig.getAdvancedPskStore();
-//                if (pskStore != null) {
-//                    PskPublicInformation identity = pskStore.getIdentity(null, null);
-//                    SecretKey key = pskStore
-//                            .requestPskSecretResult(ConnectionId.EMPTY, null, identity, null, null, null).getSecret();
-//                    singlePSKStore = new SinglePSKStore(identity, key);
-//                    dtlsConfigBuilder.setAdvancedPskStore(singlePSKStore);
-//                }
                 builder.setConnector(new DTLSConnector(dtlsConfigBuilder.build()));
                 builder.setNetworkConfig(coapConfig);
                 return builder.build();
@@ -283,5 +273,4 @@ public class LwM2MTestClient {
             client.start();
         }
     }
-
 }

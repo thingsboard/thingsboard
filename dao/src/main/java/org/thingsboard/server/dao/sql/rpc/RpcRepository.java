@@ -26,6 +26,8 @@ import org.thingsboard.server.dao.model.sql.RpcEntity;
 import java.util.UUID;
 
 public interface RpcRepository extends CrudRepository<RpcEntity, UUID> {
+    Page<RpcEntity> findAllByTenantIdAndDeviceId(UUID tenantId, UUID deviceId, Pageable pageable);
+
     Page<RpcEntity> findAllByTenantIdAndDeviceIdAndStatus(UUID tenantId, UUID deviceId, RpcStatus status, Pageable pageable);
 
     Page<RpcEntity> findAllByTenantId(UUID tenantId, Pageable pageable);

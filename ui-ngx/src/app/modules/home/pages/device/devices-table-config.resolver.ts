@@ -371,6 +371,13 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     return actions;
   }
 
+  private openDevice($event: Event, device: Device) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.router.navigateByUrl(`${this.router.url}/${device.id.id}`);
+  }
+
   importDevices($event: Event) {
     this.homeDialogs.importEntities(EntityType.DEVICE).subscribe((res) => {
       if (res) {
@@ -541,6 +548,9 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
 
   onDeviceAction(action: EntityAction<DeviceInfo>): boolean {
     switch (action.action) {
+      case 'open':
+        this.openDevice(action.event, action.entity);
+        return true;
       case 'makePublic':
         this.makePublic(action.event, action.entity);
         return true;
