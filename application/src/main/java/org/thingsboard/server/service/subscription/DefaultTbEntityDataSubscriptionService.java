@@ -178,8 +178,6 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                 log.debug("[{}][{}] Updating data using query: {}", session.getSessionId(), cmd.getCmdId(), cmd.getQuery());
             }
             ctx.setAndResolveQuery(cmd.getQuery());
-            TenantId tenantId = ctx.getTenantId();
-            CustomerId customerId = ctx.getCustomerId();
             EntityDataQuery query = ctx.getQuery();
             //Step 1. Update existing query with the contents of LatestValueCmd
             if (cmd.getLatestCmd() != null) {

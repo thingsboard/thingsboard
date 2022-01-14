@@ -74,7 +74,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
 
     @Override
     public boolean isDynamic() {
-        return query.getPageLink().isDynamic();
+        return query != null && query.getPageLink().isDynamic();
     }
 
     @Override
