@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, Input, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { merge, Observable, of, Subject } from 'rxjs';
 import { catchError, debounceTime, map, share, switchMap, tap } from 'rxjs/operators';
@@ -31,7 +31,7 @@ import { OtaPackageService } from '@core/http/ota-package.service';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { emptyPageData } from '@shared/models/page/page-data';
-import { getEntityDetailsPageURL, isEqual } from '@core/utils';
+import { getEntityDetailsPageURL } from '@core/utils';
 
 @Component({
   selector: 'tb-ota-package-autocomplete',
@@ -49,11 +49,29 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
 
   modelValue: string | EntityId | null;
 
-  @Input()
-  type = OtaUpdateType.FIRMWARE;
+  private otaUpdateType: OtaUpdateType;
+
+  get type(): OtaUpdateType {
+    return this.otaUpdateType;
+  }
 
   @Input()
-  deviceProfileId: string;
+  set type(value ) {
+    this.otaUpdateType = value ? value : OtaUpdateType.FIRMWARE;
+    this.reset();
+  }
+
+  private deviceProfile: string;
+
+  get deviceProfileId(): string {
+    return this.deviceProfile;
+  }
+
+  @Input()
+  set deviceProfileId(value: string) {
+    this.deviceProfile = value;
+    this.reset();
+  }
 
   @Input()
   labelText: string;
@@ -133,19 +151,6 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
       );
 
     this.filteredPackages = merge(this.cleanFilteredPackages, getPackages);
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    for (const propName of Object.keys(changes)) {
-      const change = changes[propName];
-      if (!change.firstChange && !isEqual(change.currentValue, change.previousValue)) {
-        const currentEntityGroup = this.getCurrentEntity();
-        if (!currentEntityGroup) {
-          this.reset();
-          this.dirty = true;
-        }
-      }
-    }
   }
 
   ngAfterViewInit(): void {
@@ -251,7 +256,7 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
   }
 
   clear() {
-    this.otaPackageFormGroup.get('packageId').patchValue('', {emitEvent: true});
+    this.otaPackageFormGroup.get('packageId').patchValue('');
     setTimeout(() => {
       this.packageInput.nativeElement.blur();
       this.packageInput.nativeElement.focus();
