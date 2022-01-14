@@ -200,6 +200,8 @@ export const entitySubtypeHref = '<a href="https://github.com/thingsboard/things
 
 export const assetSearchQueryHref = '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/asset.models.ts#L37">AssetSearchQuery</a>';
 
+export const rpcStatusHref = '<a href="https://github.com/thingsboard/thingsboard/blob/f6637c2cf3ff7ffb36f421fc8e10537c2d215d7d/ui-ngx/src/app/shared/models/rpc.models.ts#L22">RpcStatus</a>';
+
 export const pageLinkArg: FunctionArg = {
   name: 'pageLink',
   type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/page/page-link.ts#L68">PageLink</a>',
@@ -453,6 +455,26 @@ export const serviceCompletions: TbEditorCompletions = {
           requestConfigArg
         ],
         return: observableReturnType(persistentRpcHref)
+      },
+      deletePersistedRpc: {
+        description: 'Delete Persisted rpc request',
+        meta: 'function',
+        args: [
+          { name: 'rpcId', type: 'string', description: 'Id of the rpc'},
+          requestConfigArg
+        ],
+        return: observableVoid()
+      },
+      getPersistedRpcRequests: {
+        description: 'Get all persisted rpc requests',
+        meta: 'function',
+        args: [
+          { name: 'deviceId', type: 'string', description: 'Id of the device'},
+          pageLinkArg,
+          { name: 'rpcStatus', type: rpcStatusHref, description: 'RPC status', optional: true},
+          requestConfigArg
+        ],
+        return: observablePageDataReturnType(persistentRpcHref)
       },
       findByQuery: {
         description: 'Find devices by search query',
