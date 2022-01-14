@@ -137,10 +137,10 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
 
   onApplyDetails() {
     if (this.detailsForm && this.detailsForm.valid) {
-      const editingEntity = {...this.editingEntity, ...this.detailsForm.getRawValue()};
-      if (this.detailsForm.hasOwnProperty('additionalInfo')) {
+      const editingEntity = {...this.editingEntity, ...this.entityComponent.entityFormValue()};
+      if (this.editingEntity.hasOwnProperty('additionalInfo')) {
         editingEntity.additionalInfo =
-          mergeDeep((this.editingEntity as any).additionalInfo, this.detailsForm.getRawValue()?.additionalInfo);
+          mergeDeep((this.editingEntity as any).additionalInfo, this.entityComponent.entityFormValue()?.additionalInfo);
       }
       this.entitiesTableConfig.saveEntity(editingEntity, this.editingEntity).subscribe(
         (entity) => {
