@@ -65,6 +65,7 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
@@ -482,6 +483,9 @@ class DefaultTbContext implements TbContext {
     public DeviceService getDeviceService() {
         return mainCtx.getDeviceService();
     }
+
+    @Override
+    public DeviceCredentialsService deviceCredentialsService() { return mainCtx.getDeviceCredentialsService(); }
 
     @Override
     public TbClusterService getClusterService() {
