@@ -82,7 +82,17 @@ public abstract class ComponentMsgProcessor<T extends EntityId> extends Abstract
         schedulePeriodicMsgWithDelay(context, new StatsPersistTick(), statsPersistFrequency, statsPersistFrequency);
     }
 
-    protected void checkActive(TbMsg tbMsg) throws RuleNodeException {
+    protected boolean checkMsgValid(TbMsg tbMsg) {
+        var valid = tbMsg.isValid();
+        if (!valid) {
+            if (log.isTraceEnabled()) {
+                log.trace("Skip processing of message: {} because it is no longer valid!", tbMsg);
+            }
+        }
+        return valid;
+    }
+
+    protected void checkComponentStateActive(TbMsg tbMsg) throws RuleNodeException {
         if (state != ComponentLifecycleState.ACTIVE) {
             log.debug("Component is not active. Current state [{}] for processor [{}][{}] tenant [{}]", state, entityId.getEntityType(), entityId, tenantId);
             RuleNodeException ruleNodeException = getInactiveException();

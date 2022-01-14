@@ -167,6 +167,11 @@ class DefaultTbContext implements TbContext {
     }
 
     private void enqueue(TopicPartitionInfo tpi, TbMsg tbMsg, Consumer<Throwable> onFailure, Runnable onSuccess) {
+        if (!tbMsg.isValid()) {
+            log.trace("[{}] Skip invalid message: {}", getTenantId(), tbMsg);
+            onFailure.accept(new IllegalArgumentException("Source message is no longer valid!"));
+            return;
+        }
         TransportProtos.ToRuleEngineMsg msg = TransportProtos.ToRuleEngineMsg.newBuilder()
                 .setTenantIdMSB(getTenantId().getId().getMostSignificantBits())
                 .setTenantIdLSB(getTenantId().getId().getLeastSignificantBits())
@@ -235,6 +240,11 @@ class DefaultTbContext implements TbContext {
     }
 
     private void enqueueForTellNext(TopicPartitionInfo tpi, String queueName, TbMsg source, Set<String> relationTypes, String failureMessage, Runnable onSuccess, Consumer<Throwable> onFailure) {
+        if (!source.isValid()) {
+            log.trace("[{}] Skip invalid message: {}", getTenantId(), source);
+            onFailure.accept(new IllegalArgumentException("Source message is no longer valid!"));
+            return;
+        }
         RuleChainId ruleChainId = nodeCtx.getSelf().getRuleChainId();
         RuleNodeId ruleNodeId = nodeCtx.getSelf().getId();
         TbMsg tbMsg = TbMsg.newMsg(source, queueName, ruleChainId, ruleNodeId);

@@ -13,12 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.queue.processing;
+package org.thingsboard.server.common.transport.limits;
 
-public interface TbRuleEngineProcessingStrategy {
+import lombok.Data;
 
-    boolean isSkipTimeoutMsgs();
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
-    TbRuleEngineProcessingDecision analyze(TbRuleEngineProcessingResult result);
+@Data
+public class InetAddressRateLimitStats {
+
+    private final Lock lock = new ReentrantLock();
+
+    private boolean blocked;
+    private long lastActivityTs;
+    private int failureCount;
+    private int connectionsCount;
 
 }

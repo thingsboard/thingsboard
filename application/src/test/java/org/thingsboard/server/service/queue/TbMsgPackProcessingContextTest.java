@@ -69,7 +69,7 @@ public class TbMsgPackProcessingContextTest {
         TbRuleEngineSubmitStrategy strategyMock = mock(TbRuleEngineSubmitStrategy.class);
         when(strategyMock.getPendingMap()).thenReturn(messages);
 
-        TbMsgPackProcessingContext context = new TbMsgPackProcessingContext("Main", strategyMock);
+        TbMsgPackProcessingContext context = new TbMsgPackProcessingContext("Main", strategyMock, false);
         for (UUID uuid : messages.keySet()) {
             final CountDownLatch readyLatch = new CountDownLatch(parallelCount);
             final CountDownLatch startLatch = new CountDownLatch(1);

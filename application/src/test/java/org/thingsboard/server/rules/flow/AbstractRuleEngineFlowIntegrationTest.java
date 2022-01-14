@@ -144,6 +144,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         Thread.sleep(1000);
 
         TbMsgCallback tbMsgCallback = Mockito.mock(TbMsgCallback.class);
+        Mockito.when(tbMsgCallback.isMsgValid()).thenReturn(true);
         TbMsg tbMsg = TbMsg.newMsg("CUSTOM", device.getId(), new TbMsgMetaData(), "{}", tbMsgCallback);
         QueueToRuleEngineMsg qMsg = new QueueToRuleEngineMsg(savedTenant.getId(), tbMsg, null, null);
         // Pushing Message to the system
@@ -256,6 +257,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         Thread.sleep(1000);
 
         TbMsgCallback tbMsgCallback = Mockito.mock(TbMsgCallback.class);
+        Mockito.when(tbMsgCallback.isMsgValid()).thenReturn(true);
         TbMsg tbMsg = TbMsg.newMsg("CUSTOM", device.getId(), new TbMsgMetaData(), "{}", tbMsgCallback);
         QueueToRuleEngineMsg qMsg = new QueueToRuleEngineMsg(savedTenant.getId(), tbMsg, null, null);
         // Pushing Message to the system

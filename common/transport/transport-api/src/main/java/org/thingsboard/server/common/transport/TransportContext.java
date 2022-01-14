@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
+import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 
@@ -57,6 +58,9 @@ public abstract class TransportContext {
     @Autowired
     private TransportResourceCache transportResourceCache;
 
+    @Autowired
+    protected TransportRateLimitService rateLimitService;
+
     @PostConstruct
     public void init() {
         executor = ThingsBoardExecutors.newWorkStealingPool(50, getClass());
@@ -72,5 +76,7 @@ public abstract class TransportContext {
     public String getNodeId() {
         return serviceInfoProvider.getServiceId();
     }
+
+
 
 }
