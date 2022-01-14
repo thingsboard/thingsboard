@@ -83,7 +83,7 @@ public abstract class AbstractEntityService {
 
     protected void checkAssignedEntityViewsToEdge(TenantId tenantId, EntityId entityId, EdgeId edgeId) {
         try {
-            List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, entityId).get();
+            List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityId(tenantId, entityId);
             if (entityViews != null && !entityViews.isEmpty()) {
                 EntityView entityView = entityViews.get(0);
                 // TODO: @voba - refactor this blocking operation

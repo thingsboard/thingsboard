@@ -200,4 +200,12 @@ public class JpaEntityViewDao extends JpaAbstractSearchTextDao<EntityViewEntity,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
     }
+
+    @Override
+    public List<EntityView> findEntityViewsByTenantIdAndEntityId(UUID tenantId, UUID entityId) {
+        return DaoUtil.convertDataList(
+                entityViewRepository.findAllByTenantIdAndEntityId(
+                        tenantId, entityId)
+        );
+    }
 }

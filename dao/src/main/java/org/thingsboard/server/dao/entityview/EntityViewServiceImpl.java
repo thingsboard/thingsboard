@@ -302,6 +302,27 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         }
     }
 
+    @Override
+    public List<EntityView> findEntityViewsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId) {
+        log.trace("Executing findEntityViewsByTenantIdAndEntityId, tenantId [{}], entityId [{}]", tenantId, entityId);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(entityId.getId(), "Incorrect entityId" + entityId);
+
+        List<Object> tenantIdAndEntityId = new ArrayList<>();
+        tenantIdAndEntityId.add(tenantId);
+        tenantIdAndEntityId.add(entityId);
+
+        Cache cache = cacheManager.getCache(ENTITY_VIEW_CACHE);
+        List<EntityView> fromCache = cache.get(tenantIdAndEntityId, List.class);
+        if (fromCache != null) {
+            return fromCache;
+        } else {
+            List<EntityView> result = entityViewDao.findEntityViewsByTenantIdAndEntityId(tenantId.getId(), entityId.getId());
+            cache.putIfAbsent(tenantIdAndEntityId, result);
+            return result;
+        }
+    }
+
     @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityViewId}")
     @Override
     public void deleteEntityView(TenantId tenantId, EntityViewId entityViewId) {

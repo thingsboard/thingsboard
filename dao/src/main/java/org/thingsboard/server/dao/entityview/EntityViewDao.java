@@ -179,4 +179,5 @@ public interface EntityViewDao extends Dao<EntityView> {
                                                             String type,
                                                             PageLink pageLink);
 
+    List<EntityView> findEntityViewsByTenantIdAndEntityId(UUID tenantId, UUID entityId);
 }

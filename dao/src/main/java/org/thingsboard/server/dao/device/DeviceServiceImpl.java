@@ -344,14 +344,9 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
 
         Device device = deviceDao.findById(tenantId, deviceId.getId());
         final String deviceName = device.getName();
-        try {
-            List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityIdAsync(device.getTenantId(), deviceId).get();
-            if (entityViews != null && !entityViews.isEmpty()) {
-                throw new DataValidationException("Can't delete device that has entity views!");
-            }
-        } catch (ExecutionException | InterruptedException e) {
-            log.error("Exception while finding entity views for deviceId [{}]", deviceId, e);
-            throw new RuntimeException("Exception while finding entity views for deviceId [" + deviceId + "]", e);
+        List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityId(device.getTenantId(), deviceId);
+        if (entityViews != null && !entityViews.isEmpty()) {
+            throw new DataValidationException("Can't delete device that has entity views!");
         }
 
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, deviceId);
@@ -568,14 +563,9 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
     public Device assignDeviceToTenant(TenantId tenantId, Device device) {
         log.trace("Executing assignDeviceToTenant [{}][{}]", tenantId, device);
 
-        try {
-            List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityIdAsync(device.getTenantId(), device.getId()).get();
-            if (!CollectionUtils.isEmpty(entityViews)) {
-                throw new DataValidationException("Can't assign device that has entity views to another tenant!");
-            }
-        } catch (ExecutionException | InterruptedException e) {
-            log.error("Exception while finding entity views for deviceId [{}]", device.getId(), e);
-            throw new RuntimeException("Exception while finding entity views for deviceId [" + device.getId() + "]", e);
+        List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityId(device.getTenantId(), device.getId());
+        if (!CollectionUtils.isEmpty(entityViews)) {
+            throw new DataValidationException("Can't assign device that has entity views to another tenant!");
         }
 
         eventService.removeEvents(device.getTenantId(), device.getId());

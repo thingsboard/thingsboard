@@ -168,14 +168,9 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
         deleteEntityRelations(tenantId, assetId);
 
         Asset asset = assetDao.findById(tenantId, assetId.getId());
-        try {
-            List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityIdAsync(asset.getTenantId(), assetId).get();
-            if (entityViews != null && !entityViews.isEmpty()) {
-                throw new DataValidationException("Can't delete asset that has entity views!");
-            }
-        } catch (ExecutionException | InterruptedException e) {
-            log.error("Exception while finding entity views for assetId [{}]", assetId, e);
-            throw new RuntimeException("Exception while finding entity views for assetId [" + assetId + "]", e);
+        List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityId(asset.getTenantId(), assetId);
+        if (entityViews != null && !entityViews.isEmpty()) {
+            throw new DataValidationException("Can't delete asset that has entity views!");
         }
 
         removeAssetFromCacheByName(asset.getTenantId(), asset.getName());
