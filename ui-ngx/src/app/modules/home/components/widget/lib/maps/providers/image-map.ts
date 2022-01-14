@@ -215,6 +215,7 @@ export class ImageMap extends LeafletMap {
           maxZoom,
           scrollWheelZoom: !this.options.disableScrollZooming,
           center,
+          zoomControl: !this.options.disableZoomControl,
           zoom: 1,
           crs: L.CRS.Simple,
           attributionControl: false,
