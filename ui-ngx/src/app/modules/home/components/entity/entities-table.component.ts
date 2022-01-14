@@ -59,7 +59,7 @@ import { AddEntityDialogData, EntityAction } from '@home/models/entity/entity-co
 import { calculateIntervalStartEndTime, HistoryWindowType, Timewindow } from '@shared/models/time/time.models';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
-import { isDefined, isEmptyStr, isUndefined } from '@core/utils';
+import { isDefined, isEmptyStr, isEqual, isUndefined } from '@core/utils';
 import { HasUUID } from '@shared/models/id/has-uuid';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
@@ -541,7 +541,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     this.sort.active = sortable.id;
     this.sort.direction = this.entitiesTableConfig.defaultSortOrder.direction === Direction.ASC ? 'asc' : 'desc';
     if (update) {
-      this.updatedRouterParamsAndData({}, 'preserve');
+      this.updatedRouterParamsAndData({}, '');
     }
   }
 
@@ -666,6 +666,9 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
         queryParams,
         queryParamsHandling
       });
+      if (queryParamsHandling === '' && isEqual(this.route.snapshot.queryParams, queryParams)) {
+        this.updateData();
+      }
     } else {
       this.updateData();
     }
