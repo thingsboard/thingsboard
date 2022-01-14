@@ -966,21 +966,14 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         final long expTime = System.currentTimeMillis() - systemContext.getSessionInactivityTimeout();
         List<UUID> expiredIds = null;
 
-        try {
-            for (Map.Entry<UUID, SessionInfoMetaData> kv : sessions.entrySet()) { //entry set are cached for stable sessions
-                if (kv.getValue().getLastActivityTime() < expTime) {
-                    final UUID id = kv.getKey();
-                    if (expiredIds == null) {
-                        expiredIds = new ArrayList<>(1); //most of the expired sessions is a single event
-                    }
-                    expiredIds.add(id);
-
+        for (Map.Entry<UUID, SessionInfoMetaData> kv : sessions.entrySet()) { //entry set are cached for stable sessions
+            if (kv.getValue().getLastActivityTime() < expTime) {
+                final UUID id = kv.getKey();
+                if (expiredIds == null) {
+                    expiredIds = new ArrayList<>(1); //most of the expired sessions is a single event
                 }
+                expiredIds.add(id);
             }
-        } catch (ConcurrentModificationException ignored) {
-            //Sessions are not thread safe and possible exceptions
-            //It is an extremely rare event
-            //Complete session check will perform on the next check
         }
 
         if (expiredIds != null) {
