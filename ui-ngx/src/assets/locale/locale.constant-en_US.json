@@ -867,7 +867,8 @@
         "unassign-dashboards-from-edge-title": "Are you sure you want to unassign { count, plural, 1 {1 dashboard} other {# dashboards} }?",
         "unassign-dashboards-from-edge-text": "After the confirmation all selected dashboards will be unassigned and won't be accessible by the edge.",
         "assign-dashboard-to-edge": "Assign Dashboard(s) To Edge",
-        "assign-dashboard-to-edge-text": "Please select the dashboards to assign to the edge"
+        "assign-dashboard-to-edge-text": "Please select the dashboards to assign to the edge",
+        "non-existent-dashboard-state-error": "Dashboard state with id \"{{ stateId }}\" is not found"
     },
     "datakey": {
         "settings": "Settings",

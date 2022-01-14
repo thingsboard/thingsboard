@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<tb-dashboard-page
+<tb-dashboard-page *ngIf="stateExists"
   [embedded]="true"
   [syncStateWithQueryParam]="false"
   [hideToolbar]="true"
@@ -23,3 +23,6 @@
   [dashboard]="dashboard"
   [parentDashboard]="parentDashboard">
 </tb-dashboard-page>
+<div class="tb-absolute-fill tb-widget-error" *ngIf="!stateExists">
+  <span>{{ 'dashboard.non-existent-dashboard-state-error' | translate:{stateId} }}</span>
+</div>
