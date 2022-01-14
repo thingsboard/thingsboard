@@ -238,7 +238,7 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
 
     public void release() {
         if (!msgQueue.isEmpty()) {
-            log.warn("doDisconnect for device {} but unprocessed messages {} left in the msg queue. cleared", getDeviceId(), getMsgQueueSize());
+            log.warn("doDisconnect for device {} but unprocessed messages {} left in the msg queue", getDeviceId(), msgQueue.size());
             msgQueue.forEach(ReferenceCountUtil::safeRelease);
             msgQueue.clear();
         }

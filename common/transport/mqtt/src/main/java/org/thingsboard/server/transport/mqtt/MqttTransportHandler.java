@@ -75,7 +75,6 @@ import org.thingsboard.server.transport.mqtt.session.MqttTopicMatcher;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -113,6 +112,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private static final Pattern FW_REQUEST_PATTERN = Pattern.compile(MqttTopics.DEVICE_FIRMWARE_REQUEST_TOPIC_PATTERN);
     private static final Pattern SW_REQUEST_PATTERN = Pattern.compile(MqttTopics.DEVICE_SOFTWARE_REQUEST_TOPIC_PATTERN);
 
+
     private static final String PAYLOAD_TOO_LARGE = "PAYLOAD_TOO_LARGE";
 
     private static final MqttQoS MAX_SUPPORTED_QOS_LVL = AT_LEAST_ONCE;
@@ -125,8 +125,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
 
     final DeviceSessionCtx deviceSessionCtx;
-    volatile int ip = 0;
-    volatile int port = 0;
+    volatile InetSocketAddress address;
     volatile GatewaySessionHandler gatewaySessionHandler;
 
     private final ConcurrentHashMap<String, String> otaPackSessions;
@@ -185,14 +184,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     void processMqttMsg(ChannelHandlerContext ctx, MqttMessage msg) {
-        if (port == 0) {
-            InetSocketAddress address = getAddress(ctx);
-            ip = getIpv4(address); //ipv6 will not appear in logs
-            port = address.getPort();
-        }
-
+        address = getAddress(ctx);
         if (msg.fixedHeader() == null) {
-            log.info("[{}:{}] Invalid message received", ip, port);
+            log.info("[{}:{}] Invalid message received", address.getHostName(), address.getPort());
             ctx.close();
             return;
         }
@@ -204,11 +198,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         } else {
             enqueueRegularSessionMsg(ctx, msg);
         }
-    }
-
-    int getIpv4(InetSocketAddress address) {
-        byte[] ipBytes = address.getAddress().getAddress();
-        return ipBytes.length == 4 ? ByteBuffer.wrap(ipBytes).getInt() : -1;
     }
 
     InetSocketAddress getAddress(ChannelHandlerContext ctx) {
@@ -803,7 +792,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
                     @Override
                     public void onError(Throwable e) {
-                        log.trace("[{}] Failed to process credentials: {}", ip, userName, e);
+                        log.trace("[{}] Failed to process credentials: {}", address, userName, e);
                         ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE, connectMessage));
                         ctx.close();
                     }
@@ -826,14 +815,14 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
                         @Override
                         public void onError(Throwable e) {
-                            log.trace("[{}] Failed to process credentials: {}", ip, sha3Hash, e);
+                            log.trace("[{}] Failed to process credentials: {}", address, sha3Hash, e);
                             ctx.writeAndFlush(createMqttConnAckMsg(MqttConnectReturnCode.CONNECTION_REFUSED_SERVER_UNAVAILABLE, connectMessage));
                             ctx.close();
                         }
                     });
         } catch (Exception e) {
             ctx.writeAndFlush(createMqttConnAckMsg(CONNECTION_REFUSED_NOT_AUTHORIZED, connectMessage));
-            log.trace("[{}] X509 auth failure: {}", sessionId, ip, e);
+            log.trace("[{}] X509 auth failure: {}", sessionId, address, e);
             ctx.close();
         }
     }
