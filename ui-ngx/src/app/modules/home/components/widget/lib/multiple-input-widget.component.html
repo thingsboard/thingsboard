@@ -18,7 +18,7 @@
 <form #formContainer class="tb-multiple-input"
       [formGroup]="multipleInputFormGroup"
       tb-toast toastTarget="{{ toastTargetId }}"
-      (ngSubmit)="save()" novalidate autocomplete="off">
+      (ngSubmit)="saveForm()" novalidate autocomplete="off">
   <div style="padding: 0 8px;" *ngIf="entityDetected && isAllParametersValid">
     <fieldset *ngFor="let source of sources" [ngClass]="{'fields-group': settings.showGroupTitle}">
       <legend class="group-title" *ngIf="settings.showGroupTitle">{{ getGroupTitle(source.datasource) }}
@@ -127,7 +127,7 @@
               <mat-select formControlName="{{key.formId}}"
                           [required]="key.settings.required"
                           (focus)="key.isFocused = true;"
-                          (blur)="key.isFocused = false; inputChanged(source, key)">
+                          (selectionChange)="key.isFocused = false; inputChanged(source, key)">
                 <mat-option *ngFor="let option of key.settings.selectOptions"
                             [value]="option.value"
                             [disabled]="key.settings.isEditable === 'readonly'">
@@ -143,7 +143,7 @@
       </div>
     </fieldset>
     <div class="mat-padding" fxLayout="row" fxLayoutAlign="end center"
-         [fxShow]="entityDetected && settings.showActionButtons">
+         *ngIf="entityDetected && settings.showActionButtons">
       <button mat-button color="primary" type="button"
               (click)="discardAll()" style="max-height: 50px; margin-right:20px;"
               [disabled]="!multipleInputFormGroup.dirty">
