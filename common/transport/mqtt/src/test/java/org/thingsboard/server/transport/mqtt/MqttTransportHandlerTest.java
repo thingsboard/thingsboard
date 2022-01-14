@@ -23,6 +23,7 @@ import io.netty.handler.codec.mqtt.MqttConnectMessage;
 import io.netty.handler.codec.mqtt.MqttConnectPayload;
 import io.netty.handler.codec.mqtt.MqttConnectVariableHeader;
 import io.netty.handler.codec.mqtt.MqttFixedHeader;
+import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttMessageType;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import io.netty.handler.codec.mqtt.MqttPublishVariableHeader;
@@ -117,8 +118,7 @@ public class MqttTransportHandlerTest {
 
         handler.processMqttMsg(ctx, msg);
 
-        assertThat(handler.ip, is(handler.getIpv4(IP_ADDR)));
-        assertThat(handler.port, is(IP_ADDR.getPort()));
+        assertThat(handler.address, is(IP_ADDR));
         assertThat(handler.deviceSessionCtx.getChannel(), is(ctx));
         verify(handler, never()).doDisconnect();
         verify(handler, times(1)).processConnect(ctx, msg);
@@ -154,7 +154,7 @@ public class MqttTransportHandlerTest {
 
         messages.forEach((msg) -> handler.processMqttMsg(ctx, msg));
 
-        assertThat(handler.ip, is(handler.getIpv4(IP_ADDR)));
+        assertThat(handler.address, is(IP_ADDR));
         assertThat(handler.deviceSessionCtx.getChannel(), is(ctx));
         assertThat(handler.deviceSessionCtx.isConnected(), is(false));
         assertThat(handler.deviceSessionCtx.getMsgQueueSize(), is(MSG_QUEUE_LIMIT));
