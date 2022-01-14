@@ -67,6 +67,11 @@ public class TbMsgPackCallback implements TbMsgCallback {
     }
 
     @Override
+    public boolean isMsgValid() {
+        return !ctx.isCanceled();
+    }
+
+    @Override
     public void onProcessingStart(RuleNodeInfo ruleNodeInfo) {
         log.trace("[{}] ON PROCESSING START: {}", id, ruleNodeInfo);
         ctx.onProcessingStart(id, ruleNodeInfo);

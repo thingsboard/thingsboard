@@ -98,9 +98,7 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
       map[attribute.key] = attribute;
       return map;
     }, {});
-    if (edge.queueStartTs) {
-      this.queueStartTs = edge.queueStartTs.lastUpdateTs;
-    }
+    this.queueStartTs = edge.queueStartTs && edge.queueStartTs.value ? edge.queueStartTs.value : 0;
   }
 
   private updateColumns(updateTableColumns: boolean = false): void {

@@ -23,9 +23,8 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -46,7 +45,17 @@ import java.util.concurrent.TimeUnit;
         name = "save timeseries",
         configClazz = TbMsgTimeseriesNodeConfiguration.class,
         nodeDescription = "Saves timeseries data",
-        nodeDetails = "Saves timeseries telemetry data based on configurable TTL parameter. Expects messages with 'POST_TELEMETRY_REQUEST' message type",
+        nodeDetails = "Saves timeseries telemetry data based on configurable TTL parameter. Expects messages with 'POST_TELEMETRY_REQUEST' message type. " +
+                "Timestamp in milliseconds will be taken from metadata.ts, otherwise 'now' message timestamp will be applied. " +
+                "Allows stopping updating values for incoming keys in the latest ts_kv table if 'skipLatestPersistence' is set to true.\n " +
+                "<br/>" +
+                "Enable 'useServerTs' param to use the timestamp of the message processing instead of the timestamp from the message. " +
+                "Useful for all sorts of sequential processing if you merge messages from multiple sources (devices, assets, etc).\n" +
+                "<br/>" +
+                "In the case of sequential processing, the platform guarantees that the messages are processed in the order of their submission to the queue. " +
+                "However, the timestamp of the messages originated by multiple devices/servers may be unsynchronized long before they are pushed to the queue. " +
+                "The DB layer has certain optimizations to ignore the updates of the \"attributes\" and \"latest values\" tables if the new record has a timestamp that is older than the previous record. " +
+                "So, to make sure that all the messages will be processed correctly, one should enable this parameter for sequential message processing scenarios.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeTimeseriesConfig",
         icon = "file_upload"
@@ -76,7 +85,7 @@ public class TbMsgTimeseriesNode implements TbNode {
             ctx.tellFailure(msg, new IllegalArgumentException("Unsupported msg type: " + msg.getType()));
             return;
         }
-        long ts = getTs(msg);
+        long ts = computeTs(msg, config.isUseServerTs());
         String src = msg.getData();
         Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToTelemetry(new JsonParser().parse(src), ts);
         if (tsKvMap.isEmpty()) {
@@ -94,7 +103,15 @@ public class TbMsgTimeseriesNode implements TbNode {
         if (ttl == 0L) {
             ttl = tenantProfileDefaultStorageTtl;
         }
-        ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), msg.getCustomerId(), msg.getOriginator(), tsKvEntryList, ttl, new TelemetryNodeCallback(ctx, msg));
+        if (config.isSkipLatestPersistence()) {
+            ctx.getTelemetryService().saveWithoutLatestAndNotify(ctx.getTenantId(), msg.getCustomerId(), msg.getOriginator(), tsKvEntryList, ttl, new TelemetryNodeCallback(ctx, msg));
+        } else {
+            ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), msg.getCustomerId(), msg.getOriginator(), tsKvEntryList, ttl, new TelemetryNodeCallback(ctx, msg));
+        }
+    }
+
+    public static long computeTs(TbMsg msg, boolean ignoreMetadataTs) {
+        return ignoreMetadataTs ? System.currentTimeMillis() : getTs(msg);
     }
 
     public static long getTs(TbMsg msg) {
@@ -103,7 +120,7 @@ public class TbMsgTimeseriesNode implements TbNode {
         if (!StringUtils.isEmpty(tsStr)) {
             try {
                 ts = Long.parseLong(tsStr);
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException ignored) {
             }
         } else {
             ts = msg.getTs();

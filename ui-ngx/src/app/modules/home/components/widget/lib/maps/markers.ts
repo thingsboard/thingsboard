@@ -14,46 +14,49 @@
 /// limitations under the License.
 ///
 
-import L, { Icon, LeafletMouseEvent } from 'leaflet';
-import { FormattedData, MarkerSettings } from './map-models';
+import L, { LeafletMouseEvent } from 'leaflet';
 import {
-  bindPopupActions,
-  createTooltip,
-} from './maps-utils';
-import {
-  aspectCache,
-  fillPattern,
-  parseWithTranslation,
-  processPattern,
-  safeExecute
-} from './common-maps-utils';
+  FormattedData,
+  MarkerIconInfo,
+  MarkerIconReadyFunction,
+  MarkerImageInfo,
+  MarkerSettings,
+  UnitedMapSettings
+} from './map-models';
+import { bindPopupActions, createTooltip, } from './maps-utils';
+import { aspectCache, fillPattern, parseWithTranslation, processPattern, safeExecute } from './common-maps-utils';
 import tinycolor from 'tinycolor2';
 import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import LeafletMap from './leaflet-map';
 
 export class Marker {
     leafletMarker: L.Marker;
+    labelOffset: L.LatLngTuple;
     tooltipOffset: L.LatLngTuple;
     markerOffset: L.LatLngTuple;
     tooltip: L.Popup;
     data: FormattedData;
     dataSources: FormattedData[];
 
-  constructor(private map: LeafletMap, private location: L.LatLng, public settings: MarkerSettings,
+  constructor(private map: LeafletMap, private location: L.LatLng, public settings: UnitedMapSettings,
               data?: FormattedData, dataSources?, onDragendListener?) {
         this.setDataSources(data, dataSources);
-        this.leafletMarker = L.marker(location, {pmIgnore: !settings.draggableMarker});
+        this.leafletMarker = L.marker(location, {
+          pmIgnore: !settings.draggableMarker,
+          snapIgnore: !settings.snappable
+        });
 
         this.markerOffset = [
           isDefined(settings.markerOffsetX) ? settings.markerOffsetX : 0.5,
           isDefined(settings.markerOffsetY) ? settings.markerOffsetY : 1,
         ];
 
-        this.createMarkerIcon((iconInfo) => {
-            this.leafletMarker.setIcon(iconInfo.icon);
-            this.tooltipOffset = [0, -iconInfo.size[1] * this.markerOffset[1] + 10];
-            this.updateMarkerLabel(settings);
-        });
+        this.tooltipOffset = [
+          isDefined(settings.tooltipOffsetX) ? settings.tooltipOffsetX : 0,
+          isDefined(settings.tooltipOffsetY) ? settings.tooltipOffsetY : -1,
+        ];
+
+        this.updateMarkerIcon(settings);
 
         if (settings.showTooltip) {
             this.tooltip = createTooltip(this.leafletMarker, settings, data.$datasource);
@@ -111,7 +114,7 @@ export class Marker {
             }
             settings.labelText = fillPattern(this.map.markerLabelText, this.map.replaceInfoLabelMarker, this.data);
             this.leafletMarker.bindTooltip(`<div style="color: ${settings.labelColor};"><b>${settings.labelText}</b></div>`,
-                { className: 'tb-marker-label', permanent: true, direction: 'top', offset: this.tooltipOffset });
+                { className: 'tb-marker-label', permanent: true, direction: 'top', offset: this.labelOffset });
         }
     }
 
@@ -124,20 +127,22 @@ export class Marker {
     updateMarkerIcon(settings: MarkerSettings) {
         this.createMarkerIcon((iconInfo) => {
             this.leafletMarker.setIcon(iconInfo.icon);
-            this.tooltipOffset = [0, -iconInfo.size[1] * this.markerOffset[1] + 10];
+            const anchor = iconInfo.icon.options.iconAnchor;
+            if (anchor && Array.isArray(anchor)) {
+                this.labelOffset = [iconInfo.size[0] / 2 - anchor[0], 10 - anchor[1]];
+            } else {
+                this.labelOffset = [0, -iconInfo.size[1] * this.markerOffset[1] + 10];
+            }
             this.updateMarkerLabel(settings);
         });
     }
 
-    createMarkerIcon(onMarkerIconReady) {
+    private createMarkerIcon(onMarkerIconReady: MarkerIconReadyFunction) {
         if (this.settings.icon) {
-            onMarkerIconReady({
-                size: [30, 30],
-                icon: this.settings.icon,
-            });
-            return;
+          onMarkerIconReady(this.settings.icon);
+          return;
         }
-        const currentImage = this.settings.useMarkerImageFunction ?
+        const currentImage: MarkerImageInfo = this.settings.useMarkerImageFunction ?
             safeExecute(this.settings.markerImageFunction,
                 [this.data, this.settings.markerImages, this.dataSources, this.data.dsIndex]) : this.settings.currentImage;
         let currentColor = this.settings.tinyColor;
@@ -161,13 +166,21 @@ export class Marker {
                             width = currentImage.size * aspect;
                             height = currentImage.size;
                         }
+                        let iconAnchor = currentImage.markerOffset;
+                        let popupAnchor = currentImage.tooltipOffset;
+                        if (!iconAnchor) {
+                            iconAnchor = [width * this.markerOffset[0], height * this.markerOffset[1]];
+                        }
+                        if (!popupAnchor) {
+                            popupAnchor = [width * this.tooltipOffset[0], height * this.tooltipOffset[1]];
+                        }
                         const icon = L.icon({
                             iconUrl: currentImage.url,
                             iconSize: [width, height],
-                            iconAnchor: [width * this.markerOffset[0], height * this.markerOffset[1]],
-                            popupAnchor: [0, -height]
+                            iconAnchor,
+                            popupAnchor
                         });
-                        const iconInfo = {
+                        const iconInfo: MarkerIconInfo = {
                             size: [width, height],
                             icon
                         };
@@ -182,8 +195,8 @@ export class Marker {
         }
     }
 
-    createDefaultMarkerIcon(color: tinycolor.Instance, onMarkerIconReady) {
-      let icon: { size: number[], icon: Icon };
+    createDefaultMarkerIcon(color: tinycolor.Instance, onMarkerIconReady: MarkerIconReadyFunction) {
+      let icon: MarkerIconInfo;
       if (!tinycolor.equals(color, this.settings.tinyColor)) {
         icon = this.createColoredMarkerIcon(color);
       } else {
@@ -195,7 +208,7 @@ export class Marker {
       onMarkerIconReady(icon);
     }
 
-    createColoredMarkerIcon(color: tinycolor.Instance): { size: number[], icon: Icon } {
+    createColoredMarkerIcon(color: tinycolor.Instance): MarkerIconInfo {
       return {
         size: [21, 34],
         icon: L.icon({

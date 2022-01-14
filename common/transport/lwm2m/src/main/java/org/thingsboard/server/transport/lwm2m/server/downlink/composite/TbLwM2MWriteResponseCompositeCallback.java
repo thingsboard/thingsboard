@@ -31,7 +31,7 @@ public class TbLwM2MWriteResponseCompositeCallback extends TbLwM2MUplinkTargeted
     @Override
     public void onSuccess(WriteCompositeRequest request, WriteCompositeResponse response) {
         super.onSuccess(request, response);
-        handler.onWriteCompositeResponseOk(client, request);
+        handler.onWriteCompositeResponseOk(client, request, response.getCode().getCode());
     }
 
 }

@@ -56,10 +56,12 @@ public enum SoftwareUpdateResult {
     INSTALL_FAILURE(58, "Software installation failure", true),
     UN_INSTALL_FAILURE(59, "Uninstallation Failure during forUpdate(arg=0)", true);
 
-    public int code;
-    public String type;
     @Getter
-    public boolean isAgain;
+    private int code;
+    @Getter
+    private String type;
+    @Getter
+    private boolean isAgain;
 
     SoftwareUpdateResult(int code, String type, boolean isAgain) {
         this.code = code;

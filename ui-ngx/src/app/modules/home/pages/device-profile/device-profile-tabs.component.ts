@@ -38,12 +38,17 @@ export class DeviceProfileTabsComponent extends EntityTabsComponent<DeviceProfil
 
   deviceTransportTypeHints = deviceTransportTypeHintMap;
 
+  isTransportTypeChanged = false;
+
   constructor(protected store: Store<AppState>) {
     super(store);
   }
 
   ngOnInit() {
     super.ngOnInit();
+    this.detailsForm.get('transportType').valueChanges.subscribe(() => {
+      this.isTransportTypeChanged = true;
+    });
   }
 
 }

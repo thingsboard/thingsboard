@@ -31,9 +31,11 @@ import java.security.UnrecoverableEntryException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 public abstract class AbstractSslCredentials implements SslCredentials {
@@ -59,7 +61,7 @@ public abstract class AbstractSslCredentials implements SslCredentials {
             this.keyPasswordArray = keyPassword.toCharArray();
         }
         this.keyStore = this.loadKeyStore(trustsOnly, this.keyPasswordArray);
-        Set<X509Certificate> trustedCerts = getTrustedCerts(this.keyStore);
+        Set<X509Certificate> trustedCerts = getTrustedCerts(this.keyStore, trustsOnly);
         this.trusts = trustedCerts.toArray(new X509Certificate[0]);
         if (!trustsOnly) {
             PrivateKeyEntry privateKeyEntry = null;
@@ -127,6 +129,14 @@ public abstract class AbstractSslCredentials implements SslCredentials {
         return kmf;
     }
 
+    @Override
+    public String getValueFromSubjectNameByKey(String subjectName, String key) {
+        String[] dns = subjectName.split(",");
+        Optional<String> cn = (Arrays.stream(dns).filter(dn -> dn.contains(key + "="))).findFirst();
+        String value = cn.isPresent() ? cn.get().replace(key + "=", "") : null;
+        return StringUtils.isNotEmpty(value) ? value : null;
+    }
+
     protected abstract boolean canUse();
 
     protected abstract KeyStore loadKeyStore(boolean isPrivateKeyRequired, char[] keyPasswordArray) throws IOException, GeneralSecurityException;
@@ -169,7 +179,7 @@ public abstract class AbstractSslCredentials implements SslCredentials {
         return entry;
     }
 
-    private static Set<X509Certificate> getTrustedCerts(KeyStore ks) {
+    private static Set<X509Certificate> getTrustedCerts(KeyStore ks, boolean trustsOnly) {
         Set<X509Certificate> set = new HashSet<>();
         try {
             for (Enumeration<String> e = ks.aliases(); e.hasMoreElements(); ) {
@@ -177,19 +187,33 @@ public abstract class AbstractSslCredentials implements SslCredentials {
                 if (ks.isCertificateEntry(alias)) {
                     Certificate cert = ks.getCertificate(alias);
                     if (cert instanceof X509Certificate) {
-                        set.add((X509Certificate)cert);
+                        if (trustsOnly) {
+                            // is CA certificate
+                            if (((X509Certificate) cert).getBasicConstraints()>=0) {
+                                set.add((X509Certificate) cert);
+                            }
+                        } else {
+                            set.add((X509Certificate) cert);
+                        }
                     }
                 } else if (ks.isKeyEntry(alias)) {
                     Certificate[] certs = ks.getCertificateChain(alias);
                     if ((certs != null) && (certs.length > 0) &&
                             (certs[0] instanceof X509Certificate)) {
-                        set.add((X509Certificate)certs[0]);
+                        if (trustsOnly) {
+                            for (Certificate cert : certs) {
+                                // is CA certificate
+                                if (((X509Certificate) cert).getBasicConstraints()>=0) {
+                                    set.add((X509Certificate) cert);
+                                }
+                            }
+                        } else {
+                            set.add((X509Certificate)certs[0]);
+                        }
                     }
                 }
             }
         } catch (KeyStoreException ignored) {}
         return Collections.unmodifiableSet(set);
     }
-
-
 }

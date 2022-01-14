@@ -124,7 +124,7 @@ export const HelpLinks = {
     rulechains: helpBaseUrl + '/docs/user-guide/ui/rule-chains',
     resources: helpBaseUrl + '/docs/user-guide/ui/resources',
     dashboards: helpBaseUrl + '/docs/user-guide/ui/dashboards',
-    otaUpdates: helpBaseUrl + '/docs/user-guide/ui/ota-updates',
+    otaUpdates: helpBaseUrl + '/docs/user-guide/ota-updates',
     widgetsBundles: helpBaseUrl + '/docs/user-guide/ui/widget-library#bundles',
     widgetsConfig:  helpBaseUrl + '/docs/user-guide/ui/dashboards#widget-configuration',
     widgetsConfigTimeseries:  helpBaseUrl + '/docs/user-guide/ui/dashboards#timeseries',
@@ -243,6 +243,7 @@ export const contentTypesMap = new Map<ContentType, ContentTypeData>(
   ]
 );
 
+export const hidePageSizePixelValue = 550;
 export const customTranslationsPrefix = 'custom.';
 export const i18nPrefix = 'i18n';
 

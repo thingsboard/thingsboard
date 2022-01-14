@@ -159,27 +159,25 @@ export class ImageMap extends LeafletMap {
             lastCenterPos.x *= w;
             lastCenterPos.y *= h;
             const center = this.pointToLatLng(lastCenterPos.x, lastCenterPos.y);
-            setTimeout(() => {
-                this.map.panTo(center, { animate: false });
-            }, 0);
+            this.map.panTo(center, { animate: false });
         }
     }
 
     onResize(updateImage?: boolean) {
       let width = this.$container.clientWidth;
       if (width > 0 && this.aspect) {
-        let height = width / this.aspect;
+        let height = Math.round(width / this.aspect);
         const imageMapHeight = this.$container.clientHeight;
         if (imageMapHeight > 0 && height > imageMapHeight) {
           height = imageMapHeight;
-          width = height * this.aspect;
+          width = Math.round(height * this.aspect);
         }
         width *= maxZoom;
         const prevWidth = this.width;
         const prevHeight = this.height;
         if (this.width !== width || updateImage) {
           this.width = width;
-          this.height = width / this.aspect;
+          this.height = Math.round(width / this.aspect);
           if (!this.map) {
             this.initMap(updateImage);
           } else {
@@ -217,6 +215,7 @@ export class ImageMap extends LeafletMap {
           maxZoom,
           scrollWheelZoom: !this.options.disableScrollZooming,
           center,
+          zoomControl: !this.options.disableZoomControl,
           zoom: 1,
           crs: L.CRS.Simple,
           attributionControl: false,

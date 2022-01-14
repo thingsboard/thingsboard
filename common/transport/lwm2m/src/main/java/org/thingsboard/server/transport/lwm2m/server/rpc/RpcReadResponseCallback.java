@@ -24,7 +24,7 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.DownlinkRequestCal
 
 import java.util.Optional;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.contentToString;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.contentToString;
 
 public class RpcReadResponseCallback<R extends LwM2mRequest<T>, T extends ReadResponse> extends RpcLwM2MDownlinkCallback<R, T> {
 

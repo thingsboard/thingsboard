@@ -27,6 +27,7 @@ import org.passay.PasswordData;
 import org.passay.PasswordValidator;
 import org.passay.Rule;
 import org.passay.RuleResult;
+import org.passay.WhitespaceRule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -173,6 +174,9 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
         }
         if (isPositiveInteger(passwordPolicy.getMinimumSpecialCharacters())) {
             passwordRules.add(new CharacterRule(EnglishCharacterData.Special, passwordPolicy.getMinimumSpecialCharacters()));
+        }
+        if (passwordPolicy.getAllowWhitespaces() != null && !passwordPolicy.getAllowWhitespaces()) {
+            passwordRules.add(new WhitespaceRule());
         }
         PasswordValidator validator = new PasswordValidator(passwordRules);
         PasswordData passwordData = new PasswordData(password);

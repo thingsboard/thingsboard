@@ -566,7 +566,7 @@ mat-label {
     }
   }
 
-  table {
+  & > table {
     margin-left: 32px;
     width: calc(100% - 64px);
     border: 1px solid rgba(42,125,236,.2);

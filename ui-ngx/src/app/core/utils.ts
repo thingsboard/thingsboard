@@ -20,6 +20,7 @@ import { finalize, share } from 'rxjs/operators';
 import { Datasource } from '@app/shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { EntityType, baseDetailsPageByEntityType } from '@shared/models/entity-type.models';
 
 const varsRegex = /\${([^}]*)}/g;
 
@@ -112,6 +113,10 @@ export function isNumber(value: any): boolean {
 
 export function isNumeric(value: any): boolean {
   return (value - parseFloat(value) + 1) >= 0;
+}
+
+export function isBoolean(value: any): boolean {
+  return typeof value === 'boolean';
 }
 
 export function isString(value: any): boolean {
@@ -455,4 +460,8 @@ export function randomAlphanumeric(length: number): string {
     result += alphanumericCharacters.charAt(Math.floor(Math.random() * alphanumericCharactersLength));
   }
   return result;
+}
+
+export function getEntityDetailsPageURL(id: string, entityType: EntityType): string {
+  return `${baseDetailsPageByEntityType.get(entityType)}/${id}`;
 }

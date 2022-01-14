@@ -26,6 +26,7 @@ import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.actors.TbEntityActorId;
 import org.thingsboard.server.actors.TbEntityTypeActorIdPredicate;
 import org.thingsboard.server.actors.device.DeviceActorCreator;
+import org.thingsboard.server.actors.device.SessionTimeoutCheckMsg;
 import org.thingsboard.server.actors.ruleChain.RuleChainInputMsg;
 import org.thingsboard.server.actors.ruleChain.RuleChainManagerActor;
 import org.thingsboard.server.actors.ruleChain.RuleChainOutputMsg;
@@ -169,6 +170,9 @@ public class TenantActor extends RuleChainManagerActor {
             case SERVER_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
             case REMOVE_RPC_TO_DEVICE_ACTOR_MSG:
                 onToDeviceActorMsg((DeviceAwareMsg) msg, true);
+                break;
+            case SESSION_TIMEOUT_MSG:
+                ctx.broadcastToChildrenByType(msg, EntityType.DEVICE);
                 break;
             case RULE_CHAIN_INPUT_MSG:
             case RULE_CHAIN_OUTPUT_MSG:

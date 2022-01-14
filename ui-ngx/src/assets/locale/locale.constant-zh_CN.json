@@ -388,7 +388,10 @@
     "transport-messages": "传输消息",
     "transport-monthly-activity": "Transport monthly activity",
     "view-details": "查看详细信息",
-    "view-statistics": "查看统计信息"
+    "view-statistics": "查看统计信息",
+    "alarm":"警告",
+    "alarms-created": "创建警告数",
+    "notifications": "通知"
   },
   "asset": {
     "add": "添加资产",
@@ -1081,8 +1084,6 @@
     "password": "密码",
     "public": "公开",
     "remove-alias": "删除设备别名",
-    "rsa-key": "RSA公钥",
-    "rsa-key-required": "RSA公钥必填",
     "search": "查找设备",
     "secret": "密钥",
     "secret-required": "密钥必填",

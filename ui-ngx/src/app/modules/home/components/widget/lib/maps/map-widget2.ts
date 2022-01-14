@@ -18,6 +18,7 @@ import { defaultSettings, FormattedData, hereProviders, MapProviders, UnitedMapS
 import LeafletMap from './leaflet-map';
 import {
   commonMapSettingsSchema,
+  editorSettingSchema,
   mapPolygonSchema,
   markerClusteringSettingsSchema,
   markerClusteringSettingsSchemaLeaflet,
@@ -115,6 +116,8 @@ export class MapWidgetController implements MapWidgetInterface {
                     `model.useClusterMarkers === true && model.provider !== "image-map"`)]);
             addToSchema(schema, clusteringSchema);
             addGroupInfo(schema, 'Markers Clustering Settings');
+            addToSchema(schema, addCondition(editorSettingSchema, '(model.editablePolygon === true || model.draggableMarker === true)'));
+            addGroupInfo(schema, 'Editor settings');
         }
         return schema;
     }
@@ -258,17 +261,20 @@ export class MapWidgetController implements MapWidgetInterface {
             settings.mapProviderHere = hereProviders[0];
           }
         }
-        const customOptions = {
+        const customOptions: Partial<UnitedMapSettings> = {
             provider: this.provider,
             mapUrl: settings?.mapImageUrl,
             labelFunction: parseFunction(settings.labelFunction, functionParams),
             tooltipFunction: parseFunction(settings.tooltipFunction, functionParams),
             colorFunction: parseFunction(settings.colorFunction, functionParams),
             colorPointFunction: parseFunction(settings.colorPointFunction, functionParams),
+            polygonLabelFunction: parseFunction(settings.polygonLabelFunction, functionParams),
             polygonColorFunction: parseFunction(settings.polygonColorFunction, functionParams),
+            polygonStrokeColorFunction: parseFunction(settings.polygonStrokeColorFunction, functionParams),
             polygonTooltipFunction: parseFunction(settings.polygonTooltipFunction, functionParams),
             markerImageFunction: parseFunction(settings.markerImageFunction, ['data', 'images', 'dsData', 'dsIndex']),
             labelColor: this.ctx.widgetConfig.color,
+            polygonLabelColor: this.ctx.widgetConfig.color,
             polygonKeyName: settings.polKeyName ? settings.polKeyName : settings.polygonKeyName,
             tooltipPattern: settings.tooltipPattern ||
                 '<b>${entityName}</b><br/><br/><b>Latitude:</b> ${' +
@@ -294,8 +300,8 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     resize() {
-        this.map?.invalidateSize();
-        this.map.onResize();
+      this.map.onResize();
+      this.map?.invalidateSize();
     }
 
     destroy() {

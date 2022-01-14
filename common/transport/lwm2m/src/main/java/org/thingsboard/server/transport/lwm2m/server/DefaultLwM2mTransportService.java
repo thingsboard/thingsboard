@@ -19,8 +19,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.californium.scandium.dtls.cipher.CipherSuite;
-import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeDecoder;
-import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeEncoder;
+import org.eclipse.leshan.core.node.codec.DefaultLwM2mDecoder;
+import org.eclipse.leshan.core.node.codec.DefaultLwM2mEncoder;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.californium.LeshanServerBuilder;
 import org.eclipse.leshan.server.californium.registration.CaliforniumRegistrationStore;
@@ -34,7 +34,7 @@ import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MAuthorizer;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MDtlsCertificateVerifier;
 import org.thingsboard.server.transport.lwm2m.server.store.TbSecurityStore;
-import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PreDestroy;
@@ -44,7 +44,7 @@ import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CBC_SHA256;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CCM_8;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mNetworkConfig.getCoapConfig;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MNetworkConfig.getCoapConfig;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FIRMWARE_UPDATE_COAP_RESOURCE;
 
 @Slf4j
@@ -59,7 +59,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
     private final LwM2mTransportContext context;
     private final LwM2MTransportServerConfig config;
     private final OtaPackageDataCache otaPackageDataCache;
-    private final DefaultLwM2MUplinkMsgHandler handler;
+    private final DefaultLwM2mUplinkMsgHandler handler;
     private final CaliforniumRegistrationStore registrationStore;
     private final TbSecurityStore securityStore;
     private final TbLwM2MDtlsCertificateVerifier certificateVerifier;
@@ -105,9 +105,9 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         LeshanServerBuilder builder = new LeshanServerBuilder();
         builder.setLocalAddress(config.getHost(), config.getPort());
         builder.setLocalSecureAddress(config.getSecureHost(), config.getSecurePort());
-        builder.setDecoder(new DefaultLwM2mNodeDecoder());
+        builder.setDecoder(new DefaultLwM2mDecoder());
         /* Use a magic converter to support bad type send by the UI. */
-        builder.setEncoder(new DefaultLwM2mNodeEncoder(LwM2mValueConverterImpl.getInstance()));
+        builder.setEncoder(new DefaultLwM2mEncoder(LwM2mValueConverterImpl.getInstance()));
 
         /* Create CoAP Config */
         builder.setCoapConfig(getCoapConfig(config.getPort(), config.getSecurePort(), config));

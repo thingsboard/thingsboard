@@ -29,6 +29,13 @@
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
+  <button *ngIf="showDetailsPageLink && otaPackageFormGroup.get('packageId').value && disabled"
+          type="button"
+          matSuffix mat-button mat-icon-button aria-label="Open ota package">
+    <a [routerLink]=packageURL>
+      <mat-icon class="material-icons">open_in_new</mat-icon>
+    </a>
+  </button>
   <mat-autocomplete class="tb-autocomplete"
                     #packageAutocomplete="matAutocomplete"
                     [displayWith]="displayPackageFn">

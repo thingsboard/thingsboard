@@ -209,6 +209,7 @@ public class DefaultTransportService implements TransportService {
         this.transportApiStats = statsFactory.createMessagesStats(StatsType.TRANSPORT.getName() + ".producer");
         this.transportCallbackExecutor = ThingsBoardExecutors.newWorkStealingPool(20, getClass());
         this.scheduler.scheduleAtFixedRate(this::checkInactivityAndReportActivity, new Random().nextInt((int) sessionReportTimeout), sessionReportTimeout, TimeUnit.MILLISECONDS);
+        this.scheduler.scheduleAtFixedRate(this::invalidateRateLimits, new Random().nextInt((int) sessionReportTimeout), sessionReportTimeout, TimeUnit.MILLISECONDS);
         transportApiRequestTemplate = queueProvider.createTransportApiRequestTemplate();
         transportApiRequestTemplate.setMessagesStats(transportApiStats);
         ruleEngineMsgProducer = producerProvider.getRuleEngineMsgProducer();
@@ -245,6 +246,10 @@ public class DefaultTransportService implements TransportService {
                 }
             }
         });
+    }
+
+    private void invalidateRateLimits() {
+        rateLimitService.invalidateRateLimitsIpTable(sessionInactivityTimeout);
     }
 
     @PreDestroy
@@ -907,7 +912,7 @@ public class DefaultTransportService implements TransportService {
                 String resourceId = msg.getResourceKey();
                 transportResourceCache.update(tenantId, resourceType, resourceId);
                 sessions.forEach((id, mdRez) -> {
-                    log.warn("ResourceUpdate - [{}] [{}]", id, mdRez);
+                    log.trace("ResourceUpdate - [{}] [{}]", id, mdRez);
                     transportCallbackExecutor.submit(() -> mdRez.getListener().onResourceUpdate(msg));
                 });
 
@@ -957,7 +962,7 @@ public class DefaultTransportService implements TransportService {
             if ((md.getSessionInfo().getDeviceIdMSB() == deviceIdMSB && md.getSessionInfo().getDeviceIdLSB() == deviceIdLSB)) {
                 DeviceProfile newDeviceProfile;
                 if (md.getSessionInfo().getDeviceProfileIdMSB() != deviceProfileIdMSB
-                        && md.getSessionInfo().getDeviceProfileIdLSB() != deviceProfileIdLSB) {
+                        || md.getSessionInfo().getDeviceProfileIdLSB() != deviceProfileIdLSB) {
                     //TODO: if transport types are different - we should close the session.
                     newDeviceProfile = deviceProfileCache.get(new DeviceProfileId(new UUID(deviceProfileIdMSB, deviceProfileIdLSB)));
                 } else {

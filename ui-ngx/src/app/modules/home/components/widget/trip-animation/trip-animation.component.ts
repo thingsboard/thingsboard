@@ -49,7 +49,7 @@ import {
 } from '@home/components/widget/lib/maps/common-maps-utils';
 import { JsonSettingsSchema, WidgetConfig } from '@shared/models/widget.models';
 import moment from 'moment';
-import { isDefined, isUndefined } from '@core/utils';
+import { deepClone, isDefined, isUndefined } from '@core/utils';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { MapWidgetInterface } from '@home/components/widget/lib/maps/map-widget.interface';
 
@@ -100,7 +100,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
     addGroupInfo(schema, 'Path Settings');
     addToSchema(schema, addCondition(pointSchema, 'model.showPoints === true', ['showPoints']));
     addGroupInfo(schema, 'Path Points Settings');
-    const mapPolygonSchemaWithoutEdit = mapPolygonSchema;
+    const mapPolygonSchemaWithoutEdit = deepClone(mapPolygonSchema);
     delete mapPolygonSchemaWithoutEdit.schema.properties.editablePolygon;
     mapPolygonSchemaWithoutEdit.form.splice(mapPolygonSchemaWithoutEdit.form.indexOf('editablePolygon'), 1);
     addToSchema(schema, addCondition(mapPolygonSchemaWithoutEdit, 'model.showPolygon === true', ['showPolygon']));

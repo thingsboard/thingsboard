@@ -90,7 +90,7 @@ public abstract class AbstractSubscriptionService extends TbApplicationEventList
         Futures.addCallback(saveFuture, new FutureCallback<T>() {
             @Override
             public void onSuccess(@Nullable T result) {
-                callback.accept(null);
+                callback.accept(result);
             }
 
             @Override

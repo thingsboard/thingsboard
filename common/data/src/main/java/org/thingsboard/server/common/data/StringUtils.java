@@ -21,7 +21,15 @@ public class StringUtils {
         return source == null || source.isEmpty();
     }
 
+    public static boolean isBlank(String source) {
+        return source == null || source.isEmpty() || source.trim().isEmpty();
+    }
+
     public static boolean isNotEmpty(String source) {
         return source != null && !source.isEmpty();
+    }
+
+    public static boolean isNotBlank(String source) {
+        return source != null && !source.isEmpty() && !source.trim().isEmpty();
     }
 }

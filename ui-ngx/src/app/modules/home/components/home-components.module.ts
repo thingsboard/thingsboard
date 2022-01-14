@@ -143,8 +143,11 @@ import { DeviceCredentialsModule } from '@home/components/device/device-credenti
 import { DeviceProfileCommonModule } from '@home/components/profile/device/common/device-profile-common.module';
 import {
   COMPLEX_FILTER_PREDICATE_DIALOG_COMPONENT_TOKEN,
-  DASHBOARD_PAGE_COMPONENT_TOKEN
+  DASHBOARD_PAGE_COMPONENT_TOKEN,
+  HOME_COMPONENTS_MODULE_TOKEN
 } from '@home/components/tokens';
+import { DashboardStateComponent } from '@home/components/dashboard-page/dashboard-state.component';
+import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
 
 @NgModule({
   declarations:
@@ -153,6 +156,7 @@ import {
       AddEntityDialogComponent,
       DetailsPanelComponent,
       EntityDetailsPanelComponent,
+      EntityDetailsPageComponent,
       AuditLogTableComponent,
       AuditLogDetailsDialogComponent,
       EventContentDialogComponent,
@@ -252,6 +256,7 @@ import {
       TwilioSmsProviderConfigurationComponent,
       DashboardToolbarComponent,
       DashboardPageComponent,
+      DashboardStateComponent,
       DashboardLayoutComponent,
       EditWidgetComponent,
       DashboardWidgetSelectComponent,
@@ -279,6 +284,7 @@ import {
     AddEntityDialogComponent,
     DetailsPanelComponent,
     EntityDetailsPanelComponent,
+    EntityDetailsPageComponent,
     AuditLogTableComponent,
     EventTableComponent,
     EdgeDownlinkTableHeaderComponent,
@@ -363,6 +369,7 @@ import {
     TwilioSmsProviderConfigurationComponent,
     DashboardToolbarComponent,
     DashboardPageComponent,
+    DashboardStateComponent,
     DashboardLayoutComponent,
     EditWidgetComponent,
     DashboardWidgetSelectComponent,
@@ -381,7 +388,8 @@ import {
     ImportExportService,
     {provide: EMBED_DASHBOARD_DIALOG_TOKEN, useValue: EmbedDashboardDialogComponent},
     {provide: COMPLEX_FILTER_PREDICATE_DIALOG_COMPONENT_TOKEN, useValue: ComplexFilterPredicateDialogComponent},
-    {provide: DASHBOARD_PAGE_COMPONENT_TOKEN, useValue: DashboardPageComponent}
+    {provide: DASHBOARD_PAGE_COMPONENT_TOKEN, useValue: DashboardPageComponent},
+    {provide: HOME_COMPONENTS_MODULE_TOKEN, useValue: HomeComponentsModule }
   ]
 })
 export class HomeComponentsModule { }

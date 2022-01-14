@@ -506,6 +506,7 @@ export interface WidgetConfig {
   padding?: string;
   margin?: string;
   widgetStyle?: {[klass: string]: any};
+  widgetCss?: string;
   titleStyle?: {[klass: string]: any};
   units?: string;
   decimals?: number;
