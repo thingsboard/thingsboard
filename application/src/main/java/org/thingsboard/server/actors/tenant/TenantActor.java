@@ -85,8 +85,6 @@ public class TenantActor extends RuleChainManagerActor {
                 cantFindTenant = true;
                 log.info("[{}] Started tenant actor for missing tenant.", tenantId);
             } else {
-                systemContext.schedulePeriodicMsgWithDelay(ctx, SessionTimeoutCheckMsg.instance(), systemContext.getSessionReportTimeout(), systemContext.getSessionReportTimeout());
-
                 apiUsageState = new ApiUsageState(systemContext.getApiUsageStateService().getApiUsageState(tenant.getId()));
 
                 // This Service may be started for specific tenant only.
@@ -174,7 +172,7 @@ public class TenantActor extends RuleChainManagerActor {
                 onToDeviceActorMsg((DeviceAwareMsg) msg, true);
                 break;
             case SESSION_TIMEOUT_MSG:
-                broadcastToAllDeviceActors(msg);
+                ctx.broadcastToChildrenByType(msg, EntityType.DEVICE);
                 break;
             case RULE_CHAIN_INPUT_MSG:
             case RULE_CHAIN_OUTPUT_MSG:
@@ -188,11 +186,6 @@ public class TenantActor extends RuleChainManagerActor {
                 return false;
         }
         return true;
-    }
-
-    private void broadcastToAllDeviceActors(TbActorMsg msg) {
-        ctx.broadcastToChildren(msg, actorId -> actorId instanceof TbEntityActorId
-                && EntityType.DEVICE.equals(((TbEntityActorId) actorId).getEntityId().getEntityType()));
     }
 
     private boolean isMyPartition(EntityId entityId) {
