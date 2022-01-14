@@ -198,7 +198,7 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
                     } else if (dataKeyElement.isJsonObject()) {
                         stmtBuilder.setString(i.get(), dataKeyElement.getAsJsonObject().toString());
                     } else {
-                        throw new IllegalStateException("Message data key: '" + key + "' with value: '" + value + "' is not a JSON");
+                        throw new IllegalStateException("Message data key: '" + key + "' with value: '" + value + "' is not a JSON Object or JSON Primitive!");
                     }
                 } else {
                     throw new RuntimeException("Message data doesn't contain key: " + "'" + key + "'!");
