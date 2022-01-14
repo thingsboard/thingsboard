@@ -26,6 +26,7 @@ import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.actors.TbEntityActorId;
 import org.thingsboard.server.actors.TbEntityTypeActorIdPredicate;
 import org.thingsboard.server.actors.device.DeviceActorCreator;
+import org.thingsboard.server.actors.device.SessionTimeoutCheckMsg;
 import org.thingsboard.server.actors.ruleChain.RuleChainInputMsg;
 import org.thingsboard.server.actors.ruleChain.RuleChainManagerActor;
 import org.thingsboard.server.actors.ruleChain.RuleChainOutputMsg;
@@ -84,6 +85,8 @@ public class TenantActor extends RuleChainManagerActor {
                 cantFindTenant = true;
                 log.info("[{}] Started tenant actor for missing tenant.", tenantId);
             } else {
+                systemContext.schedulePeriodicMsgWithDelay(ctx, SessionTimeoutCheckMsg.instance(), systemContext.getSessionReportTimeout(), systemContext.getSessionReportTimeout());
+
                 apiUsageState = new ApiUsageState(systemContext.getApiUsageStateService().getApiUsageState(tenant.getId()));
 
                 // This Service may be started for specific tenant only.
@@ -170,6 +173,9 @@ public class TenantActor extends RuleChainManagerActor {
             case REMOVE_RPC_TO_DEVICE_ACTOR_MSG:
                 onToDeviceActorMsg((DeviceAwareMsg) msg, true);
                 break;
+            case SESSION_TIMEOUT_MSG:
+                broadcastToAllDeviceActors(msg);
+                break;
             case RULE_CHAIN_INPUT_MSG:
             case RULE_CHAIN_OUTPUT_MSG:
             case RULE_CHAIN_TO_RULE_CHAIN_MSG:
@@ -182,6 +188,11 @@ public class TenantActor extends RuleChainManagerActor {
                 return false;
         }
         return true;
+    }
+
+    private void broadcastToAllDeviceActors(TbActorMsg msg) {
+        ctx.broadcastToChildren(msg, actorId -> actorId instanceof TbEntityActorId
+                && EntityType.DEVICE.equals(((TbEntityActorId) actorId).getEntityId().getEntityType()));
     }
 
     private boolean isMyPartition(EntityId entityId) {
