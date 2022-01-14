@@ -259,7 +259,7 @@ public abstract class BaseTenantProfileServiceTest extends AbstractServiceTest {
 
     }
 
-    private TenantProfile createTenantProfile(String name) {
+    public static TenantProfile createTenantProfile(String name) {
         TenantProfile tenantProfile = new TenantProfile();
         tenantProfile.setName(name);
         tenantProfile.setDescription(name + " Test");
