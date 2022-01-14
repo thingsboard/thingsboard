@@ -281,20 +281,22 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
       )
       .subscribe();
 
-    this.route.queryParams.pipe(skip(1)).subscribe((params: PageQueryParam) => {
-      this.paginator.pageIndex = Number(params.page) || 0;
-      this.paginator.pageSize = Number(params.pageSize) || this.defaultPageSize;
-      this.sort.active = params.property || this.entitiesTableConfig.defaultSortOrder.property;
-      this.sort.direction = (params.direction || this.entitiesTableConfig.defaultSortOrder.direction).toLowerCase() as SortDirection;
-      if (params.hasOwnProperty('textSearch') && !isEmptyStr(params.textSearch)) {
-        this.textSearchMode = true;
-        this.pageLink.textSearch = decodeURI(params.textSearch);
-      } else {
-        this.textSearchMode = false;
-        this.pageLink.textSearch = null;
-      }
-      this.updateData();
-    });
+    if (this.pageMode) {
+      this.route.queryParams.pipe(skip(1)).subscribe((params: PageQueryParam) => {
+        this.paginator.pageIndex = Number(params.page) || 0;
+        this.paginator.pageSize = Number(params.pageSize) || this.defaultPageSize;
+        this.sort.active = params.property || this.entitiesTableConfig.defaultSortOrder.property;
+        this.sort.direction = (params.direction || this.entitiesTableConfig.defaultSortOrder.direction).toLowerCase() as SortDirection;
+        if (params.hasOwnProperty('textSearch') && !isEmptyStr(params.textSearch)) {
+          this.textSearchMode = true;
+          this.pageLink.textSearch = decodeURI(params.textSearch);
+        } else {
+          this.textSearchMode = false;
+          this.pageLink.textSearch = null;
+        }
+        this.updateData();
+      });
+    }
 
     this.updatePaginationSubscriptions();
     this.viewInited = true;
