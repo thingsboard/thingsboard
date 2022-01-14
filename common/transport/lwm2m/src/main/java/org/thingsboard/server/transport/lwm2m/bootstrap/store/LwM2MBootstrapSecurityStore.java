@@ -33,6 +33,7 @@ import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mSessionMsgListener;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -68,64 +69,46 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
 
     @Override
     public Iterator<SecurityInfo> getAllByEndpoint(String endPoint) {
-        TbLwM2MSecurityInfo store = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfoByCredentialsId(endPoint, BOOTSTRAP);
-        if (store.getBootstrapCredentialConfig() != null) {
-            /* add value to store  from BootstrapJson */
-            this.setBootstrapConfigScurityInfo(store);
-            endPoint = store.getEndpoint();
-            BootstrapConfig bsConfigNew = store.getBootstrapConfig();
-            if (bsConfigNew != null) {
-                try {
-                    boolean bootstrapServerUpdateEnable = ((Lwm2mDeviceProfileTransportConfiguration)store.getDeviceProfile().getProfileData().getTransportConfiguration()).isBootstrapServerUpdateEnable();
-                    if (!bootstrapServerUpdateEnable) {
-                        Optional<Map.Entry<Integer, BootstrapConfig.ServerSecurity>> securities = bsConfigNew.security.entrySet().stream().filter(sec -> sec.getValue().bootstrapServer).findAny();
-                        if (securities.isPresent()) {
-                            bsConfigNew.security.entrySet().remove(securities.get());
-                            int serverSortId = securities.get().getValue().serverId;
-                            Optional<Map.Entry<Integer, BootstrapConfig.ServerConfig>> serverConfigs = bsConfigNew.servers.entrySet().stream().filter(serv -> ((BootstrapConfig.ServerConfig)serv.getValue()).shortId==serverSortId).findAny();
-                            if (serverConfigs.isPresent()) {
-                                bsConfigNew.servers.entrySet().remove(serverConfigs.get());
-                            }
-                        }
-                    }
-                    for (String config : bootstrapConfigStore.getAll().keySet()) {
-                        if (config.equals(endPoint)) {
-                            bootstrapConfigStore.remove(config);
-                        }
-                    }
-                    bootstrapConfigStore.add(endPoint, bsConfigNew);
-                } catch (InvalidConfigurationException e) {
-                    if (e.getMessage().contains("Psk identity") && e.getMessage().contains("already used for this bootstrap server")) {
-                        log.trace("Invalid Bootstrap Configuration", e);
-                    }
-                    else {
-                        log.error("Invalid Bootstrap Configuration", e);
-                    }
-                }
-                return store.getSecurityInfo() == null ? null : Collections.singletonList(store.getSecurityInfo()).iterator();
-            }
-        }
-        return null;
+            TbLwM2MSecurityInfo store = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfoByCredentialsId(endPoint, BOOTSTRAP);
+            SecurityInfo securityInfo = this.addValueToStore(store, endPoint);
+            return securityInfo == null ? null : Collections.singletonList(store.getSecurityInfo()).iterator();
     }
 
     @Override
     public SecurityInfo getByIdentity(String identity) {
-        TbLwM2MSecurityInfo store = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfoByCredentialsId(identity, BOOTSTRAP);
-        if (store.getBootstrapCredentialConfig() != null && store.getSecurityMode() != null) {
-            /* add value to store  from BootstrapJson */
-            this.setBootstrapConfigScurityInfo(store);
-            BootstrapConfig bsConfig = store.getBootstrapConfig();
-            if (bsConfig.security != null) {
-                try {
-                    bootstrapConfigStore.add(store.getEndpoint(), bsConfig);
-                } catch (InvalidConfigurationException e) {
-                    log.error("Invalid Bootstrap Configuration", e);
+        try {
+            TbLwM2MSecurityInfo store = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfoByCredentialsId(identity, BOOTSTRAP);
+            if (store.getBootstrapCredentialConfig() != null && store.getSecurityMode() != null) {
+                /* add value to store  from BootstrapJson */
+                this.setBootstrapConfigScurityInfo(store);
+                BootstrapConfig bsConfig = store.getBootstrapConfig();
+                if (bsConfig.security != null) {
+                    try {
+                        bootstrapConfigStore.add(store.getEndpoint(), bsConfig);
+                    } catch (InvalidConfigurationException e) {
+                        log.trace("Invalid Bootstrap Configuration", e);
+                        return null;
+                    }
                 }
-                return store.getSecurityInfo();
             }
+            return store.getSecurityInfo();
+        } catch (LwM2MAuthException e) {
+            log.trace("Bootstrap Registration failed: No pre-shared key found for [identity: {}]", identity);
+            return null;
+        }
+    }
+
+    public TbLwM2MSecurityInfo getX509ByEndpoint(String endPoint) {
+        try {
+            TbLwM2MSecurityInfo store = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfoByCredentialsId(endPoint, BOOTSTRAP);
+            this.addValueToStore(store, store.getEndpoint());
+            return store;
+        } catch (LwM2MAuthException e) {
+            log.trace("Failed find security info: {}", endPoint, e);
         }
         return null;
     }
+
 
     private void setBootstrapConfigScurityInfo(TbLwM2MSecurityInfo store) {
         /* BootstrapConfig */
@@ -163,25 +146,23 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
      *
      * @return false if not sync between SecurityMode of Bootstrap credential and profile
      */
-//    private boolean getValidatedSecurityMode(LwM2MServerBootstrap bootstrapFromCredential, LwM2MServerBootstrap bootstrapServerProfile, LwM2MServerBootstrap lwm2mFromCredential, LwM2MServerBootstrap profileLwm2mServer) {
     private boolean getValidatedSecurityMode(LwM2MBootstrapConfig lwM2MBootstrapConfig) {
         LwM2MSecurityMode bootstrapServerSecurityMode = lwM2MBootstrapConfig.getBootstrapServer().getSecurityMode();
         LwM2MSecurityMode lwm2mServerSecurityMode = lwM2MBootstrapConfig.getLwm2mServer().getSecurityMode();
         AtomicBoolean validBs = new AtomicBoolean(true);
-        AtomicBoolean  validLw = new AtomicBoolean(true);
+        AtomicBoolean validLw = new AtomicBoolean(true);
         lwM2MBootstrapConfig.getServerConfiguration().forEach(serverCredential -> {
-            if (((AbstractLwM2MBootstrapServerCredential)serverCredential).isBootstrapServerIs()) {
+            if (((AbstractLwM2MBootstrapServerCredential) serverCredential).isBootstrapServerIs()) {
                 if (!bootstrapServerSecurityMode.equals(serverCredential.getSecurityMode())) {
                     validBs.set(false);
                 }
-            }
-            else {
+            } else {
                 if (!lwm2mServerSecurityMode.equals(serverCredential.getSecurityMode())) {
                     validLw.set(false);
                 }
             }
         });
-        return validBs.get()&validLw.get();
+        return validBs.get() & validLw.get();
     }
 
     public TransportProtos.SessionInfoProto getSessionByEndpoint(String endpoint) {
@@ -190,5 +171,48 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
 
     public TransportProtos.SessionInfoProto removeSessionByEndpoint(String endpoint) {
         return bsSessions.remove(endpoint);
+    }
+
+    public BootstrapConfig getBootstrapConfigByEndpoint(String endpoint) {
+        return bootstrapConfigStore.getAll().get(endpoint);
+    }
+
+    public SecurityInfo addValueToStore(TbLwM2MSecurityInfo store, String endPoint) {
+        /* add value to store  from BootstrapJson */
+        SecurityInfo securityInfo = null;
+        if (store != null && store.getBootstrapCredentialConfig() != null && store.getSecurityMode() != null) {
+            securityInfo = store.getSecurityInfo();
+            this.setBootstrapConfigScurityInfo(store);
+            BootstrapConfig bsConfigNew = store.getBootstrapConfig();
+            if (bsConfigNew != null) {
+                try {
+                    boolean bootstrapServerUpdateEnable = ((Lwm2mDeviceProfileTransportConfiguration) store.getDeviceProfile().getProfileData().getTransportConfiguration()).isBootstrapServerUpdateEnable();
+                    if (!bootstrapServerUpdateEnable) {
+                        Optional<Map.Entry<Integer, BootstrapConfig.ServerSecurity>> securities = bsConfigNew.security.entrySet().stream().filter(sec -> sec.getValue().bootstrapServer).findAny();
+                        if (securities.isPresent()) {
+                            bsConfigNew.security.entrySet().remove(securities.get());
+                            int serverSortId = securities.get().getValue().serverId;
+                            Optional<Map.Entry<Integer, BootstrapConfig.ServerConfig>> serverConfigs = bsConfigNew.servers.entrySet().stream().filter(serv -> (serv.getValue()).shortId == serverSortId).findAny();
+                            if (serverConfigs.isPresent()) {
+                                bsConfigNew.servers.entrySet().remove(serverConfigs.get());
+                            }
+                        }
+                    }
+                    for (String config : bootstrapConfigStore.getAll().keySet()) {
+                        if (config.equals(endPoint)) {
+                            bootstrapConfigStore.remove(config);
+                        }
+                    }
+                    bootstrapConfigStore.add(endPoint, bsConfigNew);
+                } catch (InvalidConfigurationException e) {
+                    if (e.getMessage().contains("Psk identity") && e.getMessage().contains("already used for this bootstrap server")) {
+                        log.trace("Invalid Bootstrap Configuration", e);
+                    } else {
+                        log.error("Invalid Bootstrap Configuration", e);
+                    }
+                }
+            }
+        }
+        return securityInfo;
     }
 }
