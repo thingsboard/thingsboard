@@ -57,7 +57,7 @@ public class DefaultGatewayDeviceStateService implements GatewayDeviceStateServi
         Device gatewayDevice = findGatewayDeviceByAdditionalInfoInDevice(device.getTenantId(), device.getAdditionalInfo());
         if (gatewayDevice != null) {
             ObjectNode renamedDeviceNode = JacksonUtil.newObjectNode();
-            renamedDeviceNode.put(device.getName(), oldDevice.getName());
+            renamedDeviceNode.put(oldDevice.getName(), device.getName());
             ToDeviceRpcRequest rpcRequest = formDeviceToGatewayRPCRequest(gatewayDevice, renamedDeviceNode, DEVICE_RENAMED_METHOD_NAME);
             deviceRpcService.processRestApiRpcRequest(rpcRequest, fromDeviceRpcResponse -> {
                 log.trace("Device renamed RPC with id: [{}] processed to gateway device with id: [{}], old device name: [{}], new device name: [{}]",
