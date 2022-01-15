@@ -122,7 +122,8 @@ export class TenantProfilesTableConfigResolver implements Resolve<EntityTableCon
     if ($event) {
       $event.stopPropagation();
     }
-    this.router.navigateByUrl(`tenantProfiles/${tenantProfile.id.id}`);
+    const url = this.router.createUrlTree(['tenantProfiles', tenantProfile.id.id]);
+    this.router.navigateByUrl(url);
   }
 
   setDefaultTenantProfile($event: Event, tenantProfile: TenantProfile) {
