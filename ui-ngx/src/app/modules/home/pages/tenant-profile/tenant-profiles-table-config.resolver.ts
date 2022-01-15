@@ -16,7 +16,7 @@
 
 import { Injectable } from '@angular/core';
 import { Resolve, Router } from '@angular/router';
-import { TenantInfo, TenantProfile } from '@shared/models/tenant.model';
+import { TenantProfile } from '@shared/models/tenant.model';
 import {
   checkBoxCell,
   DateEntityTableColumn,

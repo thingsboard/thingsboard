@@ -91,7 +91,7 @@ export class TenantsTableConfigResolver implements Resolve<EntityTableConfig<Ten
     if ($event) {
       $event.stopPropagation();
     }
-    const url = this.router.createUrlTree([tenant.id.id], {relativeTo: config.table.route})
+    const url = this.router.createUrlTree([tenant.id.id], {relativeTo: config.table.route});
     this.router.navigateByUrl(url);
   }
 

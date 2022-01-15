@@ -374,7 +374,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
     if ($event) {
       $event.stopPropagation();
     }
-    const url = this.router.createUrlTree([edge.id.id], {relativeTo: config.table.route})
+    const url = this.router.createUrlTree([edge.id.id], {relativeTo: config.table.route});
     this.router.navigateByUrl(url);
   }
 

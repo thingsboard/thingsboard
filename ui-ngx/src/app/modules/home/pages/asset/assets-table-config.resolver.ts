@@ -341,7 +341,7 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
     if ($event) {
       $event.stopPropagation();
     }
-    const url = this.router.createUrlTree([asset.id.id], {relativeTo: config.table.route})
+    const url = this.router.createUrlTree([asset.id.id], {relativeTo: config.table.route});
     this.router.navigateByUrl(url);
   }
 

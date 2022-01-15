@@ -337,7 +337,7 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
     if ($event) {
       $event.stopPropagation();
     }
-    const url = this.router.createUrlTree([entityView.id.id], {relativeTo: config.table.route})
+    const url = this.router.createUrlTree([entityView.id.id], {relativeTo: config.table.route});
     this.router.navigateByUrl(url);
   }
 

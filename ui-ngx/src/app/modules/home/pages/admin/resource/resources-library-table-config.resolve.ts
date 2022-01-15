@@ -123,7 +123,8 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
     if ($event) {
       $event.stopPropagation();
     }
-    this.router.navigateByUrl(`settings/resources-library/${resourceInfo.id.id}`);
+    const url = this.router.createUrlTree(['settings', 'resources-library', resourceInfo.id.id]);
+    this.router.navigateByUrl(url);
   }
 
   downloadResource($event: Event, resource: ResourceInfo) {

@@ -375,7 +375,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     if ($event) {
       $event.stopPropagation();
     }
-    const url = this.router.createUrlTree([device.id.id], {relativeTo: config.table.route})
+    const url = this.router.createUrlTree([device.id.id], {relativeTo: config.table.route});
     this.router.navigateByUrl(url);
   }
 
