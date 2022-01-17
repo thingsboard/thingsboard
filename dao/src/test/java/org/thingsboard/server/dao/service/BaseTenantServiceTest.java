@@ -415,17 +415,17 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         assertDeviceIsDeleted(savedTenant, savedDevice);
         assertDeviceProfileIsDeleted(savedTenant, savedDeviceProfile);
         assertDashboardIsDeleted(savedTenant, savedDashboard);
-        assertEdgeIsDeletd(savedTenant, savedEdge);
+        assertEdgeIsDeleted(savedTenant, savedEdge);
         assertTenantAdminIsDeleted(savedTenant);
         assertUserIsDeleted(savedTenant, savedUser);
         Assert.assertNull(ruleChainService.findRuleChainById(savedTenant.getId(), savedRuleChain.getId()));
         Assert.assertNull(apiUsageStateService.findTenantApiUsageState(savedTenant.getId()));
         assertResourceIsDeleted(savedTenant, savedResource);
-        assertOtaPAckageIsDeleted(savedTenant, savedOtaPackage);
+        assertOtaPackageIsDeleted(savedTenant, savedOtaPackage);
         Assert.assertNull(rpcService.findById(savedTenant.getId(), savedRpc.getId()));
     }
 
-    private void assertOtaPAckageIsDeleted(Tenant savedTenant, OtaPackage savedOtaPackage) {
+    private void assertOtaPackageIsDeleted(Tenant savedTenant, OtaPackage savedOtaPackage) {
         Assert.assertNull(
                 otaPackageService.findOtaPackageById(
                         savedTenant.getId(), savedOtaPackage.getId()
@@ -463,7 +463,7 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         Assert.assertEquals(0, tenantAdmins.getTotalElements());
     }
 
-    private void assertEdgeIsDeletd(Tenant savedTenant, Edge savedEdge) {
+    private void assertEdgeIsDeleted(Tenant savedTenant, Edge savedEdge) {
         Assert.assertNull(edgeService.findEdgeById(savedTenant.getId(), savedEdge.getId()));
         PageLink pageLinkEdges = new PageLink(1000);
         PageData<Edge> edges = edgeService.findEdgesByTenantId(savedTenant.getId(), pageLinkEdges);
