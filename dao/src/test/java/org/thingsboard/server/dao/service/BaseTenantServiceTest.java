@@ -24,7 +24,6 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -75,17 +74,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
 public abstract class BaseTenantServiceTest extends AbstractServiceTest {
-
-    public static final String TITLE = "My firmware";
-    private static final String FILE_NAME = "filename.txt";
-    private static final String VERSION = "v1.0";
-    private static final String CONTENT_TYPE = "text/plain";
-    private static final ChecksumAlgorithm CHECKSUM_ALGORITHM = ChecksumAlgorithm.SHA256;
-    private static final String CHECKSUM = "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a";
-    private static final long DATA_SIZE = 1L;
-    private static final ByteBuffer DATA = ByteBuffer.wrap(new byte[]{(int) DATA_SIZE});
-    private static final String URL = "http://firmware.test.org";
-
 
     private IdComparator<Tenant> idComparator = new IdComparator<>();
 
@@ -401,219 +389,43 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
 
     @Test
     public void testDeleteTenantDeletingAllRelatedEntities() throws Exception {
-        TenantProfile tenantProfile = new TenantProfile();
-        tenantProfile.setName("Test tenant profile");
-        TenantProfile savedProfile = tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
-
-        Tenant tenant = new Tenant();
-        tenant.setTitle("My tenant");
-        tenant.setTenantProfileId(savedProfile.getId());
-        Tenant savedTenant = tenantService.saveTenant(tenant);
-
-        User user = new User();
-        user.setAuthority(Authority.TENANT_ADMIN);
-        user.setEmail("tenantAdmin@test.com");
-        user.setFirstName("tenantAdmin");
-        user.setLastName("tenantAdmin");
-        user.setTenantId(savedTenant.getId());
-        User savedUser = userService.saveUser(user);
-
-        Customer customer = new Customer();
-        customer.setTitle("Test customer");
-        customer.setTenantId(savedTenant.getId());
-        customer.setEmail("testCustomer@test.com");
-        Customer savedCustomer = customerService.saveCustomer(customer);
-
-        WidgetsBundle widgetsBundle = new WidgetsBundle();
-        widgetsBundle.setTenantId(savedTenant.getId());
-        widgetsBundle.setTitle("Test widgets bundle");
-        widgetsBundle.setAlias("TestWidgetsBundle");
-        widgetsBundle.setDescription("Just a simple widgets bundle");
-        WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
-
-        DeviceProfile deviceProfile = new DeviceProfile();
-        deviceProfile.setTenantId(savedTenant.getId());
-        deviceProfile.setTransportType(DeviceTransportType.MQTT);
-        deviceProfile.setName("Test device profile");
-        deviceProfile.setType(DeviceProfileType.DEFAULT);
-
-        DeviceProfileData profileData = new DeviceProfileData();
-        profileData.setTransportConfiguration(new MqttDeviceProfileTransportConfiguration());
-        deviceProfile.setProfileData(profileData);
-        DeviceProfile savedDeviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
-
-
-        Device device = new Device();
-        device.setCustomerId(savedCustomer.getId());
-        device.setTenantId(savedTenant.getId());
-        device.setType("Test type");
-        device.setName("TestType");
-        device.setLabel("Test type");
-        device.setDeviceProfileId(savedDeviceProfile.getId());
-        Device savedDevice = deviceService.saveDevice(device);
-
-        EntityView entityView = new EntityView();
-        entityView.setEntityId(savedDevice.getId());
-        entityView.setTenantId(savedTenant.getId());
-        entityView.setCustomerId(savedCustomer.getId());
-        entityView.setType("Test type");
-        entityView.setName("Test entity view");
-        entityView.setStartTimeMs(0);
-        entityView.setEndTimeMs(840000);
-        EntityView savedEntityView = entityViewService.saveEntityView(entityView);
-
-        Asset asset = new Asset();
-        asset.setTenantId(savedTenant.getId());
-        asset.setCustomerId(savedCustomer.getId());
-        asset.setType("Test asset type");
-        asset.setName("Test asset type");
-        asset.setLabel("Test asset type");
-        Asset savedAsset = assetService.saveAsset(asset);
-
-        Dashboard dashboard = new Dashboard();
-        dashboard.setTenantId(savedTenant.getId());
-        dashboard.setTitle("Test dashboard");
-        dashboard.setAssignedCustomers(Set.of(savedCustomer.toShortCustomerInfo()));
-        Dashboard savedDashboard = dashboardService.saveDashboard(dashboard);
-
-        RuleChain ruleChain = new RuleChain();
-        ruleChain.setTenantId(savedTenant.getId());
-        ruleChain.setName("Test rule chain");
-        ruleChain.setType(RuleChainType.CORE);
-        RuleChain savedRuleChain = ruleChainService.saveRuleChain(ruleChain);
-
-        Edge edge = constructEdge(savedTenant.getId(), "Test edge", "Simple");
-        Edge savedEdge = edgeService.saveEdge(edge, false);
-
-        OtaPackage otaPackage = createFirmware(savedTenant.getId(), "1", savedDeviceProfile.getId());
-        OtaPackage savedOtaPackage = otaPackageService.saveOtaPackage(otaPackage);
-
-
-        TbResource resource = new TbResource();
-        resource.setTenantId(savedTenant.getId());
-        resource.setTitle("Test resource");
-        resource.setResourceType(ResourceType.LWM2M_MODEL);
-        resource.setFileName(FILE_NAME);
-        resource.setResourceKey("Test resource key");
-        resource.setData("Some super test data");
-        TbResource savedResource = resourceService.saveResource(resource);
-
-        ApiUsageState defaultApiUsageState = apiUsageStateService
-                .createDefaultApiUsageState(savedTenant.getId(), savedCustomer.getId());
-
-        Rpc rpc = new Rpc();
-        rpc.setTenantId(savedTenant.getId());
-        rpc.setDeviceId(savedDevice.getId());
-        rpc.setStatus(RpcStatus.QUEUED);
-        rpc.setRequest(JacksonUtil.toJsonNode("{}"));
-        Rpc savedRpc = rpcService.save(rpc);
-
+        TenantProfile savedProfile = createAndSaveTenantProfile();
+        Tenant savedTenant = createAndSaveTenant(savedProfile);
+        User savedUser = createAndSaveUserFor(savedTenant);
+        Customer savedCustomer = createAndSaveCustomerFor(savedTenant);
+        WidgetsBundle savedWidgetsBundle = createAndSaveWidgetBundleFor(savedTenant);
+        DeviceProfile savedDeviceProfile = createAndSaveDeviceProfileWithProfileDataFor(savedTenant);
+        Device savedDevice = createAndSaveDeviceFor(savedTenant, savedCustomer, savedDeviceProfile);
+        EntityView savedEntityView = createAndSaveEntityViewFor(savedTenant, savedCustomer, savedDevice);
+        Asset savedAsset = createAndSaveAssetFor(savedTenant, savedCustomer);
+        Dashboard savedDashboard = createAndSaveDashboardFor(savedTenant, savedCustomer);
+        RuleChain savedRuleChain = createAndSaveRuleChainFor(savedTenant);
+        Edge savedEdge = createAndSaveEdgeFor(savedTenant);
+        OtaPackage savedOtaPackage = createAndSaveOtaPackageFor(savedTenant, savedDeviceProfile);
+        TbResource savedResource = createAndSaveResourceFor(savedTenant);
+        Rpc savedRpc = createAndSaveRpcFor(savedTenant, savedDevice);
 
         tenantService.deleteTenant(savedTenant.getId());
 
         Assert.assertNull(tenantService.findTenantById(savedTenant.getId()));
-        Assert.assertNull(tenantService.findTenantById(savedTenant.getId()));
-        Assert.assertNull(customerService.findCustomerById(savedTenant.getId(), savedCustomer.getId()));
-
-
-        PageLink pageLinkCustomer = new PageLink(1000);
-        PageData<Customer> pageDataCustomer = customerService
-                .findCustomersByTenantId(savedTenant.getId(), pageLinkCustomer);
-        Assert.assertFalse(pageDataCustomer.hasNext());
-        Assert.assertEquals(0, pageDataCustomer.getTotalElements());
-
-
-        Assert.assertNull(
-                widgetsBundleService.findWidgetsBundleById(savedTenant.getId(), savedWidgetsBundle.getId())
-        );
-        List<WidgetsBundle> widgetsBundlesByTenantId =
-                widgetsBundleService.findAllTenantWidgetsBundlesByTenantId(savedTenant.getId());
-        Assert.assertTrue(widgetsBundlesByTenantId.isEmpty());
-
-
-        Assert.assertNull(entityViewService.findEntityViewById(
-                savedTenant.getId(), savedEntityView.getId()
-        ));
-        List<EntityView> entityViews =
-                entityViewService.findEntityViewsByTenantIdAndEntityId(
-                        savedTenant.getId(), savedDevice.getId());
-        Assert.assertTrue(entityViews.isEmpty());
-
-
-        Assert.assertNull(assetService.findAssetById(
-                savedTenant.getId(), savedAsset.getId()
-        ));
-        PageLink pageLinkAssets = new PageLink(1000);
-        PageData<Asset> assets =
-                assetService.findAssetsByTenantId(savedTenant.getId(), pageLinkAssets);
-        Assert.assertFalse(assets.hasNext());
-        Assert.assertEquals(0, assets.getTotalElements());
-
-
-        Assert.assertNull(deviceService.findDeviceById(
-                savedTenant.getId(), savedDevice.getId()
-        ));
-        PageLink pageLinkDevices = new PageLink(1000);
-        PageData<Device> devices =
-                deviceService.findDevicesByTenantId(savedTenant.getId(), pageLinkDevices);
-        Assert.assertFalse(devices.hasNext());
-        Assert.assertEquals(0, devices.getTotalElements());
-
-
-        Assert.assertNull(deviceProfileService.findDeviceProfileById(
-                savedTenant.getId(), savedDeviceProfile.getId()
-        ));
-        PageLink pageLinkDeviceProfiles = new PageLink(1000);
-        PageData<DeviceProfile> profiles =
-                deviceProfileService.findDeviceProfiles(savedTenant.getId(), pageLinkDeviceProfiles);
-        Assert.assertFalse(profiles.hasNext());
-        Assert.assertEquals(0, profiles.getTotalElements());
-
-
-        Assert.assertNull(dashboardService.findDashboardById(
-                savedTenant.getId(), savedDashboard.getId()
-        ));
-        PageLink pageLinkDashboards = new PageLink(1000);
-        PageData<DashboardInfo> dashboards =
-                dashboardService.findDashboardsByTenantId(savedTenant.getId(), pageLinkDashboards);
-        Assert.assertFalse(dashboards.hasNext());
-        Assert.assertEquals(0, dashboards.getTotalElements());
-
-
-        Assert.assertNull(edgeService.findEdgeById(savedTenant.getId(), savedEdge.getId()));
-        PageLink pageLinkEdges = new PageLink(1000);
-        PageData<Edge> edges = edgeService.findEdgesByTenantId(savedTenant.getId(), pageLinkEdges);
-        Assert.assertFalse(edges.hasNext());
-        Assert.assertEquals(0, edges.getTotalElements());
-
-
-        PageLink pageLinkTenantAdmins = new PageLink(1000);
-        PageData<User> tenantAdmins =
-                userService.findTenantAdmins(savedTenant.getId(), pageLinkTenantAdmins);
-        Assert.assertFalse(tenantAdmins.hasNext());
-        Assert.assertEquals(0, tenantAdmins.getTotalElements());
-
-
-        Assert.assertNull(userService.findUserById(savedTenant.getId(), savedUser.getId()));
-        PageLink pageLinkUsers = new PageLink(1000);
-        PageData<User> users =
-                userService.findUsersByTenantId(savedTenant.getId(), pageLinkUsers);
-        Assert.assertFalse(users.hasNext());
-        Assert.assertEquals(0, users.getTotalElements());
-
-
+        assertCustomerIsDeleted(savedTenant, savedCustomer);
+        assertWidgetsBundleIsDeleted(savedTenant, savedWidgetsBundle);
+        assertEntityViewIsDeleted(savedTenant, savedDevice, savedEntityView);
+        assertAssetIsDeleted(savedTenant, savedAsset);
+        assertDeviceIsDeleted(savedTenant, savedDevice);
+        assertDeviceProfileIsDeleted(savedTenant, savedDeviceProfile);
+        assertDashboardIsDeleted(savedTenant, savedDashboard);
+        assertEdgeIsDeletd(savedTenant, savedEdge);
+        assertTenantAdminIsDeleted(savedTenant);
+        assertUserIsDeleted(savedTenant, savedUser);
         Assert.assertNull(ruleChainService.findRuleChainById(savedTenant.getId(), savedRuleChain.getId()));
         Assert.assertNull(apiUsageStateService.findTenantApiUsageState(savedTenant.getId()));
+        assertResourceIsDeleted(savedTenant, savedResource);
+        assertOtaPAckageIsDeleted(savedTenant, savedOtaPackage);
+        Assert.assertNull(rpcService.findById(savedTenant.getId(), savedRpc.getId()));
+    }
 
-
-        Assert.assertNull(resourceService.findResourceById(savedTenant.getId(), savedResource.getId()));
-        PageLink pageLinkResources = new PageLink(1000);
-        PageData<TbResourceInfo> tenantResources =
-                resourceService.findAllTenantResourcesByTenantId(savedTenant.getId(), pageLinkResources);
-        Assert.assertFalse(tenantResources.hasNext());
-        Assert.assertEquals(0, tenantResources.getTotalElements());
-
-
+    private void assertOtaPAckageIsDeleted(Tenant savedTenant, OtaPackage savedOtaPackage) {
         Assert.assertNull(
                 otaPackageService.findOtaPackageById(
                         savedTenant.getId(), savedOtaPackage.getId()
@@ -623,24 +435,258 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         PageData<OtaPackageInfo> pageDataOta = otaPackageService.findTenantOtaPackagesByTenantId(savedTenant.getId(), pageLinkOta);
         Assert.assertFalse(pageDataOta.hasNext());
         Assert.assertEquals(0, pageDataOta.getTotalElements());
-
-
-        Assert.assertNull(rpcService.findById(savedTenant.getId(), savedRpc.getId()));
     }
 
-    private OtaPackage createFirmware(TenantId tenantId, String version, DeviceProfileId deviceProfileId) {
+    private void assertResourceIsDeleted(Tenant savedTenant, TbResource savedResource) {
+        Assert.assertNull(resourceService.findResourceById(savedTenant.getId(), savedResource.getId()));
+        PageLink pageLinkResources = new PageLink(1000);
+        PageData<TbResourceInfo> tenantResources =
+                resourceService.findAllTenantResourcesByTenantId(savedTenant.getId(), pageLinkResources);
+        Assert.assertFalse(tenantResources.hasNext());
+        Assert.assertEquals(0, tenantResources.getTotalElements());
+    }
+
+    private void assertUserIsDeleted(Tenant savedTenant, User savedUser) {
+        Assert.assertNull(userService.findUserById(savedTenant.getId(), savedUser.getId()));
+        PageLink pageLinkUsers = new PageLink(1000);
+        PageData<User> users =
+                userService.findUsersByTenantId(savedTenant.getId(), pageLinkUsers);
+        Assert.assertFalse(users.hasNext());
+        Assert.assertEquals(0, users.getTotalElements());
+    }
+
+    private void assertTenantAdminIsDeleted(Tenant savedTenant) {
+        PageLink pageLinkTenantAdmins = new PageLink(1000);
+        PageData<User> tenantAdmins =
+                userService.findTenantAdmins(savedTenant.getId(), pageLinkTenantAdmins);
+        Assert.assertFalse(tenantAdmins.hasNext());
+        Assert.assertEquals(0, tenantAdmins.getTotalElements());
+    }
+
+    private void assertEdgeIsDeletd(Tenant savedTenant, Edge savedEdge) {
+        Assert.assertNull(edgeService.findEdgeById(savedTenant.getId(), savedEdge.getId()));
+        PageLink pageLinkEdges = new PageLink(1000);
+        PageData<Edge> edges = edgeService.findEdgesByTenantId(savedTenant.getId(), pageLinkEdges);
+        Assert.assertFalse(edges.hasNext());
+        Assert.assertEquals(0, edges.getTotalElements());
+    }
+
+    private void assertDashboardIsDeleted(Tenant savedTenant, Dashboard savedDashboard) {
+        Assert.assertNull(dashboardService.findDashboardById(
+                savedTenant.getId(), savedDashboard.getId()
+        ));
+        PageLink pageLinkDashboards = new PageLink(1000);
+        PageData<DashboardInfo> dashboards =
+                dashboardService.findDashboardsByTenantId(savedTenant.getId(), pageLinkDashboards);
+        Assert.assertFalse(dashboards.hasNext());
+        Assert.assertEquals(0, dashboards.getTotalElements());
+    }
+
+    private void assertDeviceProfileIsDeleted(Tenant savedTenant, DeviceProfile savedDeviceProfile) {
+        Assert.assertNull(deviceProfileService.findDeviceProfileById(
+                savedTenant.getId(), savedDeviceProfile.getId()
+        ));
+        PageLink pageLinkDeviceProfiles = new PageLink(1000);
+        PageData<DeviceProfile> profiles =
+                deviceProfileService.findDeviceProfiles(savedTenant.getId(), pageLinkDeviceProfiles);
+        Assert.assertFalse(profiles.hasNext());
+        Assert.assertEquals(0, profiles.getTotalElements());
+    }
+
+    private void assertDeviceIsDeleted(Tenant savedTenant, Device savedDevice) {
+        Assert.assertNull(deviceService.findDeviceById(
+                savedTenant.getId(), savedDevice.getId()
+        ));
+        PageLink pageLinkDevices = new PageLink(1000);
+        PageData<Device> devices =
+                deviceService.findDevicesByTenantId(savedTenant.getId(), pageLinkDevices);
+        Assert.assertFalse(devices.hasNext());
+        Assert.assertEquals(0, devices.getTotalElements());
+    }
+
+    private void assertAssetIsDeleted(Tenant savedTenant, Asset savedAsset) {
+        Assert.assertNull(assetService.findAssetById(
+                savedTenant.getId(), savedAsset.getId()
+        ));
+        PageLink pageLinkAssets = new PageLink(1000);
+        PageData<Asset> assets =
+                assetService.findAssetsByTenantId(savedTenant.getId(), pageLinkAssets);
+        Assert.assertFalse(assets.hasNext());
+        Assert.assertEquals(0, assets.getTotalElements());
+    }
+
+    private void assertEntityViewIsDeleted(Tenant savedTenant, Device savedDevice, EntityView savedEntityView) {
+        Assert.assertNull(entityViewService.findEntityViewById(
+                savedTenant.getId(), savedEntityView.getId()
+        ));
+        List<EntityView> entityViews =
+                entityViewService.findEntityViewsByTenantIdAndEntityId(
+                        savedTenant.getId(), savedDevice.getId());
+        Assert.assertTrue(entityViews.isEmpty());
+    }
+
+    private void assertWidgetsBundleIsDeleted(Tenant savedTenant, WidgetsBundle savedWidgetsBundle) {
+        Assert.assertNull(
+                widgetsBundleService.findWidgetsBundleById(savedTenant.getId(), savedWidgetsBundle.getId())
+        );
+        List<WidgetsBundle> widgetsBundlesByTenantId =
+                widgetsBundleService.findAllTenantWidgetsBundlesByTenantId(savedTenant.getId());
+        Assert.assertTrue(widgetsBundlesByTenantId.isEmpty());
+    }
+
+    private void assertCustomerIsDeleted(Tenant savedTenant, Customer savedCustomer) {
+        Assert.assertNull(customerService.findCustomerById(savedTenant.getId(), savedCustomer.getId()));
+        PageLink pageLinkCustomer = new PageLink(1000);
+        PageData<Customer> pageDataCustomer = customerService
+                .findCustomersByTenantId(savedTenant.getId(), pageLinkCustomer);
+        Assert.assertFalse(pageDataCustomer.hasNext());
+        Assert.assertEquals(0, pageDataCustomer.getTotalElements());
+    }
+
+    private Rpc createAndSaveRpcFor(Tenant savedTenant, Device savedDevice) {
+        Rpc rpc = new Rpc();
+        rpc.setTenantId(savedTenant.getId());
+        rpc.setDeviceId(savedDevice.getId());
+        rpc.setStatus(RpcStatus.QUEUED);
+        rpc.setRequest(JacksonUtil.toJsonNode("{}"));
+        return rpcService.save(rpc);
+    }
+
+    private TbResource createAndSaveResourceFor(Tenant savedTenant) {
+        TbResource resource = new TbResource();
+        resource.setTenantId(savedTenant.getId());
+        resource.setTitle("Test resource");
+        resource.setResourceType(ResourceType.LWM2M_MODEL);
+        resource.setFileName("filename.txt");
+        resource.setResourceKey("Test resource key");
+        resource.setData("Some super test data");
+        return resourceService.saveResource(resource);
+    }
+
+    private OtaPackage createAndSaveOtaPackageFor(Tenant savedTenant, DeviceProfile savedDeviceProfile) {
+        OtaPackage otaPackage = createFirmware(savedTenant.getId(), savedDeviceProfile.getId());
+        return otaPackageService.saveOtaPackage(otaPackage);
+    }
+
+    private Edge createAndSaveEdgeFor(Tenant savedTenant) {
+        Edge edge = constructEdge(savedTenant.getId(), "Test edge", "Simple");
+        return edgeService.saveEdge(edge, false);
+    }
+
+    private RuleChain createAndSaveRuleChainFor(Tenant savedTenant) {
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setTenantId(savedTenant.getId());
+        ruleChain.setName("Test rule chain");
+        ruleChain.setType(RuleChainType.CORE);
+        return ruleChainService.saveRuleChain(ruleChain);
+    }
+
+    private Dashboard createAndSaveDashboardFor(Tenant savedTenant, Customer savedCustomer) {
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTenantId(savedTenant.getId());
+        dashboard.setTitle("Test dashboard");
+        dashboard.setAssignedCustomers(Set.of(savedCustomer.toShortCustomerInfo()));
+        return dashboardService.saveDashboard(dashboard);
+    }
+
+    private Asset createAndSaveAssetFor(Tenant savedTenant, Customer savedCustomer) {
+        Asset asset = new Asset();
+        asset.setTenantId(savedTenant.getId());
+        asset.setCustomerId(savedCustomer.getId());
+        asset.setType("Test asset type");
+        asset.setName("Test asset type");
+        asset.setLabel("Test asset type");
+        return assetService.saveAsset(asset);
+    }
+
+    private EntityView createAndSaveEntityViewFor(Tenant savedTenant, Customer savedCustomer, Device savedDevice) {
+        EntityView entityView = new EntityView();
+        entityView.setEntityId(savedDevice.getId());
+        entityView.setTenantId(savedTenant.getId());
+        entityView.setCustomerId(savedCustomer.getId());
+        entityView.setType("Test type");
+        entityView.setName("Test entity view");
+        entityView.setStartTimeMs(0);
+        entityView.setEndTimeMs(840000);
+        return entityViewService.saveEntityView(entityView);
+    }
+
+    private Device createAndSaveDeviceFor(Tenant savedTenant, Customer savedCustomer, DeviceProfile savedDeviceProfile) {
+        Device device = new Device();
+        device.setCustomerId(savedCustomer.getId());
+        device.setTenantId(savedTenant.getId());
+        device.setType("Test type");
+        device.setName("TestType");
+        device.setLabel("Test type");
+        device.setDeviceProfileId(savedDeviceProfile.getId());
+        return deviceService.saveDevice(device);
+    }
+
+    private DeviceProfile createAndSaveDeviceProfileWithProfileDataFor(Tenant savedTenant) {
+        DeviceProfile deviceProfile = new DeviceProfile();
+        deviceProfile.setTenantId(savedTenant.getId());
+        deviceProfile.setTransportType(DeviceTransportType.MQTT);
+        deviceProfile.setName("Test device profile");
+        deviceProfile.setType(DeviceProfileType.DEFAULT);
+        DeviceProfileData profileData = new DeviceProfileData();
+        profileData.setTransportConfiguration(new MqttDeviceProfileTransportConfiguration());
+        deviceProfile.setProfileData(profileData);
+        return deviceProfileService.saveDeviceProfile(deviceProfile);
+    }
+
+    private WidgetsBundle createAndSaveWidgetBundleFor(Tenant savedTenant) {
+        WidgetsBundle widgetsBundle = new WidgetsBundle();
+        widgetsBundle.setTenantId(savedTenant.getId());
+        widgetsBundle.setTitle("Test widgets bundle");
+        widgetsBundle.setAlias("TestWidgetsBundle");
+        widgetsBundle.setDescription("Just a simple widgets bundle");
+        return widgetsBundleService.saveWidgetsBundle(widgetsBundle);
+    }
+
+    private Customer createAndSaveCustomerFor(Tenant savedTenant) {
+        Customer customer = new Customer();
+        customer.setTitle("Test customer");
+        customer.setTenantId(savedTenant.getId());
+        customer.setEmail("testCustomer@test.com");
+        return customerService.saveCustomer(customer);
+    }
+
+    private User createAndSaveUserFor(Tenant savedTenant) {
+        User user = new User();
+        user.setAuthority(Authority.TENANT_ADMIN);
+        user.setEmail("tenantAdmin@test.com");
+        user.setFirstName("tenantAdmin");
+        user.setLastName("tenantAdmin");
+        user.setTenantId(savedTenant.getId());
+        return userService.saveUser(user);
+    }
+
+    private Tenant createAndSaveTenant(TenantProfile savedProfile) {
+        Tenant tenant = new Tenant();
+        tenant.setTitle("My tenant");
+        tenant.setTenantProfileId(savedProfile.getId());
+        return tenantService.saveTenant(tenant);
+    }
+
+    private TenantProfile createAndSaveTenantProfile() {
+        TenantProfile tenantProfile = new TenantProfile();
+        tenantProfile.setName("Test tenant profile");
+        return tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
+    }
+
+    private OtaPackage createFirmware(TenantId tenantId, DeviceProfileId deviceProfileId) {
         OtaPackage firmware = new OtaPackage();
         firmware.setTenantId(tenantId);
         firmware.setDeviceProfileId(deviceProfileId);
         firmware.setType(FIRMWARE);
-        firmware.setTitle(TITLE);
-        firmware.setVersion(version);
-        firmware.setFileName(FILE_NAME);
-        firmware.setContentType(CONTENT_TYPE);
-        firmware.setChecksumAlgorithm(CHECKSUM_ALGORITHM);
-        firmware.setChecksum(CHECKSUM);
-        firmware.setData(DATA);
-        firmware.setDataSize(DATA_SIZE);
+        firmware.setTitle("My firmware");
+        firmware.setVersion("1");
+        firmware.setFileName("filename.txt");
+        firmware.setContentType("text/plain");
+        firmware.setChecksumAlgorithm(ChecksumAlgorithm.SHA256);
+        firmware.setChecksum("4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a");
+        firmware.setData(ByteBuffer.wrap(new byte[]{(int) 1L}));
+        firmware.setDataSize(1L);
         return otaPackageService.saveOtaPackage(firmware);
     }
 }
