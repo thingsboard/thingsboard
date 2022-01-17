@@ -14,13 +14,14 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { BreadCrumb, BreadCrumbConfig } from './breadcrumb';
 import { ActivatedRoute, ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { guid } from '@core/utils';
+import { BroadcastService } from '@core/services/broadcast.service';
 
 @Component({
   selector: 'tb-breadcrumb',
@@ -51,10 +52,15 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
 
   constructor(private router: Router,
               private activatedRoute: ActivatedRoute,
+              private broadcast: BroadcastService,
+              private cd: ChangeDetectorRef,
               private translate: TranslateService) {
   }
 
   ngOnInit(): void {
+    this.broadcast.on('updateBreadcrumb', () => {
+      this.cd.markForCheck();
+    });
   }
 
   ngOnDestroy(): void {

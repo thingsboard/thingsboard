@@ -63,6 +63,11 @@ public class TbLwM2mStoreFactory {
     }
 
     @Bean
+    private TbLwM2MModelConfigStore modelConfigStore() {
+        return isRedis() ? new TbRedisLwM2MModelConfigStore(getConnectionFactory()) : new TbDummyLwM2MModelConfigStore();
+    }
+
+    @Bean
     private TbLwM2MClientOtaInfoStore otaStore() {
         return isRedis() ? new TbLwM2mRedisClientOtaInfoStore(getConnectionFactory()) : new TbDummyLwM2MClientOtaInfoStore();
     }

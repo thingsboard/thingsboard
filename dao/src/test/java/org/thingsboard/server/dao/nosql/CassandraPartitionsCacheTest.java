@@ -96,7 +96,7 @@ public class CassandraPartitionsCacheTest {
         cassandraBaseTimeseriesDao.init();
 
         UUID id = UUID.randomUUID();
-        TenantId tenantId = new TenantId(id);
+        TenantId tenantId = TenantId.fromUUID(id);
         long tsKvEntryTs = System.currentTimeMillis();
 
         for (int i = 0; i < 50000; i++) {

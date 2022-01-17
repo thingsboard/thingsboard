@@ -16,7 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
 import lombok.Builder;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType;
+import org.thingsboard.server.transport.lwm2m.server.LwM2MOperationType;
 
 public class TbLwM2MCancelObserveRequest extends AbstractTbLwM2MTargetedDownlinkRequest<Integer> {
 
@@ -26,8 +26,8 @@ public class TbLwM2MCancelObserveRequest extends AbstractTbLwM2MTargetedDownlink
     }
 
     @Override
-    public LwM2mOperationType getType() {
-        return LwM2mOperationType.OBSERVE_CANCEL;
+    public LwM2MOperationType getType() {
+        return LwM2MOperationType.OBSERVE_CANCEL;
     }
 
 

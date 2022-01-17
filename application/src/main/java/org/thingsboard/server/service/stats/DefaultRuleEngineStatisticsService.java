@@ -77,7 +77,7 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
     public void reportQueueStats(long ts, TbRuleEngineConsumerStats ruleEngineStats) {
         String queueName = ruleEngineStats.getQueueName();
         ruleEngineStats.getTenantStats().forEach((id, stats) -> {
-            TenantId tenantId = new TenantId(id);
+            TenantId tenantId = TenantId.fromUUID(id);
             try {
                 AssetId serviceAssetId = getServiceAssetId(tenantId, queueName);
                 if (stats.getTotalMsgCounter().get() > 0) {

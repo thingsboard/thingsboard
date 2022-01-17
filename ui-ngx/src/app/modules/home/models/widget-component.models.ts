@@ -37,7 +37,7 @@ import {
   IStateController,
   IWidgetSubscription,
   IWidgetUtils,
-  RpcApi,
+  RpcApi, StateParams,
   SubscriptionEntityInfo,
   TimewindowFunctions,
   WidgetActionsApi,
@@ -81,6 +81,7 @@ import { Router } from '@angular/router';
 import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 import { FormattedData } from '@home/components/widget/lib/maps/map-models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
+import { EntityId } from '@shared/models/id/entity-id';
 
 export interface IWidgetAction {
   name: string;
@@ -196,16 +197,18 @@ export class WidgetContext {
   };
 
   controlApi: RpcApi = {
-    sendOneWayCommand: (method, params, timeout, persistent, requestUUID) => {
+    sendOneWayCommand: (method, params, timeout, persistent,
+                        retries, additionalInfo, requestUUID) => {
       if (this.defaultSubscription) {
-        return this.defaultSubscription.sendOneWayCommand(method, params, timeout, persistent, requestUUID);
+        return this.defaultSubscription.sendOneWayCommand(method, params, timeout, persistent, retries, additionalInfo, requestUUID);
       } else {
         return of(null);
       }
     },
-    sendTwoWayCommand: (method, params, timeout, persistent, requestUUID) => {
+    sendTwoWayCommand: (method, params, timeout, persistent,
+                        retries, additionalInfo, requestUUID) => {
       if (this.defaultSubscription) {
-        return this.defaultSubscription.sendTwoWayCommand(method, params, timeout, persistent, requestUUID);
+        return this.defaultSubscription.sendTwoWayCommand(method, params, timeout, persistent, retries, additionalInfo, requestUUID);
       } else {
         return of(null);
       }
@@ -544,4 +547,28 @@ export function toWidgetType(widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId:
     name: widgetInfo.widgetName,
     descriptor
   };
+}
+
+export function updateEntityParams(params: StateParams, targetEntityParamName?: string, targetEntityId?: EntityId,
+                                   entityName?: string, entityLabel?: string) {
+  if (targetEntityId) {
+    let targetEntityParams: StateParams;
+    if (targetEntityParamName && targetEntityParamName.length) {
+      targetEntityParams = params[targetEntityParamName];
+      if (!targetEntityParams) {
+        targetEntityParams = {};
+        params[targetEntityParamName] = targetEntityParams;
+        params.targetEntityParamName = targetEntityParamName;
+      }
+    } else {
+      targetEntityParams = params;
+    }
+    targetEntityParams.entityId = targetEntityId;
+    if (entityName) {
+      targetEntityParams.entityName = entityName;
+    }
+    if (entityLabel) {
+      targetEntityParams.entityLabel = entityLabel;
+    }
+  }
 }

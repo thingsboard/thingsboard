@@ -166,7 +166,7 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
         Alarm alarm = new Alarm(new AlarmId(id));
         alarm.setCreatedTime(createdTime);
         if (tenantId != null) {
-            alarm.setTenantId(new TenantId(tenantId));
+            alarm.setTenantId(TenantId.fromUUID(tenantId));
         }
         if (customerId != null) {
             alarm.setCustomerId(new CustomerId(customerId));

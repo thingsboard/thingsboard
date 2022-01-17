@@ -18,9 +18,12 @@ package org.thingsboard.server.actors.app;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActor;
+import org.thingsboard.server.actors.TbActorCtx;
+import org.thingsboard.server.actors.TbActorException;
 import org.thingsboard.server.actors.TbActorId;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.actors.TbEntityActorId;
+import org.thingsboard.server.actors.device.SessionTimeoutCheckMsg;
 import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.actors.service.DefaultActorService;
@@ -65,6 +68,15 @@ public class AppActor extends ContextAwareActor {
     }
 
     @Override
+    public void init(TbActorCtx ctx) throws TbActorException {
+        super.init(ctx);
+        if (systemContext.getServiceInfoProvider().isService(ServiceType.TB_CORE)) {
+            systemContext.schedulePeriodicMsgWithDelay(ctx, SessionTimeoutCheckMsg.instance(),
+                    systemContext.getSessionReportTimeout(), systemContext.getSessionReportTimeout());
+        }
+    }
+
+    @Override
     protected boolean doProcess(TbActorMsg msg) {
         if (!ruleChainsInitialized) {
             initTenantActors();
@@ -100,6 +112,9 @@ public class AppActor extends ContextAwareActor {
                 break;
             case EDGE_EVENT_UPDATE_TO_EDGE_SESSION_MSG:
                 onToTenantActorMsg((EdgeEventUpdateMsg) msg);
+                break;
+            case SESSION_TIMEOUT_MSG:
+                ctx.broadcastToChildrenByType(msg, EntityType.TENANT);
                 break;
             default:
                 return false;
@@ -160,7 +175,7 @@ public class AppActor extends ContextAwareActor {
             }
         } else {
             if (EntityType.TENANT.equals(msg.getEntityId().getEntityType())) {
-                TenantId tenantId = new TenantId(msg.getEntityId().getId());
+                TenantId tenantId = TenantId.fromUUID(msg.getEntityId().getId());
                 if (msg.getEvent() == ComponentLifecycleEvent.DELETED) {
                     log.info("[{}] Handling tenant deleted notification: {}", msg.getTenantId(), msg);
                     deletedTenants.add(tenantId);
@@ -222,7 +237,7 @@ public class AppActor extends ContextAwareActor {
 
         @Override
         public TbActorId createActorId() {
-            return new TbEntityActorId(new TenantId(EntityId.NULL_UUID));
+            return new TbEntityActorId(TenantId.SYS_TENANT_ID);
         }
 
         @Override

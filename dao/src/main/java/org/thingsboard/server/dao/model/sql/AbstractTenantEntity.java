@@ -138,7 +138,7 @@ public abstract class AbstractTenantEntity<T extends Tenant> extends BaseSqlEnti
     }
 
     protected Tenant toTenant() {
-        Tenant tenant = new Tenant(new TenantId(this.getUuid()));
+        Tenant tenant = new Tenant(TenantId.fromUUID(this.getUuid()));
         tenant.setCreatedTime(createdTime);
         tenant.setTitle(title);
         tenant.setRegion(region);

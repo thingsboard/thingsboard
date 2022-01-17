@@ -104,7 +104,8 @@ public class TbMqttNode implements TbNode {
     protected MqttClient initClient(TbContext ctx) throws Exception {
         MqttClientConfig config = new MqttClientConfig(getSslContext());
         if (!StringUtils.isEmpty(this.mqttNodeConfiguration.getClientId())) {
-            config.setClientId(this.mqttNodeConfiguration.getClientId());
+            config.setClientId(this.mqttNodeConfiguration.isAppendClientIdSuffix() ?
+                    this.mqttNodeConfiguration.getClientId() + "_" + ctx.getServiceId() : this.mqttNodeConfiguration.getClientId());
         }
         config.setCleanSession(this.mqttNodeConfiguration.isCleanSession());
 

@@ -158,7 +158,7 @@ public final class DeviceProfileEntity extends BaseSqlEntity<DeviceProfile> impl
         DeviceProfile deviceProfile = new DeviceProfile(new DeviceProfileId(this.getUuid()));
         deviceProfile.setCreatedTime(createdTime);
         if (tenantId != null) {
-            deviceProfile.setTenantId(new TenantId(tenantId));
+            deviceProfile.setTenantId(TenantId.fromUUID(tenantId));
         }
         deviceProfile.setName(name);
         deviceProfile.setType(type);

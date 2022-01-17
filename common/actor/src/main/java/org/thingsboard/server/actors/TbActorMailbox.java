@@ -17,6 +17,7 @@ package org.thingsboard.server.actors;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbActorStopReason;
@@ -139,7 +140,7 @@ public final class TbActorMailbox implements TbActorCtx {
                 try {
                     log.debug("[{}] Going to process message: {}", selfId, msg);
                     actor.process(msg);
-                } catch (TbRuleNodeUpdateException updateException){
+                } catch (TbRuleNodeUpdateException updateException) {
                     stopReason = TbActorStopReason.INIT_FAILED;
                     destroy();
                 } catch (Throwable t) {
@@ -175,6 +176,11 @@ public final class TbActorMailbox implements TbActorCtx {
     @Override
     public void broadcastToChildren(TbActorMsg msg) {
         system.broadcastToChildren(selfId, msg);
+    }
+
+    @Override
+    public void broadcastToChildrenByType(TbActorMsg msg, EntityType entityType) {
+        broadcastToChildren(msg, actorId -> entityType.equals(actorId.getEntityType()));
     }
 
     @Override

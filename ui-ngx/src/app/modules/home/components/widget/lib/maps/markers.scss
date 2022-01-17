@@ -29,6 +29,19 @@
   box-shadow: none;
 }
 
-.leaflet-container{
+.tb-polygon-label {
+  border: none;
+  background: none;
+  box-shadow: none;
+  &:before {
+    content: none;
+  }
+}
+
+.leaflet-container {
   background-color: white;
+}
+
+.leaflet-buttons-control-button.pm-disabled {
+  pointer-events: none;
 }

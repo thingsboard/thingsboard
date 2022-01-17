@@ -17,6 +17,9 @@ package org.thingsboard.server.common.msg.queue;
 
 import org.thingsboard.server.common.data.id.RuleNodeId;
 
+/**
+ * Should be renamed to TbMsgPackContext, but this can't be changed due to backward-compatibility.
+ */
 public interface TbMsgCallback {
 
     TbMsgCallback EMPTY = new TbMsgCallback() {
@@ -36,11 +39,20 @@ public interface TbMsgCallback {
 
     void onFailure(RuleEngineException e);
 
+    /**
+     * Returns 'true' if rule engine is expecting the message to be processed, 'false' otherwise.
+     * message may no longer be valid, if the message pack is already expired/canceled/failed.
+     *
+     * @return 'true' if rule engine is expecting the message to be processed, 'false' otherwise.
+     */
+    default boolean isMsgValid() {
+        return true;
+    }
+
     default void onProcessingStart(RuleNodeInfo ruleNodeInfo) {
     }
 
     default void onProcessingEnd(RuleNodeId ruleNodeId) {
     }
-
 
 }

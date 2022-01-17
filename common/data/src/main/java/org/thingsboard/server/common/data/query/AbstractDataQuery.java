@@ -20,7 +20,7 @@ import lombok.ToString;
 
 import java.util.List;
 
-@ToString
+@ToString(callSuper = true)
 public abstract class AbstractDataQuery<T extends EntityDataPageLink> extends EntityCountQuery {
 
     @Getter

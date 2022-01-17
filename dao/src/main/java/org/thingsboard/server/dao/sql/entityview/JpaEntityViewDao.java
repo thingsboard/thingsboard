@@ -172,7 +172,7 @@ public class JpaEntityViewDao extends JpaAbstractSearchTextDao<EntityViewEntity,
         if (types != null && !types.isEmpty()) {
             list = new ArrayList<>();
             for (String type : types) {
-                list.add(new EntitySubtype(new TenantId(tenantId), EntityType.ENTITY_VIEW, type));
+                list.add(new EntitySubtype(TenantId.fromUUID(tenantId), EntityType.ENTITY_VIEW, type));
             }
         }
         return list;

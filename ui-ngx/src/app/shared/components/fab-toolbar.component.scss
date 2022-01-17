@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@use "sass:math";
+
 $font-size:   10px !default;
 @function rem($multiplier) {
   @return $multiplier * $font-size;
@@ -47,10 +50,10 @@ $swift-ease-in: all $swift-ease-in-duration $swift-ease-in-timing-function !defa
 }
 
 @mixin fab-all-positions() {
-  @include fab-position(bottom-right, auto, ($button-fab-width - $button-fab-padding)/2, ($button-fab-height - $button-fab-padding)/2, auto);
-  @include fab-position(bottom-left, auto, auto, ($button-fab-height - $button-fab-padding)/2, ($button-fab-width - $button-fab-padding)/2);
-  @include fab-position(top-right, ($button-fab-height - $button-fab-padding)/2, ($button-fab-width - $button-fab-padding)/2, auto, auto);
-  @include fab-position(top-left, ($button-fab-height - $button-fab-padding)/2, auto, auto, ($button-fab-width - $button-fab-padding)/2);
+  @include fab-position(bottom-right, auto, math.div(($button-fab-width - $button-fab-padding), 2), math.div(($button-fab-height - $button-fab-padding), 2), auto);
+  @include fab-position(bottom-left, auto, auto, math.div(($button-fab-height - $button-fab-padding), 2), math.div(($button-fab-width - $button-fab-padding), 2));
+  @include fab-position(top-right, math.div(($button-fab-height - $button-fab-padding), 2), math.div(($button-fab-width - $button-fab-padding), 2), auto, auto);
+  @include fab-position(top-left, math.div(($button-fab-height - $button-fab-padding), 2), auto, auto, math.div(($button-fab-width - $button-fab-padding), 2));
 }
 
 mat-fab-toolbar {
@@ -175,7 +178,7 @@ mat-fab-toolbar {
     mat-toolbar {
       .mat-fab-action-item {
         transition: $swift-ease-in;
-        transition-duration: $swift-ease-in-duration / 2;
+        transition-duration: math.div($swift-ease-in-duration, 2);
       }
     }
     &.mat-is-open {

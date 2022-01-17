@@ -16,6 +16,7 @@
 package org.thingsboard.server.actors;
 
 import lombok.Getter;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.Objects;
@@ -45,5 +46,10 @@ public class TbEntityActorId implements TbActorId {
     @Override
     public int hashCode() {
         return Objects.hash(entityId);
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return entityId.getEntityType();
     }
 }

@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>3.3.2-SNAPSHOT</version>
+    <version>3.3.3-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
@@ -40,6 +40,7 @@
         <jakarta.xml.bind-api.version>2.3.2</jakarta.xml.bind-api.version>
         <jaxb-runtime.version>2.3.2</jaxb-runtime.version>
         <spring-boot.version>2.3.12.RELEASE</spring-boot.version>
+        <spring-data.version>2.3.9.RELEASE</spring-data.version>
         <spring.version>5.2.16.RELEASE</spring.version>
         <spring-redis.version>5.2.11.RELEASE</spring-redis.version>
         <spring-security.version>5.4.7</spring-security.version>
@@ -47,7 +48,8 @@
         <jedis.version>3.3.0</jedis.version>
         <jjwt.version>0.7.0</jjwt.version>
         <slf4j.version>1.7.32</slf4j.version>
-        <logback.version>1.2.6</logback.version>
+        <log4j.version>2.17.1</log4j.version>
+        <logback.version>1.2.10</logback.version>
         <rat.version>0.10</rat.version>
         <cassandra.version>4.10.0</cassandra.version>
         <metrics.version>4.0.5</metrics.version>
@@ -67,18 +69,18 @@
         <fasterxml-classmate.version>1.3.4</fasterxml-classmate.version>
         <json-schema-validator.version>2.2.6</json-schema-validator.version>
         <californium.version>2.6.1</californium.version>
-        <leshan.version>2.0.0-M3</leshan.version>
+        <leshan.version>2.0.0-M4</leshan.version>
         <gson.version>2.6.2</gson.version>
         <freemarker.version>2.3.30</freemarker.version>
         <mail.version>1.6.2</mail.version>
         <curator.version>4.2.0</curator.version>
         <zookeeper.version>3.5.5</zookeeper.version>
         <protobuf.version>3.17.2</protobuf.version>
-        <grpc.version>1.38.0</grpc.version>
+        <grpc.version>1.42.1</grpc.version>
         <lombok.version>1.18.18</lombok.version>
         <paho.client.version>1.2.4</paho.client.version>
-        <netty.version>4.1.67.Final</netty.version>
-        <netty-tcnative-boringssl-static.version>2.0.40.Final</netty-tcnative-boringssl-static.version>
+        <netty.version>4.1.72.Final</netty.version>
+        <netty-tcnative.version>2.0.46.Final</netty-tcnative.version>
         <os-maven-plugin.version>1.7.0</os-maven-plugin.version>
         <rabbitmq.version>4.8.0</rabbitmq.version>
         <surfire.version>2.19.1</surfire.version>
@@ -401,39 +403,9 @@
                                                 </includes>
                                                 <filtering>false</filtering>
                                             </resource>
-                                            <resource>
-                                                <directory>../common/transport/lwm2m/src/main/resources</directory>
-                                                <includes>
-                                                    <include>**/*.xml</include>
-                                                    <include>**/*.jks</include>
-                                                </includes>
-                                                <filtering>false</filtering>
-                                            </resource>
                                         </resources>
                                     </configuration>
                                 </execution>
-                                <execution>
-                                    <id>copy-lwm2m-resources</id>
-                                    <phase>${pkg.process-resources.phase}</phase>
-                                    <goals>
-                                        <goal>copy-resources</goal>
-                                    </goals>
-                                    <configuration>
-                                        <outputDirectory>../transport/lwm2m/src/main/data</outputDirectory>
-                                        <resources>
-                                            <resource>
-                                                <directory>../common/transport/lwm2m/src/main/resources</directory>
-                                                <includes>
-                                                    <include>**/*.xml</include>
-                                                    <include>**/*.jks</include>
-                                                </includes>
-                                                <filtering>false</filtering>
-                                            </resource>
-                                        </resources>
-
-                                    </configuration>
-                                </execution>
-
                                 <execution>
                                     <id>copy-docker-config</id>
                                     <phase>${pkg.process-resources.phase}</phase>
@@ -513,6 +485,7 @@
                                 <execution>
                                     <goals>
                                         <goal>repackage</goal>
+                                        <goal>build-info</goal>
                                     </goals>
                                 </execution>
                             </executions>
@@ -684,6 +657,11 @@
                     <version>3.0.0-M1</version>
                 </plugin>
                 <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>3.0.0</version>
+                </plugin>
+                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
                     <executions>
@@ -822,14 +800,11 @@
                             <exclude>**/*.proto.js</exclude>
                             <exclude>docker/haproxy/**</exclude>
                             <exclude>docker/tb-node/**</exclude>
-                            <exclude>src/main/resources/models/*.xml</exclude>
-                            <exclude>src/main/resources/credentials/*.jks</exclude>
-                            <exclude>src/main/resources/credentials/shell/*.jks</exclude>
-                            <exclude>src/main/resources/credentials/shell/*.jks.old</exclude>
                             <exclude>ui/**</exclude>
                             <exclude>src/.browserslistrc</exclude>
                             <exclude>**/yarn.lock</exclude>
                             <exclude>**/*.raw</exclude>
+                            <exclude>**/*.patch</exclude>
                             <exclude>**/apache/cassandra/io/**</exclude>
                             <exclude>.run/**</exclude>
                         </excludes>
@@ -1124,6 +1099,11 @@
                 <version>${spring-boot.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.springframework.data</groupId>
+                <artifactId>spring-data-commons</artifactId>
+                <version>${spring-data.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.apache.kafka</groupId>
                 <artifactId>kafka-clients</artifactId>
                 <version>${kafka.version}</version>
@@ -1237,7 +1217,12 @@
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-tcnative-boringssl-static</artifactId>
-                <version>${netty-tcnative-boringssl-static.version}</version>
+                <version>${netty-tcnative.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-tcnative-classes</artifactId>
+                <version>${netty-tcnative.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
@@ -1490,6 +1475,21 @@
                 <groupId>org.slf4j</groupId>
                 <artifactId>jul-to-slf4j</artifactId>
                 <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>${log4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-core</artifactId>
+                <version>${log4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-to-slf4j</artifactId>
+                <version>${log4j.version}</version>
             </dependency>
             <dependency>
                 <groupId>ch.qos.logback</groupId>

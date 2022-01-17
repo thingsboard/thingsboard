@@ -88,7 +88,7 @@ public class TbResourceEntity extends BaseSqlEntity<TbResource> implements Searc
     public TbResource toData() {
         TbResource resource = new TbResource(new TbResourceId(id));
         resource.setCreatedTime(createdTime);
-        resource.setTenantId(new TenantId(tenantId));
+        resource.setTenantId(TenantId.fromUUID(tenantId));
         resource.setTitle(title);
         resource.setResourceType(ResourceType.valueOf(resourceType));
         resource.setResourceKey(resourceKey);

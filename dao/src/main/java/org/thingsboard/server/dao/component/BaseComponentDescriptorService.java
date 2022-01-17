@@ -51,7 +51,7 @@ public class BaseComponentDescriptorService implements ComponentDescriptorServic
 
     @Override
     public ComponentDescriptor saveComponent(TenantId tenantId, ComponentDescriptor component) {
-        componentValidator.validate(component, data -> new TenantId(EntityId.NULL_UUID));
+        componentValidator.validate(component, data -> TenantId.SYS_TENANT_ID);
         Optional<ComponentDescriptor> result = componentDescriptorDao.saveIfNotExist(tenantId, component);
         return result.orElseGet(() -> componentDescriptorDao.findByClazz(tenantId, component.getClazz()));
     }

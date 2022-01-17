@@ -170,7 +170,7 @@ public class OtaPackageInfoEntity extends BaseSqlEntity<OtaPackageInfo> implemen
     public OtaPackageInfo toData() {
         OtaPackageInfo otaPackageInfo = new OtaPackageInfo(new OtaPackageId(id));
         otaPackageInfo.setCreatedTime(createdTime);
-        otaPackageInfo.setTenantId(new TenantId(tenantId));
+        otaPackageInfo.setTenantId(TenantId.fromUUID(tenantId));
         if (deviceProfileId != null) {
             otaPackageInfo.setDeviceProfileId(new DeviceProfileId(deviceProfileId));
         }

@@ -23,14 +23,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
-import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import java.util.concurrent.ExecutorService;
+import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -73,6 +71,10 @@ public class MqttTransportContext extends TransportContext {
     @Value("${transport.mqtt.timeout:10000}")
     private long timeout;
 
+    @Getter
+    @Value("${transport.mqtt.proxy_enabled:false}")
+    private boolean proxyEnabled;
+
     private final AtomicInteger connectionsCounter = new AtomicInteger();
 
     @PostConstruct
@@ -88,4 +90,17 @@ public class MqttTransportContext extends TransportContext {
     public void channelUnregistered() {
         connectionsCounter.decrementAndGet();
     }
+
+    public boolean checkAddress(InetSocketAddress address) {
+        return rateLimitService.checkAddress(address);
+    }
+
+    public void onAuthSuccess(InetSocketAddress address) {
+        rateLimitService.onAuthSuccess(address);
+    }
+
+    public void onAuthFailure(InetSocketAddress address) {
+        rateLimitService.onAuthFailure(address);
+    }
+
 }

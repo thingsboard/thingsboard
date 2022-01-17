@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.common.msg;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -29,15 +27,25 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by ashvayka on 13.01.18.
  */
 @Data
-@NoArgsConstructor
 public final class TbMsgMetaData implements Serializable {
 
-    public static final TbMsgMetaData EMPTY = new TbMsgMetaData(Collections.emptyMap());
+    public static final TbMsgMetaData EMPTY = new TbMsgMetaData(0);
 
-    private final Map<String, String> data = new ConcurrentHashMap<>();
+    private final Map<String, String> data;
+
+    public TbMsgMetaData() {
+        this.data = new ConcurrentHashMap<>();
+    }
 
     public TbMsgMetaData(Map<String, String> data) {
-        data.forEach((key, val) -> putValue(key, val));
+        this.data = new ConcurrentHashMap<>(data);
+    }
+
+    /**
+     * Internal constructor to create immutable TbMsgMetaData.EMPTY
+     * */
+    private TbMsgMetaData(int ignored) {
+        this.data = Collections.emptyMap();
     }
 
     public String getValue(String key) {
@@ -55,6 +63,6 @@ public final class TbMsgMetaData implements Serializable {
     }
 
     public TbMsgMetaData copy() {
-        return new TbMsgMetaData(new ConcurrentHashMap<>(data));
+        return new TbMsgMetaData(data);
     }
 }

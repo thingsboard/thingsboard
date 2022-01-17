@@ -153,7 +153,7 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T
         Edge edge = new Edge(new EdgeId(getUuid()));
         edge.setCreatedTime(createdTime);
         if (tenantId != null) {
-            edge.setTenantId(new TenantId(tenantId));
+            edge.setTenantId(TenantId.fromUUID(tenantId));
         }
         if (customerId != null) {
             edge.setCustomerId(new CustomerId(customerId));

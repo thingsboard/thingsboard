@@ -57,6 +57,12 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
                 clearCacheByName("tenantProfiles");
                 clearCacheByName("relations");
                 break;
+            case "3.3.2":
+                log.info("Clear cache to upgrade from version 3.3.2 to 3.3.3 ...");
+                clearCacheByName("devices");
+                clearCacheByName("deviceProfiles");
+                clearCacheByName("tenantProfiles");
+                break;
             default:
                 //Do nothing, since cache cleanup is optional.
         }

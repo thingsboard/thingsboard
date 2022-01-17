@@ -103,7 +103,7 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
         mergeMap((savedAsset) => this.assetService.getAssetInfo(savedAsset.id.id)
         ));
     };
-    this.config.onEntityAction = action => this.onAssetAction(action);
+    this.config.onEntityAction = action => this.onAssetAction(action, this.config);
     this.config.detailsReadonly = () => (this.config.componentsData.assetScope === 'customer_user' || this.config.componentsData.assetScope === 'edge_customer_user');
 
     this.config.headerComponent = AssetTableHeaderComponent;
@@ -337,6 +337,14 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
     });
   }
 
+  private openAsset($event: Event, asset: Asset, config: EntityTableConfig<AssetInfo>) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const url = this.router.createUrlTree([asset.id.id], {relativeTo: config.table.route});
+    this.router.navigateByUrl(url);
+  }
+
   addAssetsToCustomer($event: Event) {
     if ($event) {
       $event.stopPropagation();
@@ -459,8 +467,11 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
     );
   }
 
-  onAssetAction(action: EntityAction<AssetInfo>): boolean {
+  onAssetAction(action: EntityAction<AssetInfo>, config: EntityTableConfig<AssetInfo>): boolean {
     switch (action.action) {
+      case 'open':
+        this.openAsset(action.event, action.entity, config);
+        return true;
       case 'makePublic':
         this.makePublic(action.event, action.entity);
         return true;

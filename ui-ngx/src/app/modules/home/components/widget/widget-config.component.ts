@@ -159,6 +159,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
 
   modelValue: WidgetConfigComponentData;
 
+  showLegendFieldset = true;
+
   private propagateChange = null;
 
   public dataSettings: FormGroup;
@@ -206,6 +208,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       padding: [null, []],
       margin: [null, []],
       widgetStyle: [null, []],
+      widgetCss: [null, []],
       titleStyle: [null, []],
       units: [null, []],
       decimals: [null, [Validators.min(0), Validators.max(15), Validators.pattern(/^\d*$/)]],
@@ -322,6 +325,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
         this.datasourceTypes.push(DatasourceType.entityCount);
       }
     }
+
     this.dataSettings = this.fb.group({});
     this.targetDeviceSettings = this.fb.group({});
     this.alarmSourceSettings = this.fb.group({});
@@ -385,6 +389,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     if (this.modelValue) {
       if (this.widgetType !== this.modelValue.widgetType) {
         this.widgetType = this.modelValue.widgetType;
+        this.showLegendFieldset = (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.latest);
         this.buildForms();
       }
       const config = this.modelValue.config;
@@ -406,6 +411,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
             padding: config.padding,
             margin: config.margin,
             widgetStyle: isDefined(config.widgetStyle) ? config.widgetStyle : {},
+            widgetCss: isDefined(config.widgetCss) ? config.widgetCss : '',
             titleStyle: isDefined(config.titleStyle) ? config.titleStyle : {
               fontSize: '16px',
               fontWeight: 400

@@ -110,7 +110,7 @@ public class UserEntity extends BaseSqlEntity<User> implements SearchTextEntity<
         user.setCreatedTime(createdTime);
         user.setAuthority(authority);
         if (tenantId != null) {
-            user.setTenantId(new TenantId(tenantId));
+            user.setTenantId(TenantId.fromUUID(tenantId));
         }
         if (customerId != null) {
             user.setCustomerId(new CustomerId(customerId));

@@ -117,7 +117,9 @@
         <ng-container *ngIf="direction === directions.FROM" matColumnDef="toName">
           <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 33%"> {{ 'relation.to-entity-name' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let relation">
-            {{ relation.toName }}
+            <a class="link" [routerLink]="relation.entityURL">
+              {{ relation.toName }}
+            </a>
           </mat-cell>
         </ng-container>
         <ng-container *ngIf="direction === directions.TO" matColumnDef="fromEntityTypeName">
@@ -129,7 +131,9 @@
         <ng-container *ngIf="direction === directions.TO" matColumnDef="fromName">
           <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 33%"> {{ 'relation.from-entity-name' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let relation">
-            {{ relation.fromName }}
+            <a class="link" [routerLink]="relation.entityURL">
+              {{ relation.fromName }}
+            </a>
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" stickyEnd>
@@ -165,6 +169,7 @@
     <mat-paginator [length]="dataSource.total() | async"
                    [pageIndex]="pageLink.page"
                    [pageSize]="pageLink.pageSize"
-                   [pageSizeOptions]="[10, 20, 30]"></mat-paginator>
+                   [pageSizeOptions]="[10, 20, 30]"
+                   [hidePageSize]="hidePageSize"></mat-paginator>
   </div>
 </div>

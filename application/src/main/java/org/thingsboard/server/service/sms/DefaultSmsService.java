@@ -71,7 +71,7 @@ public class DefaultSmsService implements SmsService {
 
     @Override
     public void updateSmsConfiguration() {
-        AdminSettings settings = adminSettingsService.findAdminSettingsByKey(new TenantId(EntityId.NULL_UUID), "sms");
+        AdminSettings settings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "sms");
         if (settings != null) {
             try {
                 JsonNode jsonConfig = settings.getJsonValue();

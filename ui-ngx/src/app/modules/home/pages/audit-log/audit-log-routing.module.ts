@@ -29,7 +29,8 @@ const routes: Routes = [
       breadcrumb: {
         label: 'audit-log.audit-logs',
         icon: 'track_changes'
-      }
+      },
+      isPage: true
     }
   }
 ];

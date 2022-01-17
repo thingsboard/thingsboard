@@ -95,7 +95,7 @@ public class DefaultMailService implements MailService {
 
     @Override
     public void updateMailConfiguration() {
-        AdminSettings settings = adminSettingsService.findAdminSettingsByKey(new TenantId(EntityId.NULL_UUID), "mail");
+        AdminSettings settings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
         if (settings != null) {
             JsonNode jsonConfig = settings.getJsonValue();
             mailSender = createMailSender(jsonConfig);

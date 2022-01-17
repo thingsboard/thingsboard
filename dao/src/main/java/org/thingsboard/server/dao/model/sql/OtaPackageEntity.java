@@ -151,7 +151,7 @@ public class OtaPackageEntity extends BaseSqlEntity<OtaPackage> implements Searc
     public OtaPackage toData() {
         OtaPackage otaPackage = new OtaPackage(new OtaPackageId(id));
         otaPackage.setCreatedTime(createdTime);
-        otaPackage.setTenantId(new TenantId(tenantId));
+        otaPackage.setTenantId(TenantId.fromUUID(tenantId));
         if (deviceProfileId != null) {
             otaPackage.setDeviceProfileId(new DeviceProfileId(deviceProfileId));
         }

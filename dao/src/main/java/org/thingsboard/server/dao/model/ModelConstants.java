@@ -28,7 +28,7 @@ public class ModelConstants {
     }
 
     public static final UUID NULL_UUID = Uuids.startOf(0);
-    public static final TenantId SYSTEM_TENANT = new TenantId(ModelConstants.NULL_UUID);
+    public static final TenantId SYSTEM_TENANT = TenantId.fromUUID(ModelConstants.NULL_UUID);
 
     // this is the difference between midnight October 15, 1582 UTC and midnight January 1, 1970 UTC as 100 nanosecond units
     public static final long EPOCH_DIFF = 122192928000000000L;
@@ -257,6 +257,7 @@ public class ModelConstants {
     /**
      * Cassandra alarm constants.
      */
+    public static final String ENTITY_ALARM_COLUMN_FAMILY_NAME = "entity_alarm";
     public static final String ALARM_COLUMN_FAMILY_NAME = "alarm";
     public static final String ALARM_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String ALARM_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;

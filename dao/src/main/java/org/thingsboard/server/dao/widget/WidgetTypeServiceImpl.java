@@ -135,7 +135,7 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
                         throw new DataValidationException("Widgets type descriptor can't be empty!");
                     }
                     if (widgetTypeDetails.getTenantId() == null) {
-                        widgetTypeDetails.setTenantId(new TenantId(ModelConstants.NULL_UUID));
+                        widgetTypeDetails.setTenantId(TenantId.fromUUID(ModelConstants.NULL_UUID));
                     }
                     if (!widgetTypeDetails.getTenantId().getId().equals(ModelConstants.NULL_UUID)) {
                         Tenant tenant = tenantDao.findById(tenantId, widgetTypeDetails.getTenantId().getId());

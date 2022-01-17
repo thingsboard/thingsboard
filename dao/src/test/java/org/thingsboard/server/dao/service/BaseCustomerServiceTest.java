@@ -105,7 +105,7 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
     public void testSaveCustomerWithInvalidTenant() {
         Customer customer = new Customer();
         customer.setTitle("My customer");
-        customer.setTenantId(new TenantId(Uuids.timeBased()));
+        customer.setTenantId(TenantId.fromUUID(Uuids.timeBased()));
         customerService.saveCustomer(customer);
     }
 

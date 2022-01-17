@@ -27,7 +27,7 @@ import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandle
 
 import java.util.Collection;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertObjectIdToVersionedId;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertObjectIdToVersionedId;
 
 @Slf4j
 public class LwM2mServerListener {
@@ -40,7 +40,7 @@ public class LwM2mServerListener {
 
     public final RegistrationListener registrationListener = new RegistrationListener() {
         /**
-         * Register – запрос, представленный в виде POST /rd?…
+         * Register – query represented as POST /rd?…
          */
         @Override
         public void registered(Registration registration, Registration previousReg,
@@ -49,7 +49,7 @@ public class LwM2mServerListener {
         }
 
         /**
-         * Update – представляет из себя CoAP POST запрос на URL, полученный в ответ на Register.
+         * Update – query represented as CoAP POST request for the URL received in response to Register.
          */
         @Override
         public void updated(RegistrationUpdate update, Registration updatedRegistration,
@@ -58,7 +58,7 @@ public class LwM2mServerListener {
         }
 
         /**
-         * De-register (CoAP DELETE) – отправляется клиентом в случае инициирования процедуры выключения.
+         * De-register (CoAP DELETE) – Sent by the client when a shutdown procedure is initiated.
          */
         @Override
         public void unregistered(Registration registration, Collection<Observation> observations, boolean expired,
@@ -98,7 +98,9 @@ public class LwM2mServerListener {
 
         @Override
         public void onError(Observation observation, Registration registration, Exception error) {
-            log.error("Unable to handle notification of [{}:{}]", observation.getRegistrationId(), observation.getPath(), error);
+            if (error != null) {
+                log.debug("Unable to handle notification of [{}:{}] [{}]", observation.getRegistrationId(), observation.getPath(), error.getMessage());
+            }
         }
 
         @Override

@@ -119,7 +119,7 @@ public abstract class AbstractAssetEntity<T extends Asset> extends BaseSqlEntity
         Asset asset = new Asset(new AssetId(id));
         asset.setCreatedTime(createdTime);
         if (tenantId != null) {
-            asset.setTenantId(new TenantId(tenantId));
+            asset.setTenantId(TenantId.fromUUID(tenantId));
         }
         if (customerId != null) {
             asset.setCustomerId(new CustomerId(customerId));

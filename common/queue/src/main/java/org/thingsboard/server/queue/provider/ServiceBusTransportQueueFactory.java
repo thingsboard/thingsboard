@@ -37,6 +37,7 @@ import org.thingsboard.server.queue.common.DefaultTbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
+import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportApiSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportNotificationSettings;
 
@@ -51,14 +52,17 @@ public class ServiceBusTransportQueueFactory implements TbTransportQueueFactory 
     private final TbServiceBusSettings serviceBusSettings;
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TbQueueCoreSettings coreSettings;
+    private final TbQueueRuleEngineSettings ruleEngineSettings;
 
     private final TbQueueAdmin coreAdmin;
     private final TbQueueAdmin transportApiAdmin;
     private final TbQueueAdmin notificationAdmin;
+    private final TbQueueAdmin ruleEngineAdmin;
 
     public ServiceBusTransportQueueFactory(TbQueueTransportApiSettings transportApiSettings,
                                            TbQueueTransportNotificationSettings transportNotificationSettings,
                                            TbServiceBusSettings serviceBusSettings,
+                                           TbQueueRuleEngineSettings ruleEngineSettings,
                                            TbServiceInfoProvider serviceInfoProvider,
                                            TbQueueCoreSettings coreSettings,
                                            TbServiceBusQueueConfigs serviceBusQueueConfigs) {
@@ -67,10 +71,12 @@ public class ServiceBusTransportQueueFactory implements TbTransportQueueFactory 
         this.serviceBusSettings = serviceBusSettings;
         this.serviceInfoProvider = serviceInfoProvider;
         this.coreSettings = coreSettings;
+        this.ruleEngineSettings = ruleEngineSettings;
 
         this.coreAdmin = new TbServiceBusAdmin(serviceBusSettings, serviceBusQueueConfigs.getCoreConfigs());
         this.transportApiAdmin = new TbServiceBusAdmin(serviceBusSettings, serviceBusQueueConfigs.getTransportApiConfigs());
         this.notificationAdmin = new TbServiceBusAdmin(serviceBusSettings, serviceBusQueueConfigs.getNotificationsConfigs());
+        this.ruleEngineAdmin = new TbServiceBusAdmin(serviceBusSettings, serviceBusQueueConfigs.getRuleEngineConfigs());
     }
 
     @Override
@@ -96,7 +102,7 @@ public class ServiceBusTransportQueueFactory implements TbTransportQueueFactory 
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> createRuleEngineMsgProducer() {
-        return new TbServiceBusProducerTemplate<>(transportApiAdmin, serviceBusSettings, transportApiSettings.getRequestsTopic());
+        return new TbServiceBusProducerTemplate<>(ruleEngineAdmin, serviceBusSettings, ruleEngineSettings.getTopic());
     }
 
     @Override
@@ -126,6 +132,9 @@ public class ServiceBusTransportQueueFactory implements TbTransportQueueFactory 
         }
         if (notificationAdmin != null) {
             notificationAdmin.destroy();
+        }
+        if (ruleEngineAdmin != null) {
+            ruleEngineAdmin.destroy();
         }
     }
 }

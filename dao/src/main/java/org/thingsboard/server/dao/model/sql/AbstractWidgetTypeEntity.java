@@ -75,7 +75,7 @@ public abstract class AbstractWidgetTypeEntity<T extends BaseWidgetType> extends
         BaseWidgetType widgetType = new BaseWidgetType(new WidgetTypeId(getUuid()));
         widgetType.setCreatedTime(createdTime);
         if (tenantId != null) {
-            widgetType.setTenantId(new TenantId(tenantId));
+            widgetType.setTenantId(TenantId.fromUUID(tenantId));
         }
         widgetType.setBundleAlias(bundleAlias);
         widgetType.setAlias(alias);

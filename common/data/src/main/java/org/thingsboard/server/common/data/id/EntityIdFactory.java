@@ -40,7 +40,7 @@ public class EntityIdFactory {
     public static EntityId getByTypeAndUuid(EntityType type, UUID uuid) {
         switch (type) {
             case TENANT:
-                return new TenantId(uuid);
+                return TenantId.fromUUID(uuid);
             case CUSTOMER:
                 return new CustomerId(uuid);
             case USER:

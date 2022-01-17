@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.springframework.web.server.ResponseStatusException;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -177,8 +178,8 @@ public class RpcV2Controller extends AbstractRpcController {
             @RequestParam int pageSize,
             @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
-            @ApiParam(value = "Status of the RPC", required = true, allowableValues = RPC_STATUS_ALLOWABLE_VALUES)
-            @RequestParam RpcStatus rpcStatus,
+            @ApiParam(value = "Status of the RPC", allowableValues = RPC_STATUS_ALLOWABLE_VALUES)
+            @RequestParam(required = false) RpcStatus rpcStatus,
             @ApiParam(value = RPC_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
             @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = RPC_SORT_PROPERTY_ALLOWABLE_VALUES)
@@ -187,14 +188,24 @@ public class RpcV2Controller extends AbstractRpcController {
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         checkParameter("DeviceId", strDeviceId);
         try {
+            if (rpcStatus != null && rpcStatus.equals(RpcStatus.DELETED)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "RpcStatus: DELETED");
+            }
+
             TenantId tenantId = getCurrentUser().getTenantId();
             PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
             DeviceId deviceId = new DeviceId(UUID.fromString(strDeviceId));
             final DeferredResult<ResponseEntity> response = new DeferredResult<>();
+
             accessValidator.validate(getCurrentUser(), Operation.RPC_CALL, deviceId, new HttpValidationCallback(response, new FutureCallback<>() {
                 @Override
                 public void onSuccess(@Nullable DeferredResult<ResponseEntity> result) {
-                    PageData<Rpc> rpcCalls = rpcService.findAllByDeviceIdAndStatus(tenantId, deviceId, rpcStatus, pageLink);
+                    PageData<Rpc> rpcCalls;
+                    if (rpcStatus != null) {
+                        rpcCalls = rpcService.findAllByDeviceIdAndStatus(tenantId, deviceId, rpcStatus, pageLink);
+                    } else {
+                        rpcCalls = rpcService.findAllByDeviceId(tenantId, deviceId, pageLink);
+                    }
                     response.setResult(new ResponseEntity<>(rpcCalls, HttpStatus.OK));
                 }
 
@@ -219,7 +230,7 @@ public class RpcV2Controller extends AbstractRpcController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/persistent/{rpcId}", method = RequestMethod.DELETE)
     @ResponseBody
-    public void deleteResource(
+    public void deleteRpc(
             @ApiParam(value = RPC_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(RPC_ID) String strRpc) throws ThingsboardException {
         checkParameter("RpcId", strRpc);
@@ -235,6 +246,7 @@ public class RpcV2Controller extends AbstractRpcController {
                 }
 
                 rpcService.deleteRpc(getTenantId(), rpcId);
+                rpc.setStatus(RpcStatus.DELETED);
 
                 TbMsg msg = TbMsg.newMsg(RPC_DELETED, rpc.getDeviceId(), TbMsgMetaData.EMPTY, JacksonUtil.toString(rpc));
                 tbClusterService.pushMsgToRuleEngine(getTenantId(), rpc.getDeviceId(), msg, null);

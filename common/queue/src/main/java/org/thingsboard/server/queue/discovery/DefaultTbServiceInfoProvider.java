@@ -88,7 +88,7 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
         UUID tenantId;
         if (!StringUtils.isEmpty(tenantIdStr)) {
             tenantId = UUID.fromString(tenantIdStr);
-            isolatedTenant = new TenantId(tenantId);
+            isolatedTenant = TenantId.fromUUID(tenantId);
         } else {
             tenantId = TenantId.NULL_UUID;
         }
