@@ -504,7 +504,7 @@ spring.servlet.multipart.max-file-size: "50MB"
 spring.servlet.multipart.max-request-size: "50MB"
 
 spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation: "true"
-spring.jpa.properties.hibernate.order_by.default_null_ordering: "last"
+spring.jpa.properties.hibernate.order_by.default_null_ordering: "${SPRING_JPA_PROPERTIES_HIBERNATE_ORDER_BY_DEFAULT_NULL_ORDERING:none}"
 
 # SQL DAO Configuration
 spring:
