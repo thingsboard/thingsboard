@@ -137,10 +137,6 @@ public class BaseEventService implements EventService {
             eventDao.removeAllByIds(eventsPageData.getData().stream()
                     .map(IdBased::getUuidId)
                     .collect(Collectors.toList()));
-
-            if (eventsPageData.hasNext()) {
-                eventsPageLink = eventsPageLink.nextPageLink();
-            }
         } while (eventsPageData.hasNext());
     }
 
