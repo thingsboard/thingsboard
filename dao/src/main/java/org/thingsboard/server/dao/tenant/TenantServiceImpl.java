@@ -107,7 +107,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
     private RpcService rpcService;
 
     @Override
-    @Cacheable(cacheNames = TENANTS_CACHE, key = "#tenantId", condition = "#tenantId!=null")
+    @Cacheable(cacheNames = TENANTS_CACHE, key = "#tenantId")
     public Tenant findTenantById(TenantId tenantId) {
         log.trace("Executing findTenantById [{}]", tenantId);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
@@ -148,8 +148,8 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
     }
 
     @Override
-    @Transactional
-    @CacheEvict(cacheNames = TENANTS_CACHE, key = "#tenantId", condition = "#tenantId!=null")
+    @Transactional(timeout = 60 * 60)
+    @CacheEvict(cacheNames = TENANTS_CACHE, key = "#tenantId")
     public void deleteTenant(TenantId tenantId) {
         log.trace("Executing deleteTenant [{}]", tenantId);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);

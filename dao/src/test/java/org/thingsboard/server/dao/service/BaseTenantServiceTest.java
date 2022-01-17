@@ -423,6 +423,8 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         assertResourceIsDeleted(savedTenant, savedResource);
         assertOtaPackageIsDeleted(savedTenant, savedOtaPackage);
         Assert.assertNull(rpcService.findById(savedTenant.getId(), savedRpc.getId()));
+
+        tenantProfileService.deleteTenantProfile(TenantId.SYS_TENANT_ID, savedProfile.getId());
     }
 
     private void assertOtaPackageIsDeleted(Tenant savedTenant, OtaPackage savedOtaPackage) {
