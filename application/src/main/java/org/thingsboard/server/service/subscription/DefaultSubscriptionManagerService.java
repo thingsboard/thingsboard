@@ -331,7 +331,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
                             if (subscriptionUpdate == null) {
                                 subscriptionUpdate = new ArrayList<>();
                             }
-                            subscriptionUpdate.add(new BasicTsKvEntry(0, new StringDataEntry(key, null)));
+                            subscriptionUpdate.add(new BasicTsKvEntry(0, new StringDataEntry(key, "")));
                         }
                     }
                     return subscriptionUpdate;
@@ -355,7 +355,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
                             if (subscriptionUpdate == null) {
                                 subscriptionUpdate = new ArrayList<>();
                             }
-                            subscriptionUpdate.add(new BasicTsKvEntry(0, new StringDataEntry(key, null)));
+                            subscriptionUpdate.add(new BasicTsKvEntry(0, new StringDataEntry(key, "")));
                         }
                     }
                     return subscriptionUpdate;
