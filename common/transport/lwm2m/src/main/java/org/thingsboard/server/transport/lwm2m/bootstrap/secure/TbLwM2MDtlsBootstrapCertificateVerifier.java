@@ -128,7 +128,7 @@ public class TbLwM2MDtlsBootstrapCertificateVerifier implements NewAdvancedCerti
                             try {
                                 securityInfo = bsSecurityStore.getX509ByEndpoint(sha3Hash);
                             } catch (LwM2MAuthException e) {
-                                log.trace("Failed to find security info: {}", sha3Hash, e);
+                                log.trace("Failed to find security info: [{}]", sha3Hash, e);
                             }
                         }
                         ValidateDeviceCredentialsResponse msg = securityInfo != null ? securityInfo.getMsg() : null;
@@ -139,7 +139,7 @@ public class TbLwM2MDtlsBootstrapCertificateVerifier implements NewAdvancedCerti
                     } catch (CertificateEncodingException |
                             CertificateExpiredException |
                             CertificateNotYetValidException e) {
-                        log.error(e.getMessage(), e);
+                        log.trace("Failed to find security info: [{}]", cert.getSubjectX500Principal().getName(), e);
                     }
                 }
                 if (!x509CredentialsFound) {
