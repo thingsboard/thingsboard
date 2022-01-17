@@ -71,6 +71,8 @@ import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
 public abstract class BaseTenantServiceTest extends AbstractServiceTest {
@@ -328,12 +330,12 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         tenant.setTitle("My tenant");
         Tenant savedTenant = tenantService.saveTenant(tenant);
 
-        Mockito.reset(tenantDao);
+        reset(tenantDao);
         Objects.requireNonNull(cacheManager.getCache(CacheConstants.TENANTS_CACHE), "Tenant cache manager is null").evict(savedTenant.getId());
 
-        Mockito.verify(tenantDao, Mockito.times(0)).findById(any(), any());
+        verify(tenantDao, Mockito.times(0)).findById(any(), any());
         tenantService.findTenantById(savedTenant.getId());
-        Mockito.verify(tenantDao, Mockito.times(1)).findById(eq(savedTenant.getId()), eq(savedTenant.getId().getId()));
+        verify(tenantDao, Mockito.times(1)).findById(eq(savedTenant.getId()), eq(savedTenant.getId().getId()));
 
         Cache.ValueWrapper cachedTenant =
                 Objects.requireNonNull(cacheManager.getCache(CacheConstants.TENANTS_CACHE), "Cache manager is null!").get(savedTenant.getId());
@@ -342,7 +344,7 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         for (int i = 0; i < 100; i++) {
             tenantService.findTenantById(savedTenant.getId());
         }
-        Mockito.verify(tenantDao, Mockito.times(1)).findById(eq(savedTenant.getId()), eq(savedTenant.getId().getId()));
+        verify(tenantDao, Mockito.times(1)).findById(eq(savedTenant.getId()), eq(savedTenant.getId().getId()));
 
         tenantService.deleteTenant(savedTenant.getId());
     }
@@ -360,14 +362,14 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         savedTenant.setTitle("My new tenant");
         savedTenant = tenantService.saveTenant(savedTenant);
 
-        Mockito.reset(tenantDao);
+        reset(tenantDao);
 
         cachedTenant = Objects.requireNonNull(cacheManager.getCache(CacheConstants.TENANTS_CACHE), "Cache manager is null!").get(savedTenant.getId());
         Assert.assertNull("Updating a Tenant doesn't evict the cache!", cachedTenant);
 
-        Mockito.verify(tenantDao, Mockito.times(0)).findById(any(), any());
+        verify(tenantDao, Mockito.times(0)).findById(any(), any());
         tenantService.findTenantById(savedTenant.getId());
-        Mockito.verify(tenantDao, Mockito.times(1)).findById(eq(savedTenant.getId()), eq(savedTenant.getId().getId()));
+        verify(tenantDao, Mockito.times(1)).findById(eq(savedTenant.getId()), eq(savedTenant.getId().getId()));
 
         tenantService.deleteTenant(savedTenant.getId());
     }
