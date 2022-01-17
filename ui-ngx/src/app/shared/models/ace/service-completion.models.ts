@@ -267,7 +267,7 @@ export function observablePageDataReturnType(objectType: string): FunctionArgTyp
 export function arrayReturnType(objectType: string): FunctionArgType {
   return {
     type: `Array&lt;${objectType}&gt;`,
-    description: `An <code>Array</code> of <code>${objectType}</code>.`
+    description: `<code>Array</code> of <code>${objectType}</code>.`
   };
 }
 
@@ -279,7 +279,7 @@ export const serviceCompletions: TbEditorCompletions = {
     type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/device.service.ts#L37">DeviceService</a>',
     children: {
       getTenantDeviceInfos: {
-        description: 'Get tenant devices',
+        description: 'Get tenant device infos',
         meta: 'function',
         args: [
           pageLinkArg,
@@ -289,7 +289,7 @@ export const serviceCompletions: TbEditorCompletions = {
         return: observablePageDataReturnType(deviceInfoHref)
       },
       getTenantDeviceInfosByDeviceProfileId: {
-        description: 'Get tenant device by device profile id',
+        description: 'Get tenant device infos by device profile id',
         meta: 'function',
         args: [
           pageLinkArg,
@@ -299,7 +299,7 @@ export const serviceCompletions: TbEditorCompletions = {
         return: observablePageDataReturnType(deviceInfoHref)
       },
       getCustomerDeviceInfos: {
-        description: 'Get customer devices',
+        description: 'Get customer devices infos',
         meta: 'function',
         args: [
           { name: 'customerId', type: 'string', description: 'Id of the customer'},
@@ -310,7 +310,7 @@ export const serviceCompletions: TbEditorCompletions = {
         return: observablePageDataReturnType(deviceInfoHref)
       },
       getCustomerDeviceInfosByDeviceProfileId: {
-        description: 'Get customer device by device profile id',
+        description: 'Get customer device infos by device profile id',
         meta: 'function',
         args: [
           { name: 'customerId', type: 'string', description: 'Id of the customer'},
@@ -330,7 +330,7 @@ export const serviceCompletions: TbEditorCompletions = {
         return: observableReturnType(deviceHref)
       },
       getDevices: {
-        description: 'Get devices by ids',
+        description: 'Get all devices by ids',
         meta: 'function',
         args: [
           { name: 'deviceIds', type: `Array&lt;string&gt;`, description: 'List of device ids'},
@@ -447,26 +447,26 @@ export const serviceCompletions: TbEditorCompletions = {
         }
       },
       getPersistedRpc: {
-        description: 'Get persisted rpc request',
+        description: 'Get persisted RPC request',
         meta: 'function',
         args: [
-          { name: 'rpcId', type: 'string', description: 'Id of the rpc'},
+          { name: 'rpcId', type: 'string', description: 'Id of the RPC'},
           { name: 'fullResponse', type: 'boolean', description: 'Full response (false by default)', optional: true},
           requestConfigArg
         ],
         return: observableReturnType(persistentRpcHref)
       },
       deletePersistedRpc: {
-        description: 'Delete Persisted rpc request',
+        description: 'Delete Persisted RPC request',
         meta: 'function',
         args: [
-          { name: 'rpcId', type: 'string', description: 'Id of the rpc'},
+          { name: 'rpcId', type: 'string', description: 'Id of the RPC'},
           requestConfigArg
         ],
         return: observableVoid()
       },
       getPersistedRpcRequests: {
-        description: 'Get all persisted rpc requests',
+        description: 'Get all persisted RPC requests',
         meta: 'function',
         args: [
           { name: 'deviceId', type: 'string', description: 'Id of the device'},
@@ -566,7 +566,7 @@ export const serviceCompletions: TbEditorCompletions = {
     type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/core/http/asset.service.ts#L29">AssetService</a>',
     children: {
       getTenantAssetInfos: {
-        description: 'Get tenant assets',
+        description: 'Get tenant asset infos',
         meta: 'function',
         args: [
           pageLinkArg,
@@ -576,7 +576,7 @@ export const serviceCompletions: TbEditorCompletions = {
         return: observablePageDataReturnType(assetInfoHref)
       },
       getCustomerAssetInfos: {
-        description: 'Get customer assets',
+        description: 'Get customer asset infos',
         meta: 'function',
         args: [
           {name: 'customerId', type: 'string', description: 'Id of the customer'},
@@ -1086,7 +1086,7 @@ export const serviceCompletions: TbEditorCompletions = {
         description: 'Get public dashboard link',
         meta: 'function',
         args: [
-          {name: 'dashboard', type: dashboardInfoHref, description: 'dashboard info'},
+          {name: 'dashboard', type: dashboardInfoHref, description: 'Dashboard info'},
         ],
         return: {
           type: `string|null`,
@@ -1536,7 +1536,7 @@ export const serviceCompletions: TbEditorCompletions = {
         return: observablePageDataReturnType(entityInfoHref)
       },
       findSingleEntityInfoByEntityFilter: {
-        description: 'Find single entity infos by filter',
+        description: 'Find single entity info by filter',
         meta: 'function',
         args: [
           {name: 'filter', type: entityFilterHref, description: 'Filter for the entity'},
@@ -1968,7 +1968,7 @@ export const serviceCompletions: TbEditorCompletions = {
         return: observableReturnType(deviceProfileHref)
       },
       deleteDeviceProfile: {
-        description: 'Delete device profile',
+        description: 'Delete device profile by id',
         meta: 'function',
         args: [
           {name: 'deviceProfileId', type: 'string', description: 'Id of the device profile'},
@@ -1977,7 +1977,7 @@ export const serviceCompletions: TbEditorCompletions = {
         return: observableVoid()
       },
       setDefaultDeviceProfile: {
-        description: 'Set default device profile',
+        description: 'Set default device profile by id',
         meta: 'function',
         args: [
           {name: 'deviceProfileId', type: 'string', description: 'Id of the device profile'},
@@ -2004,7 +2004,7 @@ export const serviceCompletions: TbEditorCompletions = {
         return: observablePageDataReturnType(deviceProfileInfoHref)
       },
       getDeviceProfileDevicesAttributesKeys: {
-        description: 'Get device profile attributes keys by device profile id',
+        description: 'Get device profile attributes keys by id',
         meta: 'function',
         args: [
           {name: 'deviceProfileId', type: 'string', description: 'Id of the device profile', optional: true},
@@ -2013,7 +2013,7 @@ export const serviceCompletions: TbEditorCompletions = {
         return: observableArrayReturnType('string')
       },
       getDeviceProfileDevicesTimeseriesKeys: {
-        description: 'Get device profile timeseries keys by device profile id',
+        description: 'Get device profile timeseries keys by id',
         meta: 'function',
         args: [
           {name: 'deviceProfileId', type: 'string', description: 'Id of the device profile', optional: true},
@@ -2046,8 +2046,7 @@ export const serviceCompletions: TbEditorCompletions = {
           {name: 'listener', type: broadcastListenerHref, description: 'Broadcast listener'}
         ],
         return: {
-          type: subscriptionHref,
-          description: `An <code>${subscriptionHref}</code>.`
+          type: subscriptionHref
         }
       },
     }
@@ -2089,10 +2088,7 @@ export const serviceCompletions: TbEditorCompletions = {
       initDefaultAlarmDataKeys: {
         description: 'Initialize default alarm data keys',
         meta: 'function',
-        args: [],
-        return: {
-          type: 'void'
-        }
+        args: []
       },
       getDefaultAlarmDataKeys: {
         description: 'Get default alarm data keys',
@@ -2118,8 +2114,7 @@ export const serviceCompletions: TbEditorCompletions = {
           {name: 'exception', type: 'any', description: 'Exception'},
         ],
         return: {
-          type: exceptionDataHref,
-          description: exceptionDataHref
+          type: exceptionDataHref
         }
       },
       parseException: {
@@ -2130,8 +2125,7 @@ export const serviceCompletions: TbEditorCompletions = {
           {name: 'lineOffset', type: 'number', description: 'Number of offsets line'},
         ],
         return: {
-          type: exceptionDataHref,
-          description: exceptionDataHref
+          type: exceptionDataHref
         }
       },
       customTranslation: {
@@ -2234,10 +2228,7 @@ export const serviceCompletions: TbEditorCompletions = {
         meta: 'function',
         args: [
           {name: 'datasource', type: `Array&lt;${dataSourceHref}&gt;`, description: 'Array of datasource'}
-        ],
-        return: {
-          type: 'void'
-        }
+        ]
       },
       currentPerfTime: {
         description: 'Get current performance time',
@@ -2264,10 +2255,7 @@ export const serviceCompletions: TbEditorCompletions = {
         meta: 'function',
         args: [
           {name: 'keys', type: 'Array&lt;string&gt;', description: 'Array of keys query parameter'}
-        ],
-        return: {
-          type: 'void'
-        }
+        ]
       },
       updateQueryParam: {
         description: 'Update query parameter',
@@ -2275,10 +2263,7 @@ export const serviceCompletions: TbEditorCompletions = {
         args: [
           {name: 'name', type: 'string', description: 'Name of query parameter'},
           {name: 'value', type: 'string|null', description: 'Value of query parameter'}
-        ],
-        return: {
-          type: 'void'
-        }
+        ]
       },
       updateUrlQueryString: {
         description: 'Update url query string',
@@ -2359,10 +2344,7 @@ export const serviceCompletions: TbEditorCompletions = {
         meta: 'function',
         args: [
           {name: 'dashboardId', type: 'string', description: 'Id of the dashboard'}
-        ],
-        return: {
-          type: 'void'
-        }
+        ]
       },
       importDashboard: {
         description: 'Import dashboard',
@@ -2378,10 +2360,7 @@ export const serviceCompletions: TbEditorCompletions = {
           {name: 'sourceState', type: 'string', description: 'Source state'},
           {name: 'sourceLayout', type: dashboardLayoutIdHref, description: 'Source layout'},
           {name: 'widget', type: widgetHref, description: 'Source layout'}
-        ],
-        return: {
-          type: 'void'
-        }
+        ]
       },
       importWidget: {
         description: 'Import widget',
@@ -2400,10 +2379,7 @@ export const serviceCompletions: TbEditorCompletions = {
         meta: 'function',
         args: [
           {name: 'widgetTypeId', type: 'string', description: 'Id of the widget type'}
-        ],
-        return: {
-          type: 'void'
-        }
+        ]
       },
       importWidgetType: {
         description: 'Import widget type',
@@ -2418,10 +2394,7 @@ export const serviceCompletions: TbEditorCompletions = {
         meta: 'function',
         args: [
           {name: 'widgetsBundleId', type: 'string', description: 'Id of the widget bundle'}
-        ],
-        return: {
-          type: 'void'
-        }
+        ]
       },
       importWidgetsBundle: {
         description: 'Import widget bundle',
@@ -2456,10 +2429,7 @@ export const serviceCompletions: TbEditorCompletions = {
         meta: 'function',
         args: [
           {name: 'ruleChainId', type: 'string', description: 'Id of the rule chain'}
-        ],
-        return: {
-          type: 'void'
-        }
+        ]
       },
       importRuleChain: {
         description: 'Import rule chain',
@@ -2474,10 +2444,7 @@ export const serviceCompletions: TbEditorCompletions = {
         meta: 'function',
         args: [
           {name: 'deviceProfileId', type: 'string', description: 'Id of the device profile'}
-        ],
-        return: {
-          type: 'void'
-        }
+        ]
       },
       importDeviceProfile: {
         description: 'Import device profile',
@@ -2490,10 +2457,7 @@ export const serviceCompletions: TbEditorCompletions = {
         meta: 'function',
         args: [
           {name: 'tenantProfileId', type: 'string', description: 'Id of the tenant profile'}
-        ],
-        return: {
-          type: 'void'
-        }
+        ]
       },
       importTenantProfile: {
         description: 'Import tenant profile',
@@ -2502,15 +2466,12 @@ export const serviceCompletions: TbEditorCompletions = {
         return: observableReturnType(tenantProfileHref)
       },
       exportJSZip: {
-        description: 'Export JS zip',
+        description: 'Export JS Zip',
         meta: 'function',
         args: [
           {name: 'data', type: 'object', description: 'Data'},
           {name: 'filename', type: 'string', description: 'File name'}
-        ],
-        return: {
-          type: 'void'
-        }
+        ]
       },
     }
   },
