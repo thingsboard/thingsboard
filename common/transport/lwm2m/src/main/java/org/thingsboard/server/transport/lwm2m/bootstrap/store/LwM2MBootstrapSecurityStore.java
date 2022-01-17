@@ -68,9 +68,9 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
     }
 
     @Override
-    public Iterator<SecurityInfo> getAllByEndpoint(String endPoint) {
-            TbLwM2MSecurityInfo store = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfoByCredentialsId(endPoint, BOOTSTRAP);
-            SecurityInfo securityInfo = this.addValueToStore(store, endPoint);
+    public Iterator<SecurityInfo> getAllByEndpoint(String endpoint) {
+            TbLwM2MSecurityInfo store = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfoByCredentialsId(endpoint, BOOTSTRAP);
+            SecurityInfo securityInfo = this.addValueToStore(store, endpoint);
             return securityInfo == null ? null : Collections.singletonList(store.getSecurityInfo()).iterator();
     }
 
@@ -162,7 +162,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
                 }
             }
         });
-        return validBs.get() & validLw.get();
+        return validBs.get() && validLw.get();
     }
 
     public TransportProtos.SessionInfoProto getSessionByEndpoint(String endpoint) {
@@ -177,7 +177,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
         return bootstrapConfigStore.getAll().get(endpoint);
     }
 
-    public SecurityInfo addValueToStore(TbLwM2MSecurityInfo store, String endPoint) {
+    public SecurityInfo addValueToStore(TbLwM2MSecurityInfo store, String endpoint) {
         /* add value to store  from BootstrapJson */
         SecurityInfo securityInfo = null;
         if (store != null && store.getBootstrapCredentialConfig() != null && store.getSecurityMode() != null) {
@@ -199,11 +199,11 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
                         }
                     }
                     for (String config : bootstrapConfigStore.getAll().keySet()) {
-                        if (config.equals(endPoint)) {
+                        if (config.equals(endpoint)) {
                             bootstrapConfigStore.remove(config);
                         }
                     }
-                    bootstrapConfigStore.add(endPoint, bsConfigNew);
+                    bootstrapConfigStore.add(endpoint, bsConfigNew);
                 } catch (InvalidConfigurationException e) {
                     if (e.getMessage().contains("Psk identity") && e.getMessage().contains("already used for this bootstrap server")) {
                         log.trace("Invalid Bootstrap Configuration", e);

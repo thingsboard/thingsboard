@@ -128,7 +128,7 @@ public class TbLwM2MDtlsBootstrapCertificateVerifier implements NewAdvancedCerti
                             try {
                                 securityInfo = bsSecurityStore.getX509ByEndpoint(sha3Hash);
                             } catch (LwM2MAuthException e) {
-                                log.trace("Failed find security info: {}", sha3Hash, e);
+                                log.trace("Failed to find security info: {}", sha3Hash, e);
                             }
                         }
                         ValidateDeviceCredentialsResponse msg = securityInfo != null ? securityInfo.getMsg() : null;
