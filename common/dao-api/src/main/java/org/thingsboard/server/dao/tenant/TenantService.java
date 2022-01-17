@@ -39,4 +39,6 @@ public interface TenantService {
     PageData<TenantInfo> findTenantInfos(PageLink pageLink);
     
     void deleteTenants();
+
+    PageData<TenantId> findTenantsIds(PageLink pageLink);
 }

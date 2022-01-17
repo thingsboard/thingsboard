@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.rpc.RpcDao;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
-import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
@@ -43,7 +43,7 @@ public class RpcCleanUpService {
     @Value("${sql.ttl.rpc.enabled}")
     private boolean ttlTaskExecutionEnabled;
 
-    private final TenantDao tenantDao;
+    private final TenantService tenantService;
     private final PartitionService partitionService;
     private final TbTenantProfileCache tenantProfileCache;
     private final RpcDao rpcDao;
@@ -54,7 +54,7 @@ public class RpcCleanUpService {
             PageLink tenantsBatchRequest = new PageLink(10_000, 0);
             PageData<TenantId> tenantsIds;
             do {
-                tenantsIds = tenantDao.findTenantsIds(tenantsBatchRequest);
+                tenantsIds = tenantService.findTenantsIds(tenantsBatchRequest);
                 for (TenantId tenantId : tenantsIds.getData()) {
                     if (!partitionService.resolve(ServiceType.TB_CORE, tenantId, tenantId).isMyPartition()) {
                         continue;
