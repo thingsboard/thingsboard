@@ -19,6 +19,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -59,7 +61,7 @@ public class AbstractChunkedAggregationTimeseriesDaoTest {
     public void givenIntervalNotMultiplePeriod_whenAggregateCount_thenLastIntervalShorterThanOthersAndEqualsEndTs() {
         ReadTsKvQuery query = new BaseReadTsKvQuery(TEMP, 1, 3000, 2000, LIMIT, COUNT, DESC);
         ReadTsKvQuery subQueryFirst = new BaseReadTsKvQuery(TEMP, 1, 2001, 1001, LIMIT, COUNT, DESC);
-        ReadTsKvQuery subQuerySecond = new BaseReadTsKvQuery(TEMP, 2001, 3000, 2501, LIMIT, COUNT, DESC);
+        ReadTsKvQuery subQuerySecond = new BaseReadTsKvQuery(TEMP, 2001, 3001, 2501, LIMIT, COUNT, DESC);
         tsDao.findAllAsync(SYS_TENANT_ID, SYS_TENANT_ID, query);
         verify(tsDao, times(2)).findAndAggregateAsync(any(), any(), any(), anyLong(), anyLong(), any());
         verify(tsDao, times(1)).findAndAggregateAsync(SYS_TENANT_ID, SYS_TENANT_ID, subQueryFirst, 1, 2001, COUNT);
@@ -69,7 +71,7 @@ public class AbstractChunkedAggregationTimeseriesDaoTest {
     @Test
     public void givenIntervalNotMultiplePeriod_whenAggregateCount_thenIntervalEqualsPeriod() {
         ReadTsKvQuery query = new BaseReadTsKvQuery(TEMP, 1, 3000, 3000, LIMIT, COUNT, DESC);
-        ReadTsKvQuery subQueryFirst = new BaseReadTsKvQuery(TEMP, 1, 3000, 1501, LIMIT, COUNT, DESC);
+        ReadTsKvQuery subQueryFirst = new BaseReadTsKvQuery(TEMP, 1, 3001, 1501, LIMIT, COUNT, DESC);
         willCallRealMethod().given(tsDao).findAllAsync(SYS_TENANT_ID, SYS_TENANT_ID, query);
         assertThat(tsDao.findAllAsync(SYS_TENANT_ID, SYS_TENANT_ID, query)).isNotNull();
         verify(tsDao, times(1)).findAndAggregateAsync(any(), any(), any(), anyLong(), anyLong(), any());
@@ -79,8 +81,8 @@ public class AbstractChunkedAggregationTimeseriesDaoTest {
     @Test
     public void givenIntervalNotMultiplePeriod_whenAggregateCount_thenIntervalEqualsPeriodMinusOne() {
         ReadTsKvQuery query = new BaseReadTsKvQuery(TEMP, 1, 3000, 2999, LIMIT, COUNT, DESC);
-        ReadTsKvQuery subQueryFirst = new BaseReadTsKvQuery(TEMP, 1, 2998, 1500, LIMIT, COUNT, DESC);
-        ReadTsKvQuery subQuerySecond = new BaseReadTsKvQuery(TEMP, 2999, 3000, 3000, LIMIT, COUNT, DESC);
+        ReadTsKvQuery subQueryFirst = new BaseReadTsKvQuery(TEMP, 1, 3000, 1500, LIMIT, COUNT, DESC);
+        ReadTsKvQuery subQuerySecond = new BaseReadTsKvQuery(TEMP, 3000, 3001, 3000, LIMIT, COUNT, DESC);
         willCallRealMethod().given(tsDao).findAllAsync(SYS_TENANT_ID, SYS_TENANT_ID, query);
         tsDao.findAllAsync(SYS_TENANT_ID, SYS_TENANT_ID, query);
         verify(tsDao, times(2)).findAndAggregateAsync(any(), any(), any(), anyLong(), anyLong(), any());
@@ -92,7 +94,7 @@ public class AbstractChunkedAggregationTimeseriesDaoTest {
     @Test
     public void givenIntervalNotMultiplePeriod_whenAggregateCount_thenIntervalEqualsPeriodPlusOne() {
         ReadTsKvQuery query = new BaseReadTsKvQuery(TEMP, 1, 3000, 3001, LIMIT, COUNT, DESC);
-        ReadTsKvQuery subQueryFirst = new BaseReadTsKvQuery(TEMP, 1, 3000, 1501, LIMIT, COUNT, DESC);
+        ReadTsKvQuery subQueryFirst = new BaseReadTsKvQuery(TEMP, 1, 3001, 1501, LIMIT, COUNT, DESC);
         willCallRealMethod().given(tsDao).findAllAsync(SYS_TENANT_ID, SYS_TENANT_ID, query);
         tsDao.findAllAsync(SYS_TENANT_ID, SYS_TENANT_ID, query);
         verify(tsDao, times(1)).findAndAggregateAsync(any(), any(), any(), anyLong(), anyLong(), any());
@@ -102,7 +104,7 @@ public class AbstractChunkedAggregationTimeseriesDaoTest {
     @Test
     public void givenIntervalNotMultiplePeriod_whenAggregateCount_thenIntervalEqualsOneMillisecondAndStartTsIsZero() {
         ReadTsKvQuery query = new BaseReadTsKvQuery(TEMP, 0, 0, 1, LIMIT, COUNT, DESC);
-        ReadTsKvQuery subQueryFirst = new BaseReadTsKvQuery(TEMP, 0, 0, 0, LIMIT, COUNT, DESC);
+        ReadTsKvQuery subQueryFirst = new BaseReadTsKvQuery(TEMP, 0, 1, 0, LIMIT, COUNT, DESC);
         willCallRealMethod().given(tsDao).findAllAsync(SYS_TENANT_ID, SYS_TENANT_ID, query);
         tsDao.findAllAsync(SYS_TENANT_ID, SYS_TENANT_ID, query);
         verify(tsDao, times(1)).findAndAggregateAsync(any(), any(), any(), anyLong(), anyLong(), any());
@@ -112,10 +114,11 @@ public class AbstractChunkedAggregationTimeseriesDaoTest {
     @Test
     public void givenIntervalNotMultiplePeriod_whenAggregateCount_thenIntervalEqualsOneMillisecondAndStartTsIsOne() {
         ReadTsKvQuery query = new BaseReadTsKvQuery(TEMP, 1, 1, 1, LIMIT, COUNT, DESC);
+        ReadTsKvQuery subQuery = new BaseReadTsKvQuery(TEMP, 1, 2, 1, LIMIT, COUNT, DESC);
         willCallRealMethod().given(tsDao).findAllAsync(SYS_TENANT_ID, SYS_TENANT_ID, query);
         tsDao.findAllAsync(SYS_TENANT_ID, SYS_TENANT_ID, query);
         verify(tsDao, times(1)).findAndAggregateAsync(any(), any(), any(), anyLong(), anyLong(), any());
-        verify(tsDao, times(1)).findAndAggregateAsync(SYS_TENANT_ID, SYS_TENANT_ID, query, 1, 2, COUNT);
+        verify(tsDao, times(1)).findAndAggregateAsync(SYS_TENANT_ID, SYS_TENANT_ID, subQuery, 1, 2, COUNT);
     }
 
     @Test
@@ -131,7 +134,7 @@ public class AbstractChunkedAggregationTimeseriesDaoTest {
     @Test
     public void givenIntervalNotMultiplePeriod_whenAggregateCount_thenIntervalEqualsBigNumber() {
         ReadTsKvQuery query = new BaseReadTsKvQuery(TEMP, 1, 3000, Integer.MAX_VALUE, LIMIT, COUNT, DESC);
-        ReadTsKvQuery subQueryFirst = new BaseReadTsKvQuery(TEMP, 1, 3000, 1501, LIMIT, COUNT, DESC);
+        ReadTsKvQuery subQueryFirst = new BaseReadTsKvQuery(TEMP, 1, 3001, 1501, LIMIT, COUNT, DESC);
         willCallRealMethod().given(tsDao).findAllAsync(SYS_TENANT_ID, SYS_TENANT_ID, query);
         tsDao.findAllAsync(SYS_TENANT_ID, SYS_TENANT_ID, query);
         verify(tsDao, times(1)).findAndAggregateAsync(any(), any(), any(), anyLong(), anyLong(), any());
