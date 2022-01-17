@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.socket.CloseStatus;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -205,21 +206,30 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         ListenableFuture<TbEntityDataSubCtx> historyFuture;
         if (cmd.getHistoryCmd() != null) {
             log.trace("[{}][{}] Going to process history command: {}", session.getSessionId(), cmd.getCmdId(), cmd.getHistoryCmd());
-            historyFuture = handleHistoryCmd(ctx, cmd.getHistoryCmd());
+            try {
+                historyFuture = handleHistoryCmd(ctx, cmd.getHistoryCmd());
+            } catch (RuntimeException e) {
+                handleWsCmdRuntimeException(ctx.getSessionId(), e, cmd);
+                return;
+            }
         } else {
             historyFuture = Futures.immediateFuture(ctx);
         }
         Futures.addCallback(historyFuture, new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable TbEntityDataSubCtx theCtx) {
-                if (cmd.getLatestCmd() != null) {
-                    handleLatestCmd(theCtx, cmd.getLatestCmd());
-                } else if (cmd.getTsCmd() != null) {
-                    handleTimeSeriesCmd(theCtx, cmd.getTsCmd());
-                } else if (!theCtx.isInitialDataSent()) {
-                    EntityDataUpdate update = new EntityDataUpdate(theCtx.getCmdId(), theCtx.getData(), null, theCtx.getMaxEntitiesPerDataSubscription());
-                    wsService.sendWsMsg(theCtx.getSessionId(), update);
-                    theCtx.setInitialDataSent(true);
+                try {
+                    if (cmd.getLatestCmd() != null) {
+                        handleLatestCmd(theCtx, cmd.getLatestCmd());
+                    } else if (cmd.getTsCmd() != null) {
+                        handleTimeSeriesCmd(theCtx, cmd.getTsCmd());
+                    } else if (!theCtx.isInitialDataSent()) {
+                        EntityDataUpdate update = new EntityDataUpdate(theCtx.getCmdId(), theCtx.getData(), null, theCtx.getMaxEntitiesPerDataSubscription());
+                        wsService.sendWsMsg(theCtx.getSessionId(), update);
+                        theCtx.setInitialDataSent(true);
+                    }
+                } catch (RuntimeException e) {
+                    handleWsCmdRuntimeException(theCtx.getSessionId(), e, cmd);
                 }
             }
 
@@ -228,6 +238,11 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                 log.warn("[{}][{}] Failed to process command", session.getSessionId(), cmd.getCmdId());
             }
         }, wsCallBackExecutor);
+    }
+
+    private void handleWsCmdRuntimeException(String sessionId, RuntimeException e, EntityDataCmd cmd) {
+        log.debug("[{}] Failed to process ws cmd: {}", sessionId, cmd, e);
+        wsService.close(sessionId, CloseStatus.SERVICE_RESTARTED);
     }
 
     @Override

@@ -307,6 +307,18 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
         }
     }
 
+    @Override
+    public void close(String sessionId, CloseStatus status) {
+        WsSessionMetaData md = wsSessionsMap.get(sessionId);
+        if (md != null) {
+            try {
+                msgEndpoint.close(md.getSessionRef(), status);
+            } catch (IOException e) {
+                log.warn("[{}] Failed to send session close: {}", sessionId, e);
+            }
+        }
+    }
+
     private void processSessionClose(TelemetryWebSocketSessionRef sessionRef) {
         String sessionId = "[" + sessionRef.getSessionId() + "]";
         if (maxSubscriptionsPerTenant > 0) {
