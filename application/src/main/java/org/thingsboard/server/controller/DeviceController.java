@@ -74,6 +74,7 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.device.DeviceBulkImportService;
+import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
 import org.thingsboard.server.service.importing.BulkImportRequest;
 import org.thingsboard.server.service.importing.BulkImportResult;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -127,6 +128,8 @@ public class DeviceController extends BaseController {
     protected static final String TENANT_ID = "tenantId";
 
     private final DeviceBulkImportService deviceBulkImportService;
+
+    private final GatewayNotificationsService gatewayNotificationsService;
 
     @ApiOperation(value = "Get Device (getDeviceById)",
             notes = "Fetch the Device object based on the provided Device Id. " +
@@ -263,6 +266,7 @@ public class DeviceController extends BaseController {
 
             deviceService.deleteDevice(getCurrentUser().getTenantId(), deviceId);
 
+            gatewayNotificationsService.onDeviceDeleted(device);
             tbClusterService.onDeviceDeleted(device, null);
 
             logEntityAction(deviceId, device,
