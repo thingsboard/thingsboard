@@ -98,7 +98,7 @@ export class UsersTableConfigResolver implements Resolve<EntityTableConfig<User>
     this.config.loadEntity = id => this.userService.getUser(id.id);
     this.config.saveEntity = user => this.saveUser(user);
     this.config.deleteEntity = id => this.userService.deleteUser(id.id);
-    this.config.onEntityAction = action => this.onUserAction(action);
+    this.config.onEntityAction = action => this.onUserAction(action, this.config);
     this.config.addEntity = () => this.addUser();
   }
 
@@ -174,11 +174,12 @@ export class UsersTableConfigResolver implements Resolve<EntityTableConfig<User>
     }).afterClosed();
   }
 
-  private openUser($event: Event, user: User) {
+  private openUser($event: Event, user: User, config: EntityTableConfig<User>) {
     if ($event) {
       $event.stopPropagation();
     }
-    this.router.navigateByUrl(`${this.router.url}/${user.id.id}`);
+    const url = this.router.createUrlTree([user.id.id], {relativeTo: config.table.route});
+    this.router.navigateByUrl(url);
   }
 
   loginAsUser($event: Event, user: User) {
@@ -236,10 +237,10 @@ export class UsersTableConfigResolver implements Resolve<EntityTableConfig<User>
     });
   }
 
-  onUserAction(action: EntityAction<User>): boolean {
+  onUserAction(action: EntityAction<User>, config: EntityTableConfig<User>): boolean {
     switch (action.action) {
       case 'open':
-        this.openUser(action.event, action.entity);
+        this.openUser(action.event, action.entity, config);
         return true;
       case 'loginAsUser':
         this.loginAsUser(action.event, action.entity);

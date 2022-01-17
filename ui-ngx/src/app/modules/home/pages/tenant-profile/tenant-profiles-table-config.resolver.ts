@@ -16,7 +16,7 @@
 
 import { Injectable } from '@angular/core';
 import { Resolve, Router } from '@angular/router';
-import { TenantInfo, TenantProfile } from '@shared/models/tenant.model';
+import { TenantProfile } from '@shared/models/tenant.model';
 import {
   checkBoxCell,
   DateEntityTableColumn,
@@ -122,7 +122,8 @@ export class TenantProfilesTableConfigResolver implements Resolve<EntityTableCon
     if ($event) {
       $event.stopPropagation();
     }
-    this.router.navigateByUrl(`tenantProfiles/${tenantProfile.id.id}`);
+    const url = this.router.createUrlTree(['tenantProfiles', tenantProfile.id.id]);
+    this.router.navigateByUrl(url);
   }
 
   setDefaultTenantProfile($event: Event, tenantProfile: TenantProfile) {

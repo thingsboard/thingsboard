@@ -31,6 +31,7 @@ import {
   GroupActionDescriptor,
   HeaderActionDescriptor
 } from '@home/models/entity/entities-table-config.models';
+import { ActivatedRoute } from '@angular/router';
 
 export interface IEntitiesTableComponent {
   entitiesTableConfig: EntityTableConfig<BaseData<HasId>>;
@@ -60,6 +61,7 @@ export interface IEntitiesTableComponent {
   searchInputField: ElementRef;
   paginator: MatPaginator;
   sort: MatSort;
+  route: ActivatedRoute;
 
   addEnabled(): boolean;
   clearSelection(): void;

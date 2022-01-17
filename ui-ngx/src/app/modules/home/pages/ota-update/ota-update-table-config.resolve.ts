@@ -132,7 +132,8 @@ export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<Ot
     if ($event) {
       $event.stopPropagation();
     }
-    this.router.navigateByUrl(`otaUpdates/${otaPackage.id.id}`);
+    const url = this.router.createUrlTree(['otaUpdates', otaPackage.id.id]);
+    this.router.navigateByUrl(url);
   }
 
   exportPackage($event: Event, otaPackageInfo: OtaPackageInfo) {

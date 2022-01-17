@@ -96,7 +96,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
         mergeMap((savedEdge) => this.edgeService.getEdgeInfo(savedEdge.id.id)
         ));
     };
-    this.config.onEntityAction = action => this.onEdgeAction(action);
+    this.config.onEntityAction = action => this.onEdgeAction(action, this.config);
     this.config.detailsReadonly = () => this.config.componentsData.edgeScope === 'customer_user';
     this.config.headerComponent = EdgeTableHeaderComponent;
   }
@@ -370,11 +370,12 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
       });
   }
 
-  private openEdge($event: Event, edge: Edge) {
+  private openEdge($event: Event, edge: Edge, config: EntityTableConfig<EdgeInfo>) {
     if ($event) {
       $event.stopPropagation();
     }
-    this.router.navigateByUrl(`${this.router.url}/${edge.id.id}`);
+    const url = this.router.createUrlTree([edge.id.id], {relativeTo: config.table.route});
+    this.router.navigateByUrl(url);
   }
 
   makePublic($event: Event, edge: Edge) {
@@ -525,10 +526,10 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
     );
   }
 
-  onEdgeAction(action: EntityAction<EdgeInfo>): boolean {
+  onEdgeAction(action: EntityAction<EdgeInfo>, config: EntityTableConfig<EdgeInfo>): boolean {
     switch (action.action) {
       case 'open':
-        this.openEdge(action.event, action.entity);
+        this.openEdge(action.event, action.entity, config);
         return true;
       case 'makePublic':
         this.makePublic(action.event, action.entity);
