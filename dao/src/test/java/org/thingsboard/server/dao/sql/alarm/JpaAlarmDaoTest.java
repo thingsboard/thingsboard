@@ -53,9 +53,9 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         saveAlarm(alarm1Id, tenantId, originator1Id, "TEST_ALARM");
         saveAlarm(alarm2Id, tenantId, originator1Id, "TEST_ALARM");
         saveAlarm(alarm3Id, tenantId, originator2Id, "TEST_ALARM");
-        assertEquals(3, alarmDao.find(new TenantId(tenantId)).size());
+        assertEquals(3, alarmDao.find(TenantId.fromUUID(tenantId)).size());
         ListenableFuture<Alarm> future = alarmDao
-                .findLatestByOriginatorAndType(new TenantId(tenantId), new DeviceId(originator1Id), "TEST_ALARM");
+                .findLatestByOriginatorAndType(TenantId.fromUUID(tenantId), new DeviceId(originator1Id), "TEST_ALARM");
         Alarm alarm = future.get();
         assertNotNull(alarm);
         assertEquals(alarm2Id, alarm.getId().getId());
@@ -64,13 +64,13 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
     private void saveAlarm(UUID id, UUID tenantId, UUID deviceId, String type) {
         Alarm alarm = new Alarm();
         alarm.setId(new AlarmId(id));
-        alarm.setTenantId(new TenantId(tenantId));
+        alarm.setTenantId(TenantId.fromUUID(tenantId));
         alarm.setOriginator(new DeviceId(deviceId));
         alarm.setType(type);
         alarm.setPropagate(true);
         alarm.setStartTs(System.currentTimeMillis());
         alarm.setEndTs(System.currentTimeMillis());
         alarm.setStatus(AlarmStatus.ACTIVE_UNACK);
-        alarmDao.save(new TenantId(tenantId), alarm);
+        alarmDao.save(TenantId.fromUUID(tenantId), alarm);
     }
 }

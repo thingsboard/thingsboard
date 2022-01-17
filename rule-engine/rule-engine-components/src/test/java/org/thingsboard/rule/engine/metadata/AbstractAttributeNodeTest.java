@@ -68,7 +68,7 @@ import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 @RunWith(MockitoJUnitRunner.class)
 public abstract class AbstractAttributeNodeTest {
     final CustomerId customerId = new CustomerId(Uuids.timeBased());
-    final TenantId tenantId = new TenantId(Uuids.timeBased());
+    final TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
     final RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
     final RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
     final String keyAttrConf = "${word}";

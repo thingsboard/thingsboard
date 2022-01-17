@@ -187,7 +187,7 @@ public class JpaEdgeDao extends JpaAbstractSearchTextDao<EdgeEntity, Edge> imple
         if (types != null && !types.isEmpty()) {
             list = new ArrayList<>();
             for (String type : types) {
-                list.add(new EntitySubtype(new TenantId(tenantId), EntityType.EDGE, type));
+                list.add(new EntitySubtype(TenantId.fromUUID(tenantId), EntityType.EDGE, type));
             }
         }
         return list;

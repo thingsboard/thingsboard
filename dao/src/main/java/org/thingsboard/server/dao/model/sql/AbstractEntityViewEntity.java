@@ -158,7 +158,7 @@ public abstract class AbstractEntityViewEntity<T extends EntityView> extends Bas
             entityView.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType.name(), entityId));
         }
         if (tenantId != null) {
-            entityView.setTenantId(new TenantId(tenantId));
+            entityView.setTenantId(TenantId.fromUUID(tenantId));
         }
         if (customerId != null) {
             entityView.setCustomerId(new CustomerId(customerId));

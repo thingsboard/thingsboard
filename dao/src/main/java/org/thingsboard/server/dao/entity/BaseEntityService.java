@@ -142,7 +142,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
                 hasName = entityViewService.findEntityViewByIdAsync(tenantId, new EntityViewId(entityId.getId()));
                 break;
             case TENANT:
-                hasName = tenantService.findTenantByIdAsync(tenantId, new TenantId(entityId.getId()));
+                hasName = tenantService.findTenantByIdAsync(tenantId, TenantId.fromUUID(entityId.getId()));
                 break;
             case CUSTOMER:
                 hasName = customerService.findCustomerByIdAsync(tenantId, new CustomerId(entityId.getId()));

@@ -807,7 +807,7 @@ public class DeviceController extends BaseController {
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
             Device device = checkDeviceId(deviceId, Operation.ASSIGN_TO_TENANT);
 
-            TenantId newTenantId = new TenantId(toUUID(strTenantId));
+            TenantId newTenantId = TenantId.fromUUID(toUUID(strTenantId));
             Tenant newTenant = tenantService.findTenantById(newTenantId);
             if (newTenant == null) {
                 throw new ThingsboardException("Could not find the specified Tenant!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);

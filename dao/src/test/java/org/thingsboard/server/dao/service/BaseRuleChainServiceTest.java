@@ -97,7 +97,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
     public void testSaveRuleChainWithInvalidTenant() {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setName("My RuleChain");
-        ruleChain.setTenantId(new TenantId(Uuids.timeBased()));
+        ruleChain.setTenantId(TenantId.fromUUID(Uuids.timeBased()));
         ruleChainService.saveRuleChain(ruleChain);
     }
 

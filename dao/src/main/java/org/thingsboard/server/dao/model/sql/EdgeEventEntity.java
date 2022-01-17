@@ -111,7 +111,7 @@ public class EdgeEventEntity extends BaseSqlEntity<EdgeEvent> implements BaseEnt
     public EdgeEvent toData() {
         EdgeEvent edgeEvent = new EdgeEvent(new EdgeEventId(this.getUuid()));
         edgeEvent.setCreatedTime(createdTime);
-        edgeEvent.setTenantId(new TenantId(tenantId));
+        edgeEvent.setTenantId(TenantId.fromUUID(tenantId));
         edgeEvent.setEdgeId(new EdgeId(edgeId));
         if (entityId != null) {
             edgeEvent.setEntityId(entityId);

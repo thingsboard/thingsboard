@@ -169,7 +169,7 @@ public class InstallScripts {
         ruleChain = ruleChainService.saveRuleChain(ruleChain);
 
         ruleChainMetaData.setRuleChainId(ruleChain.getId());
-        ruleChainService.saveRuleChainMetaData(new TenantId(EntityId.NULL_UUID), ruleChainMetaData);
+        ruleChainService.saveRuleChainMetaData(TenantId.SYS_TENANT_ID, ruleChainMetaData);
 
         return ruleChain;
     }
@@ -217,7 +217,7 @@ public class InstallScripts {
                             dashboard.setTenantId(tenantId);
                             Dashboard savedDashboard = dashboardService.saveDashboard(dashboard);
                             if (customerId != null && !customerId.isNullUid()) {
-                                dashboardService.assignDashboardToCustomer(new TenantId(EntityId.NULL_UUID), savedDashboard.getId(), customerId);
+                                dashboardService.assignDashboardToCustomer(TenantId.SYS_TENANT_ID, savedDashboard.getId(), customerId);
                             }
                         } catch (Exception e) {
                             log.error("Unable to load dashboard from json: [{}]", path.toString());

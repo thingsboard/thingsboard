@@ -97,7 +97,7 @@ public class RpcEntity extends BaseSqlEntity<Rpc> implements BaseEntity<Rpc> {
     public Rpc toData() {
         Rpc rpc = new Rpc(new RpcId(id));
         rpc.setCreatedTime(createdTime);
-        rpc.setTenantId(new TenantId(tenantId));
+        rpc.setTenantId(TenantId.fromUUID(tenantId));
         rpc.setDeviceId(new DeviceId(deviceId));
         rpc.setExpirationTime(expirationTime);
         rpc.setRequest(request);

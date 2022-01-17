@@ -98,7 +98,7 @@ public class TbAlarmNodeTest {
 
     private EntityId originator = new DeviceId(Uuids.timeBased());
     private EntityId alarmOriginator = new AlarmId(Uuids.timeBased());
-    private TenantId tenantId = new TenantId(Uuids.timeBased());
+    private TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
     private TbMsgMetaData metaData = new TbMsgMetaData();
     private String rawJson = "{\"name\": \"Vit\", \"passed\": 5}";
 

@@ -119,7 +119,7 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements S
         Dashboard dashboard = new Dashboard(new DashboardId(this.getUuid()));
         dashboard.setCreatedTime(this.getCreatedTime());
         if (tenantId != null) {
-            dashboard.setTenantId(new TenantId(tenantId));
+            dashboard.setTenantId(TenantId.fromUUID(tenantId));
         }
         dashboard.setTitle(title);
         dashboard.setImage(image);

@@ -132,7 +132,7 @@ public class AuditLogEntity extends BaseSqlEntity<AuditLog> implements BaseEntit
         AuditLog auditLog = new AuditLog(new AuditLogId(this.getUuid()));
         auditLog.setCreatedTime(createdTime);
         if (tenantId != null) {
-            auditLog.setTenantId(new TenantId(tenantId));
+            auditLog.setTenantId(TenantId.fromUUID(tenantId));
         }
         if (customerId != null) {
             auditLog.setCustomerId(new CustomerId(customerId));

@@ -76,7 +76,7 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
     public TbResourceInfo toData() {
         TbResourceInfo resource = new TbResourceInfo(new TbResourceId(id));
         resource.setCreatedTime(createdTime);
-        resource.setTenantId(new TenantId(tenantId));
+        resource.setTenantId(TenantId.fromUUID(tenantId));
         resource.setTitle(title);
         resource.setResourceType(ResourceType.valueOf(resourceType));
         resource.setResourceKey(resourceKey);

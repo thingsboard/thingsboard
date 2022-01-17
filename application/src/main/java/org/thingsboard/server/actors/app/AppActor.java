@@ -175,7 +175,7 @@ public class AppActor extends ContextAwareActor {
             }
         } else {
             if (EntityType.TENANT.equals(msg.getEntityId().getEntityType())) {
-                TenantId tenantId = new TenantId(msg.getEntityId().getId());
+                TenantId tenantId = TenantId.fromUUID(msg.getEntityId().getId());
                 if (msg.getEvent() == ComponentLifecycleEvent.DELETED) {
                     log.info("[{}] Handling tenant deleted notification: {}", msg.getTenantId(), msg);
                     deletedTenants.add(tenantId);
@@ -237,7 +237,7 @@ public class AppActor extends ContextAwareActor {
 
         @Override
         public TbActorId createActorId() {
-            return new TbEntityActorId(new TenantId(EntityId.NULL_UUID));
+            return new TbEntityActorId(TenantId.SYS_TENANT_ID);
         }
 
         @Override

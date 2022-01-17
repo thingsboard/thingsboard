@@ -85,7 +85,7 @@ public final class EntityAlarmEntity implements ToData<EntityAlarm> {
     @Override
     public EntityAlarm toData() {
         EntityAlarm result = new EntityAlarm();
-        result.setTenantId(new TenantId(tenantId));
+        result.setTenantId(TenantId.fromUUID(tenantId));
         result.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
         result.setAlarmId(new AlarmId(alarmId));
         result.setAlarmType(alarmType);

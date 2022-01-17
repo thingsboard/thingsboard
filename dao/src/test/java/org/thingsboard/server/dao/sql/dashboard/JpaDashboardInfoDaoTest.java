@@ -60,7 +60,7 @@ public class JpaDashboardInfoDaoTest extends AbstractJpaDaoTest {
     private void createDashboard(UUID tenantId, int index) {
         DashboardInfo dashboardInfo = new DashboardInfo();
         dashboardInfo.setId(new DashboardId(Uuids.timeBased()));
-        dashboardInfo.setTenantId(new TenantId(tenantId));
+        dashboardInfo.setTenantId(TenantId.fromUUID(tenantId));
         dashboardInfo.setTitle("DASHBOARD_" + index);
         dashboardInfoDao.save(AbstractServiceTest.SYSTEM_TENANT_ID, dashboardInfo);
     }

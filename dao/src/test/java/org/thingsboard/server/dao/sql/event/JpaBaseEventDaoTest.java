@@ -149,10 +149,10 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
             String type = i % 2 == 0 ? STATS : ALARM;
             UUID eventId1 = Uuids.timeBased();
             Event event1 = getEvent(eventId1, tenantId, entityId1, type);
-            eventDao.save(new TenantId(tenantId), event1);
+            eventDao.save(TenantId.fromUUID(tenantId), event1);
             UUID eventId2 = Uuids.timeBased();
             Event event2 = getEvent(eventId2, tenantId, entityId2, type);
-            eventDao.save(new TenantId(tenantId), event2);
+            eventDao.save(TenantId.fromUUID(tenantId), event2);
         }
         return System.currentTimeMillis();
     }
@@ -161,10 +161,10 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
         for (int i = 0; i < count / 2; i++) {
             UUID eventId1 = Uuids.timeBased();
             Event event1 = getEvent(eventId1, tenantId, entityId1);
-            eventDao.save(new TenantId(tenantId), event1);
+            eventDao.save(TenantId.fromUUID(tenantId), event1);
             UUID eventId2 = Uuids.timeBased();
             Event event2 = getEvent(eventId2, tenantId, entityId2);
-            eventDao.save(new TenantId(tenantId), event2);
+            eventDao.save(TenantId.fromUUID(tenantId), event2);
         }
         return System.currentTimeMillis();
     }
@@ -178,7 +178,7 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
     private Event getEvent(UUID eventId, UUID tenantId, UUID entityId) {
         Event event = new Event();
         event.setId(new EventId(eventId));
-        event.setTenantId(new TenantId(tenantId));
+        event.setTenantId(TenantId.fromUUID(tenantId));
         EntityId deviceId = new DeviceId(entityId);
         event.setEntityId(deviceId);
         event.setUid(event.getId().getId().toString());

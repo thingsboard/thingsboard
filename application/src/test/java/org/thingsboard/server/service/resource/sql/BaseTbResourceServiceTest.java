@@ -277,7 +277,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
     @Test(expected = DataValidationException.class)
     public void testSaveTbResourceWithInvalidTenant() throws Exception {
         TbResource resource = new TbResource();
-        resource.setTenantId(new TenantId(Uuids.timeBased()));
+        resource.setTenantId(TenantId.fromUUID(Uuids.timeBased()));
         resource.setResourceType(ResourceType.JKS);
         resource.setTitle("My resource");
         resource.setFileName(DEFAULT_FILE_NAME);

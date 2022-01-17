@@ -216,7 +216,7 @@ public class WidgetTypeController extends BaseController {
         try {
             TenantId tenantId;
             if (isSystem) {
-                tenantId = new TenantId(ModelConstants.NULL_UUID);
+                tenantId = TenantId.fromUUID(ModelConstants.NULL_UUID);
             } else {
                 tenantId = getCurrentUser().getTenantId();
             }

@@ -267,7 +267,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         Device device = new Device();
         device.setName("My device");
         device.setType("default");
-        device.setTenantId(new TenantId(Uuids.timeBased()));
+        device.setTenantId(TenantId.fromUUID(Uuids.timeBased()));
         deviceService.saveDevice(device);
     }
 

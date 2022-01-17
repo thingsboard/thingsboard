@@ -87,7 +87,7 @@ public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> impl
         WidgetsBundle widgetsBundle = new WidgetsBundle(new WidgetsBundleId(id));
         widgetsBundle.setCreatedTime(createdTime);
         if (tenantId != null) {
-            widgetsBundle.setTenantId(new TenantId(tenantId));
+            widgetsBundle.setTenantId(TenantId.fromUUID(tenantId));
         }
         widgetsBundle.setAlias(alias);
         widgetsBundle.setTitle(title);

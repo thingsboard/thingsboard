@@ -58,7 +58,7 @@ public class OAuth2ParamsEntity extends BaseSqlEntity<OAuth2Params> {
         OAuth2Params oauth2Params = new OAuth2Params();
         oauth2Params.setId(new OAuth2ParamsId(id));
         oauth2Params.setCreatedTime(createdTime);
-        oauth2Params.setTenantId(new TenantId(tenantId));
+        oauth2Params.setTenantId(TenantId.fromUUID(tenantId));
         oauth2Params.setEnabled(enabled);
         return oauth2Params;
     }
