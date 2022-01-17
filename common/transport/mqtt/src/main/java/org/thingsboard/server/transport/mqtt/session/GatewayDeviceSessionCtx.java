@@ -80,10 +80,7 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
     @Override
     public void onGetAttributesResponse(TransportProtos.GetAttributeResponseMsg response) {
         try {
-            boolean multipleAttrKeysReq = isMultipleAttributeKeysRequested(response.getRequestId());
-            parent.getPayloadAdaptor()
-                    .convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), response, multipleAttrKeysReq)
-                    .ifPresent(parent::writeAndFlush);
+            parent.getPayloadAdaptor().convertToGatewayPublish(this, getDeviceInfo().getDeviceName(), response).ifPresent(parent::writeAndFlush);
         } catch (Exception e) {
             log.trace("[{}] Failed to convert device attributes response to MQTT msg", sessionId, e);
         }
@@ -137,10 +134,6 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
     @Override
     public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg toServerResponse) {
         // This feature is not supported in the TB IoT Gateway yet.
-    }
-
-    public boolean isMultipleAttributeKeysRequested(int requestId) {
-        return parent.isMultipleAttributeKeysRequested(requestId);
     }
 
     private boolean isAckExpected(MqttMessage message) {

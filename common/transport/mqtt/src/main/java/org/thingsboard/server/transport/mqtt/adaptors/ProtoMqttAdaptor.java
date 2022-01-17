@@ -209,11 +209,6 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
         return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_RPC_TOPIC, payloadBytes));
     }
 
-    @Override
-    public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg, boolean multipleAttributeKeysRequested) throws AdaptorException {
-        return convertToGatewayPublish(ctx, deviceName, responseMsg);
-    }
-
     public static byte[] toBytes(ByteBuf inbound) {
         byte[] bytes = new byte[inbound.readableBytes()];
         int readerIndex = inbound.readerIndex();

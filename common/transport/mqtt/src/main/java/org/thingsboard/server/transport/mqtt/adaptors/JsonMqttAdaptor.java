@@ -34,7 +34,6 @@ import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.transport.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.transport.mqtt.session.GatewayDeviceSessionCtx;
 import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionContext;
 
 import java.nio.charset.Charset;
@@ -43,7 +42,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_SOFTWARE_FIRMWARE_RESPONSES_TOPIC_FORMAT;
@@ -125,14 +123,9 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
 
     @Override
     public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException {
-        return convertToGatewayPublish(ctx, deviceName, responseMsg, false);
+        return processConvertFromGatewayAttributeResponseMsg(ctx, deviceName, responseMsg);
     }
-
-    @Override
-    public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg, boolean multipleAttributeKeysRequested) throws AdaptorException {
-        return processConvertFromGatewayAttributeResponseMsg(ctx, deviceName, responseMsg, multipleAttributeKeysRequested);
-    }
-
+    
     @Override
     public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.AttributeUpdateNotificationMsg notificationMsg, String topic) {
         return Optional.of(createMqttPublishMsg(ctx, topic, JsonConverter.toJson(notificationMsg)));
@@ -239,11 +232,11 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         }
     }
 
-    private Optional<MqttMessage> processConvertFromGatewayAttributeResponseMsg(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg, boolean multipleAttrKeysRequested) throws AdaptorException {
+    private Optional<MqttMessage> processConvertFromGatewayAttributeResponseMsg(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException {
         if (!StringUtils.isEmpty(responseMsg.getError())) {
             throw new AdaptorException(responseMsg.getError());
         } else {
-            JsonObject result = JsonConverter.getJsonObjectForGateway(deviceName, responseMsg, multipleAttrKeysRequested);
+            JsonObject result = JsonConverter.getJsonObjectForGateway(deviceName, responseMsg);
             return Optional.of(createMqttPublishMsg(ctx, MqttTopics.GATEWAY_ATTRIBUTES_RESPONSE_TOPIC, result));
         }
     }

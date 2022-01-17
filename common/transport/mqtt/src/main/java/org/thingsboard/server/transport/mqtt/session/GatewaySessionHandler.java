@@ -89,7 +89,6 @@ public class GatewaySessionHandler {
     private final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
     private final ChannelHandlerContext channel;
     private final DeviceSessionCtx deviceSessionCtx;
-    private final Map<Integer, JsonObject> pendingAttributesRequests = new ConcurrentHashMap<>();
 
     public GatewaySessionHandler(DeviceSessionCtx deviceSessionCtx, UUID sessionId) {
         this.context = deviceSessionCtx.getContext();
@@ -106,13 +105,6 @@ public class GatewaySessionHandler {
 
     ConcurrentReferenceHashMap<String, Lock> createWeakMap() {
         return new ConcurrentReferenceHashMap<>(16, ReferenceType.WEAK);
-    }
-
-    public boolean isMultipleAttributeKeysRequested(int requestId) {
-        JsonObject request = pendingAttributesRequests.getOrDefault(requestId, new JsonObject());
-        boolean multipleAttributeKeysRequested = request.has("keys") && request.get("keys").getAsJsonArray().size() > 1;
-        pendingAttributesRequests.remove(requestId);
-        return multipleAttributeKeysRequested;
     }
 
     public void onDeviceConnect(MqttPublishMessage mqttMsg) throws AdaptorException {
@@ -566,7 +558,6 @@ public class GatewaySessionHandler {
         if (json.isJsonObject()) {
             JsonObject jsonObj = json.getAsJsonObject();
             int requestId = jsonObj.get("id").getAsInt();
-            pendingAttributesRequests.put(requestId, jsonObj);
             String deviceName = jsonObj.get(DEVICE_PROPERTY).getAsString();
             boolean clientScope = jsonObj.get("client").getAsBoolean();
             Set<String> keys;

@@ -149,6 +149,7 @@ message GetAttributeResponseMsg {
   int32 requestId = 1;
   repeated TsKvProto clientAttributeList = 2;
   repeated TsKvProto sharedAttributeList = 3;
+  bool isMultipleAttributesRequest = 4;
   string error = 5;
   bool sharedStateMsg = 6;
 }

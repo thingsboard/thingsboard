@@ -156,7 +156,6 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
     public void responseDataOnAttributesRequestCheck() throws Exception {
         Optional<DeviceCredentials> createdDeviceCredentials = restClient.getDeviceCredentialsByDeviceId(createdDevice.getId());
         Assert.assertTrue(createdDeviceCredentials.isPresent());
-        WsClient wsClient = subscribeToWebSocket(createdDevice.getId(), "CLIENT_SCOPE", CmdsType.ATTR_SUB_CMDS);
         JsonObject sharedAttributes = new JsonObject();
         sharedAttributes.addProperty("attr1", "value1");
         sharedAttributes.addProperty("attr2", true);

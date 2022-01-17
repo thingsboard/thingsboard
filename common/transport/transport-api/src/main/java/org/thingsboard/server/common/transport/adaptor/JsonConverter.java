@@ -315,17 +315,16 @@ public class JsonConverter {
 
     public static JsonObject getJsonObjectForGateway(
             String deviceName,
-            TransportProtos.GetAttributeResponseMsg responseMsg,
-            boolean multipleAttrKeysRequested
+            TransportProtos.GetAttributeResponseMsg responseMsg
     ) {
         JsonObject result = new JsonObject();
         result.addProperty("id", responseMsg.getRequestId());
         result.addProperty(DEVICE_PROPERTY, deviceName);
         if (responseMsg.getClientAttributeListCount() > 0) {
-            addValues(result, responseMsg.getClientAttributeListList(), multipleAttrKeysRequested);
+            addValues(result, responseMsg.getClientAttributeListList(), responseMsg.getIsMultipleAttributesRequest());
         }
         if (responseMsg.getSharedAttributeListCount() > 0) {
-            addValues(result, responseMsg.getSharedAttributeListList(), multipleAttrKeysRequested);
+            addValues(result, responseMsg.getSharedAttributeListList(), responseMsg.getIsMultipleAttributesRequest());
         }
         return result;
     }
