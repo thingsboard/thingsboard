@@ -396,14 +396,15 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       const layout = this.modelValue.layout;
       if (config) {
         this.selectedTab = 0;
+        const displayWidgetTitle = isDefined(config.showTitle) ? config.showTitle : false;
         this.widgetSettings.patchValue({
             title: config.title,
-            showTitleIcon: isDefined(config.showTitleIcon) ? config.showTitleIcon : false,
+            showTitleIcon: isDefined(config.showTitleIcon) && displayWidgetTitle ? config.showTitleIcon : false,
             titleIcon: isDefined(config.titleIcon) ? config.titleIcon : '',
             iconColor: isDefined(config.iconColor) ? config.iconColor : 'rgba(0, 0, 0, 0.87)',
             iconSize: isDefined(config.iconSize) ? config.iconSize : '24px',
             titleTooltip: isDefined(config.titleTooltip) ? config.titleTooltip : '',
-            showTitle: isDefined(config.showTitle) ? config.showTitle : false,
+            showTitle: displayWidgetTitle,
             dropShadow: isDefined(config.dropShadow) ? config.dropShadow : true,
             enableFullscreen: isDefined(config.enableFullscreen) ? config.enableFullscreen : true,
             backgroundColor: config.backgroundColor,
