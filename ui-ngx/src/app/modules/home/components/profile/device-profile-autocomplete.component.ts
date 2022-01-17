@@ -233,9 +233,9 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
-      this.selectDeviceProfileFormGroup.disable();
+      this.selectDeviceProfileFormGroup.disable({emitEvent: false});
     } else {
-      this.selectDeviceProfileFormGroup.enable();
+      this.selectDeviceProfileFormGroup.enable({emitEvent: false});
     }
   }
 

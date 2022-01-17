@@ -172,6 +172,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   private init(entitiesTableConfig: EntityTableConfig<BaseData<HasId>>) {
     this.isDetailsOpen = false;
     this.entitiesTableConfig = entitiesTableConfig;
+    this.pageMode = this.entitiesTableConfig.pageMode;
     if (this.entitiesTableConfig.headerComponent) {
       const componentFactory = this.componentFactoryResolver.resolveComponentFactory(this.entitiesTableConfig.headerComponent);
       const viewContainerRef = this.entityTableHeaderAnchor.viewContainerRef;
@@ -233,7 +234,6 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
 
     this.displayPagination = this.entitiesTableConfig.displayPagination;
     this.defaultPageSize = this.entitiesTableConfig.defaultPageSize;
-    this.pageMode = this.entitiesTableConfig.pageMode;
     this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
 
     if (this.entitiesTableConfig.useTimePageLink) {
