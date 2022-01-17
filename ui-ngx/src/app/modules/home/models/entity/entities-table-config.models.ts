@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -159,6 +159,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   addDialogStyle = {};
   defaultSortOrder: SortOrder = {property: 'createdTime', direction: Direction.DESC};
   displayPagination = true;
+  pageMode = true;
   defaultPageSize = 10;
   columns: Array<EntityColumn<L>> = [];
   cellActionDescriptors: Array<CellActionDescriptor<L>> = [];

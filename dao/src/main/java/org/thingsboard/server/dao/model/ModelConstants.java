@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ public class ModelConstants {
     }
 
     public static final UUID NULL_UUID = Uuids.startOf(0);
-    public static final TenantId SYSTEM_TENANT = new TenantId(ModelConstants.NULL_UUID);
+    public static final TenantId SYSTEM_TENANT = TenantId.fromUUID(ModelConstants.NULL_UUID);
 
     // this is the difference between midnight October 15, 1582 UTC and midnight January 1, 1970 UTC as 100 nanosecond units
     public static final long EPOCH_DIFF = 122192928000000000L;

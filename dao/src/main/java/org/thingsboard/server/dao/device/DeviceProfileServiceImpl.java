@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -765,15 +765,15 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                 X509LwM2MBootstrapServerCredential x509ServerCredentials = (X509LwM2MBootstrapServerCredential) bootstrapServerConfig;
                 server = x509ServerCredentials.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";
                 if (StringUtils.isEmpty(x509ServerCredentials.getServerPublicKey())) {
-                    throw new DeviceCredentialsValidationException(server + " X509 public key must be specified!");
+                    throw new DeviceCredentialsValidationException(server + " X509 certificate must be specified!");
                 }
 
                 try {
                     String certServer = EncryptionUtil.certTrimNewLines(x509ServerCredentials.getServerPublicKey());
                     x509ServerCredentials.setServerPublicKey(certServer);
-                    SecurityUtil.publicKey.decode(x509ServerCredentials.getDecodedCServerPublicKey());
+                    SecurityUtil.certificate.decode(x509ServerCredentials.getDecodedCServerPublicKey());
                 } catch (Exception e) {
-                    throw new DeviceCredentialsValidationException(server + " X509 public key must be in standard [RFC7250] and then encoded to Base64 format!");
+                    throw new DeviceCredentialsValidationException(server + " X509 certificate must be in DER-encoded X509v3 format and support only EC algorithm and then encoded to Base64 format!");
                 }
                 break;
         }

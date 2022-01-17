@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
         mergeMap((savedEntityView) => this.entityViewService.getEntityViewInfo(savedEntityView.id.id)
         ));
     };
-    this.config.onEntityAction = action => this.onEntityViewAction(action);
+    this.config.onEntityAction = action => this.onEntityViewAction(action, this.config);
     this.config.detailsReadonly = () => (this.config.componentsData.entityViewScope === 'customer_user' ||
       this.config.componentsData.entityViewScope === 'edge_customer_user');
 
@@ -333,6 +333,14 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
       });
   }
 
+  private openEntityView($event: Event, entityView: EntityView, config: EntityTableConfig<EntityViewInfo>) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const url = this.router.createUrlTree([entityView.id.id], {relativeTo: config.table.route});
+    this.router.navigateByUrl(url);
+  }
+
   makePublic($event: Event, entityView: EntityView) {
     if ($event) {
       $event.stopPropagation();
@@ -435,8 +443,11 @@ export class EntityViewsTableConfigResolver implements Resolve<EntityTableConfig
     );
   }
 
-  onEntityViewAction(action: EntityAction<EntityViewInfo>): boolean {
+  onEntityViewAction(action: EntityAction<EntityViewInfo>, config: EntityTableConfig<EntityViewInfo>): boolean {
     switch (action.action) {
+      case 'open':
+        this.openEntityView(action.event, action.entity, config);
+        return true;
       case 'makePublic':
         this.makePublic(action.event, action.entity);
         return true;

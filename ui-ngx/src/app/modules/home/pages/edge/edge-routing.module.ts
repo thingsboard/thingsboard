@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -39,6 +39,8 @@ import {
   RuleNodeComponentsResolver,
   TooltipsterResolver
 } from '@home/pages/rulechain/rulechain-routing.module';
+import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
+import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
 
 const routes: Routes = [
   {
@@ -55,6 +57,24 @@ const routes: Routes = [
         component: EntitiesTableComponent,
         data: {
           auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+          title: 'edge.edge-instances',
+          edgesType: 'tenant'
+        },
+        resolve: {
+          entitiesTableConfig: EdgesTableConfigResolver
+        }
+      },
+      {
+        path: ':entityId',
+        component: EntityDetailsPageComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          breadcrumb: {
+            labelFunction: entityDetailsPageBreadcrumbLabelFunction,
+            icon: 'router'
+          } as BreadCrumbConfig<EntityDetailsPageComponent>,
+          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+          title: 'edge.edge-instances',
           edgesType: 'tenant'
         },
         resolve: {
@@ -63,48 +83,123 @@ const routes: Routes = [
       },
       {
         path: ':edgeId/assets',
-        component: EntitiesTableComponent,
         data: {
-          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
-          assetsType: 'edge',
           breadcrumb: {
             label: 'edge.assets',
             icon: 'domain'
           }
         },
-        resolve: {
-          entitiesTableConfig: AssetsTableConfigResolver
-        }
+        children: [
+          {
+            path: '',
+            component: EntitiesTableComponent,
+            data: {
+              auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+              title: 'edge.assets',
+              assetsType: 'edge'
+            },
+            resolve: {
+              entitiesTableConfig: AssetsTableConfigResolver
+            }
+          },
+          {
+            path: ':entityId',
+            component: EntityDetailsPageComponent,
+            canDeactivate: [ConfirmOnExitGuard],
+            data: {
+              breadcrumb: {
+                labelFunction: entityDetailsPageBreadcrumbLabelFunction,
+                icon: 'domain'
+              } as BreadCrumbConfig<EntityDetailsPageComponent>,
+              auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+              title: 'edge.assets',
+              assetsType: 'edge'
+            },
+            resolve: {
+              entitiesTableConfig: AssetsTableConfigResolver
+            }
+          }
+        ]
       },
       {
         path: ':edgeId/devices',
-        component: EntitiesTableComponent,
         data: {
-          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
-          devicesType: 'edge',
           breadcrumb: {
             label: 'edge.devices',
             icon: 'devices_other'
           }
         },
-        resolve: {
-          entitiesTableConfig: DevicesTableConfigResolver
-        }
+        children: [
+          {
+            path: '',
+            component: EntitiesTableComponent,
+            data: {
+              auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+              title: 'edge.devices',
+              devicesType: 'edge'
+            },
+            resolve: {
+              entitiesTableConfig: DevicesTableConfigResolver
+            }
+          },
+          {
+            path: ':entityId',
+            component: EntityDetailsPageComponent,
+            canDeactivate: [ConfirmOnExitGuard],
+            data: {
+              breadcrumb: {
+                labelFunction: entityDetailsPageBreadcrumbLabelFunction,
+                icon: 'devices_other'
+              } as BreadCrumbConfig<EntityDetailsPageComponent>,
+              auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+              title: 'edge.devices',
+              devicesType: 'edge'
+            },
+            resolve: {
+              entitiesTableConfig: DevicesTableConfigResolver
+            }
+          }
+        ]
       },
       {
         path: ':edgeId/entityViews',
-        component: EntitiesTableComponent,
         data: {
-          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
-          entityViewsType: 'edge',
           breadcrumb: {
             label: 'edge.entity-views',
             icon: 'view_quilt'
           },
         },
-        resolve: {
-          entitiesTableConfig: EntityViewsTableConfigResolver
-        }
+        children: [
+          {
+            path: '',
+            component: EntitiesTableComponent,
+            data: {
+              auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+              title: 'edge.entity-views',
+              entityViewsType: 'edge'
+            },
+            resolve: {
+              entitiesTableConfig: EntityViewsTableConfigResolver
+            }
+          },
+          {
+            path: ':entityId',
+            component: EntityDetailsPageComponent,
+            canDeactivate: [ConfirmOnExitGuard],
+            data: {
+              breadcrumb: {
+                labelFunction: entityDetailsPageBreadcrumbLabelFunction,
+                icon: 'devices_other'
+              } as BreadCrumbConfig<EntityDetailsPageComponent>,
+              auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+              title: 'edge.entity-views',
+              entityViewsType: 'edge'
+            },
+            resolve: {
+              entitiesTableConfig: EntityViewsTableConfigResolver
+            }
+          }
+        ]
       },
       {
         path: ':edgeId/dashboards',

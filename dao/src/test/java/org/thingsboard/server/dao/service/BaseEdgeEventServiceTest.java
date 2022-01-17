@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public abstract class BaseEdgeEventServiceTest extends AbstractServiceTest {
 
     protected EdgeEvent generateEdgeEvent(TenantId tenantId, EdgeId edgeId, EntityId entityId, EdgeEventActionType edgeEventAction) throws IOException {
         if (tenantId == null) {
-            tenantId = new TenantId(Uuids.timeBased());
+            tenantId = TenantId.fromUUID(Uuids.timeBased());
         }
         EdgeEvent edgeEvent = new EdgeEvent();
         edgeEvent.setTenantId(tenantId);
@@ -76,7 +76,7 @@ public abstract class BaseEdgeEventServiceTest extends AbstractServiceTest {
 
         EdgeId edgeId = new EdgeId(Uuids.timeBased());
         DeviceId deviceId = new DeviceId(Uuids.timeBased());
-        TenantId tenantId = new TenantId(Uuids.timeBased());
+        TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
         saveEdgeEventWithProvidedTime(timeBeforeStartTime, edgeId, deviceId, tenantId);
         EdgeEvent savedEdgeEvent = saveEdgeEventWithProvidedTime(eventTime, edgeId, deviceId, tenantId);
         EdgeEvent savedEdgeEvent2 = saveEdgeEventWithProvidedTime(eventTime + 1, edgeId, deviceId, tenantId);
@@ -105,7 +105,7 @@ public abstract class BaseEdgeEventServiceTest extends AbstractServiceTest {
     public void findEdgeEventsWithTsUpdateAndWithout() throws Exception {
         EdgeId edgeId = new EdgeId(Uuids.timeBased());
         DeviceId deviceId = new DeviceId(Uuids.timeBased());
-        TenantId tenantId = new TenantId(Uuids.timeBased());
+        TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
         TimePageLink pageLink = new TimePageLink(1, 0, null, new SortOrder("createdTime", SortOrder.Direction.ASC));
 
         EdgeEvent edgeEventWithTsUpdate = generateEdgeEvent(tenantId, edgeId, deviceId, EdgeEventActionType.TIMESERIES_UPDATED);

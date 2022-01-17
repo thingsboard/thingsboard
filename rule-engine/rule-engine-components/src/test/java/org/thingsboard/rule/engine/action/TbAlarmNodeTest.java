@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +98,7 @@ public class TbAlarmNodeTest {
 
     private EntityId originator = new DeviceId(Uuids.timeBased());
     private EntityId alarmOriginator = new AlarmId(Uuids.timeBased());
-    private TenantId tenantId = new TenantId(Uuids.timeBased());
+    private TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
     private TbMsgMetaData metaData = new TbMsgMetaData();
     private String rawJson = "{\"name\": \"Vit\", \"passed\": 5}";
 

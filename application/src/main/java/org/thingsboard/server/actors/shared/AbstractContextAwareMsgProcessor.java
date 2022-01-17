@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,13 @@ import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.common.msg.TbActorMsg;
 
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public abstract class AbstractContextAwareMsgProcessor {
 
+    protected final static ObjectMapper mapper = new ObjectMapper();
+
     protected final ActorSystemContext systemContext;
-    protected final ObjectMapper mapper = new ObjectMapper();
 
     protected AbstractContextAwareMsgProcessor(ActorSystemContext systemContext) {
         super();

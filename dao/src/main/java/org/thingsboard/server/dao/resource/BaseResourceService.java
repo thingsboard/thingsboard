@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,7 +180,7 @@ public class BaseResourceService implements ResourceService {
                 throw new DataValidationException("Resource key should be specified!");
             }
             if (resource.getTenantId() == null) {
-                resource.setTenantId(new TenantId(ModelConstants.NULL_UUID));
+                resource.setTenantId(TenantId.fromUUID(ModelConstants.NULL_UUID));
             }
             if (!resource.getTenantId().getId().equals(ModelConstants.NULL_UUID)) {
                 Tenant tenant = tenantDao.findById(tenantId, resource.getTenantId().getId());

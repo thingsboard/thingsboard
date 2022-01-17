@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,8 +46,16 @@ import java.util.concurrent.TimeUnit;
         configClazz = TbMsgTimeseriesNodeConfiguration.class,
         nodeDescription = "Saves timeseries data",
         nodeDetails = "Saves timeseries telemetry data based on configurable TTL parameter. Expects messages with 'POST_TELEMETRY_REQUEST' message type. " +
-                "Timestamp in milliseconds will be taken from metadata.ts, otherwise 'now' timestamp will be applied. " +
-                "Allows stopping updating values for incoming keys in the latest ts_kv table if 'skipLatestPersistence' is set to true.",
+                "Timestamp in milliseconds will be taken from metadata.ts, otherwise 'now' message timestamp will be applied. " +
+                "Allows stopping updating values for incoming keys in the latest ts_kv table if 'skipLatestPersistence' is set to true.\n " +
+                "<br/>" +
+                "Enable 'useServerTs' param to use the timestamp of the message processing instead of the timestamp from the message. " +
+                "Useful for all sorts of sequential processing if you merge messages from multiple sources (devices, assets, etc).\n" +
+                "<br/>" +
+                "In the case of sequential processing, the platform guarantees that the messages are processed in the order of their submission to the queue. " +
+                "However, the timestamp of the messages originated by multiple devices/servers may be unsynchronized long before they are pushed to the queue. " +
+                "The DB layer has certain optimizations to ignore the updates of the \"attributes\" and \"latest values\" tables if the new record has a timestamp that is older than the previous record. " +
+                "So, to make sure that all the messages will be processed correctly, one should enable this parameter for sequential message processing scenarios.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeTimeseriesConfig",
         icon = "file_upload"
@@ -77,7 +85,7 @@ public class TbMsgTimeseriesNode implements TbNode {
             ctx.tellFailure(msg, new IllegalArgumentException("Unsupported msg type: " + msg.getType()));
             return;
         }
-        long ts = getTs(msg);
+        long ts = computeTs(msg, config.isUseServerTs());
         String src = msg.getData();
         Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToTelemetry(new JsonParser().parse(src), ts);
         if (tsKvMap.isEmpty()) {
@@ -100,6 +108,10 @@ public class TbMsgTimeseriesNode implements TbNode {
         } else {
             ctx.getTelemetryService().saveAndNotify(ctx.getTenantId(), msg.getCustomerId(), msg.getOriginator(), tsKvEntryList, ttl, new TelemetryNodeCallback(ctx, msg));
         }
+    }
+
+    public static long computeTs(TbMsg msg, boolean ignoreMetadataTs) {
+        return ignoreMetadataTs ? System.currentTimeMillis() : getTs(msg);
     }
 
     public static long getTs(TbMsg msg) {

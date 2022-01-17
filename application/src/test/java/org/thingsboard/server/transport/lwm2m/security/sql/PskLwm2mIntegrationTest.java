@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,13 +33,13 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
     @Test
     public void testConnectWithPSKAndObserveTelemetry() throws Exception {
         PSKClientCredential clientCredentials = new PSKClientCredential();
-        clientCredentials.setEndpoint(ENDPOINT);
-        clientCredentials.setKey(pskKey);
-        clientCredentials.setIdentity(pskIdentity);
+        clientCredentials.setEndpoint(CLIENT_ENDPOINT_PSK);
+        clientCredentials.setKey(CLIENT_PSK_KEY);
+        clientCredentials.setIdentity(CLIENT_PSK_IDENTITY);
         Security security = psk(SECURE_URI,
                 SHORT_SERVER_ID,
-                pskIdentity.getBytes(StandardCharsets.UTF_8),
-                Hex.decodeHex(pskKey.toCharArray()));
-        super.basicTestConnectionObserveTelemetry(security, clientCredentials, SECURE_COAP_CONFIG, ENDPOINT);
+                CLIENT_PSK_IDENTITY.getBytes(StandardCharsets.UTF_8),
+                Hex.decodeHex(CLIENT_PSK_KEY.toCharArray()));
+        super.basicTestConnectionObserveTelemetry(security, clientCredentials, SECURE_COAP_CONFIG, CLIENT_ENDPOINT_PSK);
     }
 }

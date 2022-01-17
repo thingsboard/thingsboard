@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,11 @@ import org.junit.runner.RunWith;
 
 @RunWith(ClasspathSuite.class)
 @ClassnameFilters({
+        "org.thingsboard.server.dao.sql.tenant.*Test",
+        "org.thingsboard.server.dao.sql.component.*Test",
+        "org.thingsboard.server.dao.sql.customer.*Test",
+        "org.thingsboard.server.dao.sql.dashboard.*Test",
+        "org.thingsboard.server.dao.sql.query.*Test",
         "org.thingsboard.server.dao.sql.*THIS_MUST_BE_FIXED_Test",
 })
 public class JpaDaoTestSuite {

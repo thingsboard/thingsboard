@@ -388,7 +388,10 @@
     "transport-messages": "传输消息",
     "transport-monthly-activity": "Transport monthly activity",
     "view-details": "查看详细信息",
-    "view-statistics": "查看统计信息"
+    "view-statistics": "查看统计信息",
+    "alarm":"警告",
+    "alarms-created": "创建警告数",
+    "notifications": "通知"
   },
   "asset": {
     "add": "添加资产",

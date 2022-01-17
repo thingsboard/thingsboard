@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,7 +148,7 @@ public class LwM2mClient implements Serializable {
 
     public void init(ValidateDeviceCredentialsResponse credentials, UUID sessionId) {
         this.session = createSession(nodeId, sessionId, credentials);
-        this.tenantId = new TenantId(new UUID(session.getTenantIdMSB(), session.getTenantIdLSB()));
+        this.tenantId = TenantId.fromUUID(new UUID(session.getTenantIdMSB(), session.getTenantIdLSB()));
         this.deviceId = new UUID(session.getDeviceIdMSB(), session.getDeviceIdLSB());
         this.profileId = new UUID(session.getDeviceProfileIdMSB(), session.getDeviceProfileIdLSB());
         this.powerMode = credentials.getDeviceInfo().getPowerMode();

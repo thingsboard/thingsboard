@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -210,7 +210,7 @@ public class DefaultTbQueueRequestTemplate<Request extends TbQueueMsg, Response 
     @Override
     public ListenableFuture<Response> send(Request request, long requestTimeoutNs) {
         if (pendingRequests.mappingCount() >= maxPendingRequests) {
-            log.warn("Pending request map is full [{}]! Consider to increase maxPendingRequests or increase processing performance", maxPendingRequests);
+            log.warn("Pending request map is full [{}]! Consider to increase maxPendingRequests or increase processing performance. Request is {}", maxPendingRequests, request);
             return Futures.immediateFailedFuture(new RuntimeException("Pending request map is full!"));
         }
         UUID requestId = UUID.randomUUID();

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { Resolve } from '@angular/router';
+import { Resolve, Router } from '@angular/router';
 import { TenantProfile } from '@shared/models/tenant.model';
 import {
   checkBoxCell,
@@ -43,6 +43,7 @@ export class TenantProfilesTableConfigResolver implements Resolve<EntityTableCon
               private importExport: ImportExportService,
               private translate: TranslateService,
               private datePipe: DatePipe,
+              private router: Router,
               private dialogService: DialogService) {
 
     this.config.entityType = EntityType.TENANT_PROFILE;
@@ -117,6 +118,14 @@ export class TenantProfilesTableConfigResolver implements Resolve<EntityTableCon
     return actions;
   }
 
+  private openTenantProfile($event: Event, tenantProfile: TenantProfile) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const url = this.router.createUrlTree(['tenantProfiles', tenantProfile.id.id]);
+    this.router.navigateByUrl(url);
+  }
+
   setDefaultTenantProfile($event: Event, tenantProfile: TenantProfile) {
     if ($event) {
       $event.stopPropagation();
@@ -158,6 +167,9 @@ export class TenantProfilesTableConfigResolver implements Resolve<EntityTableCon
 
   onTenantProfileAction(action: EntityAction<TenantProfile>): boolean {
     switch (action.action) {
+      case 'open':
+        this.openTenantProfile(action.event, action.entity);
+        return true;
       case 'setDefault':
         this.setDefaultTenantProfile(action.event, action.entity);
         return true;

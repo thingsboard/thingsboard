@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -166,7 +166,7 @@ public abstract class AbstractAlarmEntity<T extends Alarm> extends BaseSqlEntity
         Alarm alarm = new Alarm(new AlarmId(id));
         alarm.setCreatedTime(createdTime);
         if (tenantId != null) {
-            alarm.setTenantId(new TenantId(tenantId));
+            alarm.setTenantId(TenantId.fromUUID(tenantId));
         }
         if (customerId != null) {
             alarm.setCustomerId(new CustomerId(customerId));
