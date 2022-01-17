@@ -2085,11 +2085,6 @@ export const serviceCompletions: TbEditorCompletions = {
           description: `${dataSourceHref} object`
         }
       },
-      initDefaultAlarmDataKeys: {
-        description: 'Initialize default alarm data keys',
-        meta: 'function',
-        args: []
-      },
       getDefaultAlarmDataKeys: {
         description: 'Get default alarm data keys',
         meta: 'function',
@@ -2134,19 +2129,6 @@ export const serviceCompletions: TbEditorCompletions = {
         args: [
           {name: 'translationValue', type: 'string', description: 'Translation value'},
           {name: 'defaultValue', type: 'string', description: 'Default value'},
-        ],
-        return: {
-          type: 'string',
-          description: 'Returns translated string'
-        }
-      },
-      doTranslate: {
-        description: 'Translate',
-        meta: 'function',
-        args: [
-          {name: 'translationValue', type: 'string', description: 'Translation value'},
-          {name: 'defaultValue', type: 'string', description: 'Default value'},
-          {name: 'prefix', type: 'string', description: 'Prefix', optional: true},
         ],
         return: {
           type: 'string',
