@@ -9280,11 +9280,6 @@ symbol-observable@4.0.0:
   resolved "https://registry.yarnpkg.com/symbol-observable/-/symbol-observable-4.0.0.tgz#5b425f192279e87f2f9b937ac8540d1984b39205"
   integrity sha512-b19dMThMV4HVFynSAM1++gBHAbk2Tc/osgLIBZMKsyqh34jb2e8Os7T6ZW/Bt3pJFdBTd2JwAnAAEQV7rSNvcQ==
 
-systemjs-babel@^0.3.1:
-  version "0.3.1"
-  resolved "https://registry.yarnpkg.com/systemjs-babel/-/systemjs-babel-0.3.1.tgz#4b864be909b542fb7a84303f24d0dbdbc35da2e1"
-  integrity sha512-ggZ+v7RSKmN1OlAd46REpfZJmBTnrBUH1zgHnSalIB0KPepfPXEm1p2auE6v7wCmJl231EyApRxnw6X3SgpQtA==
-
 systemjs@6.11.0:
   version "6.11.0"
   resolved "https://registry.yarnpkg.com/systemjs/-/systemjs-6.11.0.tgz#8df8e74fc05822e6c40170aa409b9ca64833315f"
