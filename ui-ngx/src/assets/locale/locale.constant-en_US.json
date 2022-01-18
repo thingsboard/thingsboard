@@ -833,6 +833,8 @@
         "select-devices": "Select devices",
         "assignedToCustomer": "Assigned to customer",
         "assignedToCustomers": "Assigned to customers",
+        "copyId": "Copy dashboard id",
+        "idCopiedMessage": "Dashboard Id has been copied to clipboard",
         "public": "Public",
         "public-link": "Public link",
         "copy-public-link": "Copy public link",
