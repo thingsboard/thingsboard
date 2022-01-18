@@ -209,7 +209,7 @@ public interface TbContext {
 
     DeviceService getDeviceService();
 
-    DeviceCredentialsService deviceCredentialsService();
+    DeviceCredentialsService getDeviceCredentialsService();
 
     TbClusterService getClusterService();
 

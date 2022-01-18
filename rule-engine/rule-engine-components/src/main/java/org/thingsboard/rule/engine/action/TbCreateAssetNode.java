@@ -15,17 +15,16 @@
  */
 package org.thingsboard.rule.engine.action;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -35,93 +34,65 @@ import java.util.concurrent.ExecutionException;
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
-        name = "create asset",
-        configClazz = TbCreateDeviceNodeConfiguration.class,
-        nodeDescription = "Create or update asset.",
-        nodeDetails = "Details - to create the asset should be indicated asset name and type, otherwise message send via " +
-                "<b>Failure</b> chain. If the asset already exists or successfully created -  " +
-                "Message send via <b>Success</b> chain, otherwise <b>Failure</b> chain will be used.",
+        name = "get or create asset",
+        configClazz = TbCreateAssetNodeConfiguration.class,
+        nodeDescription = "Get or Create asset based on selected configuration",
+        nodeDetails = "Try to find target asset by <b>Name pattern</b> or create asset if it doesn't exists. In both cases incoming message send via <b>Success</b> chain.</br>" +
+                "In case that asset already exists, a message with asset entity as message originator and msg type <b>ASSET_FETCHED</b> will be generated.</br>" +
+                "In case that asset doesn't exists, rule node will create an asset based on selected configuration and generate a message with asset entity as message originator and msg type <b>ASSET_CREATED</b>.</br>" +
+                "Additionally <b>ENTITY_CREATED</b> event will generate and push to Root Rule Chain</br>" +
+                "In both cases for message with type <b>ASSET_CREATED</b> and type <b>ASSET_FETCHED</b> message content will be not changed from initial incoming message.</br>" +
+                "In case that <b>Name pattern</b> will be not specified or any processing errors will occurred the result message send via <b>Failure</b> chain.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "",
+        configDirective = "tbActionNodeSaveAssetConfig",
         icon = "add_circle"
 )
-public class TbCreateAssetNode implements TbNode {
-
-    private TbCreateAssetNodeConfiguration config;
-    private String assetName;
-    private String assetType;
+public class TbCreateAssetNode extends TbAbstractCreateEntityNode<TbCreateAssetNodeConfiguration> {
 
     @Override
-    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbCreateAssetNodeConfiguration.class);
-        this.assetName = config.getName();
-        this.assetType = config.getType();
+    protected TbCreateAssetNodeConfiguration initConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
+        return TbNodeUtils.convert(configuration, TbCreateAssetNodeConfiguration.class);
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        if (StringUtils.isEmpty(assetName)) {
-            ctx.tellFailure(msg, new IllegalArgumentException("Asset name is null or empty "));
+    protected void processOnMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
+        if (StringUtils.isEmpty(name)) {
+            ctx.tellFailure(msg, new IllegalArgumentException("Asset name is null or empty!"));
         } else {
-            assetName = TbNodeUtils.processPattern(assetName, msg);
-            if (StringUtils.isEmpty(assetType)) {
-                ctx.tellFailure(msg, new IllegalArgumentException("Asset type is null or empty "));
-            } else {
-                try {
-                    assetType = TbNodeUtils.processPattern(assetType, msg);
-                    checkRegexValidation(assetName, assetType);
-                    Asset asset = ctx.getAssetService().findAssetByTenantIdAndName(ctx.getTenantId(), assetName);
-
-                    if (asset == null) {
-                        asset = new Asset();
-                        asset.setTenantId(ctx.getTenantId());
-                    }
-                    createOrUpdateAsset(asset, msg);
-                    ctx.getAssetService().saveAsset(asset);
-                    ctx.tellSuccess(msg);
-                } catch (Exception e) {
-                    ctx.tellFailure(msg, e);
+            try {
+                String assetName = TbNodeUtils.processPattern(name, msg);
+                Asset asset = ctx.getAssetService().findAssetByTenantIdAndName(ctx.getTenantId(), assetName);
+                if (asset == null) {
+                    Asset savedAsset = createAsset(ctx, msg, assetName);
+                    ctx.enqueue(ctx.assetCreatedMsg(savedAsset, ctx.getSelfId()),
+                            () -> log.trace("Pushed Asset Created message: {}", savedAsset),
+                            throwable -> log.warn("Failed to push Asset Created message: {}", savedAsset, throwable));
+                    ctx.transformMsg(msg, DataConstants.ASSET_CREATED, savedAsset.getId(), msg.getMetaData(), msg.getData());
+                } else {
+                    ctx.transformMsg(msg, DataConstants.ASSET_FETCHED, asset.getId(), msg.getMetaData(), msg.getData());
                 }
+                ctx.tellSuccess(msg);
+            } catch (Exception e) {
+                ctx.tellFailure(msg, e);
             }
         }
     }
 
-    @Override
-    public void destroy() {
-
-    }
-
-    private void createOrUpdateAsset(Asset asset, TbMsg msg) {
-        asset.setName(assetName);
-        asset.setType(assetType);
-        if (!StringUtils.isEmpty(config.getLabel())) {
-            asset.setLabel(TbNodeUtils.processPattern(config.getLabel(), msg));
+    private Asset createAsset(TbContext ctx, TbMsg msg, String name) {
+        Asset asset = new Asset();
+        asset.setName(name);
+        if (!StringUtils.isEmpty(type)) {
+            asset.setType(TbNodeUtils.processPattern(type, msg));
         }
-        asset.setAdditionalInfo(createAdditionalInfo(asset));
+        if (!StringUtils.isEmpty(label)) {
+            asset.setLabel(TbNodeUtils.processPattern(label, msg));
+        }
+        if (!StringUtils.isEmpty(description)) {
+            ObjectNode additionalInfo = JacksonUtil.newObjectNode();
+            additionalInfo.put("description", TbNodeUtils.processPattern(description, msg));
+            asset.setAdditionalInfo(additionalInfo);
+        }
+        return ctx.getAssetService().saveAsset(asset);
     }
 
-    private JsonNode createAdditionalInfo(Asset asset) {
-        JsonNode additionalInfo = asset.getAdditionalInfo();
-        ObjectNode additionalInfoObjNode;
-        if (additionalInfo == null) {
-            additionalInfoObjNode = JacksonUtil.newObjectNode();
-        } else {
-            additionalInfoObjNode = (ObjectNode) additionalInfo;
-        }
-        additionalInfoObjNode.put("description", config.getDescription());
-        return additionalInfoObjNode;
-    }
-
-    private void checkRegexValidation(String name, String type) {
-        if (type.equals(config.getType())) {
-            assetType = replaceRegex(type);
-        }
-        if (name.equals(config.getName())) {
-            assetName = replaceRegex(name);
-        }
-    }
-
-    private String replaceRegex(String pattern) {
-        return pattern.replaceAll("\\$\\{?\\[?", "").replaceAll("}?]?", "");
-    }
 }
