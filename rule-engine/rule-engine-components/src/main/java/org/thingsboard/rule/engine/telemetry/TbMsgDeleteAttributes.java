@@ -40,7 +40,7 @@ import java.util.concurrent.ExecutionException;
                 "message send via <b>Failure</b> chain. If selected attributes successfully deleted - message send via " +
                 "<b>Success</b> chain, otherwise <b>Failure</b> chain will be used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "",
+        configDirective = "tbActionNodeDeleteAttributesConfig",
         icon = "remove_circle"
 )
 public class TbMsgDeleteAttributes implements TbNode {

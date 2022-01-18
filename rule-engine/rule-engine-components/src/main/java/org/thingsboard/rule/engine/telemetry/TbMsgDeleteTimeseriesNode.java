@@ -52,7 +52,7 @@ import java.util.concurrent.TimeUnit;
                 "should be selected! If data for selected timeseries keys successfully deleted - " +
                 "message send via <b>Success</b> chain, otherwise <b>Failure</b> chain will be used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
-        configDirective = "",
+        configDirective = "tbActionNodeDeleteTimeseriesConfig",
         icon = "remove_circle"
 )
 public class TbMsgDeleteTimeseriesNode implements TbNode {
