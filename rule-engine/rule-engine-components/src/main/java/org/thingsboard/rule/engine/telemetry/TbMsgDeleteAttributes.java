@@ -36,8 +36,8 @@ import java.util.concurrent.ExecutionException;
         name = "delete attributes",
         configClazz = TbMsgDeleteAttributesConfiguration.class,
         nodeDescription = "Delete attributes for Message Originator.",
-        nodeDetails = "Allowed scope parameter values: <b>SERVER/CLIENT/SHARED</b>. In no attributes are selected - " +
-                "message send via <b>Failure</b> chain.If selected attributes successfully deleted - Message send via " +
+        nodeDetails = "Allowed scope parameter values: <b>SERVER/CLIENT/SHARED</b>. If no attributes are selected - " +
+                "message send via <b>Failure</b> chain. If selected attributes successfully deleted - message send via " +
                 "<b>Success</b> chain, otherwise <b>Failure</b> chain will be used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "",

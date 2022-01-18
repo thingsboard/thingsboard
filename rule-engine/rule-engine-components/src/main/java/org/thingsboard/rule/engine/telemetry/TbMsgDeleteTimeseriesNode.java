@@ -15,9 +15,11 @@
  */
 package org.thingsboard.rule.engine.telemetry;
 
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.rule.engine.api.RuleNode;
@@ -28,6 +30,7 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.kv.BaseDeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
+import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -43,9 +46,11 @@ import java.util.concurrent.TimeUnit;
         configClazz = TbMsgDeleteTimeseriesNodeConfiguration.class,
         nodeDescription = "Delete timeseries data for Message Originator.",
         nodeDetails = "In case that no telemetry keys are selected - message send via <b>Failure</b> chain. " +
-                "To delete all data for keys checkbox <b>Delete all data for keys<b> should be selected, " +
-                "otherwise will be deleted data that is in range of the selected time interval. If selected " +
-                "timeseries data successfully deleted -  Message send via <b>Success</b> chain, otherwise <b>Failure</b> chain will be used.",
+                "In order to delete all data for keys checkbox <b>Delete all data for keys<b> should be selected, " +
+                "otherwise will be deleted data that is in range of the selected time interval. " +
+                "In order to rewrite the latest values for keys selected to delete, checkbox <b>Rewrite latest if deleted<b> " +
+                "should be selected! If data for selected timeseries keys successfully deleted - " +
+                "message send via <b>Success</b> chain, otherwise <b>Failure</b> chain will be used.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "",
         icon = "remove_circle"
@@ -68,25 +73,27 @@ public class TbMsgDeleteTimeseriesNode implements TbNode {
         if (CollectionUtils.isEmpty(keys)) {
             ctx.tellFailure(msg, new IllegalStateException("Telemetry keys list is not selected!"));
         } else {
+            long currentTimeMillis = System.currentTimeMillis();
             try {
                 if (config.getDeleteAllDataForKeys()) {
                     deleteFromTs = 0L;
-                    deleteToTs = System.currentTimeMillis();
+                    deleteToTs = currentTimeMillis;
                 } else {
                     if (config.isUseMetadataIntervalPatterns()) {
-                        getDeleteTsIntervalFromPatterns(msg);
+                        setDeleteTsIntervalsFromPatterns(msg);
                     } else {
-                        long ts = System.currentTimeMillis();
-                        deleteFromTs = ts - TimeUnit.valueOf(config.getStartTsTimeUnit()).toMillis(config.getStartTs());
-                        deleteToTs = ts - TimeUnit.valueOf(config.getEndTsTimeUnit()).toMillis(config.getEndTs());
+                        deleteFromTs = currentTimeMillis - TimeUnit.valueOf(config.getStartTsTimeUnit()).toMillis(config.getStartTs());
+                        deleteToTs = currentTimeMillis - TimeUnit.valueOf(config.getEndTsTimeUnit()).toMillis(config.getEndTs());
                     }
                 }
                 List<DeleteTsKvQuery> deleteTsKvQueries = new ArrayList<>();
-                for (String key : keys) {
-                    deleteTsKvQueries.add(new BaseDeleteTsKvQuery(TbNodeUtils.processPattern(key, msg), deleteFromTs, deleteToTs, config.getRewriteLatestIfDeleted()));
-                }
-                ListenableFuture<List<Void>> removeFuture = ctx.getTimeseriesService().remove(ctx.getTenantId(), msg.getOriginator(), deleteTsKvQueries);
-                DonAsynchron.withCallback(removeFuture, onSuccess -> ctx.tellSuccess(msg), throwable -> ctx.tellFailure(msg, throwable));
+                List<String> keysToDelete = new ArrayList<>();
+                keys.stream().map(key -> TbNodeUtils.processPattern(key, msg)).forEach(result -> {
+                    keysToDelete.add(result);
+                    deleteTsKvQueries.add(new BaseDeleteTsKvQuery(result, deleteFromTs, deleteToTs, config.getRewriteLatestIfDeleted()));
+                });
+                ctx.getTelemetryService().deleteTimeseriesAndNotify(ctx.getTenantId(), msg.getOriginator(),
+                        keysToDelete, deleteTsKvQueries, new TelemetryNodeCallback(ctx, msg));
             } catch (Exception e) {
                 ctx.tellFailure(msg, e);
             }
@@ -98,7 +105,7 @@ public class TbMsgDeleteTimeseriesNode implements TbNode {
 
     }
 
-    private void getDeleteTsIntervalFromPatterns(TbMsg msg) {
+    private void setDeleteTsIntervalsFromPatterns(TbMsg msg) {
         String startTsIntervalPattern = config.getStartTsIntervalPattern();
         String endTsIntervalPattern = config.getEndTsIntervalPattern();
         String startIntervalPatternValue = getPatternValue(msg, startTsIntervalPattern);
