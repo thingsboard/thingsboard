@@ -21,6 +21,7 @@
   </mat-form-field>
   <ngx-daterangepicker-material [startDate]="model.startDate"
                                 [endDate]="model.endDate"
+                                class="datePicker"
                                 [locale]="locale"
                                 [singleDatePicker]="settings.onePanel"
                                 [autoApply]="true" (choosedDate)="choosedDate($event)">
