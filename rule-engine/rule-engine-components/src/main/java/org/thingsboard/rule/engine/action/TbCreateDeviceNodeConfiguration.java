@@ -21,7 +21,7 @@ import org.thingsboard.rule.engine.api.NodeConfiguration;
 @Data
 public class TbCreateDeviceNodeConfiguration extends TbAbstractCreateEntityNodeConfiguration implements NodeConfiguration<TbCreateDeviceNodeConfiguration> {
 
-    private boolean isGateway;
+    private boolean gateway;
     private boolean overwriteActivityTime;
 
     @Override

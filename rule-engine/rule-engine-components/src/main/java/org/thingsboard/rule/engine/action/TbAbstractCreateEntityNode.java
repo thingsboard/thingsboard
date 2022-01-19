@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.action;
 
+import org.springframework.util.StringUtils;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -52,5 +53,11 @@ public abstract class TbAbstractCreateEntityNode<C extends TbAbstractCreateEntit
     protected abstract C initConfiguration(TbNodeConfiguration configuration) throws TbNodeException;
 
     protected abstract void processOnMsg(TbContext ctx, TbMsg msg) throws TbNodeException;
+
+    protected void validatePatternSubstitution(String pattern, String substitution) {
+        if (StringUtils.isEmpty(substitution) || substitution.trim().length() == 0) {
+            throw new IllegalArgumentException("Message parameter for " + pattern + " pattern has invalid value!");
+        }
+    }
 
 }
