@@ -55,7 +55,9 @@ CREATE TABLE IF NOT EXISTS alarm (
     tenant_id uuid,
     customer_id uuid,
     propagate_relation_types varchar,
-    type varchar(255)
+    type varchar(255),
+    propagate_to_owner boolean,
+    propagate_to_tenant boolean
 );
 
 CREATE TABLE IF NOT EXISTS entity_alarm (

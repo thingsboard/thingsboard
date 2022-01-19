@@ -97,6 +97,8 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             " a.originator_id as originator_id," +
             " a.originator_type as originator_type," +
             " a.propagate as propagate," +
+            " a.propagate_to_owner as propagate_to_owner," +
+            " a.propagate_to_tenant as propagate_to_tenant," +
             " a.severity as severity," +
             " a.start_ts as start_ts," +
             " a.status as status, " +
@@ -119,11 +121,10 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
     }
 
     @Override
-    public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, CustomerId customerId,
-                                                               AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
+    public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
         return transactionTemplate.execute(status -> {
             AlarmDataPageLink pageLink = query.getPageLink();
-            QueryContext ctx = new QueryContext(new QuerySecurityContext(tenantId, customerId, EntityType.ALARM));
+            QueryContext ctx = new QueryContext(new QuerySecurityContext(tenantId, null, EntityType.ALARM));
             ctx.addUuidListParameter("entity_ids", orderedEntityIds.stream().map(EntityId::getId).collect(Collectors.toList()));
             StringBuilder selectPart = new StringBuilder(FIELDS_SELECTION);
             StringBuilder fromPart = new StringBuilder(" from alarm a ");
@@ -134,7 +135,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             if (pageLink.isSearchPropagatedAlarms()) {
                 selectPart.append(" ea.entity_id as entity_id ");
                 fromPart.append(JOIN_ENTITY_ALARMS);
-                wherePart.append(buildPermissionsQuery(tenantId, customerId, ctx));
+                wherePart.append(buildPermissionsQuery(tenantId, ctx));
                 addAnd = true;
             } else {
                 selectPart.append(" a.originator_id as entity_id ");
@@ -285,7 +286,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         }
     }
 
-    private String buildPermissionsQuery(TenantId tenantId, CustomerId customerId, QueryContext ctx) {
+    private String buildPermissionsQuery(TenantId tenantId, QueryContext ctx) {
         StringBuilder permissionsQuery = new StringBuilder();
         ctx.addUuidParameter("permissions_tenant_id", tenantId.getId());
         permissionsQuery.append(" a.tenant_id = :permissions_tenant_id and ea.tenant_id = :permissions_tenant_id ");
