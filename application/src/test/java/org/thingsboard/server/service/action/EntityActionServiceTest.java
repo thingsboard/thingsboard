@@ -101,12 +101,12 @@ public class EntityActionServiceTest {
     }
 
     @Test
-    public void testPushEntityActionToRuleEngine_whenActionTypeEqualsRelationAddOrUpdate_thenSendTwoEvent() throws JsonProcessingException {
+    public void testPushEntityActionToRuleEngine_whenActionTypeEqualsRelationUpdated_thenSendTwoEvent() throws JsonProcessingException {
         EntityRelation relation = new EntityRelation();
         relation.setFrom(new DeviceId(UUID.randomUUID()));
         relation.setTo(new AssetId(UUID.randomUUID()));
 
-        pushEventAndVerify(relation, WANTED_NUMBER_OF_INVOCATIONS_FOR_NOT_DUPLICATED_MSG, ActionType.RELATION_ADD_OR_UPDATE);
+        pushEventAndVerify(relation, WANTED_NUMBER_OF_INVOCATIONS_FOR_NOT_DUPLICATED_MSG, ActionType.RELATION_UPDATED);
     }
 
     @Test
@@ -119,11 +119,11 @@ public class EntityActionServiceTest {
     }
 
     @Test
-    public void testPushEntityActionToRuleEngine_whenActionTypeEqualsRelationAddOrUpdate_thenSendOneEvent() throws JsonProcessingException {
+    public void testPushEntityActionToRuleEngine_whenActionTypeEqualsRelationUpdated_thenSendOneEvent() throws JsonProcessingException {
         EntityRelation relation = new EntityRelation();
         relation.setFrom(new DeviceId(UUID.randomUUID()));
         relation.setTo(new DeviceId(UUID.randomUUID()));
-        pushEventAndVerify(relation, WANTED_NUMBER_OF_INVOCATIONS_FOR_DUPLICATED_MSG, ActionType.RELATION_ADD_OR_UPDATE);
+        pushEventAndVerify(relation, WANTED_NUMBER_OF_INVOCATIONS_FOR_DUPLICATED_MSG, ActionType.RELATION_UPDATED);
     }
 
     @Test
@@ -183,18 +183,18 @@ public class EntityActionServiceTest {
     }
 
     @NotNull
-    private TbMsg getTbMsg(EntitySearchDirection direction, String msgType, EntityId relation, String data) {
+    private TbMsg getTbMsg(EntitySearchDirection direction, String msgType, EntityId entityId, String data) {
         TbMsgMetaData metaDataFrom = new TbMsgMetaData();
         metaDataFrom.putValue(DataConstants.RELATION_DIRECTION_MSG_ORIGINATOR, direction.name());
         metaDataFrom.putValue(CUSTOMER_ID, customerId.getId().toString());
-        return TbMsg.newMsg(msgType, relation, customerId, metaDataFrom, TbMsgDataType.JSON, data);
+        return TbMsg.newMsg(msgType, entityId, customerId, metaDataFrom, TbMsgDataType.JSON, data);
     }
 
 
     @NotNull
     private String getMsgType(ActionType actionType) {
-        if (actionType == ActionType.RELATION_ADD_OR_UPDATE) {
-            return DataConstants.ENTITY_RELATION_ADD_OR_UPDATE;
+        if (actionType == ActionType.RELATION_UPDATED) {
+            return DataConstants.ENTITY_RELATION_UPDATED;
         } else if (actionType == ActionType.RELATION_DELETED) {
             return DataConstants.ENTITY_RELATION_DELETED;
         }

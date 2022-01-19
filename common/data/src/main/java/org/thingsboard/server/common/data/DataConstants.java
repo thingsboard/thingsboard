@@ -116,7 +116,7 @@ public class DataConstants {
     public static final String EDGE_MSG_SOURCE = "edge";
     public static final String MSG_SOURCE_KEY = "source";
 
-    public static final String ENTITY_RELATION_ADD_OR_UPDATE = "ENTITY_RELATION_ADD_OR_UPDATE";
+    public static final String ENTITY_RELATION_UPDATED = "ENTITY_RELATION_UPDATED";
     public static final String ENTITY_RELATION_DELETED = "ENTITY_RELATION_DELETED";
 
     public static final String RELATION_DIRECTION_MSG_ORIGINATOR = "relationDirectionMsgOriginator";

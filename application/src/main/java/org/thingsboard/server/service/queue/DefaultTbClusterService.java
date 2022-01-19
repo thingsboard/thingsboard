@@ -34,7 +34,6 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -155,9 +154,9 @@ public class DefaultTbClusterService implements TbClusterService {
         } else {
             if (entityId.getEntityType().equals(EntityType.DEVICE)) {
                 DeviceProfile deviceProfile = deviceProfileCache.get(tenantId, new DeviceId(entityId.getId()));
-                if (tbMsg.getType().equals(DataConstants.ENTITY_RELATION_ADD_OR_UPDATE)
+                if (tbMsg.getType().equals(DataConstants.ENTITY_RELATION_UPDATED)
                         || tbMsg.getType().equals(DataConstants.ENTITY_RELATION_DELETED)) {
-                    if (isDuplicateMessage(tbMsg, deviceProfile)) {
+                    if (isMsgDuplicateByQueueNameAndRcId(tbMsg, deviceProfile)) {
                         return;
                     }
                 }
@@ -194,18 +193,45 @@ public class DefaultTbClusterService implements TbClusterService {
         return tbMsg;
     }
 
-    private boolean isDuplicateMessage(TbMsg tbMsg, DeviceProfile deviceProfile) {
+    private boolean isMsgDuplicateByQueueNameAndRcId(TbMsg tbMsg, DeviceProfile deviceProfile) {
         EntityRelation entityRelation = JacksonUtil.fromString(tbMsg.getData(), EntityRelation.class);
+        if (entityRelation == null) {
+            return false;
+        }
         if (entityRelation.getFrom().getEntityType() == entityRelation.getTo().getEntityType()) {
             if (tbMsg.getMetaData().getValue(DataConstants.RELATION_DIRECTION_MSG_ORIGINATOR).equals(EntitySearchDirection.TO.name())) {
                 DeviceProfile deviceProfileFrom = deviceProfileCache.get(deviceProfile.getTenantId(), new DeviceId(entityRelation.getFrom().getId()));
-                String defaultQueueNameFrom = deviceProfileFrom.getDefaultQueueName();
-                String defaultQueueNameTo = deviceProfile.getDefaultQueueName();
-                return deviceProfileFrom.getDefaultRuleChainId().equals(deviceProfile.getDefaultRuleChainId())
+
+                String defaultQueueNameFrom = checkAndGetQueueName(deviceProfileFrom);
+                String defaultQueueNameTo = checkAndGetQueueName(deviceProfile);
+
+                return isDefaultRuleChainsSame(deviceProfileFrom, deviceProfile)
                         && defaultQueueNameFrom.equals(defaultQueueNameTo);
             }
         }
         return false;
+    }
+
+    private String checkAndGetQueueName(DeviceProfile deviceProfile) {
+        return deviceProfile.getDefaultQueueName() == null ? "" : deviceProfile.getDefaultQueueName();
+    }
+
+    // Corner case: if one deviceProfile has no defaultRuleChainId set (root RC is used then) and another deviceProfile
+    // has root RC explicitly set, then messages won't be considered as duplicates based on the code below.
+    // Two messages will be sent to root RC.
+    // The intention was to not add findRuleChainById().isRoot() logic here
+    private boolean isDefaultRuleChainsSame(DeviceProfile deviceProfileFrom, DeviceProfile deviceProfileTo) {
+        if (deviceProfileFrom.getDefaultRuleChainId() == null && deviceProfileTo.getDefaultRuleChainId() == null) {
+            return true;
+        } else {
+            if (deviceProfileFrom.getDefaultRuleChainId() == null) {
+                return false;
+            }
+            if (deviceProfileTo.getDefaultRuleChainId() == null) {
+                return false;
+            }
+            return deviceProfileFrom.getDefaultRuleChainId().equals(deviceProfileTo.getDefaultRuleChainId());
+        }
     }
 
     @Override

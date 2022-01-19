@@ -344,6 +344,7 @@ class DefaultTbContext implements TbContext {
         return entityActionMsg(device, device.getId(), ruleNodeId, DataConstants.ENTITY_CREATED, queueName, ruleChainId);
     }
 
+    // TODO: 19.01.22 refactor this...
     @Override
     public void enqueueEntityRelationEvents(EntityRelation relation, String relationEventType) {
         try {

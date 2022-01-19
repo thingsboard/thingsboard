@@ -119,8 +119,8 @@ public class EntityActionService {
             case UNASSIGNED_FROM_EDGE:
                 msgType = DataConstants.ENTITY_UNASSIGNED_FROM_EDGE;
                 break;
-            case RELATION_ADD_OR_UPDATE:
-                msgType = DataConstants.ENTITY_RELATION_ADD_OR_UPDATE;
+            case RELATION_UPDATED:
+                msgType = DataConstants.ENTITY_RELATION_UPDATED;
                 break;
             case RELATIONS_DELETED:
             case RELATION_DELETED:
@@ -205,7 +205,7 @@ public class EntityActionService {
                         }
                         entityNode.put("startTs", extractParameter(Long.class, 1, additionalInfo));
                         entityNode.put("endTs", extractParameter(Long.class, 2, additionalInfo));
-                    } else if (actionType == ActionType.RELATION_ADD_OR_UPDATE || actionType == ActionType.RELATION_DELETED) {
+                    } else if (actionType == ActionType.RELATION_UPDATED || actionType == ActionType.RELATION_DELETED) {
                         EntityRelation relation = extractParameter(EntityRelation.class, 0, additionalInfo);
                         metaData.putValue(DataConstants.RELATION_DIRECTION_MSG_ORIGINATOR, getRelationDirectionValue(entityId, relation));
                         entityNode = json.valueToTree(relation);

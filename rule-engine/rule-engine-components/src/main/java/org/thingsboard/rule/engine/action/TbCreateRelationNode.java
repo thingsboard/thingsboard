@@ -209,7 +209,7 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
 
     protected void pushEventUpdateOrCreateRelation(TbContext ctx, SearchDirectionIds sdId, String relationType) {
         EntityRelation relation = new EntityRelation(sdId.getFromId(), sdId.getToId(), relationType);
-        ctx.enqueueEntityRelationEvents(relation, DataConstants.ENTITY_RELATION_ADD_OR_UPDATE);
+        ctx.enqueueEntityRelationEvents(relation, DataConstants.ENTITY_RELATION_UPDATED);
     }
 
 }

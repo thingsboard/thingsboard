@@ -111,6 +111,10 @@ public class TbMsgTypeSwitchNode implements TbNode {
             relationType = "RPC Failed";
         } else if (msg.getType().equals(DataConstants.RPC_DELETED)) {
             relationType = "RPC Deleted";
+        } else if (msg.getType().equals(DataConstants.ENTITY_RELATION_UPDATED)) {
+            relationType = "Entity Relation Updated";
+        } else if (msg.getType().equals(DataConstants.ENTITY_RELATION_DELETED)) {
+            relationType = "Entity Relation Deleted";
         } else {
             relationType = "Other";
         }
