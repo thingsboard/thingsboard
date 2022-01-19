@@ -36,7 +36,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         name = "get or create device",
         configClazz = TbCreateDeviceNodeConfiguration.class,
         nodeDescription = "Get or Create device based on selected configuration",
-        nodeDetails = "Try to find target device by <b>Name pattern</b> or create device if it doesn't exists. In both cases incoming message send via <b>Success</b> chain.</br>" +
+        nodeDetails = "Try to find target device by <b>Name pattern</b> or create device if it doesn't exists.</br>" +
                 "In case that device already exists, a message with device entity as message originator and msg type <b>DEVICE_FETCHED</b> will be generated.</br>" +
                 "In case that device doesn't exists, rule node will create a device based on selected configuration and generate a message with device entity as message originator and msg type <b>DEVICE_CREATED</b>.</br>" +
                 "Additionally <b>ENTITY_CREATED</b> event will generate and push to Root Rule Chain or to rule chain selected in the device profile</br>" +
@@ -71,7 +71,6 @@ public class TbCreateDeviceNode extends TbAbstractCreateEntityNode<TbCreateDevic
                 } else {
                     ctx.transformMsg(msg, DataConstants.DEVICE_FETCHED, device.getId(), msg.getMetaData(), msg.getData());
                 }
-                ctx.tellSuccess(msg);
             } catch (Exception e) {
                 ctx.tellFailure(msg, e);
             }

@@ -37,7 +37,7 @@ import java.util.concurrent.ExecutionException;
         name = "get or create asset",
         configClazz = TbCreateAssetNodeConfiguration.class,
         nodeDescription = "Get or Create asset based on selected configuration",
-        nodeDetails = "Try to find target asset by <b>Name pattern</b> or create asset if it doesn't exists. In both cases incoming message send via <b>Success</b> chain.</br>" +
+        nodeDetails = "Try to find target asset by <b>Name pattern</b> or create asset if it doesn't exists.</br>" +
                 "In case that asset already exists, a message with asset entity as message originator and msg type <b>ASSET_FETCHED</b> will be generated.</br>" +
                 "In case that asset doesn't exists, rule node will create an asset based on selected configuration and generate a message with asset entity as message originator and msg type <b>ASSET_CREATED</b>.</br>" +
                 "Additionally <b>ENTITY_CREATED</b> event will generate and push to Root Rule Chain</br>" +
@@ -71,7 +71,6 @@ public class TbCreateAssetNode extends TbAbstractCreateEntityNode<TbCreateAssetN
                 } else {
                     ctx.transformMsg(msg, DataConstants.ASSET_FETCHED, asset.getId(), msg.getMetaData(), msg.getData());
                 }
-                ctx.tellSuccess(msg);
             } catch (Exception e) {
                 ctx.tellFailure(msg, e);
             }
