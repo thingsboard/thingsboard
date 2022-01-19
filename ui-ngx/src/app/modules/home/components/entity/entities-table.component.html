@@ -23,8 +23,9 @@
               position="end"
               [opened]="isDetailsOpen">
     <tb-entity-details-panel
+      #entityDetailsPanel
       [entitiesTableConfig]="entitiesTableConfig"
-      [entityId]="dataSource.currentEntity?.id"
+      [entityId]="isDetailsOpen ? dataSource.currentEntity?.id : null"
       (closeEntityDetails)="isDetailsOpen = false; detailsPanelOpened.emit(isDetailsOpen);"
       (entityUpdated)="onEntityUpdated($event)"
       (entityAction)="onEntityAction($event)"

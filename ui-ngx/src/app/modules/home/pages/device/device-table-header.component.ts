@@ -37,7 +37,7 @@ export class DeviceTableHeaderComponent extends EntityTableHeaderComponent<Devic
 
   deviceProfileChanged(deviceProfileId: DeviceProfileId) {
     this.entitiesTableConfig.componentsData.deviceProfileId = deviceProfileId;
-    this.entitiesTableConfig.table.resetSortAndFilter(true);
+    this.entitiesTableConfig.getTable().resetSortAndFilter(true);
   }
 
 }
