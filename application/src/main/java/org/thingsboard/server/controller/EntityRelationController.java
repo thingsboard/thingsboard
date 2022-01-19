@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.relation.EntityRelationInfo;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 
 import java.util.List;
@@ -81,7 +82,8 @@ public class EntityRelationController extends BaseController {
                              @RequestBody EntityRelation relation) throws ThingsboardException {
         try {
             checkNotNull(relation);
-            checkRelation(relation.getFrom(), relation.getTo());
+            checkCanCreateRelation(relation.getFrom());
+            checkCanCreateRelation(relation.getTo());
 
             if (relation.getTypeGroup() == null) {
                 relation.setTypeGroup(RelationTypeGroup.COMMON);
@@ -121,7 +123,8 @@ public class EntityRelationController extends BaseController {
         checkParameter(TO_TYPE, strToType);
         EntityId fromId = EntityIdFactory.getByTypeAndId(strFromType, strFromId);
         EntityId toId = EntityIdFactory.getByTypeAndId(strToType, strToId);
-        checkRelation(fromId, toId);
+        checkCanCreateRelation(fromId);
+        checkCanCreateRelation(toId);
 
         RelationTypeGroup relationTypeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         EntityRelation relation = new EntityRelation(fromId, toId, strRelationType, relationTypeGroup);
@@ -377,13 +380,10 @@ public class EntityRelationController extends BaseController {
         }
     }
 
-    private void checkRelation(EntityId from, EntityId to) throws ThingsboardException {
-        UUID currentUserTenantId = getCurrentUser().getTenantId().getId();
-        if (!(from.getEntityType() == EntityType.TENANT && from.getId().equals(currentUserTenantId))) {
-            checkEntityId(from, Operation.WRITE);
-        }
-        if (!(to.getEntityType() == EntityType.TENANT && to.getId().equals(currentUserTenantId))) {
-            checkEntityId(to, Operation.WRITE);
+    private void checkCanCreateRelation(EntityId entityId) throws ThingsboardException {
+        SecurityUser currentUser = getCurrentUser();
+        if (!(currentUser.isTenantAdmin() && currentUser.getTenantId().equals(entityId))) {
+            checkEntityId(entityId, Operation.WRITE);
         }
     }
 
