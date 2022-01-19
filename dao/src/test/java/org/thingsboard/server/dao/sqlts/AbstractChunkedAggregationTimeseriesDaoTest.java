@@ -19,8 +19,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -46,8 +44,6 @@ public class AbstractChunkedAggregationTimeseriesDaoTest {
     final String TEMP = "temp";
     final String DESC = "DESC";
     AbstractChunkedAggregationTimeseriesDao tsDao;
-
-    //SOME PRESENT: When we give data with period l-r, program return data in interval [l;r)
 
     @Before
     public void setUp() throws Exception {

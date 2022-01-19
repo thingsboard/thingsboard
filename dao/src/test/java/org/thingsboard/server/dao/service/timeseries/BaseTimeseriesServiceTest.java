@@ -217,7 +217,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
 
         List<TsKvEntry> entries = tsService.findAll(tenantId, deviceId, queries).get();
         Assert.assertEquals(1, entries.size());
-        Assert.assertEquals(toTsEntry(TS + 50 , new LongDataEntry(LONG_KEY, 11L)), entries.get(0));
+        Assert.assertEquals(toTsEntry(TS + 50, new LongDataEntry(LONG_KEY, 11L)), entries.get(0));
 
         EntityView entityView = saveAndCreateEntityView(deviceId, List.of(LONG_KEY));
 
