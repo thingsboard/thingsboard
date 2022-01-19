@@ -229,6 +229,7 @@
                   (openedStart)="detailsDrawerOpenedStart()"
                   (closed)="detailsDrawerClosed()"
                   mode="over"
+                  id="editCloseWidget"
                   position="end">
         <tb-details-panel *ngIf="!isEditingWidgetClosed" fxFlex
                           headerTitle="{{editingWidget?.config.title}}"
@@ -266,7 +267,7 @@
             <button class="tb-mat-28" mat-icon-button type="button" (click)="clearSelectedWidgetBundle()">
               <mat-icon>arrow_back</mat-icon>
             </button>
-          </div>
+          </div>x 
           <div class="search-pane" *ngIf="isAddingWidget" fxLayout="row">
             <tb-widgets-bundle-search fxFlex
                                       [(ngModel)]="searchBundle"
