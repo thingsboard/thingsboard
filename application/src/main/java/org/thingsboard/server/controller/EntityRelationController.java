@@ -379,10 +379,10 @@ public class EntityRelationController extends BaseController {
 
     private void checkRelation(EntityId from, EntityId to) throws ThingsboardException {
         UUID currentUserTenantId = getCurrentUser().getTenantId().getId();
-        if (from.getEntityType() != EntityType.TENANT || !from.getId().equals(currentUserTenantId)) {
+        if (!(from.getEntityType() == EntityType.TENANT && from.getId().equals(currentUserTenantId))) {
             checkEntityId(from, Operation.WRITE);
         }
-        if (to.getEntityType() != EntityType.TENANT || !to.getId().equals(currentUserTenantId)) {
+        if (!(to.getEntityType() == EntityType.TENANT && to.getId().equals(currentUserTenantId))) {
             checkEntityId(to, Operation.WRITE);
         }
     }
