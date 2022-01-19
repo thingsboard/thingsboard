@@ -27,6 +27,8 @@ public class TbCreateAlarmNodeConfiguration extends TbAbstractAlarmNodeConfigura
 
     private String severity;
     private boolean propagate;
+    private boolean propagateToOwner;
+    private boolean propagateToTenant;
     private boolean useMessageAlarmData;
     private boolean dynamicSeverity;
 
@@ -39,6 +41,8 @@ public class TbCreateAlarmNodeConfiguration extends TbAbstractAlarmNodeConfigura
         configuration.setAlarmType("General Alarm");
         configuration.setSeverity(AlarmSeverity.CRITICAL.name());
         configuration.setPropagate(false);
+        configuration.setPropagateToOwner(false);
+        configuration.setPropagateToTenant(false);
         configuration.setUseMessageAlarmData(false);
         configuration.setRelationTypes(Collections.emptyList());
         configuration.setDynamicSeverity(false);

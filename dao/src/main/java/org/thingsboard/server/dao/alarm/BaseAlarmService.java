@@ -59,6 +59,7 @@ import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -139,11 +140,10 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     @Override
-    public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, CustomerId customerId,
+    public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId,
                                                                AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
-        return alarmDao.findAlarmDataByQueryForEntities(tenantId, customerId, query, orderedEntityIds);
+        return alarmDao.findAlarmDataByQueryForEntities(tenantId, query, orderedEntityIds);
     }
 
     @Override
@@ -171,25 +171,25 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     private List<EntityId> createEntityAlarmRecords(Alarm alarm) throws InterruptedException, ExecutionException {
-        List<EntityId> propagatedEntitiesList;
+        Set<EntityId> propagatedEntitiesSet = new LinkedHashSet<>();
+        propagatedEntitiesSet.add(alarm.getOriginator());
         if (alarm.isPropagate()) {
-            Set<EntityId> parentEntities = getParentEntities(alarm);
-            propagatedEntitiesList = new ArrayList<>(parentEntities.size() + 1);
-            for (EntityId parentId : parentEntities) {
-                propagatedEntitiesList.add(parentId);
-                createEntityAlarmRecord(alarm.getTenantId(), parentId, alarm);
-            }
-            propagatedEntitiesList.add(alarm.getOriginator());
-        } else {
-            propagatedEntitiesList = Collections.singletonList(alarm.getOriginator());
+            propagatedEntitiesSet.addAll(getRelatedEntities(alarm));
         }
-        createEntityAlarmRecord(alarm.getTenantId(), alarm.getOriginator(), alarm);
-        return propagatedEntitiesList;
+        if (alarm.isPropagateToOwner()) {
+            propagatedEntitiesSet.add(alarm.getCustomerId() != null ? alarm.getCustomerId() : alarm.getTenantId());
+        }
+        if (alarm.isPropagateToTenant()) {
+            propagatedEntitiesSet.add(alarm.getTenantId());
+        }
+        for (EntityId entityId : propagatedEntitiesSet) {
+            createEntityAlarmRecord(alarm.getTenantId(), entityId, alarm);
+        }
+        return new ArrayList<>(propagatedEntitiesSet);
     }
 
-    private Set<EntityId> getParentEntities(Alarm alarm) throws InterruptedException, ExecutionException {
+    private Set<EntityId> getRelatedEntities(Alarm alarm) throws InterruptedException, ExecutionException {
         EntityRelationsQuery query = new EntityRelationsQuery();
-        //TODO 3.1: @dlandiak we need to fetch max 3 levels and then fetch more if needed and there is at least one non-duplicate.
         RelationsSearchParameters parameters = new RelationsSearchParameters(alarm.getOriginator(), EntitySearchDirection.TO, Integer.MAX_VALUE, false);
         query.setParameters(parameters);
         List<String> propagateRelationTypes = alarm.getPropagateRelationTypes();
@@ -216,11 +216,12 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     private AlarmOperationResult updateAlarm(Alarm oldAlarm, Alarm newAlarm) {
-        boolean oldPropagate = oldAlarm.isPropagate();
-        boolean newPropagate = newAlarm.isPropagate();
+        boolean propagationEnabled = !oldAlarm.isPropagate() && newAlarm.isPropagate();
+        boolean propagationToOwnerEnabled = !oldAlarm.isPropagateToOwner() && newAlarm.isPropagateToOwner();
+        boolean propagationToTenantEnabled = !oldAlarm.isPropagateToTenant() && newAlarm.isPropagateToTenant();
         Alarm result = alarmDao.save(newAlarm.getTenantId(), merge(oldAlarm, newAlarm));
         List<EntityId> propagatedEntitiesList;
-        if (!oldPropagate && newPropagate) {
+        if (propagationEnabled || propagationToOwnerEnabled || propagationToTenantEnabled) {
             try {
                 propagatedEntitiesList = createEntityAlarmRecords(result);
             } catch (InterruptedException | ExecutionException e) {
@@ -372,6 +373,8 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
         existing.setDetails(alarm.getDetails());
         existing.setCustomerId(alarm.getCustomerId());
         existing.setPropagate(existing.isPropagate() || alarm.isPropagate());
+        existing.setPropagateToOwner(existing.isPropagateToOwner() || alarm.isPropagateToOwner());
+        existing.setPropagateToTenant(existing.isPropagateToTenant() || alarm.isPropagateToTenant());
         List<String> existingPropagateRelationTypes = existing.getPropagateRelationTypes();
         List<String> newRelationTypes = alarm.getPropagateRelationTypes();
         if (!CollectionUtils.isEmpty(newRelationTypes)) {
@@ -387,7 +390,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
     }
 
     private Set<EntityId> getPropagationEntityIds(Alarm alarm) {
-        if (alarm.isPropagate()) {
+        if (alarm.isPropagate() || alarm.isPropagateToOwner() || alarm.isPropagateToTenant()) {
             List<EntityAlarm> entityAlarms = alarmDao.findEntityAlarmRecords(alarm.getTenantId(), alarm.getId());
             return entityAlarms.stream().map(EntityAlarm::getEntityId).collect(Collectors.toSet());
         } else {

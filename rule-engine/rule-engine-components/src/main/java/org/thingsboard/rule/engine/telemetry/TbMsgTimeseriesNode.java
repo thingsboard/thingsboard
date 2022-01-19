@@ -111,21 +111,7 @@ public class TbMsgTimeseriesNode implements TbNode {
     }
 
     public static long computeTs(TbMsg msg, boolean ignoreMetadataTs) {
-        return ignoreMetadataTs ? System.currentTimeMillis() : getTs(msg);
-    }
-
-    public static long getTs(TbMsg msg) {
-        long ts = -1;
-        String tsStr = msg.getMetaData().getValue("ts");
-        if (!StringUtils.isEmpty(tsStr)) {
-            try {
-                ts = Long.parseLong(tsStr);
-            } catch (NumberFormatException ignored) {
-            }
-        } else {
-            ts = msg.getTs();
-        }
-        return ts;
+        return ignoreMetadataTs ? System.currentTimeMillis() : msg.getMetaDataTs();
     }
 
     @Override
