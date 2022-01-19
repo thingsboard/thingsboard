@@ -46,7 +46,6 @@ public class GeoUtil {
     private static final JtsSpatialContext jtsCtx;
 
     private static final JsonParser JSON_PARSER = new JsonParser();
-    private static final String ALL_POLYGONS_UNION_IS_NULL_ERROR = "Error while calculating globalPolygon - the result of all polygons union is null";
 
     static {
         JtsSpatialContextFactory factory = new JtsSpatialContextFactory();
@@ -78,8 +77,8 @@ public class GeoUtil {
     }
 
     private static Geometry unionToGlobalGeometry(List<Geometry> polygons, Set<Geometry> holes) {
-        Geometry globalPolygon = polygons.stream().reduce(Geometry::union)
-                .orElseThrow(() -> new RuntimeException(ALL_POLYGONS_UNION_IS_NULL_ERROR));
+        Geometry globalPolygon = polygons.stream().reduce(Geometry::union).orElseThrow(() ->
+                new RuntimeException("Error while calculating globalPolygon - the result of all polygons union is null"));
         Optional<Geometry> globalHole = holes.stream().reduce(Geometry::union);
         if (globalHole.isEmpty()) {
             return globalPolygon;
