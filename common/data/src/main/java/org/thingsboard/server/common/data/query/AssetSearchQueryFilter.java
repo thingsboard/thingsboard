@@ -16,10 +16,12 @@
 package org.thingsboard.server.common.data.query;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.List;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class AssetSearchQueryFilter extends EntitySearchQueryFilter {
 
     @Override
