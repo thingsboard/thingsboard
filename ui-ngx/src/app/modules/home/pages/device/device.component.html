@@ -116,12 +116,14 @@
       </mat-form-field>
       <tb-ota-package-autocomplete
         [useFullEntityId]="true"
+        [showDetailsPageLink]="true"
         [type]="otaUpdateType.FIRMWARE"
         [deviceProfileId]="entityForm.get('deviceProfileId').value?.id"
         formControlName="firmwareId">
       </tb-ota-package-autocomplete>
       <tb-ota-package-autocomplete
         [useFullEntityId]="true"
+        [showDetailsPageLink]="true"
         [type]="otaUpdateType.SOFTWARE"
         [deviceProfileId]="entityForm.get('deviceProfileId').value?.id"
         formControlName="softwareId">
