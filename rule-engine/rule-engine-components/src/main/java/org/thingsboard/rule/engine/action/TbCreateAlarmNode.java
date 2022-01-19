@@ -164,6 +164,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
     }
 
     private Alarm buildAlarm(TbMsg msg, JsonNode details, TenantId tenantId) {
+        long ts = msg.getMetaDataTs();
         return Alarm.builder()
                 .tenantId(tenantId)
                 .originator(msg.getOriginator())
@@ -172,9 +173,8 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
                 .propagate(config.isPropagate())
                 .type(TbNodeUtils.processPattern(this.config.getAlarmType(), msg))
                 .propagateRelationTypes(relationTypes)
-                //todo-vp: alarm date should be taken from Message or current Time should be used?
-//                .startTs(System.currentTimeMillis())
-//                .endTs(System.currentTimeMillis())
+                .startTs(ts)
+                .endTs(ts)
                 .details(details)
                 .build();
     }
