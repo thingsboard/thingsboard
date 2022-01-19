@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.action;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.CollectionUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -75,7 +76,7 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
 
     private ListenableFuture<Boolean> processList(TbContext ctx, TbMsg msg) {
         return Futures.transformAsync(processListSearchDirection(ctx, msg), entityRelations -> {
-            if (entityRelations.isEmpty()) {
+            if (CollectionUtils.isEmpty(entityRelations)) {
                 return Futures.immediateFuture(true);
             } else {
                 List<ListenableFuture<Boolean>> list = deleteRelationsAndPushEventMessages(ctx, entityRelations);
