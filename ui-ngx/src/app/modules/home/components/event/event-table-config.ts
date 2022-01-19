@@ -52,6 +52,7 @@ import {
 export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
   eventTypeValue: EventType | DebugEventType;
+  hideClearEventAction = false;
 
   private filterParams: FilterEventBody = {};
   private filterColumns: FilterEntityColumn[] = [];
@@ -140,15 +141,30 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     {
       name: this.translate.instant('event.clean-events'),
       icon: 'delete',
-      isEnabled: () => true,
-      onAction: ($event) => {
-        this.eventService.clearEvents(this.entityId, this.eventType, this.filterParams, this.tenantId, this.table.pageLink as TimePageLink).subscribe(
+      isEnabled: () => !this.hideClearEventAction,
+      onAction: $event => this.clearEvents($event)
+    });
+  }
+
+  clearEvents($event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialogService.confirm(
+      this.translate.instant('event.clear-request-title'),
+      this.translate.instant('event.clear-request-text'),
+      this.translate.instant('action.no'),
+      this.translate.instant('action.yes')
+    ).subscribe((res) => {
+      if (res) {
+        this.eventService.clearEvents(this.entityId, this.eventType, this.filterParams,
+          this.tenantId, this.table.pageLink as TimePageLink).subscribe(
           () => {
             this.table.paginator.pageIndex = 0;
             this.table.updateData();
           }
         );
-     }
+      }
     });
   }
 
