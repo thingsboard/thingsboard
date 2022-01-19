@@ -99,7 +99,7 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
                     if (relation != null) {
                         return Futures.transform(processSingleDeleteRelation(ctx, sdId, relationType), res -> {
                             if (res) {
-                                pushDeleteRelationEventMessage(ctx, relation);
+                                pushDeleteRelationEventMsg(ctx, relation);
                             }
                             return res;
                         }, ctx.getDbCallbackExecutor());

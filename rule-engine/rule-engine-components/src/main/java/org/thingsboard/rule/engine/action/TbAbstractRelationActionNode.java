@@ -147,7 +147,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
         return TbNodeUtils.processPattern(pattern, msg);
     }
 
-    protected void pushDeleteRelationEventMessage(TbContext ctx, EntityRelation entityRelation) {
+    protected void pushDeleteRelationEventMsg(TbContext ctx, EntityRelation entityRelation) {
         ctx.enqueueEntityRelationEvents(entityRelation, DataConstants.ENTITY_RELATION_DELETED);
     }
 
@@ -157,7 +157,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
             ListenableFuture<Boolean> future = ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), entityRelation);
             list.add(Futures.transform(future, res -> {
                 if (res) {
-                    pushDeleteRelationEventMessage(ctx, entityRelation);
+                    pushDeleteRelationEventMsg(ctx, entityRelation);
                 }
                 return res;
             }, ctx.getDbCallbackExecutor()));
