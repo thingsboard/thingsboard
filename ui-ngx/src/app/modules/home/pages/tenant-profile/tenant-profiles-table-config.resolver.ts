@@ -106,7 +106,7 @@ export class TenantProfilesTableConfigResolver implements Resolve<EntityTableCon
         name: this.translate.instant('tenant-profile.create-tenant-profile'),
         icon: 'insert_drive_file',
         isEnabled: () => true,
-        onAction: ($event) => this.config.table.addEntity($event)
+        onAction: ($event) => this.config.getTable().addEntity($event)
       },
       {
         name: this.translate.instant('tenant-profile.import'),
@@ -140,7 +140,7 @@ export class TenantProfilesTableConfigResolver implements Resolve<EntityTableCon
         if (res) {
           this.tenantProfileService.setDefaultTenantProfile(tenantProfile.id.id).subscribe(
             () => {
-              this.config.table.updateData();
+              this.config.updateData();
             }
           );
         }
@@ -152,7 +152,7 @@ export class TenantProfilesTableConfigResolver implements Resolve<EntityTableCon
     this.importExport.importTenantProfile().subscribe(
       (deviceProfile) => {
         if (deviceProfile) {
-          this.config.table.updateData();
+          this.config.updateData();
         }
       }
     );

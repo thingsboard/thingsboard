@@ -140,7 +140,7 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
   }
 
   onDeviceProfileUpdated() {
-    this.entitiesTableConfig.table.updateData(false);
+    this.entitiesTableConfig.updateData(false);
   }
 
   onDeviceProfileChanged(deviceProfile: DeviceProfileInfo) {

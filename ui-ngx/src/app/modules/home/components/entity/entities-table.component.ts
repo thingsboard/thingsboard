@@ -64,6 +64,7 @@ import { HasUUID } from '@shared/models/id/has-uuid';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { IEntitiesTableComponent } from '@home/models/entity/entity-table-component.models';
+import { EntityDetailsPanelComponent } from '@home/components/entity/entity-details-panel.component';
 
 @Component({
   selector: 'tb-entities-table',
@@ -117,6 +118,8 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
 
   @ViewChild(MatPaginator) paginator: MatPaginator;
   @ViewChild(MatSort) sort: MatSort;
+
+  @ViewChild('entityDetailsPanel') entityDetailsPanel: EntityDetailsPanelComponent;
 
   private updateDataSubscription: Subscription;
   private viewInited = false;
@@ -182,7 +185,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
       headerComponent.entitiesTableConfig = this.entitiesTableConfig;
     }
 
-    this.entitiesTableConfig.table = this;
+    this.entitiesTableConfig.setTable(this);
     this.translations = this.entitiesTableConfig.entityTranslations;
 
     this.headerActionDescriptors = [...this.entitiesTableConfig.headerActionDescriptors];
@@ -392,6 +395,9 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
       }
     }
     this.dataSource.loadEntities(this.pageLink);
+    if (this.isDetailsOpen && this.entityDetailsPanel) {
+      this.entityDetailsPanel.reloadEntity();
+    }
   }
 
   private dataLoaded(col?: number, row?: number) {
