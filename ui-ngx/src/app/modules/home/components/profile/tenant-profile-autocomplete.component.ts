@@ -139,9 +139,9 @@ export class TenantProfileAutocompleteComponent implements ControlValueAccessor,
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
-      this.selectTenantProfileFormGroup.disable();
+      this.selectTenantProfileFormGroup.disable({emitEvent: false});
     } else {
-      this.selectTenantProfileFormGroup.enable();
+      this.selectTenantProfileFormGroup.enable({emitEvent: false});
     }
   }
 

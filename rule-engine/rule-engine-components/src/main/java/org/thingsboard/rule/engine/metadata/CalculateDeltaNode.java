@@ -28,7 +28,6 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
@@ -82,7 +81,7 @@ public class CalculateDeltaNode implements TbNode {
                 DonAsynchron.withCallback(getLastValue(msg.getOriginator()),
                         previousData -> {
                             double currentValue = json.get(inputKey).asDouble();
-                            long currentTs = TbMsgTimeseriesNode.getTs(msg);
+                            long currentTs = msg.getMetaDataTs();
 
                             if (useCache) {
                                 cache.put(msg.getOriginator(), new ValueWithTs(currentTs, currentValue));

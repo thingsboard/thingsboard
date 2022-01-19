@@ -235,7 +235,6 @@ export class MenuService {
         name: 'home.home',
         type: 'link',
         path: '/home',
-        notExact: true,
         icon: 'home'
       },
       {
@@ -344,8 +343,7 @@ export class MenuService {
         name: 'api-usage.api-usage',
         type: 'link',
         path: '/usage',
-        icon: 'insert_chart',
-        notExact: true
+        icon: 'insert_chart'
       },
       {
         id: guid(),
@@ -517,7 +515,6 @@ export class MenuService {
         name: 'home.home',
         type: 'link',
         path: '/home',
-        notExact: true,
         icon: 'home'
       },
       {

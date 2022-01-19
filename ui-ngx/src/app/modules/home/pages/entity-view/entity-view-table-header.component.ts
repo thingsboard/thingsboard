@@ -36,7 +36,7 @@ export class EntityViewTableHeaderComponent extends EntityTableHeaderComponent<E
 
   entityViewTypeChanged(entityViewType: string) {
     this.entitiesTableConfig.componentsData.entityViewType = entityViewType;
-    this.entitiesTableConfig.table.resetSortAndFilter(true);
+    this.entitiesTableConfig.getTable().resetSortAndFilter(true);
   }
 
 }

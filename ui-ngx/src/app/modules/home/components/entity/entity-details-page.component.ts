@@ -32,10 +32,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FormGroup } from '@angular/forms';
 import { AssetId } from '@shared/models/id/asset-id';
 import { TranslateService } from '@ngx-translate/core';
-import { deepClone, mergeDeep } from '@core/utils';
+import { deepClone } from '@core/utils';
 import { BroadcastService } from '@core/services/broadcast.service';
 import { EntityDetailsPanelComponent } from '@home/components/entity/entity-details-panel.component';
 import { DialogService } from '@core/services/dialog.service';
+import { IEntityDetailsPageComponent } from '@home/models/entity/entity-details-page-component.models';
 
 @Component({
   selector: 'tb-entity-details-page',
@@ -43,7 +44,7 @@ import { DialogService } from '@core/services/dialog.service';
   styleUrls: ['./entity-details-page.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class EntityDetailsPageComponent extends EntityDetailsPanelComponent implements OnInit, OnDestroy {
+export class EntityDetailsPageComponent extends EntityDetailsPanelComponent implements IEntityDetailsPageComponent, OnInit, OnDestroy {
 
   headerTitle: string;
   headerSubtitle: string;
@@ -54,6 +55,7 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
     if (this.entitiesTableConfigValue !== entitiesTableConfig) {
       this.entitiesTableConfigValue = entitiesTableConfig;
       if (this.entitiesTableConfigValue) {
+        this.entitiesTableConfigValue.setEntityDetailsPage(this);
         this.isEdit = false;
         this.entity = null;
       }
@@ -81,15 +83,21 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
 
   ngOnInit() {
     this.headerSubtitle = '';
-    this.route.paramMap.subscribe( paramMap => {
-      this.entityId = new AssetId(paramMap.get('entityId'));
-    });
     this.headerSubtitle = this.translate.instant(this.entitiesTableConfig.entityTranslations.details);
     super.init();
     this.entityComponent.isDetailsPage = true;
     this.subscriptions.push(this.entityAction.subscribe((action) => {
       if (action.action === 'delete') {
         this.deleteEntity(action.event, action.entity);
+      }
+    }));
+    this.subscriptions.push(this.route.paramMap.subscribe( paramMap => {
+      if (this.entitiesTableConfig) {
+        const entityType = this.entitiesTableConfig.entityType;
+        const id = paramMap.get('entityId');
+        this.currentEntityId = { id, entityType };
+        this.reload();
+        this.selectedTab = 0;
       }
     }));
   }
@@ -99,20 +107,9 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
   }
 
   reload(): void {
-    this.isEdit = false;
-    this.entitiesTableConfig.loadEntity(this.currentEntityId).subscribe(
-      (entity) => {
-        this.entity = entity;
-        this.broadcast.broadcast('updateBreadcrumb');
-        this.isReadOnly = this.entitiesTableConfig.detailsReadonly(entity);
-        this.headerTitle = this.entitiesTableConfig.entityTitle(entity);
-        this.entityComponent.entity = entity;
-        this.entityComponent.isEdit = false;
-        if (this.entityTabsComponent) {
-          this.entityTabsComponent.entity = entity;
-        }
-      }
-    );
+    this.reloadEntity().subscribe(() => {
+      this.onUpdateEntity();
+    });
   }
 
   onToggleDetailsEditMode() {
@@ -136,27 +133,21 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
   }
 
   onApplyDetails() {
-    if (this.detailsForm && this.detailsForm.valid) {
-      const editingEntity = {...this.editingEntity, ...this.entityComponent.entityFormValue()};
-      if (this.editingEntity.hasOwnProperty('additionalInfo')) {
-        editingEntity.additionalInfo =
-          mergeDeep((this.editingEntity as any).additionalInfo, this.entityComponent.entityFormValue()?.additionalInfo);
+    this.saveEntity(false).subscribe((entity) => {
+      if (entity) {
+        this.onUpdateEntity();
       }
-      this.entitiesTableConfig.saveEntity(editingEntity, this.editingEntity).subscribe(
-        (entity) => {
-          this.entity = entity;
-          this.entityComponent.entity = entity;
-          if (this.entityTabsComponent) {
-            this.entityTabsComponent.entity = entity;
-          }
-          this.isEdit = false;
-        }
-      );
-    }
+    });
   }
 
   confirmForm(): FormGroup {
     return this.detailsForm;
+  }
+
+  private onUpdateEntity() {
+    this.broadcast.broadcast('updateBreadcrumb');
+    this.isReadOnly = this.entitiesTableConfig.detailsReadonly(this.entity);
+    this.headerTitle = this.entitiesTableConfig.entityTitle(this.entity);
   }
 
   private deleteEntity($event: Event, entity: BaseData<HasId>) {

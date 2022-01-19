@@ -16,7 +16,7 @@
 
 -->
 <a mat-button class="tb-button-toggle"
-        routerLinkActive="tb-active" [routerLinkActiveOptions]="{exact: true}" routerLink="{{section.path}}">
+        routerLinkActive="tb-active" [routerLinkActiveOptions]="{paths: 'exact', queryParams: 'ignored', matrixParams: 'ignored', fragment: 'ignored'}" routerLink="{{section.path}}">
   <mat-icon *ngIf="!section.isMdiIcon && section.icon != null" class="material-icons">{{section.icon}}</mat-icon>
   <mat-icon *ngIf="section.isMdiIcon && section.icon != null" [svgIcon]="section.icon"></mat-icon>
   <span>{{section.name | translate}}</span>

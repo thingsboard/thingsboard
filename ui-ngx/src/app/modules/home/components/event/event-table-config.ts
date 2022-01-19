@@ -142,10 +142,11 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
       icon: 'delete',
       isEnabled: () => true,
       onAction: ($event) => {
-        this.eventService.clearEvents(this.entityId, this.eventType, this.filterParams, this.tenantId, this.table.pageLink as TimePageLink).subscribe(
+        this.eventService.clearEvents(this.entityId, this.eventType, this.filterParams, this.tenantId,
+          this.getTable().pageLink as TimePageLink).subscribe(
           () => {
-            this.table.paginator.pageIndex = 0;
-            this.table.updateData();
+            this.getTable().paginator.pageIndex = 0;
+            this.updateData();
           }
         );
      }
@@ -275,7 +276,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
         break;
     }
     if (updateTableColumns) {
-      this.table.columnsUpdated(true);
+      this.getTable().columnsUpdated(true);
     }
   }
 
@@ -345,8 +346,8 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     }
 
     this.filterParams = {};
-    this.table.paginator.pageIndex = 0;
-    this.table.updateData();
+    this.getTable().paginator.pageIndex = 0;
+    this.updateData();
   }
 
   private editEventFilter($event: MouseEvent) {
@@ -389,8 +390,8 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     componentRef.onDestroy(() => {
       if (componentRef.instance.result && !isEqual(this.filterParams, componentRef.instance.result.filterParams)) {
         this.filterParams = componentRef.instance.result.filterParams;
-        this.table.paginator.pageIndex = 0;
-        this.table.updateData();
+        this.getTable().paginator.pageIndex = 0;
+        this.updateData();
       }
     });
     this.cd.detectChanges();

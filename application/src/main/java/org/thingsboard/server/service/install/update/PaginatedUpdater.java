@@ -28,7 +28,6 @@ public abstract class PaginatedUpdater<I, D> {
     private int updated = 0;
 
     public void updateEntities(I id) {
-        log.info("{}: started...", getName());
         updated = 0;
         PageLink pageLink = new PageLink(DEFAULT_LIMIT);
         boolean hasNext = true;
