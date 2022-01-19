@@ -123,7 +123,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
 
     @Override
     public ListenableFuture<Tenant> findTenantByIdAsync(TenantId callerId, TenantId tenantId) {
-        log.trace("Executing TenantIdAsync [{}]", tenantId);
+        log.trace("Executing findTenantByIdAsync [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         return tenantDao.findByIdAsync(callerId, tenantId.getId());
     }
@@ -193,7 +193,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
 
     @Override
     public PageData<TenantId> findTenantsIds(PageLink pageLink) {
-        log.trace("Executing deleteTenants");
+        log.trace("Executing findTenantsIds");
         Validator.validatePageLink(pageLink);
         return tenantDao.findTenantsIds(pageLink);
     }
