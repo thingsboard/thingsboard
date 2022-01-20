@@ -23,7 +23,7 @@ public class AlarmInfo extends Alarm {
 
     private static final long serialVersionUID = 2807343093519543363L;
 
-    @ApiModelProperty(position = 17, value = "Alarm originator name", example = "Thermostat")
+    @ApiModelProperty(position = 19, value = "Alarm originator name", example = "Thermostat")
     private String originatorName;
 
     public AlarmInfo() {
