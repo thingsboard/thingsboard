@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.telemetry;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.server.common.data.DataConstants;
 
 import java.util.Collections;
 import java.util.List;
@@ -24,13 +25,14 @@ import java.util.List;
 @Data
 public class TbMsgDeleteAttributesConfiguration implements NodeConfiguration<TbMsgDeleteAttributesConfiguration> {
 
-    private String scope;
-    private List<String> attributesKeys;
+    private String scopePattern;
+    private List<String> keysPatterns;
 
     @Override
     public TbMsgDeleteAttributesConfiguration defaultConfiguration() {
         TbMsgDeleteAttributesConfiguration configuration = new TbMsgDeleteAttributesConfiguration();
-        configuration.setAttributesKeys(Collections.emptyList());
+        configuration.setScopePattern(DataConstants.SERVER_SCOPE);
+        configuration.setKeysPatterns(Collections.emptyList());
         return configuration;
     }
 }

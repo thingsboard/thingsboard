@@ -52,21 +52,20 @@ import java.util.concurrent.TimeUnit;
 public class TbMsgDeleteTimeseriesNode implements TbNode {
 
     private TbMsgDeleteTimeseriesNodeConfiguration config;
-    private List<String> keys;
-    private long deleteFromTs;
-    private long deleteToTs;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgDeleteTimeseriesNodeConfiguration.class);
-        this.keys = config.getKeys();
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        if (CollectionUtils.isEmpty(keys)) {
+        List<String> keysPatterns = config.getKeysPatterns();
+        if (CollectionUtils.isEmpty(keysPatterns)) {
             ctx.tellFailure(msg, new IllegalStateException("Telemetry keys list is not selected!"));
         } else {
+            long deleteFromTs;
+            long deleteToTs;
             long currentTimeMillis = System.currentTimeMillis();
             try {
                 if (config.getDeleteAllDataForKeys()) {
@@ -74,7 +73,8 @@ public class TbMsgDeleteTimeseriesNode implements TbNode {
                     deleteToTs = currentTimeMillis;
                 } else {
                     if (config.isUseMetadataIntervalPatterns()) {
-                        setDeleteTsIntervalsFromPatterns(msg);
+                        deleteFromTs = setDeleteTsIntervalFromPattern(msg, config.getStartTsIntervalPattern());
+                        deleteToTs = setDeleteTsIntervalFromPattern(msg, config.getEndTsIntervalPattern());
                     } else {
                         deleteFromTs = currentTimeMillis - TimeUnit.valueOf(config.getStartTsTimeUnit()).toMillis(config.getStartTs());
                         deleteToTs = currentTimeMillis - TimeUnit.valueOf(config.getEndTsTimeUnit()).toMillis(config.getEndTs());
@@ -82,7 +82,7 @@ public class TbMsgDeleteTimeseriesNode implements TbNode {
                 }
                 List<DeleteTsKvQuery> deleteTsKvQueries = new ArrayList<>();
                 List<String> keysToDelete = new ArrayList<>();
-                keys.stream().map(key -> TbNodeUtils.processPattern(key, msg)).forEach(result -> {
+                keysPatterns.stream().map(key -> TbNodeUtils.processPattern(key, msg)).forEach(result -> {
                     keysToDelete.add(result);
                     deleteTsKvQueries.add(new BaseDeleteTsKvQuery(result, deleteFromTs, deleteToTs, config.getRewriteLatestIfDeleted()));
                 });
@@ -99,13 +99,9 @@ public class TbMsgDeleteTimeseriesNode implements TbNode {
 
     }
 
-    private void setDeleteTsIntervalsFromPatterns(TbMsg msg) {
-        String startTsIntervalPattern = config.getStartTsIntervalPattern();
-        String endTsIntervalPattern = config.getEndTsIntervalPattern();
-        String startIntervalPatternValue = TbNodeUtils.processPattern(startTsIntervalPattern, msg);
-        String endIntervalPatternValue = TbNodeUtils.processPattern(endTsIntervalPattern, msg);
-        deleteFromTs = validateIntervalPatternValue(startTsIntervalPattern, startIntervalPatternValue);
-        deleteToTs = validateIntervalPatternValue(endTsIntervalPattern, endIntervalPatternValue);
+    private long setDeleteTsIntervalFromPattern(TbMsg msg, String pattern) {
+        String patternValue = TbNodeUtils.processPattern(pattern, msg);
+        return validateIntervalPatternValue(pattern, patternValue);
     }
 
     private long validateIntervalPatternValue(String pattern, String substitution) {

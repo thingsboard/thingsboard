@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 @Data
 public class TbMsgDeleteTimeseriesNodeConfiguration implements NodeConfiguration<TbMsgDeleteTimeseriesNodeConfiguration> {
 
-    private List<String> keys;
+    private List<String> keysPatterns;
 
     private Boolean deleteAllDataForKeys;
     private Boolean rewriteLatestIfDeleted;
@@ -44,7 +44,7 @@ public class TbMsgDeleteTimeseriesNodeConfiguration implements NodeConfiguration
     @Override
     public TbMsgDeleteTimeseriesNodeConfiguration defaultConfiguration() {
         TbMsgDeleteTimeseriesNodeConfiguration configuration = new TbMsgDeleteTimeseriesNodeConfiguration();
-        configuration.setKeys(Collections.emptyList());
+        configuration.setKeysPatterns(Collections.emptyList());
         configuration.setStartTsTimeUnit(TimeUnit.MINUTES.name());
         configuration.setStartTs(2);
         configuration.setEndTsTimeUnit(TimeUnit.MINUTES.name());

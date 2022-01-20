@@ -46,21 +46,20 @@ import java.util.concurrent.ExecutionException;
 public class TbMsgDeleteAttributes implements TbNode {
 
     private TbMsgDeleteAttributesConfiguration config;
-    private List<String> attributesKeys;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgDeleteAttributesConfiguration.class);
-        this.attributesKeys = config.getAttributesKeys();
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
+        List<String> attributesKeys = config.getKeysPatterns();
         if (CollectionUtils.isEmpty(attributesKeys)) {
             ctx.tellFailure(msg, new IllegalArgumentException("Attribute keys list is empty!"));
         } else {
             try {
-                String scope = TbNodeUtils.processPattern(config.getScope(), msg);
+                String scope = TbNodeUtils.processPattern(config.getScopePattern(), msg);
                 if (DataConstants.SERVER_SCOPE.equals(scope) ||
                         DataConstants.CLIENT_SCOPE.equals(scope) ||
                         DataConstants.SHARED_SCOPE.equals(scope)) {
