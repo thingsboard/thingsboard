@@ -43,7 +43,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { BaseData, HasId } from '@shared/models/base-data';
 import { ActivatedRoute } from '@angular/router';
 import {
-  CellActionDescriptor,
+  CellActionDescriptor, CellActionDescriptorType,
   EntityActionTableColumn,
   EntityColumn,
   EntityTableColumn,
@@ -64,6 +64,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { isDefined, isUndefined } from '@core/utils';
 import { HasUUID } from '@shared/models/id/has-uuid';
+import { IEntitiesTableComponent } from '@home/models/entity/entity-table-component.models';
 
 @Component({
   selector: 'tb-entities-table',
@@ -71,7 +72,7 @@ import { HasUUID } from '@shared/models/id/has-uuid';
   styleUrls: ['./entities-table.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class EntitiesTableComponent extends PageComponent implements AfterViewInit, OnInit, OnChanges {
+export class EntitiesTableComponent extends PageComponent implements IEntitiesTableComponent, AfterViewInit, OnInit, OnChanges {
 
   @Input()
   entitiesTableConfig: EntityTableConfig<BaseData<HasId>>;
@@ -103,6 +104,8 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
   textSearchMode = false;
   timewindow: Timewindow;
   dataSource: EntitiesDataSource<BaseData<HasId>>;
+
+  cellActionType = CellActionDescriptorType;
 
   isDetailsOpen = false;
   detailsPanelOpened = new EventEmitter<boolean>();
@@ -430,6 +433,9 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
   }
 
   onTimewindowChange() {
+    if (this.displayPagination) {
+      this.paginator.pageIndex = 0;
+    }
     this.updateData();
   }
 
@@ -526,7 +532,7 @@ export class EntitiesTableComponent extends PageComponent implements AfterViewIn
       const col = this.entitiesTableConfig.columns.indexOf(column);
       const index = row * this.entitiesTableConfig.columns.length + col;
       let res = this.cellContentCache[index];
-      if (!res) {
+      if (isUndefined(res)) {
         res = this.domSanitizer.bypassSecurityTrustHtml(column.cellContentFunction(entity, column.key));
         this.cellContentCache[index] = res;
       }

@@ -16,66 +16,54 @@
 package org.thingsboard.server.transport.lwm2m.server.store;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.server.security.EditableSecurityStore;
+import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.server.security.NonUniqueSecurityInfoException;
 import org.eclipse.leshan.server.security.SecurityInfo;
-import org.eclipse.leshan.server.security.SecurityStoreListener;
-import org.springframework.stereotype.Component;
-import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
+import org.jetbrains.annotations.Nullable;
+import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
+import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
 
-import java.util.Collection;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+import static org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer.CLIENT;
 
 @Slf4j
-@Component
-@TbLwM2mTransportComponent
-public class TbLwM2mSecurityStore implements EditableSecurityStore {
+public class TbLwM2mSecurityStore implements TbMainSecurityStore {
 
-    private final LwM2mClientContext clientContext;
-    private final EditableSecurityStore securityStore;
+    private final TbEditableSecurityStore securityStore;
+    private final LwM2mCredentialsSecurityInfoValidator validator;
+    private final ConcurrentMap<String, Set<String>> endpointRegistrations = new ConcurrentHashMap<>();
 
-    public TbLwM2mSecurityStore(LwM2mClientContext clientContext, EditableSecurityStore securityStore) {
-        this.clientContext = clientContext;
+    public TbLwM2mSecurityStore(TbEditableSecurityStore securityStore, LwM2mCredentialsSecurityInfoValidator validator) {
         this.securityStore = securityStore;
+        this.validator = validator;
     }
 
     @Override
-    public Collection<SecurityInfo> getAll() {
-        return securityStore.getAll();
+    public TbLwM2MSecurityInfo getTbLwM2MSecurityInfoByEndpoint(String endpoint) {
+        return securityStore.getTbLwM2MSecurityInfoByEndpoint(endpoint);
     }
 
-    @Override
-    public SecurityInfo add(SecurityInfo info) throws NonUniqueSecurityInfoException {
-        return securityStore.add(info);
-    }
-
-    @Override
-    public SecurityInfo remove(String endpoint, boolean infosAreCompromised) {
-        return securityStore.remove(endpoint, infosAreCompromised);
-    }
-
-    @Override
-    public void setListener(SecurityStoreListener listener) {
-        securityStore.setListener(listener);
-    }
-
+    /**
+     * @param endpoint
+     * @return : If SecurityMode == NO_SEC:
+     * return SecurityInfo.newPreSharedKeyInfo(SecurityMode.NO_SEC.toString(), SecurityMode.NO_SEC.toString(),
+     * SecurityMode.NO_SEC.toString().getBytes());
+     */
     @Override
     public SecurityInfo getByEndpoint(String endpoint) {
         SecurityInfo securityInfo = securityStore.getByEndpoint(endpoint);
         if (securityInfo == null) {
-            LwM2mClient lwM2mClient = clientContext.getClientByEndpoint(endpoint);
-            if (lwM2mClient != null && lwM2mClient.getRegistration() != null && !lwM2mClient.getRegistration().getIdentity().isSecure()) {
-                return null;
-            }
-            securityInfo = clientContext.fetchClientByEndpoint(endpoint).getSecurityInfo();
-            try {
-                if (securityInfo != null) {
-                    add(securityInfo);
-                }
-            } catch (NonUniqueSecurityInfoException e) {
-                log.trace("Failed to add security info: {}", securityInfo, e);
-            }
+            securityInfo = fetchAndPutSecurityInfo(endpoint);
+        } else if (securityInfo.usePSK() && securityInfo.getEndpoint().equals(SecurityMode.NO_SEC.toString())
+                && securityInfo.getIdentity().equals(SecurityMode.NO_SEC.toString())
+                && Arrays.equals(SecurityMode.NO_SEC.toString().getBytes(), securityInfo.getPreSharedKey())) {
+            return null;
         }
         return securityInfo;
     }
@@ -84,15 +72,55 @@ public class TbLwM2mSecurityStore implements EditableSecurityStore {
     public SecurityInfo getByIdentity(String pskIdentity) {
         SecurityInfo securityInfo = securityStore.getByIdentity(pskIdentity);
         if (securityInfo == null) {
-            securityInfo = clientContext.fetchClientByEndpoint(pskIdentity).getSecurityInfo();
             try {
-                if (securityInfo != null) {
-                    add(securityInfo);
-                }
+                securityInfo = fetchAndPutSecurityInfo(pskIdentity);
+            } catch (LwM2MAuthException e) {
+                log.info("Registration failed: FORBIDDEN, endpointId: [{}]", pskIdentity);
+                securityInfo = SecurityInfo.newPreSharedKeyInfo(pskIdentity, pskIdentity, new byte[]{0x00});
+            }
+        }
+        return securityInfo;
+    }
+
+    @Nullable
+    public SecurityInfo fetchAndPutSecurityInfo(String credentialsId) {
+        TbLwM2MSecurityInfo securityInfo = validator.getEndpointSecurityInfoByCredentialsId(credentialsId, CLIENT);
+        doPut(securityInfo);
+        return securityInfo != null ? securityInfo.getSecurityInfo() : null;
+    }
+
+    private void doPut(TbLwM2MSecurityInfo securityInfo) {
+        if (securityInfo != null) {
+            try {
+                securityStore.put(securityInfo);
             } catch (NonUniqueSecurityInfoException e) {
                 log.trace("Failed to add security info: {}", securityInfo, e);
             }
         }
-        return securityInfo;
+    }
+
+    @Override
+    public void putX509(TbLwM2MSecurityInfo securityInfo) throws NonUniqueSecurityInfoException {
+        securityStore.put(securityInfo);
+    }
+
+    @Override
+    public void registerX509(String endpoint, String registrationId) {
+        endpointRegistrations.computeIfAbsent(endpoint, ep -> new HashSet<>()).add(registrationId);
+    }
+
+    @Override
+    public void remove(String endpoint, String registrationId) {
+        Set<String> epRegistrationIds = endpointRegistrations.get(endpoint);
+        boolean shouldRemove;
+        if (epRegistrationIds == null) {
+            shouldRemove = true;
+        } else {
+            epRegistrationIds.remove(registrationId);
+            shouldRemove = epRegistrationIds.isEmpty();
+        }
+        if (shouldRemove) {
+            securityStore.remove(endpoint);
+        }
     }
 }

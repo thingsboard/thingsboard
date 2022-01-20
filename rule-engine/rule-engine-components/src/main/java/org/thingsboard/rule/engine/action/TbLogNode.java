@@ -15,8 +15,11 @@
  */
 package org.thingsboard.rule.engine.action;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.common.util.ListeningExecutor;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -55,18 +58,21 @@ public class TbLogNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        ListeningExecutor jsExecutor = ctx.getJsExecutor();
         ctx.logJsEvalRequest();
-        withCallback(jsExecutor.executeAsync(() -> jsEngine.executeToString(msg)),
-                toString -> {
-                    ctx.logJsEvalResponse();
-                    log.info(toString);
-                    ctx.tellSuccess(msg);
-                },
-                t -> {
-                    ctx.logJsEvalResponse();
-                    ctx.tellFailure(msg, t);
-                });
+        Futures.addCallback(jsEngine.executeToStringAsync(msg), new FutureCallback<String>() {
+            @Override
+            public void onSuccess(@Nullable String result) {
+                ctx.logJsEvalResponse();
+                log.info(result);
+                ctx.tellSuccess(msg);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                ctx.logJsEvalResponse();
+                ctx.tellFailure(msg, t);
+            }
+        }, MoreExecutors.directExecutor()); //usually js responses runs on js callback executor
     }
 
     @Override

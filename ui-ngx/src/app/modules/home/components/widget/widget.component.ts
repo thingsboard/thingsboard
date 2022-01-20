@@ -28,7 +28,7 @@ import {
   NgZone,
   OnChanges,
   OnDestroy,
-  OnInit,
+  OnInit, Renderer2,
   SimpleChanges,
   ViewChild,
   ViewContainerRef,
@@ -55,9 +55,17 @@ import { AppState } from '@core/core.state';
 import { WidgetService } from '@core/http/widget.service';
 import { UtilsService } from '@core/services/utils.service';
 import { forkJoin, Observable, of, ReplaySubject, Subscription, throwError } from 'rxjs';
-import { deepClone, insertVariable, isDefined, objToBase64, objToBase64URI, validateEntityId } from '@core/utils';
 import {
-  IDynamicWidgetComponent,
+  deepClone,
+  insertVariable,
+  isDefined,
+  isNotEmptyStr,
+  objToBase64,
+  objToBase64URI,
+  validateEntityId
+} from '@core/utils';
+import {
+  IDynamicWidgetComponent, ShowWidgetHeaderActionFunction, updateEntityParams,
   WidgetContext,
   WidgetHeaderAction,
   WidgetInfo,
@@ -99,6 +107,11 @@ import { ComponentType } from '@angular/cdk/portal';
 import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/embed-dashboard-dialog-token';
 import { MobileService } from '@core/services/mobile.service';
 import { DialogService } from '@core/services/dialog.service';
+import { PopoverPlacement } from '@shared/components/popover.models';
+import { TbPopoverService } from '@shared/components/popover.service';
+import {
+  DASHBOARD_PAGE_COMPONENT_TOKEN
+} from '@home/components/tokens';
 
 @Component({
   selector: 'tb-widget',
@@ -130,6 +143,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   widgetErrorData: ExceptionData;
   loadingData: boolean;
   displayNoData = false;
+  noDataDisplayMessageText: string;
 
   displayLegend: boolean;
   legendConfig: LegendConfig;
@@ -168,7 +182,10 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               private elementRef: ElementRef,
               private injector: Injector,
               private dialog: MatDialog,
+              private renderer: Renderer2,
+              private popoverService: TbPopoverService,
               @Inject(EMBED_DASHBOARD_DIALOG_TOKEN) private embedDashboardDialogComponent: ComponentType<any>,
+              @Inject(DASHBOARD_PAGE_COMPONENT_TOKEN) private dashboardPageComponent: ComponentType<any>,
               private widgetService: WidgetService,
               private resources: ResourcesService,
               private timeService: TimeService,
@@ -266,6 +283,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.widgetContext.servicesMap = ServicesMap;
     this.widgetContext.isEdit = this.isEdit;
     this.widgetContext.isMobile = this.isMobile;
+    this.widgetContext.toastTargetId = this.toastTargetId;
 
     this.widgetContext.subscriptionApi = {
       createSubscription: this.createSubscription.bind(this),
@@ -284,17 +302,32 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       getActionDescriptors: this.getActionDescriptors.bind(this),
       handleWidgetAction: this.handleWidgetAction.bind(this),
       elementClick: this.elementClick.bind(this),
-      getActiveEntityInfo: this.getActiveEntityInfo.bind(this)
+      getActiveEntityInfo: this.getActiveEntityInfo.bind(this),
+      openDashboardStateInSeparateDialog: this.openDashboardStateInSeparateDialog.bind(this),
+      openDashboardStateInPopover: this.openDashboardStateInPopover.bind(this)
     };
 
     this.widgetContext.customHeaderActions = [];
     const headerActionsDescriptors = this.getActionDescriptors(widgetActionSources.headerButton.value);
-    headerActionsDescriptors.forEach((descriptor) => {
+    headerActionsDescriptors.forEach((descriptor) =>
+    {
+      let useShowWidgetHeaderActionFunction = descriptor.useShowWidgetActionFunction || false;
+      let showWidgetHeaderActionFunction: ShowWidgetHeaderActionFunction = null;
+      if (useShowWidgetHeaderActionFunction && isNotEmptyStr(descriptor.showWidgetActionFunction)) {
+        try {
+          showWidgetHeaderActionFunction =
+            new Function('widgetContext', 'data', descriptor.showWidgetActionFunction) as ShowWidgetHeaderActionFunction;
+        } catch (e) {
+          useShowWidgetHeaderActionFunction = false;
+        }
+      }
       const headerAction: WidgetHeaderAction = {
         name: descriptor.name,
         displayName: descriptor.displayName,
         icon: descriptor.icon,
         descriptor,
+        useShowWidgetHeaderActionFunction,
+        showWidgetHeaderActionFunction,
         onAction: $event => {
           const entityInfo = this.getActiveEntityInfo();
           const entityId = entityInfo ? entityInfo.entityId : null;
@@ -331,6 +364,13 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     setTimeout(() => {
       this.dashboardWidget.updateWidgetParams();
     }, 0);
+
+    const noDataDisplayMessage = this.widget.config.noDataDisplayMessage;
+    if (isNotEmptyStr(noDataDisplayMessage)) {
+      this.noDataDisplayMessageText = this.utils.customTranslation(noDataDisplayMessage, noDataDisplayMessage);
+    } else {
+      this.noDataDisplayMessageText = this.translate.instant('widget.no-data');
+    }
   }
 
   ngAfterViewInit(): void {
@@ -506,6 +546,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             this.widgetInstanceInited = true;
             if (this.dataUpdatePending) {
               this.widgetTypeInstance.onDataUpdated();
+              setTimeout(() => {
+                this.dashboardWidget.updateCustomHeaderActions(true);
+              }, 0);
               this.dataUpdatePending = false;
             }
             if (this.pendingMessage) {
@@ -759,7 +802,6 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         this.dynamicWidgetComponent = this.dynamicWidgetComponentRef.instance;
         this.widgetContext.$container = $(this.dynamicWidgetComponentRef.location.nativeElement);
         this.widgetContext.$container.css('display', 'block');
-        this.widgetContext.$container.css('user-select', 'none');
         this.widgetContext.$container.attr('id', 'container');
         if (this.widgetSizeDetected) {
           this.widgetContext.$container.css('height', this.widgetContext.height + 'px');
@@ -844,6 +886,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           if (this.displayWidgetInstance()) {
             if (this.widgetInstanceInited) {
               this.widgetTypeInstance.onDataUpdated();
+              setTimeout(() => {
+                this.dashboardWidget.updateCustomHeaderActions(true);
+              }, 0);
             } else {
               this.dataUpdatePending = true;
             }
@@ -903,12 +948,14 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       options = {
         type: this.widget.type,
         stateData: this.typeParameters.stateData,
+        datasourcesOptional: this.typeParameters.datasourcesOptional,
         hasDataPageLink: this.typeParameters.hasDataPageLink,
         singleEntity: this.typeParameters.singleEntity,
         warnOnPageDataOverflow: this.typeParameters.warnOnPageDataOverflow,
         ignoreDataUpdateOnIntervalTick: this.typeParameters.ignoreDataUpdateOnIntervalTick,
         comparisonEnabled: comparisonSettings.comparisonEnabled,
-        timeForComparison: comparisonSettings.timeForComparison
+        timeForComparison: comparisonSettings.timeForComparison,
+        comparisonCustomIntervalValue: comparisonSettings.comparisonCustomIntervalValue
       };
       if (this.widget.type === widgetType.alarm) {
         options.alarmSource = deepClone(this.widget.config.alarmSource);
@@ -1023,10 +1070,15 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       case WidgetActionType.updateDashboardState:
         let targetDashboardStateId = descriptor.targetDashboardStateId;
         const params = deepClone(this.widgetContext.stateController.getStateParams());
-        this.updateEntityParams(params, targetEntityParamName, targetEntityId, entityName, entityLabel);
+        updateEntityParams(params, targetEntityParamName, targetEntityId, entityName, entityLabel);
         if (type === WidgetActionType.openDashboardState) {
-          if (descriptor.openInSeparateDialog) {
-            this.openDashboardStateInDialog(descriptor, entityId, entityName, additionalParams, entityLabel);
+          if (descriptor.openInPopover) {
+            this.openDashboardStateInPopover($event, descriptor.targetDashboardStateId, params,
+              descriptor.popoverHideDashboardToolbar, descriptor.popoverPreferredPlacement,
+              descriptor.popoverHideOnClickOutside, descriptor.popoverWidth, descriptor.popoverHeight, descriptor.popoverStyle);
+          } else if (descriptor.openInSeparateDialog && !this.mobileService.isMobileApp()) {
+            this.openDashboardStateInSeparateDialog(descriptor.targetDashboardStateId, params, descriptor.dialogTitle,
+              descriptor.dialogHideDashboardToolbar, descriptor.dialogWidth, descriptor.dialogHeight);
           } else {
             this.widgetContext.stateController.openState(targetDashboardStateId, params, descriptor.openRightLayout);
           }
@@ -1039,7 +1091,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         targetDashboardStateId = descriptor.targetDashboardStateId;
         const stateObject: StateObject = {};
         stateObject.params = {};
-        this.updateEntityParams(stateObject.params, targetEntityParamName, targetEntityId, entityName, entityLabel);
+        updateEntityParams(stateObject.params, targetEntityParamName, targetEntityId, entityName, entityLabel);
         if (targetDashboardStateId) {
           stateObject.id = targetDashboardStateId;
         }
@@ -1277,22 +1329,62 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     }
   }
 
-  private openDashboardStateInDialog(descriptor: WidgetActionDescriptor,
-                                     entityId?: EntityId, entityName?: string, additionalParams?: any, entityLabel?: string) {
+  private openDashboardStateInPopover($event: Event,
+                                      targetDashboardStateId: string,
+                                      params?: StateParams,
+                                      hideDashboardToolbar = true,
+                                      preferredPlacement: PopoverPlacement = 'top',
+                                      hideOnClickOutside = true,
+                                      popoverWidth = '25vw',
+                                      popoverHeight = '25vh',
+                                      popoverStyle: { [klass: string]: any } = {}) {
+    const trigger = ($event.target || $event.srcElement || $event.currentTarget) as Element;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const dashboard = deepClone(this.widgetContext.stateController.dashboardCtrl.dashboardCtx.getDashboard());
+      const stateObject: StateObject = {};
+      stateObject.params = params;
+      if (targetDashboardStateId) {
+        stateObject.id = targetDashboardStateId;
+      }
+      const injector = Injector.create({
+        parent: this.widgetContentContainer.injector, providers: [
+          {
+            provide: 'embeddedValue',
+            useValue: true
+          }
+        ]
+      });
+      const component = this.popoverService.displayPopover(trigger, this.renderer,
+        this.widgetContentContainer, this.dashboardPageComponent, preferredPlacement, hideOnClickOutside,
+        injector,
+        {
+          embedded: true,
+          syncStateWithQueryParam: false,
+          hideToolbar: hideDashboardToolbar,
+          currentState: objToBase64([stateObject]),
+          dashboard,
+          parentDashboard: this.widgetContext.parentDashboard ?
+            this.widgetContext.parentDashboard : this.widgetContext.dashboard
+        },
+        {width: popoverWidth, height: popoverHeight},
+        popoverStyle,
+        {}
+      );
+      this.widgetContext.registerPopoverComponent(component);
+    }
+  }
+
+  private openDashboardStateInSeparateDialog(targetDashboardStateId: string, params?: StateParams, dialogTitle?: string,
+                                             hideDashboardToolbar = true, dialogWidth?: number, dialogHeight?: number) {
     const dashboard = deepClone(this.widgetContext.stateController.dashboardCtrl.dashboardCtx.getDashboard());
     const stateObject: StateObject = {};
-    stateObject.params = {};
-    const targetEntityParamName = descriptor.stateEntityParamName;
-    const targetDashboardStateId = descriptor.targetDashboardStateId;
-    let targetEntityId: EntityId;
-    if (descriptor.setEntityId) {
-      targetEntityId = entityId;
-    }
-    this.updateEntityParams(stateObject.params, targetEntityParamName, targetEntityId, entityName, entityLabel);
+    stateObject.params = params;
     if (targetDashboardStateId) {
       stateObject.id = targetDashboardStateId;
     }
-    let title = descriptor.dialogTitle;
+    let title = dialogTitle;
     if (!title) {
       if (targetDashboardStateId && dashboard.configuration.states) {
         const dashboardState = dashboard.configuration.states[targetDashboardStateId];
@@ -1305,7 +1397,6 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       title = dashboard.title;
     }
     title = this.utils.customTranslation(title, title);
-    const params = stateObject.params;
     const paramsEntityName = params && params.entityName ? params.entityName : '';
     const paramsEntityLabel = params && params.entityLabel ? params.entityLabel : '';
     title = insertVariable(title, 'entityName', paramsEntityName);
@@ -1321,56 +1412,33 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.dialog.open(this.embedDashboardDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      viewContainerRef: this.widgetContentContainer,
       data: {
         dashboard,
         state: objToBase64([ stateObject ]),
         title,
-        hideToolbar: descriptor.dialogHideDashboardToolbar,
-        width: descriptor.dialogWidth,
-        height: descriptor.dialogHeight
+        hideToolbar: hideDashboardToolbar,
+        width: dialogWidth,
+        height: dialogHeight
       }
     });
+    this.cd.markForCheck();
   }
 
   private elementClick($event: Event) {
-    const e = ($event.target || $event.srcElement) as Element;
-    if (e.id) {
-      const descriptors = this.getActionDescriptors('elementClick');
-      if (descriptors.length) {
-        descriptors.forEach((descriptor) => {
-          if (descriptor.name === e.id) {
-            $event.stopPropagation();
-            const entityInfo = this.getActiveEntityInfo();
-            const entityId = entityInfo ? entityInfo.entityId : null;
-            const entityName = entityInfo ? entityInfo.entityName : null;
-            const entityLabel = entityInfo && entityInfo.entityLabel ? entityInfo.entityLabel : null;
-            this.handleWidgetAction($event, descriptor, entityId, entityName, null, entityLabel);
-          }
-        });
-      }
-    }
-  }
-
-  private updateEntityParams(params: StateParams, targetEntityParamName?: string, targetEntityId?: EntityId,
-                             entityName?: string, entityLabel?: string) {
-    if (targetEntityId) {
-      let targetEntityParams: StateParams;
-      if (targetEntityParamName && targetEntityParamName.length) {
-        targetEntityParams = params[targetEntityParamName];
-        if (!targetEntityParams) {
-          targetEntityParams = {};
-          params[targetEntityParamName] = targetEntityParams;
-          params.targetEntityParamName = targetEntityParamName;
-        }
-      } else {
-        targetEntityParams = params;
-      }
-      targetEntityParams.entityId = targetEntityId;
-      if (entityName) {
-        targetEntityParams.entityName = entityName;
-      }
-      if (entityLabel) {
-        targetEntityParams.entityLabel = entityLabel;
+    const elementClicked = ($event.target || $event.srcElement) as Element;
+    const descriptors = this.getActionDescriptors('elementClick');
+    if (descriptors.length) {
+      const idsList = descriptors.map(descriptor => `#${descriptor.name}`).join(',');
+      const targetElement = $(elementClicked).closest(idsList, this.widgetContext.$container[0]);
+      if (targetElement.length && targetElement[0].id) {
+        $event.stopPropagation();
+        const descriptor = descriptors.find(descriptorInfo => descriptorInfo.name === targetElement[0].id);
+        const entityInfo = this.getActiveEntityInfo();
+        const entityId = entityInfo ? entityInfo.entityId : null;
+        const entityName = entityInfo ? entityInfo.entityName : null;
+        const entityLabel = entityInfo && entityInfo.entityLabel ? entityInfo.entityLabel : null;
+        this.handleWidgetAction($event, descriptor, entityId, entityName, null, entityLabel);
       }
     }
   }

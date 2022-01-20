@@ -16,16 +16,17 @@
 
 import { SubscriptionData, SubscriptionDataHolder } from '@app/shared/models/telemetry/telemetry.models';
 import {
-  AggregationType, calculateIntervalComparisonEndTime,
-  calculateIntervalEndTime, calculateIntervalStartEndTime,
+  AggregationType,
+  calculateIntervalComparisonEndTime,
+  calculateIntervalEndTime,
+  calculateIntervalStartEndTime,
   getCurrentTime,
-  getCurrentTimeForComparison, getTime,
+  getTime,
   SubscriptionTimewindow
 } from '@shared/models/time/time.models';
 import { UtilsService } from '@core/services/utils.service';
-import { deepClone } from '@core/utils';
+import { deepClone, isNumber, isNumeric } from '@core/utils';
 import Timeout = NodeJS.Timeout;
-import * as moment_ from 'moment';
 
 export declare type onAggregatedData = (data: SubscriptionData, detectChanges: boolean) => void;
 
@@ -91,20 +92,36 @@ declare type AggFunction = (aggData: AggData, value?: any) => void;
 
 const avg: AggFunction = (aggData: AggData, value?: any) => {
   aggData.count++;
-  aggData.sum += value;
-  aggData.aggValue = aggData.sum / aggData.count;
+  if (isNumber(value)) {
+    aggData.sum += value;
+    aggData.aggValue = aggData.sum / aggData.count;
+  } else {
+    aggData.aggValue = value;
+  }
 };
 
 const min: AggFunction = (aggData: AggData, value?: any) => {
-  aggData.aggValue = Math.min(aggData.aggValue, value);
+  if (isNumber(value)) {
+    aggData.aggValue = Math.min(aggData.aggValue, value);
+  } else {
+    aggData.aggValue = value;
+  }
 };
 
 const max: AggFunction = (aggData: AggData, value?: any) => {
-  aggData.aggValue = Math.max(aggData.aggValue, value);
+  if (isNumber(value)) {
+    aggData.aggValue = Math.max(aggData.aggValue, value);
+  } else {
+    aggData.aggValue = value;
+  }
 };
 
 const sum: AggFunction = (aggData: AggData, value?: any) => {
-  aggData.aggValue = aggData.aggValue + value;
+  if (isNumber(value)) {
+    aggData.aggValue = aggData.aggValue + value;
+  } else {
+    aggData.aggValue = value;
+  }
 };
 
 const count: AggFunction = (aggData: AggData) => {
@@ -307,7 +324,7 @@ export class DataAggregator {
           }
           aggKeyData.delete(aggTimestamp);
           this.updatedData = true;
-        } else if (aggTimestamp < this.endTs) {
+        } else if (aggTimestamp < this.endTs || this.noAggregation) {
           const kvPair: [number, any] = [aggTimestamp, aggData.aggValue];
           keyData.push(kvPair);
         }
@@ -407,24 +424,11 @@ export class DataAggregator {
     }
   }
 
-  private isNumeric(val: any): boolean {
-    return (val - parseFloat( val ) + 1) >= 0;
-  }
-
   private convertValue(val: string): any {
-    if (!this.noAggregation || val && this.isNumeric(val)) {
+    if (val && isNumeric(val) && (!this.noAggregation || this.noAggregation && Number(val).toString() === val)) {
       return Number(val);
-    } else {
-      return val;
     }
-  }
-
-  private getCurrentTime() {
-    if (this.subsTw.timeForComparison) {
-      return getCurrentTimeForComparison(this.subsTw.timeForComparison as moment_.unitOfTime.DurationConstructor, this.subsTw.timezone);
-    } else {
-      return getCurrentTime(this.subsTw.timezone);
-    }
+    return val;
   }
 
 }

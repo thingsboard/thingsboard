@@ -17,6 +17,8 @@
 import { EntityType } from '@shared/models/entity-type.models';
 import { AttributeData } from './telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
+import { DeviceCredentialMQTTBasic } from '@shared/models/device.models';
+import { Lwm2mSecurityConfigModels } from '@shared/models/lwm2m-security-config.models';
 
 export interface EntityInfo {
   name?: string;
@@ -32,12 +34,18 @@ export interface EntityInfoData {
 }
 
 export interface ImportEntityData {
+  lineNumber: number;
   name: string;
   type: string;
   label: string;
   gateway: boolean;
   description: string;
-  accessToken: string;
+  credential: {
+    accessToken?: string;
+    x509?: string;
+    mqtt?: DeviceCredentialMQTTBasic;
+    lwm2m?: Lwm2mSecurityConfigModels;
+  };
   attributes: {
     server: AttributeData[],
     shared: AttributeData[]
@@ -61,6 +69,7 @@ export interface ImportEntitiesResultInfo {
   };
   error?: {
     entity: number;
+    errors?: string;
   };
 }
 

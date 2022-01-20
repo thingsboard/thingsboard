@@ -64,3 +64,17 @@
     }
   }
 }
+
+:host ::ng-deep {
+  .tb-multiple-input {
+    .mat-slide-toggle-content {
+      width: 100%;
+      display: flex;
+      align-items: center;
+
+      .mat-icon {
+        margin-right: 8px;
+      }
+    }
+  }
+}

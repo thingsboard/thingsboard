@@ -35,11 +35,7 @@ public class TbCreateAlarmNodeConfiguration extends TbAbstractAlarmNodeConfigura
     @Override
     public TbCreateAlarmNodeConfiguration defaultConfiguration() {
         TbCreateAlarmNodeConfiguration configuration = new TbCreateAlarmNodeConfiguration();
-        configuration.setAlarmDetailsBuildJs("var details = {};\n" +
-                "if (metadata.prevAlarmDetails) {\n" +
-                "    details = JSON.parse(metadata.prevAlarmDetails);\n" +
-                "}\n" +
-                "return details;");
+        configuration.setAlarmDetailsBuildJs(ALARM_DETAILS_BUILD_JS_TEMPLATE);
         configuration.setAlarmType("General Alarm");
         configuration.setSeverity(AlarmSeverity.CRITICAL.name());
         configuration.setPropagate(false);

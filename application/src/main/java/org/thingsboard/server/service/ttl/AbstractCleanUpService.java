@@ -15,11 +15,16 @@
  */
 package org.thingsboard.server.service.ttl;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.thingsboard.server.dao.util.PsqlDao;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.queue.discovery.PartitionService;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
@@ -27,39 +32,12 @@ import java.sql.Statement;
 
 
 @Slf4j
+@RequiredArgsConstructor
 public abstract class AbstractCleanUpService {
 
-    @Value("${spring.datasource.url}")
-    protected String dbUrl;
+    private final PartitionService partitionService;
 
-    @Value("${spring.datasource.username}")
-    protected String dbUserName;
-
-    @Value("${spring.datasource.password}")
-    protected String dbPassword;
-
-    protected long executeQuery(Connection conn, String query) throws SQLException {
-        try (Statement statement = conn.createStatement(); ResultSet resultSet = statement.executeQuery(query)) {
-            if (log.isDebugEnabled()) {
-                getWarnings(statement);
-            }
-            resultSet.next();
-            return resultSet.getLong(1);
-        }
+    protected boolean isSystemTenantPartitionMine(){
+        return partitionService.resolve(ServiceType.TB_CORE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID).isMyPartition();
     }
-
-    protected void getWarnings(Statement statement) throws SQLException {
-        SQLWarning warnings = statement.getWarnings();
-        if (warnings != null) {
-            log.debug("{}", warnings.getMessage());
-            SQLWarning nextWarning = warnings.getNextWarning();
-            while (nextWarning != null) {
-                log.debug("{}", nextWarning.getMessage());
-                nextWarning = nextWarning.getNextWarning();
-            }
-        }
-    }
-
-    protected abstract void doCleanUp(Connection connection) throws SQLException;
-
 }

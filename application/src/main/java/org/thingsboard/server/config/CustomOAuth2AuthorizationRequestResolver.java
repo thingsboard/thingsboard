@@ -37,6 +37,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
+import org.thingsboard.server.dao.oauth2.OAuth2Service;
+import org.thingsboard.server.service.security.auth.oauth2.TbOAuth2ParameterNames;
+import org.thingsboard.server.service.security.model.token.OAuth2AppTokenFactory;
 import org.thingsboard.server.utils.MiscUtils;
 
 import javax.servlet.http.HttpServletRequest;
@@ -46,12 +49,13 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @Slf4j
 public class CustomOAuth2AuthorizationRequestResolver implements OAuth2AuthorizationRequestResolver {
-    public static final String DEFAULT_AUTHORIZATION_REQUEST_BASE_URI = "/oauth2/authorization";
-    public static final String DEFAULT_LOGIN_PROCESSING_URI = "/login/oauth2/code/";
+    private static final String DEFAULT_AUTHORIZATION_REQUEST_BASE_URI = "/oauth2/authorization";
+    private static final String DEFAULT_LOGIN_PROCESSING_URI = "/login/oauth2/code/";
     private static final String REGISTRATION_ID_URI_VARIABLE_NAME = "registrationId";
     private static final char PATH_DELIMITER = '/';
 
@@ -63,6 +67,12 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
     @Autowired
     private ClientRegistrationRepository clientRegistrationRepository;
 
+    @Autowired
+    private OAuth2Service oAuth2Service;
+
+    @Autowired
+    private OAuth2AppTokenFactory oAuth2AppTokenFactory;
+
     @Autowired(required = false)
     private OAuth2Configuration oauth2Configuration;
 
@@ -71,7 +81,9 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
     public OAuth2AuthorizationRequest resolve(HttpServletRequest request) {
         String registrationId = this.resolveRegistrationId(request);
         String redirectUriAction = getAction(request, "login");
-        return resolve(request, registrationId, redirectUriAction);
+        String appPackage = getAppPackage(request);
+        String appToken = getAppToken(request);
+        return resolve(request, registrationId, redirectUriAction, appPackage, appToken);
     }
 
     @Override
@@ -80,7 +92,9 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
             return null;
         }
         String redirectUriAction = getAction(request, "authorize");
-        return resolve(request, registrationId, redirectUriAction);
+        String appPackage = getAppPackage(request);
+        String appToken = getAppToken(request);
+        return resolve(request, registrationId, redirectUriAction, appPackage, appToken);
     }
 
     private String getAction(HttpServletRequest request, String defaultAction) {
@@ -91,8 +105,16 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
         return action;
     }
 
+    private String getAppPackage(HttpServletRequest request) {
+        return request.getParameter("pkg");
+    }
+
+    private String getAppToken(HttpServletRequest request) {
+        return request.getParameter("appToken");
+    }
+
     @SuppressWarnings("deprecation")
-    private OAuth2AuthorizationRequest resolve(HttpServletRequest request, String registrationId, String redirectUriAction) {
+    private OAuth2AuthorizationRequest resolve(HttpServletRequest request, String registrationId, String redirectUriAction, String appPackage, String appToken) {
         if (registrationId == null) {
             return null;
         }
@@ -104,6 +126,18 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
 
         Map<String, Object> attributes = new HashMap<>();
         attributes.put(OAuth2ParameterNames.REGISTRATION_ID, clientRegistration.getRegistrationId());
+        if (!StringUtils.isEmpty(appPackage)) {
+            if (StringUtils.isEmpty(appToken)) {
+                throw new IllegalArgumentException("Invalid application token.");
+            } else {
+                String appSecret = this.oAuth2Service.findAppSecret(UUID.fromString(registrationId), appPackage);
+                if (StringUtils.isEmpty(appSecret)) {
+                    throw new IllegalArgumentException("Invalid package: " + appPackage + ". No application secret found for Client Registration with given application package.");
+                }
+                String callbackUrlScheme = this.oAuth2AppTokenFactory.validateTokenAndGetCallbackUrlScheme(appPackage, appToken, appSecret);
+                attributes.put(TbOAuth2ParameterNames.CALLBACK_URL_SCHEME, callbackUrlScheme);
+            }
+        }
 
         OAuth2AuthorizationRequest.Builder builder;
         if (AuthorizationGrantType.AUTHORIZATION_CODE.equals(clientRegistration.getAuthorizationGrantType())) {

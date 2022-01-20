@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.event.DebugEvent;
 import org.thingsboard.server.common.data.event.ErrorEventFilter;
 import org.thingsboard.server.common.data.event.EventFilter;
-import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.event.LifeCycleEventFilter;
 import org.thingsboard.server.common.data.event.StatisticsEventFilter;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -61,6 +60,9 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
 
     @Autowired
     private EventInsertRepository eventInsertRepository;
+
+    @Autowired
+    private EventCleanupRepository eventCleanupRepository;
 
     @Override
     protected Class<EventEntity> getEntityClass() {
@@ -190,7 +192,7 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
                         eventFilter.getEntityId(),
                         eventFilter.getMsgType(),
                         eventFilter.isError(),
-                        eventFilter.getError(),
+                        eventFilter.getErrorStr(),
                         eventFilter.getDataSearch(),
                         eventFilter.getMetadataSearch(),
                         DaoUtil.toPageable(pageLink)));
@@ -206,7 +208,7 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
                         notNull(pageLink.getEndTime()),
                         eventFilter.getServer(),
                         eventFilter.getMethod(),
-                        eventFilter.getError(),
+                        eventFilter.getErrorStr(),
                         DaoUtil.toPageable(pageLink))
         );
     }
@@ -225,7 +227,7 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
                         eventFilter.getEvent(),
                         statusFilterEnabled,
                         statusFilter,
-                        eventFilter.getError(),
+                        eventFilter.getErrorStr(),
                         DaoUtil.toPageable(pageLink))
         );
     }
@@ -254,6 +256,12 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
                 eventType,
                 PageRequest.of(0, limit));
         return DaoUtil.convertDataList(latest);
+    }
+
+    @Override
+    public void cleanupEvents(long otherEventsTtl, long debugEventsTtl) {
+        log.info("Going to cleanup old events using debug events ttl: {}s and other events ttl: {}s", debugEventsTtl, otherEventsTtl);
+        eventCleanupRepository.cleanupEvents(otherEventsTtl, debugEventsTtl);
     }
 
     public Optional<Event> save(EventEntity entity, boolean ifNotExists) {

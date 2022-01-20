@@ -47,11 +47,15 @@ public class ProtoTransportPayloadConfiguration implements TransportPayloadTypeC
     public static final String TELEMETRY_PROTO_SCHEMA = "telemetry proto schema";
     public static final String RPC_RESPONSE_PROTO_SCHEMA = "rpc response proto schema";
     public static final String RPC_REQUEST_PROTO_SCHEMA = "rpc request proto schema";
+    private static final String PROTO_3_SYNTAX = "proto3";
 
     private String deviceTelemetryProtoSchema;
     private String deviceAttributesProtoSchema;
     private String deviceRpcRequestProtoSchema;
     private String deviceRpcResponseProtoSchema;
+
+    private boolean enableCompatibilityWithJsonPayloadFormat;
+    private boolean useJsonPayloadFormatForDefaultDownlinkTopics;
 
     @Override
     public TransportPayloadType getTransportPayloadType() {
@@ -82,7 +86,7 @@ public class ProtoTransportPayloadConfiguration implements TransportPayloadTypeC
                     "package rpc;\n" +
                     "\n" +
                     "message RpcResponseMsg {\n" +
-                    "  string payload = 1;\n" +
+                    "  optional string payload = 1;\n" +
                     "}";
         }
     }
@@ -95,9 +99,9 @@ public class ProtoTransportPayloadConfiguration implements TransportPayloadTypeC
                     "package rpc;\n" +
                     "\n" +
                     "message RpcRequestMsg {\n" +
-                    "  string method = 1;\n" +
-                    "  int32 requestId = 2;\n" +
-                    "  string params = 3;\n" +
+                    "  optional string method = 1;\n" +
+                    "  optional int32 requestId = 2;\n" +
+                    "  optional string params = 3;\n" +
                     "}";
         }
     }
@@ -123,6 +127,7 @@ public class ProtoTransportPayloadConfiguration implements TransportPayloadTypeC
     public DynamicSchema getDynamicSchema(ProtoFileElement protoFileElement, String schemaName) {
         DynamicSchema.Builder schemaBuilder = DynamicSchema.newBuilder();
         schemaBuilder.setName(schemaName);
+        schemaBuilder.setSyntax(PROTO_3_SYNTAX);
         schemaBuilder.setPackage(!isEmptyStr(protoFileElement.getPackageName()) ?
                 protoFileElement.getPackageName() : schemaName.toLowerCase());
         List<TypeElement> types = protoFileElement.getTypes();

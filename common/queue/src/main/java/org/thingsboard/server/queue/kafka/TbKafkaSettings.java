@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.TbProperty;
 
 import java.util.Collections;
 import java.util.List;
@@ -62,6 +63,12 @@ public class TbKafkaSettings {
 
     @Value("${queue.kafka.linger.ms}")
     private long lingerMs;
+
+    @Value("${queue.kafka.max.request.size:1048576}")
+    private int maxRequestSize;
+
+    @Value("${queue.kafka.max.in.flight.requests.per.connection:5}")
+    private int maxInFlightRequestsPerConnection;
 
     @Value("${queue.kafka.buffer.memory}")
     private long bufferMemory;
@@ -98,10 +105,10 @@ public class TbKafkaSettings {
     private String securityProtocol;
 
     @Setter
-    private List<TbKafkaProperty> other;
+    private List<TbProperty> other;
 
     @Setter
-    private Map<String, List<TbKafkaProperty>> consumerPropertiesPerTopic = Collections.emptyMap();
+    private Map<String, List<TbProperty>> consumerPropertiesPerTopic = Collections.emptyMap();
 
     public Properties toAdminProps() {
         Properties props = toProps();
@@ -139,6 +146,8 @@ public class TbKafkaSettings {
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
         props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, compressionType);
+        props.put(ProducerConfig.MAX_REQUEST_SIZE_CONFIG, maxRequestSize);
+        props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, maxInFlightRequestsPerConnection);
         return props;
     }
 

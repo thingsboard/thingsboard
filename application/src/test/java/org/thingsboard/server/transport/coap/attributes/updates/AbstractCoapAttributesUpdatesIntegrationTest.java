@@ -71,7 +71,7 @@ public abstract class AbstractCoapAttributesUpdatesIntegrationTest extends Abstr
         if (!emptyCurrentStateNotification) {
             doPostAsync("/api/plugins/telemetry/DEVICE/" + savedDevice.getId().getId() + "/attributes/SHARED_SCOPE", POST_ATTRIBUTES_PAYLOAD_ON_CURRENT_STATE_NOTIFICATION, String.class, status().isOk());
         }
-        CoapClient client = getCoapClient(FeatureType.ATTRIBUTES);
+        client = getCoapClient(FeatureType.ATTRIBUTES);
 
         CountDownLatch latch = new CountDownLatch(1);
         TestCoapCallback callback = new TestCoapCallback(latch);
@@ -109,7 +109,7 @@ public abstract class AbstractCoapAttributesUpdatesIntegrationTest extends Abstr
     protected void validateCurrentStateAttributesResponse(TestCoapCallback callback) throws InvalidProtocolBufferException {
         assertNotNull(callback.getPayloadBytes());
         assertNotNull(callback.getObserve());
-        assertEquals(callback.getResponseCode(), CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
+        assertEquals(CoAP.ResponseCode.CONTENT, callback.getResponseCode());
         assertEquals(0, callback.getObserve().intValue());
         String response = new String(callback.getPayloadBytes(), StandardCharsets.UTF_8);
         assertEquals(JacksonUtil.toJsonNode(POST_ATTRIBUTES_PAYLOAD_ON_CURRENT_STATE_NOTIFICATION), JacksonUtil.toJsonNode(response));
@@ -118,7 +118,7 @@ public abstract class AbstractCoapAttributesUpdatesIntegrationTest extends Abstr
     protected void validateEmptyCurrentStateAttributesResponse(TestCoapCallback callback) throws InvalidProtocolBufferException {
         assertNotNull(callback.getPayloadBytes());
         assertNotNull(callback.getObserve());
-        assertEquals(callback.getResponseCode(), CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
+        assertEquals(CoAP.ResponseCode.CONTENT, callback.getResponseCode());
         assertEquals(0, callback.getObserve().intValue());
         String response = new String(callback.getPayloadBytes(), StandardCharsets.UTF_8);
         assertEquals("{}", response);
@@ -127,7 +127,7 @@ public abstract class AbstractCoapAttributesUpdatesIntegrationTest extends Abstr
     protected void validateUpdateAttributesResponse(TestCoapCallback callback) throws InvalidProtocolBufferException {
         assertNotNull(callback.getPayloadBytes());
         assertNotNull(callback.getObserve());
-        assertEquals(callback.getResponseCode(), CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
+        assertEquals(CoAP.ResponseCode.CONTENT, callback.getResponseCode());
         assertEquals(1, callback.getObserve().intValue());
         String response = new String(callback.getPayloadBytes(), StandardCharsets.UTF_8);
         assertEquals(JacksonUtil.toJsonNode(POST_ATTRIBUTES_PAYLOAD), JacksonUtil.toJsonNode(response));
@@ -136,7 +136,7 @@ public abstract class AbstractCoapAttributesUpdatesIntegrationTest extends Abstr
     protected void validateDeleteAttributesResponse(TestCoapCallback callback) throws InvalidProtocolBufferException {
         assertNotNull(callback.getPayloadBytes());
         assertNotNull(callback.getObserve());
-        assertEquals(callback.getResponseCode(), CoAP.ResponseCode._UNKNOWN_SUCCESS_CODE);
+        assertEquals(CoAP.ResponseCode.CONTENT, callback.getResponseCode());
         assertEquals(2, callback.getObserve().intValue());
         String response = new String(callback.getPayloadBytes(), StandardCharsets.UTF_8);
         assertEquals(JacksonUtil.toJsonNode(RESPONSE_ATTRIBUTES_PAYLOAD_DELETED), JacksonUtil.toJsonNode(response));

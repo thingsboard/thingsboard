@@ -34,7 +34,12 @@
     #queueAutocomplete="matAutocomplete"
     [displayWith]="displayQueueFn">
     <mat-option *ngFor="let queue of filteredQueues | async" [value]="queue">
-      <span [innerHTML]="queue | highlight:searchText"></span>
+      <span [innerHTML]="queue.queueName | highlight:searchText"></span>
+    </mat-option>
+    <mat-option *ngIf="!(filteredQueues | async)?.length" [value]="null">
+      <span>
+        {{ translate.get('queue.no-queues-matching', {queue: searchText}) | async }}
+      </span>
     </mat-option>
   </mat-autocomplete>
   <mat-error *ngIf="queueFormGroup.get('queue').hasError('required')">

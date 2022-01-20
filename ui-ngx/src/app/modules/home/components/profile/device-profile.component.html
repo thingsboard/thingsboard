@@ -54,14 +54,18 @@
         <mat-error *ngIf="entityForm.get('name').hasError('required')">
           {{ 'device-profile.name-required' | translate }}
         </mat-error>
+        <mat-error *ngIf="entityForm.get('name').hasError('maxlength')">
+          {{ 'device-profile.name-max-length' | translate }}
+        </mat-error>
       </mat-form-field>
       <tb-rule-chain-autocomplete
         labelText="device-profile.default-rule-chain"
         formControlName="defaultRuleChainId">
       </tb-rule-chain-autocomplete>
       <tb-dashboard-autocomplete
-        placeholder="{{'device-profile.default-dashboard' | translate}}"
+        placeholder="{{'device-profile.mobile-dashboard' | translate}}"
         formControlName="defaultDashboardId">
+        <div tb-hint>{{'device-profile.mobile-dashboard-hint' | translate}}</div>
       </tb-dashboard-autocomplete>
       <tb-queue-type-list
         [queueType]="serviceType"
@@ -134,6 +138,7 @@
             <ng-template matExpansionPanelContent>
               <tb-device-profile-transport-configuration
                 formControlName="transportConfiguration"
+                [isAdd] = "isTransportTypeChanged"
                 required>
               </tb-device-profile-transport-configuration>
             </ng-template>

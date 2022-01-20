@@ -28,15 +28,30 @@ public class EncryptionUtil {
     private EncryptionUtil() {
     }
 
-    public static String trimNewLines(String input) {
+    public static String certTrimNewLines(String input) {
         return input.replaceAll("-----BEGIN CERTIFICATE-----", "")
-                .replaceAll("-----END CERTIFICATE-----", "")
                 .replaceAll("\n", "")
-                .replaceAll("\r", "");
+                .replaceAll("\r", "")
+                .replaceAll("-----END CERTIFICATE-----", "");
     }
 
+    public static String pubkTrimNewLines(String input) {
+        return input.replaceAll("-----BEGIN PUBLIC KEY-----", "")
+                .replaceAll("\n", "")
+                .replaceAll("\r", "")
+                .replaceAll("-----END PUBLIC KEY-----", "");
+    }
+
+    public static String prikTrimNewLines(String input) {
+        return input.replaceAll("-----BEGIN EC PRIVATE KEY-----", "")
+                .replaceAll("\n", "")
+                .replaceAll("\r", "")
+                .replaceAll("-----END EC PRIVATE KEY-----", "");
+    }
+
+
     public static String getSha3Hash(String data) {
-        String trimmedData = trimNewLines(data);
+        String trimmedData = certTrimNewLines(data);
         byte[] dataBytes = trimmedData.getBytes();
         SHA3Digest md = new SHA3Digest(256);
         md.reset();

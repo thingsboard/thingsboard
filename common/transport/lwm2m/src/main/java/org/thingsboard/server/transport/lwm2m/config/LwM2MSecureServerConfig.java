@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.transport.lwm2m.config;
 
+import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
+
 public interface LwM2MSecureServerConfig {
 
     Integer getId();
@@ -27,12 +29,6 @@ public interface LwM2MSecureServerConfig {
 
     Integer getSecurePort();
 
-    String getPublicX();
-
-    String getPublicY();
-
-    String getPrivateEncoded();
-
-    String getCertificateAlias();
+    SslCredentials getSslCredentials();
 
 }

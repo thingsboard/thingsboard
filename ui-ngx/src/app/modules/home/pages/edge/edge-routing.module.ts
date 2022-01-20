@@ -18,7 +18,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
 import { Authority } from '@shared/models/authority.enum';
-import { EdgesTableConfigResolver } from '@home/pages/edge/edges-table-config.resolver'
+import { EdgesTableConfigResolver } from '@home/pages/edge/edges-table-config.resolver';
 import { AssetsTableConfigResolver } from '@home/pages/asset/assets-table-config.resolver';
 import { DevicesTableConfigResolver } from '@home/pages/device/devices-table-config.resolver';
 import { EntityViewsTableConfigResolver } from '@home/pages/entity-view/entity-views-table-config.resolver';
@@ -32,7 +32,7 @@ import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { RuleChainType } from '@shared/models/rule-chain.models';
 import {
   importRuleChainBreadcumbLabelFunction,
-  ResolvedRuleChainMetaDataResolver,
+  RuleChainMetaDataResolver,
   ruleChainBreadcumbLabelFunction,
   RuleChainImportGuard,
   RuleChainResolver,
@@ -42,7 +42,7 @@ import {
 
 const routes: Routes = [
   {
-    path: 'edges',
+    path: 'edgeInstances',
     data: {
       breadcrumb: {
         label: 'edge.edge-instances',
@@ -181,12 +181,30 @@ const routes: Routes = [
             },
             resolve: {
               ruleChain: RuleChainResolver,
-              ruleChainMetaData: ResolvedRuleChainMetaDataResolver,
+              ruleChainMetaData: RuleChainMetaDataResolver,
               ruleNodeComponents: RuleNodeComponentsResolver,
               tooltipster: TooltipsterResolver
             }
           }
         ]
+      }
+    ]
+  },
+  {
+    path: 'edgeManagement',
+    data: {
+      breadcrumb: {
+        label: 'edge.management',
+        icon: 'settings_input_antenna'
+      }
+    },
+    children: [
+      {
+        path: '',
+        data: {
+          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+          redirectTo: '/edgeManagement/ruleChains'
+        }
       },
       {
         path: 'ruleChains',
@@ -225,7 +243,7 @@ const routes: Routes = [
             },
             resolve: {
               ruleChain: RuleChainResolver,
-              ruleChainMetaData: ResolvedRuleChainMetaDataResolver,
+              ruleChainMetaData: RuleChainMetaDataResolver,
               ruleNodeComponents: RuleNodeComponentsResolver,
               tooltipster: TooltipsterResolver
             }

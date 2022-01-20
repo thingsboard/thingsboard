@@ -29,23 +29,24 @@ import org.eclipse.californium.scandium.dtls.HandshakeResultHandler;
 import org.eclipse.californium.scandium.dtls.x509.NewAdvancedCertificateVerifier;
 import org.eclipse.californium.scandium.dtls.x509.StaticCertificateVerifier;
 import org.eclipse.californium.scandium.util.ServerNames;
+import org.eclipse.leshan.core.util.SecurityUtil;
+import org.eclipse.leshan.server.security.NonUniqueSecurityInfoException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredential;
 import org.thingsboard.server.common.msg.EncryptionUtil;
-import org.thingsboard.server.common.transport.TransportService;
-import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.common.transport.util.SslUtil;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
-import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredentials;
+import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MClientCredentials;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
+import org.thingsboard.server.transport.lwm2m.server.store.TbMainSecurityStore;
 
 import javax.annotation.PostConstruct;
 import javax.security.auth.x500.X500Principal;
@@ -57,8 +58,8 @@ import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+
+import static org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer.CLIENT;
 
 @Slf4j
 @Component
@@ -66,9 +67,10 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVerifier {
 
-    private final TransportService transportService;
     private final TbLwM2MDtlsSessionStore sessionStorage;
     private final LwM2MTransportServerConfig config;
+    private final LwM2mCredentialsSecurityInfoValidator securityInfoValidator;
+    private final TbMainSecurityStore securityStore;
 
     @SuppressWarnings("deprecation")
     private StaticCertificateVerifier staticCertificateVerifier;
@@ -81,17 +83,14 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
         return Arrays.asList(CertificateType.X_509, CertificateType.RAW_PUBLIC_KEY);
     }
 
+    @SuppressWarnings("deprecation")
     @PostConstruct
     public void init() {
         try {
             /* by default trust all */
             X509Certificate[] trustedCertificates = new X509Certificate[0];
-            if (config.getKeyStoreValue() != null) {
-                X509Certificate rootCAX509Cert = (X509Certificate) config.getKeyStoreValue().getCertificate(config.getRootCertificateAlias());
-                if (rootCAX509Cert != null) {
-                    trustedCertificates = new X509Certificate[1];
-                    trustedCertificates[0] = rootCAX509Cert;
-                }
+            if (config.getTrustSslCredentials() != null) {
+                trustedCertificates = config.getTrustSslCredentials().getTrustedCertificates();
             }
             staticCertificateVerifier = new StaticCertificateVerifier(trustedCertificates);
         } catch (Exception e) {
@@ -117,50 +116,51 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
                             cert.checkValidity();
                         }
 
-                        String strCert = SslUtil.getCertificateString(cert);
-                        String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
-                        final ValidateDeviceCredentialsResponse[] deviceCredentialsResponse = new ValidateDeviceCredentialsResponse[1];
-                        CountDownLatch latch = new CountDownLatch(1);
-                        transportService.process(TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg.newBuilder().setCredentialsId(sha3Hash).build(),
-                                new TransportServiceCallback<>() {
-                                    @Override
-                                    public void onSuccess(ValidateDeviceCredentialsResponse msg) {
-                                        if (!StringUtils.isEmpty(msg.getCredentials())) {
-                                            deviceCredentialsResponse[0] = msg;
-                                        }
-                                        latch.countDown();
-                                    }
 
-                                    @Override
-                                    public void onError(Throwable e) {
-                                        log.error(e.getMessage(), e);
-                                        latch.countDown();
-                                    }
-                                });
-                        if (latch.await(10, TimeUnit.SECONDS)) {
-                            ValidateDeviceCredentialsResponse msg = deviceCredentialsResponse[0];
-                            if (msg != null && org.thingsboard.server.common.data.StringUtils.isNotEmpty(msg.getCredentials())) {
-                                LwM2MCredentials credentials = JacksonUtil.fromString(msg.getCredentials(), LwM2MCredentials.class);
-                                if(!credentials.getClient().getSecurityConfigClientMode().equals(LwM2MSecurityMode.X509)){
-                                    continue;
-                                }
-                                X509ClientCredentials config = (X509ClientCredentials) credentials.getClient();
-                                String certBody = config.getCert();
-                                String endpoint = config.getEndpoint();
-                                if (strCert.equals(certBody)) {
-                                    x509CredentialsFound = true;
-                                    DeviceProfile deviceProfile = msg.getDeviceProfile();
-                                    if (msg.hasDeviceInfo() && deviceProfile != null) {
-                                        sessionStorage.put(endpoint, new TbX509DtlsSessionInfo(cert.getSubjectX500Principal().getName(), msg));
-                                        break;
-                                    }
-                                } else {
-                                    log.trace("[{}][{}] Certificate mismatch. Expected: {}, Actual: {}", endpoint, sha3Hash, strCert, certBody);
-                                }
+                        TbLwM2MSecurityInfo securityInfo = null;
+                        // verify if trust
+                        if (config.getTrustSslCredentials().getTrustedCertificates().length > 0) {
+                            if (verifyIssuer(cert, config.getTrustSslCredentials().getTrustedCertificates()) != null) {
+                                String endpoint = config.getTrustSslCredentials().getValueFromSubjectNameByKey(cert.getSubjectX500Principal().getName(), "CN");
+                                securityInfo = StringUtils.isNotEmpty(endpoint) ? securityInfoValidator.getEndpointSecurityInfoByCredentialsId(endpoint, CLIENT) : null;
                             }
                         }
-                    } catch (InterruptedException |
-                            CertificateEncodingException |
+                        // if not trust or cert trust securityInfo == null
+                        String strCert = SslUtil.getCertificateString(cert);
+                        String sha3Hash = EncryptionUtil.getSha3Hash(strCert);
+                        if (securityInfo == null) {
+                            try {
+                                securityInfo = securityInfoValidator.getEndpointSecurityInfoByCredentialsId(sha3Hash, CLIENT);
+                            } catch (LwM2MAuthException e) {
+                                log.trace("Failed find security info: {}", sha3Hash, e);
+                            }
+                        }
+                        ValidateDeviceCredentialsResponse msg = securityInfo != null ? securityInfo.getMsg() : null;
+                        if (msg != null && org.thingsboard.server.common.data.StringUtils.isNotEmpty(msg.getCredentials())) {
+                            LwM2MClientCredentials credentials = JacksonUtil.fromString(msg.getCredentials(), LwM2MClientCredentials.class);
+                            if (!credentials.getClient().getSecurityConfigClientMode().equals(LwM2MSecurityMode.X509)) {
+                                continue;
+                            }
+                            X509ClientCredential config = (X509ClientCredential) credentials.getClient();
+                            String certBody = config.getCert();
+                            String endpoint = config.getEndpoint();
+                            if (StringUtils.isBlank(certBody) || strCert.equals(certBody)) {
+                                x509CredentialsFound = true;
+                                DeviceProfile deviceProfile = msg.getDeviceProfile();
+                                if (msg.hasDeviceInfo() && deviceProfile != null) {
+                                    sessionStorage.put(endpoint, new TbX509DtlsSessionInfo(cert.getSubjectX500Principal().getName(), msg));
+                                    try {
+                                        securityStore.putX509(securityInfo);
+                                    } catch (NonUniqueSecurityInfoException e) {
+                                        log.trace("Failed to add security info: {}", securityInfo, e);
+                                    }
+                                    break;
+                                }
+                            } else {
+                                log.trace("[{}][{}] Certificate mismatch. Expected: {}, Actual: {}", endpoint, sha3Hash, strCert, certBody);
+                            }
+                        }
+                    } catch (CertificateEncodingException |
                             CertificateExpiredException |
                             CertificateNotYetValidException e) {
                         log.error(e.getMessage(), e);
@@ -191,5 +191,33 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
     @Override
     public void setResultHandler(HandshakeResultHandler resultHandler) {
 
+    }
+
+    private X509Certificate verifyIssuer(X509Certificate certificate, X509Certificate[] certificates) {
+        String issuerCN = config.getTrustSslCredentials().getValueFromSubjectNameByKey(certificate.getIssuerX500Principal().getName(), "CN");
+        if (!StringUtils.isBlank(issuerCN)) {
+            for (int index = 0; index < certificates.length; ++index) {
+                X509Certificate trust = certificates[index];
+                String trustCN = config.getTrustSslCredentials().getValueFromSubjectNameByKey(trust.getSubjectX500Principal().getName(), "CN");
+                if (!StringUtils.isBlank(trustCN) && issuerCN.length() >= trustCN.length() && issuerCN.substring(issuerCN.length()-trustCN.length()).equals(trustCN)) {
+                    if (verifyCertificate(certificate)) {
+                        return certificate;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean verifyCertificate(X509Certificate certificate) {
+        try {
+            // date
+            certificate.checkValidity();
+            // Validate X509.
+            SecurityUtil.certificate.decode(certificate.getEncoded());
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

@@ -15,9 +15,18 @@
 ///
 
 import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Observable, Subscription, throwError } from 'rxjs';
-import { map, mergeMap, publishReplay, refCount, tap } from 'rxjs/operators';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { Observable, of, Subscription, throwError } from 'rxjs';
+import {
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  publishReplay,
+  refCount,
+  switchMap,
+  tap
+} from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -49,9 +58,11 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
   entityType: EntityType;
 
   private requiredValue: boolean;
+
   get required(): boolean {
     return this.requiredValue;
   }
+
   @Input()
   set required(value: boolean) {
     this.requiredValue = coerceBooleanProperty(value);
@@ -65,6 +76,7 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
   selectEntitySubtypeText: string;
   entitySubtypeText: string;
   entitySubtypeRequiredText: string;
+  entitySubtypeMaxLength: string;
 
   filteredSubTypes: Observable<Array<string>>;
 
@@ -87,7 +99,7 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
               private entityViewService: EntityViewService,
               private fb: FormBuilder) {
     this.subTypeFormGroup = this.fb.group({
-      subType: [null]
+      subType: [null, Validators.maxLength(255)]
     });
   }
 
@@ -105,6 +117,7 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
         this.selectEntitySubtypeText = 'asset.select-asset-type';
         this.entitySubtypeText = 'asset.asset-type';
         this.entitySubtypeRequiredText = 'asset.asset-type-required';
+        this.entitySubtypeMaxLength = 'asset.asset-type-max-length';
         this.broadcastSubscription = this.broadcast.on('assetSaved', () => {
           this.subTypes = null;
         });
@@ -113,6 +126,7 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
         this.selectEntitySubtypeText = 'device.select-device-type';
         this.entitySubtypeText = 'device.device-type';
         this.entitySubtypeRequiredText = 'device.device-type-required';
+        this.entitySubtypeMaxLength = 'device.device-type-max-length';
         this.broadcastSubscription = this.broadcast.on('deviceSaved', () => {
           this.subTypes = null;
         });
@@ -121,6 +135,7 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
         this.selectEntitySubtypeText = 'edge.select-edge-type';
         this.entitySubtypeText = 'edge.edge-type';
         this.entitySubtypeRequiredText = 'edge.edge-type-required';
+        this.entitySubtypeMaxLength = 'edge.type-max-length';
         this.broadcastSubscription = this.broadcast.on('edgeSaved', () => {
           this.subTypes = null;
         });
@@ -129,6 +144,7 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
         this.selectEntitySubtypeText = 'entity-view.select-entity-view-type';
         this.entitySubtypeText = 'entity-view.entity-view-type';
         this.entitySubtypeRequiredText = 'entity-view.entity-view-type-required';
+        this.entitySubtypeMaxLength = 'entity-view.type-max-length'
         this.broadcastSubscription = this.broadcast.on('entityViewSaved', () => {
           this.subTypes = null;
         });
@@ -137,12 +153,14 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
 
     this.filteredSubTypes = this.subTypeFormGroup.get('subType').valueChanges
       .pipe(
+        debounceTime(150),
+        distinctUntilChanged(),
         tap(value => {
-            this.updateView(value);
+          this.updateView(value);
         }),
         // startWith<string | EntitySubtype>(''),
         map(value => value ? value : ''),
-        mergeMap(type => this.fetchSubTypes(type) )
+        switchMap(type => this.fetchSubTypes(type))
       );
   }
 
@@ -192,7 +210,7 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
   fetchSubTypes(searchText?: string, strictMatch: boolean = false): Observable<Array<string>> {
     this.searchText = searchText;
     return this.getSubTypes().pipe(
-      map(subTypes => subTypes.filter( subType => {
+      map(subTypes => subTypes.filter(subType => {
         if (strictMatch) {
           return searchText ? subType === searchText : false;
         } else {
@@ -221,6 +239,7 @@ export class EntitySubTypeAutocompleteComponent implements ControlValueAccessor,
       }
       if (subTypesObservable) {
         this.subTypes = subTypesObservable.pipe(
+          catchError(() => of([] as Array<EntitySubtype>)),
           map(subTypes => subTypes.map(subType => subType.type)),
           publishReplay(1),
           refCount()

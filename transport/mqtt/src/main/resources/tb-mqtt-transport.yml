@@ -89,6 +89,7 @@ transport:
     bind_address: "${MQTT_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${MQTT_BIND_PORT:1883}"
     timeout: "${MQTT_TIMEOUT:10000}"
+    msg_queue_size_per_device_limit: "${MQTT_MSG_QUEUE_SIZE_PER_DEVICE_LIMIT:100}" # messages await in the queue before device connected state. This limit works on low level before TenantProfileLimits mechanism
     netty:
       leak_detector_level: "${NETTY_LEAK_DETECTOR_LVL:DISABLED}"
       boss_group_thread_count: "${NETTY_BOSS_GROUP_THREADS:1}"
@@ -99,26 +100,53 @@ transport:
     ssl:
       # Enable/disable SSL support
       enabled: "${MQTT_SSL_ENABLED:false}"
-      # SSL protocol: See http://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#SSLContext
+      # MQTT SSL bind address
+      bind_address: "${MQTT_SSL_BIND_ADDRESS:0.0.0.0}"
+      # MQTT SSL bind port
+      bind_port: "${MQTT_SSL_BIND_PORT:8883}"
+      # SSL protocol: See https://docs.oracle.com/en/java/javase/11/docs/specs/security/standard-names.html#sslcontext-algorithms
       protocol: "${MQTT_SSL_PROTOCOL:TLSv1.2}"
-      # Path to the key store that holds the SSL certificate
-      key_store: "${MQTT_SSL_KEY_STORE:mqttserver.jks}"
-      # Password used to access the key store
-      key_store_password: "${MQTT_SSL_KEY_STORE_PASSWORD:server_ks_password}"
-      # Password used to access the key
-      key_password: "${MQTT_SSL_KEY_PASSWORD:server_key_password}"
-      # Type of the key store
-      key_store_type: "${MQTT_SSL_KEY_STORE_TYPE:JKS}"
+      # Server SSL credentials
+      credentials:
+        # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
+        type:  "${MQTT_SSL_CREDENTIALS_TYPE:PEM}"
+        # PEM server credentials
+        pem:
+          # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
+          cert_file: "${MQTT_SSL_PEM_CERT:mqttserver.pem}"
+          # Path to the server certificate private key file. Optional by default. Required if the private key is not present in server certificate file;
+          key_file: "${MQTT_SSL_PEM_KEY:mqttserver_key.pem}"
+          # Server certificate private key password (optional)
+          key_password: "${MQTT_SSL_PEM_KEY_PASSWORD:server_key_password}"
+        # Keystore server credentials
+        keystore:
+          # Type of the key store
+          type: "${MQTT_SSL_KEY_STORE_TYPE:JKS}"
+          # Path to the key store that holds the SSL certificate
+          store_file: "${MQTT_SSL_KEY_STORE:mqttserver.jks}"
+          # Password used to access the key store
+          store_password: "${MQTT_SSL_KEY_STORE_PASSWORD:server_ks_password}"
+          # Optional alias of the private key; If not set, the platform will load the first private key from the keystore;
+          key_alias: "${MQTT_SSL_KEY_ALIAS:}"
+          # Password used to access the key
+          key_password: "${MQTT_SSL_KEY_PASSWORD:server_key_password}"
       # Skip certificate validity check for client certificates.
       skip_validity_check_for_client_cert: "${MQTT_SSL_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
   sessions:
     inactivity_timeout: "${TB_TRANSPORT_SESSIONS_INACTIVITY_TIMEOUT:300000}"
-    report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:30000}"
+    report_timeout: "${TB_TRANSPORT_SESSIONS_REPORT_TIMEOUT:3000}"
   json:
     # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
     type_cast_enabled: "${JSON_TYPE_CAST_ENABLED:true}"
     # Maximum allowed string value length when processing Telemetry/Attributes JSON (0 value disables string value length check)
     max_string_value_length: "${JSON_MAX_STRING_VALUE_LENGTH:0}"
+  log:
+    enabled: "${TB_TRANSPORT_LOG_ENABLED:true}"
+    max_length: "${TB_TRANSPORT_LOG_MAX_LENGTH:1024}"
+  stats:
+    enabled: "${TB_TRANSPORT_STATS_ENABLED:true}"
+    print-interval-ms: "${TB_TRANSPORT_STATS_PRINT_INTERVAL_MS:60000}"
+
 
 queue:
   type: "${TB_QUEUE_TYPE:kafka}" # kafka (Apache Kafka) or aws-sqs (AWS SQS) or pubsub (PubSub) or service-bus (Azure Service Bus) or rabbitmq (RabbitMQ)
@@ -128,6 +156,8 @@ queue:
     retries: "${TB_KAFKA_RETRIES:1}"
     batch.size: "${TB_KAFKA_BATCH_SIZE:16384}"
     linger.ms: "${TB_KAFKA_LINGER_MS:1}"
+    max.request.size: "${TB_KAFKA_MAX_REQUEST_SIZE:1048576}"
+    max.in.flight.requests.per.connection: "${TB_KAFKA_MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION:5}"
     buffer.memory: "${TB_BUFFER_MEMORY:33554432}"
     replication_factor: "${TB_QUEUE_KAFKA_REPLICATION_FACTOR:1}"
     use_confluent_cloud: "${TB_QUEUE_KAFKA_USE_CONFLUENT_CLOUD:false}"
@@ -136,7 +166,11 @@ queue:
       sasl.mechanism: "${TB_QUEUE_KAFKA_CONFLUENT_SASL_MECHANISM:PLAIN}"
       sasl.config: "${TB_QUEUE_KAFKA_CONFLUENT_SASL_JAAS_CONFIG:org.apache.kafka.common.security.plain.PlainLoginModule required username=\"CLUSTER_API_KEY\" password=\"CLUSTER_API_SECRET\";}"
       security.protocol: "${TB_QUEUE_KAFKA_CONFLUENT_SECURITY_PROTOCOL:SASL_SSL}"
-    other:
+    other: # In this section you can specify custom parameters for Kafka consumer/producer and expose the env variables to configure outside
+      - key: "request.timeout.ms" # refer to https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html#producerconfigs_request.timeout.ms
+        value: "${TB_QUEUE_KAFKA_REQUEST_TIMEOUT_MS:30000}" # (30 seconds)
+      - key: "session.timeout.ms" # refer to https://docs.confluent.io/platform/current/installation/configuration/consumer-configs.html#consumerconfigs_session.timeout.ms
+        value: "${TB_QUEUE_KAFKA_SESSION_TIMEOUT_MS:10000}" # (10 seconds)
     topic-properties:
       rule-engine: "${TB_QUEUE_KAFKA_RE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
       core: "${TB_QUEUE_KAFKA_CORE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"

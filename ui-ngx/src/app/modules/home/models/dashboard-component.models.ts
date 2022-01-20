@@ -25,6 +25,8 @@ import { IterableDiffer, KeyValueDiffer } from '@angular/core';
 import { IAliasController, IStateController } from '@app/core/api/widget-api.models';
 import { enumerable } from '@shared/decorators/enumerable';
 import { UtilsService } from '@core/services/utils.service';
+import { FormattedData } from '@home/components/widget/lib/maps/map-models';
+import { parseData } from '@home/components/widget/lib/maps/common-maps-utils';
 
 export interface WidgetsData {
   widgets: Array<Widget>;
@@ -63,6 +65,7 @@ export interface IDashboardComponent {
   dashboardWidgets: DashboardWidgets;
   mobileAutofillHeight: boolean;
   isMobileSize: boolean;
+  isEdit: boolean;
   autofillHeight: boolean;
   dashboardTimewindow: Timewindow;
   dashboardTimewindowChanged: Observable<Timewindow>;
@@ -98,8 +101,17 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
   widgets: Iterable<Widget>;
   widgetLayouts: WidgetLayouts;
 
+  parentDashboard?: IDashboardComponent;
+
   [Symbol.iterator](): Iterator<DashboardWidget> {
-    return this.dashboardWidgets[Symbol.iterator]();
+    return this.activeDashboardWidgets[Symbol.iterator]();
+  }
+
+  get activeDashboardWidgets(): Array<DashboardWidget> {
+    if (this.dashboard.isMobileSize && !this.dashboard.isEdit) {
+      return this.dashboardWidgets.filter(w => !w.mobileHide);
+    }
+    return this.dashboardWidgets;
   }
 
   constructor(private dashboard: IDashboardComponent,
@@ -152,14 +164,15 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
     }
     if (updateRecords.length) {
       updateRecords.forEach((record) => {
+        let index;
         switch (record.operation) {
           case 'add':
             this.dashboardWidgets.push(
-              new DashboardWidget(this.dashboard, record.widget, record.widgetLayout)
+              new DashboardWidget(this.dashboard, record.widget, record.widgetLayout, this.parentDashboard)
             );
             break;
           case 'remove':
-            let index = this.dashboardWidgets.findIndex((dashboardWidget) => dashboardWidget.widgetId === record.widgetId);
+            index = this.dashboardWidgets.findIndex((dashboardWidget) => dashboardWidget.widgetId === record.widgetId);
             if (index > -1) {
               this.dashboardWidgets.splice(index, 1);
             }
@@ -170,7 +183,8 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
               const prevDashboardWidget = this.dashboardWidgets[index];
               if (!isEqual(prevDashboardWidget.widget, record.widget) ||
                   !isEqual(prevDashboardWidget.widgetLayout, record.widgetLayout)) {
-                this.dashboardWidgets[index] = new DashboardWidget(this.dashboard, record.widget, record.widgetLayout);
+                this.dashboardWidgets[index] = new DashboardWidget(this.dashboard, record.widget, record.widgetLayout,
+                  this.parentDashboard);
                 this.dashboardWidgets[index].highlighted = prevDashboardWidget.highlighted;
                 this.dashboardWidgets[index].selected = prevDashboardWidget.selected;
               } else {
@@ -261,7 +275,7 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
 
   private updateRowsAndSort() {
     let maxRows = this.dashboard.gridsterOpts.maxRows;
-    this.dashboardWidgets.forEach((dashboardWidget) => {
+    this.activeDashboardWidgets.forEach((dashboardWidget) => {
       const bottom = dashboardWidget.y + dashboardWidget.rows;
       maxRows = Math.max(maxRows, bottom);
     });
@@ -321,12 +335,16 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
   customHeaderActions: Array<WidgetHeaderAction>;
   widgetActions: Array<WidgetAction>;
 
-  widgetContext = new WidgetContext(this.dashboard, this, this.widget);
+  widgetContext = new WidgetContext(this.dashboard, this, this.widget, this.parentDashboard);
 
   widgetId: string;
 
   private gridsterItemComponentSubject = new Subject<GridsterItemComponentInterface>();
   private gridsterItemComponentValue: GridsterItemComponentInterface;
+
+  get mobileHide(): boolean {
+    return this.widgetLayout ? this.widgetLayout.mobileHide === true : false;
+  }
 
   set gridsterItemComponent(item: GridsterItemComponentInterface) {
     this.gridsterItemComponentValue = item;
@@ -359,7 +377,8 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
   constructor(
     private dashboard: IDashboardComponent,
     public widget: Widget,
-    public widgetLayout?: WidgetLayout) {
+    public widgetLayout?: WidgetLayout,
+    private parentDashboard?: IDashboardComponent) {
     if (!widget.id) {
       widget.id = guid();
     }
@@ -423,12 +442,44 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     this.showWidgetTitlePanel = this.widgetContext.hideTitlePanel ? false :
       this.showTitle || this.hasTimewindow;
 
-    this.showWidgetActions = this.widgetContext.hideTitlePanel ? false : true;
+    this.showWidgetActions = !this.widgetContext.hideTitlePanel;
 
-    this.customHeaderActions = this.widgetContext.customHeaderActions ? this.widgetContext.customHeaderActions : [];
+    this.updateCustomHeaderActions();
     this.widgetActions = this.widgetContext.widgetActions ? this.widgetContext.widgetActions : [];
     if (detectChanges) {
       this.widgetContext.detectContainerChanges();
+    }
+  }
+
+  updateCustomHeaderActions(detectChanges = false) {
+    let customHeaderActions: Array<WidgetHeaderAction>;
+    if (this.widgetContext.customHeaderActions) {
+      let data: FormattedData[] = [];
+      if (this.widgetContext.customHeaderActions.some(action => action.useShowWidgetHeaderActionFunction)) {
+        data = parseData(this.widgetContext.data || []);
+      }
+      customHeaderActions = this.widgetContext.customHeaderActions.filter(action => this.filterCustomHeaderAction(action, data));
+    } else {
+      customHeaderActions = [];
+    }
+    if (!isEqual(this.customHeaderActions, customHeaderActions)) {
+      this.customHeaderActions = customHeaderActions;
+      if (detectChanges) {
+        this.widgetContext.detectContainerChanges();
+      }
+    }
+  }
+
+  private filterCustomHeaderAction(action: WidgetHeaderAction, data: FormattedData[]): boolean {
+    if (action.useShowWidgetHeaderActionFunction) {
+      try {
+        return action.showWidgetHeaderActionFunction(this.widgetContext, data);
+      } catch (e) {
+        console.warn('Failed to execute showWidgetHeaderActionFunction', e);
+        return false;
+      }
+    } else {
+      return true;
     }
   }
 
@@ -498,7 +549,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
   @enumerable(true)
   get rows(): number {
     let res;
-    if (this.dashboard.isMobileSize && !this.dashboard.mobileAutofillHeight) {
+    if (this.dashboard.isMobileSize) {
       let mobileHeight;
       if (this.widgetLayout) {
         mobileHeight = this.widgetLayout.mobileHeight;

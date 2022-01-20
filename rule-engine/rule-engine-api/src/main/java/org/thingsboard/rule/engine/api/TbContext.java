@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.api;
 import io.netty.channel.EventLoopGroup;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -28,6 +29,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -47,7 +49,9 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
+import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -119,6 +123,24 @@ public interface TbContext {
     void enqueue(TbMsg msg, Runnable onSuccess, Consumer<Throwable> onFailure);
 
     /**
+     * Sends message to the nested rule chain.
+     * Fails processing of the message if the nested rule chain is not found.
+     *
+     * @param msg - the message
+     * @param ruleChainId - the id of a nested rule chain
+     */
+    void input(TbMsg msg, RuleChainId ruleChainId);
+
+    /**
+     * Sends message to the caller rule chain.
+     * Acknowledge the message if no caller rule chain is present in processing stack
+     *
+     * @param msg - the message
+     * @param relationType - the relation type that will be used to route messages in the caller rule chain
+     */
+    void output(TbMsg msg, String relationType);
+
+    /**
      * Puts new message to custom queue for processing
      *
      * @param msg - message
@@ -186,6 +208,8 @@ public interface TbContext {
 
     DeviceService getDeviceService();
 
+    TbClusterService getClusterService();
+
     DashboardService getDashboardService();
 
     RuleEngineAlarmService getAlarmService();
@@ -202,13 +226,15 @@ public interface TbContext {
 
     EntityViewService getEntityViewService();
 
+    ResourceService getResourceService();
+
+    OtaPackageService getOtaPackageService();
+
     RuleEngineDeviceProfileCache getDeviceProfileCache();
 
     EdgeService getEdgeService();
 
     EdgeEventService getEdgeEventService();
-
-    ListeningExecutor getJsExecutor();
 
     ListeningExecutor getMailExecutor();
 
@@ -218,7 +244,7 @@ public interface TbContext {
 
     ListeningExecutor getExternalCallExecutor();
 
-    MailService getMailService();
+    MailService getMailService(boolean isSystem);
 
     SmsService getSmsService();
 
@@ -238,7 +264,9 @@ public interface TbContext {
 
     CassandraCluster getCassandraCluster();
 
-    TbResultSetFuture submitCassandraTask(CassandraStatementTask task);
+    TbResultSetFuture submitCassandraReadTask(CassandraStatementTask task);
+
+    TbResultSetFuture submitCassandraWriteTask(CassandraStatementTask task);
 
     PageData<RuleNodeState> findRuleNodeStates(PageLink pageLink);
 

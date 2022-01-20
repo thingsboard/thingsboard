@@ -32,11 +32,13 @@ import {
 })
 export class DeviceProfileTabsComponent extends EntityTabsComponent<DeviceProfile> {
 
-  deviceTransportTypes = Object.keys(DeviceTransportType);
+  deviceTransportTypes = Object.values(DeviceTransportType);
 
   deviceTransportTypeTranslations = deviceTransportTypeTranslationMap;
 
   deviceTransportTypeHints = deviceTransportTypeHintMap;
+
+  isTransportTypeChanged = false;
 
   constructor(protected store: Store<AppState>) {
     super(store);
@@ -44,6 +46,9 @@ export class DeviceProfileTabsComponent extends EntityTabsComponent<DeviceProfil
 
   ngOnInit() {
     super.ngOnInit();
+    this.detailsForm.get('transportType').valueChanges.subscribe(() => {
+      this.isTransportTypeChanged = true;
+    });
   }
 
 }

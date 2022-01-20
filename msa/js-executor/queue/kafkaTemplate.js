@@ -23,8 +23,11 @@ const replicationFactor = Number(config.get('kafka.replication_factor'));
 const topicProperties = config.get('kafka.topic_properties');
 const kafkaClientId = config.get('kafka.client_id');
 const acks = Number(config.get('kafka.acks'));
+const maxBatchSize = Number(config.get('kafka.batch_size'));
+const linger = Number(config.get('kafka.linger_ms'));
 const requestTimeout = Number(config.get('kafka.requestTimeout'));
-const compressionType = (config.get('kafka.requestTimeout') === "gzip") ? CompressionTypes.GZIP : CompressionTypes.None;
+const compressionType = (config.get('kafka.compression') === "gzip") ? CompressionTypes.GZIP : CompressionTypes.None;
+const partitionsConsumedConcurrently = Number(config.get('kafka.partitions_consumed_concurrently'));
 
 let kafkaClient;
 let kafkaAdmin;
@@ -33,22 +36,65 @@ let producer;
 
 const configEntries = [];
 
+let batchMessages = [];
+let sendLoopInstance;
+
 function KafkaProducer() {
     this.send = async (responseTopic, scriptId, rawResponse, headers) => {
-        return producer.send(
-            {
-                topic: responseTopic,
-                acks: acks,
-                compression: compressionType,
-                messages: [
-                    {
-                        key: scriptId,
-                        value: rawResponse,
-                        headers: headers.data
-                    }
-                ]
-            });
+        logger.debug('Pending queue response, scriptId: [%s]', scriptId);
+        const message = {
+            topic: responseTopic,
+            messages: [{
+                key: scriptId,
+                value: rawResponse,
+                headers: headers.data
+            }]
+        };
+
+        await pushMessageToSendLater(message);
     }
+}
+
+async function pushMessageToSendLater(message) {
+    batchMessages.push(message);
+    if (batchMessages.length >= maxBatchSize) {
+        await sendMessagesAsBatch(true);
+    }
+}
+
+function sendLoopWithLinger() {
+    if (sendLoopInstance) {
+        clearTimeout(sendLoopInstance);
+    } else {
+        logger.debug("Starting new send loop with linger [%s]", linger)
+    }
+    sendLoopInstance = setTimeout(sendMessagesAsBatch, linger);
+}
+
+async function sendMessagesAsBatch(isImmediately) {
+    if (sendLoopInstance) {
+        logger.debug("sendMessagesAsBatch: Clear sendLoop scheduler. Starting new send loop with linger [%s]", linger);
+        clearTimeout(sendLoopInstance);
+    }
+    sendLoopInstance = null;
+    if (batchMessages.length > 0) {
+        logger.debug('sendMessagesAsBatch, length: [%s], %s', batchMessages.length, isImmediately ? 'immediately' : '');
+        const messagesToSend = batchMessages;
+        batchMessages = [];
+        try {
+            await producer.sendBatch({
+                topicMessages: messagesToSend,
+                acks: acks,
+                compression: compressionType
+            })
+            logger.debug('Response batch sent to kafka, length: [%s]', messagesToSend.length);
+        } catch(err) {
+            logger.error('Failed batch send to kafka, length: [%s], pending to reprocess msgs', messagesToSend.length);
+            logger.error(err.stack);
+            batchMessages = messagesToSend.concat(batchMessages);
+        }
+    }
+    sendLoopWithLinger();
 }
 
 (async () => {
@@ -64,8 +110,8 @@ function KafkaProducer() {
 
         let kafkaConfig = {
             brokers: kafkaBootstrapServers.split(','),
-                logLevel: logLevel.INFO,
-                logCreator: KafkaJsWinstonLogCreator
+            logLevel: logLevel.INFO,
+            logCreator: KafkaJsWinstonLogCreator
         };
 
         if (kafkaClientId) {
@@ -114,14 +160,55 @@ function KafkaProducer() {
 
         consumer = kafkaClient.consumer({groupId: 'js-executor-group'});
         producer = kafkaClient.producer();
+
+/*
+        //producer event instrumentation to debug
+        const { CONNECT } = producer.events;
+        const removeListenerC = producer.on(CONNECT, e => logger.info(`producer CONNECT`));
+        const { DISCONNECT } = producer.events;
+        const removeListenerD = producer.on(DISCONNECT, e => logger.info(`producer DISCONNECT`));
+        const { REQUEST } = producer.events;
+        const removeListenerR = producer.on(REQUEST, e => logger.info(`producer REQUEST ${e.payload.broker}`));
+        const { REQUEST_TIMEOUT } = producer.events;
+        const removeListenerRT = producer.on(REQUEST_TIMEOUT, e => logger.info(`producer REQUEST_TIMEOUT ${e.payload.broker}`));
+        const { REQUEST_QUEUE_SIZE } = producer.events;
+        const removeListenerRQS = producer.on(REQUEST_QUEUE_SIZE, e => logger.info(`producer REQUEST_QUEUE_SIZE ${e.payload.broker} size ${e.queueSize}`));
+*/
+
+/*
+        //consumer event instrumentation to debug
+        const removeListeners = {}
+        const { FETCH_START } = consumer.events;
+        removeListeners[FETCH_START] = consumer.on(FETCH_START, e => logger.info(`consumer FETCH_START`));
+        const { FETCH } = consumer.events;
+        removeListeners[FETCH] = consumer.on(FETCH, e => logger.info(`consumer FETCH numberOfBatches ${e.payload.numberOfBatches} duration ${e.payload.duration}`));
+        const { START_BATCH_PROCESS } = consumer.events;
+        removeListeners[START_BATCH_PROCESS] = consumer.on(START_BATCH_PROCESS, e => logger.info(`consumer START_BATCH_PROCESS topic ${e.payload.topic} batchSize ${e.payload.batchSize}`));
+        const { END_BATCH_PROCESS } = consumer.events;
+        removeListeners[END_BATCH_PROCESS] = consumer.on(END_BATCH_PROCESS, e => logger.info(`consumer END_BATCH_PROCESS topic ${e.payload.topic} batchSize ${e.payload.batchSize}`));
+        const { COMMIT_OFFSETS } = consumer.events;
+        removeListeners[COMMIT_OFFSETS] = consumer.on(COMMIT_OFFSETS, e => logger.info(`consumer COMMIT_OFFSETS topics ${e.payload.topics}`));
+*/
+
+        const { CRASH } = consumer.events;
+
+        consumer.on(CRASH, e => {
+            logger.error(`Got consumer CRASH event, should restart: ${e.payload.restart}`);
+            if (!e.payload.restart) {
+                logger.error('Going to exit due to not retryable error!');
+                exit(-1);
+            }
+        });
+
         const messageProcessor = new JsInvokeMessageProcessor(new KafkaProducer());
         await consumer.connect();
         await producer.connect();
+        sendLoopWithLinger();
         await consumer.subscribe({topic: requestTopic});
 
         logger.info('Started ThingsBoard JavaScript Executor Microservice.');
         await consumer.run({
-            //partitionsConsumedConcurrently: 1, // Default: 1
+            partitionsConsumedConcurrently: partitionsConsumedConcurrently,
             eachMessage: async ({topic, partition, message}) => {
                 let headers = message.headers;
                 let key = message.key;
@@ -197,6 +284,9 @@ async function disconnectProducer() {
         var _producer = producer;
         producer = null;
         try {
+            logger.info('Stopping loop...');
+            clearTimeout(sendLoopInstance);
+            await sendMessagesAsBatch();
             await _producer.disconnect();
             logger.info('Kafka Producer stopped.');
         } catch (e) {

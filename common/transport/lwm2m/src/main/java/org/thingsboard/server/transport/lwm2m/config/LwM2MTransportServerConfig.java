@@ -15,30 +15,27 @@
  */
 package org.thingsboard.server.transport.lwm2m.config;
 
-import com.google.common.io.Resources;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.server.model.LwM2mModelProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.TbProperty;
+import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
+import org.thingsboard.server.common.transport.config.ssl.SslCredentialsConfig;
 
-import javax.annotation.PostConstruct;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.net.URI;
-import java.security.KeyStore;
+import java.util.List;
 
 @Slf4j
 @Component
-@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true') || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
+@ConditionalOnExpression("('${service.type:null}'=='tb-transport' || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core')  && '${transport.lwm2m.enabled:false}'=='true'")
+@ConfigurationProperties(prefix = "transport.lwm2m")
 public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
-
-    @Getter
-    @Setter
-    private LwM2mModelProvider modelProvider;
 
     @Getter
     @Value("${transport.lwm2m.timeout:}")
@@ -49,60 +46,28 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     private long sessionReportTimeout;
 
     @Getter
-    @Value("${transport.lwm2m.recommended_ciphers:}")
+    @Value("${transport.lwm2m.security.recommended_ciphers:}")
     private boolean recommendedCiphers;
 
     @Getter
-    @Value("${transport.lwm2m.recommended_supported_groups:}")
+    @Value("${transport.lwm2m.security.recommended_supported_groups:}")
     private boolean recommendedSupportedGroups;
 
     @Getter
-    @Value("${transport.lwm2m.response_pool_size:}")
-    private int responsePoolSize;
+    @Value("${transport.lwm2m.downlink_pool_size:}")
+    private int downlinkPoolSize;
 
     @Getter
-    @Value("${transport.lwm2m.registered_pool_size:}")
-    private int registeredPoolSize;
+    @Value("${transport.lwm2m.uplink_pool_size:}")
+    private int uplinkPoolSize;
 
     @Getter
-    @Value("${transport.lwm2m.registration_store_pool_size:}")
-    private int registrationStorePoolSize;
+    @Value("${transport.lwm2m.ota_pool_size:}")
+    private int otaPoolSize;
 
     @Getter
     @Value("${transport.lwm2m.clean_period_in_sec:}")
     private int cleanPeriodInSec;
-
-    @Getter
-    @Value("${transport.lwm2m.update_registered_pool_size:}")
-    private int updateRegisteredPoolSize;
-
-    @Getter
-    @Value("${transport.lwm2m.un_registered_pool_size:}")
-    private int unRegisteredPoolSize;
-
-    @Getter
-    @Value("${transport.lwm2m.security.key_store_type:}")
-    private String keyStoreType;
-
-    @Getter
-    @Value("${transport.lwm2m.security.key_store:}")
-    private String keyStorePathFile;
-
-    @Getter
-    @Setter
-    private KeyStore keyStoreValue;
-
-    @Getter
-    @Value("${transport.lwm2m.security.key_store_password:}")
-    private String keyStorePassword;
-
-    @Getter
-    @Value("${transport.lwm2m.security.root_alias:}")
-    private String rootCertificateAlias;
-
-    @Getter
-    @Value("${transport.lwm2m.security.enable_gen_new_key_psk_rpk:}")
-    private Boolean enableGenNewKeyPskRpk;
 
     @Getter
     @Value("${transport.lwm2m.server.id:}")
@@ -125,38 +90,43 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     private Integer securePort;
 
     @Getter
-    @Value("${transport.lwm2m.server.security.public_x:}")
-    private String publicX;
+    @Value("${transport.lwm2m.psm_activity_timer:10000}")
+    private long psmActivityTimer;
 
     @Getter
-    @Value("${transport.lwm2m.server.security.public_y:}")
-    private String publicY;
+    @Value("${transport.lwm2m.paging_transmission_window:10000}")
+    private long pagingTransmissionWindow;
 
     @Getter
-    @Value("${transport.lwm2m.server.security.private_encoded:}")
-    private String privateEncoded;
+    @Setter
+    private List<TbProperty> networkConfig;
 
-    @Getter
-    @Value("${transport.lwm2m.server.security.alias:}")
-    private String certificateAlias;
+    @Bean
+    @ConfigurationProperties(prefix = "transport.lwm2m.server.security.credentials")
+    public SslCredentialsConfig lwm2mServerCredentials() {
+        return new SslCredentialsConfig("LWM2M Server DTLS Credentials", false);
+    }
 
-    @Getter
-    @Value("${transport.lwm2m.log_max_length:}")
-    private int logMaxLength;
+    @Autowired
+    @Qualifier("lwm2mServerCredentials")
+    private SslCredentialsConfig credentialsConfig;
 
+    @Bean
+    @ConfigurationProperties(prefix = "transport.lwm2m.security.trust-credentials")
+    public SslCredentialsConfig lwm2mTrustCredentials() {
+        return new SslCredentialsConfig("LWM2M Trust Credentials", true);
+    }
 
-    @PostConstruct
-    public void init() {
-        URI uri = null;
-        try {
-            uri = Resources.getResource(keyStorePathFile).toURI();
-            log.error("URI: {}", uri);
-            File keyStoreFile = new File(uri);
-            InputStream inKeyStore = new FileInputStream(keyStoreFile);
-            keyStoreValue = KeyStore.getInstance(keyStoreType);
-            keyStoreValue.load(inKeyStore, keyStorePassword == null ? null : keyStorePassword.toCharArray());
-        } catch (Exception e) {
-            log.info("Unable to lookup LwM2M keystore. Reason: {}, {}" , uri, e.getMessage());
-        }
+    @Autowired
+    @Qualifier("lwm2mTrustCredentials")
+    private SslCredentialsConfig trustCredentialsConfig;
+
+    @Override
+    public SslCredentials getSslCredentials() {
+        return this.credentialsConfig.getCredentials();
+    }
+
+    public SslCredentials getTrustSslCredentials() {
+        return this.trustCredentialsConfig.getCredentials();
     }
 }

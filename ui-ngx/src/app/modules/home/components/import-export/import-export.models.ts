@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Widget, WidgetType, WidgetTypeDetails } from '@app/shared/models/widget.models';
+import { Widget, WidgetTypeDetails } from '@app/shared/models/widget.models';
 import { DashboardLayoutId } from '@shared/models/dashboard.models';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 
@@ -38,6 +38,8 @@ export interface CsvToJsonResult {
   rows?: any[][];
 }
 
+export type CSVDelimiter = ',' | ';' | '|' | '\t';
+
 export enum ImportEntityColumnType {
   name = 'NAME',
   type = 'TYPE',
@@ -46,8 +48,22 @@ export enum ImportEntityColumnType {
   sharedAttribute = 'SHARED_ATTRIBUTE',
   serverAttribute = 'SERVER_ATTRIBUTE',
   timeseries = 'TIMESERIES',
-  entityField = 'ENTITY_FIELD',
   accessToken = 'ACCESS_TOKEN',
+  x509 = 'X509',
+  mqttClientId = 'MQTT_CLIENT_ID',
+  mqttUserName = 'MQTT_USER_NAME',
+  mqttPassword = 'MQTT_PASSWORD',
+  lwm2mClientEndpoint = 'LWM2M_CLIENT_ENDPOINT',
+  lwm2mClientSecurityConfigMode = 'LWM2M_CLIENT_SECURITY_CONFIG_MODE',
+  lwm2mClientIdentity = 'LWM2M_CLIENT_IDENTITY',
+  lwm2mClientKey = 'LWM2M_CLIENT_KEY',
+  lwm2mClientCert = 'LWM2M_CLIENT_CERT',
+  lwm2mBootstrapServerSecurityMode = 'LWM2M_BOOTSTRAP_SERVER_SECURITY_MODE',
+  lwm2mBootstrapServerClientPublicKeyOrId = 'LWM2M_BOOTSTRAP_SERVER_PUBLIC_KEY_OR_ID',
+  lwm2mBootstrapServerClientSecretKey = 'LWM2M_BOOTSTRAP_SERVER_SECRET_KEY',
+  lwm2mServerSecurityMode = 'LWM2M_SERVER_SECURITY_MODE',
+  lwm2mServerClientPublicKeyOrId = 'LWM2M_SERVER_CLIENT_PUBLIC_KEY_OR_ID',
+  lwm2mServerClientSecretKey = 'LWM2M_SERVER_CLIENT_SECRET_KEY',
   isGateway = 'IS_GATEWAY',
   description = 'DESCRIPTION',
   edgeLicenseKey = 'EDGE_LICENSE_KEY',
@@ -68,8 +84,22 @@ export const importEntityColumnTypeTranslations = new Map<ImportEntityColumnType
     [ImportEntityColumnType.sharedAttribute, 'import.column-type.shared-attribute'],
     [ImportEntityColumnType.serverAttribute, 'import.column-type.server-attribute'],
     [ImportEntityColumnType.timeseries, 'import.column-type.timeseries'],
-    [ImportEntityColumnType.entityField, 'import.column-type.entity-field'],
     [ImportEntityColumnType.accessToken, 'import.column-type.access-token'],
+    [ImportEntityColumnType.x509, 'import.column-type.x509'],
+    [ImportEntityColumnType.mqttClientId, 'import.column-type.mqtt.client-id'],
+    [ImportEntityColumnType.mqttUserName, 'import.column-type.mqtt.user-name'],
+    [ImportEntityColumnType.mqttPassword, 'import.column-type.mqtt.password'],
+    [ImportEntityColumnType.lwm2mClientEndpoint, 'import.column-type.lwm2m.client-endpoint'],
+    [ImportEntityColumnType.lwm2mClientSecurityConfigMode, 'import.column-type.lwm2m.security-config-mode'],
+    [ImportEntityColumnType.lwm2mClientIdentity, 'import.column-type.lwm2m.client-identity'],
+    [ImportEntityColumnType.lwm2mClientKey, 'import.column-type.lwm2m.client-key'],
+    [ImportEntityColumnType.lwm2mClientCert, 'import.column-type.lwm2m.client-cert'],
+    [ImportEntityColumnType.lwm2mBootstrapServerSecurityMode, 'import.column-type.lwm2m.bootstrap-server-security-mode'],
+    [ImportEntityColumnType.lwm2mBootstrapServerClientPublicKeyOrId, 'import.column-type.lwm2m.bootstrap-server-public-key-id'],
+    [ImportEntityColumnType.lwm2mBootstrapServerClientSecretKey, 'import.column-type.lwm2m.bootstrap-server-secret-key'],
+    [ImportEntityColumnType.lwm2mServerSecurityMode, 'import.column-type.lwm2m.lwm2m-server-security-mode'],
+    [ImportEntityColumnType.lwm2mServerClientPublicKeyOrId, 'import.column-type.lwm2m.lwm2m-server-public-key-id'],
+    [ImportEntityColumnType.lwm2mServerClientSecretKey, 'import.column-type.lwm2m.lwm2m-server-secret-key'],
     [ImportEntityColumnType.isGateway, 'import.column-type.isgateway'],
     [ImportEntityColumnType.description, 'import.column-type.description'],
     [ImportEntityColumnType.edgeLicenseKey, 'import.column-type.edge-license-key'],
@@ -83,6 +113,28 @@ export interface CsvColumnParam {
   type: ImportEntityColumnType;
   key: string;
   sampleData: any;
+}
+
+export interface ColumnMapping {
+  type: ImportEntityColumnType;
+  key?: string;
+}
+
+export interface BulkImportRequest {
+  file: string;
+  mapping: {
+    columns: Array<ColumnMapping>;
+    delimiter: CSVDelimiter;
+    header: boolean;
+    update: boolean;
+  };
+}
+
+export interface BulkImportResult {
+  created: number;
+  updated: number;
+  errors: number;
+  errorsList: Array<string>;
 }
 
 export interface FileType {

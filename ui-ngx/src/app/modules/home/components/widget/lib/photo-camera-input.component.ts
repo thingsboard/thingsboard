@@ -117,6 +117,7 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
   updatePhoto = false;
   previewPhoto: SafeUrl;
   lastPhoto: SafeUrl;
+  datasourceDetected = false;
 
   private static hasGetUserMedia(): boolean {
     return !!(window.navigator.mediaDevices && window.navigator.mediaDevices.getUserMedia);
@@ -148,14 +149,16 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
 
     this.width = this.settings.maxWidth ? this.settings.maxWidth : 640;
     this.height = this.settings.maxHeight ? this.settings.maxWidth : 480;
-
-    if (this.datasource.type === DatasourceType.entity) {
-      if (this.datasource.entityType && this.datasource.entityId) {
-        this.isEntityDetected = true;
+    this.datasourceDetected = this.ctx.datasources?.length !== 0;
+    if (this.datasourceDetected) {
+      if (this.datasource.type === DatasourceType.entity) {
+        if (this.datasource.entityType && this.datasource.entityId) {
+          this.isEntityDetected = true;
+        }
       }
-    }
-    if (this.datasource.dataKeys.length) {
-      this.dataKeyDetected = true;
+      if (this.datasource.dataKeys.length) {
+        this.dataKeyDetected = true;
+      }
     }
     this.detectAvailableDevices();
   }

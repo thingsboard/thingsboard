@@ -16,16 +16,11 @@
 package org.thingsboard.rule.engine.api.msg;
 
 import lombok.Data;
-import lombok.Getter;
-import lombok.ToString;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
-import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.MsgType;
-
-import java.util.Set;
+import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 
 /**
  * @author Andrew Shvayka

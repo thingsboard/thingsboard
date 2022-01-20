@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityComponent } from '../../components/entity/entity.component';
@@ -32,8 +32,9 @@ export class WidgetsBundleComponent extends EntityComponent<WidgetsBundle> {
   constructor(protected store: Store<AppState>,
               @Inject('entity') protected entityValue: WidgetsBundle,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<WidgetsBundle>,
-              public fb: FormBuilder) {
-    super(store, fb, entityValue, entitiesTableConfigValue);
+              public fb: FormBuilder,
+              protected cd: ChangeDetectorRef) {
+    super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
 
   hideDelete() {
@@ -47,7 +48,7 @@ export class WidgetsBundleComponent extends EntityComponent<WidgetsBundle> {
   buildForm(entity: WidgetsBundle): FormGroup {
     return this.fb.group(
       {
-        title: [entity ? entity.title : '', [Validators.required]],
+        title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
         image: [entity ? entity.image : ''],
         description: [entity  ? entity.description : '', Validators.maxLength(255)]
       }

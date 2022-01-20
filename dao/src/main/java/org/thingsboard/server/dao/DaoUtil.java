@@ -18,7 +18,7 @@ package org.thingsboard.server.dao;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -52,23 +52,15 @@ public abstract class DaoUtil {
     }
 
     public static Pageable toPageable(PageLink pageLink, Map<String,String> columnMap) {
-        return PageRequest.of(pageLink.getPage(), pageLink.getPageSize(), toSort(pageLink.getSortOrder(), columnMap));
+        return PageRequest.of(pageLink.getPage(), pageLink.getPageSize(), pageLink.toSort(pageLink.getSortOrder(), columnMap));
     }
 
-    public static Sort toSort(SortOrder sortOrder) {
-        return toSort(sortOrder, Collections.emptyMap());
+    public static Pageable toPageable(PageLink pageLink, List<SortOrder> sortOrders) {
+        return toPageable(pageLink, Collections.emptyMap(), sortOrders);
     }
 
-    public static Sort toSort(SortOrder sortOrder, Map<String,String> columnMap) {
-        if (sortOrder == null) {
-            return Sort.unsorted();
-        } else {
-            String property = sortOrder.getProperty();
-            if (columnMap.containsKey(property)) {
-                property = columnMap.get(property);
-            }
-            return Sort.by(Sort.Direction.fromString(sortOrder.getDirection().name()), property);
-        }
+    public static Pageable toPageable(PageLink pageLink, Map<String,String> columnMap, List<SortOrder> sortOrders) {
+        return PageRequest.of(pageLink.getPage(), pageLink.getPageSize(), pageLink.toSort(sortOrders, columnMap));
     }
 
     public static <T> List<T> convertDataList(Collection<? extends ToData<T>> toDataList) {

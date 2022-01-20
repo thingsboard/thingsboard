@@ -14,12 +14,6 @@
 /// limitations under the License.
 ///
 
-export const LEN_MAX_PSK = 64;
-export const LEN_MAX_PRIVATE_KEY = 134;
-export const LEN_MAX_PUBLIC_KEY_RPK = 182;
-export const LEN_MAX_PUBLIC_KEY_X509 = 3000;
-export const KEY_REGEXP_HEX_DEC = /^[-+]?[0-9A-Fa-f]+\.?[0-9A-Fa-f]*?$/;
-
 export enum Lwm2mSecurityType {
   PSK = 'PSK',
   RPK = 'RPK',
@@ -33,6 +27,29 @@ export const Lwm2mSecurityTypeTranslationMap = new Map<Lwm2mSecurityType, string
     [Lwm2mSecurityType.RPK, 'Raw Public Key'],
     [Lwm2mSecurityType.X509, 'X.509 Certificate'],
     [Lwm2mSecurityType.NO_SEC, 'No Security'],
+  ]
+);
+
+export const Lwm2mPublicKeyOrIdTooltipTranslationsMap = new Map<Lwm2mSecurityType, string>(
+  [
+    [Lwm2mSecurityType.PSK, 'device.lwm2m-security-config.client-publicKey-or-id-tooltip-psk'],
+    [Lwm2mSecurityType.RPK, 'device.lwm2m-security-config.client-publicKey-or-id-tooltip-rpk'],
+    [Lwm2mSecurityType.X509, 'device.lwm2m-security-config.client-publicKey-or-id-tooltip-x509']
+  ]
+);
+
+export const Lwm2mClientSecretKeyTooltipTranslationsMap = new Map<Lwm2mSecurityType, string>(
+  [
+    [Lwm2mSecurityType.PSK, 'device.lwm2m-security-config.client-secret-key-tooltip-psk'],
+    [Lwm2mSecurityType.RPK, 'device.lwm2m-security-config.client-secret-key-tooltip-prk'],
+    [Lwm2mSecurityType.X509, 'device.lwm2m-security-config.client-secret-key-tooltip-x509']
+  ]
+);
+
+export const Lwm2mClientKeyTooltipTranslationsMap = new Map<Lwm2mSecurityType, string>(
+  [
+    [Lwm2mSecurityType.PSK, 'device.lwm2m-security-config.client-secret-key-tooltip-psk'],
+    [Lwm2mSecurityType.RPK, 'device.lwm2m-security-config.client-secret-key-tooltip-prk']
   ]
 );
 
@@ -50,14 +67,22 @@ export interface ServerSecurityConfig {
   clientSecretKey?: string;
 }
 
-interface BootstrapSecurityConfig {
-  bootstrapServer: ServerSecurityConfig;
-  lwm2mServer: ServerSecurityConfig;
-}
-
 export interface Lwm2mSecurityConfigModels {
   client: ClientSecurityConfig;
-  bootstrap: BootstrapSecurityConfig;
+  bootstrap: Array<ServerSecurityConfig>;
+}
+
+
+export function getLwm2mSecurityConfigModelsDefault(): Lwm2mSecurityConfigModels {
+  return {
+    client: {
+      securityConfigClientMode: Lwm2mSecurityType.NO_SEC,
+      endpoint: ''
+    },
+    bootstrap: [
+      getDefaultServerSecurityConfig()
+    ]
+  };
 }
 
 export function getDefaultClientSecurityConfig(securityConfigMode: Lwm2mSecurityType, endPoint = ''): ClientSecurityConfig {

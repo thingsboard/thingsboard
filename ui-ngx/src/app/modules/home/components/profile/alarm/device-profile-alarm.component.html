@@ -20,7 +20,7 @@
     <div fxFlex fxLayout="row" fxLayoutAlign="start center">
       <mat-panel-title>
         <div fxLayout="row" fxFlex fxLayoutAlign="start center">
-          {{ alarmFormGroup.get('alarmType').value }}
+          {{ alarmTypeTitle }}
         </div>
       </mat-panel-title>
       <span fxFlex></span>
@@ -44,6 +44,9 @@
         </mat-error>
         <mat-error *ngIf="alarmFormGroup.get('alarmType').hasError('unique')">
           {{ 'device-profile.alarm-type-unique' | translate }}
+        </mat-error>
+        <mat-error *ngIf="alarmFormGroup.get('alarmType').hasError('maxlength')">
+          {{ 'device-profile.alarm-type-max-length' | translate }}
         </mat-error>
       </mat-form-field>
     </div>
@@ -73,8 +76,8 @@
                      style="max-width: 200px;"
                      [matChipInputFor]="relationTypesChipList"
                      [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-                     (matChipInputTokenEnd)="addRelationType($event)"
-                     [matChipInputAddOnBlur]="true">
+                     matChipInputAddOnBlur
+                     (matChipInputTokenEnd)="addRelationType($event)">
             </mat-chip-list>
             <mat-hint innerHTML="{{ 'device-profile.alarm-rule-relation-types-list-hint' | translate }}"></mat-hint>
           </mat-form-field>

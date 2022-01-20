@@ -14,8 +14,8 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
-import { Subject } from 'rxjs';
+import { ChangeDetectorRef, Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { combineLatest, Subject } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -30,6 +30,8 @@ import {
   OtaUpdateTypeTranslationMap
 } from '@shared/models/ota-package.models';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { filter, startWith, takeUntil } from 'rxjs/operators';
+import { isNotEmptyStr } from '@core/utils';
 
 @Component({
   selector: 'tb-ota-update',
@@ -48,8 +50,40 @@ export class OtaUpdateComponent extends EntityComponent<OtaPackage> implements O
               protected translate: TranslateService,
               @Inject('entity') protected entityValue: OtaPackage,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<OtaPackage>,
-              public fb: FormBuilder) {
-    super(store, fb, entityValue, entitiesTableConfigValue);
+              public fb: FormBuilder,
+              protected cd: ChangeDetectorRef) {
+    super(store, fb, entityValue, entitiesTableConfigValue, cd);
+  }
+
+  ngOnInit() {
+    super.ngOnInit();
+    if (this.isAdd) {
+      this.entityForm.get('isURL').valueChanges.pipe(
+        takeUntil(this.destroy$)
+      ).subscribe((isURL) => {
+        if (isURL === false) {
+          this.entityForm.get('url').clearValidators();
+          this.entityForm.get('file').setValidators(Validators.required);
+          this.entityForm.get('url').updateValueAndValidity({emitEvent: false});
+          this.entityForm.get('file').updateValueAndValidity({emitEvent: false});
+        } else {
+          this.entityForm.get('file').clearValidators();
+          this.entityForm.get('url').setValidators([Validators.required, Validators.pattern('(.|\\s)*\\S(.|\\s)*')]);
+          this.entityForm.get('file').updateValueAndValidity({emitEvent: false});
+          this.entityForm.get('url').updateValueAndValidity({emitEvent: false});
+        }
+      });
+      combineLatest([
+        this.entityForm.get('title').valueChanges.pipe(startWith('')),
+        this.entityForm.get('version').valueChanges.pipe(startWith(''))
+      ]).pipe(
+        filter(() => this.entityForm.get('tag').pristine),
+        takeUntil(this.destroy$)
+      ).subscribe(([title, version]) => {
+        const tag = (`${title} ${version}`).trim();
+        this.entityForm.get('tag').patchValue(tag);
+      });
+    }
   }
 
   ngOnDestroy() {
@@ -70,10 +104,13 @@ export class OtaUpdateComponent extends EntityComponent<OtaPackage> implements O
     const form = this.fb.group({
       title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
       version: [entity ? entity.version : '', [Validators.required, Validators.maxLength(255)]],
+      tag: [entity ? entity.tag : '', [Validators.maxLength(255)]],
       type: [entity?.type ? entity.type : OtaUpdateType.FIRMWARE, Validators.required],
       deviceProfileId: [entity ? entity.deviceProfileId : null, Validators.required],
       checksumAlgorithm: [entity && entity.checksumAlgorithm ? entity.checksumAlgorithm : ChecksumAlgorithm.SHA256],
       checksum: [entity ? entity.checksum : '', Validators.maxLength(1020)],
+      url: [entity ? entity.url : ''],
+      isURL: [false],
       additionalInfo: this.fb.group(
         {
           description: [entity && entity.additionalInfo ? entity.additionalInfo.description : ''],
@@ -82,6 +119,7 @@ export class OtaUpdateComponent extends EntityComponent<OtaPackage> implements O
     });
     if (this.isAdd) {
       form.addControl('file', this.fb.control(null, Validators.required));
+      form.addControl('generateChecksum', this.fb.control(true));
     } else {
       form.addControl('fileName', this.fb.control(null));
       form.addControl('dataSize', this.fb.control(null));
@@ -94,6 +132,7 @@ export class OtaUpdateComponent extends EntityComponent<OtaPackage> implements O
     this.entityForm.patchValue({
       title: entity.title,
       version: entity.version,
+      tag: entity.tag,
       type: entity.type,
       deviceProfileId: entity.deviceProfileId,
       checksumAlgorithm: entity.checksumAlgorithm,
@@ -101,6 +140,8 @@ export class OtaUpdateComponent extends EntityComponent<OtaPackage> implements O
       fileName: entity.fileName,
       dataSize: entity.dataSize,
       contentType: entity.contentType,
+      url: entity.url,
+      isURL: isNotEmptyStr(entity.url),
       additionalInfo: {
         description: entity.additionalInfo ? entity.additionalInfo.description : ''
       }
@@ -108,8 +149,6 @@ export class OtaUpdateComponent extends EntityComponent<OtaPackage> implements O
     if (!this.isAdd && this.entityForm.enabled) {
       this.entityForm.disable({emitEvent: false});
       this.entityForm.get('additionalInfo').enable({emitEvent: false});
-      // this.entityForm.get('dataSize').disable({emitEvent: false});
-      // this.entityForm.get('contentType').disable({emitEvent: false});
     }
   }
 
@@ -133,5 +172,26 @@ export class OtaUpdateComponent extends EntityComponent<OtaPackage> implements O
         verticalPosition: 'bottom',
         horizontalPosition: 'right'
       }));
+  }
+
+  onPackageDirectUrlCopied() {
+    this.store.dispatch(new ActionNotificationShow(
+      {
+        message: this.translate.instant('ota-update.checksum-copied-message'),
+        type: 'success',
+        duration: 750,
+        verticalPosition: 'bottom',
+        horizontalPosition: 'right'
+      }));
+  }
+
+  prepareFormValue(formValue: any): any {
+    if (formValue.isURL) {
+      delete formValue.file;
+    } else {
+      delete formValue.url;
+    }
+    delete formValue.generateChecksum;
+    return super.prepareFormValue(formValue);
   }
 }

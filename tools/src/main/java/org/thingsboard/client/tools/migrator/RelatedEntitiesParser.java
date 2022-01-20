@@ -58,7 +58,7 @@ public class RelatedEntitiesParser {
         return StringUtils.isBlank(line) || line.equals("\\.");
     }
 
-    private void processAllTables(LineIterator lineIterator) {
+    private void processAllTables(LineIterator lineIterator) throws IOException {
         String currentLine;
         try {
             while (lineIterator.hasNext()) {

@@ -30,6 +30,8 @@ public interface DeviceProfileDao extends Dao<DeviceProfile> {
 
     DeviceProfile save(TenantId tenantId, DeviceProfile deviceProfile);
 
+    DeviceProfile saveAndFlush(TenantId tenantId, DeviceProfile deviceProfile);
+
     PageData<DeviceProfile> findDeviceProfiles(TenantId tenantId, PageLink pageLink);
 
     PageData<DeviceProfileInfo> findDeviceProfileInfos(TenantId tenantId, PageLink pageLink, String transportType);

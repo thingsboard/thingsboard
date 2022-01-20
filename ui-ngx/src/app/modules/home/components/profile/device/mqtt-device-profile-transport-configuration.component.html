@@ -73,36 +73,63 @@
             {{ 'device-profile.mqtt-payload-type-required' | translate }}
           </mat-error>
         </mat-form-field>
+        <div *ngIf="protoPayloadType" style="padding-bottom: 20px">
+          <mat-checkbox formControlName="enableCompatibilityWithJsonPayloadFormat">
+            {{ 'device-profile.mqtt-enable-compatibility-with-json-payload-format' | translate }}
+          </mat-checkbox>
+          <div class="tb-hint" innerHTML="{{ 'device-profile.mqtt-enable-compatibility-with-json-payload-format-hint' | translate }}"></div>
+          <div *ngIf="compatibilityWithJsonPayloadFormatEnabled">
+            <mat-checkbox formControlName="useJsonPayloadFormatForDefaultDownlinkTopics">
+              {{ 'device-profile.mqtt-use-json-format-for-default-downlink-topics' | translate }}
+            </mat-checkbox>
+            <div class="tb-hint" innerHTML="{{ 'device-profile.mqtt-use-json-format-for-default-downlink-topics-hint' | translate }}"></div>
+          </div>
+        </div>
         <div *ngIf="protoPayloadType" fxLayout="column">
-          <mat-form-field fxFlex>
-            <mat-label translate>device-profile.telemetry-proto-schema</mat-label>
-            <textarea matInput required formControlName="deviceTelemetryProtoSchema" rows="5"></textarea>
+          <ng-container>
+            <tb-protobuf-content
+              fxFlex
+              formControlName="deviceTelemetryProtoSchema"
+              label="{{ 'device-profile.telemetry-proto-schema' | translate }}"
+              [fillHeight]="true">
+            </tb-protobuf-content>
             <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.deviceTelemetryProtoSchema').hasError('required')">
               {{ 'device-profile.telemetry-proto-schema-required' | translate}}
             </mat-error>
-          </mat-form-field>
-          <mat-form-field fxFlex>
-            <mat-label translate>device-profile.attributes-proto-schema</mat-label>
-            <textarea matInput required formControlName="deviceAttributesProtoSchema" rows="5"></textarea>
+          </ng-container>
+          <ng-container>
+            <tb-protobuf-content
+              fxFlex
+              formControlName="deviceAttributesProtoSchema"
+              label="{{ 'device-profile.attributes-proto-schema' | translate }}"
+              [fillHeight]="true">
+            </tb-protobuf-content>
             <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.deviceAttributesProtoSchema').hasError('required')">
               {{ 'device-profile.attributes-proto-schema-required' | translate}}
             </mat-error>
-          </mat-form-field>
-          <mat-form-field style="padding-bottom: 20px" fxFlex>
-            <mat-label translate>device-profile.rpc-request-proto-schema</mat-label>
-            <textarea matInput required formControlName="deviceRpcRequestProtoSchema" rows="5"></textarea>
+          </ng-container>
+          <ng-container>
+            <tb-protobuf-content
+              fxFlex
+              formControlName="deviceRpcRequestProtoSchema"
+              label="{{ 'device-profile.rpc-request-proto-schema' | translate }}"
+              [fillHeight]="true">
+            </tb-protobuf-content>
             <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.deviceRpcRequestProtoSchema').hasError('required')">
               {{ 'device-profile.rpc-request-proto-schema-required' | translate}}
             </mat-error>
-            <mat-hint class="tb-hint" translate>device-profile.rpc-request-proto-schema-hint</mat-hint>
-          </mat-form-field>
-          <mat-form-field fxFlex>
-            <mat-label translate>device-profile.rpc-response-proto-schema</mat-label>
-            <textarea matInput required formControlName="deviceRpcResponseProtoSchema" rows="5"></textarea>
+          </ng-container>
+          <ng-container>
+            <tb-protobuf-content
+              fxFlex
+              formControlName="deviceRpcResponseProtoSchema"
+              label="{{ 'device-profile.rpc-response-proto-schema' | translate }}"
+              [fillHeight]="true">
+            </tb-protobuf-content>
             <mat-error *ngIf="mqttDeviceProfileTransportConfigurationFormGroup.get('transportPayloadTypeConfiguration.deviceRpcResponseProtoSchema').hasError('required')">
               {{ 'device-profile.rpc-response-proto-schema-required' | translate}}
             </mat-error>
-          </mat-form-field>
+          </ng-container>
         </div>
       </div>
     </fieldset>

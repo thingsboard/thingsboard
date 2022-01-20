@@ -104,18 +104,29 @@
         <mat-error *ngIf="entityForm.get('title').hasError('required')">
           {{ 'dashboard.title-required' | translate }}
         </mat-error>
+        <mat-error *ngIf="entityForm.get('title').hasError('maxlength')">
+          {{ 'dashboard.title-max-length' | translate }}
+        </mat-error>
       </mat-form-field>
-      <tb-image-input fxFlex
-                      label="{{'dashboard.image' | translate}}"
-                      maxSizeByte="524288"
-                      formControlName="image">
-      </tb-image-input>
       <div formGroupName="configuration" fxLayout="column">
         <mat-form-field class="mat-block">
           <mat-label translate>dashboard.description</mat-label>
           <textarea matInput formControlName="description" rows="2"></textarea>
         </mat-form-field>
       </div>
+      <div style="padding-bottom: 16px;" translate>dashboard.mobile-app-settings</div>
+      <tb-image-input fxFlex
+                      label="{{'dashboard.image' | translate}}"
+                      maxSizeByte="524288"
+                      formControlName="image">
+      </tb-image-input>
+      <mat-checkbox fxFlex formControlName="mobileHide" style="padding-bottom: 16px; padding-top: 16px;">
+        {{ 'dashboard.mobile-hide' | translate }}
+      </mat-checkbox>
+      <mat-form-field class="mat-block">
+        <mat-label translate>dashboard.mobile-order</mat-label>
+        <input matInput formControlName="mobileOrder" type="number" step="1">
+      </mat-form-field>
     </fieldset>
   </form>
 </div>

@@ -24,7 +24,14 @@ import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DataKey, Datasource, DatasourceData, DatasourceType, WidgetConfig } from '@shared/models/widget.models';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
-import { createLabelFromDatasource, isDefined, isDefinedAndNotNull, isEqual, isUndefined } from '@core/utils';
+import {
+  createLabelFromDatasource,
+  isBoolean, isDefined,
+  isDefinedAndNotNull,
+  isEqual,
+  isNotEmptyStr,
+  isUndefined
+} from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
 import * as _moment from 'moment';
 import { FormBuilder, FormGroup, ValidatorFn, Validators } from '@angular/forms';
@@ -35,14 +42,18 @@ import { forkJoin, Observable, Subject } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { takeUntil } from 'rxjs/operators';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 
 type FieldAlignment = 'row' | 'column';
 
 type MultipleInputWidgetDataKeyType = 'server' | 'shared' | 'timeseries';
 type MultipleInputWidgetDataKeyValueType = 'string' | 'double' | 'integer' |
                                            'booleanCheckbox' | 'booleanSwitch' |
-                                           'dateTime' | 'date' | 'time';
+                                           'dateTime' | 'date' | 'time' | 'select';
 type MultipleInputWidgetDataKeyEditableType = 'editable' | 'disabled' | 'readonly';
+
+type ConvertGetValueFunction = (value: any, ctx: WidgetContext) => any;
+type ConvertSetValueFunction = (value: any, originValue: any, ctx: WidgetContext) => any;
 
 interface MultipleInputWidgetSettings {
   widgetTitle: string;
@@ -58,9 +69,16 @@ interface MultipleInputWidgetSettings {
   attributesShared?: boolean;
 }
 
+interface MultipleInputWidgetSelectOption {
+  value: string | null;
+  label: string;
+}
+
 interface MultipleInputWidgetDataKeySettings {
   dataKeyType: MultipleInputWidgetDataKeyType;
   dataKeyValueType: MultipleInputWidgetDataKeyValueType;
+  slideToggleLabelPosition?: 'after' | 'before';
+  selectOptions: MultipleInputWidgetSelectOption[];
   required: boolean;
   isEditable: MultipleInputWidgetDataKeyEditableType;
   disabledOnDataKey: string;
@@ -72,10 +90,19 @@ interface MultipleInputWidgetDataKeySettings {
   invalidDateErrorMessage?: string;
   minValueErrorMessage?: string;
   maxValueErrorMessage?: string;
+  useCustomIcon: boolean;
   icon: string;
+  customIcon: string ;
+  safeCustomIcon?: SafeUrl;
   inputTypeNumber?: boolean;
   readOnly?: boolean;
   disabledOnCondition?: boolean;
+  useGetValueFunction?: boolean;
+  getValueFunctionBody?: string;
+  getValueFunction?: ConvertGetValueFunction;
+  useSetValueFunction?: boolean;
+  setValueFunctionBody?: string;
+  setValueFunction?: ConvertSetValueFunction;
 }
 
 interface MultipleInputWidgetDataKey extends DataKey {
@@ -109,6 +136,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   private datasources: Array<Datasource>;
   private destroy$ = new Subject();
   public sources: Array<MultipleInputWidgetSource> = [];
+  private isSavingInProgress = false;
 
   isVerticalAlignment: boolean;
   inputWidthSettings: string;
@@ -117,6 +145,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   resetButtonLabel: string;
 
   entityDetected = false;
+  datasourceDetected = false;
   isAllParametersValid = true;
 
   multipleInputFormGroup: FormGroup;
@@ -131,7 +160,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
               private utils: UtilsService,
               private fb: FormBuilder,
               private attributeService: AttributeService,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              private sanitizer: DomSanitizer) {
     super(store);
   }
 
@@ -162,7 +192,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   private initializeConfig() {
 
     if (this.settings.widgetTitle && this.settings.widgetTitle.length) {
-      this.ctx.widgetTitle = this.utils.customTranslation(this.settings.widgetTitle, this.settings.widgetTitle);
+      const titlePatternText = this.utils.customTranslation(this.settings.widgetTitle, this.settings.widgetTitle);
+      this.ctx.widgetTitle = createLabelFromDatasource(this.datasources[0], titlePatternText);
     } else {
       this.ctx.widgetTitle = this.ctx.widgetConfig.title;
     }
@@ -202,7 +233,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   }
 
   private updateDatasources() {
-    if (this.datasources && this.datasources.length) {
+    this.datasourceDetected = this.datasources?.length !== 0;
+    if (this.datasourceDetected) {
       this.entityDetected = true;
       let keyIndex = 0;
       this.datasources.forEach((datasource) => {
@@ -246,6 +278,42 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
               }
             }
             // For backward compatibility
+
+            if (dataKey.settings.dataKeyValueType === 'select') {
+              dataKey.settings.selectOptions.forEach((option) => {
+                if (option.value.toLowerCase() === 'null') {
+                  option.value = null;
+                }
+              });
+            }
+
+            if (dataKey.settings.dataKeyValueType === 'booleanSwitch' && isUndefined(dataKey.settings.slideToggleLabelPosition)) {
+              dataKey.settings.slideToggleLabelPosition = 'after';
+            }
+
+            if (dataKey.settings.useCustomIcon && isDefinedAndNotNull(dataKey.settings.customIcon)) {
+              dataKey.settings.safeCustomIcon = this.sanitizer.bypassSecurityTrustUrl(dataKey.settings.customIcon);
+            }
+
+            if (dataKey.settings.useGetValueFunction && dataKey.settings.getValueFunctionBody.length) {
+              try {
+                dataKey.settings.getValueFunction =
+                  new Function('value, ctx', dataKey.settings.getValueFunctionBody) as ConvertGetValueFunction;
+              } catch (e) {
+                console.warn(`Parse getValue function in key ${dataKey.label}`, e);
+                dataKey.settings.getValueFunction = null;
+              }
+            }
+
+            if (dataKey.settings.useSetValueFunction && dataKey.settings.setValueFunctionBody.length) {
+              try {
+                dataKey.settings.setValueFunction =
+                  new Function('value, originValue, ctx', dataKey.settings.setValueFunctionBody) as ConvertSetValueFunction;
+              } catch (e) {
+                console.warn(`Parse setValue function in key ${dataKey.label}`, e);
+                dataKey.settings.setValueFunction = null;
+              }
+            }
 
             source.keys.push(dataKey);
           });
@@ -324,25 +392,41 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
       source.keys.forEach((key) => {
         const keyData = data[dataIndex].data;
         if (keyData && keyData.length) {
-          let value;
+          let value = keyData[0][1];
+          const keyValue = this.getKeyValue(value, key.settings);
           switch (key.settings.dataKeyValueType) {
             case 'dateTime':
             case 'date':
-              if (isDefinedAndNotNull(keyData[0][1]) && keyData[0][1] !== '') {
-                value = _moment(keyData[0][1]).toDate();
+              if (isDefinedAndNotNull(keyValue) && keyValue !== '') {
+                if (keyValue instanceof Date) {
+                  value = keyValue;
+                } else {
+                  value = _moment(keyValue).toDate();
+                }
               } else {
                 value = null;
               }
               break;
             case 'time':
-              value = _moment().startOf('day').add(keyData[0][1], 'ms').toDate();
+              if (keyValue instanceof Date) {
+                value = keyValue;
+              } else {
+                value = _moment().startOf('day').add(keyValue, 'ms').toDate();
+              }
               break;
             case 'booleanCheckbox':
             case 'booleanSwitch':
-              value = (keyData[0][1] === 'true');
+              if (isBoolean(keyValue)) {
+                value = keyValue;
+              } else {
+                value = (keyValue === 'true');
+              }
+              break;
+            case 'select':
+              value = keyValue.toString();
               break;
             default:
-              value = keyData[0][1];
+              value = keyValue;
           }
           key.value = value;
         }
@@ -376,6 +460,18 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
         dataIndex++;
       });
     });
+  }
+
+  private getKeyValue(data: any, keySetting: MultipleInputWidgetDataKeySettings) {
+    if (isDefined(keySetting.getValueFunction)) {
+      try {
+        return keySetting.getValueFunction(data, this.ctx);
+      } catch (e) {
+        console.warn(`Call function getValue`, e);
+        return data;
+      }
+    }
+    return data;
   }
 
   private updateWidgetDisplaying() {
@@ -445,6 +541,10 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
     return messageText;
   }
 
+  public getCustomTranslationText(value): string {
+    return this.utils.customTranslation(value, value);
+  }
+
   public visibleKeys(source: MultipleInputWidgetSource): MultipleInputWidgetDataKey[] {
     return source.keys.filter(key => !key.settings.dataKeyHidden);
   }
@@ -465,9 +565,11 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   }
 
   public inputChanged(source: MultipleInputWidgetSource, key: MultipleInputWidgetDataKey) {
-    if (!this.settings.showActionButtons) {
+    if (!this.settings.showActionButtons && !this.isSavingInProgress) {
+      this.isSavingInProgress = true;
       const currentValue = this.multipleInputFormGroup.get(key.formId).value;
-      if (!key.settings.required || (key.settings.required && isDefined(currentValue))) {
+      if (!key.settings.required ||
+        (key.settings.required && isDefinedAndNotNull(currentValue) && isNotEmptyStr(currentValue.toString()))) {
         const dataToSave: MultipleInputWidgetSource = {
           datasource: source.datasource,
           keys: [key]
@@ -478,7 +580,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   }
 
   public save(dataToSave?: MultipleInputWidgetSource) {
-    if (document && document.activeElement) {
+    if (document?.activeElement && !this.isSavingInProgress) {
+      this.isSavingInProgress = true;
       (document.activeElement as HTMLElement).blur();
     }
     const config: RequestConfig = {
@@ -495,9 +598,10 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
       const serverAttributes: AttributeData[] = [];
       const sharedAttributes: AttributeData[] = [];
       const telemetry: AttributeData[] = [];
-      for (const key of this.visibleKeys(toSave)) {
-        const currentValue = this.multipleInputFormGroup.get(key.formId).value;
+      for (const key of toSave.keys) {
+        let currentValue = key.settings.dataKeyHidden ? key.value : this.multipleInputFormGroup.get(key.formId).value;
         if (!isEqual(currentValue, key.value) || this.settings.updateAllValues) {
+          currentValue = this.setKeyValue(currentValue, key, toSave);
           const attribute: AttributeData = {
             key: key.name,
             value: null
@@ -568,12 +672,14 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
         () => {
           this.multipleInputFormGroup.markAsPristine();
           this.ctx.detectChanges();
+          this.isSavingInProgress = false;
           if (this.settings.showResultMessage) {
             this.ctx.showSuccessToast(this.translate.instant('widgets.input-widgets.update-successful'),
               1000, 'bottom', 'left', this.toastTargetId);
           }
         },
         () => {
+          this.isSavingInProgress = false;
           if (this.settings.showResultMessage) {
             this.ctx.showErrorToast(this.translate.instant('widgets.input-widgets.update-failed'),
               'bottom', 'left', this.toastTargetId);
@@ -582,7 +688,23 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
     } else {
       this.multipleInputFormGroup.markAsPristine();
       this.ctx.detectChanges();
+      this.isSavingInProgress = false;
     }
+  }
+
+  private setKeyValue(value: any, key: MultipleInputWidgetDataKey, source: MultipleInputWidgetSource) {
+    if (isDefined(key.settings.setValueFunction)) {
+      const currentDatasourceData = this.subscription.data
+        .find(dsData => dsData.datasource === source.datasource && dsData.dataKey.name === key.name);
+      const originValue = currentDatasourceData.data[0][1];
+      try {
+        return key.settings.setValueFunction(value, originValue, this.ctx);
+      } catch (e) {
+        console.warn(`Call function setValue`, e);
+        return value;
+      }
+    }
+    return value;
   }
 
   public discardAll() {

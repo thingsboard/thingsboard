@@ -120,12 +120,34 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     this.updateFilterColumns();
 
     this.headerActionDescriptors.push({
+      name: this.translate.instant('event.clear-filter'),
+      icon: 'mdi:filter-variant-remove',
+      isMdiIcon: true,
+      isEnabled: () => !isEqual(this.filterParams, {}),
+      onAction: ($event) => {
+        this.clearFiter($event);
+      }
+    },
+    {
       name: this.translate.instant('event.events-filter'),
       icon: 'filter_list',
       isEnabled: () => true,
       onAction: ($event) => {
         this.editEventFilter($event);
       }
+    },
+    {
+      name: this.translate.instant('event.clean-events'),
+      icon: 'delete',
+      isEnabled: () => true,
+      onAction: ($event) => {
+        this.eventService.clearEvents(this.entityId, this.eventType, this.filterParams, this.tenantId, this.table.pageLink as TimePageLink).subscribe(
+          () => {
+            this.table.paginator.pageIndex = 0;
+            this.table.updateData();
+          }
+        );
+     }
     });
   }
 
@@ -283,14 +305,14 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
       case EventType.ERROR:
         this.filterColumns.push(
           {key: 'method', title: 'event.method'},
-          {key: 'error', title: 'event.error'}
+          {key: 'errorStr', title: 'event.error'}
         );
         break;
       case EventType.LC_EVENT:
         this.filterColumns.push(
           {key: 'event', title: 'event.event'},
           {key: 'status', title: 'event.status'},
-          {key: 'error', title: 'event.error'}
+          {key: 'errorStr', title: 'event.error'}
         );
         break;
       case EventType.STATS:
@@ -310,10 +332,20 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
           {key: 'dataSearch', title: 'event.data'},
           {key: 'metadataSearch', title: 'event.metadata'},
           {key: 'isError', title: 'event.error'},
-          {key: 'error', title: 'event.error'}
+          {key: 'errorStr', title: 'event.error'}
         );
         break;
     }
+  }
+
+  private clearFiter($event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+
+    this.filterParams = {};
+    this.table.paginator.pageIndex = 0;
+    this.table.updateData();
   }
 
   private editEventFilter($event: MouseEvent) {

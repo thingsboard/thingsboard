@@ -23,24 +23,24 @@ import org.eclipse.leshan.server.queue.PresenceListener;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.registration.RegistrationListener;
 import org.eclipse.leshan.server.registration.RegistrationUpdate;
+import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
 import java.util.Collection;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LW2M_INFO;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertPathFromObjectIdToIdVer;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertObjectIdToVersionedId;
 
 @Slf4j
 public class LwM2mServerListener {
 
-    private final LwM2mTransportMsgHandler service;
+    private final LwM2mUplinkMsgHandler service;
 
-    public LwM2mServerListener(LwM2mTransportMsgHandler service) {
+    public LwM2mServerListener(LwM2mUplinkMsgHandler service) {
         this.service = service;
     }
 
     public final RegistrationListener registrationListener = new RegistrationListener() {
         /**
-         * Register – запрос, представленный в виде POST /rd?…
+         * Register – query represented as POST /rd?…
          */
         @Override
         public void registered(Registration registration, Registration previousReg,
@@ -49,7 +49,7 @@ public class LwM2mServerListener {
         }
 
         /**
-         * Update – представляет из себя CoAP POST запрос на URL, полученный в ответ на Register.
+         * Update – query represented as CoAP POST request for the URL received in response to Register.
          */
         @Override
         public void updated(RegistrationUpdate update, Registration updatedRegistration,
@@ -58,7 +58,7 @@ public class LwM2mServerListener {
         }
 
         /**
-         * De-register (CoAP DELETE) – отправляется клиентом в случае инициирования процедуры выключения.
+         * De-register (CoAP DELETE) – Sent by the client when a shutdown procedure is initiated.
          */
         @Override
         public void unregistered(Registration registration, Collection<Observation> observations, boolean expired,
@@ -71,13 +71,13 @@ public class LwM2mServerListener {
     public final PresenceListener presenceListener = new PresenceListener() {
         @Override
         public void onSleeping(Registration registration) {
-            log.info("onSleeping");
+            log.info("[{}] onSleeping", registration.getEndpoint());
             service.onSleepingDev(registration);
         }
 
         @Override
         public void onAwake(Registration registration) {
-            log.info("onAwake");
+            log.info("[{}] onAwake", registration.getEndpoint());
             service.onAwakeDev(registration);
         }
     };
@@ -86,30 +86,26 @@ public class LwM2mServerListener {
 
         @Override
         public void cancelled(Observation observation) {
-            String msg = String.format("%s:  Canceled Observation  %s.", LOG_LW2M_INFO, observation.getPath());
-            service.sendLogsToThingsboard(msg, observation.getRegistrationId());
-            log.warn(msg);
+            log.trace("Canceled Observation {}.", observation.getPath());
         }
 
         @Override
         public void onResponse(Observation observation, Registration registration, ObserveResponse response) {
             if (registration != null) {
-                service.onUpdateValueAfterReadResponse(registration, convertPathFromObjectIdToIdVer(observation.getPath().toString(),
-                        registration), response, null);
+                service.onUpdateValueAfterReadResponse(registration, convertObjectIdToVersionedId(observation.getPath().toString(), registration), response);
             }
         }
 
         @Override
         public void onError(Observation observation, Registration registration, Exception error) {
-            log.error(String.format("Unable to handle notification of [%s:%s]", observation.getRegistrationId(), observation.getPath()), error);
+            if (error != null) {
+                log.debug("Unable to handle notification of [{}:{}] [{}]", observation.getRegistrationId(), observation.getPath(), error.getMessage());
+            }
         }
 
         @Override
         public void newObservation(Observation observation, Registration registration) {
-            String msg = String.format("%s: Successful start newObservation  %s.", LOG_LW2M_INFO,
-                    observation.getPath());
-            log.warn(msg);
-            service.sendLogsToThingsboard(msg, registration.getId());
+            log.trace("Successful start newObservation {}.", observation.getPath());
         }
     };
 }

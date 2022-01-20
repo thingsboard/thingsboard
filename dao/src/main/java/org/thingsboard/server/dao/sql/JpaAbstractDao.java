@@ -26,6 +26,7 @@ import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.BaseEntity;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -80,11 +81,29 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     }
 
     @Override
+    public boolean existsById(TenantId tenantId, UUID key) {
+        log.debug("Exists by key {}", key);
+        return getCrudRepository().existsById(key);
+    }
+
+    @Override
+    public ListenableFuture<Boolean> existsByIdAsync(TenantId tenantId, UUID key) {
+        log.debug("Exists by key async {}", key);
+        return service.submit(() -> getCrudRepository().existsById(key));
+    }
+
+    @Override
     @Transactional
     public boolean removeById(TenantId tenantId, UUID id) {
         getCrudRepository().deleteById(id);
         log.debug("Remove request: {}", id);
         return !getCrudRepository().existsById(id);
+    }
+
+    @Transactional
+    public void removeAllByIds(Collection<UUID> ids) {
+        CrudRepository<E, UUID> repository = getCrudRepository();
+        ids.forEach(repository::deleteById);
     }
 
     @Override

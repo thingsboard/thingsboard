@@ -17,6 +17,7 @@
 import { Injectable } from '@angular/core';
 import { Resolve } from '@angular/router';
 import {
+  CellActionDescriptorType,
   DateEntityTableColumn,
   EntityTableColumn,
   EntityTableConfig
@@ -35,6 +36,8 @@ import { PageLink } from '@shared/models/page/page-link';
 import { OtaUpdateComponent } from '@home/pages/ota-update/ota-update.component';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { FileSizePipe } from '@shared/pipe/file-size.pipe';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
 
 @Injectable()
 export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<OtaPackage, PageLink, OtaPackageInfo>> {
@@ -44,6 +47,7 @@ export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<Ot
 
   constructor(private translate: TranslateService,
               private datePipe: DatePipe,
+              private store: Store<AppState>,
               private otaPackageService: OtaPackageService,
               private fileSize: FileSizePipe) {
     this.config.entityType = EntityType.OTA_PACKAGE;
@@ -55,25 +59,51 @@ export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<Ot
 
     this.config.columns.push(
       new DateEntityTableColumn<OtaPackageInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
-      new EntityTableColumn<OtaPackageInfo>('title', 'ota-update.title', '25%'),
-      new EntityTableColumn<OtaPackageInfo>('version', 'ota-update.version', '25%'),
-      new EntityTableColumn<OtaPackageInfo>('type', 'ota-update.package-type', '25%', entity => {
+      new EntityTableColumn<OtaPackageInfo>('title', 'ota-update.title', '15%'),
+      new EntityTableColumn<OtaPackageInfo>('version', 'ota-update.version', '15%'),
+      new EntityTableColumn<OtaPackageInfo>('tag', 'ota-update.version-tag', '15%'),
+      new EntityTableColumn<OtaPackageInfo>('type', 'ota-update.package-type', '15%', entity => {
         return this.translate.instant(OtaUpdateTypeTranslationMap.get(entity.type));
       }),
-      new EntityTableColumn<OtaPackageInfo>('fileName', 'ota-update.file-name', '25%'),
+      new EntityTableColumn<OtaPackageInfo>('url', 'ota-update.direct-url', '20%', entity => {
+          return entity.url ? (entity.url.length > 20 ? `${entity.url.slice(0, 20)}…` : entity.url) : '';
+        }, () => ({}), true, () => ({}), () => undefined, false,
+        {
+          name: this.translate.instant('ota-update.copy-direct-url'),
+          icon: 'content_paste',
+          style: {
+            'font-size': '16px',
+            color: 'rgba(0,0,0,.87)'
+          },
+          isEnabled: (otaPackage) => !!otaPackage.url,
+          onAction: ($event, entity) => entity.url,
+          type: CellActionDescriptorType.COPY_BUTTON
+        }),
+      new EntityTableColumn<OtaPackageInfo>('fileName', 'ota-update.file-name', '20%'),
       new EntityTableColumn<OtaPackageInfo>('dataSize', 'ota-update.file-size', '70px', entity => {
-        return this.fileSize.transform(entity.dataSize || 0);
+        return entity.dataSize ? this.fileSize.transform(entity.dataSize) : '';
       }),
-      new EntityTableColumn<OtaPackageInfo>('checksum', 'ota-update.checksum', '540px', entity => {
-        return `${ChecksumAlgorithmTranslationMap.get(entity.checksumAlgorithm)}: ${entity.checksum}`;
-      }, () => ({}), false)
+      new EntityTableColumn<OtaPackageInfo>('checksum', 'ota-update.checksum', '220px', entity => {
+        return entity.checksum ? this.checksumText(entity) : '';
+      }, () => ({}), true, () => ({}), () => undefined, false,
+      {
+        name: this.translate.instant('ota-update.copy-checksum'),
+        icon: 'content_paste',
+        style: {
+          'font-size': '16px',
+          color: 'rgba(0,0,0,.87)'
+        },
+        isEnabled: (otaPackage) => !!otaPackage.checksum,
+        onAction: ($event, entity) => entity.checksum,
+        type: CellActionDescriptorType.COPY_BUTTON
+      })
     );
 
     this.config.cellActionDescriptors.push(
       {
         name: this.translate.instant('ota-update.download'),
         icon: 'file_download',
-        isEnabled: (otaPackage) => otaPackage.hasData,
+        isEnabled: (otaPackage) => otaPackage.hasData && !otaPackage.url,
         onAction: ($event, entity) => this.exportPackage($event, entity)
       }
     );
@@ -101,7 +131,19 @@ export class OtaUpdateTableConfigResolve implements Resolve<EntityTableConfig<Ot
     if ($event) {
       $event.stopPropagation();
     }
-    this.otaPackageService.downloadOtaPackage(otaPackageInfo.id.id).subscribe();
+    if (otaPackageInfo.url) {
+      window.open(otaPackageInfo.url, '_blank');
+    } else {
+      this.otaPackageService.downloadOtaPackage(otaPackageInfo.id.id).subscribe();
+    }
+  }
+
+  checksumText(entity): string {
+    let text = `${ChecksumAlgorithmTranslationMap.get(entity.checksumAlgorithm)}: ${entity.checksum}`;
+    if (text.length > 20) {
+      text = `${text.slice(0, 20)}…`;
+    }
+    return text;
   }
 
   onPackageAction(action: EntityAction<OtaPackageInfo>): boolean {

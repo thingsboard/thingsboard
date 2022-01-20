@@ -49,7 +49,7 @@ import {
   toHistoryTimewindow,
   WidgetTimewindow
 } from '@app/shared/models/time/time.models';
-import { forkJoin, Observable, of, ReplaySubject, Subject, throwError } from 'rxjs';
+import { forkJoin, Observable, of, ReplaySubject, Subject, throwError, timer } from 'rxjs';
 import { CancelAnimationFrame } from '@core/services/raf.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import { createLabelFromDatasource, deepClone, isDefined, isDefinedAndNotNull, isEqual } from '@core/utils';
@@ -67,8 +67,9 @@ import {
   KeyFilter,
   updateDatasourceFromEntityInfo
 } from '@shared/models/query/query.models';
-import { map } from 'rxjs/operators';
+import { distinct, filter, map, switchMap, takeUntil } from 'rxjs/operators';
 import { AlarmDataListener } from '@core/api/alarm-data.service';
+import { RpcStatus } from '@shared/models/rpc.models';
 
 const moment = moment_;
 
@@ -105,10 +106,12 @@ export class WidgetSubscription implements IWidgetSubscription {
   caulculateLegendData: boolean;
   displayLegend: boolean;
   stateData: boolean;
+  datasourcesOptional: boolean;
   decimals: number;
   units: string;
   comparisonEnabled: boolean;
   timeForComparison: ComparisonDuration;
+  comparisonCustomIntervalValue: number;
   comparisonTimeWindow: WidgetTimewindow;
   timewindowForComparison: SubscriptionTimewindow;
 
@@ -137,6 +140,11 @@ export class WidgetSubscription implements IWidgetSubscription {
   executingSubjects: Array<Subject<any>>;
 
   subscribed = false;
+  widgetTimewindowChangedSubject: Subject<WidgetTimewindow> = new ReplaySubject<WidgetTimewindow>();
+
+  widgetTimewindowChanged$ = this.widgetTimewindowChangedSubject.asObservable().pipe(
+    distinct()
+  );
 
   constructor(subscriptionContext: WidgetSubscriptionContext, public options: WidgetSubscriptionOptions) {
     const subscriptionSubject = new ReplaySubject<IWidgetSubscription>();
@@ -174,6 +182,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.callbacks.dataLoading = this.callbacks.dataLoading || (() => {});
       this.callbacks.timeWindowUpdated = this.callbacks.timeWindowUpdated || (() => {});
       this.alarmSource = options.alarmSource;
+      this.datasourcesOptional = options.datasourcesOptional;
       this.alarmDataListener = null;
       this.alarms = emptyPageData();
       this.originalTimewindow = null;
@@ -205,6 +214,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.callbacks.timeWindowUpdated = this.callbacks.timeWindowUpdated || (() => {});
 
       this.configuredDatasources = this.ctx.utils.validateDatasources(options.datasources);
+      this.datasourcesOptional = options.datasourcesOptional;
       this.entityDataListeners = [];
       this.hasDataPageLink = options.hasDataPageLink;
       this.singleEntity = options.singleEntity;
@@ -233,6 +243,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.comparisonEnabled = options.comparisonEnabled && isHistoryTypeTimewindow(this.timeWindowConfig);
       if (this.comparisonEnabled) {
         this.timeForComparison = options.timeForComparison;
+        this.comparisonCustomIntervalValue = options.comparisonCustomIntervalValue;
 
         this.comparisonTimeWindow = {};
         this.timewindowForComparison = null;
@@ -384,7 +395,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   private prepareDataSubscriptions(): Observable<any> {
-    if (this.hasDataPageLink) {
+    if (this.hasDataPageLink || !this.configuredDatasources || !this.configuredDatasources.length) {
       this.hasResolvedData = true;
       this.notifyDataLoaded();
       return of(null);
@@ -440,7 +451,7 @@ export class WidgetSubscription implements IWidgetSubscription {
           }
         });
         this.configureLoadedData();
-        this.hasResolvedData = this.datasources.length > 0;
+        this.hasResolvedData = this.datasources.length > 0 || this.datasourcesOptional;
         this.updateDataTimewindow();
         this.notifyDataLoaded();
         this.onDataUpdated(true);
@@ -644,12 +655,14 @@ export class WidgetSubscription implements IWidgetSubscription {
     }
   }
 
-  sendOneWayCommand(method: string, params?: any, timeout?: number, requestUUID?: string): Observable<any> {
-    return this.sendCommand(true, method, params, timeout, requestUUID);
+  sendOneWayCommand(method: string, params?: any, timeout?: number, persistent?: boolean,
+                    persistentPollingInterval?: number, requestUUID?: string): Observable<any> {
+    return this.sendCommand(true, method, params, timeout, persistent, persistentPollingInterval, requestUUID);
   }
 
-  sendTwoWayCommand(method: string, params?: any, timeout?: number, requestUUID?: string): Observable<any> {
-    return this.sendCommand(false, method, params, timeout, requestUUID);
+  sendTwoWayCommand(method: string, params?: any, timeout?: number, persistent?: boolean,
+                    persistentPollingInterval?: number, requestUUID?: string): Observable<any> {
+    return this.sendCommand(false, method, params, timeout, persistent, persistentPollingInterval, requestUUID);
   }
 
   clearRpcError(): void {
@@ -658,11 +671,19 @@ export class WidgetSubscription implements IWidgetSubscription {
     this.callbacks.onRpcErrorCleared(this);
   }
 
-  sendCommand(oneWayElseTwoWay: boolean, method: string, params?: any, timeout?: number, requestUUID?: string): Observable<any> {
+  completedCommand(): void {
+    this.executingSubjects.forEach(subject => {
+      subject.next();
+      subject.complete();
+    });
+  }
+
+  sendCommand(oneWayElseTwoWay: boolean, method: string, params?: any, timeout?: number,
+              persistent?: boolean, persistentPollingInterval?: number, requestUUID?: string): Observable<any> {
     if (!this.rpcEnabled) {
       return throwError(new Error('Rpc disabled!'));
     } else {
-      if (this.rpcRejection && this.rpcRejection.status !== 408) {
+      if (this.rpcRejection && this.rpcRejection.status !== 504) {
         this.rpcRejection = null;
         this.rpcErrorText = null;
         this.callbacks.onRpcErrorCleared(this);
@@ -670,12 +691,13 @@ export class WidgetSubscription implements IWidgetSubscription {
       const requestBody: any = {
         method,
         params,
+        persistent,
         requestUUID
       };
       if (timeout && timeout > 0) {
         requestBody.timeout = timeout;
       }
-      const rpcSubject: Subject<any> = new ReplaySubject<any>();
+      const rpcSubject: Subject<any> = new Subject<any>();
       this.executingRpcRequest = true;
       this.callbacks.rpcStateChanged(this);
       if (this.ctx.utils.widgetEditMode) {
@@ -693,7 +715,28 @@ export class WidgetSubscription implements IWidgetSubscription {
       } else {
         this.executingSubjects.push(rpcSubject);
         (oneWayElseTwoWay ? this.ctx.deviceService.sendOneWayRpcCommand(this.targetDeviceId, requestBody) :
-          this.ctx.deviceService.sendTwoWayRpcCommand(this.targetDeviceId, requestBody))
+          this.ctx.deviceService.sendTwoWayRpcCommand(this.targetDeviceId, requestBody)).pipe(
+            switchMap((response) => {
+              if (persistent && persistentPollingInterval > 0) {
+                return timer(persistentPollingInterval / 2, persistentPollingInterval).pipe(
+                  switchMap(() => this.ctx.deviceService.getPersistedRpc(response.rpcId, true)),
+                  filter(persistentRespons =>
+                    persistentRespons.status !== RpcStatus.DELIVERED && persistentRespons.status !== RpcStatus.QUEUED),
+                  switchMap(persistentResponse => {
+                    if (persistentResponse.status === RpcStatus.TIMEOUT) {
+                      return throwError({status: 504});
+                    } else if (persistentResponse.status === RpcStatus.FAILED) {
+                      return throwError({status: 502, statusText: persistentResponse.response.error});
+                    } else {
+                      return of(persistentResponse.response);
+                    }
+                  }),
+                  takeUntil(rpcSubject)
+                );
+              }
+              return of(response);
+            })
+        )
         .subscribe((responseBody) => {
           this.rpcRejection = null;
           this.rpcErrorText = null;
@@ -713,12 +756,10 @@ export class WidgetSubscription implements IWidgetSubscription {
           }
           this.executingRpcRequest = this.executingSubjects.length > 0;
           this.callbacks.rpcStateChanged(this);
-          if (!this.executingRpcRequest || rejection.status === 408) {
+          if (!this.executingRpcRequest || rejection.status === 504) {
             this.rpcRejection = rejection;
-            if (rejection.status === 408) {
+            if (rejection.status === 504) {
               this.rpcErrorText = 'Request Timeout.';
-            } else if (rejection.status === 409) {
-              this.rpcErrorText = 'Device is offline.';
             } else {
               this.rpcErrorText =  'Error : ' + rejection.status + ' - ' + rejection.statusText;
               const error = this.extractRejectionErrorText(rejection);
@@ -772,6 +813,7 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   update(isTimewindowTypeChanged = false) {
     if (this.type !== widgetType.rpc) {
+      this.widgetTimewindowChangedSubject.next(this.timeWindowConfig);
       if (this.type === widgetType.alarm) {
         this.updateAlarmDataSubscription();
       } else {
@@ -1085,6 +1127,7 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   destroy(): void {
     this.unsubscribe();
+    this.widgetTimewindowChangedSubject.complete();
     for (const cafId of Object.keys(this.cafs)) {
       if (this.cafs[cafId]) {
         this.cafs[cafId]();
@@ -1152,7 +1195,8 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   private updateSubscriptionForComparison(): SubscriptionTimewindow {
-    this.timewindowForComparison = createTimewindowForComparison(this.subscriptionTimewindow, this.timeForComparison);
+    this.timewindowForComparison = createTimewindowForComparison(this.subscriptionTimewindow, this.timeForComparison,
+      this.comparisonCustomIntervalValue);
     this.updateComparisonTimewindow();
     return this.timewindowForComparison;
   }

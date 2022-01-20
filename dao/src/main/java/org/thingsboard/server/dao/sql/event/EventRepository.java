@@ -55,7 +55,7 @@ public interface EventRepository extends PagingAndSortingRepository<EventEntity,
             "AND e.entityType = :entityType AND e.entityId = :entityId " +
             "AND (:startTime IS NULL OR e.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR e.createdTime <= :endTime) " +
-            "AND LOWER(e.eventType) LIKE LOWER(CONCAT(:textSearch, '%'))"
+            "AND LOWER(e.eventType) LIKE LOWER(CONCAT('%', :textSearch, '%'))"
     )
     Page<EventEntity> findEventsByTenantIdAndEntityId(@Param("tenantId") UUID tenantId,
                                                       @Param("entityType") EntityType entityType,

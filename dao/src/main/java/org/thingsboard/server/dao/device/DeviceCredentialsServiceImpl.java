@@ -16,20 +16,28 @@
 package org.thingsboard.server.dao.device;
 
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.SecurityMode;
+import org.eclipse.leshan.core.util.SecurityUtil;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKBootstrapClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKBootstrapClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.X509ClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.X509BootstrapClientCredential;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -37,8 +45,8 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
-
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_CREDENTIALS_CACHE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateString;
@@ -83,21 +91,11 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
         if (deviceCredentials.getCredentialsType() == null) {
             throw new DataValidationException("Device credentials type should be specified");
         }
-        switch (deviceCredentials.getCredentialsType()) {
-            case X509_CERTIFICATE:
-                formatCertData(deviceCredentials);
-                break;
-            case MQTT_BASIC:
-                formatSimpleMqttCredentials(deviceCredentials);
-                break;
-            case LWM2M_CREDENTIALS:
-                formatSimpleLwm2mCredentials(deviceCredentials);
-                break;
-        }
+        formatCredentials(deviceCredentials);
         log.trace("Executing updateDeviceCredentials [{}]", deviceCredentials);
         credentialsValidator.validate(deviceCredentials, id -> tenantId);
         try {
-            return deviceCredentialsDao.save(tenantId, deviceCredentials);
+            return deviceCredentialsDao.saveAndFlush(tenantId, deviceCredentials);
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null
@@ -109,6 +107,21 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
         }
     }
 
+    @Override
+    public void formatCredentials(DeviceCredentials deviceCredentials) {
+        switch (deviceCredentials.getCredentialsType()) {
+            case X509_CERTIFICATE:
+                formatCertData(deviceCredentials);
+                break;
+            case MQTT_BASIC:
+                formatSimpleMqttCredentials(deviceCredentials);
+                break;
+            case LWM2M_CREDENTIALS:
+                formatAndValidateSimpleLwm2mCredentials(deviceCredentials);
+                break;
+        }
+    }
+
     private void formatSimpleMqttCredentials(DeviceCredentials deviceCredentials) {
         BasicMqttCredentials mqttCredentials;
         try {
@@ -117,11 +130,16 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 throw new IllegalArgumentException();
             }
         } catch (IllegalArgumentException e) {
-            throw new DataValidationException("Invalid credentials body for simple mqtt credentials!");
+            throw new DeviceCredentialsValidationException("Invalid credentials body for simple mqtt credentials!");
         }
+
         if (StringUtils.isEmpty(mqttCredentials.getClientId()) && StringUtils.isEmpty(mqttCredentials.getUserName())) {
-            throw new DataValidationException("Both mqtt client id and user name are empty!");
+            throw new DeviceCredentialsValidationException("Both mqtt client id and user name are empty!");
         }
+        if (StringUtils.isNotEmpty(mqttCredentials.getClientId()) && StringUtils.isNotEmpty(mqttCredentials.getPassword()) && StringUtils.isEmpty(mqttCredentials.getUserName())) {
+            throw new DeviceCredentialsValidationException("Password cannot be specified along with client id");
+        }
+
         if (StringUtils.isEmpty(mqttCredentials.getClientId())) {
             deviceCredentials.setCredentialsId(mqttCredentials.getUserName());
         } else if (StringUtils.isEmpty(mqttCredentials.getUserName())) {
@@ -129,63 +147,225 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
         } else {
             deviceCredentials.setCredentialsId(EncryptionUtil.getSha3Hash("|", mqttCredentials.getClientId(), mqttCredentials.getUserName()));
         }
-        if (!StringUtils.isEmpty(mqttCredentials.getPassword())) {
+        if (StringUtils.isNotEmpty(mqttCredentials.getPassword())) {
             mqttCredentials.setPassword(mqttCredentials.getPassword());
         }
         deviceCredentials.setCredentialsValue(JacksonUtil.toString(mqttCredentials));
     }
 
     private void formatCertData(DeviceCredentials deviceCredentials) {
-        String cert = EncryptionUtil.trimNewLines(deviceCredentials.getCredentialsValue());
+        String cert = EncryptionUtil.certTrimNewLines(deviceCredentials.getCredentialsValue());
         String sha3Hash = EncryptionUtil.getSha3Hash(cert);
         deviceCredentials.setCredentialsId(sha3Hash);
         deviceCredentials.setCredentialsValue(cert);
     }
 
-    private void formatSimpleLwm2mCredentials(DeviceCredentials deviceCredentials) {
-        LwM2MClientCredentials clientCredentials;
-        ObjectNode json;
+    private void formatAndValidateSimpleLwm2mCredentials(DeviceCredentials deviceCredentials) {
+        LwM2MDeviceCredentials lwM2MCredentials;
         try {
-            json = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(), ObjectNode.class);
-            if (json == null) {
-                throw new IllegalArgumentException();
-            }
-            clientCredentials = JacksonUtil.convertValue(json.get("client"), LwM2MClientCredentials.class);
-            if (clientCredentials == null) {
-                throw new IllegalArgumentException();
-            }
+            lwM2MCredentials = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(), LwM2MDeviceCredentials.class);
+            validateLwM2MDeviceCredentials(lwM2MCredentials);
         } catch (IllegalArgumentException e) {
-            throw new DataValidationException("Invalid credentials body for LwM2M credentials!");
+            throw new DeviceCredentialsValidationException("Invalid credentials body for LwM2M credentials!");
         }
 
         String credentialsId = null;
-
+        LwM2MClientCredential clientCredentials = lwM2MCredentials.getClient();
         switch (clientCredentials.getSecurityConfigClientMode()) {
             case NO_SEC:
             case RPK:
+                deviceCredentials.setCredentialsValue(JacksonUtil.toString(lwM2MCredentials));
                 credentialsId = clientCredentials.getEndpoint();
                 break;
             case PSK:
-                credentialsId = ((PSKClientCredentials) clientCredentials).getIdentity();
+                credentialsId = ((PSKClientCredential) clientCredentials).getIdentity();
                 break;
             case X509:
-                X509ClientCredentials x509Config = (X509ClientCredentials) clientCredentials;
-                if (x509Config.getCert() != null) {
-                    String cert = EncryptionUtil.trimNewLines(x509Config.getCert());
-                    String sha3Hash = EncryptionUtil.getSha3Hash(cert);
-                    x509Config.setCert(cert);
-                    ((ObjectNode) json.get("client")).put("cert", cert);
-                    deviceCredentials.setCredentialsValue(JacksonUtil.toString(json));
+                deviceCredentials.setCredentialsValue(JacksonUtil.toString(lwM2MCredentials));
+                X509ClientCredential x509ClientConfig = (X509ClientCredential) clientCredentials;
+                if ((StringUtils.isNotBlank(x509ClientConfig.getCert()))) {
+                    String sha3Hash = EncryptionUtil.getSha3Hash(x509ClientConfig.getCert());
                     credentialsId = sha3Hash;
                 } else {
-                    credentialsId = x509Config.getEndpoint();
+                    credentialsId = x509ClientConfig.getEndpoint();
                 }
                 break;
         }
         if (credentialsId == null) {
-            throw new DataValidationException("Invalid credentials body for LwM2M credentials!");
+            throw new DeviceCredentialsValidationException("Invalid credentials body for LwM2M credentials!");
         }
         deviceCredentials.setCredentialsId(credentialsId);
+    }
+
+    private void validateLwM2MDeviceCredentials(LwM2MDeviceCredentials lwM2MCredentials) {
+        if (lwM2MCredentials == null) {
+            throw new DeviceCredentialsValidationException("LwM2M credentials must be specified!");
+        }
+
+        LwM2MClientCredential clientCredentials = lwM2MCredentials.getClient();
+        if (clientCredentials == null) {
+            throw new DeviceCredentialsValidationException("LwM2M client credentials must be specified!");
+        }
+        validateLwM2MClientCredentials(clientCredentials);
+
+        LwM2MBootstrapClientCredentials bootstrapCredentials = lwM2MCredentials.getBootstrap();
+        if (bootstrapCredentials == null) {
+            throw new DeviceCredentialsValidationException("LwM2M bootstrap credentials must be specified!");
+        }
+
+        LwM2MBootstrapClientCredential bootstrapServerCredentials = bootstrapCredentials.getBootstrapServer();
+        if (bootstrapServerCredentials == null) {
+            throw new DeviceCredentialsValidationException("LwM2M bootstrap server credentials must be specified!");
+        }
+        validateServerCredentials(bootstrapServerCredentials, "Bootstrap server");
+
+        LwM2MBootstrapClientCredential lwm2MBootstrapClientCredential = bootstrapCredentials.getLwm2mServer();
+        if (lwm2MBootstrapClientCredential == null) {
+            throw new DeviceCredentialsValidationException("LwM2M lwm2m server credentials must be specified!");
+        }
+        validateServerCredentials(lwm2MBootstrapClientCredential, "LwM2M server");
+    }
+
+    private void validateLwM2MClientCredentials(LwM2MClientCredential clientCredentials) {
+        if (StringUtils.isBlank(clientCredentials.getEndpoint())) {
+            throw new DeviceCredentialsValidationException("LwM2M client endpoint must be specified!");
+        }
+
+        switch (clientCredentials.getSecurityConfigClientMode()) {
+            case NO_SEC:
+                break;
+            case PSK:
+                PSKClientCredential pskCredentials = (PSKClientCredential) clientCredentials;
+                if (StringUtils.isBlank(pskCredentials.getIdentity())) {
+                    throw new DeviceCredentialsValidationException("LwM2M client PSK identity must be specified and must be an utf8 string!");
+                }
+                // SecurityMode.NO_SEC.toString() == "NO_SEC";
+                if (pskCredentials.getIdentity().equals(SecurityMode.NO_SEC.toString())) {
+                    throw new DeviceCredentialsValidationException("The PSK ID of the LwM2M client must not be '" + SecurityMode.NO_SEC + "'!");
+                }
+
+                String pskKey = pskCredentials.getKey();
+                if (StringUtils.isBlank(pskKey)) {
+                    throw new DeviceCredentialsValidationException("LwM2M client PSK key must be specified!");
+                }
+
+                if (!pskKey.matches("-?[0-9a-fA-F]+")) {
+                    throw new DeviceCredentialsValidationException("LwM2M client PSK key must be random sequence in hex encoding!");
+                }
+
+                if (pskKey.length()% 32 != 0 || pskKey.length() > 128) {
+                    throw new DeviceCredentialsValidationException("LwM2M client PSK key length = " + pskKey.length() + ". Key must be HexDec format: 32, 64, 128 characters!");
+                }
+
+                break;
+            case RPK:
+                RPKClientCredential rpkCredentials = (RPKClientCredential) clientCredentials;
+                if (StringUtils.isBlank(rpkCredentials.getKey())) {
+                    throw new DeviceCredentialsValidationException("LwM2M client RPK key must be specified!");
+                }
+
+                try {
+                    String pubkClient = EncryptionUtil.pubkTrimNewLines(rpkCredentials.getKey());
+                    rpkCredentials.setKey(pubkClient);
+                    SecurityUtil.publicKey.decode(rpkCredentials.getDecoded());
+                } catch (Exception e) {
+                    throw new DeviceCredentialsValidationException("LwM2M client RPK key must be in standard [RFC7250] and support only EC algorithm and then encoded to Base64 format!");
+                }
+                break;
+            case X509:
+                X509ClientCredential x509CCredentials = (X509ClientCredential) clientCredentials;
+                if (StringUtils.isNotEmpty(x509CCredentials.getCert())) {
+                    try {
+                        String certClient = EncryptionUtil.certTrimNewLines(x509CCredentials.getCert());
+                        x509CCredentials.setCert(certClient);
+                        SecurityUtil.certificate.decode(x509CCredentials.getDecoded());
+                    } catch (Exception e) {
+                        throw new DeviceCredentialsValidationException("LwM2M client X509 certificate must be in DER-encoded X509v3 format and support only EC algorithm and then encoded to Base64 format!");
+                    }
+                }
+                break;
+        }
+    }
+
+    private void validateServerCredentials(LwM2MBootstrapClientCredential serverCredentials, String server) {
+        switch (serverCredentials.getSecurityMode()) {
+            case NO_SEC:
+                break;
+            case PSK:
+                PSKBootstrapClientCredential pskCredentials = (PSKBootstrapClientCredential) serverCredentials;
+                if (StringUtils.isBlank(pskCredentials.getClientPublicKeyOrId())) {
+                    throw new DeviceCredentialsValidationException(server + " client PSK public key or id must be specified and must be an utf8 string!");
+                }
+
+                // SecurityMode.NO_SEC.toString() == "NO_SEC";
+                if (pskCredentials.getClientPublicKeyOrId().equals(SecurityMode.NO_SEC.toString())) {
+                    throw new DeviceCredentialsValidationException(server + " client PSK public key or id must not be '" + SecurityMode.NO_SEC + "'!");
+                }
+
+                String pskKey = pskCredentials.getClientSecretKey();
+                if (StringUtils.isBlank(pskKey)) {
+                    throw new DeviceCredentialsValidationException(server + " client PSK key must be specified!");
+                }
+
+                if (!pskKey.matches("-?[0-9a-fA-F]+")) {
+                    throw new DeviceCredentialsValidationException(server + " client PSK key must be random sequence in hex encoding!");
+                }
+
+                if (pskKey.length() % 32 != 0 || pskKey.length() > 128) {
+                    throw new DeviceCredentialsValidationException(server + " client PSK key length = " + pskKey.length() + ". Key must be HexDec format: 32, 64, 128 characters!");
+                }
+                break;
+            case RPK:
+                RPKBootstrapClientCredential rpkServerCredentials = (RPKBootstrapClientCredential) serverCredentials;
+                if (StringUtils.isEmpty(rpkServerCredentials.getClientPublicKeyOrId())) {
+                    throw new DeviceCredentialsValidationException(server + " client RPK public key or id must be specified!");
+                }
+                try {
+                    String pubkRpkSever = EncryptionUtil.pubkTrimNewLines(rpkServerCredentials.getClientPublicKeyOrId());
+                    rpkServerCredentials.setClientPublicKeyOrId(pubkRpkSever);
+                    SecurityUtil.publicKey.decode(rpkServerCredentials.getDecodedClientPublicKeyOrId());
+                } catch (Exception e) {
+                    throw new DeviceCredentialsValidationException(server + " client RPK public key or id must be in standard [RFC7250 ] and then encoded to Base64 format!");
+                }
+
+                if (StringUtils.isEmpty(rpkServerCredentials.getClientSecretKey())) {
+                    throw new DeviceCredentialsValidationException(server + " client RPK secret key must be specified!");
+                }
+
+                try {
+                    String prikRpkSever = EncryptionUtil.prikTrimNewLines(rpkServerCredentials.getClientSecretKey());
+                    rpkServerCredentials.setClientSecretKey(prikRpkSever);
+                    SecurityUtil.privateKey.decode(rpkServerCredentials.getDecodedClientSecretKey());
+                } catch (Exception e) {
+                    throw new DeviceCredentialsValidationException(server + " client RPK secret key must be in PKCS#8 format (DER encoding, standard [RFC5958]) and then encoded to Base64 format!");
+                }
+                break;
+            case X509:
+                X509BootstrapClientCredential x509ServerCredentials = (X509BootstrapClientCredential) serverCredentials;
+                if (StringUtils.isBlank(x509ServerCredentials.getClientPublicKeyOrId())) {
+                    throw new DeviceCredentialsValidationException(server + " client X509 public key or id must be specified!");
+                }
+
+                try {
+                    String certServer = EncryptionUtil.certTrimNewLines(x509ServerCredentials.getClientPublicKeyOrId());
+                    x509ServerCredentials.setClientPublicKeyOrId(certServer);
+                    SecurityUtil.certificate.decode(x509ServerCredentials.getDecodedClientPublicKeyOrId());
+                } catch (Exception e) {
+                    throw new DeviceCredentialsValidationException(server + " client X509 public key or id must be in DER-encoded X509v3 format  and support only EC algorithm and then encoded to Base64 format!");
+                }
+                if (StringUtils.isBlank(x509ServerCredentials.getClientSecretKey())) {
+                    throw new DeviceCredentialsValidationException(server + " client X509 secret key must be specified!");
+                }
+
+                try {
+                    String prikX509Sever = EncryptionUtil.prikTrimNewLines(x509ServerCredentials.getClientSecretKey());
+                    x509ServerCredentials.setClientSecretKey(prikX509Sever);
+                    SecurityUtil.privateKey.decode(x509ServerCredentials.getDecodedClientSecretKey());
+                } catch (Exception e) {
+                    throw new DeviceCredentialsValidationException(server + " client X509 secret key must be in PKCS#8 format (DER encoding, standard [RFC5958]) and then encoded to Base64 format!");
+                }
+                break;
+        }
     }
 
     @Override
@@ -201,38 +381,38 @@ public class DeviceCredentialsServiceImpl extends AbstractEntityService implemen
                 @Override
                 protected void validateCreate(TenantId tenantId, DeviceCredentials deviceCredentials) {
                     if (deviceCredentialsDao.findByDeviceId(tenantId, deviceCredentials.getDeviceId().getId()) != null) {
-                        throw new DataValidationException("Credentials for this device are already specified!");
+                        throw new DeviceCredentialsValidationException("Credentials for this device are already specified!");
                     }
                     if (deviceCredentialsDao.findByCredentialsId(tenantId, deviceCredentials.getCredentialsId()) != null) {
-                        throw new DataValidationException("Device credentials are already assigned to another device!");
+                        throw new DeviceCredentialsValidationException("Device credentials are already assigned to another device!");
                     }
                 }
 
                 @Override
                 protected void validateUpdate(TenantId tenantId, DeviceCredentials deviceCredentials) {
                     if (deviceCredentialsDao.findById(tenantId, deviceCredentials.getUuidId()) == null) {
-                        throw new DataValidationException("Unable to update non-existent device credentials!");
+                        throw new DeviceCredentialsValidationException("Unable to update non-existent device credentials!");
                     }
                     DeviceCredentials existingCredentials = deviceCredentialsDao.findByCredentialsId(tenantId, deviceCredentials.getCredentialsId());
                     if (existingCredentials != null && !existingCredentials.getId().equals(deviceCredentials.getId())) {
-                        throw new DataValidationException("Device credentials are already assigned to another device!");
+                        throw new DeviceCredentialsValidationException("Device credentials are already assigned to another device!");
                     }
                 }
 
                 @Override
                 protected void validateDataImpl(TenantId tenantId, DeviceCredentials deviceCredentials) {
                     if (deviceCredentials.getDeviceId() == null) {
-                        throw new DataValidationException("Device credentials should be assigned to device!");
+                        throw new DeviceCredentialsValidationException("Device credentials should be assigned to device!");
                     }
                     if (deviceCredentials.getCredentialsType() == null) {
-                        throw new DataValidationException("Device credentials type should be specified!");
+                        throw new DeviceCredentialsValidationException("Device credentials type should be specified!");
                     }
                     if (StringUtils.isEmpty(deviceCredentials.getCredentialsId())) {
-                        throw new DataValidationException("Device credentials id should be specified!");
+                        throw new DeviceCredentialsValidationException("Device credentials id should be specified!");
                     }
                     Device device = deviceService.findDeviceById(tenantId, deviceCredentials.getDeviceId());
                     if (device == null) {
-                        throw new DataValidationException("Can't assign device credentials to non-existent device!");
+                        throw new DeviceCredentialsValidationException("Can't assign device credentials to non-existent device!");
                     }
                 }
             };

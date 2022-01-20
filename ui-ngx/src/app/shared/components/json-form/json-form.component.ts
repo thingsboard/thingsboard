@@ -15,15 +15,16 @@
 ///
 
 import {
+  ChangeDetectorRef,
   Component,
   ElementRef,
-  forwardRef,
+  forwardRef, Injector,
   Input,
   OnChanges,
   OnDestroy,
-  OnInit,
+  OnInit, Renderer2,
   SimpleChanges,
-  ViewChild,
+  ViewChild, ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
 import { ControlValueAccessor, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator } from '@angular/forms';
@@ -44,6 +45,8 @@ import { JsonFormComponentData } from './json-form-component.models';
 import { GroupInfo } from '@shared/models/widget.models';
 import { Observable } from 'rxjs/internal/Observable';
 import { forkJoin, from } from 'rxjs';
+import { MouseEvent } from 'react';
+import { TbPopoverService } from '@shared/components/popover.service';
 
 const tinycolor = tinycolor_;
 
@@ -70,6 +73,9 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
   @ViewChild('reactRoot', {static: true})
   reactRootElmRef: ElementRef<HTMLElement>;
 
+  @ViewChild('reactFullscreen', {static: true})
+  reactFullscreenElmRef: ElementRef<HTMLElement>;
+
   private readonlyValue: boolean;
   get readonly(): boolean {
     return this.readonlyValue;
@@ -89,7 +95,8 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
     onModelChange: this.onModelChange.bind(this),
     onColorClick: this.onColorClick.bind(this),
     onIconClick: this.onIconClick.bind(this),
-    onToggleFullscreen: this.onToggleFullscreen.bind(this)
+    onToggleFullscreen: this.onToggleFullscreen.bind(this),
+    onHelpClick: this.onHelpClick.bind(this)
   };
 
   data: JsonFormComponentData;
@@ -102,8 +109,7 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
   isModelValid = true;
 
   isFullscreen = false;
-  targetFullscreenElement: HTMLElement;
-  fullscreenFinishFn: () => void;
+  fullscreenFinishFn: (el: Element) => void;
 
   private propagateChange = null;
   private propagateChangePending = false;
@@ -113,7 +119,11 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
   constructor(public elementRef: ElementRef,
               private translate: TranslateService,
               private dialogs: DialogService,
-              protected store: Store<AppState>) {
+              private popoverService: TbPopoverService,
+              private renderer: Renderer2,
+              private viewContainerRef: ViewContainerRef,
+              protected store: Store<AppState>,
+              private cd: ChangeDetectorRef) {
   }
 
   ngOnInit(): void {
@@ -216,8 +226,8 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
   }
 
   private onIconClick(key: (string | number)[],
-                       val: string,
-                       iconSelectedFn: (icon: string) => void) {
+                      val: string,
+                      iconSelectedFn: (icon: string) => void) {
     this.dialogs.materialIconPicker(val).subscribe((icon) => {
       if (icon && iconSelectedFn) {
         iconSelectedFn(icon);
@@ -225,19 +235,24 @@ export class JsonFormComponent implements OnInit, ControlValueAccessor, Validato
     });
   }
 
-  private onToggleFullscreen(element: HTMLElement, fullscreenFinishFn?: () => void) {
-    this.targetFullscreenElement = element;
+  private onToggleFullscreen(fullscreenFinishFn?: (el: Element) => void) {
     this.isFullscreen = !this.isFullscreen;
     this.fullscreenFinishFn = fullscreenFinishFn;
+    this.cd.markForCheck();
   }
 
   onFullscreenChanged(fullscreen: boolean) {
     this.formProps.isFullscreen = fullscreen;
     this.renderReactSchemaForm(false);
     if (this.fullscreenFinishFn) {
-      this.fullscreenFinishFn();
+      this.fullscreenFinishFn(this.reactFullscreenElmRef.nativeElement);
       this.fullscreenFinishFn = null;
     }
+  }
+
+  private onHelpClick(event: MouseEvent, helpId: string, helpVisibleFn: (visible: boolean) => void, helpReadyFn: (ready: boolean) => void) {
+    const trigger = event.currentTarget as Element;
+    this.popoverService.toggleHelpPopover(trigger, this.renderer, this.viewContainerRef, helpId, '', helpVisibleFn, helpReadyFn);
   }
 
   private updateAndRender() {

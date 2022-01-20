@@ -94,7 +94,7 @@
       <mat-step [stepControl]="columnTypesFormGroup">
         <form [formGroup]="columnTypesFormGroup">
           <ng-template matStepLabel>{{ 'import.stepper-text.column-type' | translate }}</ng-template>
-          <tb-table-columns-assignment formControlName="columnsParam" [entityType]="entityType"></tb-table-columns-assignment>
+          <tb-table-columns-assignment #columnsAssignmentComponent formControlName="columnsParam" [entityType]="entityType"></tb-table-columns-assignment>
         </form>
         <div fxLayout="row wrap" fxLayoutAlign="space-between center">
           <button mat-button
@@ -113,21 +113,32 @@
       </mat-step>
       <mat-step>
         <ng-template matStepLabel>{{ 'import.stepper-text.creat-entities' | translate }}</ng-template>
-        <mat-progress-bar color="warn" class="tb-import-progress" mode="determinate" [value]="progressCreate">
+        <mat-progress-bar color="warn" class="tb-import-progress" mode="indeterminate">
         </mat-progress-bar>
       </mat-step>
       <mat-step>
         <ng-template matStepLabel>{{ 'import.stepper-text.done' | translate }}</ng-template>
         <div fxLayout="column">
-          <p class="mat-body-1" *ngIf="this.statistical?.create && this.statistical?.create.entity">
-            {{ translate.instant('import.message.create-entities', {count: this.statistical.create.entity}) }}
+          <p class="mat-body-1" *ngIf="this.statistical?.created">
+            {{ translate.instant('import.message.create-entities', {count: this.statistical.created}) }}
           </p>
-          <p class="mat-body-1" *ngIf="this.statistical?.update && this.statistical?.update.entity">
-            {{ translate.instant('import.message.update-entities', {count: this.statistical.update.entity}) }}
+          <p class="mat-body-1" *ngIf="this.statistical?.updated">
+            {{ translate.instant('import.message.update-entities', {count: this.statistical.updated}) }}
           </p>
-          <p class="mat-body-1" *ngIf="this.statistical?.error && this.statistical?.error.entity">
-            {{ translate.instant('import.message.error-entities', {count: this.statistical.error.entity}) }}
+          <p class="mat-body-1" style="margin-bottom: 0.8em" *ngIf="this.statistical?.errors">
+            {{ translate.instant('import.message.error-entities', {count: this.statistical.errors}) }}
           </p>
+          <mat-expansion-panel class="advanced-logs" [expanded]="false"
+                               *ngIf="this.statistical?.errorsList?.length"
+                               (opened)="initEditor()">
+            <mat-expansion-panel-header [collapsedHeight]="'38px'" [expandedHeight]="'38px'">
+              <mat-panel-title>
+                <div class="tb-small" translate>import.details</div>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <mat-divider></mat-divider>
+            <div #failureDetailsEditor class="tb-failure-details"></div>
+          </mat-expansion-panel>
         </div>
         <div fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="20px">
           <button mat-raised-button

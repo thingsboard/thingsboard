@@ -105,7 +105,7 @@ export class AddDeviceProfileDialogComponent extends
     super(store, router, dialogRef);
     this.deviceProfileDetailsFormGroup = this.fb.group(
       {
-        name: [data.deviceProfileName, [Validators.required]],
+        name: [data.deviceProfileName, [Validators.required, Validators.maxLength(255)]],
         type: [DeviceProfileType.DEFAULT, [Validators.required]],
         image: [null, []],
         defaultRuleChainId: [null, []],
@@ -187,6 +187,7 @@ export class AddDeviceProfileDialogComponent extends
         name: this.deviceProfileDetailsFormGroup.get('name').value,
         type: this.deviceProfileDetailsFormGroup.get('type').value,
         image: this.deviceProfileDetailsFormGroup.get('image').value,
+        defaultQueueName: this.deviceProfileDetailsFormGroup.get('defaultQueueName').value,
         transportType: this.transportConfigFormGroup.get('transportType').value,
         provisionType: deviceProvisionConfiguration.type,
         provisionDeviceKey,

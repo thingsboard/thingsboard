@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, Input, Optional } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, Input, Optional } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -67,6 +67,8 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
 
   displayTransportConfiguration: boolean;
 
+  isTransportTypeChanged = false;
+
   serviceType = ServiceType.TB_RULE_ENGINE;
 
   deviceProfileId: EntityId;
@@ -77,8 +79,9 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
               protected translate: TranslateService,
               @Optional() @Inject('entity') protected entityValue: DeviceProfile,
               @Optional() @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<DeviceProfile>,
-              protected fb: FormBuilder) {
-    super(store, fb, entityValue, entitiesTableConfigValue);
+              protected fb: FormBuilder,
+              protected cd: ChangeDetectorRef) {
+    super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
 
   hideDelete() {
@@ -102,7 +105,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     };
     const form = this.fb.group(
       {
-        name: [entity ? entity.name : '', [Validators.required]],
+        name: [entity ? entity.name : '', [Validators.required, Validators.maxLength(255)]],
         type: [entity ? entity.type : null, [Validators.required]],
         image: [entity ? entity.image : null],
         transportType: [entity ? entity.transportType : null, [Validators.required]],
@@ -157,6 +160,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     const deviceTransportType: DeviceTransportType = form.get('transportType').value;
     this.displayTransportConfiguration = deviceTransportType &&
       deviceTransportTypeConfigurationInfoMap.get(deviceTransportType).hasProfileConfiguration;
+    this.isTransportTypeChanged = true;
     let profileData: DeviceProfileData = form.getRawValue().profileData;
     if (!profileData) {
       profileData = {

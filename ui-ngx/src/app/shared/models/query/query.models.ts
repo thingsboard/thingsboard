@@ -202,6 +202,17 @@ export function createDefaultFilterPredicate(valueType: EntityKeyValueType, comp
   return predicate;
 }
 
+export function getDynamicSourcesForAllowUser(allow: boolean): DynamicValueSourceType[] {
+  const dynamicValueSourceTypes = [DynamicValueSourceType.CURRENT_TENANT,
+    DynamicValueSourceType.CURRENT_CUSTOMER];
+  if (allow) {
+    dynamicValueSourceTypes.push(DynamicValueSourceType.CURRENT_USER);
+  } else {
+    dynamicValueSourceTypes.push(DynamicValueSourceType.CURRENT_DEVICE);
+  }
+  return dynamicValueSourceTypes;
+}
+
 export enum FilterPredicateType {
   STRING = 'STRING',
   NUMERIC = 'NUMERIC',
@@ -215,7 +226,9 @@ export enum StringOperation {
   STARTS_WITH = 'STARTS_WITH',
   ENDS_WITH = 'ENDS_WITH',
   CONTAINS = 'CONTAINS',
-  NOT_CONTAINS = 'NOT_CONTAINS'
+  NOT_CONTAINS = 'NOT_CONTAINS',
+  IN = 'IN',
+  NOT_IN = 'NOT_IN'
 }
 
 export const stringOperationTranslationMap = new Map<StringOperation, string>(
@@ -225,7 +238,9 @@ export const stringOperationTranslationMap = new Map<StringOperation, string>(
     [StringOperation.STARTS_WITH, 'filter.operation.starts-with'],
     [StringOperation.ENDS_WITH, 'filter.operation.ends-with'],
     [StringOperation.CONTAINS, 'filter.operation.contains'],
-    [StringOperation.NOT_CONTAINS, 'filter.operation.not-contains']
+    [StringOperation.NOT_CONTAINS, 'filter.operation.not-contains'],
+    [StringOperation.IN, 'filter.operation.in'],
+    [StringOperation.NOT_IN, 'filter.operation.not-in']
   ]
 );
 
@@ -288,6 +303,10 @@ export const dynamicValueSourceTypeTranslationMap = new Map<DynamicValueSourceTy
     [DynamicValueSourceType.CURRENT_DEVICE, 'filter.current-device']
   ]
 );
+
+export const inheritModeForDynamicValueSourceType = [
+  DynamicValueSourceType.CURRENT_CUSTOMER,
+  DynamicValueSourceType.CURRENT_DEVICE];
 
 export interface DynamicValue<T> {
   sourceType: DynamicValueSourceType;
@@ -819,12 +838,14 @@ export function updateDatasourceFromEntityInfo(datasource: Datasource, entity: E
   datasource.entityId = entity.id;
   datasource.entityType = entity.entityType;
   if (datasource.type === DatasourceType.entity || datasource.type === DatasourceType.entityCount) {
-    datasource.entityName = entity.name;
-    datasource.entityLabel = entity.label;
-    datasource.name = entity.name;
-    datasource.entityDescription = entity.entityDescription;
-    datasource.entity.label = entity.label;
-    datasource.entity.name = entity.name;
+    if (datasource.type === DatasourceType.entity) {
+      datasource.entityName = entity.name;
+      datasource.entityLabel = entity.label;
+      datasource.name = entity.name;
+      datasource.entityDescription = entity.entityDescription;
+      datasource.entity.label = entity.label;
+      datasource.entity.name = entity.name;
+    }
     if (createFilter) {
       datasource.entityFilter = {
         type: AliasFilterType.singleEntity,

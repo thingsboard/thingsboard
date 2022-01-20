@@ -126,7 +126,7 @@ export const timewindowCompletion: TbEditorCompletion = {
       }
     }
   }
-}
+};
 
 export const widgetContextCompletions: TbEditorCompletions = {
   ctx: {
@@ -390,6 +390,63 @@ export const widgetContextCompletions: TbEditorCompletions = {
           meta: 'property',
           type: 'number'
         },
+        currentUser: {
+          description: 'Current user object.',
+          meta: 'property',
+          type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/user.model.ts#L45">AuthUser</a>',
+          children: {
+            sub: {
+              description: 'User subject (email).',
+              meta: 'property',
+              type: 'string'
+            },
+            scopes: {
+              description: 'User security scopes.',
+              meta: 'property',
+              type: 'Array<string>'
+            },
+            userId: {
+              description: 'User id.',
+              meta: 'property',
+              type: 'string'
+            },
+            firstName: {
+              description: 'User first name.',
+              meta: 'property',
+              type: 'string'
+            },
+            lastName: {
+              description: 'User last name.',
+              meta: 'property',
+              type: 'string'
+            },
+            enabled: {
+              description: 'Whether is user enabled.',
+              meta: 'property',
+              type: 'boolean'
+            },
+            tenantId: {
+              description: 'Tenant id of the user.',
+              meta: 'property',
+              type: 'string'
+            },
+            customerId: {
+              description: 'Customer id of the user (available when user belongs to specific customer).',
+              meta: 'property',
+              type: 'string'
+            },
+            isPublic: {
+              description: 'Special flag indicating public user.',
+              meta: 'property',
+              type: 'boolean'
+            },
+            authority: {
+              description: 'User authority. Possible values: SYS_ADMIN, TENANT_ADMIN, CUSTOMER_USER',
+              meta: 'property',
+              type: '<a href="https://github.com/thingsboard/thingsboard/blob/13e6b10b7ab830e64d31b99614a9d95a1a25928a/ui-ngx/src/app/shared/models/authority.enum.ts#L17">Authority</a>'
+            }
+          }
+        },
         hideTitlePanel: {
           description: 'Manages visibility of widget title panel. Useful for widget with custom title panels or different states. <b>updateWidgetParams()</b> function must be called after this property change.',
           meta: 'property',
@@ -465,6 +522,18 @@ export const widgetContextCompletions: TbEditorCompletions = {
                   description: 'Maximum delay in milliseconds to wait until response/acknowledgement is received.',
                   type: 'number',
                   optional: true
+                },
+                {
+                  name: 'persistent',
+                  description: 'RPC request persistent',
+                  type: 'boolean',
+                  optional: true
+                },
+                {
+                  name: 'persistentPollingInterval',
+                  description: 'Polling interval in milliseconds to get persistent RPC command response',
+                  type: 'number',
+                  optional: true
                 }
               ],
               return: {
@@ -490,6 +559,18 @@ export const widgetContextCompletions: TbEditorCompletions = {
                 {
                   name: 'timeout',
                   description: 'Maximum delay in milliseconds to wait until response/acknowledgement is received.',
+                  type: 'number',
+                  optional: true
+                },
+                {
+                  name: 'persistent',
+                  description: 'RPC request persistent',
+                  type: 'boolean',
+                  optional: true
+                },
+                {
+                  name: 'persistentPollingInterval',
+                  description: 'Polling interval in milliseconds to get persistent RPC command response',
                   type: 'number',
                   optional: true
                 }
@@ -657,4 +738,4 @@ export const widgetContextCompletions: TbEditorCompletions = {
       ...serviceCompletions
     }
   }
-}
+};

@@ -26,7 +26,6 @@
     </appender>
 
     <logger name="org.thingsboard.server" level="INFO" />
-    <logger name="org.thingsboard.server.transport.snmp" level="DEBUG" />
 
 <!--    <logger name="org.thingsboard.server.service.queue" level="TRACE" />-->
 <!--    <logger name="org.thingsboard.server.service.transport" level="TRACE" />-->
@@ -40,6 +39,9 @@
 
     <!-- Top Rule Nodes by max execution time -->
 <!--    <logger name="org.thingsboard.server.service.queue.TbMsgPackProcessingContext" level="DEBUG" /> -->
+
+<!-- MQTT transport debug -->
+<!--    <logger name="org.thingsboard.server.transport.mqtt.MqttTransportHandler" level="DEBUG" /> -->
 
     <logger name="com.microsoft.azure.servicebus.primitives.CoreMessageReceiver" level="OFF" />
 

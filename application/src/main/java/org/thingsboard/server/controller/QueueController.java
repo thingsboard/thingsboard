@@ -15,7 +15,10 @@
  */
 package org.thingsboard.server.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -24,41 +27,33 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
-import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
+import org.thingsboard.server.queue.QueueService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Set;
+
+import static org.thingsboard.server.controller.ControllerConstants.QUEUE_SERVICE_TYPE_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.QUEUE_SERVICE_TYPE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
+@RequiredArgsConstructor
 public class QueueController extends BaseController {
 
-    @Autowired(required = false)
-    private TbQueueRuleEngineSettings ruleEngineSettings;
+    private final QueueService queueService;
 
+    @ApiOperation(value = "Get queue names (getTenantQueuesByServiceType)",
+            notes = "Returns a set of unique queue names based on service type. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/queues", params = {"serviceType"}, method = RequestMethod.GET)
-    @ResponseBody
-    public List<String> getTenantQueuesByServiceType(@RequestParam String serviceType) throws ThingsboardException {
+    @RequestMapping(value = "/tenant/queues", params = {"serviceType"}, produces = MediaType.APPLICATION_JSON_VALUE, method = RequestMethod.GET)
+    @ResponseBody()
+    public Set<String> getTenantQueuesByServiceType(@ApiParam(value = QUEUE_SERVICE_TYPE_DESCRIPTION, allowableValues = QUEUE_SERVICE_TYPE_ALLOWABLE_VALUES)
+                                                    @RequestParam String serviceType) throws ThingsboardException {
         checkParameter("serviceType", serviceType);
         try {
-            ServiceType type = ServiceType.valueOf(serviceType);
-            switch (type) {
-                case TB_RULE_ENGINE:
-                    if (ruleEngineSettings == null) {
-                        return Arrays.asList("Main", "HighPriority", "SequentialByOriginator");
-                    }
-                    return ruleEngineSettings.getQueues().stream()
-                            .map(TbRuleEngineQueueConfiguration::getName)
-                            .collect(Collectors.toList());
-                default:
-                    return Collections.emptyList();
-            }
+            return queueService.getQueuesByServiceType(ServiceType.valueOf(serviceType));
         } catch (Exception e) {
             throw handleException(e);
         }

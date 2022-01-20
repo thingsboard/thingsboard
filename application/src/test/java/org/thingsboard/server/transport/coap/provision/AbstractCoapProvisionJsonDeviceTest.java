@@ -146,7 +146,7 @@ public abstract class AbstractCoapProvisionJsonDeviceTest extends AbstractCoapIn
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.get("credentialsType").getAsString());
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), "X509_CERTIFICATE");
 
-        String cert = EncryptionUtil.trimNewLines(deviceCredentials.getCredentialsValue());
+        String cert = EncryptionUtil.certTrimNewLines(deviceCredentials.getCredentialsValue());
         String sha3Hash = EncryptionUtil.getSha3Hash(cert);
 
         Assert.assertEquals(deviceCredentials.getCredentialsId(), sha3Hash);
@@ -180,7 +180,7 @@ public abstract class AbstractCoapProvisionJsonDeviceTest extends AbstractCoapIn
 
     private CoapResponse createCoapClientAndPublish(String deviceCredentials) throws Exception {
         String provisionRequestMsg = createTestProvisionMessage(deviceCredentials);
-        CoapClient client = getCoapClient(FeatureType.PROVISION);
+        client = getCoapClient(FeatureType.PROVISION);
         return postProvision(client, provisionRequestMsg.getBytes());
     }
 

@@ -145,7 +145,7 @@ public abstract class AbstractCoapProvisionProtoDeviceTest extends AbstractCoapI
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.getCredentialsType().toString());
         Assert.assertEquals(deviceCredentials.getCredentialsType(), DeviceCredentialsType.X509_CERTIFICATE);
 
-        String cert = EncryptionUtil.trimNewLines(deviceCredentials.getCredentialsValue());
+        String cert = EncryptionUtil.certTrimNewLines(deviceCredentials.getCredentialsValue());
         String sha3Hash = EncryptionUtil.getSha3Hash(cert);
 
         Assert.assertEquals(deviceCredentials.getCredentialsId(), sha3Hash);
@@ -172,11 +172,13 @@ public abstract class AbstractCoapProvisionProtoDeviceTest extends AbstractCoapI
 
     private CoapResponse createCoapClientAndPublish() throws Exception {
         byte[] provisionRequestMsg = createTestProvisionMessage();
-        return createCoapClientAndPublish(provisionRequestMsg);
+        CoapResponse coapResponse = createCoapClientAndPublish(provisionRequestMsg);
+        Assert.assertNotNull("COAP response", coapResponse);
+        return coapResponse;
     }
 
     private CoapResponse createCoapClientAndPublish(byte[] provisionRequestMsg) throws Exception {
-        CoapClient client = getCoapClient(FeatureType.PROVISION);
+        client = getCoapClient(FeatureType.PROVISION);
         return postProvision(client, provisionRequestMsg);
     }
 

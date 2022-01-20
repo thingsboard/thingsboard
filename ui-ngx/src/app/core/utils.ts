@@ -114,6 +114,10 @@ export function isNumeric(value: any): boolean {
   return (value - parseFloat(value) + 1) >= 0;
 }
 
+export function isBoolean(value: any): boolean {
+  return typeof value === 'boolean';
+}
+
 export function isString(value: any): boolean {
   return typeof value === 'string';
 }
@@ -440,4 +444,19 @@ export function generateSecret(length?: number): string {
 
 export function validateEntityId(entityId: EntityId | null): boolean {
     return isDefinedAndNotNull(entityId?.id) && entityId.id !== NULL_UUID && isDefinedAndNotNull(entityId?.entityType);
+}
+
+export function isMobileApp(): boolean {
+  return isDefined((window as any).flutter_inappwebview);
+}
+
+const alphanumericCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+const alphanumericCharactersLength = alphanumericCharacters.length;
+
+export function randomAlphanumeric(length: number): string {
+  let result = '';
+  for ( let i = 0; i < length; i++ ) {
+    result += alphanumericCharacters.charAt(Math.floor(Math.random() * alphanumericCharactersLength));
+  }
+  return result;
 }

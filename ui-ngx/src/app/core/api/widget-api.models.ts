@@ -54,6 +54,7 @@ import { PageData } from '@shared/models/page/page-data';
 import { TranslateService } from '@ngx-translate/core';
 import { AlarmDataService } from '@core/api/alarm-data.service';
 import { IDashboardController } from '@home/components/dashboard-page/dashboard-page.models';
+import { PopoverPlacement } from '@shared/components/popover.models';
 
 export interface TimewindowFunctions {
   onUpdateTimewindow: (startTimeMs: number, endTimeMs: number, interval?: number) => void;
@@ -69,8 +70,11 @@ export interface WidgetSubscriptionApi {
 }
 
 export interface RpcApi {
-  sendOneWayCommand: (method: string, params?: any, timeout?: number, requestUUID?: string) => Observable<any>;
-  sendTwoWayCommand: (method: string, params?: any, timeout?: number, requestUUID?: string) => Observable<any>;
+  sendOneWayCommand: (method: string, params?: any, timeout?: number, persistent?: boolean,
+                      persistentPollingInterval?: number, requestUUID?: string) => Observable<any>;
+  sendTwoWayCommand: (method: string, params?: any, timeout?: number, persistent?: boolean,
+                      persistentPollingInterval?: number, requestUUID?: string) => Observable<any>;
+  completedCommand: () => void;
 }
 
 export interface IWidgetUtils {
@@ -84,6 +88,12 @@ export interface WidgetActionsApi {
                        entityId?: EntityId, entityName?: string, additionalParams?: any, entityLabel?: string) => void;
   elementClick: ($event: Event) => void;
   getActiveEntityInfo: () => SubscriptionEntityInfo;
+  openDashboardStateInSeparateDialog: (targetDashboardStateId: string, params?: StateParams, dialogTitle?: string,
+                                       hideDashboardToolbar?: boolean, dialogWidth?: number, dialogHeight?: number) => void;
+  openDashboardStateInPopover: ($event: Event, targetDashboardStateId: string, params?: StateParams,
+                                hideDashboardToolbar?: boolean, preferredPlacement?: PopoverPlacement,
+                                hideOnClickOutside?: boolean, popoverWidth?: string,
+                                popoverHeight?: string, popoverStyle?: { [klass: string]: any }) => void;
 }
 
 export interface AliasInfo {
@@ -140,6 +150,7 @@ export type StateControllerHolder = () => IStateController;
 export interface IStateController {
   dashboardCtrl: IDashboardController;
   getStateParams(): StateParams;
+  stateChanged(): Observable<string>;
   getStateParamsByStateId(stateId: string): StateParams;
   openState(id: string, params?: StateParams, openRightLayout?: boolean): void;
   updateState(id?: string, params?: StateParams, openRightLayout?: boolean): void;
@@ -152,6 +163,7 @@ export interface IStateController {
   getStateIndex(): number;
   getStateIdAtIndex(index: number): string;
   getEntityId(entityParamName: string): EntityId;
+  getCurrentStateName(): string;
 }
 
 export interface SubscriptionInfo {
@@ -224,6 +236,7 @@ export interface WidgetSubscriptionOptions {
   stateData?: boolean;
   alarmSource?: Datasource;
   datasources?: Array<Datasource>;
+  datasourcesOptional?: boolean;
   hasDataPageLink?: boolean;
   singleEntity?: boolean;
   warnOnPageDataOverflow?: boolean;
@@ -237,6 +250,7 @@ export interface WidgetSubscriptionOptions {
   legendConfig?: LegendConfig;
   comparisonEnabled?: boolean;
   timeForComparison?: moment_.unitOfTime.DurationConstructor;
+  comparisonCustomIntervalValue?: number;
   decimals?: number;
   units?: string;
   callbacks?: WidgetSubscriptionCallbacks;
@@ -270,6 +284,7 @@ export interface IWidgetSubscription {
   hiddenData?: Array<{data: DataSet}>;
   timeWindowConfig?: Timewindow;
   timeWindow?: WidgetTimewindow;
+  widgetTimewindowChanged$: Observable<WidgetTimewindow>;
   comparisonEnabled?: boolean;
   comparisonTimeWindow?: WidgetTimewindow;
 
@@ -298,8 +313,10 @@ export interface IWidgetSubscription {
   onResetTimewindow(): void;
   updateTimewindowConfig(newTimewindow: Timewindow): void;
 
-  sendOneWayCommand(method: string, params?: any, timeout?: number, requestUUID?: string): Observable<any>;
-  sendTwoWayCommand(method: string, params?: any, timeout?: number, requestUUID?: string): Observable<any>;
+  sendOneWayCommand(method: string, params?: any, timeout?: number, persistent?: boolean,
+                    persistentPollingInterval?: number, requestUUID?: string): Observable<any>;
+  sendTwoWayCommand(method: string, params?: any, timeout?: number, persistent?: boolean,
+                    persistentPollingInterval?: number, requestUUID?: string): Observable<any>;
   clearRpcError(): void;
 
   subscribe(): void;

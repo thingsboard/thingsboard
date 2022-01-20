@@ -35,7 +35,7 @@ import java.util.function.Predicate;
 /**
  * Created by ashvayka on 20.03.18.
  */
-public class AbstractRuleEngineControllerTest extends AbstractControllerTest {
+public abstract class AbstractRuleEngineControllerTest extends AbstractControllerTest {
 
     @Autowired
     protected RuleChainService ruleChainService;

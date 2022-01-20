@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -36,8 +36,9 @@ export class TenantComponent extends ContactBasedComponent<TenantInfo> {
               protected translate: TranslateService,
               @Inject('entity') protected entityValue: TenantInfo,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<TenantInfo>,
-              protected fb: FormBuilder) {
-    super(store, fb, entityValue, entitiesTableConfigValue);
+              protected fb: FormBuilder,
+              protected cd: ChangeDetectorRef) {
+    super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
 
   hideDelete() {
@@ -51,7 +52,7 @@ export class TenantComponent extends ContactBasedComponent<TenantInfo> {
   buildEntityForm(entity: TenantInfo): FormGroup {
     return this.fb.group(
       {
-        title: [entity ? entity.title : '', [Validators.required]],
+        title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
         tenantProfileId: [entity ? entity.tenantProfileId : null, [Validators.required]],
         additionalInfo: this.fb.group(
           {

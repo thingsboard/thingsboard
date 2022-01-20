@@ -17,11 +17,15 @@ package org.thingsboard.server.common.data.page;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.thingsboard.server.common.data.BaseData;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+@ApiModel
 public class PageData<T> {
 
     private final List<T> data;
@@ -44,21 +48,29 @@ public class PageData<T> {
         this.hasNext = hasNext;
     }
 
+    @ApiModelProperty(position = 1, value = "Array of the entities", readOnly = true)
     public List<T> getData() {
         return data;
     }
 
+    @ApiModelProperty(position = 2, value = "Total number of available pages. Calculated based on the 'pageSize' request parameter and total number of entities that match search criteria", readOnly = true)
     public int getTotalPages() {
         return totalPages;
     }
 
+    @ApiModelProperty(position = 3, value = "Total number of elements in all available pages", readOnly = true)
     public long getTotalElements() {
         return totalElements;
     }
 
+    @ApiModelProperty(position = 4, value = "'false' value indicates the end of the result set", readOnly = true)
     @JsonProperty("hasNext")
     public boolean hasNext() {
         return hasNext;
+    }
+
+    public <D> PageData<D> mapData(Function<T, D> mapper) {
+        return new PageData<>(getData().stream().map(mapper).collect(Collectors.toList()), getTotalPages(), getTotalElements(), hasNext());
     }
 
 }

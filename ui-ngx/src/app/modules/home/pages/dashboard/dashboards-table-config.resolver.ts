@@ -362,7 +362,7 @@ export class DashboardsTableConfigResolver implements Resolve<EntityTableConfig<
     if (this.config.componentsData.dashboardScope === 'customer') {
       this.router.navigateByUrl(`customers/${this.config.componentsData.customerId}/dashboards/${dashboard.id.id}`);
     } else if (this.config.componentsData.dashboardScope === 'edge') {
-      this.router.navigateByUrl(`edges/${this.config.componentsData.edgeId}/dashboards/${dashboard.id.id}`);
+      this.router.navigateByUrl(`edgeInstances/${this.config.componentsData.edgeId}/dashboards/${dashboard.id.id}`);
     } else {
       this.router.navigateByUrl(`dashboards/${dashboard.id.id}`);
     }

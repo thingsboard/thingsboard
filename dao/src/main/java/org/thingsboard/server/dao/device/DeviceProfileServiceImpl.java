@@ -28,7 +28,8 @@ import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import com.squareup.wire.schema.internal.parser.ProtoParser;
 import com.squareup.wire.schema.internal.parser.TypeElement;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+import org.eclipse.leshan.core.util.SecurityUtil;
+import org.thingsboard.server.common.data.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
@@ -45,6 +46,7 @@ import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceTypeConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultCoapDeviceTypeConfiguration;
@@ -54,24 +56,33 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
+import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.AbstractLwM2MBootstrapServerCredential;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.RPKLwM2MBootstrapServerCredential;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBootstrapServerCredential;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.X509LwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.msg.EncryptionUtil;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.queue.QueueService;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -102,6 +113,9 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     private static String invalidSchemaProvidedMessage(String schemaName) {
         return "[Transport Configuration] invalid " + schemaName + " provided!";
     }
+
+    @Autowired(required = false)
+    private QueueService queueService;
 
     @Autowired
     private DeviceProfileDao deviceProfileDao;
@@ -162,7 +176,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
         }
         DeviceProfile savedDeviceProfile;
         try {
-            savedDeviceProfile = deviceProfileDao.save(deviceProfile.getTenantId(), deviceProfile);
+            savedDeviceProfile = deviceProfileDao.saveAndFlush(deviceProfile.getTenantId(), deviceProfile);
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("device_profile_name_unq_key")) {
@@ -248,8 +262,8 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
         log.trace("Executing findOrCreateDefaultDeviceProfile");
         DeviceProfile deviceProfile = findDeviceProfileByName(tenantId, name);
         if (deviceProfile == null) {
+            findOrCreateLock.lock();
             try {
-                findOrCreateLock.lock();
                 deviceProfile = findDeviceProfileByName(tenantId, name);
                 if (deviceProfile == null) {
                     deviceProfile = this.doCreateDefaultDeviceProfile(tenantId, name, name.equals("default"));
@@ -372,7 +386,14 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                             throw new DataValidationException("Another default device profile is present in scope of current tenant!");
                         }
                     }
-
+                    if (!StringUtils.isEmpty(deviceProfile.getDefaultQueueName()) && queueService != null){
+                        if(!queueService.getQueuesByServiceType(ServiceType.TB_RULE_ENGINE).contains(deviceProfile.getDefaultQueueName())){
+                            throw new DataValidationException("Device profile is referencing to non-existent queue!");
+                        }
+                    }
+                    if (deviceProfile.getProvisionType() == null) {
+                        deviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
+                    }
                     DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
                     transportConfiguration.validate();
                     if (transportConfiguration instanceof MqttDeviceProfileTransportConfiguration) {
@@ -381,6 +402,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                             ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration =
                                     (ProtoTransportPayloadConfiguration) mqttTransportConfiguration.getTransportPayloadTypeConfiguration();
                             validateProtoSchemas(protoTransportPayloadConfiguration);
+                            validateTelemetryDynamicMessageFields(protoTransportPayloadConfiguration);
                             validateRpcRequestDynamicMessageFields(protoTransportPayloadConfiguration);
                         }
                     } else if (transportConfiguration instanceof CoapDeviceProfileTransportConfiguration) {
@@ -392,8 +414,16 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                             if (transportPayloadTypeConfiguration instanceof ProtoTransportPayloadConfiguration) {
                                 ProtoTransportPayloadConfiguration protoTransportPayloadConfiguration = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
                                 validateProtoSchemas(protoTransportPayloadConfiguration);
+                                validateTelemetryDynamicMessageFields(protoTransportPayloadConfiguration);
                                 validateRpcRequestDynamicMessageFields(protoTransportPayloadConfiguration);
                             }
+                        }
+                    } else if (transportConfiguration instanceof Lwm2mDeviceProfileTransportConfiguration) {
+                        List<LwM2MBootstrapServerCredential> lwM2MBootstrapServersConfigurations = ((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration).getBootstrap();
+                        validateLwm2mServersConfigOfBootstrapForClient(lwM2MBootstrapServersConfigurations,
+                                ((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration).isBootstrapServerUpdateEnable());
+                        for (LwM2MBootstrapServerCredential bootstrapServerCredential : lwM2MBootstrapServersConfigurations) {
+                            validateLwm2mServersCredentialOfBootstrapForClient(bootstrapServerCredential);
                         }
                     }
 
@@ -434,7 +464,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                         if (!firmware.getType().equals(OtaPackageType.FIRMWARE)) {
                             throw new DataValidationException("Can't assign firmware with type: " + firmware.getType());
                         }
-                        if (firmware.getData() == null) {
+                        if (firmware.getData() == null && !firmware.hasUrl()) {
                             throw new DataValidationException("Can't assign firmware with empty data!");
                         }
                         if (!firmware.getDeviceProfileId().equals(deviceProfile.getId())) {
@@ -450,7 +480,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                         if (!software.getType().equals(OtaPackageType.SOFTWARE)) {
                             throw new DataValidationException("Can't assign software with type: " + software.getType());
                         }
-                        if (software.getData() == null) {
+                        if (software.getData() == null && !software.hasUrl()) {
                             throw new DataValidationException("Can't assign software with empty data!");
                         }
                         if (!software.getDeviceProfileId().equals(deviceProfile.getId())) {
@@ -609,6 +639,33 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
 
             };
 
+    private void validateTelemetryDynamicMessageFields(ProtoTransportPayloadConfiguration protoTransportPayloadTypeConfiguration) {
+        String deviceTelemetryProtoSchema = protoTransportPayloadTypeConfiguration.getDeviceTelemetryProtoSchema();
+        Descriptors.Descriptor telemetryDynamicMessageDescriptor = protoTransportPayloadTypeConfiguration.getTelemetryDynamicMessageDescriptor(deviceTelemetryProtoSchema);
+        if (telemetryDynamicMessageDescriptor == null) {
+            throw new DataValidationException(invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA) + " Failed to get telemetryDynamicMessageDescriptor!");
+        } else {
+            List<Descriptors.FieldDescriptor> fields = telemetryDynamicMessageDescriptor.getFields();
+            if (CollectionUtils.isEmpty(fields)) {
+                throw new DataValidationException(invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA) + " " + telemetryDynamicMessageDescriptor.getName() + " fields is empty!");
+            } else if (fields.size() == 2) {
+                Descriptors.FieldDescriptor tsFieldDescriptor = telemetryDynamicMessageDescriptor.findFieldByName("ts");
+                Descriptors.FieldDescriptor valuesFieldDescriptor = telemetryDynamicMessageDescriptor.findFieldByName("values");
+                if (tsFieldDescriptor != null && valuesFieldDescriptor != null) {
+                    if (!Descriptors.FieldDescriptor.Type.MESSAGE.equals(valuesFieldDescriptor.getType())) {
+                        throw new DataValidationException(invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA) + " Field 'values' has invalid data type. Only message type is supported!");
+                    }
+                    if (!Descriptors.FieldDescriptor.Type.INT64.equals(tsFieldDescriptor.getType())) {
+                        throw new DataValidationException(invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA) + " Field 'ts' has invalid data type. Only int64 type is supported!");
+                    }
+                    if (!tsFieldDescriptor.hasOptionalKeyword()) {
+                        throw new DataValidationException(invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA) + " Field 'ts' has invalid label. Field 'ts' should have optional keyword!");
+                    }
+                }
+            }
+        }
+    }
+
     private void validateRpcRequestDynamicMessageFields(ProtoTransportPayloadConfiguration protoTransportPayloadTypeConfiguration) {
         DynamicMessage.Builder rpcRequestDynamicMessageBuilder = protoTransportPayloadTypeConfiguration.getRpcRequestDynamicMessageBuilder(protoTransportPayloadTypeConfiguration.getDeviceRpcRequestProtoSchema());
         Descriptors.Descriptor rpcRequestDynamicMessageDescriptor = rpcRequestDynamicMessageBuilder.getDescriptorForType();
@@ -645,9 +702,80 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                 throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Failed to get field descriptor for field: params!");
             } else {
                 if (paramsFieldDescriptor.isRepeated()) {
-                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + "Field 'params' has invalid label!");
+                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Field 'params' has invalid label!");
                 }
             }
+        }
+    }
+
+    private void validateLwm2mServersConfigOfBootstrapForClient(List<LwM2MBootstrapServerCredential> lwM2MBootstrapServersConfigurations, boolean isBootstrapServerUpdateEnable) {
+        Set <String> uris = new HashSet<>();
+        Set <Integer> shortServerIds = new HashSet<>();
+        for (LwM2MBootstrapServerCredential bootstrapServerCredential : lwM2MBootstrapServersConfigurations) {
+            AbstractLwM2MBootstrapServerCredential serverConfig = (AbstractLwM2MBootstrapServerCredential) bootstrapServerCredential;
+            if (!isBootstrapServerUpdateEnable && serverConfig.isBootstrapServerIs()) {
+                throw new DeviceCredentialsValidationException("Bootstrap config must not include \"Bootstrap Server\". \"Include Bootstrap Server updates\" is " + isBootstrapServerUpdateEnable + "." );
+            }
+            String server = serverConfig.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server" + " shortServerId: " + serverConfig.getShortServerId() + ":";
+            if (serverConfig.getShortServerId() < 1 || serverConfig.getShortServerId() > 65534) {
+                throw new DeviceCredentialsValidationException(server + " ShortServerId must not be less than 1 and more than 65534!");
+            }
+            if (!shortServerIds.add(serverConfig.getShortServerId())){
+                throw new DeviceCredentialsValidationException(server + " \"Short server Id\" value = "  + serverConfig.getShortServerId() + ". This value must be a unique value for all servers!");
+            };
+            String uri = serverConfig.getHost() + ":" + serverConfig.getPort();
+            if (!uris.add(uri)){
+                throw new DeviceCredentialsValidationException(server + " \"Host + port\" value = "  + uri + ". This value must be a unique value for all servers!");
+            };
+            Integer port;
+            if (LwM2MSecurityMode.NO_SEC.equals(serverConfig.getSecurityMode())) {
+               port =  serverConfig.isBootstrapServerIs() ? 5687 : 5685;
+            }
+            else {
+                port =  serverConfig.isBootstrapServerIs() ? 5688 : 5686;
+            }
+            if (serverConfig.getPort() == null || serverConfig.getPort().intValue() != port) {
+                throw new DeviceCredentialsValidationException(server + " \"Port\" value = "  + serverConfig.getPort() + ". This value for security " + serverConfig.getSecurityMode().name() + " must be " + port + "!");
+
+            }
+        }
+    }
+
+    private void validateLwm2mServersCredentialOfBootstrapForClient(LwM2MBootstrapServerCredential bootstrapServerConfig) {
+        String server;
+        switch (bootstrapServerConfig.getSecurityMode()) {
+            case NO_SEC:
+            case PSK:
+                break;
+            case RPK:
+                RPKLwM2MBootstrapServerCredential rpkServerCredentials = (RPKLwM2MBootstrapServerCredential)  bootstrapServerConfig;
+                server = rpkServerCredentials.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";
+                if (StringUtils.isEmpty(rpkServerCredentials.getServerPublicKey())) {
+                    throw new DeviceCredentialsValidationException(server + " RPK public key must be specified!");
+                }
+                try {
+                    String pubkRpkSever = EncryptionUtil.pubkTrimNewLines(rpkServerCredentials.getServerPublicKey());
+                    rpkServerCredentials.setServerPublicKey(pubkRpkSever);
+                    SecurityUtil.publicKey.decode(rpkServerCredentials.getDecodedCServerPublicKey());
+                } catch (Exception e) {
+                    throw new DeviceCredentialsValidationException(server + " RPK public key must be in standard [RFC7250] and then encoded to Base64 format!");
+                }
+                break;
+            case X509:
+                X509LwM2MBootstrapServerCredential x509ServerCredentials = (X509LwM2MBootstrapServerCredential) bootstrapServerConfig;
+                server = x509ServerCredentials.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";
+                if (StringUtils.isEmpty(x509ServerCredentials.getServerPublicKey())) {
+                    throw new DeviceCredentialsValidationException(server + " X509 public key must be specified!");
+                }
+
+                try {
+                    String certServer = EncryptionUtil.certTrimNewLines(x509ServerCredentials.getServerPublicKey());
+                    x509ServerCredentials.setServerPublicKey(certServer);
+                    SecurityUtil.publicKey.decode(x509ServerCredentials.getDecodedCServerPublicKey());
+                } catch (Exception e) {
+                    throw new DeviceCredentialsValidationException(server + " X509 public key must be in standard [RFC7250] and then encoded to Base64 format!");
+                }
+                break;
         }
     }
 

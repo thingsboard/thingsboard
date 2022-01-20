@@ -49,7 +49,7 @@ import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.common.MultipleTbQueueTbMsgCallbackWrapper;
 import org.thingsboard.server.queue.common.TbQueueTbMsgCallbackWrapper;
 import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
-import org.thingsboard.server.service.queue.TbClusterService;
+import org.thingsboard.server.cluster.TbClusterService;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -66,6 +66,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleChainId> {
 
+    private static final String NA_RELATION_TYPE = "";
     private final TbActorRef parent;
     private final TbActorRef self;
     private final Map<RuleNodeId, RuleNodeCtx> nodeActors;
@@ -201,30 +202,55 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         TbMsg msg = envelope.getMsg();
         log.trace("[{}][{}] Processing message [{}]: {}", entityId, firstId, msg.getId(), msg);
         if (envelope.getRelationTypes() == null || envelope.getRelationTypes().isEmpty()) {
-            try {
-                checkActive(envelope.getMsg());
-                RuleNodeId targetId = msg.getRuleNodeId();
-                RuleNodeCtx targetCtx;
-                if (targetId == null) {
-                    targetCtx = firstNode;
-                    msg = msg.copyWithRuleChainId(entityId);
-                } else {
-                    targetCtx = nodeActors.get(targetId);
-                }
-                if (targetCtx != null) {
-                    log.trace("[{}][{}] Pushing message to target rule node", entityId, targetId);
-                    pushMsgToNode(targetCtx, msg, "");
-                } else {
-                    log.trace("[{}][{}] Rule node does not exist. Probably old message", entityId, targetId);
-                    msg.getCallback().onSuccess();
-                }
-            } catch (RuleNodeException rne) {
-                envelope.getMsg().getCallback().onFailure(rne);
-            } catch (Exception e) {
-                envelope.getMsg().getCallback().onFailure(new RuleEngineException(e.getMessage()));
-            }
+            onTellNext(msg, true);
         } else {
             onTellNext(envelope.getMsg(), envelope.getMsg().getRuleNodeId(), envelope.getRelationTypes(), envelope.getFailureMessage());
+        }
+    }
+
+    private void onTellNext(TbMsg msg, boolean useRuleNodeIdFromMsg) {
+        try {
+            checkActive(msg);
+            RuleNodeId targetId = useRuleNodeIdFromMsg ? msg.getRuleNodeId() : null;
+            RuleNodeCtx targetCtx;
+            if (targetId == null) {
+                targetCtx = firstNode;
+                msg = msg.copyWithRuleChainId(entityId);
+            } else {
+                targetCtx = nodeActors.get(targetId);
+            }
+            if (targetCtx != null) {
+                log.trace("[{}][{}] Pushing message to target rule node", entityId, targetId);
+                pushMsgToNode(targetCtx, msg, NA_RELATION_TYPE);
+            } else {
+                log.trace("[{}][{}] Rule node does not exist. Probably old message", entityId, targetId);
+                msg.getCallback().onSuccess();
+            }
+        } catch (RuleNodeException rne) {
+            msg.getCallback().onFailure(rne);
+        } catch (Exception e) {
+            msg.getCallback().onFailure(new RuleEngineException(e.getMessage()));
+        }
+    }
+
+    public void onRuleChainInputMsg(RuleChainInputMsg envelope) {
+        if (entityId.equals(envelope.getRuleChainId())) {
+            onTellNext(envelope.getMsg(), false);
+        } else {
+            parent.tell(envelope);
+        }
+    }
+
+    public void onRuleChainOutputMsg(RuleChainOutputMsg envelope) {
+        if (entityId.equals(envelope.getRuleChainId())) {
+            var originatorNodeId = envelope.getTargetRuleNodeId();
+            RuleNodeCtx ruleNodeCtx = nodeActors.get(originatorNodeId);
+            if (ruleNodeCtx != null && ruleNodeCtx.getSelf().isDebugMode()) {
+                systemContext.persistDebugOutput(tenantId, originatorNodeId, envelope.getMsg(), envelope.getRelationType());
+            }
+            onTellNext(envelope.getMsg(), originatorNodeId, Collections.singleton(envelope.getRelationType()), RuleNodeException.UNKNOWN);
+        } else {
+            parent.tell(envelope);
         }
     }
 
@@ -250,10 +276,17 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             checkActive(msg);
             EntityId entityId = msg.getOriginator();
             TopicPartitionInfo tpi = systemContext.resolve(ServiceType.TB_RULE_ENGINE, msg.getQueueName(), tenantId, entityId);
-            List<RuleNodeRelation> relations = nodeRoutes.get(originatorNodeId).stream()
+
+            List<RuleNodeRelation> ruleNodeRelations = nodeRoutes.get(originatorNodeId);
+            if (ruleNodeRelations == null) { // When unchecked, this will cause NullPointerException when rule node doesn't exist anymore
+                log.warn("[{}][{}][{}] No outbound relations (null). Probably rule node does not exist. Probably old message.", tenantId, entityId, msg.getId());
+                ruleNodeRelations = Collections.emptyList();
+            }
+
+            List<RuleNodeRelation> relationsByTypes = ruleNodeRelations.stream()
                     .filter(r -> contains(relationTypes, r.getType()))
                     .collect(Collectors.toList());
-            int relationsCount = relations.size();
+            int relationsCount = relationsByTypes.size();
             if (relationsCount == 0) {
                 log.trace("[{}][{}][{}] No outbound relations to process", tenantId, entityId, msg.getId());
                 if (relationTypes.contains(TbRelationTypes.FAILURE)) {
@@ -268,14 +301,14 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                     msg.getCallback().onSuccess();
                 }
             } else if (relationsCount == 1) {
-                for (RuleNodeRelation relation : relations) {
+                for (RuleNodeRelation relation : relationsByTypes) {
                     log.trace("[{}][{}][{}] Pushing message to single target: [{}]", tenantId, entityId, msg.getId(), relation.getOut());
                     pushToTarget(tpi, msg, relation.getOut(), relation.getType());
                 }
             } else {
                 MultipleTbQueueTbMsgCallbackWrapper callbackWrapper = new MultipleTbQueueTbMsgCallbackWrapper(relationsCount, msg.getCallback());
-                log.trace("[{}][{}][{}] Pushing message to multiple targets: [{}]", tenantId, entityId, msg.getId(), relations);
-                for (RuleNodeRelation relation : relations) {
+                log.trace("[{}][{}][{}] Pushing message to multiple targets: [{}]", tenantId, entityId, msg.getId(), relationsByTypes);
+                for (RuleNodeRelation relation : relationsByTypes) {
                     EntityId target = relation.getOut();
                     putToQueue(tpi, msg, callbackWrapper, target);
                 }
@@ -283,6 +316,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         } catch (RuleNodeException rne) {
             msg.getCallback().onFailure(rne);
         } catch (Exception e) {
+            log.warn("[" + tenantId + "]" + "[" + entityId + "]" + "[" + msg.getId() + "]" + " onTellNext failure", e);
             msg.getCallback().onFailure(new RuleEngineException("onTellNext - " + e.getMessage()));
         }
     }
@@ -348,4 +382,5 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         RuleNode firstRuleNode = firstNode != null ? firstNode.getSelf() : null;
         return new RuleNodeException("Rule Chain is not active!  Failed to initialize.", ruleChainName, firstRuleNode);
     }
+
 }

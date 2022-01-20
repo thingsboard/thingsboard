@@ -15,8 +15,9 @@
     limitations under the License.
 
 -->
-<div class="tb-json-form" style="background: #fff;" tb-fullscreen [fullscreenElement]="targetFullscreenElement"
+<div class="tb-json-form" style="background: #fff;" tb-fullscreen [fullscreenElement]="reactFullscreen"
      [fullscreen]="isFullscreen"
      (fullscreenChanged)="onFullscreenChanged($event)">
   <div #reactRoot></div>
+  <div class="tb-json-form" #reactFullscreen></div>
 </div>

@@ -16,8 +16,8 @@
 
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Observable } from 'rxjs';
-import { map, mergeMap, share, tap } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,11 +27,11 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { BaseData } from '@shared/models/base-data';
 import { EntityService } from '@core/http/entity.service';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
-import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { OtaPackageInfo, OtaUpdateTranslation, OtaUpdateType } from '@shared/models/ota-package.models';
 import { OtaPackageService } from '@core/http/ota-package.service';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
+import { emptyPageData } from "@shared/models/page/page-data";
 
 @Component({
   selector: 'tb-ota-package-autocomplete',
@@ -109,6 +109,7 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
   ngOnInit() {
     this.filteredPackages = this.otaPackageFormGroup.get('packageId').valueChanges
       .pipe(
+        debounceTime(150),
         tap(value => {
           let modelValue;
           if (typeof value === 'string' || !value) {
@@ -122,7 +123,8 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
           }
         }),
         map(value => value ? (typeof value === 'string' ? value : value.title) : ''),
-        mergeMap(name => this.fetchPackages(name)),
+        distinctUntilChanged(),
+        switchMap(name => this.fetchPackages(name)),
         share()
       );
   }
@@ -216,13 +218,14 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
       direction: Direction.ASC
     });
     return this.otaPackageService.getOtaPackagesInfoByDeviceProfileId(pageLink, this.deviceProfileId, this.type,
-                                                          true, {ignoreLoading: true}).pipe(
+                                                                {ignoreLoading: true}).pipe(
+      catchError(() => of(emptyPageData<OtaPackageInfo>())),
       map((data) => data && data.data.length ? data.data : null)
     );
   }
 
   clear() {
-    this.otaPackageFormGroup.get('packageId').patchValue('', {emitEvent: true});
+    this.otaPackageFormGroup.get('packageId').patchValue('', {emitEvent: false});
     setTimeout(() => {
       this.packageInput.nativeElement.blur();
       this.packageInput.nativeElement.focus();

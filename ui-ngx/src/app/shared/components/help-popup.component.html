@@ -1,0 +1,47 @@
+<!--
+
+    Copyright © 2016-2021 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<fieldset class="tb-help-popup-button-container" *ngIf="!textMode">
+  <div #toggleHelpButton
+       matTooltip="{{'help.show-help' | translate}}"
+       matTooltipPosition="above"
+       style="border-radius: 50%"
+       (click)="toggleHelp()">
+    <button mat-icon-button
+            color="primary"
+            class="tb-help-popup-button tb-mat-32"
+            type="button">
+      <mat-icon class="material-icons">{{popoverVisible ? 'help' : 'help_outline'}}</mat-icon>
+      <mat-spinner *ngIf="popoverVisible && !popoverReady" class="tb-help-popup-button-loading" mode="indeterminate" diameter="20" strokeWidth="2"></mat-spinner>
+    </button>
+  </div>
+</fieldset>
+<fieldset class="tb-help-popup-button-container" *ngIf="textMode">
+  <div #toggleHelpTextButton
+       (click)="toggleHelp()">
+    <button mat-button
+            color="primary"
+            class="tb-help-popup-text-button"
+            [ngClass]="{'mat-stroked-button': popoverVisible && popoverReady}">
+      <ng-container *ngIf="triggerSafeHtml">
+        <span [style]="triggerStyle" [innerHTML]="triggerSafeHtml"></span>
+      </ng-container>
+      <mat-icon *ngIf="!popoverVisible || popoverReady" class="tb-mat-16">open_in_new</mat-icon>
+      <mat-spinner *ngIf="popoverVisible && !popoverReady" mode="indeterminate" diameter="16" strokeWidth="2"></mat-spinner>
+    </button>
+  </div>
+</fieldset>

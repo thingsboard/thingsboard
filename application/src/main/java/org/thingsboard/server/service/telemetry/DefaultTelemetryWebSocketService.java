@@ -104,6 +104,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DefaultTelemetryWebSocketService implements TelemetryWebSocketService {
 
+    public static final int NUMBER_OF_PING_ATTEMPTS = 3;
+
     private static final int DEFAULT_LIMIT = 100;
     private static final Aggregation DEFAULT_AGGREGATION = Aggregation.NONE;
     private static final int UNKNOWN_SUBSCRIPTION_ID = 0;
@@ -140,6 +142,9 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     @Autowired
     private TbTenantProfileCache tenantProfileCache;
 
+    @Value("${server.ws.ping_timeout:30000}")
+    private long pingTimeout;
+
     private ConcurrentMap<TenantId, Set<String>> tenantSubscriptionsMap = new ConcurrentHashMap<>();
     private ConcurrentMap<CustomerId, Set<String>> customerSubscriptionsMap = new ConcurrentHashMap<>();
     private ConcurrentMap<UserId, Set<String>> regularUserSubscriptionsMap = new ConcurrentHashMap<>();
@@ -156,7 +161,7 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
         executor = ThingsBoardExecutors.newWorkStealingPool(50, getClass());
 
         pingExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("telemetry-web-socket-ping"));
-        pingExecutor.scheduleWithFixedDelay(this::sendPing, 10000, 10000, TimeUnit.MILLISECONDS);
+        pingExecutor.scheduleWithFixedDelay(this::sendPing, pingTimeout / NUMBER_OF_PING_ATTEMPTS, pingTimeout / NUMBER_OF_PING_ATTEMPTS, TimeUnit.MILLISECONDS);
     }
 
     @PreDestroy

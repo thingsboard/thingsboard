@@ -14,22 +14,8 @@
  * limitations under the License.
  */
 package org.thingsboard.server.transport.lwm2m.server;
-/**
- * Copyright © 2016-2020 The Thingsboard Authors
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
+import com.google.gson.JsonParser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.DDFFileParser;
@@ -38,7 +24,6 @@ import org.eclipse.leshan.core.model.InvalidDDFFileException;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.codec.CodecException;
-import org.eclipse.leshan.core.request.ContentFormat;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
@@ -47,14 +32,15 @@ import org.thingsboard.server.gen.transport.TransportProtos.PostAttributeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.PostTelemetryMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
-import org.thingsboard.server.transport.lwm2m.server.adaptors.LwM2MJsonAdaptor;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.thingsboard.server.gen.transport.TransportProtos.KeyValueType.BOOLEAN_V;
 
@@ -65,52 +51,74 @@ import static org.thingsboard.server.gen.transport.TransportProtos.KeyValueType.
 public class LwM2mTransportServerHelper {
 
     private final LwM2mTransportContext context;
-    private final LwM2MJsonAdaptor adaptor;
-    private final AtomicInteger atomicTs = new AtomicInteger(0);
-
-
-    public long getTS() {
-        int addTs =  atomicTs.getAndIncrement() >= 1000 ? atomicTs.getAndSet(0) : atomicTs.get();
-        return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) * 1000L +  addTs;
-    }
-
-    /**
-     * send to Thingsboard Attribute || Telemetry
-     *
-     * @param msg - JsonObject: [{name: value}]
-     * @return - dummyWriteReplace {\"targetIdVer\":\"/19_1.0/0/0\",\"value\":0082}
-     */
-    private <T> TransportServiceCallback<Void> getPubAckCallbackSendAttrTelemetry(final T msg) {
-        return new TransportServiceCallback<>() {
-            @Override
-            public void onSuccess(Void dummy) {
-                log.trace("Success to publish msg: {}, dummy: {}", msg, dummy);
-            }
-
-            @Override
-            public void onError(Throwable e) {
-                log.trace("[{}] Failed to publish msg: {}", msg, e);
-            }
-        };
-    }
+    private final static JsonParser JSON_PARSER = new JsonParser();
 
     public void sendParametersOnThingsboardAttribute(List<TransportProtos.KeyValueProto> result, SessionInfoProto sessionInfo) {
         PostAttributeMsg.Builder request = PostAttributeMsg.newBuilder();
         request.addAllKv(result);
         PostAttributeMsg postAttributeMsg = request.build();
-        TransportServiceCallback call = this.getPubAckCallbackSendAttrTelemetry(postAttributeMsg);
-        context.getTransportService().process(sessionInfo, postAttributeMsg, this.getPubAckCallbackSendAttrTelemetry(call));
+        context.getTransportService().process(sessionInfo, postAttributeMsg, TransportServiceCallback.EMPTY);
     }
 
-    public void sendParametersOnThingsboardTelemetry(List<TransportProtos.KeyValueProto> result, SessionInfoProto sessionInfo) {
-        PostTelemetryMsg.Builder request = PostTelemetryMsg.newBuilder();
-        TransportProtos.TsKvListProto.Builder builder = TransportProtos.TsKvListProto.newBuilder();
-        builder.setTs(this.getTS());
-        builder.addAllKv(result);
-        request.addTsKvList(builder.build());
-        PostTelemetryMsg postTelemetryMsg = request.build();
-        TransportServiceCallback call = this.getPubAckCallbackSendAttrTelemetry(postTelemetryMsg);
-        context.getTransportService().process(sessionInfo, postTelemetryMsg, this.getPubAckCallbackSendAttrTelemetry(call));
+    public void sendParametersOnThingsboardTelemetry(List<TransportProtos.KeyValueProto> kvList, SessionInfoProto sessionInfo) {
+        sendParametersOnThingsboardTelemetry(kvList, sessionInfo, null);
+    }
+
+    public void sendParametersOnThingsboardTelemetry(List<TransportProtos.KeyValueProto> kvList, SessionInfoProto sessionInfo, @Nullable Map<String, AtomicLong> keyTsLatestMap) {
+        TransportProtos.TsKvListProto tsKvList = toTsKvList(kvList, keyTsLatestMap);
+
+        PostTelemetryMsg postTelemetryMsg = PostTelemetryMsg.newBuilder()
+                .addTsKvList(tsKvList)
+                .build();
+
+        context.getTransportService().process(sessionInfo, postTelemetryMsg, TransportServiceCallback.EMPTY);
+    }
+
+    TransportProtos.TsKvListProto toTsKvList(List<TransportProtos.KeyValueProto> kvList, Map<String, AtomicLong> keyTsLatestMap) {
+        return TransportProtos.TsKvListProto.newBuilder()
+                .setTs(getTs(kvList, keyTsLatestMap))
+                .addAllKv(kvList)
+                .build();
+    }
+
+    long getTs(List<TransportProtos.KeyValueProto> kvList, Map<String, AtomicLong> keyTsLatestMap) {
+        if (keyTsLatestMap == null || kvList == null || kvList.isEmpty()) {
+            return getCurrentTimeMillis();
+        }
+
+        return getTsByKey(kvList.get(0).getKey(), keyTsLatestMap, getCurrentTimeMillis());
+    }
+
+    long getTsByKey(@Nonnull String key, @Nonnull Map<String, AtomicLong> keyTsLatestMap, final long tsNow) {
+        AtomicLong tsLatestAtomic = keyTsLatestMap.putIfAbsent(key, new AtomicLong(tsNow));
+        if (tsLatestAtomic == null) {
+            return tsNow; // it is a first known timestamp for this key. return as the latest
+        }
+
+        return compareAndSwapOrIncrementTsAtomically(tsLatestAtomic, tsNow);
+    }
+
+    /**
+     * This algorithm is sensitive to wall-clock time shift.
+     * Once time have shifted *backward*, the latest ts never came back.
+     * Ts latest will be incremented until current time overtake the latest ts.
+     * In normal environment without race conditions method will return current ts (wall-clock)
+     * */
+    long compareAndSwapOrIncrementTsAtomically(AtomicLong tsLatestAtomic, final long tsNow) {
+        long tsLatest;
+        while ((tsLatest = tsLatestAtomic.get()) < tsNow) {
+            if (tsLatestAtomic.compareAndSet(tsLatest, tsNow)) {
+                return tsNow; //swap successful
+            }
+        }
+        return tsLatestAtomic.incrementAndGet(); //return next ms
+    }
+
+    /**
+     * For the test ability to mock system timer
+     * */
+    long getCurrentTimeMillis() {
+        return System.currentTimeMillis();
     }
 
     /**
@@ -137,7 +145,7 @@ public class LwM2mTransportServerHelper {
     public ObjectModel parseFromXmlToObjectModel(byte[] xmlByte, String streamName, DefaultDDFFileValidator ddfValidator) {
         try {
             DDFFileParser ddfFileParser = new DDFFileParser(ddfValidator);
-            return ddfFileParser.parseEx(new ByteArrayInputStream(xmlByte), streamName).get(0);
+            return ddfFileParser.parse(new ByteArrayInputStream(xmlByte), streamName).get(0);
         } catch (IOException | InvalidDDFFileException e) {
             log.error("Could not parse the XML file [{}]", streamName, e);
             return null;
@@ -212,28 +220,6 @@ public class LwM2mTransportServerHelper {
         throw new CodecException("Invalid ResourceModel_Type for resource %s, got %s", resourcePath, currentType);
     }
 
-    public static ContentFormat convertResourceModelTypeToContentFormat(ResourceModel.Type type) {
-        switch (type) {
-            case BOOLEAN:
-            case STRING:
-            case TIME:
-            case INTEGER:
-            case FLOAT:
-                return ContentFormat.TLV;
-            case OPAQUE:
-                return ContentFormat.OPAQUE;
-            case OBJLNK:
-                return ContentFormat.LINK;
-            default:
-        }
-        throw new CodecException("Invalid ResourceModel_Type for %s ContentFormat.", type);
-    }
-
-    public static ContentFormat getContentFormatByResourceModelType(ResourceModel resourceModel, ContentFormat contentFormat) {
-        return contentFormat.equals(ContentFormat.TLV) ? convertResourceModelTypeToContentFormat(resourceModel.type) :
-                contentFormat;
-    }
-
     public static Object getValueFromKvProto(TransportProtos.KeyValueProto kv) {
         switch (kv.getType()) {
             case BOOLEAN_V:
@@ -245,8 +231,13 @@ public class LwM2mTransportServerHelper {
             case STRING_V:
                 return kv.getStringV();
             case JSON_V:
-                return kv.getJsonV();
+                try {
+                    return JSON_PARSER.parse(kv.getJsonV());
+                } catch (Exception e) {
+                    return null;
+                }
         }
         return null;
     }
+
 }

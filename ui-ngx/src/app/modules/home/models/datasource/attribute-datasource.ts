@@ -88,7 +88,10 @@ export class AttributeDatasource implements DataSource<AttributeData> {
   fetchAttributes(entityId: EntityId, attributesScope: TelemetryType,
                   pageLink: PageLink): Observable<PageData<AttributeData>> {
     return this.getAllAttributes(entityId, attributesScope).pipe(
-      map((data) => pageLink.filterData(data))
+      map((data) => {
+        const filteredData = data.filter(attrData => attrData.lastUpdateTs !== 0 && attrData.value !== null);
+        return pageLink.filterData(filteredData);
+      })
     );
   }
 

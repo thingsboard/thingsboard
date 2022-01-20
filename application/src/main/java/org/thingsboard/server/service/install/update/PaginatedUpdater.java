@@ -22,12 +22,13 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
 @Slf4j
-public abstract class PaginatedUpdater<I, D extends SearchTextBased<? extends UUIDBased>> {
+public abstract class PaginatedUpdater<I, D> {
 
     private static final int DEFAULT_LIMIT = 100;
     private int updated = 0;
 
     public void updateEntities(I id) {
+        log.info("{}: started...", getName());
         updated = 0;
         PageLink pageLink = new PageLink(DEFAULT_LIMIT);
         boolean hasNext = true;

@@ -15,12 +15,16 @@
 ///
 
 import { EntityId } from '@shared/models/id/entity-id';
-import { DataKey, WidgetConfig } from '@shared/models/widget.models';
-import { getDescendantProp, isDefined } from '@core/utils';
+import { DataKey, WidgetActionDescriptor, WidgetConfig } from '@shared/models/widget.models';
+import { getDescendantProp, isDefined, isNotEmptyStr } from '@core/utils';
 import { AlarmDataInfo, alarmFields } from '@shared/models/alarm.models';
 import * as tinycolor_ from 'tinycolor2';
 import { Direction, EntityDataSortOrder, EntityKey } from '@shared/models/query/query.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { WidgetContext } from '@home/models/widget-component.models';
+import { FormattedData } from '@home/components/widget/lib/maps/map-models';
+import { UtilsService } from '@core/services/utils.service';
+import { TranslateService } from '@ngx-translate/core';
 
 const tinycolor = tinycolor_;
 
@@ -36,6 +40,7 @@ export interface TableWidgetSettings {
   defaultPageSize: number;
   useRowStyleFunction: boolean;
   rowStyleFunction?: string;
+  reserveSpaceForHiddenAction?: boolean;
 }
 
 export interface TableWidgetDataKeySettings {
@@ -48,11 +53,20 @@ export interface TableWidgetDataKeySettings {
   columnSelectionToDisplay?: ColumnSelectionOptions;
 }
 
+export type ShowCellButtonActionFunction = (ctx: WidgetContext, data: EntityData | AlarmDataInfo | FormattedData) => boolean;
+
+export interface TableCellButtonActionDescriptor extends  WidgetActionDescriptor {
+  useShowActionCellButtonFunction: boolean;
+  showActionCellButtonFunction: ShowCellButtonActionFunction;
+}
+
 export interface EntityData {
   id: EntityId;
   entityName: string;
   entityLabel?: string;
   entityType?: string;
+  actionCellButtons?: TableCellButtonActionDescriptor[];
+  hasActions?: boolean;
   [key: string]: any;
 }
 
@@ -296,6 +310,57 @@ export function getColumnSelectionAvailability(keySettings: TableWidgetDataKeySe
   return !(isDefined(keySettings.columnSelectionToDisplay) && keySettings.columnSelectionToDisplay === 'disabled');
 }
 
+export function getTableCellButtonActions(widgetContext: WidgetContext): TableCellButtonActionDescriptor[] {
+  return widgetContext.actionsApi.getActionDescriptors('actionCellButton').map(descriptor => {
+    let useShowActionCellButtonFunction = descriptor.useShowWidgetActionFunction || false;
+    let showActionCellButtonFunction: ShowCellButtonActionFunction = null;
+    if (useShowActionCellButtonFunction && isNotEmptyStr(descriptor.showWidgetActionFunction)) {
+      try {
+        showActionCellButtonFunction =
+          new Function('widgetContext', 'data', descriptor.showWidgetActionFunction) as ShowCellButtonActionFunction;
+      } catch (e) {
+        useShowActionCellButtonFunction = false;
+      }
+    }
+    return {...descriptor, showActionCellButtonFunction, useShowActionCellButtonFunction};
+  });
+}
+
+export function checkHasActions(cellButtonActions: TableCellButtonActionDescriptor[]): boolean {
+  return cellButtonActions.some(action => action.icon);
+}
+
+export function prepareTableCellButtonActions(widgetContext: WidgetContext, cellButtonActions: TableCellButtonActionDescriptor[],
+                                              data: EntityData | AlarmDataInfo | FormattedData,
+                                              reserveSpaceForHiddenAction = true): TableCellButtonActionDescriptor[] {
+  if (reserveSpaceForHiddenAction) {
+    return cellButtonActions.map(action =>
+      filterTableCellButtonAction(widgetContext, action, data) ? action : { id: action.id } as TableCellButtonActionDescriptor);
+  }
+  return cellButtonActions.filter(action => filterTableCellButtonAction(widgetContext, action, data));
+}
+
+function filterTableCellButtonAction(widgetContext: WidgetContext,
+                                     action: TableCellButtonActionDescriptor, data: EntityData | AlarmDataInfo | FormattedData): boolean {
+  if (action.useShowActionCellButtonFunction) {
+    try {
+      return action.showActionCellButtonFunction(widgetContext, data);
+    } catch (e) {
+      console.warn('Failed to execute showActionCellButtonFunction', e);
+      return false;
+    }
+  } else {
+    return true;
+  }
+}
+
+export function noDataMessage(noDataDisplayMessage: string, defaultMessage: string,
+                              utils: UtilsService, translate: TranslateService): string {
+  if (isNotEmptyStr(noDataDisplayMessage)) {
+    return utils.customTranslation(noDataDisplayMessage, noDataDisplayMessage);
+  }
+  return translate.instant(defaultMessage);
+}
 
 export function constructTableCssString(widgetConfig: WidgetConfig): string {
   const origColor = widgetConfig.color || 'rgba(0, 0, 0, 0.87)';

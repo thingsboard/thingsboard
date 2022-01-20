@@ -26,15 +26,19 @@ import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.alarm.EntityAlarm;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.model.sql.AlarmEntity;
+import org.thingsboard.server.dao.model.sql.EntityAlarmEntity;
 import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.sql.query.AlarmQueryRepository;
@@ -60,7 +64,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     private AlarmQueryRepository alarmQueryRepository;
 
     @Autowired
-    private RelationDao relationDao;
+    private EntityAlarmRepository entityAlarmRepository;
 
     @Override
     protected Class<AlarmEntity> getEntityClass() {
@@ -160,5 +164,29 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     @Override
     public Set<AlarmSeverity> findAlarmSeverities(TenantId tenantId, EntityId entityId, Set<AlarmStatus> statuses) {
         return alarmRepository.findAlarmSeverities(tenantId.getId(), entityId.getId(), entityId.getEntityType().name(), statuses);
+    }
+
+    @Override
+    public PageData<AlarmId> findAlarmsIdsByEndTsBeforeAndTenantId(Long time, TenantId tenantId, PageLink pageLink) {
+        return DaoUtil.pageToPageData(alarmRepository.findAlarmsIdsByEndTsBeforeAndTenantId(time, tenantId.getId(), DaoUtil.toPageable(pageLink)))
+                .mapData(AlarmId::new);
+    }
+
+    @Override
+    public void createEntityAlarmRecord(EntityAlarm entityAlarm) {
+        log.debug("Saving entity {}", entityAlarm);
+        entityAlarmRepository.save(new EntityAlarmEntity(entityAlarm));
+    }
+
+    @Override
+    public List<EntityAlarm> findEntityAlarmRecords(TenantId tenantId, AlarmId id) {
+        log.trace("[{}] Try to find entity alarm records using [{}]", tenantId, id);
+        return DaoUtil.convertDataList(entityAlarmRepository.findAllByAlarmId(id.getId()));
+    }
+
+    @Override
+    public void deleteEntityAlarmRecords(TenantId tenantId, EntityId entityId) {
+        log.trace("[{}] Try to delete entity alarm records using [{}]", tenantId, entityId);
+        entityAlarmRepository.deleteByEntityId(entityId.getId());
     }
 }

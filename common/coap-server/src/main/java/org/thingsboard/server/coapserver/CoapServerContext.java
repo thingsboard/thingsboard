@@ -39,6 +39,14 @@ public class CoapServerContext {
     private Long timeout;
 
     @Getter
+    @Value("${transport.coap.psm_activity_timer:10000}")
+    private long psmActivityTimer;
+
+    @Getter
+    @Value("${transport.coap.paging_transmission_window:10000}")
+    private long pagingTransmissionWindow;
+
+    @Getter
     @Autowired(required = false)
     private TbCoapDtlsSettings dtlsSettings;
 

@@ -42,18 +42,18 @@ public abstract class AbstractTransportIntegrationTest extends AbstractControlle
             "package test;\n" +
             "\n" +
             "message PostTelemetry {\n" +
-            "  string key1 = 1;\n" +
-            "  bool key2 = 2;\n" +
-            "  double key3 = 3;\n" +
-            "  int32 key4 = 4;\n" +
+            "  optional string key1 = 1;\n" +
+            "  optional bool key2 = 2;\n" +
+            "  optional double key3 = 3;\n" +
+            "  optional int32 key4 = 4;\n" +
             "  JsonObject key5 = 5;\n" +
             "\n" +
             "  message JsonObject {\n" +
-            "    int32 someNumber = 6;\n" +
+            "    optional int32 someNumber = 6;\n" +
             "    repeated int32 someArray = 7;\n" +
-            "    NestedJsonObject someNestedObject = 8;\n" +
+            "    optional NestedJsonObject someNestedObject = 8;\n" +
             "    message NestedJsonObject {\n" +
-            "       string key = 9;\n" +
+            "       optional string key = 9;\n" +
             "    }\n" +
             "  }\n" +
             "}";
@@ -63,18 +63,18 @@ public abstract class AbstractTransportIntegrationTest extends AbstractControlle
             "package test;\n" +
             "\n" +
             "message PostAttributes {\n" +
-            "  string key1 = 1;\n" +
-            "  bool key2 = 2;\n" +
-            "  double key3 = 3;\n" +
-            "  int32 key4 = 4;\n" +
+            "  optional string key1 = 1;\n" +
+            "  optional bool key2 = 2;\n" +
+            "  optional double key3 = 3;\n" +
+            "  optional int32 key4 = 4;\n" +
             "  JsonObject key5 = 5;\n" +
             "\n" +
             "  message JsonObject {\n" +
-            "    int32 someNumber = 6;\n" +
+            "    optional int32 someNumber = 6;\n" +
             "    repeated int32 someArray = 7;\n" +
             "    NestedJsonObject someNestedObject = 8;\n" +
             "    message NestedJsonObject {\n" +
-            "       string key = 9;\n" +
+            "       optional string key = 9;\n" +
             "    }\n" +
             "  }\n" +
             "}";
@@ -83,16 +83,16 @@ public abstract class AbstractTransportIntegrationTest extends AbstractControlle
             "package rpc;\n" +
             "\n" +
             "message RpcResponseMsg {\n" +
-            "  string payload = 1;\n" +
+            "  optional string payload = 1;\n" +
             "}";
 
     protected static final String DEVICE_RPC_REQUEST_PROTO_SCHEMA = "syntax =\"proto3\";\n" +
             "package rpc;\n" +
             "\n" +
             "message RpcRequestMsg {\n" +
-            "  string method = 1;\n" +
-            "  int32 requestId = 2;\n" +
-            "  string params = 3;\n" +
+            "  optional string method = 1;\n" +
+            "  optional int32 requestId = 2;\n" +
+            "  optional string params = 3;\n" +
             "}";
 
     protected Tenant savedTenant;

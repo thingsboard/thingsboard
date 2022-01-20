@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityComponent } from '@home/components/entity/entity.component';
@@ -42,8 +42,9 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
               protected translate: TranslateService,
               @Inject('entity') protected entityValue: EdgeInfo,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<EdgeInfo>,
-              public fb: FormBuilder) {
-    super(store, fb, entityValue, entitiesTableConfigValue);
+              public fb: FormBuilder,
+              protected cd: ChangeDetectorRef) {
+    super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
 
   ngOnInit() {
@@ -69,11 +70,11 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
   buildForm(entity: EdgeInfo): FormGroup {
     const form = this.fb.group(
       {
-        name: [entity ? entity.name : '', [Validators.required]],
-        type: [entity?.type ? entity.type : 'default', [Validators.required]],
-        label: [entity ? entity.label : ''],
-        cloudEndpoint: [null, [Validators.required]],
-        edgeLicenseKey: ['', [Validators.required]],
+        name: [entity ? entity.name : '', [Validators.required, Validators.maxLength(255)]],
+        type: [entity?.type ? entity.type : 'default', [Validators.required, Validators.maxLength(255)]],
+        label: [entity ? entity.label : '', Validators.maxLength(255)],
+        cloudEndpoint: [null, [Validators.required, Validators.maxLength(255)]],
+        edgeLicenseKey: ['', [Validators.required, Validators.maxLength(30)]],
         routingKey: this.fb.control({value: entity ? entity.routingKey : null, disabled: true}),
         secret: this.fb.control({value: entity ? entity.secret : null, disabled: true}),
         additionalInfo: this.fb.group(

@@ -18,12 +18,14 @@ package org.thingsboard.server.dao.entity;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -40,6 +42,10 @@ public abstract class AbstractEntityService {
 
     @Autowired
     protected RelationService relationService;
+
+    @Lazy
+    @Autowired
+    protected AlarmService alarmService;
 
     @Autowired
     protected EntityViewService entityViewService;
@@ -60,6 +66,8 @@ public abstract class AbstractEntityService {
     protected void deleteEntityRelations(TenantId tenantId, EntityId entityId) {
         log.trace("Executing deleteEntityRelations [{}]", entityId);
         relationService.deleteEntityRelations(tenantId, entityId);
+        log.trace("Executing deleteEntityAlarms [{}]", entityId);
+        alarmService.deleteEntityAlarmRelations(tenantId, entityId);
     }
 
     protected Optional<ConstraintViolationException> extractConstraintViolationException(Exception t) {
@@ -77,8 +85,8 @@ public abstract class AbstractEntityService {
             List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, entityId).get();
             if (entityViews != null && !entityViews.isEmpty()) {
                 EntityView entityView = entityViews.get(0);
-                // TODO: voba - refactor this blocking operation in 3.3+
-                Boolean relationExists = relationService.checkRelation(tenantId,edgeId, entityView.getId(),
+                // TODO: @voba - refactor this blocking operation
+                Boolean relationExists = relationService.checkRelation(tenantId, edgeId, entityView.getId(),
                         EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE).get();
                 if (relationExists) {
                     throw new DataValidationException("Can't unassign device/asset from edge that is related to entity view and entity view is assigned to edge!");

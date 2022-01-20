@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import "~compass-sass-mixins/lib/compass";
 
 $swift-ease-out-duration: .4s !default;
 $swift-ease-out-timing-function: cubic-bezier(.25, .8, .25, 1) !default;
@@ -189,6 +188,18 @@ $previewSize: 100px !default;
           padding: 0 !important;
           font-size: 12px !important;
         }
+      }
+      button.help-button {
+        background: rgba(220, 220, 220, .35);
+        padding: 4px;
+      }
+      div.help-button-loading {
+        pointer-events: none;
+        background: #f3f3f3;
+        border-radius: 50%;
+        display: flex;
+        place-content: center;
+        align-items: center;
       }
     }
   }

@@ -52,4 +52,8 @@ public class TbEntityCountSubCtx extends TbAbstractSubCtx<EntityCountQuery> {
         }
     }
 
+    @Override
+    public boolean isDynamic() {
+        return true;
+    }
 }

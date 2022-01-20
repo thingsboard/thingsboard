@@ -60,6 +60,8 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       maxUsers: [null, [Validators.required, Validators.min(0)]],
       maxDashboards: [null, [Validators.required, Validators.min(0)]],
       maxRuleChains: [null, [Validators.required, Validators.min(0)]],
+      maxResourcesInBytes: [null, [Validators.required, Validators.min(0)]],
+      maxOtaPackagesInBytes: [null, [Validators.required, Validators.min(0)]],
       transportTenantMsgRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
       transportTenantTelemetryMsgRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
       transportTenantTelemetryDataPointsRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
@@ -76,6 +78,8 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       maxSms: [null, [Validators.required, Validators.min(0)]],
       maxCreatedAlarms: [null, [Validators.required, Validators.min(0)]],
       defaultStorageTtlDays: [null, [Validators.required, Validators.min(0)]],
+      alarmsTtlDays: [null, [Validators.required, Validators.min(0)]],
+      rpcTtlDays: [null, [Validators.required, Validators.min(0)]],
 
       rateLimitsTenantConfiguration: [null, [Validators.pattern(this.rateLimitsPattern)]],
       rateLimitsCustomerConfiguration: [null, [Validators.pattern(this.rateLimitsPattern)]],
