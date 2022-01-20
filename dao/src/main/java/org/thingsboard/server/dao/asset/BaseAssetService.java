@@ -407,10 +407,12 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
 
                 @Override
                 protected void validateDataImpl(TenantId tenantId, Asset asset) {
-                    if (StringUtils.isEmpty(asset.getType())) {
+                    String type = asset.getType();
+                    if (StringUtils.isEmpty(type) || type.trim().length() == 0) {
                         throw new DataValidationException("Asset type should be specified!");
                     }
-                    if (StringUtils.isEmpty(asset.getName())) {
+                    String name = asset.getName();
+                    if (StringUtils.isEmpty(name) || name.trim().length() == 0) {
                         throw new DataValidationException("Asset name should be specified!");
                     }
                     if (asset.getTenantId() == null) {

@@ -19,20 +19,15 @@ import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 @Data
-public class TbCreateAssetNodeConfiguration implements NodeConfiguration<TbCreateAssetNodeConfiguration> {
-
-    private String name;
-    private String type;
-    private String description;
-    private String label;
+public class TbCreateAssetNodeConfiguration extends TbAbstractCreateEntityNodeConfiguration implements NodeConfiguration<TbCreateAssetNodeConfiguration> {
 
     @Override
     public TbCreateAssetNodeConfiguration defaultConfiguration() {
         TbCreateAssetNodeConfiguration configuration = new TbCreateAssetNodeConfiguration();
         configuration.setName("");
         configuration.setType("");
-        configuration.setDescription("");
         configuration.setLabel("");
+        configuration.setDescription("");
         return configuration;
     }
 }

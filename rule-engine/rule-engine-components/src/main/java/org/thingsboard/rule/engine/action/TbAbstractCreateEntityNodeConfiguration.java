@@ -19,20 +19,10 @@ import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 @Data
-public class TbCreateDeviceNodeConfiguration extends TbAbstractCreateEntityNodeConfiguration implements NodeConfiguration<TbCreateDeviceNodeConfiguration> {
+public abstract class TbAbstractCreateEntityNodeConfiguration {
 
-    private boolean gateway;
-    private boolean overwriteActivityTime;
-
-    @Override
-    public TbCreateDeviceNodeConfiguration defaultConfiguration() {
-        TbCreateDeviceNodeConfiguration configuration = new TbCreateDeviceNodeConfiguration();
-        configuration.setName("");
-        configuration.setType("");
-        configuration.setLabel("");
-        configuration.setDescription("");
-        configuration.setGateway(false);
-        configuration.setOverwriteActivityTime(false);
-        return configuration;
-    }
+    private String name;
+    private String type;
+    private String label;
+    private String description;
 }

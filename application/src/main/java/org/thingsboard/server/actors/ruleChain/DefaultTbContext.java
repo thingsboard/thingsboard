@@ -485,7 +485,7 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public DeviceCredentialsService deviceCredentialsService() { return mainCtx.getDeviceCredentialsService(); }
+    public DeviceCredentialsService getDeviceCredentialsService() { return mainCtx.getDeviceCredentialsService(); }
 
     @Override
     public TbClusterService getClusterService() {

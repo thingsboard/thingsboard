@@ -96,6 +96,11 @@ public class DataConstants {
     public static final String RPC_FAILED = "RPC_FAILED";
     public static final String RPC_DELETED = "RPC_DELETED";
 
+    public static final String DEVICE_CREATED = "DEVICE_CREATED";
+    public static final String DEVICE_FETCHED = "DEVICE_FETCHED";
+    public static final String ASSET_CREATED = "ASSET_CREATED";
+    public static final String ASSET_FETCHED = "ASSET_FETCHED";
+
     public static final String DEFAULT_SECRET_KEY = "";
     public static final String SECRET_KEY_FIELD_NAME = "secretKey";
     public static final String DURATION_MS_FIELD_NAME = "durationMs";
