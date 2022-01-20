@@ -6,6 +6,7 @@
     "start": "node --max_old_space_size=8048 ./node_modules/@angular/cli/bin/ng serve --configuration development --host 0.0.0.0 --open",
     "build": "ng build",
     "build:prod": "ng build --configuration production --vendor-chunk",
+    "build:type": "rm -rf target/type && ./node_modules/.bin/ngc --p src/tsconfig.app.json --declaration --outDir target/type && find target/type -type f -name '*.js*' -delete",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
