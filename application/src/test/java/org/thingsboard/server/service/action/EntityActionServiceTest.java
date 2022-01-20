@@ -15,16 +15,16 @@
  */
 package org.thingsboard.server.service.action;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -59,12 +59,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-
 @RunWith(MockitoJUnitRunner.class)
 public class EntityActionServiceTest {
 
     public static final String CUSTOMER_ID = "customerId";
-    public static final int WANTED_NUMBER_OF_INVOCATIONS_FOR_NOT_DUPLICATED_MSG = 2;
+    public static final int WANTED_NUMBER_OF_INVOCATIONS = 2;
     public static final String DEFAULT_QUEUE_NAME = "Main";
 
     EntityActionService actionService;
@@ -79,13 +78,14 @@ public class EntityActionServiceTest {
     TbDeviceProfileCache deviceProfileCache;
     @Mock
     TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> queueProducer;
-    @MockBean
+    @Spy
+    @InjectMocks
     DefaultTbClusterService clusterService;
-
-    DeviceProfile deviceProfile;
 
     TenantId tenantId = new TenantId(UUID.randomUUID());
     CustomerId customerId = new CustomerId(UUID.randomUUID());
+
+    DeviceProfile deviceProfile;
 
     @Before
     public void init() {
@@ -101,7 +101,7 @@ public class EntityActionServiceTest {
     }
 
     @Test
-    public void testPushEntityActionToRuleEngine_whenActionTypeEqualsRelationUpdated_thenSendTwoEvent() throws JsonProcessingException {
+    public void testPushEntityActionToRuleEngine_whenActionTypeEqualsRelationUpdated_thenSendTwoEvent() {
         EntityRelation relation = new EntityRelation();
         relation.setFrom(new DeviceId(UUID.randomUUID()));
         relation.setTo(new AssetId(UUID.randomUUID()));
@@ -110,7 +110,7 @@ public class EntityActionServiceTest {
     }
 
     @Test
-    public void testPushEntityActionToRuleEngine_whenActionTypeEqualsRelationDeleted_thenSendTwoEvent() throws JsonProcessingException {
+    public void testPushEntityActionToRuleEngine_whenActionTypeEqualsRelationDeleted_thenSendTwoEvent() {
         EntityRelation relation = new EntityRelation();
         relation.setFrom(new DeviceId(UUID.randomUUID()));
         relation.setTo(new AssetId(UUID.randomUUID()));
@@ -118,7 +118,7 @@ public class EntityActionServiceTest {
         pushEventAndVerify(relation, ActionType.RELATION_DELETED);
     }
 
-    void pushEventAndVerify(EntityRelation relation, ActionType actionType) throws JsonProcessingException {
+    void pushEventAndVerify(EntityRelation relation, ActionType actionType) {
         actionService.pushEntityActionToRuleEngine(relation.getFrom(),
                 null,
                 tenantId,
@@ -136,12 +136,12 @@ public class EntityActionServiceTest {
                 relation);
 
         verifyMetadataTbMsg(relation, actionType);
-        verify(partitionService, times(WANTED_NUMBER_OF_INVOCATIONS_FOR_NOT_DUPLICATED_MSG)).resolve(any(), anyString(), any(), any());
+        verify(partitionService, times(WANTED_NUMBER_OF_INVOCATIONS)).resolve(any(), anyString(), any(), any());
     }
 
-    private void verifyMetadataTbMsg(EntityRelation relation, ActionType actionType) throws JsonProcessingException {
+    private void verifyMetadataTbMsg(EntityRelation relation, ActionType actionType) {
         String msgType = getMsgType(actionType);
-        String data = JacksonUtil.OBJECT_MAPPER.writeValueAsString(JacksonUtil.valueToTree(relation));
+        String data = JacksonUtil.toString(JacksonUtil.valueToTree(relation));
 
         TbMsg tbMsgFrom = getTbMsg(EntitySearchDirection.FROM, msgType, relation.getFrom(), data);
         TbMsg tbMsgTo = getTbMsg(EntitySearchDirection.TO, msgType, relation.getTo(), data);
@@ -173,7 +173,6 @@ public class EntityActionServiceTest {
         metaDataFrom.putValue(CUSTOMER_ID, customerId.getId().toString());
         return TbMsg.newMsg(msgType, entityId, customerId, metaDataFrom, TbMsgDataType.JSON, data);
     }
-
 
     @NotNull
     private String getMsgType(ActionType actionType) {
