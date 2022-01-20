@@ -39,7 +39,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
-import org.thingsboard.server.transport.lwm2m.config.LwM2mVersion;
+import org.thingsboard.server.transport.lwm2m.config.TbLwM2mVersion;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -423,14 +423,14 @@ public class LwM2mClient implements Serializable {
         if (registration == null) {
             return ContentFormat.DEFAULT;
         } else{
-            return LwM2mVersion.fromVersion(registration.getLwM2mVersion()).getContentFormat();
+            return TbLwM2mVersion.fromVersion(registration.getLwM2mVersion()).getContentFormat();
         }
     }
 
     static private Set<ContentFormat> clientSupportContentFormat(Registration registration) {
         Set<ContentFormat> contentFormats = new HashSet<>();
         contentFormats.add(ContentFormat.DEFAULT);
-        String code = Arrays.stream(registration.getObjectLinks()).filter(link -> link.getUrl().equals("/")).findFirst().get().getAttributes().get("ct");
+        String code = Arrays.stream(registration.getObjectLinks()).filter(link -> link.getUriReference().equals("/")).findFirst().get().getLinkParams().get("ct").getUnquoted();
         if (code != null) {
             Set<ContentFormat> codes = Stream.of(code.replaceAll("\"", "").split(" ", -1))
                     .map(String::trim)

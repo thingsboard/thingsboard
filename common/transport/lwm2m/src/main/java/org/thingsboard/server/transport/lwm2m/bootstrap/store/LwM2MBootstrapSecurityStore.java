@@ -80,7 +80,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
             TbLwM2MSecurityInfo store = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfoByCredentialsId(identity, BOOTSTRAP);
             if (store.getBootstrapCredentialConfig() != null && store.getSecurityMode() != null) {
                 /* add value to store  from BootstrapJson */
-                this.setBootstrapConfigScurityInfo(store);
+                this.setBootstrapConfigSecurityInfo(store);
                 BootstrapConfig bsConfig = store.getBootstrapConfig();
                 if (bsConfig.security != null) {
                     try {
@@ -99,18 +99,13 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
     }
 
     public TbLwM2MSecurityInfo getX509ByEndpoint(String endPoint) {
-        try {
             TbLwM2MSecurityInfo store = lwM2MCredentialsSecurityInfoValidator.getEndpointSecurityInfoByCredentialsId(endPoint, BOOTSTRAP);
             this.addValueToStore(store, store.getEndpoint());
             return store;
-        } catch (LwM2MAuthException e) {
-            log.trace("Failed find security info: {}", endPoint, e);
-        }
-        return null;
     }
 
 
-    private void setBootstrapConfigScurityInfo(TbLwM2MSecurityInfo store) {
+    private void setBootstrapConfigSecurityInfo(TbLwM2MSecurityInfo store) {
         /* BootstrapConfig */
         LwM2MBootstrapConfig lwM2MBootstrapConfig = this.getParametersBootstrap(store);
         if (lwM2MBootstrapConfig != null) {
@@ -182,7 +177,7 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
         SecurityInfo securityInfo = null;
         if (store != null && store.getBootstrapCredentialConfig() != null && store.getSecurityMode() != null) {
             securityInfo = store.getSecurityInfo();
-            this.setBootstrapConfigScurityInfo(store);
+            this.setBootstrapConfigSecurityInfo(store);
             BootstrapConfig bsConfigNew = store.getBootstrapConfig();
             if (bsConfigNew != null) {
                 try {
