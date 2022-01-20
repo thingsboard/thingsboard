@@ -201,9 +201,9 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
     @Test
     public void testSoftwareUpdateByObject9() throws Exception {
         createDeviceProfile(OTA_TRANSPORT_CONFIGURATION);
-        NoSecClientCredential credentials = createNoSecClientCredentials(this.CLIENT_ENDPOINT_OTA9);
+        NoSecClientCredential credentials = createNoSecClientCredentials(CLIENT_ENDPOINT_OTA9);
         final Device device = createDevice(credentials);
-        createNewClient(SECURITY, COAP_CONFIG, false, this.CLIENT_ENDPOINT_OTA9);
+        createNewClient(SECURITY, COAP_CONFIG, false, CLIENT_ENDPOINT_OTA9);
 
         Thread.sleep(1000);
 

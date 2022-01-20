@@ -25,15 +25,13 @@ import org.thingsboard.server.common.data.CoapDeviceType;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
 
 @Slf4j
@@ -88,7 +86,7 @@ public abstract class AbstractCoapAttributesUpdatesProtoIntegrationTest extends 
     }
 
     protected void validateEmptyCurrentStateAttributesResponse(TestCoapCallback callback) throws InvalidProtocolBufferException {
-        assertNull(callback.getPayloadBytes());
+        assertArrayEquals(EMPTY_PAYLOAD, callback.getPayloadBytes());
         assertNotNull(callback.getObserve());
         assertEquals(CoAP.ResponseCode.CONTENT, callback.getResponseCode());
         assertEquals(0, callback.getObserve().intValue());

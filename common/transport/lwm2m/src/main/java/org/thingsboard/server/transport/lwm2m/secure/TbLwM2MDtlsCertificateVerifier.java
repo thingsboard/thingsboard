@@ -17,19 +17,18 @@ package org.thingsboard.server.transport.lwm2m.secure;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.elements.auth.RawPublicKeyIdentity;
 import org.eclipse.californium.elements.util.CertPathUtil;
 import org.eclipse.californium.scandium.dtls.AlertMessage;
 import org.eclipse.californium.scandium.dtls.CertificateMessage;
 import org.eclipse.californium.scandium.dtls.CertificateType;
 import org.eclipse.californium.scandium.dtls.CertificateVerificationResult;
 import org.eclipse.californium.scandium.dtls.ConnectionId;
-import org.eclipse.californium.scandium.dtls.DTLSSession;
 import org.eclipse.californium.scandium.dtls.HandshakeException;
 import org.eclipse.californium.scandium.dtls.HandshakeResultHandler;
 import org.eclipse.californium.scandium.dtls.x509.NewAdvancedCertificateVerifier;
-import org.eclipse.californium.scandium.dtls.x509.StaticCertificateVerifier;
+import org.eclipse.californium.scandium.dtls.x509.StaticNewAdvancedCertificateVerifier;
 import org.eclipse.californium.scandium.util.ServerNames;
-import org.eclipse.leshan.core.util.SecurityUtil;
 import org.eclipse.leshan.server.security.NonUniqueSecurityInfoException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -50,6 +49,7 @@ import org.thingsboard.server.transport.lwm2m.server.store.TbMainSecurityStore;
 
 import javax.annotation.PostConstruct;
 import javax.security.auth.x500.X500Principal;
+import java.net.InetSocketAddress;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
@@ -81,18 +81,16 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
     private final LwM2mCredentialsSecurityInfoValidator securityInfoValidator;
     private final TbMainSecurityStore securityStore;
 
-    @SuppressWarnings("deprecation")
-    private StaticCertificateVerifier staticCertificateVerifier;
+    private StaticNewAdvancedCertificateVerifier staticCertificateVerifier;
 
     @Value("${transport.lwm2m.server.security.skip_validity_check_for_client_cert:false}")
     private boolean skipValidityCheckForClientCert;
 
     @Override
-    public List<CertificateType> getSupportedCertificateType() {
+    public List<CertificateType> getSupportedCertificateTypes() {
         return Arrays.asList(CertificateType.X_509, CertificateType.RAW_PUBLIC_KEY);
     }
 
-    @SuppressWarnings("deprecation")
     @PostConstruct
     public void init() {
         try {
@@ -101,14 +99,14 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
             if (config.getTrustSslCredentials() != null) {
                 trustedCertificates = config.getTrustSslCredentials().getTrustedCertificates();
             }
-            staticCertificateVerifier = new StaticCertificateVerifier(trustedCertificates);
+            staticCertificateVerifier = new StaticNewAdvancedCertificateVerifier(trustedCertificates, new RawPublicKeyIdentity[]{}, null);
         } catch (Exception e) {
             log.info("Failed to initialize the ");
         }
     }
 
     @Override
-    public CertificateVerificationResult verifyCertificate(ConnectionId cid, ServerNames serverName, Boolean clientUsage, boolean truncateCertificatePath, CertificateMessage message, DTLSSession session) {
+    public CertificateVerificationResult verifyCertificate(ConnectionId cid, ServerNames serverName, InetSocketAddress remotePeer, boolean clientUsage, boolean verifySubject, boolean truncateCertificatePath, CertificateMessage message) {
         CertPath certChain = message.getCertificateChain();
         if (certChain == null) {
             //We trust all RPK on this layer, and use TbLwM2MAuthorizer
@@ -177,10 +175,9 @@ public class TbLwM2MDtlsCertificateVerifier implements NewAdvancedCertificateVer
                 }
                 if (!x509CredentialsFound) {
                     if (staticCertificateVerifier != null) {
-                        staticCertificateVerifier.verifyCertificate(message, session);
+                        staticCertificateVerifier.verifyCertificate(cid, serverName, remotePeer, clientUsage, verifySubject, truncateCertificatePath, message);
                     } else {
-                        AlertMessage alert = new AlertMessage(AlertMessage.AlertLevel.FATAL, AlertMessage.AlertDescription.INTERNAL_ERROR,
-                                session.getPeer());
+                        AlertMessage alert = new AlertMessage(AlertMessage.AlertLevel.FATAL, AlertMessage.AlertDescription.INTERNAL_ERROR);
                         throw new HandshakeException("x509 verification not enabled!", alert);
                     }
                 }

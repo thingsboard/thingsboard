@@ -93,10 +93,9 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
         float delta = (RANDOM.nextInt(20) - 10) / 10f;
         currentTemp += delta;
         Integer changedResource = adjustMinMaxMeasuredValue(currentTemp);
+        fireResourceChange(5700);
         if (changedResource != null) {
-            fireResourcesChange(5700, changedResource);
-        } else {
-            fireResourcesChange(5700);
+            fireResourceChange(changedResource);
         }
     }
 
@@ -125,7 +124,6 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
     @Override
     public void destroy() {
     }
-
 
 
 }
