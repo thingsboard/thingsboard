@@ -19,8 +19,11 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.Ticker;
 import com.github.benmanes.caffeine.cache.Weigher;
+import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cache.CacheManager;
@@ -30,11 +33,18 @@ import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.cache.transaction.TransactionAwareCacheManagerProxy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -48,6 +58,19 @@ public class CaffeineCacheConfiguration {
 
     private Map<String, CacheSpecs> specs;
 
+    @Value("${cache.stats.enabled:true}")
+    private boolean cacheStatsEnabled;
+
+    @Value("${cache.stats.interval:60}")
+    private long cacheStatsInterval;
+
+    @Lazy
+    @Autowired
+    private CacheManager cacheManager;
+
+    private ScheduledExecutorService scheduler = null;
+
+    List<CaffeineCache> caches = Collections.emptyList();
 
     /**
      * Transaction aware CaffeineCache implementation with TransactionAwareCacheManagerProxy
@@ -58,7 +81,7 @@ public class CaffeineCacheConfiguration {
         log.trace("Initializing cache: {} specs {}", Arrays.toString(RemovalCause.values()), specs);
         SimpleCacheManager manager = new SimpleCacheManager();
         if (specs != null) {
-            List<CaffeineCache> caches =
+            caches =
                     specs.entrySet().stream()
                             .map(entry -> buildCache(entry.getKey(),
                                     entry.getValue()))
@@ -72,6 +95,31 @@ public class CaffeineCacheConfiguration {
         return new TransactionAwareCacheManagerProxy(manager);
     }
 
+    @PostConstruct
+    public void init() {
+        if (cacheStatsEnabled) {
+            log.debug("initializing cache stats scheduled job");
+            scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("cache-stats"));
+            scheduler.scheduleAtFixedRate(this::printCacheStats, cacheStatsInterval, cacheStatsInterval, TimeUnit.SECONDS);
+        }
+    }
+
+    @PreDestroy
+    public void stopActorSystem() {
+        if (scheduler != null) {
+            scheduler.shutdown();
+        }
+    }
+
+    void printCacheStats() {
+        caches.forEach((cache) -> {
+            CacheStats stats = cache.getNativeCache().stats();
+            if (stats.hitCount() != 0 || stats.missCount() != 0) {
+                log.info("Caffeine [{}] hit [{}] [{}]", cache.getName(), stats.hitRate(), stats);
+            }
+        });
+    }
+
     private CaffeineCache buildCache(String name, CacheSpecs cacheSpec) {
         final Caffeine<Object, Object> caffeineBuilder
                 = Caffeine.newBuilder()
@@ -79,6 +127,9 @@ public class CaffeineCacheConfiguration {
                 .maximumWeight(cacheSpec.getMaxSize())
                 .expireAfterWrite(cacheSpec.getTimeToLiveInMinutes(), TimeUnit.MINUTES)
                 .ticker(ticker());
+        if (cacheStatsEnabled) {
+            caffeineBuilder.recordStats();
+        }
         return new CaffeineCache(name, caffeineBuilder.build());
     }
 

@@ -379,6 +379,9 @@ cache:
   attributes:
     # make sure that if cache.type is 'redis' and cache.attributes.enabled is 'true' that you change 'maxmemory-policy' Redis config property to 'allkeys-lru', 'allkeys-lfu' or 'allkeys-random'
     enabled: "${CACHE_ATTRIBUTES_ENABLED:true}"
+  stats:
+    enabled: "${CACHE_STATS_ENABLED:true}"
+    interval: "${CACHE_STATS_INTERVAL:60}"
 
 caffeine:
   specs:
