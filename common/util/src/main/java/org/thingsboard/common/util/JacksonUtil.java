@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,6 +130,14 @@ public class JacksonUtil {
         }
     }
 
+    public static <T> T treeToValue(JsonNode node, Class<T> clazz) {
+        try {
+            return OBJECT_MAPPER.treeToValue(node, clazz);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Can't convert value: " + node.toString(), e);
+        }
+    }
+
     public static ObjectNode newObjectNode() {
         return OBJECT_MAPPER.createObjectNode();
     }
@@ -142,10 +150,6 @@ public class JacksonUtil {
 
     public static <T> JsonNode valueToTree(T value) {
         return OBJECT_MAPPER.valueToTree(value);
-    }
-
-    public static <T> T treeToValue(JsonNode tree, Class<T> type) throws JsonProcessingException {
-        return OBJECT_MAPPER.treeToValue(tree, type);
     }
 
     public static <T> byte[] writeValueAsBytes(T value) {

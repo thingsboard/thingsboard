@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 import { EntityId } from '@shared/models/id/entity-id';
 import { HasUUID } from '@shared/models/id/has-uuid';
+import { isDefinedAndNotNull } from '@core/utils';
 
 export declare type HasId = EntityId | HasUUID;
 
@@ -24,4 +25,12 @@ export interface BaseData<T extends HasId> {
   id?: T;
   name?: string;
   label?: string;
+}
+
+export function hasIdEquals(id1: HasId, id2: HasId): boolean {
+  if (isDefinedAndNotNull(id1) && isDefinedAndNotNull(id2)) {
+    return id1.id === id2.id;
+  } else {
+    return id1 === id2;
+  }
 }

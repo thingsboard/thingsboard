@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ public class RpcEntity extends BaseSqlEntity<Rpc> implements BaseEntity<Rpc> {
     public Rpc toData() {
         Rpc rpc = new Rpc(new RpcId(id));
         rpc.setCreatedTime(createdTime);
-        rpc.setTenantId(new TenantId(tenantId));
+        rpc.setTenantId(TenantId.fromUUID(tenantId));
         rpc.setDeviceId(new DeviceId(deviceId));
         rpc.setExpirationTime(expirationTime);
         rpc.setRequest(request);

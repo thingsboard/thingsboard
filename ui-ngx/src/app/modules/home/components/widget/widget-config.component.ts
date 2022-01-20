@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -158,6 +158,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   selectedTab: number;
 
   modelValue: WidgetConfigComponentData;
+
+  showLegendFieldset = true;
 
   private propagateChange = null;
 
@@ -323,6 +325,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
         this.datasourceTypes.push(DatasourceType.entityCount);
       }
     }
+
     this.dataSettings = this.fb.group({});
     this.targetDeviceSettings = this.fb.group({});
     this.alarmSourceSettings = this.fb.group({});
@@ -386,6 +389,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     if (this.modelValue) {
       if (this.widgetType !== this.modelValue.widgetType) {
         this.widgetType = this.modelValue.widgetType;
+        this.showLegendFieldset = (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.latest);
         this.buildForms();
       }
       const config = this.modelValue.config;

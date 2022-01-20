@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,10 +144,14 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
             if (msgAlarm != null) {
                 existingAlarm.setSeverity(msgAlarm.getSeverity());
                 existingAlarm.setPropagate(msgAlarm.isPropagate());
+                existingAlarm.setPropagateToOwner(msgAlarm.isPropagateToOwner());
+                existingAlarm.setPropagateToTenant(msgAlarm.isPropagateToTenant());
                 existingAlarm.setPropagateRelationTypes(msgAlarm.getPropagateRelationTypes());
             } else {
                 existingAlarm.setSeverity(processAlarmSeverity(msg));
                 existingAlarm.setPropagate(config.isPropagate());
+                existingAlarm.setPropagateToOwner(config.isPropagateToOwner());
+                existingAlarm.setPropagateToTenant(config.isPropagateToTenant());
                 existingAlarm.setPropagateRelationTypes(relationTypes);
             }
             existingAlarm.setDetails(details);
@@ -159,6 +163,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
     }
 
     private Alarm buildAlarm(TbMsg msg, JsonNode details, TenantId tenantId) {
+        long ts = msg.getMetaDataTs();
         return Alarm.builder()
                 .tenantId(tenantId)
                 .originator(msg.getOriginator())
@@ -167,9 +172,8 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
                 .propagate(config.isPropagate())
                 .type(TbNodeUtils.processPattern(this.config.getAlarmType(), msg))
                 .propagateRelationTypes(relationTypes)
-                //todo-vp: alarm date should be taken from Message or current Time should be used?
-//                .startTs(System.currentTimeMillis())
-//                .endTs(System.currentTimeMillis())
+                .startTs(ts)
+                .endTs(ts)
                 .details(details)
                 .build();
     }

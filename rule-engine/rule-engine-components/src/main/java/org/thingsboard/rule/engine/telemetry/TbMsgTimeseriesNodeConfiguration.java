@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,14 @@ public class TbMsgTimeseriesNodeConfiguration implements NodeConfiguration<TbMsg
 
     private long defaultTTL;
     private boolean skipLatestPersistence;
+    private boolean useServerTs;
 
     @Override
     public TbMsgTimeseriesNodeConfiguration defaultConfiguration() {
         TbMsgTimeseriesNodeConfiguration configuration = new TbMsgTimeseriesNodeConfiguration();
         configuration.setDefaultTTL(0L);
         configuration.setSkipLatestPersistence(false);
+        configuration.setUseServerTs(false);
         return configuration;
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,7 +113,7 @@ public final class CustomerEntity extends BaseSqlEntity<Customer> implements Sea
     public Customer toData() {
         Customer customer = new Customer(new CustomerId(this.getUuid()));
         customer.setCreatedTime(createdTime);
-        customer.setTenantId(new TenantId(tenantId));
+        customer.setTenantId(TenantId.fromUUID(tenantId));
         customer.setTitle(title);
         customer.setCountry(country);
         customer.setState(state);

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,7 +135,7 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
                         throw new DataValidationException("Widgets type descriptor can't be empty!");
                     }
                     if (widgetTypeDetails.getTenantId() == null) {
-                        widgetTypeDetails.setTenantId(new TenantId(ModelConstants.NULL_UUID));
+                        widgetTypeDetails.setTenantId(TenantId.fromUUID(ModelConstants.NULL_UUID));
                     }
                     if (!widgetTypeDetails.getTenantId().getId().equals(ModelConstants.NULL_UUID)) {
                         Tenant tenant = tenantDao.findById(tenantId, widgetTypeDetails.getTenantId().getId());

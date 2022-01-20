@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -130,7 +130,7 @@ export class DeviceProfileProvisionConfigurationComponent implements ControlValu
   setDisabledState(isDisabled: boolean){
     this.disabled = isDisabled;
     if (this.disabled){
-      this.provisionConfigurationFormGroup.disable();
+      this.provisionConfigurationFormGroup.disable({emitEvent: false});
     } else {
       if (this.provisionConfigurationFormGroup.get('type').value !== DeviceProvisionType.DISABLED) {
         this.provisionConfigurationFormGroup.enable({emitEvent: false});

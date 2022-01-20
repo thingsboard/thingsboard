@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ import { defaultSettings, FormattedData, hereProviders, MapProviders, UnitedMapS
 import LeafletMap from './leaflet-map';
 import {
   commonMapSettingsSchema,
+  editorSettingSchema,
   mapPolygonSchema,
   markerClusteringSettingsSchema,
   markerClusteringSettingsSchemaLeaflet,
@@ -115,6 +116,8 @@ export class MapWidgetController implements MapWidgetInterface {
                     `model.useClusterMarkers === true && model.provider !== "image-map"`)]);
             addToSchema(schema, clusteringSchema);
             addGroupInfo(schema, 'Markers Clustering Settings');
+            addToSchema(schema, addCondition(editorSettingSchema, '(model.editablePolygon === true || model.draggableMarker === true)'));
+            addGroupInfo(schema, 'Editor settings');
         }
         return schema;
     }
@@ -297,8 +300,8 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     resize() {
-        this.map?.invalidateSize();
-        this.map.onResize();
+      this.map.onResize();
+      this.map?.invalidateSize();
     }
 
     destroy() {

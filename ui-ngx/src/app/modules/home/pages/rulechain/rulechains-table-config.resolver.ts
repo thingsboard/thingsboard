@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -151,7 +151,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
           name: this.translate.instant('rulechain.create-new-rulechain'),
           icon: 'insert_drive_file',
           isEnabled: () => true,
-          onAction: ($event) => this.config.table.addEntity($event)
+          onAction: ($event) => this.config.getTable().addEntity($event)
         },
         {
           name: this.translate.instant('rulechain.import'),
@@ -343,13 +343,13 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
             this.ruleChainService.setEdgeRootRuleChain(this.config.componentsData.edgeId, ruleChain.id.id).subscribe(
               (edge) => {
                 this.config.componentsData.edge = edge;
-                this.config.table.updateData();
+                this.config.updateData();
               }
             );
           } else {
             this.ruleChainService.setRootRuleChain(ruleChain.id.id).subscribe(
               () => {
-                this.config.table.updateData();
+                this.config.updateData();
               }
             );
           }
@@ -399,7 +399,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
         if (res) {
           this.ruleChainService.setEdgeTemplateRootRuleChain(ruleChain.id.id).subscribe(
             () => {
-              this.config.table.updateData();
+              this.config.updateData();
             }
           );
         }
@@ -436,11 +436,11 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
                   this.dialogService.alert(this.translate.instant('edge.missing-related-rule-chains-title'),
                     message, this.translate.instant('action.close'), true).subscribe(
                     () => {
-                      this.config.table.updateData();
+                      this.config.updateData();
                     }
                   );
                 } else {
-                  this.config.table.updateData();
+                  this.config.updateData();
                 }
               }
             );
@@ -463,7 +463,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
         if (res) {
           this.ruleChainService.unassignRuleChainFromEdge(this.config.componentsData.edgeId, ruleChain.id.id).subscribe(
             () => {
-              this.config.table.updateData();
+              this.config.updateData(this.config.componentsData.ruleChainScope !== 'tenant');
             }
           );
         }
@@ -491,7 +491,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
           );
           forkJoin(tasks).subscribe(
             () => {
-              this.config.table.updateData();
+              this.config.updateData();
             }
           );
         }
@@ -513,7 +513,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
         if (res) {
           this.ruleChainService.setAutoAssignToEdgeRuleChain(ruleChain.id.id).subscribe(
             () => {
-              this.config.table.updateData();
+              this.config.updateData();
             }
           );
         }
@@ -535,7 +535,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
         if (res) {
           this.ruleChainService.unsetAutoAssignToEdgeRuleChain(ruleChain.id.id).subscribe(
             () => {
-              this.config.table.updateData();
+              this.config.updateData();
             }
           );
         }

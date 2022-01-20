@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { Dashboard } from '@shared/models/dashboard.models';
+import { Dashboard, DashboardLayoutId } from '@shared/models/dashboard.models';
 import { StateObject } from '@core/api/widget-api.models';
 import { updateEntityParams, WidgetContext } from '@home/models/widget-component.models';
-import { deepClone, objToBase64 } from '@core/utils';
+import { deepClone, isDefinedAndNotNull, isNotEmptyStr, objToBase64 } from '@core/utils';
 import { IDashboardComponent } from '@home/models/dashboard-component.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { Subscription } from 'rxjs';
@@ -29,7 +29,7 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'tb-dashboard-state',
   templateUrl: './dashboard-state.component.html',
-  styleUrls: []
+  styleUrls: ['./dashboard-state.component.scss']
 })
 export class DashboardStateComponent extends PageComponent implements OnInit, OnDestroy {
 
@@ -43,6 +43,15 @@ export class DashboardStateComponent extends PageComponent implements OnInit, On
   syncParentStateParams = false;
 
   @Input()
+  defaultAutofillLayout = true;
+
+  @Input()
+  defaultMargin;
+
+  @Input()
+  defaultBackgroundColor;
+
+  @Input()
   entityParamName: string;
 
   @Input()
@@ -54,6 +63,8 @@ export class DashboardStateComponent extends PageComponent implements OnInit, On
 
   parentDashboard: IDashboardComponent;
 
+  stateExists = true;
+
   private stateSubscription: Subscription;
 
   constructor(protected store: Store<AppState>,
@@ -63,14 +74,31 @@ export class DashboardStateComponent extends PageComponent implements OnInit, On
 
   ngOnInit(): void {
     this.dashboard = deepClone(this.ctx.stateController.dashboardCtrl.dashboardCtx.getDashboard());
-    this.updateCurrentState();
-    this.parentDashboard = this.ctx.parentDashboard ?
-      this.ctx.parentDashboard : this.ctx.dashboard;
-    if (this.syncParentStateParams) {
-      this.stateSubscription = this.ctx.stateController.dashboardCtrl.dashboardCtx.stateChanged.subscribe(() => {
-        this.updateCurrentState();
-        this.cd.markForCheck();
-      });
+    const state = this.dashboard.configuration.states[this.stateId];
+    if (state) {
+      for (const layoutId of Object.keys(state.layouts)) {
+        if (this.defaultAutofillLayout) {
+          state.layouts[layoutId as DashboardLayoutId].gridSettings.autoFillHeight = true;
+          state.layouts[layoutId as DashboardLayoutId].gridSettings.mobileAutoFillHeight = true;
+        }
+        if (isDefinedAndNotNull(this.defaultMargin)) {
+          state.layouts[layoutId as DashboardLayoutId].gridSettings.margin = this.defaultMargin;
+        }
+        if (isNotEmptyStr(this.defaultBackgroundColor)) {
+          state.layouts[layoutId as DashboardLayoutId].gridSettings.backgroundColor = this.defaultBackgroundColor;
+        }
+      }
+      this.updateCurrentState();
+      this.parentDashboard = this.ctx.parentDashboard ?
+        this.ctx.parentDashboard : this.ctx.dashboard;
+      if (this.syncParentStateParams) {
+        this.stateSubscription = this.ctx.stateController.dashboardCtrl.dashboardCtx.stateChanged.subscribe(() => {
+          this.updateCurrentState();
+          this.cd.markForCheck();
+        });
+      }
+    } else {
+      this.stateExists = false;
     }
   }
 

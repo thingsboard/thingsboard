@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +28,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
@@ -84,7 +84,9 @@ import static org.junit.Assert.assertNotNull;
 @ComponentScan("org.thingsboard.server")
 public abstract class AbstractServiceTest {
 
-    public static final TenantId SYSTEM_TENANT_ID = new TenantId(EntityId.NULL_UUID);
+    protected ObjectMapper mapper = new ObjectMapper();
+
+    public static final TenantId SYSTEM_TENANT_ID = TenantId.SYS_TENANT_ID;
 
     @Autowired
     protected UserService userService;
@@ -171,7 +173,7 @@ public abstract class AbstractServiceTest {
 
     protected Event generateEvent(TenantId tenantId, EntityId entityId, String eventType, String eventUid) throws IOException {
         if (tenantId == null) {
-            tenantId = new TenantId(Uuids.timeBased());
+            tenantId = TenantId.fromUUID(Uuids.timeBased());
         }
         Event event = new Event();
         event.setTenantId(tenantId);
@@ -202,7 +204,7 @@ public abstract class AbstractServiceTest {
 //    }
 
     public JsonNode readFromResource(String resourceName) throws IOException {
-        return JacksonUtil.getObjectMapper().readTree(this.getClass().getClassLoader().getResourceAsStream(resourceName));
+        return mapper.readTree(this.getClass().getClassLoader().getResourceAsStream(resourceName));
     }
 
     @Bean

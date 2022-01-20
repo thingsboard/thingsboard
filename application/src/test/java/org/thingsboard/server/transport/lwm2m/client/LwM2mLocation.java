@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,19 +101,15 @@ public class LwM2mLocation extends BaseInstanceEnabler implements Destroyable {
         switch (nextMove.charAt(0)) {
             case 'w':
                 moveLatitude(1.0f);
-//                log.info("Move to North [{}]/[{}]", getLatitude(), getLongitude());
                 break;
             case 'a':
                 moveLongitude(-1.0f);
-//                log.info("Move to East [{}]/[{}]", getLatitude(), getLongitude());
                 break;
             case 's':
                 moveLatitude(-1.0f);
-//                log.info("Move to South [{}]/[{}]", getLatitude(), getLongitude());
                 break;
             case 'd':
                 moveLongitude(1.0f);
-//                log.info("Move to West [{}]/[{}]", getLatitude(), getLongitude());
                 break;
         }
     }

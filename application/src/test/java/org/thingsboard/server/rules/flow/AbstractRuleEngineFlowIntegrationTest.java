@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,6 +145,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         Thread.sleep(1000);
 
         TbMsgCallback tbMsgCallback = Mockito.mock(TbMsgCallback.class);
+        Mockito.when(tbMsgCallback.isMsgValid()).thenReturn(true);
         TbMsg tbMsg = TbMsg.newMsg("CUSTOM", device.getId(), new TbMsgMetaData(), "{}", tbMsgCallback);
         QueueToRuleEngineMsg qMsg = new QueueToRuleEngineMsg(savedTenant.getId(), tbMsg, null, null);
         // Pushing Message to the system
@@ -257,6 +258,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         Thread.sleep(1000);
 
         TbMsgCallback tbMsgCallback = Mockito.mock(TbMsgCallback.class);
+        Mockito.when(tbMsgCallback.isMsgValid()).thenReturn(true);
         TbMsg tbMsg = TbMsg.newMsg("CUSTOM", device.getId(), new TbMsgMetaData(), "{}", tbMsgCallback);
         QueueToRuleEngineMsg qMsg = new QueueToRuleEngineMsg(savedTenant.getId(), tbMsg, null, null);
         // Pushing Message to the system

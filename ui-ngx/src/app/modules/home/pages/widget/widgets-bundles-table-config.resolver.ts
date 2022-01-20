@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
         name: this.translate.instant('widgets-bundle.create-new-widgets-bundle'),
         icon: 'insert_drive_file',
         isEnabled: () => true,
-        onAction: ($event) => this.config.table.addEntity($event)
+        onAction: ($event) => this.config.getTable().addEntity($event)
       },
       {
         name: this.translate.instant('widgets-bundle.import'),
@@ -137,7 +137,7 @@ export class WidgetsBundlesTableConfigResolver implements Resolve<EntityTableCon
     this.importExport.importWidgetsBundle().subscribe(
       (widgetsBundle) => {
         if (widgetsBundle) {
-          this.config.table.updateData();
+          this.config.updateData();
         }
       }
     );

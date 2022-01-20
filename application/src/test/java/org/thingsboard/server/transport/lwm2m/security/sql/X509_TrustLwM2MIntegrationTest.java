@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,13 +30,13 @@ public class X509_TrustLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegra
     @Test
     public void testConnectAndObserveTelemetry() throws Exception {
         X509ClientCredential credentials = new X509ClientCredential();
-        credentials.setEndpoint(ENDPOINT);
+        credentials.setEndpoint(CLIENT_ENDPOINT_X509_TRUST);
         Security security = x509(SECURE_URI,
                 SHORT_SERVER_ID,
-                clientX509Cert.getEncoded(),
-                clientPrivateKeyFromCert.getEncoded(),
+                clientX509CertTrust.getEncoded(),
+                clientPrivateKeyFromCertTrust.getEncoded(),
                 serverX509Cert.getEncoded());
-        super.basicTestConnectionObserveTelemetry(security, credentials, SECURE_COAP_CONFIG, ENDPOINT);
+        super.basicTestConnectionObserveTelemetry(security, credentials, SECURE_COAP_CONFIG, CLIENT_ENDPOINT_X509_TRUST);
     }
 
 }
