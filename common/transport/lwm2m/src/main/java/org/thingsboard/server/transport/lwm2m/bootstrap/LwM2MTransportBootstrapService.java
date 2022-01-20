@@ -40,6 +40,7 @@ import java.security.cert.X509Certificate;
 
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CURVES_ONLY;
+import static org.thingsboard.server.transport.lwm2m.server.DefaultLwM2mTransportService.PSK_CIPHER_SUITES;
 import static org.thingsboard.server.transport.lwm2m.server.DefaultLwM2mTransportService.RPK_OR_X509_CIPHER_SUITES;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MNetworkConfig.getCoapConfig;
 
@@ -48,7 +49,6 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2MNetworkConfig.g
 @TbLwM2mBootstrapTransportComponent
 @RequiredArgsConstructor
 public class LwM2MTransportBootstrapService {
-    private boolean pskMode = false;
 
     private final LwM2MTransportServerConfig serverConfig;
     private final LwM2MTransportBootstrapConfig bootstrapConfig;
@@ -86,7 +86,7 @@ public class LwM2MTransportBootstrapService {
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder(getCoapConfig(bootstrapConfig.getPort(), bootstrapConfig.getSecurePort(), serverConfig));
         dtlsConfig.set(DTLS_RECOMMENDED_CURVES_ONLY, serverConfig.isRecommendedSupportedGroups());
         dtlsConfig.set(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, serverConfig.isRecommendedCiphers());
-        dtlsConfig.setAsList(DtlsConfig.DTLS_CIPHER_SUITES, this.pskMode ? DefaultLwM2mTransportService.PSK_CIPHER_SUITES : DefaultLwM2mTransportService.RPK_OR_X509_CIPHER_SUITES);
+
         setServerWithCredentials(builder, dtlsConfig);
 
         /* Set DTLS Config */
@@ -112,13 +112,13 @@ public class LwM2MTransportBootstrapService {
             builder.setPublicKey(sslCredentials.getPublicKey());
             builder.setPrivateKey(sslCredentials.getPrivateKey());
             builder.setCertificateChain(sslCredentials.getCertificateChain());
-            dtlsConfig.setAsList(DtlsConfig.DTLS_CIPHER_SUITES, this.pskMode ? DefaultLwM2mTransportService.PSK_CIPHER_SUITES : DefaultLwM2mTransportService.RPK_OR_X509_CIPHER_SUITES);
             dtlsConfig.setAdvancedCertificateVerifier(certificateVerifier);
+            dtlsConfig.setAsList(DtlsConfig.DTLS_CIPHER_SUITES, RPK_OR_X509_CIPHER_SUITES);
         } else {
             /* by default trust all */
             builder.setTrustedCertificates(new X509Certificate[0]);
             log.info("Unable to load X509 files for BootStrapServer");
-            this.pskMode = true;
+            dtlsConfig.setAsList(DtlsConfig.DTLS_CIPHER_SUITES, PSK_CIPHER_SUITES);
         }
     }
 }
