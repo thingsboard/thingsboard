@@ -96,7 +96,6 @@ import org.thingsboard.server.service.transport.TbCoreToTransportService;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Optional;
@@ -486,7 +485,7 @@ public class ActorSystemContext {
     }
 
     private JsonNode toBodyJson(String serviceId, String method, String body) {
-        return JacksonUtil.getObjectMapper().createObjectNode().put("server", serviceId).put("method", method).put("error", body);
+        return JacksonUtil.newObjectNode().put("server", serviceId).put("method", method).put("error", body);
     }
 
     public TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId) {
@@ -523,48 +522,44 @@ public class ActorSystemContext {
 
     private void persistDebugAsync(TenantId tenantId, EntityId entityId, String type, TbMsg tbMsg, String relationType, Throwable error, String failureMessage) {
         if (checkLimits(tenantId, tbMsg, error)) {
-            try {
-                Event event = new Event();
-                event.setTenantId(tenantId);
-                event.setEntityId(entityId);
-                event.setType(DataConstants.DEBUG_RULE_NODE);
+            Event event = new Event();
+            event.setTenantId(tenantId);
+            event.setEntityId(entityId);
+            event.setType(DataConstants.DEBUG_RULE_NODE);
 
-                String metadata = JacksonUtil.toString(tbMsg.getMetaData().getData());
+            String metadata = JacksonUtil.toString(tbMsg.getMetaData().getData());
 
-                ObjectNode node = JacksonUtil.getObjectMapper().createObjectNode()
-                        .put("type", type)
-                        .put("server", getServiceId())
-                        .put("entityId", tbMsg.getOriginator().getId().toString())
-                        .put("entityName", tbMsg.getOriginator().getEntityType().name())
-                        .put("msgId", tbMsg.getId().toString())
-                        .put("msgType", tbMsg.getType())
-                        .put("dataType", tbMsg.getDataType().name())
-                        .put("relationType", relationType)
-                        .put("data", tbMsg.getData())
-                        .put("metadata", metadata);
+            ObjectNode node = JacksonUtil.getObjectMapper().createObjectNode()
+                    .put("type", type)
+                    .put("server", getServiceId())
+                    .put("entityId", tbMsg.getOriginator().getId().toString())
+                    .put("entityName", tbMsg.getOriginator().getEntityType().name())
+                    .put("msgId", tbMsg.getId().toString())
+                    .put("msgType", tbMsg.getType())
+                    .put("dataType", tbMsg.getDataType().name())
+                    .put("relationType", relationType)
+                    .put("data", tbMsg.getData())
+                    .put("metadata", metadata);
 
-                if (error != null) {
-                    node = node.put("error", toString(error));
-                } else if (failureMessage != null) {
-                    node = node.put("error", failureMessage);
+            if (error != null) {
+                node = node.put("error", toString(error));
+            } else if (failureMessage != null) {
+                node = node.put("error", failureMessage);
+            }
+
+            event.setBody(node);
+            ListenableFuture<Event> future = eventService.saveAsync(event);
+            Futures.addCallback(future, new FutureCallback<Event>() {
+                @Override
+                public void onSuccess(@Nullable Event event) {
+
                 }
 
-                event.setBody(node);
-                ListenableFuture<Event> future = eventService.saveAsync(event);
-                Futures.addCallback(future, new FutureCallback<Event>() {
-                    @Override
-                    public void onSuccess(@Nullable Event event) {
-
-                    }
-
-                    @Override
-                    public void onFailure(Throwable th) {
-                        log.error("Could not save debug Event for Node", th);
-                    }
-                }, MoreExecutors.directExecutor());
-            } catch (IOException ex) {
-                log.warn("Failed to persist rule node debug message", ex);
-            }
+                @Override
+                public void onFailure(Throwable th) {
+                    log.error("Could not save debug Event for Node", th);
+                }
+            }, MoreExecutors.directExecutor());
         }
     }
 

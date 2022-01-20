@@ -104,7 +104,7 @@ public abstract class AbstractContainerTest {
 
     protected Device createGatewayDevice() throws JsonProcessingException {
         String isGateway = "{\"gateway\":true}";
-        JsonNode additionalInfo = JacksonUtil.getObjectMapper().readTree(isGateway);
+        JsonNode additionalInfo = JacksonUtil.toJsonNode(isGateway);
         Device gatewayDeviceTemplate = new Device();
         gatewayDeviceTemplate.setName("mqtt_gateway");
         gatewayDeviceTemplate.setType("gateway");

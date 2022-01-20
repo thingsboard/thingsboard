@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.edge.rpc.constructor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -49,7 +48,6 @@ import java.util.stream.Collectors;
 @TbCoreComponent
 public class RuleChainMsgConstructor {
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final String RULE_CHAIN_INPUT_NODE = "org.thingsboard.rule.engine.flow.TbRuleChainInputNode";
     private static final String TB_RULE_CHAIN_OUTPUT_NODE = "org.thingsboard.rule.engine.flow.TbRuleChainOutputNode";
 
@@ -222,7 +220,7 @@ public class RuleChainMsgConstructor {
         return result;
     }
 
-    private List<RuleNodeProto> constructNodes(List<RuleNode> nodes) throws JsonProcessingException {
+    private List<RuleNodeProto> constructNodes(List<RuleNode> nodes) {
         List<RuleNodeProto> result = new ArrayList<>();
         if (nodes != null && !nodes.isEmpty()) {
             for (RuleNode node : nodes) {
@@ -232,7 +230,7 @@ public class RuleChainMsgConstructor {
         return result;
     }
 
-    private List<RuleChainConnectionInfo> addRuleChainConnections_V_3_3_0(List<RuleNode> nodes, List<NodeConnectionInfo> connections) throws JsonProcessingException {
+    private List<RuleChainConnectionInfo> addRuleChainConnections_V_3_3_0(List<RuleNode> nodes, List<NodeConnectionInfo> connections) {
         List<RuleChainConnectionInfo> result = new ArrayList<>();
         for (int i = 0; i < nodes.size(); i++) {
             RuleNode node = nodes.get(i);
@@ -263,7 +261,7 @@ public class RuleChainMsgConstructor {
         return result;
     }
 
-    private RuleChainConnectionInfoProto constructRuleChainConnection(RuleChainConnectionInfo ruleChainConnectionInfo, NavigableSet<Integer> removedNodeIndexes) throws JsonProcessingException {
+    private RuleChainConnectionInfoProto constructRuleChainConnection(RuleChainConnectionInfo ruleChainConnectionInfo, NavigableSet<Integer> removedNodeIndexes) {
         int fromIndex = ruleChainConnectionInfo.getFromIndex();
         // decrease index because of removed nodes
         for (Integer removedIndex : removedNodeIndexes) {
@@ -280,19 +278,19 @@ public class RuleChainMsgConstructor {
                 .setTargetRuleChainIdMSB(ruleChainConnectionInfo.getTargetRuleChainId().getId().getMostSignificantBits())
                 .setTargetRuleChainIdLSB(ruleChainConnectionInfo.getTargetRuleChainId().getId().getLeastSignificantBits())
                 .setType(ruleChainConnectionInfo.getType())
-                .setAdditionalInfo(objectMapper.writeValueAsString(additionalInfo))
+                .setAdditionalInfo(JacksonUtil.toString(additionalInfo))
                 .build();
     }
 
-    private RuleNodeProto constructNode(RuleNode node) throws JsonProcessingException {
+    private RuleNodeProto constructNode(RuleNode node) {
         return RuleNodeProto.newBuilder()
                 .setIdMSB(node.getId().getId().getMostSignificantBits())
                 .setIdLSB(node.getId().getId().getLeastSignificantBits())
                 .setType(node.getType())
                 .setName(node.getName())
                 .setDebugMode(node.isDebugMode())
-                .setConfiguration(objectMapper.writeValueAsString(node.getConfiguration()))
-                .setAdditionalInfo(objectMapper.writeValueAsString(node.getAdditionalInfo()))
+                .setConfiguration(JacksonUtil.toString(node.getConfiguration()))
+                .setAdditionalInfo(JacksonUtil.toString(node.getAdditionalInfo()))
                 .build();
     }
 
