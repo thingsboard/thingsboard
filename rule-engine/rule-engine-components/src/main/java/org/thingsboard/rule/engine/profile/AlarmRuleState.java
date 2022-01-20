@@ -232,21 +232,7 @@ class AlarmRuleState {
         if (specType.equals(AlarmConditionSpecType.REPEATING)) {
             RepeatingAlarmConditionSpec repeating = (RepeatingAlarmConditionSpec) spec;
 
-            repeatingTimes = repeating.getPredicate().getDefaultValue();
-
-            if (repeating.getPredicate().getDynamicValue() != null &&
-                    repeating.getPredicate().getDynamicValue().getSourceAttribute() != null) {
-                EntityKeyValue repeatingKeyValue = getDynamicPredicateValue(data, repeating.getPredicate().getDynamicValue());
-                if (repeatingKeyValue != null) {
-                    var longValue = getLongValue(repeatingKeyValue);
-                    if (longValue != null) {
-                        repeatingTimes = longValue;
-                    } else {
-                        String sourceAttribute = repeating.getPredicate().getDynamicValue().getSourceAttribute();
-                        throw new NumericParseException(String.format("could not parse attribute [%s: %s] from source!", sourceAttribute, getStrValue(repeatingKeyValue)));
-                    }
-                }
-            }
+            repeatingTimes = resolveDynamicValue(data, repeating.getPredicate());
         }
         return repeatingTimes;
     }
@@ -259,24 +245,29 @@ class AlarmRuleState {
             DurationAlarmConditionSpec duration = (DurationAlarmConditionSpec) spec;
             TimeUnit timeUnit = duration.getUnit();
 
-            durationTimeInMs = timeUnit.toMillis(duration.getPredicate().getDefaultValue());
+            durationTimeInMs = timeUnit.toMillis(resolveDynamicValue(data, duration.getPredicate()));
+        }
+        return durationTimeInMs;
+    }
 
-            if (duration.getPredicate().getDynamicValue() != null &&
-                    duration.getPredicate().getDynamicValue().getSourceAttribute() != null) {
-                EntityKeyValue durationKeyValue = getDynamicPredicateValue(data, duration.getPredicate().getDynamicValue());
-                if (durationKeyValue != null) {
-                    var longValue = getLongValue(durationKeyValue);
-                    if (longValue != null) {
-                        durationTimeInMs = timeUnit.toMillis(longValue);
-                    } else {
-                        String sourceAttribute = duration.getPredicate().getDynamicValue().getSourceAttribute();
-                        throw new NumericParseException(String.format("could not parse attribute [%s: %s] from source!", sourceAttribute, getStrValue(durationKeyValue)));
-                    }
-                }
-            }
+    private Long resolveDynamicValue(DataSnapshot data, FilterPredicateValue<? extends Number> predicate) {
+        DynamicValue<?> dynamicValue = predicate.getDynamicValue();
+        Long defaultValue = predicate.getDefaultValue().longValue();
+        if (dynamicValue == null || dynamicValue.getSourceAttribute() == null) {
+            return defaultValue;
         }
 
-        return durationTimeInMs;
+        EntityKeyValue keyValue = getDynamicPredicateValue(data, dynamicValue);
+        if (keyValue == null) {
+            return defaultValue;
+        }
+
+        var longValue = getLongValue(keyValue);
+        if (longValue != null) {
+            String sourceAttribute = dynamicValue.getSourceAttribute();
+            throw new NumericParseException(String.format("could not parse attribute [%s: %s] from source!", sourceAttribute, getStrValue(keyValue)));
+        }
+        return longValue;
     }
 
     public AlarmEvalResult eval(long ts, DataSnapshot dataSnapshot) {
