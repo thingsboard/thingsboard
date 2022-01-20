@@ -23,15 +23,16 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.kv.BaseDeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RuleNode(
@@ -52,45 +53,53 @@ import java.util.concurrent.TimeUnit;
 public class TbMsgDeleteTimeseriesNode implements TbNode {
 
     private TbMsgDeleteTimeseriesNodeConfiguration config;
+    private long startTs;
+    private long endTs;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgDeleteTimeseriesNodeConfiguration.class);
+        if (CollectionUtils.isEmpty(config.getKeysPatterns())) {
+            throw new IllegalStateException("Telemetry keys list is not selected!");
+        }
+        this.startTs = TimeUnit.valueOf(config.getStartTsTimeUnit()).toMillis(config.getStartTs());
+        this.endTs = TimeUnit.valueOf(config.getEndTsTimeUnit()).toMillis(config.getEndTs());
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
         List<String> keysPatterns = config.getKeysPatterns();
-        if (CollectionUtils.isEmpty(keysPatterns)) {
-            ctx.tellFailure(msg, new IllegalStateException("Telemetry keys list is not selected!"));
-        } else {
-            long deleteFromTs;
-            long deleteToTs;
-            long currentTimeMillis = System.currentTimeMillis();
-            try {
-                if (config.getDeleteAllDataForKeys()) {
-                    deleteFromTs = 0L;
-                    deleteToTs = currentTimeMillis;
+        long deleteFromTs;
+        long deleteToTs;
+        long currentTimeMillis = System.currentTimeMillis();
+        try {
+            if (config.getDeleteAllDataForKeys()) {
+                deleteFromTs = 0L;
+                deleteToTs = currentTimeMillis;
+            } else {
+                if (config.isUseMetadataIntervalPatterns()) {
+                    deleteFromTs = setDeleteTsIntervalFromPattern(msg, config.getStartTsIntervalPattern());
+                    deleteToTs = setDeleteTsIntervalFromPattern(msg, config.getEndTsIntervalPattern());
                 } else {
-                    if (config.isUseMetadataIntervalPatterns()) {
-                        deleteFromTs = setDeleteTsIntervalFromPattern(msg, config.getStartTsIntervalPattern());
-                        deleteToTs = setDeleteTsIntervalFromPattern(msg, config.getEndTsIntervalPattern());
-                    } else {
-                        deleteFromTs = currentTimeMillis - TimeUnit.valueOf(config.getStartTsTimeUnit()).toMillis(config.getStartTs());
-                        deleteToTs = currentTimeMillis - TimeUnit.valueOf(config.getEndTsTimeUnit()).toMillis(config.getEndTs());
-                    }
+                    deleteFromTs = currentTimeMillis - startTs;
+                    deleteToTs = currentTimeMillis - endTs;
                 }
-                List<DeleteTsKvQuery> deleteTsKvQueries = new ArrayList<>();
-                List<String> keysToDelete = new ArrayList<>();
-                keysPatterns.stream().map(key -> TbNodeUtils.processPattern(key, msg)).forEach(result -> {
-                    keysToDelete.add(result);
-                    deleteTsKvQueries.add(new BaseDeleteTsKvQuery(result, deleteFromTs, deleteToTs, config.getRewriteLatestIfDeleted()));
-                });
-                ctx.getTelemetryService().deleteTimeseriesAndNotify(ctx.getTenantId(), msg.getOriginator(),
-                        keysToDelete, deleteTsKvQueries, new TelemetryNodeCallback(ctx, msg));
-            } catch (Exception e) {
-                ctx.tellFailure(msg, e);
             }
+            List<String> keysToDelete = keysPatterns.stream()
+                    .map(keyPattern -> TbNodeUtils.processPattern(keyPattern, msg))
+                    .distinct()
+                    .filter(StringUtils::isNotBlank)
+                    .collect(Collectors.toList());
+            if (keysToDelete.isEmpty()) {
+                throw new RuntimeException("Selected keys patterns have invalid values!");
+            }
+            List<DeleteTsKvQuery> deleteTsKvQueries = keysToDelete.stream()
+                    .map(key -> new BaseDeleteTsKvQuery(key, deleteFromTs, deleteToTs, config.getRewriteLatestIfDeleted()))
+                    .collect(Collectors.toList());
+            ctx.getTelemetryService().deleteTimeseriesAndNotify(ctx.getTenantId(), msg.getOriginator(),
+                    keysToDelete, deleteTsKvQueries, new TelemetryNodeCallback(ctx, msg));
+        } catch (Exception e) {
+            ctx.tellFailure(msg, e);
         }
     }
 

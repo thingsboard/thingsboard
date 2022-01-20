@@ -24,11 +24,13 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RuleNode(
@@ -50,27 +52,33 @@ public class TbMsgDeleteAttributes implements TbNode {
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgDeleteAttributesConfiguration.class);
+        if (CollectionUtils.isEmpty(config.getKeysPatterns())) {
+            throw new IllegalArgumentException("Attribute keys list is empty!");
+        }
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        List<String> attributesKeys = config.getKeysPatterns();
-        if (CollectionUtils.isEmpty(attributesKeys)) {
-            ctx.tellFailure(msg, new IllegalArgumentException("Attribute keys list is empty!"));
-        } else {
-            try {
-                String scope = TbNodeUtils.processPattern(config.getScopePattern(), msg);
-                if (DataConstants.SERVER_SCOPE.equals(scope) ||
-                        DataConstants.CLIENT_SCOPE.equals(scope) ||
-                        DataConstants.SHARED_SCOPE.equals(scope)) {
-                    List<String> keys = TbNodeUtils.processPatterns(attributesKeys, msg);
-                    ctx.getTelemetryService().deleteAndNotify(ctx.getTenantId(), msg.getOriginator(), scope, keys, new TelemetryNodeCallback(ctx, msg));
-                } else {
-                    ctx.tellFailure(msg, new IllegalArgumentException("Unsupported attributes scope '" + scope + "'! Only 'SERVER_SCOPE', 'CLIENT_SCOPE' or 'SHARED_SCOPE' are allowed!"));
+        List<String> keysPatterns = config.getKeysPatterns();
+        try {
+            String scope = TbNodeUtils.processPattern(config.getScopePattern(), msg);
+            if (DataConstants.SERVER_SCOPE.equals(scope) ||
+                    DataConstants.CLIENT_SCOPE.equals(scope) ||
+                    DataConstants.SHARED_SCOPE.equals(scope)) {
+                List<String> keysToDelete = keysPatterns.stream()
+                        .map(keyPattern -> TbNodeUtils.processPattern(keyPattern, msg))
+                        .distinct()
+                        .filter(StringUtils::isNotBlank)
+                        .collect(Collectors.toList());
+                if (keysToDelete.isEmpty()) {
+                    throw new RuntimeException("Selected keys patterns have invalid values!");
                 }
-            } catch (Exception e) {
-                ctx.tellFailure(msg, e);
+                ctx.getTelemetryService().deleteAndNotify(ctx.getTenantId(), msg.getOriginator(), scope, keysToDelete, new TelemetryNodeCallback(ctx, msg));
+            } else {
+                ctx.tellFailure(msg, new IllegalArgumentException("Unsupported attributes scope '" + scope + "'! Only 'SERVER_SCOPE', 'CLIENT_SCOPE' or 'SHARED_SCOPE' are allowed!"));
             }
+        } catch (Exception e) {
+            ctx.tellFailure(msg, e);
         }
     }
 
