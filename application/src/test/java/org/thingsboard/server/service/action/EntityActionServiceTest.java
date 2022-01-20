@@ -22,10 +22,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -42,7 +41,9 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.audit.AuditLogService;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueProducer;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
@@ -61,9 +62,9 @@ import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class EntityActionServiceTest {
+
     public static final String CUSTOMER_ID = "customerId";
     public static final int WANTED_NUMBER_OF_INVOCATIONS_FOR_NOT_DUPLICATED_MSG = 2;
-    public static final int WANTED_NUMBER_OF_INVOCATIONS_FOR_DUPLICATED_MSG = 1;
     public static final String DEFAULT_QUEUE_NAME = "Main";
 
     EntityActionService actionService;
@@ -77,9 +78,8 @@ public class EntityActionServiceTest {
     @Mock
     TbDeviceProfileCache deviceProfileCache;
     @Mock
-    TbQueueProducer queueProducer;
-    @Spy
-    @InjectMocks
+    TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> queueProducer;
+    @MockBean
     DefaultTbClusterService clusterService;
 
     DeviceProfile deviceProfile;
@@ -106,7 +106,7 @@ public class EntityActionServiceTest {
         relation.setFrom(new DeviceId(UUID.randomUUID()));
         relation.setTo(new AssetId(UUID.randomUUID()));
 
-        pushEventAndVerify(relation, WANTED_NUMBER_OF_INVOCATIONS_FOR_NOT_DUPLICATED_MSG, ActionType.RELATION_UPDATED);
+        pushEventAndVerify(relation, ActionType.RELATION_UPDATED);
     }
 
     @Test
@@ -115,26 +115,10 @@ public class EntityActionServiceTest {
         relation.setFrom(new DeviceId(UUID.randomUUID()));
         relation.setTo(new AssetId(UUID.randomUUID()));
 
-        pushEventAndVerify(relation, WANTED_NUMBER_OF_INVOCATIONS_FOR_NOT_DUPLICATED_MSG, ActionType.RELATION_DELETED);
+        pushEventAndVerify(relation, ActionType.RELATION_DELETED);
     }
 
-    @Test
-    public void testPushEntityActionToRuleEngine_whenActionTypeEqualsRelationUpdated_thenSendOneEvent() throws JsonProcessingException {
-        EntityRelation relation = new EntityRelation();
-        relation.setFrom(new DeviceId(UUID.randomUUID()));
-        relation.setTo(new DeviceId(UUID.randomUUID()));
-        pushEventAndVerify(relation, WANTED_NUMBER_OF_INVOCATIONS_FOR_DUPLICATED_MSG, ActionType.RELATION_UPDATED);
-    }
-
-    @Test
-    public void testPushEntityActionToRuleEngine_whenActionTypeEqualsRelationDeleted_thenSendOneEvent() throws JsonProcessingException {
-        EntityRelation relation = new EntityRelation();
-        relation.setFrom(new DeviceId(UUID.randomUUID()));
-        relation.setTo(new DeviceId(UUID.randomUUID()));
-        pushEventAndVerify(relation, WANTED_NUMBER_OF_INVOCATIONS_FOR_DUPLICATED_MSG, ActionType.RELATION_DELETED);
-    }
-
-    void pushEventAndVerify(EntityRelation relation, int wantedNumberOfInvocations, ActionType actionType) throws JsonProcessingException {
+    void pushEventAndVerify(EntityRelation relation, ActionType actionType) throws JsonProcessingException {
         actionService.pushEntityActionToRuleEngine(relation.getFrom(),
                 null,
                 tenantId,
@@ -152,7 +136,7 @@ public class EntityActionServiceTest {
                 relation);
 
         verifyMetadataTbMsg(relation, actionType);
-        verify(partitionService, times(wantedNumberOfInvocations)).resolve(any(), anyString(), any(), any());
+        verify(partitionService, times(WANTED_NUMBER_OF_INVOCATIONS_FOR_NOT_DUPLICATED_MSG)).resolve(any(), anyString(), any(), any());
     }
 
     private void verifyMetadataTbMsg(EntityRelation relation, ActionType actionType) throws JsonProcessingException {

@@ -19,7 +19,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.channel.EventLoopGroup;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
@@ -344,47 +346,35 @@ class DefaultTbContext implements TbContext {
         return entityActionMsg(device, device.getId(), ruleNodeId, DataConstants.ENTITY_CREATED, queueName, ruleChainId);
     }
 
-    // TODO: 19.01.22 refactor this...
     @Override
     public void enqueueEntityRelationEvents(EntityRelation relation, String relationEventType) {
-        try {
-            EntityId from = relation.getFrom();
-            String queueNameFrom = null;
-            RuleChainId ruleChainIdFrom = null;
-            if (from.getEntityType() == EntityType.DEVICE) {
-                DeviceProfile deviceProfileFrom = getDeviceProfileByDeviceId(new DeviceId(from.getId()));
-                queueNameFrom = deviceProfileFrom.getDefaultQueueName();
-                ruleChainIdFrom = deviceProfileFrom.getDefaultRuleChainId();
-            }
-            TbMsgMetaData metaDataFrom = new TbMsgMetaData();
-            metaDataFrom.putValue(DataConstants.RELATION_DIRECTION_MSG_ORIGINATOR, EntitySearchDirection.FROM.name());
+        EntityId from = relation.getFrom();
+        createAndPushRelationEventMsg(relation, relationEventType, from, EntitySearchDirection.FROM);
 
-            TbMsg tbMsgFrom = TbMsg.newMsg(queueNameFrom, relationEventType, from, metaDataFrom, mapper.writeValueAsString(relation), ruleChainIdFrom, null);
-            processEnqueue(tbMsgFrom, relation, relationEventType);
+        EntityId to = relation.getTo();
+        createAndPushRelationEventMsg(relation, relationEventType, to, EntitySearchDirection.TO);
+    }
 
-            EntityId to = relation.getTo();
-            String queueNameTo = null;
-            RuleChainId ruleChainIdTo = null;
+    private void createAndPushRelationEventMsg(EntityRelation relation, String relationEventType, EntityId entityId, EntitySearchDirection direction) {
+        String queueName = null;
+        RuleChainId ruleChainId = null;
 
-            boolean isDuplicate = false;
-            if (to.getEntityType() == EntityType.DEVICE) {
-                DeviceProfile deviceProfileTo = getDeviceProfileByDeviceId(new DeviceId(from.getId()));
-                queueNameTo = deviceProfileTo.getDefaultQueueName();
-                ruleChainIdTo = deviceProfileTo.getDefaultRuleChainId();
-
-                if (from.getEntityType() == EntityType.DEVICE && queueNameTo.equals(queueNameFrom) && ruleChainIdTo.equals(ruleChainIdFrom)) {
-                    isDuplicate = true;
-                }
-            }
-            if (!isDuplicate) {
-                TbMsgMetaData metaDataTo = new TbMsgMetaData();
-                metaDataTo.putValue(DataConstants.RELATION_DIRECTION_MSG_ORIGINATOR, EntitySearchDirection.TO.name());
-                TbMsg tbMsgTo = TbMsg.newMsg(queueNameTo, relationEventType, to, metaDataTo, mapper.writeValueAsString(relation), ruleChainIdTo, null);
-                processEnqueue(tbMsgTo, relation, relationEventType);
-            }
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to process [" + relationEventType + "] msg: " + e);
+        if (entityId.getEntityType() == EntityType.DEVICE) {
+            DeviceProfile deviceProfile = getDeviceProfileByDeviceId(new DeviceId(entityId.getId()));
+            queueName = deviceProfile.getDefaultQueueName();
+            ruleChainId = deviceProfile.getDefaultRuleChainId();
         }
+
+        TbMsgMetaData metaData = createRelationEventMetadata(direction);
+        TbMsg tbMsg = TbMsg.newMsg(queueName, relationEventType, entityId, metaData, JacksonUtil.toString(relation), ruleChainId, null);
+        processEnqueue(tbMsg, relation, relationEventType);
+    }
+
+    @NotNull
+    private TbMsgMetaData createRelationEventMetadata(EntitySearchDirection direction) {
+        TbMsgMetaData metaData = new TbMsgMetaData();
+        metaData.putValue(DataConstants.RELATION_DIRECTION_MSG_ORIGINATOR, direction.name());
+        return metaData;
     }
 
     private void processEnqueue(TbMsg tbMsg, EntityRelation relation, String relationEventType) {

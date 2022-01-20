@@ -21,11 +21,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageState;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EdgeUtils;
@@ -43,8 +41,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
-import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
@@ -153,14 +149,7 @@ public class DefaultTbClusterService implements TbClusterService {
             }
         } else {
             if (entityId.getEntityType().equals(EntityType.DEVICE)) {
-                DeviceProfile deviceProfile = deviceProfileCache.get(tenantId, new DeviceId(entityId.getId()));
-                if (tbMsg.getType().equals(DataConstants.ENTITY_RELATION_UPDATED)
-                        || tbMsg.getType().equals(DataConstants.ENTITY_RELATION_DELETED)) {
-                    if (isMsgDuplicateByQueueNameAndRcId(tbMsg, deviceProfile)) {
-                        return;
-                    }
-                }
-                tbMsg = transformMsg(tbMsg, deviceProfile);
+                tbMsg = transformMsg(tbMsg, deviceProfileCache.get(tenantId, new DeviceId(entityId.getId())));
             } else if (entityId.getEntityType().equals(EntityType.DEVICE_PROFILE)) {
                 tbMsg = transformMsg(tbMsg, deviceProfileCache.get(tenantId, new DeviceProfileId(entityId.getId())));
             }
@@ -191,47 +180,6 @@ public class DefaultTbClusterService implements TbClusterService {
             }
         }
         return tbMsg;
-    }
-
-    private boolean isMsgDuplicateByQueueNameAndRcId(TbMsg tbMsg, DeviceProfile deviceProfile) {
-        EntityRelation entityRelation = JacksonUtil.fromString(tbMsg.getData(), EntityRelation.class);
-        if (entityRelation == null) {
-            return false;
-        }
-        if (entityRelation.getFrom().getEntityType() == entityRelation.getTo().getEntityType()) {
-            if (tbMsg.getMetaData().getValue(DataConstants.RELATION_DIRECTION_MSG_ORIGINATOR).equals(EntitySearchDirection.TO.name())) {
-                DeviceProfile deviceProfileFrom = deviceProfileCache.get(deviceProfile.getTenantId(), new DeviceId(entityRelation.getFrom().getId()));
-
-                String defaultQueueNameFrom = checkAndGetQueueName(deviceProfileFrom);
-                String defaultQueueNameTo = checkAndGetQueueName(deviceProfile);
-
-                return isDefaultRuleChainsSame(deviceProfileFrom, deviceProfile)
-                        && defaultQueueNameFrom.equals(defaultQueueNameTo);
-            }
-        }
-        return false;
-    }
-
-    private String checkAndGetQueueName(DeviceProfile deviceProfile) {
-        return deviceProfile.getDefaultQueueName() == null ? "" : deviceProfile.getDefaultQueueName();
-    }
-
-    // Corner case: if one deviceProfile has no defaultRuleChainId set (root RC is used then) and another deviceProfile
-    // has root RC explicitly set, then messages won't be considered as duplicates based on the code below.
-    // Two messages will be sent to root RC.
-    // The intention was to not add findRuleChainById().isRoot() logic here
-    private boolean isDefaultRuleChainsSame(DeviceProfile deviceProfileFrom, DeviceProfile deviceProfileTo) {
-        if (deviceProfileFrom.getDefaultRuleChainId() == null && deviceProfileTo.getDefaultRuleChainId() == null) {
-            return true;
-        } else {
-            if (deviceProfileFrom.getDefaultRuleChainId() == null) {
-                return false;
-            }
-            if (deviceProfileTo.getDefaultRuleChainId() == null) {
-                return false;
-            }
-            return deviceProfileFrom.getDefaultRuleChainId().equals(deviceProfileTo.getDefaultRuleChainId());
-        }
     }
 
     @Override
