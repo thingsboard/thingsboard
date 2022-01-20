@@ -239,6 +239,8 @@ cassandra:
     # Specify partitioning size for timestamp key-value storage. Example: MINUTES, HOURS, DAYS, MONTHS, INDEFINITE
     ts_key_value_partitioning: "${TS_KV_PARTITIONING:MONTHS}"
     ts_key_value_partitions_max_cache_size: "${TS_KV_PARTITIONS_MAX_CACHE_SIZE:100000}"
+    ts_key_value_partitions_cache_stats_enabled: "${TS_KV_PARTITIONS_CACHE_STATS_ENABLED:true}"
+    ts_key_value_partitions_cache_stats_interval: "${TS_KV_PARTITIONS_CACHE_STATS_INTERVAL:60}"
     ts_key_value_ttl: "${TS_KV_TTL:0}"
     events_ttl: "${TS_EVENTS_TTL:0}"
     # Specify TTL of debug log in seconds. The current value corresponds to one week

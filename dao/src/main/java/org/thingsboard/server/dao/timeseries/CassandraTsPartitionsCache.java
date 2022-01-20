@@ -17,19 +17,42 @@ package org.thingsboard.server.dao.timeseries;
 
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.stats.CacheStats;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
+@Slf4j
 public class CassandraTsPartitionsCache {
 
-    private AsyncLoadingCache<CassandraPartitionCacheKey, Boolean> partitionsCache;
+    private final AsyncLoadingCache<CassandraPartitionCacheKey, Boolean> partitionsCache;
 
-    public CassandraTsPartitionsCache(long maxCacheSize) {
-        this.partitionsCache = Caffeine.newBuilder()
-                .maximumSize(maxCacheSize)
+    public CassandraTsPartitionsCache(long maxCacheSize, boolean partitionsCacheStats, long partitionsCacheStatsInterval,
+                                      ScheduledExecutorService scheduler) {
+        Caffeine<Object, Object> caffeineBuilder = Caffeine.newBuilder()
+                .maximumSize(maxCacheSize);
+
+        if (partitionsCacheStats) {
+            caffeineBuilder.recordStats();
+        }
+
+        this.partitionsCache = caffeineBuilder
                 .buildAsync(key -> {
                     throw new IllegalStateException("'get' methods calls are not supported!");
                 });
+
+        if (partitionsCacheStats) {
+            scheduler.scheduleAtFixedRate(this::printCacheStats, partitionsCacheStatsInterval, partitionsCacheStatsInterval, TimeUnit.SECONDS);
+        }
+    }
+
+    void printCacheStats() {
+        CacheStats stats = this.partitionsCache.synchronous().stats();
+        if (stats.hitCount() != 0 || stats.missCount() != 0) {
+            log.info("ts partitions cache hit [{}] [{}]", stats.hitRate(), stats);
+        }
     }
 
     public boolean has(CassandraPartitionCacheKey key) {

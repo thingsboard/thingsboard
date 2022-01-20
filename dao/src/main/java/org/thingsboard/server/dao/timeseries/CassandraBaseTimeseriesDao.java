@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
@@ -61,6 +62,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -93,11 +96,19 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     @Value("${cassandra.query.ts_key_value_partitions_max_cache_size:100000}")
     private long partitionsCacheSize;
 
+    @Value("${cassandra.query.ts_key_value_partitions_cache_stats_enabled:true}")
+    private boolean partitionsCacheStatsEnabled;
+
+    @Value("${cassandra.query.ts_key_value_partitions_cache_stats_interval:60}")
+    private long partitionsCacheStatsInterval;
+
     @Value("${cassandra.query.ts_key_value_ttl}")
     private long systemTtl;
 
     @Value("${cassandra.query.set_null_values_enabled}")
     private boolean setNullValuesEnabled;
+
+    ScheduledExecutorService scheduler = null;
 
     private NoSqlTsPartitionDate tsFormat;
 
@@ -125,7 +136,10 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         if (partition.isPresent()) {
             tsFormat = partition.get();
             if (!isFixedPartitioning() && partitionsCacheSize > 0) {
-                cassandraTsPartitionsCache = new CassandraTsPartitionsCache(partitionsCacheSize);
+                if (partitionsCacheStatsEnabled) {
+                    scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("cassandra-partitions-cache-stats"));
+                }
+                cassandraTsPartitionsCache = new CassandraTsPartitionsCache(partitionsCacheSize, partitionsCacheStatsEnabled, partitionsCacheStatsInterval, scheduler);
             }
         } else {
             log.warn("Incorrect configuration of partitioning {}", partitioning);
@@ -136,6 +150,9 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     @PreDestroy
     public void stop() {
         super.stopExecutor();
+        if (scheduler != null) {
+            scheduler.shutdown();
+        }
     }
 
     @Override
