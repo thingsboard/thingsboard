@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.service;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,9 +47,7 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rpc.Rpc;
@@ -62,7 +61,6 @@ import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -71,9 +69,8 @@ import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
-import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class BaseTenantServiceTest extends AbstractServiceTest {
 
@@ -84,6 +81,13 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
 
     @Autowired
     CacheManager cacheManager;
+
+    private Cache tenantCache;
+
+    @Before
+    public void setup() {
+        tenantCache = cacheManager.getCache(CacheConstants.TENANTS_CACHE);
+    }
 
     @Test
     public void testSaveTenant() {
@@ -330,15 +334,15 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         tenant.setTitle("My tenant");
         Tenant savedTenant = tenantService.saveTenant(tenant);
 
-        reset(tenantDao);
-        Objects.requireNonNull(cacheManager.getCache(CacheConstants.TENANTS_CACHE), "Tenant cache manager is null").evict(savedTenant.getId());
+        Mockito.reset(tenantDao);
+        Objects.requireNonNull(tenantCache, "Tenant cache manager is null").evict(savedTenant.getId());
 
         verify(tenantDao, Mockito.times(0)).findById(any(), any());
         tenantService.findTenantById(savedTenant.getId());
         verify(tenantDao, Mockito.times(1)).findById(eq(savedTenant.getId()), eq(savedTenant.getId().getId()));
 
         Cache.ValueWrapper cachedTenant =
-                Objects.requireNonNull(cacheManager.getCache(CacheConstants.TENANTS_CACHE), "Cache manager is null!").get(savedTenant.getId());
+                Objects.requireNonNull(tenantCache, "Cache manager is null!").get(savedTenant.getId());
         Assert.assertNotNull("Getting an existing Tenant doesn't add it to the cache!", cachedTenant);
 
         for (int i = 0; i < 100; i++) {
@@ -356,15 +360,15 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         Tenant savedTenant = tenantService.saveTenant(tenant);
 
         Cache.ValueWrapper cachedTenant =
-                Objects.requireNonNull(cacheManager.getCache(CacheConstants.TENANTS_CACHE), "Cache manager is null!").get(savedTenant.getId());
+                Objects.requireNonNull(tenantCache, "Cache manager is null!").get(savedTenant.getId());
         Assert.assertNotNull("Saving a Tenant doesn't add it to the cache!", cachedTenant);
 
         savedTenant.setTitle("My new tenant");
         savedTenant = tenantService.saveTenant(savedTenant);
 
-        reset(tenantDao);
+        Mockito.reset(tenantDao);
 
-        cachedTenant = Objects.requireNonNull(cacheManager.getCache(CacheConstants.TENANTS_CACHE), "Cache manager is null!").get(savedTenant.getId());
+        cachedTenant = Objects.requireNonNull(tenantCache, "Cache manager is null!").get(savedTenant.getId());
         Assert.assertNull("Updating a Tenant doesn't evict the cache!", cachedTenant);
 
         verify(tenantDao, Mockito.times(0)).findById(any(), any());
@@ -381,184 +385,168 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         Tenant savedTenant = tenantService.saveTenant(tenant);
 
         Cache.ValueWrapper cachedTenant =
-                Objects.requireNonNull(cacheManager.getCache(CacheConstants.TENANTS_CACHE), "Cache manager is null!").get(savedTenant.getId());
+                Objects.requireNonNull(tenantCache, "Cache manager is null!").get(savedTenant.getId());
         Assert.assertNotNull("Saving a Tenant doesn't add it to the cache!", cachedTenant);
 
         tenantService.deleteTenant(savedTenant.getId());
-        cachedTenant = Objects.requireNonNull(cacheManager.getCache(CacheConstants.TENANTS_CACHE), "Cache manager is null!").get(savedTenant.getId());
+        cachedTenant = Objects.requireNonNull(tenantCache, "Cache manager is null!").get(savedTenant.getId());
         Assert.assertNull("Removing a Tenant doesn't evict the cache!", cachedTenant);
     }
 
     @Test
     public void testDeleteTenantDeletingAllRelatedEntities() throws Exception {
-        TenantProfile savedProfile = createAndSaveTenantProfile();
-        Tenant savedTenant = createAndSaveTenant(savedProfile);
-        User savedUser = createAndSaveUserFor(savedTenant);
-        Customer savedCustomer = createAndSaveCustomerFor(savedTenant);
-        WidgetsBundle savedWidgetsBundle = createAndSaveWidgetBundleFor(savedTenant);
-        DeviceProfile savedDeviceProfile = createAndSaveDeviceProfileWithProfileDataFor(savedTenant);
-        Device savedDevice = createAndSaveDeviceFor(savedTenant, savedCustomer, savedDeviceProfile);
-        EntityView savedEntityView = createAndSaveEntityViewFor(savedTenant, savedCustomer, savedDevice);
-        Asset savedAsset = createAndSaveAssetFor(savedTenant, savedCustomer);
-        Dashboard savedDashboard = createAndSaveDashboardFor(savedTenant, savedCustomer);
-        RuleChain savedRuleChain = createAndSaveRuleChainFor(savedTenant);
-        Edge savedEdge = createAndSaveEdgeFor(savedTenant);
-        OtaPackage savedOtaPackage = createAndSaveOtaPackageFor(savedTenant, savedDeviceProfile);
-        TbResource savedResource = createAndSaveResourceFor(savedTenant);
-        Rpc savedRpc = createAndSaveRpcFor(savedTenant, savedDevice);
+        TenantProfile profile = createAndSaveTenantProfile();
+        Tenant tenant = createAndSaveTenant(profile);
+        User user = createAndSaveUserFor(tenant);
+        Customer customer = createAndSaveCustomerFor(tenant);
+        WidgetsBundle widgetsBundle = createAndSaveWidgetBundleFor(tenant);
+        DeviceProfile deviceProfile = createAndSaveDeviceProfileWithProfileDataFor(tenant);
+        Device device = createAndSaveDeviceFor(tenant, customer, deviceProfile);
+        EntityView entityView = createAndSaveEntityViewFor(tenant, customer, device);
+        Asset asset = createAndSaveAssetFor(tenant, customer);
+        Dashboard dashboard = createAndSaveDashboardFor(tenant, customer);
+        RuleChain ruleChain = createAndSaveRuleChainFor(tenant);
+        Edge edge = createAndSaveEdgeFor(tenant);
+        OtaPackage otaPackage = createAndSaveOtaPackageFor(tenant, deviceProfile);
+        TbResource resource = createAndSaveResourceFor(tenant);
+        Rpc rpc = createAndSaveRpcFor(tenant, device);
 
-        tenantService.deleteTenant(savedTenant.getId());
+        tenantService.deleteTenant(tenant.getId());
 
-        Assert.assertNull(tenantService.findTenantById(savedTenant.getId()));
-        assertCustomerIsDeleted(savedTenant, savedCustomer);
-        assertWidgetsBundleIsDeleted(savedTenant, savedWidgetsBundle);
-        assertEntityViewIsDeleted(savedTenant, savedDevice, savedEntityView);
-        assertAssetIsDeleted(savedTenant, savedAsset);
-        assertDeviceIsDeleted(savedTenant, savedDevice);
-        assertDeviceProfileIsDeleted(savedTenant, savedDeviceProfile);
-        assertDashboardIsDeleted(savedTenant, savedDashboard);
-        assertEdgeIsDeleted(savedTenant, savedEdge);
-        assertTenantAdminIsDeleted(savedTenant);
-        assertUserIsDeleted(savedTenant, savedUser);
-        Assert.assertNull(ruleChainService.findRuleChainById(savedTenant.getId(), savedRuleChain.getId()));
-        Assert.assertNull(apiUsageStateService.findTenantApiUsageState(savedTenant.getId()));
-        assertResourceIsDeleted(savedTenant, savedResource);
-        assertOtaPackageIsDeleted(savedTenant, savedOtaPackage);
-        Assert.assertNull(rpcService.findById(savedTenant.getId(), savedRpc.getId()));
+        Assert.assertNull(tenantService.findTenantById(tenant.getId()));
+        assertCustomerIsDeleted(tenant, customer);
+        assertWidgetsBundleIsDeleted(tenant, widgetsBundle);
+        assertEntityViewIsDeleted(tenant, device, entityView);
+        assertAssetIsDeleted(tenant, asset);
+        assertDeviceIsDeleted(tenant, device);
+        assertDeviceProfileIsDeleted(tenant, deviceProfile);
+        assertDashboardIsDeleted(tenant, dashboard);
+        assertEdgeIsDeleted(tenant, edge);
+        assertTenantAdminIsDeleted(tenant);
+        assertUserIsDeleted(tenant, user);
+        Assert.assertNull(ruleChainService.findRuleChainById(tenant.getId(), ruleChain.getId()));
+        Assert.assertNull(apiUsageStateService.findTenantApiUsageState(tenant.getId()));
+        assertResourceIsDeleted(tenant, resource);
+        assertOtaPackageIsDeleted(tenant, otaPackage);
+        Assert.assertNull(rpcService.findById(tenant.getId(), rpc.getId()));
 
-        tenantProfileService.deleteTenantProfile(TenantId.SYS_TENANT_ID, savedProfile.getId());
+        tenantProfileService.deleteTenantProfile(TenantId.SYS_TENANT_ID, profile.getId());
     }
 
-    private void assertOtaPackageIsDeleted(Tenant savedTenant, OtaPackage savedOtaPackage) {
-        Assert.assertNull(
-                otaPackageService.findOtaPackageById(
-                        savedTenant.getId(), savedOtaPackage.getId()
-                )
-        );
-        PageLink pageLinkOta = new PageLink(1000);
-        PageData<OtaPackageInfo> pageDataOta = otaPackageService.findTenantOtaPackagesByTenantId(savedTenant.getId(), pageLinkOta);
-        Assert.assertFalse(pageDataOta.hasNext());
+    private void assertOtaPackageIsDeleted(Tenant tenant, OtaPackage otaPackage) {
+        assertThat(otaPackageService.findOtaPackageById(tenant.getId(), otaPackage.getId()))
+                .as("otaPackage").isNull();
+        PageLink pageLinkOta = new PageLink(1);
+        PageData<OtaPackageInfo> pageDataOta = otaPackageService.findTenantOtaPackagesByTenantId(tenant.getId(), pageLinkOta);
         Assert.assertEquals(0, pageDataOta.getTotalElements());
     }
 
-    private void assertResourceIsDeleted(Tenant savedTenant, TbResource savedResource) {
-        Assert.assertNull(resourceService.findResourceById(savedTenant.getId(), savedResource.getId()));
-        PageLink pageLinkResources = new PageLink(1000);
+    private void assertResourceIsDeleted(Tenant tenant, TbResource resource) {
+        assertThat(resourceService.findResourceById(tenant.getId(), resource.getId()))
+                .as("resource").isNull();
+        PageLink pageLinkResources = new PageLink(1);
         PageData<TbResourceInfo> tenantResources =
-                resourceService.findAllTenantResourcesByTenantId(savedTenant.getId(), pageLinkResources);
-        Assert.assertFalse(tenantResources.hasNext());
+                resourceService.findAllTenantResourcesByTenantId(tenant.getId(), pageLinkResources);
         Assert.assertEquals(0, tenantResources.getTotalElements());
     }
 
-    private void assertUserIsDeleted(Tenant savedTenant, User savedUser) {
-        Assert.assertNull(userService.findUserById(savedTenant.getId(), savedUser.getId()));
-        PageLink pageLinkUsers = new PageLink(1000);
+    private void assertUserIsDeleted(Tenant tenant, User user) {
+        assertThat(userService.findUserById(tenant.getId(), user.getId()))
+                .as("user").isNull();
+        PageLink pageLinkUsers = new PageLink(1);
         PageData<User> users =
-                userService.findUsersByTenantId(savedTenant.getId(), pageLinkUsers);
-        Assert.assertFalse(users.hasNext());
+                userService.findUsersByTenantId(tenant.getId(), pageLinkUsers);
         Assert.assertEquals(0, users.getTotalElements());
     }
 
     private void assertTenantAdminIsDeleted(Tenant savedTenant) {
-        PageLink pageLinkTenantAdmins = new PageLink(1000);
+        PageLink pageLinkTenantAdmins = new PageLink(1);
         PageData<User> tenantAdmins =
                 userService.findTenantAdmins(savedTenant.getId(), pageLinkTenantAdmins);
-        Assert.assertFalse(tenantAdmins.hasNext());
         Assert.assertEquals(0, tenantAdmins.getTotalElements());
     }
 
-    private void assertEdgeIsDeleted(Tenant savedTenant, Edge savedEdge) {
-        Assert.assertNull(edgeService.findEdgeById(savedTenant.getId(), savedEdge.getId()));
-        PageLink pageLinkEdges = new PageLink(1000);
-        PageData<Edge> edges = edgeService.findEdgesByTenantId(savedTenant.getId(), pageLinkEdges);
-        Assert.assertFalse(edges.hasNext());
+    private void assertEdgeIsDeleted(Tenant tenant, Edge edge) {
+        assertThat(edgeService.findEdgeById(tenant.getId(), edge.getId()))
+                .as("edge").isNull();
+        PageLink pageLinkEdges = new PageLink(1);
+        PageData<Edge> edges = edgeService.findEdgesByTenantId(tenant.getId(), pageLinkEdges);
         Assert.assertEquals(0, edges.getTotalElements());
     }
 
-    private void assertDashboardIsDeleted(Tenant savedTenant, Dashboard savedDashboard) {
-        Assert.assertNull(dashboardService.findDashboardById(
-                savedTenant.getId(), savedDashboard.getId()
-        ));
-        PageLink pageLinkDashboards = new PageLink(1000);
+    private void assertDashboardIsDeleted(Tenant tenant, Dashboard dashboard) {
+        assertThat(dashboardService.findDashboardById(tenant.getId(), dashboard.getId()))
+                .as("dashboard").isNull();
+        PageLink pageLinkDashboards = new PageLink(1);
         PageData<DashboardInfo> dashboards =
-                dashboardService.findDashboardsByTenantId(savedTenant.getId(), pageLinkDashboards);
-        Assert.assertFalse(dashboards.hasNext());
+                dashboardService.findDashboardsByTenantId(tenant.getId(), pageLinkDashboards);
         Assert.assertEquals(0, dashboards.getTotalElements());
     }
 
-    private void assertDeviceProfileIsDeleted(Tenant savedTenant, DeviceProfile savedDeviceProfile) {
-        Assert.assertNull(deviceProfileService.findDeviceProfileById(
-                savedTenant.getId(), savedDeviceProfile.getId()
-        ));
-        PageLink pageLinkDeviceProfiles = new PageLink(1000);
+    private void assertDeviceProfileIsDeleted(Tenant tenant, DeviceProfile deviceProfile) {
+        assertThat(deviceProfileService.findDeviceProfileById(tenant.getId(), deviceProfile.getId()))
+                .as("deviceProfile").isNull();
+        PageLink pageLinkDeviceProfiles = new PageLink(1);
         PageData<DeviceProfile> profiles =
-                deviceProfileService.findDeviceProfiles(savedTenant.getId(), pageLinkDeviceProfiles);
-        Assert.assertFalse(profiles.hasNext());
+                deviceProfileService.findDeviceProfiles(tenant.getId(), pageLinkDeviceProfiles);
         Assert.assertEquals(0, profiles.getTotalElements());
     }
 
-    private void assertDeviceIsDeleted(Tenant savedTenant, Device savedDevice) {
-        Assert.assertNull(deviceService.findDeviceById(
-                savedTenant.getId(), savedDevice.getId()
-        ));
-        PageLink pageLinkDevices = new PageLink(1000);
+    private void assertDeviceIsDeleted(Tenant tenant, Device device) {
+        assertThat(deviceService.findDeviceById(tenant.getId(), device.getId()))
+                .as("device").isNull();
+        PageLink pageLinkDevices = new PageLink(1);
         PageData<Device> devices =
-                deviceService.findDevicesByTenantId(savedTenant.getId(), pageLinkDevices);
-        Assert.assertFalse(devices.hasNext());
+                deviceService.findDevicesByTenantId(tenant.getId(), pageLinkDevices);
         Assert.assertEquals(0, devices.getTotalElements());
     }
 
-    private void assertAssetIsDeleted(Tenant savedTenant, Asset savedAsset) {
-        Assert.assertNull(assetService.findAssetById(
-                savedTenant.getId(), savedAsset.getId()
-        ));
-        PageLink pageLinkAssets = new PageLink(1000);
+    private void assertAssetIsDeleted(Tenant tenant, Asset asset) {
+        assertThat(assetService.findAssetById(tenant.getId(), asset.getId()))
+                .as("asset").isNull();
+        PageLink pageLinkAssets = new PageLink(1);
         PageData<Asset> assets =
-                assetService.findAssetsByTenantId(savedTenant.getId(), pageLinkAssets);
-        Assert.assertFalse(assets.hasNext());
+                assetService.findAssetsByTenantId(tenant.getId(), pageLinkAssets);
         Assert.assertEquals(0, assets.getTotalElements());
     }
 
-    private void assertEntityViewIsDeleted(Tenant savedTenant, Device savedDevice, EntityView savedEntityView) {
-        Assert.assertNull(entityViewService.findEntityViewById(
-                savedTenant.getId(), savedEntityView.getId()
-        ));
+    private void assertEntityViewIsDeleted(Tenant tenant, Device device, EntityView entityView) {
+        assertThat(entityViewService.findEntityViewById(tenant.getId(), entityView.getId()))
+                .as("entityView").isNull();
         List<EntityView> entityViews =
-                entityViewService.findEntityViewsByTenantIdAndEntityId(
-                        savedTenant.getId(), savedDevice.getId());
+                entityViewService.findEntityViewsByTenantIdAndEntityId(tenant.getId(), device.getId());
         Assert.assertTrue(entityViews.isEmpty());
     }
 
-    private void assertWidgetsBundleIsDeleted(Tenant savedTenant, WidgetsBundle savedWidgetsBundle) {
-        Assert.assertNull(
-                widgetsBundleService.findWidgetsBundleById(savedTenant.getId(), savedWidgetsBundle.getId())
-        );
+    private void assertWidgetsBundleIsDeleted(Tenant tenant, WidgetsBundle widgetsBundle) {
+        assertThat(widgetsBundleService.findWidgetsBundleById(tenant.getId(), widgetsBundle.getId()))
+                .as("widgetBundle").isNull();
         List<WidgetsBundle> widgetsBundlesByTenantId =
-                widgetsBundleService.findAllTenantWidgetsBundlesByTenantId(savedTenant.getId());
+                widgetsBundleService.findAllTenantWidgetsBundlesByTenantId(tenant.getId());
         Assert.assertTrue(widgetsBundlesByTenantId.isEmpty());
     }
 
-    private void assertCustomerIsDeleted(Tenant savedTenant, Customer savedCustomer) {
-        Assert.assertNull(customerService.findCustomerById(savedTenant.getId(), savedCustomer.getId()));
-        PageLink pageLinkCustomer = new PageLink(1000);
+    private void assertCustomerIsDeleted(Tenant tenant, Customer customer) {
+        assertThat(customerService.findCustomerById(tenant.getId(), customer.getId()))
+                .as("customer").isNull();
+        PageLink pageLinkCustomer = new PageLink(1);
         PageData<Customer> pageDataCustomer = customerService
-                .findCustomersByTenantId(savedTenant.getId(), pageLinkCustomer);
-        Assert.assertFalse(pageDataCustomer.hasNext());
+                .findCustomersByTenantId(tenant.getId(), pageLinkCustomer);
         Assert.assertEquals(0, pageDataCustomer.getTotalElements());
     }
 
-    private Rpc createAndSaveRpcFor(Tenant savedTenant, Device savedDevice) {
+    private Rpc createAndSaveRpcFor(Tenant tenant, Device device) {
         Rpc rpc = new Rpc();
-        rpc.setTenantId(savedTenant.getId());
-        rpc.setDeviceId(savedDevice.getId());
+        rpc.setTenantId(tenant.getId());
+        rpc.setDeviceId(device.getId());
         rpc.setStatus(RpcStatus.QUEUED);
         rpc.setRequest(JacksonUtil.toJsonNode("{}"));
         return rpcService.save(rpc);
     }
 
-    private TbResource createAndSaveResourceFor(Tenant savedTenant) {
+    private TbResource createAndSaveResourceFor(Tenant tenant) {
         TbResource resource = new TbResource();
-        resource.setTenantId(savedTenant.getId());
+        resource.setTenantId(tenant.getId());
         resource.setTitle("Test resource");
         resource.setResourceType(ResourceType.LWM2M_MODEL);
         resource.setFileName("filename.txt");
@@ -567,47 +555,49 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         return resourceService.saveResource(resource);
     }
 
-    private OtaPackage createAndSaveOtaPackageFor(Tenant savedTenant, DeviceProfile savedDeviceProfile) {
-        OtaPackage otaPackage = createFirmware(savedTenant.getId(), savedDeviceProfile.getId());
-        return otaPackageService.saveOtaPackage(otaPackage);
+    private OtaPackage createAndSaveOtaPackageFor(Tenant tenant, DeviceProfile deviceProfile) {
+        return otaPackageService.saveOtaPackage(
+                BaseOtaPackageServiceTest.createFirmware(
+                        tenant.getId(), "2", deviceProfile.getId())
+        );
     }
 
-    private Edge createAndSaveEdgeFor(Tenant savedTenant) {
-        Edge edge = constructEdge(savedTenant.getId(), "Test edge", "Simple");
+    private Edge createAndSaveEdgeFor(Tenant tenant) {
+        Edge edge = constructEdge(tenant.getId(), "Test edge", "Simple");
         return edgeService.saveEdge(edge, false);
     }
 
-    private RuleChain createAndSaveRuleChainFor(Tenant savedTenant) {
+    private RuleChain createAndSaveRuleChainFor(Tenant tenant) {
         RuleChain ruleChain = new RuleChain();
-        ruleChain.setTenantId(savedTenant.getId());
+        ruleChain.setTenantId(tenant.getId());
         ruleChain.setName("Test rule chain");
         ruleChain.setType(RuleChainType.CORE);
         return ruleChainService.saveRuleChain(ruleChain);
     }
 
-    private Dashboard createAndSaveDashboardFor(Tenant savedTenant, Customer savedCustomer) {
+    private Dashboard createAndSaveDashboardFor(Tenant tenant, Customer customer) {
         Dashboard dashboard = new Dashboard();
-        dashboard.setTenantId(savedTenant.getId());
+        dashboard.setTenantId(tenant.getId());
         dashboard.setTitle("Test dashboard");
-        dashboard.setAssignedCustomers(Set.of(savedCustomer.toShortCustomerInfo()));
+        dashboard.setAssignedCustomers(Set.of(customer.toShortCustomerInfo()));
         return dashboardService.saveDashboard(dashboard);
     }
 
-    private Asset createAndSaveAssetFor(Tenant savedTenant, Customer savedCustomer) {
+    private Asset createAndSaveAssetFor(Tenant tenant, Customer customer) {
         Asset asset = new Asset();
-        asset.setTenantId(savedTenant.getId());
-        asset.setCustomerId(savedCustomer.getId());
+        asset.setTenantId(tenant.getId());
+        asset.setCustomerId(customer.getId());
         asset.setType("Test asset type");
         asset.setName("Test asset type");
         asset.setLabel("Test asset type");
         return assetService.saveAsset(asset);
     }
 
-    private EntityView createAndSaveEntityViewFor(Tenant savedTenant, Customer savedCustomer, Device savedDevice) {
+    private EntityView createAndSaveEntityViewFor(Tenant tenant, Customer customer, Device device) {
         EntityView entityView = new EntityView();
-        entityView.setEntityId(savedDevice.getId());
-        entityView.setTenantId(savedTenant.getId());
-        entityView.setCustomerId(savedCustomer.getId());
+        entityView.setEntityId(device.getId());
+        entityView.setTenantId(tenant.getId());
+        entityView.setCustomerId(customer.getId());
         entityView.setType("Test type");
         entityView.setName("Test entity view");
         entityView.setStartTimeMs(0);
@@ -615,20 +605,20 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         return entityViewService.saveEntityView(entityView);
     }
 
-    private Device createAndSaveDeviceFor(Tenant savedTenant, Customer savedCustomer, DeviceProfile savedDeviceProfile) {
+    private Device createAndSaveDeviceFor(Tenant tenant, Customer customer, DeviceProfile deviceProfile) {
         Device device = new Device();
-        device.setCustomerId(savedCustomer.getId());
-        device.setTenantId(savedTenant.getId());
+        device.setCustomerId(customer.getId());
+        device.setTenantId(tenant.getId());
         device.setType("Test type");
         device.setName("TestType");
         device.setLabel("Test type");
-        device.setDeviceProfileId(savedDeviceProfile.getId());
+        device.setDeviceProfileId(deviceProfile.getId());
         return deviceService.saveDevice(device);
     }
 
-    private DeviceProfile createAndSaveDeviceProfileWithProfileDataFor(Tenant savedTenant) {
+    private DeviceProfile createAndSaveDeviceProfileWithProfileDataFor(Tenant tenant) {
         DeviceProfile deviceProfile = new DeviceProfile();
-        deviceProfile.setTenantId(savedTenant.getId());
+        deviceProfile.setTenantId(tenant.getId());
         deviceProfile.setTransportType(DeviceTransportType.MQTT);
         deviceProfile.setName("Test device profile");
         deviceProfile.setType(DeviceProfileType.DEFAULT);
@@ -638,37 +628,37 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         return deviceProfileService.saveDeviceProfile(deviceProfile);
     }
 
-    private WidgetsBundle createAndSaveWidgetBundleFor(Tenant savedTenant) {
+    private WidgetsBundle createAndSaveWidgetBundleFor(Tenant tenant) {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
-        widgetsBundle.setTenantId(savedTenant.getId());
+        widgetsBundle.setTenantId(tenant.getId());
         widgetsBundle.setTitle("Test widgets bundle");
         widgetsBundle.setAlias("TestWidgetsBundle");
         widgetsBundle.setDescription("Just a simple widgets bundle");
         return widgetsBundleService.saveWidgetsBundle(widgetsBundle);
     }
 
-    private Customer createAndSaveCustomerFor(Tenant savedTenant) {
+    private Customer createAndSaveCustomerFor(Tenant tenant) {
         Customer customer = new Customer();
         customer.setTitle("Test customer");
-        customer.setTenantId(savedTenant.getId());
+        customer.setTenantId(tenant.getId());
         customer.setEmail("testCustomer@test.com");
         return customerService.saveCustomer(customer);
     }
 
-    private User createAndSaveUserFor(Tenant savedTenant) {
+    private User createAndSaveUserFor(Tenant tenant) {
         User user = new User();
         user.setAuthority(Authority.TENANT_ADMIN);
         user.setEmail("tenantAdmin@test.com");
         user.setFirstName("tenantAdmin");
         user.setLastName("tenantAdmin");
-        user.setTenantId(savedTenant.getId());
+        user.setTenantId(tenant.getId());
         return userService.saveUser(user);
     }
 
-    private Tenant createAndSaveTenant(TenantProfile savedProfile) {
+    private Tenant createAndSaveTenant(TenantProfile tenantProfile) {
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
-        tenant.setTenantProfileId(savedProfile.getId());
+        tenant.setTenantProfileId(tenantProfile.getId());
         return tenantService.saveTenant(tenant);
     }
 
@@ -676,21 +666,5 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         TenantProfile tenantProfile = new TenantProfile();
         tenantProfile.setName("Test tenant profile");
         return tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
-    }
-
-    private OtaPackage createFirmware(TenantId tenantId, DeviceProfileId deviceProfileId) {
-        OtaPackage firmware = new OtaPackage();
-        firmware.setTenantId(tenantId);
-        firmware.setDeviceProfileId(deviceProfileId);
-        firmware.setType(FIRMWARE);
-        firmware.setTitle("My firmware");
-        firmware.setVersion("1");
-        firmware.setFileName("filename.txt");
-        firmware.setContentType("text/plain");
-        firmware.setChecksumAlgorithm(ChecksumAlgorithm.SHA256);
-        firmware.setChecksum("4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a");
-        firmware.setData(ByteBuffer.wrap(new byte[]{(int) 1L}));
-        firmware.setDataSize(1L);
-        return otaPackageService.saveOtaPackage(firmware);
     }
 }

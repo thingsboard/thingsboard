@@ -308,9 +308,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         validateId(entityId.getId(), "Incorrect entityId" + entityId);
 
-        List<Object> tenantIdAndEntityId = new ArrayList<>();
-        tenantIdAndEntityId.add(tenantId);
-        tenantIdAndEntityId.add(entityId);
+        List<Object> tenantIdAndEntityId = List.of(tenantId, entityId);
 
         Cache cache = cacheManager.getCache(ENTITY_VIEW_CACHE);
         List<EntityView> fromCache = cache.get(tenantIdAndEntityId, List.class);
@@ -366,15 +364,10 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
             throw new DataValidationException("Can't assign entityView to edge from different tenant!");
         }
 
-        try {
-            Boolean relationExists = relationService.checkRelation(tenantId, edgeId, entityView.getEntityId(),
-                    EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE).get();
-            if (!relationExists) {
-                throw new DataValidationException("Can't assign entity view to edge because related device/asset doesn't assigned to edge!");
-            }
-        } catch (ExecutionException | InterruptedException e) {
-            log.error("Exception during relation check", e);
-            throw new RuntimeException("Exception during relation check", e);
+        Boolean relationExists = relationService.checkRelation(tenantId, edgeId, entityView.getEntityId(),
+                EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
+        if (!relationExists) {
+            throw new DataValidationException("Can't assign entity view to edge because related device/asset doesn't assigned to edge!");
         }
 
         try {

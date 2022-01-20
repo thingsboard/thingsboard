@@ -184,7 +184,6 @@ public class BaseResourceService implements ResourceService {
             }
             if (!resource.getTenantId().getId().equals(ModelConstants.NULL_UUID)) {
                 Tenant tenant = tenantService.findTenantById(resource.getTenantId());
-                // TODO: 12.01.22 Instead of finding and checking for null need to create and use tenantService.exists()
                 if (tenant == null) {
                     throw new DataValidationException("Resource is referencing to non-existent tenant!");
                 }

@@ -163,7 +163,6 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
                     }
                     if (!widgetsBundle.getTenantId().getId().equals(ModelConstants.NULL_UUID)) {
                         Tenant tenant = tenantService.findTenantById(widgetsBundle.getTenantId());
-                        // TODO: 12.01.22 Instead of finding and checking for null need to create and use tenantService.exists()
                         if (tenant == null) {
                             throw new DataValidationException("Widgets bundle is referencing to non-existent tenant!");
                         }

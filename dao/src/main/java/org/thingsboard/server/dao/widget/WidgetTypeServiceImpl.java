@@ -139,7 +139,6 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
                     }
                     if (!widgetTypeDetails.getTenantId().getId().equals(ModelConstants.NULL_UUID)) {
                         Tenant tenant = tenantService.findTenantById(widgetTypeDetails.getTenantId());
-                        // TODO: 12.01.22 Instead of finding and checking for null need to create and use tenantService.exists()
                         if (tenant == null) {
                             throw new DataValidationException("Widget type is referencing to non-existent tenant!");
                         }

@@ -165,7 +165,6 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
                         throw new DataValidationException("ApiUsageState should be assigned to tenant!");
                     } else {
                         Tenant tenant = tenantService.findTenantById(apiUsageState.getTenantId());
-                        // TODO: 12.01.22 Instead of finding and checking for null need to create and use tenantService.exists()
                         if (tenant == null && !requestTenantId.equals(TenantId.SYS_TENANT_ID)) {
                             throw new DataValidationException("ApiUsageState is referencing to non-existent tenant!");
                         }

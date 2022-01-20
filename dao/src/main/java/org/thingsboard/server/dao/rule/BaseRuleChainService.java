@@ -727,7 +727,6 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                         throw new DataValidationException("Rule chain should be assigned to tenant!");
                     }
                     Tenant tenant = tenantService.findTenantById(ruleChain.getTenantId());
-                    // TODO: 12.01.22 Instead of finding and checking for null need to create and use tenantService.exists()
                     if (tenant == null) {
                         throw new DataValidationException("Rule chain is referencing to non-existent tenant!");
                     }
