@@ -86,7 +86,7 @@ public class TbLwM2MDtlsBootstrapCertificateVerifier implements NewAdvancedCerti
                 staticCertificateVerifier = new StaticCertificateVerifier(trustedCertificates);
             }
         } catch (Exception e) {
-            log.info("Failed to initialize the ");
+            log.info("Failed to initialize the certificate verifier", e);
         }
     }
 
