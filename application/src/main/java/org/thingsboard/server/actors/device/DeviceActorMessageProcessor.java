@@ -473,7 +473,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
                             .addAllClientAttributeList(toTsKvProtos(result.get(0)))
                             .addAllSharedAttributeList(toTsKvProtos(result.get(1)))
                             .setIsMultipleAttributesRequest(
-                                    request.getSharedAttributeNamesCount() > 1 || request.getClientAttributeNamesCount() > 1)
+                                    request.getSharedAttributeNamesCount() + request.getClientAttributeNamesCount() > 1)
                             .build();
                     sendToTransport(responseMsg, sessionInfo);
                 }
