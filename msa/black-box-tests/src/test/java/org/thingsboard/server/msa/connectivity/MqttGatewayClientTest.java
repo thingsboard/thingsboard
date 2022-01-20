@@ -20,6 +20,7 @@ import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.netty.buffer.ByteBuf;
@@ -149,6 +150,75 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         Assert.assertTrue(verify(actualLatestTelemetry, "attr2", Boolean.TRUE.toString()));
         Assert.assertTrue(verify(actualLatestTelemetry, "attr3", Double.toString(42.0)));
         Assert.assertTrue(verify(actualLatestTelemetry, "attr4", Long.toString(73)));
+    }
+
+    @Test
+    public void responseDataOnAttributesRequestCheck() throws Exception {
+        Optional<DeviceCredentials> createdDeviceCredentials = restClient.getDeviceCredentialsByDeviceId(createdDevice.getId());
+        Assert.assertTrue(createdDeviceCredentials.isPresent());
+        JsonObject sharedAttributes = new JsonObject();
+        sharedAttributes.addProperty("attr1", "value1");
+        sharedAttributes.addProperty("attr2", true);
+        sharedAttributes.addProperty("attr3", 42.0);
+        sharedAttributes.addProperty("attr4", 73);
+
+        mqttClient.on("v1/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
+        ResponseEntity sharedAttributesResponse = restClient.getRestTemplate()
+                .postForEntity(HTTPS_URL + "/api/plugins/telemetry/DEVICE/{deviceId}/SHARED_SCOPE",
+                        mapper.readTree(sharedAttributes.toString()), ResponseEntity.class,
+                        createdDevice.getId());
+        Assert.assertTrue(sharedAttributesResponse.getStatusCode().is2xxSuccessful());
+        var event = listener.getEvents().poll(10, TimeUnit.SECONDS);
+
+        JsonObject requestData = new JsonObject();
+        requestData.addProperty("id", 1);
+        requestData.addProperty("device", createdDevice.getName());
+        requestData.addProperty("client", false);
+        requestData.addProperty("key", "attr1");
+
+        mqttClient.on("v1/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
+        mqttClient.publish("v1/gateway/attributes/request", Unpooled.wrappedBuffer(requestData.toString().getBytes())).get();
+        event = listener.getEvents().poll(10, TimeUnit.SECONDS);
+
+        JsonObject responseData = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+        Assert.assertTrue(responseData.has("value"));
+        Assert.assertEquals(sharedAttributes.get("attr1").getAsString(), responseData.get("value").getAsString());
+
+        requestData = new JsonObject();
+        requestData.addProperty("id", 1);
+        requestData.addProperty("device", createdDevice.getName());
+        requestData.addProperty("client", false);
+        JsonArray keys = new JsonArray();
+        keys.add("attr1");
+        keys.add("attr2");
+        requestData.add("keys", keys);
+
+        mqttClient.on("v1/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
+        mqttClient.publish("v1/gateway/attributes/request", Unpooled.wrappedBuffer(requestData.toString().getBytes())).get();
+        event = listener.getEvents().poll(10, TimeUnit.SECONDS);
+        responseData = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+
+        Assert.assertTrue(responseData.has("values"));
+        Assert.assertEquals(sharedAttributes.get("attr1").getAsString(), responseData.get("values").getAsJsonObject().get("attr1").getAsString());
+        Assert.assertEquals(sharedAttributes.get("attr2").getAsString(), responseData.get("values").getAsJsonObject().get("attr2").getAsString());
+
+        requestData = new JsonObject();
+        requestData.addProperty("id", 1);
+        requestData.addProperty("device", createdDevice.getName());
+        requestData.addProperty("client", false);
+        keys = new JsonArray();
+        keys.add("attr1");
+        keys.add("undefined");
+        requestData.add("keys", keys);
+
+        mqttClient.on("v1/gateway/attributes/response", listener, MqttQoS.AT_LEAST_ONCE).get();
+        mqttClient.publish("v1/gateway/attributes/request", Unpooled.wrappedBuffer(requestData.toString().getBytes())).get();
+        event = listener.getEvents().poll(10, TimeUnit.SECONDS);
+        responseData = jsonParser.parse(Objects.requireNonNull(event).getMessage()).getAsJsonObject();
+
+        Assert.assertTrue(responseData.has("values"));
+        Assert.assertEquals(sharedAttributes.get("attr1").getAsString(), responseData.get("values").getAsJsonObject().get("attr1").getAsString());
+        Assert.assertEquals(1, responseData.get("values").getAsJsonObject().entrySet().size());
     }
 
     @Test
