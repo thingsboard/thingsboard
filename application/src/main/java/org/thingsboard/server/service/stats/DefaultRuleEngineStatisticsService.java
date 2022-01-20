@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -95,7 +96,8 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
             }
         });
         ruleEngineStats.getTenantExceptions().forEach((tenantId, e) -> {
-            TsKvEntry tsKv = new BasicTsKvEntry(ts, new JsonDataEntry("ruleEngineException", e.toJsonString()));
+            TsKvEntry tsKv = new BasicTsKvEntry(e.getTs(), new JsonDataEntry("ruleEngineException",
+                    JacksonUtil.toString(JacksonUtil.newObjectNode().put("message", e.getMessage()))));
             try {
                 tsService.saveAndNotifyInternal(tenantId, getServiceAssetId(tenantId, queueName), Collections.singletonList(tsKv), CALLBACK);
             } catch (DataValidationException e2) {
