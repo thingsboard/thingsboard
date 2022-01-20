@@ -83,7 +83,7 @@ public class TenantProfile extends SearchTextBased<TenantProfileId> implements H
     @ApiModelProperty(position = 1, value = "JSON object with the tenant profile Id. " +
             "Specify this field to update the tenant profile. " +
             "Referencing non-existing tenant profile Id will cause error. " +
-            "Omit this field to create new tenant profile." )
+            "Omit this field to create new tenant profile.")
     @Override
     public TenantProfileId getId() {
         return super.getId();
@@ -133,6 +133,7 @@ public class TenantProfile extends SearchTextBased<TenantProfileId> implements H
     public TenantProfileData createDefaultTenantProfileData() {
         TenantProfileData tpd = new TenantProfileData();
         tpd.setConfiguration(new DefaultTenantProfileConfiguration());
+        this.profileData = tpd;
         return tpd;
     }
 
@@ -147,11 +148,7 @@ public class TenantProfile extends SearchTextBased<TenantProfileId> implements H
 
     @JsonIgnore
     public DefaultTenantProfileConfiguration getDefaultTenantProfileConfiguration() {
-        if(getProfileData().getConfiguration() != null &&
-                getProfileData().getConfiguration().getType().equals(TenantProfileType.DEFAULT)) {
-            return (DefaultTenantProfileConfiguration) this.profileData.getConfiguration();
-        }
-        return null;
+        return getProfileConfiguration().orElse(null);
     }
 
 }

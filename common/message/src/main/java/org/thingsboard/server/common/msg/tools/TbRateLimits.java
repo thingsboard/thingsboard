@@ -29,11 +29,10 @@ import java.time.Duration;
 public class TbRateLimits {
     private final LocalBucket bucket;
     @Getter
-    private final String currentConfig;
+    private final String configuration;
 
     public TbRateLimits(String limitsConfiguration) {
         LocalBucketBuilder builder = Bucket4j.builder();
-        currentConfig = limitsConfiguration;
         boolean initialized = false;
         for (String limitSrc : limitsConfiguration.split(",")) {
             long capacity = Long.parseLong(limitSrc.split(":")[0]);
@@ -46,8 +45,7 @@ public class TbRateLimits {
         } else {
             throw new IllegalArgumentException("Failed to parse rate limits configuration: " + limitsConfiguration);
         }
-
-
+        this.configuration = limitsConfiguration;
     }
 
     public boolean tryConsume() {

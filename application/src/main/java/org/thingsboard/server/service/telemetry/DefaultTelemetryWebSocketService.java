@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.socket.CloseStatus;
@@ -304,29 +305,29 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
 
     private void processSessionClose(TelemetryWebSocketSessionRef sessionRef) {
         var tenantProfileConfiguration = (DefaultTenantProfileConfiguration) tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultTenantProfileConfiguration();
-        if(tenantProfileConfiguration != null) {
+        if (tenantProfileConfiguration != null) {
             String sessionId = "[" + sessionRef.getSessionId() + "]";
 
-            if (tenantProfileConfiguration.getWsLimitMaxSubscriptionsPerTenant() > 0) {
+            if (tenantProfileConfiguration.getMaxWsSubscriptionsPerTenant() > 0) {
                 Set<String> tenantSubscriptions = tenantSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getTenantId(), id -> ConcurrentHashMap.newKeySet());
                 synchronized (tenantSubscriptions) {
                     tenantSubscriptions.removeIf(subId -> subId.startsWith(sessionId));
                 }
             }
             if (sessionRef.getSecurityCtx().isCustomerUser()) {
-                if (tenantProfileConfiguration.getWsLimitMaxSubscriptionsPerCustomer() > 0) {
+                if (tenantProfileConfiguration.getMaxWsSubscriptionsPerCustomer() > 0) {
                     Set<String> customerSessions = customerSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getCustomerId(), id -> ConcurrentHashMap.newKeySet());
                     synchronized (customerSessions) {
                         customerSessions.removeIf(subId -> subId.startsWith(sessionId));
                     }
                 }
-                if (tenantProfileConfiguration.getWsLimitMaxSubscriptionsPerRegularUser() > 0 && UserPrincipal.Type.USER_NAME.equals(sessionRef.getSecurityCtx().getUserPrincipal().getType())) {
+                if (tenantProfileConfiguration.getMaxWsSubscriptionsPerRegularUser() > 0 && UserPrincipal.Type.USER_NAME.equals(sessionRef.getSecurityCtx().getUserPrincipal().getType())) {
                     Set<String> regularUserSessions = regularUserSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getId(), id -> ConcurrentHashMap.newKeySet());
                     synchronized (regularUserSessions) {
                         regularUserSessions.removeIf(subId -> subId.startsWith(sessionId));
                     }
                 }
-                if (tenantProfileConfiguration.getWsLimitMaxSubscriptionsPerPublicUser() > 0 && UserPrincipal.Type.PUBLIC_ID.equals(sessionRef.getSecurityCtx().getUserPrincipal().getType())) {
+                if (tenantProfileConfiguration.getMaxWsSubscriptionsPerPublicUser() > 0 && UserPrincipal.Type.PUBLIC_ID.equals(sessionRef.getSecurityCtx().getUserPrincipal().getType())) {
                     Set<String> publicUserSessions = publicUserSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getId(), id -> ConcurrentHashMap.newKeySet());
                     synchronized (publicUserSessions) {
                         publicUserSessions.removeIf(subId -> subId.startsWith(sessionId));
@@ -341,12 +342,12 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
 
         String subId = "[" + sessionRef.getSessionId() + "]:[" + cmd.getCmdId() + "]";
         try {
-            if (tenantProfileConfiguration.getWsLimitMaxSubscriptionsPerTenant() > 0) {
+            if (tenantProfileConfiguration.getMaxWsSubscriptionsPerTenant() > 0) {
                 Set<String> tenantSubscriptions = tenantSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getTenantId(), id -> ConcurrentHashMap.newKeySet());
                 synchronized (tenantSubscriptions) {
                     if (cmd.isUnsubscribe()) {
                         tenantSubscriptions.remove(subId);
-                    } else if (tenantSubscriptions.size() < tenantProfileConfiguration.getWsLimitMaxSubscriptionsPerTenant()) {
+                    } else if (tenantSubscriptions.size() < tenantProfileConfiguration.getMaxWsSubscriptionsPerTenant()) {
                         tenantSubscriptions.add(subId);
                     } else {
                         log.info("[{}][{}][{}] Failed to start subscription. Max tenant subscriptions limit reached"
@@ -358,12 +359,12 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
             }
 
             if (sessionRef.getSecurityCtx().isCustomerUser()) {
-                if (tenantProfileConfiguration.getWsLimitMaxSubscriptionsPerCustomer() > 0) {
+                if (tenantProfileConfiguration.getMaxWsSubscriptionsPerCustomer() > 0) {
                     Set<String> customerSessions = customerSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getCustomerId(), id -> ConcurrentHashMap.newKeySet());
                     synchronized (customerSessions) {
                         if (cmd.isUnsubscribe()) {
                             customerSessions.remove(subId);
-                        } else if (customerSessions.size() < tenantProfileConfiguration.getWsLimitMaxSubscriptionsPerCustomer()) {
+                        } else if (customerSessions.size() < tenantProfileConfiguration.getMaxWsSubscriptionsPerCustomer()) {
                             customerSessions.add(subId);
                         } else {
                             log.info("[{}][{}][{}] Failed to start subscription. Max customer subscriptions limit reached"
@@ -373,10 +374,10 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                         }
                     }
                 }
-                if (tenantProfileConfiguration.getWsLimitMaxSubscriptionsPerRegularUser() > 0 && UserPrincipal.Type.USER_NAME.equals(sessionRef.getSecurityCtx().getUserPrincipal().getType())) {
+                if (tenantProfileConfiguration.getMaxWsSubscriptionsPerRegularUser() > 0 && UserPrincipal.Type.USER_NAME.equals(sessionRef.getSecurityCtx().getUserPrincipal().getType())) {
                     Set<String> regularUserSessions = regularUserSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getId(), id -> ConcurrentHashMap.newKeySet());
                     synchronized (regularUserSessions) {
-                        if (regularUserSessions.size() < tenantProfileConfiguration.getWsLimitMaxSubscriptionsPerRegularUser()) {
+                        if (regularUserSessions.size() < tenantProfileConfiguration.getMaxWsSubscriptionsPerRegularUser()) {
                             regularUserSessions.add(subId);
                         } else {
                             log.info("[{}][{}][{}] Failed to start subscription. Max regular user subscriptions limit reached"
@@ -386,10 +387,10 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
                         }
                     }
                 }
-                if (tenantProfileConfiguration.getWsLimitMaxSubscriptionsPerPublicUser() > 0 && UserPrincipal.Type.PUBLIC_ID.equals(sessionRef.getSecurityCtx().getUserPrincipal().getType())) {
+                if (tenantProfileConfiguration.getMaxWsSubscriptionsPerPublicUser() > 0 && UserPrincipal.Type.PUBLIC_ID.equals(sessionRef.getSecurityCtx().getUserPrincipal().getType())) {
                     Set<String> publicUserSessions = publicUserSubscriptionsMap.computeIfAbsent(sessionRef.getSecurityCtx().getId(), id -> ConcurrentHashMap.newKeySet());
                     synchronized (publicUserSessions) {
-                        if (publicUserSessions.size() < tenantProfileConfiguration.getWsLimitMaxSubscriptionsPerPublicUser()) {
+                        if (publicUserSessions.size() < tenantProfileConfiguration.getMaxWsSubscriptionsPerPublicUser()) {
                             publicUserSessions.add(subId);
                         } else {
                             log.info("[{}][{}][{}] Failed to start subscription. Max public user subscriptions limit reached"

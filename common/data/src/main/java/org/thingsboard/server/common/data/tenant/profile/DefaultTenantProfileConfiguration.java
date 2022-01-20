@@ -46,22 +46,21 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private String transportDeviceTelemetryMsgRateLimit;
     private String transportDeviceTelemetryDataPointsRateLimit;
 
-    private String rateLimitsTenantConfiguration;
-    private String rateLimitsCustomerConfiguration;
+    private String tenantServerRestLimitsConfiguration;
+    private String customerServerRestLimitsConfiguration;
 
-    private int wsLimitMaxSessionsPerTenant;
-    private int wsLimitMaxSessionsPerCustomer;
-    private int wsLimitMaxSessionsPerRegularUser;
-    private int wsLimitMaxSessionsPerPublicUser;
-    private int wsLimitQueuePerWsSession;
-    private long wsLimitMaxSubscriptionsPerTenant;
-    private long wsLimitMaxSubscriptionsPerCustomer;
-    private long wsLimitMaxSubscriptionsPerRegularUser;
-    private long wsLimitMaxSubscriptionsPerPublicUser;
-    private String wsLimitUpdatesPerSession;
+    private int maxWsSessionsPerTenant;
+    private int maxWsSessionsPerCustomer;
+    private int maxWsSessionsPerRegularUser;
+    private int maxWsSessionsPerPublicUser;
+    private int wsMsgQueueLimitPerSession;
+    private long maxWsSubscriptionsPerTenant;
+    private long maxWsSubscriptionsPerCustomer;
+    private long maxWsSubscriptionsPerRegularUser;
+    private long maxWsSubscriptionsPerPublicUser;
+    private String wsUpdatesPerSessionRateLimit;
 
-    private String cassandraTenantLimitsConfiguration;
-    private boolean printTenantNames;
+    private String cassandraQueryTenantRateLimitsConfiguration;
 
     private long maxTransportMessages;
     private long maxTransportDataPoints;

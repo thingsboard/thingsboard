@@ -48,22 +48,20 @@ public class RateLimitProcessingFilter extends GenericFilterBean {
     @Autowired
     private TbTenantProfileCache tenantProfileCache;
 
-    private ConcurrentMap<TenantId, TbRateLimits> perTenantLimits = new ConcurrentHashMap<>();
-    private ConcurrentMap<CustomerId, TbRateLimits> perCustomerLimits = new ConcurrentHashMap<>();
+    private final ConcurrentMap<TenantId, TbRateLimits> perTenantLimits = new ConcurrentHashMap<>();
+    private final ConcurrentMap<CustomerId, TbRateLimits> perCustomerLimits = new ConcurrentHashMap<>();
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         SecurityUser user = getCurrentUser();
         if (user != null && !user.isSystemAdmin()) {
-
             var profileConfiguration = tenantProfileCache.get(user.getTenantId()).getDefaultTenantProfileConfiguration();
-
-            if(profileConfiguration != null) {
-                if (user.isTenantAdmin() && StringUtils.isNotEmpty(profileConfiguration.getRateLimitsTenantConfiguration())) {
-
+            if (profileConfiguration != null) {
+                if (user.isTenantAdmin() && StringUtils.isNotEmpty(profileConfiguration.getTenantServerRestLimitsConfiguration())) {
                     TbRateLimits rateLimits = perTenantLimits.get(user.getTenantId());
-                    if(rateLimits == null || !rateLimits.getCurrentConfig().equals(profileConfiguration.getRateLimitsTenantConfiguration())) {
-                        rateLimits = new TbRateLimits(profileConfiguration.getRateLimitsTenantConfiguration());
+                    if (rateLimits == null || !rateLimits.getConfiguration().equals(profileConfiguration.getTenantServerRestLimitsConfiguration())) {
+                        // fixme: or maybe handle component lifecycle event ?
+                        rateLimits = new TbRateLimits(profileConfiguration.getTenantServerRestLimitsConfiguration());
                         perTenantLimits.put(user.getTenantId(), rateLimits);
                     }
 
@@ -71,12 +69,10 @@ public class RateLimitProcessingFilter extends GenericFilterBean {
                         errorResponseHandler.handle(new TbRateLimitsException(EntityType.TENANT), (HttpServletResponse) response);
                         return;
                     }
-                }
-                if (user.isCustomerUser() && StringUtils.isNotEmpty(profileConfiguration.getRateLimitsCustomerConfiguration())) {
-
+                } else if (user.isCustomerUser() && StringUtils.isNotEmpty(profileConfiguration.getCustomerServerRestLimitsConfiguration())) {
                     TbRateLimits rateLimits = perCustomerLimits.get(user.getCustomerId());
-                    if(rateLimits == null || !rateLimits.getCurrentConfig().equals(profileConfiguration.getRateLimitsCustomerConfiguration())) {
-                        rateLimits = new TbRateLimits(profileConfiguration.getRateLimitsCustomerConfiguration());
+                    if (rateLimits == null || !rateLimits.getConfiguration().equals(profileConfiguration.getCustomerServerRestLimitsConfiguration())) {
+                        rateLimits = new TbRateLimits(profileConfiguration.getCustomerServerRestLimitsConfiguration());
                         perCustomerLimits.put(user.getCustomerId(), rateLimits);
                     }
 

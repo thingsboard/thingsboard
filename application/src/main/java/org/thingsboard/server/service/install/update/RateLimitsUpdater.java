@@ -15,53 +15,53 @@
  */
 package org.thingsboard.server.service.install.update;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 
 @Component
 class RateLimitsUpdater extends PaginatedUpdater<String, TenantProfile> {
+
     @Value("${server.rest.limits.tenant.enabled}")
-    boolean tenantServerRateLimitsEnabled;
-    @Value("${server.rest.limits.customer.enabled}")
-    boolean customerServerRateLimitsEnabled;
+    boolean tenantServerRestLimitsEnabled;
     @Value("${server.rest.limits.tenant.configuration}")
-    String tenantServerRateLimitsConfiguration;
+    String tenantServerRestLimitsConfiguration;
+    @Value("${server.rest.limits.customer.enabled}")
+    boolean customerServerRestLimitsEnabled;
     @Value("${server.rest.limits.customer.configuration}")
-    String customerServerRateLimitsConfiguration;
+    String customerServerRestLimitsConfiguration;
 
     @Value("${server.ws.limits.max_sessions_per_tenant}")
-    private int wsLimitMaxSessionsPerTenant;
+    private int maxWsSessionsPerTenant;
     @Value("${server.ws.limits.max_sessions_per_customer}")
-    private int wsLimitMaxSessionsPerCustomer;
+    private int maxWsSessionsPerCustomer;
     @Value("${server.ws.limits.max_sessions_per_regular_user}")
-    private int wsLimitMaxSessionsPerRegularUser;
+    private int maxWsSessionsPerRegularUser;
     @Value("${server.ws.limits.max_sessions_per_public_user}")
-    private int wsLimitMaxSessionsPerPublicUser;
+    private int maxWsSessionsPerPublicUser;
     @Value("${server.ws.limits.max_queue_per_ws_session}")
-    private int wsLimitQueuePerWsSession;
+    private int wsMsgQueueLimitPerSession;
     @Value("${server.ws.limits.max_subscriptions_per_tenant}")
-    private long wsLimitMaxSubscriptionsPerTenant;
+    private long maxWsSubscriptionsPerTenant;
     @Value("${server.ws.limits.max_subscriptions_per_customer}")
-    private long wsLimitMaxSubscriptionsPerCustomer;
+    private long maxWsSubscriptionsPerCustomer;
     @Value("${server.ws.limits.max_subscriptions_per_regular_user}")
-    private long wsLimitMaxSubscriptionsPerRegularUser;
+    private long maxWsSubscriptionsPerRegularUser;
     @Value("${server.ws.limits.max_subscriptions_per_public_user}")
-    private long wsLimitMaxSubscriptionsPerPublicUser;
+    private long maxWsSubscriptionsPerPublicUser;
     @Value("${server.ws.limits.max_updates_per_session}")
-    private String wsLimitUpdatesPerSession;
+    private String wsUpdatesPerSessionRateLimit;
 
     @Value("${cassandra.query.tenant_rate_limits.enabled}")
-    private boolean cassandraLimitsIsEnabled;
+    private boolean cassandraQueryTenantRateLimitsEnabled;
     @Value("${cassandra.query.tenant_rate_limits.configuration}")
-    private String cassandraTenantLimitsConfiguration;
-    @Value("${cassandra.query.tenant_rate_limits.print_tenant_names}")
-    private boolean printTenantNames;
+    private String cassandraQueryTenantRateLimitsConfiguration;
 
     @Autowired
     private TenantProfileService tenantProfileService;
@@ -78,40 +78,38 @@ class RateLimitsUpdater extends PaginatedUpdater<String, TenantProfile> {
 
     @Override
     protected PageData<TenantProfile> findEntities(String id, PageLink pageLink) {
-        return tenantProfileService.findTenantProfiles(null, pageLink);
+        return tenantProfileService.findTenantProfiles(TenantId.SYS_TENANT_ID, pageLink);
     }
 
     @Override
-    protected void updateEntity(TenantProfile entity) {
-        var profileConfiguration = entity.getDefaultTenantProfileConfiguration();
-        if (profileConfiguration != null) {
-            if (tenantServerRateLimitsEnabled && StringUtils.isNotEmpty(tenantServerRateLimitsConfiguration)) {
-                profileConfiguration.setRateLimitsTenantConfiguration(tenantServerRateLimitsConfiguration);
-            }
-            if (customerServerRateLimitsEnabled && StringUtils.isNotEmpty(customerServerRateLimitsConfiguration)) {
-                profileConfiguration.setRateLimitsCustomerConfiguration(customerServerRateLimitsConfiguration);
-            }
+    protected void updateEntity(TenantProfile tenantProfile) {
+        var profileConfiguration = tenantProfile.getDefaultTenantProfileConfiguration();
 
-            profileConfiguration.setWsLimitMaxSessionsPerTenant(wsLimitMaxSessionsPerTenant);
-            profileConfiguration.setWsLimitMaxSessionsPerCustomer(wsLimitMaxSessionsPerCustomer);
-            profileConfiguration.setWsLimitMaxSessionsPerPublicUser(wsLimitMaxSessionsPerPublicUser);
-            profileConfiguration.setWsLimitMaxSessionsPerRegularUser(wsLimitMaxSessionsPerRegularUser);
-            profileConfiguration.setWsLimitMaxSubscriptionsPerTenant(wsLimitMaxSubscriptionsPerTenant);
-            profileConfiguration.setWsLimitMaxSubscriptionsPerCustomer(wsLimitMaxSubscriptionsPerCustomer);
-            profileConfiguration.setWsLimitMaxSubscriptionsPerPublicUser(wsLimitMaxSubscriptionsPerPublicUser);
-            profileConfiguration.setWsLimitMaxSubscriptionsPerRegularUser(wsLimitMaxSubscriptionsPerRegularUser);
-            profileConfiguration.setWsLimitQueuePerWsSession(wsLimitQueuePerWsSession);
-
-            if (StringUtils.isNotEmpty(wsLimitUpdatesPerSession)) {
-                profileConfiguration.setWsLimitUpdatesPerSession(wsLimitUpdatesPerSession);
-            }
-
-            if (cassandraLimitsIsEnabled) {
-                profileConfiguration.setCassandraTenantLimitsConfiguration(cassandraTenantLimitsConfiguration);
-                profileConfiguration.setPrintTenantNames(printTenantNames);
-            }
-
-            tenantProfileService.saveTenantProfile(null, entity);
+        if (tenantServerRestLimitsEnabled && StringUtils.isNotEmpty(tenantServerRestLimitsConfiguration)) {
+            profileConfiguration.setTenantServerRestLimitsConfiguration(tenantServerRestLimitsConfiguration);
         }
+        if (customerServerRestLimitsEnabled && StringUtils.isNotEmpty(customerServerRestLimitsConfiguration)) {
+            profileConfiguration.setCustomerServerRestLimitsConfiguration(customerServerRestLimitsConfiguration);
+        }
+
+        profileConfiguration.setMaxWsSessionsPerTenant(maxWsSessionsPerTenant);
+        profileConfiguration.setMaxWsSessionsPerCustomer(maxWsSessionsPerCustomer);
+        profileConfiguration.setMaxWsSessionsPerPublicUser(maxWsSessionsPerPublicUser);
+        profileConfiguration.setMaxWsSessionsPerRegularUser(maxWsSessionsPerRegularUser);
+        profileConfiguration.setMaxWsSubscriptionsPerTenant(maxWsSubscriptionsPerTenant);
+        profileConfiguration.setMaxWsSubscriptionsPerCustomer(maxWsSubscriptionsPerCustomer);
+        profileConfiguration.setMaxWsSubscriptionsPerPublicUser(maxWsSubscriptionsPerPublicUser);
+        profileConfiguration.setMaxWsSubscriptionsPerRegularUser(maxWsSubscriptionsPerRegularUser);
+        profileConfiguration.setWsMsgQueueLimitPerSession(wsMsgQueueLimitPerSession);
+        if (StringUtils.isNotEmpty(wsUpdatesPerSessionRateLimit)) {
+            profileConfiguration.setWsUpdatesPerSessionRateLimit(wsUpdatesPerSessionRateLimit);
+        }
+
+        if (cassandraQueryTenantRateLimitsEnabled && StringUtils.isNotEmpty(cassandraQueryTenantRateLimitsConfiguration)) {
+            profileConfiguration.setCassandraQueryTenantRateLimitsConfiguration(cassandraQueryTenantRateLimitsConfiguration);
+        }
+
+        tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
     }
+
 }
