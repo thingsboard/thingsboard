@@ -243,7 +243,7 @@ public class AuditLogServiceImpl implements AuditLogService {
                 actionData.put("unassignedCustomerId", strCustomerId);
                 actionData.put("unassignedCustomerName", strCustomerName);
                 break;
-            case RELATION_UPDATED:
+            case RELATION_ADD_OR_UPDATE:
             case RELATION_DELETED:
                 EntityRelation relation = extractParameter(EntityRelation.class, 0, additionalInfo);
                 actionData.set("relation", JacksonUtil.valueToTree(relation));

@@ -148,7 +148,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
     }
 
     protected void pushDeleteRelationEventMsg(TbContext ctx, EntityRelation entityRelation) {
-        ctx.enqueueEntityRelationEvents(entityRelation, DataConstants.ENTITY_RELATION_DELETED);
+        ctx.enqueueEntityRelationEvents(entityRelation, DataConstants.RELATION_DELETED);
     }
 
     protected List<ListenableFuture<Boolean>> deleteRelationsAndPushEventMessages(TbContext ctx, List<EntityRelation> relations) {

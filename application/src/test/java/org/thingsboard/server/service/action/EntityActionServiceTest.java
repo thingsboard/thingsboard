@@ -106,7 +106,7 @@ public class EntityActionServiceTest {
         relation.setFrom(new DeviceId(UUID.randomUUID()));
         relation.setTo(new AssetId(UUID.randomUUID()));
 
-        pushEventAndVerify(relation, ActionType.RELATION_UPDATED);
+        pushEventAndVerify(relation, ActionType.RELATION_ADD_OR_UPDATE);
     }
 
     @Test
@@ -176,10 +176,10 @@ public class EntityActionServiceTest {
 
     @NotNull
     private String getMsgType(ActionType actionType) {
-        if (actionType == ActionType.RELATION_UPDATED) {
-            return DataConstants.ENTITY_RELATION_UPDATED;
+        if (actionType == ActionType.RELATION_ADD_OR_UPDATE) {
+            return DataConstants.RELATION_ADD_OR_UPDATE;
         } else if (actionType == ActionType.RELATION_DELETED) {
-            return DataConstants.ENTITY_RELATION_DELETED;
+            return DataConstants.RELATION_DELETED;
         }
         return "";
     }

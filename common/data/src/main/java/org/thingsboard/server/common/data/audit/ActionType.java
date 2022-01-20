@@ -34,7 +34,7 @@ public enum ActionType {
     SUSPENDED(false), // log string id
     CREDENTIALS_READ(true), // log device id
     ATTRIBUTES_READ(true), // log attributes
-    RELATION_UPDATED(false),
+    RELATION_ADD_OR_UPDATE(false),
     RELATION_DELETED(false),
     RELATIONS_DELETED(false),
     ALARM_ACK(false),

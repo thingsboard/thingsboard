@@ -571,7 +571,7 @@
         "type-suspended": "Suspended",
         "type-credentials-read": "Credentials read",
         "type-attributes-read": "Attributes read",
-        "type-relation-update": "Relation updated",
+        "type-relation-add-or-update": "Relation updated",
         "type-relation-delete": "Relation deleted",
         "type-relations-delete": "All relation deleted",
         "type-alarm-ack": "Acknowledged",

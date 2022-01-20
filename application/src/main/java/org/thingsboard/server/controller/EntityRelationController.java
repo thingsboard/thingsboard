@@ -87,16 +87,16 @@ public class EntityRelationController extends BaseController {
             relationService.saveRelation(getTenantId(), relation);
 
             logEntityAction(relation.getFrom(), null, getCurrentUser().getCustomerId(),
-                    ActionType.RELATION_UPDATED, null, relation);
+                    ActionType.RELATION_ADD_OR_UPDATE, null, relation);
             logEntityAction(relation.getTo(), null, getCurrentUser().getCustomerId(),
-                    ActionType.RELATION_UPDATED, null, relation);
+                    ActionType.RELATION_ADD_OR_UPDATE, null, relation);
 
             sendRelationNotificationMsg(getTenantId(), relation, EdgeEventActionType.RELATION_ADD_OR_UPDATE);
         } catch (Exception e) {
             logEntityAction(relation.getFrom(), null, getCurrentUser().getCustomerId(),
-                    ActionType.RELATION_UPDATED, e, relation);
+                    ActionType.RELATION_ADD_OR_UPDATE, e, relation);
             logEntityAction(relation.getTo(), null, getCurrentUser().getCustomerId(),
-                    ActionType.RELATION_UPDATED, e, relation);
+                    ActionType.RELATION_ADD_OR_UPDATE, e, relation);
             throw handleException(e);
         }
     }

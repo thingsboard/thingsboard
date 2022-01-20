@@ -197,7 +197,7 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
     private ListenableFuture<Boolean> pushEvent(TbContext ctx, ListenableFuture<Boolean> future, SearchDirectionIds sdId, String relationType) {
         return Futures.transform(future, res -> {
             if (res) {
-                pushEventUpdateOrCreateRelation(ctx, sdId, relationType);
+                pushCreateOrUpdateRelationEvent(ctx, sdId, relationType);
             }
             return res;
         }, ctx.getDbCallbackExecutor());
@@ -207,9 +207,9 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
         return ctx.getRelationService().saveRelationAsync(ctx.getTenantId(), new EntityRelation(sdId.getFromId(), sdId.getToId(), relationType, RelationTypeGroup.COMMON));
     }
 
-    protected void pushEventUpdateOrCreateRelation(TbContext ctx, SearchDirectionIds sdId, String relationType) {
+    protected void pushCreateOrUpdateRelationEvent(TbContext ctx, SearchDirectionIds sdId, String relationType) {
         EntityRelation relation = new EntityRelation(sdId.getFromId(), sdId.getToId(), relationType);
-        ctx.enqueueEntityRelationEvents(relation, DataConstants.ENTITY_RELATION_UPDATED);
+        ctx.enqueueEntityRelationEvents(relation, DataConstants.RELATION_ADD_OR_UPDATE);
     }
 
 }
