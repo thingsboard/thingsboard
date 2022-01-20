@@ -27,10 +27,10 @@ public class TbCreateDeviceNodeConfiguration extends TbAbstractCreateEntityNodeC
     @Override
     public TbCreateDeviceNodeConfiguration defaultConfiguration() {
         TbCreateDeviceNodeConfiguration configuration = new TbCreateDeviceNodeConfiguration();
-        configuration.setName("");
-        configuration.setType("");
-        configuration.setLabel("");
-        configuration.setDescription("");
+        configuration.setNamePattern("");
+        configuration.setTypePattern("");
+        configuration.setLabelPattern("");
+        configuration.setDescriptionPattern("");
         configuration.setGateway(false);
         configuration.setOverwriteActivityTime(false);
         return configuration;

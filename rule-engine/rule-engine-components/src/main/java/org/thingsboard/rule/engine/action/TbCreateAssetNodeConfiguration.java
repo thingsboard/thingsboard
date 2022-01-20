@@ -24,10 +24,10 @@ public class TbCreateAssetNodeConfiguration extends TbAbstractCreateEntityNodeCo
     @Override
     public TbCreateAssetNodeConfiguration defaultConfiguration() {
         TbCreateAssetNodeConfiguration configuration = new TbCreateAssetNodeConfiguration();
-        configuration.setName("");
-        configuration.setType("");
-        configuration.setLabel("");
-        configuration.setDescription("");
+        configuration.setNamePattern("");
+        configuration.setTypePattern("");
+        configuration.setLabelPattern("");
+        configuration.setDescriptionPattern("");
         return configuration;
     }
 }

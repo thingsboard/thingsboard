@@ -27,18 +27,10 @@ import java.util.concurrent.ExecutionException;
 public abstract class TbAbstractCreateEntityNode<C extends TbAbstractCreateEntityNodeConfiguration> implements TbNode {
 
     protected C config;
-    protected String name;
-    protected String type;
-    protected String label;
-    protected String description;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = initConfiguration(configuration);
-        this.name = config.getName();
-        this.type = config.getType();
-        this.label = config.getLabel();
-        this.description = config.getDescription();
     }
 
     @Override

@@ -58,22 +58,24 @@ public class TbCreateAssetNode extends TbAbstractCreateEntityNode<TbCreateAssetN
 
     @Override
     protected void processOnMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
-        if (StringUtils.isEmpty(name)) {
+        String namePattern = config.getNamePattern();
+        if (StringUtils.isEmpty(namePattern)) {
             ctx.tellFailure(msg, new DataValidationException("Asset name should be specified!"));
             return;
         }
-        if (StringUtils.isEmpty(type)) {
+        String typePattern = config.getTypePattern();
+        if (StringUtils.isEmpty(typePattern)) {
             ctx.tellFailure(msg, new DataValidationException("Asset type should be specified!"));
             return;
         }
         try {
             TbMsg result;
-            String assetName = TbNodeUtils.processPattern(name, msg);
-            validatePatternSubstitution(name, assetName);
+            String assetName = TbNodeUtils.processPattern(namePattern, msg);
+            validatePatternSubstitution(namePattern, assetName);
             Asset asset = ctx.getAssetService().findAssetByTenantIdAndName(ctx.getTenantId(), assetName);
             if (asset == null) {
-                String assetType = TbNodeUtils.processPattern(type, msg);
-                validatePatternSubstitution(type, assetType);
+                String assetType = TbNodeUtils.processPattern(typePattern, msg);
+                validatePatternSubstitution(typePattern, assetType);
                 Asset savedAsset = createAsset(ctx, msg, assetName, assetType);
                 ctx.enqueue(ctx.assetCreatedMsg(savedAsset, ctx.getSelfId()),
                         () -> log.trace("Pushed Asset Created message: {}", savedAsset),
@@ -93,12 +95,14 @@ public class TbCreateAssetNode extends TbAbstractCreateEntityNode<TbCreateAssetN
         asset.setTenantId(ctx.getTenantId());
         asset.setName(name);
         asset.setType(type);
-        if (!StringUtils.isEmpty(label)) {
-            asset.setLabel(TbNodeUtils.processPattern(label, msg));
+        String labelPattern = config.getLabelPattern();
+        if (!StringUtils.isEmpty(labelPattern)) {
+            asset.setLabel(TbNodeUtils.processPattern(labelPattern, msg));
         }
-        if (!StringUtils.isEmpty(description)) {
+        String descriptionPattern = config.getDescriptionPattern();
+        if (!StringUtils.isEmpty(descriptionPattern)) {
             ObjectNode additionalInfo = JacksonUtil.newObjectNode();
-            additionalInfo.put("description", TbNodeUtils.processPattern(description, msg));
+            additionalInfo.put("description", TbNodeUtils.processPattern(descriptionPattern, msg));
             asset.setAdditionalInfo(additionalInfo);
         }
         return ctx.getAssetService().saveAsset(asset);

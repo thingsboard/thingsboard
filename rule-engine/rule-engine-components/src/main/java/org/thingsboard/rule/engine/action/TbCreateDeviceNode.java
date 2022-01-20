@@ -59,13 +59,14 @@ public class TbCreateDeviceNode extends TbAbstractCreateEntityNode<TbCreateDevic
 
     @Override
     protected void processOnMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
-        if (StringUtils.isEmpty(name)) {
+        String namePattern = config.getNamePattern();
+        if (StringUtils.isEmpty(namePattern)) {
             ctx.tellFailure(msg, new DataValidationException("Device name should be specified!"));
         } else {
             try {
                 TbMsg result;
-                String deviceName = TbNodeUtils.processPattern(name, msg);
-                validatePatternSubstitution(name, deviceName);
+                String deviceName = TbNodeUtils.processPattern(namePattern, msg);
+                validatePatternSubstitution(namePattern, deviceName);
                 Device device = ctx.getDeviceService().findDeviceByTenantIdAndName(ctx.getTenantId(), deviceName);
                 if (device == null) {
                     Device savedDevice = createDevice(ctx, msg, deviceName);
@@ -88,15 +89,18 @@ public class TbCreateDeviceNode extends TbAbstractCreateEntityNode<TbCreateDevic
         Device device = new Device();
         device.setTenantId(ctx.getTenantId());
         device.setName(name);
-        if (!StringUtils.isEmpty(type)) {
-            device.setType(TbNodeUtils.processPattern(type, msg));
+        String typePattern = config.getTypePattern();
+        if (!StringUtils.isEmpty(typePattern)) {
+            device.setType(TbNodeUtils.processPattern(typePattern, msg));
         }
-        if (!StringUtils.isEmpty(label)) {
-            device.setLabel(TbNodeUtils.processPattern(label, msg));
+        String labelPattern = config.getLabelPattern();
+        if (!StringUtils.isEmpty(labelPattern)) {
+            device.setLabel(TbNodeUtils.processPattern(labelPattern, msg));
         }
         ObjectNode additionalInfo = JacksonUtil.newObjectNode();
-        if (!StringUtils.isEmpty(description)) {
-            additionalInfo.put("description", TbNodeUtils.processPattern(description, msg));
+        String descriptionPattern = config.getDescriptionPattern();
+        if (!StringUtils.isEmpty(descriptionPattern)) {
+            additionalInfo.put("description", TbNodeUtils.processPattern(descriptionPattern, msg));
         }
         if (config.isGateway()) {
             additionalInfo.put("gateway", config.isGateway());

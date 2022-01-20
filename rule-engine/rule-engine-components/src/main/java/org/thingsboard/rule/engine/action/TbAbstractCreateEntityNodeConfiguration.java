@@ -16,13 +16,12 @@
 package org.thingsboard.rule.engine.action;
 
 import lombok.Data;
-import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 @Data
 public abstract class TbAbstractCreateEntityNodeConfiguration {
 
-    private String name;
-    private String type;
-    private String label;
-    private String description;
+    private String namePattern;
+    private String typePattern;
+    private String labelPattern;
+    private String descriptionPattern;
 }
