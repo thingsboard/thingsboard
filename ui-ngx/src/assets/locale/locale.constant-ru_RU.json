@@ -959,7 +959,9 @@
         "messages-processed": "Сообщения обработаны",
         "errors-occurred": "Возникли ошибки",
         "all-events": "Все",
-        "entity-type": "Тип объекта"
+        "entity-type": "Тип объекта",
+        "clear-request-title": "Удалить все события",
+        "clear-request-text": "Вы точно хотите удалить все события?"
     },
     "extension": {
         "extensions": "Расширение",

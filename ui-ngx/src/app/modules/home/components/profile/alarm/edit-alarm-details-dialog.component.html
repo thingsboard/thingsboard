@@ -33,6 +33,7 @@
         <mat-form-field class="mat-block">
           <mat-label translate>device-profile.alarm-details</mat-label>
           <textarea matInput formControlName="alarmDetails" rows="5"></textarea>
+          <mat-hint [innerHTML]="'device-profile.alarm-rule-details-hint' | translate | safe: 'html'"></mat-hint>
         </mat-form-field>
       </div>
     </fieldset>

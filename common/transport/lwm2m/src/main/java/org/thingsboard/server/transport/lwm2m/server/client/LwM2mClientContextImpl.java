@@ -393,9 +393,9 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     public Set<String> getSupportedIdVerInClient(LwM2mClient client) {
         Set<String> clientObjects = ConcurrentHashMap.newKeySet();
         Arrays.stream(client.getRegistration().getObjectLinks()).forEach(link -> {
-            LwM2mPath pathIds = new LwM2mPath(link.getUrl());
+            LwM2mPath pathIds = new LwM2mPath(link.getUriReference());
             if (!pathIds.isRoot()) {
-                clientObjects.add(convertObjectIdToVersionedId(link.getUrl(), client.getRegistration()));
+                clientObjects.add(convertObjectIdToVersionedId(link.getUriReference(), client.getRegistration()));
             }
         });
         return (clientObjects.size() > 0) ? clientObjects : null;

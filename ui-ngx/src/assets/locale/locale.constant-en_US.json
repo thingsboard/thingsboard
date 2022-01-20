@@ -1199,13 +1199,16 @@
         "condition-duration-time-unit-required": "Time unit is required.",
         "advanced-settings": "Advanced settings",
         "alarm-rule-details": "Details",
+        "alarm-rule-details-hint": "Hint: use <code><span style=\"color: #000;\">$&#123;</span>keyName<span style=\"color: #000;\">&#125;</span></code> to substitute values of the attribute or telemetry keys that are used in alarm rule condition.",
         "add-alarm-rule-details": "Add details",
         "alarm-rule-mobile-dashboard": "Mobile dashboard",
         "alarm-rule-mobile-dashboard-hint": "Used by mobile application as an alarm details dashboard",
         "alarm-rule-no-mobile-dashboard": "No dashboard selected",
-        "propagate-alarm": "Propagate alarm",
+        "propagate-alarm": "Propagate alarm to related entities",
         "alarm-rule-relation-types-list": "Relation types to propagate",
         "alarm-rule-relation-types-list-hint": "If Propagate relation types are not selected, alarms will be propagated without filtering by relation type.",
+        "propagate-alarm-to-owner": "Propagate alarm to entity owner (Customer or Tenant)",
+        "propagate-alarm-to-tenant": "Propagate alarm to Tenant",
         "alarm-details": "Alarm details",
         "alarm-rule-condition": "Alarm rule condition",
         "enter-alarm-rule-condition-prompt": "Please add alarm rule condition",
@@ -1888,7 +1891,9 @@
         "has-error": "Has error",
         "entity-id": "Entity Id",
         "entity-type": "Entity type",
-        "clear-filter": "Clear Filter"
+        "clear-filter": "Clear Filter",
+        "clear-request-title": "Clear all events",
+        "clear-request-text": "Are you sure you want to clear all events?"
     },
     "extension": {
         "extensions": "Extensions",

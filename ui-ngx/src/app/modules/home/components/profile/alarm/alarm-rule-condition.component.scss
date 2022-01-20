@@ -27,6 +27,11 @@
       opacity: 0.7;
       padding: 4px;
     }
+    &.title {
+      padding: 4px;
+      opacity: 0.7;
+      overflow: visible;
+    }
   }
 }
 

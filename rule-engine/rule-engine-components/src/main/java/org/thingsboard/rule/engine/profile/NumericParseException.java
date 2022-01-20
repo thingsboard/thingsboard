@@ -13,23 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.tb-date-range-navigator-panel {
-  overflow: auto;
-  background: #fff;
-  border-radius: 4px;
-  box-shadow:
-    0 7px 8px -4px rgba(0, 0, 0, .2),
-    0 13px 19px 2px rgba(0, 0, 0, .14),
-    0 5px 24px 4px rgba(0, 0, 0, .12);
+package org.thingsboard.rule.engine.profile;
 
-  .mat-content {
-    overflow: hidden;
-    background-color: #fff;
-  }
-
-  .mat-padding {
-    padding: 16px;
-    min-width: 560px;
-  }
-  
+public class NumericParseException extends RuntimeException {
+    public NumericParseException(String message) {
+        super(message);
+    }
 }

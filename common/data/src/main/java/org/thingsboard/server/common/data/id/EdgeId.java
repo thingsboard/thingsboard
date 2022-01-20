@@ -32,8 +32,8 @@ public class EdgeId extends UUIDBased implements EntityId {
         super(id);
     }
 
-    public static EdgeId fromString(String integrationId) {
-        return new EdgeId(UUID.fromString(integrationId));
+    public static EdgeId fromString(String edgeId) {
+        return new EdgeId(UUID.fromString(edgeId));
     }
 
     @ApiModelProperty(position = 2, required = true, value = "string", example = "EDGE", allowableValues = "EDGE")

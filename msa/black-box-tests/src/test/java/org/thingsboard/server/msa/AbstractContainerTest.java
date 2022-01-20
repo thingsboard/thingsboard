@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.cassandra.cql3.Json;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -68,6 +69,7 @@ public abstract class AbstractContainerTest {
     protected static final String WSS_URL = "wss://localhost";
     protected static String TB_TOKEN;
     protected static RestClient restClient;
+    protected JsonParser jsonParser = new JsonParser();
 
     @BeforeClass
     public static void before() throws Exception {

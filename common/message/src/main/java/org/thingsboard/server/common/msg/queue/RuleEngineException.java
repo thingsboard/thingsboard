@@ -16,13 +16,18 @@
 package org.thingsboard.server.common.msg.queue;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 
 @Slf4j
 public class RuleEngineException extends Exception {
+    @Getter
+    private long ts;
+
     public RuleEngineException(String message) {
         super(message != null ? message : "Unknown");
+        ts = System.currentTimeMillis();
     }
 
     public String toJsonString() {

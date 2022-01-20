@@ -17,7 +17,7 @@ package org.thingsboard.server.transport.lwm2m;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.io.IOUtils;
-import org.eclipse.californium.core.network.config.NetworkConfig;
+import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.leshan.client.object.Security;
 import org.junit.After;
 import org.junit.Assert;
@@ -174,7 +174,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
 
     public void basicTestConnectionObserveTelemetry(Security security,
                                                     LwM2MClientCredential credentials,
-                                                    NetworkConfig coapConfig,
+                                                    Configuration coapConfig,
                                                     String endpoint) throws Exception {
         createDeviceProfile(TRANSPORT_CONFIGURATION);
         Device device = createDevice(credentials);
@@ -259,7 +259,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         this.resources = resources;
     }
 
-    public void createNewClient(Security security, NetworkConfig coapConfig, boolean isRpc, String endpoint) throws Exception {
+    public void createNewClient(Security security, Configuration coapConfig, boolean isRpc, String endpoint) throws Exception {
         clientDestroy();
         client = new LwM2MTestClient(this.executor, endpoint);
         int clientPort = SocketUtils.findAvailableTcpPort();
