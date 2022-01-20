@@ -96,8 +96,7 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
             }
         });
         ruleEngineStats.getTenantExceptions().forEach((tenantId, e) -> {
-            TsKvEntry tsKv = new BasicTsKvEntry(e.getTs(), new JsonDataEntry("ruleEngineException",
-                    JacksonUtil.toString(JacksonUtil.newObjectNode().put("message", e.getMessage()))));
+            TsKvEntry tsKv = new BasicTsKvEntry(e.getTs(), new JsonDataEntry("ruleEngineException", e.toJsonString()));
             try {
                 tsService.saveAndNotifyInternal(tenantId, getServiceAssetId(tenantId, queueName), Collections.singletonList(tsKv), CALLBACK);
             } catch (DataValidationException e2) {

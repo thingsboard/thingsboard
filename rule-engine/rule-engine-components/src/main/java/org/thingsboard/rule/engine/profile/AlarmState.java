@@ -51,7 +51,7 @@ import java.util.function.BiFunction;
 @Slf4j
 class AlarmState {
 
-    public static final String ERROR_MSG = "Failed to process alarm state for Device [%s]: %s";
+    public static final String ERROR_MSG = "Failed to process alarm rule for Device [%s]: %s";
     private final ProfileState deviceProfile;
     private final EntityId originator;
     private DeviceProfileAlarm alarmDefinition;

@@ -265,7 +265,7 @@ class AlarmRuleState {
         var longValue = getLongValue(keyValue);
         if (longValue == null) {
             String sourceAttribute = dynamicValue.getSourceAttribute();
-            throw new NumericParseException(String.format("could not parse attribute [%s: %s] from source!", sourceAttribute, getStrValue(keyValue)));
+            throw new NumericParseException(String.format("Could not convert attribute '%s' with value '%s' to numeric value!", sourceAttribute, getStrValue(keyValue)));
         }
         return longValue;
     }
