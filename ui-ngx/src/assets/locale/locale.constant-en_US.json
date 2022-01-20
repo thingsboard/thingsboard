@@ -1891,7 +1891,9 @@
         "has-error": "Has error",
         "entity-id": "Entity Id",
         "entity-type": "Entity type",
-        "clear-filter": "Clear Filter"
+        "clear-filter": "Clear Filter",
+        "clear-request-title": "Clear all events",
+        "clear-request-text": "Are you sure you want to clear all events?"
     },
     "extension": {
         "extensions": "Extensions",

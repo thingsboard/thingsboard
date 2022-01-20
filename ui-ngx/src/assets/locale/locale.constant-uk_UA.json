@@ -1211,7 +1211,9 @@
         "messages-processed": "Повідомлення опрацьовані",
         "errors-occurred": "Виникли помилки",
         "all-events": "Всі",
-        "entity-type": "Тип сутності"
+        "entity-type": "Тип сутності",
+        "clear-request-title": "Видалити всі події",
+        "clear-request-text": "Ви впевнені, що хочете видалити всі події?"
     },
     "extension": {
         "extensions": "Розширення",
