@@ -56,18 +56,6 @@ server:
     send_timeout: "${TB_SERVER_WS_SEND_TIMEOUT:5000}"
     # recommended timeout >= 30 seconds. Platform will attempt to send 'ping' request 3 times within the timeout
     ping_timeout: "${TB_SERVER_WS_PING_TIMEOUT:30000}"
-    limits:
-      # Limit the amount of sessions and subscriptions available on each server. Put values to zero to disable particular limitation
-      max_sessions_per_tenant: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SESSIONS_PER_TENANT:0}"
-      max_sessions_per_customer: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SESSIONS_PER_CUSTOMER:0}"
-      max_sessions_per_regular_user: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SESSIONS_PER_REGULAR_USER:0}"
-      max_sessions_per_public_user: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SESSIONS_PER_PUBLIC_USER:0}"
-      max_queue_per_ws_session: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_QUEUE_PER_WS_SESSION:500}"
-      max_subscriptions_per_tenant: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SUBSCRIPTIONS_PER_TENANT:0}"
-      max_subscriptions_per_customer: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SUBSCRIPTIONS_PER_CUSTOMER:0}"
-      max_subscriptions_per_regular_user: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SUBSCRIPTIONS_PER_REGULAR_USER:0}"
-      max_subscriptions_per_public_user: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_SUBSCRIPTIONS_PER_PUBLIC_USER:0}"
-      max_updates_per_session: "${TB_SERVER_WS_TENANT_RATE_LIMITS_MAX_UPDATES_PER_SESSION:300:1,3000:60}"
     dynamic_page_link:
       refresh_interval: "${TB_SERVER_WS_DYNAMIC_PAGE_LINK_REFRESH_INTERVAL_SEC:60}"
       refresh_pool_size: "${TB_SERVER_WS_DYNAMIC_PAGE_LINK_REFRESH_POOL_SIZE:1}"
@@ -76,13 +64,6 @@ server:
     max_entities_per_data_subscription: "${TB_SERVER_WS_MAX_ENTITIES_PER_DATA_SUBSCRIPTION:10000}"
     max_entities_per_alarm_subscription: "${TB_SERVER_WS_MAX_ENTITIES_PER_ALARM_SUBSCRIPTION:10000}"
   rest:
-    limits:
-      tenant:
-        enabled: "${TB_SERVER_REST_LIMITS_TENANT_ENABLED:false}"
-        configuration: "${TB_SERVER_REST_LIMITS_TENANT_CONFIGURATION:100:1,2000:60}"
-      customer:
-        enabled: "${TB_SERVER_REST_LIMITS_CUSTOMER_ENABLED:false}"
-        configuration: "${TB_SERVER_REST_LIMITS_CUSTOMER_CONFIGURATION:50:1,1000:60}"
     server_side_rpc:
       # Minimum value of the server side RPC timeout. May override value provided in the REST API call.
       # Since 2.5 migration to queues, the RPC delay depends on the size of the pending messages in the queue,
@@ -255,8 +236,6 @@ cassandra:
     # log one of cassandra queries with specified frequency (0 - logging is disabled)
     print_queries_freq: "${CASSANDRA_QUERY_PRINT_FREQ:0}"
     tenant_rate_limits:
-      enabled: "${CASSANDRA_QUERY_TENANT_RATE_LIMITS_ENABLED:false}"
-      configuration: "${CASSANDRA_QUERY_TENANT_RATE_LIMITS_CONFIGURATION:1000:1,30000:60}"
       print_tenant_names: "${CASSANDRA_QUERY_TENANT_RATE_LIMITS_PRINT_TENANT_NAMES:false}"
 
 # SQL configuration parameters

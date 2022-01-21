@@ -15,14 +15,14 @@
  */
 package org.thingsboard.server.config;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.GenericFilterBean;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
@@ -36,6 +36,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -55,35 +56,36 @@ public class RateLimitProcessingFilter extends GenericFilterBean {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         SecurityUser user = getCurrentUser();
         if (user != null && !user.isSystemAdmin()) {
-            var profileConfiguration = tenantProfileCache.get(user.getTenantId()).getDefaultTenantProfileConfiguration();
-            if (profileConfiguration != null) {
-                if (user.isTenantAdmin() && StringUtils.isNotEmpty(profileConfiguration.getTenantServerRestLimitsConfiguration())) {
-                    TbRateLimits rateLimits = perTenantLimits.get(user.getTenantId());
-                    if (rateLimits == null || !rateLimits.getConfiguration().equals(profileConfiguration.getTenantServerRestLimitsConfiguration())) {
-                        // fixme: or maybe handle component lifecycle event ?
-                        rateLimits = new TbRateLimits(profileConfiguration.getTenantServerRestLimitsConfiguration());
-                        perTenantLimits.put(user.getTenantId(), rateLimits);
-                    }
-
-                    if (!rateLimits.tryConsume()) {
-                        errorResponseHandler.handle(new TbRateLimitsException(EntityType.TENANT), (HttpServletResponse) response);
-                        return;
-                    }
-                } else if (user.isCustomerUser() && StringUtils.isNotEmpty(profileConfiguration.getCustomerServerRestLimitsConfiguration())) {
-                    TbRateLimits rateLimits = perCustomerLimits.get(user.getCustomerId());
-                    if (rateLimits == null || !rateLimits.getConfiguration().equals(profileConfiguration.getCustomerServerRestLimitsConfiguration())) {
-                        rateLimits = new TbRateLimits(profileConfiguration.getCustomerServerRestLimitsConfiguration());
-                        perCustomerLimits.put(user.getCustomerId(), rateLimits);
-                    }
-
-                    if (!rateLimits.tryConsume()) {
-                        errorResponseHandler.handle(new TbRateLimitsException(EntityType.CUSTOMER), (HttpServletResponse) response);
-                        return;
-                    }
+            var profileConfiguration = tenantProfileCache.get(user.getTenantId()).getDefaultProfileConfiguration();
+            if (!checkRateLimits(user.getTenantId(), profileConfiguration.getTenantServerRestLimitsConfiguration(), perTenantLimits, response)) {
+                return;
+            }
+            if (user.isCustomerUser()) {
+                if (!checkRateLimits(user.getCustomerId(), profileConfiguration.getCustomerServerRestLimitsConfiguration(), perCustomerLimits, response)) {
+                    return;
                 }
             }
         }
         chain.doFilter(request, response);
+    }
+
+    private <I extends EntityId> boolean checkRateLimits(I ownerId, String rateLimitConfig, Map<I, TbRateLimits> rateLimitsMap, ServletResponse response) {
+        if (StringUtils.isNotEmpty(rateLimitConfig)) {
+            TbRateLimits rateLimits = rateLimitsMap.get(ownerId);
+            if (rateLimits == null || !rateLimits.getConfiguration().equals(rateLimitConfig)) {
+                rateLimits = new TbRateLimits(rateLimitConfig);
+                rateLimitsMap.put(ownerId, rateLimits);
+            }
+
+            if (!rateLimits.tryConsume()) {
+                errorResponseHandler.handle(new TbRateLimitsException(ownerId.getEntityType()), (HttpServletResponse) response);
+                return false;
+            }
+        } else {
+            rateLimitsMap.remove(ownerId);
+        }
+
+        return true;
     }
 
     protected SecurityUser getCurrentUser() {

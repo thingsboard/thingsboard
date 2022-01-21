@@ -38,7 +38,6 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
-import org.thingsboard.server.service.telemetry.DefaultTelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.SessionEvent;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketMsgEndpoint;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
@@ -138,8 +137,9 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
             if (!checkLimits(session, sessionRef)) {
                 return;
             }
-            var tenantProfileConfiguration = tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultTenantProfileConfiguration();
-            internalSessionMap.put(internalSessionId, new SessionMetaData(session, sessionRef, tenantProfileConfiguration.getWsMsgQueueLimitPerSession()));
+            var tenantProfileConfiguration = tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultProfileConfiguration();
+            internalSessionMap.put(internalSessionId, new SessionMetaData(session, sessionRef, tenantProfileConfiguration.getWsMsgQueueLimitPerSession() > 0 ?
+                    tenantProfileConfiguration.getWsMsgQueueLimitPerSession() : 500));
 
             externalSessionMap.put(externalSessionId, internalSessionId);
             processInWebSocketService(sessionRef, SessionEvent.onEstablished());
@@ -300,9 +300,8 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
         if (internalId != null) {
             SessionMetaData sessionMd = internalSessionMap.get(internalId);
             if (sessionMd != null) {
-                var tenantProfileConfiguration = tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultTenantProfileConfiguration();
+                var tenantProfileConfiguration = tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultProfileConfiguration();
                 if (StringUtils.isNotEmpty(tenantProfileConfiguration.getWsUpdatesPerSessionRateLimit())) {
-                    // fixme: is this ok not to update rate limits config if it was change in profile?
                     TbRateLimits rateLimits = perSessionUpdateLimits.computeIfAbsent(sessionRef.getSessionId(), sid -> new TbRateLimits(tenantProfileConfiguration.getWsUpdatesPerSessionRateLimit()));
                     if (!rateLimits.tryConsume()) {
                         if (blacklistedSessions.putIfAbsent(externalId, sessionRef) == null) {
@@ -315,6 +314,8 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
                         log.debug("[{}][{}][{}] Session is no longer blacklisted.", sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), externalId);
                         blacklistedSessions.remove(externalId);
                     }
+                } else {
+                    perSessionUpdateLimits.remove(sessionRef.getSessionId());
                 }
                 sessionMd.sendMsg(msg);
             } else {
@@ -360,8 +361,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
 
     private boolean checkLimits(WebSocketSession session, TelemetryWebSocketSessionRef sessionRef) throws Exception {
         var tenantProfileConfiguration =
-                tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultTenantProfileConfiguration();
-
+                tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultProfileConfiguration();
         if (tenantProfileConfiguration == null) {
             return true;
         }
@@ -428,7 +428,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
     }
 
     private void cleanupLimits(WebSocketSession session, TelemetryWebSocketSessionRef sessionRef) {
-        var tenantProfileConfiguration = tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultTenantProfileConfiguration();
+        var tenantProfileConfiguration = tenantProfileCache.get(sessionRef.getSecurityCtx().getTenantId()).getDefaultProfileConfiguration();
 
         String sessionId = session.getId();
         perSessionUpdateLimits.remove(sessionRef.getSessionId());

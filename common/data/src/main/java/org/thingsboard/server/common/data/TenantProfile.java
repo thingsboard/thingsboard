@@ -130,6 +130,11 @@ public class TenantProfile extends SearchTextBased<TenantProfileId> implements H
                 .map(profileConfiguration -> (DefaultTenantProfileConfiguration) profileConfiguration);
     }
 
+    @JsonIgnore
+    public DefaultTenantProfileConfiguration getDefaultProfileConfiguration() {
+        return getProfileConfiguration().orElse(null);
+    }
+
     public TenantProfileData createDefaultTenantProfileData() {
         TenantProfileData tpd = new TenantProfileData();
         tpd.setConfiguration(new DefaultTenantProfileConfiguration());
@@ -144,11 +149,6 @@ public class TenantProfile extends SearchTextBased<TenantProfileId> implements H
         } catch (JsonProcessingException e) {
             log.warn("Can't serialize tenant profile data: ", e);
         }
-    }
-
-    @JsonIgnore
-    public DefaultTenantProfileConfiguration getDefaultTenantProfileConfiguration() {
-        return getProfileConfiguration().orElse(null);
     }
 
 }

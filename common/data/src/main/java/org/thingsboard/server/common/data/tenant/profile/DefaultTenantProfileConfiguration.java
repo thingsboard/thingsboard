@@ -46,6 +46,16 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private String transportDeviceTelemetryMsgRateLimit;
     private String transportDeviceTelemetryDataPointsRateLimit;
 
+    private long maxTransportMessages;
+    private long maxTransportDataPoints;
+    private long maxREExecutions;
+    private long maxJSExecutions;
+    private long maxDPStorageDays;
+    private int maxRuleNodeExecutionsPerMessage;
+    private long maxEmails;
+    private long maxSms;
+    private long maxCreatedAlarms;
+
     private String tenantServerRestLimitsConfiguration;
     private String customerServerRestLimitsConfiguration;
 
@@ -61,16 +71,6 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private String wsUpdatesPerSessionRateLimit;
 
     private String cassandraQueryTenantRateLimitsConfiguration;
-
-    private long maxTransportMessages;
-    private long maxTransportDataPoints;
-    private long maxREExecutions;
-    private long maxJSExecutions;
-    private long maxDPStorageDays;
-    private int maxRuleNodeExecutionsPerMessage;
-    private long maxEmails;
-    private long maxSms;
-    private long maxCreatedAlarms;
 
     private int defaultStorageTtlDays;
     private int alarmsTtlDays;

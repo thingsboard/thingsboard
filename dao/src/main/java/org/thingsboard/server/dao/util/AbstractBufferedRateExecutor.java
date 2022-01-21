@@ -116,7 +116,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
         F result = wrap(task, settableFuture);
 
         boolean perTenantLimitReached = false;
-        var tenantProfileConfiguration = tenantProfileCache.get(task.getTenantId()).getDefaultTenantProfileConfiguration();
+        var tenantProfileConfiguration = tenantProfileCache.get(task.getTenantId()).getDefaultProfileConfiguration();
         if (StringUtils.isNotEmpty(tenantProfileConfiguration.getCassandraQueryTenantRateLimitsConfiguration())) {
             if (task.getTenantId() == null) {
                 log.info("Invalid task received: {}", task);
@@ -131,6 +131,8 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
                     perTenantLimitReached = true;
                 }
             }
+        } else if (!TenantId.SYS_TENANT_ID.equals(task.getTenantId())) {
+            perTenantLimits.remove(task.getTenantId());
         }
 
         if (!perTenantLimitReached) {
