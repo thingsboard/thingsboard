@@ -329,7 +329,7 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testGettingTenantAddItToCache() {
+    public void testGettingTenantAddingItToCache() {
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
         Tenant savedTenant = tenantService.saveTenant(tenant);

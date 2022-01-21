@@ -75,14 +75,16 @@ public class BaseRelationService implements RelationService {
 
     @Override
     public ListenableFuture<Boolean> checkRelationAsync(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
-        log.trace("Executing checkRelation [{}][{}][{}][{}]", from, to, relationType, typeGroup);
+        log.trace("Executing checkRelationAsync [{}][{}][{}][{}]", from, to, relationType, typeGroup);
         validate(from, to, relationType, typeGroup);
         return relationDao.checkRelationAsync(tenantId, from, to, relationType, typeGroup);
     }
 
     @Override
     public Boolean checkRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
-        return null;
+        log.trace("Executing checkRelation [{}][{}][{}][{}]", from, to, relationType, typeGroup);
+        validate(from, to, relationType, typeGroup);
+        return relationDao.checkRelation(tenantId, from, to, relationType, typeGroup);
     }
 
     @Cacheable(cacheNames = RELATIONS_CACHE, key = "{#from, #to, #relationType, #typeGroup}")
