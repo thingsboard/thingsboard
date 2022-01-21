@@ -51,22 +51,21 @@ export interface DefaultTenantProfileConfiguration {
   maxSms: number;
   maxCreatedAlarms: number;
 
-  rateLimitsTenantConfiguration: string;
-  rateLimitsCustomerConfiguration: string;
+  tenantServerRestLimitsConfiguration: string;
+  customerServerRestLimitsConfiguration: string;
 
-  wsLimitMaxSessionsPerTenant: number;
-  wsLimitMaxSessionsPerCustomer: number;
-  wsLimitMaxSessionsPerRegularUser: number;
-  wsLimitMaxSessionsPerPublicUser: number;
-  wsLimitQueuePerWsSession: number;
-  wsLimitMaxSubscriptionsPerTenant: number;
-  wsLimitMaxSubscriptionsPerCustomer: number;
-  wsLimitMaxSubscriptionsPerRegularUser: number;
-  wsLimitMaxSubscriptionsPerPublicUser: number;
-  wsLimitUpdatesPerSession: string;
+  maxWsSessionsPerTenant: number;
+  maxWsSessionsPerCustomer: number;
+  maxWsSessionsPerRegularUser: number;
+  maxWsSessionsPerPublicUser: number;
+  wsMsgQueueLimitPerSession: number;
+  maxWsSubscriptionsPerTenant: number;
+  maxWsSubscriptionsPerCustomer: number;
+  maxWsSubscriptionsPerRegularUser: number;
+  maxWsSubscriptionsPerPublicUser: number;
+  wsUpdatesPerSessionRateLimit: string;
 
-  cassandraTenantLimitsConfiguration: string;
-  printTenantNames: boolean;
+  cassandraQueryTenantRateLimitsConfiguration: string;
 
   defaultStorageTtlDays: number;
   alarmsTtlDays: number;
@@ -102,26 +101,22 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           maxEmails: 0,
           maxSms: 0,
           maxCreatedAlarms: 0,
+          tenantServerRestLimitsConfiguration: '',
+          customerServerRestLimitsConfiguration: '',
+          maxWsSessionsPerTenant: 0,
+          maxWsSessionsPerCustomer: 0,
+          maxWsSessionsPerRegularUser: 0,
+          maxWsSessionsPerPublicUser: 0,
+          wsMsgQueueLimitPerSession: 0,
+          maxWsSubscriptionsPerTenant: 0,
+          maxWsSubscriptionsPerCustomer: 0,
+          maxWsSubscriptionsPerRegularUser: 0,
+          maxWsSubscriptionsPerPublicUser: 0,
+          wsUpdatesPerSessionRateLimit: '',
+          cassandraQueryTenantRateLimitsConfiguration: '',
           defaultStorageTtlDays: 0,
           alarmsTtlDays: 0,
           rpcTtlDays: 0,
-
-          rateLimitsTenantConfiguration: '',
-          rateLimitsCustomerConfiguration: '',
-
-          wsLimitMaxSessionsPerTenant: 0,
-          wsLimitMaxSessionsPerCustomer: 0,
-          wsLimitMaxSessionsPerRegularUser: 0,
-          wsLimitMaxSessionsPerPublicUser: 0,
-          wsLimitQueuePerWsSession: 500,
-          wsLimitMaxSubscriptionsPerTenant: 0,
-          wsLimitMaxSubscriptionsPerCustomer: 0,
-          wsLimitMaxSubscriptionsPerRegularUser: 0,
-          wsLimitMaxSubscriptionsPerPublicUser: 0,
-          wsLimitUpdatesPerSession: '' ,
-
-          cassandraTenantLimitsConfiguration: '',
-          printTenantNames: false
         };
         configuration = {...defaultConfiguration, type: TenantProfileType.DEFAULT};
         break;

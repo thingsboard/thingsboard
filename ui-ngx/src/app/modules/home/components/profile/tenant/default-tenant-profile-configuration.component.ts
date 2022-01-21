@@ -80,22 +80,19 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       defaultStorageTtlDays: [null, [Validators.required, Validators.min(0)]],
       alarmsTtlDays: [null, [Validators.required, Validators.min(0)]],
       rpcTtlDays: [null, [Validators.required, Validators.min(0)]],
-
-      rateLimitsTenantConfiguration: [null, [Validators.pattern(this.rateLimitsPattern)]],
-      rateLimitsCustomerConfiguration: [null, [Validators.pattern(this.rateLimitsPattern)]],
-
-      wsLimitMaxSessionsPerTenant: [null, [Validators.min(0)]],
-      wsLimitMaxSessionsPerCustomer: [null, [Validators.min(0)]],
-      wsLimitMaxSessionsPerPublicUser: [null, [Validators.min(0)]],
-      wsLimitQueuePerWsSession: [null, [Validators.min(0)]],
-      wsLimitMaxSubscriptionsPerTenant: [null, [Validators.min(0)]],
-      wsLimitMaxSubscriptionsPerCustomer: [null, [Validators.min(0)]],
-      wsLimitMaxSubscriptionsPerRegularUser: [null, [Validators.min(0)]],
-      wsLimitMaxSubscriptionsPerPublicUser: [null, [Validators.min(0)]],
-      wsLimitUpdatesPerSession: [null, [Validators.pattern(this.rateLimitsPattern)]],
-
-      cassandraTenantLimitsConfiguration: [null, [Validators.pattern(this.rateLimitsPattern)]],
-      printTenantNames: [null, []]
+      tenantServerRestLimitsConfiguration: [null, [Validators.pattern(this.rateLimitsPattern)]],
+      customerServerRestLimitsConfiguration: [null, [Validators.pattern(this.rateLimitsPattern)]],
+      maxWsSessionsPerTenant: [null, [Validators.min(0)]],
+      maxWsSessionsPerCustomer: [null, [Validators.min(0)]],
+      maxWsSessionsPerRegularUser: [null, [Validators.min(0)]],
+      maxWsSessionsPerPublicUser: [null, [Validators.min(0)]],
+      wsMsgQueueLimitPerSession: [null, [Validators.min(0)]],
+      maxWsSubscriptionsPerTenant: [null, [Validators.min(0)]],
+      maxWsSubscriptionsPerCustomer: [null, [Validators.min(0)]],
+      maxWsSubscriptionsPerRegularUser: [null, [Validators.min(0)]],
+      maxWsSubscriptionsPerPublicUser: [null, [Validators.min(0)]],
+      wsUpdatesPerSessionRateLimit: [null, [Validators.pattern(this.rateLimitsPattern)]],
+      cassandraQueryTenantRateLimitsConfiguration: [null, [Validators.pattern(this.rateLimitsPattern)]]
     });
     this.defaultTenantProfileConfigurationFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
