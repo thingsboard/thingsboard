@@ -304,7 +304,15 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         Assert.assertEquals(clientResponse.toString(), serverResponse.getBody());
     }
 
-        private void checkAttribute(boolean client, String expectedValue) throws Exception{
+    @Test
+    public void deviceCreationAfterDeleted() throws Exception {
+        restClient.getRestTemplate().delete(HTTPS_URL + "/api/device/" + this.createdDevice.getId());
+        Optional<Device> deletedDevice = restClient.getDeviceById(this.createdDevice.getId());
+        Assert.assertTrue(deletedDevice.isEmpty());
+        this.createdDevice = createDeviceThroughGateway(mqttClient, gatewayDevice);
+    }
+
+    private void checkAttribute(boolean client, String expectedValue) throws Exception {
         JsonObject gatewayAttributesRequest = new JsonObject();
         int messageId = new Random().nextInt(100);
         gatewayAttributesRequest.addProperty("id", messageId);
