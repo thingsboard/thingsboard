@@ -411,8 +411,7 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
                     if (asset.getTenantId() == null) {
                         throw new DataValidationException("Asset should be assigned to tenant!");
                     } else {
-                        Tenant tenant = tenantService.findTenantById(asset.getTenantId());
-                        if (tenant == null) {
+                        if (!tenantService.exists(asset.getTenantId())) {
                             throw new DataValidationException("Asset is referencing to non-existent tenant!");
                         }
                     }

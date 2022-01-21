@@ -375,8 +375,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                     if (deviceProfile.getTenantId() == null) {
                         throw new DataValidationException("Device profile should be assigned to tenant!");
                     } else {
-                        Tenant tenant = tenantService.findTenantById(deviceProfile.getTenantId());
-                        if (tenant == null) {
+                        if (!tenantService.exists(deviceProfile.getTenantId())) {
                             throw new DataValidationException("Device profile is referencing to non-existent tenant!");
                         }
                     }

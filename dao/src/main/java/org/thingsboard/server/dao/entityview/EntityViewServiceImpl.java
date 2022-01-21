@@ -446,8 +446,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
                     if (entityView.getTenantId() == null) {
                         throw new DataValidationException("Entity view should be assigned to tenant!");
                     } else {
-                        Tenant tenant = tenantService.findTenantById(entityView.getTenantId());
-                        if (tenant == null) {
+                        if (!tenantService.exists(entityView.getTenantId())) {
                             throw new DataValidationException("Entity view is referencing to non-existent tenant!");
                         }
                     }

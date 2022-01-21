@@ -413,8 +413,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
                     if (edge.getTenantId() == null) {
                         throw new DataValidationException("Edge should be assigned to tenant!");
                     } else {
-                        Tenant tenant = tenantService.findTenantById(edge.getTenantId());
-                        if (tenant == null) {
+                        if (!tenantService.exists(edge.getTenantId())) {
                             throw new DataValidationException("Edge is referencing to non-existent tenant!");
                         }
                     }

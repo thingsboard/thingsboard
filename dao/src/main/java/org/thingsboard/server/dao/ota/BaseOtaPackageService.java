@@ -357,9 +357,7 @@ public class BaseOtaPackageService implements OtaPackageService {
         if (otaPackageInfo.getTenantId() == null) {
             throw new DataValidationException("OtaPackage should be assigned to tenant!");
         } else {
-            Tenant tenant = tenantService.findTenantById(otaPackageInfo.getTenantId());
-            // TODO: 12.01.22 Instead of finding and checking for null need to create and use tenantService.exists()
-            if (tenant == null) {
+            if (!tenantService.exists(otaPackageInfo.getTenantId())) {
                 throw new DataValidationException("OtaPackage is referencing to non-existent tenant!");
             }
         }

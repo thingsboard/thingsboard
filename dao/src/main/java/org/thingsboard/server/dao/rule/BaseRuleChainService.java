@@ -726,8 +726,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     if (ruleChain.getTenantId() == null || ruleChain.getTenantId().isNullUid()) {
                         throw new DataValidationException("Rule chain should be assigned to tenant!");
                     }
-                    Tenant tenant = tenantService.findTenantById(ruleChain.getTenantId());
-                    if (tenant == null) {
+                    if (!tenantService.exists(ruleChain.getTenantId())) {
                         throw new DataValidationException("Rule chain is referencing to non-existent tenant!");
                     }
                     if (ruleChain.isRoot() && RuleChainType.CORE.equals(ruleChain.getType())) {

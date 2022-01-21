@@ -308,8 +308,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
                     if (dashboard.getTenantId() == null) {
                         throw new DataValidationException("Dashboard should be assigned to tenant!");
                     } else {
-                        Tenant tenant = tenantService.findTenantById(dashboard.getTenantId());
-                        if (tenant == null) {
+                        if (!tenantService.exists(dashboard.getTenantId())) {
                             throw new DataValidationException("Dashboard is referencing to non-existent tenant!");
                         }
                     }

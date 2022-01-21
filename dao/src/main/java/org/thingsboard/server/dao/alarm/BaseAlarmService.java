@@ -430,8 +430,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                     if (alarm.getTenantId() == null) {
                         throw new DataValidationException("Alarm should be assigned to tenant!");
                     } else {
-                        Tenant tenant = tenantService.findTenantById(alarm.getTenantId());
-                        if (tenant == null) {
+                        if (!tenantService.exists(alarm.getTenantId())) {
                             throw new DataValidationException("Alarm is referencing to non-existent tenant!");
                         }
                     }

@@ -210,8 +210,7 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
                     if (customer.getTenantId() == null) {
                         throw new DataValidationException("Customer should be assigned to tenant!");
                     } else {
-                        Tenant tenant = tenantService.findTenantById(customer.getTenantId());
-                        if (tenant == null) {
+                        if (!tenantService.exists(customer.getTenantId())) {
                             throw new DataValidationException("Customer is referencing to non-existent tenant!");
                         }
                     }

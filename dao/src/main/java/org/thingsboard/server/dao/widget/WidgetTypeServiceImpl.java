@@ -138,8 +138,7 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
                         widgetTypeDetails.setTenantId(new TenantId(ModelConstants.NULL_UUID));
                     }
                     if (!widgetTypeDetails.getTenantId().getId().equals(ModelConstants.NULL_UUID)) {
-                        Tenant tenant = tenantService.findTenantById(widgetTypeDetails.getTenantId());
-                        if (tenant == null) {
+                        if (!tenantService.exists(widgetTypeDetails.getTenantId())) {
                             throw new DataValidationException("Widget type is referencing to non-existent tenant!");
                         }
                     }

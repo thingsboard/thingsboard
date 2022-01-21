@@ -183,8 +183,7 @@ public class BaseResourceService implements ResourceService {
                 resource.setTenantId(new TenantId(ModelConstants.NULL_UUID));
             }
             if (!resource.getTenantId().getId().equals(ModelConstants.NULL_UUID)) {
-                Tenant tenant = tenantService.findTenantById(resource.getTenantId());
-                if (tenant == null) {
+                if (!tenantService.exists(resource.getTenantId())) {
                     throw new DataValidationException("Resource is referencing to non-existent tenant!");
                 }
             }

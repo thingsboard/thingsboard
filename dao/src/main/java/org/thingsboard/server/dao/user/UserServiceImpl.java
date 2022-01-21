@@ -448,9 +448,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
                                 + " already present in database!");
                     }
                     if (!tenantId.getId().equals(ModelConstants.NULL_UUID)) {
-                        Tenant tenant = tenantService.findTenantById(user.getTenantId());
-                        // TODO: 12.01.22 Instead of finding and checking for null need to create and use tenantService.exists()
-                        if (tenant == null) {
+                        if (!tenantService.exists(user.getTenantId())) {
                             throw new DataValidationException("User is referencing to non-existent tenant!");
                         }
                     }

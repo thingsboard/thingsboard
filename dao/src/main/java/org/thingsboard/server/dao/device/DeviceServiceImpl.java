@@ -731,8 +731,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                     if (device.getTenantId() == null) {
                         throw new DataValidationException("Device should be assigned to tenant!");
                     } else {
-                        Tenant tenant = tenantService.findTenantById(device.getTenantId());
-                        if (tenant == null) {
+                        if (!tenantService.exists(device.getTenantId())) {
                             throw new DataValidationException("Device is referencing to non-existent tenant!");
                         }
                     }
