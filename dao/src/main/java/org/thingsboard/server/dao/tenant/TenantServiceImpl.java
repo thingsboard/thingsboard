@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.transaction.annotation.Transactional;
@@ -107,7 +108,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
     private RpcService rpcService;
 
     @Override
-    @Cacheable(cacheNames = TENANTS_CACHE, key = "#tenantId")
+    @Cacheable(cacheNames = TENANTS_CACHE, key = "{#tenantId, 'TENANT'}")
     public Tenant findTenantById(TenantId tenantId) {
         log.trace("Executing findTenantById [{}]", tenantId);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
@@ -130,7 +131,10 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
 
     @Override
     @Transactional
-    @CacheEvict(cacheNames = TENANTS_CACHE, key = "#tenant.id", condition = "#tenant.id!=null")
+    @Caching(evict = {
+            @CacheEvict(cacheNames = TENANTS_CACHE, key = "{#tenant.id, 'TENANT'}", condition = "#tenant.id!=null"),
+            @CacheEvict(cacheNames = TENANTS_CACHE, key = "{#tenant.id, 'EXISTS'}", condition = "#tenant.id!=null")
+    })
     public Tenant saveTenant(Tenant tenant) {
         log.trace("Executing saveTenant [{}]", tenant);
         tenant.setRegion(DEFAULT_TENANT_REGION);
@@ -149,7 +153,10 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
 
     @Override
     @Transactional(timeout = 60 * 60)
-    @CacheEvict(cacheNames = TENANTS_CACHE, key = "#tenantId")
+    @Caching(evict = {
+            @CacheEvict(cacheNames = TENANTS_CACHE, key = "{#tenantId, 'TENANT'}"),
+            @CacheEvict(cacheNames = TENANTS_CACHE, key = "{#tenantId, 'EXISTS'}")
+    })
     public void deleteTenant(TenantId tenantId) {
         log.trace("Executing deleteTenant [{}]", tenantId);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
@@ -196,6 +203,11 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
         log.trace("Executing findTenantsIds");
         Validator.validatePageLink(pageLink);
         return tenantDao.findTenantsIds(pageLink);
+    }
+
+    @Cacheable(cacheNames = TENANTS_CACHE, key = "{#tenantId, 'EXISTS'}")
+    public boolean exists(TenantId tenantId) {
+        return tenantDao.existsById(tenantId, tenantId.getId());
     }
 
     private DataValidator<Tenant> tenantValidator =

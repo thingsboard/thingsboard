@@ -31,7 +31,9 @@ public interface TenantService {
     ListenableFuture<Tenant> findTenantByIdAsync(TenantId callerId, TenantId tenantId);
     
     Tenant saveTenant(Tenant tenant);
-    
+
+    boolean exists(TenantId tenantId);
+
     void deleteTenant(TenantId tenantId);
     
     PageData<Tenant> findTenants(PageLink pageLink);
