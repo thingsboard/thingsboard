@@ -510,6 +510,16 @@ public class DefaultTransportService implements TransportService {
     public void process(TransportToDeviceActorMsg msg, TransportServiceCallback<Void> callback) {
         TransportProtos.SessionInfoProto sessionInfo = msg.getSessionInfo();
         if (checkLimits(sessionInfo, msg, callback)) {
+            SessionMetaData sessionMetaData = sessions.get(toSessionId(sessionInfo));
+            if (sessionMetaData != null) {
+                if (msg.hasSubscribeToAttributes()) {
+                    sessionMetaData.setSubscribedToAttributes(true);
+                }
+                if (msg.hasSubscribeToRPC()) {
+                    sessionMetaData.setSubscribedToRPC(true);
+                }
+            }
+
             reportActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, msg, callback);
         }
