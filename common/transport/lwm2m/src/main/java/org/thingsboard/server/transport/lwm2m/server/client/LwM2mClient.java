@@ -20,6 +20,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.link.LinkParamValue;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mMultipleResource;
@@ -430,9 +431,9 @@ public class LwM2mClient implements Serializable {
     static private Set<ContentFormat> clientSupportContentFormat(Registration registration) {
         Set<ContentFormat> contentFormats = new HashSet<>();
         contentFormats.add(ContentFormat.DEFAULT);
-        String code = Arrays.stream(registration.getObjectLinks()).filter(link -> link.getUriReference().equals("/")).findFirst().get().getLinkParams().get("ct").getUnquoted();
+        LinkParamValue code = Arrays.stream(registration.getObjectLinks()).filter(link -> link.getUriReference().equals("/")).findFirst().get().getLinkParams().get("ct");
         if (code != null) {
-            Set<ContentFormat> codes = Stream.of(code.replaceAll("\"", "").split(" ", -1))
+            Set<ContentFormat> codes = Stream.of(code.getUnquoted().replaceAll("\"", "").split(" ", -1))
                     .map(String::trim)
                     .map(Integer::parseInt)
                     .map(ContentFormat::fromCode)
