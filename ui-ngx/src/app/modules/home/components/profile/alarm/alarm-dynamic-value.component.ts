@@ -14,8 +14,9 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
+  AbstractControl,
   ControlValueAccessor,
   FormBuilder,
   FormGroup,
@@ -43,12 +44,14 @@ export class AlarmDynamicValue implements ControlValueAccessor, OnInit{
   public dynamicValueSourceTypeTranslations = dynamicValueSourceTypeTranslationMap;
   private propagateChange = (v: any) => { };
 
+  @Input() helpId: string;
+
   constructor(private fb: FormBuilder) {
   }
 
   ngOnInit(): void {
     this.dynamicValue = this.fb.group({
-      sourceType: [null],
+      sourceType: [null, []],
       sourceAttribute: [null]
     })
 
