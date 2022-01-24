@@ -382,7 +382,8 @@ public class EntityRelationController extends BaseController {
 
     private void checkCanCreateRelation(EntityId entityId) throws ThingsboardException {
         SecurityUser currentUser = getCurrentUser();
-        if (!(currentUser.isTenantAdmin() && currentUser.getTenantId().equals(entityId))) {
+        var isTenantAdminAndRelateToSelf = currentUser.isTenantAdmin() && currentUser.getTenantId().equals(entityId);
+        if (!isTenantAdminAndRelateToSelf) {
             checkEntityId(entityId, Operation.WRITE);
         }
     }
