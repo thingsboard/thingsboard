@@ -1069,7 +1069,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     @Override
     public void onDeviceDeleted(DeviceId deviceId) {
-        doDisconnect();
         context.onAuthFailure(address);
         ChannelHandlerContext ctx = deviceSessionCtx.getChannel();
         ctx.close();
