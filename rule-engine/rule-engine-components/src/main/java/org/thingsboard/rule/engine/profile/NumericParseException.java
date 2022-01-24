@@ -13,24 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.query;
+package org.thingsboard.rule.engine.profile;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-
-import java.util.List;
-
-@Data
-@EqualsAndHashCode(callSuper = true)
-@ToString(callSuper = true)
-public class EdgeSearchQueryFilter extends EntitySearchQueryFilter {
-
-    @Override
-    public EntityFilterType getType() {
-        return EntityFilterType.EDGE_SEARCH_QUERY;
+public class NumericParseException extends RuntimeException {
+    public NumericParseException(String message) {
+        super(message);
     }
-
-    private List<String> edgeTypes;
-
 }

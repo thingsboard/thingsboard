@@ -17,19 +17,18 @@ package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.elements.auth.RawPublicKeyIdentity;
 import org.eclipse.californium.elements.util.CertPathUtil;
 import org.eclipse.californium.scandium.dtls.AlertMessage;
 import org.eclipse.californium.scandium.dtls.CertificateMessage;
 import org.eclipse.californium.scandium.dtls.CertificateType;
 import org.eclipse.californium.scandium.dtls.CertificateVerificationResult;
 import org.eclipse.californium.scandium.dtls.ConnectionId;
-import org.eclipse.californium.scandium.dtls.DTLSSession;
 import org.eclipse.californium.scandium.dtls.HandshakeException;
 import org.eclipse.californium.scandium.dtls.HandshakeResultHandler;
 import org.eclipse.californium.scandium.dtls.x509.NewAdvancedCertificateVerifier;
-import org.eclipse.californium.scandium.dtls.x509.StaticCertificateVerifier;
+import org.eclipse.californium.scandium.dtls.x509.StaticNewAdvancedCertificateVerifier;
 import org.eclipse.californium.scandium.util.ServerNames;
-import org.eclipse.leshan.server.security.SecurityChecker;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
@@ -39,14 +38,12 @@ import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.queue.util.TbLwM2mBootstrapTransportComponent;
 import org.thingsboard.server.transport.lwm2m.bootstrap.store.LwM2MBootstrapSecurityStore;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
-import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
-import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MDtlsSessionStore;
-import org.thingsboard.server.transport.lwm2m.server.store.TbMainSecurityStore;
 
 import javax.annotation.PostConstruct;
 import javax.security.auth.x500.X500Principal;
+import java.net.InetSocketAddress;
 import java.security.PublicKey;
 import java.security.cert.CertPath;
 import java.security.cert.CertificateEncodingException;
@@ -65,14 +62,13 @@ public class TbLwM2MDtlsBootstrapCertificateVerifier implements NewAdvancedCerti
     private final LwM2MTransportServerConfig config;
     private final LwM2MBootstrapSecurityStore bsSecurityStore;
 
-    @SuppressWarnings("deprecation")
-    private StaticCertificateVerifier staticCertificateVerifier;
+    private StaticNewAdvancedCertificateVerifier staticCertificateVerifier;
 
     @Value("${transport.lwm2m.server.security.skip_validity_check_for_client_cert:false}")
     private boolean skipValidityCheckForClientCert;
 
     @Override
-    public List<CertificateType> getSupportedCertificateType() {
+    public List<CertificateType> getSupportedCertificateTypes() {
         return Arrays.asList(CertificateType.X_509, CertificateType.RAW_PUBLIC_KEY);
     }
 
@@ -83,17 +79,17 @@ public class TbLwM2MDtlsBootstrapCertificateVerifier implements NewAdvancedCerti
             /* by default trust all */
             if (config.getTrustSslCredentials() != null) {
                 X509Certificate[] trustedCertificates = config.getTrustSslCredentials().getTrustedCertificates();
-                staticCertificateVerifier = new StaticCertificateVerifier(trustedCertificates);
+                staticCertificateVerifier = new StaticNewAdvancedCertificateVerifier(trustedCertificates, new RawPublicKeyIdentity[0], null);
             }
         } catch (Exception e) {
-            log.info("Failed to initialize the certificate verifier", e);
+            log.warn("ailed to initialize the LwM2M certificate verifier", e);
         }
     }
 
     @Override
-    public CertificateVerificationResult verifyCertificate(ConnectionId cid, ServerNames serverName, Boolean clientUsage,
-                                                           boolean truncateCertificatePath, CertificateMessage message,
-                                                           DTLSSession session) {
+    public CertificateVerificationResult verifyCertificate(ConnectionId cid, ServerNames serverName, InetSocketAddress remotePeer,
+                                                           boolean clientUsage, boolean verifySubject, boolean truncateCertificatePath,
+                                                           CertificateMessage message) {
         CertPath certChain = message.getCertificateChain();
         if (certChain == null) {
             //We trust all RPK on this layer, and use TbLwM2MAuthorizer
@@ -111,14 +107,14 @@ public class TbLwM2MDtlsBootstrapCertificateVerifier implements NewAdvancedCerti
                         TbLwM2MSecurityInfo securityInfo = null;
                         // verify if trust
                         if (staticCertificateVerifier != null) {
-                            try {
-                                staticCertificateVerifier.verifyCertificate(message, session);
+                            HandshakeException exception = staticCertificateVerifier.verifyCertificate(cid, serverName, remotePeer, clientUsage, verifySubject, truncateCertificatePath, message).getException();
+                            if (exception == null) {
                                 String endpoint = config.getTrustSslCredentials().getValueFromSubjectNameByKey(cert.getSubjectX500Principal().getName(), "CN");
                                 if (StringUtils.isNotEmpty(endpoint)) {
                                     securityInfo = bsSecurityStore.getX509ByEndpoint(endpoint);
                                 }
-                            } catch (HandshakeException e) {
-                                log.trace("Certificate validation failed.", e);
+                            } else {
+                                log.trace("Certificate validation failed.", exception);
                             }
                         }
                         // if not trust or cert trust securityInfo == null
@@ -143,8 +139,7 @@ public class TbLwM2MDtlsBootstrapCertificateVerifier implements NewAdvancedCerti
                     }
                 }
                 if (!x509CredentialsFound) {
-                    AlertMessage alert = new AlertMessage(AlertMessage.AlertLevel.FATAL, AlertMessage.AlertDescription.INTERNAL_ERROR,
-                            session.getPeer());
+                    AlertMessage alert = new AlertMessage(AlertMessage.AlertLevel.FATAL, AlertMessage.AlertDescription.INTERNAL_ERROR);
                     throw new HandshakeException("x509 verification not enabled!", alert);
                 }
                 return new CertificateVerificationResult(cid, certChain, null);

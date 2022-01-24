@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.lwm2m.bootstrap;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.scandium.config.DtlsConfig;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.leshan.server.bootstrap.BootstrapSessionManager;
 import org.eclipse.leshan.server.californium.bootstrap.LeshanBootstrapServer;
@@ -31,12 +32,14 @@ import org.thingsboard.server.transport.lwm2m.bootstrap.store.LwM2MBootstrapSecu
 import org.thingsboard.server.transport.lwm2m.bootstrap.store.LwM2MInMemoryBootstrapConfigStore;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportBootstrapConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
-import org.thingsboard.server.transport.lwm2m.server.DefaultLwM2mTransportService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.security.cert.X509Certificate;
 
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CURVES_ONLY;
+import static org.thingsboard.server.transport.lwm2m.server.DefaultLwM2mTransportService.PSK_CIPHER_SUITES;
 import static org.thingsboard.server.transport.lwm2m.server.DefaultLwM2mTransportService.RPK_OR_X509_CIPHER_SUITES;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MNetworkConfig.getCoapConfig;
 
@@ -45,7 +48,6 @@ import static org.thingsboard.server.transport.lwm2m.server.LwM2MNetworkConfig.g
 @TbLwM2mBootstrapTransportComponent
 @RequiredArgsConstructor
 public class LwM2MTransportBootstrapService {
-    private boolean pskMode = false;
 
     private final LwM2MTransportServerConfig serverConfig;
     private final LwM2MTransportBootstrapConfig bootstrapConfig;
@@ -80,12 +82,13 @@ public class LwM2MTransportBootstrapService {
 
 
         /* Create and Set DTLS Config */
-        DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
-        dtlsConfig.setRecommendedSupportedGroupsOnly(serverConfig.isRecommendedSupportedGroups());
-        dtlsConfig.setRecommendedCipherSuitesOnly(serverConfig.isRecommendedCiphers());
-        dtlsConfig.setSupportedCipherSuites(this.pskMode ? DefaultLwM2mTransportService.PSK_CIPHER_SUITES : DefaultLwM2mTransportService.RPK_OR_X509_CIPHER_SUITES);
-        /*  Create credentials */
-        this.setServerWithCredentials(builder, dtlsConfig);
+        DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder(getCoapConfig(bootstrapConfig.getPort(), bootstrapConfig.getSecurePort(), serverConfig));
+
+        dtlsConfig.set(DtlsConfig.DTLS_ROLE, DtlsConfig.DtlsRole.SERVER_ONLY);
+        dtlsConfig.set(DTLS_RECOMMENDED_CURVES_ONLY, serverConfig.isRecommendedSupportedGroups());
+        dtlsConfig.set(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, serverConfig.isRecommendedCiphers());
+
+        setServerWithCredentials(builder, dtlsConfig);
 
         /* Set DTLS Config */
         builder.setDtlsConfig(dtlsConfig);
@@ -110,13 +113,13 @@ public class LwM2MTransportBootstrapService {
             builder.setPublicKey(sslCredentials.getPublicKey());
             builder.setPrivateKey(sslCredentials.getPrivateKey());
             builder.setCertificateChain(sslCredentials.getCertificateChain());
-            dtlsConfig.setSupportedCipherSuites(RPK_OR_X509_CIPHER_SUITES);
             dtlsConfig.setAdvancedCertificateVerifier(certificateVerifier);
+            dtlsConfig.setAsList(DtlsConfig.DTLS_CIPHER_SUITES, RPK_OR_X509_CIPHER_SUITES);
         } else {
             /* by default trust all */
             builder.setTrustedCertificates(new X509Certificate[0]);
             log.info("Unable to load X509 files for BootStrapServer");
-            this.pskMode = true;
+            dtlsConfig.setAsList(DtlsConfig.DTLS_CIPHER_SUITES, PSK_CIPHER_SUITES);
         }
     }
 }

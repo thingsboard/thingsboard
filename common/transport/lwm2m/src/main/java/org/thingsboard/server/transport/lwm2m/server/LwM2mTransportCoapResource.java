@@ -56,7 +56,7 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
         if (relation == null || relation.isCanceled()) {
             return; // because request did not try to establish a relation
         }
-        if (CoAP.ResponseCode.isSuccess(response.getCode())) {
+        if (response.getCode().isSuccess()) {
 
             if (!relation.isEstablished()) {
                 relation.setEstablished();

@@ -51,6 +51,7 @@ import java.util.function.BiFunction;
 @Slf4j
 class AlarmState {
 
+    public static final String ERROR_MSG = "Failed to process alarm rule for Device [%s]: %s";
     private final ProfileState deviceProfile;
     private final EntityId originator;
     private DeviceProfileAlarm alarmDefinition;
@@ -75,12 +76,20 @@ class AlarmState {
         lastMsgMetaData = msg.getMetaData();
         lastMsgQueueName = msg.getQueueName();
         this.dataSnapshot = data;
-        return createOrClearAlarms(ctx, msg, data, update, AlarmRuleState::eval);
+        try {
+            return createOrClearAlarms(ctx, msg, data, update, AlarmRuleState::eval);
+        } catch (NumericParseException e) {
+            throw new RuntimeException(String.format(ERROR_MSG, originator.getId().toString(), e.getMessage()));
+        }
     }
 
     public boolean process(TbContext ctx, long ts) throws ExecutionException, InterruptedException {
         initCurrentAlarm(ctx);
-        return createOrClearAlarms(ctx, null, ts, null, (alarmState, tsParam) -> alarmState.eval(tsParam, dataSnapshot));
+        try {
+            return createOrClearAlarms(ctx, null, ts, null, (alarmState, tsParam) -> alarmState.eval(tsParam, dataSnapshot));
+        } catch (NumericParseException e) {
+            throw new RuntimeException(String.format(ERROR_MSG, originator.getId().toString(), e.getMessage()));
+        }
     }
 
     public <T> boolean createOrClearAlarms(TbContext ctx, TbMsg msg, T data, SnapshotUpdate update, BiFunction<AlarmRuleState, T, AlarmEvalResult> evalFunction) {

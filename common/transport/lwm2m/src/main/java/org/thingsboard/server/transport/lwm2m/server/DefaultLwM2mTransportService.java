@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.lwm2m.server;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.scandium.config.DtlsConfig;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.californium.scandium.dtls.cipher.CipherSuite;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mDecoder;
@@ -40,6 +41,8 @@ import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 import javax.annotation.PreDestroy;
 import java.security.cert.X509Certificate;
 
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CURVES_ONLY;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CBC_SHA256;
@@ -121,11 +124,12 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
 
 
         /* Create DTLS Config */
-        DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
+        DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder(getCoapConfig(config.getPort(), config.getSecurePort(), config));
 
-        dtlsConfig.setServerOnly(true);
-        dtlsConfig.setRecommendedSupportedGroupsOnly(config.isRecommendedSupportedGroups());
-        dtlsConfig.setRecommendedCipherSuitesOnly(config.isRecommendedCiphers());
+        dtlsConfig.set(DtlsConfig.DTLS_ROLE, DtlsConfig.DtlsRole.SERVER_ONLY);
+        dtlsConfig.set(DTLS_RECOMMENDED_CURVES_ONLY, config.isRecommendedSupportedGroups());
+        dtlsConfig.set(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, config.isRecommendedCiphers());
+
         /*  Create credentials */
         this.setServerWithCredentials(builder, dtlsConfig);
 
@@ -144,12 +148,12 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
             builder.setCertificateChain(sslCredentials.getCertificateChain());
             dtlsConfig.setAdvancedCertificateVerifier(certificateVerifier);
             builder.setAuthorizer(authorizer);
-            dtlsConfig.setSupportedCipherSuites(RPK_OR_X509_CIPHER_SUITES);
+            dtlsConfig.setAsList(DtlsConfig.DTLS_CIPHER_SUITES, RPK_OR_X509_CIPHER_SUITES);
         } else {
             /* by default trust all */
             builder.setTrustedCertificates(new X509Certificate[0]);
             log.info("Unable to load X509 files for LWM2MServer");
-            dtlsConfig.setSupportedCipherSuites(PSK_CIPHER_SUITES);
+            dtlsConfig.setAsList(DtlsConfig.DTLS_CIPHER_SUITES, PSK_CIPHER_SUITES);
         }
     }
 
