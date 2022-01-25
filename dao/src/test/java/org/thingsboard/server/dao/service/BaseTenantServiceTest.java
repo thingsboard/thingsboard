@@ -393,18 +393,12 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
 
         Mockito.reset(tenantDao);
 
-        cachedTenant = Objects.requireNonNull(tenantCache, "Cache manager is null!").get(List.of(savedTenant.getId(), "EXISTS"));
+        cachedTenant = Objects.requireNonNull(tenantCache, "Cache manager is null!").get(List.of(savedTenant.getId(), "TENANT"));
         Assert.assertNull("Updating a Tenant doesn't evict the cache!", cachedTenant);
 
         verify(tenantDao, Mockito.times(0)).findById(any(), any());
         tenantService.findTenantById(savedTenant.getId());
         verify(tenantDao, Mockito.times(1)).findById(eq(savedTenant.getId()), eq(savedTenant.getId().getId()));
-
-        Mockito.reset(tenantDao);
-
-        verify(tenantDao, Mockito.times(0)).existsById(any(), any());
-        tenantService.tenantExists(savedTenant.getId());
-        verify(tenantDao, Mockito.times(1)).existsById(eq(savedTenant.getId()), eq(savedTenant.getId().getId()));
 
         tenantService.deleteTenant(savedTenant.getId());
     }
