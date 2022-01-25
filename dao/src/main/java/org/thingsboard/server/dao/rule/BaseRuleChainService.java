@@ -30,7 +30,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -726,7 +725,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     if (ruleChain.getTenantId() == null || ruleChain.getTenantId().isNullUid()) {
                         throw new DataValidationException("Rule chain should be assigned to tenant!");
                     }
-                    if (!tenantService.exists(ruleChain.getTenantId())) {
+                    if (!tenantService.tenantExists(ruleChain.getTenantId())) {
                         throw new DataValidationException("Rule chain is referencing to non-existent tenant!");
                     }
                     if (ruleChain.isRoot() && RuleChainType.CORE.equals(ruleChain.getType())) {

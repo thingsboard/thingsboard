@@ -45,7 +45,6 @@ import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.OtaPackage;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceTypeConfiguration;
@@ -375,7 +374,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                     if (deviceProfile.getTenantId() == null) {
                         throw new DataValidationException("Device profile should be assigned to tenant!");
                     } else {
-                        if (!tenantService.exists(deviceProfile.getTenantId())) {
+                        if (!tenantService.tenantExists(deviceProfile.getTenantId())) {
                             throw new DataValidationException("Device profile is referencing to non-existent tenant!");
                         }
                     }

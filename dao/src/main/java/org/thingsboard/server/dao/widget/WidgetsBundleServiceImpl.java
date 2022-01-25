@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -162,7 +161,7 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
                         widgetsBundle.setTenantId(new TenantId(ModelConstants.NULL_UUID));
                     }
                     if (!widgetsBundle.getTenantId().getId().equals(ModelConstants.NULL_UUID)) {
-                        if (!tenantService.exists(widgetsBundle.getTenantId())) {
+                        if (!tenantService.tenantExists(widgetsBundle.getTenantId())) {
                             throw new DataValidationException("Widgets bundle is referencing to non-existent tenant!");
                         }
                     }

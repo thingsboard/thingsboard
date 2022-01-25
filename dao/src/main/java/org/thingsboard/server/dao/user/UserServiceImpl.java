@@ -31,7 +31,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -448,7 +447,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
                                 + " already present in database!");
                     }
                     if (!tenantId.getId().equals(ModelConstants.NULL_UUID)) {
-                        if (!tenantService.exists(user.getTenantId())) {
+                        if (!tenantService.tenantExists(user.getTenantId())) {
                             throw new DataValidationException("User is referencing to non-existent tenant!");
                         }
                     }

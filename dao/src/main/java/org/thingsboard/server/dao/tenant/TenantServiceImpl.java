@@ -131,10 +131,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
 
     @Override
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(cacheNames = TENANTS_CACHE, key = "{#tenant.id, 'TENANT'}", condition = "#tenant.id!=null"),
-            @CacheEvict(cacheNames = TENANTS_CACHE, key = "{#tenant.id, 'EXISTS'}", condition = "#tenant.id!=null")
-    })
+    @CacheEvict(cacheNames = TENANTS_CACHE, key = "{#tenant.id, 'TENANT'}", condition = "#tenant.id!=null")
     public Tenant saveTenant(Tenant tenant) {
         log.trace("Executing saveTenant [{}]", tenant);
         tenant.setRegion(DEFAULT_TENANT_REGION);
@@ -206,7 +203,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
     }
 
     @Cacheable(cacheNames = TENANTS_CACHE, key = "{#tenantId, 'EXISTS'}")
-    public boolean exists(TenantId tenantId) {
+    public boolean tenantExists(TenantId tenantId) {
         return tenantDao.existsById(tenantId, tenantId.getId());
     }
 

@@ -34,7 +34,6 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -61,7 +60,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.CacheConstants.ENTITY_VIEW_CACHE;
@@ -446,7 +444,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
                     if (entityView.getTenantId() == null) {
                         throw new DataValidationException("Entity view should be assigned to tenant!");
                     } else {
-                        if (!tenantService.exists(entityView.getTenantId())) {
+                        if (!tenantService.tenantExists(entityView.getTenantId())) {
                             throw new DataValidationException("Entity view is referencing to non-existent tenant!");
                         }
                     }

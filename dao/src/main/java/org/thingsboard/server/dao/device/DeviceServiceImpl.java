@@ -43,7 +43,6 @@ import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.OtaPackage;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.device.data.CoapDeviceTransportConfiguration;
@@ -91,7 +90,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_CACHE;
@@ -731,7 +729,7 @@ public class DeviceServiceImpl extends AbstractEntityService implements DeviceSe
                     if (device.getTenantId() == null) {
                         throw new DataValidationException("Device should be assigned to tenant!");
                     } else {
-                        if (!tenantService.exists(device.getTenantId())) {
+                        if (!tenantService.tenantExists(device.getTenantId())) {
                             throw new DataValidationException("Device is referencing to non-existent tenant!");
                         }
                     }

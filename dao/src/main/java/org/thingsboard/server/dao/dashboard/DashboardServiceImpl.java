@@ -26,7 +26,6 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -308,7 +307,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
                     if (dashboard.getTenantId() == null) {
                         throw new DataValidationException("Dashboard should be assigned to tenant!");
                     } else {
-                        if (!tenantService.exists(dashboard.getTenantId())) {
+                        if (!tenantService.tenantExists(dashboard.getTenantId())) {
                             throw new DataValidationException("Dashboard is referencing to non-existent tenant!");
                         }
                     }

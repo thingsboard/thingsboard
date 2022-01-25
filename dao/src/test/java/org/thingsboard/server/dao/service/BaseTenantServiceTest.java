@@ -363,7 +363,7 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         tenantCache.clear();
 
         verify(tenantDao, Mockito.times(0)).existsById(any(), any());
-        tenantService.exists(savedTenant.getId());
+        tenantService.tenantExists(savedTenant.getId());
         verify(tenantDao, Mockito.times(1)).existsById(eq(savedTenant.getId()), eq(savedTenant.getId().getId()));
 
         Cache.ValueWrapper cachedExists =
@@ -371,7 +371,7 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         Assert.assertNotNull("Getting an existing Tenant doesn't add it to the cache!", cachedExists);
 
         for (int i = 0; i < 100; i++) {
-            tenantService.exists(savedTenant.getId());
+            tenantService.tenantExists(savedTenant.getId());
         }
         verify(tenantDao, Mockito.times(1)).existsById(eq(savedTenant.getId()), eq(savedTenant.getId().getId()));
 
@@ -403,7 +403,7 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         Mockito.reset(tenantDao);
 
         verify(tenantDao, Mockito.times(0)).existsById(any(), any());
-        tenantService.exists(savedTenant.getId());
+        tenantService.tenantExists(savedTenant.getId());
         verify(tenantDao, Mockito.times(1)).existsById(eq(savedTenant.getId()), eq(savedTenant.getId().getId()));
 
         tenantService.deleteTenant(savedTenant.getId());
@@ -415,7 +415,7 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         tenant.setTitle("My tenant");
         Tenant savedTenant = tenantService.saveTenant(tenant);
 
-        tenantService.exists(savedTenant.getId());
+        tenantService.tenantExists(savedTenant.getId());
 
         Cache.ValueWrapper cachedTenant =
                 Objects.requireNonNull(tenantCache, "Cache manager is null!").get(List.of(savedTenant.getId(), "TENANT"));

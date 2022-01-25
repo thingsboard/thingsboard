@@ -33,7 +33,6 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetSearchQuery;
@@ -62,7 +61,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.CacheConstants.ASSET_CACHE;
@@ -411,7 +409,7 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
                     if (asset.getTenantId() == null) {
                         throw new DataValidationException("Asset should be assigned to tenant!");
                     } else {
-                        if (!tenantService.exists(asset.getTenantId())) {
+                        if (!tenantService.tenantExists(asset.getTenantId())) {
                             throw new DataValidationException("Asset is referencing to non-existent tenant!");
                         }
                     }

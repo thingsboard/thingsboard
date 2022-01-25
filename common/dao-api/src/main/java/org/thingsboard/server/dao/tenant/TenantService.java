@@ -32,7 +32,7 @@ public interface TenantService {
     
     Tenant saveTenant(Tenant tenant);
 
-    boolean exists(TenantId tenantId);
+    boolean tenantExists(TenantId tenantId);
 
     void deleteTenant(TenantId tenantId);
     

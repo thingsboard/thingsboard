@@ -27,7 +27,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
@@ -430,7 +429,7 @@ public class BaseAlarmService extends AbstractEntityService implements AlarmServ
                     if (alarm.getTenantId() == null) {
                         throw new DataValidationException("Alarm should be assigned to tenant!");
                     } else {
-                        if (!tenantService.exists(alarm.getTenantId())) {
+                        if (!tenantService.tenantExists(alarm.getTenantId())) {
                             throw new DataValidationException("Alarm is referencing to non-existent tenant!");
                         }
                     }

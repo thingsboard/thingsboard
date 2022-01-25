@@ -32,7 +32,6 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -357,7 +356,7 @@ public class BaseOtaPackageService implements OtaPackageService {
         if (otaPackageInfo.getTenantId() == null) {
             throw new DataValidationException("OtaPackage should be assigned to tenant!");
         } else {
-            if (!tenantService.exists(otaPackageInfo.getTenantId())) {
+            if (!tenantService.tenantExists(otaPackageInfo.getTenantId())) {
                 throw new DataValidationException("OtaPackage is referencing to non-existent tenant!");
             }
         }

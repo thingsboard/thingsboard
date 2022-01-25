@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -183,7 +182,7 @@ public class BaseResourceService implements ResourceService {
                 resource.setTenantId(new TenantId(ModelConstants.NULL_UUID));
             }
             if (!resource.getTenantId().getId().equals(ModelConstants.NULL_UUID)) {
-                if (!tenantService.exists(resource.getTenantId())) {
+                if (!tenantService.tenantExists(resource.getTenantId())) {
                     throw new DataValidationException("Resource is referencing to non-existent tenant!");
                 }
             }

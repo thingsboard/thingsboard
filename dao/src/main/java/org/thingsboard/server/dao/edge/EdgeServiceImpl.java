@@ -34,7 +34,6 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
@@ -413,7 +412,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
                     if (edge.getTenantId() == null) {
                         throw new DataValidationException("Edge should be assigned to tenant!");
                     } else {
-                        if (!tenantService.exists(edge.getTenantId())) {
+                        if (!tenantService.tenantExists(edge.getTenantId())) {
                             throw new DataValidationException("Edge is referencing to non-existent tenant!");
                         }
                     }
