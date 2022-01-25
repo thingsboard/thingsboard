@@ -29,6 +29,7 @@ import { DataSet, DatasourceType, widgetType } from '@shared/models/widget.model
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { isDefinedAndNotNull, isEmptyStr } from '@core/utils';
+import { EntityDataPageLink } from '@shared/models/query/query.models';
 
 const maxZoom = 4; // ?
 
@@ -88,6 +89,7 @@ export class ImageMap extends LeafletMap {
       let isUpdate = false;
       const imageUrlSubscriptionOptions: WidgetSubscriptionOptions = {
         datasources,
+        hasDataPageLink: true,
         useDashboardTimewindow: false,
         type: widgetType.latest,
         callbacks: {
@@ -97,7 +99,15 @@ export class ImageMap extends LeafletMap {
           }
         }
       };
-      this.ctx.subscriptionApi.createSubscription(imageUrlSubscriptionOptions, true).subscribe(() => { });
+      this.ctx.subscriptionApi.createSubscription(imageUrlSubscriptionOptions, true).subscribe((subscription) => {
+        const pageLink: EntityDataPageLink = {
+          page: 0,
+          pageSize: 1,
+          textSearch: null,
+          dynamic: true
+        };
+        subscription.subscribeAllForPaginatedData(pageLink, null);
+      });
       return this.imageFromAlias(result);
     }
 

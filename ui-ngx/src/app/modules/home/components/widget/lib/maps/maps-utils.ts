@@ -41,22 +41,6 @@ export function createTooltip(target: L.Layer,
     return popup;
 }
 
-export function disablePopup(target: L.Layer) {
-  if (target.isPopupOpen()) {
-    target.closePopup();
-  }
-  target.unbindPopup();
-  target.off('popupopen');
-}
-
-export function enablePopup(target: L.Layer, popup: L.Popup,
-                            settings: MarkerSettings | PolylineSettings | PolygonSettings, datasource: Datasource) {
-  target.bindPopup(popup);
-  target.on('popupopen', () => {
-    bindPopupActions(popup, settings, datasource);
-  });
-}
-
 export function bindPopupActions(popup: L.Popup, settings: MarkerSettings | PolylineSettings | PolygonSettings,
                                  datasource: Datasource) {
   const actions = popup.getElement().getElementsByClassName('tb-custom-action');

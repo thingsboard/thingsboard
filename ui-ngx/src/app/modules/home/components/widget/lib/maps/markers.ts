@@ -23,7 +23,7 @@ import {
   MarkerSettings,
   UnitedMapSettings
 } from './map-models';
-import { bindPopupActions, createTooltip, disablePopup, enablePopup, } from './maps-utils';
+import { bindPopupActions, createTooltip } from './maps-utils';
 import { aspectCache, fillPattern, parseWithTranslation, processPattern, safeExecute } from './common-maps-utils';
 import tinycolor from 'tinycolor2';
 import { isDefined, isDefinedAndNotNull } from '@core/utils';
@@ -37,7 +37,6 @@ export class Marker {
     tooltip: L.Popup;
     data: FormattedData;
     dataSources: FormattedData[];
-    isDragging = false;
 
   constructor(private map: LeafletMap, private location: L.LatLng, public settings: UnitedMapSettings,
               data?: FormattedData, dataSources?, onDragendListener?) {
@@ -65,30 +64,24 @@ export class Marker {
         }
 
         if (this.settings.markerClick) {
-            if (!this.isDragging) {
-                this.leafletMarker.on('click', (event: LeafletMouseEvent) => {
-                  for (const action in this.settings.markerClick) {
-                    if (typeof (this.settings.markerClick[action]) === 'function') {
-                      this.settings.markerClick[action](event.originalEvent, this.data.$datasource);
-                    }
-                  }
-                });
-            }
+            this.leafletMarker.on('click', (event: LeafletMouseEvent) => {
+              for (const action in this.settings.markerClick) {
+                if (typeof (this.settings.markerClick[action]) === 'function') {
+                  this.settings.markerClick[action](event.originalEvent, this.data.$datasource);
+                }
+              }
+            });
         }
 
         if (settings.draggableMarker && onDragendListener) {
+          this.leafletMarker.on('pm:dragstart', (e) => {
+            (this.leafletMarker.dragging as any)._draggable = { _moved: true };
+            (this.leafletMarker.dragging as any)._enabled = true;
+          });
           this.leafletMarker.on('pm:dragend', (e) => {
             onDragendListener(e, this.data);
-            this.isDragging = false;
-            if (settings.showTooltip && settings.showTooltipAction === 'click') {
-              enablePopup(this.leafletMarker, this.tooltip, settings, this.data.$datasource);
-            }
-          });
-          this.leafletMarker.on('pm:dragstart', (e) => {
-            this.isDragging = true;
-            if (settings.showTooltip && settings.showTooltipAction === 'click') {
-              disablePopup(this.leafletMarker);
-            }
+            delete (this.leafletMarker.dragging as any)._draggable;
+            delete (this.leafletMarker.dragging as any)._enabled;
           });
         }
     }
