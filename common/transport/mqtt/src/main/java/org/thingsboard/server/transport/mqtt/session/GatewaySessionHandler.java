@@ -178,6 +178,10 @@ public class GatewaySessionHandler {
         devices.forEach(this::deregisterSession);
     }
 
+    public void onDeviceDeleted(String deviceName) {
+        deregisterSession(deviceName);
+    }
+
     public String getNodeId() {
         return context.getNodeId();
     }
