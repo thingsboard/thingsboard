@@ -20,6 +20,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.link.LinkParamValue;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mMultipleResource;
@@ -108,7 +109,7 @@ public class LwM2mClient implements Serializable {
     @Getter
     private Long edrxCycle;
     @Getter
-    private Registration registration;
+    private transient Registration registration;
     @Getter
     @Setter
     private boolean asleep;
@@ -121,9 +122,9 @@ public class LwM2mClient implements Serializable {
     private boolean firstEdrxDownlink = true;
 
     @Getter
-    private Set<ContentFormat> clientSupportContentFormats;
+    private transient Set<ContentFormat> clientSupportContentFormats;
     @Getter
-    private ContentFormat defaultContentFormat;
+    private transient ContentFormat defaultContentFormat;
     @Getter
     private final AtomicInteger retryAttempts;
 
@@ -430,9 +431,9 @@ public class LwM2mClient implements Serializable {
     static private Set<ContentFormat> clientSupportContentFormat(Registration registration) {
         Set<ContentFormat> contentFormats = new HashSet<>();
         contentFormats.add(ContentFormat.DEFAULT);
-        String code = Arrays.stream(registration.getObjectLinks()).filter(link -> link.getUriReference().equals("/")).findFirst().get().getLinkParams().get("ct").getUnquoted();
-        if (code != null) {
-            Set<ContentFormat> codes = Stream.of(code.replaceAll("\"", "").split(" ", -1))
+        LinkParamValue ct = Arrays.stream(registration.getObjectLinks()).filter(link -> link.getUriReference().equals("/")).findFirst().get().getLinkParams().get("ct");
+        if (ct != null) {
+            Set<ContentFormat> codes = Stream.of(ct.getUnquoted().replaceAll("\"", "").split(" ", -1))
                     .map(String::trim)
                     .map(Integer::parseInt)
                     .map(ContentFormat::fromCode)

@@ -71,7 +71,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
 
     private LeshanServer server;
 
-    @AfterStartUp
+    @AfterStartUp(order = Integer.MAX_VALUE - 1)
     public void init() {
         this.server = getLhServer();
         /*
@@ -83,8 +83,8 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
          */
         LwM2mTransportCoapResource otaCoapResource = new LwM2mTransportCoapResource(otaPackageDataCache, FIRMWARE_UPDATE_COAP_RESOURCE);
         this.server.coap().getServer().add(otaCoapResource);
-        this.startLhServer();
         this.context.setServer(server);
+        this.startLhServer();
     }
 
     private void startLhServer() {
