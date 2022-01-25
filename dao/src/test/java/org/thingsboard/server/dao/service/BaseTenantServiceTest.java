@@ -360,6 +360,7 @@ public abstract class BaseTenantServiceTest extends AbstractServiceTest {
         Tenant savedTenant = tenantService.saveTenant(tenant);
 
         Mockito.reset(tenantDao);
+        tenantCache.clear();
 
         verify(tenantDao, Mockito.times(0)).existsById(any(), any());
         tenantService.exists(savedTenant.getId());
