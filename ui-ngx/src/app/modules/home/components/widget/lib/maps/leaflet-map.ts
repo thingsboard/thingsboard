@@ -89,6 +89,7 @@ export default abstract class LeafletMap {
     saveLocation: (e: FormattedData, values: {[key: string]: any}) => Observable<any>;
     saveMarkerLocation: (e: FormattedData, lat?: number, lng?: number) => Observable<any>;
     savePolygonLocation: (e: FormattedData, coordinates?: Array<any>) => Observable<any>;
+    translateService: TranslateService;
 
     protected constructor(public ctx: WidgetContext,
                           public $container: HTMLElement,
@@ -96,6 +97,7 @@ export default abstract class LeafletMap {
         this.options = options;
         this.editPolygons = options.showPolygon && options.editablePolygon;
         L.Icon.Default.imagePath = '/';
+        this.translateService = this.ctx.$injector.get(TranslateService);
     }
 
     public initSettings(options: MapSettings) {
@@ -171,6 +173,38 @@ export default abstract class LeafletMap {
         if (data !== null) {
           this.selectedEntity = data;
           this.toggleDrawMode(type);
+          let tooltipText;
+          let customTranslation;
+          switch (type) {
+            case 'tbMarker':
+              tooltipText = this.translateService.instant('widgets.maps.tooltips.placeMarker', {entityName: data.entityName});
+              // @ts-ignore
+              this.map.pm.Draw.tbMarker._hintMarker.setTooltipContent(tooltipText);
+              break;
+            case 'tbRectangle':
+              tooltipText = this.translateService.instant('widgets.maps.tooltips.firstVertex', {entityName: data.entityName});
+              // @ts-ignore
+              this.map.pm.Draw.tbRectangle._hintMarker.setTooltipContent(tooltipText);
+              customTranslation = {
+                tooltips: {
+                  finishRect: this.translateService.instant('widgets.maps.tooltips.finishRect', {entityName: data.entityName})
+                }
+              };
+              this.map.pm.setLang('en', customTranslation, 'en');
+              break;
+            case 'tbPolygon':
+              tooltipText = this.translateService.instant('widgets.maps.tooltips.firstVertex', {entityName: data.entityName});
+              // @ts-ignore
+              this.map.pm.Draw.tbPolygon._hintMarker.setTooltipContent(tooltipText);
+              customTranslation = {
+                tooltips: {
+                  continueLine: this.translateService.instant('widgets.maps.tooltips.continueLine', {entityName: data.entityName}),
+                  finishPoly: this.translateService.instant('widgets.maps.tooltips.finishPoly', {entityName: data.entityName})
+                }
+              };
+              this.map.pm.setLang('en', customTranslation);
+              break;
+          }
         } else {
           // @ts-ignore
           this.map.pm.Toolbar.toggleButton(type, false);
@@ -231,8 +265,7 @@ export default abstract class LeafletMap {
         });
       }
 
-      const translateService = this.ctx.$injector.get(TranslateService);
-      this.map.pm.setLang('en', translateService.instant('widgets.maps'), 'en');
+      this.map.pm.setLang('en', this.translateService.instant('widgets.maps'), 'en');
       if (!this.options.hideAllControlButton) {
         this.map.pm.addControls({
           position: 'topleft',
@@ -494,16 +527,72 @@ export default abstract class LeafletMap {
         }
         this.updateMarkers(formattedData, false);
         this.updateBoundsInternal();
-        if (this.options.draggableMarker && !this.options.hideDrawControlButton) {
-          const foundEntityWithoutLocation = formattedData.some(mData => !this.convertPosition(mData));
-          this.map.pm.Toolbar.setButtonDisabled('tbMarker', !foundEntityWithoutLocation);
-          this.datasources = formattedData;
-        }
-        if (this.editPolygons && !this.options.hideDrawControlButton) {
-          const foundEntityWithoutPolygon = formattedData.some(pData => !this.isValidPolygonPosition(pData));
-          this.map.pm.Toolbar.setButtonDisabled('tbPolygon', !foundEntityWithoutPolygon);
-          this.map.pm.Toolbar.setButtonDisabled('tbRectangle', !foundEntityWithoutPolygon);
-          this.datasources = formattedData;
+        if (this.options.draggableMarker || this.editPolygons) {
+          let foundEntityWithoutLocation = false;
+          let foundEntityWithLocation = false;
+          let foundEntityWithoutPolygon = false;
+          let foundEntityWithPolygon = false;
+
+          if (this.options.draggableMarker && !this.options.hideDrawControlButton && !this.options.hideAllControlButton) {
+            for (const mData of formattedData) {
+              const position = this.convertPosition(mData);
+              if (!position) {
+                foundEntityWithoutLocation = true;
+              } else if (!!position) {
+                foundEntityWithLocation = true;
+              }
+              if (foundEntityWithoutLocation && foundEntityWithLocation) {
+                break;
+              }
+            }
+            this.map.pm.Toolbar.setButtonDisabled('tbMarker', !foundEntityWithoutLocation);
+            this.datasources = formattedData;
+          }
+
+          if (this.editPolygons && !this.options.hideDrawControlButton && !this.options.hideAllControlButton) {
+            for (const pData of formattedData) {
+              const isValidPolygon = this.isValidPolygonPosition(pData);
+              if (!isValidPolygon) {
+                foundEntityWithoutPolygon = true;
+              } else if (isValidPolygon) {
+                foundEntityWithPolygon = true;
+              }
+              if (foundEntityWithoutPolygon && foundEntityWithPolygon) {
+                break;
+              }
+            }
+            this.map.pm.Toolbar.setButtonDisabled('tbPolygon', !foundEntityWithoutPolygon);
+            this.map.pm.Toolbar.setButtonDisabled('tbRectangle', !foundEntityWithoutPolygon);
+            this.datasources = formattedData;
+          }
+          if (!this.options.hideRemoveControlButton && !this.options.hideAllControlButton) {
+            const disabledButton = !foundEntityWithLocation && !foundEntityWithPolygon;
+            if (disabledButton && this.map.pm.globalRemovalModeEnabled()) {
+              this.map.pm.toggleGlobalRemovalMode();
+            }
+            this.map.pm.Toolbar.setButtonDisabled('removalMode', disabledButton);
+          }
+          if (!this.options.hideEditControlButton && !this.options.hideAllControlButton) {
+            const disabledButton = !foundEntityWithLocation && !foundEntityWithPolygon;
+            if (disabledButton) {
+              // @ts-ignore
+              this.map.pm.Toolbar.toggleButton('dragMode', false);
+            }
+            if (this.editPolygons && !foundEntityWithPolygon) {
+              // @ts-ignore
+              this.map.pm.Toolbar.toggleButton('editMode', false);
+              // @ts-ignore
+              this.map.pm.Toolbar.toggleButton('cutPolygon', false);
+              // @ts-ignore
+              this.map.pm.Toolbar.toggleButton('rotateMode', false);
+            }
+            this.map.pm.Toolbar.setButtonDisabled('dragMode', disabledButton);
+            if (this.editPolygons) {
+              this.map.pm.Toolbar.setButtonDisabled('editMode', !foundEntityWithPolygon);
+              this.map.pm.Toolbar.setButtonDisabled('cutPolygon', !foundEntityWithPolygon);
+              this.map.pm.Toolbar.setButtonDisabled('rotateMode', !foundEntityWithPolygon);
+            }
+          }
         }
       } else {
         this.updatePending = true;
