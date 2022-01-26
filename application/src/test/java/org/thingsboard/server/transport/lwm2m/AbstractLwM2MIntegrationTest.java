@@ -39,10 +39,6 @@ import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCr
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecBootstrapClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredential;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKBootstrapClientCredential;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCredential;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKBootstrapClientCredential;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCredential;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
@@ -95,7 +91,6 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClient
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_STARTED;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_SUCCESS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.BOTH;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
 
 @Slf4j
@@ -278,9 +273,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
             "  }\n" +
             "}";
 
-    protected final Lwm2mDeviceProfileTransportConfiguration LWM2M_TRANSPORT_CONFIGURATION_NO_SEC_WITH_ATTRIBUTES = JacksonUtil.fromString(TRANSPORT_CONFIGURATION, Lwm2mDeviceProfileTransportConfiguration.class);
-    protected final Lwm2mDeviceProfileTransportConfiguration LWM2M_TRANSPORT_CONFIGURATION_NO_SEC_WITHOUT_ATTRIBUTES = JacksonUtil.fromString(TRANSPORT_CONFIGURATION_NO_SEC_WITHOUT_ATTRIBUTES, Lwm2mDeviceProfileTransportConfiguration.class);
-    protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationLwm2mSuccess = new HashSet<>(Arrays.asList(ON_INIT, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
+     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationLwm2mSuccess = new HashSet<>(Arrays.asList(ON_INIT, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationBsSuccess = new HashSet<>(Arrays.asList(ON_INIT, ON_BOOTSTRAP_STARTED, ON_BOOTSTRAP_SUCCESS, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
     protected DeviceProfile deviceProfile;
     protected ScheduledExecutorService executor;
@@ -414,7 +407,6 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
                 doGet("/api/device/" + device.getId().getId().toString() + "/credentials", DeviceCredentials.class);
         Assert.assertEquals(device.getId(), deviceCredentials.getDeviceId());
         deviceCredentials.setCredentialsType(DeviceCredentialsType.LWM2M_CREDENTIALS);
-//        LwM2MDeviceCredentials credentials = getDeviceCredentials(clientCredentials, mode);
         deviceCredentials.setCredentialsValue(JacksonUtil.toString(credentials));
         doPost("/api/device/credentials", deviceCredentials).andExpect(status().isOk());
         return device;

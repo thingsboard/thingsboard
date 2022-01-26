@@ -30,12 +30,13 @@ import static org.eclipse.leshan.client.object.Security.rpk;
 import static org.eclipse.leshan.client.object.Security.rpkBootstrap;
 import static org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode.RPK;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.BOTH;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
 
 public class RpkLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTest {
 
     //Lwm2m only
     @Test
-    public void testWithRpkConnectLwm2mSuccessAndObserveTelemetry() throws Exception {
+    public void testWithRpkConnectLwm2mSuccess() throws Exception {
         String clientEndpoint = CLIENT_ENDPOINT_RPK;
         X509Certificate certificate = clientX509CertTrust;
         PrivateKey privateKey = clientPrivateKeyFromCertTrust;
@@ -47,7 +48,7 @@ public class RpkLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
                 certificate.getPublicKey().getEncoded(),
                 privateKey.getEncoded(),
                 serverX509Cert.getPublicKey().getEncoded());
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(RPK, BOTH));
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(RPK, NONE));
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, privateKey, certificate, RPK);
         this.basicTestConnection(securityBs,
                 deviceCredentials,

@@ -17,6 +17,10 @@ package org.thingsboard.server.transport.lwm2m.security;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
+import org.junit.Assert;
+import org.springframework.test.web.servlet.MvcResult;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
@@ -31,6 +35,8 @@ import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBo
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.PSKLwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.RPKLwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.X509LwM2MBootstrapServerCredential;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest;
 import org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType;
@@ -257,5 +263,21 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         bootstrapCredentials.setBootstrapServer(serverCredentials);
         bootstrapCredentials.setLwm2mServer(serverCredentials);
         return bootstrapCredentials;
+    }
+
+    protected MvcResult createDeviceWithMvcResult(LwM2MDeviceCredentials credentials, String endpoint) throws Exception {
+        Device device = new Device();
+        device.setName(endpoint);
+        device.setDeviceProfileId(deviceProfile.getId());
+        device.setTenantId(tenantId);
+        device = doPost("/api/device", device, Device.class);
+        Assert.assertNotNull(device);
+
+        DeviceCredentials deviceCredentials =
+                doGet("/api/device/" + device.getId().getId().toString() + "/credentials", DeviceCredentials.class);
+        Assert.assertEquals(device.getId(), deviceCredentials.getDeviceId());
+        deviceCredentials.setCredentialsType(DeviceCredentialsType.LWM2M_CREDENTIALS);
+        deviceCredentials.setCredentialsValue(JacksonUtil.toString(credentials));
+        return doPost("/api/device/credentials", deviceCredentials).andReturn();
     }
 }

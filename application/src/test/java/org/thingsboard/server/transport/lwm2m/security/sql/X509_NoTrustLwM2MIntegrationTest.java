@@ -30,12 +30,13 @@ import static org.eclipse.leshan.client.object.Security.x509;
 import static org.eclipse.leshan.client.object.Security.x509Bootstrap;
 import static org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode.X509;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.BOTH;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
 
 public class X509_NoTrustLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTest {
 
     //Lwm2m only
     @Test
-    public void testWithX509NoTrustConnectLwm2mSuccessAndObserveTelemetry() throws Exception {
+    public void testWithX509NoTrustConnectLwm2mSuccess() throws Exception {
         String clientEndpoint = CLIENT_ENDPOINT_X509_TRUST_NO;
         X509Certificate certificate = clientX509CertTrustNo;
         PrivateKey privateKey = clientPrivateKeyFromCertTrustNo;
@@ -47,7 +48,7 @@ public class X509_NoTrustLwM2MIntegrationTest extends AbstractSecurityLwM2MInteg
                 certificate.getEncoded(),
                 privateKey.getEncoded(),
                 serverX509Cert.getEncoded());
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(X509, BOTH));
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(X509, NONE));
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, privateKey, certificate, X509);
         this.basicTestConnection(security,
                 deviceCredentials,
