@@ -134,6 +134,7 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
   public actionCellButtonAction: PersistentTableWidgetActionDescriptor[] = [];
   public displayedColumns: string[];
   public hidePageSize = false;
+  hasData = false;
 
   constructor(protected store: Store<AppState>,
               private elementRef: ElementRef,
@@ -154,6 +155,7 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
     this.widgetConfig = this.ctx.widgetConfig;
     this.subscription = this.ctx.defaultSubscription;
     this.initializeConfig();
+    this.hasData = this.ctx.defaultSubscription.hasResolvedData;
     this.ctx.updateWidgetParams();
     if (this.displayPagination) {
       this.widgetResize$ = new ResizeObserver(() => {
