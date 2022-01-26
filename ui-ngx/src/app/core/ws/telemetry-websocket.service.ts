@@ -332,7 +332,7 @@ export class TelemetryWebsocketService implements TelemetryService {
   }
 
   private onClose(closeEvent: CloseEvent) {
-    if (closeEvent && closeEvent.code > 1001 && closeEvent.code !== 1006 && closeEvent.code !== 1012) {
+    if (closeEvent && closeEvent.code > 1001 && closeEvent.code !== 1006 && closeEvent.code !== 1012 && closeEvent.code !== 4500) {
       this.showWsError(closeEvent.code, closeEvent.reason);
     }
     this.isOpening = false;
