@@ -875,9 +875,6 @@ public class DeviceController extends BaseController {
 
             Device savedDevice = checkNotNull(deviceService.assignDeviceToEdge(getCurrentUser().getTenantId(), deviceId, edgeId));
 
-            tbClusterService.pushMsgToCore(new DeviceEdgeUpdateMsg(savedDevice.getTenantId(),
-                    savedDevice.getId(), edgeId), null);
-
             logEntityAction(deviceId, savedDevice,
                     savedDevice.getCustomerId(),
                     ActionType.ASSIGNED_TO_EDGE, null, strDeviceId, strEdgeId, edge.getName());
@@ -917,9 +914,6 @@ public class DeviceController extends BaseController {
             Device device = checkDeviceId(deviceId, Operation.READ);
 
             Device savedDevice = checkNotNull(deviceService.unassignDeviceFromEdge(getCurrentUser().getTenantId(), deviceId, edgeId));
-
-            tbClusterService.pushMsgToCore(new DeviceEdgeUpdateMsg(savedDevice.getTenantId(),
-                    savedDevice.getId(), null), null);
 
             logEntityAction(deviceId, device,
                     device.getCustomerId(),
