@@ -15,30 +15,74 @@
  */
 package org.thingsboard.server.transport.lwm2m.security.sql;
 
+import org.apache.commons.codec.binary.Base64;
 import org.eclipse.leshan.client.object.Security;
 import org.junit.Test;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCredential;
+import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.transport.lwm2m.security.AbstractSecurityLwM2MIntegrationTest;
 
-import org.apache.commons.codec.binary.Base64;;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
 
 import static org.eclipse.leshan.client.object.Security.rpk;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURE_COAP_CONFIG;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURE_URI;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SHORT_SERVER_ID;
+import static org.eclipse.leshan.client.object.Security.rpkBootstrap;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode.RPK;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.BOTH;
 
 public class RpkLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTest {
 
+    //Lwm2m only
     @Test
-    public void testConnectWithRPKAndObserveTelemetry() throws Exception {
-        RPKClientCredential rpkClientCredentials = new RPKClientCredential();
-        rpkClientCredentials.setEndpoint(CLIENT_ENDPOINT_RPK);
-        rpkClientCredentials.setKey(new String(Base64.encodeBase64(clientPublicKeyFromCertTrust.getEncoded())));
-        Security security = rpk(SECURE_URI,
-                SHORT_SERVER_ID,
-                clientPublicKeyFromCertTrust.getEncoded(),
-                clientPrivateKeyFromCertTrust.getEncoded(),
-                serverPublicKeyFromCert.getEncoded());
-        super.basicTestConnectionObserveTelemetry(security, rpkClientCredentials, SECURE_COAP_CONFIG, CLIENT_ENDPOINT_RPK);
+    public void testWithRpkConnectLwm2mSuccessAndObserveTelemetry() throws Exception {
+        String clientEndpoint = CLIENT_ENDPOINT_RPK;
+        X509Certificate certificate = clientX509CertTrust;
+        PrivateKey privateKey = clientPrivateKeyFromCertTrust;
+        RPKClientCredential clientCredentials = new RPKClientCredential();
+        clientCredentials.setEndpoint(clientEndpoint);
+        clientCredentials.setKey(Base64.encodeBase64String(certificate.getPublicKey().getEncoded()));
+        Security securityBs = rpk(SECURE_URI,
+                shortServerId,
+                certificate.getPublicKey().getEncoded(),
+                privateKey.getEncoded(),
+                serverX509Cert.getPublicKey().getEncoded());
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(RPK, BOTH));
+        LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, privateKey, certificate, RPK);
+        this.basicTestConnection(securityBs,
+                deviceCredentials,
+                COAP_CONFIG,
+                clientEndpoint,
+                transportConfiguration,
+                "await on client state (Rpk_Lwm2m)",
+                expectedStatusesRegistrationLwm2mSuccess,
+                false,
+                RPK);
+    }
+
+    // Bootstrap + Lwm2m
+    @Test
+    public void testWithRpkConnectBsSuccess_UpdateTwoSectionsBootstrapAndLm2m_ConnectLwm2mSuccess() throws Exception {
+        String clientEndpoint = CLIENT_ENDPOINT_RPK_BS;
+        X509Certificate certificate = clientX509CertTrust;
+        PrivateKey privateKey = clientPrivateKeyFromCertTrust;
+        RPKClientCredential clientCredentials = new RPKClientCredential();
+        clientCredentials.setEndpoint(clientEndpoint);
+        clientCredentials.setKey(Base64.encodeBase64String(certificate.getPublicKey().getEncoded()));
+        Security securityBs = rpkBootstrap(SECURE_URI_BS,
+                certificate.getPublicKey().getEncoded(),
+                privateKey.getEncoded(),
+                serverX509CertBs.getPublicKey().getEncoded());
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(RPK, BOTH));
+        LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, clientPrivateKeyFromCertTrust, certificate, RPK);
+        this.basicTestConnection(securityBs,
+                deviceCredentials,
+                COAP_CONFIG,
+                clientEndpoint,
+                transportConfiguration,
+                "await on client state (RpkBS two section)",
+                expectedStatusesRegistrationBsSuccess,
+                true,
+                RPK);
     }
 }

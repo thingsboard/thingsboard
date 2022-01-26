@@ -33,12 +33,12 @@ public class LwM2MNetworkConfig {
         coapConfig.set(CoapConfig.COAP_SECURE_PORT, serverSecurePort);
         /**
          Example:Property for large packet:
-         #NetworkConfig config = new NetworkConfig();
-         #config.setInt(CoapConfig.MAX_MESSAGE_SIZE,32);
-         #config.setInt(CoapConfig.PREFERRED_BLOCK_SIZE,32);
-         #config.setInt(CoapConfig.MAX_RESOURCE_BODY_SIZE,2048);
-         #config.setInt(CoapConfig.MAX_RETRANSMIT,3);
-         #config.setInt(CoapConfig.MAX_TRANSMIT_WAIT,120000);
+         #NetworkConfig config = new Configuration();
+         #config.sett(CoapConfig.MAX_MESSAGE_SIZE,32);
+         #config.set(CoapConfig.PREFERRED_BLOCK_SIZE,32);
+         #config.set(CoapConfig.MAX_RESOURCE_BODY_SIZE,2048);
+         #config.set(CoapConfig.MAX_RETRANSMIT,3);
+         #config.set(CoapConfig.MAX_TRANSMIT_WAIT,120000);
          */
 
         /**

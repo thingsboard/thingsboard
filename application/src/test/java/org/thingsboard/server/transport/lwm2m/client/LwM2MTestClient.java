@@ -45,7 +45,9 @@ import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
@@ -57,6 +59,25 @@ import static org.eclipse.leshan.core.LwM2mId.SECURITY;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.eclipse.leshan.core.LwM2mId.SOFTWARE_MANAGEMENT;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_FAILURE;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_STARTED;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_SUCCESS;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_TIMEOUT;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_FAILURE;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_STARTED;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_SUCCESS;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_TIMEOUT;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_EXPECTED_ERROR;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_INIT;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_FAILURE;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_STARTED;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_SUCCESS;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_TIMEOUT;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_FAILURE;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_STARTED;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_SUCCESS;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_TIMEOUT;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_12;
@@ -79,18 +100,23 @@ public class LwM2MTestClient {
     private LwM2mBinaryAppDataContainer lwM2MBinaryAppDataContainer;
     private LwM2MLocationParams locationParams;
     private LwM2mTemperatureSensor lwM2MTemperatureSensor;
+    private LwM2MClientState clientState;
+    private Set<LwM2MClientState> clientStates;
 
-    public void init(Security security, Configuration coapConfig, int port, boolean isRpc) throws InvalidDDFFileException, IOException {
+    public void init(Security security, Configuration coapConfig, int port, boolean isRpc, boolean isBootstrap, int shortServerId, int shortServerIdBs) throws InvalidDDFFileException, IOException {
         Assert.assertNull("client already initialized", client);
         List<ObjectModel> models = new ArrayList<>();
         for (String resourceName : resources) {
             models.addAll(ObjectLoader.loadDdfFile(LwM2MTestClient.class.getClassLoader().getResourceAsStream("lwm2m/" + resourceName), resourceName));
         }
-
         LwM2mModel model = new StaticModel(models);
         ObjectsInitializer initializer = new ObjectsInitializer(model);
         initializer.setInstancesForObject(SECURITY, security);
-        initializer.setInstancesForObject(SERVER, lwm2mServer = new Server(123, 300));
+        if (isBootstrap) {
+            initializer.setInstancesForObject(SERVER, lwm2mServer = new Server(shortServerIdBs, 300));
+        } else {
+            initializer.setInstancesForObject(SERVER, lwm2mServer = new Server(shortServerId, 300));
+        }
         initializer.setInstancesForObject(DEVICE, lwM2MDevice = new SimpleLwM2MDevice());
         initializer.setInstancesForObject(FIRMWARE, fwLwM2MDevice = new FwLwM2MDevice());
         initializer.setInstancesForObject(SOFTWARE_MANAGEMENT, swLwM2MDevice = new SwLwM2MDevice());
@@ -119,94 +145,128 @@ public class LwM2MTestClient {
         builder.setDecoder(new DefaultLwM2mDecoder(false));
 
         builder.setEncoder(new DefaultLwM2mEncoder(new LwM2mValueConverterImpl(), false));
+        clientState = ON_INIT;
+        clientStates = new HashSet<>();
+        clientStates.add(clientState);
         client = builder.build();
 
         LwM2mClientObserver observer = new LwM2mClientObserver() {
             @Override
             public void onBootstrapStarted(ServerIdentity bsserver, BootstrapRequest request) {
-                log.info("ClientObserver -> onBootstrapStarted...");
+                clientState = ON_BOOTSTRAP_STARTED;
+                clientStates.add(clientState);
+//                log.info("ClientObserver -> onBootstrapStarted...");
             }
 
             @Override
             public void onBootstrapSuccess(ServerIdentity bsserver, BootstrapRequest request) {
-                log.info("ClientObserver -> onBootstrapSuccess...");
+                clientState = ON_BOOTSTRAP_SUCCESS;
+                clientStates.add(clientState);
+//                log.info("ClientObserver -> onBootstrapSuccess...");
             }
 
             @Override
             public void onBootstrapFailure(ServerIdentity bsserver, BootstrapRequest request, ResponseCode responseCode, String errorMessage, Exception cause) {
-                log.info("ClientObserver -> onBootstrapFailure...");
+                clientState = ON_BOOTSTRAP_FAILURE;
+                clientStates.add(clientState);
+//                log.info("ClientObserver -> onBootstrapFailure...");
             }
 
             @Override
             public void onBootstrapTimeout(ServerIdentity bsserver, BootstrapRequest request) {
-                log.info("ClientObserver -> onBootstrapTimeout...");
+                clientState = ON_BOOTSTRAP_TIMEOUT;
+                clientStates.add(clientState);
+//                log.info("ClientObserver -> onBootstrapTimeout...");
             }
 
             @Override
             public void onRegistrationStarted(ServerIdentity server, RegisterRequest request) {
+                clientState = ON_REGISTRATION_STARTED;
+                clientStates.add(clientState);
 //                log.info("ClientObserver -> onRegistrationStarted...  EndpointName [{}]", request.getEndpointName());
             }
 
             @Override
             public void onRegistrationSuccess(ServerIdentity server, RegisterRequest request, String registrationID) {
-                log.info("ClientObserver -> onRegistrationSuccess...  EndpointName [{}] [{}]", request.getEndpointName(), registrationID);
+                clientState = ON_REGISTRATION_SUCCESS;
+                clientStates.add(clientState);
+//                log.info("ClientObserver -> onRegistrationSuccess...  EndpointName [{}] [{}]", request.getEndpointName(), registrationID);
             }
 
             @Override
             public void onRegistrationFailure(ServerIdentity server, RegisterRequest request, ResponseCode responseCode, String errorMessage, Exception cause) {
-                log.info("ClientObserver -> onRegistrationFailure... ServerIdentity [{}]", server);
+                clientState = ON_REGISTRATION_FAILURE;
+                clientStates.add(clientState);
+//                log.info("ClientObserver -> onRegistrationFailure... ServerIdentity [{}]", server);
             }
 
             @Override
             public void onRegistrationTimeout(ServerIdentity server, RegisterRequest request) {
-                log.info("ClientObserver -> onRegistrationTimeout... RegisterRequest [{}]", request);
+                clientState = ON_REGISTRATION_TIMEOUT;
+                clientStates.add(clientState);
+//                log.info("ClientObserver -> onRegistrationTimeout... RegisterRequest [{}]", request);
             }
 
             @Override
             public void onUpdateStarted(ServerIdentity server, UpdateRequest request) {
+                clientState = ON_UPDATE_STARTED;
+                clientStates.add(clientState);
 //                log.info("ClientObserver -> onUpdateStarted...  UpdateRequest [{}]", request);
             }
 
             @Override
             public void onUpdateSuccess(ServerIdentity server, UpdateRequest request) {
+                clientState = ON_UPDATE_SUCCESS;
+                clientStates.add(clientState);
 //                log.info("ClientObserver -> onUpdateSuccess...  UpdateRequest [{}]", request);
             }
 
             @Override
             public void onUpdateFailure(ServerIdentity server, UpdateRequest request, ResponseCode responseCode, String errorMessage, Exception cause) {
-
+                clientState = ON_UPDATE_FAILURE;
+                clientStates.add(clientState);
             }
 
             @Override
             public void onUpdateTimeout(ServerIdentity server, UpdateRequest request) {
-
+                clientState = ON_UPDATE_TIMEOUT;
+                clientStates.add(clientState);
             }
 
             @Override
             public void onDeregistrationStarted(ServerIdentity server, DeregisterRequest request) {
-                log.info("ClientObserver ->onDeregistrationStarted...  DeregisterRequest [{}]", request.getRegistrationId());
+                clientState = ON_DEREGISTRATION_STARTED;
+                clientStates.add(clientState);
+//                log.info("ClientObserver ->onDeregistrationStarted...  DeregisterRequest [{}]", request.getRegistrationId());
 
             }
 
             @Override
             public void onDeregistrationSuccess(ServerIdentity server, DeregisterRequest request) {
+                clientState = ON_DEREGISTRATION_SUCCESS;
+                clientStates.add(clientState);
                 log.info("ClientObserver ->onDeregistrationSuccess...  DeregisterRequest [{}]", request.getRegistrationId());
 
             }
 
             @Override
             public void onDeregistrationFailure(ServerIdentity server, DeregisterRequest request, ResponseCode responseCode, String errorMessage, Exception cause) {
-                log.info("ClientObserver ->onDeregistrationFailure...  DeregisterRequest [{}] [{}]", request.getRegistrationId(), request.getRegistrationId());
+                clientState = ON_DEREGISTRATION_FAILURE;
+                clientStates.add(clientState);
+//                log.info("ClientObserver ->onDeregistrationFailure...  DeregisterRequest [{}] [{}]", request.getRegistrationId(), request.getRegistrationId());
             }
 
             @Override
             public void onDeregistrationTimeout(ServerIdentity server, DeregisterRequest request) {
-                log.info("ClientObserver ->onDeregistrationTimeout...  DeregisterRequest [{}] [{}]", request.getRegistrationId(), request.getRegistrationId());
+                clientState = ON_DEREGISTRATION_TIMEOUT;
+                clientStates.add(clientState);
+//                log.info("ClientObserver ->onDeregistrationTimeout...  DeregisterRequest [{}] [{}]", request.getRegistrationId(), request.getRegistrationId());
             }
 
             @Override
             public void onUnexpectedError(Throwable unexpectedError) {
-
+                clientState = ON_EXPECTED_ERROR;
+                clientStates.add(clientState);
             }
         };
         this.client.addObserver(observer);

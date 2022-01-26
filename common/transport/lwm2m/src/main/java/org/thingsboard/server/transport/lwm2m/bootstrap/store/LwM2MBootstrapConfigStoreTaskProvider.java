@@ -33,6 +33,8 @@ import org.eclipse.leshan.server.bootstrap.BootstrapSession;
 import org.eclipse.leshan.server.bootstrap.BootstrapTaskProvider;
 import org.eclipse.leshan.server.bootstrap.BootstrapUtil;
 
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -43,6 +45,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 import static org.eclipse.leshan.server.bootstrap.BootstrapUtil.toWriteRequest;
 
 @Slf4j
@@ -164,9 +167,14 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
 
     protected void findServerInstanceId(BootstrapReadResponse readResponse) {
         this.serverInstances = new HashMap<>();
-        ((LwM2mObject) readResponse.getContent()).getInstances().values().forEach(instance -> {
-            serverInstances.put(((Long) instance.getResource(0).getValue()).intValue(), instance.getId());
-        });
+        try {
+            ((LwM2mObject) readResponse.getContent()).getInstances().values().forEach(instance -> {
+                Integer shortId = OPAQUE.equals(instance.getResource(0).getType()) ? new BigInteger((byte[]) instance.getResource(0).getValue()).intValue() : (Integer) instance.getResource(0).getValue();
+                serverInstances.put(shortId, instance.getId());
+            });
+        } catch (Exception e) {
+            log.error("", e);
+        }
         if (this.securityInstances != null && this.securityInstances.size() > 0 && this.serverInstances != null && this.serverInstances.size() > 0) {
             this.findBootstrapServerId();
         }

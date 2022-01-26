@@ -17,9 +17,11 @@ package org.thingsboard.server.transport.lwm2m.rpc;
 
 import org.junit.Before;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
+import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest;
+
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -31,8 +33,6 @@ import static org.eclipse.leshan.core.LwM2mId.FIRMWARE;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.eclipse.leshan.core.LwM2mId.SOFTWARE_MANAGEMENT;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.COAP_CONFIG;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURITY;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.TEMPERATURE_SENSOR;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_ID_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_0;
@@ -45,12 +45,12 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_14;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_9;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resources;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
 
 @DaoSqlTest
 public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
-    protected String RPC_TRANSPORT_CONFIGURATION;
-
+    protected String OBSERVE_ATTRIBUTES_WITH_PARAMS_RPC;
     protected String deviceId;
     public Set expectedObjects;
     public Set expectedObjectIdVers;
@@ -71,7 +71,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
     protected static AtomicInteger endpointSequence = new AtomicInteger();
     protected static String DEVICE_ENDPOINT_RPC_PREF = "deviceEndpointRpc";
 
-    public AbstractRpcLwM2MIntegrationTest(){
+    public AbstractRpcLwM2MIntegrationTest() {
         setResources(resources);
     }
 
@@ -79,7 +79,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
     public void beforeTest() throws Exception {
         String endpoint = DEVICE_ENDPOINT_RPC_PREF + endpointSequence.incrementAndGet();
         init();
-        createNewClient (SECURITY, COAP_CONFIG, true, endpoint);
+        createNewClient(SECURITY_NO_SEC, COAP_CONFIG, true, endpoint, false);
 
         expectedObjects = ConcurrentHashMap.newKeySet();
         expectedObjectIdVers = ConcurrentHashMap.newKeySet();
@@ -103,8 +103,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
         String ver_Id_0 = client.getClient().getObjectTree().getModel().getObjectModel(OBJECT_ID_0).version;
         if ("1.0".equals(ver_Id_0)) {
             objectIdVer_0 = "/" + OBJECT_ID_0;
-        }
-        else {
+        } else {
             objectIdVer_0 = "/" + OBJECT_ID_0 + "_" + ver_Id_0;
         }
         objectIdVer_2 = (String) expectedObjectIdVers.stream().filter(path -> ((String) path).contains("/" + ACCESS_CONTROL)).findFirst().get();
@@ -116,86 +115,44 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
         objectInstanceIdVer_5 = (String) expectedObjectIdVerInstances.stream().filter(path -> ((String) path).contains("/" + FIRMWARE)).findFirst().get();
         objectInstanceIdVer_9 = (String) expectedObjectIdVerInstances.stream().filter(path -> ((String) path).contains("/" + SOFTWARE_MANAGEMENT)).findFirst().get();
 
-        RPC_TRANSPORT_CONFIGURATION = "{\n" +
-                "  \"type\": \"LWM2M\",\n" +
-                "  \"observeAttr\": {\n" +
-                "    \"keyName\": {\n" +
-                "      \""  + objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_9 + "\": \"" + RESOURCE_ID_NAME_3_9 + "\",\n" +
-                "      \"" + objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_14 + "\": \"" + RESOURCE_ID_NAME_3_14 + "\",\n" +
-                "      \""  + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0 + "\": \"" + RESOURCE_ID_NAME_19_0_0 + "\",\n" +
-                "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_1 + "/" + RESOURCE_ID_0 + "\": \"" + RESOURCE_ID_NAME_19_1_0 + "\"\n" +
-                "    },\n" +
-                "    \"observe\": [\n" +
-                "      \"" + objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_9 + "\",\n" +
-                "      \""  + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0 + "\"\n" +
-                "    ],\n" +
-                "    \"attribute\": [\n" +
-                "    ],\n" +
-                "    \"telemetry\": [\n" +
-                "      \""  + objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_9 + "\",\n" +
-                "      \""  + objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_14 + "\",\n" +
-                "      \""  + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0 + "\",\n" +
-                "      \""  + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_1 + "/" + RESOURCE_ID_0 + "\"\n" +
-                "    ],\n" +
-                "    \"attributeLwm2m\": {}\n" +
-                "  },\n" +
-                "  \"bootstrapServerUpdateEnable\": true,\n" +
-                "  \"bootstrap\": [\n" +
+        OBSERVE_ATTRIBUTES_WITH_PARAMS_RPC =
                 "    {\n" +
-                "       \"host\": \"0.0.0.0\",\n" +
-                "       \"port\": 5687,\n" +
-                "       \"binding\": \"U\",\n" +
-                "       \"lifetime\": 300,\n" +
-                "       \"securityMode\": \"NO_SEC\",\n" +
-                "       \"shortServerId\": 111,\n" +
-                "       \"notifIfDisabled\": true,\n" +
-                "       \"serverPublicKey\": \"\",\n" +
-                "       \"defaultMinPeriod\": 1,\n" +
-                "       \"bootstrapServerIs\": true,\n" +
-                "       \"clientHoldOffTime\": 1,\n" +
-                "       \"bootstrapServerAccountTimeout\": 0\n" +
-                "    },\n" +
-                "    {\n" +
-                "       \"host\": \"0.0.0.0\",\n" +
-                "       \"port\": 5685,\n" +
-                "       \"binding\": \"U\",\n" +
-                "       \"lifetime\": 300,\n" +
-                "       \"securityMode\": \"NO_SEC\",\n" +
-                "       \"shortServerId\": 123,\n" +
-                "       \"notifIfDisabled\": true,\n" +
-                "       \"serverPublicKey\": \"\",\n" +
-                "       \"defaultMinPeriod\": 1,\n" +
-                "       \"bootstrapServerIs\": false,\n" +
-                "       \"clientHoldOffTime\": 1,\n" +
-                "       \"bootstrapServerAccountTimeout\": 0\n" +
-                "    }\n" +
-                "  ],\n" +
-                "  \"clientLwM2mSettings\": {\n" +
-                "    \"edrxCycle\": null,\n" +
-                "    \"powerMode\": \"DRX\",\n" +
-                "    \"fwUpdateResource\": null,\n" +
-                "    \"fwUpdateStrategy\": 1,\n" +
-                "    \"psmActivityTimer\": null,\n" +
-                "    \"swUpdateResource\": null,\n" +
-                "    \"swUpdateStrategy\": 1,\n" +
-                "    \"pagingTransmissionWindow\": null,\n" +
-                "    \"clientOnlyObserveAfterConnect\": 1\n" +
-                "  }\n" +
-                "}";
-        createDeviceProfile(RPC_TRANSPORT_CONFIGURATION);
+                        "    \"keyName\": {\n" +
+                        "      \"" + objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_9 + "\": \"" + RESOURCE_ID_NAME_3_9 + "\",\n" +
+                        "      \"" + objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_14 + "\": \"" + RESOURCE_ID_NAME_3_14 + "\",\n" +
+                        "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0 + "\": \"" + RESOURCE_ID_NAME_19_0_0 + "\",\n" +
+                        "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_1 + "/" + RESOURCE_ID_0 + "\": \"" + RESOURCE_ID_NAME_19_1_0 + "\"\n" +
+                        "    },\n" +
+                        "    \"observe\": [\n" +
+                        "      \"" + objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_9 + "\",\n" +
+                        "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0 + "\"\n" +
+                        "    ],\n" +
+                        "    \"attribute\": [\n" +
+                        "    ],\n" +
+                        "    \"telemetry\": [\n" +
+                        "      \"" + objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_9 + "\",\n" +
+                        "      \"" + objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_14 + "\",\n" +
+                        "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0 + "\",\n" +
+                        "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_1 + "/" + RESOURCE_ID_0 + "\"\n" +
+                        "    ],\n" +
+                        "    \"attributeLwm2m\": {}\n" +
+                        "  }";
 
-        NoSecClientCredential credentials =  createNoSecClientCredentials(endpoint);
-        final Device device = createDevice(credentials);
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITH_PARAMS_RPC, getBootstrapServerCredentialsNoSec(NONE));
+        createDeviceProfile(transportConfiguration);
+
+        LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(endpoint));
+        final Device device = createDevice(deviceCredentials, endpoint);
         deviceId = device.getId().getId().toString();
 
         client.start();
-     }
+    }
 
     protected String pathIdVerToObjectId(String pathIdVer) {
-        if (pathIdVer.contains("_")){
-            String [] objVer = pathIdVer.split("/");
-            objVer[1] =  objVer[1].split("_")[0];
-            return String.join("/",  objVer);
+        if (pathIdVer.contains("_")) {
+            String[] objVer = pathIdVer.split("/");
+            objVer[1] = objVer[1].split("_")[0];
+            return String.join("/", objVer);
         }
         return pathIdVer;
     }

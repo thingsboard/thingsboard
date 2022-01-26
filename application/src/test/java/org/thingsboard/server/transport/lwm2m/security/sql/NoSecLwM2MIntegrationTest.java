@@ -15,21 +15,41 @@
  */
 package org.thingsboard.server.transport.lwm2m.security.sql;
 
-import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.client.object.Security;
 import org.junit.Test;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
+import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.transport.lwm2m.security.AbstractSecurityLwM2MIntegrationTest;
 
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.COAP_CONFIG;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURITY;
+import static org.eclipse.leshan.client.object.Security.noSecBootstap;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode.NO_SEC;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.BOTH;
 
-@Slf4j
 public class NoSecLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTest {
 
+    //Lwm2m only
     @Test
-    public void testConnectAndObserveTelemetry() throws Exception {
-        NoSecClientCredential clientCredentials =  createNoSecClientCredentials(CLIENT_ENDPOINT_NO_SEC);
-        super.basicTestConnectionObserveTelemetry(SECURITY, clientCredentials, COAP_CONFIG, CLIENT_ENDPOINT_NO_SEC);
+    public void testWithNoSecConnectLwm2mSuccessAndObserveTelemetry() throws Exception {
+        String clientEndpoint = CLIENT_ENDPOINT_NO_SEC;
+        LwM2MDeviceCredentials clientCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
+        super.basicTestConnectionObserveTelemetry(SECURITY_NO_SEC, clientCredentials, COAP_CONFIG, clientEndpoint);
     }
 
+    // Bootstrap + Lwm2m
+    @Test
+    public void testWithNoSecConnectBsSuccess_UpdateTwoSectionsBootstrapAndLm2m_ConnectLwm2mSuccess() throws Exception {
+        String clientEndpoint = CLIENT_ENDPOINT_NO_SEC_BS;
+        Security securityBs = noSecBootstap(URI_BS);
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(BOTH));
+        LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
+        this.basicTestConnection(securityBs,
+                deviceCredentials,
+                COAP_CONFIG_BS,
+                clientEndpoint,
+                transportConfiguration,
+                "await on client state (NoSecBS two section)",
+                expectedStatusesRegistrationBsSuccess,
+                true,
+                NO_SEC);
+    }
 }
