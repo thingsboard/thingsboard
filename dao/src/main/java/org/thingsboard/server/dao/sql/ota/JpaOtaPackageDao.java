@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.OtaPackage;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.ota.OtaPackageDao;
 import org.thingsboard.server.dao.model.sql.OtaPackageEntity;
@@ -48,4 +49,10 @@ public class JpaOtaPackageDao extends JpaAbstractSearchTextDao<OtaPackageEntity,
     public Long sumDataSizeByTenantId(TenantId tenantId) {
         return otaPackageRepository.sumDataSizeByTenantId(tenantId.getId());
     }
+
+    @Override
+    public boolean existsByDeviceProfileId(DeviceProfileId deviceProfileId) {
+        return otaPackageRepository.existsByDeviceProfileId(deviceProfileId.getId());
+    }
+
 }
