@@ -79,7 +79,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
     public void beforeTest() throws Exception {
         String endpoint = DEVICE_ENDPOINT_RPC_PREF + endpointSequence.incrementAndGet();
         init();
-        createNewClient(SECURITY_NO_SEC, COAP_CONFIG, true, endpoint, false);
+        createNewClient(SECURITY_NO_SEC, COAP_CONFIG, true, endpoint, false, null);
 
         expectedObjects = ConcurrentHashMap.newKeySet();
         expectedObjectIdVers = ConcurrentHashMap.newKeySet();

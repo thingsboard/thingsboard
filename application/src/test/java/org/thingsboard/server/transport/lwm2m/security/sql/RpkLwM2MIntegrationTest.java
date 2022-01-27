@@ -29,6 +29,7 @@ import java.security.cert.X509Certificate;
 import static org.eclipse.leshan.client.object.Security.rpk;
 import static org.eclipse.leshan.client.object.Security.rpkBootstrap;
 import static org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode.RPK;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_SUCCESS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.BOTH;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
 
@@ -58,7 +59,7 @@ public class RpkLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
                 "await on client state (Rpk_Lwm2m)",
                 expectedStatusesRegistrationLwm2mSuccess,
                 false,
-                RPK);
+                ON_REGISTRATION_SUCCESS);
     }
 
     // Bootstrap + Lwm2m
@@ -84,6 +85,6 @@ public class RpkLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
                 "await on client state (RpkBS two section)",
                 expectedStatusesRegistrationBsSuccess,
                 true,
-                RPK);
+                ON_REGISTRATION_SUCCESS);
     }
 }

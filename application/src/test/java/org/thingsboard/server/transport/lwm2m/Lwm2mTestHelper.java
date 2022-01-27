@@ -51,6 +51,7 @@ public class Lwm2mTestHelper {
 
     // Ids in Client
     public static final int OBJECT_ID_0 = 0;
+    public static final int OBJECT_ID_1 = 1;
     public static final int OBJECT_INSTANCE_ID_0 = 0;
     public static final int OBJECT_INSTANCE_ID_1 = 1;
     public static final int OBJECT_INSTANCE_ID_2 = 2;

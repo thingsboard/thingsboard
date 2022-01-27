@@ -28,6 +28,7 @@ import java.security.cert.X509Certificate;
 import static org.eclipse.leshan.client.object.Security.x509;
 import static org.eclipse.leshan.client.object.Security.x509Bootstrap;
 import static org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode.X509;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_SUCCESS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.BOTH;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
 
@@ -57,7 +58,7 @@ public class X509_TrustLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegra
                 "await on client state (X509_Trust_Lwm2m)",
                 expectedStatusesRegistrationLwm2mSuccess,
                 false,
-                X509);
+                ON_REGISTRATION_SUCCESS);
     }
 
     // Bootstrap + Lwm2m
@@ -83,6 +84,6 @@ public class X509_TrustLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegra
                 "await on client state (X509Trust two section)",
                 expectedStatusesRegistrationBsSuccess,
                 true,
-                X509);
+                ON_REGISTRATION_SUCCESS);
     }
 }

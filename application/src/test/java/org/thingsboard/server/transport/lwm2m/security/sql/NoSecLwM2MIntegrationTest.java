@@ -15,15 +15,16 @@
  */
 package org.thingsboard.server.transport.lwm2m.security.sql;
 
-import org.eclipse.leshan.client.object.Security;
 import org.junit.Test;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
-import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.transport.lwm2m.security.AbstractSecurityLwM2MIntegrationTest;
 
-import static org.eclipse.leshan.client.object.Security.noSecBootstap;
-import static org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode.NO_SEC;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_SUCCESS;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_SUCCESS;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.BOOTSTRAP_ONLY;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.BOTH;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.LWM2M_ONLY;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
 
 public class NoSecLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTest {
 
@@ -39,17 +40,56 @@ public class NoSecLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationT
     @Test
     public void testWithNoSecConnectBsSuccess_UpdateTwoSectionsBootstrapAndLm2m_ConnectLwm2mSuccess() throws Exception {
         String clientEndpoint = CLIENT_ENDPOINT_NO_SEC_BS;
-        Security securityBs = noSecBootstap(URI_BS);
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(BOTH));
-        LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
-        this.basicTestConnection(securityBs,
-                deviceCredentials,
-                COAP_CONFIG_BS,
-                clientEndpoint,
-                transportConfiguration,
-                "await on client state (NoSecBS two section)",
-                expectedStatusesRegistrationBsSuccess,
-                true,
-                NO_SEC);
+        String awaitAlias = "await on client state (NoSecBS two section)";
+        basicTestConnectionBefore(clientEndpoint, awaitAlias, BOTH, expectedStatusesRegistrationBsSuccess, ON_REGISTRATION_SUCCESS);
+    }
+
+    @Test
+    public void testWithNoSecConnectBsSuccess_UpdateLwm2mSectionAndLm2m_ConnectLwm2mSuccess() throws Exception {
+        String clientEndpoint = CLIENT_ENDPOINT_NO_SEC_BS + LWM2M_ONLY.name();
+        String awaitAlias = "await on client state (NoSecBS Lwm2m section)";
+        basicTestConnectionBefore(clientEndpoint, awaitAlias, LWM2M_ONLY, expectedStatusesRegistrationBsSuccess, ON_REGISTRATION_SUCCESS);
+    }
+
+    @Test
+    public void testWithNoSecConnectBsSuccess_UpdateBootstrapSectionAndLm2m_ConnectLwm2mSuccess() throws Exception {
+        String clientEndpoint = CLIENT_ENDPOINT_NO_SEC + BOOTSTRAP_ONLY.name();
+        String awaitAlias = "await on client state (NoSecBS Bootstrap section)";
+        basicTestConnectionBefore(clientEndpoint, awaitAlias, BOOTSTRAP_ONLY, expectedStatusesBsSuccess, ON_BOOTSTRAP_SUCCESS);
+    }
+
+    @Test
+    public void testWithNoSecConnectBsSuccess_UpdateNoneSectionAndLm2m_ConnectLwm2mSuccess() throws Exception {
+        String clientEndpoint = CLIENT_ENDPOINT_NO_SEC + NONE.name();
+        String awaitAlias = "await on client state (NoSecBS None section)";
+        basicTestConnectionBefore(clientEndpoint, awaitAlias, NONE, expectedStatusesBsSuccess, ON_BOOTSTRAP_SUCCESS);
+    }
+
+    @Test
+    public void testWithNoSecBootstrapRequestTriggerConnectBsSuccess_UpdateTwoSectionAndLm2m_ConnectLwm2mSuccess() throws Exception {
+        String clientEndpoint = CLIENT_ENDPOINT_NO_SEC_BS + "Trigger" + BOTH.name();
+        String awaitAlias = "await on client state (NoSecBS Trigger Two section)";
+        basicTestConnectionBootstrapRequestTriggerBefore(clientEndpoint, awaitAlias, BOTH);
+    }
+
+    @Test
+    public void testWithNoSecBootstrapRequestTriggerConnectBsSuccess_UpdateBootstrapSectionAndLm2m_ConnectLwm2mSuccess() throws Exception {
+        String clientEndpoint = CLIENT_ENDPOINT_NO_SEC_BS + "Trigger" + BOOTSTRAP_ONLY.name();
+        String awaitAlias = "await on client state (NoSecBS Trigger Bootstrap section)";
+        basicTestConnectionBootstrapRequestTriggerBefore(clientEndpoint, awaitAlias, BOOTSTRAP_ONLY);
+    }
+
+    @Test
+    public void testWithNoSecBootstrapRequestTriggerConnectBsSuccess_UpdateLwm2mSectionAndLm2m_ConnectLwm2mSuccess() throws Exception {
+        String clientEndpoint = CLIENT_ENDPOINT_NO_SEC_BS + "Trigger" + LWM2M_ONLY.name();
+        String awaitAlias = "await on client state (NoSecBS Trigger Lwm2m section)";
+        basicTestConnectionBootstrapRequestTriggerBefore(clientEndpoint, awaitAlias, LWM2M_ONLY);
+    }
+
+    @Test
+    public void testWithNoSecBootstrapRequestTriggerConnectBsSuccess_UpdateNoneSectionAndLm2m_ConnectLwm2mSuccess() throws Exception {
+        String clientEndpoint = CLIENT_ENDPOINT_NO_SEC_BS + "Trigger" + NONE.name();
+        String awaitAlias = "await on client state (NoSecBS Trigger None  section)";
+        basicTestConnectionBootstrapRequestTriggerBefore(clientEndpoint, awaitAlias, NONE);
     }
 }

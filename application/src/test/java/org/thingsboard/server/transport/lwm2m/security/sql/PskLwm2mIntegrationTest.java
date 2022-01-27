@@ -32,6 +32,7 @@ import static org.eclipse.leshan.client.object.Security.pskBootstrap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode.PSK;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_SUCCESS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.BOTH;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
 
@@ -47,13 +48,13 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
         clientCredentials.setEndpoint(clientEndpoint);
         clientCredentials.setIdentity(identity);
         clientCredentials.setKey(keyPsk);
-        Security securityBs = psk(SECURE_URI,
+        Security security = psk(SECURE_URI,
                 shortServerId,
                 identity.getBytes(StandardCharsets.UTF_8),
                 Hex.decodeHex(keyPsk.toCharArray()));
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(PSK, NONE));
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, null, null, PSK);
-        this.basicTestConnection(securityBs,
+        this.basicTestConnection(security,
                 deviceCredentials,
                 COAP_CONFIG,
                 clientEndpoint,
@@ -61,7 +62,7 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
                 "await on client state (Psk_Lwm2m)",
                 expectedStatusesRegistrationLwm2mSuccess,
                 false,
-                PSK);
+                ON_REGISTRATION_SUCCESS);
     }
 
     @Test
@@ -106,6 +107,6 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
                 "await on client state (PskBS two section)",
                 expectedStatusesRegistrationBsSuccess,
                 true,
-                PSK);
+                ON_REGISTRATION_SUCCESS);
     }
 }

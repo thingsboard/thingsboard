@@ -273,6 +273,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
             "  }\n" +
             "}";
 
+     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesBsSuccess = new HashSet<>(Arrays.asList(ON_INIT, ON_BOOTSTRAP_STARTED, ON_BOOTSTRAP_SUCCESS));
      protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationLwm2mSuccess = new HashSet<>(Arrays.asList(ON_INIT, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationBsSuccess = new HashSet<>(Arrays.asList(ON_INIT, ON_BOOTSTRAP_STARTED, ON_BOOTSTRAP_SUCCESS, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
     protected DeviceProfile deviceProfile;
@@ -314,31 +315,6 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         executor.shutdownNow();
     }
 
-    public void basicTestConnection(Security security,
-                                    LwM2MDeviceCredentials deviceCredentials,
-                                    Configuration coapConfig,
-                                    String endpoint,
-                                    Lwm2mDeviceProfileTransportConfiguration transportConfiguration,
-                                    String awaitAlias, Set<LwM2MClientState> expectedStatuses,
-                                    boolean isBootstrap, LwM2MSecurityMode mode) throws Exception {
-        createDeviceProfile(transportConfiguration);
-        createDevice(deviceCredentials, endpoint);
-        createNewClient(security, coapConfig, false, endpoint, isBootstrap);
-
-        await(awaitAlias)
-                .atMost(1000, TimeUnit.MILLISECONDS)
-                .until(() -> ON_REGISTRATION_SUCCESS.equals(client.getClientState()));
-        Assert.assertEquals(expectedStatuses, client.getClientStates());
-
-        client.destroy();
-        expectedStatuses.add(ON_DEREGISTRATION_STARTED);
-        expectedStatuses.add(ON_DEREGISTRATION_SUCCESS);
-        await(awaitAlias)
-                .atMost(1000, TimeUnit.MILLISECONDS)
-                .until(() -> ON_DEREGISTRATION_SUCCESS.equals(client.getClientState()));
-        Assert.assertEquals(expectedStatuses, client.getClientStates());
-    }
-
     public void basicTestConnectionObserveTelemetry(Security security,
                                                     LwM2MDeviceCredentials deviceCredentials,
                                                     Configuration coapConfig,
@@ -362,7 +338,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         wsClient.waitForReply();
 
         wsClient.registerWaitForUpdate();
-        createNewClient(security, coapConfig, false, endpoint, false);
+        createNewClient(security, coapConfig, false, endpoint, false, null);
         String msg = wsClient.waitForUpdate();
 
         EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
@@ -422,11 +398,11 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         this.resources = resources;
     }
 
-    public void createNewClient(Security security, Configuration coapConfig, boolean isRpc, String endpoint, boolean isBootstrap) throws Exception {
+    public void createNewClient(Security security, Configuration coapConfig, boolean isRpc, String endpoint, boolean isBootstrap, Security securityBs) throws Exception {
         clientDestroy();
         client = new LwM2MTestClient(this.executor, endpoint);
         int clientPort = SocketUtils.findAvailableTcpPort();
-        client.init(security, coapConfig, clientPort, isRpc, isBootstrap, this.shortServerId, this.shortServerIdBs);
+        client.init(security, coapConfig, clientPort, isRpc, isBootstrap, this.shortServerId, this.shortServerIdBs, securityBs);
     }
 
     private void clientDestroy() {
