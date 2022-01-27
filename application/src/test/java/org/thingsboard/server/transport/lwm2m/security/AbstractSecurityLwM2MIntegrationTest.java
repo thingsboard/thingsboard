@@ -21,6 +21,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.core.ResponseCode;
+import org.eclipse.leshan.core.util.Hex;
 import org.junit.Assert;
 import org.springframework.test.web.servlet.MvcResult;
 import org.thingsboard.common.util.JacksonUtil;
@@ -226,7 +227,6 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
                     expectedStatusesRegistrationBsSuccess,
                     false,
                     securityBs);
-
     }
 
     private void basicTestConnectionBootstrapRequestTrigger(Security security,
@@ -327,7 +327,8 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
     protected LwM2MDeviceCredentials getDeviceCredentialsSecure(LwM2MClientCredential clientCredentials,
                                                                 PrivateKey privateKey,
                                                                 X509Certificate certificate,
-                                                                LwM2MSecurityMode mode) {
+                                                                LwM2MSecurityMode mode,
+                                                                boolean privateKeyIsBad) {
         LwM2MDeviceCredentials credentials = new LwM2MDeviceCredentials();
         credentials.setClient(clientCredentials);
         LwM2MBootstrapClientCredentials bootstrapCredentials;
@@ -336,10 +337,10 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
                 bootstrapCredentials = getBootstrapClientCredentialsPsk(clientCredentials);
                 break;
             case RPK:
-                bootstrapCredentials = getBootstrapClientCredentialsRpk(certificate, privateKey);
+                bootstrapCredentials = getBootstrapClientCredentialsRpk(certificate, privateKey, privateKeyIsBad);
                 break;
             case X509:
-                bootstrapCredentials = getBootstrapClientCredentialsX509(certificate, privateKey);
+                bootstrapCredentials = getBootstrapClientCredentialsX509(certificate, privateKey, privateKeyIsBad);
                 break;
             default:
                 throw new IllegalStateException("Unexpected value: " + mode);
@@ -360,25 +361,34 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         return bootstrapCredentials;
     }
 
-    private LwM2MBootstrapClientCredentials getBootstrapClientCredentialsRpk(X509Certificate certificate, PrivateKey privateKey) {
+    private LwM2MBootstrapClientCredentials getBootstrapClientCredentialsRpk(X509Certificate certificate, PrivateKey privateKey, boolean privateKeyIsBad) {
         LwM2MBootstrapClientCredentials bootstrapCredentials = new LwM2MBootstrapClientCredentials();
         RPKBootstrapClientCredential serverCredentials = new RPKBootstrapClientCredential();
         if (certificate != null && certificate.getPublicKey() != null && privateKey != null) {
             serverCredentials.setClientPublicKeyOrId(Base64.encodeBase64String(certificate.getPublicKey().getEncoded()));
-            serverCredentials.setClientSecretKey(Base64.encodeBase64String(privateKey.getEncoded()));
+            if (privateKeyIsBad) {
+                serverCredentials.setClientSecretKey(Hex.encodeHexString(privateKey.getEncoded()));
+            } else {
+                serverCredentials.setClientSecretKey(Base64.encodeBase64String(privateKey.getEncoded()));
+
+            }
         }
         bootstrapCredentials.setBootstrapServer(serverCredentials);
         bootstrapCredentials.setLwm2mServer(serverCredentials);
         return bootstrapCredentials;
     }
 
-    private LwM2MBootstrapClientCredentials getBootstrapClientCredentialsX509(X509Certificate certificate, PrivateKey privateKey) {
+    private LwM2MBootstrapClientCredentials getBootstrapClientCredentialsX509(X509Certificate certificate, PrivateKey privateKey, boolean privateKeyIsBad) {
         LwM2MBootstrapClientCredentials bootstrapCredentials = new LwM2MBootstrapClientCredentials();
         X509BootstrapClientCredential serverCredentials = new X509BootstrapClientCredential();
         if (certificate != null) {
             try {
                 serverCredentials.setClientPublicKeyOrId(Base64.encodeBase64String(certificate.getEncoded()));
-                serverCredentials.setClientSecretKey(Base64.encodeBase64String(privateKey.getEncoded()));
+                if (privateKeyIsBad) {
+                    serverCredentials.setClientSecretKey(Hex.encodeHexString(privateKey.getEncoded()));
+                } else {
+                    serverCredentials.setClientSecretKey(Base64.encodeBase64String(privateKey.getEncoded()));
+                }
             } catch (CertificateEncodingException e) {
                 log.error("Client`s certificate [{}] is bad. [{}]", certificate, e.getMessage());
             }

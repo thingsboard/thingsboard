@@ -169,70 +169,60 @@ public class LwM2MTestClient {
             public void onBootstrapStarted(ServerIdentity bsserver, BootstrapRequest request) {
                 clientState = ON_BOOTSTRAP_STARTED;
                 clientStates.add(clientState);
-//                log.info("ClientObserver -> onBootstrapStarted...");
             }
 
             @Override
             public void onBootstrapSuccess(ServerIdentity bsserver, BootstrapRequest request) {
                 clientState = ON_BOOTSTRAP_SUCCESS;
                 clientStates.add(clientState);
-//                log.info("ClientObserver -> onBootstrapSuccess...");
             }
 
             @Override
             public void onBootstrapFailure(ServerIdentity bsserver, BootstrapRequest request, ResponseCode responseCode, String errorMessage, Exception cause) {
                 clientState = ON_BOOTSTRAP_FAILURE;
                 clientStates.add(clientState);
-//                log.info("ClientObserver -> onBootstrapFailure...");
             }
 
             @Override
             public void onBootstrapTimeout(ServerIdentity bsserver, BootstrapRequest request) {
                 clientState = ON_BOOTSTRAP_TIMEOUT;
                 clientStates.add(clientState);
-//                log.info("ClientObserver -> onBootstrapTimeout...");
             }
 
             @Override
             public void onRegistrationStarted(ServerIdentity server, RegisterRequest request) {
                 clientState = ON_REGISTRATION_STARTED;
                 clientStates.add(clientState);
-//                log.info("ClientObserver -> onRegistrationStarted...  EndpointName [{}]", request.getEndpointName());
             }
 
             @Override
             public void onRegistrationSuccess(ServerIdentity server, RegisterRequest request, String registrationID) {
                 clientState = ON_REGISTRATION_SUCCESS;
                 clientStates.add(clientState);
-//                log.info("ClientObserver -> onRegistrationSuccess...  EndpointName [{}] [{}]", request.getEndpointName(), registrationID);
             }
 
             @Override
             public void onRegistrationFailure(ServerIdentity server, RegisterRequest request, ResponseCode responseCode, String errorMessage, Exception cause) {
                 clientState = ON_REGISTRATION_FAILURE;
                 clientStates.add(clientState);
-//                log.info("ClientObserver -> onRegistrationFailure... ServerIdentity [{}]", server);
             }
 
             @Override
             public void onRegistrationTimeout(ServerIdentity server, RegisterRequest request) {
                 clientState = ON_REGISTRATION_TIMEOUT;
                 clientStates.add(clientState);
-//                log.info("ClientObserver -> onRegistrationTimeout... RegisterRequest [{}]", request);
             }
 
             @Override
             public void onUpdateStarted(ServerIdentity server, UpdateRequest request) {
                 clientState = ON_UPDATE_STARTED;
                 clientStates.add(clientState);
-//                log.info("ClientObserver -> onUpdateStarted...  UpdateRequest [{}]", request);
             }
 
             @Override
             public void onUpdateSuccess(ServerIdentity server, UpdateRequest request) {
                 clientState = ON_UPDATE_SUCCESS;
                 clientStates.add(clientState);
-//                log.info("ClientObserver -> onUpdateSuccess...  UpdateRequest [{}]", request);
             }
 
             @Override
@@ -251,30 +241,24 @@ public class LwM2MTestClient {
             public void onDeregistrationStarted(ServerIdentity server, DeregisterRequest request) {
                 clientState = ON_DEREGISTRATION_STARTED;
                 clientStates.add(clientState);
-//                log.info("ClientObserver ->onDeregistrationStarted...  DeregisterRequest [{}]", request.getRegistrationId());
-
             }
 
             @Override
             public void onDeregistrationSuccess(ServerIdentity server, DeregisterRequest request) {
                 clientState = ON_DEREGISTRATION_SUCCESS;
                 clientStates.add(clientState);
-//                log.info("ClientObserver ->onDeregistrationSuccess...  DeregisterRequest [{}]", request.getRegistrationId());
-
             }
 
             @Override
             public void onDeregistrationFailure(ServerIdentity server, DeregisterRequest request, ResponseCode responseCode, String errorMessage, Exception cause) {
                 clientState = ON_DEREGISTRATION_FAILURE;
                 clientStates.add(clientState);
-//                log.info("ClientObserver ->onDeregistrationFailure...  DeregisterRequest [{}] [{}]", request.getRegistrationId(), request.getRegistrationId());
             }
 
             @Override
             public void onDeregistrationTimeout(ServerIdentity server, DeregisterRequest request) {
                 clientState = ON_DEREGISTRATION_TIMEOUT;
                 clientStates.add(clientState);
-//                log.info("ClientObserver ->onDeregistrationTimeout...  DeregisterRequest [{}] [{}]", request.getRegistrationId(), request.getRegistrationId());
             }
 
             @Override
