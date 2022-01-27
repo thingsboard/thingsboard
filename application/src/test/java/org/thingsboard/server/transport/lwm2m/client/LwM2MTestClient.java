@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,7 @@ package org.thingsboard.server.transport.lwm2m.client;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.californium.core.network.CoapEndpoint;
-import org.eclipse.californium.core.network.config.NetworkConfig;
-import org.eclipse.californium.core.observe.ObservationStore;
-import org.eclipse.californium.scandium.DTLSConnector;
+import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.leshan.client.californium.LeshanClient;
 import org.eclipse.leshan.client.californium.LeshanClientBuilder;
@@ -31,33 +28,41 @@ import org.eclipse.leshan.client.observer.LwM2mClientObserver;
 import org.eclipse.leshan.client.resource.DummyInstanceEnabler;
 import org.eclipse.leshan.client.resource.ObjectsInitializer;
 import org.eclipse.leshan.client.servers.ServerIdentity;
-import org.eclipse.leshan.core.LwM2mId;
 import org.eclipse.leshan.core.ResponseCode;
-import org.eclipse.leshan.core.californium.EndpointFactory;
 import org.eclipse.leshan.core.model.InvalidDDFFileException;
 import org.eclipse.leshan.core.model.LwM2mModel;
 import org.eclipse.leshan.core.model.ObjectLoader;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.StaticModel;
-import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeDecoder;
-import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeEncoder;
+import org.eclipse.leshan.core.node.codec.DefaultLwM2mDecoder;
+import org.eclipse.leshan.core.node.codec.DefaultLwM2mEncoder;
 import org.eclipse.leshan.core.request.BootstrapRequest;
 import org.eclipse.leshan.core.request.DeregisterRequest;
 import org.eclipse.leshan.core.request.RegisterRequest;
 import org.eclipse.leshan.core.request.UpdateRequest;
 import org.junit.Assert;
+import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
+import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
 import static org.eclipse.leshan.core.LwM2mId.DEVICE;
 import static org.eclipse.leshan.core.LwM2mId.FIRMWARE;
+import static org.eclipse.leshan.core.LwM2mId.LOCATION;
 import static org.eclipse.leshan.core.LwM2mId.SECURITY;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.eclipse.leshan.core.LwM2mId.SOFTWARE_MANAGEMENT;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_0;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_1;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_12;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.TEMPERATURE_SENSOR;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resources;
+
 
 @Slf4j
 @Data
@@ -66,76 +71,54 @@ public class LwM2MTestClient {
     private final ScheduledExecutorService executor;
     private final String endpoint;
     private LeshanClient client;
+
+    private Server lwm2mServer;
+    private SimpleLwM2MDevice lwM2MDevice;
     private FwLwM2MDevice fwLwM2MDevice;
     private SwLwM2MDevice swLwM2MDevice;
+    private LwM2mBinaryAppDataContainer lwM2MBinaryAppDataContainer;
+    private LwM2MLocationParams locationParams;
+    private LwM2mTemperatureSensor lwM2MTemperatureSensor;
 
-    public void init(Security security, NetworkConfig coapConfig) throws InvalidDDFFileException, IOException {
+    public void init(Security security, Configuration coapConfig, int port, boolean isRpc) throws InvalidDDFFileException, IOException {
         Assert.assertNull("client already initialized", client);
-        String[] resources = new String[]{"0.xml", "1.xml", "2.xml", "3.xml", "5.xml", "9.xml"};
         List<ObjectModel> models = new ArrayList<>();
         for (String resourceName : resources) {
             models.addAll(ObjectLoader.loadDdfFile(LwM2MTestClient.class.getClassLoader().getResourceAsStream("lwm2m/" + resourceName), resourceName));
         }
+
         LwM2mModel model = new StaticModel(models);
         ObjectsInitializer initializer = new ObjectsInitializer(model);
         initializer.setInstancesForObject(SECURITY, security);
-        initializer.setInstancesForObject(SERVER, new Server(123, 300));
-        initializer.setInstancesForObject(DEVICE, new SimpleLwM2MDevice());
+        initializer.setInstancesForObject(SERVER, lwm2mServer = new Server(123, 300));
+        initializer.setInstancesForObject(DEVICE, lwM2MDevice = new SimpleLwM2MDevice());
         initializer.setInstancesForObject(FIRMWARE, fwLwM2MDevice = new FwLwM2MDevice());
         initializer.setInstancesForObject(SOFTWARE_MANAGEMENT, swLwM2MDevice = new SwLwM2MDevice());
-        initializer.setClassForObject(LwM2mId.ACCESS_CONTROL, DummyInstanceEnabler.class);
+        initializer.setClassForObject(ACCESS_CONTROL, DummyInstanceEnabler.class);
+        initializer.setInstancesForObject(BINARY_APP_DATA_CONTAINER, lwM2MBinaryAppDataContainer = new LwM2mBinaryAppDataContainer(executor, OBJECT_INSTANCE_ID_0),
+                new LwM2mBinaryAppDataContainer(executor, OBJECT_INSTANCE_ID_1));
+        locationParams = new LwM2MLocationParams();
+        locationParams.getPos();
+        initializer.setInstancesForObject(LOCATION, new LwM2mLocation(locationParams.getLatitude(), locationParams.getLongitude(), locationParams.getScaleFactor(), executor, OBJECT_INSTANCE_ID_0));
+        initializer.setInstancesForObject(TEMPERATURE_SENSOR, lwM2MTemperatureSensor = new LwM2mTemperatureSensor(executor, OBJECT_INSTANCE_ID_0), new LwM2mTemperatureSensor(executor, OBJECT_INSTANCE_ID_12));
 
-        DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
-        dtlsConfig.setRecommendedCipherSuitesOnly(true);
-        dtlsConfig.setClientOnly();
+        DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder(coapConfig);
+        dtlsConfig.set(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, true);
 
         DefaultRegistrationEngineFactory engineFactory = new DefaultRegistrationEngineFactory();
         engineFactory.setReconnectOnUpdate(false);
         engineFactory.setResumeOnConnect(true);
 
-        EndpointFactory endpointFactory = new EndpointFactory() {
-
-            @Override
-            public CoapEndpoint createUnsecuredEndpoint(InetSocketAddress address, NetworkConfig coapConfig,
-                                                        ObservationStore store) {
-                CoapEndpoint.Builder builder = new CoapEndpoint.Builder();
-                builder.setInetSocketAddress(address);
-                builder.setNetworkConfig(coapConfig);
-                return builder.build();
-            }
-
-            @Override
-            public CoapEndpoint createSecuredEndpoint(DtlsConnectorConfig dtlsConfig, NetworkConfig coapConfig,
-                                                      ObservationStore store) {
-                CoapEndpoint.Builder builder = new CoapEndpoint.Builder();
-                DtlsConnectorConfig.Builder dtlsConfigBuilder = new DtlsConnectorConfig.Builder(dtlsConfig);
-
-                // tricks to be able to change psk information on the fly
-//                AdvancedPskStore pskStore = dtlsConfig.getAdvancedPskStore();
-//                if (pskStore != null) {
-//                    PskPublicInformation identity = pskStore.getIdentity(null, null);
-//                    SecretKey key = pskStore
-//                            .requestPskSecretResult(ConnectionId.EMPTY, null, identity, null, null, null).getSecret();
-//                    singlePSKStore = new SinglePSKStore(identity, key);
-//                    dtlsConfigBuilder.setAdvancedPskStore(singlePSKStore);
-//                }
-                builder.setConnector(new DTLSConnector(dtlsConfigBuilder.build()));
-                builder.setNetworkConfig(coapConfig);
-                return builder.build();
-            }
-        };
-
-
         LeshanClientBuilder builder = new LeshanClientBuilder(endpoint);
-        builder.setLocalAddress("0.0.0.0", 11000);
+        builder.setLocalAddress("0.0.0.0", port);
         builder.setObjects(initializer.createAll());
         builder.setCoapConfig(coapConfig);
         builder.setDtlsConfig(dtlsConfig);
         builder.setRegistrationEngineFactory(engineFactory);
-        builder.setEndpointFactory(endpointFactory);
         builder.setSharedExecutor(executor);
-        builder.setDecoder(new DefaultLwM2mNodeDecoder(true));
-        builder.setEncoder(new DefaultLwM2mNodeEncoder(true));
+        builder.setDecoder(new DefaultLwM2mDecoder(false));
+
+        builder.setEncoder(new DefaultLwM2mEncoder(new LwM2mValueConverterImpl(), false));
         client = builder.build();
 
         LwM2mClientObserver observer = new LwM2mClientObserver() {
@@ -227,18 +210,38 @@ public class LwM2MTestClient {
             }
         };
         this.client.addObserver(observer);
-
-        client.start();
+        if (!isRpc) {
+            client.start();
+        }
     }
 
     public void destroy() {
-        client.destroy(true);
+        if (client != null) {
+            client.destroy(true);
+        }
+        if (lwm2mServer != null) {
+            lwm2mServer = null;
+        }
+        if (lwM2MDevice != null) {
+            lwM2MDevice.destroy();
+        }
         if (fwLwM2MDevice != null) {
             fwLwM2MDevice.destroy();
         }
         if (swLwM2MDevice != null) {
             swLwM2MDevice.destroy();
         }
+        if (lwM2MBinaryAppDataContainer != null) {
+            lwM2MBinaryAppDataContainer.destroy();
+        }
+        if (lwM2MTemperatureSensor != null) {
+            lwM2MTemperatureSensor.destroy();
+        }
     }
 
+    public void start() {
+        if (client != null) {
+            client.start();
+        }
+    }
 }

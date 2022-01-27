@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -573,10 +573,9 @@ public class TelemetryController extends BaseController {
             for (String key : keys) {
                 deleteTsKvQueries.add(new BaseDeleteTsKvQuery(key, deleteFromTs, deleteToTs, rewriteLatestIfDeleted));
             }
-            ListenableFuture<List<Void>> future = tsService.remove(user.getTenantId(), entityId, deleteTsKvQueries);
-            Futures.addCallback(future, new FutureCallback<>() {
+            tsSubService.deleteTimeseriesAndNotify(tenantId, entityId, keys, deleteTsKvQueries, new FutureCallback<>() {
                 @Override
-                public void onSuccess(@Nullable List<Void> tmp) {
+                public void onSuccess(@Nullable Void tmp) {
                     logTimeseriesDeleted(user, entityId, keys, deleteFromTs, deleteToTs, null);
                     result.setResult(new ResponseEntity<>(HttpStatus.OK));
                 }
@@ -586,7 +585,7 @@ public class TelemetryController extends BaseController {
                     logTimeseriesDeleted(user, entityId, keys, deleteFromTs, deleteToTs, t);
                     result.setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
                 }
-            }, executor);
+            });
         });
     }
 

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -76,19 +76,19 @@ export class NavTreeComponent implements OnInit {
   }
 
   @Input()
-  private loadNodes: LoadNodesCallback;
+  loadNodes: LoadNodesCallback;
 
   @Input()
-  private searchCallback: NodeSearchCallback;
+  searchCallback: NodeSearchCallback;
 
   @Input()
-  private onNodeSelected: NodeSelectedCallback;
+  onNodeSelected: NodeSelectedCallback;
 
   @Input()
-  private onNodesInserted: NodesInsertedCallback;
+  onNodesInserted: NodesInsertedCallback;
 
   @Input()
-  private editCallbacks: NavTreeEditCallbacks;
+  editCallbacks: NavTreeEditCallbacks;
 
   private treeElement: JSTree;
 

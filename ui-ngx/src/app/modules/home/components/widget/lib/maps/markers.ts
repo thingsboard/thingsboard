@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,36 +14,36 @@
 /// limitations under the License.
 ///
 
-import L, { Icon, LeafletMouseEvent } from 'leaflet';
-import { FormattedData, MarkerSettings } from './map-models';
+import L, { LeafletMouseEvent } from 'leaflet';
 import {
-  bindPopupActions,
-  createTooltip,
-} from './maps-utils';
-import {
-  aspectCache,
-  fillPattern,
-  parseWithTranslation,
-  processPattern,
-  safeExecute
-} from './common-maps-utils';
+  FormattedData,
+  MarkerIconInfo,
+  MarkerIconReadyFunction,
+  MarkerImageInfo,
+  MarkerSettings,
+  UnitedMapSettings
+} from './map-models';
+import { bindPopupActions, createTooltip } from './maps-utils';
+import { aspectCache, fillPattern, parseWithTranslation, processPattern, safeExecute } from './common-maps-utils';
 import tinycolor from 'tinycolor2';
 import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import LeafletMap from './leaflet-map';
 
 export class Marker {
     leafletMarker: L.Marker;
+    labelOffset: L.LatLngTuple;
     tooltipOffset: L.LatLngTuple;
     markerOffset: L.LatLngTuple;
     tooltip: L.Popup;
     data: FormattedData;
     dataSources: FormattedData[];
 
-  constructor(private map: LeafletMap, private location: L.LatLng, public settings: MarkerSettings,
+  constructor(private map: LeafletMap, private location: L.LatLng, public settings: UnitedMapSettings,
               data?: FormattedData, dataSources?, onDragendListener?) {
         this.setDataSources(data, dataSources);
         this.leafletMarker = L.marker(location, {
-            draggable: settings.draggableMarker
+          pmIgnore: !settings.draggableMarker,
+          snapIgnore: !settings.snappable
         });
 
         this.markerOffset = [
@@ -51,11 +51,12 @@ export class Marker {
           isDefined(settings.markerOffsetY) ? settings.markerOffsetY : 1,
         ];
 
-        this.createMarkerIcon((iconInfo) => {
-            this.leafletMarker.setIcon(iconInfo.icon);
-            this.tooltipOffset = [0, -iconInfo.size[1] * this.markerOffset[1] + 10];
-            this.updateMarkerLabel(settings);
-        });
+        this.tooltipOffset = [
+          isDefined(settings.tooltipOffsetX) ? settings.tooltipOffsetX : 0,
+          isDefined(settings.tooltipOffsetY) ? settings.tooltipOffsetY : -1,
+        ];
+
+        this.updateMarkerIcon(settings);
 
         if (settings.showTooltip) {
             this.tooltip = createTooltip(this.leafletMarker, settings, data.$datasource);
@@ -64,16 +65,24 @@ export class Marker {
 
         if (this.settings.markerClick) {
             this.leafletMarker.on('click', (event: LeafletMouseEvent) => {
-                for (const action in this.settings.markerClick) {
-                    if (typeof (this.settings.markerClick[action]) === 'function') {
-                        this.settings.markerClick[action](event.originalEvent, this.data.$datasource);
-                    }
+              for (const action in this.settings.markerClick) {
+                if (typeof (this.settings.markerClick[action]) === 'function') {
+                  this.settings.markerClick[action](event.originalEvent, this.data.$datasource);
                 }
+              }
             });
         }
 
-        if (onDragendListener) {
-            this.leafletMarker.on('dragend', (e) => onDragendListener(e, this.data));
+        if (settings.draggableMarker && onDragendListener) {
+          this.leafletMarker.on('pm:dragstart', (e) => {
+            (this.leafletMarker.dragging as any)._draggable = { _moved: true };
+            (this.leafletMarker.dragging as any)._enabled = true;
+          });
+          this.leafletMarker.on('pm:dragend', (e) => {
+            onDragendListener(e, this.data);
+            delete (this.leafletMarker.dragging as any)._draggable;
+            delete (this.leafletMarker.dragging as any)._enabled;
+          });
         }
     }
 
@@ -113,7 +122,7 @@ export class Marker {
             }
             settings.labelText = fillPattern(this.map.markerLabelText, this.map.replaceInfoLabelMarker, this.data);
             this.leafletMarker.bindTooltip(`<div style="color: ${settings.labelColor};"><b>${settings.labelText}</b></div>`,
-                { className: 'tb-marker-label', permanent: true, direction: 'top', offset: this.tooltipOffset });
+                { className: 'tb-marker-label', permanent: true, direction: 'top', offset: this.labelOffset });
         }
     }
 
@@ -126,20 +135,22 @@ export class Marker {
     updateMarkerIcon(settings: MarkerSettings) {
         this.createMarkerIcon((iconInfo) => {
             this.leafletMarker.setIcon(iconInfo.icon);
-            this.tooltipOffset = [0, -iconInfo.size[1] * this.markerOffset[1] + 10];
+            const anchor = iconInfo.icon.options.iconAnchor;
+            if (anchor && Array.isArray(anchor)) {
+                this.labelOffset = [iconInfo.size[0] / 2 - anchor[0], 10 - anchor[1]];
+            } else {
+                this.labelOffset = [0, -iconInfo.size[1] * this.markerOffset[1] + 10];
+            }
             this.updateMarkerLabel(settings);
         });
     }
 
-    createMarkerIcon(onMarkerIconReady) {
+    private createMarkerIcon(onMarkerIconReady: MarkerIconReadyFunction) {
         if (this.settings.icon) {
-            onMarkerIconReady({
-                size: [30, 30],
-                icon: this.settings.icon,
-            });
-            return;
+          onMarkerIconReady(this.settings.icon);
+          return;
         }
-        const currentImage = this.settings.useMarkerImageFunction ?
+        const currentImage: MarkerImageInfo = this.settings.useMarkerImageFunction ?
             safeExecute(this.settings.markerImageFunction,
                 [this.data, this.settings.markerImages, this.dataSources, this.data.dsIndex]) : this.settings.currentImage;
         let currentColor = this.settings.tinyColor;
@@ -163,13 +174,21 @@ export class Marker {
                             width = currentImage.size * aspect;
                             height = currentImage.size;
                         }
+                        let iconAnchor = currentImage.markerOffset;
+                        let popupAnchor = currentImage.tooltipOffset;
+                        if (!iconAnchor) {
+                            iconAnchor = [width * this.markerOffset[0], height * this.markerOffset[1]];
+                        }
+                        if (!popupAnchor) {
+                            popupAnchor = [width * this.tooltipOffset[0], height * this.tooltipOffset[1]];
+                        }
                         const icon = L.icon({
                             iconUrl: currentImage.url,
                             iconSize: [width, height],
-                            iconAnchor: [width * this.markerOffset[0], height * this.markerOffset[1]],
-                            popupAnchor: [0, -height]
+                            iconAnchor,
+                            popupAnchor
                         });
-                        const iconInfo = {
+                        const iconInfo: MarkerIconInfo = {
                             size: [width, height],
                             icon
                         };
@@ -184,8 +203,8 @@ export class Marker {
         }
     }
 
-    createDefaultMarkerIcon(color: tinycolor.Instance, onMarkerIconReady) {
-      let icon: { size: number[], icon: Icon };
+    createDefaultMarkerIcon(color: tinycolor.Instance, onMarkerIconReady: MarkerIconReadyFunction) {
+      let icon: MarkerIconInfo;
       if (!tinycolor.equals(color, this.settings.tinyColor)) {
         icon = this.createColoredMarkerIcon(color);
       } else {
@@ -197,19 +216,24 @@ export class Marker {
       onMarkerIconReady(icon);
     }
 
-    createColoredMarkerIcon(color: tinycolor.Instance): { size: number[], icon: Icon } {
+    createColoredMarkerIcon(color: tinycolor.Instance): MarkerIconInfo {
       return {
-            size: [21, 34],
-            icon: L.icon({
-              iconUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|' + color.toHex(),
-              iconSize: [21, 34],
-              iconAnchor: [21 * this.markerOffset[0], 34 * this.markerOffset[1]],
-              popupAnchor: [0, -34],
-              shadowUrl: 'https://chart.apis.google.com/chart?chst=d_map_pin_shadow',
-              shadowSize: [40, 37],
-              shadowAnchor: [12, 35]
+        size: [21, 34],
+        icon: L.icon({
+          iconUrl: this.createColorIconURI(color),
+          iconSize: [21, 34],
+          iconAnchor: [21 * this.markerOffset[0], 34 * this.markerOffset[1]],
+          popupAnchor: [0, -34],
+          shadowUrl: 'assets/shadow.png',
+          shadowSize: [40, 37],
+          shadowAnchor: [12, 35]
         })
       };
+    }
+
+    createColorIconURI(color: tinycolor.Instance): string {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-191.35 -351.18 1083.58 1730.46"><path fill-rule="evenodd" clip-rule="evenodd" fill="#${color.toHex()}" stroke="#000" stroke-width="37" stroke-miterlimit="10" d="M351.833 1360.78c-38.766-190.3-107.116-348.665-189.903-495.44C100.523 756.469 29.386 655.978-36.434 550.404c-21.972-35.244-40.934-72.477-62.047-109.054-42.216-73.137-76.444-157.935-74.269-267.932 2.125-107.473 33.208-193.685 78.03-264.173C-21-206.69 102.481-301.745 268.164-326.724c135.466-20.425 262.475 14.082 352.543 66.747 73.6 43.038 130.596 100.528 173.92 168.28 45.22 70.716 76.36 154.26 78.971 263.233 1.337 55.83-7.805 107.532-20.684 150.417-13.034 43.41-33.996 79.695-52.646 118.455-36.406 75.659-82.049 144.981-127.855 214.345-136.437 206.606-264.496 417.31-320.58 706.028z"/><circle fill-rule="evenodd" clip-rule="evenodd" cx="352.891" cy="225.779" r="183.332"/></svg>`;
+      return 'data:image/svg+xml;base64,' + btoa(svg);
     }
 
     removeMarker() {

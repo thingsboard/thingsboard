@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,12 +30,13 @@ import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 import static org.thingsboard.rule.engine.api.TbRelationTypes.FAILURE;
-import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 
 @Slf4j
@@ -65,27 +66,35 @@ public abstract class TbEntityGetAttrNode<T extends EntityId> implements TbNode 
             return;
         }
 
-        withCallback(config.isTelemetry() ? getLatestTelemetry(ctx, entityId) : getAttributesAsync(ctx, entityId),
-                attributes -> putAttributesAndTell(ctx, msg, attributes),
+        Map<String, String> mappingsMap = new HashMap<>();
+        config.getAttrMapping().forEach((key, value) -> {
+            String processPatternKey = TbNodeUtils.processPattern(key, msg);
+            String processPatternValue = TbNodeUtils.processPattern(value, msg);
+            mappingsMap.put(processPatternKey, processPatternValue);
+        });
+
+        List<String> keys = List.copyOf(mappingsMap.keySet());
+        withCallback(config.isTelemetry() ? getLatestTelemetry(ctx, entityId, keys) : getAttributesAsync(ctx, entityId, keys),
+                attributes -> putAttributesAndTell(ctx, msg, attributes, mappingsMap),
                 t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
-    private ListenableFuture<List<KvEntry>> getAttributesAsync(TbContext ctx, EntityId entityId) {
-        ListenableFuture<List<AttributeKvEntry>> latest = ctx.getAttributesService().find(ctx.getTenantId(), entityId, SERVER_SCOPE, config.getAttrMapping().keySet());
+    private ListenableFuture<List<KvEntry>> getAttributesAsync(TbContext ctx, EntityId entityId, List<String> attrKeys) {
+        ListenableFuture<List<AttributeKvEntry>> latest = ctx.getAttributesService().find(ctx.getTenantId(), entityId, SERVER_SCOPE, attrKeys);
         return Futures.transform(latest, l ->
                 l.stream().map(i -> (KvEntry) i).collect(Collectors.toList()), MoreExecutors.directExecutor());
     }
 
-    private ListenableFuture<List<KvEntry>> getLatestTelemetry(TbContext ctx, EntityId entityId) {
-        ListenableFuture<List<TsKvEntry>> latest = ctx.getTimeseriesService().findLatest(ctx.getTenantId(), entityId, config.getAttrMapping().keySet());
+    private ListenableFuture<List<KvEntry>> getLatestTelemetry(TbContext ctx, EntityId entityId, List<String> timeseriesKeys) {
+        ListenableFuture<List<TsKvEntry>> latest = ctx.getTimeseriesService().findLatest(ctx.getTenantId(), entityId, timeseriesKeys);
         return Futures.transform(latest, l ->
                 l.stream().map(i -> (KvEntry) i).collect(Collectors.toList()), MoreExecutors.directExecutor());
     }
 
 
-    private void putAttributesAndTell(TbContext ctx, TbMsg msg, List<? extends KvEntry> attributes) {
+    private void putAttributesAndTell(TbContext ctx, TbMsg msg, List<? extends KvEntry> attributes, Map<String, String> map) {
         attributes.forEach(r -> {
-            String attrName = config.getAttrMapping().get(r.getKey());
+            String attrName = map.get(r.getKey());
             msg.getMetaData().putValue(attrName, r.getValueAsString());
         });
         ctx.tellSuccess(msg);

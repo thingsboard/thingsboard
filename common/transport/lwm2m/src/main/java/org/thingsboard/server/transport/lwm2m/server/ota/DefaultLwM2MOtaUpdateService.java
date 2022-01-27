@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.device.data.lwm2m.OtherConfiguration;
+import org.thingsboard.server.common.data.device.profile.lwm2m.OtherConfiguration;
 import org.thingsboard.server.common.data.ota.OtaPackageKey;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;
@@ -74,8 +74,10 @@ import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDA
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATING;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.VERIFIED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUtil.getAttributeKey;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_TELEMETRY;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertObjectIdToVersionedId;
+import static org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdateResult.UPDATE_SUCCESSFULLY;
+import static org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateResult.NOT_ENOUGH_STORAGE;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_TELEMETRY;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertObjectIdToVersionedId;
 
 @Slf4j
 @Service
@@ -180,9 +182,8 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         }
 
         var clientSettings = clientContext.getProfile(client.getProfileId()).getClientLwM2mSettings();
-
-        onFirmwareStrategyUpdate(client, clientSettings);
-        onCurrentSoftwareStrategyUpdate(client, clientSettings);
+        initFwStrategy(client, clientSettings);
+        initSwStrategy(client, clientSettings);
 
         if (!attributesToFetch.isEmpty()) {
             var future = attributesService.getSharedAttributes(client, attributesToFetch);
@@ -192,7 +193,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
                     Optional<String> newFwVersion = getAttributeValue(attrs, FIRMWARE_VERSION);
                     Optional<String> newFwTag = getAttributeValue(attrs, FIRMWARE_TAG);
                     Optional<String> newFwUrl = getAttributeValue(attrs, FIRMWARE_URL);
-                    if (newFwTitle.isPresent() && newFwVersion.isPresent()) {
+                    if (newFwTitle.isPresent() && newFwVersion.isPresent() && !isOtaDownloading(client) && !UPDATING.equals(fwInfo.status)) {
                         onTargetFirmwareUpdate(client, newFwTitle.get(), newFwVersion.get(), newFwUrl, newFwTag);
                     }
                 }
@@ -244,19 +245,27 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     @Override
     public void onFirmwareStrategyUpdate(LwM2mClient client, OtherConfiguration configuration) {
         log.debug("[{}] Current fw strategy: {}", client.getEndpoint(), configuration.getFwUpdateStrategy());
+        startFirmwareUpdateIfNeeded(client, initFwStrategy(client, configuration));
+    }
+
+    private LwM2MClientFwOtaInfo initFwStrategy(LwM2mClient client, OtherConfiguration configuration) {
         LwM2MClientFwOtaInfo fwInfo = getOrInitFwInfo(client);
         fwInfo.setStrategy(LwM2MFirmwareUpdateStrategy.fromStrategyFwByCode(configuration.getFwUpdateStrategy()));
         fwInfo.setBaseUrl(configuration.getFwUpdateResource());
-        startFirmwareUpdateIfNeeded(client, fwInfo);
+        return fwInfo;
     }
 
     @Override
     public void onCurrentSoftwareStrategyUpdate(LwM2mClient client, OtherConfiguration configuration) {
         log.debug("[{}] Current sw strategy: {}", client.getEndpoint(), configuration.getSwUpdateStrategy());
+        startSoftwareUpdateIfNeeded(client, initSwStrategy(client, configuration));
+    }
+
+    private LwM2MClientSwOtaInfo initSwStrategy(LwM2mClient client, OtherConfiguration configuration) {
         LwM2MClientSwOtaInfo swInfo = getOrInitSwInfo(client);
         swInfo.setStrategy(LwM2MSoftwareUpdateStrategy.fromStrategySwByCode(configuration.getSwUpdateStrategy()));
         swInfo.setBaseUrl(configuration.getSwUpdateResource());
-        startSoftwareUpdateIfNeeded(client, swInfo);
+        return swInfo;
     }
 
     @Override
@@ -307,6 +316,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         if (FirmwareUpdateResult.INITIAL.equals(result) && OtaPackageUpdateStatus.UPDATING.equals(fwInfo.getStatus())) {
             status = Optional.of(UPDATED);
             fwInfo.setRetryAttempts(0);
+            fwInfo.setFailedPackageId(null);
         }
 
         status.ifPresent(otaStatus -> {
@@ -387,6 +397,22 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         startSoftwareUpdateIfNeeded(client, fwInfo);
     }
 
+    @Override
+    public boolean isOtaDownloading(LwM2mClient client) {
+        String endpoint = client.getEndpoint();
+        LwM2MClientFwOtaInfo fwInfo = fwStates.get(endpoint);
+        LwM2MClientSwOtaInfo swInfo = swStates.get(endpoint);
+
+        if (fwInfo != null && (DOWNLOADING.equals(fwInfo.getStatus()))) {
+            return true;
+        }
+        if (swInfo != null && (DOWNLOADING.equals(swInfo.getStatus()))) {
+            return true;
+        }
+
+        return false;
+    }
+
     private void startFirmwareUpdateIfNeeded(LwM2mClient client, LwM2MClientFwOtaInfo fwInfo) {
         try {
             if (!fwInfo.isSupported() && fwInfo.isAssigned()) {
@@ -400,9 +426,12 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
                     log.debug("[{}] Starting update to [{}{}] using binary", client.getEndpoint(), fwInfo.getTargetName(), fwInfo.getTargetVersion());
                     startUpdateUsingBinary(client, fwInfo);
                 }
+            } else if (fwInfo.getResult() != null && fwInfo.getResult().getCode() > UPDATE_SUCCESSFULLY.getCode()) {
+                log.trace("[{}] Previous update failed. [{}]", client.getEndpoint(), fwInfo);
+                logService.log(client, "Previous update firmware failed. Result: " + fwInfo.getResult().name());
             }
         } catch (Exception e) {
-            log.info("[{}] failed to update client: {}", client.getEndpoint(), fwInfo, e);
+            log.error("[{}] failed to update client: {}", client.getEndpoint(), fwInfo, e);
             sendStateUpdateToTelemetry(client, fwInfo, OtaPackageUpdateStatus.FAILED, "Internal server error: " + e.getMessage());
         }
     }
@@ -425,6 +454,9 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
                         startUpdateUsingBinary(client, swInfo);
                     }
                 }
+            } else if (swInfo.getResult() != null && swInfo.getResult().getCode() >= NOT_ENOUGH_STORAGE.getCode()) {
+                log.trace("[{}] Previous update failed. [{}]", client.getEndpoint(), swInfo);
+                logService.log(client, "Previous update software failed. Result: " + swInfo.getResult().name());
             }
         } catch (Exception e) {
             log.info("[{}] failed to update client: {}", client.getEndpoint(), swInfo, e);

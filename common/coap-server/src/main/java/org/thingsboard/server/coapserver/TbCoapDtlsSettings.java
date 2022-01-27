@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,13 @@
 package org.thingsboard.server.coapserver;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.elements.config.CertificateAuthenticationMode;
+import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.californium.elements.util.SslContextUtil;
+import org.eclipse.californium.scandium.config.DtlsConfig;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.californium.scandium.dtls.CertificateType;
+import org.eclipse.californium.scandium.dtls.x509.SingleCertificateProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,17 +30,14 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.ResourceUtils;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentialsConfig;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.security.GeneralSecurityException;
 import java.util.Collections;
 
 @Slf4j
@@ -75,15 +76,14 @@ public class TbCoapDtlsSettings {
     @Autowired
     private TbServiceInfoProvider serviceInfoProvider;
 
-    public DtlsConnectorConfig dtlsConnectorConfig() throws UnknownHostException {
-        DtlsConnectorConfig.Builder configBuilder = new DtlsConnectorConfig.Builder();
+    public DtlsConnectorConfig dtlsConnectorConfig(Configuration configuration) throws UnknownHostException {
+        DtlsConnectorConfig.Builder configBuilder = new DtlsConnectorConfig.Builder(configuration);
         configBuilder.setAddress(getInetSocketAddress());
         SslCredentials sslCredentials = this.coapDtlsCredentialsConfig.getCredentials();
         SslContextUtil.Credentials serverCredentials =
                 new SslContextUtil.Credentials(sslCredentials.getPrivateKey(), null, sslCredentials.getCertificateChain());
-        configBuilder.setServerOnly(true);
-        configBuilder.setClientAuthenticationRequired(false);
-        configBuilder.setClientAuthenticationWanted(true);
+        configBuilder.set(DtlsConfig.DTLS_ROLE, DtlsConfig.DtlsRole.SERVER_ONLY);
+        configBuilder.set(DtlsConfig.DTLS_CLIENT_AUTHENTICATION_MODE, CertificateAuthenticationMode.WANTED);
         configBuilder.setAdvancedCertificateVerifier(
                 new TbCoapDtlsCertificateVerifier(
                         transportService,
@@ -93,8 +93,8 @@ public class TbCoapDtlsSettings {
                         skipValidityCheckForClientCert
                 )
         );
-        configBuilder.setIdentity(serverCredentials.getPrivateKey(), serverCredentials.getCertificateChain(),
-                Collections.singletonList(CertificateType.X_509));
+        configBuilder.setCertificateIdentityProvider(new SingleCertificateProvider(serverCredentials.getPrivateKey(), serverCredentials.getCertificateChain(),
+                Collections.singletonList(CertificateType.X_509)));
         return configBuilder.build();
     }
 

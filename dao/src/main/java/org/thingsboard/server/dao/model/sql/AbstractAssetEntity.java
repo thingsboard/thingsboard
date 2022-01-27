@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,7 +119,7 @@ public abstract class AbstractAssetEntity<T extends Asset> extends BaseSqlEntity
         Asset asset = new Asset(new AssetId(id));
         asset.setCreatedTime(createdTime);
         if (tenantId != null) {
-            asset.setTenantId(new TenantId(tenantId));
+            asset.setTenantId(TenantId.fromUUID(tenantId));
         }
         if (customerId != null) {
             asset.setCustomerId(new CustomerId(customerId));

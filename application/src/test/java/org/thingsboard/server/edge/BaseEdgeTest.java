@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -767,7 +767,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
         edgeImitator.expectMessageAmount(1);
         doDelete("/api/alarm/" + savedAlarm.getId().getId().toString())
                 .andExpect(status().isOk());
-        Assert.assertTrue(edgeImitator.waitForMessages(1));
+        Assert.assertTrue(edgeImitator.waitForMessages());
         latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof AlarmUpdateMsg);
         alarmUpdateMsg = (AlarmUpdateMsg) latestMessage;
@@ -1137,7 +1137,7 @@ abstract public class BaseEdgeTest extends AbstractControllerTest {
             clusterService.onEdgeEventUpdate(tenantId, edge.getId());
         }
 
-        Assert.assertTrue(edgeImitator.waitForMessages(60));
+        Assert.assertTrue(edgeImitator.waitForMessages(120));
 
         List<EntityDataProto> allTelemetryMsgs = edgeImitator.findAllMessagesByType(EntityDataProto.class);
         Assert.assertEquals(numberOfTimeseriesToSend, allTelemetryMsgs.size());

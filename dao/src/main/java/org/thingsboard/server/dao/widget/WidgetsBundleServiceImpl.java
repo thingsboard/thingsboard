@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,7 +159,7 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
                         throw new DataValidationException("Widgets bundle title should be specified!");
                     }
                     if (widgetsBundle.getTenantId() == null) {
-                        widgetsBundle.setTenantId(new TenantId(ModelConstants.NULL_UUID));
+                        widgetsBundle.setTenantId(TenantId.fromUUID(ModelConstants.NULL_UUID));
                     }
                     if (!widgetsBundle.getTenantId().getId().equals(ModelConstants.NULL_UUID)) {
                         Tenant tenant = tenantDao.findById(tenantId, widgetsBundle.getTenantId().getId());

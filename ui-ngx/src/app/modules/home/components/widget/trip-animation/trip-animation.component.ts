@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ import {
 } from '@home/components/widget/lib/maps/common-maps-utils';
 import { JsonSettingsSchema, WidgetConfig } from '@shared/models/widget.models';
 import moment from 'moment';
-import { isDefined, isUndefined } from '@core/utils';
+import { deepClone, isDefined, isUndefined } from '@core/utils';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { MapWidgetInterface } from '@home/components/widget/lib/maps/map-widget.interface';
 
@@ -100,7 +100,10 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
     addGroupInfo(schema, 'Path Settings');
     addToSchema(schema, addCondition(pointSchema, 'model.showPoints === true', ['showPoints']));
     addGroupInfo(schema, 'Path Points Settings');
-    addToSchema(schema, addCondition(mapPolygonSchema, 'model.showPolygon === true', ['showPolygon']));
+    const mapPolygonSchemaWithoutEdit = deepClone(mapPolygonSchema);
+    delete mapPolygonSchemaWithoutEdit.schema.properties.editablePolygon;
+    mapPolygonSchemaWithoutEdit.form.splice(mapPolygonSchemaWithoutEdit.form.indexOf('editablePolygon'), 1);
+    addToSchema(schema, addCondition(mapPolygonSchemaWithoutEdit, 'model.showPolygon === true', ['showPolygon']));
     addGroupInfo(schema, 'Polygon Settings');
     return schema;
   }
@@ -115,6 +118,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
       rotationAngle: 0
     };
     this.settings = { ...settings, ...this.ctx.settings };
+    this.settings.editablePolygon = false;
     this.useAnchors = this.settings.showPoints && this.settings.usePointAsAnchor;
     this.settings.pointAsAnchorFunction = parseFunction(this.settings.pointAsAnchorFunction, ['data', 'dsData', 'dsIndex']);
     this.settings.tooltipFunction = parseFunction(this.settings.tooltipFunction, ['data', 'dsData', 'dsIndex']);

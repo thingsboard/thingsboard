@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,17 +25,16 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.ResourceUtils;
+import org.thingsboard.server.common.data.TbProperty;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentialsConfig;
 
-import javax.annotation.PostConstruct;
-import java.io.InputStream;
-import java.security.KeyStore;
+import java.util.List;
 
 @Slf4j
 @Component
-@ConditionalOnExpression("('${service.type:null}'=='tb-transport' && '${transport.lwm2m.enabled:false}'=='true') || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core'")
+@ConditionalOnExpression("('${service.type:null}'=='tb-transport' || '${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core')  && '${transport.lwm2m.enabled:false}'=='true'")
+@ConfigurationProperties(prefix = "transport.lwm2m")
 public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
 
     @Getter
@@ -91,16 +90,16 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     private Integer securePort;
 
     @Getter
-    @Value("${transport.lwm2m.log_max_length:}")
-    private int logMaxLength;
-
-    @Getter
     @Value("${transport.lwm2m.psm_activity_timer:10000}")
     private long psmActivityTimer;
 
     @Getter
     @Value("${transport.lwm2m.paging_transmission_window:10000}")
     private long pagingTransmissionWindow;
+
+    @Getter
+    @Setter
+    private List<TbProperty> networkConfig;
 
     @Bean
     @ConfigurationProperties(prefix = "transport.lwm2m.server.security.credentials")

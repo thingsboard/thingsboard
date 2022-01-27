@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -159,6 +159,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
 
   modelValue: WidgetConfigComponentData;
 
+  showLegendFieldset = true;
+
   private propagateChange = null;
 
   public dataSettings: FormGroup;
@@ -206,6 +208,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       padding: [null, []],
       margin: [null, []],
       widgetStyle: [null, []],
+      widgetCss: [null, []],
       titleStyle: [null, []],
       units: [null, []],
       decimals: [null, [Validators.min(0), Validators.max(15), Validators.pattern(/^\d*$/)]],
@@ -322,6 +325,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
         this.datasourceTypes.push(DatasourceType.entityCount);
       }
     }
+
     this.dataSettings = this.fb.group({});
     this.targetDeviceSettings = this.fb.group({});
     this.alarmSourceSettings = this.fb.group({});
@@ -385,20 +389,22 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     if (this.modelValue) {
       if (this.widgetType !== this.modelValue.widgetType) {
         this.widgetType = this.modelValue.widgetType;
+        this.showLegendFieldset = (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.latest);
         this.buildForms();
       }
       const config = this.modelValue.config;
       const layout = this.modelValue.layout;
       if (config) {
         this.selectedTab = 0;
+        const displayWidgetTitle = isDefined(config.showTitle) ? config.showTitle : false;
         this.widgetSettings.patchValue({
             title: config.title,
-            showTitleIcon: isDefined(config.showTitleIcon) ? config.showTitleIcon : false,
+            showTitleIcon: isDefined(config.showTitleIcon) && displayWidgetTitle ? config.showTitleIcon : false,
             titleIcon: isDefined(config.titleIcon) ? config.titleIcon : '',
             iconColor: isDefined(config.iconColor) ? config.iconColor : 'rgba(0, 0, 0, 0.87)',
             iconSize: isDefined(config.iconSize) ? config.iconSize : '24px',
             titleTooltip: isDefined(config.titleTooltip) ? config.titleTooltip : '',
-            showTitle: isDefined(config.showTitle) ? config.showTitle : false,
+            showTitle: displayWidgetTitle,
             dropShadow: isDefined(config.dropShadow) ? config.dropShadow : true,
             enableFullscreen: isDefined(config.enableFullscreen) ? config.enableFullscreen : true,
             backgroundColor: config.backgroundColor,
@@ -406,6 +412,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
             padding: config.padding,
             margin: config.margin,
             widgetStyle: isDefined(config.widgetStyle) ? config.widgetStyle : {},
+            widgetCss: isDefined(config.widgetCss) ? config.widgetCss : '',
             titleStyle: isDefined(config.titleStyle) ? config.titleStyle : {
               fontSize: '16px',
               fontWeight: 400

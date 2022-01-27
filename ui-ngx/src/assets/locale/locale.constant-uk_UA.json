@@ -795,8 +795,6 @@
         "access-token": "Маркер доступу",
         "access-token-required": "Необхідно вказати маркер доступу.",
         "access-token-invalid": "Маркер доступу має бути від 1 до 32 символів.",
-        "rsa-key": "Публічний ключ RSA",
-        "rsa-key-required": "Необхідно вказати публічний ключ RSA.",
         "secret": "Секрет",
         "secret-required": "Необхідно вказати секрет.",
         "device-type": "Тип пристрою",
@@ -1213,7 +1211,9 @@
         "messages-processed": "Повідомлення опрацьовані",
         "errors-occurred": "Виникли помилки",
         "all-events": "Всі",
-        "entity-type": "Тип сутності"
+        "entity-type": "Тип сутності",
+        "clear-request-title": "Видалити всі події",
+        "clear-request-text": "Ви впевнені, що хочете видалити всі події?"
     },
     "extension": {
         "extensions": "Розширення",
@@ -2359,6 +2359,47 @@
             "update-attribute": "Оновити атрибут",
             "update-timeseries": "Оновити телеметрію",
             "value": "Значення"
+        },
+        "persistent-table": {
+            "rpc-id": "RPC ID",
+            "message-type": "Тип повідомлення",
+            "method": "Метод",
+            "params": "Параметри",
+            "created-time": "Час створення",
+            "expiration-time": "Час життя",
+            "retries": "Повторні спроби",
+            "status": "Статус",
+            "filter": "Фільтр",
+            "refresh": "Оновити",
+            "add": "Додати RPC запит",
+            "details": "Деталі",
+            "delete": "Видалити",
+            "delete-request-title": "Видалити RPC запит",
+            "delete-request-text": "Ви впевнені, що хочете видалити RPC запит?",
+            "details-title": "Деталі RPC ID: ",
+            "additional-info": "Додаткова інформація",
+            "response": "Відповідь",
+            "any-status": "Будь-який статус",
+            "rpc-status-list": "Список RPC статусів",
+            "no-request-prompt": "Запитів не знайдено",
+            "send-request": "Відправити запит",
+            "add-title": "Додати новий RPC запит",
+            "method-error": "Необхідно вказати метод.",
+            "white-space-error": "Пробіли не допускаються.",
+            "rpc-status": {
+                "QUEUED": "В ЧЕРЗІ",
+                "SENT": "ВІДПРАВЛЕНО",
+                "DELIVERED": "ДОСТАВЛЕННО",
+                "SUCCESSFUL": "УСПІШНО",
+                "TIMEOUT": "ЧАС МИНУВ",
+                "EXPIRED": "ПРОСРОЧЕНО",
+                "FAILED": "НЕ ВДАЛО"
+            },
+            "rpc-search-status-all": "ВСІ",
+            "message-types": {
+                "false": "Двосторонній",
+                "true": "Односторонній"
+            }
         }
     },
     "white-labeling": {

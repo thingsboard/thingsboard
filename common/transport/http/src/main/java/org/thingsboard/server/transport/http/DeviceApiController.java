@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -601,6 +601,13 @@ public class DeviceApiController implements TbTransportService {
         @Override
         public void onToServerRpcResponse(ToServerRpcResponseMsg msg) {
             responseWriter.setResult(new ResponseEntity<>(JsonConverter.toJson(msg).toString(), HttpStatus.OK));
+        }
+
+        @Override
+        public void onDeviceDeleted(DeviceId deviceId) {
+            UUID sessionId = new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB());
+            log.trace("[{}] Received device deleted notification for device with id: {}",sessionId, deviceId);
+            responseWriter.setResult(new ResponseEntity<>("Device was deleted!", HttpStatus.FORBIDDEN));
         }
 
     }

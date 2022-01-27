@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,12 @@ public class RuleChainActor extends ComponentActor<RuleChainId, RuleChainActorMe
                 break;
             case RULE_CHAIN_TO_RULE_CHAIN_MSG:
                 processor.onRuleChainToRuleChainMsg((RuleChainToRuleChainMsg) msg);
+                break;
+            case RULE_CHAIN_INPUT_MSG:
+                processor.onRuleChainInputMsg((RuleChainInputMsg) msg);
+                break;
+            case RULE_CHAIN_OUTPUT_MSG:
+                processor.onRuleChainOutputMsg((RuleChainOutputMsg) msg);
                 break;
             case PARTITION_CHANGE_MSG:
                 processor.onPartitionChangeMsg((PartitionChangeMsg) msg);

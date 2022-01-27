@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.rule.RuleNode;
 public class RuleNodeException extends RuleEngineException {
 
     private static final long serialVersionUID = -1776681087370749776L;
+    public static final String UNKNOWN = "Unknown";
 
     @Getter
     private final String ruleChainName;
@@ -45,7 +46,7 @@ public class RuleNodeException extends RuleEngineException {
             this.ruleChainId = ruleNode.getRuleChainId();
             this.ruleNodeId = ruleNode.getId();
         } else {
-            ruleNodeName = "Unknown";
+            ruleNodeName = UNKNOWN;
             ruleChainId = new RuleChainId(RuleChainId.NULL_UUID);
             ruleNodeId = new RuleNodeId(RuleNodeId.NULL_UUID);
         }

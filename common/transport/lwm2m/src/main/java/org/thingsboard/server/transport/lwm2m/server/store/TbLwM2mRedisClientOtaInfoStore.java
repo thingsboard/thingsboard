@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,12 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.store;
 
-import org.eclipse.leshan.server.security.NonUniqueSecurityInfoException;
-import org.eclipse.leshan.server.security.SecurityInfo;
-import org.jetbrains.annotations.Nullable;
-import org.nustaq.serialization.FSTConfiguration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.integration.redis.util.RedisLockRegistry;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
-import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MClientOtaInfo;
 import org.thingsboard.server.transport.lwm2m.server.ota.firmware.LwM2MClientFwOtaInfo;
 import org.thingsboard.server.transport.lwm2m.server.ota.software.LwM2MClientSwOtaInfo;
-
-import java.util.concurrent.locks.Lock;
 
 public class TbLwM2mRedisClientOtaInfoStore implements TbLwM2MClientOtaInfoStore {
     private static final String OTA_EP = "OTA#EP#";

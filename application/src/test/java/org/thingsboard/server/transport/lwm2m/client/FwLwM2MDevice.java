@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,10 +131,10 @@ public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
         scheduler.schedule(() -> {
             try {
                 state.set(1);
-                fireResourcesChange(3);
+                fireResourceChange(3);
                 Thread.sleep(100);
                 state.set(2);
-                fireResourcesChange(3);
+                fireResourceChange(3);
             } catch (Exception e) {
             }
         }, 100, TimeUnit.MILLISECONDS);
@@ -144,10 +144,10 @@ public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
         scheduler.schedule(() -> {
             try {
                 state.set(3);
-                fireResourcesChange(3);
+                fireResourceChange(3);
                 Thread.sleep(100);
                 updateResult.set(1);
-                fireResourcesChange(5);
+                fireResourceChange(5);
             } catch (Exception e) {
             }
         }, 100, TimeUnit.MILLISECONDS);

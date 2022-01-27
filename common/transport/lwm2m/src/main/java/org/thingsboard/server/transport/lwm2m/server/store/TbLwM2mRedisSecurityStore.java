@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.store;
 
+import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.server.security.NonUniqueSecurityInfoException;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.nustaq.serialization.FSTConfiguration;
@@ -49,7 +50,13 @@ public class TbLwM2mRedisSecurityStore implements TbEditableSecurityStore {
             if (data == null || data.length == 0) {
                 return null;
             } else {
-                return ((TbLwM2MSecurityInfo) serializer.asObject(data)).getSecurityInfo();
+                if (SecurityMode.NO_SEC.equals(((TbLwM2MSecurityInfo) serializer.asObject(data)).getSecurityMode())) {
+                    return SecurityInfo.newPreSharedKeyInfo(SecurityMode.NO_SEC.toString(), SecurityMode.NO_SEC.toString(),
+                            SecurityMode.NO_SEC.toString().getBytes());
+                }
+                else {
+                    return ((TbLwM2MSecurityInfo) serializer.asObject(data)).getSecurityInfo();
+                }
             }
         } finally {
             if (lock != null) {

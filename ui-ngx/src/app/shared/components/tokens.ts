@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,4 +21,4 @@ export const HELP_MARKDOWN_COMPONENT_TOKEN: InjectionToken<ComponentType<any>> =
   new InjectionToken<ComponentType<any>>('HELP_MARKDOWN_COMPONENT_TOKEN');
 
 export const SHARED_MODULE_TOKEN: InjectionToken<Type<any>> =
-  new InjectionToken<Type<any>>('HELP_MARKDOWN_COMPONENT_TOKEN');
+  new InjectionToken<Type<any>>('SHARED_MODULE_TOKEN');

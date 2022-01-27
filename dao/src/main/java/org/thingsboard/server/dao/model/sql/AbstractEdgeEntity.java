@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,7 +153,7 @@ public abstract class AbstractEdgeEntity<T extends Edge> extends BaseSqlEntity<T
         Edge edge = new Edge(new EdgeId(getUuid()));
         edge.setCreatedTime(createdTime);
         if (tenantId != null) {
-            edge.setTenantId(new TenantId(tenantId));
+            edge.setTenantId(TenantId.fromUUID(tenantId));
         }
         if (customerId != null) {
             edge.setCustomerId(new CustomerId(customerId));

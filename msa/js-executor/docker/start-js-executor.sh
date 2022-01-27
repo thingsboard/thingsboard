@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2016-2021 The Thingsboard Authors
+# Copyright © 2016-2022 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,12 +20,10 @@ echo "Starting '${project.name}' ..."
 
 CONF_FOLDER="${pkg.installFolder}/conf"
 
-mainfile=${pkg.installFolder}/bin/${pkg.name}
 configfile=${pkg.name}.conf
-identity=${pkg.name}
 
 source "${CONF_FOLDER}/${configfile}"
 
-cd ${pkg.installFolder}/bin
+cd ${pkg.installFolder}
 
-exec /bin/sh -c "$mainfile"
+exec /bin/sh -c "node server.js"

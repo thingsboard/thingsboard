@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ public class TbDeviceProfileNodeTest {
     @Mock
     private AttributesService attributesService;
 
-    private final TenantId tenantId = new TenantId(UUID.randomUUID());
+    private final TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
     private final DeviceId deviceId = new DeviceId(UUID.randomUUID());
     private final CustomerId customerId = new CustomerId(UUID.randomUUID());
     private final DeviceProfileId deviceProfileId = new DeviceProfileId(UUID.randomUUID());

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.TbProperty;
 
 import java.util.Collections;
 import java.util.List;
@@ -104,10 +105,10 @@ public class TbKafkaSettings {
     private String securityProtocol;
 
     @Setter
-    private List<TbKafkaProperty> other;
+    private List<TbProperty> other;
 
     @Setter
-    private Map<String, List<TbKafkaProperty>> consumerPropertiesPerTopic = Collections.emptyMap();
+    private Map<String, List<TbProperty>> consumerPropertiesPerTopic = Collections.emptyMap();
 
     public Properties toAdminProps() {
         Properties props = toProps();

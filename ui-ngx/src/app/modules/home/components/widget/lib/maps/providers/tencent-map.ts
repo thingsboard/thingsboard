@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ export class TencentMap extends LeafletMap {
     super(ctx, $container, options);
     const txUrl = 'http://rt{s}.map.gtimg.com/realtimerender?z={z}&x={x}&y={y}&type=vector&style=0';
     const map = L.map($container, {
-      editable: !!options.editablePolygon,
+      zoomControl: !this.options.disableZoomControl,
       tap: L.Browser.safari && L.Browser.mobile
     }).setView(options?.defaultCenterPosition, options?.defaultZoomLevel || DEFAULT_ZOOM_LEVEL);
     const txLayer = L.tileLayer(txUrl, {

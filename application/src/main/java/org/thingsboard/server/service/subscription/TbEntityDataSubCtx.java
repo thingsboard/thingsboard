@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -165,6 +165,7 @@ public class TbEntityDataSubCtx extends TbAbstractDataSubCtx<EntityDataQuery> {
         return data.getData().stream().filter(item -> item.getEntityId().equals(entityId)).findFirst().orElse(null);
     }
 
+    @Override
     public synchronized void doUpdate(Map<EntityId, EntityData> newDataMap) {
         List<Integer> subIdsToCancel = new ArrayList<>();
         List<TbSubscription> subsToAdd = new ArrayList<>();

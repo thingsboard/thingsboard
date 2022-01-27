@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ package org.thingsboard.server.transport.lwm2m.server.downlink;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.request.ObserveRequest;
 import org.eclipse.leshan.core.response.ObserveResponse;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
 @Slf4j
 public class TbLwM2MObserveCallback extends TbLwM2MUplinkTargetedCallback<ObserveRequest, ObserveResponse> {

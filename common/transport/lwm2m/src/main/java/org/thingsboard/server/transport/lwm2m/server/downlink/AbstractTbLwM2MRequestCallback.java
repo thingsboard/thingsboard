@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.LOG_LWM2M_WARN;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_ERROR;
 
 @Slf4j
 public abstract class AbstractTbLwM2MRequestCallback<R, T> implements DownlinkRequestCallback<R, T> {
@@ -35,12 +35,12 @@ public abstract class AbstractTbLwM2MRequestCallback<R, T> implements DownlinkRe
     @Override
     public void onValidationError(String params, String msg) {
         log.trace("[{}] Request [{}] validation failed. Reason: {}", client.getEndpoint(), params, msg);
-        logService.log(client, String.format("[%s]: Request [%s] validation failed. Reason: %s", LOG_LWM2M_WARN, params, msg));
+        logService.log(client, String.format("[%s]: Request [%s] validation failed. Reason: %s", LOG_LWM2M_ERROR, params, msg));
     }
 
     @Override
     public void onError(String params, Exception e) {
         log.trace("[{}] Request [{}] processing failed", client.getEndpoint(), params, e);
-        logService.log(client, String.format("[%s]: Request [%s] processing failed. Reason: %s", LOG_LWM2M_WARN, params, e));
+        logService.log(client, String.format("[%s]: Request [%s] processing failed. Reason: %s", LOG_LWM2M_ERROR, params, e));
     }
 }

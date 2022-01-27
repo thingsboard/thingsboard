@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,13 @@ import java.io.Serializable;
 @Data
 public class TbLwM2MSecurityInfo implements Serializable {
     private ValidateDeviceCredentialsResponse msg;
+    private DeviceProfile deviceProfile;
+    private String endpoint;
     private SecurityInfo securityInfo;
     private SecurityMode securityMode;
 
+
     /** bootstrap */
-    private DeviceProfile deviceProfile;
     private LwM2MBootstrapConfig bootstrapCredentialConfig;
-    private String endpoint;
     private BootstrapConfig bootstrapConfig;
 }

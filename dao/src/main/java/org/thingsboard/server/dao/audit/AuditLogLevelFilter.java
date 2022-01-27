@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class AuditLogLevelFilter {
@@ -28,7 +29,7 @@ public class AuditLogLevelFilter {
     public AuditLogLevelFilter(Map<String, String> mask) {
         entityTypeMask.clear();
         mask.forEach((entityTypeStr, logLevelMaskStr) -> {
-            EntityType entityType = EntityType.valueOf(entityTypeStr.toUpperCase());
+            EntityType entityType = EntityType.valueOf(entityTypeStr.toUpperCase(Locale.ENGLISH));
             AuditLogLevelMask logLevelMask = AuditLogLevelMask.valueOf(logLevelMaskStr.toUpperCase());
             entityTypeMask.put(entityType, logLevelMask);
         });

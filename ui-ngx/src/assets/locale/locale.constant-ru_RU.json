@@ -678,8 +678,6 @@
         "access-token": "Токен",
         "access-token-required": "Токен обязателен.",
         "access-token-invalid": "Длина токена должна быть от 1 до 32 символов.",
-        "rsa-key": "Открытый ключ RSA",
-        "rsa-key-required": "Открытый ключ RSA обязателен.",
         "secret": "Секрет",
         "secret-required": "Секрет обязателен.",
         "device-type": "Тип устройства",
@@ -961,7 +959,9 @@
         "messages-processed": "Сообщения обработаны",
         "errors-occurred": "Возникли ошибки",
         "all-events": "Все",
-        "entity-type": "Тип объекта"
+        "entity-type": "Тип объекта",
+        "clear-request-title": "Удалить все события",
+        "clear-request-text": "Вы точно хотите удалить все события?"
     },
     "extension": {
         "extensions": "Расширение",
@@ -1787,6 +1787,47 @@
             "update-attribute": "Обновить атрибут",
             "update-timeseries": "Обновить телеметрию",
             "value": "Значение"
+        },
+        "persistent-table": {
+            "rpc-id": "RPC ID",
+            "message-type": "Тип сообщения",
+            "method": "Метод",
+            "params": "Параметры",
+            "created-time": "Время создания",
+            "expiration-time": "Время жизни",
+            "retries": "Повторные попытки",
+            "status": "Статус",
+            "filter": "Фильтр",
+            "refresh": "Обновить",
+            "add": "Добавить RPC запрос",
+            "details": "Детали",
+            "delete": "Удалить",
+            "delete-request-title": "Удалить RPC запрос",
+            "delete-request-text": "Вы точно хотите удалить RPC запрос?",
+            "details-title": "Детали RPC ID: ",
+            "additional-info": "Дополнительная информация",
+            "response": "Ответ",
+            "any-status": "Любой статус",
+            "rpc-status-list": "Список RPC статусов",
+            "no-request-prompt": "Запросы не найдены",
+            "send-request": "Отправить запрос",
+            "add-title": "Добавить новый RPC запрос",
+            "method-error": "Метод обязателен.",
+            "white-space-error": "Пробелы не допускаются.",
+            "rpc-status": {
+                "QUEUED": "В ОЧЕРЕДИ",
+                "SENT": "ОТПРАВЛЕННО",
+                "DELIVERED": "ДОСТАВЛЕННО",
+                "SUCCESSFUL": "УСПЕШНО",
+                "TIMEOUT": "ВРЕМЯ ИСТЕКЛО",
+                "EXPIRED": "ПРОСРОЧЕНО",
+                "FAILED": "НЕУДАЧНО"
+            },
+            "rpc-search-status-all": "ВСЕ",
+            "message-types": {
+                "false": "Двусторонний",
+                "true": "Односторонний"
+            }
         }
     },
     "icon": {

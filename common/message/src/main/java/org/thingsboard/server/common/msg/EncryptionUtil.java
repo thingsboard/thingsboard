@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,15 +28,30 @@ public class EncryptionUtil {
     private EncryptionUtil() {
     }
 
-    public static String trimNewLines(String input) {
+    public static String certTrimNewLines(String input) {
         return input.replaceAll("-----BEGIN CERTIFICATE-----", "")
-                .replaceAll("-----END CERTIFICATE-----", "")
                 .replaceAll("\n", "")
-                .replaceAll("\r", "");
+                .replaceAll("\r", "")
+                .replaceAll("-----END CERTIFICATE-----", "");
     }
 
+    public static String pubkTrimNewLines(String input) {
+        return input.replaceAll("-----BEGIN PUBLIC KEY-----", "")
+                .replaceAll("\n", "")
+                .replaceAll("\r", "")
+                .replaceAll("-----END PUBLIC KEY-----", "");
+    }
+
+    public static String prikTrimNewLines(String input) {
+        return input.replaceAll("-----BEGIN EC PRIVATE KEY-----", "")
+                .replaceAll("\n", "")
+                .replaceAll("\r", "")
+                .replaceAll("-----END EC PRIVATE KEY-----", "");
+    }
+
+
     public static String getSha3Hash(String data) {
-        String trimmedData = trimNewLines(data);
+        String trimmedData = certTrimNewLines(data);
         byte[] dataBytes = trimmedData.getBytes();
         SHA3Digest md = new SHA3Digest(256);
         md.reset();

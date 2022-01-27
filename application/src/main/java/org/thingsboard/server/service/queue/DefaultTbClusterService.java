@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.thingsboard.rule.engine.api.msg.DeviceEdgeUpdateMsg;
 import org.thingsboard.rule.engine.api.msg.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EdgeUtils;
@@ -61,6 +62,7 @@ import org.thingsboard.server.queue.common.MultipleTbQueueCallbackWrapper;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
+import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
@@ -91,6 +93,7 @@ public class DefaultTbClusterService implements TbClusterService {
     private final DataDecodingEncodingService encodingService;
     private final TbDeviceProfileCache deviceProfileCache;
     private final OtaPackageStateService otaPackageStateService;
+    private final GatewayNotificationsService gatewayNotificationsService;
 
     @Override
     public void pushMsgToCore(TenantId tenantId, EntityId entityId, ToCoreMsg msg, TbQueueCallback callback) {
@@ -140,7 +143,7 @@ public class DefaultTbClusterService implements TbClusterService {
     public void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, TbMsg tbMsg, TbQueueCallback callback) {
         if (tenantId.isNullUid()) {
             if (entityId.getEntityType().equals(EntityType.TENANT)) {
-                tenantId = new TenantId(entityId.getId());
+                tenantId = TenantId.fromUUID(entityId.getId());
             } else {
                 log.warn("[{}][{}] Received invalid message: {}", tenantId, entityId, tbMsg);
                 return;
@@ -399,8 +402,14 @@ public class DefaultTbClusterService implements TbClusterService {
     public void onDeviceUpdated(Device device, Device old, boolean notifyEdge) {
         var created = old == null;
         broadcastEntityChangeToTransport(device.getTenantId(), device.getId(), device, null);
-        if (old != null && (!device.getName().equals(old.getName()) || !device.getType().equals(old.getType()))) {
-            pushMsgToCore(new DeviceNameOrTypeUpdateMsg(device.getTenantId(), device.getId(), device.getName(), device.getType()), null);
+        if (old != null) {
+            boolean deviceNameChanged = !device.getName().equals(old.getName());
+            if (deviceNameChanged) {
+                gatewayNotificationsService.onDeviceUpdated(device, old);
+            }
+            if (deviceNameChanged || !device.getType().equals(old.getType())) {
+                pushMsgToCore(new DeviceNameOrTypeUpdateMsg(device.getTenantId(), device.getId(), device.getName(), device.getType()), null);
+            }
         }
         broadcastEntityStateChangeEvent(device.getTenantId(), device.getId(), created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
         sendDeviceStateServiceEvent(device.getTenantId(), device.getId(), created, !created, false);
@@ -447,6 +456,21 @@ public class DefaultTbClusterService implements TbClusterService {
         TransportProtos.EdgeNotificationMsgProto msg = builder.build();
         log.trace("[{}] sending notification to edge service {}", tenantId.getId(), msg);
         pushMsgToCore(tenantId, entityId != null ? entityId : tenantId, TransportProtos.ToCoreMsg.newBuilder().setEdgeNotificationMsg(msg).build(), null);
+
+        if (entityId != null && EntityType.DEVICE.equals(entityId.getEntityType())) {
+            pushDeviceUpdateMessage(tenantId, edgeId, entityId, action);
+        }
     }
 
+    private void pushDeviceUpdateMessage(TenantId tenantId, EdgeId edgeId, EntityId entityId, EdgeEventActionType action) {
+        log.trace("{} Going to send edge update notification for device actor, device id {}, edge id {}", tenantId, entityId, edgeId);
+        switch (action) {
+            case ASSIGNED_TO_EDGE:
+                pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), edgeId), null);
+                break;
+            case UNASSIGNED_FROM_EDGE:
+                pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), null), null);
+                break;
+        }
+    }
 }

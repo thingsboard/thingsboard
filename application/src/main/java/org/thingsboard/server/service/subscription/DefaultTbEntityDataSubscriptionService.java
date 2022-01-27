@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.socket.CloseStatus;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -36,16 +37,13 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.EntityData;
-import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
-import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entity.EntityService;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -68,7 +66,6 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -83,8 +80,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -133,6 +128,8 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     private int maxEntitiesPerDataSubscription;
     @Value("${server.ws.max_entities_per_alarm_subscription:1000}")
     private int maxEntitiesPerAlarmSubscription;
+    @Value("${server.ws.max_alarm_queries_per_refresh_interval:3}")
+    private int maxAlarmQueriesPerRefreshInterval;
 
     private ExecutorService wsCallBackExecutor;
     private boolean tsInSqlDB;
@@ -182,8 +179,6 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                 log.debug("[{}][{}] Updating data using query: {}", session.getSessionId(), cmd.getCmdId(), cmd.getQuery());
             }
             ctx.setAndResolveQuery(cmd.getQuery());
-            TenantId tenantId = ctx.getTenantId();
-            CustomerId customerId = ctx.getCustomerId();
             EntityDataQuery query = ctx.getQuery();
             //Step 1. Update existing query with the contents of LatestValueCmd
             if (cmd.getLatestCmd() != null) {
@@ -211,21 +206,30 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         ListenableFuture<TbEntityDataSubCtx> historyFuture;
         if (cmd.getHistoryCmd() != null) {
             log.trace("[{}][{}] Going to process history command: {}", session.getSessionId(), cmd.getCmdId(), cmd.getHistoryCmd());
-            historyFuture = handleHistoryCmd(ctx, cmd.getHistoryCmd());
+            try {
+                historyFuture = handleHistoryCmd(ctx, cmd.getHistoryCmd());
+            } catch (RuntimeException e) {
+                handleWsCmdRuntimeException(ctx.getSessionId(), e, cmd);
+                return;
+            }
         } else {
             historyFuture = Futures.immediateFuture(ctx);
         }
         Futures.addCallback(historyFuture, new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable TbEntityDataSubCtx theCtx) {
-                if (cmd.getLatestCmd() != null) {
-                    handleLatestCmd(theCtx, cmd.getLatestCmd());
-                } else if (cmd.getTsCmd() != null) {
-                    handleTimeSeriesCmd(theCtx, cmd.getTsCmd());
-                } else if (!theCtx.isInitialDataSent()) {
-                    EntityDataUpdate update = new EntityDataUpdate(theCtx.getCmdId(), theCtx.getData(), null, theCtx.getMaxEntitiesPerDataSubscription());
-                    wsService.sendWsMsg(theCtx.getSessionId(), update);
-                    theCtx.setInitialDataSent(true);
+                try {
+                    if (cmd.getLatestCmd() != null) {
+                        handleLatestCmd(theCtx, cmd.getLatestCmd());
+                    } else if (cmd.getTsCmd() != null) {
+                        handleTimeSeriesCmd(theCtx, cmd.getTsCmd());
+                    } else if (!theCtx.isInitialDataSent()) {
+                        EntityDataUpdate update = new EntityDataUpdate(theCtx.getCmdId(), theCtx.getData(), null, theCtx.getMaxEntitiesPerDataSubscription());
+                        wsService.sendWsMsg(theCtx.getSessionId(), update);
+                        theCtx.setInitialDataSent(true);
+                    }
+                } catch (RuntimeException e) {
+                    handleWsCmdRuntimeException(theCtx.getSessionId(), e, cmd);
                 }
             }
 
@@ -234,6 +238,11 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
                 log.warn("[{}][{}] Failed to process command", session.getSessionId(), cmd.getCmdId());
             }
         }, wsCallBackExecutor);
+    }
+
+    private void handleWsCmdRuntimeException(String sessionId, RuntimeException e, EntityDataCmd cmd) {
+        log.debug("[{}] Failed to process ws cmd: {}", sessionId, cmd, e);
+        wsService.close(sessionId, CloseStatus.SERVICE_RESTARTED);
     }
 
     @Override
@@ -282,7 +291,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             if (adq.getPageLink().getTimeWindow() > 0) {
                 TbAlarmDataSubCtx finalCtx = ctx;
                 ScheduledFuture<?> task = scheduler.scheduleWithFixedDelay(
-                        finalCtx::cleanupOldAlarms, dynamicPageLinkRefreshInterval, dynamicPageLinkRefreshInterval, TimeUnit.SECONDS);
+                        finalCtx::checkAndResetInvocationCounter, dynamicPageLinkRefreshInterval, dynamicPageLinkRefreshInterval, TimeUnit.SECONDS);
                 finalCtx.setRefreshTask(task);
             }
         }
@@ -293,6 +302,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             long start = System.currentTimeMillis();
             finalCtx.update();
             long end = System.currentTimeMillis();
+            log.trace("[{}][{}] Executing query: {}", finalCtx.getSessionId(), finalCtx.getCmdId(), finalCtx.getQuery());
             stats.getDynamicQueryInvocationCnt().incrementAndGet();
             stats.getDynamicQueryTimeSpent().addAndGet(end - start);
         } catch (Exception e) {
@@ -308,7 +318,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         long regularQueryInvocationTimeValue = stats.getRegularQueryTimeSpent().getAndSet(0);
         int dynamicQueryInvocationCntValue = stats.getDynamicQueryInvocationCnt().getAndSet(0);
         long dynamicQueryInvocationTimeValue = stats.getDynamicQueryTimeSpent().getAndSet(0);
-        long dynamicQueryCnt = subscriptionsBySessionId.values().stream().map(Map::values).count();
+        long dynamicQueryCnt = subscriptionsBySessionId.values().stream().mapToLong(m -> m.values().stream().filter(TbAbstractSubCtx::isDynamic).count()).sum();
         if (regularQueryInvocationCntValue > 0 || dynamicQueryInvocationCntValue > 0 || dynamicQueryCnt > 0 || alarmQueryInvocationCntValue > 0) {
             log.info("Stats: regularQueryInvocationCnt = [{}], regularQueryInvocationTime = [{}], " +
                             "dynamicQueryCnt = [{}] dynamicQueryInvocationCnt = [{}], dynamicQueryInvocationTime = [{}], " +
@@ -345,7 +355,8 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     private TbAlarmDataSubCtx createSubCtx(TelemetryWebSocketSessionRef sessionRef, AlarmDataCmd cmd) {
         Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.computeIfAbsent(sessionRef.getSessionId(), k -> new HashMap<>());
         TbAlarmDataSubCtx ctx = new TbAlarmDataSubCtx(serviceId, wsService, entityService, localSubscriptionService,
-                attributesService, stats, alarmService, sessionRef, cmd.getCmdId(), maxEntitiesPerAlarmSubscription);
+                attributesService, stats, alarmService, sessionRef, cmd.getCmdId(), maxEntitiesPerAlarmSubscription,
+                maxAlarmQueriesPerRefreshInterval);
         ctx.setAndResolveQuery(cmd.getQuery());
         sessionSubs.put(cmd.getCmdId(), ctx);
         return ctx;
@@ -501,6 +512,12 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         if (ctx != null) {
             ctx.cancelTasks();
             ctx.clearSubscriptions();
+            if (ctx.getSessionId() != null) {
+                Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.get(ctx.getSessionId());
+                if (sessionSubs != null) {
+                    sessionSubs.remove(ctx.getCmdId());
+                }
+            }
         }
     }
 
