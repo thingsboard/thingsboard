@@ -112,6 +112,7 @@
         "sms-provider-type-required": "SMS provider type is required.",
         "sms-provider-type-aws-sns": "Amazon SNS",
         "sms-provider-type-twilio": "Twilio",
+        "sms-provider-type-smpp": "SMPP",
         "aws-access-key-id": "AWS Access Key ID",
         "aws-access-key-id-required": "AWS Access Key ID is required",
         "aws-secret-access-key": "AWS Secret Access Key",

@@ -14,8 +14,9 @@
 /// limitations under the License.
 ///
 
-import { ValidatorFn } from '@angular/forms';
-import { isNotEmptyStr } from '@core/utils';
+import { ValidatorFn, Validators } from '@angular/forms';
+import { isNotEmptyStr, isNumber } from '@core/utils';
+import { number, string } from 'prop-types';
 
 export const smtpPortPattern: RegExp = /^([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$/;
 
@@ -71,13 +72,15 @@ export const phoneNumberPatternTwilio = /^\+[1-9]\d{1,14}$|^(MG|PN).*$/;
 
 export enum SmsProviderType {
   AWS_SNS = 'AWS_SNS',
-  TWILIO = 'TWILIO'
+  TWILIO = 'TWILIO',
+  SMPP = 'SMPP'
 }
 
 export const smsProviderTypeTranslationMap = new Map<SmsProviderType, string>(
   [
     [SmsProviderType.AWS_SNS, 'admin.sms-provider-type-aws-sns'],
-    [SmsProviderType.TWILIO, 'admin.sms-provider-type-twilio']
+    [SmsProviderType.TWILIO, 'admin.sms-provider-type-twilio'],
+    [SmsProviderType.SMPP, 'admin.sms-provider-type-smpp']
   ]
 );
 
@@ -93,7 +96,26 @@ export interface TwilioSmsProviderConfiguration {
   numberFrom?: string;
 }
 
-export type SmsProviderConfigurations = AwsSnsSmsProviderConfiguration & TwilioSmsProviderConfiguration;
+export interface SmppSmsProviderConfiguration {
+  protocolVersion?: string,
+  host?: string,
+  port?: number,
+  systemId?: string,
+  password?: string,
+  systemType?: string,
+  bindType?: string,
+  serviceType?: string,
+  sourceAddress?: string,
+  sourceTon?: number,
+  sourceNpi?: number,
+  destinationTon?: number,
+  destinationNpi?: number,
+  addressRange?: string,
+  codingScheme?: number
+}
+
+
+export type SmsProviderConfigurations = SmppSmsProviderConfiguration & AwsSnsSmsProviderConfiguration & TwilioSmsProviderConfiguration;
 
 export interface SmsProviderConfiguration extends SmsProviderConfigurations {
   type: SmsProviderType;
@@ -116,6 +138,11 @@ export function smsProviderConfigurationValidator(required: boolean): ValidatorF
             const twilioConfiguration: TwilioSmsProviderConfiguration = configuration;
             valid = isNotEmptyStr(twilioConfiguration.numberFrom) && isNotEmptyStr(twilioConfiguration.accountSid)
               && isNotEmptyStr(twilioConfiguration.accountToken);
+            break;
+          case SmsProviderType.SMPP:
+            const smppConfiguration: SmppSmsProviderConfiguration = configuration;
+            valid = isNotEmptyStr(smppConfiguration.protocolVersion) && isNotEmptyStr(smppConfiguration.host)
+              && isNumber(smppConfiguration.port) && isNotEmptyStr(smppConfiguration.systemId) && isNotEmptyStr(smppConfiguration.password);
             break;
         }
       }
@@ -154,6 +181,26 @@ export function createSmsProviderConfiguration(type: SmsProviderType): SmsProvid
           accountToken: ''
         };
         smsProviderConfiguration = {...twilioSmsProviderConfiguration, type: SmsProviderType.TWILIO};
+        break;
+      case SmsProviderType.SMPP:
+        const smppSmsProviderConfiguration: SmppSmsProviderConfiguration = {
+          protocolVersion: '',
+          host: '',
+          port: null,
+          systemId: '',
+          password: '',
+          systemType: '',
+          bindType: 'TX',
+          serviceType: '',
+          sourceAddress: '',
+          sourceTon: 5,
+          sourceNpi: 0,
+          destinationTon: 5,
+          destinationNpi: 0,
+          addressRange: '',
+          codingScheme: 0
+        };
+        smsProviderConfiguration = {...smppSmsProviderConfiguration, type: SmsProviderType.SMPP};
         break;
     }
   }
