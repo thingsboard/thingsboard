@@ -132,6 +132,7 @@
         <!--      BLACKBOX TEST SCOPE     -->
         <testcontainers.version>1.16.0</testcontainers.version>
         <zeroturnaround.version>1.12</zeroturnaround.version>
+        <opensmpp.version>3.0.0</opensmpp.version>
     </properties>
 
     <modules>
@@ -1870,6 +1871,11 @@
                 <artifactId>zt-exec</artifactId>
                 <version>${zeroturnaround.version}</version>
                 <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.opensmpp</groupId>
+                <artifactId>opensmpp-core</artifactId>
+                <version>${opensmpp.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
