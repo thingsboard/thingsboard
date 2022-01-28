@@ -864,6 +864,7 @@ export abstract class TbBaseGauge<S, O extends GenericOptions> {
         }
       }
     }
+    this.gauge.update({} as GenericOptions);
   }
 
   mobileModeChanged() {
