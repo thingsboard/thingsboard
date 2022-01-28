@@ -36,7 +36,6 @@ import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecBootstrapClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredential;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
@@ -74,19 +73,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
-import static org.awaitility.Awaitility.await;
-import static org.eclipse.californium.core.config.CoapConfig.COAP_PORT;
-import static org.eclipse.californium.core.config.CoapConfig.COAP_SECURE_PORT;
 import static org.eclipse.leshan.client.object.Security.noSec;
+import static org.eclipse.leshan.client.object.Security.noSecBootstap;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode.NO_SEC;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_STARTED;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_SUCCESS;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_STARTED;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_SUCCESS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_INIT;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_STARTED;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_SUCCESS;
@@ -112,16 +105,11 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
     public static final String COAPS = "coaps://";
     public static final String URI = COAP + host + ":" + port;
     public static final String SECURE_URI = COAPS + host + ":" + securityPort;
-    public static final Configuration COAP_CONFIG = new Configuration().set(COAP_PORT, port).set(COAP_SECURE_PORT, securityPort);
-    public static final Security SECURITY_NO_SEC = noSec(URI, shortServerId);
-
-    public static final Configuration SECURE_COAP_CONFIG = COAP_CONFIG.set(COAP_SECURE_PORT, securityPort);
-    public static final Configuration COAP_CONFIG_BS = new Configuration().set(COAP_PORT, portBs);
-
-
     public static final String URI_BS = COAP + hostBs + ":" + portBs;
-
     public static final String SECURE_URI_BS = COAPS + hostBs + ":" + securityPortBs;
+    public static final Configuration COAP_CONFIG = new Configuration();
+    public static final Security SECURITY_NO_SEC = noSec(URI, shortServerId);
+    public static final Security SECURITY_NO_SEC_BS = noSecBootstap(URI_BS);
 
     protected final String OBSERVE_ATTRIBUTES_WITHOUT_PARAMS =
             "    {\n" +

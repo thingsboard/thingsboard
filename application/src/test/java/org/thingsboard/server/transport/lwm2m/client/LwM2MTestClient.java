@@ -94,7 +94,10 @@ public class LwM2MTestClient {
     private final String endpoint;
     private LeshanClient client;
 
+    private Security lwm2mSecurity;
+    private Security lwm2mSecurityBs;
     private Server lwm2mServer;
+    private Server lwm2mServerBs;
     private SimpleLwM2MDevice lwM2MDevice;
     private FwLwM2MDevice fwLwM2MDevice;
     private SwLwM2MDevice swLwM2MDevice;
@@ -113,20 +116,25 @@ public class LwM2MTestClient {
         LwM2mModel model = new StaticModel(models);
         ObjectsInitializer initializer = new ObjectsInitializer(model);
         if (securityBs == null) {
-            initializer.setInstancesForObject(SECURITY, security);
+            initializer.setInstancesForObject(SECURITY, this.lwm2mSecurity = security);
         } else {
-            LwM2mInstanceEnabler[] instances = new LwM2mInstanceEnabler[]{securityBs, security};
+            securityBs.setId(0);
+            security.setId(1);
+            LwM2mInstanceEnabler[] instances = new LwM2mInstanceEnabler[]{this.lwm2mSecurityBs = securityBs, this.lwm2mSecurity = security};
+            initializer.setClassForObject(SECURITY, Security.class);
             initializer.setInstancesForObject(SECURITY, instances);
         }
         if (isBootstrap) {
-            initializer.setInstancesForObject(SERVER, lwm2mServer = new Server(shortServerIdBs, 300));
+            initializer.setInstancesForObject(SERVER, lwm2mServerBs = new Server(shortServerIdBs, 300));
         } else {
             if (securityBs == null) {
                 initializer.setInstancesForObject(SERVER, lwm2mServer = new Server(shortServerId, 300));
             } else {
-                Server serverBootstrap = new Server(shortServerIdBs, 300);
-                Server serverLwm2m =  new Server(shortServerId, 300);
-                LwM2mInstanceEnabler[] instances = new LwM2mInstanceEnabler[]{serverBootstrap, serverLwm2m};
+                lwm2mServerBs = new Server(shortServerIdBs, 300);
+                lwm2mServerBs.setId(0);
+                lwm2mServer =new Server(shortServerId, 300);
+                lwm2mServer.setId(1);
+                LwM2mInstanceEnabler[] instances = new LwM2mInstanceEnabler[]{lwm2mServerBs, lwm2mServer};
                 initializer.setClassForObject(SERVER, Server.class);
                 initializer.setInstancesForObject(SERVER, instances);
             }
@@ -277,7 +285,16 @@ public class LwM2MTestClient {
         if (client != null) {
             client.destroy(true);
         }
-        if (lwm2mServer != null) {
+        if (lwm2mSecurityBs != null) {
+            lwm2mSecurityBs = null;
+        }
+        if (lwm2mSecurity != null) {
+            lwm2mSecurity = null;
+        }
+        if (lwm2mServerBs != null) {
+            lwm2mServerBs = null;
+        }
+       if (lwm2mServer != null) {
             lwm2mServer = null;
         }
         if (lwM2MDevice != null) {

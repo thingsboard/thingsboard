@@ -34,7 +34,6 @@ import org.eclipse.leshan.server.bootstrap.BootstrapTaskProvider;
 import org.eclipse.leshan.server.bootstrap.BootstrapUtil;
 
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -169,7 +168,13 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
         this.serverInstances = new HashMap<>();
         try {
             ((LwM2mObject) readResponse.getContent()).getInstances().values().forEach(instance -> {
-                Integer shortId = OPAQUE.equals(instance.getResource(0).getType()) ? new BigInteger((byte[]) instance.getResource(0).getValue()).intValue() : (Integer) instance.getResource(0).getValue();
+                var shId = OPAQUE.equals(instance.getResource(0).getType()) ? new BigInteger((byte[]) instance.getResource(0).getValue()).intValue() : instance.getResource(0).getValue();
+                int shortId;
+                if (shId instanceof Long) {
+                    shortId = ((Long) shId).intValue();
+                } else {
+                    shortId = ((Integer) shId).intValue();
+                }
                 serverInstances.put(shortId, instance.getId());
             });
         } catch (Exception e) {
@@ -259,7 +264,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
                 if (this.bootstrapServerIdNew != null && server.getValue().shortId == this.bootstrapServerIdNew &&
                         (this.bootstrapServerIdNew != this.bootstrapServerIdOld || securityInstanceId != this.serverInstances.get(this.bootstrapServerIdOld))) {
                     pathsDelete.add("/1/" + this.serverInstances.get(this.bootstrapServerIdOld));
-                /** Delete instance if serverIdNew is present in serverInstances and  securityInstanceIdOld by serverIdNew not equals serverInstanceIdOld */
+                    /** Delete instance if serverIdNew is present in serverInstances and  securityInstanceIdOld by serverIdNew not equals serverInstanceIdOld */
                 } else if (this.serverInstances.containsKey(server.getValue().shortId) && securityInstanceId != this.serverInstances.get(server.getValue().shortId)) {
                     pathsDelete.add("/1/" + this.serverInstances.get(server.getValue().shortId));
                 }
