@@ -78,7 +78,7 @@ public class X509_TrustLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegra
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, privateKey, certificate, X509, false);
         this.basicTestConnection(security,
                 deviceCredentials,
-                COAP_CONFIG,
+                COAP_CONFIG_BS,
                 clientEndpoint,
                 transportConfiguration,
                 "await on client state (X509Trust two section)",

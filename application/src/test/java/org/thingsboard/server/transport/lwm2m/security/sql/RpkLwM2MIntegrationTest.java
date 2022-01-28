@@ -118,7 +118,7 @@ public class RpkLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, clientPrivateKeyFromCertTrust, certificate, RPK, false);
         this.basicTestConnection(securityBs,
                 deviceCredentials,
-                COAP_CONFIG,
+                COAP_CONFIG_BS,
                 clientEndpoint,
                 transportConfiguration,
                 "await on client state (RpkBS two section)",

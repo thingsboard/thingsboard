@@ -20,9 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.leshan.client.object.Security;
-import org.eclipse.leshan.core.CertificateUsage;
 import org.eclipse.leshan.core.ResponseCode;
-import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.util.Hex;
 import org.junit.Assert;
 import org.springframework.test.web.servlet.MvcResult;
@@ -173,7 +171,7 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
         this.basicTestConnection(noSecBootstap(URI_BS),
                 deviceCredentials,
-                COAP_CONFIG,
+                COAP_CONFIG_BS,
                 clientEndpoint,
                 transportConfiguration,
                 awaitAlias,
@@ -183,14 +181,14 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
     }
 
     protected void basicTestConnection(Security security,
-                                    LwM2MDeviceCredentials deviceCredentials,
-                                    Configuration coapConfig,
-                                    String endpoint,
-                                    Lwm2mDeviceProfileTransportConfiguration transportConfiguration,
-                                    String awaitAlias,
-                                    Set<LwM2MClientState> expectedStatuses,
-                                    boolean isBootstrap,
-                                    LwM2MClientState finishState) throws Exception {
+                                       LwM2MDeviceCredentials deviceCredentials,
+                                       Configuration coapConfig,
+                                       String endpoint,
+                                       Lwm2mDeviceProfileTransportConfiguration transportConfiguration,
+                                       String awaitAlias,
+                                       Set<LwM2MClientState> expectedStatuses,
+                                       boolean isBootstrap,
+                                       LwM2MClientState finishState) throws Exception {
         createNewClient(security, coapConfig, true, endpoint, isBootstrap, null);
         createDeviceProfile(transportConfiguration);
         final Device device = createDevice(deviceCredentials, endpoint);
@@ -214,33 +212,32 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
     }
 
 
-
     public void basicTestConnectionBootstrapRequestTriggerBefore(String clientEndpoint, String awaitAlias, LwM2MProfileBootstrapConfigType type) throws Exception {
-            Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(type));
-            LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
-            this.basicTestConnectionBootstrapRequestTrigger(
-                    SECURITY_NO_SEC,
-                    deviceCredentials,
-                    COAP_CONFIG,
-                    clientEndpoint,
-                    transportConfiguration,
-                    awaitAlias,
-                    expectedStatusesRegistrationLwm2mSuccess,
-                    expectedStatusesRegistrationBsSuccess,
-                    false,
-                    SECURITY_NO_SEC_BS);
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(type));
+        LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
+        this.basicTestConnectionBootstrapRequestTrigger(
+                SECURITY_NO_SEC,
+                deviceCredentials,
+                COAP_CONFIG,
+                clientEndpoint,
+                transportConfiguration,
+                awaitAlias,
+                expectedStatusesRegistrationLwm2mSuccess,
+                expectedStatusesRegistrationBsSuccess,
+                false,
+                SECURITY_NO_SEC_BS);
     }
 
     private void basicTestConnectionBootstrapRequestTrigger(Security security,
-                                                           LwM2MDeviceCredentials deviceCredentials,
-                                                           Configuration coapConfig,
-                                                           String endpoint,
-                                                           Lwm2mDeviceProfileTransportConfiguration transportConfiguration,
-                                                           String awaitAlias,
-                                                           Set<LwM2MClientState> expectedStatusesLwm2m,
-                                                           Set<LwM2MClientState> expectedStatusesBs,
-                                                           boolean isBootstrap,
-                                                           Security securityBs) throws Exception {
+                                                            LwM2MDeviceCredentials deviceCredentials,
+                                                            Configuration coapConfig,
+                                                            String endpoint,
+                                                            Lwm2mDeviceProfileTransportConfiguration transportConfiguration,
+                                                            String awaitAlias,
+                                                            Set<LwM2MClientState> expectedStatusesLwm2m,
+                                                            Set<LwM2MClientState> expectedStatusesBs,
+                                                            boolean isBootstrap,
+                                                            Security securityBs) throws Exception {
         createNewClient(security, coapConfig, true, endpoint, isBootstrap, securityBs);
         createDeviceProfile(transportConfiguration);
         final Device device = createDevice(deviceCredentials, endpoint);

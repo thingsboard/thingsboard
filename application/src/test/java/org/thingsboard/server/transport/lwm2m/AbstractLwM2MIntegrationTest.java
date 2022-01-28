@@ -74,10 +74,11 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+import static org.eclipse.californium.core.config.CoapConfig.COAP_PORT;
+import static org.eclipse.californium.core.config.CoapConfig.COAP_SECURE_PORT;
 import static org.eclipse.leshan.client.object.Security.noSec;
 import static org.eclipse.leshan.client.object.Security.noSecBootstap;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode.NO_SEC;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_STARTED;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_SUCCESS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_INIT;
@@ -107,7 +108,8 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
     public static final String SECURE_URI = COAPS + host + ":" + securityPort;
     public static final String URI_BS = COAP + hostBs + ":" + portBs;
     public static final String SECURE_URI_BS = COAPS + hostBs + ":" + securityPortBs;
-    public static final Configuration COAP_CONFIG = new Configuration();
+    public static final Configuration COAP_CONFIG = new Configuration().set(COAP_PORT, port).set(COAP_SECURE_PORT, securityPort);
+    public static Configuration COAP_CONFIG_BS = new Configuration().set(COAP_PORT, portBs).set(COAP_SECURE_PORT, securityPortBs);
     public static final Security SECURITY_NO_SEC = noSec(URI, shortServerId);
     public static final Security SECURITY_NO_SEC_BS = noSecBootstap(URI_BS);
 
@@ -148,121 +150,8 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
                     "    \"clientOnlyObserveAfterConnect\": 1\n" +
                     "  }";
 
-
-    protected final String TRANSPORT_CONFIGURATION_NO_SEC_WITHOUT_ATTRIBUTES = "{\n" +
-            "  \"type\": \"LWM2M\",\n" +
-            "  \"observeAttr\": {\n" +
-            "    \"keyName\": {},\n" +
-            "    \"observe\": [],\n" +
-            "    \"attribute\": [],\n" +
-            "    \"telemetry\": [],\n" +
-            "    \"attributeLwm2m\": {}\n" +
-            "  },\n" +
-            "  \"bootstrapServerUpdateEnable\": true,\n" +
-            "  \"bootstrap\": [\n" +
-            "    {\n" +
-            "       \"host\": \"" + hostBs + "\",\n" +
-            "       \"port\": " + portBs + ",\n" +
-            "       \"binding\": \"U\",\n" +
-            "       \"lifetime\": 300,\n" +
-            "       \"securityMode\": \"" + NO_SEC.name() + "\",\n" +
-            "       \"shortServerId\": " + shortServerIdBs + ",\n" +
-            "       \"notifIfDisabled\": true,\n" +
-            "       \"serverPublicKey\": \"\",\n" +
-            "       \"defaultMinPeriod\": 1,\n" +
-            "       \"bootstrapServerIs\": true,\n" +
-            "       \"clientHoldOffTime\": 1,\n" +
-            "       \"bootstrapServerAccountTimeout\": 0\n" +
-            "    },\n" +
-            "    {\n" +
-            "       \"host\": \"" + host + "\",\n" +
-            "       \"port\": " + port + ",\n" +
-            "       \"binding\": \"U\",\n" +
-            "       \"lifetime\": 300,\n" +
-            "       \"securityMode\": \"" + NO_SEC.name() + "\",\n" +
-            "       \"shortServerId\": " + shortServerId + ",\n" +
-            "       \"notifIfDisabled\": true,\n" +
-            "       \"serverPublicKey\": \"\",\n" +
-            "       \"defaultMinPeriod\": 1,\n" +
-            "       \"bootstrapServerIs\": false,\n" +
-            "       \"clientHoldOffTime\": 1,\n" +
-            "       \"bootstrapServerAccountTimeout\": 0\n" +
-            "    }\n" +
-            "  ],\n" +
-            "  \"clientLwM2mSettings\": {\n" +
-            "    \"edrxCycle\": null,\n" +
-            "    \"powerMode\": \"DRX\",\n" +
-            "    \"fwUpdateResource\": null,\n" +
-            "    \"fwUpdateStrategy\": 1,\n" +
-            "    \"psmActivityTimer\": null,\n" +
-            "    \"swUpdateResource\": null,\n" +
-            "    \"swUpdateStrategy\": 1,\n" +
-            "    \"pagingTransmissionWindow\": null,\n" +
-            "    \"clientOnlyObserveAfterConnect\": 1\n" +
-            "  }\n" +
-            "}";
-
-
-    protected final String TRANSPORT_CONFIGURATION = "{\n" +
-            "  \"type\": \"LWM2M\",\n" +
-            "  \"observeAttr\": {\n" +
-            "    \"keyName\": {\n" +
-            "      \"/3_1.0/0/9\": \"batteryLevel\"\n" +
-            "    },\n" +
-            "    \"observe\": [],\n" +
-            "    \"attribute\": [\n" +
-            "    ],\n" +
-            "    \"telemetry\": [\n" +
-            "      \"/3_1.0/0/9\"\n" +
-            "    ],\n" +
-            "    \"attributeLwm2m\": {}\n" +
-            "  },\n" +
-            "  \"bootstrapServerUpdateEnable\": true,\n" +
-            "  \"bootstrap\": [\n" +
-            "    {\n" +
-            "       \"host\": \"" + hostBs + "\",\n" +
-            "       \"port\": " + portBs + ",\n" +
-            "       \"binding\": \"U\",\n" +
-            "       \"lifetime\": 300,\n" +
-            "       \"securityMode\": \"" + NO_SEC.name() + "\",\n" +
-            "       \"shortServerId\": " + shortServerIdBs + ",\n" +
-            "       \"notifIfDisabled\": true,\n" +
-            "       \"serverPublicKey\": \"\",\n" +
-            "       \"defaultMinPeriod\": 1,\n" +
-            "       \"bootstrapServerIs\": true,\n" +
-            "       \"clientHoldOffTime\": 1,\n" +
-            "       \"bootstrapServerAccountTimeout\": 0\n" +
-            "    },\n" +
-            "    {\n" +
-            "       \"host\": \"" + host + "\",\n" +
-            "       \"port\": " + port + ",\n" +
-            "       \"binding\": \"U\",\n" +
-            "       \"lifetime\": 300,\n" +
-            "       \"securityMode\": \"" + NO_SEC.name() + "\",\n" +
-            "       \"shortServerId\": " + shortServerId + ",\n" +
-            "       \"notifIfDisabled\": true,\n" +
-            "       \"serverPublicKey\": \"\",\n" +
-            "       \"defaultMinPeriod\": 1,\n" +
-            "       \"bootstrapServerIs\": false,\n" +
-            "       \"clientHoldOffTime\": 1,\n" +
-            "       \"bootstrapServerAccountTimeout\": 0\n" +
-            "    }\n" +
-            "  ],\n" +
-            "  \"clientLwM2mSettings\": {\n" +
-            "    \"edrxCycle\": null,\n" +
-            "    \"powerMode\": \"DRX\",\n" +
-            "    \"fwUpdateResource\": null,\n" +
-            "    \"fwUpdateStrategy\": 1,\n" +
-            "    \"psmActivityTimer\": null,\n" +
-            "    \"swUpdateResource\": null,\n" +
-            "    \"swUpdateStrategy\": 1,\n" +
-            "    \"pagingTransmissionWindow\": null,\n" +
-            "    \"clientOnlyObserveAfterConnect\": 1\n" +
-            "  }\n" +
-            "}";
-
-     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesBsSuccess = new HashSet<>(Arrays.asList(ON_INIT, ON_BOOTSTRAP_STARTED, ON_BOOTSTRAP_SUCCESS));
-     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationLwm2mSuccess = new HashSet<>(Arrays.asList(ON_INIT, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
+    protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesBsSuccess = new HashSet<>(Arrays.asList(ON_INIT, ON_BOOTSTRAP_STARTED, ON_BOOTSTRAP_SUCCESS));
+    protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationLwm2mSuccess = new HashSet<>(Arrays.asList(ON_INIT, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationBsSuccess = new HashSet<>(Arrays.asList(ON_INIT, ON_BOOTSTRAP_STARTED, ON_BOOTSTRAP_SUCCESS, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
     protected DeviceProfile deviceProfile;
     protected ScheduledExecutorService executor;
@@ -299,6 +188,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
 
     @After
     public void after() {
+        wsClient.close();
         clientDestroy();
         executor.shutdownNow();
     }

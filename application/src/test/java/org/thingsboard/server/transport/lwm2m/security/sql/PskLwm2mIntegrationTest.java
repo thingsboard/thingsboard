@@ -101,7 +101,7 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, null, null, PSK, false);
         this.basicTestConnection(securityBs,
                 deviceCredentials,
-                COAP_CONFIG,
+                COAP_CONFIG_BS,
                 clientEndpoint,
                 transportConfiguration,
                 "await on client state (PskBS two section)",
