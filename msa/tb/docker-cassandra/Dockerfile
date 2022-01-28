@@ -54,7 +54,7 @@ ENV DATABASE_TS_TYPE=cassandra
 ENV PGDATA=/data/db
 ENV CASSANDRA_DATA=/data/cassandra
 
-ENV SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+ENV SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQL10Dialect
 ENV SPRING_DRIVER_CLASS_NAME=org.postgresql.Driver
 ENV SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/thingsboard
 ENV SPRING_DATASOURCE_USERNAME=${pkg.user}
