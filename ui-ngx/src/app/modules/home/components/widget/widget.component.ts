@@ -1068,7 +1068,6 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     switch (type) {
       case WidgetActionType.openDashboardState:
       case WidgetActionType.updateDashboardState:
-        let targetDashboardStateId = descriptor.targetDashboardStateId;
         const params = deepClone(this.widgetContext.stateController.getStateParams());
         updateEntityParams(params, targetEntityParamName, targetEntityId, entityName, entityLabel);
         if (type === WidgetActionType.openDashboardState) {
@@ -1080,20 +1079,19 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             this.openDashboardStateInSeparateDialog(descriptor.targetDashboardStateId, params, descriptor.dialogTitle,
               descriptor.dialogHideDashboardToolbar, descriptor.dialogWidth, descriptor.dialogHeight);
           } else {
-            this.widgetContext.stateController.openState(targetDashboardStateId, params, descriptor.openRightLayout);
+            this.widgetContext.stateController.openState(descriptor.targetDashboardStateId, params, descriptor.openRightLayout);
           }
         } else {
-          this.widgetContext.stateController.updateState(targetDashboardStateId, params, descriptor.openRightLayout);
+          this.widgetContext.stateController.updateState(descriptor.targetDashboardStateId, params, descriptor.openRightLayout);
         }
         break;
       case WidgetActionType.openDashboard:
         const targetDashboardId = descriptor.targetDashboardId;
-        targetDashboardStateId = descriptor.targetDashboardStateId;
         const stateObject: StateObject = {};
         stateObject.params = {};
         updateEntityParams(stateObject.params, targetEntityParamName, targetEntityId, entityName, entityLabel);
-        if (targetDashboardStateId) {
-          stateObject.id = targetDashboardStateId;
+        if (descriptor.targetDashboardStateId) {
+          stateObject.id = descriptor.targetDashboardStateId;
         }
         const state = objToBase64URI([ stateObject ]);
         const isSinglePage = this.route.snapshot.data.singlePageMode;

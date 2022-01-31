@@ -107,7 +107,7 @@
         <mat-row *matRowDef="let column; columns: displayedColumns"
                  [fxShow]="!persistentDatasource.dataLoading"></mat-row>
       </table>
-      <span [fxShow]="(persistentDatasource.isEmpty() | async) && !persistentDatasource.dataLoading"
+      <span [fxShow]="(persistentDatasource.isEmpty() | async) && !persistentDatasource.dataLoading && hasData"
             fxLayoutAlign="center center"
             class="no-data-found">{{ noDataDisplayMessageText }}</span>
       <span [fxShow]="persistentDatasource.dataLoading"

@@ -49,6 +49,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.device.profile.MqttTopics;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
@@ -1065,6 +1066,13 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     @Override
     public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
         deviceSessionCtx.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
+    }
+
+    @Override
+    public void onDeviceDeleted(DeviceId deviceId) {
+        context.onAuthFailure(address);
+        ChannelHandlerContext ctx = deviceSessionCtx.getChannel();
+        ctx.close();
     }
 
 }

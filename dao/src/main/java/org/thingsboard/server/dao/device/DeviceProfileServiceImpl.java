@@ -420,10 +420,12 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                         }
                     } else if (transportConfiguration instanceof Lwm2mDeviceProfileTransportConfiguration) {
                         List<LwM2MBootstrapServerCredential> lwM2MBootstrapServersConfigurations = ((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration).getBootstrap();
-                        validateLwm2mServersConfigOfBootstrapForClient(lwM2MBootstrapServersConfigurations,
-                                ((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration).isBootstrapServerUpdateEnable());
-                        for (LwM2MBootstrapServerCredential bootstrapServerCredential : lwM2MBootstrapServersConfigurations) {
-                            validateLwm2mServersCredentialOfBootstrapForClient(bootstrapServerCredential);
+                        if (lwM2MBootstrapServersConfigurations != null) {
+                            validateLwm2mServersConfigOfBootstrapForClient(lwM2MBootstrapServersConfigurations,
+                                    ((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration).isBootstrapServerUpdateEnable());
+                            for (LwM2MBootstrapServerCredential bootstrapServerCredential : lwM2MBootstrapServersConfigurations) {
+                                validateLwm2mServersCredentialOfBootstrapForClient(bootstrapServerCredential);
+                            }
                         }
                     }
 
@@ -709,34 +711,32 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     }
 
     private void validateLwm2mServersConfigOfBootstrapForClient(List<LwM2MBootstrapServerCredential> lwM2MBootstrapServersConfigurations, boolean isBootstrapServerUpdateEnable) {
-        Set <String> uris = new HashSet<>();
-        Set <Integer> shortServerIds = new HashSet<>();
+        Set<String> uris = new HashSet<>();
+        Set<Integer> shortServerIds = new HashSet<>();
         for (LwM2MBootstrapServerCredential bootstrapServerCredential : lwM2MBootstrapServersConfigurations) {
             AbstractLwM2MBootstrapServerCredential serverConfig = (AbstractLwM2MBootstrapServerCredential) bootstrapServerCredential;
             if (!isBootstrapServerUpdateEnable && serverConfig.isBootstrapServerIs()) {
-                throw new DeviceCredentialsValidationException("Bootstrap config must not include \"Bootstrap Server\". \"Include Bootstrap Server updates\" is " + isBootstrapServerUpdateEnable + "." );
+                throw new DeviceCredentialsValidationException("Bootstrap config must not include \"Bootstrap Server\". \"Include Bootstrap Server updates\" is " + isBootstrapServerUpdateEnable + ".");
             }
             String server = serverConfig.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server" + " shortServerId: " + serverConfig.getShortServerId() + ":";
             if (serverConfig.getShortServerId() < 1 || serverConfig.getShortServerId() > 65534) {
                 throw new DeviceCredentialsValidationException(server + " ShortServerId must not be less than 1 and more than 65534!");
             }
-            if (!shortServerIds.add(serverConfig.getShortServerId())){
-                throw new DeviceCredentialsValidationException(server + " \"Short server Id\" value = "  + serverConfig.getShortServerId() + ". This value must be a unique value for all servers!");
-            };
+            if (!shortServerIds.add(serverConfig.getShortServerId())) {
+                throw new DeviceCredentialsValidationException(server + " \"Short server Id\" value = " + serverConfig.getShortServerId() + ". This value must be a unique value for all servers!");
+            }
             String uri = serverConfig.getHost() + ":" + serverConfig.getPort();
-            if (!uris.add(uri)){
-                throw new DeviceCredentialsValidationException(server + " \"Host + port\" value = "  + uri + ". This value must be a unique value for all servers!");
-            };
+            if (!uris.add(uri)) {
+                throw new DeviceCredentialsValidationException(server + " \"Host + port\" value = " + uri + ". This value must be a unique value for all servers!");
+            }
             Integer port;
             if (LwM2MSecurityMode.NO_SEC.equals(serverConfig.getSecurityMode())) {
-               port =  serverConfig.isBootstrapServerIs() ? 5687 : 5685;
-            }
-            else {
-                port =  serverConfig.isBootstrapServerIs() ? 5688 : 5686;
+                port = serverConfig.isBootstrapServerIs() ? 5687 : 5685;
+            } else {
+                port = serverConfig.isBootstrapServerIs() ? 5688 : 5686;
             }
             if (serverConfig.getPort() == null || serverConfig.getPort().intValue() != port) {
-                throw new DeviceCredentialsValidationException(server + " \"Port\" value = "  + serverConfig.getPort() + ". This value for security " + serverConfig.getSecurityMode().name() + " must be " + port + "!");
-
+                throw new DeviceCredentialsValidationException(server + " \"Port\" value = " + serverConfig.getPort() + ". This value for security " + serverConfig.getSecurityMode().name() + " must be " + port + "!");
             }
         }
     }

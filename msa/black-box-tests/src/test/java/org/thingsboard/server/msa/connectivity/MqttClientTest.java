@@ -340,6 +340,21 @@ public class MqttClientTest extends AbstractContainerTest {
         restClient.getRestTemplate().delete(HTTPS_URL + "/api/device/" + device.getId());
     }
 
+    @Test
+    public void deviceDeletedClosingSession() throws Exception {
+        restClient.login("tenant@thingsboard.org", "tenant");
+        String deviceForDeletingTestName = "Device for deleting notification test";
+        Device device = createDevice(deviceForDeletingTestName);
+        DeviceCredentials deviceCredentials = restClient.getDeviceCredentialsByDeviceId(device.getId()).get();
+
+        MqttMessageListener listener = new MqttMessageListener();
+        MqttClient mqttClient = getMqttClient(deviceCredentials, listener);
+
+        restClient.deleteDevice(device.getId());
+        TimeUnit.SECONDS.sleep(3);
+        Assert.assertFalse(mqttClient.isConnected());
+    }
+
     private RuleChainId createRootRuleChainForRpcResponse() throws Exception {
         RuleChain newRuleChain = new RuleChain();
         newRuleChain.setName("testRuleChain");
