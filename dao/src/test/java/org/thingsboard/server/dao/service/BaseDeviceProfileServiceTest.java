@@ -31,8 +31,8 @@ import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -45,6 +45,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+import static org.junit.Assert.assertThrows;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
 public abstract class BaseDeviceProfileServiceTest extends AbstractServiceTest {
@@ -250,6 +251,19 @@ public abstract class BaseDeviceProfileServiceTest extends AbstractServiceTest {
         device.setDeviceProfileId(savedDeviceProfile.getId());
         deviceService.saveDevice(device);
         deviceProfileService.deleteDeviceProfile(tenantId, savedDeviceProfile.getId());
+    }
+
+    @Test
+    public void testDeleteDeviceProfileWithExistingOta() {
+        DeviceProfile deviceProfile = this.createDeviceProfile(tenantId, "Device Profile");
+        DeviceProfile savedDeviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
+
+        OtaPackage otaPackage = constructDefaultOtaPackage(tenantId, savedDeviceProfile.getId());
+        otaPackageService.saveOtaPackage(otaPackage);
+
+        assertThrows("The device profile is referenced by OTA update package", DataValidationException.class, () -> {
+            deviceProfileService.deleteDeviceProfile(tenantId, savedDeviceProfile.getId());
+        });
     }
 
     @Test
