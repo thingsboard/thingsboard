@@ -1,4 +1,6 @@
-## PR description
+## Pull Request description
+
+Put your PR description here instead of this sentence.   
 
 ## General checklist
 
@@ -7,17 +9,17 @@
 - [ ] Description references specific [issue](https://github.com/thingsboard/thingsboard/issues).
 - [ ] Description contains human-readable scope of changes.
 - [ ] Description contains brief notes about what needs to be added to the documentation.
-- [ ] No merge conficts.
+- [ ] No merge conficts, commented blocks of code, code formatting issues.
 - [ ] Changes are backward compatible or upgrade script is provided.
 - [ ] Similar PR is opened for PE version to simplify merge. Required for internal contributors only.
   
-## UI Feature checklist
+## Front-End feature checklist
 
 - [ ] Screenshots with affected component(s) are added. The best option is to provide 2 screens: before and after changes;
 - [ ] If you change widget or other API, ensure it is backward-compatible or upgrade script is present.
 - [ ] Ensure new API is documented [here](https://github.com/thingsboard/thingsboard-ui-help)
 
-## Back-end Feature checklist
+## Back-End feature checklist
 
 - [ ] Added corresponding unit and/or integration test(s). Provide written explanation in the PR description if you have failed to add tests.
 - [ ] If new dependency was added: the dependency tree is checked for conflicts.
