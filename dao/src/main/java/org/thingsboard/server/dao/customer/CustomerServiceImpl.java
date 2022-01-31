@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.dao.customer;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -47,7 +45,6 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.dao.user.UserService;
 
-import java.io.IOException;
 import java.util.Optional;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -148,11 +145,7 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
             Customer publicCustomer = new Customer();
             publicCustomer.setTenantId(tenantId);
             publicCustomer.setTitle(PUBLIC_CUSTOMER_TITLE);
-            try {
-                publicCustomer.setAdditionalInfo(JacksonUtil.getObjectMapper().readValue("{ \"isPublic\": true }", JsonNode.class));
-            } catch (IOException e) {
-                throw new IncorrectParameterException("Unable to create public customer.", e);
-            }
+            publicCustomer.setAdditionalInfo(JacksonUtil.toJsonNode("{ \"isPublic\": true }"));
             return customerDao.save(tenantId, publicCustomer);
         }
     }

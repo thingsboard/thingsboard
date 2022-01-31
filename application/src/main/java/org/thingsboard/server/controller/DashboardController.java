@@ -782,7 +782,7 @@ public class DashboardController extends BaseController {
             Tenant tenant = tenantService.findTenantById(getTenantId());
             JsonNode additionalInfo = tenant.getAdditionalInfo();
             if (additionalInfo == null || !(additionalInfo instanceof ObjectNode)) {
-                additionalInfo = JacksonUtil.getObjectMapper().createObjectNode();
+                additionalInfo = JacksonUtil.newObjectNode();
             }
             if (homeDashboardInfo.getDashboardId() != null) {
                 ((ObjectNode) additionalInfo).put(HOME_DASHBOARD_ID, homeDashboardInfo.getDashboardId().getId().toString());

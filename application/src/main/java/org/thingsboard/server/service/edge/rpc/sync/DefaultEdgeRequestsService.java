@@ -146,7 +146,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                     if (ssAttributes != null && !ssAttributes.isEmpty()) {
                         try {
                             Map<String, Object> entityData = new HashMap<>();
-                            ObjectNode attributes = JacksonUtil.getObjectMapper().createObjectNode();
+                            ObjectNode attributes = JacksonUtil.newObjectNode();
                             for (AttributeKvEntry attr : ssAttributes) {
                                 if (attr.getDataType() == DataType.BOOLEAN && attr.getBooleanValue().isPresent()) {
                                     attributes.put(attr.getKey(), attr.getBooleanValue().get());
@@ -160,7 +160,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                             }
                             entityData.put("kv", attributes);
                             entityData.put("scope", scope);
-                            JsonNode body = JacksonUtil.getObjectMapper().valueToTree(entityData);
+                            JsonNode body = JacksonUtil.valueToTree(entityData);
                             log.debug("Sending attributes data msg, entityId [{}], attributes [{}]", entityId, body);
                             saveEdgeEvent(tenantId,
                                     edge.getId(),
@@ -223,7 +223,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                                                 EdgeEventType.RELATION,
                                                 EdgeEventActionType.ADDED,
                                                 null,
-                                                JacksonUtil.getObjectMapper().valueToTree(relation));
+                                                JacksonUtil.valueToTree(relation));
                                     }
                                 } catch (Exception e) {
                                     log.error("Exception during loading relation [{}] to edge on sync!", relation, e);

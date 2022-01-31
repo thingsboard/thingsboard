@@ -663,7 +663,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public void changePassword(String currentPassword, String newPassword) {
-        ObjectNode changePasswordRequest = JacksonUtil.getObjectMapper().createObjectNode();
+        ObjectNode changePasswordRequest = JacksonUtil.newObjectNode();
         changePasswordRequest.put("currentPassword", currentPassword);
         changePasswordRequest.put("newPassword", newPassword);
         restTemplate.postForLocation(baseURL + "/api/auth/changePassword", changePasswordRequest);
@@ -688,7 +688,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public void requestResetPasswordByEmail(String email) {
-        ObjectNode resetPasswordByEmailRequest = JacksonUtil.getObjectMapper().createObjectNode();
+        ObjectNode resetPasswordByEmailRequest = JacksonUtil.newObjectNode();
         resetPasswordByEmailRequest.put("email", email);
         restTemplate.postForLocation(baseURL + "/api/noauth/resetPasswordByEmail", resetPasswordByEmailRequest);
     }
@@ -698,7 +698,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public Optional<JsonNode> activateUser(UserId userId, String password, boolean sendActivationMail) {
-        ObjectNode activateRequest = JacksonUtil.getObjectMapper().createObjectNode();
+        ObjectNode activateRequest = JacksonUtil.newObjectNode();
         activateRequest.put("activateToken", getActivateToken(userId));
         activateRequest.put("password", password);
         try {

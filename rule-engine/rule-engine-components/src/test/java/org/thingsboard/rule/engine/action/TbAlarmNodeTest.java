@@ -122,7 +122,7 @@ public class TbAlarmNodeTest {
     }
 
     @Test
-    public void newAlarmCanBeCreated() throws ScriptException, IOException {
+    public void newAlarmCanBeCreated() {
         initWithCreateAlarmScript();
         metaData.putValue("key", "value");
         TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
@@ -150,7 +150,7 @@ public class TbAlarmNodeTest {
         assertEquals(Boolean.TRUE.toString(), metadataCaptor.getValue().getValue(IS_NEW_ALARM));
         assertNotSame(metaData, metadataCaptor.getValue());
 
-        Alarm actualAlarm = JacksonUtil.getObjectMapper().readValue(dataCaptor.getValue().getBytes(), Alarm.class);
+        Alarm actualAlarm = JacksonUtil.fromBytes(dataCaptor.getValue().getBytes(), Alarm.class);
         Alarm expectedAlarm = Alarm.builder()
                 .startTs(ts)
                 .endTs(ts)
@@ -167,7 +167,7 @@ public class TbAlarmNodeTest {
     }
 
     @Test
-    public void buildDetailsThrowsException() throws ScriptException, IOException {
+    public void buildDetailsThrowsException() {
         initWithCreateAlarmScript();
         metaData.putValue("key", "value");
         TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
@@ -190,7 +190,7 @@ public class TbAlarmNodeTest {
     }
 
     @Test
-    public void ifAlarmClearedCreateNew() throws ScriptException, IOException {
+    public void ifAlarmClearedCreateNew() {
         initWithCreateAlarmScript();
         metaData.putValue("key", "value");
         TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
@@ -222,7 +222,7 @@ public class TbAlarmNodeTest {
         assertNotSame(metaData, metadataCaptor.getValue());
 
 
-        Alarm actualAlarm = JacksonUtil.getObjectMapper().readValue(dataCaptor.getValue().getBytes(), Alarm.class);
+        Alarm actualAlarm = JacksonUtil.fromBytes(dataCaptor.getValue().getBytes(), Alarm.class);
         Alarm expectedAlarm = Alarm.builder()
                 .startTs(ts)
                 .endTs(ts)
@@ -239,7 +239,7 @@ public class TbAlarmNodeTest {
     }
 
     @Test
-    public void alarmCanBeUpdated() throws ScriptException, IOException {
+    public void alarmCanBeUpdated() {
         initWithCreateAlarmScript();
         metaData.putValue("key", "value");
         TbMsg msg = TbMsg.newMsg("USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
@@ -271,7 +271,7 @@ public class TbAlarmNodeTest {
         assertEquals(Boolean.TRUE.toString(), metadataCaptor.getValue().getValue(IS_EXISTING_ALARM));
         assertNotSame(metaData, metadataCaptor.getValue());
 
-        Alarm actualAlarm = JacksonUtil.getObjectMapper().readValue(dataCaptor.getValue().getBytes(), Alarm.class);
+        Alarm actualAlarm = JacksonUtil.fromString(dataCaptor.getValue(), Alarm.class);
         assertTrue(activeAlarm.getEndTs() > oldEndDate);
         Alarm expectedAlarm = Alarm.builder()
                 .tenantId(tenantId)
@@ -288,7 +288,7 @@ public class TbAlarmNodeTest {
     }
 
     @Test
-    public void alarmCanBeCleared() throws ScriptException, IOException {
+    public void alarmCanBeCleared() {
         initWithClearAlarmScript();
         metaData.putValue("key", "value");
         TbMsg msg = TbMsg.newMsg( "USER", originator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
@@ -322,7 +322,7 @@ public class TbAlarmNodeTest {
         assertEquals(Boolean.TRUE.toString(), metadataCaptor.getValue().getValue(IS_CLEARED_ALARM));
         assertNotSame(metaData, metadataCaptor.getValue());
 
-        Alarm actualAlarm = JacksonUtil.getObjectMapper().readValue(dataCaptor.getValue().getBytes(), Alarm.class);
+        Alarm actualAlarm = JacksonUtil.fromBytes(dataCaptor.getValue().getBytes(), Alarm.class);
         Alarm expectedAlarm = Alarm.builder()
                 .tenantId(tenantId)
                 .originator(originator)
@@ -338,7 +338,7 @@ public class TbAlarmNodeTest {
     }
 
     @Test
-    public void alarmCanBeClearedWithAlarmOriginator() throws ScriptException, IOException {
+    public void alarmCanBeClearedWithAlarmOriginator() {
         initWithClearAlarmScript();
         metaData.putValue("key", "value");
         TbMsg msg = TbMsg.newMsg( "USER", alarmOriginator, metaData, TbMsgDataType.JSON, rawJson, ruleChainId, ruleNodeId);
@@ -372,7 +372,7 @@ public class TbAlarmNodeTest {
         assertEquals(Boolean.TRUE.toString(), metadataCaptor.getValue().getValue(IS_CLEARED_ALARM));
         assertNotSame(metaData, metadataCaptor.getValue());
 
-        Alarm actualAlarm = JacksonUtil.getObjectMapper().readValue(dataCaptor.getValue().getBytes(), Alarm.class);
+        Alarm actualAlarm = JacksonUtil.fromBytes(dataCaptor.getValue().getBytes(), Alarm.class);
         Alarm expectedAlarm = Alarm.builder()
                 .tenantId(tenantId)
                 .originator(originator)
@@ -396,7 +396,7 @@ public class TbAlarmNodeTest {
         config.setAlarmType("SomeType");
         config.setAlarmDetailsBuildJs("DETAILS");
         config.setDynamicSeverity(true);
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.getObjectMapper().valueToTree(config));
+        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
         when(ctx.createJsScriptEngine("DETAILS")).thenReturn(detailsJs);
 
@@ -434,7 +434,7 @@ public class TbAlarmNodeTest {
         assertEquals(Boolean.TRUE.toString(), metadataCaptor.getValue().getValue(IS_NEW_ALARM));
         assertNotSame(metaData, metadataCaptor.getValue());
 
-        Alarm actualAlarm = JacksonUtil.getObjectMapper().readValue(dataCaptor.getValue().getBytes(), Alarm.class);
+        Alarm actualAlarm = JacksonUtil.fromBytes(dataCaptor.getValue().getBytes(), Alarm.class);
         Alarm expectedAlarm = Alarm.builder()
                 .startTs(ts)
                 .endTs(ts)
@@ -458,7 +458,7 @@ public class TbAlarmNodeTest {
         config.setAlarmType("SomeType");
         config.setAlarmDetailsBuildJs("DETAILS");
         config.setDynamicSeverity(true);
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.getObjectMapper().valueToTree(config));
+        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
         when(ctx.createJsScriptEngine("DETAILS")).thenReturn(detailsJs);
 
@@ -495,7 +495,7 @@ public class TbAlarmNodeTest {
         assertEquals(Boolean.TRUE.toString(), metadataCaptor.getValue().getValue(IS_NEW_ALARM));
         assertNotSame(metaData, metadataCaptor.getValue());
 
-        Alarm actualAlarm = JacksonUtil.getObjectMapper().readValue(dataCaptor.getValue().getBytes(), Alarm.class);
+        Alarm actualAlarm = JacksonUtil.fromBytes(dataCaptor.getValue().getBytes(), Alarm.class);
         Alarm expectedAlarm = Alarm.builder()
                 .startTs(ts)
                 .endTs(ts)
@@ -518,7 +518,7 @@ public class TbAlarmNodeTest {
             config.setSeverity(CRITICAL.name());
             config.setAlarmType("SomeType");
             config.setAlarmDetailsBuildJs("DETAILS");
-            TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.getObjectMapper().valueToTree(config));
+            TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
             when(ctx.createJsScriptEngine("DETAILS")).thenReturn(detailsJs);
 
@@ -538,7 +538,7 @@ public class TbAlarmNodeTest {
             TbClearAlarmNodeConfiguration config = new TbClearAlarmNodeConfiguration();
             config.setAlarmType("SomeType");
             config.setAlarmDetailsBuildJs("DETAILS");
-            TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.getObjectMapper().valueToTree(config));
+            TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
             when(ctx.createJsScriptEngine("DETAILS")).thenReturn(detailsJs);
 

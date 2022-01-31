@@ -294,7 +294,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         doGet("/api/noauth/activate?activateToken={activateToken}", TestMailService.currentActivateToken)
                 .andExpect(status().isSeeOther())
                 .andExpect(header().string(HttpHeaders.LOCATION, "/login/createPassword?activateToken=" + TestMailService.currentActivateToken));
-        return JacksonUtil.getObjectMapper().createObjectNode()
+        return JacksonUtil.newObjectNode()
                 .put("activateToken", TestMailService.currentActivateToken)
                 .put("password", password);
     }
@@ -578,7 +578,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected <T> T readResponse(ResultActions result, TypeReference<T> type) throws Exception {
         byte[] content = result.andReturn().getResponse().getContentAsByteArray();
-        return JacksonUtil.getObjectMapper().readerFor(type).readValue(content);
+        return JacksonUtil.fromBytes(content, type);
     }
 
     public class IdComparator<D extends HasId> implements Comparator<D> {

@@ -29,7 +29,6 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import java.io.IOException;
 import java.util.Properties;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
@@ -91,8 +90,8 @@ public class TbSendEmailNode implements TbNode {
         }
     }
 
-    private TbEmail getEmail(TbMsg msg) throws IOException {
-        TbEmail email = JacksonUtil.getObjectMapper().readValue(msg.getData(), TbEmail.class);
+    private TbEmail getEmail(TbMsg msg) {
+        TbEmail email = JacksonUtil.fromString(msg.getData(), TbEmail.class);
         if (StringUtils.isBlank(email.getTo())) {
             throw new IllegalStateException("Email destination can not be blank [" + email.getTo() + "]");
         }

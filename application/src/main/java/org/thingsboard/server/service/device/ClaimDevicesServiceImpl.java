@@ -52,7 +52,6 @@ import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -130,12 +129,8 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
             Optional<AttributeKvEntry> claimDataAttr = attributesService.find(device.getTenantId(), device.getId(),
                     DataConstants.SERVER_SCOPE, CLAIM_DATA_ATTRIBUTE_NAME).get();
             if (claimDataAttr.isPresent()) {
-                try {
-                    ClaimData claimDataFromAttribute = JacksonUtil.getObjectMapper().readValue(claimDataAttr.get().getValueAsString(), ClaimData.class);
-                    return new ClaimDataInfo(false, key, claimDataFromAttribute);
-                } catch (IOException e) {
-                    log.warn("Failed to read Claim Data [{}] from attribute!", claimDataAttr, e);
-                }
+                ClaimData claimDataFromAttribute = JacksonUtil.fromString(claimDataAttr.get().getValueAsString(), ClaimData.class);
+                return new ClaimDataInfo(false, key, claimDataFromAttribute);
             }
         }
         return null;

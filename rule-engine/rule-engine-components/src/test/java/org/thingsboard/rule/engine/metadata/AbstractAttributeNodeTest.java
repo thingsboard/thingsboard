@@ -89,7 +89,7 @@ public abstract class AbstractAttributeNodeTest {
     TbEntityGetAttrNode node;
 
     void init(TbEntityGetAttrNode node) throws TbNodeException {
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.getObjectMapper().valueToTree(getTbNodeConfig()));
+        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(getTbNodeConfig()));
 
         metaData = new HashMap<>();
         metaData.putIfAbsent("word", "temperature");
@@ -164,7 +164,7 @@ public abstract class AbstractAttributeNodeTest {
     }
 
     void deviceCustomerTelemetryFetched(Device device) throws TbNodeException {
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.getObjectMapper().valueToTree(getTbNodeConfigForTelemetry()));
+        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(getTbNodeConfigForTelemetry()));
 
         TbEntityGetAttrNode node = getEmptyNode();
         node.init(null, nodeConfiguration);

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.msg.queue;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
@@ -31,11 +30,6 @@ public class RuleEngineException extends Exception {
     }
 
     public String toJsonString() {
-        try {
-            return JacksonUtil.getObjectMapper().writeValueAsString(JacksonUtil.getObjectMapper().createObjectNode().put("message", getMessage()));
-        } catch (JsonProcessingException e) {
-            log.warn("Failed to serialize exception ", e);
-            throw new RuntimeException(e);
-        }
+        return JacksonUtil.toString(JacksonUtil.newObjectNode().put("message", getMessage()));
     }
 }

@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.gson.JsonParseException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.thingsboard.common.util.JacksonUtil;
@@ -34,7 +33,6 @@ import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -151,7 +149,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
     }
 
     private void putValueWithTs(TbMsg msg, TsKvEntry r) {
-        ObjectNode value = JacksonUtil.getObjectMapperWithUnquotedFieldNames().createObjectNode();
+        ObjectNode value = JacksonUtil.newObjectNodeAndUseObjectMapperWithUnquotedFieldNames();
         value.put(TS, r.getTs());
         switch (r.getDataType()) {
             case STRING:
@@ -167,11 +165,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
                 value.put(VALUE, r.getDoubleValue().get());
                 break;
             case JSON:
-                try {
-                    value.set(VALUE, JacksonUtil.getObjectMapperWithUnquotedFieldNames().readTree(r.getJsonValue().get()));
-                } catch (IOException e) {
-                    throw new JsonParseException("Can't parse jsonValue: " + r.getJsonValue().get(), e);
-                }
+                value.set(VALUE, JacksonUtil.toJsonNodeAndUseObjectMapperWithUnquotedFieldNames(r.getJsonValue().get()));
                 break;
         }
         msg.getMetaData().putValue(r.getKey(), value.toString());

@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.edge.rpc.processor;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -102,7 +101,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                                     "Creating a new device with random prefix and relate to this edge", tenantId, deviceName, edge.getId(), deviceUpdateMsg);
                             String newDeviceName = deviceUpdateMsg.getName() + "_" + RandomStringUtils.randomAlphabetic(15);
                             Device newDevice = createDevice(tenantId, edge, deviceUpdateMsg, newDeviceName);
-                            ObjectNode body = JacksonUtil.getObjectMapper().createObjectNode();
+                            ObjectNode body = JacksonUtil.newObjectNode();
                             body.put("conflictName", deviceName);
                             saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.ENTITY_MERGE_REQUEST, newDevice.getId(), body);
                             saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.CREDENTIALS_REQUEST, newDevice.getId(), null);
@@ -256,9 +255,9 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
     private void pushDeviceCreatedEventToRuleEngine(TenantId tenantId, Edge edge, Device device) {
         try {
             DeviceId deviceId = device.getId();
-            ObjectNode entityNode = JacksonUtil.getObjectMapper().valueToTree(device);
+            ObjectNode entityNode = JacksonUtil.valueToTree(device).deepCopy();
             TbMsg tbMsg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, deviceId, device.getCustomerId(),
-                    getActionTbMsgMetaData(edge, device.getCustomerId()), TbMsgDataType.JSON, JacksonUtil.getObjectMapper().writeValueAsString(entityNode));
+                    getActionTbMsgMetaData(edge, device.getCustomerId()), TbMsgDataType.JSON, JacksonUtil.toString(entityNode));
             tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {
@@ -270,7 +269,7 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                     log.debug("Failed to send ENTITY_CREATED EVENT to rule engine [{}]", device, t);
                 }
             });
-        } catch (JsonProcessingException | IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             log.warn("[{}] Failed to push device action to rule engine: {}", device.getId(), DataConstants.ENTITY_CREATED, e);
         }
     }

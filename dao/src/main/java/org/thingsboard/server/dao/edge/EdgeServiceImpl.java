@@ -516,7 +516,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     public String findMissingToRelatedRuleChains(TenantId tenantId, EdgeId edgeId) {
         List<RuleChain> edgeRuleChains = findEdgeRuleChains(tenantId, edgeId);
         List<RuleChainId> edgeRuleChainIds = edgeRuleChains.stream().map(IdBased::getId).collect(Collectors.toList());
-        ObjectNode result = JacksonUtil.getObjectMapper().createObjectNode();
+        ObjectNode result = JacksonUtil.newObjectNode();
         for (RuleChain edgeRuleChain : edgeRuleChains) {
             List<RuleChainConnectionInfo> connectionInfos =
                     ruleChainService.loadRuleChainMetaData(edgeRuleChain.getTenantId(), edgeRuleChain.getId()).getRuleChainConnections();
@@ -531,7 +531,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
                     }
                 }
                 if (!missingRuleChains.isEmpty()) {
-                    ArrayNode array = JacksonUtil.getObjectMapper().createArrayNode();
+                    ArrayNode array = JacksonUtil.createArrayNode();
                     for (String missingRuleChain : missingRuleChains) {
                         array.add(missingRuleChain);
                     }

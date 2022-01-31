@@ -48,7 +48,7 @@ public class EdgeProcessor extends BaseEdgeProcessor {
             ListenableFuture<Edge> edgeFuture;
             switch (actionType) {
                 case ASSIGNED_TO_CUSTOMER:
-                    CustomerId customerId = JacksonUtil.getObjectMapper().readValue(edgeNotificationMsg.getBody(), CustomerId.class);
+                    CustomerId customerId = JacksonUtil.fromString(edgeNotificationMsg.getBody(), CustomerId.class);
                     edgeFuture = edgeService.findEdgeByIdAsync(tenantId, edgeId);
                     Futures.addCallback(edgeFuture, new FutureCallback<Edge>() {
                         @Override
@@ -79,7 +79,7 @@ public class EdgeProcessor extends BaseEdgeProcessor {
                     }, dbCallbackExecutorService);
                     break;
                 case UNASSIGNED_FROM_CUSTOMER:
-                    CustomerId customerIdToDelete = JacksonUtil.getObjectMapper().readValue(edgeNotificationMsg.getBody(), CustomerId.class);
+                    CustomerId customerIdToDelete = JacksonUtil.fromString(edgeNotificationMsg.getBody(), CustomerId.class);
                     edgeFuture = edgeService.findEdgeByIdAsync(tenantId, edgeId);
                     Futures.addCallback(edgeFuture, new FutureCallback<Edge>() {
                         @Override

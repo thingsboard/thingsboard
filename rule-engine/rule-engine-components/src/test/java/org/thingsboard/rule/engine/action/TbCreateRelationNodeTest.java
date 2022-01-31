@@ -188,7 +188,7 @@ public class TbCreateRelationNodeTest {
     }
 
     public void init(TbCreateRelationNodeConfiguration configuration) throws TbNodeException {
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.getObjectMapper().valueToTree(configuration));
+        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(configuration));
 
         when(ctx.getDbCallbackExecutor()).thenReturn(dbExecutor);
         when(ctx.getRelationService()).thenReturn(relationService);

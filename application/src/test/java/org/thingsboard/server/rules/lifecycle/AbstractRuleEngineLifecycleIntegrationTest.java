@@ -116,7 +116,7 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
         ruleNode.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration = new TbGetAttributesNodeConfiguration();
         configuration.setServerAttributeNames(Collections.singletonList("serverAttributeKey"));
-        ruleNode.setConfiguration(JacksonUtil.getObjectMapper().valueToTree(configuration));
+        ruleNode.setConfiguration(JacksonUtil.valueToTree(configuration));
 
         metaData.setNodes(Collections.singletonList(ruleNode));
         metaData.setFirstNodeIndex(0);

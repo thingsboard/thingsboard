@@ -117,7 +117,7 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
         user.setFirstName("Jackson");
         user.setLastName("Roberts");
         String additionalInfo = "{\"key\":\"value-100\"}";
-        JsonNode jsonNode = JacksonUtil.getObjectMapper().readTree(additionalInfo);
+        JsonNode jsonNode = JacksonUtil.toJsonNode(additionalInfo);
         user.setAdditionalInfo(jsonNode);
         userDao.save(AbstractServiceTest.SYSTEM_TENANT_ID,user);
         assertEquals(6, userDao.find(AbstractServiceTest.SYSTEM_TENANT_ID).size());

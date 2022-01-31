@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.device;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -232,10 +231,10 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
 
     private void pushDeviceCreatedEventToRuleEngine(Device device) {
         try {
-            ObjectNode entityNode = JacksonUtil.getObjectMapper().valueToTree(device);
-            TbMsg msg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, device.getId(), device.getCustomerId(), createTbMsgMetaData(device), JacksonUtil.getObjectMapper().writeValueAsString(entityNode));
+            ObjectNode entityNode = JacksonUtil.valueToTree(device).deepCopy();
+            TbMsg msg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, device.getId(), device.getCustomerId(), createTbMsgMetaData(device), JacksonUtil.toString(entityNode));
             sendToRuleEngine(device.getTenantId(), msg, null);
-        } catch (JsonProcessingException | IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             log.warn("[{}] Failed to push device action to rule engine: {}", device.getId(), DataConstants.ENTITY_CREATED, e);
         }
     }

@@ -817,7 +817,7 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         edgeEvent.setEntityId(deviceId.getId());
         edgeEvent.setType(EdgeEventType.DEVICE);
 
-        ObjectNode body = JacksonUtil.getObjectMapper().createObjectNode();
+        ObjectNode body = JacksonUtil.newObjectNode();
         body.put("requestId", requestId);
         body.put("requestUUID", msg.getId().toString());
         body.put("oneway", msg.isOneway());

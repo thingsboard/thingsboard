@@ -171,7 +171,7 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
     private void handleSubscriptionException(ThingsboardException subscriptionException, HttpServletResponse response) throws IOException {
         response.setStatus(HttpStatus.FORBIDDEN.value());
         mapper.writeValue(response.getWriter(),
-                (JacksonUtil.getObjectMapper()).readValue(((HttpClientErrorException) subscriptionException.getCause()).getResponseBodyAsByteArray(), Object.class));
+                JacksonUtil.fromBytes(((HttpClientErrorException) subscriptionException.getCause()).getResponseBodyAsByteArray(), Object.class));
     }
 
     private void handleAccessDeniedException(HttpServletResponse response) throws IOException {

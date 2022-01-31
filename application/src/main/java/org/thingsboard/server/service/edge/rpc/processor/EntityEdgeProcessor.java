@@ -121,7 +121,7 @@ public class EntityEdgeProcessor extends BaseEdgeProcessor {
                     if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
                         for (EdgeId relatedEdgeId : pageData.getData()) {
                             try {
-                                CustomerId customerId = JacksonUtil.getObjectMapper().readValue(edgeNotificationMsg.getBody(), CustomerId.class);
+                                CustomerId customerId = JacksonUtil.fromString(edgeNotificationMsg.getBody(), CustomerId.class);
                                 ListenableFuture<Edge> future = edgeService.findEdgeByIdAsync(tenantId, relatedEdgeId);
                                 Futures.addCallback(future, new FutureCallback<>() {
                                     @Override

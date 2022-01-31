@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.security.auth.oauth2;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -55,12 +54,7 @@ public class CustomOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
 
         RestTemplate restTemplate = restTemplateBuilder.build();
         String request;
-        try {
-            request = JacksonUtil.getObjectMapper().writeValueAsString(token.getPrincipal());
-        } catch (JsonProcessingException e) {
-            log.error("Can't convert principal to JSON string", e);
-            throw new RuntimeException("Can't convert principal to JSON string", e);
-        }
+        request = JacksonUtil.toString(token.getPrincipal());
         try {
             return restTemplate.postForEntity(custom.getUrl(), request, OAuth2User.class).getBody();
         } catch (Exception e) {

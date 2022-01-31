@@ -109,7 +109,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
 
     private Alarm getAlarmFromMessage(TbContext ctx, TbMsg msg) throws IOException {
         Alarm msgAlarm;
-        msgAlarm = JacksonUtil.getObjectMapper().readValue(msg.getData(), Alarm.class);
+        msgAlarm = JacksonUtil.fromString(msg.getData(), Alarm.class);
         msgAlarm.setTenantId(ctx.getTenantId());
         if (msgAlarm.getOriginator() == null) {
             msgAlarm.setOriginator(msg.getOriginator());

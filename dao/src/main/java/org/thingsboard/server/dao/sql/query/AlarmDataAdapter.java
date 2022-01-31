@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.query;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.thingsboard.common.util.JacksonUtil;
@@ -36,7 +35,6 @@ import org.thingsboard.server.dao.model.ModelConstants;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -71,11 +69,7 @@ public class AlarmDataAdapter {
         alarm.setEndTs((long) row.get(ModelConstants.ALARM_END_TS_PROPERTY));
         Object additionalInfo = row.get(ModelConstants.ADDITIONAL_INFO_PROPERTY);
         if (additionalInfo != null) {
-            try {
-                alarm.setDetails(JacksonUtil.getObjectMapper().readTree(additionalInfo.toString()));
-            } catch (JsonProcessingException e) {
-                log.warn("Failed to parse json: {}", row.get(ModelConstants.ADDITIONAL_INFO_PROPERTY), e);
-            }
+            alarm.setDetails(JacksonUtil.toJsonNode(additionalInfo.toString()));
         }
         EntityType originatorType = EntityType.values()[(int) row.get(ModelConstants.ALARM_ORIGINATOR_TYPE_PROPERTY)];
         UUID originatorId = (UUID) row.get(ModelConstants.ALARM_ORIGINATOR_ID_PROPERTY);

@@ -110,7 +110,7 @@ public class ElasticsearchAuditLogSink implements AuditLogSink {
     }
 
     private String createElasticJsonRecord(AuditLog auditLog) {
-        ObjectNode auditLogNode = JacksonUtil.getObjectMapper().createObjectNode();
+        ObjectNode auditLogNode = JacksonUtil.newObjectNode();
         auditLogNode.put("postDate", LocalDateTime.now().toString());
         auditLogNode.put("id", auditLog.getId().getId().toString());
         auditLogNode.put("entityName", auditLog.getEntityName());

@@ -231,7 +231,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     public void createAdminSettings() throws Exception {
         AdminSettings generalSettings = new AdminSettings();
         generalSettings.setKey("general");
-        ObjectNode node = JacksonUtil.getObjectMapper().createObjectNode();
+        ObjectNode node = JacksonUtil.newObjectNode();
         node.put("baseUrl", "http://localhost:8080");
         node.put("prohibitDifferentUrl", false);
         generalSettings.setJsonValue(node);
@@ -239,7 +239,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
         AdminSettings mailSettings = new AdminSettings();
         mailSettings.setKey("mail");
-        node = JacksonUtil.getObjectMapper().createObjectNode();
+        node = JacksonUtil.newObjectNode();
         node.put("mailFrom", "ThingsBoard <sysadmin@localhost.localdomain>");
         node.put("smtpProtocol", "smtp");
         node.put("smtpHost", "localhost");
@@ -511,7 +511,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         device.setDeviceProfileId(deviceProfileId);
         device.setName(name);
         if (description != null) {
-            ObjectNode additionalInfo = JacksonUtil.getObjectMapper().createObjectNode();
+            ObjectNode additionalInfo = JacksonUtil.newObjectNode();
             additionalInfo.put("description", description);
             device.setAdditionalInfo(additionalInfo);
         }

@@ -75,7 +75,6 @@ import org.thingsboard.server.transport.mqtt.session.GatewaySessionHandler;
 import org.thingsboard.server.transport.mqtt.session.MqttTopicMatcher;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -899,19 +898,15 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     private void checkGatewaySession(SessionMetaData sessionMetaData) {
         TransportDeviceInfo device = deviceSessionCtx.getDeviceInfo();
-        try {
-            JsonNode infoNode = JacksonUtil.getObjectMapper().readTree(device.getAdditionalInfo());
-            if (infoNode != null) {
-                JsonNode gatewayNode = infoNode.get("gateway");
-                if (gatewayNode != null && gatewayNode.asBoolean()) {
-                    gatewaySessionHandler = new GatewaySessionHandler(deviceSessionCtx, sessionId);
-                    if (infoNode.has(DefaultTransportService.OVERWRITE_ACTIVITY_TIME) && infoNode.get(DefaultTransportService.OVERWRITE_ACTIVITY_TIME).isBoolean()) {
-                        sessionMetaData.setOverwriteActivityTime(infoNode.get(DefaultTransportService.OVERWRITE_ACTIVITY_TIME).asBoolean());
-                    }
+        JsonNode infoNode = JacksonUtil.toJsonNode(device.getAdditionalInfo());
+        if (infoNode != null) {
+            JsonNode gatewayNode = infoNode.get("gateway");
+            if (gatewayNode != null && gatewayNode.asBoolean()) {
+                gatewaySessionHandler = new GatewaySessionHandler(deviceSessionCtx, sessionId);
+                if (infoNode.has(DefaultTransportService.OVERWRITE_ACTIVITY_TIME) && infoNode.get(DefaultTransportService.OVERWRITE_ACTIVITY_TIME).isBoolean()) {
+                    sessionMetaData.setOverwriteActivityTime(infoNode.get(DefaultTransportService.OVERWRITE_ACTIVITY_TIME).asBoolean());
                 }
             }
-        } catch (IOException e) {
-            log.trace("[{}][{}] Failed to fetch device additional info", sessionId, device.getDeviceName(), e);
         }
     }
 

@@ -16,7 +16,6 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -33,7 +32,6 @@ import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.util.Optional;
 
 @ApiModel
@@ -173,12 +171,7 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
             return deviceData;
         } else {
             if (deviceDataBytes != null) {
-                try {
-                    deviceData = JacksonUtil.getObjectMapper().readValue(new ByteArrayInputStream(deviceDataBytes), DeviceData.class);
-                } catch (IOException e) {
-                    log.warn("Can't deserialize device data: ", e);
-                    return null;
-                }
+                deviceData = JacksonUtil.fromBytes(new ByteArrayInputStream(deviceDataBytes).readAllBytes(), DeviceData.class);
                 return deviceData;
             } else {
                 return null;
@@ -188,11 +181,7 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
 
     public void setDeviceData(DeviceData data) {
         this.deviceData = data;
-        try {
-            this.deviceDataBytes = data != null ? JacksonUtil.getObjectMapper().writeValueAsBytes(data) : null;
-        } catch (JsonProcessingException e) {
-            log.warn("Can't serialize device data: ", e);
-        }
+        this.deviceDataBytes = data != null ? JacksonUtil.writeValueAsBytes(data) : null;
     }
 
     @Override

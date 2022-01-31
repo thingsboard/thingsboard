@@ -16,7 +16,6 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -30,7 +29,6 @@ import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.util.Optional;
 
 @ApiModel
@@ -109,12 +107,7 @@ public class TenantProfile extends SearchTextBased<TenantProfileId> implements H
             return profileData;
         } else {
             if (profileDataBytes != null) {
-                try {
-                    profileData = JacksonUtil.getObjectMapper().readValue(new ByteArrayInputStream(profileDataBytes), TenantProfileData.class);
-                } catch (IOException e) {
-                    log.warn("Can't deserialize tenant profile data: ", e);
-                    return createDefaultTenantProfileData();
-                }
+                profileData = JacksonUtil.fromBytes(profileDataBytes, TenantProfileData.class);
                 return profileData;
             } else {
                 return createDefaultTenantProfileData();
@@ -137,11 +130,7 @@ public class TenantProfile extends SearchTextBased<TenantProfileId> implements H
 
     public void setProfileData(TenantProfileData data) {
         this.profileData = data;
-        try {
-            this.profileDataBytes = data != null ? JacksonUtil.getObjectMapper().writeValueAsBytes(data) : null;
-        } catch (JsonProcessingException e) {
-            log.warn("Can't serialize tenant profile data: ", e);
-        }
+        this.profileDataBytes = data != null ? JacksonUtil.writeValueAsBytes(data) : null;
     }
 
 }

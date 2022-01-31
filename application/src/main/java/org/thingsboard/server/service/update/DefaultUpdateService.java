@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.update;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -118,7 +117,7 @@ public class DefaultUpdateService implements UpdateService {
     Runnable checkUpdatesRunnable = () -> {
         try {
             log.trace("Executing check update method for instanceId [{}], platform [{}] and version [{}]", instanceId, platform, version);
-            ObjectNode request = JacksonUtil.getObjectMapper().createObjectNode();
+            ObjectNode request = JacksonUtil.newObjectNode();
             request.put(PLATFORM_PARAM, platform);
             request.put(VERSION_PARAM, version);
             request.put(INSTANCE_ID_PARAM, instanceId.toString());

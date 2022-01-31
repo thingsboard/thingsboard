@@ -190,14 +190,14 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
         wrapper.setEntityDataCmds(Collections.singletonList(cmd));
 
-        wsClient.send(JacksonUtil.getObjectMapper().writeValueAsString(wrapper));
+        wsClient.send(JacksonUtil.toString(wrapper));
         wsClient.waitForReply();
 
         wsClient.registerWaitForUpdate();
         createNewClient(security, coapConfig, false, endpoint);
         String msg = wsClient.waitForUpdate();
 
-        EntityDataUpdate update = JacksonUtil.getObjectMapper().readValue(msg, EntityDataUpdate.class);
+        EntityDataUpdate update = JacksonUtil.fromString(msg, EntityDataUpdate.class);
         Assert.assertEquals(1, update.getCmdId());
         List<EntityData> eData = update.getUpdate();
         Assert.assertNotNull(eData);

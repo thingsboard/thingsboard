@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.telemetry;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -205,48 +204,43 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
             log.trace("[{}] Processing: {}", sessionRef.getSessionId(), msg);
         }
 
-        try {
-            TelemetryPluginCmdsWrapper cmdsWrapper = JacksonUtil.getObjectMapper().readValue(msg, TelemetryPluginCmdsWrapper.class);
-            if (cmdsWrapper != null) {
-                if (cmdsWrapper.getAttrSubCmds() != null) {
-                    cmdsWrapper.getAttrSubCmds().forEach(cmd -> {
-                        if (processSubscription(sessionRef, cmd)) {
-                            handleWsAttributesSubscriptionCmd(sessionRef, cmd);
-                        }
-                    });
-                }
-                if (cmdsWrapper.getTsSubCmds() != null) {
-                    cmdsWrapper.getTsSubCmds().forEach(cmd -> {
-                        if (processSubscription(sessionRef, cmd)) {
-                            handleWsTimeseriesSubscriptionCmd(sessionRef, cmd);
-                        }
-                    });
-                }
-                if (cmdsWrapper.getHistoryCmds() != null) {
-                    cmdsWrapper.getHistoryCmds().forEach(cmd -> handleWsHistoryCmd(sessionRef, cmd));
-                }
-                if (cmdsWrapper.getEntityDataCmds() != null) {
-                    cmdsWrapper.getEntityDataCmds().forEach(cmd -> handleWsEntityDataCmd(sessionRef, cmd));
-                }
-                if (cmdsWrapper.getAlarmDataCmds() != null) {
-                    cmdsWrapper.getAlarmDataCmds().forEach(cmd -> handleWsAlarmDataCmd(sessionRef, cmd));
-                }
-                if (cmdsWrapper.getEntityCountCmds() != null) {
-                    cmdsWrapper.getEntityCountCmds().forEach(cmd -> handleWsEntityCountCmd(sessionRef, cmd));
-                }
-                if (cmdsWrapper.getEntityDataUnsubscribeCmds() != null) {
-                    cmdsWrapper.getEntityDataUnsubscribeCmds().forEach(cmd -> handleWsDataUnsubscribeCmd(sessionRef, cmd));
-                }
-                if (cmdsWrapper.getAlarmDataUnsubscribeCmds() != null) {
-                    cmdsWrapper.getAlarmDataUnsubscribeCmds().forEach(cmd -> handleWsDataUnsubscribeCmd(sessionRef, cmd));
-                }
-                if (cmdsWrapper.getEntityCountUnsubscribeCmds() != null) {
-                    cmdsWrapper.getEntityCountUnsubscribeCmds().forEach(cmd -> handleWsDataUnsubscribeCmd(sessionRef, cmd));
-                }
+        TelemetryPluginCmdsWrapper cmdsWrapper = JacksonUtil.fromString(msg, TelemetryPluginCmdsWrapper.class);
+        if (cmdsWrapper != null) {
+            if (cmdsWrapper.getAttrSubCmds() != null) {
+                cmdsWrapper.getAttrSubCmds().forEach(cmd -> {
+                    if (processSubscription(sessionRef, cmd)) {
+                        handleWsAttributesSubscriptionCmd(sessionRef, cmd);
+                    }
+                });
             }
-        } catch (IOException e) {
-            log.warn("Failed to decode subscription cmd: {}", e.getMessage(), e);
-            sendWsMsg(sessionRef, new TelemetrySubscriptionUpdate(UNKNOWN_SUBSCRIPTION_ID, SubscriptionErrorCode.BAD_REQUEST, FAILED_TO_PARSE_WS_COMMAND));
+            if (cmdsWrapper.getTsSubCmds() != null) {
+                cmdsWrapper.getTsSubCmds().forEach(cmd -> {
+                    if (processSubscription(sessionRef, cmd)) {
+                        handleWsTimeseriesSubscriptionCmd(sessionRef, cmd);
+                    }
+                });
+            }
+            if (cmdsWrapper.getHistoryCmds() != null) {
+                cmdsWrapper.getHistoryCmds().forEach(cmd -> handleWsHistoryCmd(sessionRef, cmd));
+            }
+            if (cmdsWrapper.getEntityDataCmds() != null) {
+                cmdsWrapper.getEntityDataCmds().forEach(cmd -> handleWsEntityDataCmd(sessionRef, cmd));
+            }
+            if (cmdsWrapper.getAlarmDataCmds() != null) {
+                cmdsWrapper.getAlarmDataCmds().forEach(cmd -> handleWsAlarmDataCmd(sessionRef, cmd));
+            }
+            if (cmdsWrapper.getEntityCountCmds() != null) {
+                cmdsWrapper.getEntityCountCmds().forEach(cmd -> handleWsEntityCountCmd(sessionRef, cmd));
+            }
+            if (cmdsWrapper.getEntityDataUnsubscribeCmds() != null) {
+                cmdsWrapper.getEntityDataUnsubscribeCmds().forEach(cmd -> handleWsDataUnsubscribeCmd(sessionRef, cmd));
+            }
+            if (cmdsWrapper.getAlarmDataUnsubscribeCmds() != null) {
+                cmdsWrapper.getAlarmDataUnsubscribeCmds().forEach(cmd -> handleWsDataUnsubscribeCmd(sessionRef, cmd));
+            }
+            if (cmdsWrapper.getEntityCountUnsubscribeCmds() != null) {
+                cmdsWrapper.getEntityCountUnsubscribeCmds().forEach(cmd -> handleWsDataUnsubscribeCmd(sessionRef, cmd));
+            }
         }
     }
 
@@ -787,18 +781,14 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
     }
 
     private void sendWsMsg(TelemetryWebSocketSessionRef sessionRef, int cmdId, Object update) {
-        try {
-            String msg = JacksonUtil.getObjectMapper().writeValueAsString(update);
-            executor.submit(() -> {
-                try {
-                    msgEndpoint.send(sessionRef, cmdId, msg);
-                } catch (IOException e) {
-                    log.warn("[{}] Failed to send reply: {}", sessionRef.getSessionId(), update, e);
-                }
-            });
-        } catch (JsonProcessingException e) {
-            log.warn("[{}] Failed to encode reply: {}", sessionRef.getSessionId(), update, e);
-        }
+        String msg = JacksonUtil.toString(update);
+        executor.submit(() -> {
+            try {
+                msgEndpoint.send(sessionRef, cmdId, msg);
+            } catch (IOException e) {
+                log.warn("[{}] Failed to send reply: {}", sessionRef.getSessionId(), update, e);
+            }
+        });
     }
 
     private void sendPing() {

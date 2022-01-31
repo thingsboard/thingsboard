@@ -72,7 +72,7 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
             } else {
                 args[0] = "";
             }
-            args[1] = JacksonUtil.getObjectMapper().writeValueAsString(msg.getMetaData().getData());
+            args[1] = JacksonUtil.toString(msg.getMetaData().getData());
             args[2] = msg.getType();
             return args;
         } catch (Throwable th) {
@@ -87,11 +87,11 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
             String messageType = null;
             if (msgData.has(RuleNodeScriptFactory.MSG)) {
                 JsonNode msgPayload = msgData.get(RuleNodeScriptFactory.MSG);
-                data = JacksonUtil.getObjectMapper().writeValueAsString(msgPayload);
+                data = JacksonUtil.toString(msgPayload);
             }
             if (msgData.has(RuleNodeScriptFactory.METADATA)) {
                 JsonNode msgMetadata = msgData.get(RuleNodeScriptFactory.METADATA);
-                metadata = JacksonUtil.getObjectMapper().convertValue(msgMetadata, new TypeReference<Map<String, String>>() {
+                metadata = JacksonUtil.convertValue(msgMetadata, new TypeReference<Map<String, String>>() {
                 });
             }
             if (msgData.has(RuleNodeScriptFactory.MSG_TYPE)) {
@@ -213,7 +213,7 @@ public class RuleNodeJsScriptEngine implements org.thingsboard.rule.engine.api.S
         return Futures.transformAsync(sandboxService.invokeFunction(tenantId, customerId, this.scriptId, args),
                 o -> {
                     try {
-                        return Futures.immediateFuture(JacksonUtil.getObjectMapper().readTree(o.toString()));
+                        return Futures.immediateFuture(JacksonUtil.toJsonNode(o.toString()));
                     } catch (Exception e) {
                         if (e.getCause() instanceof ScriptException) {
                             return Futures.immediateFailedFuture(e.getCause());

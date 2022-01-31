@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.metadata;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.gson.JsonParseException;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +38,6 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -146,7 +144,7 @@ public class TbGetTelemetryNode implements TbNode {
     }
 
     private void process(List<TsKvEntry> entries, TbMsg msg, List<String> keys) {
-        ObjectNode resultNode = JacksonUtil.getObjectMapperWithUnquotedFieldNames().createObjectNode();
+        ObjectNode resultNode = JacksonUtil.newObjectNodeAndUseObjectMapperWithUnquotedFieldNames();
         if (FETCH_MODE_ALL.equals(fetchMode)) {
             entries.forEach(entry -> processArray(resultNode, entry));
         } else {
@@ -169,14 +167,14 @@ public class TbGetTelemetryNode implements TbNode {
             ArrayNode arrayNode = (ArrayNode) node.get(entry.getKey());
             arrayNode.add(buildNode(entry));
         } else {
-            ArrayNode arrayNode = JacksonUtil.getObjectMapperWithUnquotedFieldNames().createArrayNode();
+            ArrayNode arrayNode = JacksonUtil.createArrayNodeAndUseObjectMapperWithUnquotedFieldNames();
             arrayNode.add(buildNode(entry));
             node.set(entry.getKey(), arrayNode);
         }
     }
 
     private ObjectNode buildNode(TsKvEntry entry) {
-        ObjectNode obj = JacksonUtil.getObjectMapperWithUnquotedFieldNames().createObjectNode()
+        ObjectNode obj = JacksonUtil.newObjectNodeAndUseObjectMapperWithUnquotedFieldNames()
                 .put("ts", entry.getTs());
         switch (entry.getDataType()) {
             case STRING:
@@ -192,11 +190,7 @@ public class TbGetTelemetryNode implements TbNode {
                 obj.put("value", entry.getDoubleValue().get());
                 break;
             case JSON:
-                try {
-                    obj.set("value", JacksonUtil.getObjectMapperWithUnquotedFieldNames().readTree(entry.getJsonValue().get()));
-                } catch (IOException e) {
-                    throw new JsonParseException("Can't parse jsonValue: " + entry.getJsonValue().get(), e);
-                }
+                obj.set("value", JacksonUtil.toJsonNodeAndUseObjectMapperWithUnquotedFieldNames(entry.getJsonValue().get()));
                 break;
         }
         return obj;

@@ -78,11 +78,9 @@ import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -540,11 +538,11 @@ public class RuleChainController extends BaseController {
             String script = inputParams.get("script").asText();
             String scriptType = inputParams.get("scriptType").asText();
             JsonNode argNamesJson = inputParams.get("argNames");
-            String[] argNames = JacksonUtil.getObjectMapper().treeToValue(argNamesJson, String[].class);
+            String[] argNames = JacksonUtil.treeToValue(argNamesJson, String[].class);
 
             String data = inputParams.get("msg").asText();
             JsonNode metadataJson = inputParams.get("metadata");
-            Map<String, String> metadata = JacksonUtil.getObjectMapper().convertValue(metadataJson, new TypeReference<Map<String, String>>() {
+            Map<String, String> metadata = JacksonUtil.convertValue(metadataJson, new TypeReference<Map<String, String>>() {
             });
             String msgType = inputParams.get("msgType").asText();
             String output = "";
@@ -566,11 +564,11 @@ public class RuleChainController extends BaseController {
                         break;
                     case "switch":
                         Set<String> states = engine.executeSwitchAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
-                        output = JacksonUtil.getObjectMapper().writeValueAsString(states);
+                        output = JacksonUtil.toString(states);
                         break;
                     case "json":
                         JsonNode json = engine.executeJsonAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
-                        output = JacksonUtil.getObjectMapper().writeValueAsString(json);
+                        output = JacksonUtil.toString(json);
                         break;
                     case "string":
                         output = engine.executeToStringAsync(inMsg).get(TIMEOUT, TimeUnit.SECONDS);
@@ -586,7 +584,7 @@ public class RuleChainController extends BaseController {
                     engine.destroy();
                 }
             }
-            ObjectNode result = JacksonUtil.getObjectMapper().createObjectNode();
+            ObjectNode result = JacksonUtil.newObjectNode();
             result.put("output", output);
             result.put("error", errorText);
             return result;
@@ -637,13 +635,13 @@ public class RuleChainController extends BaseController {
 
     private String msgToOutput(TbMsg msg) throws Exception {
         JsonNode resultNode = convertMsgToOut(msg);
-        return JacksonUtil.getObjectMapper().writeValueAsString(resultNode);
+        return JacksonUtil.toString(resultNode);
     }
 
     private String msgToOutput(List<TbMsg> msgs) throws Exception {
         JsonNode resultNode;
         if (msgs.size() > 1) {
-            resultNode = JacksonUtil.getObjectMapper().createArrayNode();
+            resultNode = JacksonUtil.createArrayNode();
             for (TbMsg msg : msgs) {
                 JsonNode convertedData = convertMsgToOut(msg);
                 ((ArrayNode) resultNode).add(convertedData);
@@ -651,16 +649,16 @@ public class RuleChainController extends BaseController {
         } else {
             resultNode = convertMsgToOut(msgs.get(0));
         }
-        return JacksonUtil.getObjectMapper().writeValueAsString(resultNode);
+        return JacksonUtil.toString(resultNode);
     }
 
     private JsonNode convertMsgToOut(TbMsg msg) throws Exception {
-        ObjectNode msgData = JacksonUtil.getObjectMapper().createObjectNode();
+        ObjectNode msgData = JacksonUtil.newObjectNode();
         if (!StringUtils.isEmpty(msg.getData())) {
-            msgData.set("msg", JacksonUtil.getObjectMapper().readTree(msg.getData()));
+            msgData.set("msg", JacksonUtil.toJsonNode(msg.getData()));
         }
         Map<String, String> metadata = msg.getMetaData().getData();
-        msgData.set("metadata", JacksonUtil.getObjectMapper().valueToTree(metadata));
+        msgData.set("metadata", JacksonUtil.valueToTree(metadata));
         msgData.put("msgType", msg.getType());
         return msgData;
     }

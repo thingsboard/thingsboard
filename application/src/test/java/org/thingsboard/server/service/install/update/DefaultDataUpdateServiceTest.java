@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.install.update;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,7 +43,7 @@ class DefaultDataUpdateServiceTest {
     }
 
     JsonNode readFromResource(String resourceName) throws IOException {
-        return JacksonUtil.getObjectMapper().readTree(this.getClass().getClassLoader().getResourceAsStream(resourceName));
+        return JacksonUtil.fromBytes(this.getClass().getClassLoader().getResourceAsStream(resourceName).readAllBytes());
     }
 
     @Test
@@ -66,27 +65,27 @@ class DefaultDataUpdateServiceTest {
     }
 
     @Test
-    void convertDeviceProfileAlarmRulesForVersion330EmptyJson() throws JsonProcessingException {
-        JsonNode spec = JacksonUtil.getObjectMapper().readTree("{ }");
-        JsonNode expected = JacksonUtil.getObjectMapper().readTree("{ }");
+    void convertDeviceProfileAlarmRulesForVersion330EmptyJson() {
+        JsonNode spec = JacksonUtil.toJsonNode("{ }");
+        JsonNode expected = JacksonUtil.toJsonNode("{ }");
 
         assertThat(service.convertDeviceProfileForVersion330(spec)).isFalse();
         assertThat(spec.toPrettyString()).isEqualTo(expected.toPrettyString());
     }
 
     @Test
-    void convertDeviceProfileAlarmRulesForVersion330AlarmNodeNull() throws JsonProcessingException {
-        JsonNode spec = JacksonUtil.getObjectMapper().readTree("{ \"alarms\" : null }");
-        JsonNode expected = JacksonUtil.getObjectMapper().readTree("{ \"alarms\" : null }");
+    void convertDeviceProfileAlarmRulesForVersion330AlarmNodeNull() {
+        JsonNode spec = JacksonUtil.toJsonNode("{ \"alarms\" : null }");
+        JsonNode expected = JacksonUtil.toJsonNode("{ \"alarms\" : null }");
 
         assertThat(service.convertDeviceProfileForVersion330(spec)).isFalse();
         assertThat(spec.toPrettyString()).isEqualTo(expected.toPrettyString());
     }
 
     @Test
-    void convertDeviceProfileAlarmRulesForVersion330NoAlarmNode() throws JsonProcessingException {
-        JsonNode spec = JacksonUtil.getObjectMapper().readTree("{ \"configuration\": { \"type\": \"DEFAULT\" } }");
-        JsonNode expected = JacksonUtil.getObjectMapper().readTree("{ \"configuration\": { \"type\": \"DEFAULT\" } }");
+    void convertDeviceProfileAlarmRulesForVersion330NoAlarmNode() {
+        JsonNode spec = JacksonUtil.toJsonNode("{ \"configuration\": { \"type\": \"DEFAULT\" } }");
+        JsonNode expected = JacksonUtil.toJsonNode("{ \"configuration\": { \"type\": \"DEFAULT\" } }");
 
         assertThat(service.convertDeviceProfileForVersion330(spec)).isFalse();
         assertThat(spec.toPrettyString()).isEqualTo(expected.toPrettyString());

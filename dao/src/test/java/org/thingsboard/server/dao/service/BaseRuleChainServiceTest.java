@@ -65,7 +65,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testSaveRuleChain() throws IOException {
+    public void testSaveRuleChain() {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setTenantId(tenantId);
         ruleChain.setName("My RuleChain");
@@ -274,7 +274,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testUpdateRuleChainMetaData() throws Exception {
+    public void testUpdateRuleChainMetaData() {
         RuleChainMetaData savedRuleChainMetaData = createRuleChainMetadata();
 
         List<RuleNode> ruleNodes = savedRuleChainMetaData.getNodes();
@@ -289,7 +289,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         RuleNode ruleNode4 = new RuleNode();
         ruleNode4.setName("name4");
         ruleNode4.setType("type4");
-        ruleNode4.setConfiguration(JacksonUtil.getObjectMapper().readTree("\"key4\": \"val4\""));
+        ruleNode4.setConfiguration(JacksonUtil.toJsonNode("\"key4\": \"val4\""));
 
         ruleNodes.set(name3Index, ruleNode4);
 
@@ -369,7 +369,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         return savedEdgeRuleChain.getId();
     }
 
-    private RuleChainMetaData createRuleChainMetadata() throws Exception {
+    private RuleChainMetaData createRuleChainMetadata() {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setName("My RuleChain");
         ruleChain.setTenantId(tenantId);
@@ -381,17 +381,17 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("name1");
         ruleNode1.setType("type1");
-        ruleNode1.setConfiguration(JacksonUtil.getObjectMapper().readTree("\"key1\": \"val1\""));
+        ruleNode1.setConfiguration(JacksonUtil.toJsonNode("\"key1\": \"val1\""));
 
         RuleNode ruleNode2 = new RuleNode();
         ruleNode2.setName("name2");
         ruleNode2.setType("type2");
-        ruleNode2.setConfiguration(JacksonUtil.getObjectMapper().readTree("\"key2\": \"val2\""));
+        ruleNode2.setConfiguration(JacksonUtil.toJsonNode("\"key2\": \"val2\""));
 
         RuleNode ruleNode3 = new RuleNode();
         ruleNode3.setName("name3");
         ruleNode3.setType("type3");
-        ruleNode3.setConfiguration(JacksonUtil.getObjectMapper().readTree("\"key3\": \"val3\""));
+        ruleNode3.setConfiguration(JacksonUtil.toJsonNode("\"key3\": \"val3\""));
 
         List<RuleNode> ruleNodes = new ArrayList<>();
         ruleNodes.add(ruleNode1);
@@ -408,7 +408,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         return ruleChainService.loadRuleChainMetaData(tenantId, ruleChainMetaData.getRuleChainId());
     }
 
-    private RuleChainMetaData createRuleChainMetadataWithCirclingRelation() throws Exception {
+    private RuleChainMetaData createRuleChainMetadataWithCirclingRelation() {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setName("My RuleChain");
         ruleChain.setTenantId(tenantId);
@@ -420,17 +420,17 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("name1");
         ruleNode1.setType("type1");
-        ruleNode1.setConfiguration(JacksonUtil.getObjectMapper().readTree("\"key1\": \"val1\""));
+        ruleNode1.setConfiguration(JacksonUtil.toJsonNode("\"key1\": \"val1\""));
 
         RuleNode ruleNode2 = new RuleNode();
         ruleNode2.setName("name2");
         ruleNode2.setType("type2");
-        ruleNode2.setConfiguration(JacksonUtil.getObjectMapper().readTree("\"key2\": \"val2\""));
+        ruleNode2.setConfiguration(JacksonUtil.toJsonNode("\"key2\": \"val2\""));
 
         RuleNode ruleNode3 = new RuleNode();
         ruleNode3.setName("name3");
         ruleNode3.setType("type3");
-        ruleNode3.setConfiguration(JacksonUtil.getObjectMapper().readTree("\"key3\": \"val3\""));
+        ruleNode3.setConfiguration(JacksonUtil.toJsonNode("\"key3\": \"val3\""));
 
         List<RuleNode> ruleNodes = new ArrayList<>();
         ruleNodes.add(ruleNode1);
@@ -447,7 +447,7 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         return ruleChainMetaData;
     }
 
-    private RuleChainMetaData createRuleChainMetadataWithCirclingRelation2() throws Exception {
+    private RuleChainMetaData createRuleChainMetadataWithCirclingRelation2() {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setName("My RuleChain");
         ruleChain.setTenantId(tenantId);
@@ -459,17 +459,17 @@ public abstract class BaseRuleChainServiceTest extends AbstractServiceTest {
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("name1");
         ruleNode1.setType("type1");
-        ruleNode1.setConfiguration(JacksonUtil.getObjectMapper().readTree("\"key1\": \"val1\""));
+        ruleNode1.setConfiguration(JacksonUtil.toJsonNode("\"key1\": \"val1\""));
 
         RuleNode ruleNode2 = new RuleNode();
         ruleNode2.setName("name2");
         ruleNode2.setType("type2");
-        ruleNode2.setConfiguration(JacksonUtil.getObjectMapper().readTree("\"key2\": \"val2\""));
+        ruleNode2.setConfiguration(JacksonUtil.toJsonNode("\"key2\": \"val2\""));
 
         RuleNode ruleNode3 = new RuleNode();
         ruleNode3.setName("name3");
         ruleNode3.setType("type3");
-        ruleNode3.setConfiguration(JacksonUtil.getObjectMapper().readTree("\"key3\": \"val3\""));
+        ruleNode3.setConfiguration(JacksonUtil.toJsonNode("\"key3\": \"val3\""));
 
         List<RuleNode> ruleNodes = new ArrayList<>();
         ruleNodes.add(ruleNode1);

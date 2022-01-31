@@ -124,7 +124,7 @@ public abstract class AbstractOAuth2ClientMapper {
                     user.setFirstName(oauth2User.getFirstName());
                     user.setLastName(oauth2User.getLastName());
 
-                    ObjectNode additionalInfo = JacksonUtil.getObjectMapper().createObjectNode();
+                    ObjectNode additionalInfo = JacksonUtil.newObjectNode();
 
                     if (!StringUtils.isEmpty(oauth2User.getDefaultDashboardName())) {
                         Optional<DashboardId> dashboardIdOpt =

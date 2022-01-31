@@ -112,10 +112,10 @@ public class TbDeviceProfileNodeTest {
         deviceProfile.setProfileData(deviceProfileData);
 
         Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
-        ObjectNode data = JacksonUtil.getObjectMapper().createObjectNode();
+        ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 42);
         TbMsg msg = TbMsg.newMsg("123456789", deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, JacksonUtil.getObjectMapper().writeValueAsString(data), null, null);
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
         verify(ctx, Mockito.never()).tellFailure(Mockito.any(), Mockito.any());
@@ -131,10 +131,10 @@ public class TbDeviceProfileNodeTest {
         deviceProfile.setProfileData(deviceProfileData);
 
         Mockito.when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
-        ObjectNode data = JacksonUtil.getObjectMapper().createObjectNode();
+        ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 42);
         TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, JacksonUtil.getObjectMapper().writeValueAsString(data), null, null);
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
         verify(ctx, Mockito.never()).tellFailure(Mockito.any(), Mockito.any());
@@ -188,10 +188,10 @@ public class TbDeviceProfileNodeTest {
         TbMsg theMsg = TbMsg.newMsg("ALARM", deviceId, new TbMsgMetaData(), "");
         Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString())).thenReturn(theMsg);
 
-        ObjectNode data = JacksonUtil.getObjectMapper().createObjectNode();
+        ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 42);
         TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, JacksonUtil.getObjectMapper().writeValueAsString(data), null, null);
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
         verify(ctx).enqueueForTellNext(theMsg, "Alarm Created");
@@ -202,7 +202,7 @@ public class TbDeviceProfileNodeTest {
 
 
         TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, JacksonUtil.getObjectMapper().writeValueAsString(data), null, null);
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
         node.onMsg(ctx, msg2);
         verify(ctx).tellSuccess(msg2);
         verify(ctx).enqueueForTellNext(theMsg2, "Alarm Updated");
@@ -280,10 +280,10 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
-        ObjectNode data = JacksonUtil.getObjectMapper().createObjectNode();
+        ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 21);
         TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, JacksonUtil.getObjectMapper().writeValueAsString(data), null, null);
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -367,10 +367,10 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
-        ObjectNode data = JacksonUtil.getObjectMapper().createObjectNode();
+        ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 21);
         TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, JacksonUtil.getObjectMapper().writeValueAsString(data), null, null);
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -436,10 +436,10 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
-        ObjectNode data = JacksonUtil.getObjectMapper().createObjectNode();
+        ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 35);
         TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, JacksonUtil.getObjectMapper().writeValueAsString(data), null, null);
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -530,10 +530,10 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
-        ObjectNode data = JacksonUtil.getObjectMapper().createObjectNode();
+        ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 35);
         TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, JacksonUtil.getObjectMapper().writeValueAsString(data), null, null);
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -548,7 +548,7 @@ public class TbDeviceProfileNodeTest {
         Thread.sleep(halfOfAlarmDelay);
 
         TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, JacksonUtil.getObjectMapper().writeValueAsString(data), null, null);
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         node.onMsg(ctx, msg2);
         verify(ctx).tellSuccess(msg2);
@@ -654,10 +654,10 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
-        ObjectNode data = JacksonUtil.getObjectMapper().createObjectNode();
+        ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 150);
         TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, JacksonUtil.getObjectMapper().writeValueAsString(data), null, null);
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -672,7 +672,7 @@ public class TbDeviceProfileNodeTest {
         Thread.sleep(halfOfAlarmDelay);
 
         TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, JacksonUtil.getObjectMapper().writeValueAsString(data), null, null);
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         node.onMsg(ctx, msg2);
         verify(ctx).tellSuccess(msg2);
@@ -763,10 +763,10 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
-        ObjectNode data = JacksonUtil.getObjectMapper().createObjectNode();
+        ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 150);
         TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, JacksonUtil.getObjectMapper().writeValueAsString(data), null, null);
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -775,7 +775,7 @@ public class TbDeviceProfileNodeTest {
 
         data.put("temperature", 151);
         TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, JacksonUtil.getObjectMapper().writeValueAsString(data), null, null);
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         node.onMsg(ctx, msg2);
         verify(ctx).tellSuccess(msg2);
@@ -879,10 +879,10 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
-        ObjectNode data = JacksonUtil.getObjectMapper().createObjectNode();
+        ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 150);
         TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, JacksonUtil.getObjectMapper().writeValueAsString(data), null, null);
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -891,7 +891,7 @@ public class TbDeviceProfileNodeTest {
 
         data.put("temperature", 151);
         TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, JacksonUtil.getObjectMapper().writeValueAsString(data), null, null);
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         node.onMsg(ctx, msg2);
         verify(ctx).tellSuccess(msg2);
@@ -975,10 +975,10 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
-        ObjectNode data = JacksonUtil.getObjectMapper().createObjectNode();
+        ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 35);
         TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, JacksonUtil.getObjectMapper().writeValueAsString(data), null, null);
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -993,7 +993,7 @@ public class TbDeviceProfileNodeTest {
         Thread.sleep(halfOfAlarmDelay);
 
         TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, JacksonUtil.getObjectMapper().writeValueAsString(data), null, null);
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         node.onMsg(ctx, msg2);
         verify(ctx).tellSuccess(msg2);
@@ -1073,10 +1073,10 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
-        ObjectNode data = JacksonUtil.getObjectMapper().createObjectNode();
+        ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 35);
         TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, JacksonUtil.getObjectMapper().writeValueAsString(data), null, null);
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -1154,10 +1154,10 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
-        ObjectNode data = JacksonUtil.getObjectMapper().createObjectNode();
+        ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 25);
         TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, JacksonUtil.getObjectMapper().writeValueAsString(data), null, null);
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -1228,10 +1228,10 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
-        ObjectNode data = JacksonUtil.getObjectMapper().createObjectNode();
+        ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 40);
         TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, JacksonUtil.getObjectMapper().writeValueAsString(data), null, null);
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -1312,10 +1312,10 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
-        ObjectNode data = JacksonUtil.getObjectMapper().createObjectNode();
+        ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 150L);
         TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, JacksonUtil.getObjectMapper().writeValueAsString(data), null, null);
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -1398,10 +1398,10 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(ctx.newMsg(Mockito.anyString(), Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
-        ObjectNode data = JacksonUtil.getObjectMapper().createObjectNode();
+        ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 150L);
         TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, JacksonUtil.getObjectMapper().writeValueAsString(data), null, null);
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         node.onMsg(ctx, msg);
         verify(ctx).tellSuccess(msg);
@@ -1416,7 +1416,7 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(ctx.getAlarmService()).thenReturn(alarmService);
         Mockito.when(ctx.getDeviceService()).thenReturn(deviceService);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.getObjectMapper().createObjectNode());
+        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.newObjectNode());
         node = new TbDeviceProfileNode();
         node.init(ctx, nodeConfiguration);
     }

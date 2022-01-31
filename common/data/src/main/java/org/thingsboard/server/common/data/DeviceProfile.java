@@ -16,7 +16,6 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -34,8 +33,6 @@ import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.Valid;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 
 @ApiModel
 @Data
@@ -144,12 +141,7 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
             return profileData;
         } else {
             if (profileDataBytes != null) {
-                try {
-                    profileData = JacksonUtil.getObjectMapper().readValue(new ByteArrayInputStream(profileDataBytes), DeviceProfileData.class);
-                } catch (IOException e) {
-                    log.warn("Can't deserialize device profile data: ", e);
-                    return null;
-                }
+                profileData = JacksonUtil.fromBytes(profileDataBytes, DeviceProfileData.class);
                 return profileData;
             } else {
                 return null;
@@ -159,11 +151,7 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
 
     public void setProfileData(DeviceProfileData data) {
         this.profileData = data;
-        try {
-            this.profileDataBytes = data != null ? JacksonUtil.getObjectMapper().writeValueAsBytes(data) : null;
-        } catch (JsonProcessingException e) {
-            log.warn("Can't serialize device profile data: ", e);
-        }
+        this.profileDataBytes = data != null ? JacksonUtil.writeValueAsBytes(data) : null;
     }
 
 }

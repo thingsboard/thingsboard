@@ -107,7 +107,7 @@ public class CustomerController extends BaseController {
         try {
             CustomerId customerId = new CustomerId(toUUID(strCustomerId));
             Customer customer = checkCustomerId(customerId, Operation.READ);
-            ObjectNode infoObject = JacksonUtil.getObjectMapper().createObjectNode();
+            ObjectNode infoObject = JacksonUtil.newObjectNode();
             infoObject.put("title", customer.getTitle());
             infoObject.put(IS_PUBLIC, customer.isPublic());
             return infoObject;

@@ -25,7 +25,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
 import org.thingsboard.server.actors.ActorSystemContext;
-import org.thingsboard.server.common.data.*;
+import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.Event;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.page.PageData;
@@ -110,7 +114,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         ruleNode1.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration1 = new TbGetAttributesNodeConfiguration();
         configuration1.setServerAttributeNames(Collections.singletonList("serverAttributeKey1"));
-        ruleNode1.setConfiguration(JacksonUtil.getObjectMapper().valueToTree(configuration1));
+        ruleNode1.setConfiguration(JacksonUtil.valueToTree(configuration1));
 
         RuleNode ruleNode2 = new RuleNode();
         ruleNode2.setName("Simple Rule Node 2");
@@ -118,7 +122,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         ruleNode2.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration2 = new TbGetAttributesNodeConfiguration();
         configuration2.setServerAttributeNames(Collections.singletonList("serverAttributeKey2"));
-        ruleNode2.setConfiguration(JacksonUtil.getObjectMapper().valueToTree(configuration2));
+        ruleNode2.setConfiguration(JacksonUtil.valueToTree(configuration2));
 
 
         metaData.setNodes(Arrays.asList(ruleNode1, ruleNode2));
@@ -215,11 +219,11 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         ruleNode1.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration1 = new TbGetAttributesNodeConfiguration();
         configuration1.setServerAttributeNames(Collections.singletonList("serverAttributeKey1"));
-        ruleNode1.setConfiguration(JacksonUtil.getObjectMapper().valueToTree(configuration1));
+        ruleNode1.setConfiguration(JacksonUtil.valueToTree(configuration1));
 
         rootMetaData.setNodes(Collections.singletonList(ruleNode1));
         rootMetaData.setFirstNodeIndex(0);
-        rootMetaData.addRuleChainConnectionInfo(0, secondaryRuleChain.getId(), "Success", JacksonUtil.getObjectMapper().createObjectNode());
+        rootMetaData.addRuleChainConnectionInfo(0, secondaryRuleChain.getId(), "Success", JacksonUtil.newObjectNode());
         rootMetaData = saveRuleChainMetaData(rootMetaData);
         Assert.assertNotNull(rootMetaData);
 
@@ -236,7 +240,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         ruleNode2.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration2 = new TbGetAttributesNodeConfiguration();
         configuration2.setServerAttributeNames(Collections.singletonList("serverAttributeKey2"));
-        ruleNode2.setConfiguration(JacksonUtil.getObjectMapper().valueToTree(configuration2));
+        ruleNode2.setConfiguration(JacksonUtil.valueToTree(configuration2));
 
         secondaryMetaData.setNodes(Collections.singletonList(ruleNode2));
         secondaryMetaData.setFirstNodeIndex(0);

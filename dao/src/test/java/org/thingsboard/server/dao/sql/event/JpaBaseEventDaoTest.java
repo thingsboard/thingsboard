@@ -33,8 +33,6 @@ import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.event.EventDao;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 
-import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -183,12 +181,8 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
         event.setEntityId(deviceId);
         event.setUid(event.getId().getId().toString());
         event.setType(STATS);
-        try {
-            JsonNode jsonNode = JacksonUtil.getObjectMapper().readTree("{\"key\":\"value\"}");
-            event.setBody(jsonNode);
-        } catch (IOException e) {
-            log.error(e.getMessage(), e);
-        }
+        JsonNode jsonNode = JacksonUtil.toJsonNode("{\"key\":\"value\"}");
+        event.setBody(jsonNode);
         return event;
     }
 }

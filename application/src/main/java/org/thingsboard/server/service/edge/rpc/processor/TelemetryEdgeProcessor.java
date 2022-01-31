@@ -316,7 +316,7 @@ public class TelemetryEdgeProcessor extends BaseEdgeProcessor {
                 log.warn("Unsupported edge event type [{}]", edgeEvent);
                 return null;
         }
-        return constructEntityDataProtoMsg(entityId, edgeEvent.getAction(), JsonUtils.parse(JacksonUtil.getObjectMapper().writeValueAsString(edgeEvent.getBody())));
+        return constructEntityDataProtoMsg(entityId, edgeEvent.getAction(), JsonUtils.parse(JacksonUtil.toString(edgeEvent.getBody())));
     }
 
     private DownlinkMsg constructEntityDataProtoMsg(EntityId entityId, EdgeEventActionType actionType, JsonElement entityData) {

@@ -34,8 +34,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
-import java.io.IOException;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.mockito.Mockito.verify;
@@ -56,7 +54,7 @@ public class TbMsgToEmailNodeTest {
     private RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
 
     @Test
-    public void msgCanBeConverted() throws IOException {
+    public void msgCanBeConverted() {
         initWithScript();
         metaData.putValue("username", "oreo");
         metaData.putValue("userEmail", "user@email.io");
@@ -80,7 +78,7 @@ public class TbMsgToEmailNodeTest {
         assertEquals("oreo", metadataCaptor.getValue().getValue("username"));
         assertNotSame(metaData, metadataCaptor.getValue());
 
-        TbEmail actual = JacksonUtil.getObjectMapper().readValue(dataCaptor.getValue().getBytes(), TbEmail.class);
+        TbEmail actual = JacksonUtil.fromBytes(dataCaptor.getValue().getBytes(), TbEmail.class);
 
         TbEmail expected = TbEmail.builder()
                 .from("test@mail.org")
@@ -99,7 +97,7 @@ public class TbMsgToEmailNodeTest {
             config.setSubjectTemplate("Hi ${username} there");
             config.setBodyTemplate("${name} is to high. Current ${passed} and ${count}");
             config.setMailBodyType("false");
-            TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.getObjectMapper().valueToTree(config));
+            TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
             emailNode = new TbMsgToEmailNode();
             emailNode.init(ctx, nodeConfiguration);

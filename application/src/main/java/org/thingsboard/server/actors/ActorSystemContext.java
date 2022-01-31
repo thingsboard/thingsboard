@@ -529,7 +529,7 @@ public class ActorSystemContext {
 
             String metadata = JacksonUtil.toString(tbMsg.getMetaData().getData());
 
-            ObjectNode node = JacksonUtil.getObjectMapper().createObjectNode()
+            ObjectNode node = JacksonUtil.newObjectNode()
                     .put("type", type)
                     .put("server", getServiceId())
                     .put("entityId", tbMsg.getOriginator().getId().toString())
@@ -588,7 +588,7 @@ public class ActorSystemContext {
         event.setEntityId(entityId);
         event.setType(DataConstants.DEBUG_RULE_CHAIN);
 
-        ObjectNode node = JacksonUtil.getObjectMapper().createObjectNode()
+        ObjectNode node = JacksonUtil.newObjectNode()
                 //todo: what fields are needed here?
                 .put("server", getServiceId())
                 .put("message", "Reached debug mode rate limit!");

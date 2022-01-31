@@ -17,7 +17,6 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -73,7 +72,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
                 .andExpect(status().isSeeOther())
                 .andExpect(header().string(HttpHeaders.LOCATION, "/login/createPassword?activateToken=" + TestMailService.currentActivateToken));
 
-        JsonNode activateRequest = JacksonUtil.getObjectMapper().createObjectNode()
+        JsonNode activateRequest = JacksonUtil.newObjectNode()
                 .put("activateToken", TestMailService.currentActivateToken)
                 .put("password", "testPassword");
 
@@ -149,7 +148,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
         User savedUser = createUserAndLogin(user, "testPassword1");
         logout();
 
-        JsonNode resetPasswordByEmailRequest = JacksonUtil.getObjectMapper().createObjectNode()
+        JsonNode resetPasswordByEmailRequest = JacksonUtil.newObjectNode()
                 .put("email", email);
 
         doPost("/api/noauth/resetPasswordByEmail", resetPasswordByEmailRequest)
@@ -159,7 +158,7 @@ public abstract class BaseUserControllerTest extends AbstractControllerTest {
                 .andExpect(status().isSeeOther())
                 .andExpect(header().string(HttpHeaders.LOCATION, "/login/resetPassword?resetToken=" + TestMailService.currentResetPasswordToken));
 
-        JsonNode resetPasswordRequest = JacksonUtil.getObjectMapper().createObjectNode()
+        JsonNode resetPasswordRequest = JacksonUtil.newObjectNode()
                 .put("resetToken", TestMailService.currentResetPasswordToken)
                 .put("password", "testPassword2");
 

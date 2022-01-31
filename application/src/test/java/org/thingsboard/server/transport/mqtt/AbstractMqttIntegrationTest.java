@@ -107,9 +107,7 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
         Device gateway = new Device();
         gateway.setName(gatewayName);
         gateway.setType("default");
-        ObjectNode additionalInfo = JacksonUtil.getObjectMapper().createObjectNode();
-        additionalInfo.put("gateway", true);
-        gateway.setAdditionalInfo(additionalInfo);
+        gateway.setAdditionalInfo(JacksonUtil.newObjectNode().put("gateway", true));
 
         if (payloadType != null) {
             DeviceProfile mqttDeviceProfile = createMqttDeviceProfile(payloadType, telemetryTopic, attributesTopic, telemetryProtoSchema, attributesProtoSchema, rpcResponseProtoSchema, rpcRequestProtoSchema, provisionKey, provisionSecret, provisionType, enableCompatibilityWithJsonPayloadFormat, useJsonPayloadFormatForDefaultDownlinkTopics);

@@ -17,14 +17,11 @@ package org.thingsboard.rule.engine.filter;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.ScriptEngine;
@@ -38,10 +35,8 @@ import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import javax.script.ScriptException;
-import java.util.concurrent.Callable;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.same;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -62,7 +57,7 @@ public class TbJsFilterNodeTest {
     private RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
 
     @Test
-    public void falseEvaluationDoNotSendMsg() throws TbNodeException, ScriptException {
+    public void falseEvaluationDoNotSendMsg() throws TbNodeException {
         initWithScript();
         TbMsg msg = TbMsg.newMsg("USER", null, new TbMsgMetaData(), TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
         when(scriptEngine.executeFilterAsync(msg)).thenReturn(Futures.immediateFuture(false));
@@ -73,7 +68,7 @@ public class TbJsFilterNodeTest {
     }
 
     @Test
-    public void exceptionInJsThrowsException() throws TbNodeException, ScriptException {
+    public void exceptionInJsThrowsException() throws TbNodeException {
         initWithScript();
         TbMsgMetaData metaData = new TbMsgMetaData();
         TbMsg msg = TbMsg.newMsg("USER", null, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
@@ -85,7 +80,7 @@ public class TbJsFilterNodeTest {
     }
 
     @Test
-    public void metadataConditionCanBeTrue() throws TbNodeException, ScriptException {
+    public void metadataConditionCanBeTrue() throws TbNodeException {
         initWithScript();
         TbMsgMetaData metaData = new TbMsgMetaData();
         TbMsg msg = TbMsg.newMsg("USER", null, metaData, TbMsgDataType.JSON, "{}", ruleChainId, ruleNodeId);
@@ -99,7 +94,7 @@ public class TbJsFilterNodeTest {
     private void initWithScript() throws TbNodeException {
         TbJsFilterNodeConfiguration config = new TbJsFilterNodeConfiguration();
         config.setJsScript("scr");
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.getObjectMapper().valueToTree(config));
+        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
         when(ctx.createJsScriptEngine("scr")).thenReturn(scriptEngine);
 

@@ -16,9 +16,11 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.AllArgsConstructor;
@@ -45,7 +47,7 @@ public class EntityFieldsData {
     private ObjectNode fieldsData;
 
     public EntityFieldsData(BaseData data) {
-        fieldsData = JacksonUtil.getObjectMapper().valueToTree(data);
+        fieldsData = JacksonUtil.valueToTree(data).deepCopy();
     }
 
     public String getFieldValue(String field) {
@@ -63,11 +65,7 @@ public class EntityFieldsData {
             if (current.isValueNode()) {
                 return current.asText();
             } else {
-                try {
-                    return JacksonUtil.getObjectMapper().writeValueAsString(current);
-                } catch (JsonProcessingException e) {
-                    return null;
-                }
+                return JacksonUtil.toString(current);
             }
         } else {
             return null;

@@ -154,8 +154,8 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
             scannedComponent.setName(ruleNodeAnnotation.name());
             scannedComponent.setScope(ruleNodeAnnotation.scope());
             NodeDefinition nodeDefinition = prepareNodeDefinition(ruleNodeAnnotation);
-            ObjectNode configurationDescriptor = JacksonUtil.getObjectMapper().createObjectNode();
-            JsonNode node = JacksonUtil.getObjectMapper().valueToTree(nodeDefinition);
+            ObjectNode configurationDescriptor = JacksonUtil.newObjectNode();
+            JsonNode node = JacksonUtil.valueToTree(nodeDefinition);
             configurationDescriptor.set("nodeDefinition", node);
             scannedComponent.setConfigurationDescriptor(configurationDescriptor);
             scannedComponent.setClazz(clazzName);
@@ -192,7 +192,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
         Class<? extends NodeConfiguration> configClazz = nodeAnnotation.configClazz();
         NodeConfiguration config = configClazz.getDeclaredConstructor().newInstance();
         NodeConfiguration defaultConfiguration = config.defaultConfiguration();
-        nodeDefinition.setDefaultConfiguration(JacksonUtil.getObjectMapper().valueToTree(defaultConfiguration));
+        nodeDefinition.setDefaultConfiguration(JacksonUtil.valueToTree(defaultConfiguration));
         nodeDefinition.setUiResources(nodeAnnotation.uiResources());
         nodeDefinition.setConfigDirective(nodeAnnotation.configDirective());
         nodeDefinition.setIcon(nodeAnnotation.icon());

@@ -637,7 +637,7 @@ public abstract class BaseOAuth2ServiceTest extends AbstractServiceTest {
                 .clientAuthenticationMethod(UUID.randomUUID().toString())
                 .loginButtonLabel(label != null ? label : UUID.randomUUID().toString())
                 .loginButtonIcon(UUID.randomUUID().toString())
-                .additionalInfo(JacksonUtil.getObjectMapper().createObjectNode().put(UUID.randomUUID().toString(), UUID.randomUUID().toString()))
+                .additionalInfo(JacksonUtil.newObjectNode().put(UUID.randomUUID().toString(), UUID.randomUUID().toString()))
                 .mapperConfig(
                         OAuth2MapperConfig.builder()
                                 .allowUserCreation(true)

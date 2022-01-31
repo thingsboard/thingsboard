@@ -30,7 +30,6 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.dao.rule.RuleChainService;
 
-import java.io.IOException;
 import java.util.function.Predicate;
 
 /**
@@ -66,11 +65,7 @@ public abstract class AbstractRuleEngineControllerTest extends AbstractControlle
 
     protected JsonNode getMetadata(Event outEvent) {
         String metaDataStr = outEvent.getBody().get("metadata").asText();
-        try {
-            return JacksonUtil.getObjectMapper().readTree(metaDataStr);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return JacksonUtil.toJsonNode(metaDataStr);
     }
 
     protected Predicate<Event> filterByCustomEvent() {

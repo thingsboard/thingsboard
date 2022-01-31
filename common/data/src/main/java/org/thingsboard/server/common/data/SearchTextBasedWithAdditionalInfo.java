@@ -82,12 +82,7 @@ public abstract class SearchTextBasedWithAdditionalInfo<I extends UUIDBased> ext
         } else {
             byte[] data = binaryData.get();
             if (data != null) {
-                try {
-                    return JacksonUtil.getObjectMapper().readTree(new ByteArrayInputStream(data));
-                } catch (IOException e) {
-                    log.warn("Can't deserialize json data: ", e);
-                    return null;
-                }
+                return JacksonUtil.fromBytes(data);
             } else {
                 return null;
             }
@@ -96,10 +91,6 @@ public abstract class SearchTextBasedWithAdditionalInfo<I extends UUIDBased> ext
 
     public static void setJson(JsonNode json, Consumer<JsonNode> jsonConsumer, Consumer<byte[]> bytesConsumer) {
         jsonConsumer.accept(json);
-        try {
-            bytesConsumer.accept(JacksonUtil.getObjectMapper().writeValueAsBytes(json));
-        } catch (JsonProcessingException e) {
-            log.warn("Can't serialize json data: ", e);
-        }
+        bytesConsumer.accept(JacksonUtil.writeValueAsBytes(json));
     }
 }
