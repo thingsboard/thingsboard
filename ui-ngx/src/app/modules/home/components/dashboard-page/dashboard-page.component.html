@@ -250,7 +250,7 @@
                           [widgetLayout]="editingWidgetLayout">
           </tb-edit-widget>
         </tb-details-panel>
-        <tb-details-panel *ngIf="!isAddingWidgetClosed && !widgetEditMode" fxFlexcd
+        <tb-details-panel *ngIf="!isAddingWidgetClosed && !widgetEditMode" fxFlex
                           headerTitle="{{ isAddingWidget ?
                             ((!dashboardWidgetSelectComponent?.widgetsBundle ?
                                'widget.select-widgets-bundle' : 'dashboard.select-widget-value') | translate: dashboardWidgetSelectComponent?.widgetsBundle) : ''
