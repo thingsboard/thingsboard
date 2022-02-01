@@ -16,7 +16,6 @@
 
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
-  AbstractControl,
   ControlValueAccessor,
   FormBuilder,
   FormGroup,
@@ -44,7 +43,11 @@ export class AlarmDynamicValue implements ControlValueAccessor, OnInit{
   public dynamicValueSourceTypeTranslations = dynamicValueSourceTypeTranslationMap;
   private propagateChange = (v: any) => { };
 
-  @Input() helpId: string;
+  @Input()
+  helpId: string;
+
+  @Input()
+  disabled: boolean;
 
   constructor(private fb: FormBuilder) {
   }
@@ -78,6 +81,15 @@ export class AlarmDynamicValue implements ControlValueAccessor, OnInit{
   writeValue(dynamicValue: {sourceType: string, sourceAttribute: string}): void {
     if(dynamicValue) {
       this.dynamicValue.patchValue(dynamicValue, {emitEvent: false});
+    }
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
+    if (this.disabled) {
+      this.dynamicValue.disable({emitEvent: false});
+    } else {
+      this.dynamicValue.enable({emitEvent: false});
     }
   }
 
