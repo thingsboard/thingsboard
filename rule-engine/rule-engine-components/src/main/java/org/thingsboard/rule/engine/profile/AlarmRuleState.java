@@ -172,7 +172,13 @@ class AlarmRuleState {
                 return false;
             }
         }
-        return isActive(eventTs, zoneId, zdt, schedule.getStartsOn(), schedule.getEndsOn());
+        long endsOn = schedule.getEndsOn();
+        if (endsOn == 0) {
+            // 24 hours in milliseconds
+            endsOn = 86400000;
+        }
+
+        return isActive(eventTs, zoneId, zdt, schedule.getStartsOn(), endsOn);
     }
 
     private boolean isActiveCustom(CustomTimeSchedule schedule, long eventTs) {
