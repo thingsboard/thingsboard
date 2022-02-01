@@ -20,7 +20,6 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.Dao;
@@ -103,7 +102,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
 
     @Transactional
     public void removeAllByIds(Collection<UUID> ids) {
-        CrudRepository<E, UUID> repository = getRepository();
+        JpaRepository<E, UUID> repository = getRepository();
         ids.forEach(repository::deleteById);
     }
 

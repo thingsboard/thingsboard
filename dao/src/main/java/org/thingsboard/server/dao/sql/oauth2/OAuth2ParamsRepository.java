@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.sql.oauth2;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.repository.CrudRepository;
 import org.thingsboard.server.dao.model.sql.OAuth2ParamsEntity;
 
 import java.util.UUID;

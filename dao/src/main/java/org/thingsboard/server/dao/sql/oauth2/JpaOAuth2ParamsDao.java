@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.sql.oauth2;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.oauth2.OAuth2Params;
 import org.thingsboard.server.dao.model.sql.OAuth2ParamsEntity;
