@@ -18,7 +18,7 @@ package org.thingsboard.server.dao.sql.entityview;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
@@ -57,7 +57,7 @@ public class JpaEntityViewDao extends JpaAbstractSearchTextDao<EntityViewEntity,
     }
 
     @Override
-    protected CrudRepository<EntityViewEntity, UUID> getCrudRepository() {
+    protected JpaRepository<EntityViewEntity, UUID> getRepository() {
         return entityViewRepository;
     }
 
