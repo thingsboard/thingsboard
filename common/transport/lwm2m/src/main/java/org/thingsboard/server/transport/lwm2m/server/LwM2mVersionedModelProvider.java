@@ -85,8 +85,6 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
             this.registration = registration;
             this.tenantId = lwM2mClientContext.getClientByEndpoint(registration.getEndpoint()).getTenantId();
             this.modelsLock = new ReentrantLock();
-            log.info("tenantId: [{}]", tenantId);
-            log.info("models: [{}]",  models);
             if (tenantId != null) {
                 models.computeIfAbsent(tenantId, t -> new ConcurrentHashMap<>());
             }
