@@ -27,7 +27,7 @@ import org.junit.runner.RunWith;
         "org.thingsboard.server.dao.sql.dashboard.*Test",
         "org.thingsboard.server.dao.sql.query.*Test",
         "org.thingsboard.server.dao.sql.device.*Test",
-        "org.thingsboard.server.dao.sql.widget.*JpaWidgetsBundleDaoTest",
+        "org.thingsboard.server.dao.sql.widget.*Test",
         "org.thingsboard.server.dao.sql.event.*Test",
         "org.thingsboard.server.dao.sql.user.*JpaUserCredentialsDaoTest"
 })
