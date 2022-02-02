@@ -45,38 +45,54 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
     private WidgetsBundleDao widgetsBundleDao;
 
     @Test
-    @DatabaseSetup(value = "classpath:dbunit/widgets_bundle.xml",type= DatabaseOperation.CLEAN_INSERT)
-    @DatabaseTearDown(value = "classpath:dbunit/widgets_bundle.xml", type= DatabaseOperation.DELETE_ALL)
     public void testFindAll() {
-        assertEquals(7, widgetsBundleDao.find(AbstractServiceTest.SYSTEM_TENANT_ID).size());
+        createSystemWidgetBundles(7, "WB_");
+        List<WidgetsBundle> widgetsBundles = widgetsBundleDao.find(AbstractServiceTest.SYSTEM_TENANT_ID);
+        try {
+            assertEquals(7, widgetsBundles.size());
+        } finally {
+            for (WidgetsBundle widgetsBundle:widgetsBundles) {
+                widgetsBundleDao.removeById(AbstractServiceTest.SYSTEM_TENANT_ID, widgetsBundle.getUuidId());
+            }
+        }
     }
 
     @Test
-    @DatabaseSetup(value = "classpath:dbunit/widgets_bundle.xml",type= DatabaseOperation.CLEAN_INSERT)
-    @DatabaseTearDown(value = "classpath:dbunit/widgets_bundle.xml", type= DatabaseOperation.DELETE_ALL)
     public void testFindWidgetsBundleByTenantIdAndAlias() {
+        createSystemWidgetBundles(1, "CHECK");
         WidgetsBundle widgetsBundle = widgetsBundleDao.findWidgetsBundleByTenantIdAndAlias(
-                UUID.fromString("250aca8e-2825-11e7-93ae-92361f002671"), "WB3");
-        assertEquals("44e6af4e-2825-11e7-93ae-92361f002671", widgetsBundle.getId().toString());
+                AbstractServiceTest.SYSTEM_TENANT_ID.getId(), "CHECK" + 0);
+        try {
+            System.out.println(widgetsBundle);
+            assertEquals("CHECK" + 0, widgetsBundle.getAlias());
+        } finally {
+            List<WidgetsBundle> allWidgets = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(TenantId.SYS_TENANT_ID.getId(),
+                    new PageLink(1, 0, "CHECK" + 0)).getData();
+            deleteWidgetBundles(allWidgets);
+        }
     }
 
     @Test
-    @DatabaseSetup(value = "classpath:dbunit/widgets_bundle.xml", type= DatabaseOperation.DELETE_ALL)
     public void testFindSystemWidgetsBundles() {
         createSystemWidgetBundles(30, "WB_");
-        assertEquals(30, widgetsBundleDao.find(AbstractServiceTest.SYSTEM_TENANT_ID).size());
-        // Get first page
-        PageLink pageLink = new PageLink(10, 0, "WB");
-        PageData<WidgetsBundle> widgetsBundles1 = widgetsBundleDao.findSystemWidgetsBundles(AbstractServiceTest.SYSTEM_TENANT_ID, pageLink);
-        assertEquals(10, widgetsBundles1.getData().size());
-        // Get next page
-        pageLink = pageLink.nextPageLink();
-        PageData<WidgetsBundle> widgetsBundles2 = widgetsBundleDao.findSystemWidgetsBundles(AbstractServiceTest.SYSTEM_TENANT_ID, pageLink);
-        assertEquals(10, widgetsBundles2.getData().size());
+        try {
+            assertEquals(30, widgetsBundleDao.find(AbstractServiceTest.SYSTEM_TENANT_ID).size());
+            // Get first page
+            PageLink pageLink = new PageLink(10, 0, "WB");
+            PageData<WidgetsBundle> widgetsBundles1 = widgetsBundleDao.findSystemWidgetsBundles(AbstractServiceTest.SYSTEM_TENANT_ID, pageLink);
+            assertEquals(10, widgetsBundles1.getData().size());
+            // Get next page
+            pageLink = pageLink.nextPageLink();
+            PageData<WidgetsBundle> widgetsBundles2 = widgetsBundleDao.findSystemWidgetsBundles(AbstractServiceTest.SYSTEM_TENANT_ID, pageLink);
+            assertEquals(10, widgetsBundles2.getData().size());
+        } finally {
+            List<WidgetsBundle> allWidgets = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(TenantId.SYS_TENANT_ID.getId(),
+                    new PageLink(500, 0, "WB")).getData();
+            deleteWidgetBundles(allWidgets);
+        }
     }
 
     @Test
-    @DatabaseSetup(value = "classpath:dbunit/widgets_bundle.xml", type= DatabaseOperation.DELETE_ALL)
     public void testFindWidgetsBundlesByTenantId() {
         UUID tenantId1 = Uuids.timeBased();
         UUID tenantId2 = Uuids.timeBased();
@@ -86,23 +102,33 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
             createWidgetBundles(5, tenantId2, "WB2_");
             createSystemWidgetBundles(10, "WB_SYS_");
         }
-        assertEquals(180, widgetsBundleDao.find(AbstractServiceTest.SYSTEM_TENANT_ID).size());
+        try {
+            assertEquals(180, widgetsBundleDao.find(AbstractServiceTest.SYSTEM_TENANT_ID).size());
 
-        PageLink pageLink1 = new PageLink(40, 0,  "WB");
-        PageData<WidgetsBundle> widgetsBundles1 = widgetsBundleDao.findTenantWidgetsBundlesByTenantId(tenantId1, pageLink1);
-        assertEquals(30, widgetsBundles1.getData().size());
+            PageLink pageLink1 = new PageLink(40, 0,  "WB");
+            PageData<WidgetsBundle> widgetsBundles1 = widgetsBundleDao.findTenantWidgetsBundlesByTenantId(tenantId1, pageLink1);
+            assertEquals(30, widgetsBundles1.getData().size());
 
-        PageLink pageLink2 = new PageLink(40, 0,  "WB");
-        PageData<WidgetsBundle> widgetsBundles2 = widgetsBundleDao.findTenantWidgetsBundlesByTenantId(tenantId2, pageLink2);
-        assertEquals(40, widgetsBundles2.getData().size());
+            PageLink pageLink2 = new PageLink(40, 0,  "WB");
+            PageData<WidgetsBundle> widgetsBundles2 = widgetsBundleDao.findTenantWidgetsBundlesByTenantId(tenantId2, pageLink2);
+            assertEquals(40, widgetsBundles2.getData().size());
 
-        pageLink2 = pageLink2.nextPageLink();
-        PageData<WidgetsBundle> widgetsBundles3 = widgetsBundleDao.findTenantWidgetsBundlesByTenantId(tenantId2, pageLink2);
-        assertEquals(10, widgetsBundles3.getData().size());
+            pageLink2 = pageLink2.nextPageLink();
+            PageData<WidgetsBundle> widgetsBundles3 = widgetsBundleDao.findTenantWidgetsBundlesByTenantId(tenantId2, pageLink2);
+            assertEquals(10, widgetsBundles3.getData().size());
+        } finally {
+            List<WidgetsBundle> allWidgets =
+                    widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId1,
+                            new PageLink(500, 0, "WB1_")).getData();
+            allWidgets.addAll(widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId2,
+                    new PageLink(500, 0, "WB2_")).getData());
+            allWidgets.addAll(widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(TenantId.SYS_TENANT_ID.getId(),
+                    new PageLink(500, 0, "WB_SYS_")).getData());
+            deleteWidgetBundles(allWidgets);
+        }
     }
 
     @Test
-    @DatabaseSetup(value = "classpath:dbunit/widgets_bundle.xml", type= DatabaseOperation.DELETE_ALL)
     public void testFindAllWidgetsBundlesByTenantId() {
         UUID tenantId1 = Uuids.timeBased();
         UUID tenantId2 = Uuids.timeBased();
@@ -112,35 +138,51 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
             createWidgetBundles(3, tenantId2, "WB2_");
             createSystemWidgetBundles(2, "WB_SYS_");
         }
+        try {
+            PageLink pageLink = new PageLink(30, 0, "WB");
+            PageData<WidgetsBundle> widgetsBundles1 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId1, pageLink);
+            assertEquals(30, widgetsBundles1.getData().size());
 
-        PageLink pageLink = new PageLink(30, 0,  "WB");
-        PageData<WidgetsBundle> widgetsBundles1 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId1, pageLink);
-        assertEquals(30, widgetsBundles1.getData().size());
+            pageLink = pageLink.nextPageLink();
+            PageData<WidgetsBundle> widgetsBundles2 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId1, pageLink);
+            assertEquals(30, widgetsBundles2.getData().size());
 
-        pageLink = pageLink.nextPageLink();
-        PageData<WidgetsBundle> widgetsBundles2 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId1, pageLink);
-        assertEquals(30, widgetsBundles2.getData().size());
+            pageLink = pageLink.nextPageLink();
+            PageData<WidgetsBundle> widgetsBundles3 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId1, pageLink);
+            assertEquals(10, widgetsBundles3.getData().size());
 
-        pageLink = pageLink.nextPageLink();
-        PageData<WidgetsBundle> widgetsBundles3 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId1, pageLink);
-        assertEquals(10, widgetsBundles3.getData().size());
-
-        pageLink = pageLink.nextPageLink();
-        PageData<WidgetsBundle> widgetsBundles4 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId1, pageLink);
-        assertEquals(0, widgetsBundles4.getData().size());
+            pageLink = pageLink.nextPageLink();
+            PageData<WidgetsBundle> widgetsBundles4 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId1, pageLink);
+            assertEquals(0, widgetsBundles4.getData().size());
+        } finally {
+            List<WidgetsBundle> allWidgets =
+                    widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId1,
+                            new PageLink(500, 0, "WB1_")).getData();
+            allWidgets.addAll(widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId2,
+                    new PageLink(500, 0, "WB2_")).getData());
+            allWidgets.addAll(widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(TenantId.SYS_TENANT_ID.getId(),
+                    new PageLink(500, 0, "WB_SYS_")).getData());
+            deleteWidgetBundles(allWidgets);
+        }
     }
 
     @Test
-    @DatabaseSetup("classpath:dbunit/empty_dataset.xml")
-    @DatabaseTearDown(value = "classpath:dbunit/empty_dataset.xml", type= DatabaseOperation.DELETE_ALL)
     public void testSearchTextNotFound() {
         UUID tenantId = Uuids.timeBased();
         createWidgetBundles(5, tenantId, "ABC_");
         createSystemWidgetBundles(5, "SYS_");
-
-        PageLink textPageLink = new PageLink(30, 0, "TEXT_NOT_FOUND");
-        PageData<WidgetsBundle> widgetsBundles4 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId, textPageLink);
-        assertEquals(0, widgetsBundles4.getData().size());
+        try {
+            PageLink textPageLink = new PageLink(30, 0, "TEXT_NOT_FOUND");
+            PageData<WidgetsBundle> widgetsBundles4 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId, textPageLink);
+            assertEquals(0, widgetsBundles4.getData().size());
+        } finally {
+            List<WidgetsBundle> allWidgets =
+                    widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId,
+                            new PageLink(500, 0, "ABC_")).getData();
+            allWidgets.addAll(widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(TenantId.SYS_TENANT_ID.getId(),
+                    new PageLink(500, 0, "SYS_")).getData());
+            deleteWidgetBundles(allWidgets);
+        }
     }
 
     private void createWidgetBundles(int count, UUID tenantId, String prefix) {
@@ -153,6 +195,7 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
             widgetsBundleDao.save(AbstractServiceTest.SYSTEM_TENANT_ID, widgetsBundle);
         }
     }
+
     private void createSystemWidgetBundles(int count, String prefix) {
         for (int i = 0; i < count; i++) {
             WidgetsBundle widgetsBundle = new WidgetsBundle();
@@ -161,6 +204,12 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
             widgetsBundle.setTenantId(TenantId.SYS_TENANT_ID);
             widgetsBundle.setId(new WidgetsBundleId(Uuids.timeBased()));
             widgetsBundleDao.save(AbstractServiceTest.SYSTEM_TENANT_ID, widgetsBundle);
+        }
+    }
+
+    void deleteWidgetBundles(List<WidgetsBundle> widgetsBundles) {
+        for (WidgetsBundle widgetsBundle : widgetsBundles) {
+            widgetsBundleDao.removeById(widgetsBundle.getTenantId(), widgetsBundle.getUuidId());
         }
     }
 }
