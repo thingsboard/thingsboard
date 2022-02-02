@@ -15,14 +15,18 @@
  */
 package org.thingsboard.server.dao.sql.device;
 
-import com.github.springtestdbunit.annotation.DatabaseSetup;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.device.DeviceCredentialsDao;
-import org.thingsboard.server.dao.service.AbstractServiceTest;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -37,22 +41,45 @@ public class JpaDeviceCredentialsDaoTest extends AbstractJpaDaoTest {
     @Autowired
     DeviceCredentialsDao deviceCredentialsDao;
 
-    @Test
-    @DatabaseSetup("classpath:dbunit/device_credentials.xml")
-    public void testFindByDeviceId() {
-        UUID deviceId = UUID.fromString("958e3a30-3215-11e7-93ae-92361f002671");
-        DeviceCredentials deviceCredentials = deviceCredentialsDao.findByDeviceId(SYSTEM_TENANT_ID, deviceId);
-        assertNotNull(deviceCredentials);
-        assertEquals("958e3314-3215-11e7-93ae-92361f002671", deviceCredentials.getId().getId().toString());
-        assertEquals("ID_1", deviceCredentials.getCredentialsId());
+    List<DeviceCredentials> deviceCredentialsList;
+
+    @Before
+    public void setUp() {
+        deviceCredentialsList = List.of(createAndSaveDeviceCredentials(), createAndSaveDeviceCredentials());
+    }
+
+    DeviceCredentials createAndSaveDeviceCredentials() {
+        DeviceCredentials deviceCredentials = new DeviceCredentials();
+        deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
+        deviceCredentials.setCredentialsId(UUID.randomUUID().toString());
+        deviceCredentials.setCredentialsValue("CHECK123");
+        deviceCredentials.setDeviceId(new DeviceId(UUID.randomUUID()));
+        return deviceCredentialsDao.save(TenantId.SYS_TENANT_ID, deviceCredentials);
+    }
+
+    @After
+    public void deleteDeviceCredentials() {
+        for (DeviceCredentials credentials : deviceCredentialsList) {
+            deviceCredentialsDao.removeById(TenantId.SYS_TENANT_ID, credentials.getUuidId());
+        }
     }
 
     @Test
-    @DatabaseSetup("classpath:dbunit/device_credentials.xml")
-    public void findByCredentialsId() {
-        String credentialsId = "ID_2";
-        DeviceCredentials deviceCredentials = deviceCredentialsDao.findByCredentialsId(SYSTEM_TENANT_ID, credentialsId);
+    public void testFindByDeviceId() {
+        DeviceCredentials result = deviceCredentialsList.get(0);
+        assertNotNull(result);
+        DeviceCredentials deviceCredentials = deviceCredentialsDao.findByDeviceId(SYSTEM_TENANT_ID, result.getDeviceId().getId());
         assertNotNull(deviceCredentials);
-        assertEquals("958e3c74-3215-11e7-93ae-92361f002671", deviceCredentials.getId().getId().toString());
+        assertEquals(result.getId(), deviceCredentials.getId());
+        assertEquals(result.getCredentialsId(), deviceCredentials.getCredentialsId());
+    }
+
+    @Test
+    public void findByCredentialsId() {
+        DeviceCredentials result = deviceCredentialsList.get(0);
+        assertNotNull(result);
+        DeviceCredentials deviceCredentials = deviceCredentialsDao.findByCredentialsId(SYSTEM_TENANT_ID, result.getCredentialsId());
+        assertNotNull(deviceCredentials);
+        assertEquals(result.getId(), deviceCredentials.getId());
     }
 }
