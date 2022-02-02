@@ -1459,7 +1459,7 @@
         "hours": "{ hours, plural, one {1 час} few {# часа} other {# часов} }",
         "minutes": "{ minutes, plural, one {1 минута} few {# минуты} other {# минут} }",
         "seconds": "{ seconds, plural, one {1 секунда} few {# секунды} other {# секунд} }",
-        "realtime": "Режим реального времени",
+        "realtime": "Реальное время",
         "history": "История",
         "last-prefix": "Последние",
         "period": "с {{ startTime }} до {{ endTime }}",
