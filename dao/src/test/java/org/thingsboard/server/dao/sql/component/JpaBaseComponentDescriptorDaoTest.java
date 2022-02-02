@@ -54,6 +54,7 @@ public class JpaBaseComponentDescriptorDaoTest extends AbstractJpaDaoTest {
         pageLink = pageLink.nextPageLink();
         PageData<ComponentDescriptor> components2 = componentDescriptorDao.findByTypeAndPageLink(AbstractServiceTest.SYSTEM_TENANT_ID,ComponentType.FILTER, pageLink);
         assertEquals(5, components2.getData().size());
+        deleteComponentDescription(List.of(ComponentType.FILTER, ComponentType.ACTION));
     }
 
     @Test
@@ -73,6 +74,7 @@ public class JpaBaseComponentDescriptorDaoTest extends AbstractJpaDaoTest {
         PageData<ComponentDescriptor> components2 = componentDescriptorDao.findByScopeAndTypeAndPageLink(AbstractServiceTest.SYSTEM_TENANT_ID,
                 ComponentScope.SYSTEM, ComponentType.FILTER, pageLink);
         assertEquals(5, components2.getData().size());
+        deleteComponentDescription(List.of(ComponentType.FILTER, ComponentType.ACTION, ComponentType.ENRICHMENT));
     }
 
     private void createComponentDescriptor(ComponentType type, ComponentScope scope, int index) {
@@ -84,4 +86,14 @@ public class JpaBaseComponentDescriptorDaoTest extends AbstractJpaDaoTest {
         componentDescriptorDao.save(AbstractServiceTest.SYSTEM_TENANT_ID,component);
     }
 
+    void deleteComponentDescription(List<ComponentType> componentTypes) {
+        for (ComponentType componentType : componentTypes) {
+            List<ComponentDescriptor> byTypeAndPageLink = componentDescriptorDao.findByTypeAndPageLink(AbstractServiceTest.SYSTEM_TENANT_ID,
+                    componentType,
+                    new PageLink(100)).getData();
+            for (ComponentDescriptor descriptor : byTypeAndPageLink) {
+                componentDescriptorDao.deleteById(AbstractServiceTest.SYSTEM_TENANT_ID, descriptor.getId());
+            }
+        }
+    }
 }
