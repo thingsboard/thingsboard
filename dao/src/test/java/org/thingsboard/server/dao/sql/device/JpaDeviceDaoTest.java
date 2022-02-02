@@ -20,10 +20,15 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileType;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -31,6 +36,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.device.DeviceDao;
+import org.thingsboard.server.dao.device.DeviceProfileDao;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +55,23 @@ public class JpaDeviceDaoTest extends AbstractJpaDaoTest {
     @Autowired
     private DeviceDao deviceDao;
 
+    @Autowired
+    private DeviceProfileDao deviceProfileDao;
+
+    private DeviceProfile savedDeviceProfile;
+
     ListeningExecutorService executor;
+
+    @Before
+    public void setUp() {
+        DeviceProfile deviceProfile = new DeviceProfile();
+        deviceProfile.setName("TEST" + RandomStringUtils.random(7));
+        deviceProfile.setTenantId(TenantId.SYS_TENANT_ID);
+        deviceProfile.setType(DeviceProfileType.DEFAULT);
+        deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
+        deviceProfile.setDescription("Test");
+        savedDeviceProfile = deviceProfileDao.save(TenantId.SYS_TENANT_ID, deviceProfile);
+    }
 
     @After
     public void tearDown() throws Exception {
@@ -156,7 +178,8 @@ public class JpaDeviceDaoTest extends AbstractJpaDaoTest {
         device.setId(new DeviceId(deviceId));
         device.setTenantId(TenantId.fromUUID(tenantId));
         device.setCustomerId(new CustomerId(customerID));
-        device.setName("SEARCH_TEXT");
+        device.setName("SEARCH_TEXT" + RandomStringUtils.random(7));
+        device.setDeviceProfileId(savedDeviceProfile.getId());
         return device;
     }
 }
