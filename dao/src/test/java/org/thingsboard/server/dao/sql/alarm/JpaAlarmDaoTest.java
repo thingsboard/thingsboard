@@ -43,7 +43,6 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testFindLatestByOriginatorAndType() throws ExecutionException, InterruptedException {
-        System.out.println(System.currentTimeMillis());
         UUID tenantId = UUID.fromString("d4b68f40-3e96-11e7-a884-898080180d6b");
         UUID originator1Id = UUID.fromString("d4b68f41-3e96-11e7-a884-898080180d6b");
         UUID originator2Id = UUID.fromString("d4b68f42-3e96-11e7-a884-898080180d6b");
