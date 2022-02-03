@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 
 @RunWith(ClasspathSuite.class)
 @ClassnameFilters({
-        "org.thingsboard.server.dao.sql.*.*Test"
+        "org.thingsboard.server.dao.sql.*Test"
 })
 public class JpaDaoTestSuite {
 

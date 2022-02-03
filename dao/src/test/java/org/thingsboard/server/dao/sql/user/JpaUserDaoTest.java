@@ -46,7 +46,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
  */
 public class JpaUserDaoTest extends AbstractJpaDaoTest {
 
-    // add to count user sysadmin@thingsboard.org
+    // it comes from the DefaultSystemDataLoaderService super class
     final int COUNT_CREATED_USER = 1;
     final int COUNT_SYSADMIN_USER = 90;
     UUID tenantId;
@@ -75,9 +75,9 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
     @Test
     public void testFindByEmail() throws JsonProcessingException {
         User user = new User();
-        user.setId(new UserId(UUID.fromString("cd481534-27cc-11e7-93ae-92361f002671")));
-        user.setTenantId(TenantId.fromUUID(UUID.fromString("1edcb2c6-27cb-11e7-93ae-92361f002671")));
-        user.setCustomerId(new CustomerId(UUID.fromString("51477cb4-27cb-11e7-93ae-92361f002671")));
+        user.setId(new UserId(UUID.randomUUID()));
+        user.setTenantId(TenantId.fromUUID(UUID.randomUUID()));
+        user.setCustomerId(new CustomerId(UUID.randomUUID()));
         user.setEmail("user@thingsboard.org");
         user.setFirstName("Jackson");
         user.setLastName("Roberts");
@@ -120,7 +120,6 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
         PageData<User> customerUsers3 = userDao.findCustomerUsers(tenantId, customerId,
                 pageLink);
         assertEquals(0, customerUsers3.getData().size());
-        delete30TenantAdminsAnd60CustomerUsers(tenantId, customerId);
     }
 
     private void create30TenantAdminsAnd60CustomerUsers(UUID tenantId, UUID customerId) {

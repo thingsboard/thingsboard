@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.alarm;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -35,6 +36,7 @@ import static org.junit.Assert.assertNotNull;
 /**
  * Created by Valerii Sosliuk on 5/21/2017.
  */
+@Slf4j
 public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
 
     @Autowired
@@ -43,6 +45,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testFindLatestByOriginatorAndType() throws ExecutionException, InterruptedException {
+        log.info("Current system time in millis = {}", System.currentTimeMillis());
         UUID tenantId = UUID.fromString("d4b68f40-3e96-11e7-a884-898080180d6b");
         UUID originator1Id = UUID.fromString("d4b68f41-3e96-11e7-a884-898080180d6b");
         UUID originator2Id = UUID.fromString("d4b68f42-3e96-11e7-a884-898080180d6b");

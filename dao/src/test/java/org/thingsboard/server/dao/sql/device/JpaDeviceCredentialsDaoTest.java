@@ -42,10 +42,13 @@ public class JpaDeviceCredentialsDaoTest extends AbstractJpaDaoTest {
     DeviceCredentialsDao deviceCredentialsDao;
 
     List<DeviceCredentials> deviceCredentialsList;
+    DeviceCredentials neededDeviceCredentials;
 
     @Before
     public void setUp() {
         deviceCredentialsList = List.of(createAndSaveDeviceCredentials(), createAndSaveDeviceCredentials());
+        neededDeviceCredentials = deviceCredentialsList.get(0);
+        assertNotNull(neededDeviceCredentials);
     }
 
     DeviceCredentials createAndSaveDeviceCredentials() {
@@ -66,20 +69,16 @@ public class JpaDeviceCredentialsDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testFindByDeviceId() {
-        DeviceCredentials result = deviceCredentialsList.get(0);
-        assertNotNull(result);
-        DeviceCredentials deviceCredentials = deviceCredentialsDao.findByDeviceId(SYSTEM_TENANT_ID, result.getDeviceId().getId());
-        assertNotNull(deviceCredentials);
-        assertEquals(result.getId(), deviceCredentials.getId());
-        assertEquals(result.getCredentialsId(), deviceCredentials.getCredentialsId());
+        DeviceCredentials foundedDeviceCredentials = deviceCredentialsDao.findByDeviceId(SYSTEM_TENANT_ID, neededDeviceCredentials.getDeviceId().getId());
+        assertNotNull(foundedDeviceCredentials);
+        assertEquals(neededDeviceCredentials.getId(), foundedDeviceCredentials.getId());
+        assertEquals(neededDeviceCredentials.getCredentialsId(), foundedDeviceCredentials.getCredentialsId());
     }
 
     @Test
     public void findByCredentialsId() {
-        DeviceCredentials result = deviceCredentialsList.get(0);
-        assertNotNull(result);
-        DeviceCredentials deviceCredentials = deviceCredentialsDao.findByCredentialsId(SYSTEM_TENANT_ID, result.getCredentialsId());
-        assertNotNull(deviceCredentials);
-        assertEquals(result.getId(), deviceCredentials.getId());
+        DeviceCredentials foundedDeviceCredentials = deviceCredentialsDao.findByCredentialsId(SYSTEM_TENANT_ID, neededDeviceCredentials.getCredentialsId());
+        assertNotNull(foundedDeviceCredentials);
+        assertEquals(neededDeviceCredentials.getId(), foundedDeviceCredentials.getId());
     }
 }

@@ -40,8 +40,9 @@ public class JpaUserCredentialsDaoTest extends AbstractJpaDaoTest {
 
     public static final String ACTIVATE_TOKEN = "ACTIVATE_TOKEN_0";
     public static final String RESET_TOKEN = "RESET_TOKEN_0";
-    final int COUNT_USER_CREDENTIALS = 2;
+    public static final int COUNT_USER_CREDENTIALS = 2;
     List<UserCredentials> userCredentialsList;
+    UserCredentials neededUserCredentials;
 
     @Autowired
     private UserCredentialsDao userCredentialsDao;
@@ -52,6 +53,8 @@ public class JpaUserCredentialsDaoTest extends AbstractJpaDaoTest {
         for (int i=0; i<COUNT_USER_CREDENTIALS; i++) {
             userCredentialsList.add(createUserCredentials(i));
         }
+        neededUserCredentials = userCredentialsList.get(0);
+        assertNotNull(neededUserCredentials);
     }
 
     UserCredentials createUserCredentials(int number) {
@@ -79,32 +82,22 @@ public class JpaUserCredentialsDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testFindByUserId() {
-        UserCredentials result = userCredentialsList.get(0);
-        assertNotNull(result);
-        UserCredentials userCredentials = userCredentialsDao.findByUserId(SYSTEM_TENANT_ID, result.getUserId().getId());
-        assertNotNull(userCredentials);
-        assertEquals(result.getId(), userCredentials.getId());
-        assertEquals(result.isEnabled(), userCredentials.isEnabled());
-        assertEquals(result.getPassword(), userCredentials.getPassword());
-        assertEquals(result.getActivateToken(), userCredentials.getActivateToken());
-        assertEquals(result.getResetToken(), userCredentials.getResetToken());
+        UserCredentials foundedUserCredentials = userCredentialsDao.findByUserId(SYSTEM_TENANT_ID, neededUserCredentials.getUserId().getId());
+        assertNotNull(foundedUserCredentials);
+        assertEquals(neededUserCredentials, foundedUserCredentials);
     }
 
     @Test
     public void testFindByActivateToken() {
-        UserCredentials userCredentials = userCredentialsDao.findByActivateToken(SYSTEM_TENANT_ID, ACTIVATE_TOKEN);
-        assertNotNull(userCredentials);
-        UserCredentials result = userCredentialsList.get(0);
-        assertNotNull(result);
-        assertEquals(result.getId(), userCredentials.getId());
+        UserCredentials foundedUserCredentials = userCredentialsDao.findByActivateToken(SYSTEM_TENANT_ID, ACTIVATE_TOKEN);
+        assertNotNull(foundedUserCredentials);
+        assertEquals(neededUserCredentials.getId(), foundedUserCredentials.getId());
     }
 
     @Test
     public void testFindByResetToken() {
-        UserCredentials userCredentials = userCredentialsDao.findByResetToken(SYSTEM_TENANT_ID, RESET_TOKEN);
-        assertNotNull(userCredentials);
-        UserCredentials result = userCredentialsList.get(0);
-        assertNotNull(result);
-        assertEquals(result.getId(), userCredentials.getId());
+        UserCredentials foundedUserCredentials = userCredentialsDao.findByResetToken(SYSTEM_TENANT_ID, RESET_TOKEN);
+        assertNotNull(foundedUserCredentials);
+        assertEquals(neededUserCredentials.getId(), foundedUserCredentials.getId());
     }
 }
