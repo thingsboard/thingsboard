@@ -309,6 +309,12 @@ export class MapWidgetController implements MapWidgetInterface {
       if (this.map) {
         this.map.remove();
       }
+      if ($.tooltipster) {
+        const instances = $.tooltipster.instances();
+        instances.forEach((instance) => {
+          instance.destroy();
+        });
+      }
     }
 }
 
