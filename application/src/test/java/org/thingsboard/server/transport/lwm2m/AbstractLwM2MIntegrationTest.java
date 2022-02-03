@@ -279,7 +279,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
     public void createNewClient(Security security, Configuration coapConfig, boolean isRpc, String endpoint, boolean isBootstrap, Security securityBs) throws Exception {
         clientDestroy();
         client = new LwM2MTestClient(this.executor, endpoint);
-        int clientPort = SocketUtils.findAvailableTcpPort();
+        int clientPort = SocketUtils.findAvailableUdpPort();
         client.init(security, coapConfig, clientPort, isRpc, isBootstrap, this.shortServerId, this.shortServerIdBs, securityBs);
     }
 
