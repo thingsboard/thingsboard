@@ -15,12 +15,10 @@
  */
 package org.thingsboard.server.transport.lwm2m.security;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.leshan.client.object.Security;
-import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.util.Hex;
 import org.junit.Assert;
 import org.springframework.test.web.servlet.MvcResult;
@@ -63,9 +61,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
 import static org.eclipse.leshan.client.object.Security.noSecBootstap;
-import static org.junit.Assert.assertEquals;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_SUCCESS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_STARTED;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_SUCCESS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_SUCCESS;
@@ -193,22 +189,12 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         createDeviceProfile(transportConfiguration);
         final Device device = createDevice(deviceCredentials, endpoint);
         device.getId().getId().toString();
-        client.start();
+        lwM2MTestClient.start();
 
         await(awaitAlias)
                 .atMost(1000, TimeUnit.MILLISECONDS)
-                .until(() -> finishState.equals(client.getClientState()));
-        Assert.assertEquals(expectedStatuses, client.getClientStates());
-
-        client.destroy();
-        if (ON_BOOTSTRAP_SUCCESS != finishState) {
-            expectedStatuses.add(ON_DEREGISTRATION_STARTED);
-            expectedStatuses.add(ON_DEREGISTRATION_SUCCESS);
-            await(awaitAlias)
-                    .atMost(1000, TimeUnit.MILLISECONDS)
-                    .until(() -> ON_DEREGISTRATION_SUCCESS.equals(client.getClientState()));
-            Assert.assertEquals(expectedStatuses, client.getClientStates());
-        }
+                .until(() -> finishState.equals(lwM2MTestClient.getClientState()));
+        Assert.assertEquals(expectedStatuses, lwM2MTestClient.getClientStates());
     }
 
 
@@ -242,30 +228,21 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         createDeviceProfile(transportConfiguration);
         final Device device = createDevice(deviceCredentials, endpoint);
         String deviceId = device.getId().getId().toString();
-        client.start();
+        lwM2MTestClient.start();
 
         await(awaitAlias)
                 .atMost(1000, TimeUnit.MILLISECONDS)
-                .until(() -> ON_REGISTRATION_SUCCESS.equals(client.getClientState()));
-        Assert.assertEquals(expectedStatusesLwm2m, client.getClientStates());
+                .until(() -> ON_REGISTRATION_SUCCESS.equals(lwM2MTestClient.getClientState()));
+        Assert.assertEquals(expectedStatusesLwm2m, lwM2MTestClient.getClientStates());
 
         String executedPath = getObjectIdVer_1() + "/0/" + RESOURCE_ID_9;
-        String actualResult = sendRPCSecurityExecuteById(executedPath, deviceId, endpoint);
-        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
-        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
-
+        sendRPCSecurityExecuteById(executedPath, deviceId, endpoint);
         expectedStatusesBs.add(ON_DEREGISTRATION_STARTED);
         expectedStatusesBs.add(ON_DEREGISTRATION_SUCCESS);
         await(awaitAlias)
                 .atMost(1000, TimeUnit.MILLISECONDS)
-                .until(() -> ON_REGISTRATION_SUCCESS.equals(client.getClientState()));
-        Assert.assertEquals(expectedStatusesBs, client.getClientStates());
-
-        client.destroy();
-        await(awaitAlias)
-                .atMost(1000, TimeUnit.MILLISECONDS)
-                .until(() -> ON_DEREGISTRATION_SUCCESS.equals(client.getClientState()));
-        Assert.assertEquals(expectedStatusesBs, client.getClientStates());
+                .until(() -> ON_REGISTRATION_SUCCESS.equals(lwM2MTestClient.getClientState()));
+        Assert.assertEquals(expectedStatusesBs, lwM2MTestClient.getClientStates());
     }
 
     protected List<LwM2MBootstrapServerCredential> getBootstrapServerCredentialsSecure(LwM2MSecurityMode mode, LwM2MProfileBootstrapConfigType bootstrapConfigType) {
@@ -423,7 +400,7 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
     }
 
     private String getObjectIdVer_1() {
-        String ver_Id_0 = client.getClient().getObjectTree().getModel().getObjectModel(OBJECT_ID_1).version;
+        String ver_Id_0 = lwM2MTestClient.getLeshanClient().getObjectTree().getModel().getObjectModel(OBJECT_ID_1).version;
         String objectIdVer_1;
         if ("1.0".equals(ver_Id_0)) {
             objectIdVer_1 = "/" + OBJECT_ID_1;

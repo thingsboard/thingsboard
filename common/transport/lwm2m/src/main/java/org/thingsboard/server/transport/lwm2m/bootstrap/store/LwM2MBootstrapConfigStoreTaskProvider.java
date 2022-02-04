@@ -173,7 +173,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
                 if (shId instanceof Long) {
                     shortId = ((Long) shId).intValue();
                 } else {
-                    shortId = ((Integer) shId).intValue();
+                    shortId = (int) shId;
                 }
                 serverInstances.put(shortId, instance.getId());
             });

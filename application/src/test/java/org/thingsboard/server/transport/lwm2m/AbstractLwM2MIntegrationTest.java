@@ -19,8 +19,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.californium.elements.config.Configuration;
+import org.eclipse.leshan.client.californium.LeshanClient;
 import org.eclipse.leshan.client.object.Security;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.springframework.util.SocketUtils;
@@ -64,6 +66,8 @@ import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
 import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -73,7 +77,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
+import static org.awaitility.Awaitility.await;
 import static org.eclipse.californium.core.config.CoapConfig.COAP_PORT;
 import static org.eclipse.californium.core.config.CoapConfig.COAP_SECURE_PORT;
 import static org.eclipse.leshan.client.object.Security.noSec;
@@ -97,6 +103,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
     public static final int securityPort = 5686;
     public static final int portBs = 5687;
     public static final int securityPortBs = 5688;
+    public static final int[] SERVERS_PORT_NUMBERS = {port, securityPort, portBs, securityPortBs};
 
     public static final String host = "localhost";
     public static final String hostBs = "localhost";
@@ -156,16 +163,29 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
     protected DeviceProfile deviceProfile;
     protected ScheduledExecutorService executor;
     protected TbTestWebSocketClient wsClient;
-    protected LwM2MTestClient client;
+    protected LwM2MTestClient lwM2MTestClient;
     private String[] resources;
 
-    public AbstractLwM2MIntegrationTest() {
+    @Before
+    public void startInit() throws Exception {
+        init();
     }
 
-    public void init() throws Exception {
+    @After
+    public void after() {
+        wsClient.close();
+        clientDestroy();
+        executor.shutdownNow();
+    }
+
+    @AfterClass
+    public static void afterClass () {
+        awaitServersDestroy();
+    }
+
+    private void init () throws Exception {
         executor = Executors.newScheduledThreadPool(10, ThingsBoardThreadFactory.forName("test-lwm2m-scheduled"));
         loginTenantAdmin();
-
         for (String resourceName : this.resources) {
             TbResource lwModel = new TbResource();
             lwModel.setResourceType(ResourceType.LWM2M_MODEL);
@@ -179,18 +199,6 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
             Assert.assertNotNull(lwModel);
         }
         wsClient = buildAndConnectWebSocketClient();
-    }
-
-    @Before
-    public void beforeTest() throws Exception {
-        this.init();
-    }
-
-    @After
-    public void after() {
-        wsClient.close();
-        clientDestroy();
-        executor.shutdownNow();
     }
 
     public void basicTestConnectionObserveTelemetry(Security security,
@@ -277,15 +285,20 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
     }
 
     public void createNewClient(Security security, Configuration coapConfig, boolean isRpc, String endpoint, boolean isBootstrap, Security securityBs) throws Exception {
-        clientDestroy();
-        client = new LwM2MTestClient(this.executor, endpoint);
+        this.clientDestroy();
+        lwM2MTestClient = new LwM2MTestClient(this.executor, endpoint);
         int clientPort = SocketUtils.findAvailableUdpPort();
-        client.init(security, coapConfig, clientPort, isRpc, isBootstrap, this.shortServerId, this.shortServerIdBs, securityBs);
+        lwM2MTestClient.init(security, coapConfig, clientPort, isRpc, isBootstrap, this.shortServerId, this.shortServerIdBs, securityBs);
     }
 
     private void clientDestroy() {
-        if (client != null) {
-            client.destroy();
+        try {
+            if (lwM2MTestClient != null) {
+                lwM2MTestClient.destroy();
+                awaitClientDestroy(lwM2MTestClient.getLeshanClient());
+            }
+        } catch (Exception e) {
+            log.error("", e);
         }
     }
 
@@ -338,4 +351,31 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         credentials.setBootstrap(bootstrapCredentials);
         return credentials;
     }
+
+    private static void awaitServersDestroy()  {
+        await("One of servers ports number is not free")
+                .atMost(3000, TimeUnit.MILLISECONDS)
+                .until(() -> isServerPortsAvailable() == null);
+    }
+
+
+    private static String isServerPortsAvailable() {
+        for (int port : SERVERS_PORT_NUMBERS) {
+            try (ServerSocket serverSocket = new ServerSocket(port)) {
+                serverSocket.close();
+                Assert.assertEquals(true, serverSocket.isClosed());
+            } catch (IOException e) {
+                log.warn(String.format("Port %n still in use", port));
+                return (String.format("Port %n still in use", port));
+            }
+        }
+        return null;
+    }
+
+    private static void awaitClientDestroy(LeshanClient leshanClient)  {
+        await("Destroy LeshanClient: delete All is registered Servers.")
+                .atMost(2000, TimeUnit.MILLISECONDS)
+                .until(() -> leshanClient.getRegisteredServers().size() == 0);
+    }
+
 }

@@ -76,16 +76,18 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
     }
 
     @Before
-    public void beforeTest() throws Exception {
-        String endpoint = DEVICE_ENDPOINT_RPC_PREF + endpointSequence.incrementAndGet();
-        init();
-        createNewClient(SECURITY_NO_SEC, COAP_CONFIG, true, endpoint, false, null);
+    public void startInitRPC() throws Exception {
+        initRpc();
+    }
 
+    private void initRpc () throws Exception {
+        String endpoint = DEVICE_ENDPOINT_RPC_PREF + endpointSequence.incrementAndGet();
+        createNewClient(SECURITY_NO_SEC, COAP_CONFIG, true, endpoint, false, null);
         expectedObjects = ConcurrentHashMap.newKeySet();
         expectedObjectIdVers = ConcurrentHashMap.newKeySet();
         expectedInstances = ConcurrentHashMap.newKeySet();
         expectedObjectIdVerInstances = ConcurrentHashMap.newKeySet();
-        client.getClient().getObjectTree().getObjectEnablers().forEach((key, val) -> {
+        lwM2MTestClient.getLeshanClient().getObjectTree().getObjectEnablers().forEach((key, val) -> {
             if (key > 0) {
                 String objectVerId = "/" + key;
                 if (!val.getObjectModel().version.equals("1.0")) {
@@ -100,7 +102,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
                 });
             }
         });
-        String ver_Id_0 = client.getClient().getObjectTree().getModel().getObjectModel(OBJECT_ID_0).version;
+        String ver_Id_0 = lwM2MTestClient.getLeshanClient().getObjectTree().getModel().getObjectModel(OBJECT_ID_0).version;
         if ("1.0".equals(ver_Id_0)) {
             objectIdVer_0 = "/" + OBJECT_ID_0;
         } else {
@@ -145,7 +147,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
         final Device device = createDevice(deviceCredentials, endpoint);
         deviceId = device.getId().getId().toString();
 
-        client.start();
+        lwM2MTestClient.start();
     }
 
     protected String pathIdVerToObjectId(String pathIdVer) {

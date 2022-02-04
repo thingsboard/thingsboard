@@ -67,9 +67,13 @@ public class LwM2MTransportBootstrapService {
 
     @PreDestroy
     public void shutdown() {
-        log.info("Stopping LwM2M transport bootstrap server!");
-        server.destroy();
-        log.info("LwM2M transport bootstrap server stopped!");
+        try {
+            log.info("Stopping LwM2M transport bootstrap server!");
+            server.destroy();
+            log.info("LwM2M transport bootstrap server stopped!");
+        } catch (Exception e) {
+            log.error("", e);
+        }
     }
 
     public LeshanBootstrapServer getLhBootstrapServer() {

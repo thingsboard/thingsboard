@@ -43,7 +43,6 @@ import org.eclipse.leshan.core.request.RegisterRequest;
 import org.eclipse.leshan.core.request.UpdateRequest;
 import org.junit.Assert;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -92,12 +91,12 @@ public class LwM2MTestClient {
 
     private final ScheduledExecutorService executor;
     private final String endpoint;
-    private LeshanClient client;
+    private LeshanClient leshanClient;
 
     private Security lwm2mSecurity;
     private Security lwm2mSecurityBs;
-    private Server lwm2mServer;
-    private Server lwm2mServerBs;
+    private Lwm2mServer lwm2mServer;
+    private Lwm2mServer lwm2mServerBs;
     private SimpleLwM2MDevice lwM2MDevice;
     private FwLwM2MDevice fwLwM2MDevice;
     private SwLwM2MDevice swLwM2MDevice;
@@ -108,7 +107,7 @@ public class LwM2MTestClient {
     private Set<LwM2MClientState> clientStates;
 
     public void init(Security security, Configuration coapConfig, int port, boolean isRpc, boolean isBootstrap, int shortServerId, int shortServerIdBs, Security securityBs) throws InvalidDDFFileException, IOException {
-        Assert.assertNull("client already initialized", client);
+        Assert.assertNull("client already initialized", leshanClient);
         List<ObjectModel> models = new ArrayList<>();
         for (String resourceName : resources) {
             models.addAll(ObjectLoader.loadDdfFile(LwM2MTestClient.class.getClassLoader().getResourceAsStream("lwm2m/" + resourceName), resourceName));
@@ -125,14 +124,14 @@ public class LwM2MTestClient {
             initializer.setInstancesForObject(SECURITY, instances);
         }
         if (isBootstrap) {
-            initializer.setInstancesForObject(SERVER, lwm2mServerBs = new Server(shortServerIdBs, 300));
+            initializer.setInstancesForObject(SERVER, lwm2mServerBs = new Lwm2mServer(shortServerIdBs, 300));
         } else {
             if (securityBs == null) {
-                initializer.setInstancesForObject(SERVER, lwm2mServer = new Server(shortServerId, 300));
+                initializer.setInstancesForObject(SERVER, lwm2mServer = new Lwm2mServer(shortServerId, 300));
             } else {
-                lwm2mServerBs = new Server(shortServerIdBs, 300);
+                lwm2mServerBs = new Lwm2mServer(shortServerIdBs, 300);
                 lwm2mServerBs.setId(0);
-                lwm2mServer =new Server(shortServerId, 300);
+                lwm2mServer = new Lwm2mServer(shortServerId, 300);
                 lwm2mServer.setId(1);
                 LwM2mInstanceEnabler[] instances = new LwM2mInstanceEnabler[]{lwm2mServerBs, lwm2mServer};
                 initializer.setClassForObject(SERVER, Server.class);
@@ -170,7 +169,7 @@ public class LwM2MTestClient {
         clientState = ON_INIT;
         clientStates = new HashSet<>();
         clientStates.add(clientState);
-        client = builder.build();
+        leshanClient = builder.build();
 
         LwM2mClientObserver observer = new LwM2mClientObserver() {
             @Override
@@ -275,15 +274,16 @@ public class LwM2MTestClient {
                 clientStates.add(clientState);
             }
         };
-        this.client.addObserver(observer);
+        this.leshanClient.addObserver(observer);
+
         if (!isRpc) {
-            client.start();
+            leshanClient.start();
         }
     }
 
     public void destroy() {
-        if (client != null) {
-            client.destroy(true);
+        if (leshanClient != null) {
+            leshanClient.destroy(true);
         }
         if (lwm2mSecurityBs != null) {
             lwm2mSecurityBs = null;
@@ -315,8 +315,8 @@ public class LwM2MTestClient {
     }
 
     public void start() {
-        if (client != null) {
-            client.start();
+        if (leshanClient != null) {
+            leshanClient.start();
         }
     }
 }

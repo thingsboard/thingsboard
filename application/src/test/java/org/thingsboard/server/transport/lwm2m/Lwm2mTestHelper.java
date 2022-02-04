@@ -17,33 +17,6 @@ package org.thingsboard.server.transport.lwm2m;
 
 public class Lwm2mTestHelper {
 
-//    // Server
-//    public static final int SECURE_PORT = 5686;
-//    public static final int SECURE_PORT_BS = 5688;
-//
-////    public static final String HOST = "localhost";
-////    public static final int PORT = 5685;
-////public static final String URI = "coap://" + HOST + ":" + PORT;
-//public static final String SECURE_URI = "coaps://" + HOST + ":" + SECURE_PORT;
-//    public static final Configuration COAP_CONFIG = new Configuration().set(EXCHANGE_LIFETIME , 200, TimeUnit.SECONDS).set(COAP_PORT, PORT).set(COAP_SECURE_PORT, SECURE_PORT);
-//    public static final Security SECURITY_NO_SEC = noSec(URI, SHORT_SERVER_ID);
-//
-//    public static final int PORT_BS = 5687;
-//
-//    public static final String HOST_BS = "localhost";
-//    public static final int SHORT_SERVER_ID = 123;
-//    public static final int SHORT_SERVER_ID_BS = 111;
-//
-//
-//    public static final Configuration SECURE_COAP_CONFIG = COAP_CONFIG.set(COAP_SECURE_PORT, SECURE_PORT);
-//    public static final Configuration COAP_CONFIG_BS = new Configuration().set(COAP_PORT, PORT_BS);
-//
-//
-//    public static final String URI_BS = "coap://" + HOST_BS + ":" + PORT_BS;
-//
-//    public static final String SECURE_URI_BS = "coaps://" + HOST_BS + ":" + SECURE_PORT_BS;
-
-
     // Models
     public static final String[] resources = new String[]{"0.xml", "1.xml", "2.xml", "3.xml", "5.xml", "6.xml", "9.xml", "19.xml", "3303.xml"};
     public static final int BINARY_APP_DATA_CONTAINER = 19;
