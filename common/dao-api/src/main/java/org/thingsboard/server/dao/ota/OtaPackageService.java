@@ -51,7 +51,4 @@ public interface OtaPackageService {
     void deleteOtaPackagesByTenantId(TenantId tenantId);
 
     long sumDataSizeByTenantId(TenantId tenantId);
-
-    boolean existsByDeviceProfileId(DeviceProfileId deviceProfileId);
-
 }

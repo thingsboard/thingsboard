@@ -218,9 +218,6 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
         if (deviceProfile != null && deviceProfile.isDefault()) {
             throw new DataValidationException("Deletion of Default Device Profile is prohibited!");
         }
-        if (otaPackageService.existsByDeviceProfileId(deviceProfileId)) {
-            throw new DataValidationException("The device profile is referenced by OTA update package");
-        }
         this.removeDeviceProfile(tenantId, deviceProfile);
     }
 

@@ -487,9 +487,6 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
             thrown.expectMessage("The otaPackage referenced by the device profile cannot be deleted!");
             otaPackageService.deleteOtaPackage(tenantId, savedFirmware.getId());
         } finally {
-            savedDeviceProfile.setFirmwareId(null);
-            deviceProfileService.saveDeviceProfile(savedDeviceProfile);
-            otaPackageService.deleteOtaPackage(tenantId, savedFirmware.getId());
             deviceProfileService.deleteDeviceProfile(tenantId, savedDeviceProfile.getId());
         }
     }

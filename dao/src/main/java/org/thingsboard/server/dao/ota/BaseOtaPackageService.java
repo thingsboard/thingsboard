@@ -224,11 +224,6 @@ public class BaseOtaPackageService implements OtaPackageService {
     }
 
     @Override
-    public boolean existsByDeviceProfileId(DeviceProfileId deviceProfileId) {
-        return otaPackageDao.existsByDeviceProfileId(deviceProfileId);
-    }
-
-    @Override
     public void deleteOtaPackagesByTenantId(TenantId tenantId) {
         log.trace("Executing deleteOtaPackagesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
