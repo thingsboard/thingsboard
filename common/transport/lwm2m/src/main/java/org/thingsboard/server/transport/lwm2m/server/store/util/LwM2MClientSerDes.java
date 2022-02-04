@@ -57,7 +57,6 @@ public class LwM2MClientSerDes {
             resourceValue.add("lwM2mResource", serialize(v.getLwM2mResource()));
             resourceValue.add("resourceModel", serialize(v.getResourceModel()));
             resources.add(k, resourceValue);
-
         });
         o.add("resources", resources);
         JsonObject sharedAttributes = Json.object();
@@ -300,21 +299,21 @@ public class LwM2MClientSerDes {
         if (edrxCycle != null) {
             Field edrxCycleField = lwM2mClientClass.getDeclaredField("edrxCycle");
             edrxCycleField.setAccessible(true);
-            edrxCycleField.setLong(lwM2mClient, edrxCycle.asLong());
+            edrxCycleField.set(lwM2mClient, edrxCycle.asLong());
         }
 
         JsonValue psmActivityTimer = o.get("psmActivityTimer");
         if (psmActivityTimer != null) {
             Field psmActivityTimerField = lwM2mClientClass.getDeclaredField("psmActivityTimer");
             psmActivityTimerField.setAccessible(true);
-            psmActivityTimerField.setLong(lwM2mClient, psmActivityTimer.asLong());
+            psmActivityTimerField.set(lwM2mClient, psmActivityTimer.asLong());
         }
 
         JsonValue pagingTransmissionWindow = o.get("pagingTransmissionWindow");
         if (pagingTransmissionWindow != null) {
             Field pagingTransmissionWindowField = lwM2mClientClass.getDeclaredField("pagingTransmissionWindow");
             pagingTransmissionWindowField.setAccessible(true);
-            pagingTransmissionWindowField.setLong(lwM2mClient, pagingTransmissionWindow.asLong());
+            pagingTransmissionWindowField.set(lwM2mClient, pagingTransmissionWindow.asLong());
         }
 
         JsonValue registration = o.get("registration");
