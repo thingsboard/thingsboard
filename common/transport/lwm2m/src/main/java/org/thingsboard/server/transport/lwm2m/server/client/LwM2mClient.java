@@ -228,25 +228,19 @@ public class LwM2mClient implements Serializable {
     }
 
     public boolean saveResourceValue(String pathRezIdVer, LwM2mResource resource, LwM2mModelProvider modelProvider, Mode mode) {
-        if (this.resources.get(pathRezIdVer) != null && this.resources.get(pathRezIdVer).getResourceModel() != null &&
-                resourceEqualsModel(resource, this.resources.get(pathRezIdVer).getResourceModel())) {
+        if (this.resources.get(pathRezIdVer) != null && this.resources.get(pathRezIdVer).getResourceModel() != null) {
             this.resources.get(pathRezIdVer).updateLwM2mResource(resource, mode);
             return true;
         } else {
             LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRezIdVer));
             ResourceModel resourceModel = modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
-            if (resourceModel != null && resourceEqualsModel(resource, resourceModel)) {
+            if (resourceModel != null) {
                 this.resources.put(pathRezIdVer, new ResourceValue(resource, resourceModel));
                 return true;
             } else {
                 return false;
             }
         }
-    }
-
-    private boolean resourceEqualsModel(LwM2mResource resource, ResourceModel resourceModel) {
-        return ((!resourceModel.multiple && resource instanceof LwM2mSingleResource) ||
-                (resourceModel.multiple && resource instanceof LwM2mMultipleResource));
     }
 
     public Object getResourceValue(String pathRezIdVer, String pathRezId) {
