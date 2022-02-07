@@ -213,7 +213,7 @@ export class ResourcesService {
       case 'js':
         el = this.document.createElement('script');
         el.type = 'text/javascript';
-        el.async = true;
+        el.async = false;
         el.src = url;
         break;
       case 'css':
