@@ -24,14 +24,13 @@ import org.eclipse.leshan.core.node.LwM2mResourceInstance;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.request.WriteRequest.Mode;
 
-import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 @Slf4j
 @Data
-public class ResourceValue implements Serializable {
+public class ResourceValue {
 
     private LwM2mResource lwM2mResource;
     private ResourceModel resourceModel;
