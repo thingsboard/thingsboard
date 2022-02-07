@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,7 +198,7 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
                 if (pathIdVer != null) {
                     // #1.1
                     if (lwM2MClient.getSharedAttributes().containsKey(pathIdVer)) {
-                        if (tsKvProto.getTs() >= lwM2MClient.getSharedAttributes().get(pathIdVer).getTs()) {
+                        if (tsKvProto.getTs() > lwM2MClient.getSharedAttributes().get(pathIdVer).getTs()) {
                             lwM2MClient.getSharedAttributes().put(pathIdVer, tsKvProto);
                             attributesUpdate.put(pathIdVer, tsKvProto);
                         }

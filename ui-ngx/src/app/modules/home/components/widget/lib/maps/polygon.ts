@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,16 +23,18 @@ import {
   processPattern,
   safeExecute
 } from './common-maps-utils';
-import { FormattedData, MarkerSettings, PolygonSettings } from './map-models';
+import { FormattedData, PolygonSettings, UnitedMapSettings } from './map-models';
 
 export class Polygon {
+
+    private editing = false;
 
     leafletPoly: L.Polygon;
     tooltip: L.Popup;
     data: FormattedData;
     dataSources: FormattedData[];
 
-    constructor(public map, data: FormattedData, dataSources: FormattedData[], private settings: PolygonSettings,
+    constructor(public map, data: FormattedData, dataSources: FormattedData[], private settings: UnitedMapSettings,
                 private onDragendListener?) {
         this.dataSources = dataSources;
         this.data = data;
@@ -47,7 +49,8 @@ export class Polygon {
           weight: settings.polygonStrokeWeight,
           fillOpacity: settings.polygonOpacity,
           opacity: settings.polygonStrokeOpacity,
-          pmIgnore: !settings.editablePolygon
+          pmIgnore: !settings.editablePolygon,
+          snapIgnore: !settings.snappable
         }).addTo(this.map);
 
         this.updateLabel(settings);
@@ -61,6 +64,8 @@ export class Polygon {
 
     private createEventListeners() {
       if (this.settings.editablePolygon && this.onDragendListener) {
+        this.leafletPoly.on('pm:markerdragstart', () => this.editing = true);
+        this.leafletPoly.on('pm:markerdragend', () => this.editing = false);
         this.leafletPoly.on('pm:edit', (e) => this.onDragendListener(e, this.data));
       }
 
@@ -99,6 +104,9 @@ export class Polygon {
     }
 
     updatePolygon(data: FormattedData, dataSources: FormattedData[], settings: PolygonSettings) {
+      if (this.editing) {
+        return;
+      }
       this.data = data;
       this.dataSources = dataSources;
       const polyData = data[this.settings.polygonKeyName];

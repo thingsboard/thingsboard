@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,9 @@ package org.thingsboard.server.coapserver;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapServer;
 import org.eclipse.californium.core.network.CoapEndpoint;
-import org.eclipse.californium.core.network.config.NetworkConfig;
+import org.eclipse.californium.core.config.CoapConfig;
 import org.eclipse.californium.core.server.resources.Resource;
+import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.californium.scandium.DTLSConnector;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +38,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static org.eclipse.californium.core.network.config.NetworkConfigDefaults.DEFAULT_BLOCKWISE_STATUS_LIFETIME;
+import static org.eclipse.californium.core.config.CoapConfig.DEFAULT_BLOCKWISE_STATUS_LIFETIME_IN_SECONDS;
 
 @Slf4j
 @Component
@@ -78,8 +79,8 @@ public class DefaultCoapServerService implements CoapServerService {
     }
 
     @Override
-    public ConcurrentMap<String, TbCoapDtlsSessionInfo> getDtlsSessionsMap() {
-        return tbDtlsCertificateVerifier != null ? tbDtlsCertificateVerifier.getTbCoapDtlsSessionIdsMap() : null;
+    public ConcurrentMap<InetSocketAddress, TbCoapDtlsSessionInfo> getDtlsSessionsMap() {
+        return tbDtlsCertificateVerifier != null ? tbDtlsCertificateVerifier.getTbCoapDtlsSessionsMap() : null;
     }
 
     @Override
@@ -88,16 +89,16 @@ public class DefaultCoapServerService implements CoapServerService {
     }
 
     private CoapServer createCoapServer() throws UnknownHostException {
-        NetworkConfig networkConfig = new NetworkConfig();
-        networkConfig.setBoolean(NetworkConfig.Keys.BLOCKWISE_STRICT_BLOCK2_OPTION, true);
-        networkConfig.setBoolean(NetworkConfig.Keys.BLOCKWISE_ENTITY_TOO_LARGE_AUTO_FAILOVER, true);
-        networkConfig.setLong(NetworkConfig.Keys.BLOCKWISE_STATUS_LIFETIME, DEFAULT_BLOCKWISE_STATUS_LIFETIME);
-        networkConfig.setInt(NetworkConfig.Keys.MAX_RESOURCE_BODY_SIZE, 256 * 1024 * 1024);
-        networkConfig.setString(NetworkConfig.Keys.RESPONSE_MATCHING, "RELAXED");
-        networkConfig.setInt(NetworkConfig.Keys.PREFERRED_BLOCK_SIZE, 1024);
-        networkConfig.setInt(NetworkConfig.Keys.MAX_MESSAGE_SIZE, 1024);
-        networkConfig.setInt(NetworkConfig.Keys.MAX_RETRANSMIT, 4);
-        networkConfig.setInt(NetworkConfig.Keys.COAP_PORT, coapServerContext.getPort());
+        Configuration networkConfig = new Configuration();
+        networkConfig.set(CoapConfig.BLOCKWISE_STRICT_BLOCK2_OPTION, true);
+        networkConfig.set(CoapConfig.BLOCKWISE_ENTITY_TOO_LARGE_AUTO_FAILOVER, true);
+        networkConfig.set(CoapConfig.BLOCKWISE_STATUS_LIFETIME, DEFAULT_BLOCKWISE_STATUS_LIFETIME_IN_SECONDS, TimeUnit.SECONDS);
+        networkConfig.set(CoapConfig.MAX_RESOURCE_BODY_SIZE, 256 * 1024 * 1024);
+        networkConfig.set(CoapConfig.RESPONSE_MATCHING, CoapConfig.MatcherMode.RELAXED);
+        networkConfig.set(CoapConfig.PREFERRED_BLOCK_SIZE, 1024);
+        networkConfig.set(CoapConfig.MAX_MESSAGE_SIZE, 1024);
+        networkConfig.set(CoapConfig.MAX_RETRANSMIT, 4);
+        networkConfig.set(CoapConfig.COAP_PORT, coapServerContext.getPort());
         server = new CoapServer(networkConfig);
 
         CoapEndpoint.Builder noSecCoapEndpointBuilder = new CoapEndpoint.Builder();
@@ -105,15 +106,15 @@ public class DefaultCoapServerService implements CoapServerService {
         InetSocketAddress sockAddr = new InetSocketAddress(addr, coapServerContext.getPort());
         noSecCoapEndpointBuilder.setInetSocketAddress(sockAddr);
 
-        noSecCoapEndpointBuilder.setNetworkConfig(networkConfig);
+        noSecCoapEndpointBuilder.setConfiguration(networkConfig);
         CoapEndpoint noSecCoapEndpoint = noSecCoapEndpointBuilder.build();
         server.addEndpoint(noSecCoapEndpoint);
         if (isDtlsEnabled()) {
             CoapEndpoint.Builder dtlsCoapEndpointBuilder = new CoapEndpoint.Builder();
             TbCoapDtlsSettings dtlsSettings = coapServerContext.getDtlsSettings();
-            DtlsConnectorConfig dtlsConnectorConfig = dtlsSettings.dtlsConnectorConfig();
-            networkConfig.setInt(NetworkConfig.Keys.COAP_SECURE_PORT, dtlsConnectorConfig.getAddress().getPort());
-            dtlsCoapEndpointBuilder.setNetworkConfig(networkConfig);
+            DtlsConnectorConfig dtlsConnectorConfig = dtlsSettings.dtlsConnectorConfig(networkConfig);
+            networkConfig.set(CoapConfig.COAP_SECURE_PORT, dtlsConnectorConfig.getAddress().getPort());
+            dtlsCoapEndpointBuilder.setConfiguration(networkConfig);
             DTLSConnector connector = new DTLSConnector(dtlsConnectorConfig);
             dtlsCoapEndpointBuilder.setConnector(connector);
             CoapEndpoint dtlsCoapEndpoint = dtlsCoapEndpointBuilder.build();

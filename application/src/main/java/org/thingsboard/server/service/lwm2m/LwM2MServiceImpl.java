@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,12 @@ public class LwM2MServiceImpl implements LwM2MService {
         } else {
             bsServ.setServerPublicKey(Base64.encodeBase64String(publicKeyBase64));
         }
+        byte[] certificateBase64 = getCertificate(bsServerConfig);
+        if (certificateBase64 == null) {
+            bsServ.setServerCertificate("");
+        } else {
+            bsServ.setServerCertificate(Base64.encodeBase64String(certificateBase64));
+        }
         return bsServ;
     }
 
@@ -74,6 +80,18 @@ public class LwM2MServiceImpl implements LwM2MService {
             }
         } catch (Exception e) {
             log.trace("Failed to fetch public key from key store!", e);
+        }
+        return null;
+    }
+
+    private byte[] getCertificate(LwM2MSecureServerConfig config) {
+        try {
+            SslCredentials sslCredentials = config.getSslCredentials();
+            if (sslCredentials != null) {
+                return sslCredentials.getCertificateChain()[0].getEncoded();
+            }
+        } catch (Exception e) {
+            log.trace("Failed to fetch certificate from key store!", e);
         }
         return null;
     }

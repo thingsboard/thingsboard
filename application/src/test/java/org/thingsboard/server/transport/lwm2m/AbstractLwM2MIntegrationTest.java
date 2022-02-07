@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package org.thingsboard.server.transport.lwm2m;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.io.IOUtils;
-import org.eclipse.californium.core.network.config.NetworkConfig;
+import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.leshan.client.object.Security;
 import org.junit.After;
 import org.junit.Assert;
@@ -69,7 +69,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DaoSqlTest
 public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
 
-    protected String transportConfiguration = "{\n" +
+    protected final String TRANSPORT_CONFIGURATION = "{\n" +
             "  \"type\": \"LWM2M\",\n" +
             "  \"observeAttr\": {\n" +
             "    \"keyName\": {\n" +
@@ -133,7 +133,6 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
     protected LwM2MTestClient client;
     private final LwM2MBootstrapClientCredentials defaultBootstrapCredentials;
     private String[] resources;
-    protected String endpoint;
 
     public AbstractLwM2MIntegrationTest() {
         this.defaultBootstrapCredentials = new LwM2MBootstrapClientCredentials();
@@ -175,9 +174,9 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
 
     public void basicTestConnectionObserveTelemetry(Security security,
                                                     LwM2MClientCredential credentials,
-                                                    NetworkConfig coapConfig,
+                                                    Configuration coapConfig,
                                                     String endpoint) throws Exception {
-        createDeviceProfile(transportConfiguration);
+        createDeviceProfile(TRANSPORT_CONFIGURATION);
         Device device = createDevice(credentials);
 
         SingleEntityFilter sef = new SingleEntityFilter();
@@ -195,8 +194,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         wsClient.waitForReply();
 
         wsClient.registerWaitForUpdate();
-        this.endpoint = endpoint;
-        createNewClient(security, coapConfig, false);
+        createNewClient(security, coapConfig, false, endpoint);
         String msg = wsClient.waitForUpdate();
 
         EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
@@ -261,13 +259,9 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         this.resources = resources;
     }
 
-    public void setEndpoint(String endpoint) {
-        this.endpoint = endpoint;
-    }
-
-    public void createNewClient(Security security, NetworkConfig coapConfig, boolean isRpc) throws Exception {
+    public void createNewClient(Security security, Configuration coapConfig, boolean isRpc, String endpoint) throws Exception {
         clientDestroy();
-        client = new LwM2MTestClient(this.executor, this.endpoint);
+        client = new LwM2MTestClient(this.executor, endpoint);
         int clientPort = SocketUtils.findAvailableTcpPort();
         client.init(security, coapConfig, clientPort, isRpc);
     }

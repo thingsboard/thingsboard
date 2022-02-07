@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import org.thingsboard.server.transport.lwm2m.bootstrap.store.LwM2MBootstrapSecu
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -83,15 +84,16 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
     @Override
     public BootstrapSession begin(BootstrapRequest request, Identity clientIdentity) {
         boolean authorized = true;
-        Iterator<SecurityInfo> securityInfos;
+        Iterator<SecurityInfo> securityInfos = null;
         try {
             if (bsSecurityStore != null && securityChecker != null) {
-                if (clientIdentity.isSecure() && clientIdentity.isPSK()) {
-                    securityInfos = bsSecurityStore.getAllByEndpoint(clientIdentity.getPskIdentity());
-                } else {
+                if (clientIdentity.isPSK()) {
+                    SecurityInfo securityInfo = bsSecurityStore.getByIdentity(clientIdentity.getPskIdentity());
+                    securityInfos = Collections.singletonList(securityInfo).iterator();
+                } else if (!clientIdentity.isX509()) {
                     securityInfos = bsSecurityStore.getAllByEndpoint(request.getEndpointName());
                 }
-                authorized = securityChecker.checkSecurityInfos(request.getEndpointName(), clientIdentity, securityInfos);
+                authorized = this.checkSecurityInfo(request.getEndpointName(), clientIdentity, securityInfos);
             }
         } catch (LwM2MAuthException e) {
             authorized = false;
@@ -187,7 +189,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
             // store response
             DefaultBootstrapSession session = (DefaultBootstrapSession) bsSession;
             session.getResponses().add(response);
-            this.sendLogs (bsSession.getEndpoint(),
+            this.sendLogs(bsSession.getEndpoint(),
                     String.format("%s: %s %s receives error response %s ", LOG_LWM2M_INFO,
                             request.getClass().getSimpleName(),
                             request.getPath().toString(), response.toString()));
@@ -195,7 +197,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
             return BootstrapPolicy.continueWith(nextRequest(bsSession));
         } else {
             // on response error for bootstrap finish request we stop the session
-            this.sendLogs (bsSession.getEndpoint(),
+            this.sendLogs(bsSession.getEndpoint(),
                     String.format("%s: error response for request bootstrap finish. Stop the session: %s", LOG_LWM2M_ERROR, bsSession.toString()));
             return BootstrapPolicy.failed();
         }
@@ -222,7 +224,16 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
     }
 
     private void sendLogs(String endpointName, String logMsg) {
-        log.info(logMsg);
+        log.info("Endpoint: [{}] [{}]", endpointName, logMsg);
         transportService.log(((LwM2MBootstrapSecurityStore) bsSecurityStore).getSessionByEndpoint(endpointName), logMsg);
+    }
+
+    private boolean checkSecurityInfo(String endpoint, Identity clientIdentity, Iterator<SecurityInfo> securityInfos) {
+        if (clientIdentity.isX509()) {
+            return clientIdentity.getX509CommonName().equals(endpoint)
+                    & ((LwM2MBootstrapSecurityStore) bsSecurityStore).getBootstrapConfigByEndpoint(endpoint) != null;
+        } else {
+            return securityChecker.checkSecurityInfos(endpoint, clientIdentity, securityInfos);
+        }
     }
 }

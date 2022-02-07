@@ -622,7 +622,8 @@
         "enter-search": "Enter search",
         "created-time": "Created time",
         "loading": "Loading...",
-        "proceed": "Proceed"
+        "proceed": "Proceed",
+        "open-details-page": "Open details page"
     },
     "content-type": {
         "json": "Json",
@@ -866,7 +867,8 @@
         "unassign-dashboards-from-edge-title": "Are you sure you want to unassign { count, plural, 1 {1 dashboard} other {# dashboards} }?",
         "unassign-dashboards-from-edge-text": "After the confirmation all selected dashboards will be unassigned and won't be accessible by the edge.",
         "assign-dashboard-to-edge": "Assign Dashboard(s) To Edge",
-        "assign-dashboard-to-edge-text": "Please select the dashboards to assign to the edge"
+        "assign-dashboard-to-edge-text": "Please select the dashboards to assign to the edge",
+        "non-existent-dashboard-state-error": "Dashboard state with id \"{{ stateId }}\" is not found"
     },
     "datakey": {
         "settings": "Settings",
@@ -1197,13 +1199,16 @@
         "condition-duration-time-unit-required": "Time unit is required.",
         "advanced-settings": "Advanced settings",
         "alarm-rule-details": "Details",
+        "alarm-rule-details-hint": "Hint: use <code><span style=\"color: #000;\">$&#123;</span>keyName<span style=\"color: #000;\">&#125;</span></code> to substitute values of the attribute or telemetry keys that are used in alarm rule condition.",
         "add-alarm-rule-details": "Add details",
         "alarm-rule-mobile-dashboard": "Mobile dashboard",
         "alarm-rule-mobile-dashboard-hint": "Used by mobile application as an alarm details dashboard",
         "alarm-rule-no-mobile-dashboard": "No dashboard selected",
-        "propagate-alarm": "Propagate alarm",
+        "propagate-alarm": "Propagate alarm to related entities",
         "alarm-rule-relation-types-list": "Relation types to propagate",
         "alarm-rule-relation-types-list-hint": "If Propagate relation types are not selected, alarms will be propagated without filtering by relation type.",
+        "propagate-alarm-to-owner": "Propagate alarm to entity owner (Customer or Tenant)",
+        "propagate-alarm-to-tenant": "Propagate alarm to Tenant",
         "alarm-details": "Alarm details",
         "alarm-rule-condition": "Alarm rule condition",
         "enter-alarm-rule-condition-prompt": "Please add alarm rule condition",
@@ -1886,7 +1891,9 @@
         "has-error": "Has error",
         "entity-id": "Entity Id",
         "entity-type": "Entity type",
-        "clear-filter": "Clear Filter"
+        "clear-filter": "Clear Filter",
+        "clear-request-title": "Clear all events",
+        "clear-request-text": "Are you sure you want to clear all events?"
     },
     "extension": {
         "extensions": "Extensions",
@@ -3269,16 +3276,58 @@
             "value": "Value"
         },
         "invalid-qr-code-text": "Invalid input text for QR code. Input should have a string type",
+        "persistent-table": {
+            "rpc-id": "RPC ID",
+            "message-type": "Message type",
+            "method": "Method",
+            "params": "Params",
+            "created-time": "Created time",
+            "expiration-time": "Expiration time",
+            "retries": "Retries",
+            "status": "Status",
+            "filter": "Filter",
+            "refresh": "Refresh",
+            "add": "Add RPC request",
+            "details": "Details",
+            "delete": "Delete",
+            "delete-request-title": "Delete Persistent RPC request",
+            "delete-request-text": "Are you sure you want to delete request?",
+            "details-title": "Details RPC ID: ",
+            "additional-info": "Additional info",
+            "response": "Response",
+            "any-status": "Any status",
+            "rpc-status-list": "RPC status list",
+            "no-request-prompt": "No request to display",
+            "send-request": "Send request",
+            "add-title": "Create Persistent RPC request",
+            "method-error": "Method is required.",
+            "timeout-error": "Min timeout value is 5000 (5 seconds).",
+            "white-space-error": "White space is not allowed.",
+            "rpc-status": {
+                "QUEUED": "QUEUED",
+                "SENT": "SENT",
+                "DELIVERED": "DELIVERED",
+                "SUCCESSFUL": "SUCCESSFUL",
+                "TIMEOUT": "TIMEOUT",
+                "EXPIRED": "EXPIRED",
+                "FAILED": "FAILED"
+            },
+            "rpc-search-status-all": "ALL",
+            "message-types": {
+                "false": "Two-way",
+                "true": "One-way"
+            }
+        },
         "maps": {
             "select-entity": "Select entity",
             "select-entity-hint": "Hint: after selection click at the map to set position",
             "tooltips": {
-                "placeMarker": "Click to place marker",
-                "firstVertex": "Click to place first point",
-                "continueLine": "Click to continue drawing",
+                "placeMarker": "Click to place '{{entityName}}' entity",
+                "firstVertex": "Polygon for '{{entityName}}': click to place first point",
+                "continueLine": "Polygon for '{{entityName}}': click to continue drawing",
                 "finishLine": "Click any existing marker to finish",
-                "finishPoly": "Click first marker to finish and save",
-                "finishRect": "Click to finish and save",
+                "finishPoly": "Polygon for '{{entityName}}': click first marker to finish and save",
+                "finishRect": "Polygon for '{{entityName}}': click to finish and save",
                 "startCircle": "Click to place circle center",
                 "finishCircle": "Click to finish circle",
                 "placeCircleMarker": "Click to place circle marker"
@@ -3289,10 +3338,10 @@
                 "removeLastVertex": "Remove last point"
             },
             "buttonTitles": {
-                "drawMarkerButton": "Create marker",
+                "drawMarkerButton": "Place entity",
                 "drawPolyButton": "Create polygon",
-                "drawLineButton": "Create Polyline",
-                "drawCircleButton": "Create Circle",
+                "drawLineButton": "Create polyline",
+                "drawCircleButton": "Create circle",
                 "drawRectButton": "Create rectangle",
                 "editButton": "Edit mode",
                 "dragButton": "Drag-drop mode",

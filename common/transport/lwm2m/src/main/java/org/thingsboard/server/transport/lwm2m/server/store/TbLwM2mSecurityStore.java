@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -75,8 +74,8 @@ public class TbLwM2mSecurityStore implements TbMainSecurityStore {
             try {
                 securityInfo = fetchAndPutSecurityInfo(pskIdentity);
             } catch (LwM2MAuthException e) {
-                log.info("Registration failed: FORBIDDEN, endpointId: [{}]", pskIdentity);
-                securityInfo = SecurityInfo.newPreSharedKeyInfo(pskIdentity, pskIdentity, new byte[]{0x00});
+                log.trace("Registration failed: No pre-shared key found for [identity: {}]", pskIdentity);
+                return null;
             }
         }
         return securityInfo;

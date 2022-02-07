@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -112,6 +112,9 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
         this.changeSecurityHostPortFields(serverSecurityConfig);
       }
       this.serverFormGroup.patchValue(serverSecurityConfig, {emitEvent: false});
+      if (this.currentSecurityMode === Lwm2mSecurityType.X509) {
+        this.serverFormGroup.get('serverPublicKey').patchValue(serverSecurityConfig.serverCertificate, {emitEvent: false});
+      }
     });
     this.serverFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
 
     private static final ConcurrentMap<String, SessionMetaData> internalSessionMap = new ConcurrentHashMap<>();
     private static final ConcurrentMap<String, String> externalSessionMap = new ConcurrentHashMap<>();
-    private static final ByteBuffer PING_MSG = ByteBuffer.wrap(new byte[]{});
+
 
     @Autowired
     private TelemetryWebSocketService webSocketService;
@@ -216,7 +216,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
         private final TelemetryWebSocketSessionRef sessionRef;
 
         private volatile boolean isSending = false;
-        private final Queue<String> msgQueue;
+        private final Queue<TbWebSocketMsg<?>> msgQueue;
 
         private volatile long lastActivityTime;
 
@@ -237,7 +237,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
                     log.warn("[{}] Closing session due to ping timeout", session.getId());
                     closeSession(CloseStatus.SESSION_NOT_RELIABLE);
                 } else if (timeSinceLastActivity >= pingTimeout / NUMBER_OF_PING_ATTEMPTS) {
-                    this.asyncRemote.sendPing(PING_MSG);
+                    sendMsg(TbWebSocketPingMsg.INSTANCE);
                 }
             } catch (Exception e) {
                 log.trace("[{}] Failed to send ping msg", session.getId(), e);
@@ -258,6 +258,10 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
         }
 
         synchronized void sendMsg(String msg) {
+            sendMsg(new TbWebSocketTextMsg(msg));
+        }
+
+        synchronized void sendMsg(TbWebSocketMsg<?> msg) {
             if (isSending) {
                 try {
                     msgQueue.add(msg);
@@ -275,9 +279,16 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
             }
         }
 
-        private void sendMsgInternal(String msg) {
+        private void sendMsgInternal(TbWebSocketMsg<?> msg) {
             try {
-                this.asyncRemote.sendText(msg, this);
+                if (TbWebSocketMsgType.TEXT.equals(msg.getType())) {
+                    TbWebSocketTextMsg textMsg = (TbWebSocketTextMsg) msg;
+                    this.asyncRemote.sendText(textMsg.getMsg(), this);
+                } else {
+                    TbWebSocketPingMsg pingMsg = (TbWebSocketPingMsg) msg;
+                    this.asyncRemote.sendPing(pingMsg.getMsg());
+                    processNextMsg();
+                }
             } catch (Exception e) {
                 log.trace("[{}] Failed to send msg", session.getId(), e);
                 closeSession(CloseStatus.SESSION_NOT_RELIABLE);
@@ -290,12 +301,16 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
                 log.trace("[{}] Failed to send msg", session.getId(), result.getException());
                 closeSession(CloseStatus.SESSION_NOT_RELIABLE);
             } else {
-                String msg = msgQueue.poll();
-                if (msg != null) {
-                    sendMsgInternal(msg);
-                } else {
-                    isSending = false;
-                }
+                processNextMsg();
+            }
+        }
+
+        private void processNextMsg() {
+            TbWebSocketMsg<?> msg = msgQueue.poll();
+            if (msg != null) {
+                sendMsgInternal(msg);
+            } else {
+                isSending = false;
             }
         }
     }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ public class TbResourceEntity extends BaseSqlEntity<TbResource> implements Searc
     public TbResource toData() {
         TbResource resource = new TbResource(new TbResourceId(id));
         resource.setCreatedTime(createdTime);
-        resource.setTenantId(new TenantId(tenantId));
+        resource.setTenantId(TenantId.fromUUID(tenantId));
         resource.setTitle(title);
         resource.setResourceType(ResourceType.valueOf(resourceType));
         resource.setResourceKey(resourceKey);

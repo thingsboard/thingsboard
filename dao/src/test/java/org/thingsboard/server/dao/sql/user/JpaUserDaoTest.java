@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,7 +111,7 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
     public void testSave() throws IOException {
         User user = new User();
         user.setId(new UserId(UUID.fromString("cd481534-27cc-11e7-93ae-92361f002671")));
-        user.setTenantId(new TenantId(UUID.fromString("1edcb2c6-27cb-11e7-93ae-92361f002671")));
+        user.setTenantId(TenantId.fromUUID(UUID.fromString("1edcb2c6-27cb-11e7-93ae-92361f002671")));
         user.setCustomerId(new CustomerId(UUID.fromString("51477cb4-27cb-11e7-93ae-92361f002671")));
         user.setEmail("user@thingsboard.org");
         user.setFirstName("Jackson");
@@ -140,7 +140,7 @@ public class JpaUserDaoTest extends AbstractJpaDaoTest {
         User user = new User();
         UUID id = Uuids.timeBased();
         user.setId(new UserId(id));
-        user.setTenantId(new TenantId(tenantId));
+        user.setTenantId(TenantId.fromUUID(tenantId));
         user.setCustomerId(new CustomerId(customerId));
         if (customerId == NULL_UUID) {
             user.setAuthority(Authority.TENANT_ADMIN);

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,24 +14,25 @@
 /// limitations under the License.
 ///
 
-import L, { Icon, LeafletMouseEvent } from 'leaflet';
-import { FormattedData, MarkerIconInfo, MarkerIconReadyFunction, MarkerImageInfo, MarkerSettings } from './map-models';
+import L, { LeafletMouseEvent } from 'leaflet';
 import {
-  bindPopupActions,
-  createTooltip,
-} from './maps-utils';
-import {
-  aspectCache,
-  fillPattern,
-  parseWithTranslation,
-  processPattern,
-  safeExecute
-} from './common-maps-utils';
+  FormattedData,
+  MarkerIconInfo,
+  MarkerIconReadyFunction,
+  MarkerImageInfo,
+  MarkerSettings,
+  UnitedMapSettings
+} from './map-models';
+import { bindPopupActions, createTooltip } from './maps-utils';
+import { aspectCache, fillPattern, parseWithTranslation, processPattern, safeExecute } from './common-maps-utils';
 import tinycolor from 'tinycolor2';
 import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import LeafletMap from './leaflet-map';
 
 export class Marker {
+
+    private editing = false;
+
     leafletMarker: L.Marker;
     labelOffset: L.LatLngTuple;
     tooltipOffset: L.LatLngTuple;
@@ -40,10 +41,13 @@ export class Marker {
     data: FormattedData;
     dataSources: FormattedData[];
 
-  constructor(private map: LeafletMap, private location: L.LatLng, public settings: MarkerSettings,
+  constructor(private map: LeafletMap, private location: L.LatLng, public settings: UnitedMapSettings,
               data?: FormattedData, dataSources?, onDragendListener?) {
         this.setDataSources(data, dataSources);
-        this.leafletMarker = L.marker(location, {pmIgnore: !settings.draggableMarker});
+        this.leafletMarker = L.marker(location, {
+          pmIgnore: !settings.draggableMarker,
+          snapIgnore: !settings.snappable
+        });
 
         this.markerOffset = [
           isDefined(settings.markerOffsetX) ? settings.markerOffsetX : 0.5,
@@ -64,16 +68,26 @@ export class Marker {
 
         if (this.settings.markerClick) {
             this.leafletMarker.on('click', (event: LeafletMouseEvent) => {
-                for (const action in this.settings.markerClick) {
-                    if (typeof (this.settings.markerClick[action]) === 'function') {
-                        this.settings.markerClick[action](event.originalEvent, this.data.$datasource);
-                    }
+              for (const action in this.settings.markerClick) {
+                if (typeof (this.settings.markerClick[action]) === 'function') {
+                  this.settings.markerClick[action](event.originalEvent, this.data.$datasource);
                 }
+              }
             });
         }
 
         if (settings.draggableMarker && onDragendListener) {
-          this.leafletMarker.on('pm:dragend', (e) => onDragendListener(e, this.data));
+          this.leafletMarker.on('pm:dragstart', (e) => {
+            (this.leafletMarker.dragging as any)._draggable = { _moved: true };
+            (this.leafletMarker.dragging as any)._enabled = true;
+            this.editing = true;
+          });
+          this.leafletMarker.on('pm:dragend', (e) => {
+            onDragendListener(e, this.data);
+            delete (this.leafletMarker.dragging as any)._draggable;
+            delete (this.leafletMarker.dragging as any)._enabled;
+            this.editing = false;
+          });
         }
     }
 
@@ -96,7 +110,7 @@ export class Marker {
     }
 
     updateMarkerPosition(position: L.LatLng) {
-      if (!this.leafletMarker.getLatLng().equals(position)) {
+      if (!this.leafletMarker.getLatLng().equals(position) && !this.editing) {
         this.location = position;
         this.leafletMarker.setLatLng(position);
       }

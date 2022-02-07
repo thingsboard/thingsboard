@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,11 @@ import org.eclipse.leshan.core.Destroyable;
 import org.eclipse.leshan.core.Startable;
 import org.eclipse.leshan.core.Stoppable;
 import org.eclipse.leshan.core.observation.Observation;
+import org.eclipse.leshan.core.observation.SingleObservation;
 import org.eclipse.leshan.core.request.Identity;
 import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.core.util.Validate;
-import org.eclipse.leshan.server.californium.observation.ObserveUtil;
+import org.eclipse.leshan.core.californium.ObserveUtil;
 import org.eclipse.leshan.server.californium.registration.CaliforniumRegistrationStore;
 import org.eclipse.leshan.server.redis.RedisRegistrationStore;
 import org.eclipse.leshan.server.redis.serialization.IdentitySerDes;
@@ -455,7 +456,8 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
 
                 // cancel existing observations for the same path and registration id.
                 for (Observation obs : getObservations(connection, registrationId)) {
-                    if (observation.getPath().equals(obs.getPath())
+                    //TODO: should be able to use CompositeObservation
+                    if (((SingleObservation)observation).getPath().equals(((SingleObservation)obs).getPath())
                             && !Arrays.equals(observation.getId(), obs.getId())) {
                         removed.add(obs);
                         unsafeRemoveObservation(connection, registrationId, obs.getId());

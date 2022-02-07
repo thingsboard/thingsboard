@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ public class EventEntity extends BaseSqlEntity<Event> implements BaseEntity<Even
     public Event toData() {
         Event event = new Event(new EventId(this.getUuid()));
         event.setCreatedTime(createdTime);
-        event.setTenantId(new TenantId(tenantId));
+        event.setTenantId(TenantId.fromUUID(tenantId));
         event.setEntityId(EntityIdFactory.getByTypeAndUuid(entityType, entityId));
         event.setBody(body);
         event.setType(eventType);

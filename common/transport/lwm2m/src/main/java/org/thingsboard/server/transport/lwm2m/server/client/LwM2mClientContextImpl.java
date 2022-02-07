@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.server.registration.Registration;
+import org.eclipse.leshan.server.registration.RegistrationStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -72,6 +73,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     private final LwM2MSessionManager sessionManager;
     private final TransportDeviceProfileCache deviceProfileCache;
     private final LwM2MModelConfigService modelConfigService;
+    private final RegistrationStore registrationStore;
 
     @Autowired
     @Lazy
@@ -118,8 +120,11 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     private void updateFetchedClient(String nodeId, LwM2mClient client) {
         boolean updated = false;
-        if (client.getRegistration() != null) {
-            lwM2mClientsByRegistrationId.put(client.getRegistration().getId(), client);
+        Registration registration = registrationStore.getRegistrationByEndpoint(client.getEndpoint());
+
+        if (registration != null) {
+            client.setRegistration(registration);
+            lwM2mClientsByRegistrationId.put(registration.getId(), client);
         }
         if (client.getSession() != null) {
             client.refreshSessionId(nodeId);
@@ -393,9 +398,9 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     public Set<String> getSupportedIdVerInClient(LwM2mClient client) {
         Set<String> clientObjects = ConcurrentHashMap.newKeySet();
         Arrays.stream(client.getRegistration().getObjectLinks()).forEach(link -> {
-            LwM2mPath pathIds = new LwM2mPath(link.getUrl());
+            LwM2mPath pathIds = new LwM2mPath(link.getUriReference());
             if (!pathIds.isRoot()) {
-                clientObjects.add(convertObjectIdToVersionedId(link.getUrl(), client.getRegistration()));
+                clientObjects.add(convertObjectIdToVersionedId(link.getUriReference(), client.getRegistration()));
             }
         });
         return (clientObjects.size() > 0) ? clientObjects : null;

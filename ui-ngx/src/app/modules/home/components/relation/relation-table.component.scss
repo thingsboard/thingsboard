@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 :host {
   width: 100%;
   height: 100%;
+  display: block;
   .tb-entity-table {
     .tb-entity-table-content {
       width: 100%;
@@ -41,6 +42,9 @@
 
       .table-container {
         overflow: auto;
+        .link {
+          border-bottom: none;
+        }
       }
 
       .tb-entity-table-info{

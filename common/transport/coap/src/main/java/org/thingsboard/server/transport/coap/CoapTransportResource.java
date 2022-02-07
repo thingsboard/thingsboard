@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.thingsboard.server.coapserver.TbCoapDtlsSessionInfo;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.security.DeviceTokenCredentials;
 import org.thingsboard.server.common.msg.session.FeatureType;
@@ -48,6 +47,7 @@ import org.thingsboard.server.transport.coap.callback.ToServerRpcSyncSessionCall
 import org.thingsboard.server.transport.coap.client.CoapClientContext;
 import org.thingsboard.server.transport.coap.client.TbCoapClientState;
 
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -55,6 +55,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.eclipse.californium.elements.DtlsEndpointContext.KEY_SESSION_ID;
 
 @Slf4j
 public class CoapTransportResource extends AbstractCoapTransportResource {
@@ -64,9 +66,8 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
 
     private static final int FEATURE_TYPE_POSITION_CERTIFICATE_REQUEST = 3;
     private static final int REQUEST_ID_POSITION_CERTIFICATE_REQUEST = 4;
-    private static final String DTLS_SESSION_ID_KEY = "DTLS_SESSION_ID";
 
-    private final ConcurrentMap<String, TbCoapDtlsSessionInfo> dtlsSessionIdMap;
+    private final ConcurrentMap<InetSocketAddress, TbCoapDtlsSessionInfo> dtlsSessionsMap;
     private final long timeout;
     private final CoapClientContext clients;
 
@@ -74,7 +75,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         super(ctx, name);
         this.setObservable(true); // enable observing
         this.addObserver(new CoapResourceObserver());
-        this.dtlsSessionIdMap = coapServerService.getDtlsSessionsMap();
+        this.dtlsSessionsMap = coapServerService.getDtlsSessionsMap();
         this.timeout = coapServerService.getTimeout();
         this.clients = ctx.getClientContext();
         long sessionReportTimeout = ctx.getSessionReportTimeout();
@@ -91,7 +92,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         if (relation == null || relation.isCanceled()) {
             return; // because request did not try to establish a relation
         }
-        if (CoAP.ResponseCode.isSuccess(response.getCode())) {
+        if (response.getCode().isSuccess()) {
             if (!relation.isEstablished()) {
                 relation.setEstablished();
                 addObserveRelation(relation);
@@ -198,10 +199,10 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         Exchange advanced = exchange.advanced();
         Request request = advanced.getRequest();
 
-        String dtlsSessionIdStr = request.getSourceContext().get(DTLS_SESSION_ID_KEY);
-        if (dtlsSessionIdMap != null && StringUtils.isNotEmpty(dtlsSessionIdStr)) {
-            TbCoapDtlsSessionInfo tbCoapDtlsSessionInfo = dtlsSessionIdMap
-                    .computeIfPresent(dtlsSessionIdStr, (dtlsSessionId, dtlsSessionInfo) -> {
+        var dtlsSessionId = request.getSourceContext().get(KEY_SESSION_ID);
+        if (dtlsSessionsMap != null && dtlsSessionId != null && !dtlsSessionId.isEmpty()) {
+            TbCoapDtlsSessionInfo tbCoapDtlsSessionInfo = dtlsSessionsMap
+                    .computeIfPresent(request.getSourceContext().getPeerAddress(), (dtlsSessionIdStr, dtlsSessionInfo) -> {
                         dtlsSessionInfo.setLastActivityTime(System.currentTimeMillis());
                         return dtlsSessionInfo;
                     });
