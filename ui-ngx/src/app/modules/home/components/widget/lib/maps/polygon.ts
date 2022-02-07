@@ -27,6 +27,8 @@ import { FormattedData, PolygonSettings, UnitedMapSettings } from './map-models'
 
 export class Polygon {
 
+    private editing = false;
+
     leafletPoly: L.Polygon;
     tooltip: L.Popup;
     data: FormattedData;
@@ -62,6 +64,8 @@ export class Polygon {
 
     private createEventListeners() {
       if (this.settings.editablePolygon && this.onDragendListener) {
+        this.leafletPoly.on('pm:markerdragstart', () => this.editing = true);
+        this.leafletPoly.on('pm:markerdragend', () => this.editing = false);
         this.leafletPoly.on('pm:edit', (e) => this.onDragendListener(e, this.data));
       }
 
@@ -100,6 +104,9 @@ export class Polygon {
     }
 
     updatePolygon(data: FormattedData, dataSources: FormattedData[], settings: PolygonSettings) {
+      if (this.editing) {
+        return;
+      }
       this.data = data;
       this.dataSources = dataSources;
       const polyData = data[this.settings.polygonKeyName];
