@@ -51,7 +51,7 @@ public class EntityFieldsData {
     private ObjectNode fieldsData;
 
     public EntityFieldsData(BaseData data) {
-        fieldsData = mapper.valueToTree(data).deepCopy();
+        fieldsData = mapper.valueToTree(data);
     }
 
     public String getFieldValue(String field) {
