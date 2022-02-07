@@ -16,10 +16,12 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -37,17 +39,19 @@ import java.io.IOException;
 @AllArgsConstructor
 public class EntityFieldsData {
 
+    private static final ObjectMapper mapper = JacksonUtil.getNewObjectMapperWithJavaTimeModule();
+
     static {
         SimpleModule entityFieldsModule = new SimpleModule("EntityFieldsModule", new Version(1, 0, 0, null, null, null));
         entityFieldsModule.addSerializer(EntityId.class, new EntityIdFieldSerializer());
-        JacksonUtil.getObjectMapper().disable(MapperFeature.USE_ANNOTATIONS);
-        JacksonUtil.getObjectMapper().registerModule(entityFieldsModule);
+        mapper.disable(MapperFeature.USE_ANNOTATIONS);
+        mapper.registerModule(entityFieldsModule);
     }
 
     private ObjectNode fieldsData;
 
     public EntityFieldsData(BaseData data) {
-        fieldsData = JacksonUtil.valueToTree(data).deepCopy();
+        fieldsData = mapper.valueToTree(data).deepCopy();
     }
 
     public String getFieldValue(String field) {
@@ -65,7 +69,11 @@ public class EntityFieldsData {
             if (current.isValueNode()) {
                 return current.asText();
             } else {
-                return JacksonUtil.toString(current);
+                try {
+                    return mapper.writeValueAsString(current);
+                } catch (JsonProcessingException e) {
+                    return null;
+                }
             }
         } else {
             return null;

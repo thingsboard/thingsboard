@@ -46,7 +46,7 @@ public class JacksonUtil {
                 configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
     }
 
-    private static ObjectMapper getNewObjectMapperWithJavaTimeModule() {
+    public static ObjectMapper getNewObjectMapperWithJavaTimeModule() {
         return new ObjectMapper().registerModule(new JavaTimeModule());
     }
 
@@ -157,7 +157,7 @@ public class JacksonUtil {
         }
     }
 
-    public static JsonNode toJsonNodeAndUseObjectMapperWithUnquotedFieldNames(String value) {
+    public static JsonNode toJsonNodeUnquotedFieldNames(String value) {
         try {
             return !StringUtils.isEmpty(value) ? OBJECT_MAPPER_WITH_UNQUOTED_FIELD_NAMES.readTree(value) : null;
         } catch (IOException e) {
@@ -178,7 +178,7 @@ public class JacksonUtil {
         return OBJECT_MAPPER.createObjectNode();
     }
 
-    public static ObjectNode newObjectNodeAndUseObjectMapperWithUnquotedFieldNames() {
+    public static ObjectNode newObjectNodeUnquotedFieldNames() {
         return OBJECT_MAPPER_WITH_UNQUOTED_FIELD_NAMES.createObjectNode();
     }
 
@@ -186,7 +186,7 @@ public class JacksonUtil {
         return OBJECT_MAPPER.createArrayNode();
     }
 
-    public static ArrayNode createArrayNodeAndUseObjectMapperWithUnquotedFieldNames() {
+    public static ArrayNode createArrayNodeUnquotedFieldNames() {
         return OBJECT_MAPPER_WITH_UNQUOTED_FIELD_NAMES.createArrayNode();
     }
 

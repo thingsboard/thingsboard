@@ -144,7 +144,7 @@ public class TbGetTelemetryNode implements TbNode {
     }
 
     private void process(List<TsKvEntry> entries, TbMsg msg, List<String> keys) {
-        ObjectNode resultNode = JacksonUtil.newObjectNodeAndUseObjectMapperWithUnquotedFieldNames();
+        ObjectNode resultNode = JacksonUtil.newObjectNodeUnquotedFieldNames();
         if (FETCH_MODE_ALL.equals(fetchMode)) {
             entries.forEach(entry -> processArray(resultNode, entry));
         } else {
@@ -167,14 +167,14 @@ public class TbGetTelemetryNode implements TbNode {
             ArrayNode arrayNode = (ArrayNode) node.get(entry.getKey());
             arrayNode.add(buildNode(entry));
         } else {
-            ArrayNode arrayNode = JacksonUtil.createArrayNodeAndUseObjectMapperWithUnquotedFieldNames();
+            ArrayNode arrayNode = JacksonUtil.createArrayNodeUnquotedFieldNames();
             arrayNode.add(buildNode(entry));
             node.set(entry.getKey(), arrayNode);
         }
     }
 
     private ObjectNode buildNode(TsKvEntry entry) {
-        ObjectNode obj = JacksonUtil.newObjectNodeAndUseObjectMapperWithUnquotedFieldNames()
+        ObjectNode obj = JacksonUtil.newObjectNodeUnquotedFieldNames()
                 .put("ts", entry.getTs());
         switch (entry.getDataType()) {
             case STRING:
@@ -190,7 +190,7 @@ public class TbGetTelemetryNode implements TbNode {
                 obj.put("value", entry.getDoubleValue().get());
                 break;
             case JSON:
-                obj.set("value", JacksonUtil.toJsonNodeAndUseObjectMapperWithUnquotedFieldNames(entry.getJsonValue().get()));
+                obj.set("value", JacksonUtil.toJsonNodeUnquotedFieldNames(entry.getJsonValue().get()));
                 break;
         }
         return obj;

@@ -149,7 +149,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
     }
 
     private void putValueWithTs(TbMsg msg, TsKvEntry r) {
-        ObjectNode value = JacksonUtil.newObjectNodeAndUseObjectMapperWithUnquotedFieldNames();
+        ObjectNode value = JacksonUtil.newObjectNodeUnquotedFieldNames();
         value.put(TS, r.getTs());
         switch (r.getDataType()) {
             case STRING:
@@ -165,7 +165,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
                 value.put(VALUE, r.getDoubleValue().get());
                 break;
             case JSON:
-                value.set(VALUE, JacksonUtil.toJsonNodeAndUseObjectMapperWithUnquotedFieldNames(r.getJsonValue().get()));
+                value.set(VALUE, JacksonUtil.toJsonNodeUnquotedFieldNames(r.getJsonValue().get()));
                 break;
         }
         msg.getMetaData().putValue(r.getKey(), value.toString());
