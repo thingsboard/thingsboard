@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -55,16 +56,17 @@ public final class TbMsg implements Serializable {
     private final RuleChainId ruleChainId;
     private final RuleNodeId ruleNodeId;
     @Getter(value = AccessLevel.NONE)
-    private final AtomicInteger ruleNodeExecCounter;
-
-
-    public int getAndIncrementRuleNodeCounter() {
-        return ruleNodeExecCounter.getAndIncrement();
-    }
+    @JsonIgnore
+    //This field is not serialized because we use queues and there is no need to do it
+    private final TbMsgProcessingCtx ctx;
 
     //This field is not serialized because we use queues and there is no need to do it
     @JsonIgnore
     transient private final TbMsgCallback callback;
+
+    public int getAndIncrementRuleNodeCounter() {
+        return ctx.getAndIncrementRuleNodeCounter();
+    }
 
     public static TbMsg newMsg(String queueName, String type, EntityId originator, TbMsgMetaData metaData, String data, RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
         return newMsg(queueName, type, originator, null, metaData, data, ruleChainId, ruleNodeId);
@@ -72,7 +74,7 @@ public final class TbMsg implements Serializable {
 
     public static TbMsg newMsg(String queueName, String type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, String data, RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
         return new TbMsg(queueName, UUID.randomUUID(), System.currentTimeMillis(), type, originator, customerId,
-                metaData.copy(), TbMsgDataType.JSON, data, ruleChainId, ruleNodeId, 0, TbMsgCallback.EMPTY);
+                metaData.copy(), TbMsgDataType.JSON, data, ruleChainId, ruleNodeId, null, TbMsgCallback.EMPTY);
     }
 
     public static TbMsg newMsg(String type, EntityId originator, TbMsgMetaData metaData, String data) {
@@ -80,7 +82,8 @@ public final class TbMsg implements Serializable {
     }
 
     public static TbMsg newMsg(String type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, String data) {
-        return new TbMsg(ServiceQueue.MAIN, UUID.randomUUID(), System.currentTimeMillis(), type, originator, customerId, metaData.copy(), TbMsgDataType.JSON, data, null, null, 0, TbMsgCallback.EMPTY);
+        return new TbMsg(ServiceQueue.MAIN, UUID.randomUUID(), System.currentTimeMillis(), type, originator, customerId,
+                metaData.copy(), TbMsgDataType.JSON, data, null, null, null, TbMsgCallback.EMPTY);
     }
 
     // REALLY NEW MSG
@@ -90,11 +93,13 @@ public final class TbMsg implements Serializable {
     }
 
     public static TbMsg newMsg(String queueName, String type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, String data) {
-        return new TbMsg(queueName, UUID.randomUUID(), System.currentTimeMillis(), type, originator, customerId, metaData.copy(), TbMsgDataType.JSON, data, null, null, 0, TbMsgCallback.EMPTY);
+        return new TbMsg(queueName, UUID.randomUUID(), System.currentTimeMillis(), type, originator, customerId,
+                metaData.copy(), TbMsgDataType.JSON, data, null, null, null, TbMsgCallback.EMPTY);
     }
 
     public static TbMsg newMsg(String type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, TbMsgDataType dataType, String data) {
-        return new TbMsg(ServiceQueue.MAIN, UUID.randomUUID(), System.currentTimeMillis(), type, originator, customerId, metaData.copy(), dataType, data, null, null, 0, TbMsgCallback.EMPTY);
+        return new TbMsg(ServiceQueue.MAIN, UUID.randomUUID(), System.currentTimeMillis(), type, originator, customerId,
+                metaData.copy(), dataType, data, null, null, null, TbMsgCallback.EMPTY);
     }
 
     public static TbMsg newMsg(String type, EntityId originator, TbMsgMetaData metaData, TbMsgDataType dataType, String data) {
@@ -104,46 +109,48 @@ public final class TbMsg implements Serializable {
     // For Tests only
 
     public static TbMsg newMsg(String type, EntityId originator, TbMsgMetaData metaData, TbMsgDataType dataType, String data, RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
-        return new TbMsg(ServiceQueue.MAIN, UUID.randomUUID(), System.currentTimeMillis(), type, originator, null, metaData.copy(), dataType, data, ruleChainId, ruleNodeId, 0, TbMsgCallback.EMPTY);
+        return new TbMsg(ServiceQueue.MAIN, UUID.randomUUID(), System.currentTimeMillis(), type, originator, null,
+                metaData.copy(), dataType, data, ruleChainId, ruleNodeId, null, TbMsgCallback.EMPTY);
     }
 
     public static TbMsg newMsg(String type, EntityId originator, TbMsgMetaData metaData, String data, TbMsgCallback callback) {
-        return new TbMsg(ServiceQueue.MAIN, UUID.randomUUID(), System.currentTimeMillis(), type, originator, null, metaData.copy(), TbMsgDataType.JSON, data, null, null, 0, callback);
+        return new TbMsg(ServiceQueue.MAIN, UUID.randomUUID(), System.currentTimeMillis(), type, originator, null,
+                metaData.copy(), TbMsgDataType.JSON, data, null, null, null, callback);
     }
 
     public static TbMsg transformMsg(TbMsg tbMsg, String type, EntityId originator, TbMsgMetaData metaData, String data) {
         return new TbMsg(tbMsg.queueName, tbMsg.id, tbMsg.ts, type, originator, tbMsg.customerId, metaData.copy(), tbMsg.dataType,
-                data, tbMsg.ruleChainId, tbMsg.ruleNodeId, tbMsg.ruleNodeExecCounter.get(), tbMsg.callback);
+                data, tbMsg.ruleChainId, tbMsg.ruleNodeId, tbMsg.ctx.copy(), tbMsg.callback);
     }
 
     public static TbMsg transformMsg(TbMsg tbMsg, CustomerId customerId) {
         return new TbMsg(tbMsg.queueName, tbMsg.id, tbMsg.ts, tbMsg.type, tbMsg.originator, customerId, tbMsg.metaData, tbMsg.dataType,
-                tbMsg.data, tbMsg.ruleChainId, tbMsg.ruleNodeId, tbMsg.ruleNodeExecCounter.get(), tbMsg.getCallback());
+                tbMsg.data, tbMsg.ruleChainId, tbMsg.ruleNodeId, tbMsg.ctx.copy(), tbMsg.getCallback());
     }
 
     public static TbMsg transformMsg(TbMsg tbMsg, RuleChainId ruleChainId) {
         return new TbMsg(tbMsg.queueName, tbMsg.id, tbMsg.ts, tbMsg.type, tbMsg.originator, tbMsg.customerId, tbMsg.metaData, tbMsg.dataType,
-                tbMsg.data, ruleChainId, null, tbMsg.ruleNodeExecCounter.get(), tbMsg.getCallback());
+                tbMsg.data, ruleChainId, null, tbMsg.ctx.copy(), tbMsg.getCallback());
     }
 
     public static TbMsg transformMsg(TbMsg tbMsg, String queueName) {
         return new TbMsg(queueName, tbMsg.id, tbMsg.ts, tbMsg.type, tbMsg.originator, tbMsg.customerId, tbMsg.metaData, tbMsg.dataType,
-                tbMsg.data, tbMsg.getRuleChainId(), null, tbMsg.ruleNodeExecCounter.get(), tbMsg.getCallback());
+                tbMsg.data, tbMsg.getRuleChainId(), null, tbMsg.ctx.copy(), tbMsg.getCallback());
     }
 
     public static TbMsg transformMsg(TbMsg tbMsg, RuleChainId ruleChainId, String queueName) {
         return new TbMsg(queueName, tbMsg.id, tbMsg.ts, tbMsg.type, tbMsg.originator, tbMsg.customerId, tbMsg.metaData, tbMsg.dataType,
-                tbMsg.data, ruleChainId, null, tbMsg.ruleNodeExecCounter.get(), tbMsg.getCallback());
+                tbMsg.data, ruleChainId, null, tbMsg.ctx.copy(), tbMsg.getCallback());
     }
 
     //used for enqueueForTellNext
     public static TbMsg newMsg(TbMsg tbMsg, String queueName, RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
         return new TbMsg(queueName, UUID.randomUUID(), tbMsg.getTs(), tbMsg.getType(), tbMsg.getOriginator(), tbMsg.customerId, tbMsg.getMetaData().copy(),
-                tbMsg.getDataType(), tbMsg.getData(), ruleChainId, ruleNodeId, tbMsg.ruleNodeExecCounter.get(), TbMsgCallback.EMPTY);
+                tbMsg.getDataType(), tbMsg.getData(), ruleChainId, ruleNodeId, tbMsg.ctx.copy(), TbMsgCallback.EMPTY);
     }
 
     private TbMsg(String queueName, UUID id, long ts, String type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, TbMsgDataType dataType, String data,
-                  RuleChainId ruleChainId, RuleNodeId ruleNodeId, int ruleNodeExecCounter, TbMsgCallback callback) {
+                  RuleChainId ruleChainId, RuleNodeId ruleNodeId, TbMsgProcessingCtx ctx, TbMsgCallback callback) {
         this.id = id;
         this.queueName = queueName != null ? queueName : ServiceQueue.MAIN;
         if (ts > 0) {
@@ -167,7 +174,7 @@ public final class TbMsg implements Serializable {
         this.data = data;
         this.ruleChainId = ruleChainId;
         this.ruleNodeId = ruleNodeId;
-        this.ruleNodeExecCounter = new AtomicInteger(ruleNodeExecCounter);
+        this.ctx = ctx != null ? ctx : new TbMsgProcessingCtx();
         if (callback != null) {
             this.callback = callback;
         } else {
@@ -209,7 +216,8 @@ public final class TbMsg implements Serializable {
 
         builder.setDataType(msg.getDataType().ordinal());
         builder.setData(msg.getData());
-        builder.setRuleNodeExecCounter(msg.ruleNodeExecCounter.get());
+
+        builder.setCtx(msg.ctx.toProto());
         return builder.build().toByteArray();
     }
 
@@ -231,8 +239,17 @@ public final class TbMsg implements Serializable {
                 ruleNodeId = new RuleNodeId(new UUID(proto.getRuleNodeIdMSB(), proto.getRuleNodeIdLSB()));
             }
 
+            TbMsgProcessingCtx ctx;
+            if (proto.hasCtx()) {
+                ctx = TbMsgProcessingCtx.fromProto(proto.getCtx());
+            } else {
+                // Backward compatibility with unprocessed messages fetched from queue after update.
+                ctx = new TbMsgProcessingCtx(proto.getRuleNodeExecCounter());
+            }
+
             TbMsgDataType dataType = TbMsgDataType.values()[proto.getDataType()];
-            return new TbMsg(queueName, UUID.fromString(proto.getId()), proto.getTs(), proto.getType(), entityId, customerId, metaData, dataType, proto.getData(), ruleChainId, ruleNodeId, proto.getRuleNodeExecCounter(), callback);
+            return new TbMsg(queueName, UUID.fromString(proto.getId()), proto.getTs(), proto.getType(), entityId, customerId,
+                    metaData, dataType, proto.getData(), ruleChainId, ruleNodeId, ctx, callback);
         } catch (InvalidProtocolBufferException e) {
             throw new IllegalStateException("Could not parse protobuf for TbMsg", e);
         }
@@ -243,15 +260,17 @@ public final class TbMsg implements Serializable {
     }
 
     public TbMsg copyWithRuleChainId(RuleChainId ruleChainId, UUID msgId) {
-        return new TbMsg(this.queueName, msgId, this.ts, this.type, this.originator, this.customerId, this.metaData, this.dataType, this.data, ruleChainId, null, this.ruleNodeExecCounter.get(), callback);
+        return new TbMsg(this.queueName, msgId, this.ts, this.type, this.originator, this.customerId,
+                this.metaData, this.dataType, this.data, ruleChainId, null, this.ctx, callback);
     }
 
     public TbMsg copyWithRuleNodeId(RuleChainId ruleChainId, RuleNodeId ruleNodeId, UUID msgId) {
-        return new TbMsg(this.queueName, msgId, this.ts, this.type, this.originator, this.customerId, this.metaData, this.dataType, this.data, ruleChainId, ruleNodeId, this.ruleNodeExecCounter.get(), callback);
+        return new TbMsg(this.queueName, msgId, this.ts, this.type, this.originator, this.customerId,
+                this.metaData, this.dataType, this.data, ruleChainId, ruleNodeId, this.ctx, callback);
     }
 
     public TbMsgCallback getCallback() {
-        //May be null in case of deserialization;
+        // May be null in case of deserialization;
         if (callback != null) {
             return callback;
         } else {
@@ -261,5 +280,32 @@ public final class TbMsg implements Serializable {
 
     public String getQueueName() {
         return queueName != null ? queueName : ServiceQueue.MAIN;
+    }
+
+    public void pushToStack(RuleChainId ruleChainId, RuleNodeId ruleNodeId) {
+        ctx.push(ruleChainId, ruleNodeId);
+    }
+
+    public TbMsgProcessingStackItem popFormStack() {
+        return ctx.pop();
+    }
+
+    /**
+     * Checks if the message is still valid for processing. May be invalid if the message pack is timed-out or canceled.
+     * @return 'true' if message is valid for processing, 'false' otherwise.
+     */
+    public boolean isValid() {
+        return getCallback().isMsgValid();
+    }
+
+    public long getMetaDataTs() {
+        String tsStr = metaData.getValue("ts");
+        if (!StringUtils.isEmpty(tsStr)) {
+            try {
+                return Long.parseLong(tsStr);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return ts;
     }
 }

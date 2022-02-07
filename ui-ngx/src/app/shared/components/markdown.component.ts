@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import {
   ChangeDetectorRef,
   Component,
   ComponentFactory,
-  ComponentRef,
+  ComponentRef, ElementRef,
   EventEmitter,
   Inject,
   Injector,
@@ -33,22 +33,23 @@ import { MarkdownService, PrismPlugin } from 'ngx-markdown';
 import { DynamicComponentFactoryService } from '@core/services/dynamic-component-factory.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { SHARED_MODULE_TOKEN } from '@shared/components/tokens';
+import { isDefinedAndNotNull } from '@core/utils';
+import { Observable, of, ReplaySubject } from 'rxjs';
 
 @Component({
   selector: 'tb-markdown',
-  template: '<ng-container #markdownContainer>' +
-            '</ng-container>' +
-            '<div *ngIf="error" style="color: #f00; font-size: 14px;' +
-                                      ' line-height: 28px;' +
-                                      ' background: #efefef;">' +
-                      '{{error}}' +
-            '</div>'
+  templateUrl: './markdown.component.html'
 })
 export class TbMarkdownComponent implements OnChanges {
 
   @ViewChild('markdownContainer', {read: ViewContainerRef, static: true}) markdownContainer: ViewContainerRef;
+  @ViewChild('fallbackElement', {static: true}) fallbackElement: ElementRef<HTMLElement>;
 
   @Input() data: string | undefined;
+
+  @Input() context: any;
+
+  @Input() additionalCompileModules: Type<any>[];
 
   @Input() markdownClass: string | undefined;
 
@@ -58,9 +59,14 @@ export class TbMarkdownComponent implements OnChanges {
   get lineNumbers(): boolean { return this.lineNumbersValue; }
   set lineNumbers(value: boolean) { this.lineNumbersValue = coerceBooleanProperty(value); }
 
+  @Input()
+  get fallbackToPlainMarkdown(): boolean { return this.fallbackToPlainMarkdownValue; }
+  set fallbackToPlainMarkdown(value: boolean) { this.fallbackToPlainMarkdownValue = coerceBooleanProperty(value); }
+
   @Output() ready = new EventEmitter<void>();
 
   private lineNumbersValue = false;
+  private fallbackToPlainMarkdownValue = false;
 
   isMarkdownReady = false;
 
@@ -76,14 +82,14 @@ export class TbMarkdownComponent implements OnChanges {
               private dynamicComponentFactoryService: DynamicComponentFactoryService) {}
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (this.data) {
+    if (isDefinedAndNotNull(this.data)) {
       this.render(this.data);
     }
   }
 
   private render(markdown: string) {
-    let template = this.markdownService.compile(markdown, false);
-    template = this.sanitizeCurlyBraces(template);
+    const compiled = this.markdownService.compile(markdown, false);
+    let template = this.sanitizeCurlyBraces(compiled);
     let markdownClass = 'tb-markdown-view';
     if (this.markdownClass) {
       markdownClass += ` ${this.markdownClass}`;
@@ -91,6 +97,11 @@ export class TbMarkdownComponent implements OnChanges {
     template = `<div [ngStyle]="style" class="${markdownClass}">${template}</div>`;
     this.markdownContainer.clear();
     const parent = this;
+    let readyObservable: Observable<void>;
+    let compileModules = [this.sharedModule];
+    if (this.additionalCompileModules) {
+      compileModules = compileModules.concat(this.additionalCompileModules);
+    }
     this.dynamicComponentFactoryService.createDynamicComponentFactory(
       class TbMarkdownInstance {
         ngOnDestroy(): void {
@@ -98,7 +109,7 @@ export class TbMarkdownComponent implements OnChanges {
         }
       },
       template,
-      [this.sharedModule],
+      compileModules,
       true
     ).subscribe((factory) => {
       this.tbMarkdownInstanceComponentFactory = factory;
@@ -106,23 +117,46 @@ export class TbMarkdownComponent implements OnChanges {
       try {
         this.tbMarkdownInstanceComponentRef =
           this.markdownContainer.createComponent(this.tbMarkdownInstanceComponentFactory, 0, injector);
+        if (this.context) {
+          for (const propName of Object.keys(this.context)) {
+            this.tbMarkdownInstanceComponentRef.instance[propName] = this.context[propName];
+          }
+        }
         this.tbMarkdownInstanceComponentRef.instance.style = this.style;
         this.handlePlugins(this.tbMarkdownInstanceComponentRef.location.nativeElement);
         this.markdownService.highlight(this.tbMarkdownInstanceComponentRef.location.nativeElement);
+        readyObservable = this.handleImages(this.tbMarkdownInstanceComponentRef.location.nativeElement);
         this.error = null;
       } catch (error) {
-        this.error = (error ? error + '' : 'Failed to render markdown!').replace(/\n/g, '<br>');
-        this.destroyMarkdownInstanceResources();
+        readyObservable = this.handleError(compiled, error);
       }
       this.cd.detectChanges();
-      this.ready.emit();
+      readyObservable.subscribe(() => {
+        this.ready.emit();
+      });
     },
     (error) => {
-      this.error = (error ? error + '' : 'Failed to render markdown!').replace(/\n/g, '<br>');
-      this.destroyMarkdownInstanceResources();
+      readyObservable = this.handleError(compiled, error);
       this.cd.detectChanges();
-      this.ready.emit();
+      readyObservable.subscribe(() => {
+        this.ready.emit();
+      });
     });
+  }
+
+  private handleError(template: string, error): Observable<void> {
+    this.error = (error ? error + '' : 'Failed to render markdown!').replace(/\n/g, '<br>');
+    this.destroyMarkdownInstanceResources();
+    if (this.fallbackToPlainMarkdownValue) {
+      this.markdownContainer.clear();
+      const element = this.fallbackElement.nativeElement;
+      element.innerHTML = template;
+      this.handlePlugins(element);
+      this.markdownService.highlight(element);
+      return this.handleImages(element);
+    } else {
+      return of(null);
+    }
   }
 
   private handlePlugins(element: HTMLElement): void {
@@ -136,6 +170,26 @@ export class TbMarkdownComponent implements OnChanges {
     for (let i = 0; i < preElements.length; i++) {
       const classes = plugin instanceof Array ? plugin : [plugin];
       preElements.item(i).classList.add(...classes);
+    }
+  }
+
+  private handleImages(element: HTMLElement): Observable<void> {
+    const imgs = $('img', element);
+    if (imgs.length) {
+      let totalImages = imgs.length;
+      const imagesLoadedSubject = new ReplaySubject<void>();
+      imgs.each((index, img) => {
+        $(img).one('load error', () => {
+          totalImages--;
+          if (totalImages === 0) {
+            imagesLoadedSubject.next();
+            imagesLoadedSubject.complete();
+          }
+        });
+      });
+      return imagesLoadedSubject.asObservable();
+    } else {
+      return of(null);
     }
   }
 

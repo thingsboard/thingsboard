@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import io.swagger.annotations.ApiModelProperty;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.Valid;
@@ -32,7 +33,9 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
 
     private TenantId tenantId;
     @NoXss
+    @Length(fieldName = "title")
     private String title;
+    @Length(fieldName = "image", max = 1000000)
     private String image;
     @Valid
     private Set<ShortCustomerInfo> assignedCustomers;

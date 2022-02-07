@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public class GetAttributesSyncSessionCallback extends AbstractSyncSessionCallbac
     @Override
     public void onGetAttributesResponse(TransportProtos.GetAttributeResponseMsg msg) {
         try {
-            respond(state.getAdaptor().convertToPublish(request.isConfirmable(), msg));
+            respond(state.getAdaptor().convertToPublish(msg));
         } catch (AdaptorException e) {
             log.trace("[{}] Failed to reply due to error", state.getDeviceId(), e);
             exchange.respond(new Response(CoAP.ResponseCode.INTERNAL_SERVER_ERROR));

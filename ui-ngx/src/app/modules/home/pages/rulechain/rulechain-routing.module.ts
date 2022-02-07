@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import { RuleChainsTableConfigResolver } from '@modules/home/pages/rulechain/rul
 import { from, Observable } from 'rxjs';
 import { BreadCrumbConfig, BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
 import {
-  ResolvedRuleChainMetaData,
+  RuleChainMetaData,
   RuleChain, RuleChainType
 } from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
@@ -41,6 +41,7 @@ import { RuleNodeComponentDescriptor } from '@shared/models/rule-node.models';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { ItemBufferService } from '@core/public-api';
 import { MODULES_MAP } from '@shared/public-api';
+import { IModulesMap } from '@modules/common/modules-map.models';
 
 @Injectable()
 export class RuleChainResolver implements Resolve<RuleChain> {
@@ -55,14 +56,14 @@ export class RuleChainResolver implements Resolve<RuleChain> {
 }
 
 @Injectable()
-export class ResolvedRuleChainMetaDataResolver implements Resolve<ResolvedRuleChainMetaData> {
+export class RuleChainMetaDataResolver implements Resolve<RuleChainMetaData> {
 
   constructor(private ruleChainService: RuleChainService) {
   }
 
-  resolve(route: ActivatedRouteSnapshot): Observable<ResolvedRuleChainMetaData> {
+  resolve(route: ActivatedRouteSnapshot): Observable<RuleChainMetaData> {
     const ruleChainId = route.params.ruleChainId;
-    return this.ruleChainService.getResolvedRuleChainMetadata(ruleChainId);
+    return this.ruleChainService.getRuleChainMetadata(ruleChainId);
   }
 }
 
@@ -70,7 +71,7 @@ export class ResolvedRuleChainMetaDataResolver implements Resolve<ResolvedRuleCh
 export class RuleNodeComponentsResolver implements Resolve<Array<RuleNodeComponentDescriptor>> {
 
   constructor(private ruleChainService: RuleChainService,
-              @Optional() @Inject(MODULES_MAP) private modulesMap: {[key: string]: any}) {
+              @Optional() @Inject(MODULES_MAP) private modulesMap: IModulesMap) {
   }
 
   resolve(route: ActivatedRouteSnapshot): Observable<Array<RuleNodeComponentDescriptor>> {
@@ -159,7 +160,7 @@ const routes: Routes = [
         },
         resolve: {
           ruleChain: RuleChainResolver,
-          ruleChainMetaData: ResolvedRuleChainMetaDataResolver,
+          ruleChainMetaData: RuleChainMetaDataResolver,
           ruleNodeComponents: RuleNodeComponentsResolver,
           tooltipster: TooltipsterResolver
         }
@@ -195,7 +196,7 @@ const routes: Routes = [
   providers: [
     RuleChainsTableConfigResolver,
     RuleChainResolver,
-    ResolvedRuleChainMetaDataResolver,
+    RuleChainMetaDataResolver,
     RuleNodeComponentsResolver,
     TooltipsterResolver,
     RuleChainImportGuard

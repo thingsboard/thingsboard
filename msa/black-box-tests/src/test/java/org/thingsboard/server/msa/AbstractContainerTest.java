@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.cassandra.cql3.Json;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -69,6 +70,7 @@ public abstract class AbstractContainerTest {
     protected static String TB_TOKEN;
     protected static RestClient restClient;
     protected ObjectMapper mapper = new ObjectMapper();
+    protected JsonParser jsonParser = new JsonParser();
 
     @BeforeClass
     public static void before() throws Exception {

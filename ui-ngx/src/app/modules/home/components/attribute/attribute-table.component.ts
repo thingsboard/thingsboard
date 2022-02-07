@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -84,6 +84,8 @@ import {
 } from '@home/components/attribute/add-widget-to-dashboard-dialog.component';
 import { deepClone } from '@core/utils';
 import { Filters } from '@shared/models/query/query.models';
+import { hidePageSizePixelValue } from '@shared/models/constants';
+import { ResizeObserver } from '@juggle/resize-observer';
 
 
 @Component({
@@ -109,6 +111,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   pageLink: PageLink;
   textSearchMode = false;
   dataSource: AttributeDatasource;
+  hidePageSize = false;
 
   activeValue = false;
   dirtyValue = false;
@@ -127,10 +130,14 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   aliasController: IAliasController;
   private widgetDatasource: Datasource;
 
+  private widgetResize$: ResizeObserver;
+
   private disableAttributeScopeSelectionValue: boolean;
+
   get disableAttributeScopeSelection(): boolean {
     return this.disableAttributeScopeSelectionValue;
   }
+
   @Input()
   set disableAttributeScopeSelection(value: boolean) {
     this.disableAttributeScopeSelectionValue = coerceBooleanProperty(value);
@@ -184,7 +191,8 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
               private dashboardUtils: DashboardUtilsService,
               private widgetService: WidgetService,
               private zone: NgZone,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private elementRef: ElementRef) {
     super(store);
     this.dirtyValue = !this.activeValue;
     const sortOrder: SortOrder = { property: 'key', direction: Direction.ASC };
@@ -193,11 +201,26 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
   }
 
   ngOnInit() {
+    this.widgetResize$ = new ResizeObserver(() => {
+      const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+      if (showHidePageSize !== this.hidePageSize) {
+        this.hidePageSize = showHidePageSize;
+        this.cd.markForCheck();
+      }
+    });
+    this.widgetResize$.observe(this.elementRef.nativeElement);
+  }
+
+  ngOnDestroy() {
+    if (this.widgetResize$) {
+      this.widgetResize$.disconnect();
+    }
   }
 
   attributeScopeChanged(attributeScope: TelemetryType) {
     this.attributeScope = attributeScope;
     this.mode = 'default';
+    this.paginator.pageIndex = 0;
     this.updateData(true);
   }
 
@@ -262,6 +285,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
       this.attributeScopeSelectionReadonly = true;
     }
     this.mode = 'default';
+    this.selectedWidgetsBundleAlias = null;
     this.attributeScope = this.defaultAttributeScope;
     this.pageLink.textSearch = null;
     if (this.viewsInited) {
@@ -447,7 +471,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     if (this.mode === 'widget') {
       this.widgetsList = [];
       this.widgetsListCache = [];
-      this.widgetsCarouselIndex = 0;      
+      this.widgetsCarouselIndex = 0;
       if (widgetsBundle) {
         this.widgetsLoaded = false;
         const bundleAlias = widgetsBundle.alias;

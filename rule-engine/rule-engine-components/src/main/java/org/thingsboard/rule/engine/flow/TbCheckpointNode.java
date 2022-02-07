@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
 @RuleNode(
-        type = ComponentType.ACTION,
+        type = ComponentType.FLOW,
         name = "checkpoint",
         configClazz = TbCheckpointNodeConfiguration.class,
         nodeDescription = "transfers the message to another queue",

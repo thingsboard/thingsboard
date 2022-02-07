@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,22 @@
  */
 package org.thingsboard.server.common.data.rule;
 
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 
 @Data
-@AllArgsConstructor
 public class RuleChainImportResult {
 
+    @JsonIgnore
     private TenantId tenantId;
     private RuleChainId ruleChainId;
-    private ComponentLifecycleEvent lifecycleEvent;
+    private String ruleChainName;
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    private boolean updated;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String error;
+
 }

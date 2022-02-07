@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public class DefaultQueryLogComponent implements QueryLogComponent {
     @Override
     public void logQuery(QueryContext ctx, String query, long duration) {
         if (logSqlQueries && duration > logQueriesThreshold) {
-            log.info("QUERY: {} took {}ms", query, duration);
+            log.info("QUERY: {} took {} ms", query, duration);
             Arrays.asList(ctx.getParameterNames()).forEach(param -> log.info("QUERY PARAM: {} -> {}", param, ctx.getValue(param)));
         }
     }

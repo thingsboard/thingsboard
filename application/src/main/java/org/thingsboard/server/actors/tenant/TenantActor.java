@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,10 @@ import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.actors.TbEntityActorId;
 import org.thingsboard.server.actors.TbEntityTypeActorIdPredicate;
 import org.thingsboard.server.actors.device.DeviceActorCreator;
+import org.thingsboard.server.actors.device.SessionTimeoutCheckMsg;
+import org.thingsboard.server.actors.ruleChain.RuleChainInputMsg;
 import org.thingsboard.server.actors.ruleChain.RuleChainManagerActor;
+import org.thingsboard.server.actors.ruleChain.RuleChainOutputMsg;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.common.data.ApiUsageState;
@@ -168,6 +171,11 @@ public class TenantActor extends RuleChainManagerActor {
             case REMOVE_RPC_TO_DEVICE_ACTOR_MSG:
                 onToDeviceActorMsg((DeviceAwareMsg) msg, true);
                 break;
+            case SESSION_TIMEOUT_MSG:
+                ctx.broadcastToChildrenByType(msg, EntityType.DEVICE);
+                break;
+            case RULE_CHAIN_INPUT_MSG:
+            case RULE_CHAIN_OUTPUT_MSG:
             case RULE_CHAIN_TO_RULE_CHAIN_MSG:
                 onRuleChainMsg((RuleChainAwareMsg) msg);
                 break;

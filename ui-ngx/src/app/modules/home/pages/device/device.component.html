@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2021 The Thingsboard Authors
+    Copyright © 2016-2022 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,6 +16,12 @@
 
 -->
 <div class="tb-details-buttons" fxLayout.xs="column">
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'open')"
+          [fxShow]="!isEdit && !isDetailsPage">
+    {{'common.open-details-page' | translate }}
+  </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'makePublic')"
@@ -89,26 +95,35 @@
         <mat-error *ngIf="entityForm.get('name').hasError('required')">
           {{ 'device.name-required' | translate }}
         </mat-error>
+        <mat-error *ngIf="entityForm.get('name').hasError('maxlength')">
+          {{ 'device.name-max-length' | translate }}
+        </mat-error>
       </mat-form-field>
       <tb-device-profile-autocomplete
         [selectDefaultProfile]="isAdd"
         required
         formControlName="deviceProfileId"
+        [showDetailsPageLink]="true"
         (deviceProfileUpdated)="onDeviceProfileUpdated()"
         (deviceProfileChanged)="onDeviceProfileChanged($event)">
       </tb-device-profile-autocomplete>
       <mat-form-field class="mat-block">
         <mat-label translate>device.label</mat-label>
         <input matInput formControlName="label">
+        <mat-error *ngIf="entityForm.get('label').hasError('maxlength')">
+          {{ 'device.label-max-length' | translate }}
+        </mat-error>
       </mat-form-field>
       <tb-ota-package-autocomplete
         [useFullEntityId]="true"
+        [showDetailsPageLink]="true"
         [type]="otaUpdateType.FIRMWARE"
         [deviceProfileId]="entityForm.get('deviceProfileId').value?.id"
         formControlName="firmwareId">
       </tb-ota-package-autocomplete>
       <tb-ota-package-autocomplete
         [useFullEntityId]="true"
+        [showDetailsPageLink]="true"
         [type]="otaUpdateType.SOFTWARE"
         [deviceProfileId]="entityForm.get('deviceProfileId').value?.id"
         formControlName="softwareId">

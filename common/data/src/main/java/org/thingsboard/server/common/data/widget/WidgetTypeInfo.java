@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.widget;
 
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.validation.NoXss;
@@ -22,10 +23,13 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @Data
 public class WidgetTypeInfo extends BaseWidgetType {
 
+    @ApiModelProperty(position = 7, value = "Base64 encoded widget thumbnail", readOnly = true)
     private String image;
     @NoXss
+    @ApiModelProperty(position = 7, value = "Description of the widget type", readOnly = true)
     private String description;
     @NoXss
+    @ApiModelProperty(position = 8, value = "Type of the widget (timeseries, latest, control, alarm or static)", readOnly = true)
     private String widgetType;
 
     public WidgetTypeInfo() {

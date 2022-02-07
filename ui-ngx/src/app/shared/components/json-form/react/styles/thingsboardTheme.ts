@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@
  */
 import indigo from '@material-ui/core/colors/indigo';
 import deeepOrange from '@material-ui/core/colors/deepOrange';
-import { ThemeOptions } from '@material-ui/core/styles/createMuiTheme';
+import { ThemeOptions } from '@material-ui/core/styles';
 import { PaletteOptions } from '@material-ui/core/styles/createPalette';
 import { mergeDeep } from '@core/utils';
 

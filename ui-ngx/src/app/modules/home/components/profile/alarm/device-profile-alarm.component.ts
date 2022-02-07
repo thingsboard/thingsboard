@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -93,11 +93,13 @@ export class DeviceProfileAlarmComponent implements ControlValueAccessor, OnInit
   ngOnInit() {
     this.alarmFormGroup = this.fb.group({
       id: [null, Validators.required],
-      alarmType: [null, Validators.required],
+      alarmType: [null, [Validators.required, Validators.maxLength(255)]],
       createRules: [null],
       clearRule: [null],
       propagate: [null],
-      propagateRelationTypes: [null]
+      propagateRelationTypes: [null],
+      propagateToOwner: [null],
+      propagateToTenant: [null]
     }, { validators: deviceProfileAlarmValidator });
     this.alarmFormGroup.valueChanges.subscribe(() => {
       this.updateModel();

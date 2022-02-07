@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -88,7 +88,10 @@ export class AttributeDatasource implements DataSource<AttributeData> {
   fetchAttributes(entityId: EntityId, attributesScope: TelemetryType,
                   pageLink: PageLink): Observable<PageData<AttributeData>> {
     return this.getAllAttributes(entityId, attributesScope).pipe(
-      map((data) => pageLink.filterData(data))
+      map((data) => {
+        const filteredData = data.filter(attrData => attrData.lastUpdateTs !== 0 && attrData.value !== '');
+        return pageLink.filterData(filteredData);
+      })
     );
   }
 

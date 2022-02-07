@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ export type OnColorClickFn = (key: (string | number)[], val: tinycolor.ColorForm
                               colorSelectedFn: (color: tinycolor.ColorFormats.RGBA) => void) => void;
 export type OnIconClickFn = (key: (string | number)[], val: string,
                              iconSelectedFn: (icon: string) => void) => void;
-export type onToggleFullscreenFn = (element: HTMLElement, fullscreenFinishFn?: () => void) => void;
+export type onToggleFullscreenFn = (fullscreenFinishFn?: (el: Element) => void) => void;
 export type onHelpClickFn = (event: MouseEvent, helpId: string, helpVisibleFn: (visible: boolean) => void,
                              helpReadyFn: (ready: boolean) => void) => void;
 

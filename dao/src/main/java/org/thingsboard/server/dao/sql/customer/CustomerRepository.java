@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import java.util.UUID;
 public interface CustomerRepository extends PagingAndSortingRepository<CustomerEntity, UUID> {
 
     @Query("SELECT c FROM CustomerEntity c WHERE c.tenantId = :tenantId " +
-            "AND LOWER(c.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+            "AND LOWER(c.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<CustomerEntity> findByTenantId(@Param("tenantId") UUID tenantId,
                                         @Param("textSearch") String textSearch,
                                         Pageable pageable);

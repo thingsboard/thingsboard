@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,6 +88,28 @@ public abstract class BaseCustomerControllerTest extends AbstractControllerTest 
 
         doDelete("/api/customer/"+savedCustomer.getId().getId().toString())
         .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testSaveCustomerWithViolationOfValidation() throws Exception {
+        Customer customer = new Customer();
+        customer.setTitle(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/customer", customer).andExpect(statusReason(containsString("length of title must be equal or less than 255")));
+        customer.setTitle("Normal title");
+        customer.setCity(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/customer", customer).andExpect(statusReason(containsString("length of city must be equal or less than 255")));
+        customer.setCity("Normal city");
+        customer.setCountry(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/customer", customer).andExpect(statusReason(containsString("length of country must be equal or less than 255")));
+        customer.setCountry("Ukraine");
+        customer.setPhone(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/customer", customer).andExpect(statusReason(containsString("length of phone must be equal or less than 255")));
+        customer.setPhone("+3892555554512");
+        customer.setState(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/customer", customer).andExpect(statusReason(containsString("length of state must be equal or less than 255")));
+        customer.setState("Normal state");
+        customer.setZip(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/customer", customer).andExpect(statusReason(containsString("length of zip or postal code must be equal or less than 255")));
     }
 
     @Test

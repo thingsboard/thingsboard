@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2021 The Thingsboard Authors
+    Copyright © 2016-2022 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,6 +16,12 @@
 
 -->
 <div class="tb-details-buttons" fxLayout.xs="column">
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'open')"
+          [fxShow]="!isEdit && !isDetailsPage">
+    {{'common.open-details-page' | translate }}
+  </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'manageTenantAdmins')"
@@ -48,9 +54,13 @@
         <mat-error *ngIf="entityForm.get('title').hasError('required')">
           {{ 'tenant.title-required' | translate }}
         </mat-error>
+        <mat-error *ngIf="entityForm.get('title').hasError('maxlength')">
+          {{ 'tenant.title-max-length' | translate }}
+        </mat-error>
       </mat-form-field>
       <tb-tenant-profile-autocomplete
         [selectDefaultProfile]="isAdd"
+        [showDetailsPageLink]="true"
         required
         formControlName="tenantProfileId"
         (tenantProfileUpdated)="onTenantProfileUpdated()">

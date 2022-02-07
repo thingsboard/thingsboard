@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.ConcurrencyFailureException;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
@@ -26,6 +28,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.RelationCompositeKey;
 import org.thingsboard.server.dao.model.sql.RelationEntity;
@@ -157,7 +160,11 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     private boolean deleteRelationIfExists(RelationCompositeKey key) {
         boolean relationExistsBeforeDelete = relationRepository.existsById(key);
         if (relationExistsBeforeDelete) {
-            relationRepository.deleteById(key);
+            try {
+                relationRepository.deleteById(key);
+            } catch (DataAccessException e) {
+                log.debug("[{}] Concurrency exception while deleting relation", key, e);
+            }
         }
         return relationExistsBeforeDelete;
     }
@@ -192,28 +199,8 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
                 });
     }
 
-    private Specification<RelationEntity> getEntityFieldsSpec(EntityId from, String relationType, RelationTypeGroup typeGroup, EntityType childType) {
-        return (root, criteriaQuery, criteriaBuilder) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            if (from != null) {
-                Predicate fromIdPredicate = criteriaBuilder.equal(root.get("fromId"),  from.getId());
-                predicates.add(fromIdPredicate);
-                Predicate fromEntityTypePredicate = criteriaBuilder.equal(root.get("fromType"), from.getEntityType().name());
-                predicates.add(fromEntityTypePredicate);
-            }
-            if (relationType != null) {
-                Predicate relationTypePredicate = criteriaBuilder.equal(root.get("relationType"), relationType);
-                predicates.add(relationTypePredicate);
-            }
-            if (typeGroup != null) {
-                Predicate typeGroupPredicate = criteriaBuilder.equal(root.get("relationTypeGroup"), typeGroup.name());
-                predicates.add(typeGroupPredicate);
-            }
-            if (childType != null) {
-                Predicate childTypePredicate = criteriaBuilder.equal(root.get("toType"), childType.name());
-                predicates.add(childTypePredicate);
-            }
-            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
-        };
+    @Override
+    public List<EntityRelation> findRuleNodeToRuleChainRelations(RuleChainType ruleChainType, int limit) {
+        return DaoUtil.convertDataList(relationRepository.findRuleNodeToRuleChainRelations(ruleChainType, PageRequest.of(0, limit)));
     }
 }

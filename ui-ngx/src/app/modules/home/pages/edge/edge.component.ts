@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -70,11 +70,11 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
   buildForm(entity: EdgeInfo): FormGroup {
     const form = this.fb.group(
       {
-        name: [entity ? entity.name : '', [Validators.required]],
-        type: [entity?.type ? entity.type : 'default', [Validators.required]],
-        label: [entity ? entity.label : ''],
-        cloudEndpoint: [null, [Validators.required]],
-        edgeLicenseKey: ['', [Validators.required]],
+        name: [entity ? entity.name : '', [Validators.required, Validators.maxLength(255)]],
+        type: [entity?.type ? entity.type : 'default', [Validators.required, Validators.maxLength(255)]],
+        label: [entity ? entity.label : '', Validators.maxLength(255)],
+        cloudEndpoint: [null, [Validators.required, Validators.maxLength(255)]],
+        edgeLicenseKey: ['', [Validators.required, Validators.maxLength(30)]],
         routingKey: this.fb.control({value: entity ? entity.routingKey : null, disabled: true}),
         secret: this.fb.control({value: entity ? entity.secret : null, disabled: true}),
         additionalInfo: this.fb.group(

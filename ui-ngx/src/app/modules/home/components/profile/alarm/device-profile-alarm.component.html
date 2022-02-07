@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2021 The Thingsboard Authors
+    Copyright © 2016-2022 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -45,6 +45,9 @@
         <mat-error *ngIf="alarmFormGroup.get('alarmType').hasError('unique')">
           {{ 'device-profile.alarm-type-unique' | translate }}
         </mat-error>
+        <mat-error *ngIf="alarmFormGroup.get('alarmType').hasError('maxlength')">
+          {{ 'device-profile.alarm-type-max-length' | translate }}
+        </mat-error>
       </mat-form-field>
     </div>
     <mat-expansion-panel class="advanced-settings" [expanded]="false">
@@ -79,6 +82,12 @@
             <mat-hint innerHTML="{{ 'device-profile.alarm-rule-relation-types-list-hint' | translate }}"></mat-hint>
           </mat-form-field>
         </section>
+        <mat-checkbox formControlName="propagateToOwner" style="display: block; padding-bottom: 16px;">
+          {{ 'device-profile.propagate-alarm-to-owner' | translate }}
+        </mat-checkbox>
+        <mat-checkbox formControlName="propagateToTenant" style="display: block; padding-bottom: 16px;">
+          {{ 'device-profile.propagate-alarm-to-tenant' | translate }}
+        </mat-checkbox>
       </ng-template>
     </mat-expansion-panel>
     <div fxFlex fxLayout="column">

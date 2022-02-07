@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -40,20 +42,20 @@ import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.gen.transport.TransportProtos.*;
 import org.thingsboard.server.gen.transport.TransportProtos.LocalSubscriptionServiceMsgProto;
+import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmSubscriptionUpdateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionUpdateProto;
+import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionUpdateTsValue;
 import org.thingsboard.server.gen.transport.TransportProtos.TbSubscriptionUpdateValueListProto;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
 import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.sub.AlarmSubscriptionUpdate;
@@ -222,7 +224,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
                         }
                     }
                     return subscriptionUpdate;
-                });
+                }, true);
         if (entityId.getEntityType() == EntityType.DEVICE) {
             updateDeviceInactivityTimeout(tenantId, entityId, ts);
         }
@@ -256,7 +258,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
                         }
                     }
                     return subscriptionUpdate;
-                });
+                }, true);
         if (entityId.getEntityType() == EntityType.DEVICE) {
             if (TbAttributeSubscriptionScope.SERVER_SCOPE.name().equalsIgnoreCase(scope)) {
                 updateDeviceInactivityTimeout(tenantId, entityId, attributes);
@@ -329,18 +331,43 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
                             if (subscriptionUpdate == null) {
                                 subscriptionUpdate = new ArrayList<>();
                             }
-                            subscriptionUpdate.add(new BasicTsKvEntry(0, new StringDataEntry(key, null)));
+                            subscriptionUpdate.add(new BasicTsKvEntry(0, new StringDataEntry(key, "")));
                         }
                     }
                     return subscriptionUpdate;
-                });
+                }, false);
+        callback.onSuccess();
+    }
+
+    @Override
+    public void onTimeSeriesDelete(TenantId tenantId, EntityId entityId, List<String> keys, TbCallback callback) {
+        onLocalTelemetrySubUpdate(entityId,
+                s -> {
+                    if (TbSubscriptionType.TIMESERIES.equals(s.getType())) {
+                        return (TbTimeseriesSubscription) s;
+                    } else {
+                        return null;
+                    }
+                }, s -> true, s -> {
+                    List<TsKvEntry> subscriptionUpdate = null;
+                    for (String key : keys) {
+                        if (s.isAllKeys() || s.getKeyStates().containsKey(key)) {
+                            if (subscriptionUpdate == null) {
+                                subscriptionUpdate = new ArrayList<>();
+                            }
+                            subscriptionUpdate.add(new BasicTsKvEntry(0, new StringDataEntry(key, "")));
+                        }
+                    }
+                    return subscriptionUpdate;
+                }, false);
         callback.onSuccess();
     }
 
     private <T extends TbSubscription> void onLocalTelemetrySubUpdate(EntityId entityId,
                                                                       Function<TbSubscription, T> castFunction,
                                                                       Predicate<T> filterFunction,
-                                                                      Function<T, List<TsKvEntry>> processFunction) {
+                                                                      Function<T, List<TsKvEntry>> processFunction,
+                                                                      boolean ignoreEmptyUpdates) {
         Set<TbSubscription> entitySubscriptions = subscriptionsByEntityId.get(entityId);
         if (entitySubscriptions != null) {
             entitySubscriptions.stream().map(castFunction).filter(Objects::nonNull).filter(filterFunction).forEach(s -> {
@@ -351,7 +378,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
                         localSubscriptionService.onSubscriptionUpdate(s.getSessionId(), update, TbCallback.EMPTY);
                     } else {
                         TopicPartitionInfo tpi = partitionService.getNotificationsTopic(ServiceType.TB_CORE, s.getServiceId());
-                        toCoreNotificationsProducer.send(tpi, toProto(s, subscriptionUpdate), null);
+                        toCoreNotificationsProducer.send(tpi, toProto(s, subscriptionUpdate, ignoreEmptyUpdates), null);
                     }
                 }
             });
@@ -467,6 +494,10 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
     }
 
     private TbProtoQueueMsg<ToCoreNotificationMsg> toProto(TbSubscription subscription, List<TsKvEntry> updates) {
+        return toProto(subscription, updates, true);
+    }
+
+    private TbProtoQueueMsg<ToCoreNotificationMsg> toProto(TbSubscription subscription, List<TsKvEntry> updates, boolean ignoreEmptyUpdates) {
         TbSubscriptionUpdateProto.Builder builder = TbSubscriptionUpdateProto.newBuilder();
 
         builder.setSessionId(subscription.getSessionId());
@@ -487,14 +518,16 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
             boolean hasData = false;
             for (Object v : value) {
                 Object[] array = (Object[]) v;
-                dataBuilder.addTs((long) array[0]);
+                TbSubscriptionUpdateTsValue.Builder tsValueBuilder = TbSubscriptionUpdateTsValue.newBuilder();
+                tsValueBuilder.setTs((long) array[0]);
                 String strVal = (String) array[1];
                 if (strVal != null) {
                     hasData = true;
-                    dataBuilder.addValue(strVal);
+                    tsValueBuilder.setValue(strVal);
                 }
+                dataBuilder.addTsValue(tsValueBuilder.build());
             }
-            if (hasData) {
+            if (!ignoreEmptyUpdates || hasData) {
                 builder.addData(dataBuilder.build());
             }
         });

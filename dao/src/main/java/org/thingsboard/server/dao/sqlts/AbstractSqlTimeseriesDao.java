@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,6 +74,7 @@ public abstract class AbstractSqlTimeseriesDao extends BaseAbstractSqlTimeseries
             stmt.setObject(1, ModelConstants.NULL_UUID);
             stmt.setLong(2, systemTtl);
             stmt.setLong(3, 0);
+            stmt.setQueryTimeout((int) TimeUnit.HOURS.toSeconds(1));
             stmt.execute();
             printWarnings(stmt);
             try (ResultSet resultSet = stmt.getResultSet()) {

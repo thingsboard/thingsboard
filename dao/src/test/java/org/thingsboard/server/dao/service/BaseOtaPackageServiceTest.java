@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,11 +38,13 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
+import javax.validation.ValidationException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
 public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
@@ -57,7 +59,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     private static final ByteBuffer DATA = ByteBuffer.wrap(new byte[]{(int) DATA_SIZE});
     private static final String URL = "http://firmware.test.org";
 
-    private IdComparator<OtaPackageInfo> idComparator = new IdComparator<>();
+    private final IdComparator<OtaPackageInfo> idComparator = new IdComparator<>();
 
     private TenantId tenantId;
 
@@ -340,7 +342,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     @Test
     public void testSaveFirmwareWithInvalidTenant() {
         OtaPackage firmware = new OtaPackage();
-        firmware.setTenantId(new TenantId(Uuids.timeBased()));
+        firmware.setTenantId(TenantId.fromUUID(Uuids.timeBased()));
         firmware.setDeviceProfileId(deviceProfileId);
         firmware.setType(FIRMWARE);
         firmware.setTitle(TITLE);
@@ -564,7 +566,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         Collections.sort(firmwares, idComparator);
         Collections.sort(loadedFirmwares, idComparator);
 
-        Assert.assertEquals(firmwares, loadedFirmwares);
+        assertThat(firmwares).isEqualTo(loadedFirmwares);
 
         otaPackageService.deleteOtaPackagesByTenantId(tenantId);
 
@@ -619,7 +621,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         Collections.sort(firmwares, idComparator);
         Collections.sort(loadedFirmwares, idComparator);
 
-        Assert.assertEquals(firmwares, loadedFirmwares);
+        assertThat(firmwares).isEqualTo(loadedFirmwares);
 
         otaPackageService.deleteOtaPackagesByTenantId(tenantId);
 
@@ -673,8 +675,8 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmwareInfo.setUrl(URL);
         firmwareInfo.setTenantId(tenantId);
 
-        thrown.expect(DataValidationException.class);
-        thrown.expectMessage("The length of title should be equal or shorter than 255");
+        thrown.expect(ValidationException.class);
+        thrown.expectMessage("length of title must be equal or less than 255");
 
         otaPackageService.saveOtaPackageInfo(firmwareInfo, true);
     }
@@ -689,7 +691,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmwareInfo.setTitle(TITLE);
 
         firmwareInfo.setVersion(RandomStringUtils.random(257));
-        thrown.expectMessage("The length of version should be equal or shorter than 255");
+        thrown.expectMessage("length of version must be equal or less than 255");
 
         otaPackageService.saveOtaPackageInfo(firmwareInfo, true);
     }

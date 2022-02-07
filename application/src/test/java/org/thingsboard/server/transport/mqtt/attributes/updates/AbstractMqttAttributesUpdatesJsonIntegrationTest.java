@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
+import org.thingsboard.server.common.data.device.profile.MqttTopics;
+import org.thingsboard.server.transport.mqtt.attributes.AbstractMqttAttributesIntegrationTest;
 
 @Slf4j
-public abstract class AbstractMqttAttributesUpdatesJsonIntegrationTest extends AbstractMqttAttributesUpdatesIntegrationTest {
+public abstract class AbstractMqttAttributesUpdatesJsonIntegrationTest extends AbstractMqttAttributesIntegrationTest {
 
     @Before
     public void beforeTest() throws Exception {
@@ -35,22 +37,22 @@ public abstract class AbstractMqttAttributesUpdatesJsonIntegrationTest extends A
     }
 
     @Test
-    public void testSubscribeToAttributesUpdatesFromTheServer() throws Exception {
-        super.testSubscribeToAttributesUpdatesFromTheServer();
+    public void testJsonSubscribeToAttributesUpdatesFromTheServer() throws Exception {
+        processJsonTestSubscribeToAttributesUpdates(MqttTopics.DEVICE_ATTRIBUTES_TOPIC);
     }
 
     @Test
-    public void testSubscribeToAttributesUpdatesFromTheServerOnShortTopic() throws Exception {
-        super.testSubscribeToAttributesUpdatesFromTheServerOnShortTopic();
+    public void testJsonSubscribeToAttributesUpdatesFromTheServerOnShortTopic() throws Exception {
+        processJsonTestSubscribeToAttributesUpdates(MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC);
     }
 
     @Test
-    public void testSubscribeToAttributesUpdatesFromTheServerOnShortJsonTopic() throws Exception {
-        super.testSubscribeToAttributesUpdatesFromTheServerOnShortJsonTopic();
+    public void testJsonSubscribeToAttributesUpdatesFromTheServerOnShortJsonTopic() throws Exception {
+        processJsonTestSubscribeToAttributesUpdates(MqttTopics.DEVICE_ATTRIBUTES_SHORT_JSON_TOPIC);
     }
 
     @Test
-    public void testSubscribeToAttributesUpdatesFromTheServerGateway() throws Exception {
-        processGatewayTestSubscribeToAttributesUpdates();
+    public void testJsonSubscribeToAttributesUpdatesFromTheServerGateway() throws Exception {
+        processJsonGatewayTestSubscribeToAttributesUpdates();
     }
 }

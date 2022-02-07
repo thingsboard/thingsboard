@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,6 +64,7 @@ import java.util.List;
 public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     public static final String JWT_TOKEN_HEADER_PARAM = "X-Authorization";
+    public static final String JWT_TOKEN_HEADER_PARAM_V2 = "Authorization";
     public static final String JWT_TOKEN_QUERY_PARAM = "token";
 
     public static final String WEBJARS_ENTRY_POINT = "/webjars/**";

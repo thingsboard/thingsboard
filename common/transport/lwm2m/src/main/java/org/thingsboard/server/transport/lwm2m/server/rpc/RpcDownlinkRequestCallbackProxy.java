@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.rpc;
 
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.request.exception.ClientSleepingException;
 import org.thingsboard.common.util.JacksonUtil;
@@ -26,8 +27,10 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.downlink.DownlinkRequestCallback;
 
+import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
+@Slf4j
 public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkRequestCallback<R, T> {
 
     private final TransportService transportService;
@@ -44,8 +47,20 @@ public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkR
     }
 
     @Override
-    public void onSent(R request) {
+    public boolean onSent(R request) {
+        client.lock();
+        try {
+            UUID rpcId = new UUID(this.request.getRequestIdMSB(), this.request.getRequestIdLSB());
+            if (rpcId.equals(client.getLastSentRpcId())) {
+                log.debug("[{}]][{}] Rpc has already sent!", client.getEndpoint(), rpcId);
+                return false;
+            }
+            client.setLastSentRpcId(rpcId);
+        } finally {
+            client.unlock();
+        }
         transportService.process(client.getSession(), this.request, RpcStatus.SENT, TransportServiceCallback.EMPTY);
+        return true;
     }
 
     @Override
@@ -68,6 +83,7 @@ public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkR
     @Override
     public void onError(String params, Exception e) {
         if (e instanceof TimeoutException || e instanceof org.eclipse.leshan.core.request.exception.TimeoutException) {
+            client.setLastSentRpcId(null);
             transportService.process(client.getSession(), this.request, RpcStatus.TIMEOUT, TransportServiceCallback.EMPTY);
         } else if (!(e instanceof ClientSleepingException)) {
             sendRpcReplyOnError(e);
@@ -95,7 +111,11 @@ public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkR
     }
 
     protected void sendRpcReplyOnError(Exception e) {
-        reply(LwM2MRpcResponseBody.builder().result(ResponseCode.INTERNAL_SERVER_ERROR.getName()).error(e.getMessage()).build());
+        String error = e.getMessage();
+        if (error == null) {
+            error = e.toString();
+        }
+        reply(LwM2MRpcResponseBody.builder().result(ResponseCode.INTERNAL_SERVER_ERROR.getName()).error(error).build());
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,8 +106,8 @@ class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {
     this.props.onIconClick(key, val, iconSelectedFn);
   }
 
-  onToggleFullscreen(element: HTMLElement, fullscreenFinishFn?: () => void) {
-    this.props.onToggleFullscreen(element, fullscreenFinishFn);
+  onToggleFullscreen(fullscreenFinishFn?: (el: Element) => void) {
+    this.props.onToggleFullscreen(fullscreenFinishFn);
   }
 
   onHelpClick(event: MouseEvent, helpId: string, helpVisibleFn: (visible: boolean) => void, helpReadyFn: (ready: boolean) => void) {

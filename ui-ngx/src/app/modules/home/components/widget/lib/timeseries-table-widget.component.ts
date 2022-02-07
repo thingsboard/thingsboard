@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 import {
   AfterViewInit,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   Input,
@@ -59,6 +60,7 @@ import {
   getCellStyleInfo,
   getRowStyleInfo,
   getTableCellButtonActions,
+  noDataMessage,
   prepareTableCellButtonActions,
   RowStyleInfo,
   TableCellButtonActionDescriptor,
@@ -70,6 +72,8 @@ import { SubscriptionEntityInfo } from '@core/api/widget-api.models';
 import { DatePipe } from '@angular/common';
 import { parseData } from '@home/components/widget/lib/maps/common-maps-utils';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { ResizeObserver } from '@juggle/resize-observer';
+import { hidePageSizePixelValue } from '@shared/models/constants';
 
 export interface TimeseriesTableWidgetSettings extends TableWidgetSettings {
   showTimestamp: boolean;
@@ -87,6 +91,7 @@ interface TimeseriesRow {
 interface TimeseriesHeader {
   index: number;
   dataKey: DataKey;
+  sortable: boolean;
 }
 
 interface TimeseriesTableSource {
@@ -123,9 +128,11 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   public enableStickyAction = true;
   public pageSizeOptions;
   public textSearchMode = false;
+  public hidePageSize = false;
   public textSearch: string = null;
   public sources: TimeseriesTableSource[];
   public sourceIndex: number;
+  public noDataDisplayMessageText: string;
   private setCellButtonAction: boolean;
 
   private cellContentCache: Array<any> = [];
@@ -147,6 +154,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   private rowStylesInfo: RowStyleInfo;
 
   private subscriptions: Subscription[] = [];
+  private widgetTimewindowChanged$: Subscription;
+  private widgetResize$: ResizeObserver;
 
   private searchAction: WidgetAction = {
     name: 'action.search',
@@ -164,7 +173,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
               private utils: UtilsService,
               private translate: TranslateService,
               private domSanitizer: DomSanitizer,
-              private datePipe: DatePipe) {
+              private datePipe: DatePipe,
+              private cd: ChangeDetectorRef) {
     super(store);
   }
 
@@ -176,6 +186,36 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.datasources = this.ctx.datasources;
     this.initialize();
     this.ctx.updateWidgetParams();
+
+    if (this.displayPagination) {
+      this.widgetTimewindowChanged$ = this.ctx.defaultSubscription.widgetTimewindowChanged$.subscribe(
+        () => {
+          this.sources.forEach((source) => {
+            if (this.displayPagination) {
+              source.pageLink.page = 0;
+            }
+          });
+        }
+      );
+      this.widgetResize$ = new ResizeObserver(() => {
+        const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+        if (showHidePageSize !== this.hidePageSize) {
+          this.hidePageSize = showHidePageSize;
+          this.cd.markForCheck();
+        }
+      });
+      this.widgetResize$.observe(this.elementRef.nativeElement);
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.widgetTimewindowChanged$) {
+      this.widgetTimewindowChanged$.unsubscribe();
+      this.widgetTimewindowChanged$ = null;
+    }
+    if (this.widgetResize$) {
+      this.widgetResize$.disconnect();
+    }
   }
 
   ngAfterViewInit(): void {
@@ -231,6 +271,9 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     }
     this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
 
+    this.noDataDisplayMessageText =
+      noDataMessage(this.widgetConfig.noDataDisplayMessage, 'widget.no-data-found', this.utils, this.translate);
+
     let cssString = constructTableCssString(this.widgetConfig);
 
     const origBackgroundColor = this.widgetConfig.backgroundColor || 'rgb(255, 255, 255)';
@@ -283,10 +326,12 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
         for (let a = 0; a < datasource.dataKeys.length; a++ ) {
           const dataKey = datasource.dataKeys[a];
           const keySettings: TableWidgetDataKeySettings = dataKey.settings;
+          const sortable = !dataKey.usePostProcessing;
           const index = a + 1;
           source.header.push({
             index,
-            dataKey
+            dataKey,
+            sortable
           });
           source.displayedColumns.push(index + '');
           source.rowDataTemplate[dataKey.label] = null;

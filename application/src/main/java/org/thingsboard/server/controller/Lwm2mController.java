@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,11 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,55 +29,56 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MServerSecurityConfigDefault;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.lwm2m.ServerSecurityConfig;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
-import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.permission.Resource;
+import org.thingsboard.server.service.lwm2m.LwM2MService;
 
 import java.util.Map;
 
+import static org.thingsboard.server.controller.ControllerConstants.IS_BOOTSTRAP_SERVER_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
+
 @Slf4j
 @RestController
-@TbCoreComponent
+@ConditionalOnExpression("('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core') && '${transport.lwm2m.enabled:false}'=='true'")
 @RequestMapping("/api")
 public class Lwm2mController extends BaseController {
 
+    @Autowired
+    private DeviceController deviceController;
+
+    @Autowired
+    private LwM2MService lwM2MService;
+
+    public static final String IS_BOOTSTRAP_SERVER = "isBootstrapServer";
+
+    @ApiOperation(value = "Get Lwm2m Bootstrap SecurityInfo (getLwm2mBootstrapSecurityInfo)",
+            notes = "Get the Lwm2m Bootstrap SecurityInfo object (of the current server) based on the provided isBootstrapServer parameter. If isBootstrapServer == true, get the parameters of the current Bootstrap Server. If isBootstrapServer == false, get the parameters of the current Lwm2m Server. Used for client settings when starting the client in Bootstrap mode. " +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
+            produces = "application/json")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/lwm2m/deviceProfile/bootstrap/{isBootstrapServer}", method = RequestMethod.GET)
     @ResponseBody
-    public ServerSecurityConfig getLwm2mBootstrapSecurityInfo(@PathVariable("isBootstrapServer") boolean bootstrapServer) throws ThingsboardException {
-        try {
-            return lwM2MServerSecurityInfoRepository.getServerSecurityInfo(bootstrapServer);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+    public LwM2MServerSecurityConfigDefault getLwm2mBootstrapSecurityInfo(
+        @ApiParam(value = IS_BOOTSTRAP_SERVER_PARAM_DESCRIPTION)
+        @PathVariable(IS_BOOTSTRAP_SERVER) boolean bootstrapServer) throws ThingsboardException {
+            try {
+                return lwM2MService.getServerSecurityInfo(bootstrapServer);
+            } catch (Exception e) {
+                throw handleException(e);
+            }
     }
 
+    @ApiOperation(hidden = true, value = "Save device with credentials (Deprecated)")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/lwm2m/device-credentials", method = RequestMethod.POST)
     @ResponseBody
-    public Device saveDeviceWithCredentials(@RequestBody (required=false) Map<Class<?>, Object> deviceWithDeviceCredentials) throws ThingsboardException {
+    public Device saveDeviceWithCredentials(@RequestBody Map<Class<?>, Object> deviceWithDeviceCredentials) throws ThingsboardException {
         ObjectMapper mapper = new ObjectMapper();
         Device device = checkNotNull(mapper.convertValue(deviceWithDeviceCredentials.get(Device.class), Device.class));
-        DeviceCredentials credentials = checkNotNull(mapper.convertValue( deviceWithDeviceCredentials.get(DeviceCredentials.class), DeviceCredentials.class));
-        try {
-            device.setTenantId(getCurrentUser().getTenantId());
-            checkEntity(device.getId(), device, Resource.DEVICE);
-            Device savedDevice = deviceService.saveDeviceWithCredentials(device, credentials);
-            checkNotNull(savedDevice);
-            tbClusterService.onDeviceUpdated(savedDevice, device);
-            logEntityAction(savedDevice.getId(), savedDevice,
-                    savedDevice.getCustomerId(),
-                    device.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
-
-            return savedDevice;
-        } catch (Exception e) {
-            logEntityAction(emptyId(EntityType.DEVICE), device,
-                    null, device.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
-            throw handleException(e);
-        }
+        DeviceCredentials credentials = checkNotNull(mapper.convertValue(deviceWithDeviceCredentials.get(DeviceCredentials.class), DeviceCredentials.class));
+        return deviceController.saveDeviceWithCredentials(new SaveDeviceWithCredentialsRequest(device, credentials));
     }
 }

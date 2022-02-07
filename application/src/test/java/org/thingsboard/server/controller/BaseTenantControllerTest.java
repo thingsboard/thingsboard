@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,14 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         Assert.assertEquals(foundTenant.getTitle(), savedTenant.getTitle());
         doDelete("/api/tenant/"+savedTenant.getId().getId().toString())
         .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testSaveTenantWithViolationOfValidation() throws Exception {
+        loginSysAdmin();
+        Tenant tenant = new Tenant();
+        tenant.setTitle(RandomStringUtils.randomAlphanumeric(300));
+        doPost("/api/tenant", tenant).andExpect(statusReason(containsString("length of title must be equal or less than 255")));
     }
     
     @Test

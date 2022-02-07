@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,17 @@ package org.thingsboard.server.common.data.page;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import org.springframework.data.domain.Sort;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @Data
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
 public class TimePageLink extends PageLink {
 
     private final Long startTime;
@@ -56,5 +65,31 @@ public class TimePageLink extends PageLink {
     public TimePageLink nextPageLink() {
         return new TimePageLink(this.getPageSize(), this.getPage()+1, this.getTextSearch(), this.getSortOrder(),
                 this.startTime, this.endTime);
+    }
+
+    @Override
+    public Sort toSort(SortOrder sortOrder, Map<String,String> columnMap) {
+        if (sortOrder == null) {
+            return super.toSort(sortOrder, columnMap);
+        } else {
+            return toSort(new ArrayList<>(List.of(sortOrder)), columnMap);
+        }
+    }
+
+    @Override
+    public Sort toSort(List<SortOrder> sortOrders, Map<String,String> columnMap) {
+        if (!isDefaultSortOrderAvailable(sortOrders)) {
+            sortOrders.add(new SortOrder(DEFAULT_SORT_PROPERTY, SortOrder.Direction.ASC));
+        }
+        return super.toSort(sortOrders, columnMap);
+    }
+
+    private boolean isDefaultSortOrderAvailable(List<SortOrder> sortOrders) {
+        for (SortOrder sortOrder : sortOrders) {
+            if (DEFAULT_SORT_PROPERTY.equals(sortOrder.getProperty())) {
+                return true;
+            }
+        }
+        return false;
     }
 }

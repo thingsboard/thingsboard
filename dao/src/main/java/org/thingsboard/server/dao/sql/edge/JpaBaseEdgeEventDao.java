@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,33 +16,31 @@
 package org.thingsboard.server.dao.sql.edge;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.EdgeEventId;
 import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.edge.EdgeEventDao;
 import org.thingsboard.server.dao.model.sql.EdgeEventEntity;
-import org.thingsboard.server.dao.model.sql.EventEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -107,6 +105,7 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
                                 .findEdgeEventsByTenantIdAndEdgeId(
                                         tenantId,
                                         edgeId.getId(),
+                                        Objects.toString(pageLink.getTextSearch(), ""),
                                         pageLink.getStartTime(),
                                         pageLink.getEndTime(),
                                         DaoUtil.toPageable(pageLink)));
@@ -116,6 +115,7 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
                                 .findEdgeEventsByTenantIdAndEdgeIdWithoutTimeseriesUpdated(
                                         tenantId,
                                         edgeId.getId(),
+                                        Objects.toString(pageLink.getTextSearch(), ""),
                                         pageLink.getStartTime(),
                                         pageLink.getEndTime(),
                                         DaoUtil.toPageable(pageLink)));
@@ -145,6 +145,7 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
              PreparedStatement stmt = connection.prepareStatement("call cleanup_edge_events_by_ttl(?,?)")) {
             stmt.setLong(1, ttl);
             stmt.setLong(2, 0);
+            stmt.setQueryTimeout((int) TimeUnit.HOURS.toSeconds(1));
             stmt.execute();
             printWarnings(stmt);
             try (ResultSet resultSet = stmt.getResultSet()) {

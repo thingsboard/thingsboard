@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
   buildForm(entity: TenantProfile): FormGroup {
     return this.fb.group(
       {
-        name: [entity ? entity.name : '', [Validators.required]],
+        name: [entity ? entity.name : '', [Validators.required, Validators.maxLength(255)]],
         isolatedTbCore: [entity ? entity.isolatedTbCore : false, []],
         isolatedTbRuleEngine: [entity ? entity.isolatedTbRuleEngine : false, []],
         profileData: [entity && !this.isAdd ? entity.profileData : {

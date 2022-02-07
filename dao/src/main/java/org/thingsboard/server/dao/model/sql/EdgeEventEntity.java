@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -40,15 +39,14 @@ import javax.persistence.Table;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_ACTION_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_BODY_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_COLUMN_FAMILY_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_EDGE_ID_PROPERTY;
-import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_BODY_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_ENTITY_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_TENANT_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EDGE_EVENT_UID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.EPOCH_DIFF;
-import static org.thingsboard.server.dao.model.ModelConstants.EVENT_UID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.TS_COLUMN;
 
 @Data
@@ -113,7 +111,7 @@ public class EdgeEventEntity extends BaseSqlEntity<EdgeEvent> implements BaseEnt
     public EdgeEvent toData() {
         EdgeEvent edgeEvent = new EdgeEvent(new EdgeEventId(this.getUuid()));
         edgeEvent.setCreatedTime(createdTime);
-        edgeEvent.setTenantId(new TenantId(tenantId));
+        edgeEvent.setTenantId(TenantId.fromUUID(tenantId));
         edgeEvent.setEdgeId(new EdgeId(edgeId));
         if (entityId != null) {
             edgeEvent.setEntityId(entityId);

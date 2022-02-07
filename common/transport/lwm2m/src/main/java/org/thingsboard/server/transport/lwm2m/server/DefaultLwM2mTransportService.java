@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,38 +17,37 @@ package org.thingsboard.server.transport.lwm2m.server;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.californium.elements.util.SslContextUtil;
+import org.eclipse.californium.scandium.config.DtlsConfig;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.californium.scandium.dtls.cipher.CipherSuite;
-import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeDecoder;
-import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeEncoder;
+import org.eclipse.leshan.core.node.codec.DefaultLwM2mDecoder;
+import org.eclipse.leshan.core.node.codec.DefaultLwM2mEncoder;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.californium.LeshanServerBuilder;
 import org.eclipse.leshan.server.californium.registration.CaliforniumRegistrationStore;
-import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
+import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MAuthorizer;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MDtlsCertificateVerifier;
-import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.store.TbSecurityStore;
-import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.security.cert.X509Certificate;
 
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CURVES_ONLY;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CBC_SHA256;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CCM_8;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mNetworkConfig.getCoapConfig;
+import static org.thingsboard.server.transport.lwm2m.server.LwM2MNetworkConfig.getCoapConfig;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FIRMWARE_UPDATE_COAP_RESOURCE;
 
 @Slf4j
@@ -63,7 +62,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
     private final LwM2mTransportContext context;
     private final LwM2MTransportServerConfig config;
     private final OtaPackageDataCache otaPackageDataCache;
-    private final DefaultLwM2MUplinkMsgHandler handler;
+    private final DefaultLwM2mUplinkMsgHandler handler;
     private final CaliforniumRegistrationStore registrationStore;
     private final TbSecurityStore securityStore;
     private final TbLwM2MDtlsCertificateVerifier certificateVerifier;
@@ -72,7 +71,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
 
     private LeshanServer server;
 
-    @PostConstruct
+    @AfterStartUp(order = Integer.MAX_VALUE - 1)
     public void init() {
         this.server = getLhServer();
         /*
@@ -84,8 +83,8 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
          */
         LwM2mTransportCoapResource otaCoapResource = new LwM2mTransportCoapResource(otaPackageDataCache, FIRMWARE_UPDATE_COAP_RESOURCE);
         this.server.coap().getServer().add(otaCoapResource);
-        this.startLhServer();
         this.context.setServer(server);
+        this.startLhServer();
     }
 
     private void startLhServer() {
@@ -109,9 +108,9 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         LeshanServerBuilder builder = new LeshanServerBuilder();
         builder.setLocalAddress(config.getHost(), config.getPort());
         builder.setLocalSecureAddress(config.getSecureHost(), config.getSecurePort());
-        builder.setDecoder(new DefaultLwM2mNodeDecoder());
+        builder.setDecoder(new DefaultLwM2mDecoder());
         /* Use a magic converter to support bad type send by the UI. */
-        builder.setEncoder(new DefaultLwM2mNodeEncoder(LwM2mValueConverterImpl.getInstance()));
+        builder.setEncoder(new DefaultLwM2mEncoder(LwM2mValueConverterImpl.getInstance()));
 
         /* Create CoAP Config */
         builder.setCoapConfig(getCoapConfig(config.getPort(), config.getSecurePort(), config));
@@ -125,11 +124,12 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
 
 
         /* Create DTLS Config */
-        DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
+        DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder(getCoapConfig(config.getPort(), config.getSecurePort(), config));
 
-        dtlsConfig.setServerOnly(true);
-        dtlsConfig.setRecommendedSupportedGroupsOnly(config.isRecommendedSupportedGroups());
-        dtlsConfig.setRecommendedCipherSuitesOnly(config.isRecommendedCiphers());
+        dtlsConfig.set(DtlsConfig.DTLS_ROLE, DtlsConfig.DtlsRole.SERVER_ONLY);
+        dtlsConfig.set(DTLS_RECOMMENDED_CURVES_ONLY, config.isRecommendedSupportedGroups());
+        dtlsConfig.set(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, config.isRecommendedCiphers());
+
         /*  Create credentials */
         this.setServerWithCredentials(builder, dtlsConfig);
 
@@ -141,35 +141,19 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
     }
 
     private void setServerWithCredentials(LeshanServerBuilder builder, DtlsConnectorConfig.Builder dtlsConfig) {
-        if (config.getKeyStoreValue() != null && this.setBuilderX509(builder)) {
+        if (this.config.getSslCredentials() != null) {
+            SslCredentials sslCredentials = this.config.getSslCredentials();
+            builder.setPublicKey(sslCredentials.getPublicKey());
+            builder.setPrivateKey(sslCredentials.getPrivateKey());
+            builder.setCertificateChain(sslCredentials.getCertificateChain());
             dtlsConfig.setAdvancedCertificateVerifier(certificateVerifier);
             builder.setAuthorizer(authorizer);
-            dtlsConfig.setSupportedCipherSuites(RPK_OR_X509_CIPHER_SUITES);
+            dtlsConfig.setAsList(DtlsConfig.DTLS_CIPHER_SUITES, RPK_OR_X509_CIPHER_SUITES);
         } else {
             /* by default trust all */
             builder.setTrustedCertificates(new X509Certificate[0]);
             log.info("Unable to load X509 files for LWM2MServer");
-            dtlsConfig.setSupportedCipherSuites(PSK_CIPHER_SUITES);
-        }
-    }
-
-    private boolean setBuilderX509(LeshanServerBuilder builder) {
-        try {
-            X509Certificate[] certificateChain = SslContextUtil.asX509Certificates(config.getKeyStoreValue().getCertificateChain(config.getCertificateAlias()));
-            X509Certificate serverCertificate = certificateChain[0];
-            PrivateKey privateKey = (PrivateKey) config.getKeyStoreValue().getKey(config.getCertificateAlias(), config.getCertificatePassword() == null ? null : config.getCertificatePassword().toCharArray());
-            PublicKey publicKey = serverCertificate.getPublicKey();
-            if (privateKey != null && privateKey.getEncoded().length > 0 && publicKey != null && publicKey.getEncoded().length > 0) {
-                builder.setPublicKey(serverCertificate.getPublicKey());
-                builder.setPrivateKey(privateKey);
-                builder.setCertificateChain(certificateChain);
-                return true;
-            } else {
-                return false;
-            }
-        } catch (Exception ex) {
-            log.error("[{}] Unable to load KeyStore  files server", ex.getMessage());
-            return false;
+            dtlsConfig.setAsList(DtlsConfig.DTLS_CIPHER_SUITES, PSK_CIPHER_SUITES);
         }
     }
 

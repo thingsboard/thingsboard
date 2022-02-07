@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.relation;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
@@ -33,7 +34,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class RelationsSearchParameters {
 
-    @ApiModelProperty(position = 1, value = "Root entity id to start search from.")
+    @ApiModelProperty(position = 1, value = "Root entity id to start search from.", example = "784f394c-42b6-435a-983c-b7beff2784f9")
     private UUID rootId;
     @ApiModelProperty(position = 2, value = "Type of the root entity.")
     private EntityType rootType;
@@ -59,6 +60,7 @@ public class RelationsSearchParameters {
         this.fetchLastLevelOnly = fetchLastLevelOnly;
     }
 
+    @JsonIgnore
     public EntityId getEntityId() {
         return EntityIdFactory.getByTypeAndUuid(rootType, rootId);
     }

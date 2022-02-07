@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -337,6 +337,21 @@ public class MqttClientTest extends AbstractContainerTest {
         // Delete the created rule chain
         restClient.getRestTemplate().delete(HTTPS_URL + "/api/ruleChain/{ruleChainId}", ruleChainId);
         restClient.getRestTemplate().delete(HTTPS_URL + "/api/device/" + device.getId());
+    }
+
+    @Test
+    public void deviceDeletedClosingSession() throws Exception {
+        restClient.login("tenant@thingsboard.org", "tenant");
+        String deviceForDeletingTestName = "Device for deleting notification test";
+        Device device = createDevice(deviceForDeletingTestName);
+        DeviceCredentials deviceCredentials = restClient.getDeviceCredentialsByDeviceId(device.getId()).get();
+
+        MqttMessageListener listener = new MqttMessageListener();
+        MqttClient mqttClient = getMqttClient(deviceCredentials, listener);
+
+        restClient.deleteDevice(device.getId());
+        TimeUnit.SECONDS.sleep(3);
+        Assert.assertFalse(mqttClient.isConnected());
     }
 
     private RuleChainId createRootRuleChainForRpcResponse() throws Exception {

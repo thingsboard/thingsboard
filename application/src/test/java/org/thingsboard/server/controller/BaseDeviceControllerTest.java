@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,6 +112,20 @@ public abstract class BaseDeviceControllerTest extends AbstractControllerTest {
 
         Device foundDevice = doGet("/api/device/" + savedDevice.getId().getId().toString(), Device.class);
         Assert.assertEquals(foundDevice.getName(), savedDevice.getName());
+    }
+
+    @Test
+    public void saveDeviceWithViolationOfValidation() throws Exception {
+        Device device = new Device();
+        device.setName(RandomStringUtils.randomAlphabetic(300));
+        device.setType("default");
+        doPost("/api/device", device).andExpect(statusReason(containsString("length of name must be equal or less than 255")));
+        device.setName("Normal Name");
+        device.setType(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/device", device).andExpect(statusReason(containsString("length of type must be equal or less than 255")));
+        device.setType("Normal type");
+        device.setLabel(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/device", device).andExpect(statusReason(containsString("length of label must be equal or less than 255")));
     }
 
     @Test

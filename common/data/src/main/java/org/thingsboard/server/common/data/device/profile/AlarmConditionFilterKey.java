@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,21 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.Serializable;
 
+@ApiModel
 @Data
 public class AlarmConditionFilterKey implements Serializable {
 
+    @ApiModelProperty(position = 1, value = "The key type", example = "TIME_SERIES")
     private final AlarmConditionKeyType type;
     @NoXss
+    @ApiModelProperty(position = 2, value = "String value representing the key", example = "temp")
     private final String key;
 
 }

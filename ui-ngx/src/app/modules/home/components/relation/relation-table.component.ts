@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,16 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  Input,
+  OnInit,
+  ViewChild
+} from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { PageLink } from '@shared/models/page/page-link';
 import { MatPaginator } from '@angular/material/paginator';
@@ -38,6 +47,8 @@ import {
 import { EntityId } from '@shared/models/id/entity-id';
 import { RelationsDatasource } from '../../models/datasource/relation-datasource';
 import { RelationDialogComponent, RelationDialogData } from '@home/components/relation/relation-dialog.component';
+import { hidePageSizePixelValue } from '@shared/models/constants';
+import { ResizeObserver } from '@juggle/resize-observer';
 
 @Component({
   selector: 'tb-relation-table',
@@ -56,6 +67,7 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
   displayedColumns: string[];
   direction: EntitySearchDirection;
   pageLink: PageLink;
+  hidePageSize = false;
   textSearchMode = false;
   dataSource: RelationsDatasource;
 
@@ -64,6 +76,8 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
   entityIdValue: EntityId;
 
   viewsInited = false;
+
+  private widgetResize$: ResizeObserver;
 
   @Input()
   set active(active: boolean) {
@@ -100,7 +114,9 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
               private entityRelationService: EntityRelationService,
               public translate: TranslateService,
               public dialog: MatDialog,
-              private dialogService: DialogService) {
+              private dialogService: DialogService,
+              private cd: ChangeDetectorRef,
+              private elementRef: ElementRef) {
     super(store);
     this.dirtyValue = !this.activeValue;
     const sortOrder: SortOrder = { property: 'type', direction: Direction.ASC };
@@ -111,6 +127,20 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
   }
 
   ngOnInit() {
+    this.widgetResize$ = new ResizeObserver(() => {
+      const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+      if (showHidePageSize !== this.hidePageSize) {
+        this.hidePageSize = showHidePageSize;
+        this.cd.markForCheck();
+      }
+    });
+    this.widgetResize$.observe(this.elementRef.nativeElement);
+  }
+
+  ngOnDestroy() {
+    if (this.widgetResize$) {
+      this.widgetResize$.disconnect();
+    }
   }
 
   updateColumns() {
@@ -124,6 +154,7 @@ export class RelationTableComponent extends PageComponent implements AfterViewIn
   directionChanged(direction: EntitySearchDirection) {
     this.direction = direction;
     this.updateColumns();
+    this.paginator.pageIndex = 0;
     this.updateData(true);
   }
 

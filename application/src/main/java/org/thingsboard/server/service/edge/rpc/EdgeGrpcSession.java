@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkResponseMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.v1.EdgeUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.EntityDataProto;
 import org.thingsboard.server.gen.edge.v1.EntityViewsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.RelationRequestMsg;
@@ -73,14 +74,11 @@ import org.thingsboard.server.service.edge.rpc.fetch.GeneralEdgeEventFetcher;
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
@@ -108,6 +106,8 @@ public final class EdgeGrpcSession implements Closeable {
     private StreamObserver<ResponseMsg> outputStream;
     private boolean connected;
     private boolean syncCompleted;
+
+    private EdgeVersion edgeVersion;
 
     private ScheduledExecutorService sendDownlinkExecutorService;
 
@@ -501,8 +501,9 @@ public final class EdgeGrpcSession implements Closeable {
 
     private ListenableFuture<List<Void>> updateQueueStartTs(Long newStartTs) {
         log.trace("[{}] updating QueueStartTs [{}][{}]", this.sessionId, edge.getId(), newStartTs);
-        newStartTs = ++newStartTs; // increments ts by 1 - next edge event search starts from current offset + 1
-        List<AttributeKvEntry> attributes = Collections.singletonList(new BaseAttributeKvEntry(new LongDataEntry(QUEUE_START_TS_ATTR_KEY, newStartTs), System.currentTimeMillis()));
+        List<AttributeKvEntry> attributes = Collections.singletonList(
+                new BaseAttributeKvEntry(
+                        new LongDataEntry(QUEUE_START_TS_ATTR_KEY, newStartTs), System.currentTimeMillis()));
         return ctx.getAttributesService().save(edge.getTenantId(), edge.getId(), DataConstants.SERVER_SCOPE, attributes);
     }
 
@@ -525,7 +526,7 @@ public final class EdgeGrpcSession implements Closeable {
             case RULE_CHAIN:
                 return ctx.getRuleChainProcessor().processRuleChainToEdge(edge, edgeEvent, msgType, action);
             case RULE_CHAIN_METADATA:
-                return ctx.getRuleChainProcessor().processRuleChainMetadataToEdge(edgeEvent, msgType);
+                return ctx.getRuleChainProcessor().processRuleChainMetadataToEdge(edgeEvent, msgType, this.edgeVersion);
             case ALARM:
                 return ctx.getAlarmProcessor().processAlarmToEdge(edge, edgeEvent, msgType, action);
             case USER:
@@ -655,6 +656,7 @@ public final class EdgeGrpcSession implements Closeable {
             try {
                 if (edge.getSecret().equals(request.getEdgeSecret())) {
                     sessionOpenListener.accept(edge.getId(), this);
+                    this.edgeVersion = request.getEdgeVersion();
                     return ConnectResponseMsg.newBuilder()
                             .setResponseCode(ConnectResponseCode.ACCEPTED)
                             .setErrorMsg("")

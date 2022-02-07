@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,6 +91,13 @@ public abstract class BaseDashboardControllerTest extends AbstractControllerTest
         
         Dashboard foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
         Assert.assertEquals(foundDashboard.getTitle(), savedDashboard.getTitle());
+    }
+
+    @Test
+    public void testSaveDashboardInfoWithViolationOfValidation() throws Exception {
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/dashboard", dashboard).andExpect(statusReason(containsString("length of title must be equal or less than 255")));
     }
 
     @Test

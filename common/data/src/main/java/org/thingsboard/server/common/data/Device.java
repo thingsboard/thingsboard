@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.ByteArrayInputStream;
@@ -44,10 +45,13 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
     private TenantId tenantId;
     private CustomerId customerId;
     @NoXss
+    @Length(fieldName = "name")
     private String name;
     @NoXss
+    @Length(fieldName = "type")
     private String type;
     @NoXss
+    @Length(fieldName = "label")
     private String label;
     private DeviceProfileId deviceProfileId;
     private transient DeviceData deviceData;
@@ -92,10 +96,10 @@ public class Device extends SearchTextBasedWithAdditionalInfo<DeviceId> implemen
         return this;
     }
 
-    @ApiModelProperty(position = 1, value = "JSON object with the device Id. " +
-            "Specify this field to update the device. " +
-            "Referencing non-existing device Id will cause error. " +
-            "Omit this field to create new device." )
+    @ApiModelProperty(position = 1, value = "JSON object with the Device Id. " +
+            "Specify this field to update the Device. " +
+            "Referencing non-existing Device Id will cause error. " +
+            "Omit this field to create new Device." )
     @Override
     public DeviceId getId() {
         return super.getId();

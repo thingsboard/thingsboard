@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -179,19 +179,26 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
                 if (key.equals(ENTITY_ID)) {
                     stmtBuilder.setUuid(i.get(), msg.getOriginator().getId());
                 } else if (dataAsObject.has(key)) {
-                    if (dataAsObject.get(key).isJsonPrimitive()) {
-                        JsonPrimitive primitive = dataAsObject.get(key).getAsJsonPrimitive();
+                    JsonElement dataKeyElement = dataAsObject.get(key);
+                    if (dataKeyElement.isJsonPrimitive()) {
+                        JsonPrimitive primitive = dataKeyElement.getAsJsonPrimitive();
                         if (primitive.isNumber()) {
-                            stmtBuilder.setLong(i.get(), dataAsObject.get(key).getAsLong());
+                            if (primitive.getAsString().contains(".")) {
+                                stmtBuilder.setDouble(i.get(), primitive.getAsDouble());
+                            } else {
+                                stmtBuilder.setLong(i.get(), primitive.getAsLong());
+                            }
                         } else if (primitive.isBoolean()) {
-                            stmtBuilder.setBoolean(i.get(), dataAsObject.get(key).getAsBoolean());
+                            stmtBuilder.setBoolean(i.get(), primitive.getAsBoolean());
                         } else if (primitive.isString()) {
-                            stmtBuilder.setString(i.get(), dataAsObject.get(key).getAsString());
+                            stmtBuilder.setString(i.get(), primitive.getAsString());
                         } else {
                             stmtBuilder.setToNull(i.get());
                         }
+                    } else if (dataKeyElement.isJsonObject()) {
+                        stmtBuilder.setString(i.get(), dataKeyElement.getAsJsonObject().toString());
                     } else {
-                        throw new IllegalStateException("Message data key: '" + key + "' with value: '" + value + "' is not a JSON Primitive!");
+                        throw new IllegalStateException("Message data key: '" + key + "' with value: '" + value + "' is not a JSON Object or JSON Primitive!");
                     }
                 } else {
                     throw new RuntimeException("Message data doesn't contain key: " + "'" + key + "'!");
@@ -213,7 +220,7 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
         if (statement.getConsistencyLevel() == null) {
             statement.setConsistencyLevel(level);
         }
-        return ctx.submitCassandraTask(new CassandraStatementTask(ctx.getTenantId(), getSession(), statement));
+        return ctx.submitCassandraWriteTask(new CassandraStatementTask(ctx.getTenantId(), getSession(), statement));
     }
 
     private static String statementToString(Statement statement) {

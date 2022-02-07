@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.CoapDeviceType;
 import org.thingsboard.server.common.data.TransportPayloadType;
@@ -39,14 +39,14 @@ import static org.junit.Assert.assertTrue;
 @Slf4j
 public abstract class AbstractCoapAttributesProtoIntegrationTest extends AbstractCoapAttributesIntegrationTest {
 
-    @After
-    public void afterTest() throws Exception {
-        processAfterTest();
+    @Before
+    @Override
+    public void beforeTest() throws Exception {
+        processBeforeTest("Test Post Attributes device Proto", CoapDeviceType.DEFAULT, TransportPayloadType.PROTOBUF);
     }
 
     @Test
     public void testPushAttributes() throws Exception {
-        super.processBeforeTest("Test Post Attributes device Proto", CoapDeviceType.DEFAULT, TransportPayloadType.PROTOBUF);
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
         assertTrue(transportConfiguration instanceof CoapDeviceProfileTransportConfiguration);
         CoapDeviceProfileTransportConfiguration coapTransportConfiguration = (CoapDeviceProfileTransportConfiguration) transportConfiguration;
@@ -90,7 +90,6 @@ public abstract class AbstractCoapAttributesProtoIntegrationTest extends Abstrac
 
     @Test
     public void testPushAttributesWithExplicitPresenceProtoKeys() throws Exception {
-        super.processBeforeTest("Test Post Attributes device Proto", CoapDeviceType.DEFAULT, TransportPayloadType.PROTOBUF);
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
         assertTrue(transportConfiguration instanceof CoapDeviceProfileTransportConfiguration);
         CoapDeviceProfileTransportConfiguration coapTransportConfiguration = (CoapDeviceProfileTransportConfiguration) transportConfiguration;

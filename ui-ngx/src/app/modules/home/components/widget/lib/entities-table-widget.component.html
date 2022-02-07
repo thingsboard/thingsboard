@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2021 The Thingsboard Authors
+    Copyright © 2016-2022 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@
       <table mat-table [dataSource]="entityDatasource" [trackBy]="trackByEntityId"
                  matSort [matSortActive]="sortOrderProperty" [matSortDirection]="pageLinkSortDirection()" matSortDisableClear>
         <ng-container [matColumnDef]="column.def" *ngFor="let column of columns; trackBy: trackByColumnDef;">
-          <mat-header-cell [ngStyle]="headerStyle(column)" *matHeaderCellDef mat-sort-header> {{ column.title }} </mat-header-cell>
+          <mat-header-cell [ngStyle]="headerStyle(column)" *matHeaderCellDef mat-sort-header [disabled]="!column.sortable"> {{ column.title }} </mat-header-cell>
           <mat-cell *matCellDef="let entity; let row = index"
                     [innerHTML]="cellContent(entity, column, row)"
                     [ngStyle]="cellStyle(entity, column, row)">
@@ -95,7 +95,7 @@
       </table>
       <span [fxShow]="(entityDatasource.isEmpty() | async) && !entityDatasource.dataLoading"
             fxLayoutAlign="center center"
-            class="no-data-found" translate>entity.no-entities-prompt</span>
+            class="no-data-found">{{ noDataDisplayMessageText }}</span>
       <span [fxShow]="entityDatasource.dataLoading"
             fxLayoutAlign="center center"
             class="no-data-found">{{ 'common.loading' | translate }}</span>
@@ -106,6 +106,7 @@
                    [pageIndex]="pageLink.page"
                    [pageSize]="pageLink.pageSize"
                    [pageSizeOptions]="pageSizeOptions"
+                   [hidePageSize]="hidePageSize"
                    showFirstLastButtons></mat-paginator>
   </div>
 </div>

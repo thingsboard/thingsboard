@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -67,6 +67,8 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
 
   displayTransportConfiguration: boolean;
 
+  isTransportTypeChanged = false;
+
   serviceType = ServiceType.TB_RULE_ENGINE;
 
   deviceProfileId: EntityId;
@@ -103,7 +105,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     };
     const form = this.fb.group(
       {
-        name: [entity ? entity.name : '', [Validators.required]],
+        name: [entity ? entity.name : '', [Validators.required, Validators.maxLength(255)]],
         type: [entity ? entity.type : null, [Validators.required]],
         image: [entity ? entity.image : null],
         transportType: [entity ? entity.transportType : null, [Validators.required]],
@@ -158,6 +160,7 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     const deviceTransportType: DeviceTransportType = form.get('transportType').value;
     this.displayTransportConfiguration = deviceTransportType &&
       deviceTransportTypeConfigurationInfoMap.get(deviceTransportType).hasProfileConfiguration;
+    this.isTransportTypeChanged = true;
     let profileData: DeviceProfileData = form.getRawValue().profileData;
     if (!profileData) {
       profileData = {

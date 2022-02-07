@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2021 The Thingsboard Authors
+# Copyright © 2016-2022 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -88,6 +88,9 @@ transport:
   mqtt:
     bind_address: "${MQTT_BIND_ADDRESS:0.0.0.0}"
     bind_port: "${MQTT_BIND_PORT:1883}"
+    # Enable proxy protocol support. Disabled by default. If enabled, supports both v1 and v2.
+    # Useful to get the real IP address of the client in the logs and for rate limits.
+    proxy_enabled: "${MQTT_PROXY_PROTOCOL_ENABLED:false}"
     timeout: "${MQTT_TIMEOUT:10000}"
     msg_queue_size_per_device_limit: "${MQTT_MSG_QUEUE_SIZE_PER_DEVICE_LIMIT:100}" # messages await in the queue before device connected state. This limit works on low level before TenantProfileLimits mechanism
     netty:
@@ -104,16 +107,32 @@ transport:
       bind_address: "${MQTT_SSL_BIND_ADDRESS:0.0.0.0}"
       # MQTT SSL bind port
       bind_port: "${MQTT_SSL_BIND_PORT:8883}"
-      # SSL protocol: See http://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#SSLContext
+      # SSL protocol: See https://docs.oracle.com/en/java/javase/11/docs/specs/security/standard-names.html#sslcontext-algorithms
       protocol: "${MQTT_SSL_PROTOCOL:TLSv1.2}"
-      # Path to the key store that holds the SSL certificate
-      key_store: "${MQTT_SSL_KEY_STORE:mqttserver.jks}"
-      # Password used to access the key store
-      key_store_password: "${MQTT_SSL_KEY_STORE_PASSWORD:server_ks_password}"
-      # Password used to access the key
-      key_password: "${MQTT_SSL_KEY_PASSWORD:server_key_password}"
-      # Type of the key store
-      key_store_type: "${MQTT_SSL_KEY_STORE_TYPE:JKS}"
+      # Server SSL credentials
+      credentials:
+        # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
+        type:  "${MQTT_SSL_CREDENTIALS_TYPE:PEM}"
+        # PEM server credentials
+        pem:
+          # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
+          cert_file: "${MQTT_SSL_PEM_CERT:mqttserver.pem}"
+          # Path to the server certificate private key file. Optional by default. Required if the private key is not present in server certificate file;
+          key_file: "${MQTT_SSL_PEM_KEY:mqttserver_key.pem}"
+          # Server certificate private key password (optional)
+          key_password: "${MQTT_SSL_PEM_KEY_PASSWORD:server_key_password}"
+        # Keystore server credentials
+        keystore:
+          # Type of the key store
+          type: "${MQTT_SSL_KEY_STORE_TYPE:JKS}"
+          # Path to the key store that holds the SSL certificate
+          store_file: "${MQTT_SSL_KEY_STORE:mqttserver.jks}"
+          # Password used to access the key store
+          store_password: "${MQTT_SSL_KEY_STORE_PASSWORD:server_ks_password}"
+          # Optional alias of the private key; If not set, the platform will load the first private key from the keystore;
+          key_alias: "${MQTT_SSL_KEY_ALIAS:}"
+          # Password used to access the key
+          key_password: "${MQTT_SSL_KEY_PASSWORD:server_key_password}"
       # Skip certificate validity check for client certificates.
       skip_validity_check_for_client_cert: "${MQTT_SSL_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
   sessions:
@@ -130,6 +149,15 @@ transport:
   stats:
     enabled: "${TB_TRANSPORT_STATS_ENABLED:true}"
     print-interval-ms: "${TB_TRANSPORT_STATS_PRINT_INTERVAL_MS:60000}"
+  client_side_rpc:
+    timeout: "${CLIENT_SIDE_RPC_TIMEOUT:60000}"
+  rate_limits:
+    # Enable or disable generic rate limits. Device and Tenant specific rate limits are controlled in Tenant Profile.
+    ip_limits_enabled: "${TB_TRANSPORT_IP_RATE_LIMITS_ENABLED:false}"
+    # Maximum number of connect attempts with invalid credentials
+    max_wrong_credentials_per_ip: "${TB_TRANSPORT_MAX_WRONG_CREDENTIALS_PER_IP:10}"
+    # Timeout to expire block IP addresses
+    ip_block_timeout: "${TB_TRANSPORT_IP_BLOCK_TIMEOUT:60000}"
 
 
 queue:
@@ -261,7 +289,7 @@ queue:
           # For BATCH only
           batch-size: "${TB_QUEUE_RE_MAIN_SUBMIT_STRATEGY_BATCH_SIZE:1000}" # Maximum number of messages in batch
         processing-strategy:
-          type: "${TB_QUEUE_RE_MAIN_PROCESSING_STRATEGY_TYPE:SKIP_ALL_FAILURES}" # SKIP_ALL_FAILURES, RETRY_ALL, RETRY_FAILED, RETRY_TIMED_OUT, RETRY_FAILED_AND_TIMED_OUT
+          type: "${TB_QUEUE_RE_MAIN_PROCESSING_STRATEGY_TYPE:SKIP_ALL_FAILURES}" # SKIP_ALL_FAILURES, SKIP_ALL_FAILURES_AND_TIMED_OUT, RETRY_ALL, RETRY_FAILED, RETRY_TIMED_OUT, RETRY_FAILED_AND_TIMED_OUT
           # For RETRY_ALL, RETRY_FAILED, RETRY_TIMED_OUT, RETRY_FAILED_AND_TIMED_OUT
           retries: "${TB_QUEUE_RE_MAIN_PROCESSING_STRATEGY_RETRIES:3}" # Number of retries, 0 is unlimited
           failure-percentage: "${TB_QUEUE_RE_MAIN_PROCESSING_STRATEGY_FAILURE_PERCENTAGE:0}" # Skip retry if failures or timeouts are less then X percentage of messages;
@@ -276,7 +304,7 @@ queue:
           # For BATCH only
           batch-size: "${TB_QUEUE_RE_HP_SUBMIT_STRATEGY_BATCH_SIZE:100}" # Maximum number of messages in batch
         processing-strategy:
-          type: "${TB_QUEUE_RE_HP_PROCESSING_STRATEGY_TYPE:RETRY_FAILED_AND_TIMED_OUT}" # SKIP_ALL_FAILURES, RETRY_ALL, RETRY_FAILED, RETRY_TIMED_OUT, RETRY_FAILED_AND_TIMED_OUT
+          type: "${TB_QUEUE_RE_HP_PROCESSING_STRATEGY_TYPE:RETRY_FAILED_AND_TIMED_OUT}" # SKIP_ALL_FAILURES, SKIP_ALL_FAILURES_AND_TIMED_OUT, RETRY_ALL, RETRY_FAILED, RETRY_TIMED_OUT, RETRY_FAILED_AND_TIMED_OUT
           # For RETRY_ALL, RETRY_FAILED, RETRY_TIMED_OUT, RETRY_FAILED_AND_TIMED_OUT
           retries: "${TB_QUEUE_RE_HP_PROCESSING_STRATEGY_RETRIES:0}" # Number of retries, 0 is unlimited
           failure-percentage: "${TB_QUEUE_RE_HP_PROCESSING_STRATEGY_FAILURE_PERCENTAGE:0}" # Skip retry if failures or timeouts are less then X percentage of messages;
@@ -291,7 +319,7 @@ queue:
           # For BATCH only
           batch-size: "${TB_QUEUE_RE_SQ_SUBMIT_STRATEGY_BATCH_SIZE:100}" # Maximum number of messages in batch
         processing-strategy:
-          type: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_TYPE:RETRY_FAILED_AND_TIMED_OUT}" # SKIP_ALL_FAILURES, RETRY_ALL, RETRY_FAILED, RETRY_TIMED_OUT, RETRY_FAILED_AND_TIMED_OUT
+          type: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_TYPE:RETRY_FAILED_AND_TIMED_OUT}" # SKIP_ALL_FAILURES, SKIP_ALL_FAILURES_AND_TIMED_OUT, RETRY_ALL, RETRY_FAILED, RETRY_TIMED_OUT, RETRY_FAILED_AND_TIMED_OUT
           # For RETRY_ALL, RETRY_FAILED, RETRY_TIMED_OUT, RETRY_FAILED_AND_TIMED_OUT
           retries: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_RETRIES:3}" # Number of retries, 0 is unlimited
           failure-percentage: "${TB_QUEUE_RE_SQ_PROCESSING_STRATEGY_FAILURE_PERCENTAGE:0}" # Skip retry if failures or timeouts are less then X percentage of messages;

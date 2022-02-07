@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,22 @@
 package org.thingsboard.server.common.data.widget;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @Data
 @JsonPropertyOrder({ "alias", "name", "image", "description", "descriptor" })
 public class WidgetTypeDetails extends WidgetType {
 
+    @Length(fieldName = "image", max = 1000000)
+    @ApiModelProperty(position = 8, value = "Base64 encoded thumbnail", readOnly = true)
     private String image;
     @NoXss
+    @Length(fieldName = "description")
+    @ApiModelProperty(position = 9, value = "Description of the widget", readOnly = true)
     private String description;
 
     public WidgetTypeDetails() {

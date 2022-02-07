@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public interface UserRepository extends PagingAndSortingRepository<UserEntity, U
 
     @Query("SELECT u FROM UserEntity u WHERE u.tenantId = :tenantId " +
             "AND u.customerId = :customerId AND u.authority = :authority " +
-            "AND LOWER(u.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
+            "AND LOWER(u.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     Page<UserEntity> findUsersByAuthority(@Param("tenantId") UUID tenantId,
                                           @Param("customerId") UUID customerId,
                                           @Param("searchText") String searchText,
@@ -42,7 +42,7 @@ public interface UserRepository extends PagingAndSortingRepository<UserEntity, U
                                           Pageable pageable);
 
     @Query("SELECT u FROM UserEntity u WHERE u.tenantId = :tenantId " +
-            "AND LOWER(u.searchText) LIKE LOWER(CONCAT(:searchText, '%'))")
+            "AND LOWER(u.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     Page<UserEntity> findByTenantId(@Param("tenantId") UUID tenantId,
                                     @Param("searchText") String searchText,
                                     Pageable pageable);

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,8 +174,7 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
                 query.getStartTs(),
                 query.getEndTs(),
                 PageRequest.of(0, query.getLimit(),
-                        Sort.by(Sort.Direction.fromString(
-                                query.getOrder()), "ts")));
+                        Sort.by(new Sort.Order(Sort.Direction.fromString(query.getOrder()),  "ts").nullsNative())));;
         timescaleTsKvEntities.forEach(tsKvEntity -> tsKvEntity.setStrKey(strKey));
         return Futures.immediateFuture(DaoUtil.convertDataList(timescaleTsKvEntities));
     }

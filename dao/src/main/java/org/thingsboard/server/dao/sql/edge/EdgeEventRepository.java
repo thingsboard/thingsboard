@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,13 @@ public interface EdgeEventRepository extends PagingAndSortingRepository<EdgeEven
     @Query("SELECT e FROM EdgeEventEntity e WHERE " +
             "e.tenantId = :tenantId " +
             "AND e.edgeId = :edgeId " +
-            "AND (:startTime IS NULL OR e.createdTime >= :startTime) " +
-            "AND (:endTime IS NULL OR e.createdTime <= :endTime) "
+            "AND (:startTime IS NULL OR e.createdTime > :startTime) " +
+            "AND (:endTime IS NULL OR e.createdTime <= :endTime) " +
+            "AND LOWER(e.edgeEventType) LIKE LOWER(CONCAT('%', :textSearch, '%'))"
     )
     Page<EdgeEventEntity> findEdgeEventsByTenantIdAndEdgeId(@Param("tenantId") UUID tenantId,
                                                             @Param("edgeId") UUID edgeId,
+                                                            @Param("textSearch") String textSearch,
                                                             @Param("startTime") Long startTime,
                                                             @Param("endTime") Long endTime,
                                                             Pageable pageable);
@@ -42,12 +44,14 @@ public interface EdgeEventRepository extends PagingAndSortingRepository<EdgeEven
     @Query("SELECT e FROM EdgeEventEntity e WHERE " +
             "e.tenantId = :tenantId " +
             "AND e.edgeId = :edgeId " +
-            "AND (:startTime IS NULL OR e.createdTime >= :startTime) " +
+            "AND (:startTime IS NULL OR e.createdTime > :startTime) " +
             "AND (:endTime IS NULL OR e.createdTime <= :endTime) " +
-            "AND e.edgeEventAction <> 'TIMESERIES_UPDATED'"
+            "AND e.edgeEventAction <> 'TIMESERIES_UPDATED' " +
+            "AND LOWER(e.edgeEventType) LIKE LOWER(CONCAT('%', :textSearch, '%'))"
     )
     Page<EdgeEventEntity> findEdgeEventsByTenantIdAndEdgeIdWithoutTimeseriesUpdated(@Param("tenantId") UUID tenantId,
                                                                                     @Param("edgeId") UUID edgeId,
+                                                                                    @Param("textSearch") String textSearch,
                                                                                     @Param("startTime") Long startTime,
                                                                                     @Param("endTime") Long endTime,
                                                                                     Pageable pageable);

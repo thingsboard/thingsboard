@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ import {
   KeyFilter,
   updateDatasourceFromEntityInfo
 } from '@shared/models/query/query.models';
-import { filter, map, switchMap, takeUntil } from 'rxjs/operators';
+import { distinct, filter, map, switchMap, takeUntil } from 'rxjs/operators';
 import { AlarmDataListener } from '@core/api/alarm-data.service';
 import { RpcStatus } from '@shared/models/rpc.models';
 
@@ -106,6 +106,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   caulculateLegendData: boolean;
   displayLegend: boolean;
   stateData: boolean;
+  datasourcesOptional: boolean;
   decimals: number;
   units: string;
   comparisonEnabled: boolean;
@@ -139,6 +140,11 @@ export class WidgetSubscription implements IWidgetSubscription {
   executingSubjects: Array<Subject<any>>;
 
   subscribed = false;
+  widgetTimewindowChangedSubject: Subject<WidgetTimewindow> = new ReplaySubject<WidgetTimewindow>();
+
+  widgetTimewindowChanged$ = this.widgetTimewindowChangedSubject.asObservable().pipe(
+    distinct()
+  );
 
   constructor(subscriptionContext: WidgetSubscriptionContext, public options: WidgetSubscriptionOptions) {
     const subscriptionSubject = new ReplaySubject<IWidgetSubscription>();
@@ -176,6 +182,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.callbacks.dataLoading = this.callbacks.dataLoading || (() => {});
       this.callbacks.timeWindowUpdated = this.callbacks.timeWindowUpdated || (() => {});
       this.alarmSource = options.alarmSource;
+      this.datasourcesOptional = options.datasourcesOptional;
       this.alarmDataListener = null;
       this.alarms = emptyPageData();
       this.originalTimewindow = null;
@@ -207,6 +214,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.callbacks.timeWindowUpdated = this.callbacks.timeWindowUpdated || (() => {});
 
       this.configuredDatasources = this.ctx.utils.validateDatasources(options.datasources);
+      this.datasourcesOptional = options.datasourcesOptional;
       this.entityDataListeners = [];
       this.hasDataPageLink = options.hasDataPageLink;
       this.singleEntity = options.singleEntity;
@@ -387,7 +395,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   private prepareDataSubscriptions(): Observable<any> {
-    if (this.hasDataPageLink) {
+    if (this.hasDataPageLink || !this.configuredDatasources || !this.configuredDatasources.length) {
       this.hasResolvedData = true;
       this.notifyDataLoaded();
       return of(null);
@@ -443,7 +451,7 @@ export class WidgetSubscription implements IWidgetSubscription {
           }
         });
         this.configureLoadedData();
-        this.hasResolvedData = this.datasources.length > 0;
+        this.hasResolvedData = this.datasources.length > 0 || this.datasourcesOptional;
         this.updateDataTimewindow();
         this.notifyDataLoaded();
         this.onDataUpdated(true);
@@ -648,13 +656,13 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   sendOneWayCommand(method: string, params?: any, timeout?: number, persistent?: boolean,
-                    persistentPollingInterval?: number, requestUUID?: string): Observable<any> {
-    return this.sendCommand(true, method, params, timeout, persistent, persistentPollingInterval, requestUUID);
+                    persistentPollingInterval?: number, retries?: number, additionalInfo?: any, requestUUID?: string): Observable<any> {
+    return this.sendCommand(true, method, params, timeout, persistent, persistentPollingInterval, retries, additionalInfo, requestUUID);
   }
 
   sendTwoWayCommand(method: string, params?: any, timeout?: number, persistent?: boolean,
-                    persistentPollingInterval?: number, requestUUID?: string): Observable<any> {
-    return this.sendCommand(false, method, params, timeout, persistent, persistentPollingInterval, requestUUID);
+                    persistentPollingInterval?: number, retries?: number, additionalInfo?: any, requestUUID?: string): Observable<any> {
+    return this.sendCommand(false, method, params, timeout, persistent, persistentPollingInterval, retries, additionalInfo, requestUUID);
   }
 
   clearRpcError(): void {
@@ -671,7 +679,8 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   sendCommand(oneWayElseTwoWay: boolean, method: string, params?: any, timeout?: number,
-              persistent?: boolean, persistentPollingInterval?: number, requestUUID?: string): Observable<any> {
+              persistent?: boolean, persistentPollingInterval?: number, retries?: number,
+              additionalInfo?: any, requestUUID?: string): Observable<any> {
     if (!this.rpcEnabled) {
       return throwError(new Error('Rpc disabled!'));
     } else {
@@ -684,6 +693,8 @@ export class WidgetSubscription implements IWidgetSubscription {
         method,
         params,
         persistent,
+        retries,
+        additionalInfo,
         requestUUID
       };
       if (timeout && timeout > 0) {
@@ -805,6 +816,7 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   update(isTimewindowTypeChanged = false) {
     if (this.type !== widgetType.rpc) {
+      this.widgetTimewindowChangedSubject.next(this.timeWindowConfig);
       if (this.type === widgetType.alarm) {
         this.updateAlarmDataSubscription();
       } else {
@@ -1118,6 +1130,7 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   destroy(): void {
     this.unsubscribe();
+    this.widgetTimewindowChangedSubject.complete();
     for (const cafId of Object.keys(this.cafs)) {
       if (this.cafs[cafId]) {
         this.cafs[cafId]();

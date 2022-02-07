@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2021 The Thingsboard Authors
+    Copyright © 2016-2022 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -40,6 +40,9 @@
               <input matInput formControlName="name" required/>
               <mat-error *ngIf="deviceProfileDetailsFormGroup.get('name').hasError('required')">
                 {{ 'device-profile.name-required' | translate }}
+              </mat-error>
+              <mat-error *ngIf="deviceProfileDetailsFormGroup.get('name').hasError('maxlength')">
+                {{ 'device-profile.name-max-length' | translate }}
               </mat-error>
             </mat-form-field>
             <tb-rule-chain-autocomplete
@@ -97,6 +100,7 @@
           </mat-form-field>
           <tb-device-profile-transport-configuration
             formControlName="transportConfiguration"
+            isAdd="true"
             required>
           </tb-device-profile-transport-configuration>
         </form>

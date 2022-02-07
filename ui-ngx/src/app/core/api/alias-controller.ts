@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -323,6 +323,9 @@ export class AliasController implements IAliasController {
   }
 
   resolveDatasources(datasources: Array<Datasource>, singleEntity?: boolean): Observable<Array<Datasource>> {
+    if (!datasources || !datasources.length) {
+      return of([]);
+    }
     const toResolve = singleEntity ? [datasources[0]] : datasources;
     const observables = new Array<Observable<Datasource>>();
     toResolve.forEach((datasource) => {

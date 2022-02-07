@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ export class TenantComponent extends ContactBasedComponent<TenantInfo> {
   buildEntityForm(entity: TenantInfo): FormGroup {
     return this.fb.group(
       {
-        title: [entity ? entity.title : '', [Validators.required]],
+        title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
         tenantProfileId: [entity ? entity.tenantProfileId : null, [Validators.required]],
         additionalInfo: this.fb.group(
           {
@@ -99,6 +99,6 @@ export class TenantComponent extends ContactBasedComponent<TenantInfo> {
   }
 
   onTenantProfileUpdated() {
-    this.entitiesTableConfig.table.updateData(false);
+    this.entitiesTableConfig.updateData(false);
   }
 }

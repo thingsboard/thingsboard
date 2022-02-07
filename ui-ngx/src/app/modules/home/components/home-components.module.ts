@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -49,7 +49,6 @@ import { EntityAliasSelectComponent } from '@home/components/alias/entity-alias-
 import { DataKeysComponent } from '@home/components/widget/data-keys.component';
 import { DataKeyConfigDialogComponent } from '@home/components/widget/data-key-config-dialog.component';
 import { DataKeyConfigComponent } from '@home/components/widget/data-key-config.component';
-import { LegendConfigPanelComponent } from '@home/components/widget/legend-config-panel.component';
 import { LegendConfigComponent } from '@home/components/widget/legend-config.component';
 import { ManageWidgetActionsComponent } from '@home/components/widget/action/manage-widget-actions.component';
 import { WidgetActionDialogComponent } from '@home/components/widget/action/widget-action-dialog.component';
@@ -139,9 +138,16 @@ import { DisplayWidgetTypesPanelComponent } from '@home/components/dashboard-pag
 import { AlarmDurationPredicateValueComponent } from '@home/components/profile/alarm/alarm-duration-predicate-value.component';
 import { DashboardImageDialogComponent } from '@home/components/dashboard-page/dashboard-image-dialog.component';
 import { WidgetContainerComponent } from '@home/components/widget/widget-container.component';
-import { SnmpDeviceProfileTransportModule } from '@home/components/profile/device/snpm/snmp-device-profile-transport.module';
+import { SnmpDeviceProfileTransportModule } from '@home/components/profile/device/snmp/snmp-device-profile-transport.module';
 import { DeviceCredentialsModule } from '@home/components/device/device-credentials.module';
 import { DeviceProfileCommonModule } from '@home/components/profile/device/common/device-profile-common.module';
+import {
+  COMPLEX_FILTER_PREDICATE_DIALOG_COMPONENT_TOKEN,
+  DASHBOARD_PAGE_COMPONENT_TOKEN,
+  HOME_COMPONENTS_MODULE_TOKEN
+} from '@home/components/tokens';
+import { DashboardStateComponent } from '@home/components/dashboard-page/dashboard-state.component';
+import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
 
 @NgModule({
   declarations:
@@ -150,6 +156,7 @@ import { DeviceProfileCommonModule } from '@home/components/profile/device/commo
       AddEntityDialogComponent,
       DetailsPanelComponent,
       EntityDetailsPanelComponent,
+      EntityDetailsPageComponent,
       AuditLogTableComponent,
       AuditLogDetailsDialogComponent,
       EventContentDialogComponent,
@@ -182,7 +189,6 @@ import { DeviceProfileCommonModule } from '@home/components/profile/device/commo
       DataKeysComponent,
       DataKeyConfigComponent,
       DataKeyConfigDialogComponent,
-      LegendConfigPanelComponent,
       LegendConfigComponent,
       ManageWidgetActionsComponent,
       WidgetActionDialogComponent,
@@ -250,6 +256,7 @@ import { DeviceProfileCommonModule } from '@home/components/profile/device/commo
       TwilioSmsProviderConfigurationComponent,
       DashboardToolbarComponent,
       DashboardPageComponent,
+      DashboardStateComponent,
       DashboardLayoutComponent,
       EditWidgetComponent,
       DashboardWidgetSelectComponent,
@@ -277,6 +284,7 @@ import { DeviceProfileCommonModule } from '@home/components/profile/device/commo
     AddEntityDialogComponent,
     DetailsPanelComponent,
     EntityDetailsPanelComponent,
+    EntityDetailsPageComponent,
     AuditLogTableComponent,
     EventTableComponent,
     EdgeDownlinkTableHeaderComponent,
@@ -361,6 +369,7 @@ import { DeviceProfileCommonModule } from '@home/components/profile/device/commo
     TwilioSmsProviderConfigurationComponent,
     DashboardToolbarComponent,
     DashboardPageComponent,
+    DashboardStateComponent,
     DashboardLayoutComponent,
     EditWidgetComponent,
     DashboardWidgetSelectComponent,
@@ -377,7 +386,10 @@ import { DeviceProfileCommonModule } from '@home/components/profile/device/commo
     WidgetComponentService,
     CustomDialogService,
     ImportExportService,
-    {provide: EMBED_DASHBOARD_DIALOG_TOKEN, useValue: EmbedDashboardDialogComponent}
+    {provide: EMBED_DASHBOARD_DIALOG_TOKEN, useValue: EmbedDashboardDialogComponent},
+    {provide: COMPLEX_FILTER_PREDICATE_DIALOG_COMPONENT_TOKEN, useValue: ComplexFilterPredicateDialogComponent},
+    {provide: DASHBOARD_PAGE_COMPONENT_TOKEN, useValue: DashboardPageComponent},
+    {provide: HOME_COMPONENTS_MODULE_TOKEN, useValue: HomeComponentsModule }
   ]
 })
 export class HomeComponentsModule { }

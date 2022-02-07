@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.server.uplink;
 
 import org.eclipse.leshan.core.observation.Observation;
+import org.eclipse.leshan.core.request.CreateRequest;
 import org.eclipse.leshan.core.request.WriteCompositeRequest;
 import org.eclipse.leshan.core.request.WriteRequest;
 import org.eclipse.leshan.core.response.ReadCompositeResponse;
@@ -23,6 +24,7 @@ import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.server.registration.Registration;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
@@ -48,15 +50,19 @@ public interface LwM2mUplinkMsgHandler {
 
     void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt);
 
+    void onDeviceDelete(DeviceId deviceId);
+
     void onResourceUpdate(TransportProtos.ResourceUpdateMsg resourceUpdateMsgOpt);
 
     void onResourceDelete(TransportProtos.ResourceDeleteMsg resourceDeleteMsgOpt);
 
     void onAwakeDev(Registration registration);
 
-    void onWriteResponseOk(LwM2mClient client, String path, WriteRequest request);
+    void onWriteResponseOk(LwM2mClient client, String path, WriteRequest request, int code);
 
-    void onWriteCompositeResponseOk(LwM2mClient client, WriteCompositeRequest request);
+    void onCreateResponseOk(LwM2mClient client, String path, CreateRequest request);
+
+    void onWriteCompositeResponseOk(LwM2mClient client, WriteCompositeRequest request, int code);
 
     void onToTransportUpdateCredentials(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToTransportUpdateCredentialsProto updateCredentials);
 

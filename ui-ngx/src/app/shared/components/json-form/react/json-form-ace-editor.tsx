@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 import * as React from 'react';
+import * as ReactDOM from 'react-dom';
 import ThingsboardBaseComponent from './json-form-base-component';
 import reactCSS from 'reactcss';
 import Button from '@material-ui/core/Button';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
 import { IEditorProps } from 'react-ace/src/types';
 import { mergeMap } from 'rxjs/operators';
-import { loadAceDependencies } from '@shared/models/ace/ace.models';
+import { getAce } from '@shared/models/ace/ace.models';
 import { from } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { CircularProgress, IconButton } from '@material-ui/core';
 import { MouseEvent } from 'react';
 import { Help, HelpOutline } from '@material-ui/icons';
-import { position } from 'html2canvas/dist/types/css/property-descriptors/position';
 
 const ReactAce = React.lazy(() => {
-  return loadAceDependencies().pipe(
+  return getAce().pipe(
     mergeMap(() => {
       return from(import('react-ace'));
     })
@@ -43,6 +43,7 @@ interface ThingsboardAceEditorProps extends JsonFormFieldProps {
 
 interface ThingsboardAceEditorState extends JsonFormFieldState {
   isFull: boolean;
+  fullscreenContainerElement: Element;
   helpVisible: boolean;
   helpReady: boolean;
   focused: boolean;
@@ -50,7 +51,6 @@ interface ThingsboardAceEditorState extends JsonFormFieldState {
 
 class ThingsboardAceEditor extends React.Component<ThingsboardAceEditorProps, ThingsboardAceEditorState> {
 
-    hostElement: HTMLElement;
     private aceEditor: IEditorProps;
 
     constructor(props) {
@@ -65,6 +65,7 @@ class ThingsboardAceEditor extends React.Component<ThingsboardAceEditorProps, Th
         const value = props.value ? props.value + '' : '';
         this.state = {
             isFull: false,
+            fullscreenContainerElement: null,
             helpVisible: false,
             helpReady: true,
             value,
@@ -132,12 +133,8 @@ class ThingsboardAceEditor extends React.Component<ThingsboardAceEditorProps, Th
     }
 
     onToggleFull() {
-        this.setState({ isFull: !this.state.isFull });
-        this.props.onToggleFullscreen(this.hostElement, () => {
-          if (this.aceEditor) {
-            this.aceEditor.resize();
-            this.aceEditor.renderer.updateFull();
-          }
+        this.props.onToggleFullscreen((el) => {
+          this.setState({ isFull: !this.state.isFull, fullscreenContainerElement: el });
         });
     }
 
@@ -178,56 +175,61 @@ class ThingsboardAceEditor extends React.Component<ThingsboardAceEditorProps, Th
         if (this.state.isFull) {
             containerClass += ' fullscreen-form-field';
         }
-        return (
-          <div>
-            <div className='tb-json-form' ref={c => (this.hostElement = c)}>
-              <div className={containerClass}>
-                  <label className={labelClass}>{this.props.form.title}</label>
-                  <div className='json-form-ace-editor'>
-                      <div className='title-panel'>
-                          <label>{this.props.mode}</label>
-                          { this.props.onTidy ? <Button style={ styles.tidyButtonStyle }
-                                                       className='tidy-button' onClick={this.onTidy}>Tidy</Button> : null }
-                          { this.props.form.helpId ? <div style={ {position: 'relative', display: 'inline-block', marginLeft: '5px'} }>
-                            <IconButton color='primary'
-                                        className='help-button' onClick={this.onHelp}>
-                                        {this.state.helpVisible ? <Help /> : <HelpOutline /> }
-                             </IconButton>
-                            { this.state.helpVisible && !this.state.helpReady ?
-                              <div className='tb-absolute-fill help-button-loading'>
-                                <CircularProgress size={18} thickness={4}/>
-                               </div> : null }</div> : null }
-                          <Button style={ styles.tidyButtonStyle }
-                                  className='tidy-button' onClick={this.onToggleFull}>
-                            {this.state.isFull ?
-                              'Exit fullscreen' : 'Fullscreen'}
-                          </Button>
-                      </div>
-                      <React.Suspense fallback={<div>Loading...</div>}>
-                        <ReactAce  mode={this.props.mode}
-                                   height={this.state.isFull ? '100%' : '150px'}
-                                   width={this.state.isFull ? '100%' : '300px'}
-                                   theme='github'
-                                   onChange={this.onValueChanged}
-                                   onFocus={this.onFocus}
-                                   onBlur={this.onBlur}
-                                   onLoad={this.onLoad}
-                                   name={this.props.form.title}
-                                   value={this.state.value}
-                                   readOnly={this.props.form.readonly}
-                                   editorProps={{$blockScrolling: Infinity}}
-                                   enableBasicAutocompletion={true}
-                                   enableSnippets={true}
-                                   enableLiveAutocompletion={true}
-                                   style={style}/>
-                      </React.Suspense>
-                  </div>
-                  <div className='json-form-error'
-                       style={{opacity: this.props.valid ? '0' : '1'}}>{this.props.error}</div>
+        const formDom = (
+          <div className={containerClass}>
+            <label className={labelClass}>{this.props.form.title}</label>
+            <div className='json-form-ace-editor'>
+              <div className='title-panel'>
+                <label>{this.props.mode}</label>
+                { this.props.onTidy ? <Button style={ styles.tidyButtonStyle }
+                                              className='tidy-button' onClick={this.onTidy}>Tidy</Button> : null }
+                { this.props.form.helpId ? <div style={ {position: 'relative', display: 'inline-block', marginLeft: '5px'} }>
+                  <IconButton color='primary'
+                              className='help-button' onClick={this.onHelp}>
+                    {this.state.helpVisible ? <Help /> : <HelpOutline /> }
+                  </IconButton>
+                  { this.state.helpVisible && !this.state.helpReady ?
+                    <div className='tb-absolute-fill help-button-loading'>
+                      <CircularProgress size={18} thickness={4}/>
+                    </div> : null }</div> : null }
+                <Button style={ styles.tidyButtonStyle }
+                        className='tidy-button' onClick={this.onToggleFull}>
+                  {this.state.isFull ?
+                    'Exit fullscreen' : 'Fullscreen'}
+                </Button>
               </div>
+              <React.Suspense fallback={<div>Loading...</div>}>
+                <ReactAce  mode={this.props.mode}
+                           theme={'textmate'}
+                           height={this.state.isFull ? '100%' : '150px'}
+                           width={this.state.isFull ? '100%' : '300px'}
+                           onChange={this.onValueChanged}
+                           onFocus={this.onFocus}
+                           onBlur={this.onBlur}
+                           onLoad={this.onLoad}
+                           name={this.props.form.title}
+                           value={this.state.value}
+                           readOnly={this.props.form.readonly}
+                           editorProps={{$blockScrolling: Infinity}}
+                           enableBasicAutocompletion={true}
+                           enableSnippets={true}
+                           enableLiveAutocompletion={true}
+                           style={style}/>
+              </React.Suspense>
             </div>
+            <div className='json-form-error'
+                 style={{opacity: this.props.valid ? '0' : '1'}}>{this.props.error}</div>
           </div>
         );
+        if (this.state.isFull) {
+          return ReactDOM.createPortal(formDom, this.state.fullscreenContainerElement);
+        } else {
+          return (
+            <div>
+                {formDom}
+            </div>
+          );
+        }
     }
 }
 

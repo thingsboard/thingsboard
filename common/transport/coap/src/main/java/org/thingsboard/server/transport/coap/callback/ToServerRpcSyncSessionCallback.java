@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public class ToServerRpcSyncSessionCallback extends AbstractSyncSessionCallback 
     @Override
     public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg toServerResponse) {
         try {
-            respond(state.getAdaptor().convertToPublish(request.isConfirmable(), toServerResponse));
+            respond(state.getAdaptor().convertToPublish(toServerResponse));
         } catch (AdaptorException e) {
             log.trace("Failed to reply due to error", e);
             exchange.respond(CoAP.ResponseCode.INTERNAL_SERVER_ERROR);

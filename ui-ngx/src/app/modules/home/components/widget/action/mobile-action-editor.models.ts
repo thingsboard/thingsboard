@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -110,12 +110,6 @@ const processLocationFunction =
   '// - longitude - phone location longitude\n\n' +
   'showLocationDialog(\'Location\', latitude, longitude);\n' +
   '// saveEntityLocationAttributes(\'latitude\', \'longitude\', latitude, longitude);\n' +
-  '\n' +
-  'function showImageDialog(title, imageUrl) {\n' +
-  '    setTimeout(function() {\n' +
-  '        widgetContext.customDialog.customDialog(imageDialogTemplate, ImageDialogController, {imageUrl: imageUrl, title: title}).subscribe();\n' +
-  '    }, 100);\n' +
-  '}\n' +
   '\n' +
   'function saveEntityLocationAttributes(latitudeAttributeName, longitudeAttributeName, latitude, longitude) {\n' +
   '    if (entityId) {\n' +

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,10 +30,10 @@ import {
   DateRangeNavigatorPanelComponent,
   DateRangeNavigatorWidgetComponent
 } from '@home/components/widget/lib/date-range-navigator/date-range-navigator.component';
-import { MultipleInputWidgetComponent } from './lib/multiple-input-widget.component';
-import { TripAnimationComponent } from './trip-animation/trip-animation.component';
-import { PhotoCameraInputWidgetComponent } from './lib/photo-camera-input.component';
-import { GatewayFormComponent } from './lib/gateway/gateway-form.component';
+import { MultipleInputWidgetComponent } from '@home/components/widget/lib/multiple-input-widget.component';
+import { TripAnimationComponent } from '@home/components/widget/trip-animation/trip-animation.component';
+import { PhotoCameraInputWidgetComponent } from '@home/components/widget/lib/photo-camera-input.component';
+import { GatewayFormComponent } from '@home/components/widget/lib/gateway/gateway-form.component';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
 import { NavigationCardsWidgetComponent } from '@home/components/widget/lib/navigation-cards-widget.component';
 import { NavigationCardWidgetComponent } from '@home/components/widget/lib/navigation-card-widget.component';
@@ -41,6 +41,7 @@ import { EdgesOverviewWidgetComponent } from '@home/components/widget/lib/edges-
 import { JsonInputWidgetComponent } from '@home/components/widget/lib/json-input-widget.component';
 import { QrCodeWidgetComponent } from '@home/components/widget/lib/qrcode-widget.component';
 import { MarkdownWidgetComponent } from '@home/components/widget/lib/markdown-widget.component';
+import { SelectEntityDialogComponent } from '@home/components/widget/lib/maps/dialogs/select-entity-dialog.component';
 
 @NgModule({
   declarations:
@@ -62,7 +63,8 @@ import { MarkdownWidgetComponent } from '@home/components/widget/lib/markdown-wi
       NavigationCardsWidgetComponent,
       NavigationCardWidgetComponent,
       QrCodeWidgetComponent,
-      MarkdownWidgetComponent
+      MarkdownWidgetComponent,
+      SelectEntityDialogComponent
     ],
   imports: [
     CommonModule,

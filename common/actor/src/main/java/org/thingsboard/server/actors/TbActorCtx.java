@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.actors;
 
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 
 import java.util.List;
@@ -34,6 +35,8 @@ public interface TbActorCtx extends TbActorRef {
     TbActorRef getOrCreateChildActor(TbActorId actorId, Supplier<String> dispatcher, Supplier<TbActorCreator> creator);
 
     void broadcastToChildren(TbActorMsg msg);
+
+    void broadcastToChildrenByType(TbActorMsg msg, EntityType entityType);
 
     void broadcastToChildren(TbActorMsg msg, Predicate<TbActorId> childFilter);
 

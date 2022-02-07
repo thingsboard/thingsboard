@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
@@ -134,6 +135,11 @@ public class GatewayDeviceSessionCtx extends MqttDeviceAwareSessionContext imple
     @Override
     public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg toServerResponse) {
         // This feature is not supported in the TB IoT Gateway yet.
+    }
+
+    @Override
+    public void onDeviceDeleted(DeviceId deviceId) {
+        parent.onDeviceDeleted(this.getSessionInfo().getDeviceName());
     }
 
     private boolean isAckExpected(MqttMessage message) {

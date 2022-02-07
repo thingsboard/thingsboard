@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,6 +133,14 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         assertEquals(foundEntityView.getKeys(), telemetry);
     }
 
+    @Test
+    public void testSaveEntityViewWithViolationOfValidation() throws Exception {
+        EntityView entityView = createEntityView(RandomStringUtils.randomAlphabetic(300), 0, 0);
+        doPost("/api/entityView", entityView).andExpect(statusReason(containsString("length of name must be equal or less than 255")));
+        entityView.setName("Normal name");
+        entityView.setType(RandomStringUtils.randomAlphabetic(300));
+        doPost("/api/entityView", entityView).andExpect(statusReason(containsString("length of type must be equal or less than 255")));
+    }
 
     @Test
     public void testUpdateEntityViewFromDifferentTenant() throws Exception {

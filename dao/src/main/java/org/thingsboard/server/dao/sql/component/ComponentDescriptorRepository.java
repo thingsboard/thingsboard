@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,13 +34,13 @@ public interface ComponentDescriptorRepository extends PagingAndSortingRepositor
     ComponentDescriptorEntity findByClazz(String clazz);
 
     @Query("SELECT cd FROM ComponentDescriptorEntity cd WHERE cd.type = :type " +
-            "AND LOWER(cd.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+            "AND LOWER(cd.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<ComponentDescriptorEntity> findByType(@Param("type") ComponentType type,
                                                @Param("textSearch") String textSearch,
                                                Pageable pageable);
 
     @Query("SELECT cd FROM ComponentDescriptorEntity cd WHERE cd.type = :type " +
-            "AND cd.scope = :scope AND LOWER(cd.searchText) LIKE LOWER(CONCAT(:textSearch, '%'))")
+            "AND cd.scope = :scope AND LOWER(cd.searchText) LIKE LOWER(CONCAT('%', :textSearch, '%'))")
     Page<ComponentDescriptorEntity> findByScopeAndType(@Param("type") ComponentType type,
                                                        @Param("scope") ComponentScope scope,
                                                        @Param("textSearch") String textSearch,

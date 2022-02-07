@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 import {
   AfterViewInit,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   EventEmitter,
@@ -48,7 +49,7 @@ import cssjs from '@core/css/css';
 import { sortItems } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { CollectionViewer, DataSource, SelectionModel } from '@angular/cdk/collections';
-import { BehaviorSubject, forkJoin, fromEvent, merge, Observable } from 'rxjs';
+import { BehaviorSubject, forkJoin, fromEvent, merge, Observable, Subscription } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
 import { debounceTime, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
@@ -74,6 +75,7 @@ import {
   getColumnWidth,
   getRowStyleInfo,
   getTableCellButtonActions,
+  noDataMessage,
   prepareTableCellButtonActions,
   RowStyleInfo,
   TableCellButtonActionDescriptor,
@@ -122,6 +124,8 @@ import {
 } from '@home/components/widget/lib/alarm-filter-panel.component';
 import { entityFields } from '@shared/models/entity.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { ResizeObserver } from '@juggle/resize-observer';
+import { hidePageSizePixelValue } from '@shared/models/constants';
 
 interface AlarmsTableWidgetSettings extends TableWidgetSettings {
   alarmsTitle: string;
@@ -163,9 +167,11 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   public pageLink: AlarmDataPageLink;
   public sortOrderProperty: string;
   public textSearchMode = false;
+  public hidePageSize = false;
   public columns: Array<EntityColumn> = [];
   public displayedColumns: string[] = [];
   public alarmsDatasource: AlarmsDatasource;
+  public noDataDisplayMessageText: string;
   private setCellButtonAction: boolean;
 
   private cellContentCache: Array<any> = [];
@@ -175,6 +181,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   private settings: AlarmsTableWidgetSettings;
   private widgetConfig: WidgetConfig;
   private subscription: IWidgetSubscription;
+  private widgetResize$: ResizeObserver;
 
   private alarmsTitlePattern: string;
 
@@ -192,6 +199,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   private columnSelectionAvailability: {[key: string]: boolean} = {};
 
   private rowStylesInfo: RowStyleInfo;
+
+  private widgetTimewindowChanged$: Subscription;
 
   private searchAction: WidgetAction = {
     name: 'action.search',
@@ -231,7 +240,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
               private datePipe: DatePipe,
               private dialog: MatDialog,
               private dialogService: DialogService,
-              private alarmService: AlarmService) {
+              private alarmService: AlarmService,
+              private cd: ChangeDetectorRef) {
     super(store);
     this.pageLink = {
       page: 0,
@@ -248,6 +258,30 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.initializeConfig();
     this.updateAlarmSource();
     this.ctx.updateWidgetParams();
+
+    if (this.displayPagination) {
+      this.widgetTimewindowChanged$ = this.ctx.defaultSubscription.widgetTimewindowChanged$.subscribe(
+        () => this.pageLink.page = 0
+      );
+      this.widgetResize$ = new ResizeObserver(() => {
+        const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+        if (showHidePageSize !== this.hidePageSize) {
+          this.hidePageSize = showHidePageSize;
+          this.cd.markForCheck();
+        }
+      });
+      this.widgetResize$.observe(this.elementRef.nativeElement);
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.widgetTimewindowChanged$) {
+      this.widgetTimewindowChanged$.unsubscribe();
+      this.widgetTimewindowChanged$ = null;
+    }
+    if (this.widgetResize$) {
+      this.widgetResize$.disconnect();
+    }
   }
 
   ngAfterViewInit(): void {
@@ -341,6 +375,9 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.pageLink.statusList = alarmStatusList;
     this.pageLink.severityList = isDefined(this.widgetConfig.alarmSeverityList) ? this.widgetConfig.alarmSeverityList : [];
     this.pageLink.typeList = isDefined(this.widgetConfig.alarmTypeList) ? this.widgetConfig.alarmTypeList : [];
+
+    this.noDataDisplayMessageText =
+      noDataMessage(this.widgetConfig.noDataDisplayMessage, 'alarm.no-alarms-prompt', this.utils, this.translate);
 
     const cssString = constructTableCssString(this.widgetConfig);
     const cssParser = new cssjs();

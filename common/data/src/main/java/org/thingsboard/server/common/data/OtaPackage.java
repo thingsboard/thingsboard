@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,22 @@
  */
 package org.thingsboard.server.common.data;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 
 import java.nio.ByteBuffer;
 
+@ApiModel
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class OtaPackage extends OtaPackageInfo {
 
     private static final long serialVersionUID = 3091601761339422546L;
 
+    @ApiModelProperty(position = 16, value = "OTA Package data.", readOnly = true)
     private transient ByteBuffer data;
 
     public OtaPackage() {

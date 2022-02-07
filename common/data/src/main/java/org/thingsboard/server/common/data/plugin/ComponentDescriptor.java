@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.*;
 import org.thingsboard.server.common.data.SearchTextBased;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
+import org.thingsboard.server.common.data.validation.Length;
 
 /**
  * @author Andrew Shvayka
@@ -35,12 +36,14 @@ public class ComponentDescriptor extends SearchTextBased<ComponentDescriptorId> 
     @Getter @Setter private ComponentType type;
     @ApiModelProperty(position = 4, value = "Scope of the Rule Node. Always set to 'TENANT', since no rule chains on the 'SYSTEM' level yet.", readOnly = true, allowableValues = "TENANT", example = "TENANT")
     @Getter @Setter private ComponentScope scope;
+    @Length(fieldName = "name")
     @ApiModelProperty(position = 5, value = "Name of the Rule Node. Taken from the @RuleNode annotation.", readOnly = true, example = "Custom Rule Node")
     @Getter @Setter private String name;
     @ApiModelProperty(position = 6, value = "Full name of the Java class that implements the Rule Engine Node interface.", readOnly = true, example = "com.mycompany.CustomRuleNode")
     @Getter @Setter private String clazz;
     @ApiModelProperty(position = 7, value = "Complex JSON object that represents the Rule Node configuration.", readOnly = true)
     @Getter @Setter private transient JsonNode configurationDescriptor;
+    @Length(fieldName = "actions")
     @ApiModelProperty(position = 8, value = "Rule Node Actions. Deprecated. Always null.", readOnly = true)
     @Getter @Setter private String actions;
 
