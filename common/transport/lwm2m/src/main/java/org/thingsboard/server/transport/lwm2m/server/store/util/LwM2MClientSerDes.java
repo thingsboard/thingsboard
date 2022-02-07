@@ -31,6 +31,7 @@ import org.eclipse.leshan.server.redis.serialization.RegistrationSerDes;
 import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClientState;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.ResourceValue;
 
@@ -71,6 +72,8 @@ public class LwM2MClientSerDes {
             keyTsLatestMap.add(k, v.get());
         });
         o.add("keyTsLatestMap", keyTsLatestMap);
+
+        o.add("state", client.getState().toString());
 
         if (client.getSession() != null) {
             o.add("session", JsonFormat.printer().print(client.getSession()));
@@ -254,6 +257,8 @@ public class LwM2MClientSerDes {
         o.get("keyTsLatestMap").asObject().forEach(entry -> {
             lwM2mClient.getKeyTsLatestMap().put(entry.getName(), new AtomicLong(entry.getValue().asLong()));
         });
+
+        lwM2mClient.setState(LwM2MClientState.valueOf(o.get("state").asString()));
 
         Class<LwM2mClient> lwM2mClientClass = LwM2mClient.class;
 

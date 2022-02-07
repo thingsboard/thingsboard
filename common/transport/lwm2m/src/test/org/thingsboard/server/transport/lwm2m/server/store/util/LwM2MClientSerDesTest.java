@@ -27,6 +27,8 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
+import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClientState;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 
 import java.net.InetSocketAddress;
@@ -63,6 +65,10 @@ class LwM2MClientSerDesTest {
                         .build();
 
         client.setRegistration(registration);
+        client.setState(LwM2MClientState.REGISTERED);
+
+        client.getSharedAttributes().put("key1", TransportProtos.TsKvProto.newBuilder().setTs(0).setKv(TransportProtos.KeyValueProto.newBuilder().setStringV("test").build()).build());
+        client.getSharedAttributes().put("key2", TransportProtos.TsKvProto.newBuilder().setTs(1).setKv(TransportProtos.KeyValueProto.newBuilder().setDoubleV(1.02).build()).build());
 
         byte[] bytes = LwM2MClientSerDes.serialize(client);
         Assert.assertNotNull(bytes);
