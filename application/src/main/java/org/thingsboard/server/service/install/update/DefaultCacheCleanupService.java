@@ -64,6 +64,10 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
                 log.info("Clear cache to upgrade from version 3.3.2 to 3.3.3 ...");
                 clearAll();
                 break;
+            case "3.3.3":
+                log.info("Clear cache to upgrade from version 3.3.3 to 3.3.4 ...");
+                clearAll();
+                break;
             default:
                 //Do nothing, since cache cleanup is optional.
         }
