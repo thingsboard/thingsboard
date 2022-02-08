@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 package org.thingsboard.server.transport.lwm2m.server;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.observation.CompositeObservation;
 import org.eclipse.leshan.core.observation.Observation;
+import org.eclipse.leshan.core.observation.SingleObservation;
+import org.eclipse.leshan.core.response.ObserveCompositeResponse;
 import org.eclipse.leshan.core.response.ObserveResponse;
 import org.eclipse.leshan.server.observation.ObservationListener;
 import org.eclipse.leshan.server.queue.PresenceListener;
@@ -86,26 +89,34 @@ public class LwM2mServerListener {
 
         @Override
         public void cancelled(Observation observation) {
-            log.trace("Canceled Observation {}.", observation.getPath());
+            //TODO: should be able to use CompositeObservation
+            log.trace("Canceled Observation {}.", ((SingleObservation)observation).getPath());
         }
 
         @Override
-        public void onResponse(Observation observation, Registration registration, ObserveResponse response) {
+        public void onResponse(SingleObservation observation, Registration registration, ObserveResponse response) {
             if (registration != null) {
                 service.onUpdateValueAfterReadResponse(registration, convertObjectIdToVersionedId(observation.getPath().toString(), registration), response);
             }
         }
 
         @Override
+        public void onResponse(CompositeObservation observation, Registration registration, ObserveCompositeResponse response) {
+            throw new RuntimeException("Not implemented yet!");
+        }
+
+        @Override
         public void onError(Observation observation, Registration registration, Exception error) {
             if (error != null) {
-                log.debug("Unable to handle notification of [{}:{}] [{}]", observation.getRegistrationId(), observation.getPath(), error.getMessage());
+                //TODO: should be able to use CompositeObservation
+                log.debug("Unable to handle notification of [{}:{}] [{}]", observation.getRegistrationId(), ((SingleObservation)observation).getPath(), error.getMessage());
             }
         }
 
         @Override
         public void newObservation(Observation observation, Registration registration) {
-            log.trace("Successful start newObservation {}.", observation.getPath());
+            //TODO: should be able to use CompositeObservation
+            log.trace("Successful start newObservation {}.", ((SingleObservation)observation).getPath());
         }
     };
 }

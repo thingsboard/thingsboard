@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,10 +93,9 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
         float delta = (RANDOM.nextInt(20) - 10) / 10f;
         currentTemp += delta;
         Integer changedResource = adjustMinMaxMeasuredValue(currentTemp);
+        fireResourceChange(5700);
         if (changedResource != null) {
-            fireResourcesChange(5700, changedResource);
-        } else {
-            fireResourcesChange(5700);
+            fireResourceChange(changedResource);
         }
     }
 
@@ -125,7 +124,6 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
     @Override
     public void destroy() {
     }
-
 
 
 }

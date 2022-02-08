@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -313,16 +313,18 @@ public class JsonConverter {
         return result;
     }
 
-    public static JsonObject getJsonObjectForGateway(String deviceName, TransportProtos.GetAttributeResponseMsg
-            responseMsg) {
+    public static JsonObject getJsonObjectForGateway(
+            String deviceName,
+            TransportProtos.GetAttributeResponseMsg responseMsg
+    ) {
         JsonObject result = new JsonObject();
         result.addProperty("id", responseMsg.getRequestId());
         result.addProperty(DEVICE_PROPERTY, deviceName);
         if (responseMsg.getClientAttributeListCount() > 0) {
-            addValues(result, responseMsg.getClientAttributeListList());
+            addValues(result, responseMsg.getClientAttributeListList(), responseMsg.getIsMultipleAttributesRequest());
         }
         if (responseMsg.getSharedAttributeListCount() > 0) {
-            addValues(result, responseMsg.getSharedAttributeListList());
+            addValues(result, responseMsg.getSharedAttributeListList(), responseMsg.getIsMultipleAttributesRequest());
         }
         return result;
     }
@@ -335,8 +337,8 @@ public class JsonConverter {
         return result;
     }
 
-    private static void addValues(JsonObject result, List<TransportProtos.TsKvProto> kvList) {
-        if (kvList.size() == 1) {
+    private static void addValues(JsonObject result, List<TransportProtos.TsKvProto> kvList, boolean multipleAttrKeysRequested) {
+        if (kvList.size() == 1 && !multipleAttrKeysRequested) {
             addValueToJson(result, "value", kvList.get(0).getKv());
         } else {
             JsonObject values;

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -304,6 +304,18 @@ public class DefaultTelemetryWebSocketService implements TelemetryWebSocketServi
         WsSessionMetaData md = wsSessionsMap.get(sessionId);
         if (md != null) {
             sendWsMsg(md.getSessionRef(), cmdId, update);
+        }
+    }
+
+    @Override
+    public void close(String sessionId, CloseStatus status) {
+        WsSessionMetaData md = wsSessionsMap.get(sessionId);
+        if (md != null) {
+            try {
+                msgEndpoint.close(md.getSessionRef(), status);
+            } catch (IOException e) {
+                log.warn("[{}] Failed to send session close: {}", sessionId, e);
+            }
         }
     }
 

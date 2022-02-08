@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -88,7 +88,11 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
       textSearch: null,
       dynamic: true
     };
-    this.ctx.defaultSubscription.subscribeAllForPaginatedData(pageLink, null);
+    if (this.ctx.widgetConfig.datasources.length) {
+      this.ctx.defaultSubscription.subscribeAllForPaginatedData(pageLink, null);
+    } else {
+      this.onDataUpdated();
+    }
   }
 
   public onDataUpdated() {

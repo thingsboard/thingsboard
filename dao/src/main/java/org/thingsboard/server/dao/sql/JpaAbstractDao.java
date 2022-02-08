@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,6 +78,18 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     public ListenableFuture<D> findByIdAsync(TenantId tenantId, UUID key) {
         log.debug("Get entity by key async {}", key);
         return service.submit(() -> DaoUtil.getData(getCrudRepository().findById(key)));
+    }
+
+    @Override
+    public boolean existsById(TenantId tenantId, UUID key) {
+        log.debug("Exists by key {}", key);
+        return getCrudRepository().existsById(key);
+    }
+
+    @Override
+    public ListenableFuture<Boolean> existsByIdAsync(TenantId tenantId, UUID key) {
+        log.debug("Exists by key async {}", key);
+        return service.submit(() -> getCrudRepository().existsById(key));
     }
 
     @Override

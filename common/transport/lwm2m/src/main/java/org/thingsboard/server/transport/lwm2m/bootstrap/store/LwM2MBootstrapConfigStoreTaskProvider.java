@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.bootstrap.store;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.Link;
+import org.eclipse.leshan.core.link.Link;
 import org.eclipse.leshan.core.node.LwM2mObject;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.request.BootstrapDeleteRequest;
@@ -134,18 +134,18 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
         log.info("Object after discover: [{}]", objectLinks);
         this.securityInstances = new HashMap<>();
         for (Link link : objectLinks) {
-            if (link.getUrl().startsWith("/0/")) {
+            if (link.getUriReference().startsWith("/0/")) {
                 try {
-                    LwM2mPath path = new LwM2mPath(link.getUrl());
+                    LwM2mPath path = new LwM2mPath(link.getUriReference());
                     if (path.isObjectInstance()) {
-                        if (link.getAttributes().containsKey("ssid")) {
-                            int serverId = Integer.parseInt(link.getAttributes().get("ssid"));
+                        if (link.getLinkParams().containsKey("ssid")) {
+                            int serverId = Integer.parseInt(link.getLinkParams().get("ssid").getUnquoted());
                             if (!this.securityInstances.containsKey(serverId)) {
                                 this.securityInstances.put(serverId, path.getObjectInstanceId());
                             } else {
                                 log.error("Invalid lwm2mSecurityInstance by [{}]", path.getObjectInstanceId());
                             }
-                            this.securityInstances.put(Integer.valueOf(link.getAttributes().get("ssid")), path.getObjectInstanceId());
+                            this.securityInstances.put(Integer.valueOf(link.getLinkParams().get("ssid").getUnquoted()), path.getObjectInstanceId());
                         } else {
                             if (!this.securityInstances.containsKey(0)) {
                                 this.securityInstances.put(0, path.getObjectInstanceId());
@@ -188,10 +188,10 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
     private void initAfterBootstrapDiscover(BootstrapDiscoverResponse response) {
         Link[] links = response.getObjectLinks();
         Arrays.stream(links).forEach(link -> {
-            LwM2mPath path = new LwM2mPath(link.getUrl());
+            LwM2mPath path = new LwM2mPath(link.getUriReference());
             if (!path.isRoot() && path.getObjectId() < 3) {
                 if (path.isObject()) {
-                    String ver = link.getAttributes().get("ver") != null ? link.getAttributes().get("ver") : "1.0";
+                    String ver = link.getLinkParams().get("ver") != null ? link.getLinkParams().get("ver").getUnquoted() : "1.0";
                     this.supportedObjects.put(path.getObjectId(), ver);
                 }
             }

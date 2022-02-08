@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,7 +126,7 @@ public class JwtTokenFactory {
         securityUser.setUserPrincipal(principal);
         String tenantId = claims.get(TENANT_ID, String.class);
         if (tenantId != null) {
-            securityUser.setTenantId(new TenantId(UUID.fromString(tenantId)));
+            securityUser.setTenantId(TenantId.fromUUID(UUID.fromString(tenantId)));
         }
         String customerId = claims.get(CUSTOMER_ID, String.class);
         if (customerId != null) {

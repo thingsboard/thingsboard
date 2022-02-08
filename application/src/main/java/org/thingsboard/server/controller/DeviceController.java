@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.rule.engine.api.msg.DeviceCredentialsUpdateNotificationMsg;
-import org.thingsboard.rule.engine.api.msg.DeviceEdgeUpdateMsg;
 import org.thingsboard.server.common.data.ClaimRequest;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
@@ -74,6 +73,7 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.device.DeviceBulkImportService;
+import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
 import org.thingsboard.server.service.importing.BulkImportRequest;
 import org.thingsboard.server.service.importing.BulkImportResult;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -127,6 +127,8 @@ public class DeviceController extends BaseController {
     protected static final String TENANT_ID = "tenantId";
 
     private final DeviceBulkImportService deviceBulkImportService;
+
+    private final GatewayNotificationsService gatewayNotificationsService;
 
     @ApiOperation(value = "Get Device (getDeviceById)",
             notes = "Fetch the Device object based on the provided Device Id. " +
@@ -263,6 +265,7 @@ public class DeviceController extends BaseController {
 
             deviceService.deleteDevice(getCurrentUser().getTenantId(), deviceId);
 
+            gatewayNotificationsService.onDeviceDeleted(device);
             tbClusterService.onDeviceDeleted(device, null);
 
             logEntityAction(deviceId, device,
@@ -807,7 +810,7 @@ public class DeviceController extends BaseController {
             DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
             Device device = checkDeviceId(deviceId, Operation.ASSIGN_TO_TENANT);
 
-            TenantId newTenantId = new TenantId(toUUID(strTenantId));
+            TenantId newTenantId = TenantId.fromUUID(toUUID(strTenantId));
             Tenant newTenant = tenantService.findTenantById(newTenantId);
             if (newTenant == null) {
                 throw new ThingsboardException("Could not find the specified Tenant!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
@@ -871,9 +874,6 @@ public class DeviceController extends BaseController {
 
             Device savedDevice = checkNotNull(deviceService.assignDeviceToEdge(getCurrentUser().getTenantId(), deviceId, edgeId));
 
-            tbClusterService.pushMsgToCore(new DeviceEdgeUpdateMsg(savedDevice.getTenantId(),
-                    savedDevice.getId(), edgeId), null);
-
             logEntityAction(deviceId, savedDevice,
                     savedDevice.getCustomerId(),
                     ActionType.ASSIGNED_TO_EDGE, null, strDeviceId, strEdgeId, edge.getName());
@@ -913,9 +913,6 @@ public class DeviceController extends BaseController {
             Device device = checkDeviceId(deviceId, Operation.READ);
 
             Device savedDevice = checkNotNull(deviceService.unassignDeviceFromEdge(getCurrentUser().getTenantId(), deviceId, edgeId));
-
-            tbClusterService.pushMsgToCore(new DeviceEdgeUpdateMsg(savedDevice.getTenantId(),
-                    savedDevice.getId(), null), null);
 
             logEntityAction(deviceId, device,
                     device.getCustomerId(),

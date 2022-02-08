@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ public class NoSecLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationT
 
     @Test
     public void testConnectAndObserveTelemetry() throws Exception {
-        NoSecClientCredential clientCredentials =  createNoSecClientCredentials(ENDPOINT);
-        super.basicTestConnectionObserveTelemetry(SECURITY, clientCredentials, COAP_CONFIG, ENDPOINT);
+        NoSecClientCredential clientCredentials =  createNoSecClientCredentials(CLIENT_ENDPOINT_NO_SEC);
+        super.basicTestConnectionObserveTelemetry(SECURITY, clientCredentials, COAP_CONFIG, CLIENT_ENDPOINT_NO_SEC);
     }
 
 }

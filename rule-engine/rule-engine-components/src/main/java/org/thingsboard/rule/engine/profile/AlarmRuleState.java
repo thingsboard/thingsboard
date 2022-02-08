@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,7 +151,7 @@ class AlarmRuleState {
 
     private AlarmSchedule getSchedule(DataSnapshot data, AlarmRule alarmRule) {
         AlarmSchedule schedule = alarmRule.getSchedule();
-        EntityKeyValue dynamicValue = getDynamicValue(data, schedule.getDynamicValue());
+        EntityKeyValue dynamicValue = getDynamicPredicateValue(data, schedule.getDynamicValue());
 
         if (dynamicValue != null) {
             try {
@@ -259,15 +259,7 @@ class AlarmRuleState {
         if (specType.equals(AlarmConditionSpecType.REPEATING)) {
             RepeatingAlarmConditionSpec repeating = (RepeatingAlarmConditionSpec) spec;
 
-            repeatingTimes = repeating.getPredicate().getDefaultValue();
-
-            if (repeating.getPredicate().getDynamicValue() != null &&
-                    repeating.getPredicate().getDynamicValue().getSourceAttribute() != null) {
-                EntityKeyValue repeatingKeyValue = getDynamicValue(data, repeating.getPredicate().getDynamicValue());
-                if (repeatingKeyValue != null) {
-                    repeatingTimes = repeatingKeyValue.getLngValue();
-                }
-            }
+            repeatingTimes = resolveDynamicValue(data, repeating.getPredicate());
         }
         return repeatingTimes;
     }
@@ -280,18 +272,29 @@ class AlarmRuleState {
             DurationAlarmConditionSpec duration = (DurationAlarmConditionSpec) spec;
             TimeUnit timeUnit = duration.getUnit();
 
-            durationTimeInMs = timeUnit.toMillis(duration.getPredicate().getDefaultValue());
+            durationTimeInMs = timeUnit.toMillis(resolveDynamicValue(data, duration.getPredicate()));
+        }
+        return durationTimeInMs;
+    }
 
-            if (duration.getPredicate().getDynamicValue() != null &&
-                    duration.getPredicate().getDynamicValue().getSourceAttribute() != null) {
-                EntityKeyValue durationKeyValue = getDynamicValue(data, duration.getPredicate().getDynamicValue());
-                if (durationKeyValue != null) {
-                    durationTimeInMs = timeUnit.toMillis(durationKeyValue.getLngValue());
-                }
-            }
+    private Long resolveDynamicValue(DataSnapshot data, FilterPredicateValue<? extends Number> predicate) {
+        DynamicValue<?> dynamicValue = predicate.getDynamicValue();
+        Long defaultValue = predicate.getDefaultValue().longValue();
+        if (dynamicValue == null || dynamicValue.getSourceAttribute() == null) {
+            return defaultValue;
         }
 
-        return durationTimeInMs;
+        EntityKeyValue keyValue = getDynamicPredicateValue(data, dynamicValue);
+        if (keyValue == null) {
+            return defaultValue;
+        }
+
+        var longValue = getLongValue(keyValue);
+        if (longValue == null) {
+            String sourceAttribute = dynamicValue.getSourceAttribute();
+            throw new NumericParseException(String.format("Could not convert attribute '%s' with value '%s' to numeric value!", sourceAttribute, getStrValue(keyValue)));
+        }
+        return longValue;
     }
 
     public AlarmEvalResult eval(long ts, DataSnapshot dataSnapshot) {
@@ -470,7 +473,7 @@ class AlarmRuleState {
     }
 
     private <T> T getPredicateValue(DataSnapshot data, FilterPredicateValue<T> value, AlarmConditionFilter filter, Function<EntityKeyValue, T> transformFunction) {
-        EntityKeyValue ekv = getDynamicValue(data, value.getDynamicValue());
+        EntityKeyValue ekv = getDynamicPredicateValue(data, value.getDynamicValue());
         if (ekv != null) {
             T result = transformFunction.apply(ekv);
             if (result != null) {
@@ -484,7 +487,7 @@ class AlarmRuleState {
         }
     }
 
-    private <T> EntityKeyValue getDynamicValue(DataSnapshot data, DynamicValue<T> value) {
+    private <T> EntityKeyValue getDynamicPredicateValue(DataSnapshot data, DynamicValue<T> value) {
         EntityKeyValue ekv = null;
         if (value != null) {
             switch (value.getSourceType()) {
@@ -572,4 +575,28 @@ class AlarmRuleState {
         }
     }
 
+    private static Long getLongValue(EntityKeyValue ekv) {
+        switch (ekv.getDataType()) {
+            case LONG:
+                return ekv.getLngValue();
+            case DOUBLE:
+                return ekv.getDblValue() != null ? ekv.getDblValue().longValue() : null;
+            case BOOLEAN:
+                return ekv.getBoolValue() != null ? (ekv.getBoolValue() ? 1 : 0L) : null;
+            case STRING:
+                try {
+                    return Long.parseLong(ekv.getStrValue());
+                } catch (RuntimeException e) {
+                    return null;
+                }
+            case JSON:
+                try {
+                    return Long.parseLong(ekv.getJsonValue());
+                } catch (RuntimeException e) {
+                    return null;
+                }
+            default:
+                return null;
+        }
+    }
 }

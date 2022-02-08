@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -182,7 +182,7 @@ public class JpaAssetDao extends JpaAbstractSearchTextDao<AssetEntity, Asset> im
         if (types != null && !types.isEmpty()) {
             list = new ArrayList<>();
             for (String type : types) {
-                list.add(new EntitySubtype(new TenantId(tenantId), EntityType.ASSET, type));
+                list.add(new EntitySubtype(TenantId.fromUUID(tenantId), EntityType.ASSET, type));
             }
         }
         return list;

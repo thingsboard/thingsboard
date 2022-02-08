@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import { finalize, share } from 'rxjs/operators';
 import { Datasource } from '@app/shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { EntityType, baseDetailsPageByEntityType } from '@shared/models/entity-type.models';
 
 const varsRegex = /\${([^}]*)}/g;
 
@@ -459,4 +460,8 @@ export function randomAlphanumeric(length: number): string {
     result += alphanumericCharacters.charAt(Math.floor(Math.random() * alphanumericCharactersLength));
   }
   return result;
+}
+
+export function getEntityDetailsPageURL(id: string, entityType: EntityType): string {
+  return `${baseDetailsPageByEntityType.get(entityType)}/${id}`;
 }

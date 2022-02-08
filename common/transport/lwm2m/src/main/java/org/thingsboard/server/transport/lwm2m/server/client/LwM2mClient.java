@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.link.LinkParamValue;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mMultipleResource;
@@ -39,7 +40,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
-import org.thingsboard.server.transport.lwm2m.config.LwM2mVersion;
+import org.thingsboard.server.transport.lwm2m.config.TbLwM2mVersion;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -108,7 +109,7 @@ public class LwM2mClient implements Serializable {
     @Getter
     private Long edrxCycle;
     @Getter
-    private Registration registration;
+    private transient Registration registration;
     @Getter
     @Setter
     private boolean asleep;
@@ -121,9 +122,9 @@ public class LwM2mClient implements Serializable {
     private boolean firstEdrxDownlink = true;
 
     @Getter
-    private Set<ContentFormat> clientSupportContentFormats;
+    private transient Set<ContentFormat> clientSupportContentFormats;
     @Getter
-    private ContentFormat defaultContentFormat;
+    private transient ContentFormat defaultContentFormat;
     @Getter
     private final AtomicInteger retryAttempts;
 
@@ -148,7 +149,7 @@ public class LwM2mClient implements Serializable {
 
     public void init(ValidateDeviceCredentialsResponse credentials, UUID sessionId) {
         this.session = createSession(nodeId, sessionId, credentials);
-        this.tenantId = new TenantId(new UUID(session.getTenantIdMSB(), session.getTenantIdLSB()));
+        this.tenantId = TenantId.fromUUID(new UUID(session.getTenantIdMSB(), session.getTenantIdLSB()));
         this.deviceId = new UUID(session.getDeviceIdMSB(), session.getDeviceIdLSB());
         this.profileId = new UUID(session.getDeviceProfileIdMSB(), session.getDeviceProfileIdLSB());
         this.powerMode = credentials.getDeviceInfo().getPowerMode();
@@ -423,16 +424,16 @@ public class LwM2mClient implements Serializable {
         if (registration == null) {
             return ContentFormat.DEFAULT;
         } else{
-            return LwM2mVersion.fromVersion(registration.getLwM2mVersion()).getContentFormat();
+            return TbLwM2mVersion.fromVersion(registration.getLwM2mVersion()).getContentFormat();
         }
     }
 
     static private Set<ContentFormat> clientSupportContentFormat(Registration registration) {
         Set<ContentFormat> contentFormats = new HashSet<>();
         contentFormats.add(ContentFormat.DEFAULT);
-        String code = Arrays.stream(registration.getObjectLinks()).filter(link -> link.getUrl().equals("/")).findFirst().get().getAttributes().get("ct");
-        if (code != null) {
-            Set<ContentFormat> codes = Stream.of(code.replaceAll("\"", "").split(" ", -1))
+        LinkParamValue ct = Arrays.stream(registration.getObjectLinks()).filter(link -> link.getUriReference().equals("/")).findFirst().get().getLinkParams().get("ct");
+        if (ct != null) {
+            Set<ContentFormat> codes = Stream.of(ct.getUnquoted().replaceAll("\"", "").split(" ", -1))
                     .map(String::trim)
                     .map(Integer::parseInt)
                     .map(ContentFormat::fromCode)

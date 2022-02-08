@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,6 +149,7 @@ message GetAttributeResponseMsg {
   int32 requestId = 1;
   repeated TsKvProto clientAttributeList = 2;
   repeated TsKvProto sharedAttributeList = 3;
+  bool isMultipleAttributesRequest = 4;
   string error = 5;
   bool sharedStateMsg = 6;
 }

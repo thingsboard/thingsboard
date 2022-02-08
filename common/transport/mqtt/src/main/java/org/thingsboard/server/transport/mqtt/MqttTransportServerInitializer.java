@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,12 @@ package org.thingsboard.server.transport.mqtt;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.codec.haproxy.HAProxyMessageDecoder;
 import io.netty.handler.codec.mqtt.MqttDecoder;
 import io.netty.handler.codec.mqtt.MqttEncoder;
 import io.netty.handler.ssl.SslHandler;
+import org.thingsboard.server.transport.mqtt.limits.IpFilter;
+import org.thingsboard.server.transport.mqtt.limits.ProxyIpFilter;
 
 /**
  * @author Andrew Shvayka
@@ -39,6 +42,12 @@ public class MqttTransportServerInitializer extends ChannelInitializer<SocketCha
     public void initChannel(SocketChannel ch) {
         ChannelPipeline pipeline = ch.pipeline();
         SslHandler sslHandler = null;
+        if (context.isProxyEnabled()) {
+            pipeline.addLast("proxy", new HAProxyMessageDecoder());
+            pipeline.addLast("ipFilter", new ProxyIpFilter(context));
+        } else {
+            pipeline.addLast("ipFilter", new IpFilter(context));
+        }
         if (sslEnabled && context.getSslHandlerProvider() != null) {
             sslHandler = context.getSslHandlerProvider().getSslHandler();
             pipeline.addLast(sslHandler);

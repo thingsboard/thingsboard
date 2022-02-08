@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -267,7 +267,7 @@ public abstract class BaseDeviceServiceTest extends AbstractServiceTest {
         Device device = new Device();
         device.setName("My device");
         device.setType("default");
-        device.setTenantId(new TenantId(Uuids.timeBased()));
+        device.setTenantId(TenantId.fromUUID(Uuids.timeBased()));
         deviceService.saveDevice(device);
     }
 

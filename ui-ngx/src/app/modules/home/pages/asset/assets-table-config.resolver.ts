@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -103,8 +103,9 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
         mergeMap((savedAsset) => this.assetService.getAssetInfo(savedAsset.id.id)
         ));
     };
-    this.config.onEntityAction = action => this.onAssetAction(action);
-    this.config.detailsReadonly = () => (this.config.componentsData.assetScope === 'customer_user' || this.config.componentsData.assetScope === 'edge_customer_user');
+    this.config.onEntityAction = action => this.onAssetAction(action, this.config);
+    this.config.detailsReadonly = () => (this.config.componentsData.assetScope === 'customer_user' ||
+      this.config.componentsData.assetScope === 'edge_customer_user');
 
     this.config.headerComponent = AssetTableHeaderComponent;
 
@@ -295,7 +296,7 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
           name: this.translate.instant('asset.add-asset-text'),
           icon: 'insert_drive_file',
           isEnabled: () => true,
-          onAction: ($event) => this.config.table.addEntity($event)
+          onAction: ($event) => this.config.getTable().addEntity($event)
         },
         {
           name: this.translate.instant('asset.import'),
@@ -332,9 +333,17 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
     this.homeDialogs.importEntities(EntityType.ASSET).subscribe((res) => {
       if (res) {
         this.broadcast.broadcast('assetSaved');
-        this.config.table.updateData();
+        this.config.updateData();
       }
     });
+  }
+
+  private openAsset($event: Event, asset: Asset, config: EntityTableConfig<AssetInfo>) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const url = this.router.createUrlTree([asset.id.id], {relativeTo: config.getActivatedRoute()});
+    this.router.navigateByUrl(url);
   }
 
   addAssetsToCustomer($event: Event) {
@@ -352,7 +361,7 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
     }).afterClosed()
       .subscribe((res) => {
         if (res) {
-          this.config.table.updateData();
+          this.config.updateData();
         }
       });
   }
@@ -371,7 +380,7 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
         if (res) {
           this.assetService.makeAssetPublic(asset.id.id).subscribe(
             () => {
-              this.config.table.updateData();
+              this.config.updateData();
             }
           );
         }
@@ -394,7 +403,7 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
     }).afterClosed()
       .subscribe((res) => {
         if (res) {
-          this.config.table.updateData();
+          this.config.updateData();
         }
       });
   }
@@ -423,7 +432,7 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
         if (res) {
           this.assetService.unassignAssetFromCustomer(asset.id.id).subscribe(
             () => {
-              this.config.table.updateData();
+              this.config.updateData(this.config.componentsData.assetScope !== 'tenant');
             }
           );
         }
@@ -451,7 +460,7 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
           );
           forkJoin(tasks).subscribe(
             () => {
-              this.config.table.updateData();
+              this.config.updateData();
             }
           );
         }
@@ -459,8 +468,11 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
     );
   }
 
-  onAssetAction(action: EntityAction<AssetInfo>): boolean {
+  onAssetAction(action: EntityAction<AssetInfo>, config: EntityTableConfig<AssetInfo>): boolean {
     switch (action.action) {
+      case 'open':
+        this.openAsset(action.event, action.entity, config);
+        return true;
       case 'makePublic':
         this.makePublic(action.event, action.entity);
         return true;
@@ -492,7 +504,7 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
     }).afterClosed()
       .subscribe((res) => {
         if (res) {
-          this.config.table.updateData();
+          this.config.updateData();
         }
       });
   }
@@ -511,7 +523,7 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
         if (res) {
           this.assetService.unassignAssetFromEdge(this.config.componentsData.edgeId, asset.id.id).subscribe(
             () => {
-              this.config.table.updateData();
+              this.config.updateData(this.config.componentsData.assetScope !== 'tenant');
             }
           );
         }
@@ -539,7 +551,7 @@ export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<Asse
           );
           forkJoin(tasks).subscribe(
             () => {
-              this.config.table.updateData();
+              this.config.updateData();
             }
           );
         }
