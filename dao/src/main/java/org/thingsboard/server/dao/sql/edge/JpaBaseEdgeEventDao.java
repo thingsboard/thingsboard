@@ -19,7 +19,7 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeEventId;
@@ -63,7 +63,7 @@ public class JpaBaseEdgeEventDao extends JpaAbstractSearchTextDao<EdgeEventEntit
     }
 
     @Override
-    protected CrudRepository<EdgeEventEntity, UUID> getCrudRepository() {
+    protected JpaRepository<EdgeEventEntity, UUID> getRepository() {
         return edgeEventRepository;
     }
 

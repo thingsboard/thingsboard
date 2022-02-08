@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.event.DebugEvent;
@@ -70,7 +70,7 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
     }
 
     @Override
-    protected CrudRepository<EventEntity, UUID> getCrudRepository() {
+    protected JpaRepository<EventEntity, UUID> getRepository() {
         return eventRepository;
     }
 
