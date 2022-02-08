@@ -19,7 +19,7 @@ import org.eclipse.leshan.core.link.Link;
 import org.eclipse.leshan.core.request.Identity;
 import org.eclipse.leshan.server.registration.Registration;
 import org.junit.Assert;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -34,10 +34,10 @@ import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import java.net.InetSocketAddress;
 import java.util.UUID;
 
-class LwM2MClientSerDesTest {
+public class LwM2MClientSerDesTest {
 
     @Test
-    void serializeDeserialize() {
+    public void serializeDeserialize() {
         LwM2mClient client = new LwM2mClient("nodeId", "testEndpoint");
 
         TransportDeviceInfo tdi = new TransportDeviceInfo();
