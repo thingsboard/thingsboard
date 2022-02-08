@@ -38,23 +38,31 @@ public class ProxyIpFilter extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if(msg instanceof HAProxyMessage){
+        log.trace("[{}] Received msg: {}", ctx.channel().id(), msg);
+        if (msg instanceof HAProxyMessage) {
             HAProxyMessage proxyMsg = (HAProxyMessage) msg;
-            if(proxyMsg.sourceAddress() != null && proxyMsg.sourcePort() > 0) {
+            if (proxyMsg.sourceAddress() != null && proxyMsg.sourcePort() > 0) {
                 InetSocketAddress address = new InetSocketAddress(proxyMsg.sourceAddress(), proxyMsg.sourcePort());
-                if(!context.checkAddress(address)){
-                    ctx.close();
+                if (!context.checkAddress(address)) {
+                    closeChannel(ctx);
                 } else {
+                    log.trace("[{}] Setting address: {}", ctx.channel().id(), address);
                     ctx.channel().attr(MqttTransportService.ADDRESS).set(address);
                     // We no longer need this channel in the pipeline. Similar to HAProxyMessageDecoder
                     ctx.pipeline().remove(this);
                 }
             } else {
-                log.debug("Received local health-check connection message: {}", proxyMsg);
-                ctx.close();
+                log.trace("Received local health-check connection message: {}", proxyMsg);
+                closeChannel(ctx);
             }
-        } else {
-            super.channelRead(ctx, msg);
         }
+    }
+
+    private void closeChannel(ChannelHandlerContext ctx) {
+        while (ctx.pipeline().last() != this) {
+            ctx.pipeline().removeLast();
+        }
+        ctx.pipeline().remove(this);
+        ctx.close();
     }
 }

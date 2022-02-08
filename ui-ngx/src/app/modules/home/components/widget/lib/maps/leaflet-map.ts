@@ -400,6 +400,40 @@ export default abstract class LeafletMap {
           this.updatePending = false;
           this.updateData(this.drawRoutes, this.showPolygon);
         }
+        this.createdControlButtonTooltip();
+    }
+
+    private createdControlButtonTooltip() {
+      import('tooltipster').then(() => {
+        $(this.ctx.$container)
+          .find('a[role="button"]:not(.leaflet-pm-action)')
+          .each((index, element) => {
+            let title;
+            if (element.children.length) {
+              title = (element.children[0] as HTMLElement).title;
+              $(element).children().removeAttr('title');
+            } else {
+              title = element.title;
+              $(element).removeAttr('title');
+            }
+            $(element).tooltipster(
+              {
+                content: title,
+                theme: 'tooltipster-shadow',
+                delay: 10,
+                triggerClose: {
+                  click: true,
+                  tap: true,
+                  scroll: true,
+                  mouseleave: true
+                },
+                side: 'right',
+                distance: 2,
+                trackOrigin: true
+              }
+            );
+          });
+      });
     }
 
     createLatLng(lat: number, lng: number): L.LatLng {
@@ -545,7 +579,10 @@ export default abstract class LeafletMap {
                 break;
               }
             }
-            this.map.pm.Toolbar.setButtonDisabled('tbMarker', !foundEntityWithoutLocation);
+            // @ts-ignore
+            if (this.map.pm.Toolbar.getButtons().tbMarker.disable !== foundEntityWithoutLocation) {
+              this.map.pm.Toolbar.setButtonDisabled('tbMarker', !foundEntityWithoutLocation);
+            }
             this.datasources = formattedData;
           }
 
@@ -561,8 +598,11 @@ export default abstract class LeafletMap {
                 break;
               }
             }
-            this.map.pm.Toolbar.setButtonDisabled('tbPolygon', !foundEntityWithoutPolygon);
-            this.map.pm.Toolbar.setButtonDisabled('tbRectangle', !foundEntityWithoutPolygon);
+            // @ts-ignore
+            if (this.map.pm.Toolbar.getButtons().tbPolygon.disable !== foundEntityWithoutPolygon) {
+              this.map.pm.Toolbar.setButtonDisabled('tbPolygon', !foundEntityWithoutPolygon);
+              this.map.pm.Toolbar.setButtonDisabled('tbRectangle', !foundEntityWithoutPolygon);
+            }
             this.datasources = formattedData;
           }
           if (!this.options.hideRemoveControlButton && !this.options.hideAllControlButton) {
@@ -574,23 +614,15 @@ export default abstract class LeafletMap {
           }
           if (!this.options.hideEditControlButton && !this.options.hideAllControlButton) {
             const disabledButton = !foundEntityWithLocation && !foundEntityWithPolygon;
-            if (disabledButton) {
+            // @ts-ignore
+            if (this.map.pm.Toolbar.getButtons().dragMode.disable !== disabledButton) {
+              this.map.pm.Toolbar.setButtonDisabled('dragMode', disabledButton);
               // @ts-ignore
-              this.map.pm.Toolbar.toggleButton('dragMode', false);
-            }
-            if (this.editPolygons && !foundEntityWithPolygon) {
-              // @ts-ignore
-              this.map.pm.Toolbar.toggleButton('editMode', false);
-              // @ts-ignore
-              this.map.pm.Toolbar.toggleButton('cutPolygon', false);
-              // @ts-ignore
-              this.map.pm.Toolbar.toggleButton('rotateMode', false);
-            }
-            this.map.pm.Toolbar.setButtonDisabled('dragMode', disabledButton);
-            if (this.editPolygons) {
-              this.map.pm.Toolbar.setButtonDisabled('editMode', !foundEntityWithPolygon);
-              this.map.pm.Toolbar.setButtonDisabled('cutPolygon', !foundEntityWithPolygon);
-              this.map.pm.Toolbar.setButtonDisabled('rotateMode', !foundEntityWithPolygon);
+              if (this.editPolygons && this.map.pm.Toolbar.getButtons().editMode.disable !== foundEntityWithPolygon) {
+                this.map.pm.Toolbar.setButtonDisabled('editMode', !foundEntityWithPolygon);
+                this.map.pm.Toolbar.setButtonDisabled('cutPolygon', !foundEntityWithPolygon);
+                this.map.pm.Toolbar.setButtonDisabled('rotateMode', !foundEntityWithPolygon);
+              }
             }
           }
         }
