@@ -84,6 +84,7 @@ import static org.eclipse.californium.core.config.CoapConfig.COAP_PORT;
 import static org.eclipse.californium.core.config.CoapConfig.COAP_SECURE_PORT;
 import static org.eclipse.leshan.client.object.Security.noSec;
 import static org.eclipse.leshan.client.object.Security.noSecBootstap;
+import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_STARTED;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_SUCCESS;
@@ -235,7 +236,11 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
         Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES));
         var tsValue = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("batteryLevel");
-        Assert.assertEquals(42, Long.parseLong(tsValue.getValue()));
+        Assert.assertThat(Long.parseLong(tsValue.getValue()), instanceOf(Long.class));
+        int expectedMax = 50;
+        int expectedMin = 5;
+        Assert.assertTrue(expectedMax >= Long.parseLong(tsValue.getValue()));
+        Assert.assertTrue(expectedMin <= Long.parseLong(tsValue.getValue()));
     }
 
     protected void createDeviceProfile(Lwm2mDeviceProfileTransportConfiguration transportConfiguration) throws Exception {
@@ -289,6 +294,9 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         lwM2MTestClient = new LwM2MTestClient(this.executor, endpoint);
         int clientPort = SocketUtils.findAvailableUdpPort();
         lwM2MTestClient.init(security, coapConfig, clientPort, isRpc, isBootstrap, this.shortServerId, this.shortServerIdBs, securityBs);
+        if (!isRpc) {
+            Thread.sleep(1000);
+        }
     }
 
     private void clientDestroy() {

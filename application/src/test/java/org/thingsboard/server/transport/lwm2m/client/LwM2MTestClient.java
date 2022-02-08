@@ -138,7 +138,7 @@ public class LwM2MTestClient {
                 initializer.setInstancesForObject(SERVER, instances);
             }
         }
-        initializer.setInstancesForObject(DEVICE, lwM2MDevice = new SimpleLwM2MDevice());
+        initializer.setInstancesForObject(DEVICE, lwM2MDevice = new SimpleLwM2MDevice(executor));
         initializer.setInstancesForObject(FIRMWARE, fwLwM2MDevice = new FwLwM2MDevice());
         initializer.setInstancesForObject(SOFTWARE_MANAGEMENT, swLwM2MDevice = new SwLwM2MDevice());
         initializer.setClassForObject(ACCESS_CONTROL, DummyInstanceEnabler.class);

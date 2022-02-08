@@ -60,7 +60,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
     protected String objectInstanceIdVer_1;
     protected String objectIdVer_0;
     protected String objectIdVer_2;
-    private static final Predicate PREDICATE_3 = path -> (!((String) path).contains("/" + TEMPERATURE_SENSOR) && ((String) path).contains("/" + DEVICE));
+    private static final Predicate PREDICATE_3 = path -> (!((String) path).startsWith("/" + TEMPERATURE_SENSOR) && ((String) path).startsWith("/" + DEVICE));
     protected String objectIdVer_3;
     protected String objectInstanceIdVer_3;
     protected String objectInstanceIdVer_5;
@@ -70,6 +70,8 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
     protected String objectIdVer_3303;
     protected static AtomicInteger endpointSequence = new AtomicInteger();
     protected static String DEVICE_ENDPOINT_RPC_PREF = "deviceEndpointRpc";
+    protected String idVer_3_0_9;
+    protected String idVer_19_0_0;
 
     public AbstractRpcLwM2MIntegrationTest() {
         setResources(resources);
@@ -90,9 +92,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
         lwM2MTestClient.getLeshanClient().getObjectTree().getObjectEnablers().forEach((key, val) -> {
             if (key > 0) {
                 String objectVerId = "/" + key;
-                if (!val.getObjectModel().version.equals("1.0")) {
-                    objectVerId += ("_" + val.getObjectModel().version);
-                }
+                objectVerId += ("_" + val.getObjectModel().version);
                 expectedObjects.add("/" + key);
                 expectedObjectIdVers.add(objectVerId);
                 String finalObjectVerId = objectVerId;
@@ -103,38 +103,37 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
             }
         });
         String ver_Id_0 = lwM2MTestClient.getLeshanClient().getObjectTree().getModel().getObjectModel(OBJECT_ID_0).version;
-        if ("1.0".equals(ver_Id_0)) {
-            objectIdVer_0 = "/" + OBJECT_ID_0;
-        } else {
-            objectIdVer_0 = "/" + OBJECT_ID_0 + "_" + ver_Id_0;
-        }
-        objectIdVer_2 = (String) expectedObjectIdVers.stream().filter(path -> ((String) path).contains("/" + ACCESS_CONTROL)).findFirst().get();
-        objectIdVer_3 = (String) expectedObjects.stream().filter(PREDICATE_3).findFirst().get();
-        objectIdVer_19 = (String) expectedObjectIdVers.stream().filter(path -> ((String) path).contains("/" + BINARY_APP_DATA_CONTAINER)).findFirst().get();
-        objectIdVer_3303 = (String) expectedObjectIdVers.stream().filter(path -> ((String) path).contains("/" + TEMPERATURE_SENSOR)).findFirst().get();
-        objectInstanceIdVer_1 = (String) expectedObjectIdVerInstances.stream().filter(path -> (!((String) path).contains("/" + BINARY_APP_DATA_CONTAINER) && ((String) path).contains("/" + SERVER))).findFirst().get();
+        objectIdVer_0 = "/" + OBJECT_ID_0 + "_" + ver_Id_0;
+        objectIdVer_2 = (String) expectedObjectIdVers.stream().filter(path -> ((String) path).startsWith("/" + ACCESS_CONTROL)).findFirst().get();
+        objectIdVer_3 = (String) expectedObjectIdVers.stream().filter(PREDICATE_3).findFirst().get();
+        objectIdVer_19 = (String) expectedObjectIdVers.stream().filter(path -> ((String) path).startsWith("/" + BINARY_APP_DATA_CONTAINER)).findFirst().get();
+        objectIdVer_3303 = (String) expectedObjectIdVers.stream().filter(path -> ((String) path).startsWith("/" + TEMPERATURE_SENSOR)).findFirst().get();
+        objectInstanceIdVer_1 = (String) expectedObjectIdVerInstances.stream().filter(path -> (!((String) path).startsWith("/" + BINARY_APP_DATA_CONTAINER) && ((String) path).startsWith("/" + SERVER))).findFirst().get();
         objectInstanceIdVer_3 = (String) expectedObjectIdVerInstances.stream().filter(PREDICATE_3).findFirst().get();
-        objectInstanceIdVer_5 = (String) expectedObjectIdVerInstances.stream().filter(path -> ((String) path).contains("/" + FIRMWARE)).findFirst().get();
-        objectInstanceIdVer_9 = (String) expectedObjectIdVerInstances.stream().filter(path -> ((String) path).contains("/" + SOFTWARE_MANAGEMENT)).findFirst().get();
+        objectInstanceIdVer_5 = (String) expectedObjectIdVerInstances.stream().filter(path -> ((String) path).startsWith("/" + FIRMWARE)).findFirst().get();
+        objectInstanceIdVer_9 = (String) expectedObjectIdVerInstances.stream().filter(path -> ((String) path).startsWith("/" + SOFTWARE_MANAGEMENT)).findFirst().get();
+
+        idVer_3_0_9 = objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_9;
+        idVer_19_0_0 = objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0;
 
         OBSERVE_ATTRIBUTES_WITH_PARAMS_RPC =
                 "    {\n" +
                         "    \"keyName\": {\n" +
-                        "      \"" + objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_9 + "\": \"" + RESOURCE_ID_NAME_3_9 + "\",\n" +
+                        "      \"" + idVer_3_0_9 + "\": \"" + RESOURCE_ID_NAME_3_9 + "\",\n" +
                         "      \"" + objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_14 + "\": \"" + RESOURCE_ID_NAME_3_14 + "\",\n" +
-                        "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0 + "\": \"" + RESOURCE_ID_NAME_19_0_0 + "\",\n" +
+                        "      \"" + idVer_19_0_0 + "\": \"" + RESOURCE_ID_NAME_19_0_0 + "\",\n" +
                         "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_1 + "/" + RESOURCE_ID_0 + "\": \"" + RESOURCE_ID_NAME_19_1_0 + "\"\n" +
                         "    },\n" +
                         "    \"observe\": [\n" +
-                        "      \"" + objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_9 + "\",\n" +
-                        "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0 + "\"\n" +
+                        "      \"" + idVer_3_0_9 + "\",\n" +
+                        "      \"" + idVer_19_0_0 + "\"\n" +
                         "    ],\n" +
                         "    \"attribute\": [\n" +
+                        "      \"" + objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_14 + "\"\n" +
                         "    ],\n" +
                         "    \"telemetry\": [\n" +
-                        "      \"" + objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_9 + "\",\n" +
-                        "      \"" + objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_14 + "\",\n" +
-                        "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0 + "\",\n" +
+                        "      \"" + idVer_3_0_9 + "\",\n" +
+                        "      \"" + idVer_19_0_0 + "\",\n" +
                         "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_1 + "/" + RESOURCE_ID_0 + "\"\n" +
                         "    ],\n" +
                         "    \"attributeLwm2m\": {}\n" +
@@ -148,6 +147,9 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
         deviceId = device.getId().getId().toString();
 
         lwM2MTestClient.start();
+
+        Thread.sleep(1000);
+
     }
 
     protected String pathIdVerToObjectId(String pathIdVer) {
