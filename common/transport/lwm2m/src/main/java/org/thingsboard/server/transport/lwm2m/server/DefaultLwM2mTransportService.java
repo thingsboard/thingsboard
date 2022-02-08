@@ -104,7 +104,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
             server.destroy();
             log.info("LwM2M transport server stopped!");
         } catch (Exception e) {
-            log.error("", e);
+            log.error("Failed to gracefully stop the LwM2M transport server!", e);
         }
     }
 

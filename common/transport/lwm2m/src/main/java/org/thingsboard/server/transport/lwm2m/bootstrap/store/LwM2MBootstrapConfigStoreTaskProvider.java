@@ -178,7 +178,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
                 serverInstances.put(shortId, instance.getId());
             });
         } catch (Exception e) {
-            log.error("", e);
+            log.error("Failed find Server Instance Id. ", e);
         }
         if (this.securityInstances != null && this.securityInstances.size() > 0 && this.serverInstances != null && this.serverInstances.size() > 0) {
             this.findBootstrapServerId();
