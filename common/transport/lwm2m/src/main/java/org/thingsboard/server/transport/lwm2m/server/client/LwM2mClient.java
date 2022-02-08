@@ -423,15 +423,18 @@ public class LwM2mClient implements Serializable {
     private ContentFormat calculateDefaultContentFormat(Registration registration) {
         if (registration == null) {
             return ContentFormat.DEFAULT;
-        } else{
+        } else {
             return TbLwM2mVersion.fromVersion(registration.getLwM2mVersion()).getContentFormat();
         }
     }
 
-    static private Set<ContentFormat> clientSupportContentFormat(Registration registration) {
+    private static Set<ContentFormat> clientSupportContentFormat(Registration registration) {
         Set<ContentFormat> contentFormats = new HashSet<>();
         contentFormats.add(ContentFormat.DEFAULT);
-        LinkParamValue ct = Arrays.stream(registration.getObjectLinks()).filter(link -> link.getUriReference().equals("/")).findFirst().get().getLinkParams().get("ct");
+        LinkParamValue ct = Arrays.stream(registration.getObjectLinks())
+                .filter(link -> link.getUriReference().equals("/"))
+                .findFirst()
+                .map(link -> link.getLinkParams().get("ct")).orElse(null);
         if (ct != null) {
             Set<ContentFormat> codes = Stream.of(ct.getUnquoted().replaceAll("\"", "").split(" ", -1))
                     .map(String::trim)
