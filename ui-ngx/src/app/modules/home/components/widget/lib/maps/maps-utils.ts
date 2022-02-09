@@ -33,6 +33,10 @@ export function createTooltip(target: L.Layer,
         target.on('mouseover', () => {
             target.openPopup();
         });
+        target.on('mousemove', (e) => {
+            // @ts-ignore
+            popup.setLatLng(e.latlng);
+        });
         target.on('mouseout', () => {
             target.closePopup();
         });
