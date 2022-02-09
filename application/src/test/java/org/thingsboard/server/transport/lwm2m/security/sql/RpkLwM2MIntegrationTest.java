@@ -64,7 +64,8 @@ public class RpkLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
                 "await on client state (Rpk_Lwm2m)",
                 expectedStatusesRegistrationLwm2mSuccess,
                 false,
-                ON_REGISTRATION_SUCCESS);
+                ON_REGISTRATION_SUCCESS,
+                true);
     }
 
     @Test
@@ -124,6 +125,7 @@ public class RpkLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
                 "await on client state (RpkBS two section)",
                 expectedStatusesRegistrationBsSuccess,
                 true,
-                ON_REGISTRATION_SUCCESS);
+                ON_REGISTRATION_SUCCESS,
+                true);
     }
 }

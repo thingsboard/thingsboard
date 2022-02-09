@@ -146,10 +146,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
         final Device device = createDevice(deviceCredentials, endpoint);
         deviceId = device.getId().getId().toString();
 
-        lwM2MTestClient.start();
-
-        Thread.sleep(1000);
-
+        lwM2MTestClient.start(true);
     }
 
     protected String pathIdVerToObjectId(String pathIdVer) {

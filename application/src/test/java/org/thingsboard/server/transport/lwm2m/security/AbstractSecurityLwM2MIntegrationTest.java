@@ -176,7 +176,8 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
                 awaitAlias,
                 expectedStatuses,
                 true,
-                finishState);
+                finishState,
+                false);
     }
 
     protected void basicTestConnection(Security security,
@@ -187,14 +188,13 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
                                        String awaitAlias,
                                        Set<LwM2MClientState> expectedStatuses,
                                        boolean isBootstrap,
-                                       LwM2MClientState finishState) throws Exception {
+                                       LwM2MClientState finishState,
+                                       boolean isStartLw) throws Exception {
         createNewClient(security, coapConfig, true, endpoint, isBootstrap, null);
         createDeviceProfile(transportConfiguration);
         final Device device = createDevice(deviceCredentials, endpoint);
         device.getId().getId().toString();
-        lwM2MTestClient.start();
-        Thread.sleep(1000);
-
+        lwM2MTestClient.start(isStartLw);
         await(awaitAlias)
                 .atMost(1000, TimeUnit.MILLISECONDS)
                 .until(() -> finishState.equals(lwM2MTestClient.getClientState()));
@@ -232,9 +232,7 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         createDeviceProfile(transportConfiguration);
         final Device device = createDevice(deviceCredentials, endpoint);
         String deviceId = device.getId().getId().toString();
-        lwM2MTestClient.start();
-        Thread.sleep(1000);
-
+        lwM2MTestClient.start(true);
         await(awaitAlias)
                 .atMost(1000, TimeUnit.MILLISECONDS)
                 .until(() -> ON_REGISTRATION_SUCCESS.equals(lwM2MTestClient.getClientState()));

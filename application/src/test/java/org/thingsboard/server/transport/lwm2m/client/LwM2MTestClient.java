@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2022 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,14 +42,21 @@ import org.eclipse.leshan.core.request.DeregisterRequest;
 import org.eclipse.leshan.core.request.RegisterRequest;
 import org.eclipse.leshan.core.request.UpdateRequest;
 import org.junit.Assert;
+import org.mockito.Mockito;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
+import static org.awaitility.Awaitility.await;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
 import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
 import static org.eclipse.leshan.core.LwM2mId.DEVICE;
@@ -105,9 +112,12 @@ public class LwM2MTestClient {
     private LwM2mTemperatureSensor lwM2MTemperatureSensor;
     private LwM2MClientState clientState;
     private Set<LwM2MClientState> clientStates;
+    private DefaultLwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandlerTest;
 
-    public void init(Security security, Configuration coapConfig, int port, boolean isRpc, boolean isBootstrap, int shortServerId, int shortServerIdBs, Security securityBs) throws InvalidDDFFileException, IOException {
+    public void init(Security security, Configuration coapConfig, int port, boolean isRpc, boolean isBootstrap,
+                     int shortServerId, int shortServerIdBs, Security securityBs, DefaultLwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandler) throws InvalidDDFFileException, IOException {
         Assert.assertNull("client already initialized", leshanClient);
+        this.defaultLwM2mUplinkMsgHandlerTest = defaultLwM2mUplinkMsgHandler;
         List<ObjectModel> models = new ArrayList<>();
         for (String resourceName : resources) {
             models.addAll(ObjectLoader.loadDdfFile(LwM2MTestClient.class.getClassLoader().getResourceAsStream("lwm2m/" + resourceName), resourceName));
@@ -277,7 +287,7 @@ public class LwM2MTestClient {
         this.leshanClient.addObserver(observer);
 
         if (!isRpc) {
-            leshanClient.start();
+            this.start(true);
         }
     }
 
@@ -294,7 +304,7 @@ public class LwM2MTestClient {
         if (lwm2mServerBs != null) {
             lwm2mServerBs = null;
         }
-       if (lwm2mServer != null) {
+        if (lwm2mServer != null) {
             lwm2mServer = null;
         }
         if (lwM2MDevice != null) {
@@ -314,9 +324,30 @@ public class LwM2MTestClient {
         }
     }
 
-    public void start() {
+    public void start(boolean isStartLw) {
         if (leshanClient != null) {
             leshanClient.start();
+            if (isStartLw) {
+                this.awaitClientAfterStartConnectLw();
+            }
+        }
+    }
+
+    private void awaitClientAfterStartConnectLw() {
+        LwM2mClient lwM2MClient = this.defaultLwM2mUplinkMsgHandlerTest.clientContext.getClientByEndpoint(endpoint);
+        CountDownLatch latch = new CountDownLatch(1);
+        Mockito.doAnswer(invocation -> {
+//            Object result = invocation.callRealMethod();
+            latch.countDown();
+            return null;
+        }).when(defaultLwM2mUplinkMsgHandlerTest).initAttributes(lwM2MClient, true);
+
+        try {
+            if (!latch.await(1, TimeUnit.SECONDS)) {
+                throw new RuntimeException("Failed to await TimeOut lwm2m client initialization!");
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Exception Failed to await lwm2m client initialization! ", e);
         }
     }
 }

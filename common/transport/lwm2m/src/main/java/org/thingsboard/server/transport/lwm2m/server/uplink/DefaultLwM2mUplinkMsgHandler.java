@@ -150,7 +150,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     private final LwM2MTelemetryLogService logService;
     private final LwM2mTransportServerHelper helper;
     private final TbLwM2MDtlsSessionStore sessionStore;
-    private final LwM2mClientContext clientContext;
+    public final LwM2mClientContext clientContext;
     private final LwM2mDownlinkMsgHandler defaultLwM2MDownlinkMsgHandler;
     private final LwM2mVersionedModelProvider modelProvider;
     private final RegistrationStore registrationStore;
