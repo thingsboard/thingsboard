@@ -21,12 +21,14 @@ import { Datasource } from '@app/shared/models/widget.models';
 export function createTooltip(target: L.Layer,
                               settings: MarkerSettings | PolylineSettings | PolygonSettings,
                               datasource: Datasource,
+                              autoClose = false,
+                              showTooltipAction = 'click',
                               content?: string | HTMLElement
 ): L.Popup {
     const popup = L.popup();
     popup.setContent(content);
-    target.bindPopup(popup, { autoClose: settings.autocloseTooltip, closeOnClick: false });
-    if (settings.showTooltipAction === 'hover') {
+    target.bindPopup(popup, { autoClose, closeOnClick: false });
+    if (showTooltipAction === 'hover') {
         target.off('click');
         target.on('mouseover', () => {
             target.openPopup();
@@ -58,8 +60,17 @@ export function bindPopupActions(popup: L.Popup, settings: MarkerSettings | Poly
 }
 
 export function isCutPolygon(data): boolean {
-  if (Array.isArray(data[0]) && Array.isArray(data[0][0])) {
+  if (data.length > 1 && Array.isArray(data[0]) && (Array.isArray(data[0][0]) || data[0][0] instanceof L.LatLng)) {
     return true;
   }
   return false;
+}
+
+export function isJSON(data: string): boolean {
+  try {
+    const parseData = JSON.parse(data);
+    return !Array.isArray(parseData);
+  } catch (e) {
+    return false;
+  }
 }
