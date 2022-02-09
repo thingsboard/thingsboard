@@ -25,6 +25,8 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.util.SocketUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -65,6 +67,7 @@ import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
 import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
+import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -73,6 +76,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -98,6 +102,9 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfil
 @DaoSqlTest
 public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
 
+    @Autowired
+    @SpyBean
+    DefaultLwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandlerTest;
 
     //  Lwm2m Server
     public static final int port = 5685;
@@ -293,10 +300,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         this.clientDestroy();
         lwM2MTestClient = new LwM2MTestClient(this.executor, endpoint);
         int clientPort = SocketUtils.findAvailableUdpPort();
-        lwM2MTestClient.init(security, coapConfig, clientPort, isRpc, isBootstrap, this.shortServerId, this.shortServerIdBs, securityBs);
-        if (!isRpc) {
-            Thread.sleep(1000);
-        }
+        lwM2MTestClient.init(security, coapConfig, clientPort, isRpc, isBootstrap, this.shortServerId, this.shortServerIdBs, securityBs, this.defaultLwM2mUplinkMsgHandlerTest);
     }
 
     private void clientDestroy() {
@@ -306,7 +310,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
                 awaitClientDestroy(lwM2MTestClient.getLeshanClient());
             }
         } catch (Exception e) {
-            log.error("", e);
+            log.error("Failed client Destroy", e);
         }
     }
 
@@ -365,7 +369,6 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
                 .atMost(3000, TimeUnit.MILLISECONDS)
                 .until(() -> isServerPortsAvailable() == null);
     }
-
 
     private static String isServerPortsAvailable() {
         for (int port : SERVERS_PORT_NUMBERS) {
