@@ -99,6 +99,8 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
         log.trace("[{}] Fetching alarms: {}", cmdId, alarmInvocationAttempts);
         if (alarmInvocationAttempts <= maxAlarmQueriesPerRefreshInterval) {
             doFetchAlarms();
+        } else {
+            log.trace("[{}] Ignore alarm fetch due to rate limit: [{}] of maximum [{}]", cmdId, alarmInvocationAttempts, maxAlarmQueriesPerRefreshInterval);
         }
     }
 

@@ -36,7 +36,9 @@ public class IpFilter extends AbstractRemoteAddressFilter<InetSocketAddress> {
 
     @Override
     protected boolean accept(ChannelHandlerContext ctx, InetSocketAddress remoteAddress) throws Exception {
+        log.trace("[{}] Received msg: {}", ctx.channel().id(), remoteAddress);
         if(context.checkAddress(remoteAddress)){
+            log.trace("[{}] Setting address: {}", ctx.channel().id(), remoteAddress);
             ctx.channel().attr(MqttTransportService.ADDRESS).set(remoteAddress);
             return true;
         } else {
