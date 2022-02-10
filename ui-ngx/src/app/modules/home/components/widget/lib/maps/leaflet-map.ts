@@ -355,6 +355,7 @@ export default abstract class LeafletMap {
         this.ignoreUpdateBounds = true;
       }
 
+      this.map.on('pm:globaldrawmodetoggled', (e) => this.ignoreUpdateBounds = e.enabled);
       this.map.on('pm:globaleditmodetoggled', (e) => this.ignoreUpdateBounds = e.enabled);
       this.map.on('pm:globaldragmodetoggled', (e) => this.ignoreUpdateBounds = e.enabled);
       this.map.on('pm:globalremovalmodetoggled', (e) => this.ignoreUpdateBounds = e.enabled);
@@ -754,9 +755,6 @@ export default abstract class LeafletMap {
     }
 
   private updateBoundsInternal() {
-    if (this.ignoreUpdateBounds) {
-      return;
-    }
     const bounds = new L.LatLngBounds(null, null);
     if (this.drawRoutes) {
       this.polylines.forEach((polyline) => {
@@ -785,7 +783,9 @@ export default abstract class LeafletMap {
     if (bounds.isValid() && (!this.bounds || !this.bounds.isValid() || !this.bounds.equals(bounds)
         && this.options.fitMapBounds ? !mapBounds.contains(bounds) : false)) {
       this.bounds = bounds;
-      this.fitBounds(bounds);
+      if (!this.ignoreUpdateBounds) {
+        this.fitBounds(bounds);
+      }
     }
   }
 

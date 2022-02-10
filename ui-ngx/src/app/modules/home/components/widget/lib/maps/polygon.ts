@@ -70,6 +70,9 @@ export class Polygon {
         // Change position (call in drag drop mode)
         this.leafletPoly.on('pm:dragstart', () => this.editing = true);
         this.leafletPoly.on('pm:dragend', () => this.editing = false);
+        // Rotate (call in rotate mode)
+        this.leafletPoly.on('pm:rotatestart', () => this.editing = true);
+        this.leafletPoly.on('pm:rotateend', () => this.editing = false);
         // Change size/point (call in edit mode)
         this.leafletPoly.on('pm:markerdragstart', () => this.editing = true);
         this.leafletPoly.on('pm:markerdragend', () => this.editing = false);
