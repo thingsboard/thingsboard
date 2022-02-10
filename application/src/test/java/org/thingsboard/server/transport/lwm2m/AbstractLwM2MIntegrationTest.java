@@ -102,7 +102,6 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfil
 @DaoSqlTest
 public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
 
-    @Autowired
     @SpyBean
     DefaultLwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandlerTest;
 
