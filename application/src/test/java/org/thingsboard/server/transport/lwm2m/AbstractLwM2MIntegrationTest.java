@@ -67,6 +67,7 @@ import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
 import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler;
 
 import java.io.IOException;
@@ -104,6 +105,9 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
 
     @SpyBean
     DefaultLwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandlerTest;
+
+    @Autowired
+    private LwM2mClientContext clientContextTest;
 
     //  Lwm2m Server
     public static final int port = 5685;
@@ -299,7 +303,8 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         this.clientDestroy();
         lwM2MTestClient = new LwM2MTestClient(this.executor, endpoint);
         int clientPort = SocketUtils.findAvailableUdpPort();
-        lwM2MTestClient.init(security, coapConfig, clientPort, isRpc, isBootstrap, this.shortServerId, this.shortServerIdBs, securityBs, this.defaultLwM2mUplinkMsgHandlerTest);
+        lwM2MTestClient.init(security, coapConfig, clientPort, isRpc, isBootstrap, this.shortServerId, this.shortServerIdBs,
+                securityBs, this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest);
     }
 
     private void clientDestroy() {

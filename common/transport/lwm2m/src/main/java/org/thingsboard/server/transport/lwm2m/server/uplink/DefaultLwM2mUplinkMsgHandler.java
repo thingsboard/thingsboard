@@ -150,7 +150,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     private final LwM2MTelemetryLogService logService;
     private final LwM2mTransportServerHelper helper;
     private final TbLwM2MDtlsSessionStore sessionStore;
-    public final LwM2mClientContext clientContext;
+    private final LwM2mClientContext clientContext;
     private final LwM2mDownlinkMsgHandler defaultLwM2MDownlinkMsgHandler;
     private final LwM2mVersionedModelProvider modelProvider;
     private final RegistrationStore registrationStore;
@@ -487,8 +487,8 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
             latch.await();
         } catch (InterruptedException e) {
             log.error("[{}] Failed to await Read requests!", lwM2MClient.getEndpoint(), e);
-        } catch (Exception e1) {
-            log.error("[{}] Failed to process read requests!", lwM2MClient.getEndpoint(), e1);
+        } catch (Exception e) {
+            log.error("[{}] Failed to process read requests!", lwM2MClient.getEndpoint(), e);
             logService.log(lwM2MClient, "Failed to process read requests. Possible profile misconfiguration.");
         }
     }
@@ -505,8 +505,8 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
             latch.await();
         } catch (InterruptedException e) {
             log.error("[{}] Failed to await Observe requests!", lwM2MClient.getEndpoint(), e);
-        } catch (Exception e1) {
-            log.error("[{}] Failed to process observe requests!", lwM2MClient.getEndpoint(), e1);
+        } catch (Exception e) {
+            log.error("[{}] Failed to process observe requests!", lwM2MClient.getEndpoint(), e);
             logService.log(lwM2MClient, "Failed to process observe requests. Possible profile misconfiguration.");
         }
     }
