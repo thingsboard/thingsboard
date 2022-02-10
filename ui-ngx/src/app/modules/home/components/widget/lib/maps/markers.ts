@@ -30,6 +30,9 @@ import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import LeafletMap from './leaflet-map';
 
 export class Marker {
+
+    private editing = false;
+
     leafletMarker: L.Marker;
     labelOffset: L.LatLngTuple;
     tooltipOffset: L.LatLngTuple;
@@ -59,7 +62,8 @@ export class Marker {
         this.updateMarkerIcon(settings);
 
         if (settings.showTooltip) {
-            this.tooltip = createTooltip(this.leafletMarker, settings, data.$datasource);
+            this.tooltip = createTooltip(this.leafletMarker, settings, data.$datasource,
+              settings.autocloseTooltip, settings.showTooltipAction);
             this.updateMarkerTooltip(data);
         }
 
@@ -77,11 +81,13 @@ export class Marker {
           this.leafletMarker.on('pm:dragstart', (e) => {
             (this.leafletMarker.dragging as any)._draggable = { _moved: true };
             (this.leafletMarker.dragging as any)._enabled = true;
+            this.editing = true;
           });
           this.leafletMarker.on('pm:dragend', (e) => {
             onDragendListener(e, this.data);
             delete (this.leafletMarker.dragging as any)._draggable;
             delete (this.leafletMarker.dragging as any)._enabled;
+            this.editing = false;
           });
         }
     }
@@ -105,7 +111,7 @@ export class Marker {
     }
 
     updateMarkerPosition(position: L.LatLng) {
-      if (!this.leafletMarker.getLatLng().equals(position)) {
+      if (!this.leafletMarker.getLatLng().equals(position) && !this.editing) {
         this.location = position;
         this.leafletMarker.setLatLng(position);
       }

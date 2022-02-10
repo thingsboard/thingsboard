@@ -567,7 +567,7 @@ export const mapPolygonSchema =
             polygonKeyName: {
                 title: 'Polygon key name',
                 type: 'string',
-                default: 'coordinates'
+                default: 'perimeter'
             },
             editablePolygon: {
               title: 'Enable polygon edit',
@@ -600,7 +600,7 @@ export const mapPolygonSchema =
             polygonOpacity: {
                 title: 'Polygon opacity',
                 type: 'number',
-                default: 0.5
+                default: 0.2
             },
             polygonStrokeColor: {
                 title: 'Stroke color',
@@ -614,12 +614,22 @@ export const mapPolygonSchema =
             polygonStrokeWeight: {
                 title: 'Stroke weight',
                 type: 'number',
-                default: 1
+                default: 3
             },
             showPolygonTooltip: {
                 title: 'Show polygon tooltip',
                 type: 'boolean',
                 default: false
+            },
+            showPolygonTooltipAction: {
+              title: 'Action for displaying polygon tooltip',
+              type: 'string',
+              default: 'click'
+            },
+            autoClosePolygonTooltip: {
+              title: 'Auto-close polygon tooltips',
+              type: 'boolean',
+              default: true
             },
             polygonTooltipPattern: {
                 title: 'Tooltip (for ex. \'Text ${keyName} units.\' or <link-act name=\'my-action\'>Link text</link-act>\')',
@@ -701,6 +711,26 @@ export const mapPolygonSchema =
         'polygonStrokeOpacity',
         'polygonStrokeWeight',
         'showPolygonTooltip',
+        {
+          key: 'showPolygonTooltipAction',
+          type: 'rc-select',
+          multiple: false,
+          items: [
+            {
+              value: 'click',
+              label: 'Show tooltip on click (Default)'
+            },
+            {
+              value: 'hover',
+              label: 'Show tooltip on hover'
+            }
+          ],
+          condition: 'model.showPolygonTooltip === true'
+        },
+        {
+          key: 'autoClosePolygonTooltip',
+          condition: 'model.showPolygonTooltip === true'
+        },
         {
           key: 'usePolygonTooltipFunction',
           condition: 'model.showPolygonTooltip === true'
@@ -1372,6 +1402,202 @@ export const editorSettingSchema =
       {
         key: 'hideRemoveControlButton',
         condition: 'model.hideAllControlButton == false'
+      }
+    ]
+  };
+
+export const mapCircleSchema =
+  {
+    schema: {
+      title: 'Map Circle Configuration',
+      type: 'object',
+      properties: {
+        showCircle: {
+          title: 'Show circle',
+          type: 'boolean',
+          default: false
+        },
+        circleKeyName: {
+          title: 'Circle key name',
+          type: 'string',
+          default: 'perimeter'
+        },
+        editableCircle: {
+          title: 'Enable circle edit',
+          type: 'boolean',
+          default: false
+        },
+        showCircleLabel: {
+          title: 'Show circle label',
+          type: 'boolean',
+          default: false
+        },
+        circleLabel: {
+          title: 'Circle label (pattern examples: \'${entityName}\', \'${entityName}: (Text ${keyName} units.)\' )',
+          type: 'string',
+          default: '${entityName}'
+        },
+        useCircleLabelFunction: {
+          title: 'Use circle label function',
+          type: 'boolean',
+          default: false
+        },
+        circleLabelFunction: {
+          title: 'Circle label function: f(data, dsData, dsIndex)',
+          type: 'string'
+        },
+        circleFillColor: {
+          title: 'Circle fill color',
+          type: 'string'
+        },
+        useCircleFillColorFunction: {
+          title: 'Use circle fill color function',
+          type: 'boolean',
+          default: false
+        },
+        circleFillColorFunction: {
+          title: 'Circle fill color function: f(data, dsData, dsIndex)',
+          type: 'string'
+        },
+        circleFillColorOpacity: {
+          title: 'Circle fill color opacity',
+          type: 'number',
+          default: 0.2
+        },
+        circleStrokeColor: {
+          title: 'Circle stroke color',
+          type: 'string'
+        },
+        useCircleStrokeColorFunction: {
+          title: 'Use circle stroke color function',
+          type: 'boolean',
+          default: false
+        },
+        circleStrokeColorFunction: {
+          title: 'Circle stroke Color function: f(data, dsData, dsIndex)',
+          type: 'string'
+        },
+        circleStrokeOpacity: {
+          title: 'Circle stroke opacity',
+          type: 'number',
+          default: 1
+        },
+        circleStrokeWeight: {
+          title: 'Circle stroke weight',
+          type: 'number',
+          default: 3
+        },
+        showCircleTooltip: {
+          title: 'Show circle tooltip',
+          type: 'boolean',
+          default: false
+        },
+        showCircleTooltipAction: {
+          title: 'Action for displaying circle tooltip',
+          type: 'string',
+          default: 'click'
+        },
+        autoCloseCircleTooltip: {
+          title: 'Auto-close circle tooltips',
+          type: 'boolean',
+          default: true
+        },
+        circleTooltipPattern: {
+          title: 'Tooltip (for ex. \'Text ${keyName} units.\' or <link-act name=\'my-action\'>Link text</link-act>\')',
+          type: 'string',
+          default: '<b>${entityName}</b><br/><br/><b>Temperatur:</b> ${temp:1}'
+        },
+        useCircleTooltipFunction: {
+          title: 'Use circle tooltip function',
+          type: 'boolean',
+          default: false
+        },
+        circleTooltipFunction: {
+          title: 'Circle tooltip function: f(data, dsData, dsIndex)',
+          type: 'string'
+        }
+      },
+      required: []
+    },
+    form: [
+      'showCircle',
+      'circleKeyName',
+      'editableCircle',
+      'showCircleLabel',
+      {
+        key: 'useCircleLabelFunction',
+        condition: 'model.showCircleLabel === true'
+      },
+      {
+        key: 'circleLabel',
+        condition: 'model.showCircleLabel === true && model.useCircleLabelFunction !== true'
+      },
+      {
+        key: 'circleLabelFunction',
+        type: 'javascript',
+        helpId: 'widget/lib/map/label_fn',
+        condition: 'model.showCircleLabel === true && model.useCircleLabelFunction === true'
+      },
+      {
+        key: 'circleFillColor',
+        type: 'color'
+      },
+      'useCircleFillColorFunction',
+      {
+        key: 'circleFillColorFunction',
+        helpId: 'widget/lib/map/polygon_color_fn',
+        type: 'javascript',
+        condition: 'model.useCircleFillColorFunction === true'
+      },
+      'circleFillColorOpacity',
+      {
+        key: 'circleStrokeColor',
+        type: 'color'
+      },
+      'useCircleStrokeColorFunction',
+      {
+        key: 'circleStrokeColorFunction',
+        helpId: 'widget/lib/map/polygon_color_fn',
+        type: 'javascript',
+        condition: 'model.useCircleStrokeColorFunction === true'
+      },
+      'circleStrokeOpacity',
+      'circleStrokeWeight',
+      'showCircleTooltip',
+      {
+        key: 'showCircleTooltipAction',
+        type: 'rc-select',
+        multiple: false,
+        items: [
+          {
+            value: 'click',
+            label: 'Show tooltip on click (Default)'
+          },
+          {
+            value: 'hover',
+            label: 'Show tooltip on hover'
+          }
+        ],
+        condition: 'model.showCircleTooltip === true'
+      },
+      {
+        key: 'autoCloseCircleTooltip',
+        condition: 'model.showCircleTooltip === true'
+      },
+      {
+        key: 'useCircleTooltipFunction',
+        condition: 'model.showCircleTooltip === true'
+      },
+      {
+        key: 'circleTooltipPattern',
+        type: 'textarea',
+        condition: 'model.showCircleTooltip === true && model.useCircleTooltipFunction !== true'
+      },
+      {
+        key: 'circleTooltipFunction',
+        helpId: 'widget/lib/map/polygon_tooltip_fn',
+        type: 'javascript',
+        condition: 'model.showCircleTooltip === true && model.useCircleTooltipFunction === true'
       }
     ]
   };

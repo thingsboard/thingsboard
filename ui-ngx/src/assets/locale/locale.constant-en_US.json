@@ -3314,12 +3314,15 @@
             "tooltips": {
                 "placeMarker": "Click to place '{{entityName}}' entity",
                 "firstVertex": "Polygon for '{{entityName}}': click to place first point",
+                "firstVertex-cut": "Click to place first point",
                 "continueLine": "Polygon for '{{entityName}}': click to continue drawing",
+                "continueLine-cut": "Click to continue drawing",
                 "finishLine": "Click any existing marker to finish",
                 "finishPoly": "Polygon for '{{entityName}}': click first marker to finish and save",
+                "finishPoly-cut": "Click first marker to finish and save",
                 "finishRect": "Polygon for '{{entityName}}': click to finish and save",
-                "startCircle": "Click to place circle center",
-                "finishCircle": "Click to finish circle",
+                "startCircle": "Circle for '{{entityName}}': click to place circle center",
+                "finishCircle": "Circle for '{{entityName}}': click to finish circle",
                 "placeCircleMarker": "Click to place circle marker"
             },
             "actions": {
@@ -3354,6 +3357,7 @@
             "row-click": "On row click",
             "polygon-click": "On polygon click",
             "marker-click": "On marker click",
+            "circle-click": "On circle click",
             "tooltip-tag-action": "Tooltip tag action",
             "node-selected": "On node selected",
             "element-click": "On HTML element click",
