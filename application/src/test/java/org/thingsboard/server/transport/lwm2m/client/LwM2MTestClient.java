@@ -57,7 +57,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static org.awaitility.Awaitility.await;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
 import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
 import static org.eclipse.leshan.core.LwM2mId.DEVICE;
