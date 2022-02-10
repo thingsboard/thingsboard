@@ -42,9 +42,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.transport.lwm2m.config.TbLwM2mVersion;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -72,15 +69,14 @@ import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.ge
 @Slf4j
 @EqualsAndHashCode(of = {"endpoint"})
 @ToString(of = "endpoint")
-public class LwM2mClient implements Serializable {
+public class LwM2mClient {
 
-    private static final long serialVersionUID = 8793482946289222623L;
-
+    @Getter
     private final String nodeId;
     @Getter
     private final String endpoint;
 
-    private transient Lock lock;
+    private final Lock lock;
 
     @Getter
     private final Map<String, ResourceValue> resources;
@@ -109,7 +105,7 @@ public class LwM2mClient implements Serializable {
     @Getter
     private Long edrxCycle;
     @Getter
-    private transient Registration registration;
+    private Registration registration;
     @Getter
     @Setter
     private boolean asleep;
@@ -117,14 +113,14 @@ public class LwM2mClient implements Serializable {
     private long lastUplinkTime;
     @Getter
     @Setter
-    private transient Future<Void> sleepTask;
+    private Future<Void> sleepTask;
 
     private boolean firstEdrxDownlink = true;
 
     @Getter
-    private transient Set<ContentFormat> clientSupportContentFormats;
+    private Set<ContentFormat> clientSupportContentFormats;
     @Getter
-    private transient ContentFormat defaultContentFormat;
+    private ContentFormat defaultContentFormat;
     @Getter
     private final AtomicInteger retryAttempts;
 
@@ -423,7 +419,7 @@ public class LwM2mClient implements Serializable {
     private ContentFormat calculateDefaultContentFormat(Registration registration) {
         if (registration == null) {
             return ContentFormat.DEFAULT;
-        } else{
+        } else {
             return TbLwM2mVersion.fromVersion(registration.getLwM2mVersion()).getContentFormat();
         }
     }
@@ -441,11 +437,6 @@ public class LwM2mClient implements Serializable {
             contentFormats.addAll(codes);
         }
         return contentFormats;
-    }
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        this.lock = new ReentrantLock();
     }
 
     public long updateLastUplinkTime() {
