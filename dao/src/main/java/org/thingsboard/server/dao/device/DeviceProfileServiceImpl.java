@@ -17,18 +17,9 @@ package org.thingsboard.server.dao.device;
 
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
-import com.squareup.wire.Syntax;
-import com.squareup.wire.schema.Field;
-import com.squareup.wire.schema.Location;
-import com.squareup.wire.schema.internal.parser.EnumElement;
-import com.squareup.wire.schema.internal.parser.FieldElement;
-import com.squareup.wire.schema.internal.parser.MessageElement;
-import com.squareup.wire.schema.internal.parser.OneOfElement;
-import com.squareup.wire.schema.internal.parser.ProtoFileElement;
-import com.squareup.wire.schema.internal.parser.ProtoParser;
-import com.squareup.wire.schema.internal.parser.TypeElement;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.util.SecurityUtil;
+import org.thingsboard.server.common.data.DynamicProtoUtils;
 import org.thingsboard.server.common.data.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,7 +82,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.CacheConstants.DEVICE_PROFILE_CACHE;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -104,15 +94,11 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     private static final String INCORRECT_DEVICE_PROFILE_ID = "Incorrect deviceProfileId ";
     private static final String INCORRECT_DEVICE_PROFILE_NAME = "Incorrect deviceProfileName ";
 
-    private static final Location LOCATION = new Location("", "", -1, -1);
     private static final String ATTRIBUTES_PROTO_SCHEMA = "attributes proto schema";
     private static final String TELEMETRY_PROTO_SCHEMA = "telemetry proto schema";
     private static final String RPC_REQUEST_PROTO_SCHEMA = "rpc request proto schema";
     private static final String RPC_RESPONSE_PROTO_SCHEMA = "rpc response proto schema";
-
-    private static String invalidSchemaProvidedMessage(String schemaName) {
-        return "[Transport Configuration] invalid " + schemaName + " provided!";
-    }
+    private static final String EXCEPTION_PREFIX = "[Transport Configuration]";
 
     @Autowired(required = false)
     private QueueService queueService;
@@ -386,8 +372,8 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                             throw new DataValidationException("Another default device profile is present in scope of current tenant!");
                         }
                     }
-                    if (!StringUtils.isEmpty(deviceProfile.getDefaultQueueName()) && queueService != null){
-                        if(!queueService.getQueuesByServiceType(ServiceType.TB_RULE_ENGINE).contains(deviceProfile.getDefaultQueueName())){
+                    if (!StringUtils.isEmpty(deviceProfile.getDefaultQueueName()) && queueService != null) {
+                        if (!queueService.getQueuesByServiceType(ServiceType.TB_RULE_ENGINE).contains(deviceProfile.getDefaultQueueName())) {
                             throw new DataValidationException("Device profile is referencing to non-existent queue!");
                         }
                     }
@@ -515,269 +501,152 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
 
                 private void validateProtoSchemas(ProtoTransportPayloadConfiguration protoTransportPayloadTypeConfiguration) {
                     try {
-                        validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceAttributesProtoSchema(), ATTRIBUTES_PROTO_SCHEMA);
-                        validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceTelemetryProtoSchema(), TELEMETRY_PROTO_SCHEMA);
-                        validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceRpcRequestProtoSchema(), RPC_REQUEST_PROTO_SCHEMA);
-                        validateTransportProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceRpcResponseProtoSchema(), RPC_RESPONSE_PROTO_SCHEMA);
+                        DynamicProtoUtils.validateProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceAttributesProtoSchema(), ATTRIBUTES_PROTO_SCHEMA, EXCEPTION_PREFIX);
+                        DynamicProtoUtils.validateProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceTelemetryProtoSchema(), TELEMETRY_PROTO_SCHEMA, EXCEPTION_PREFIX);
+                        DynamicProtoUtils.validateProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceRpcRequestProtoSchema(), RPC_REQUEST_PROTO_SCHEMA, EXCEPTION_PREFIX);
+                        DynamicProtoUtils.validateProtoSchema(protoTransportPayloadTypeConfiguration.getDeviceRpcResponseProtoSchema(), RPC_RESPONSE_PROTO_SCHEMA, EXCEPTION_PREFIX);
                     } catch (Exception exception) {
                         throw new DataValidationException(exception.getMessage());
                     }
                 }
 
-                private void validateTransportProtoSchema(String schema, String schemaName) throws IllegalArgumentException {
-                    ProtoParser schemaParser = new ProtoParser(LOCATION, schema.toCharArray());
-                    ProtoFileElement protoFileElement;
-                    try {
-                        protoFileElement = schemaParser.readProtoFile();
-                    } catch (Exception e) {
-                        throw new IllegalArgumentException("[Transport Configuration] failed to parse " + schemaName + " due to: " + e.getMessage());
-                    }
-                    checkProtoFileSyntax(schemaName, protoFileElement);
-                    checkProtoFileCommonSettings(schemaName, protoFileElement.getOptions().isEmpty(), " Schema options don't support!");
-                    checkProtoFileCommonSettings(schemaName, protoFileElement.getPublicImports().isEmpty(), " Schema public imports don't support!");
-                    checkProtoFileCommonSettings(schemaName, protoFileElement.getImports().isEmpty(), " Schema imports don't support!");
-                    checkProtoFileCommonSettings(schemaName, protoFileElement.getExtendDeclarations().isEmpty(), " Schema extend declarations don't support!");
-                    checkTypeElements(schemaName, protoFileElement);
-                }
-
-                private void checkProtoFileSyntax(String schemaName, ProtoFileElement protoFileElement) {
-                    if (protoFileElement.getSyntax() == null || !protoFileElement.getSyntax().equals(Syntax.PROTO_3)) {
-                        throw new IllegalArgumentException("[Transport Configuration] invalid schema syntax: " + protoFileElement.getSyntax() +
-                                " for " + schemaName + " provided! Only " + Syntax.PROTO_3 + " allowed!");
-                    }
-                }
-
-                private void checkProtoFileCommonSettings(String schemaName, boolean isEmptySettings, String invalidSettingsMessage) {
-                    if (!isEmptySettings) {
-                        throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + invalidSettingsMessage);
-                    }
-                }
-
-                private void checkTypeElements(String schemaName, ProtoFileElement protoFileElement) {
-                    List<TypeElement> types = protoFileElement.getTypes();
-                    if (!types.isEmpty()) {
-                        if (types.stream().noneMatch(typeElement -> typeElement instanceof MessageElement)) {
-                            throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " At least one Message definition should exists!");
+                private void validateLwm2mServersConfigOfBootstrapForClient(List<LwM2MBootstrapServerCredential> lwM2MBootstrapServersConfigurations, boolean isBootstrapServerUpdateEnable) {
+                    Set<String> uris = new HashSet<>();
+                    Set<Integer> shortServerIds = new HashSet<>();
+                    for (LwM2MBootstrapServerCredential bootstrapServerCredential : lwM2MBootstrapServersConfigurations) {
+                        AbstractLwM2MBootstrapServerCredential serverConfig = (AbstractLwM2MBootstrapServerCredential) bootstrapServerCredential;
+                        if (!isBootstrapServerUpdateEnable && serverConfig.isBootstrapServerIs()) {
+                            throw new DeviceCredentialsValidationException("Bootstrap config must not include \"Bootstrap Server\". \"Include Bootstrap Server updates\" is " + isBootstrapServerUpdateEnable + ".");
+                        }
+                        String server = serverConfig.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server" + " shortServerId: " + serverConfig.getShortServerId() + ":";
+                        if (serverConfig.getShortServerId() < 1 || serverConfig.getShortServerId() > 65534) {
+                            throw new DeviceCredentialsValidationException(server + " ShortServerId must not be less than 1 and more than 65534!");
+                        }
+                        if (!shortServerIds.add(serverConfig.getShortServerId())) {
+                            throw new DeviceCredentialsValidationException(server + " \"Short server Id\" value = " + serverConfig.getShortServerId() + ". This value must be a unique value for all servers!");
+                        }
+                        String uri = serverConfig.getHost() + ":" + serverConfig.getPort();
+                        if (!uris.add(uri)) {
+                            throw new DeviceCredentialsValidationException(server + " \"Host + port\" value = " + uri + ". This value must be a unique value for all servers!");
+                        }
+                        Integer port;
+                        if (LwM2MSecurityMode.NO_SEC.equals(serverConfig.getSecurityMode())) {
+                            port = serverConfig.isBootstrapServerIs() ? 5687 : 5685;
                         } else {
-                            checkEnumElements(schemaName, getEnumElements(types));
-                            checkMessageElements(schemaName, getMessageTypes(types));
+                            port = serverConfig.isBootstrapServerIs() ? 5688 : 5686;
                         }
+                        if (serverConfig.getPort() == null || serverConfig.getPort().intValue() != port) {
+                            throw new DeviceCredentialsValidationException(server + " \"Port\" value = " + serverConfig.getPort() + ". This value for security " + serverConfig.getSecurityMode().name() + " must be " + port + "!");
+                        }
+                    }
+                }
+
+                private void validateLwm2mServersCredentialOfBootstrapForClient(LwM2MBootstrapServerCredential bootstrapServerConfig) {
+                    String server;
+                    switch (bootstrapServerConfig.getSecurityMode()) {
+                        case NO_SEC:
+                        case PSK:
+                            break;
+                        case RPK:
+                            RPKLwM2MBootstrapServerCredential rpkServerCredentials = (RPKLwM2MBootstrapServerCredential) bootstrapServerConfig;
+                            server = rpkServerCredentials.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";
+                            if (StringUtils.isEmpty(rpkServerCredentials.getServerPublicKey())) {
+                                throw new DeviceCredentialsValidationException(server + " RPK public key must be specified!");
+                            }
+                            try {
+                                String pubkRpkSever = EncryptionUtil.pubkTrimNewLines(rpkServerCredentials.getServerPublicKey());
+                                rpkServerCredentials.setServerPublicKey(pubkRpkSever);
+                                SecurityUtil.publicKey.decode(rpkServerCredentials.getDecodedCServerPublicKey());
+                            } catch (Exception e) {
+                                throw new DeviceCredentialsValidationException(server + " RPK public key must be in standard [RFC7250] and then encoded to Base64 format!");
+                            }
+                            break;
+                        case X509:
+                            X509LwM2MBootstrapServerCredential x509ServerCredentials = (X509LwM2MBootstrapServerCredential) bootstrapServerConfig;
+                            server = x509ServerCredentials.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";
+                            if (StringUtils.isEmpty(x509ServerCredentials.getServerPublicKey())) {
+                                throw new DeviceCredentialsValidationException(server + " X509 certificate must be specified!");
+                            }
+                            try {
+                                String certServer = EncryptionUtil.certTrimNewLines(x509ServerCredentials.getServerPublicKey());
+                                x509ServerCredentials.setServerPublicKey(certServer);
+                                SecurityUtil.certificate.decode(x509ServerCredentials.getDecodedCServerPublicKey());
+                            } catch (Exception e) {
+                                throw new DeviceCredentialsValidationException(server + " X509 certificate must be in DER-encoded X509v3 format and support only EC algorithm and then encoded to Base64 format!");
+                            }
+                            break;
+                    }
+                }
+
+                private void validateTelemetryDynamicMessageFields(ProtoTransportPayloadConfiguration protoTransportPayloadTypeConfiguration) {
+                    String deviceTelemetryProtoSchema = protoTransportPayloadTypeConfiguration.getDeviceTelemetryProtoSchema();
+                    Descriptors.Descriptor telemetryDynamicMessageDescriptor = protoTransportPayloadTypeConfiguration.getTelemetryDynamicMessageDescriptor(deviceTelemetryProtoSchema);
+                    if (telemetryDynamicMessageDescriptor == null) {
+                        throw new DataValidationException(DynamicProtoUtils.invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA, EXCEPTION_PREFIX) + " Failed to get telemetryDynamicMessageDescriptor!");
                     } else {
-                        throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " Type elements is empty!");
-                    }
-                }
-
-                private void checkFieldElements(String schemaName, List<FieldElement> fieldElements) {
-                    if (!fieldElements.isEmpty()) {
-                        boolean hasRequiredLabel = fieldElements.stream().anyMatch(fieldElement -> {
-                            Field.Label label = fieldElement.getLabel();
-                            return label != null && label.equals(Field.Label.REQUIRED);
-                        });
-                        if (hasRequiredLabel) {
-                            throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " Required labels are not supported!");
-                        }
-                        boolean hasDefaultValue = fieldElements.stream().anyMatch(fieldElement -> fieldElement.getDefaultValue() != null);
-                        if (hasDefaultValue) {
-                            throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " Default values are not supported!");
-                        }
-                    }
-                }
-
-                private void checkEnumElements(String schemaName, List<EnumElement> enumTypes) {
-                    if (enumTypes.stream().anyMatch(enumElement -> !enumElement.getNestedTypes().isEmpty())) {
-                        throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " Nested types in Enum definitions are not supported!");
-                    }
-                    if (enumTypes.stream().anyMatch(enumElement -> !enumElement.getOptions().isEmpty())) {
-                        throw new IllegalArgumentException(invalidSchemaProvidedMessage(schemaName) + " Enum definitions options are not supported!");
-                    }
-                }
-
-                private void checkMessageElements(String schemaName, List<MessageElement> messageElementsList) {
-                    if (!messageElementsList.isEmpty()) {
-                        messageElementsList.forEach(messageElement -> {
-                            checkProtoFileCommonSettings(schemaName, messageElement.getGroups().isEmpty(),
-                                    " Message definition groups don't support!");
-                            checkProtoFileCommonSettings(schemaName, messageElement.getOptions().isEmpty(),
-                                    " Message definition options don't support!");
-                            checkProtoFileCommonSettings(schemaName, messageElement.getExtensions().isEmpty(),
-                                    " Message definition extensions don't support!");
-                            checkProtoFileCommonSettings(schemaName, messageElement.getReserveds().isEmpty(),
-                                    " Message definition reserved elements don't support!");
-                            checkFieldElements(schemaName, messageElement.getFields());
-                            List<OneOfElement> oneOfs = messageElement.getOneOfs();
-                            if (!oneOfs.isEmpty()) {
-                                oneOfs.forEach(oneOfElement -> {
-                                    checkProtoFileCommonSettings(schemaName, oneOfElement.getGroups().isEmpty(),
-                                            " OneOf definition groups don't support!");
-                                    checkFieldElements(schemaName, oneOfElement.getFields());
-                                });
-                            }
-                            List<TypeElement> nestedTypes = messageElement.getNestedTypes();
-                            if (!nestedTypes.isEmpty()) {
-                                List<EnumElement> nestedEnumTypes = getEnumElements(nestedTypes);
-                                if (!nestedEnumTypes.isEmpty()) {
-                                    checkEnumElements(schemaName, nestedEnumTypes);
+                        List<Descriptors.FieldDescriptor> fields = telemetryDynamicMessageDescriptor.getFields();
+                        if (CollectionUtils.isEmpty(fields)) {
+                            throw new DataValidationException(DynamicProtoUtils.invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA, EXCEPTION_PREFIX) + " " + telemetryDynamicMessageDescriptor.getName() + " fields is empty!");
+                        } else if (fields.size() == 2) {
+                            Descriptors.FieldDescriptor tsFieldDescriptor = telemetryDynamicMessageDescriptor.findFieldByName("ts");
+                            Descriptors.FieldDescriptor valuesFieldDescriptor = telemetryDynamicMessageDescriptor.findFieldByName("values");
+                            if (tsFieldDescriptor != null && valuesFieldDescriptor != null) {
+                                if (!Descriptors.FieldDescriptor.Type.MESSAGE.equals(valuesFieldDescriptor.getType())) {
+                                    throw new DataValidationException(DynamicProtoUtils.invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA, EXCEPTION_PREFIX) + " Field 'values' has invalid data type. Only message type is supported!");
                                 }
-                                List<MessageElement> nestedMessageTypes = getMessageTypes(nestedTypes);
-                                checkMessageElements(schemaName, nestedMessageTypes);
+                                if (!Descriptors.FieldDescriptor.Type.INT64.equals(tsFieldDescriptor.getType())) {
+                                    throw new DataValidationException(DynamicProtoUtils.invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA, EXCEPTION_PREFIX) + " Field 'ts' has invalid data type. Only int64 type is supported!");
+                                }
+                                if (!tsFieldDescriptor.hasOptionalKeyword()) {
+                                    throw new DataValidationException(DynamicProtoUtils.invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA, EXCEPTION_PREFIX) + " Field 'ts' has invalid label. Field 'ts' should have optional keyword!");
+                                }
                             }
-                        });
+                        }
                     }
                 }
 
-                private List<MessageElement> getMessageTypes(List<TypeElement> types) {
-                    return types.stream()
-                            .filter(typeElement -> typeElement instanceof MessageElement)
-                            .map(typeElement -> (MessageElement) typeElement)
-                            .collect(Collectors.toList());
+                private void validateRpcRequestDynamicMessageFields(ProtoTransportPayloadConfiguration protoTransportPayloadTypeConfiguration) {
+                    DynamicMessage.Builder rpcRequestDynamicMessageBuilder = protoTransportPayloadTypeConfiguration.getRpcRequestDynamicMessageBuilder(protoTransportPayloadTypeConfiguration.getDeviceRpcRequestProtoSchema());
+                    Descriptors.Descriptor rpcRequestDynamicMessageDescriptor = rpcRequestDynamicMessageBuilder.getDescriptorForType();
+                    if (rpcRequestDynamicMessageDescriptor == null) {
+                        throw new DataValidationException(DynamicProtoUtils.invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA, EXCEPTION_PREFIX) + " Failed to get rpcRequestDynamicMessageDescriptor!");
+                    } else {
+                        if (CollectionUtils.isEmpty(rpcRequestDynamicMessageDescriptor.getFields()) || rpcRequestDynamicMessageDescriptor.getFields().size() != 3) {
+                            throw new DataValidationException(DynamicProtoUtils.invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA, EXCEPTION_PREFIX) + " " + rpcRequestDynamicMessageDescriptor.getName() + " message should always contains 3 fields: method, requestId and params!");
+                        }
+                        Descriptors.FieldDescriptor methodFieldDescriptor = rpcRequestDynamicMessageDescriptor.findFieldByName("method");
+                        if (methodFieldDescriptor == null) {
+                            throw new DataValidationException(DynamicProtoUtils.invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA, EXCEPTION_PREFIX) + " Failed to get field descriptor for field: method!");
+                        } else {
+                            if (!Descriptors.FieldDescriptor.Type.STRING.equals(methodFieldDescriptor.getType())) {
+                                throw new DataValidationException(DynamicProtoUtils.invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA, EXCEPTION_PREFIX) + " Field 'method' has invalid data type. Only string type is supported!");
+                            }
+                            if (methodFieldDescriptor.isRepeated()) {
+                                throw new DataValidationException(DynamicProtoUtils.invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA, EXCEPTION_PREFIX) + " Field 'method' has invalid label!");
+                            }
+                        }
+                        Descriptors.FieldDescriptor requestIdFieldDescriptor = rpcRequestDynamicMessageDescriptor.findFieldByName("requestId");
+                        if (requestIdFieldDescriptor == null) {
+                            throw new DataValidationException(DynamicProtoUtils.invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA, EXCEPTION_PREFIX) + " Failed to get field descriptor for field: requestId!");
+                        } else {
+                            if (!Descriptors.FieldDescriptor.Type.INT32.equals(requestIdFieldDescriptor.getType())) {
+                                throw new DataValidationException(DynamicProtoUtils.invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA, EXCEPTION_PREFIX) + " Field 'requestId' has invalid data type. Only int32 type is supported!");
+                            }
+                            if (requestIdFieldDescriptor.isRepeated()) {
+                                throw new DataValidationException(DynamicProtoUtils.invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA, EXCEPTION_PREFIX) + " Field 'requestId' has invalid label!");
+                            }
+                        }
+                        Descriptors.FieldDescriptor paramsFieldDescriptor = rpcRequestDynamicMessageDescriptor.findFieldByName("params");
+                        if (paramsFieldDescriptor == null) {
+                            throw new DataValidationException(DynamicProtoUtils.invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA, EXCEPTION_PREFIX) + " Failed to get field descriptor for field: params!");
+                        } else {
+                            if (paramsFieldDescriptor.isRepeated()) {
+                                throw new DataValidationException(DynamicProtoUtils.invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA, EXCEPTION_PREFIX) + " Field 'params' has invalid label!");
+                            }
+                        }
+                    }
                 }
-
-                private List<EnumElement> getEnumElements(List<TypeElement> types) {
-                    return types.stream()
-                            .filter(typeElement -> typeElement instanceof EnumElement)
-                            .map(typeElement -> (EnumElement) typeElement)
-                            .collect(Collectors.toList());
-                }
-
             };
-
-    private void validateTelemetryDynamicMessageFields(ProtoTransportPayloadConfiguration protoTransportPayloadTypeConfiguration) {
-        String deviceTelemetryProtoSchema = protoTransportPayloadTypeConfiguration.getDeviceTelemetryProtoSchema();
-        Descriptors.Descriptor telemetryDynamicMessageDescriptor = protoTransportPayloadTypeConfiguration.getTelemetryDynamicMessageDescriptor(deviceTelemetryProtoSchema);
-        if (telemetryDynamicMessageDescriptor == null) {
-            throw new DataValidationException(invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA) + " Failed to get telemetryDynamicMessageDescriptor!");
-        } else {
-            List<Descriptors.FieldDescriptor> fields = telemetryDynamicMessageDescriptor.getFields();
-            if (CollectionUtils.isEmpty(fields)) {
-                throw new DataValidationException(invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA) + " " + telemetryDynamicMessageDescriptor.getName() + " fields is empty!");
-            } else if (fields.size() == 2) {
-                Descriptors.FieldDescriptor tsFieldDescriptor = telemetryDynamicMessageDescriptor.findFieldByName("ts");
-                Descriptors.FieldDescriptor valuesFieldDescriptor = telemetryDynamicMessageDescriptor.findFieldByName("values");
-                if (tsFieldDescriptor != null && valuesFieldDescriptor != null) {
-                    if (!Descriptors.FieldDescriptor.Type.MESSAGE.equals(valuesFieldDescriptor.getType())) {
-                        throw new DataValidationException(invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA) + " Field 'values' has invalid data type. Only message type is supported!");
-                    }
-                    if (!Descriptors.FieldDescriptor.Type.INT64.equals(tsFieldDescriptor.getType())) {
-                        throw new DataValidationException(invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA) + " Field 'ts' has invalid data type. Only int64 type is supported!");
-                    }
-                    if (!tsFieldDescriptor.hasOptionalKeyword()) {
-                        throw new DataValidationException(invalidSchemaProvidedMessage(TELEMETRY_PROTO_SCHEMA) + " Field 'ts' has invalid label. Field 'ts' should have optional keyword!");
-                    }
-                }
-            }
-        }
-    }
-
-    private void validateRpcRequestDynamicMessageFields(ProtoTransportPayloadConfiguration protoTransportPayloadTypeConfiguration) {
-        DynamicMessage.Builder rpcRequestDynamicMessageBuilder = protoTransportPayloadTypeConfiguration.getRpcRequestDynamicMessageBuilder(protoTransportPayloadTypeConfiguration.getDeviceRpcRequestProtoSchema());
-        Descriptors.Descriptor rpcRequestDynamicMessageDescriptor = rpcRequestDynamicMessageBuilder.getDescriptorForType();
-        if (rpcRequestDynamicMessageDescriptor == null) {
-            throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Failed to get rpcRequestDynamicMessageDescriptor!");
-        } else {
-            if (CollectionUtils.isEmpty(rpcRequestDynamicMessageDescriptor.getFields()) || rpcRequestDynamicMessageDescriptor.getFields().size() != 3) {
-                throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " " + rpcRequestDynamicMessageDescriptor.getName() + " message should always contains 3 fields: method, requestId and params!");
-            }
-            Descriptors.FieldDescriptor methodFieldDescriptor = rpcRequestDynamicMessageDescriptor.findFieldByName("method");
-            if (methodFieldDescriptor == null) {
-                throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Failed to get field descriptor for field: method!");
-            } else {
-                if (!Descriptors.FieldDescriptor.Type.STRING.equals(methodFieldDescriptor.getType())) {
-                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Field 'method' has invalid data type. Only string type is supported!");
-                }
-                if (methodFieldDescriptor.isRepeated()) {
-                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Field 'method' has invalid label!");
-                }
-            }
-            Descriptors.FieldDescriptor requestIdFieldDescriptor = rpcRequestDynamicMessageDescriptor.findFieldByName("requestId");
-            if (requestIdFieldDescriptor == null) {
-                throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Failed to get field descriptor for field: requestId!");
-            } else {
-                if (!Descriptors.FieldDescriptor.Type.INT32.equals(requestIdFieldDescriptor.getType())) {
-                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Field 'requestId' has invalid data type. Only int32 type is supported!");
-                }
-                if (requestIdFieldDescriptor.isRepeated()) {
-                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Field 'requestId' has invalid label!");
-                }
-            }
-            Descriptors.FieldDescriptor paramsFieldDescriptor = rpcRequestDynamicMessageDescriptor.findFieldByName("params");
-            if (paramsFieldDescriptor == null) {
-                throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Failed to get field descriptor for field: params!");
-            } else {
-                if (paramsFieldDescriptor.isRepeated()) {
-                    throw new DataValidationException(invalidSchemaProvidedMessage(RPC_REQUEST_PROTO_SCHEMA) + " Field 'params' has invalid label!");
-                }
-            }
-        }
-    }
-
-    private void validateLwm2mServersConfigOfBootstrapForClient(List<LwM2MBootstrapServerCredential> lwM2MBootstrapServersConfigurations, boolean isBootstrapServerUpdateEnable) {
-        Set<String> uris = new HashSet<>();
-        Set<Integer> shortServerIds = new HashSet<>();
-        for (LwM2MBootstrapServerCredential bootstrapServerCredential : lwM2MBootstrapServersConfigurations) {
-            AbstractLwM2MBootstrapServerCredential serverConfig = (AbstractLwM2MBootstrapServerCredential) bootstrapServerCredential;
-            if (!isBootstrapServerUpdateEnable && serverConfig.isBootstrapServerIs()) {
-                throw new DeviceCredentialsValidationException("Bootstrap config must not include \"Bootstrap Server\". \"Include Bootstrap Server updates\" is " + isBootstrapServerUpdateEnable + ".");
-            }
-            String server = serverConfig.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server" + " shortServerId: " + serverConfig.getShortServerId() + ":";
-            if (serverConfig.getShortServerId() < 1 || serverConfig.getShortServerId() > 65534) {
-                throw new DeviceCredentialsValidationException(server + " ShortServerId must not be less than 1 and more than 65534!");
-            }
-            if (!shortServerIds.add(serverConfig.getShortServerId())) {
-                throw new DeviceCredentialsValidationException(server + " \"Short server Id\" value = " + serverConfig.getShortServerId() + ". This value must be a unique value for all servers!");
-            }
-            String uri = serverConfig.getHost() + ":" + serverConfig.getPort();
-            if (!uris.add(uri)) {
-                throw new DeviceCredentialsValidationException(server + " \"Host + port\" value = " + uri + ". This value must be a unique value for all servers!");
-            }
-            Integer port;
-            if (LwM2MSecurityMode.NO_SEC.equals(serverConfig.getSecurityMode())) {
-                port = serverConfig.isBootstrapServerIs() ? 5687 : 5685;
-            } else {
-                port = serverConfig.isBootstrapServerIs() ? 5688 : 5686;
-            }
-            if (serverConfig.getPort() == null || serverConfig.getPort().intValue() != port) {
-                throw new DeviceCredentialsValidationException(server + " \"Port\" value = " + serverConfig.getPort() + ". This value for security " + serverConfig.getSecurityMode().name() + " must be " + port + "!");
-            }
-        }
-    }
-
-    private void validateLwm2mServersCredentialOfBootstrapForClient(LwM2MBootstrapServerCredential bootstrapServerConfig) {
-        String server;
-        switch (bootstrapServerConfig.getSecurityMode()) {
-            case NO_SEC:
-            case PSK:
-                break;
-            case RPK:
-                RPKLwM2MBootstrapServerCredential rpkServerCredentials = (RPKLwM2MBootstrapServerCredential)  bootstrapServerConfig;
-                server = rpkServerCredentials.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";
-                if (StringUtils.isEmpty(rpkServerCredentials.getServerPublicKey())) {
-                    throw new DeviceCredentialsValidationException(server + " RPK public key must be specified!");
-                }
-                try {
-                    String pubkRpkSever = EncryptionUtil.pubkTrimNewLines(rpkServerCredentials.getServerPublicKey());
-                    rpkServerCredentials.setServerPublicKey(pubkRpkSever);
-                    SecurityUtil.publicKey.decode(rpkServerCredentials.getDecodedCServerPublicKey());
-                } catch (Exception e) {
-                    throw new DeviceCredentialsValidationException(server + " RPK public key must be in standard [RFC7250] and then encoded to Base64 format!");
-                }
-                break;
-            case X509:
-                X509LwM2MBootstrapServerCredential x509ServerCredentials = (X509LwM2MBootstrapServerCredential) bootstrapServerConfig;
-                server = x509ServerCredentials.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";
-                if (StringUtils.isEmpty(x509ServerCredentials.getServerPublicKey())) {
-                    throw new DeviceCredentialsValidationException(server + " X509 certificate must be specified!");
-                }
-
-                try {
-                    String certServer = EncryptionUtil.certTrimNewLines(x509ServerCredentials.getServerPublicKey());
-                    x509ServerCredentials.setServerPublicKey(certServer);
-                    SecurityUtil.certificate.decode(x509ServerCredentials.getDecodedCServerPublicKey());
-                } catch (Exception e) {
-                    throw new DeviceCredentialsValidationException(server + " X509 certificate must be in DER-encoded X509v3 format and support only EC algorithm and then encoded to Base64 format!");
-                }
-                break;
-        }
-    }
 
     private PaginatedRemover<TenantId, DeviceProfile> tenantDeviceProfilesRemover =
             new PaginatedRemover<TenantId, DeviceProfile>() {
