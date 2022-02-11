@@ -94,8 +94,10 @@ export class ImageMap extends LeafletMap {
         type: widgetType.latest,
         callbacks: {
           onDataUpdated: (subscription) => {
-            result.next([subscription.data[0]?.data, isUpdate]);
-            isUpdate = true;
+            if (subscription.data[0]?.data[0]?.length > 0) {
+              result.next([subscription.data[0].data, isUpdate]);
+              isUpdate = true;
+            }
           }
         }
       };
@@ -126,7 +128,6 @@ export class ImageMap extends LeafletMap {
 
     private imageFromAlias(alias: Observable<[DataSet, boolean]>): Observable<MapImage> {
       return alias.pipe(
-        filter(result => result[0].length > 0),
         mergeMap(res => {
           const mapImage: MapImage = {
             imageUrl: res[0][0][1],
