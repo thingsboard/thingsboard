@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,12 +73,13 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
     }
 
     @Override
+    public boolean isDynamic() {
+        return query != null && query.getPageLink().isDynamic();
+    }
+
+    @Override
     protected synchronized void update() {
-        long start = System.currentTimeMillis();
         PageData<EntityData> newData = findEntityData();
-        long end = System.currentTimeMillis();
-        stats.getRegularQueryInvocationCnt().incrementAndGet();
-        stats.getRegularQueryTimeSpent().addAndGet(end - start);
         Map<EntityId, EntityData> oldDataMap;
         if (data != null && !data.getData().isEmpty()) {
             oldDataMap = data.getData().stream().collect(Collectors.toMap(EntityData::getEntityId, Function.identity(), (a, b) -> a));

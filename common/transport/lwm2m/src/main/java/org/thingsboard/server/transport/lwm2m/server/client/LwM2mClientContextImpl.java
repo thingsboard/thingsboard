@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.thingsboard.server.transport.lwm2m.server.client;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.SecurityMode;
-import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,8 +25,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.data.PowerMode;
-import org.thingsboard.server.common.data.device.data.lwm2m.OtherConfiguration;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.lwm2m.OtherConfiguration;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.transport.TransportDeviceProfileCache;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
@@ -36,16 +35,15 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
-import org.thingsboard.server.transport.lwm2m.config.LwM2mVersion;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mVersionedModelProvider;
+import org.thingsboard.server.transport.lwm2m.server.model.LwM2MModelConfigService;
 import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MOtaUpdateService;
 import org.thingsboard.server.transport.lwm2m.server.session.LwM2MSessionManager;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MClientStore;
 import org.thingsboard.server.transport.lwm2m.server.store.TbMainSecurityStore;
-import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2MUplinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -59,9 +57,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import static org.eclipse.leshan.core.SecurityMode.NO_SEC;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.convertObjectIdToVersionedId;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.fromVersionedIdToObjectId;
-import static org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil.validateObjectVerFromKey;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertObjectIdToVersionedId;
 
 @Slf4j
 @Service
@@ -75,11 +71,11 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     private final TbLwM2MClientStore clientStore;
     private final LwM2MSessionManager sessionManager;
     private final TransportDeviceProfileCache deviceProfileCache;
-    private final LwM2mVersionedModelProvider modelProvider;
+    private final LwM2MModelConfigService modelConfigService;
 
     @Autowired
     @Lazy
-    private DefaultLwM2MUplinkMsgHandler defaultLwM2MUplinkMsgHandler;
+    private DefaultLwM2mUplinkMsgHandler defaultLwM2MUplinkMsgHandler;
     @Autowired
     @Lazy
     private LwM2MOtaUpdateService otaUpdateService;
@@ -233,10 +229,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
                 throw new LwM2MClientStateException(client.getState(), "Client is in invalid state.");
             }
             client.setRegistration(registration);
-            onUplink(client);
-            if (compareAndSetSleepFlag(client, false)) {
-                sendMsgsAfterSleeping(client);
-            } else {
+            if (!awake(client)) {
                 clientStore.put(client);
             }
         } finally {
@@ -259,6 +252,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 //                TODO: change tests to use new certificate.
 //                this.securityStore.remove(client.getEndpoint(), registration.getId());
                 clientStore.remove(client.getEndpoint());
+                modelConfigService.removeUpdates(client.getEndpoint());
                 UUID profileId = client.getProfileId();
                 if (profileId != null) {
                     Optional<LwM2mClient> otherClients = lwM2mClientsByRegistrationId.values().stream().filter(e -> e.getProfileId().equals(profileId)).findFirst();
@@ -295,11 +289,14 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     @Override
     public String getObjectIdByKeyNameFromProfile(LwM2mClient client, String keyName) {
         Lwm2mDeviceProfileTransportConfiguration profile = getProfile(client.getProfileId());
-
-        return profile.getObserveAttr().getKeyName().entrySet().stream()
-                .filter(e -> e.getValue().equals(keyName) && validateResourceInModel(client, e.getKey(), false)).findFirst().orElseThrow(
-                        () -> new IllegalArgumentException(keyName + " is not configured in the device profile!")
-                ).getKey();
+        for (Map.Entry<String, String> entry : profile.getObserveAttr().getKeyName().entrySet()) {
+            String k = entry.getKey();
+            String v = entry.getValue();
+            if (v.equals(keyName) && client.isValidObjectVersion(k).isEmpty()) {
+                return k;
+            }
+        }
+        throw new IllegalArgumentException(keyName + " is not configured in the device profile!");
     }
 
     public Registration getRegistration(String registrationId) {
@@ -333,7 +330,8 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         if (LwM2MClientState.REGISTERED.equals(lwM2MClient.getState())) {
             PowerMode powerMode = getPowerMode(lwM2MClient);
             if (PowerMode.PSM.equals(powerMode) || PowerMode.E_DRX.equals(powerMode)) {
-                defaultLwM2MUplinkMsgHandler.initAttributes(lwM2MClient);
+                modelConfigService.sendUpdates(lwM2MClient);
+                defaultLwM2MUplinkMsgHandler.initAttributes(lwM2MClient, false);
                 TransportProtos.TransportToDeviceActorMsg persistentRpcRequestMsg = TransportProtos.TransportToDeviceActorMsg
                         .newBuilder()
                         .setSessionInfo(lwM2MClient.getSession())
@@ -386,7 +384,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     @Override
     public Lwm2mDeviceProfileTransportConfiguration profileUpdate(DeviceProfile deviceProfile) {
-        Lwm2mDeviceProfileTransportConfiguration clientProfile = LwM2mTransportUtil.toLwM2MClientProfile(deviceProfile);
+        Lwm2mDeviceProfileTransportConfiguration clientProfile = LwM2MTransportUtil.toLwM2MClientProfile(deviceProfile);
         profiles.put(deviceProfile.getUuidId(), clientProfile);
         return clientProfile;
     }
@@ -395,9 +393,9 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     public Set<String> getSupportedIdVerInClient(LwM2mClient client) {
         Set<String> clientObjects = ConcurrentHashMap.newKeySet();
         Arrays.stream(client.getRegistration().getObjectLinks()).forEach(link -> {
-            LwM2mPath pathIds = new LwM2mPath(link.getUrl());
+            LwM2mPath pathIds = new LwM2mPath(link.getUriReference());
             if (!pathIds.isRoot()) {
-                clientObjects.add(convertObjectIdToVersionedId(link.getUrl(), client.getRegistration()));
+                clientObjects.add(convertObjectIdToVersionedId(link.getUriReference(), client.getRegistration()));
             }
         });
         return (clientObjects.size() > 0) ? clientObjects : null;
@@ -406,12 +404,6 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     @Override
     public LwM2mClient getClientByDeviceId(UUID deviceId) {
         return lwM2mClientsByRegistrationId.values().stream().filter(e -> deviceId.equals(e.getDeviceId())).findFirst().orElse(null);
-    }
-
-    @Override
-    public boolean isComposite(LwM2mClient client) {
-        return LwM2mVersion.fromVersionStr(client.getRegistration().getLwM2mVersion()).isComposite() &
-                getProfile(client.getProfileId()).getClientLwM2mSettings().isCompositeOperationsSupport();
     }
 
     @Override
@@ -426,7 +418,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
                 powerMode = PowerMode.DRX;
             }
         }
-        if (PowerMode.DRX.equals(powerMode)) {
+        if (PowerMode.DRX.equals(powerMode) || otaUpdateService.isOtaDownloading(client)) {
             return true;
         }
         client.lock();
@@ -510,7 +502,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
                 sleepTask.cancel(false);
             }
             Future<Void> task = context.getScheduler().schedule(() -> {
-                if (uplinkTime == client.getLastUplinkTime()) {
+                if (uplinkTime == client.getLastUplinkTime() && !otaUpdateService.isOtaDownloading(client)) {
                     asleep(client);
                 }
                 return null;
@@ -537,15 +529,6 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
             timeout = this.config.getTimeout();
         }
         return timeout;
-    }
-
-    private boolean validateResourceInModel(LwM2mClient lwM2mClient, String pathIdVer, boolean isWritableNotOptional) {
-        ResourceModel resourceModel = lwM2mClient.getResourceModel(pathIdVer, modelProvider);
-        Integer objectId = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer)).getObjectId();
-        String objectVer = validateObjectVerFromKey(pathIdVer);
-        return resourceModel != null && (isWritableNotOptional ?
-                objectId != null && objectVer != null && objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId)) && resourceModel.operations.isWritable() :
-                objectId != null && objectVer != null && objectVer.equals(lwM2mClient.getRegistration().getSupportedVersion(objectId)));
     }
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,7 +145,7 @@ public abstract class AbstractCoapProvisionProtoDeviceTest extends AbstractCoapI
         Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.getCredentialsType().toString());
         Assert.assertEquals(deviceCredentials.getCredentialsType(), DeviceCredentialsType.X509_CERTIFICATE);
 
-        String cert = EncryptionUtil.trimNewLines(deviceCredentials.getCredentialsValue());
+        String cert = EncryptionUtil.certTrimNewLines(deviceCredentials.getCredentialsValue());
         String sha3Hash = EncryptionUtil.getSha3Hash(cert);
 
         Assert.assertEquals(deviceCredentials.getCredentialsId(), sha3Hash);

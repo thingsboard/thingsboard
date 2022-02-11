@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
         if (relation == null || relation.isCanceled()) {
             return; // because request did not try to establish a relation
         }
-        if (CoAP.ResponseCode.isSuccess(response.getCode())) {
+        if (response.getCode().isSuccess()) {
 
             if (!relation.isEstablished()) {
                 relation.setEstablished();
@@ -138,8 +138,8 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
         UUID currentId = UUID.fromString(idStr);
         Response response = new Response(CoAP.ResponseCode.CONTENT);
         byte[] otaData = this.getOtaData(currentId);
-        log.debug("Read ota data (length): [{}]", otaData.length);
-        if (otaData.length > 0) {
+        if (otaData != null && otaData.length > 0) {
+            log.debug("Read ota data (length): [{}]", otaData.length);
             response.setPayload(otaData);
             if (exchange.getRequestOptions().getBlock2() != null) {
                 int chunkSize = exchange.getRequestOptions().getBlock2().getSzx();
@@ -150,6 +150,8 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
                 log.trace("With block1 Send currentId: [{}], length: [{}], ", currentId.toString(), otaData.length);
             }
             exchange.respond(response);
+        } else {
+            log.trace("Ota packaged currentId: [{}] is not found.", currentId.toString());
         }
     }
 

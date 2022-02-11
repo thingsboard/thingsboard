@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ public class SnmpTransportContext extends TransportContext {
     private final Map<DeviceId, DeviceSessionContext> sessions = new ConcurrentHashMap<>();
     private final Collection<DeviceId> allSnmpDevicesIds = new ConcurrentLinkedDeque<>();
 
-    @AfterStartUp(order = 2)
+    @AfterStartUp(order = Integer.MAX_VALUE)
     public void fetchDevicesAndEstablishSessions() {
         log.info("Initializing SNMP devices sessions");
 

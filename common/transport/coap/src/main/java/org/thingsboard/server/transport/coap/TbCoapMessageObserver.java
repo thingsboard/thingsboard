@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,11 @@ public class TbCoapMessageObserver implements MessageObserver {
     private final int msgId;
     private final Consumer<Integer> onAcknowledge;
     private final Consumer<Integer> onTimeout;
+
+    @Override
+    public boolean isInternal() {
+        return false;
+    }
 
     @Override
     public void onRetransmission() {
@@ -87,12 +92,17 @@ public class TbCoapMessageObserver implements MessageObserver {
     }
 
     @Override
+    public void onResponseHandlingError(Throwable cause) {
+
+    }
+
+    @Override
     public void onContextEstablished(EndpointContext endpointContext) {
 
     }
 
     @Override
-    public void onComplete() {
+    public void onTransferComplete() {
 
     }
 }

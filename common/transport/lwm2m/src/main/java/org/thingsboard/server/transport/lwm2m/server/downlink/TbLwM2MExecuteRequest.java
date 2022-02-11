@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package org.thingsboard.server.transport.lwm2m.server.downlink;
 import lombok.Builder;
 import lombok.Getter;
 import org.eclipse.leshan.core.response.ReadResponse;
-import org.thingsboard.server.transport.lwm2m.server.LwM2mOperationType;
+import org.thingsboard.server.transport.lwm2m.server.LwM2MOperationType;
 
 public class TbLwM2MExecuteRequest extends AbstractTbLwM2MTargetedDownlinkRequest<ReadResponse> {
 
@@ -32,8 +32,8 @@ public class TbLwM2MExecuteRequest extends AbstractTbLwM2MTargetedDownlinkReques
     }
 
     @Override
-    public LwM2mOperationType getType() {
-        return LwM2mOperationType.EXECUTE;
+    public LwM2MOperationType getType() {
+        return LwM2MOperationType.EXECUTE;
     }
 
 

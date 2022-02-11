@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,21 +17,23 @@ package org.thingsboard.server.transport.lwm2m.secure;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.DecoderException;
 import org.eclipse.leshan.core.util.SecurityUtil;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCredentials;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCredentials;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCredential;
+import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MCredentialsRequestMsg;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
+import org.thingsboard.server.transport.lwm2m.bootstrap.secure.LwM2MBootstrapConfig;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
-import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MCredentials;
+import org.thingsboard.server.transport.lwm2m.secure.credentials.LwM2MClientCredentials;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mTypeServer;
@@ -66,17 +68,16 @@ public class LwM2mCredentialsSecurityInfoValidator {
                     @Override
                     public void onSuccess(ValidateDeviceCredentialsResponse msg) {
                         log.trace("Validated credentials: [{}] [{}]", credentialsId, msg);
-                        String credentialsBody = msg.getCredentials();
-                        resultSecurityStore[0] = createSecurityInfo(credentialsId, credentialsBody, keyValue);
-                        resultSecurityStore[0].setMsg(msg);
-                        resultSecurityStore[0].setDeviceProfile(msg.getDeviceProfile());
+                        resultSecurityStore[0] = createSecurityInfo(credentialsId, msg, keyValue);
                         latch.countDown();
                     }
 
                     @Override
                     public void onError(Throwable e) {
                         log.trace("[{}] [{}] Failed to process credentials ", credentialsId, e);
-                        resultSecurityStore[0] = createSecurityInfo(credentialsId, null, null);
+                        TbLwM2MSecurityInfo result = new TbLwM2MSecurityInfo();
+                        result.setEndpoint(credentialsId);
+                        resultSecurityStore[0] = result;
                         latch.countDown();
                     }
                 });
@@ -87,51 +88,45 @@ public class LwM2mCredentialsSecurityInfoValidator {
         }
 
         TbLwM2MSecurityInfo securityInfo = resultSecurityStore[0];
-
         if (securityInfo.getSecurityMode() == null) {
             throw new LwM2MAuthException();
         }
-
         return securityInfo;
     }
 
     /**
      * Create new SecurityInfo
-     * @param endpoint -
-     * @param jsonStr -
-     * @param keyValue -
+     *
      * @return SecurityInfo
      */
-    private TbLwM2MSecurityInfo createSecurityInfo(String endpoint, String jsonStr, LwM2mTypeServer keyValue) {
+    private TbLwM2MSecurityInfo createSecurityInfo(String endpoint, ValidateDeviceCredentialsResponse msg, LwM2mTypeServer keyValue) {
         TbLwM2MSecurityInfo result = new TbLwM2MSecurityInfo();
-        LwM2MCredentials credentials = JacksonUtil.fromString(jsonStr, LwM2MCredentials.class);
+        LwM2MClientCredentials credentials = JacksonUtil.fromString(msg.getCredentials(), LwM2MClientCredentials.class);
         if (credentials != null) {
+            result.setMsg(msg);
+            result.setDeviceProfile(msg.getDeviceProfile());
+            result.setEndpoint(credentials.getClient().getEndpoint());
+//            if ((keyValue.equals(CLIENT))) {
+            switch (credentials.getClient().getSecurityConfigClientMode()) {
+                case NO_SEC:
+                    createClientSecurityInfoNoSec(result);
+                    break;
+                case PSK:
+                    createClientSecurityInfoPSK(result, endpoint, credentials.getClient());
+                    break;
+                case RPK:
+                    createClientSecurityInfoRPK(result, endpoint, credentials.getClient());
+                    break;
+                case X509:
+                    createClientSecurityInfoX509(result, endpoint);
+                    break;
+                default:
+                    break;
+            }
             if (keyValue.equals(BOOTSTRAP)) {
-                result.setBootstrapCredentialConfig(credentials.getBootstrap());
-                if (LwM2MSecurityMode.PSK.equals(credentials.getClient().getSecurityConfigClientMode())) {
-                    PSKClientCredentials pskClientConfig = (PSKClientCredentials) credentials.getClient();
-                    endpoint = StringUtils.isNotEmpty(pskClientConfig.getEndpoint()) ? pskClientConfig.getEndpoint() : endpoint;
-                }
-                result.setEndpoint(endpoint);
-                result.setSecurityMode(credentials.getBootstrap().getBootstrapServer().getSecurityMode());
-            } else {
-                result.setEndpoint(credentials.getClient().getEndpoint());
-                switch (credentials.getClient().getSecurityConfigClientMode()) {
-                    case NO_SEC:
-                        createClientSecurityInfoNoSec(result);
-                        break;
-                    case PSK:
-                        createClientSecurityInfoPSK(result, endpoint, credentials.getClient());
-                        break;
-                    case RPK:
-                        createClientSecurityInfoRPK(result, endpoint, credentials.getClient());
-                        break;
-                    case X509:
-                        createClientSecurityInfoX509(result, endpoint, credentials.getClient());
-                        break;
-                    default:
-                        break;
-                }
+                LwM2MBootstrapConfig bootstrapCredentialConfig = new LwM2MBootstrapConfig(((Lwm2mDeviceProfileTransportConfiguration) msg.getDeviceProfile().getProfileData().getTransportConfiguration()).getBootstrap(),
+                        credentials.getBootstrap().getBootstrapServer(), credentials.getBootstrap().getLwm2mServer());
+                result.setBootstrapCredentialConfig(bootstrapCredentialConfig);
             }
         }
         return result;
@@ -142,18 +137,18 @@ public class LwM2mCredentialsSecurityInfoValidator {
         result.setSecurityMode(NO_SEC);
     }
 
-    private void createClientSecurityInfoPSK(TbLwM2MSecurityInfo result, String endpoint, LwM2MClientCredentials clientCredentialsConfig) {
-        PSKClientCredentials pskConfig = (PSKClientCredentials) clientCredentialsConfig;
+    private void createClientSecurityInfoPSK(TbLwM2MSecurityInfo result, String endpoint, LwM2MClientCredential clientCredentialsConfig) {
+        PSKClientCredential pskConfig = (PSKClientCredential) clientCredentialsConfig;
         if (StringUtils.isNotEmpty(pskConfig.getIdentity())) {
             try {
-                if (pskConfig.getDecodedKey() != null && pskConfig.getDecodedKey().length > 0) {
+                if (pskConfig.getDecoded() != null && pskConfig.getDecoded().length > 0) {
                     endpoint = StringUtils.isNotEmpty(pskConfig.getEndpoint()) ? pskConfig.getEndpoint() : endpoint;
                     if (endpoint != null && !endpoint.isEmpty()) {
-                        result.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(endpoint, pskConfig.getIdentity(), pskConfig.getDecodedKey()));
+                        result.setSecurityInfo(SecurityInfo.newPreSharedKeyInfo(endpoint, pskConfig.getIdentity(), pskConfig.getDecoded()));
                         result.setSecurityMode(PSK);
                     }
                 }
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException | DecoderException e) {
                 log.error("Missing PSK key: " + e.getMessage());
             }
         } else {
@@ -161,22 +156,22 @@ public class LwM2mCredentialsSecurityInfoValidator {
         }
     }
 
-    private void createClientSecurityInfoRPK(TbLwM2MSecurityInfo result, String endpoint, LwM2MClientCredentials clientCredentialsConfig) {
-        RPKClientCredentials rpkConfig = (RPKClientCredentials) clientCredentialsConfig;
+    private void createClientSecurityInfoRPK(TbLwM2MSecurityInfo result, String endpoint, LwM2MClientCredential clientCredentialsConfig) {
+        RPKClientCredential rpkConfig = (RPKClientCredential) clientCredentialsConfig;
         try {
-            if (rpkConfig.getDecodedKey() != null) {
-                PublicKey key = SecurityUtil.publicKey.decode(rpkConfig.getDecodedKey());
+            if (rpkConfig.getDecoded() != null) {
+                PublicKey key = SecurityUtil.publicKey.decode(rpkConfig.getDecoded());
                 result.setSecurityInfo(SecurityInfo.newRawPublicKeyInfo(endpoint, key));
                 result.setSecurityMode(RPK);
             } else {
                 log.error("Missing RPK key");
             }
-        } catch (IllegalArgumentException | IOException | GeneralSecurityException e) {
+        } catch (IllegalArgumentException | IOException | GeneralSecurityException | DecoderException e) {
             log.error("RPK: Invalid security info content: " + e.getMessage());
         }
     }
 
-    private void createClientSecurityInfoX509(TbLwM2MSecurityInfo result, String endpoint, LwM2MClientCredentials clientCredentialsConfig) {
+    private void createClientSecurityInfoX509(TbLwM2MSecurityInfo result, String endpoint) {
         result.setSecurityInfo(SecurityInfo.newX509CertInfo(endpoint));
         result.setSecurityMode(X509);
     }

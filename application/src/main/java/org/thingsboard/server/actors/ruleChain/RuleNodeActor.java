@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 
@@ -86,12 +87,19 @@ public class RuleNodeActor extends ComponentActor<RuleNodeId, RuleNodeActorMessa
         }
     }
 
-    private void onRuleChainToRuleNodeMsg(RuleChainToRuleNodeMsg msg) {
+    private void onRuleChainToRuleNodeMsg(RuleChainToRuleNodeMsg envelope) {
+        TbMsg msg = envelope.getMsg();
+        if (!msg.isValid()) {
+            if (log.isTraceEnabled()) {
+                log.trace("Skip processing of message: {} because it is no longer valid!", msg);
+            }
+            return;
+        }
         if (log.isDebugEnabled()) {
-            log.debug("[{}][{}][{}] Going to process rule msg: {}", ruleChainId, id, processor.getComponentName(), msg.getMsg());
+            log.debug("[{}][{}][{}] Going to process rule engine msg: {}", ruleChainId, id, processor.getComponentName(), msg);
         }
         try {
-            processor.onRuleChainToRuleNodeMsg(msg);
+            processor.onRuleChainToRuleNodeMsg(envelope);
             increaseMessagesProcessedCount();
         } catch (Exception e) {
             logAndPersist("onRuleMsg", e);

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,7 +142,7 @@ public abstract class BaseWidgetTypeServiceTest extends AbstractServiceTest {
         WidgetsBundle savedWidgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
 
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
-        widgetType.setTenantId(new TenantId(Uuids.timeBased()));
+        widgetType.setTenantId(TenantId.fromUUID(Uuids.timeBased()));
         widgetType.setBundleAlias(savedWidgetsBundle.getAlias());
         widgetType.setName("Widget Type");
         widgetType.setDescriptor(new ObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
@@ -176,7 +176,7 @@ public abstract class BaseWidgetTypeServiceTest extends AbstractServiceTest {
         widgetType.setName("Widget Type");
         widgetType.setDescriptor(new ObjectMapper().readValue("{ \"someKey\": \"someValue\" }", JsonNode.class));
         WidgetTypeDetails savedWidgetType = widgetTypeService.saveWidgetType(widgetType);
-        savedWidgetType.setTenantId(new TenantId(ModelConstants.NULL_UUID));
+        savedWidgetType.setTenantId(TenantId.fromUUID(ModelConstants.NULL_UUID));
         try {
             widgetTypeService.saveWidgetType(savedWidgetType);
         } finally {

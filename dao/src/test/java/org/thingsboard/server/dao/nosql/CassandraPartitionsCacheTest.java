@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ public class CassandraPartitionsCacheTest {
         cassandraBaseTimeseriesDao.init();
 
         UUID id = UUID.randomUUID();
-        TenantId tenantId = new TenantId(id);
+        TenantId tenantId = TenantId.fromUUID(id);
         long tsKvEntryTs = System.currentTimeMillis();
 
         for (int i = 0; i < 50000; i++) {

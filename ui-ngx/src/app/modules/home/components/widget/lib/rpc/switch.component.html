@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2021 The Thingsboard Authors
+    Copyright © 2016-2022 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-switch" fxLayout="column" [ngStyle]="{'pointerEvents': ctx.isEdit ? 'none' : 'all'}">
+<div class="tb-switch" fxLayout="column" [ngStyle]="{'pointerEvents': ctx.isEdit ? 'none' : 'all'}" *ngIf="switchType === 'switch'; else slideToggle">
   <div #switchErrorContainer class="error-container" [ngStyle]="{'background': error?.length ? 'rgba(255,255,255,0.25)' : 'none'}"
        fxLayout="row" fxLayoutAlign="center center">
     <span #switchError class="switch-error">{{ error }}</span>
@@ -37,3 +37,14 @@
   </div>
   <div #textMeasure id="text-measure"></div>
 </div>
+<ng-template #slideToggle>
+  <div class="tb-absolute-fill" fxLayout="column" [ngStyle]="{'pointerEvents': ctx.isEdit ? 'none' : 'all'}" fxLayoutAlign="center center">
+    <div>
+      <mat-slide-toggle [disabled]="executingUpdateValue" [labelPosition]="labelPosition" [color]="sliderColor" [(ngModel)]="value" (change)="onValue()">{{title}}</mat-slide-toggle>
+      <mat-progress-bar style="height: 2px;" [color]="sliderColor" mode="indeterminate" *ngIf="executingUpdateValue"></mat-progress-bar>
+      <div style="height: 2px;" *ngIf="!executingUpdateValue"></div>
+      <tb-error style="margin-top: -6px; display: block; pointer-events: none;"
+                [error]="error"></tb-error>
+    </div>
+  </div>
+</ng-template>

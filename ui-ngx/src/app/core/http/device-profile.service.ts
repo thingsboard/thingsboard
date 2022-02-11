@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,13 +24,13 @@ import { DeviceProfile, DeviceProfileInfo, DeviceTransportType } from '@shared/m
 import { deepClone, isDefinedAndNotNull, isEmptyStr } from '@core/utils';
 import {
   ObjectLwM2M,
-  securityConfigMode,
   ServerSecurityConfig,
   ServerSecurityConfigInfo
 } from '@home/components/profile/device/lwm2m/lwm2m-profile-config.models';
 import { SortOrder } from '@shared/models/page/sort-order';
 import { OtaPackageService } from '@core/http/ota-package.service';
 import { map, mergeMap, tap } from 'rxjs/operators';
+import { Lwm2mSecurityType } from '@shared/models/lwm2m-security-config.models';
 
 @Injectable({
   providedIn: 'root'
@@ -79,25 +79,27 @@ export class DeviceProfileService {
     }
   }
 
-  public getLwm2mBootstrapSecurityInfoBySecurityType(isBootstrapServer: boolean, securityMode = securityConfigMode.NO_SEC,
+  public getLwm2mBootstrapSecurityInfoBySecurityType(isBootstrapServer: boolean, securityMode = Lwm2mSecurityType.NO_SEC,
                                                      config?: RequestConfig): Observable<ServerSecurityConfig> {
     return this.getLwm2mBootstrapSecurityInfo(isBootstrapServer, config).pipe(
       map(securityConfig => {
         const serverSecurityConfigInfo = deepClone(securityConfig);
-        switch (securityMode) {
-          case securityConfigMode.PSK:
-            serverSecurityConfigInfo.port = serverSecurityConfigInfo.securityPort;
-            serverSecurityConfigInfo.host = serverSecurityConfigInfo.securityHost;
-            serverSecurityConfigInfo.serverPublicKey = '';
-            break;
-          case securityConfigMode.RPK:
-          case securityConfigMode.X509:
-            serverSecurityConfigInfo.port = serverSecurityConfigInfo.securityPort;
-            serverSecurityConfigInfo.host = serverSecurityConfigInfo.securityHost;
-            break;
-          case securityConfigMode.NO_SEC:
-            serverSecurityConfigInfo.serverPublicKey = '';
-            break;
+        if (serverSecurityConfigInfo) {
+          switch (securityMode) {
+            case Lwm2mSecurityType.PSK:
+              serverSecurityConfigInfo.port = serverSecurityConfigInfo.securityPort;
+              serverSecurityConfigInfo.host = serverSecurityConfigInfo.securityHost;
+              serverSecurityConfigInfo.serverPublicKey = '';
+              break;
+            case Lwm2mSecurityType.RPK:
+            case Lwm2mSecurityType.X509:
+              serverSecurityConfigInfo.port = serverSecurityConfigInfo.securityPort;
+              serverSecurityConfigInfo.host = serverSecurityConfigInfo.securityHost;
+              break;
+            case Lwm2mSecurityType.NO_SEC:
+              serverSecurityConfigInfo.serverPublicKey = '';
+              break;
+          }
         }
         return serverSecurityConfigInfo;
       })

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.server.controller;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.event.EventFilter;
@@ -134,7 +136,7 @@ public class EventController extends BaseController {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
         try {
-            TenantId tenantId = new TenantId(toUUID(strTenantId));
+            TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
 
             EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
             checkEntityId(entityId, Operation.READ);
@@ -175,7 +177,7 @@ public class EventController extends BaseController {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
         try {
-            TenantId tenantId = new TenantId(toUUID(strTenantId));
+            TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
 
             EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
             checkEntityId(entityId, Operation.READ);
@@ -222,7 +224,7 @@ public class EventController extends BaseController {
         checkParameter("EntityId", strEntityId);
         checkParameter("EntityType", strEntityType);
         try {
-            TenantId tenantId = new TenantId(toUUID(strTenantId));
+            TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
 
             EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
             checkEntityId(entityId, Operation.READ);
@@ -233,6 +235,32 @@ public class EventController extends BaseController {
 
             TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
             return checkNotNull(eventService.findEventsByFilter(tenantId, entityId, eventFilter, pageLink));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @ApiOperation(value = "Clear Events (clearEvents)", notes = "Clears events by filter for specified entity.")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/events/{entityType}/{entityId}/clear", method = RequestMethod.POST)
+    @ResponseStatus(HttpStatus.OK)
+    public void clearEvents(@ApiParam(value = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
+                            @PathVariable(ENTITY_TYPE) String strEntityType,
+                            @ApiParam(value = ENTITY_ID_PARAM_DESCRIPTION, required = true)
+                            @PathVariable(ENTITY_ID) String strEntityId,
+                            @ApiParam(value = EVENT_START_TIME_DESCRIPTION)
+                            @RequestParam(required = false) Long startTime,
+                            @ApiParam(value = EVENT_END_TIME_DESCRIPTION)
+                            @RequestParam(required = false) Long endTime,
+                            @ApiParam(value = EVENT_FILTER_DEFINITION)
+                            @RequestBody EventFilter eventFilter) throws ThingsboardException {
+        checkParameter("EntityId", strEntityId);
+        checkParameter("EntityType", strEntityType);
+        try {
+            EntityId entityId = EntityIdFactory.getByTypeAndId(strEntityType, strEntityId);
+            checkEntityId(entityId, Operation.WRITE);
+
+            eventService.removeEvents(getTenantId(), entityId, eventFilter, startTime, endTime);
         } catch (Exception e) {
             throw handleException(e);
         }

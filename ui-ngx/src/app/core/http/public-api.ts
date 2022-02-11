@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ export * from './component-descriptor.service';
 export * from './customer.service';
 export * from './dashboard.service';
 export * from './device.service';
+export * from './device-profile.service';
 export * from './entity.service';
 export * from './edge.service';
 export * from './entity-relation.service';
@@ -30,8 +31,12 @@ export * from './entity-view.service';
 export * from './event.service';
 export * from './http-utils';
 export * from './oauth2.service';
+export * from './ota-package.service';
 export * from './queue.service';
+export * from './resource.service';
 export * from './rule-chain.service';
 export * from './tenant.service';
+export * from './tenant-profile.service';
+export * from './ui-settings.service';
 export * from './user.service';
 export * from './widget.service';

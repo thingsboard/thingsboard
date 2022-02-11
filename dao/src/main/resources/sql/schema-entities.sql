@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2021 The Thingsboard Authors
+-- Copyright © 2016-2022 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -55,7 +55,9 @@ CREATE TABLE IF NOT EXISTS alarm (
     tenant_id uuid,
     customer_id uuid,
     propagate_relation_types varchar,
-    type varchar(255)
+    type varchar(255),
+    propagate_to_owner boolean,
+    propagate_to_tenant boolean
 );
 
 CREATE TABLE IF NOT EXISTS entity_alarm (

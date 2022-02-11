@@ -66,6 +66,18 @@ return {msg: msg, metadata: metadata, msgType: newType};
 {:copy-code}
 ```
 
+* Replace the incoming message with **two** new messages that contain only one field - sum or difference of properties in the original message:
+
+```javascript
+var sum = msg.a + msg.b;
+var diff = msg.a - msg.b;
+
+return [
+    {msg: {sum: sum}, metadata: metadata, msgType: msgType},
+    {msg: {difference: diff}, metadata: metadata, msgType: msgType}
+    ];
+```
+
 <br>
 
 You can see real life example, how to use this node in those tutorials:

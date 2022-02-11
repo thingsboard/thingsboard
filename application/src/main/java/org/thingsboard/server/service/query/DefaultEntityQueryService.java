@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,8 +106,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
             for (EntityData entityData : entities.getData()) {
                 entitiesMap.put(entityData.getEntityId(), entityData);
             }
-            PageData<AlarmData> alarms = alarmService.findAlarmDataByQueryForEntities(securityUser.getTenantId(),
-                    securityUser.getCustomerId(), query, entitiesMap.keySet());
+            PageData<AlarmData> alarms = alarmService.findAlarmDataByQueryForEntities(securityUser.getTenantId(), query, entitiesMap.keySet());
             for (AlarmData alarmData : alarms.getData()) {
                 EntityId entityId = alarmData.getEntityId();
                 if (entityId != null) {

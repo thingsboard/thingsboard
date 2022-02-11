@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public class RefreshTokenAuthenticationProvider implements AuthenticationProvide
     }
 
     private SecurityUser authenticateByUserId(UserId userId) {
-        TenantId systemId = new TenantId(EntityId.NULL_UUID);
+        TenantId systemId = TenantId.SYS_TENANT_ID;
         User user = userService.findUserById(systemId, userId);
         if (user == null) {
             throw new UsernameNotFoundException("User not found by refresh token");
@@ -99,7 +99,7 @@ public class RefreshTokenAuthenticationProvider implements AuthenticationProvide
     }
 
     private SecurityUser authenticateByPublicId(String publicId) {
-        TenantId systemId = new TenantId(EntityId.NULL_UUID);
+        TenantId systemId = TenantId.SYS_TENANT_ID;
         CustomerId customerId;
         try {
             customerId = new CustomerId(UUID.fromString(publicId));

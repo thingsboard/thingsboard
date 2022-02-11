@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,32 +15,29 @@
  */
 package org.thingsboard.server.transport.lwm2m.bootstrap.secure;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.request.BindingMode;
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfig;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.AbstractLwM2MBootstrapClientCredentialWithKeys;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.AbstractLwM2MBootstrapServerCredential;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBootstrapServerCredential;
 
 import java.io.Serializable;
-import java.nio.charset.StandardCharsets;
+import java.util.List;
 
+@Slf4j
 @Data
 public class LwM2MBootstrapConfig implements Serializable {
-    /*
-      interface BootstrapSecurityConfig
-        servers: BootstrapServersSecurityConfig,
-        bootstrapServer: ServerSecurityConfig,
-        lwm2mServer: ServerSecurityConfig
-      }
-     */
-    /** -servers
-     *   shortId: number,
-     *   lifetime: number,
-     *   defaultMinPeriod: number,
-     *   notifIfDisabled: boolean,
-     *   binding: string
-     * */
-    LwM2MBootstrapServers servers;
+
+    List<LwM2MBootstrapServerCredential> serverConfiguration;
 
     /** -bootstrapServer, lwm2mServer
      * interface ServerSecurityConfig
@@ -55,50 +52,84 @@ public class LwM2MBootstrapConfig implements Serializable {
      *   serverId?: number,
      *   bootstrapServerAccountTimeout: number
      * */
-    LwM2MServerBootstrap bootstrapServer;
+    @Getter
+    @Setter
+    private LwM2MBootstrapClientCredential bootstrapServer;
 
-    LwM2MServerBootstrap lwm2mServer;
+    @Getter
+    @Setter
+    private LwM2MBootstrapClientCredential lwm2mServer;
 
+    public LwM2MBootstrapConfig(){};
+
+    public LwM2MBootstrapConfig(List<LwM2MBootstrapServerCredential> serverConfiguration, LwM2MBootstrapClientCredential bootstrapClientServer, LwM2MBootstrapClientCredential lwm2mClientServer) {
+        this.serverConfiguration = serverConfiguration;
+        this.bootstrapServer = bootstrapClientServer;
+        this.lwm2mServer = lwm2mClientServer;
+
+    }
+
+    @JsonIgnore
     public BootstrapConfig getLwM2MBootstrapConfig() {
         BootstrapConfig configBs = new BootstrapConfig();
-        /* Delete old security objects */
-        configBs.toDelete.add("/0");
-        configBs.toDelete.add("/1");
-        /* Server Configuration (object 1) as defined in LWM2M 1.0.x TS. */
-        BootstrapConfig.ServerConfig server0 = new BootstrapConfig.ServerConfig();
-        server0.shortId = servers.getShortId();
-        server0.lifetime = servers.getLifetime();
-        server0.defaultMinPeriod = servers.getDefaultMinPeriod();
-        server0.notifIfDisabled = servers.isNotifIfDisabled();
-        server0.binding = BindingMode.parse(servers.getBinding());
-        configBs.servers.put(0, server0);
-        /* Security Configuration (object 0) as defined in LWM2M 1.0.x TS. Bootstrap instance = 0 */
-        this.bootstrapServer.setBootstrapServerIs(true);
-        configBs.security.put(0, setServerSecurity(this.lwm2mServer.getHost(), this.lwm2mServer.getPort(), this.lwm2mServer.getSecurityHost(), this.lwm2mServer.getSecurityPort(), this.bootstrapServer.isBootstrapServerIs(), this.bootstrapServer.getSecurityMode(), this.bootstrapServer.getClientPublicKeyOrId(), this.bootstrapServer.getServerPublicKey(), this.bootstrapServer.getClientSecretKey(), this.bootstrapServer.getServerId()));
-        /* Security Configuration (object 0) as defined in LWM2M 1.0.x TS. Server instance = 1 */
-        configBs.security.put(1, setServerSecurity(this.lwm2mServer.getHost(), this.lwm2mServer.getPort(), this.lwm2mServer.getSecurityHost(), this.lwm2mServer.getSecurityPort(), this.lwm2mServer.isBootstrapServerIs(), this.lwm2mServer.getSecurityMode(), this.lwm2mServer.getClientPublicKeyOrId(), this.lwm2mServer.getServerPublicKey(), this.lwm2mServer.getClientSecretKey(), this.lwm2mServer.getServerId()));
+        configBs.autoIdForSecurityObject = true;
+        int id = 0;
+        for (LwM2MBootstrapServerCredential serverCredential : serverConfiguration) {
+            BootstrapConfig.ServerConfig serverConfig = setServerConfig((AbstractLwM2MBootstrapServerCredential) serverCredential);
+            configBs.servers.put(id, serverConfig);
+            BootstrapConfig.ServerSecurity serverSecurity = setServerSecurity((AbstractLwM2MBootstrapServerCredential) serverCredential, serverCredential.getSecurityMode());
+            configBs.security.put(id, serverSecurity);
+            id++;
+        }
+        /** in LwM2mDefaultBootstrapSessionManager -> initTasks
+         * Delete all security/config objects if update bootstrap server and lwm2m server
+         * if other: del or update only instances */
+
         return configBs;
     }
 
-    private BootstrapConfig.ServerSecurity setServerSecurity(String host, Integer port, String securityHost, Integer securityPort, boolean bootstrapServer, SecurityMode securityMode, String clientPublicKey, String serverPublicKey, String secretKey, int serverId) {
+    private BootstrapConfig.ServerSecurity setServerSecurity(AbstractLwM2MBootstrapServerCredential serverCredential, LwM2MSecurityMode securityMode) {
         BootstrapConfig.ServerSecurity serverSecurity = new BootstrapConfig.ServerSecurity();
-        if (securityMode.equals(SecurityMode.NO_SEC)) {
-            serverSecurity.uri = "coap://" + host + ":" + Integer.toString(port);
-        } else {
-            serverSecurity.uri = "coaps://" + securityHost + ":" + Integer.toString(securityPort);
+        String serverUri = "coap://";
+        byte[] publicKeyOrId = new byte[]{};
+        byte[] secretKey = new byte[]{};
+        byte[] serverPublicKey = new byte[]{};
+        serverSecurity.serverId = serverCredential.getShortServerId();
+        serverSecurity.securityMode = SecurityMode.valueOf(securityMode.name());
+        serverSecurity.bootstrapServer = serverCredential.isBootstrapServerIs();
+        if (!LwM2MSecurityMode.NO_SEC.equals(securityMode)) {
+            AbstractLwM2MBootstrapClientCredentialWithKeys server;
+            if (serverSecurity.bootstrapServer) {
+                server = (AbstractLwM2MBootstrapClientCredentialWithKeys) this.bootstrapServer;
+
+            } else {
+                server = (AbstractLwM2MBootstrapClientCredentialWithKeys) this.lwm2mServer;
+            }
+            serverUri = "coaps://";
+            if (LwM2MSecurityMode.PSK.equals(securityMode)) {
+                publicKeyOrId = server.getClientPublicKeyOrId().getBytes();
+                secretKey = Hex.decodeHex(server.getClientSecretKey().toCharArray());
+            } else {
+                publicKeyOrId = server.getDecodedClientPublicKeyOrId();
+                secretKey = server.getDecodedClientSecretKey();
+            }
+            serverPublicKey = serverCredential.getDecodedCServerPublicKey();
         }
-        serverSecurity.bootstrapServer = bootstrapServer;
-        serverSecurity.securityMode = securityMode;
-        serverSecurity.publicKeyOrId = setPublicKeyOrId(clientPublicKey, securityMode);
-        serverSecurity.serverPublicKey = (serverPublicKey != null && !serverPublicKey.isEmpty()) ? Hex.decodeHex(serverPublicKey.toCharArray()) : new byte[]{};
-        serverSecurity.secretKey = (secretKey != null && !secretKey.isEmpty()) ? Hex.decodeHex(secretKey.toCharArray()) : new byte[]{};
-        serverSecurity.serverId = serverId;
+        serverUri += (((serverCredential.getHost().equals("0.0.0.0") ? "localhost" : serverCredential.getHost()) + ":" + serverCredential.getPort()));
+        serverSecurity.uri = serverUri;
+        serverSecurity.publicKeyOrId = publicKeyOrId;
+        serverSecurity.secretKey = secretKey;
+        serverSecurity.serverPublicKey = serverPublicKey;
         return serverSecurity;
     }
 
-    private byte[] setPublicKeyOrId(String publicKeyOrIdStr, SecurityMode securityMode) {
-        return (publicKeyOrIdStr == null || publicKeyOrIdStr.isEmpty()) ? new byte[]{} :
-                SecurityMode.PSK.equals(securityMode) ? publicKeyOrIdStr.getBytes(StandardCharsets.UTF_8) :
-                        Hex.decodeHex(publicKeyOrIdStr.toCharArray());
+    private BootstrapConfig.ServerConfig setServerConfig (AbstractLwM2MBootstrapServerCredential serverCredential) {
+        BootstrapConfig.ServerConfig serverConfig = new BootstrapConfig.ServerConfig();
+        serverConfig.shortId = serverCredential.getShortServerId();
+        serverConfig.lifetime = serverCredential.getLifetime();
+        serverConfig.defaultMinPeriod = serverCredential.getDefaultMinPeriod();
+        serverConfig.notifIfDisabled = serverCredential.isNotifIfDisabled();
+        serverConfig.binding = BindingMode.parse(serverCredential.getBinding());
+        return serverConfig;
     }
 }

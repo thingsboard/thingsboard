@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,9 +31,6 @@ import { OtaPackageId } from '@shared/models/id/ota-package-id';
 import { DashboardId } from '@shared/models/id/dashboard-id';
 import { DataType } from '@shared/models/constants';
 import {
-  getDefaultBootstrapServerSecurityConfig,
-  getDefaultBootstrapServersSecurityConfig,
-  getDefaultLwM2MServerSecurityConfig,
   getDefaultProfileClientLwM2mSettingsConfig,
   getDefaultProfileObserveAttrConfig,
   PowerMode
@@ -384,11 +381,7 @@ export function createDeviceProfileTransportConfiguration(type: DeviceTransportT
       case DeviceTransportType.LWM2M:
         const lwm2mTransportConfiguration: Lwm2mDeviceProfileTransportConfiguration = {
           observeAttr: getDefaultProfileObserveAttrConfig(),
-          bootstrap: {
-            servers: getDefaultBootstrapServersSecurityConfig(),
-            bootstrapServer: getDefaultBootstrapServerSecurityConfig(),
-            lwm2mServer: getDefaultLwM2MServerSecurityConfig()
-          },
+          bootstrap: [],
           clientLwM2mSettings: getDefaultProfileClientLwM2mSettingsConfig()
         };
         transportConfiguration = {...lwm2mTransportConfiguration, type: DeviceTransportType.LWM2M};
@@ -524,6 +517,8 @@ export interface DeviceProfileAlarm {
   createRules: {[severity: string]: AlarmRule};
   clearRule?: AlarmRule;
   propagate?: boolean;
+  propagateToOwner?: boolean;
+  propagateToTenant?: boolean;
   propagateRelationTypes?: Array<string>;
 }
 

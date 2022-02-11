@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class JpaDashboardInfoDaoTest extends AbstractJpaDaoTest {
     private void createDashboard(UUID tenantId, int index) {
         DashboardInfo dashboardInfo = new DashboardInfo();
         dashboardInfo.setId(new DashboardId(Uuids.timeBased()));
-        dashboardInfo.setTenantId(new TenantId(tenantId));
+        dashboardInfo.setTenantId(TenantId.fromUUID(tenantId));
         dashboardInfo.setTitle("DASHBOARD_" + index);
         dashboardInfoDao.save(AbstractServiceTest.SYSTEM_TENANT_ID, dashboardInfo);
     }

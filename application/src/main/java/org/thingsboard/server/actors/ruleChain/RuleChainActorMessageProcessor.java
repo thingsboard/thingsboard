@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -200,17 +200,20 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     void onQueueToRuleEngineMsg(QueueToRuleEngineMsg envelope) {
         TbMsg msg = envelope.getMsg();
+        if (!checkMsgValid(msg)) {
+            return;
+        }
         log.trace("[{}][{}] Processing message [{}]: {}", entityId, firstId, msg.getId(), msg);
         if (envelope.getRelationTypes() == null || envelope.getRelationTypes().isEmpty()) {
             onTellNext(msg, true);
         } else {
-            onTellNext(envelope.getMsg(), envelope.getMsg().getRuleNodeId(), envelope.getRelationTypes(), envelope.getFailureMessage());
+            onTellNext(msg, envelope.getMsg().getRuleNodeId(), envelope.getRelationTypes(), envelope.getFailureMessage());
         }
     }
 
     private void onTellNext(TbMsg msg, boolean useRuleNodeIdFromMsg) {
         try {
-            checkActive(msg);
+            checkComponentStateActive(msg);
             RuleNodeId targetId = useRuleNodeIdFromMsg ? msg.getRuleNodeId() : null;
             RuleNodeCtx targetCtx;
             if (targetId == null) {
@@ -234,6 +237,10 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     }
 
     public void onRuleChainInputMsg(RuleChainInputMsg envelope) {
+        var msg = envelope.getMsg();
+        if (!checkMsgValid(msg)) {
+            return;
+        }
         if (entityId.equals(envelope.getRuleChainId())) {
             onTellNext(envelope.getMsg(), false);
         } else {
@@ -242,6 +249,10 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     }
 
     public void onRuleChainOutputMsg(RuleChainOutputMsg envelope) {
+        var msg = envelope.getMsg();
+        if (!checkMsgValid(msg)) {
+            return;
+        }
         if (entityId.equals(envelope.getRuleChainId())) {
             var originatorNodeId = envelope.getTargetRuleNodeId();
             RuleNodeCtx ruleNodeCtx = nodeActors.get(originatorNodeId);
@@ -255,8 +266,12 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     }
 
     void onRuleChainToRuleChainMsg(RuleChainToRuleChainMsg envelope) {
+        var msg = envelope.getMsg();
+        if (!checkMsgValid(msg)) {
+            return;
+        }
         try {
-            checkActive(envelope.getMsg());
+            checkComponentStateActive(envelope.getMsg());
             if (firstNode != null) {
                 pushMsgToNode(firstNode, envelope.getMsg(), envelope.getFromRelationType());
             } else {
@@ -268,12 +283,15 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     }
 
     void onTellNext(RuleNodeToRuleChainTellNextMsg envelope) {
-        onTellNext(envelope.getMsg(), envelope.getOriginator(), envelope.getRelationTypes(), envelope.getFailureMessage());
+        var msg = envelope.getMsg();
+        if (checkMsgValid(msg)) {
+            onTellNext(msg, envelope.getOriginator(), envelope.getRelationTypes(), envelope.getFailureMessage());
+        }
     }
 
     private void onTellNext(TbMsg msg, RuleNodeId originatorNodeId, Set<String> relationTypes, String failureMessage) {
         try {
-            checkActive(msg);
+            checkComponentStateActive(msg);
             EntityId entityId = msg.getOriginator();
             TopicPartitionInfo tpi = systemContext.resolve(ServiceType.TB_RULE_ENGINE, msg.getQueueName(), tenantId, entityId);
 
