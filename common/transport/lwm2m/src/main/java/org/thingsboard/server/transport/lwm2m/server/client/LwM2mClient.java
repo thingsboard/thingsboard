@@ -305,13 +305,11 @@ public class LwM2mClient implements Serializable {
                     .getObjectModel(pathIds.getObjectId()) : null;
         } catch (Exception e) {
             if (registration == null) {
-                log.error("Failed Registration is null, GetObjectModelRegistration. ", e);
-            }
-            else if (registration.getSupportedObject() == null) {
-                log.error("Failed SupportedObject in Registration == null, GetObjectModelRegistration.", e);
-            }
-            else {
-                log.error("Failed ModelProvider.getObjectModel [{}] in Registration. ", registration.getSupportedObject(), e);
+                log.error("[{}] Failed Registration is null, GetObjectModelRegistration. ", this.endpoint, e);
+            } else if (registration.getSupportedObject() == null) {
+                log.error("[{}] Failed SupportedObject in Registration, GetObjectModelRegistration.", this.endpoint, e);
+            } else {
+                log.error("[{}] Failed ModelProvider.getObjectModel [{}] in Registration. ", this.endpoint, registration.getSupportedObject(), e);
             }
             return null;
         }
@@ -436,7 +434,7 @@ public class LwM2mClient implements Serializable {
     private ContentFormat calculateDefaultContentFormat(Registration registration) {
         if (registration == null) {
             return ContentFormat.DEFAULT;
-        } else{
+        } else {
             return TbLwM2mVersion.fromVersion(registration.getLwM2mVersion()).getContentFormat();
         }
     }
