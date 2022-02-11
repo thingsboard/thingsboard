@@ -25,6 +25,8 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.util.SocketUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -65,6 +67,8 @@ import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.telemetry.cmd.v2.LatestValueCmd;
 import org.thingsboard.server.transport.lwm2m.client.LwM2MTestClient;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
+import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -84,6 +88,7 @@ import static org.eclipse.californium.core.config.CoapConfig.COAP_PORT;
 import static org.eclipse.californium.core.config.CoapConfig.COAP_SECURE_PORT;
 import static org.eclipse.leshan.client.object.Security.noSec;
 import static org.eclipse.leshan.client.object.Security.noSecBootstap;
+import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_STARTED;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_SUCCESS;
@@ -97,6 +102,11 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfil
 @DaoSqlTest
 public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
 
+    @SpyBean
+    DefaultLwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandlerTest;
+
+    @Autowired
+    private LwM2mClientContext clientContextTest;
 
     //  Lwm2m Server
     public static final int port = 5685;
@@ -235,7 +245,11 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         Assert.assertEquals(device.getId(), eData.get(0).getEntityId());
         Assert.assertNotNull(eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES));
         var tsValue = eData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("batteryLevel");
-        Assert.assertEquals(42, Long.parseLong(tsValue.getValue()));
+        Assert.assertThat(Long.parseLong(tsValue.getValue()), instanceOf(Long.class));
+        int expectedMax = 50;
+        int expectedMin = 5;
+        Assert.assertTrue(expectedMax >= Long.parseLong(tsValue.getValue()));
+        Assert.assertTrue(expectedMin <= Long.parseLong(tsValue.getValue()));
     }
 
     protected void createDeviceProfile(Lwm2mDeviceProfileTransportConfiguration transportConfiguration) throws Exception {
@@ -288,7 +302,8 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         this.clientDestroy();
         lwM2MTestClient = new LwM2MTestClient(this.executor, endpoint);
         int clientPort = SocketUtils.findAvailableUdpPort();
-        lwM2MTestClient.init(security, coapConfig, clientPort, isRpc, isBootstrap, this.shortServerId, this.shortServerIdBs, securityBs);
+        lwM2MTestClient.init(security, coapConfig, clientPort, isRpc, isBootstrap, this.shortServerId, this.shortServerIdBs,
+                securityBs, this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest);
     }
 
     private void clientDestroy() {
@@ -298,7 +313,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
                 awaitClientDestroy(lwM2MTestClient.getLeshanClient());
             }
         } catch (Exception e) {
-            log.error("", e);
+            log.error("Failed client Destroy", e);
         }
     }
 
@@ -357,7 +372,6 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
                 .atMost(3000, TimeUnit.MILLISECONDS)
                 .until(() -> isServerPortsAvailable() == null);
     }
-
 
     private static String isServerPortsAvailable() {
         for (int port : SERVERS_PORT_NUMBERS) {

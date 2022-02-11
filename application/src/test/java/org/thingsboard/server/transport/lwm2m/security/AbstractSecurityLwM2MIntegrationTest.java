@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.transport.lwm2m.security;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.leshan.client.object.Security;
+import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.util.Hex;
 import org.junit.Assert;
 import org.springframework.test.web.servlet.MvcResult;
@@ -61,6 +63,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
 import static org.eclipse.leshan.client.object.Security.noSecBootstap;
+import static org.junit.Assert.assertEquals;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_STARTED;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_SUCCESS;
@@ -173,7 +176,8 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
                 awaitAlias,
                 expectedStatuses,
                 true,
-                finishState);
+                finishState,
+                false);
     }
 
     protected void basicTestConnection(Security security,
@@ -184,13 +188,13 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
                                        String awaitAlias,
                                        Set<LwM2MClientState> expectedStatuses,
                                        boolean isBootstrap,
-                                       LwM2MClientState finishState) throws Exception {
+                                       LwM2MClientState finishState,
+                                       boolean isStartLw) throws Exception {
         createNewClient(security, coapConfig, true, endpoint, isBootstrap, null);
         createDeviceProfile(transportConfiguration);
         final Device device = createDevice(deviceCredentials, endpoint);
         device.getId().getId().toString();
-        lwM2MTestClient.start();
-
+        lwM2MTestClient.start(isStartLw);
         await(awaitAlias)
                 .atMost(1000, TimeUnit.MILLISECONDS)
                 .until(() -> finishState.equals(lwM2MTestClient.getClientState()));
@@ -228,15 +232,17 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         createDeviceProfile(transportConfiguration);
         final Device device = createDevice(deviceCredentials, endpoint);
         String deviceId = device.getId().getId().toString();
-        lwM2MTestClient.start();
-
+        lwM2MTestClient.start(true);
         await(awaitAlias)
                 .atMost(1000, TimeUnit.MILLISECONDS)
                 .until(() -> ON_REGISTRATION_SUCCESS.equals(lwM2MTestClient.getClientState()));
         Assert.assertEquals(expectedStatusesLwm2m, lwM2MTestClient.getClientStates());
 
-        String executedPath = getObjectIdVer_1() + "/0/" + RESOURCE_ID_9;
-        sendRPCSecurityExecuteById(executedPath, deviceId, endpoint);
+        String executedPath = "/" + OBJECT_ID_1 + "_" +  lwM2MTestClient.getLeshanClient().getObjectTree().getModel().getObjectModel(OBJECT_ID_1).version
+                + "/0/" + RESOURCE_ID_9;
+        String actualResult = sendRPCSecurityExecuteById(executedPath, deviceId, endpoint);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
         expectedStatusesBs.add(ON_DEREGISTRATION_STARTED);
         expectedStatusesBs.add(ON_DEREGISTRATION_SUCCESS);
         await(awaitAlias)
@@ -397,16 +403,5 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
 
         String setRpcRequest = "{\"method\": \"Execute\", \"params\": {\"id\": \"" + path + "\"}}";
         return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
-    }
-
-    private String getObjectIdVer_1() {
-        String ver_Id_0 = lwM2MTestClient.getLeshanClient().getObjectTree().getModel().getObjectModel(OBJECT_ID_1).version;
-        String objectIdVer_1;
-        if ("1.0".equals(ver_Id_0)) {
-            objectIdVer_1 = "/" + OBJECT_ID_1;
-        } else {
-            objectIdVer_1 = "/" + OBJECT_ID_1 + "_" + ver_Id_0;
-        }
-        return objectIdVer_1;
     }
 }

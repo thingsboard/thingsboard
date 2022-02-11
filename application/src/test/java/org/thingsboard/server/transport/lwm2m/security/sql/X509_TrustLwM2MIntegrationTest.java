@@ -58,7 +58,8 @@ public class X509_TrustLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegra
                 "await on client state (X509_Trust_Lwm2m)",
                 expectedStatusesRegistrationLwm2mSuccess,
                 false,
-                ON_REGISTRATION_SUCCESS);
+                ON_REGISTRATION_SUCCESS,
+                true);
     }
 
     // Bootstrap + Lwm2m
@@ -84,6 +85,7 @@ public class X509_TrustLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegra
                 "await on client state (X509Trust two section)",
                 expectedStatusesRegistrationBsSuccess,
                 true,
-                ON_REGISTRATION_SUCCESS);
+                ON_REGISTRATION_SUCCESS,
+                true);
     }
 }
