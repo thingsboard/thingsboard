@@ -16,12 +16,14 @@
 package org.thingsboard.server.transport.mqtt.credentials.sql;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttSecurityException;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.eclipse.paho.mqttv5.client.MqttAsyncClient;
+import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
+import org.eclipse.paho.mqttv5.common.MqttException;
+import org.eclipse.paho.mqttv5.common.MqttSecurityException;
+import org.eclipse.paho.mqttv5.client.persist.MemoryPersistence;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -121,7 +123,8 @@ public class BasicMqttCredentialsTest extends AbstractMqttIntegrationTest {
         testTelemetryIsDelivered(accessToken2Device, getMqttAsyncClient(RandomStringUtils.randomAlphanumeric(10), USER_NAME2, RandomStringUtils.randomAlphanumeric(10)));
     }
 
-    @Test(expected = MqttSecurityException.class)
+    // Should be MqttSecurityException.class https://github.com/eclipse/paho.mqtt.java/issues/880
+    @Test(expected = MqttException.class)
     public void testCorrectClientIdAndUserNameButWrongPassword() throws Exception {
         // Not correct. Correct clientId and username, but wrong password
         testTelemetryIsNotDelivered(clientIdAndUserNameAndPasswordDevice3, getMqttAsyncClient(CLIENT_ID, USER_NAME3, "WRONG PASSWORD"));
@@ -175,16 +178,16 @@ public class BasicMqttCredentialsTest extends AbstractMqttIntegrationTest {
 
     protected MqttAsyncClient getMqttAsyncClient(String clientId, String username, String password) throws MqttException {
         if (StringUtils.isEmpty(clientId)) {
-            clientId = MqttAsyncClient.generateClientId();
+            clientId = UUID.randomUUID().toString();
         }
         MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId, new MemoryPersistence());
 
-        MqttConnectOptions options = new MqttConnectOptions();
+        MqttConnectionOptions options = new MqttConnectionOptions();
         if (StringUtils.isNotEmpty(username)) {
             options.setUserName(username);
         }
         if (StringUtils.isNotEmpty(password)) {
-            options.setPassword(password.toCharArray());
+            options.setPassword(password.getBytes(StandardCharsets.UTF_8));
         }
         client.connect(options).waitForCompletion();
         return client;

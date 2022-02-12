@@ -20,7 +20,7 @@ import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
+import org.eclipse.paho.mqttv5.client.MqttAsyncClient;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;

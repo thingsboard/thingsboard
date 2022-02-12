@@ -78,7 +78,7 @@
         <protobuf.version>3.17.2</protobuf.version>
         <grpc.version>1.42.1</grpc.version>
         <lombok.version>1.18.18</lombok.version>
-        <paho.client.version>1.2.4</paho.client.version>
+        <paho.client.version>1.2.5</paho.client.version>
         <netty.version>4.1.72.Final</netty.version>
         <netty-tcnative.version>2.0.46.Final</netty-tcnative.version>
         <os-maven-plugin.version>1.7.0</os-maven-plugin.version>
@@ -1626,7 +1626,7 @@
             </dependency>
             <dependency>
                 <groupId>org.eclipse.paho</groupId>
-                <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
+                <artifactId>org.eclipse.paho.mqttv5.client</artifactId>
                 <version>${paho.client.version}</version>
             </dependency>
             <dependency>

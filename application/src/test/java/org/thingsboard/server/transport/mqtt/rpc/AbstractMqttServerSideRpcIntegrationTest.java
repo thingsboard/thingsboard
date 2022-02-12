@@ -26,11 +26,14 @@ import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttCallback;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.mqttv5.client.IMqttDeliveryToken;
+import org.eclipse.paho.mqttv5.client.IMqttToken;
+import org.eclipse.paho.mqttv5.client.MqttAsyncClient;
+import org.eclipse.paho.mqttv5.client.MqttCallback;
+import org.eclipse.paho.mqttv5.client.MqttDisconnectResponse;
+import org.eclipse.paho.mqttv5.common.MqttException;
+import org.eclipse.paho.mqttv5.common.MqttMessage;
+import org.eclipse.paho.mqttv5.common.packet.MqttProperties;
 import org.junit.Assert;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
@@ -316,7 +319,13 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
         }
 
         @Override
-        public void connectionLost(Throwable throwable) {
+        public void disconnected(MqttDisconnectResponse disconnectResponse) {
+
+        }
+
+        @Override
+        public void mqttErrorOccurred(MqttException exception) {
+
         }
 
         @Override
@@ -327,7 +336,17 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
         }
 
         @Override
-        public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
+        public void deliveryComplete(IMqttToken token) {
+
+        }
+
+        @Override
+        public void connectComplete(boolean reconnect, String serverURI) {
+
+        }
+
+        @Override
+        public void authPacketArrived(int reasonCode, MqttProperties properties) {
 
         }
     }
@@ -347,8 +366,15 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
             return qoS;
         }
 
+
         @Override
-        public void connectionLost(Throwable throwable) {
+        public void disconnected(MqttDisconnectResponse disconnectResponse) {
+
+        }
+
+        @Override
+        public void mqttErrorOccurred(MqttException exception) {
+
         }
 
         @Override
@@ -366,9 +392,20 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
         }
 
         @Override
-        public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
+        public void deliveryComplete(IMqttToken token) {
 
         }
+
+        @Override
+        public void connectComplete(boolean reconnect, String serverURI) {
+
+        }
+
+        @Override
+        public void authPacketArrived(int reasonCode, MqttProperties properties) {
+
+        }
+
     }
 
     protected class TestProtoMqttCallback implements MqttCallback {
@@ -386,8 +423,15 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
             return qoS;
         }
 
+
         @Override
-        public void connectionLost(Throwable throwable) {
+        public void disconnected(MqttDisconnectResponse disconnectResponse) {
+
+        }
+
+        @Override
+        public void mqttErrorOccurred(MqttException exception) {
+
         }
 
         @Override
@@ -405,7 +449,17 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
         }
 
         @Override
-        public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
+        public void deliveryComplete(IMqttToken token) {
+
+        }
+
+        @Override
+        public void connectComplete(boolean reconnect, String serverURI) {
+
+        }
+
+        @Override
+        public void authPacketArrived(int reasonCode, MqttProperties properties) {
 
         }
     }
@@ -476,7 +530,13 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
         }
 
         @Override
-        public void connectionLost(Throwable throwable) {
+        public void disconnected(MqttDisconnectResponse disconnectResponse) {
+
+        }
+
+        @Override
+        public void mqttErrorOccurred(MqttException exception) {
+
         }
 
         @Override
@@ -492,8 +552,19 @@ public abstract class AbstractMqttServerSideRpcIntegrationTest extends AbstractM
         }
 
         @Override
-        public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
+        public void deliveryComplete(IMqttToken token) {
 
         }
+
+        @Override
+        public void connectComplete(boolean reconnect, String serverURI) {
+
+        }
+
+        @Override
+        public void authPacketArrived(int reasonCode, MqttProperties properties) {
+
+        }
+
     }
 }

@@ -17,12 +17,13 @@ package org.thingsboard.server.controller;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.eclipse.paho.mqttv5.client.MqttAsyncClient;
+import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
+import org.eclipse.paho.mqttv5.common.MqttMessage;
+import org.eclipse.paho.mqttv5.client.persist.MemoryPersistence;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -437,10 +438,10 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         String accessToken = deviceCredentials.getCredentialsId();
         assertNotNull(accessToken);
 
-        String clientId = MqttAsyncClient.generateClientId();
+        String clientId = UUID.randomUUID().toString();
         MqttAsyncClient client = new MqttAsyncClient("tcp://localhost:1883", clientId, new MemoryPersistence());
 
-        MqttConnectOptions options = new MqttConnectOptions();
+        MqttConnectionOptions options = new MqttConnectionOptions();
         options.setUserName(accessToken);
         client.connect(options);
         awaitConnected(client, TimeUnit.SECONDS.toMillis(30));
@@ -479,10 +480,10 @@ public abstract class BaseEntityViewControllerTest extends AbstractControllerTes
         String accessToken = deviceCredentials.getCredentialsId();
         assertNotNull(accessToken);
 
-        String clientId = MqttAsyncClient.generateClientId();
+        String clientId = UUID.randomUUID().toString();
         MqttAsyncClient client = new MqttAsyncClient("tcp://localhost:1883", clientId, new MemoryPersistence());
 
-        MqttConnectOptions options = new MqttConnectOptions();
+        MqttConnectionOptions options = new MqttConnectionOptions();
         options.setUserName(accessToken);
         client.connect(options);
         awaitConnected(client, TimeUnit.SECONDS.toMillis(30));

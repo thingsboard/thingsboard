@@ -17,13 +17,18 @@ package org.thingsboard.server.transport.mqtt.telemetry.timeseries;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.netty.handler.codec.mqtt.MqttQoS;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttCallback;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.eclipse.paho.mqttv5.client.IMqttDeliveryToken;
+import org.eclipse.paho.mqttv5.client.IMqttToken;
+import org.eclipse.paho.mqttv5.client.MqttAsyncClient;
+import org.eclipse.paho.mqttv5.client.MqttCallback;
+import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
+import org.eclipse.paho.mqttv5.client.MqttDisconnectResponse;
+import org.eclipse.paho.mqttv5.common.MqttException;
+import org.eclipse.paho.mqttv5.common.MqttMessage;
+import org.eclipse.paho.mqttv5.client.persist.MemoryPersistence;
+import org.eclipse.paho.mqttv5.common.packet.MqttProperties;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -309,10 +314,10 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
 
     //    @Test - Unstable
     public void testMqttQoSLevel() throws Exception {
-        String clientId = MqttAsyncClient.generateClientId();
+        String clientId = UUID.randomUUID().toString();
         MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId, new MemoryPersistence());
 
-        MqttConnectOptions options = new MqttConnectOptions();
+        MqttConnectionOptions options = new MqttConnectionOptions();
         options.setUserName(accessToken);
         CountDownLatch latch = new CountDownLatch(1);
         TestMqttCallback callback = new TestMqttCallback(client, latch);
@@ -350,9 +355,16 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
             return qoS;
         }
 
+
+
         @Override
-        public void connectionLost(Throwable throwable) {
-            log.error("Client connection lost", throwable);
+        public void disconnected(MqttDisconnectResponse disconnectResponse) {
+
+        }
+
+        @Override
+        public void mqttErrorOccurred(MqttException exception) {
+            log.error("Client connection error", exception);
         }
 
         @Override
@@ -363,7 +375,17 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         }
 
         @Override
-        public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
+        public void deliveryComplete(IMqttToken token) {
+
+        }
+
+        @Override
+        public void connectComplete(boolean reconnect, String serverURI) {
+
+        }
+
+        @Override
+        public void authPacketArrived(int reasonCode, MqttProperties properties) {
 
         }
     }

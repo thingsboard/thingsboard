@@ -22,10 +22,10 @@ package org.thingsboard.client.tools;
 
 import com.google.common.io.Resources;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.eclipse.paho.mqttv5.client.MqttAsyncClient;
+import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
+import org.eclipse.paho.mqttv5.common.MqttMessage;
+import org.eclipse.paho.mqttv5.client.persist.MemoryPersistence;
 import org.thingsboard.server.common.data.ResourceUtils;
 
 import javax.net.ssl.*;
@@ -66,7 +66,7 @@ public class MqttSslClient {
             SSLContext sslContext = SSLContext.getInstance(TLS);
             sslContext.init(km, tm, null);
 
-            MqttConnectOptions options = new MqttConnectOptions();
+            MqttConnectionOptions options = new MqttConnectionOptions();
             options.setSocketFactory(sslContext.getSocketFactory());
             MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, CLIENT_ID, new MemoryPersistence());
             client.connect(options);

@@ -16,12 +16,13 @@
 package org.thingsboard.server.transport.mqtt;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.eclipse.paho.mqttv5.client.MqttAsyncClient;
+import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
+import org.eclipse.paho.mqttv5.common.MqttException;
+import org.eclipse.paho.mqttv5.common.MqttMessage;
+import org.eclipse.paho.mqttv5.client.persist.MemoryPersistence;
 import org.junit.Assert;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.Device;
@@ -147,10 +148,10 @@ public abstract class AbstractMqttIntegrationTest extends AbstractTransportInteg
     }
 
     protected MqttAsyncClient getMqttAsyncClient(String accessToken) throws MqttException {
-        String clientId = MqttAsyncClient.generateClientId();
+        String clientId = UUID.randomUUID().toString();
         MqttAsyncClient client = new MqttAsyncClient(MQTT_URL, clientId, new MemoryPersistence());
 
-        MqttConnectOptions options = new MqttConnectOptions();
+        MqttConnectionOptions options = new MqttConnectionOptions();
         options.setUserName(accessToken);
         client.connect(options).waitForCompletion();
         return client;

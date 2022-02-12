@@ -17,10 +17,14 @@ package org.thingsboard.server.transport.mqtt.provision;
 
 import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttCallback;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.mqttv5.client.IMqttDeliveryToken;
+import org.eclipse.paho.mqttv5.client.IMqttToken;
+import org.eclipse.paho.mqttv5.client.MqttAsyncClient;
+import org.eclipse.paho.mqttv5.client.MqttCallback;
+import org.eclipse.paho.mqttv5.client.MqttDisconnectResponse;
+import org.eclipse.paho.mqttv5.common.MqttException;
+import org.eclipse.paho.mqttv5.common.MqttMessage;
+import org.eclipse.paho.mqttv5.common.packet.MqttProperties;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -256,7 +260,13 @@ public abstract class AbstractMqttProvisionProtoDeviceTest extends AbstractMqttI
         }
 
         @Override
-        public void connectionLost(Throwable throwable) {
+        public void disconnected(MqttDisconnectResponse disconnectResponse) {
+
+        }
+
+        @Override
+        public void mqttErrorOccurred(MqttException exception) {
+
         }
 
         @Override
@@ -267,7 +277,17 @@ public abstract class AbstractMqttProvisionProtoDeviceTest extends AbstractMqttI
         }
 
         @Override
-        public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
+        public void deliveryComplete(IMqttToken token) {
+
+        }
+
+        @Override
+        public void connectComplete(boolean reconnect, String serverURI) {
+
+        }
+
+        @Override
+        public void authPacketArrived(int reasonCode, MqttProperties properties) {
 
         }
     }

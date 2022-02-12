@@ -16,8 +16,8 @@
 package org.thingsboard.server.transport.mqtt.claim;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.mqttv5.client.MqttAsyncClient;
+import org.eclipse.paho.mqttv5.common.MqttMessage;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
