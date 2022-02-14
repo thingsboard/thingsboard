@@ -26,7 +26,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -45,11 +44,13 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceRpcCallMsg;
@@ -59,7 +60,6 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.service.rpc.FromDeviceRpcResponseActorMsg;
 
 import java.util.UUID;
@@ -194,7 +194,6 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
             if (device == null) {
                 device = new Device();
                 device.setTenantId(tenantId);
-                device.setId(deviceId);
                 device.setCreatedTime(Uuids.unixTimestamp(deviceId.getId()));
                 created = true;
             }
@@ -213,6 +212,12 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                         new UUID(deviceUpdateMsg.getDeviceProfileIdMSB(),
                                 deviceUpdateMsg.getDeviceProfileIdLSB()));
                 device.setDeviceProfileId(deviceProfileId);
+            }
+            if (created) {
+                deviceValidator.validate(device, Device::getTenantId);
+                device.setId(deviceId);
+            } else {
+                deviceValidator.validate(device, Device::getTenantId);
             }
             Device savedDevice = deviceService.saveDevice(device, false);
             tbClusterService.onDeviceUpdated(savedDevice, created ? null : device, false);
