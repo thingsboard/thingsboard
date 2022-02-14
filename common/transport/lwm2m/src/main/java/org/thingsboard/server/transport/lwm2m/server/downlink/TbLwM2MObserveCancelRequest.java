@@ -16,24 +16,18 @@
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
 import lombok.Builder;
-import lombok.Getter;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MOperationType;
 
-import java.util.Set;
-
-public class TbLwM2MObserveAllRequest implements TbLwM2MDownlinkRequest<Set<String>> {
-
-    @Getter
-    private final long timeout;
+public class TbLwM2MObserveCancelRequest extends AbstractTbLwM2MTargetedDownlinkRequest<Integer> {
 
     @Builder
-    private TbLwM2MObserveAllRequest(long timeout) {
-        this.timeout = timeout;
+    private TbLwM2MObserveCancelRequest(String versionedId, long timeout) {
+        super(versionedId, timeout);
     }
 
     @Override
     public LwM2MOperationType getType() {
-        return LwM2MOperationType.OBSERVE_READ_ALL;
+        return LwM2MOperationType.OBSERVE_CANCEL;
     }
 
 

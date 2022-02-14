@@ -13,32 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.downlink;
+package org.thingsboard.server.transport.lwm2m.server.downlink.composite;
 
 import lombok.Builder;
-import org.eclipse.leshan.core.request.ContentFormat;
-import org.eclipse.leshan.core.response.ObserveResponse;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MOperationType;
 
-import java.util.Optional;
-
-public class TbLwM2MObserveRequest extends AbstractTbLwM2MTargetedDownlinkRequest<ObserveResponse> implements HasContentFormat {
-
-    private final Optional<ContentFormat> requestContentFormat;
+public class TbLwM2MObserveCompositeCancelRequest extends AbstractTbLwM2MTargetedDownlinkCompositeRequest {
 
     @Builder
-    private TbLwM2MObserveRequest(String versionedId, long timeout, ContentFormat requestContentFormat) {
-        super(versionedId, timeout);
-        this.requestContentFormat = Optional.ofNullable(requestContentFormat);
+    private TbLwM2MObserveCompositeCancelRequest(String [] versionedIds, long timeout) {
+        super(versionedIds, timeout);
     }
 
     @Override
     public LwM2MOperationType getType() {
-        return LwM2MOperationType.OBSERVE;
-    }
-
-    @Override
-    public Optional<ContentFormat> getRequestContentFormat() {
-        return this.requestContentFormat;
+        return LwM2MOperationType.OBSERVE_COMPOSITE_CANCEL;
     }
 }

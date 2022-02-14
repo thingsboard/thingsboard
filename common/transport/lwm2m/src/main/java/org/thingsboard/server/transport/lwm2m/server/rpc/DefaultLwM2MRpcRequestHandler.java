@@ -32,15 +32,14 @@ import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
-import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MOperationType;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.downlink.LwM2mDownlinkMsgHandler;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelAllObserveCallback;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelAllRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelObserveCallback;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelObserveRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveCancelAllCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveCancelAllRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveCancelCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveCancelRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCreateRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCreateResponseCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MDeleteCallback;
@@ -50,7 +49,7 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MDiscoverCal
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MDiscoverRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MExecuteCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MExecuteRequest;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveAllRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveReadAllRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MReadCallback;
@@ -60,10 +59,16 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttrib
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteReplaceRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteResponseCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteUpdateRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MObserveCompositeCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MObserveCompositeCancelCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MObserveCompositeCancelRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MObserveCompositeRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MReadCompositeCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MReadCompositeRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MWriteResponseCompositeCallback;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
+import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcObserveCompositeCancelCallback;
+import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcObserveResponseCompositeCallback;
 import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcReadCompositeRequest;
 import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcReadResponseCompositeCallback;
 import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcWriteCompositeRequest;
@@ -138,7 +143,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
                             sendWriteAttributesRequest(client, rpcRequest, objectId);
                             break;
                         case OBSERVE_CANCEL:
-                            sendCancelObserveRequest(client, rpcRequest, objectId);
+                            sendObserveCancelRequest(client, rpcRequest, objectId);
                             break;
                         case DELETE:
                             sendDeleteRequest(client, rpcRequest, objectId);
@@ -165,6 +170,12 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
                             case WRITE_COMPOSITE:
                                 sendWriteCompositeRequest(client, rpcRequest, contentFormatComposite);
                                 break;
+                            case OBSERVE_COMPOSITE:
+                                sendObserveCompositeRequest(client, rpcRequest, contentFormatComposite);
+                                break;
+                            case OBSERVE_COMPOSITE_CANCEL:
+                                sendObserveCompositeCancelRequest(client, rpcRequest, contentFormatComposite);
+                                break;
                             default:
                                 throw new IllegalArgumentException("Unsupported operation: " + operationType.name());
                         }
@@ -178,7 +189,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
                             sendCancelAllObserveRequest(client, rpcRequest);
                             break;
                         case OBSERVE_READ_ALL:
-                            sendObserveAllRequest(client, rpcRequest);
+                            sendObserveReadAllRequest(client, rpcRequest);
                             break;
                         case DISCOVER_ALL:
                             sendDiscoverAllRequest(client, rpcRequest);
@@ -218,9 +229,32 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         downlinkHandler.sendObserveRequest(client, request, rpcCallback);
     }
 
-    private void sendObserveAllRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
-        TbLwM2MObserveAllRequest request = TbLwM2MObserveAllRequest.builder().timeout(clientContext.getRequestTimeout(client)).build();
-        downlinkHandler.sendObserveAllRequest(client, request, new RpcLinkSetCallback<>(transportService, client, requestMsg, null));
+    private void sendObserveCancelRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
+        TbLwM2MObserveCancelRequest downlink = TbLwM2MObserveCancelRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(client)).build();
+        var mainCallback = new TbLwM2MObserveCancelCallback(logService, client, versionedId);
+        var rpcCallback = new RpcObserveCancelCallback(transportService, client, requestMsg, mainCallback);
+        downlinkHandler.sendObserveCancelRequest(client, downlink, rpcCallback);
+    }
+
+    private void sendObserveCompositeRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, ContentFormat contentFormatComposite) {
+        String[] versionedIds = getIdsFromParameters(client, requestMsg);
+        TbLwM2MObserveCompositeRequest request = TbLwM2MObserveCompositeRequest.builder().versionedIds(versionedIds).timeout(clientContext.getRequestTimeout(client)).build();
+        var mainCallback = new TbLwM2MObserveCompositeCallback(uplinkHandler, logService, client, versionedIds);
+        var rpcCallback = new RpcObserveResponseCompositeCallback(transportService, client, requestMsg, mainCallback);
+        downlinkHandler.sendObserveCompositeRequest(client, request, rpcCallback, contentFormatComposite);
+    }
+
+    private void sendObserveCompositeCancelRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, ContentFormat contentFormatComposite) {
+        String[] versionedIds = getIdsFromParameters(client, requestMsg);
+        TbLwM2MObserveCompositeCancelRequest request = TbLwM2MObserveCompositeCancelRequest.builder().versionedIds(versionedIds).timeout(clientContext.getRequestTimeout(client)).build();
+        var mainCallback = new TbLwM2MObserveCompositeCancelCallback(logService, client, versionedIds);
+        var rpcCallback = new RpcObserveCompositeCancelCallback(transportService, client, requestMsg, mainCallback);
+        downlinkHandler.sendObserveCompositeCancelRequest(client, request, rpcCallback);
+    }
+
+    private void sendObserveReadAllRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
+        TbLwM2MObserveReadAllRequest request = TbLwM2MObserveReadAllRequest.builder().timeout(clientContext.getRequestTimeout(client)).build();
+        downlinkHandler.sendObserveReadAllRequest(client, request, new RpcLinkSetCallback<>(transportService, client, requestMsg, null));
     }
 
     private void sendDiscoverAllRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
@@ -320,8 +354,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
                 LwM2mPath path = new LwM2mPath(fromVersionedIdToObjectId(key));
                 if (path.isResource() || path.isResourceInstance()) {
                     versionedId = key;
-                }
-                else {
+                } else {
                     throw new IllegalArgumentException(String.format("nodes: %s is not validate value. " +
                             "The WriteComposite operation is only used for SingleResources or/and ResourceInstance.", nodes.toString()));
                 }
@@ -334,8 +367,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
                 if (!element.isJsonNull() && !element.isJsonPrimitive()) {
                     throw new IllegalArgumentException(String.format("nodes: %s is not validate value. " +
                             "The WriteComposite operation is only used for SingleResources or/and ResourceInstance.", nodes.toString()));
-                }
-                else if (versionedId != null) {
+                } else if (versionedId != null) {
                     newNodes.put(fromVersionedIdToObjectId(versionedId), value);
                 }
             } catch (JsonSyntaxException jse) {
@@ -347,13 +379,6 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         return newNodes;
     }
 
-    private void sendCancelObserveRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
-        TbLwM2MCancelObserveRequest downlink = TbLwM2MCancelObserveRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(client)).build();
-        var mainCallback = new TbLwM2MCancelObserveCallback(logService, client, versionedId);
-        var rpcCallback = new RpcCancelObserveCallback(transportService, client, requestMsg, mainCallback);
-        downlinkHandler.sendCancelObserveRequest(client, downlink, rpcCallback);
-    }
-
     private void sendDeleteRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
         TbLwM2MDeleteRequest downlink = TbLwM2MDeleteRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MDeleteCallback(logService, client, versionedId);
@@ -362,10 +387,10 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
     }
 
     private void sendCancelAllObserveRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
-        TbLwM2MCancelAllRequest downlink = TbLwM2MCancelAllRequest.builder().timeout(clientContext.getRequestTimeout(client)).build();
-        var mainCallback = new TbLwM2MCancelAllObserveCallback(logService, client);
-        var rpcCallback = new RpcCancelAllObserveCallback(transportService, client, requestMsg, mainCallback);
-        downlinkHandler.sendCancelAllRequest(client, downlink, rpcCallback);
+        TbLwM2MObserveCancelAllRequest downlink = TbLwM2MObserveCancelAllRequest.builder().timeout(clientContext.getRequestTimeout(client)).build();
+        var mainCallback = new TbLwM2MObserveCancelAllCallback(logService, client);
+        var rpcCallback = new RpcObserveCancelAllCallback(transportService, client, requestMsg, mainCallback);
+        downlinkHandler.sendObserveCancelAllRequest(client, downlink, rpcCallback);
     }
 
     private String getIdFromParameters(LwM2mClient client, LwM2MRpcRequestHeader header) {
@@ -417,11 +442,9 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
     private ContentFormat getCompositeContentFormat(LwM2mClient client) {
         if (client.getClientSupportContentFormats().contains(ContentFormat.SENML_JSON)) {
             return ContentFormat.SENML_JSON;
-        }
-        else if (client.getClientSupportContentFormats().contains(ContentFormat.SENML_CBOR)) {
+        } else if (client.getClientSupportContentFormats().contains(ContentFormat.SENML_CBOR)) {
             return ContentFormat.SENML_CBOR;
-        }
-        else {
+        } else {
             return null;
         }
     }

@@ -26,8 +26,8 @@ import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.downlink.DownlinkRequestCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.LwM2mDownlinkMsgHandler;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelObserveCallback;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelObserveRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveCancelCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveCancelRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MReadCallback;
@@ -169,15 +169,15 @@ public class LwM2MModelConfigServiceImpl implements LwM2MModelConfigService {
 
         Set<String> toCancelObserve = modelConfig.getToCancelObserve();
         toCancelObserve.forEach(id -> {
-            TbLwM2MCancelObserveRequest request = TbLwM2MCancelObserveRequest.builder().versionedId(id)
+            TbLwM2MObserveCancelRequest request = TbLwM2MObserveCancelRequest.builder().versionedId(id)
                     .timeout(clientContext.getRequestTimeout(lwM2mClient)).build();
-            downlinkMsgHandler.sendCancelObserveRequest(lwM2mClient, request,
+            downlinkMsgHandler.sendObserveCancelRequest(lwM2mClient, request,
                     createDownlinkProxyCallback(() -> {
                         toCancelObserve.remove(id);
                         if (modelConfig.isEmpty()) {
                             modelStore.remove(endpoint);
                         }
-                    }, new TbLwM2MCancelObserveCallback(logService, lwM2mClient, id))
+                    }, new TbLwM2MObserveCancelCallback(logService, lwM2mClient, id))
             );
         });
     }

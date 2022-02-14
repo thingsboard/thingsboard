@@ -19,13 +19,13 @@ import lombok.Builder;
 import lombok.Getter;
 import org.thingsboard.server.transport.lwm2m.server.LwM2MOperationType;
 
-public class TbLwM2MCancelAllRequest implements TbLwM2MDownlinkRequest<Integer> {
+public class TbLwM2MObserveCancelAllRequest implements TbLwM2MDownlinkRequest<Integer> {
 
     @Getter
     private final long timeout;
 
     @Builder
-    private TbLwM2MCancelAllRequest(long timeout) {
+    private TbLwM2MObserveCancelAllRequest(long timeout) {
         this.timeout = timeout;
     }
 

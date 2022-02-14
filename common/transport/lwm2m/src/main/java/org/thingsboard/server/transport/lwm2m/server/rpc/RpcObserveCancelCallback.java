@@ -20,11 +20,11 @@ import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.downlink.DownlinkRequestCallback;
-import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelAllRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveCancelRequest;
 
-public class RpcCancelAllObserveCallback extends RpcDownlinkRequestCallbackProxy<TbLwM2MCancelAllRequest, Integer> {
+public class RpcObserveCancelCallback extends RpcDownlinkRequestCallbackProxy<TbLwM2MObserveCancelRequest, Integer> {
 
-    public RpcCancelAllObserveCallback(TransportService transportService, LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, DownlinkRequestCallback<TbLwM2MCancelAllRequest, Integer> callback) {
+    public RpcObserveCancelCallback(TransportService transportService, LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, DownlinkRequestCallback<TbLwM2MObserveCancelRequest, Integer> callback) {
         super(transportService, client, requestMsg, callback);
     }
 

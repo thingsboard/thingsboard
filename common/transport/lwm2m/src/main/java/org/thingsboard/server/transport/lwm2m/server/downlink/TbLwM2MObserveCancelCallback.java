@@ -22,16 +22,19 @@ import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogServic
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_INFO;
 
 @Slf4j
-public class TbLwM2MCancelAllObserveCallback extends AbstractTbLwM2MRequestCallback<TbLwM2MCancelAllRequest, Integer> {
+public class TbLwM2MObserveCancelCallback extends AbstractTbLwM2MRequestCallback<TbLwM2MObserveCancelRequest, Integer> {
 
-    public TbLwM2MCancelAllObserveCallback(LwM2MTelemetryLogService logService, LwM2mClient client) {
+    private final String versionedId;
+
+    public TbLwM2MObserveCancelCallback(LwM2MTelemetryLogService logService, LwM2mClient client, String versionedId) {
         super(logService, client);
+        this.versionedId = versionedId;
     }
 
     @Override
-    public void onSuccess(TbLwM2MCancelAllRequest request, Integer canceledSubscriptionsCount) {
-        log.trace("[{}] Cancel of all observations was successful: {}", client.getEndpoint(),  canceledSubscriptionsCount);
-        logService.log(client, String.format("[%s]: Cancel of all observations was successful. Result: [%s]", LOG_LWM2M_INFO, canceledSubscriptionsCount));
+    public void onSuccess(TbLwM2MObserveCancelRequest request, Integer canceledSubscriptionsCount) {
+        log.trace("[{}] Cancel observation of [{}] successful: {}", client.getEndpoint(),  versionedId, canceledSubscriptionsCount);
+        logService.log(client, String.format("[%s]: Cancel Observe for [%s] successful. Result: [%s]", LOG_LWM2M_INFO, versionedId, canceledSubscriptionsCount));
     }
 
 }

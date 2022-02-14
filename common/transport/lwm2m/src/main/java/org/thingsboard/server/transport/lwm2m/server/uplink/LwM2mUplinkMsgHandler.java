@@ -44,6 +44,8 @@ public interface LwM2mUplinkMsgHandler {
 
     void onUpdateValueAfterReadResponse(Registration registration, String path, ReadResponse response);
 
+    void onErrorObservation(Registration registration, String errorMsg);
+
     void onUpdateValueAfterReadCompositeResponse(Registration registration, ReadCompositeResponse response);
 
     void onDeviceProfileUpdate(TransportProtos.SessionInfoProto sessionInfo, DeviceProfile deviceProfile);
