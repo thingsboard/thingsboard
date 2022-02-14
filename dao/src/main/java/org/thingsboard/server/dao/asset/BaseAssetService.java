@@ -22,8 +22,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
@@ -49,6 +47,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.dao.cache.EntitiesCacheManager;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -58,7 +57,6 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -92,7 +90,7 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
     private CustomerDao customerDao;
 
     @Autowired
-    private CacheManager cacheManager;
+    private EntitiesCacheManager cacheManager;
 
     @Autowired
     @Lazy
@@ -178,14 +176,9 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
             throw new RuntimeException("Exception while finding entity views for assetId [" + assetId + "]", e);
         }
 
-        removeAssetFromCacheByName(asset.getTenantId(), asset.getName());
+        cacheManager.removeAssetFromCacheByName(asset.getTenantId(), asset.getName());
 
         assetDao.removeById(tenantId, assetId.getId());
-    }
-
-    private void removeAssetFromCacheByName(TenantId tenantId, String name) {
-        Cache cache = cacheManager.getCache(ASSET_CACHE);
-        cache.evict(Arrays.asList(tenantId, name));
     }
 
     @Override
@@ -401,7 +394,7 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
                         throw new DataValidationException("Can't update non existing asset!");
                     }
                     if (!old.getName().equals(asset.getName())) {
-                        removeAssetFromCacheByName(tenantId, old.getName());
+                        cacheManager.removeAssetFromCacheByName(tenantId, old.getName());
                     }
                 }
 

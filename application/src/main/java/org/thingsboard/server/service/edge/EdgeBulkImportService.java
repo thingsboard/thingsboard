@@ -74,7 +74,7 @@ public class EdgeBulkImportService extends AbstractBulkImportService<Edge> {
 
     @Override
     protected Edge saveEntity(Edge entity, Map<BulkImportColumnType, String> fields) {
-        return edgeService.saveEdge(entity, true);
+        return edgeService.saveEdge(entity);
     }
 
     @Override

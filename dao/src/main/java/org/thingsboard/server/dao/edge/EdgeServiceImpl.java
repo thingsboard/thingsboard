@@ -52,6 +52,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
+import org.thingsboard.server.dao.cache.EntitiesCacheManager;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -105,7 +106,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
     private UserService userService;
 
     @Autowired
-    private CacheManager cacheManager;
+    private EntitiesCacheManager cacheManager;
 
     @Autowired
     private RuleChainService ruleChainService;
@@ -152,11 +153,9 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
 
     @CacheEvict(cacheNames = EDGE_CACHE, key = "{#edge.tenantId, #edge.name}")
     @Override
-    public Edge saveEdge(Edge edge, boolean doValidate) {
+    public Edge saveEdge(Edge edge) {
         log.trace("Executing saveEdge [{}]", edge);
-        if (doValidate) {
-            edgeValidator.validate(edge, Edge::getTenantId);
-        }
+        edgeValidator.validate(edge, Edge::getTenantId);
         try {
             return edgeDao.save(edge.getTenantId(), edge);
         } catch (Exception t) {
@@ -175,7 +174,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
         log.trace("[{}] Executing assignEdgeToCustomer [{}][{}]", tenantId, edgeId, customerId);
         Edge edge = findEdgeById(tenantId, edgeId);
         edge.setCustomerId(customerId);
-        return saveEdge(edge, true);
+        return saveEdge(edge);
     }
 
     @Override
@@ -183,7 +182,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
         log.trace("[{}] Executing unassignEdgeFromCustomer [{}]", tenantId, edgeId);
         Edge edge = findEdgeById(tenantId, edgeId);
         edge.setCustomerId(null);
-        return saveEdge(edge, true);
+        return saveEdge(edge);
     }
 
     @Override
@@ -195,14 +194,9 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
 
         deleteEntityRelations(tenantId, edgeId);
 
-        removeEdgeFromCacheByName(edge.getTenantId(), edge.getName());
+        cacheManager.removeEdgeFromCacheByName(edge.getTenantId(), edge.getName());
 
         edgeDao.removeById(tenantId, edgeId.getId());
-    }
-
-    private void removeEdgeFromCacheByName(TenantId tenantId, String name) {
-        Cache cache = cacheManager.getCache(EDGE_CACHE);
-        cache.evict(Arrays.asList(tenantId, name));
     }
 
     @Override
@@ -386,7 +380,7 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
                 protected void validateUpdate(TenantId tenantId, Edge edge) {
                     Edge old = edgeDao.findById(edge.getTenantId(), edge.getId().getId());
                     if (!old.getName().equals(edge.getName())) {
-                        removeEdgeFromCacheByName(tenantId, old.getName());
+                        cacheManager.removeEdgeFromCacheByName(tenantId, old.getName());
                     }
                 }
 

@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -38,7 +39,6 @@ import org.thingsboard.server.service.edge.rpc.processor.CustomerEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.EdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.EntityEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.RelationEdgeProcessor;
-import org.thingsboard.server.cluster.TbClusterService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -93,7 +93,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     @Override
     public Edge setEdgeRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId) throws IOException {
         edge.setRootRuleChainId(ruleChainId);
-        Edge savedEdge = edgeService.saveEdge(edge, true);
+        Edge savedEdge = edgeService.saveEdge(edge);
         saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.RULE_CHAIN, EdgeEventActionType.UPDATED, ruleChainId, null);
         return savedEdge;
     }

@@ -21,8 +21,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.hamcrest.Matchers;
 import org.apache.commons.lang3.StringUtils;
+import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -91,8 +91,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.assertEquals;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
 
 @Slf4j
 public abstract class BaseEntityServiceTest extends AbstractServiceTest {
@@ -241,7 +241,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         List<Edge> edges = new ArrayList<>();
         for (int i = 0; i < 97; i++) {
             Edge edge = createEdge(i, "default");
-            edges.add(edgeService.saveEdge(edge, true));
+            edges.add(edgeService.saveEdge(edge));
         }
 
         EdgeTypeFilter filter = new EdgeTypeFilter();
@@ -279,7 +279,7 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
     public void testCountHierarchicalEntitiesByEdgeSearchQuery() throws InterruptedException {
         for (int i = 0; i < 5; i++) {
             Edge edge = createEdge(i, "type" + i);
-            edge = edgeService.saveEdge(edge, true);
+            edge = edgeService.saveEdge(edge);
             //TO make sure devices have different created time
             Thread.sleep(1);
 
