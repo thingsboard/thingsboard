@@ -112,7 +112,6 @@ public class NetworkReceive implements Receive {
                 if (receiveSize < 0)
                     throw new InvalidReceiveException("Invalid receive (size = " + receiveSize + ")");
                 if (maxSize != UNLIMITED && receiveSize > maxSize) {
-                    var t = Thread.currentThread();
                     throw new ThingsboardKafkaClientError("Invalid receive (size = " + receiveSize + " larger than " + maxSize + ")");
                 }
                 requestedBufferSize = receiveSize; //may be 0 for some payloads (SASL)
