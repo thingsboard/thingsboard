@@ -21,7 +21,7 @@ import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTest;
+import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcWithObjectId19_MultipleResourceLwM2MIntegrationTest;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -34,8 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_2;
 
-
-public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegrationTest {
+public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcWithObjectId19_MultipleResourceLwM2MIntegrationTest {
 
     /**
      * DiscoverAll

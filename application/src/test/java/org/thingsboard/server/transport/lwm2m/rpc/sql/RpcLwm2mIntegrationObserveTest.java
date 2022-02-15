@@ -20,7 +20,7 @@ import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTest;
+import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcWithObjectId19_MultipleResourceLwM2MIntegrationTest;
 
 import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
 import static org.junit.Assert.assertEquals;
@@ -32,7 +32,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_3;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fromVersionedIdToObjectId;
 
-public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationTest {
+public class RpcLwm2mIntegrationObserveTest extends AbstractRpcWithObjectId19_MultipleResourceLwM2MIntegrationTest {
 
     /**
      * ObserveReadAll

@@ -20,7 +20,7 @@ import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTest;
+import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcWithObjectId19_MultipleResourceLwM2MIntegrationTest;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -30,8 +30,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INST
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_12;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_0;
 
-
-public class RpcLwm2mIntegrationCreateTest extends AbstractRpcLwM2MIntegrationTest {
+public class RpcLwm2mIntegrationCreateTest extends AbstractRpcWithObjectId19_MultipleResourceLwM2MIntegrationTest {
 
     /**
      * Create  {"id":"/19_1.1","value":{"0":{"0":"00AC"}, "1":1}}

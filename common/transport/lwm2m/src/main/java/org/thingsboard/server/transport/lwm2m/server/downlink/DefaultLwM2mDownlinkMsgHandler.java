@@ -171,15 +171,8 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
             if (observations.stream().noneMatch(observation -> (observation instanceof SingleObservation ? ((SingleObservation) observation).getPath().equals(resultId) :
                     ((CompositeObservation) observation).getPaths().contains(resultId)))) {
-                ObserveRequest downlink;
                 ContentFormat contentFormat = getReadRequestContentFormat(client, request, modelProvider);
-                if (resultId.isResource()) {
-                    downlink = new ObserveRequest(contentFormat, resultId.getObjectId(), resultId.getObjectInstanceId(), resultId.getResourceId());
-                } else if (resultId.isObjectInstance()) {
-                    downlink = new ObserveRequest(contentFormat, resultId.getObjectId(), resultId.getObjectInstanceId());
-                } else {
-                    downlink = new ObserveRequest(contentFormat, resultId.getObjectId());
-                }
+                ObserveRequest downlink = new ObserveRequest(contentFormat, resultId.toString());
                 log.info("[{}] Send observation: {}.", client.getEndpoint(), request.getVersionedId());
                 sendSimpleRequest(client, downlink, request.getTimeout(), callback);
             } else {

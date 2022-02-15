@@ -19,15 +19,14 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.eclipse.leshan.core.ResponseCode;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTest;
+import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcWithObjectId19_MultipleResourceLwM2MIntegrationTest;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_14;
 
-
-public class RpcLwm2mIntegrationWriteAttributesTest extends AbstractRpcLwM2MIntegrationTest {
+public class RpcLwm2mIntegrationWriteAttributesTest extends AbstractRpcWithObjectId19_MultipleResourceLwM2MIntegrationTest {
 
     /**
      * WriteAttributes {"id":"/3/0/14","attributes":{"pmax":100, "pmin":10}}

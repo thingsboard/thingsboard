@@ -52,6 +52,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
@@ -89,8 +90,6 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INST
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_12;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.TEMPERATURE_SENSOR;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resources;
-
 
 @Slf4j
 @Data
@@ -118,7 +117,8 @@ public class LwM2MTestClient {
     public void init(Security security, Configuration coapConfig, int port, boolean isRpc, boolean isBootstrap,
                      int shortServerId, int shortServerIdBs, Security securityBs,
                      DefaultLwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandler,
-                     LwM2mClientContext clientContext) throws InvalidDDFFileException, IOException {
+                     LwM2mClientContext clientContext,
+                     String[] resources) throws InvalidDDFFileException, IOException {
         Assert.assertNull("client already initialized", leshanClient);
         this.defaultLwM2mUplinkMsgHandlerTest = defaultLwM2mUplinkMsgHandler;
         this.clientContext = clientContext;
@@ -152,17 +152,32 @@ public class LwM2MTestClient {
                 initializer.setInstancesForObject(SERVER, instances);
             }
         }
-        initializer.setInstancesForObject(DEVICE, lwM2MDevice = new SimpleLwM2MDevice(executor));
-        initializer.setInstancesForObject(FIRMWARE, fwLwM2MDevice = new FwLwM2MDevice());
-        initializer.setInstancesForObject(SOFTWARE_MANAGEMENT, swLwM2MDevice = new SwLwM2MDevice());
-        initializer.setClassForObject(ACCESS_CONTROL, DummyInstanceEnabler.class);
-        initializer.setInstancesForObject(BINARY_APP_DATA_CONTAINER, lwM2MBinaryAppDataContainer = new LwM2mBinaryAppDataContainer(executor, OBJECT_INSTANCE_ID_0),
-                new LwM2mBinaryAppDataContainer(executor, OBJECT_INSTANCE_ID_1));
-        locationParams = new LwM2MLocationParams();
-        locationParams.getPos();
-        initializer.setInstancesForObject(LOCATION, new LwM2mLocation(locationParams.getLatitude(), locationParams.getLongitude(), locationParams.getScaleFactor(), executor, OBJECT_INSTANCE_ID_0));
-        initializer.setInstancesForObject(TEMPERATURE_SENSOR, lwM2MTemperatureSensor = new LwM2mTemperatureSensor(executor, OBJECT_INSTANCE_ID_0), new LwM2mTemperatureSensor(executor, OBJECT_INSTANCE_ID_12));
+        if (models.stream().filter(obj -> obj.id == ACCESS_CONTROL).findAny().isPresent()) {
+            initializer.setClassForObject(ACCESS_CONTROL, DummyInstanceEnabler.class);
+        }
+        if (models.stream().filter(obj -> obj.id == DEVICE).findAny().isPresent()) {
+            initializer.setInstancesForObject(DEVICE, lwM2MDevice = new SimpleLwM2MDevice(executor));
+        }
+        if (models.stream().filter(obj -> obj.id == FIRMWARE).findAny().isPresent()) {
+            initializer.setInstancesForObject(FIRMWARE, fwLwM2MDevice = new FwLwM2MDevice());
+        }
+        if (models.stream().filter(obj -> obj.id == SOFTWARE_MANAGEMENT).findAny().isPresent()) {
+            initializer.setInstancesForObject(SOFTWARE_MANAGEMENT, swLwM2MDevice = new SwLwM2MDevice());        }
 
+        Optional optObj19 = models.stream().filter(obj -> obj.id == BINARY_APP_DATA_CONTAINER).findAny();
+        if (optObj19.isPresent()) {
+            boolean dataMultipleBinaryApp = ((ObjectModel)optObj19.get()).resources.get(0).multiple;
+            initializer.setInstancesForObject(BINARY_APP_DATA_CONTAINER, lwM2MBinaryAppDataContainer = new LwM2mBinaryAppDataContainer(executor, OBJECT_INSTANCE_ID_0),
+                    new LwM2mBinaryAppDataContainer(executor, OBJECT_INSTANCE_ID_1));
+        }
+        if (models.stream().filter(obj -> obj.id == LOCATION).findAny().isPresent()) {
+            locationParams = new LwM2MLocationParams();
+            locationParams.getPos();
+            initializer.setInstancesForObject(LOCATION, new LwM2mLocation(locationParams.getLatitude(), locationParams.getLongitude(), locationParams.getScaleFactor(), executor, OBJECT_INSTANCE_ID_0));
+        }
+        if (models.stream().filter(obj -> obj.id == TEMPERATURE_SENSOR).findAny().isPresent()) {
+            initializer.setInstancesForObject(TEMPERATURE_SENSOR, lwM2MTemperatureSensor = new LwM2mTemperatureSensor(executor, OBJECT_INSTANCE_ID_0), new LwM2mTemperatureSensor(executor, OBJECT_INSTANCE_ID_12));
+        }
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder(coapConfig);
         dtlsConfig.set(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, true);
 

@@ -17,8 +17,6 @@ package org.thingsboard.server.transport.lwm2m;
 
 public class Lwm2mTestHelper {
 
-    // Models
-    public static final String[] resources = new String[]{"0.xml", "1.xml", "2.xml", "3.xml", "5.xml", "6.xml", "9.xml", "19.xml", "3303.xml"};
     public static final int BINARY_APP_DATA_CONTAINER = 19;
     public static final int TEMPERATURE_SENSOR = 3303;
 
@@ -34,12 +32,14 @@ public class Lwm2mTestHelper {
     public static final int RESOURCE_ID_2 = 2;
     public static final int RESOURCE_ID_3 = 3;
     public static final int RESOURCE_ID_4 = 4;
+    public static final int RESOURCE_ID_5 = 5;
     public static final int RESOURCE_ID_7 = 7;
     public static final int RESOURCE_ID_8 = 8;
     public static final int RESOURCE_ID_9 = 9;
     public static final int RESOURCE_ID_11 = 11;
     public static final int RESOURCE_ID_14 = 14;
     public static final int RESOURCE_ID_15 = 15;
+    public static final int RESOURCE_INSTANCE_ID_0 = 0;
     public static final int RESOURCE_INSTANCE_ID_2 = 2;
 
     public static final String RESOURCE_ID_NAME_3_9 = "batteryLevel";

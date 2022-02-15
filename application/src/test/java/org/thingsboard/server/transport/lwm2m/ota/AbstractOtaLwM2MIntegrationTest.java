@@ -29,7 +29,7 @@ import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
 @DaoSqlTest
 public abstract class AbstractOtaLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
-    private final  String[] RESOURCES_OTA = new String[]{"3.xml", "5.xml", "9.xml"};
+    private final  String[] RESOURCES_OTA = new String[]{"0.xml", "1.xml", "2.xml", "3.xml", "5.xml", "6.xml", "9.xml", "19.xml", "3303.xml"};
     protected static final String CLIENT_ENDPOINT_WITHOUT_FW_INFO = "WithoutFirmwareInfoDevice";
     protected static final String CLIENT_ENDPOINT_OTA5 = "Ota5_Device";
     protected static final String CLIENT_ENDPOINT_OTA9 = "Ota9_Device";

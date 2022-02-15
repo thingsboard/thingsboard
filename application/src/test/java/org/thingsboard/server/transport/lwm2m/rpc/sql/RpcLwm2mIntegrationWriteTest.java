@@ -20,7 +20,7 @@ import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTest;
+import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcWithObjectId19_MultipleResourceLwM2MIntegrationTest;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -34,8 +34,9 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_15;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_9;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_INSTANCE_ID_2;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fromVersionedIdToObjectId;
 
-public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTest {
+public class RpcLwm2mIntegrationWriteTest extends AbstractRpcWithObjectId19_MultipleResourceLwM2MIntegrationTest {
 
 
     /**
@@ -113,12 +114,46 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
      * {"result":"METHOD_NOT_ALLOWED"}
      */
     @Test
-    public void testWriteReplaceValueSingleResourceR_ById_Result_CHANGED() throws Exception {
+    public void testWriteReplaceValueSingleResource_ById_Result_CHANGED() throws Exception {
         String expectedPath = objectInstanceIdVer_3 + "/" + RESOURCE_ID_9;
         Integer expectedValue = 90;
         String actualResult = sendRPCWriteObjectById("WriteReplace", expectedPath, expectedValue);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.METHOD_NOT_ALLOWED.getName(), rpcActualResult.get("result").asText());
+    }
+
+    /**
+     * bad: MultipleResource,
+     * WriteReplace {"id":"/19/0/0","value":"00AC"}
+     * {"result":"BAD_REQUEST"}
+     */
+    @Test
+    public void testWriteReplaceSingleValueToMultipleResource_ById_Result_BAD_REQUEST() throws Exception {
+        String expectedPath = objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0;
+        String expectedValue = "00AC";
+        String actualResult = sendRPCWriteStringById("WriteReplace", expectedPath, expectedValue);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
+        String expected = "Invalidate value ...";
+        assertEquals(expected, rpcActualResult.get("error").asText());
+    }
+
+    /**
+     * bad: MultipleResource,
+     * WriteUpdate {"id":"/19/0/0","value":"00AC"}
+     * {"result":"BAD_REQUEST"}
+     */
+    @Test
+    public void testWriteUpdateSingleValueToMultipleResource_ById_Result_BAD_REQUEST() throws Exception {
+        String expectedPath = objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0;
+        String expectedValue = "00AC";
+        String actualResult = sendRPCWriteStringById("WriteUpdate", expectedPath, expectedValue);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
+        String expected = String.format("Resource %s. This operation can only be used for ObjectInstance or Multi-Instance Resource ! " +
+                "Resource id=%s, class = String, value = %s is bad. Value of Multi-Instance Resource must be in Json format!",
+                expectedPath, fromVersionedIdToObjectId(expectedPath), expectedValue);
+        assertEquals(expected, rpcActualResult.get("error").asText());
     }
 
     /**

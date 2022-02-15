@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.transport.lwm2m.rpc;
 
-import org.junit.Before;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
@@ -44,7 +43,6 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_14;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_9;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resources;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
 
 @DaoSqlTest
@@ -74,15 +72,9 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
     protected String idVer_19_0_0;
 
     public AbstractRpcLwM2MIntegrationTest() {
-        setResources(resources);
     }
 
-    @Before
-    public void startInitRPC() throws Exception {
-        initRpc();
-    }
-
-    private void initRpc () throws Exception {
+    public void initRpc () throws Exception {
         String endpoint = DEVICE_ENDPOINT_RPC_PREF + endpointSequence.incrementAndGet();
         createNewClient(SECURITY_NO_SEC, COAP_CONFIG, true, endpoint, false, null);
         expectedObjects = ConcurrentHashMap.newKeySet();

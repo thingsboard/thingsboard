@@ -67,7 +67,8 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
      * },
      */
 
-    Map<Integer, byte[]> data;
+//    boolean dataMultiple = false;
+    private Object  data;
     private Integer priority = 0;
     private Time timestamp;
     private String description;
@@ -78,9 +79,11 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
     public LwM2mBinaryAppDataContainer() {
     }
 
+//    public LwM2mBinaryAppDataContainer(ScheduledExecutorService executorService, Integer id, boolean dataMultiple) {
     public LwM2mBinaryAppDataContainer(ScheduledExecutorService executorService, Integer id) {
         try {
             if (id != null) this.setId(id);
+//            this.dataMultiple = dataMultiple;
             executorService.scheduleWithFixedDelay(() -> {
                         fireResourceChange(0);
                         fireResourceChange(2);
@@ -97,7 +100,12 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
         try {
             switch (resourceId) {
                 case 0:
-                    ReadResponse response = ReadResponse.success(resourceId, getData(), ResourceModel.Type.OPAQUE);
+                    ReadResponse response;
+                    if (this.getModel().resources.get(resourceId).multiple) {
+                        response = ReadResponse.success(resourceId, getDataMulti(), ResourceModel.Type.OPAQUE);
+                    } else {
+                        response = ReadResponse.success(resourceId, getDatSingle());
+                    }
                     return response;
                 case 1:
                     return ReadResponse.success(resourceId, getPriority());
@@ -123,9 +131,10 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
         switch (resourceId) {
             case 0:
                 if (setData(value, replace)) {
+                    fireResourceChange(resourceId);
                     return WriteResponse.success();
                 } else {
-                    WriteResponse.badRequest("Invalidate value ...");
+                    return WriteResponse.badRequest("Invalidate value ...");
                 }
             case 1:
                 setPriority((Integer) (value.getValue() instanceof Long ? ((Long) value.getValue()).intValue() : value.getValue()));
@@ -187,28 +196,39 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
 
     private boolean setData(LwM2mResource value, boolean replace) {
         try {
-            if (value instanceof LwM2mMultipleResource) {
-                if (replace || this.data == null) {
-                    this.data = new HashMap<>();
+            if (this.getModel().resources.get(0).multiple) {
+                if (value instanceof LwM2mMultipleResource) {
+                    if (replace || this.data == null) {
+                        this.data = new HashMap<Integer, byte[]>();;
+                    }
+                    value.getInstances().values().forEach(v -> {
+                        ((Map) this.data).put(v.getId(), v.getValue());
+                    });
+                    return true;
+                } else {
+                    return false;
                 }
-                value.getInstances().values().forEach(v -> {
-                    this.data.put(v.getId(), (byte[]) v.getValue());
-                });
-                return true;
             } else {
-                return false;
+                this.data = value.getValue();
+                return true;
             }
         } catch (Exception e) {
             return false;
         }
     }
 
-    private Map<Integer, byte[]> getData() {
+    private byte[] getDatSingle() {
         if (data == null) {
-            this.data = new HashMap<>();
-            this.data.put(0, new byte[]{(byte) 0xAC});
+                this.data = new byte[]{(byte) 0xAC};
         }
-        return data;
+        return (byte[]) data;
+    }
+    private Map<Integer, byte[]>  getDataMulti() {
+        if (data == null) {
+                this.data = new HashMap<Integer, byte[]>();
+                ((Map) this.data).put(0, new byte[]{(byte) 0xAC});
+        }
+        return (Map<Integer, byte[]>) data;
     }
 
     @Override

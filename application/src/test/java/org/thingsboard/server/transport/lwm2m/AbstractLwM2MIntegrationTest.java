@@ -303,7 +303,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         lwM2MTestClient = new LwM2MTestClient(this.executor, endpoint);
         int clientPort = SocketUtils.findAvailableUdpPort();
         lwM2MTestClient.init(security, coapConfig, clientPort, isRpc, isBootstrap, this.shortServerId, this.shortServerIdBs,
-                securityBs, this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest);
+                securityBs, this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest, this.resources);
     }
 
     private void clientDestroy() {
