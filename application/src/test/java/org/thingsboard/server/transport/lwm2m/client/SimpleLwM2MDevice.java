@@ -32,15 +32,38 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.PrimitiveIterator;
 import java.util.Random;
 import java.util.TimeZone;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
 
 
     private static final Random RANDOM = new Random();
+    private static final int min = 5;
+    private static final int max = 50;
+    private static final  PrimitiveIterator.OfInt randomIterator = new Random().ints(min,max + 1).iterator();
     private static final List<Integer> supportedResources = Arrays.asList(0, 1, 2, 3, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21);
+
+
+    public SimpleLwM2MDevice() {
+    }
+
+    public SimpleLwM2MDevice(ScheduledExecutorService executorService) {
+        try {
+            executorService.scheduleWithFixedDelay(() -> {
+                        fireResourceChange(9);
+                    }
+                    , 1800000, 1800000, TimeUnit.MILLISECONDS); // 30 MIN
+        } catch (Throwable e) {
+            log.error("[{}]Throwable", e.toString());
+            e.printStackTrace();
+        }
+    }
+
 
     @Override
     public ReadResponse read(ServerIdentity identity, int resourceId) {
@@ -135,7 +158,8 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
     }
 
     private int getBatteryLevel() {
-        return 42;
+        return randomIterator.nextInt();
+//        return 42;
     }
 
     private long getMemoryFree() {
