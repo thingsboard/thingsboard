@@ -99,10 +99,8 @@ message EdgeConfiguration {
   string type = 8;
   string routingKey = 9;
   string secret = 10;
-  string edgeLicenseKey = 11;
-  string cloudEndpoint = 12;
-  string additionalInfo = 13;
-  string cloudType = 14;
+  string additionalInfo = 11;
+  string cloudType = 12;
 }
 
 enum UpdateMsgType {

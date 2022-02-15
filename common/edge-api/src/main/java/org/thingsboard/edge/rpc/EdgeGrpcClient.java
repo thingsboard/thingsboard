@@ -162,7 +162,9 @@ public class EdgeGrpcClient implements EdgeRpcClient {
     public void disconnect(boolean onError) throws InterruptedException {
         if (!onError) {
             try {
-                inputStream.onCompleted();
+                if (inputStream != null) {
+                    inputStream.onCompleted();
+                }
             } catch (Exception e) {
                 log.error("Exception during onCompleted", e);
             }
