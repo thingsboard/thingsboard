@@ -130,7 +130,7 @@
             </mat-form-field>
           </section>
         </section>
-        <section fxLayout="row" [fxShow]="timewindowForm.get('aggregation.type').value === aggregationTypes.NONE">
+        <section fxLayout="row" *ngIf="timewindowForm.get('aggregation.type').value === aggregationTypes.NONE">
           <section fxLayout="column" [fxShow]="isEdit">
             <label class="tb-small hide-label" translate>timewindow.hide</label>
             <mat-checkbox [ngModelOptions]="{standalone: true}" [(ngModel)]="timewindow.hideAggInterval"

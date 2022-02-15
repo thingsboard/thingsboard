@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.client;
+package org.thingsboard.server.common.data.exception;
 
-import org.eclipse.leshan.core.node.LwM2mResource;
+public class ThingsboardKafkaClientError extends Error {
 
-public interface TbLwM2MResource extends LwM2mResource {
+    public ThingsboardKafkaClientError(String message) {
+        super(message);
+    }
 }

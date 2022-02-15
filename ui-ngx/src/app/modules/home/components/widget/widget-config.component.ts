@@ -922,7 +922,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
     } else if (this.modelValue) {
       const config = this.modelValue.config;
       if (this.widgetType === widgetType.rpc && this.modelValue.isDataEnabled) {
-        if (!config.targetDeviceAliasIds || !config.targetDeviceAliasIds.length) {
+        if (!this.widgetEditMode && (!config.targetDeviceAliasIds || !config.targetDeviceAliasIds.length)) {
           return {
             targetDeviceAliasIds: {
               valid: false

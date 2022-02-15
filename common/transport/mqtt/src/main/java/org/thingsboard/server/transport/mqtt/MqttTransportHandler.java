@@ -188,7 +188,16 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     InetSocketAddress getAddress(ChannelHandlerContext ctx) {
-        return ctx.channel().attr(MqttTransportService.ADDRESS).get();
+        var address = ctx.channel().attr(MqttTransportService.ADDRESS).get();
+        if (address == null) {
+            log.trace("[{}] Received empty address.", ctx.channel().id());
+            InetSocketAddress remoteAddress = (InetSocketAddress) ctx.channel().remoteAddress();
+            log.trace("[{}] Going to use address: {}", ctx.channel().id(), remoteAddress);
+            return remoteAddress;
+        } else {
+            log.trace("[{}] Received address: {}", ctx.channel().id(), address);
+        }
+        return address;
     }
 
     void processMqttMsg(ChannelHandlerContext ctx, MqttMessage msg) {
@@ -757,7 +766,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     void processConnect(ChannelHandlerContext ctx, MqttConnectMessage msg) {
-        log.debug("[{}] Processing connect msg for client: {}!", sessionId, msg.payload().clientIdentifier());
+        log.debug("[{}][{}] Processing connect msg for client: {}!", address, sessionId, msg.payload().clientIdentifier());
         String userName = msg.payload().userName();
         String clientId = msg.payload().clientIdentifier();
         if (DataConstants.PROVISION.equals(userName) || DataConstants.PROVISION.equals(clientId)) {
