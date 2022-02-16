@@ -120,13 +120,13 @@ public class DefaultTbApiUsageStateService extends TbApplicationEventListener<Pa
     private InternalTelemetryService tsWsService;
 
     // Entities that should be processed on this server
-    private final Map<EntityId, BaseApiUsageState> myUsageStates = new ConcurrentHashMap<>();
+    final Map<EntityId, BaseApiUsageState> myUsageStates = new ConcurrentHashMap<>();
     // Entities that should be processed on other servers
-    private final Map<EntityId, ApiUsageState> otherUsageStates = new ConcurrentHashMap<>();
+    final Map<EntityId, ApiUsageState> otherUsageStates = new ConcurrentHashMap<>();
 
-    private final ConcurrentMap<TopicPartitionInfo, Set<EntityId>> partitionedEntities = new ConcurrentHashMap<>();
+    final ConcurrentMap<TopicPartitionInfo, Set<EntityId>> partitionedEntities = new ConcurrentHashMap<>();
 
-    private final Set<EntityId> deletedEntities = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    final Set<EntityId> deletedEntities = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     @Value("${usage.stats.report.enabled:true}")
     private boolean enabled;
@@ -489,7 +489,7 @@ public class DefaultTbApiUsageStateService extends TbApplicationEventListener<Pa
         tsWsService.saveAndNotifyInternal(state.getTenantId(), state.getApiUsageState().getId(), counts, VOID_CALLBACK);
     }
 
-    private BaseApiUsageState getOrFetchState(TenantId tenantId, EntityId entityId) {
+    BaseApiUsageState getOrFetchState(TenantId tenantId, EntityId entityId) {
         if (entityId == null || entityId.isNullUid()) {
             entityId = tenantId;
         }
