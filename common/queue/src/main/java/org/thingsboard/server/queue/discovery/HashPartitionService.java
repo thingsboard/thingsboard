@@ -158,6 +158,8 @@ public class HashPartitionService implements PartitionService {
             }
         });
 
+        tpiCache.clear();
+
         oldPartitions.forEach((serviceQueueKey, partitions) -> {
             if (!myPartitions.containsKey(serviceQueueKey)) {
                 log.info("[{}] NO MORE PARTITIONS FOR CURRENT KEY", serviceQueueKey);
@@ -174,7 +176,6 @@ public class HashPartitionService implements PartitionService {
                 applicationEventPublisher.publishEvent(new PartitionChangeEvent(this, serviceQueueKey, tpiList));
             }
         });
-        tpiCache.clear();
 
         if (currentOtherServices == null) {
             currentOtherServices = new ArrayList<>(otherServices);
