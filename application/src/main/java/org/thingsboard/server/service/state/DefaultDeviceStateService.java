@@ -163,6 +163,12 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     }
 
     @Override
+    protected String getServiceName() {
+        return "Device State";
+    }
+
+
+    @Override
     protected String getSchedulerExecutorName() {
         return "device-state-scheduled";
     }

@@ -158,6 +158,11 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
     }
 
     @Override
+    protected String getServiceName() {
+        return "API Usage";
+    }
+
+    @Override
     protected String getSchedulerExecutorName() {
         return "api-usage-scheduled";
     }
