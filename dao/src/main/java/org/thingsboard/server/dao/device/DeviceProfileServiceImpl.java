@@ -82,7 +82,7 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TenantDao;
-import org.thingsboard.server.queue.QueueService;
+import org.thingsboard.server.queue.TbQueueService;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -115,7 +115,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     }
 
     @Autowired(required = false)
-    private QueueService queueService;
+    private TbQueueService queueService;
 
     @Autowired
     private DeviceProfileDao deviceProfileDao;

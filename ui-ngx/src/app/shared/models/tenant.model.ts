@@ -106,6 +106,8 @@ export interface TenantProfile extends BaseData<TenantProfileId> {
   default?: boolean;
   isolatedTbCore?: boolean;
   isolatedTbRuleEngine?: boolean;
+  maxNumberOfQueues?: number;
+  maxNumberOfPartitionsPerQueue?: number;
   profileData?: TenantProfileData;
 }
 

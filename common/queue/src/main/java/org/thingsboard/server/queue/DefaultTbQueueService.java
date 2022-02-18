@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class DefaultQueueService implements QueueService {
+public class DefaultTbQueueService implements TbQueueService {
 
     private final TbQueueRuleEngineSettings ruleEngineSettings;
     private Set<String> ruleEngineQueues;

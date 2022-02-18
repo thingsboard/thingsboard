@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue;
+package org.thingsboard.server.common.data.queue;
 
-import org.thingsboard.server.common.msg.queue.ServiceType;
+import lombok.Data;
 
-import java.util.Set;
-
-public interface QueueService {
-
-    Set<String> getQueuesByServiceType(ServiceType serviceType);
-
-    String resolve(ServiceType serviceType, String queueName);
-
+@Data
+public class ProcessingStrategy {
+    private ProcessingStrategyType type;
+    private int retries;
+    private double failurePercentage;
+    private long pauseBetweenRetries;
+    private long maxPauseBetweenRetries;
 }

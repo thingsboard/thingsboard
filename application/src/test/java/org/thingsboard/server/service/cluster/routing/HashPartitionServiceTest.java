@@ -21,13 +21,12 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.queue.QueueService;
+import org.thingsboard.server.queue.TbQueueService;
 import org.thingsboard.server.queue.discovery.HashPartitionService;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
@@ -59,7 +58,7 @@ public class HashPartitionServiceTest {
     private TenantRoutingInfoService routingInfoService;
     private ApplicationEventPublisher applicationEventPublisher;
     private TbQueueRuleEngineSettings ruleEngineSettings;
-    private QueueService queueService;
+    private TbQueueService queueService;
 
     private String hashFunctionName = "sha256";
 
@@ -70,7 +69,7 @@ public class HashPartitionServiceTest {
         applicationEventPublisher = mock(ApplicationEventPublisher.class);
         routingInfoService = mock(TenantRoutingInfoService.class);
         ruleEngineSettings = mock(TbQueueRuleEngineSettings.class);
-        queueService = mock(QueueService.class);
+        queueService = mock(TbQueueService.class);
         clusterRoutingService = new HashPartitionService(discoveryService,
                 routingInfoService,
                 applicationEventPublisher,

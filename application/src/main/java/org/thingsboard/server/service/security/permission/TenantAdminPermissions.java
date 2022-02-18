@@ -45,6 +45,7 @@ public class TenantAdminPermissions extends AbstractPermissions {
         put(Resource.OTA_PACKAGE, tenantEntityPermissionChecker);
         put(Resource.EDGE, tenantEntityPermissionChecker);
         put(Resource.RPC, tenantEntityPermissionChecker);
+        put(Resource.QUEUE, tenantEntityPermissionChecker);
     }
 
     public static final PermissionChecker tenantEntityPermissionChecker = new PermissionChecker() {

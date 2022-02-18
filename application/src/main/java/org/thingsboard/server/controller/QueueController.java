@@ -20,17 +20,26 @@ import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.QueueId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.queue.QueueService;
+import org.thingsboard.server.queue.TbQueueService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.Set;
+import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.QUEUE_SERVICE_TYPE_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.QUEUE_SERVICE_TYPE_DESCRIPTION;
@@ -42,7 +51,7 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHO
 @RequiredArgsConstructor
 public class QueueController extends BaseController {
 
-    private final QueueService queueService;
+    private final TbQueueService tbQueueService;
 
     @ApiOperation(value = "Get queue names (getTenantQueuesByServiceType)",
             notes = "Returns a set of unique queue names based on service type. " + TENANT_AUTHORITY_PARAGRAPH)
@@ -53,7 +62,86 @@ public class QueueController extends BaseController {
                                                     @RequestParam String serviceType) throws ThingsboardException {
         checkParameter("serviceType", serviceType);
         try {
-            return queueService.getQueuesByServiceType(ServiceType.valueOf(serviceType));
+            //TODO: replace for using new QueueService
+            return tbQueueService.getQueuesByServiceType(ServiceType.valueOf(serviceType));
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/tenant/queues", params = {"serviceType", "pageSize", "page"}, method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<Queue> getTenantQueuesByServiceType(@RequestParam String serviceType,
+                                                        @RequestParam int pageSize,
+                                                        @RequestParam int page,
+                                                        @RequestParam(required = false) String textSearch,
+                                                        @RequestParam(required = false) String sortProperty,
+                                                        @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        checkParameter("serviceType", serviceType);
+        try {
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            ServiceType type = ServiceType.valueOf(serviceType);
+            switch (type) {
+                case TB_RULE_ENGINE:
+                    return queueService.findQueuesByTenantId(getTenantId(), pageLink);
+                default:
+                    return new PageData<>();
+            }
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/tenant/queues/{queueId}", method = RequestMethod.GET)
+    @ResponseBody
+    public Queue getQueueById(@PathVariable("queueId") String queueIdStr) throws ThingsboardException {
+        checkParameter("queueId", queueIdStr);
+        try {
+            QueueId queueId = new QueueId(UUID.fromString(queueIdStr));
+            return checkNotNull(queueService.findQueueById(getTenantId(), queueId));
+        } catch (
+                Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/tenant/queues", params = {"serviceType"}, method = RequestMethod.POST)
+    @ResponseBody
+    public Queue saveQueue(@RequestBody Queue queue,
+                           @RequestParam String serviceType) throws ThingsboardException {
+        checkParameter("serviceType", serviceType);
+        try {
+            queue.setTenantId(getCurrentUser().getTenantId());
+
+            checkEntity(queue.getId(), queue, Resource.QUEUE);
+
+            ServiceType type = ServiceType.valueOf(serviceType);
+            switch (type) {
+                case TB_RULE_ENGINE:
+                    queue.setTenantId(getTenantId());
+                    Queue savedQueue = queueService.saveQueue(queue);
+                    checkNotNull(savedQueue);
+                    return savedQueue;
+                default:
+                    return null;
+            }
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/tenant/queues/{queueId}", method = RequestMethod.DELETE)
+    @ResponseBody
+    public void deleteQueue(@PathVariable("queueId") String queueIdStr) throws ThingsboardException {
+        checkParameter("queueId", queueIdStr);
+        try {
+            QueueId queueId = new QueueId(toUUID(queueIdStr));
+            checkQueueId(queueId, Operation.DELETE);
+            queueService.deleteQueue(getTenantId(), queueId);
         } catch (Exception e) {
             throw handleException(e);
         }

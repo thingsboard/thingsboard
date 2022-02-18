@@ -337,6 +337,8 @@ CREATE TABLE IF NOT EXISTS tenant_profile (
     is_default boolean,
     isolated_tb_core boolean,
     isolated_tb_rule_engine boolean,
+    max_number_of_queues int ,
+    max_number_of_partitions_per_queue int,
     CONSTRAINT tenant_profile_name_unq_key UNIQUE (name)
 );
 
@@ -630,6 +632,19 @@ CREATE TABLE IF NOT EXISTS rpc (
     response varchar(10000000),
     additional_info varchar(10000000),
     status varchar(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS queue(
+    id uuid NOT NULL CONSTRAINT queue_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid,
+    name varchar(255),
+    topic varchar(255),
+    poll_interval int,
+    partitions int,
+    pack_processing_timeout bigint,
+    submit_strategy varchar(255),
+    processing_strategy varchar(255)
 );
 
 CREATE OR REPLACE PROCEDURE cleanup_events_by_ttl(IN ttl bigint, IN debug_ttl bigint, INOUT deleted bigint)

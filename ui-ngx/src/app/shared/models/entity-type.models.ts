@@ -36,7 +36,8 @@ export enum EntityType {
   API_USAGE_STATE = 'API_USAGE_STATE',
   TB_RESOURCE = 'TB_RESOURCE',
   OTA_PACKAGE = 'OTA_PACKAGE',
-  RPC = 'RPC'
+  RPC = 'RPC',
+  QUEUE = 'QUEUE'
 }
 
 export enum AliasEntityType {
@@ -306,6 +307,15 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         search: 'ota-update.search',
         selectedEntities: 'ota-update.selected-package'
       }
+    ],
+    [
+      EntityType.QUEUE,
+      {
+        add: 'queue.add',
+        search: 'queue.search',
+        details: 'queue.details',
+        selectedEntities: 'queue.selected-queues'
+      }
     ]
   ]
 );
@@ -394,6 +404,12 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
       EntityType.OTA_PACKAGE,
       {
         helpLinkId: 'otaUpdates'
+      }
+    ],
+    [
+      EntityType.QUEUE,
+      {
+        helpLinkId: 'queue'
       }
     ]
   ]
