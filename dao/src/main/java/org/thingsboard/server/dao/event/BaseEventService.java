@@ -47,26 +47,10 @@ public class BaseEventService implements EventService {
     public EventDao eventDao;
 
     @Override
-    public Event save(Event event) {
-        eventValidator.validate(event, Event::getTenantId);
-        return eventDao.save(event.getTenantId(), event);
-    }
-
-    @Override
-    public ListenableFuture<Event> saveAsync(Event event) {
+    public ListenableFuture<Void> saveAsync(Event event) {
         eventValidator.validate(event, Event::getTenantId);
         checkAndTruncateDebugEvent(event);
         return eventDao.saveAsync(event);
-    }
-
-    @Override
-    public Optional<Event> saveIfNotExists(Event event) {
-        eventValidator.validate(event, Event::getTenantId);
-        if (StringUtils.isEmpty(event.getUid())) {
-            throw new DataValidationException("Event uid should be specified!.");
-        }
-        checkAndTruncateDebugEvent(event);
-        return eventDao.saveIfNotExists(event);
     }
 
     private void checkAndTruncateDebugEvent(Event event) {

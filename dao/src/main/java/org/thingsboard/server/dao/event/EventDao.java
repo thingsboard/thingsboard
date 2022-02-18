@@ -34,28 +34,12 @@ import java.util.UUID;
 public interface EventDao extends Dao<Event> {
 
     /**
-     * Save or update event object
-     *
-     * @param event the event object
-     * @return saved event object
-     */
-    Event save(TenantId tenantId, Event event);
-
-    /**
      * Save or update event object async
      *
      * @param event the event object
      * @return saved event object future
      */
-    ListenableFuture<Event> saveAsync(Event event);
-
-    /**
-     * Save event object if it is not yet saved
-     *
-     * @param event the event object
-     * @return saved event object
-     */
-    Optional<Event> saveIfNotExists(Event event);
+    ListenableFuture<Void> saveAsync(Event event);
 
     /**
      * Find event by tenantId, entityId and eventUid.
