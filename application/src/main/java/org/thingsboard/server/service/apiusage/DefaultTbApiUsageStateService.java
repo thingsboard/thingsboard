@@ -67,6 +67,7 @@ import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.service.partition.AbstractPartitionBasedService;
 import org.thingsboard.server.service.telemetry.InternalTelemetryService;
 
 import javax.annotation.PostConstruct;
@@ -93,7 +94,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-public class DefaultTbApiUsageStateService extends TbApplicationEventListener<PartitionChangeEvent> implements TbApiUsageStateService {
+public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService<EntityId> implements TbApiUsageStateService {
 
     public static final String HOURLY = "Hourly";
     public static final FutureCallback<Integer> VOID_CALLBACK = new FutureCallback<Integer>() {
@@ -123,8 +124,6 @@ public class DefaultTbApiUsageStateService extends TbApplicationEventListener<Pa
     // Entities that should be processed on other servers
     final Map<EntityId, ApiUsageState> otherUsageStates = new ConcurrentHashMap<>();
 
-    final ConcurrentMap<TopicPartitionInfo, Set<EntityId>> partitionedEntities = new ConcurrentHashMap<>();
-
     final Set<EntityId> deletedEntities = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     @Value("${usage.stats.report.enabled:true}")
@@ -136,10 +135,6 @@ public class DefaultTbApiUsageStateService extends TbApplicationEventListener<Pa
     private final Lock updateLock = new ReentrantLock();
 
     private final ExecutorService mailExecutor;
-
-    private ListeningScheduledExecutorService scheduledExecutor;
-
-    final Queue<Set<TopicPartitionInfo>> subscribeQueue = new ConcurrentLinkedQueue<>();
 
     public DefaultTbApiUsageStateService(TbClusterService clusterService,
                                          PartitionService partitionService,
@@ -162,12 +157,17 @@ public class DefaultTbApiUsageStateService extends TbApplicationEventListener<Pa
 
     @PostConstruct
     public void init() {
-        scheduledExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("api-usage-scheduled")));
+        super.init();
         if (enabled) {
             log.info("Starting api usage service.");
             scheduledExecutor.scheduleAtFixedRate(this::checkStartOfNextCycle, nextCycleCheckInterval, nextCycleCheckInterval, TimeUnit.MILLISECONDS);
             log.info("Started api usage service.");
         }
+    }
+
+    @Override
+    protected String getSchedulerExecutorName() {
+        return "api-usage-scheduled";
     }
 
     @Override
@@ -223,59 +223,6 @@ public class DefaultTbApiUsageStateService extends TbApplicationEventListener<Pa
         tsWsService.saveAndNotifyInternal(tenantId, usageState.getApiUsageState().getId(), updatedEntries, VOID_CALLBACK);
         if (!result.isEmpty()) {
             persistAndNotify(usageState, result);
-        }
-    }
-
-    @Override
-    protected void onTbApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
-        if (partitionChangeEvent.getServiceType().equals(ServiceType.TB_CORE)) {
-            subscribeQueue.add(partitionChangeEvent.getPartitions());
-            scheduledExecutor.submit(this::pollInitStateFromDB);
-        }
-    }
-
-    void pollInitStateFromDB() {
-        final Set<TopicPartitionInfo> partitions = getLatestPartitionsFromQueue();
-        if (partitions == null) {
-            log.info("Api Usage state service. Nothing to do. Partitions are empty");
-            return;
-        }
-        initStateFromDB(partitions);
-    }
-
-    Set<TopicPartitionInfo> getLatestPartitionsFromQueue() {
-        log.debug("getLatestPartitionsFromQueue, queue size {}", subscribeQueue.size());
-        Set<TopicPartitionInfo> partitions = null;
-        while (!subscribeQueue.isEmpty()) {
-            partitions = subscribeQueue.poll();
-            log.debug("polled from the queue partitions {}", partitions);
-        }
-        log.debug("getLatestPartitionsFromQueue, partitions {}", partitions);
-        return partitions;
-    }
-
-    private void initStateFromDB(Set<TopicPartitionInfo> partitions) {
-        try {
-            Set<TopicPartitionInfo> addedPartitions = new HashSet<>(partitions);
-            addedPartitions.removeAll(partitionedEntities.keySet());
-
-            Set<TopicPartitionInfo> removedPartitions = new HashSet<>(partitionedEntities.keySet());
-            removedPartitions.removeAll(partitions);
-
-            removedPartitions.forEach(partition -> {
-                Set<EntityId> entities = partitionedEntities.remove(partition);
-                entities.forEach(this::cleanUpEntitiesStateMap);
-            });
-
-            addedPartitions.forEach(tpi ->
-                    partitionedEntities.computeIfAbsent(tpi, key -> ConcurrentHashMap.newKeySet()));
-
-            otherUsageStates.entrySet().removeIf(entry ->
-                    partitionService.resolve(ServiceType.TB_CORE, entry.getValue().getTenantId(), entry.getKey()).isMyPartition());
-
-            initStatesFromDataBase(addedPartitions);
-        } catch (Throwable t) {
-            log.warn("Failed to init tenant states from DB", t);
         }
     }
 
@@ -401,7 +348,8 @@ public class DefaultTbApiUsageStateService extends TbApplicationEventListener<Pa
         myUsageStates.remove(customerId);
     }
 
-    private void cleanUpEntitiesStateMap(EntityId entityId) {
+    @Override
+    protected void cleanupEntityOnPartitionRemoval(EntityId entityId) {
         myUsageStates.remove(entityId);
     }
 
@@ -553,11 +501,14 @@ public class DefaultTbApiUsageStateService extends TbApplicationEventListener<Pa
         return state;
     }
 
-    private void initStatesFromDataBase(Set<TopicPartitionInfo> addedPartitions) {
-        if (addedPartitions.isEmpty()) {
-            return;
-        }
+    @Override
+    protected void onRepartitionEvent() {
+        otherUsageStates.entrySet().removeIf(entry ->
+                partitionService.resolve(ServiceType.TB_CORE, entry.getValue().getTenantId(), entry.getKey()).isMyPartition());
+    }
 
+    @Override
+    protected void onAddedPartitions(Set<TopicPartitionInfo> addedPartitions) {
         try {
             log.info("Initializing tenant states.");
             updateLock.lock();
@@ -595,11 +546,9 @@ public class DefaultTbApiUsageStateService extends TbApplicationEventListener<Pa
 
     @PreDestroy
     private void destroy() {
+        super.stop();
         if (mailExecutor != null) {
             mailExecutor.shutdownNow();
-        }
-        if (scheduledExecutor != null) {
-            scheduledExecutor.shutdownNow();
         }
     }
 }

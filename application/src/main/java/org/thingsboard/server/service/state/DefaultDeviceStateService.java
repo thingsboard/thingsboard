@@ -59,6 +59,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.service.partition.AbstractPartitionBasedService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import javax.annotation.Nonnull;
@@ -94,7 +95,7 @@ import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 @Service
 @TbCoreComponent
 @Slf4j
-public class DefaultDeviceStateService extends TbApplicationEventListener<PartitionChangeEvent> implements DeviceStateService {
+public class DefaultDeviceStateService extends AbstractPartitionBasedService<DeviceId> implements DeviceStateService {
 
     public static final String ACTIVITY_STATE = "active";
     public static final String LAST_CONNECT_TIME = "lastConnectTime";
@@ -131,12 +132,9 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
     @Getter
     private int initFetchPackSize;
 
-    private ListeningScheduledExecutorService scheduledExecutor;
     private ExecutorService deviceStateExecutor;
-    private final ConcurrentMap<TopicPartitionInfo, Set<DeviceId>> partitionedDevices = new ConcurrentHashMap<>();
-    final ConcurrentMap<DeviceId, DeviceStateData> deviceStates = new ConcurrentHashMap<>();
 
-    final Queue<Set<TopicPartitionInfo>> subscribeQueue = new ConcurrentLinkedQueue<>();
+    final ConcurrentMap<DeviceId, DeviceStateData> deviceStates = new ConcurrentHashMap<>();
 
     public DefaultDeviceStateService(TenantService tenantService, DeviceService deviceService,
                                      AttributesService attributesService, TimeseriesService tsService,
@@ -156,21 +154,23 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
 
     @PostConstruct
     public void init() {
+        super.init();
         deviceStateExecutor = Executors.newFixedThreadPool(
                 Runtime.getRuntime().availableProcessors(), ThingsBoardThreadFactory.forName("device-state"));
-        // Should be always single threaded due to absence of locks.
-        scheduledExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("device-state-scheduled")));
         scheduledExecutor.scheduleAtFixedRate(this::updateInactivityStateIfExpired, new Random().nextInt(defaultStateCheckIntervalInSec), defaultStateCheckIntervalInSec, TimeUnit.SECONDS);
     }
 
     @PreDestroy
     public void stop() {
+        super.stop();
         if (deviceStateExecutor != null) {
             deviceStateExecutor.shutdownNow();
         }
-        if (scheduledExecutor != null) {
-            scheduledExecutor.shutdownNow();
-        }
+    }
+
+    @Override
+    protected String getSchedulerExecutorName() {
+        return "device-state-scheduled";
     }
 
     @Override
@@ -208,7 +208,7 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
             }
         } else {
             log.debug("updateActivityState - fetched state IN NULL for device {}, lastReportedActivity {}", deviceId, lastReportedActivity);
-            cleanUpDeviceStateMap(deviceId);
+            cleanupEntity(deviceId);
         }
     }
 
@@ -246,11 +246,11 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
                 Device device = deviceService.findDeviceById(TenantId.SYS_TENANT_ID, deviceId);
                 if (device != null) {
                     if (proto.getAdded()) {
-                        Futures.addCallback(fetchDeviceState(device), new FutureCallback<DeviceStateData>() {
+                        Futures.addCallback(fetchDeviceState(device), new FutureCallback<>() {
                             @Override
                             public void onSuccess(@Nullable DeviceStateData state) {
                                 TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, device.getId());
-                                if (partitionedDevices.containsKey(tpi)) {
+                                if (partitionedEntities.containsKey(tpi)) {
                                     addDeviceUsingState(tpi, state);
                                     save(deviceId, ACTIVITY_STATE, false);
                                     callback.onSuccess();
@@ -286,94 +286,14 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
         }
     }
 
-    /**
-     * DiscoveryService will call this event from the single thread (one-by-one).
-     * Events order is guaranteed by DiscoveryService.
-     * The only concurrency is expected from the [main] thread on Application started.
-     * Async implementation. Locks is not allowed by design.
-     * Any locks or delays in this module will affect DiscoveryService and entire system
-     */
     @Override
-    protected void onTbApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
-        if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceType())) {
-            log.debug("onTbApplicationEvent ServiceType is TB_CORE, processing queue {}", partitionChangeEvent);
-            subscribeQueue.add(partitionChangeEvent.getPartitions());
-            scheduledExecutor.submit(this::pollInitStateFromDB);
-        }
-    }
-
-    void pollInitStateFromDB() {
-        final Set<TopicPartitionInfo> partitions = getLatestPartitionsFromQueue();
-        if (partitions == null) {
-            log.info("Device state service. Nothing to do. partitions is null");
-            return;
-        }
-        initStateFromDB(partitions);
-    }
-
-    // TODO: move to utils
-    Set<TopicPartitionInfo> getLatestPartitionsFromQueue() {
-        log.debug("getLatestPartitionsFromQueue, queue size {}", subscribeQueue.size());
-        Set<TopicPartitionInfo> partitions = null;
-        while (!subscribeQueue.isEmpty()) {
-            partitions = subscribeQueue.poll();
-            log.debug("polled from the queue partitions {}", partitions);
-        }
-        log.debug("getLatestPartitionsFromQueue, partitions {}", partitions);
-        return partitions;
-    }
-
-    private void initStateFromDB(Set<TopicPartitionInfo> partitions) {
-        try {
-            log.info("CURRENT PARTITIONS: {}", partitionedDevices.keySet());
-            log.info("NEW PARTITIONS: {}", partitions);
-
-            Set<TopicPartitionInfo> addedPartitions = new HashSet<>(partitions);
-            addedPartitions.removeAll(partitionedDevices.keySet());
-
-            log.info("ADDED PARTITIONS: {}", addedPartitions);
-
-            Set<TopicPartitionInfo> removedPartitions = new HashSet<>(partitionedDevices.keySet());
-            removedPartitions.removeAll(partitions);
-
-            log.info("REMOVED PARTITIONS: {}", removedPartitions);
-
-            // We no longer manage current partition of devices;
-            removedPartitions.forEach(partition -> {
-                Set<DeviceId> devices = partitionedDevices.remove(partition);
-                devices.forEach(this::cleanUpDeviceStateMap);
-            });
-
-            addedPartitions.forEach(tpi -> partitionedDevices.computeIfAbsent(tpi, key -> ConcurrentHashMap.newKeySet()));
-
-            initPartitions(addedPartitions);
-
-            scheduledExecutor.submit(() -> {
-                log.info("Managing following partitions:");
-                partitionedDevices.forEach((tpi, devices) -> {
-                    log.info("[{}]: {} devices", tpi.getFullTopicName(), devices.size());
-                });
-            });
-        } catch (Throwable t) {
-            log.warn("Failed to init device states from DB", t);
-        }
-    }
-
-    //TODO 3.0: replace this dummy search with new functionality to search by partitions using SQL capabilities.
-    //Adding only entities that are in new partitions
-    boolean initPartitions(Set<TopicPartitionInfo> addedPartitions) {
-        if (addedPartitions.isEmpty()) {
-            return false;
-        }
-
+    protected void onAddedPartitions(Set<TopicPartitionInfo> addedPartitions) {
         List<Tenant> tenants = tenantService.findTenants(new PageLink(Integer.MAX_VALUE)).getData();
         for (Tenant tenant : tenants) {
             log.debug("Finding devices for tenant [{}]", tenant.getName());
             final PageLink pageLink = new PageLink(initFetchPackSize);
             scheduledExecutor.submit(() -> processPageAndSubmitNextPage(addedPartitions, tenant, pageLink, scheduledExecutor));
-
         }
-        return true;
     }
 
     private void processPageAndSubmitNextPage(final Set<TopicPartitionInfo> addedPartitions, final Tenant tenant, final PageLink pageLink, final ExecutorService executor) {
@@ -435,7 +355,7 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
     }
 
     private void addDeviceUsingState(TopicPartitionInfo tpi, DeviceStateData state) {
-        Set<DeviceId> deviceIds = partitionedDevices.get(tpi);
+        Set<DeviceId> deviceIds = partitionedEntities.get(tpi);
         if (deviceIds != null) {
             deviceIds.add(state.getDeviceId());
             deviceStates.put(state.getDeviceId(), state);
@@ -447,7 +367,7 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
 
     void updateInactivityStateIfExpired() {
         final long ts = System.currentTimeMillis();
-        partitionedDevices.forEach((tpi, deviceIds) -> {
+        partitionedEntities.forEach((tpi, deviceIds) -> {
             log.debug("Calculating state updates. tpi {} for {} devices", tpi.getFullTopicName(), deviceIds.size());
             for (DeviceId deviceId : deviceIds) {
                 updateInactivityStateIfExpired(ts, deviceId);
@@ -473,7 +393,7 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
             }
         } else {
             log.debug("[{}] Device that belongs to other server is detected and removed.", deviceId);
-            cleanUpDeviceStateMap(deviceId);
+            cleanupEntity(deviceId);
         }
     }
 
@@ -508,23 +428,31 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
 
     private void cleanDeviceStateIfBelongsExternalPartition(TenantId tenantId, final DeviceId deviceId) {
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId);
-        if (!partitionedDevices.containsKey(tpi)) {
-            cleanUpDeviceStateMap(deviceId);
+        if (!partitionedEntities.containsKey(tpi)) {
+            cleanupEntity(deviceId);
             log.debug("[{}][{}] device belongs to external partition. Probably rebalancing is in progress. Topic: {}"
                     , tenantId, deviceId, tpi.getFullTopicName());
         }
     }
 
     private void onDeviceDeleted(TenantId tenantId, DeviceId deviceId) {
-        cleanUpDeviceStateMap(deviceId);
+        cleanupEntity(deviceId);
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId);
-        Set<DeviceId> deviceIdSet = partitionedDevices.get(tpi);
-        deviceIdSet.remove(deviceId);
+        Set<DeviceId> deviceIdSet = partitionedEntities.get(tpi);
+        if (deviceIdSet != null) {
+            deviceIdSet.remove(deviceId);
+        }
     }
 
-    private void cleanUpDeviceStateMap(DeviceId deviceId) {
+    @Override
+    protected void cleanupEntityOnPartitionRemoval(DeviceId deviceId) {
+        cleanupEntity(deviceId);
+    }
+
+    private void cleanupEntity(DeviceId deviceId) {
         deviceStates.remove(deviceId);
     }
+
 
     private ListenableFuture<DeviceStateData> fetchDeviceState(Device device) {
         ListenableFuture<DeviceStateData> future;

@@ -60,8 +60,6 @@ public class DefaultTbApiUsageStateServiceTest {
     @Mock
     ApiUsageStateService apiUsageStateService;
     @Mock
-    SchedulerComponent scheduler;
-    @Mock
     TbTenantProfileCache tenantProfileCache;
     @Mock
     MailService mailService;
@@ -74,7 +72,7 @@ public class DefaultTbApiUsageStateServiceTest {
 
     @Before
     public void setUp() {
-        service = spy(new DefaultTbApiUsageStateService(clusterService, partitionService, tenantService, tsService, apiUsageStateService, scheduler, tenantProfileCache, mailService, dbExecutor));
+        service = spy(new DefaultTbApiUsageStateService(clusterService, partitionService, tenantService, tsService, apiUsageStateService, tenantProfileCache, mailService, dbExecutor));
     }
 
     @Test
@@ -94,7 +92,7 @@ public class DefaultTbApiUsageStateServiceTest {
         willReturn(tenantUsageStateMock).given(service).getOrFetchState(tenantId, tenantId);
         ApiUsageState tenantUsageState = service.getApiUsageState(tenantId);
         assertThat(tenantUsageState, is(tenantUsageStateMock.getApiUsageState()));
-        assertThat(true, is(service.partitionedEntities.get(tpi).contains(tenantId)));
+        assertThat(true, is(service.getPartitionedEntities(tpi).contains(tenantId)));
         Mockito.verify(service, times(1)).getOrFetchState(tenantId, tenantId);
     }
 
