@@ -120,11 +120,9 @@ public abstract class AbstractPartitionBasedService<T extends EntityId> extends 
                 onAddedPartitions(addedPartitions);
             }
 
-            scheduledExecutor.submit(() -> {
-                log.info("Managing following partitions:");
-                partitionedEntities.forEach((tpi, entities) -> {
-                    log.info("[{}]: {} entities", tpi.getFullTopicName(), entities.size());
-                });
+            log.info("Managing following partitions:");
+            partitionedEntities.forEach((tpi, entities) -> {
+                log.info("[{}]: {} entities", tpi.getFullTopicName(), entities.size());
             });
         } catch (Throwable t) {
             log.warn("Failed to init entities state from DB", t);
