@@ -259,9 +259,9 @@ public class JpaBaseEventDao extends JpaAbstractDao<EventEntity, Event> implemen
     }
 
     @Override
-    public void cleanupEvents(long otherEventsTtl, long debugEventsTtl) {
-        log.info("Going to cleanup old events using debug events ttl: {}s and other events ttl: {}s", debugEventsTtl, otherEventsTtl);
-        eventCleanupRepository.cleanupEvents(otherEventsTtl, debugEventsTtl);
+    public void cleanupEvents(long regularEventStartTs, long regularEventEndTs, long debugEventStartTs, long debugEventEndTs) {
+        log.info("Going to cleanup old events. Interval for regular events: [{}:{}], for debug events: [{}:{}]", regularEventStartTs, regularEventEndTs, debugEventStartTs, debugEventEndTs);
+        eventCleanupRepository.cleanupEvents(regularEventStartTs, regularEventEndTs, debugEventStartTs, debugEventEndTs);
     }
 
     public Optional<Event> save(EventEntity entity, boolean ifNotExists) {
