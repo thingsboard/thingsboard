@@ -83,17 +83,4 @@ public class DefaultTbApiUsageStateServiceTest {
         Mockito.verify(service, never()).getOrFetchState(tenantId, tenantId);
     }
 
-    @Test
-    public void givenTenantIdWithoutTenantStateInMap_whenGetState_thenGetOrFetchState() {
-        TopicPartitionInfo tpi = Mockito.mock(TopicPartitionInfo.class);
-        Mockito.when(tpi.isMyPartition()).thenReturn(true);
-        willReturn(tpi).given(partitionService).resolve(ServiceType.TB_CORE, tenantId, tenantId);
-        service.myUsageStates.clear();
-        willReturn(tenantUsageStateMock).given(service).getOrFetchState(tenantId, tenantId);
-        ApiUsageState tenantUsageState = service.getApiUsageState(tenantId);
-        assertThat(tenantUsageState, is(tenantUsageStateMock.getApiUsageState()));
-        assertThat(true, is(service.getPartitionedEntities(tpi).contains(tenantId)));
-        Mockito.verify(service, times(1)).getOrFetchState(tenantId, tenantId);
-    }
-
 }
