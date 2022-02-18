@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
@@ -291,8 +292,8 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
 
     @Override
     protected void onAddedPartitions(Set<TopicPartitionInfo> addedPartitions) {
-        List<Tenant> tenants = tenantService.findTenants(new PageLink(Integer.MAX_VALUE)).getData();
-        for (Tenant tenant : tenants) {
+        PageDataIterable<Tenant> tenantIterator = new PageDataIterable<>(tenantService::findTenants, 1024);
+        for (Tenant tenant : tenantIterator) {
             log.debug("Finding devices for tenant [{}]", tenant.getName());
             final PageLink pageLink = new PageLink(initFetchPackSize);
             processPageAndSubmitNextPage(addedPartitions, tenant, pageLink);
