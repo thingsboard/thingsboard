@@ -110,7 +110,6 @@ public class DefaultTbApiUsageStateService extends TbApplicationEventListener<Pa
     private final TenantService tenantService;
     private final TimeseriesService tsService;
     private final ApiUsageStateService apiUsageStateService;
-    private final SchedulerComponent scheduler;
     private final TbTenantProfileCache tenantProfileCache;
     private final MailService mailService;
     private final DbCallbackExecutorService dbExecutor;
@@ -138,7 +137,7 @@ public class DefaultTbApiUsageStateService extends TbApplicationEventListener<Pa
 
     private final ExecutorService mailExecutor;
 
-    private ListeningScheduledExecutorService tenantStateExecutor;
+    private ListeningScheduledExecutorService scheduledExecutor;
 
     final Queue<Set<TopicPartitionInfo>> subscribeQueue = new ConcurrentLinkedQueue<>();
 
@@ -147,7 +146,6 @@ public class DefaultTbApiUsageStateService extends TbApplicationEventListener<Pa
                                          TenantService tenantService,
                                          TimeseriesService tsService,
                                          ApiUsageStateService apiUsageStateService,
-                                         SchedulerComponent scheduler,
                                          TbTenantProfileCache tenantProfileCache,
                                          MailService mailService,
                                          DbCallbackExecutorService dbExecutor) {
@@ -156,7 +154,6 @@ public class DefaultTbApiUsageStateService extends TbApplicationEventListener<Pa
         this.tenantService = tenantService;
         this.tsService = tsService;
         this.apiUsageStateService = apiUsageStateService;
-        this.scheduler = scheduler;
         this.tenantProfileCache = tenantProfileCache;
         this.mailService = mailService;
         this.mailExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("api-usage-svc-mail"));
@@ -165,12 +162,12 @@ public class DefaultTbApiUsageStateService extends TbApplicationEventListener<Pa
 
     @PostConstruct
     public void init() {
+        scheduledExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("api-usage-scheduled")));
         if (enabled) {
             log.info("Starting api usage service.");
-            scheduler.scheduleAtFixedRate(this::checkStartOfNextCycle, nextCycleCheckInterval, nextCycleCheckInterval, TimeUnit.MILLISECONDS);
+            scheduledExecutor.scheduleAtFixedRate(this::checkStartOfNextCycle, nextCycleCheckInterval, nextCycleCheckInterval, TimeUnit.MILLISECONDS);
             log.info("Started api usage service.");
         }
-        tenantStateExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("tenant-state")));
     }
 
     @Override
@@ -233,14 +230,14 @@ public class DefaultTbApiUsageStateService extends TbApplicationEventListener<Pa
     protected void onTbApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
         if (partitionChangeEvent.getServiceType().equals(ServiceType.TB_CORE)) {
             subscribeQueue.add(partitionChangeEvent.getPartitions());
-            tenantStateExecutor.submit(this::pollInitStateFromDB);
+            scheduledExecutor.submit(this::pollInitStateFromDB);
         }
     }
 
     void pollInitStateFromDB() {
         final Set<TopicPartitionInfo> partitions = getLatestPartitionsFromQueue();
         if (partitions == null) {
-            log.info("Tenant state service. Nothing to do. partitions is null");
+            log.info("Api Usage state service. Nothing to do. Partitions are empty");
             return;
         }
         initStateFromDB(partitions);
@@ -601,8 +598,8 @@ public class DefaultTbApiUsageStateService extends TbApplicationEventListener<Pa
         if (mailExecutor != null) {
             mailExecutor.shutdownNow();
         }
-        if (tenantStateExecutor != null) {
-            tenantStateExecutor.shutdownNow();
+        if (scheduledExecutor != null) {
+            scheduledExecutor.shutdownNow();
         }
     }
 }
