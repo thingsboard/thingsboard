@@ -19,6 +19,7 @@ import LeafletMap from './leaflet-map';
 import {
   commonMapSettingsSchema,
   editorSettingSchema,
+  mapCircleSchema,
   mapPolygonSchema,
   markerClusteringSettingsSchema,
   markerClusteringSettingsSchemaLeaflet,
@@ -63,6 +64,7 @@ export class MapWidgetController implements MapWidgetInterface {
         this.settings.tooltipAction = this.getDescriptors('tooltipAction');
         this.settings.markerClick = this.getDescriptors('markerClick');
         this.settings.polygonClick = this.getDescriptors('polygonClick');
+        this.settings.circleClick = this.getDescriptors('circleClick');
 
         const MapClass = providerClass[this.provider];
         if (!MapClass) {
@@ -107,6 +109,8 @@ export class MapWidgetController implements MapWidgetInterface {
         addGroupInfo(schema, 'Common Map Settings');
         addToSchema(schema, addCondition(mapPolygonSchema, 'model.showPolygon === true', ['showPolygon']));
         addGroupInfo(schema, 'Polygon Settings');
+        addToSchema(schema, addCondition(mapCircleSchema, 'model.showCircle === true', ['showCircle']));
+        addGroupInfo(schema, 'Circle Settings');
         if (drawRoutes) {
             addToSchema(schema, routeMapSettingsSchema);
             addGroupInfo(schema, 'Route Map Settings');
@@ -130,6 +134,10 @@ export class MapWidgetController implements MapWidgetInterface {
             },
             polygonClick: {
                 name: 'widget-action.polygon-click',
+                multiple: false
+            },
+            circleClick: {
+                name: 'widget-action.circle-click',
                 multiple: false
             },
             tooltipAction: {
@@ -272,6 +280,10 @@ export class MapWidgetController implements MapWidgetInterface {
             polygonColorFunction: parseFunction(settings.polygonColorFunction, functionParams),
             polygonStrokeColorFunction: parseFunction(settings.polygonStrokeColorFunction, functionParams),
             polygonTooltipFunction: parseFunction(settings.polygonTooltipFunction, functionParams),
+            circleLabelFunction: parseFunction(settings.circleLabelFunction, functionParams),
+            circleStrokeColorFunction: parseFunction(settings.circleStrokeColorFunction, functionParams),
+            circleFillColorFunction: parseFunction(settings.circleFillColorFunction, functionParams),
+            circleTooltipFunction: parseFunction(settings.circleTooltipFunction, functionParams),
             markerImageFunction: parseFunction(settings.markerImageFunction, ['data', 'images', 'dsData', 'dsIndex']),
             labelColor: this.ctx.widgetConfig.color,
             polygonLabelColor: this.ctx.widgetConfig.color,
@@ -305,16 +317,10 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     destroy() {
-      (this.ctx as any).mapInstance = null;
       if (this.map) {
         this.map.remove();
       }
-      if ($.tooltipster) {
-        const instances = $.tooltipster.instances();
-        instances.forEach((instance) => {
-          instance.destroy();
-        });
-      }
+      (this.ctx as any).mapInstance = null;
     }
 }
 

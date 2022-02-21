@@ -55,12 +55,6 @@ public class EdgeBulkImportService extends AbstractBulkImportService<Edge> {
                 case DESCRIPTION:
                     additionalInfo.set("description", new TextNode(value));
                     break;
-                case EDGE_LICENSE_KEY:
-                    entity.setEdgeLicenseKey(value);
-                    break;
-                case CLOUD_ENDPOINT:
-                    entity.setCloudEndpoint(value);
-                    break;
                 case ROUTING_KEY:
                     entity.setRoutingKey(value);
                     break;

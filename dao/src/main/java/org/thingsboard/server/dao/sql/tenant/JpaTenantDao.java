@@ -58,19 +58,17 @@ public class JpaTenantDao extends JpaAbstractSearchTextDao<TenantEntity, Tenant>
     }
 
     @Override
-    public PageData<Tenant> findTenantsByRegion(TenantId tenantId, String region, PageLink pageLink) {
+    public PageData<Tenant> findTenants(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(tenantRepository
-                .findByRegionNextPage(
-                        region,
+                .findTenantsNextPage(
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
     }
 
     @Override
-    public PageData<TenantInfo> findTenantInfosByRegion(TenantId tenantId, String region, PageLink pageLink) {
+    public PageData<TenantInfo> findTenantInfos(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(tenantRepository
-                .findTenantInfoByRegionNextPage(
-                        region,
+                .findTenantInfosNextPage(
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink, TenantInfoEntity.tenantInfoColumnMap)));
     }

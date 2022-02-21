@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge;
+package org.thingsboard.server.common.data.exception;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import org.springframework.http.ResponseEntity;
+public class ThingsboardKafkaClientError extends Error {
 
-public interface EdgeLicenseService {
-
-    ResponseEntity<JsonNode> checkInstance(JsonNode request);
-
-    ResponseEntity<JsonNode> activateInstance(String licenseSecret, String releaseDate);
+    public ThingsboardKafkaClientError(String message) {
+        super(message);
+    }
 }

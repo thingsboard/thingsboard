@@ -121,8 +121,8 @@ public class RpcLwm2mIntegrationExecuteTest extends AbstractRpcLwM2MIntegrationT
 
     /**
      * bad: resource operation not "E"
-     * Execute {"id":"5/0/3"}
-     * {"result":"BAD_REQUEST","error":"Resource with /5/0/3 is not executable."}
+     * Execute {"id":"5_1.0/0/3"}
+     * {"result":"BAD_REQUEST","error":"Resource with /5_1.0/0/3 is not executable."}
      */
     @Test
     public void testExecuteResourceWithOperationNotExecuteById_Result_METHOD_NOT_ALLOWED() throws Exception {
@@ -130,8 +130,7 @@ public class RpcLwm2mIntegrationExecuteTest extends AbstractRpcLwM2MIntegrationT
         String actualResult = sendRPCExecuteById(expectedPath);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
-        String expectedObjectId = pathIdVerToObjectId((String) expectedPath);
-        String expected = "Resource with " + expectedObjectId + " is not executable.";
+        String expected = "Resource with " + expectedPath + " is not executable.";
         String actual = rpcActualResult.get("error").asText();
         assertTrue(actual.equals(expected));
     }

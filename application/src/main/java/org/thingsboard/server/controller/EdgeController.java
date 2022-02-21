@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -23,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -52,7 +50,6 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rule.RuleChain;
-import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -118,11 +115,7 @@ public class EdgeController extends BaseController {
         checkParameter(EDGE_ID, strEdgeId);
         try {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-            Edge edge = checkEdgeId(edgeId, Operation.READ);
-            if (Authority.CUSTOMER_USER.equals(getCurrentUser().getAuthority())) {
-                cleanUpLicenseKey(edge);
-            }
-            return edge;
+            return checkEdgeId(edgeId, Operation.READ);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -139,11 +132,7 @@ public class EdgeController extends BaseController {
         checkParameter(EDGE_ID, strEdgeId);
         try {
             EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-            EdgeInfo edgeInfo = checkEdgeInfoId(edgeId, Operation.READ);
-            if (Authority.CUSTOMER_USER.equals(getCurrentUser().getAuthority())) {
-                cleanUpLicenseKey(edgeInfo);
-            }
-            return edgeInfo;
+            return checkEdgeInfoId(edgeId, Operation.READ);
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -525,11 +514,6 @@ public class EdgeController extends BaseController {
             } else {
                 result = edgeService.findEdgesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
             }
-            if (Authority.CUSTOMER_USER.equals(user.getAuthority())) {
-                for (Edge edge : result.getData()) {
-                    cleanUpLicenseKey(edge);
-                }
-            }
             return checkNotNull(result);
         } catch (Exception e) {
             throw handleException(e);
@@ -570,11 +554,6 @@ public class EdgeController extends BaseController {
             } else {
                 result = edgeService.findEdgeInfosByTenantIdAndCustomerId(tenantId, customerId, pageLink);
             }
-            if (Authority.CUSTOMER_USER.equals(user.getAuthority())) {
-                for (Edge edge : result.getData()) {
-                    cleanUpLicenseKey(edge);
-                }
-            }
             return checkNotNull(result);
         } catch (Exception e) {
             throw handleException(e);
@@ -606,11 +585,6 @@ public class EdgeController extends BaseController {
                 edgesFuture = edgeService.findEdgesByTenantIdCustomerIdAndIdsAsync(tenantId, customerId, edgeIds);
             }
             List<Edge> edges = edgesFuture.get();
-            if (Authority.CUSTOMER_USER.equals(user.getAuthority())) {
-                for (Edge edge : edges) {
-                    cleanUpLicenseKey(edge);
-                }
-            }
             return checkNotNull(edges);
         } catch (Exception e) {
             throw handleException(e);
@@ -642,11 +616,6 @@ public class EdgeController extends BaseController {
                     return false;
                 }
             }).collect(Collectors.toList());
-            if (Authority.CUSTOMER_USER.equals(user.getAuthority())) {
-                for (Edge edge : edges) {
-                    cleanUpLicenseKey(edge);
-                }
-            }
             return edges;
         } catch (Exception e) {
             throw handleException(e);
@@ -731,40 +700,5 @@ public class EdgeController extends BaseController {
                 throw new RuntimeException(e);
             }
         });
-    }
-
-    private void cleanUpLicenseKey(Edge edge) {
-        edge.setEdgeLicenseKey(null);
-    }
-
-    @ApiOperation(value = "Check edge license (checkInstance)",
-            notes = "Checks license request from edge service by forwarding request to license portal.",
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    @RequestMapping(value = "/license/checkInstance", method = RequestMethod.POST)
-    @ResponseBody
-    public ResponseEntity<JsonNode> checkInstance(@RequestBody JsonNode request) throws ThingsboardException {
-        log.debug("Checking instance [{}]", request);
-        try {
-            return edgeLicenseService.checkInstance(request);
-        } catch (Exception e) {
-            log.error("Error occurred: [{}]", e.getMessage(), e);
-            throw new ThingsboardException(e, ThingsboardErrorCode.SUBSCRIPTION_VIOLATION);
-        }
-    }
-
-    @ApiOperation(value = "Activate edge instance (activateInstance)",
-            notes = "Activates edge license on license portal.",
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    @RequestMapping(value = "/license/activateInstance", params = {"licenseSecret", "releaseDate"}, method = RequestMethod.POST)
-    @ResponseBody
-    public ResponseEntity<JsonNode> activateInstance(@RequestParam String licenseSecret,
-                                                     @RequestParam String releaseDate) throws ThingsboardException {
-        log.debug("Activating instance [{}], [{}]", licenseSecret, releaseDate);
-        try {
-            return edgeLicenseService.activateInstance(licenseSecret, releaseDate);
-        } catch (Exception e) {
-            log.error("Error occurred: [{}]", e.getMessage(), e);
-            throw new ThingsboardException(e, ThingsboardErrorCode.SUBSCRIPTION_VIOLATION);
-        }
     }
 }

@@ -85,7 +85,9 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
             this.registration = registration;
             this.tenantId = lwM2mClientContext.getClientByEndpoint(registration.getEndpoint()).getTenantId();
             this.modelsLock = new ReentrantLock();
-            models.computeIfAbsent(tenantId, t -> new ConcurrentHashMap<>());
+            if (tenantId != null) {
+                models.computeIfAbsent(tenantId, t -> new ConcurrentHashMap<>());
+            }
         }
 
         @Override
@@ -127,8 +129,8 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
 
         private ObjectModel getObjectModelDynamic(Integer objectId, String version) {
             String key = getKeyIdVer(objectId, version);
-            ObjectModel objectModel = models.get(tenantId).get(key);
-            if (objectModel == null) {
+            ObjectModel objectModel = tenantId != null ? models.get(tenantId).get(key) : null;
+            if (tenantId != null && objectModel == null) {
                 modelsLock.lock();
                 try {
                     objectModel = models.get(tenantId).get(key);

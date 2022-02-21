@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -168,20 +167,20 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
     public PageData<Tenant> findTenants(PageLink pageLink) {
         log.trace("Executing findTenants pageLink [{}]", pageLink);
         Validator.validatePageLink(pageLink);
-        return tenantDao.findTenantsByRegion(TenantId.SYS_TENANT_ID, DEFAULT_TENANT_REGION, pageLink);
+        return tenantDao.findTenants(TenantId.SYS_TENANT_ID, pageLink);
     }
 
     @Override
     public PageData<TenantInfo> findTenantInfos(PageLink pageLink) {
         log.trace("Executing findTenantInfos pageLink [{}]", pageLink);
         Validator.validatePageLink(pageLink);
-        return tenantDao.findTenantInfosByRegion(TenantId.SYS_TENANT_ID, DEFAULT_TENANT_REGION, pageLink);
+        return tenantDao.findTenantInfos(TenantId.SYS_TENANT_ID, pageLink);
     }
 
     @Override
     public void deleteTenants() {
         log.trace("Executing deleteTenants");
-        tenantsRemover.removeEntities(TenantId.SYS_TENANT_ID, DEFAULT_TENANT_REGION);
+        tenantsRemover.removeEntities(TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID);
     }
 
     private DataValidator<Tenant> tenantValidator =
@@ -214,12 +213,12 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
                 }
             };
 
-    private PaginatedRemover<String, Tenant> tenantsRemover =
-            new PaginatedRemover<String, Tenant>() {
+    private PaginatedRemover<TenantId, Tenant> tenantsRemover =
+            new PaginatedRemover<>() {
 
                 @Override
-                protected PageData<Tenant> findEntities(TenantId tenantId, String region, PageLink pageLink) {
-                    return tenantDao.findTenantsByRegion(tenantId, region, pageLink);
+                protected PageData<Tenant> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+                    return tenantDao.findTenants(tenantId, pageLink);
                 }
 
                 @Override

@@ -62,7 +62,8 @@ export class Marker {
         this.updateMarkerIcon(settings);
 
         if (settings.showTooltip) {
-            this.tooltip = createTooltip(this.leafletMarker, settings, data.$datasource);
+            this.tooltip = createTooltip(this.leafletMarker, settings, data.$datasource,
+              settings.autocloseTooltip, settings.showTooltipAction);
             this.updateMarkerTooltip(data);
         }
 
