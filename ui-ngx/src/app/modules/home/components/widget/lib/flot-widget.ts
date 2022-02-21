@@ -552,7 +552,7 @@ export class TbFlot {
           this.subscription.timeWindowConfig.aggregation.type === AggregationType.NONE) {
           this.options.series.bars.barWidth = this.defaultBarWidth;
         } else {
-          this.options.series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
+          this.options.series.bars.barWidth = this.subscription.timeWindow.interval * 1;
         }
       }
       this.options.xaxes[0].min = this.subscription.timeWindow.minTime;
@@ -645,7 +645,7 @@ export class TbFlot {
               this.subscription.timeWindowConfig.aggregation.type === AggregationType.NONE) {
               this.options.series.bars.barWidth = this.defaultBarWidth;
             } else {
-              this.options.series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
+              this.options.series.bars.barWidth = this.subscription.timeWindow.interval*1;
             }
           }
 
@@ -663,7 +663,7 @@ export class TbFlot {
                 this.subscription.timeWindowConfig.aggregation.type === AggregationType.NONE) {
                 this.plot.getOptions().series.bars.barWidth = this.defaultBarWidth;
               } else {
-                this.plot.getOptions().series.bars.barWidth = this.subscription.timeWindow.interval * 0.6;
+                this.plot.getOptions().series.bars.barWidth = this.subscription.timeWindow.interval * 1;
               }
             }
             this.updateData();
