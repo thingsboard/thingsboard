@@ -392,7 +392,9 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
     this.ctx.detectChanges();
   }
 
-  private updateColor(color: string) {
+  private updateColor(color: string) {  
+    this.minmaxLabel.css({color: this.ctx.widgetConfig.color});
+    this.knobTitle.css({color: this.ctx.widgetConfig.color});
     const glowColor = tinycolor(color).brighten(30).toHexString();
     this.knobValue.css({color: glowColor});
     const textShadow = `${color} 1px 1px 10px, ${glowColor} 1px 1px 10px`;

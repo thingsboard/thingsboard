@@ -148,6 +148,10 @@ export class SwitchComponent extends PageComponent implements OnInit, OnDestroy 
     const initialValue = isDefined(settings.initialValue) ? settings.initialValue : false;
     this.setValue(initialValue);
 
+    this.switchTitle.css({color: this.ctx.widgetConfig.color});
+    this.onLabel.css({color: this.ctx.widgetConfig.color});
+    this.offLabel.css({color: this.ctx.widgetConfig.color});
+
     const subscription = this.ctx.defaultSubscription;
     const rpcEnabled = subscription.rpcEnabled;
 

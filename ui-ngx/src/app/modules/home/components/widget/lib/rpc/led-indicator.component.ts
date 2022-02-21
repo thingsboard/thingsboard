@@ -258,6 +258,8 @@ export class LedIndicatorComponent extends PageComponent implements OnInit, OnDe
     const color = this.value ? this.ledColor : this.disabledColor;
     const middleColor = this.value ? this.ledMiddleColor : this.disabledMiddleColor;
     const boxShadow = `#000 0 -1px 6px 1px, inset ${middleColor} 0 -1px 8px, ${color} 0 3px 11px`;
+    
+    this.ledTitle.css({color: this.ctx.widgetConfig.color});
     this.led.css({backgroundColor: color});
     this.led.css({boxShadow});
     if (this.value) {
