@@ -99,9 +99,13 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
 
     @PreDestroy
     public void shutdown() {
-        log.info("Stopping LwM2M transport server!");
-        server.destroy();
-        log.info("LwM2M transport server stopped!");
+        try {
+            log.info("Stopping LwM2M transport server!");
+            server.destroy();
+            log.info("LwM2M transport server stopped!");
+        } catch (Exception e) {
+            log.error("Failed to gracefully stop the LwM2M transport server!", e);
+        }
     }
 
     private LeshanServer getLhServer() {

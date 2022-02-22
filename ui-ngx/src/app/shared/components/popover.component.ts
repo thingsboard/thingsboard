@@ -558,7 +558,9 @@ export class TbPopoverComponent implements OnDestroy, OnInit {
 
   onClickOutside(event: MouseEvent): void {
     if (this.tbHideOnClickOutside && !this.origin.elementRef.nativeElement.contains(event.target) && this.tbTrigger !== null) {
-      this.hide();
+      if (!this.isTopOverlay(event.target as Element)) {
+        this.hide();
+      }
     }
   }
 
@@ -569,6 +571,21 @@ export class TbPopoverComponent implements OnDestroy, OnInit {
 
   animationDone() {
     this.tbAnimationDone.next();
+  }
+
+  private isTopOverlay(targetElement: Element): boolean {
+    const target = $(targetElement);
+    if (target.parents('.cdk-overlay-container').length) {
+      let targetOverlayContainerChild: JQuery<Element>;
+      if (target.hasClass('cdk-overlay-backdrop')) {
+        targetOverlayContainerChild = target;
+      } else {
+        targetOverlayContainerChild = target.parents('.cdk-overlay-pane').parent();
+      }
+      const currentOverlayContainerChild = $(this.overlay.overlayRef.overlayElement).parent();
+      return targetOverlayContainerChild.index() > currentOverlayContainerChild.index();
+    }
+    return false;
   }
 
   private updateVisibilityByContent(): void {

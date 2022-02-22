@@ -30,6 +30,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.BINARY_APP_
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_19_0_0;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_19_0_3;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_19_1_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_3_14;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_3_9;
@@ -181,11 +182,12 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
      * ReadComposite {"keys":["batteryLevel", "UtfOffset", "dataRead", "dataWrite"]}
      */
     @Test
-    public void testReadCompositeSingleResourceByKeys_Result_CONTENT_Value_3_0_IsLwM2mSingleResource_19_0_0_AND_19_0_1_Null() throws Exception {
+    public void testReadCompositeSingleResourceByKeys_Result_CONTENT_Value_3_0_IsLwM2mSingleResource_19_0_0_AND_19_0_1__IsLwM2mMultipleResource() throws Exception {
         String expectedKey3_0_9 = RESOURCE_ID_NAME_3_9;
         String expectedKey3_0_14 = RESOURCE_ID_NAME_3_14;
         String expectedKey19_0_0 = RESOURCE_ID_NAME_19_0_0;
         String expectedKey19_1_0 = RESOURCE_ID_NAME_19_1_0;
+        String expectedKey19_X_0 = "=LwM2mMultipleResource [id=0, values={0=LwM2mResourceInstance [id=0, value=1Bytes, type=OPAQUE]";
         String expectedKeys = "[\"" + expectedKey3_0_9 + "\", \"" + expectedKey3_0_14 + "\", \"" + expectedKey19_0_0 + "\", \"" + expectedKey19_1_0 + "\"]";
         String actualResult = sendCompositeRPCByKeys(expectedKeys);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
@@ -194,13 +196,30 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
         String objectId_19 = pathIdVerToObjectId(objectIdVer_19);
         String expected3_0_9 = objectInstanceId_3 + "/" + RESOURCE_ID_9 + "=LwM2mSingleResource [id=" + RESOURCE_ID_9 + ", value=";
         String expected3_0_14 = objectInstanceId_3 + "/" + RESOURCE_ID_14 + "=LwM2mSingleResource [id=" + RESOURCE_ID_14 + ", value=";
-        String expected19_0_0 = objectId_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0 + "=null";
-        String expected19_1_0 = objectId_19 + "/" + OBJECT_INSTANCE_ID_1 + "/" + RESOURCE_ID_0 + "=null";
+        String expected19_0_0 = objectId_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0 +  expectedKey19_X_0;
+        String expected19_1_0 = objectId_19 + "/" + OBJECT_INSTANCE_ID_1 + "/" + RESOURCE_ID_0 +  expectedKey19_X_0;
         String actualValues = rpcActualResult.get("value").asText();
         assertTrue(actualValues.contains(expected3_0_9));
         assertTrue(actualValues.contains(expected3_0_14));
         assertTrue(actualValues.contains(expected19_0_0));
         assertTrue(actualValues.contains(expected19_1_0));
+    }
+
+    /**
+     * ReadComposite {"keys":["batteryLevel", "UtfOffset", "dataDescription"]}
+     */
+    @Test
+    public void testReadCompositeSingleResourceByKeys_Result_CONTENT_Value_3_0_IsLwM2mSingleResource_19_0_3_IsNotConfiguredInTheDeviceProfile() throws Exception {
+        String expectedKey3_0_9 = RESOURCE_ID_NAME_3_9;
+        String expectedKey3_0_14 = RESOURCE_ID_NAME_3_14;
+        String expectedKey19_0_3 = RESOURCE_ID_NAME_19_0_3;
+        String expectedKeys = "[\"" + expectedKey3_0_9 + "\", \"" + expectedKey3_0_14 + "\", \"" + expectedKey19_0_3 + "\"]";
+        String actualResult = sendCompositeRPCByKeys(expectedKeys);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
+        String actualValue = rpcActualResult.get("error").asText();
+        String expectedValue = expectedKey19_0_3 + " is not configured in the device profile!";
+        assertEquals(actualValue, expectedValue);
     }
 
 

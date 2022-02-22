@@ -20,7 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecClientCredential;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
+import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus;
@@ -46,105 +47,59 @@ import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.QUEU
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATING;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.VERIFIED;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.COAP_CONFIG;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.SECURITY;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
 
 @Slf4j
 public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
 
     public static final int TIMEOUT = 30;
-    private final String OTA_TRANSPORT_CONFIGURATION = "{\n" +
-            "  \"type\": \"LWM2M\",\n" +
-            "  \"observeAttr\": {\n" +
-            "    \"keyName\": {\n" +
-            "      \"/5_1.0/0/3\": \"state\",\n" +
-            "      \"/5_1.0/0/5\": \"updateResult\",\n" +
-            "      \"/5_1.0/0/6\": \"pkgname\",\n" +
-            "      \"/5_1.0/0/7\": \"pkgversion\",\n" +
-            "      \"/5_1.0/0/9\": \"firmwareUpdateDeliveryMethod\",\n" +
-            "      \"/9_1.0/0/0\": \"pkgname\",\n" +
-            "      \"/9_1.0/0/1\": \"pkgversion\",\n" +
-            "      \"/9_1.0/0/7\": \"updateState\",\n" +
-            "      \"/9_1.0/0/9\": \"updateResult\"\n" +
-            "    },\n" +
-            "    \"observe\": [\n" +
-            "      \"/5_1.0/0/3\",\n" +
-            "      \"/5_1.0/0/5\",\n" +
-            "      \"/5_1.0/0/6\",\n" +
-            "      \"/5_1.0/0/7\",\n" +
-            "      \"/5_1.0/0/9\",\n" +
-            "      \"/9_1.0/0/0\",\n" +
-            "      \"/9_1.0/0/1\",\n" +
-            "      \"/9_1.0/0/7\",\n" +
-            "      \"/9_1.0/0/9\"\n" +
-            "    ],\n" +
-            "    \"attribute\": [],\n" +
-            "    \"telemetry\": [\n" +
-            "      \"/5_1.0/0/3\",\n" +
-            "      \"/5_1.0/0/5\",\n" +
-            "      \"/5_1.0/0/6\",\n" +
-            "      \"/5_1.0/0/7\",\n" +
-            "      \"/5_1.0/0/9\",\n" +
-            "      \"/9_1.0/0/0\",\n" +
-            "      \"/9_1.0/0/1\",\n" +
-            "      \"/9_1.0/0/7\",\n" +
-            "      \"/9_1.0/0/9\"\n" +
-            "    ],\n" +
-            "    \"attributeLwm2m\": {}\n" +
-            "  },\n" +
-            "  \"bootstrapServerUpdateEnable\": true,\n" +
-            "  \"bootstrap\": [\n" +
-            "    {\n" +
-            "       \"host\": \"0.0.0.0\",\n" +
-            "       \"port\": 5687,\n" +
-            "       \"binding\": \"U\",\n" +
-            "       \"lifetime\": 300,\n" +
-            "       \"securityMode\": \"NO_SEC\",\n" +
-            "       \"shortServerId\": 111,\n" +
-            "       \"notifIfDisabled\": true,\n" +
-            "       \"serverPublicKey\": \"\",\n" +
-            "       \"defaultMinPeriod\": 1,\n" +
-            "       \"bootstrapServerIs\": true,\n" +
-            "       \"clientHoldOffTime\": 1,\n" +
-            "       \"bootstrapServerAccountTimeout\": 0\n" +
-            "    },\n" +
-            "    {\n" +
-            "       \"host\": \"0.0.0.0\",\n" +
-            "       \"port\": 5685,\n" +
-            "       \"binding\": \"U\",\n" +
-            "       \"lifetime\": 300,\n" +
-            "       \"securityMode\": \"NO_SEC\",\n" +
-            "       \"shortServerId\": 123,\n" +
-            "       \"notifIfDisabled\": true,\n" +
-            "       \"serverPublicKey\": \"\",\n" +
-            "       \"defaultMinPeriod\": 1,\n" +
-            "       \"bootstrapServerIs\": false,\n" +
-            "       \"clientHoldOffTime\": 1,\n" +
-            "       \"bootstrapServerAccountTimeout\": 0\n" +
-            "    }\n" +
-            "  ],\n" +
-            "  \"clientLwM2mSettings\": {\n" +
-            "    \"edrxCycle\": null,\n" +
-            "    \"powerMode\": \"DRX\",\n" +
-            "    \"fwUpdateResource\": null,\n" +
-            "    \"fwUpdateStrategy\": 1,\n" +
-            "    \"psmActivityTimer\": null,\n" +
-            "    \"swUpdateResource\": null,\n" +
-            "    \"swUpdateStrategy\": 1,\n" +
-            "    \"pagingTransmissionWindow\": null,\n" +
-            "    \"clientOnlyObserveAfterConnect\": 1\n" +
-            "  }\n" +
-            "}";
 
-    @Test
+    protected final String OBSERVE_ATTRIBUTES_WITH_PARAMS_OTA =
+
+            "    {\n" +
+                    "    \"keyName\": {\n" +
+                    "      \"/5_1.0/0/3\": \"state\",\n" +
+                    "      \"/5_1.0/0/5\": \"updateResult\",\n" +
+                    "      \"/5_1.0/0/6\": \"pkgname\",\n" +
+                    "      \"/5_1.0/0/7\": \"pkgversion\",\n" +
+                    "      \"/5_1.0/0/9\": \"firmwareUpdateDeliveryMethod\",\n" +
+                    "      \"/9_1.0/0/0\": \"pkgname\",\n" +
+                    "      \"/9_1.0/0/1\": \"pkgversion\",\n" +
+                    "      \"/9_1.0/0/7\": \"updateState\",\n" +
+                    "      \"/9_1.0/0/9\": \"updateResult\"\n" +
+                    "    },\n" +
+                    "    \"observe\": [\n" +
+                    "      \"/5_1.0/0/3\",\n" +
+                    "      \"/5_1.0/0/5\",\n" +
+                    "      \"/5_1.0/0/6\",\n" +
+                    "      \"/5_1.0/0/7\",\n" +
+                    "      \"/5_1.0/0/9\",\n" +
+                    "      \"/9_1.0/0/0\",\n" +
+                    "      \"/9_1.0/0/1\",\n" +
+                    "      \"/9_1.0/0/7\",\n" +
+                    "      \"/9_1.0/0/9\"\n" +
+                    "    ],\n" +
+                    "    \"attribute\": [],\n" +
+                    "    \"telemetry\": [\n" +
+                    "      \"/5_1.0/0/3\",\n" +
+                    "      \"/5_1.0/0/5\",\n" +
+                    "      \"/5_1.0/0/6\",\n" +
+                    "      \"/5_1.0/0/7\",\n" +
+                    "      \"/5_1.0/0/9\",\n" +
+                    "      \"/9_1.0/0/0\",\n" +
+                    "      \"/9_1.0/0/1\",\n" +
+                    "      \"/9_1.0/0/7\",\n" +
+                    "      \"/9_1.0/0/9\"\n" +
+                    "    ],\n" +
+                    "    \"attributeLwm2m\": {}\n" +
+                    "  }";
+     @Test
     public void testFirmwareUpdateWithClientWithoutFirmwareOtaInfoFromProfile() throws Exception {
-        createDeviceProfile(TRANSPORT_CONFIGURATION);
-        NoSecClientCredential credentials = createNoSecClientCredentials(this.CLIENT_ENDPOINT_WITHOUT_FW_INFO);
-        final Device device = createDevice(credentials);
-        createNewClient(SECURITY, COAP_CONFIG, false, this.CLIENT_ENDPOINT_WITHOUT_FW_INFO);
-
-        Thread.sleep(1000);
-
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITH_PARAMS, getBootstrapServerCredentialsNoSec(NONE));
+        createDeviceProfile(transportConfiguration);
+        LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(this.CLIENT_ENDPOINT_WITHOUT_FW_INFO));
+        final Device device = createDevice(deviceCredentials, this.CLIENT_ENDPOINT_WITHOUT_FW_INFO);
+        createNewClient(SECURITY_NO_SEC, COAP_CONFIG, false, this.CLIENT_ENDPOINT_WITHOUT_FW_INFO, false, null);
         device.setFirmwareId(createFirmware().getId());
         final Device savedDevice = doPost("/api/device", device, Device.class);
 
@@ -163,13 +118,11 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
 
     @Test
     public void testFirmwareUpdateByObject5() throws Exception {
-        createDeviceProfile(OTA_TRANSPORT_CONFIGURATION);
-        NoSecClientCredential credentials = createNoSecClientCredentials(this.CLIENT_ENDPOINT_OTA5);
-        final Device device = createDevice(credentials);
-        createNewClient(SECURITY, COAP_CONFIG, false, this.CLIENT_ENDPOINT_OTA5);
-
-        Thread.sleep(1000);
-
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITH_PARAMS_OTA, getBootstrapServerCredentialsNoSec(NONE));
+        createDeviceProfile(transportConfiguration);
+        LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(this.CLIENT_ENDPOINT_OTA5));
+        final Device device = createDevice(deviceCredentials, this.CLIENT_ENDPOINT_OTA5);
+        createNewClient(SECURITY_NO_SEC, COAP_CONFIG, false, this.CLIENT_ENDPOINT_OTA5, false, null);
         device.setFirmwareId(createFirmware().getId());
         final Device savedDevice = doPost("/api/device", device, Device.class);
 
@@ -200,10 +153,11 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
      * */
     @Test
     public void testSoftwareUpdateByObject9() throws Exception {
-        createDeviceProfile(OTA_TRANSPORT_CONFIGURATION);
-        NoSecClientCredential credentials = createNoSecClientCredentials(CLIENT_ENDPOINT_OTA9);
-        final Device device = createDevice(credentials);
-        createNewClient(SECURITY, COAP_CONFIG, false, CLIENT_ENDPOINT_OTA9);
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITH_PARAMS_OTA, getBootstrapServerCredentialsNoSec(NONE));
+        createDeviceProfile(transportConfiguration);
+        LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(this.CLIENT_ENDPOINT_OTA9));
+        final Device device = createDevice(deviceCredentials, this.CLIENT_ENDPOINT_OTA9);
+        createNewClient(SECURITY_NO_SEC, COAP_CONFIG, false, this.CLIENT_ENDPOINT_OTA9, false, null);
 
         Thread.sleep(1000);
 
