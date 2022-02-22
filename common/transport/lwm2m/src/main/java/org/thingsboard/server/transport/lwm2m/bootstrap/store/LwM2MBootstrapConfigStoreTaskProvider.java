@@ -144,6 +144,13 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
         return config.autoIdForSecurityObject;
     }
 
+    /**
+     * "Short Server ID": This Resource MUST be set when the Bootstrap-Server Resource has a value of 'false'.
+     * The values ID:0 and ID:65535 values MUST NOT be used for identifying the LwM2M Server.
+     * "Short Server ID":
+     * - Link Instance (lwm2m Server) hase linkParams with key = "ssid" value = "shortId" (ver lvm2m = 1.1).
+     * - Link Instance (bootstrap Server) hase not linkParams with key = "ssid" (ver lvm2m = 1.1).
+     */
     protected void findSecurityInstanceId(Link[] objectLinks, String endpoint) {
         log.info("Object after discover: [{}]", objectLinks);
         for (Link link : objectLinks) {
@@ -230,26 +237,27 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
         List<BootstrapDownlinkRequest<? extends LwM2mResponse>> requestsWrite = new ArrayList<>();
         boolean isBsServer = false;
         boolean isLwServer = false;
-        /** Map<serverId, InstanceId> */
+        /** Map<serverId ("Short Server ID"), InstanceId> */
         Map<Integer, Integer> instances = new HashMap<>();
         Integer bootstrapServerIdNew = null;
         // handle security
-        int id = 0;
+        int lwm2mSecurityInstanceId = 0;
+        int bootstrapSecurityInstanceId = this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(0);
         for (BootstrapConfig.ServerSecurity security : new TreeMap<>(bootstrapConfig.security).values()) {
             if (security.bootstrapServer) {
-                requestsWrite.add(toWriteRequest(this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(0), security, contentFormat));
+                requestsWrite.add(toWriteRequest(bootstrapSecurityInstanceId, security, contentFormat));
                 isBsServer = true;
                 bootstrapServerIdNew = security.serverId;
-                instances.put(security.serverId, this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(0));
+                instances.put(security.serverId, bootstrapSecurityInstanceId);
             } else {
-                if (id == this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(0)) {
-                    id++;
+                if (lwm2mSecurityInstanceId == bootstrapSecurityInstanceId) {
+                    lwm2mSecurityInstanceId++;
                 }
-                requestsWrite.add(toWriteRequest(id, security, contentFormat));
-                instances.put(security.serverId, id);
+                requestsWrite.add(toWriteRequest(lwm2mSecurityInstanceId, security, contentFormat));
+                instances.put(security.serverId, lwm2mSecurityInstanceId);
                 isLwServer = true;
                 if (!isBsServer && this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().containsKey(security.serverId) &&
-                        id != this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(security.serverId)) {
+                        lwm2mSecurityInstanceId != this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(security.serverId)) {
                     pathsDelete.add("/0/" + this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(security.serverId));
                 }
                 /**
@@ -258,14 +266,14 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
                 // find serverId in securityInstances by id (instance)
                 Integer serverIdOld = null;
                 for (Map.Entry<Integer, Integer> entry : this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().entrySet()) {
-                    if (entry.getValue().equals(id)) {
+                    if (entry.getValue().equals(lwm2mSecurityInstanceId)) {
                         serverIdOld = entry.getKey();
                     }
                 }
                 if (!isBsServer && serverIdOld != null && this.lwM2MBootstrapSessionClients.get(endpoint).getServerInstances().containsKey(serverIdOld)) {
                     pathsDelete.add("/1/" + this.lwM2MBootstrapSessionClients.get(endpoint).getServerInstances().get(serverIdOld));
                 }
-                id++;
+                lwm2mSecurityInstanceId++;
             }
         }
         // handle server
