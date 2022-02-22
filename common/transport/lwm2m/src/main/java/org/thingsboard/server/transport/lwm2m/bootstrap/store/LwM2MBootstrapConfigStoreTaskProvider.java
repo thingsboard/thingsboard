@@ -33,6 +33,7 @@ import org.eclipse.leshan.server.bootstrap.BootstrapSession;
 import org.eclipse.leshan.server.bootstrap.BootstrapTaskProvider;
 import org.eclipse.leshan.server.bootstrap.BootstrapUtil;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -43,6 +44,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 import static org.eclipse.leshan.server.bootstrap.BootstrapUtil.toWriteRequest;
 
 @Slf4j
@@ -164,9 +166,20 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
 
     protected void findServerInstanceId(BootstrapReadResponse readResponse) {
         this.serverInstances = new HashMap<>();
-        ((LwM2mObject) readResponse.getContent()).getInstances().values().forEach(instance -> {
-            serverInstances.put(((Long) instance.getResource(0).getValue()).intValue(), instance.getId());
-        });
+        try {
+            ((LwM2mObject) readResponse.getContent()).getInstances().values().forEach(instance -> {
+                var shId = OPAQUE.equals(instance.getResource(0).getType()) ? new BigInteger((byte[]) instance.getResource(0).getValue()).intValue() : instance.getResource(0).getValue();
+                int shortId;
+                if (shId instanceof Long) {
+                    shortId = ((Long) shId).intValue();
+                } else {
+                    shortId = (int) shId;
+                }
+                serverInstances.put(shortId, instance.getId());
+            });
+        } catch (Exception e) {
+            log.error("Failed find Server Instance Id. ", e);
+        }
         if (this.securityInstances != null && this.securityInstances.size() > 0 && this.serverInstances != null && this.serverInstances.size() > 0) {
             this.findBootstrapServerId();
         }
@@ -251,7 +264,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements BootstrapTaskProvi
                 if (this.bootstrapServerIdNew != null && server.getValue().shortId == this.bootstrapServerIdNew &&
                         (this.bootstrapServerIdNew != this.bootstrapServerIdOld || securityInstanceId != this.serverInstances.get(this.bootstrapServerIdOld))) {
                     pathsDelete.add("/1/" + this.serverInstances.get(this.bootstrapServerIdOld));
-                /** Delete instance if serverIdNew is present in serverInstances and  securityInstanceIdOld by serverIdNew not equals serverInstanceIdOld */
+                    /** Delete instance if serverIdNew is present in serverInstances and  securityInstanceIdOld by serverIdNew not equals serverInstanceIdOld */
                 } else if (this.serverInstances.containsKey(server.getValue().shortId) && securityInstanceId != this.serverInstances.get(server.getValue().shortId)) {
                     pathsDelete.add("/1/" + this.serverInstances.get(server.getValue().shortId));
                 }

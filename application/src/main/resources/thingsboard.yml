@@ -278,6 +278,11 @@ sql:
     stats_print_interval_ms: "${SQL_TS_LATEST_BATCH_STATS_PRINT_MS:10000}"
     batch_threads: "${SQL_TS_LATEST_BATCH_THREADS:3}" # batch thread count have to be a prime number like 3 or 5 to gain perfect hash distribution
     update_by_latest_ts: "${SQL_TS_UPDATE_BY_LATEST_TIMESTAMP:true}"
+  events:
+    batch_size: "${SQL_EVENTS_BATCH_SIZE:10000}"
+    batch_max_delay: "${SQL_EVENTS_BATCH_MAX_DELAY_MS:100}"
+    stats_print_interval_ms: "${SQL_EVENTS_BATCH_STATS_PRINT_MS:10000}"
+    batch_threads: "${SQL_EVENTS_BATCH_THREADS:3}" # batch thread count have to be a prime number like 3 or 5 to gain perfect hash distribution
   # Specify whether to sort entities before batch update. Should be enabled for cluster mode to avoid deadlocks
   batch_sort: "${SQL_BATCH_SORT:false}"
   # Specify whether to remove null characters from strValue of attributes and timeseries before insert
@@ -831,8 +836,6 @@ transport:
     log_max_length: "${LWM2M_LOG_MAX_LENGTH:1024}"
     psm_activity_timer: "${LWM2M_PSM_ACTIVITY_TIMER:10000}"
     paging_transmission_window: "${LWM2M_PAGING_TRANSMISSION_WINDOW:10000}"
-    # Use redis for Security and Registration stores
-    redis.enabled: "${LWM2M_REDIS_ENABLED:false}"
     network_config: # In this section you can specify custom parameters for LwM2M network configuration and expose the env variables to configure outside
 #      - key: "PROTOCOL_STAGE_THREAD_COUNT"
 #        value: "${LWM2M_PROTOCOL_STAGE_THREAD_COUNT:4}"

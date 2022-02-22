@@ -66,36 +66,34 @@ public class JpaTenantDaoTest extends AbstractJpaDaoTest {
 
     @Test
     //@DatabaseSetup("classpath:dbunit/empty_dataset.xml")
-    public void testFindTenantsByRegion() {
+    public void testFindTenants() {
         createTenants();
-        assertEquals(60, tenantDao.find(AbstractServiceTest.SYSTEM_TENANT_ID).size());
+        assertEquals(30, tenantDao.find(AbstractServiceTest.SYSTEM_TENANT_ID).size());
 
         PageLink pageLink = new PageLink(20, 0, "title");
-        PageData<Tenant> tenants1 = tenantDao.findTenantsByRegion(AbstractServiceTest.SYSTEM_TENANT_ID, "REGION_1", pageLink);
+        PageData<Tenant> tenants1 = tenantDao.findTenants(AbstractServiceTest.SYSTEM_TENANT_ID, pageLink);
         assertEquals(20, tenants1.getData().size());
 
         pageLink = pageLink.nextPageLink();
-        PageData<Tenant> tenants2 = tenantDao.findTenantsByRegion(AbstractServiceTest.SYSTEM_TENANT_ID, "REGION_1",
+        PageData<Tenant> tenants2 = tenantDao.findTenants(AbstractServiceTest.SYSTEM_TENANT_ID,
                 pageLink);
         assertEquals(10, tenants2.getData().size());
 
         pageLink = pageLink.nextPageLink();
-        PageData<Tenant> tenants3 = tenantDao.findTenantsByRegion(AbstractServiceTest.SYSTEM_TENANT_ID, "REGION_1",
+        PageData<Tenant> tenants3 = tenantDao.findTenants(AbstractServiceTest.SYSTEM_TENANT_ID,
                 pageLink);
         assertEquals(0, tenants3.getData().size());
     }
 
     private void createTenants() {
         for (int i = 0; i < 30; i++) {
-            createTenant("REGION_1", "TITLE", i);
-            createTenant("REGION_2", "TITLE", i);
+            createTenant("TITLE", i);
         }
     }
 
-    void createTenant(String region, String title, int index) {
+    void createTenant(String title, int index) {
         Tenant tenant = new Tenant();
         tenant.setId(TenantId.fromUUID(Uuids.timeBased()));
-        tenant.setRegion(region);
         tenant.setTitle(title + "_" + index);
         tenant.setTenantProfileId(tenantProfile.getId());
         createdTenants.add(tenantDao.save(TenantId.SYS_TENANT_ID, tenant));

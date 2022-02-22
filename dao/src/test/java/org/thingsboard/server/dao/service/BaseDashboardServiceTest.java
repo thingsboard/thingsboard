@@ -32,13 +32,11 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
-import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -420,8 +418,6 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
         edge.setType("default");
         edge.setSecret(RandomStringUtils.randomAlphanumeric(20));
         edge.setRoutingKey(RandomStringUtils.randomAlphanumeric(20));
-        edge.setEdgeLicenseKey(RandomStringUtils.randomAlphanumeric(20));
-        edge.setCloudEndpoint("http://localhost:8080");
         edge = edgeService.saveEdge(edge, true);
         try {
             dashboardService.assignDashboardToEdge(tenantId, dashboard.getId(), edge.getId());

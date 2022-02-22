@@ -57,12 +57,6 @@ public class Edge extends SearchTextBasedWithAdditionalInfo<EdgeId> implements H
     @NoXss
     @Length(fieldName = "secret")
     private String secret;
-    @NoXss
-    @Length(fieldName = "edgeLicenseKey", max = 30)
-    private String edgeLicenseKey;
-    @NoXss
-    @Length(fieldName = "cloudEndpoint")
-    private String cloudEndpoint;
 
     public Edge() {
         super();
@@ -82,8 +76,6 @@ public class Edge extends SearchTextBasedWithAdditionalInfo<EdgeId> implements H
         this.name = edge.getName();
         this.routingKey = edge.getRoutingKey();
         this.secret = edge.getSecret();
-        this.edgeLicenseKey = edge.getEdgeLicenseKey();
-        this.cloudEndpoint = edge.getCloudEndpoint();
     }
 
     public void update(Edge edge) {
@@ -95,8 +87,6 @@ public class Edge extends SearchTextBasedWithAdditionalInfo<EdgeId> implements H
         this.name = edge.getName();
         this.routingKey = edge.getRoutingKey();
         this.secret = edge.getSecret();
-        this.edgeLicenseKey = edge.getEdgeLicenseKey();
-        this.cloudEndpoint = edge.getCloudEndpoint();
     }
 
     @ApiModelProperty(position = 1, value = "JSON object with the Edge Id. " +
@@ -160,16 +150,6 @@ public class Edge extends SearchTextBasedWithAdditionalInfo<EdgeId> implements H
     @ApiModelProperty(position = 10, required = true, value = "Edge secret ('password') to authorize on cloud")
     public String getSecret() {
         return this.secret;
-    }
-
-    @ApiModelProperty(position = 11, required = true, value = "Edge license key obtained from license portal", example = "AgcnI24Z06XC&m6Sxsdgf")
-    public String getEdgeLicenseKey() {
-        return this.edgeLicenseKey;
-    }
-
-    @ApiModelProperty(position = 12, required = true, value = "Edge uses this cloud URL to activate and periodically check it's license", example = "https://thingsboard.cloud")
-    public String getCloudEndpoint() {
-        return this.cloudEndpoint;
     }
 
 }

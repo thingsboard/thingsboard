@@ -314,8 +314,6 @@ public abstract class BaseEntityServiceTest extends AbstractServiceTest {
         edge.setLabel("EdgeLabel" + i);
         edge.setSecret(RandomStringUtils.randomAlphanumeric(20));
         edge.setRoutingKey(RandomStringUtils.randomAlphanumeric(20));
-        edge.setEdgeLicenseKey(RandomStringUtils.randomAlphanumeric(20));
-        edge.setCloudEndpoint("http://localhost:8080");
         return edge;
     }
 
