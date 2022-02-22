@@ -98,8 +98,6 @@ public class EntityEdgeProcessor extends BaseEdgeProcessor {
         if (edgeNotificationMsg.getEdgeIdMSB() != 0 && edgeNotificationMsg.getEdgeIdLSB() != 0) {
             edgeId = new EdgeId(new UUID(edgeNotificationMsg.getEdgeIdMSB(), edgeNotificationMsg.getEdgeIdLSB()));
         }
-        PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
-        PageData<EdgeId> pageData;
         switch (actionType) {
             case ADDED: // used only for USER entity
             case UPDATED:
@@ -108,6 +106,8 @@ public class EntityEdgeProcessor extends BaseEdgeProcessor {
                 break;
             case ASSIGNED_TO_CUSTOMER:
             case UNASSIGNED_FROM_CUSTOMER:
+                PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
+                PageData<EdgeId> pageData;
                 do {
                     pageData = edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId, pageLink);
                     if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
