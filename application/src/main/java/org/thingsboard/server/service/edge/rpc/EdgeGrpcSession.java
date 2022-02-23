@@ -644,6 +644,7 @@ public final class EdgeGrpcSession implements Closeable {
             }
         } catch (Exception e) {
             log.error("[{}] Can't process uplink msg [{}]", this.sessionId, uplinkMsg, e);
+            return Futures.immediateFailedFuture(e);
         }
         return Futures.allAsList(result);
     }

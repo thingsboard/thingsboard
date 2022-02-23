@@ -122,7 +122,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
 
     @Override
     public void pushNotificationToEdge(TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg, TbCallback callback) {
-        log.trace("Pushing notification to edge {}", edgeNotificationMsg);
+        log.debug("Pushing notification to edge {}", edgeNotificationMsg);
         try {
             TenantId tenantId = TenantId.fromUUID(new UUID(edgeNotificationMsg.getTenantIdMSB(), edgeNotificationMsg.getTenantIdLSB()));
             EdgeEventType type = EdgeEventType.valueOf(edgeNotificationMsg.getType());
@@ -153,11 +153,12 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                     relationProcessor.processRelationNotification(tenantId, edgeNotificationMsg);
                     break;
                 default:
-                    log.debug("Edge event type [{}] is not designed to be pushed to edge", type);
+                    log.warn("Edge event type [{}] is not designed to be pushed to edge", type);
             }
         } catch (Exception e) {
             callback.onFailure(e);
-            log.error("Can't push to edge updates, edgeNotificationMsg [{}]", edgeNotificationMsg, e);
+            String errMsg = String.format("Can't push to edge updates, edgeNotificationMsg [%s]", edgeNotificationMsg);
+            log.error(errMsg, e);
         } finally {
             callback.onSuccess();
         }

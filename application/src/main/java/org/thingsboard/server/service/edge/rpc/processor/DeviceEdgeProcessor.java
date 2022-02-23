@@ -51,6 +51,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
+import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceRpcCallMsg;
@@ -79,38 +80,37 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                 String deviceName = deviceUpdateMsg.getName();
                 Device device = deviceService.findDeviceByTenantIdAndName(tenantId, deviceName);
                 if (device != null) {
-                    PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
-                    PageData<EdgeId> pageData;
-                    do {
-                        pageData = edgeService.findRelatedEdgeIdsByEntityId(tenantId, device.getId(), pageLink);
-                        boolean update = false;
-                        if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-                            if (pageData.getData().contains(edge.getId())) {
-                                update = true;
-                            }
-                            if (pageData.hasNext()) {
-                                pageLink = pageLink.nextPageLink();
-                            }
+                    boolean deviceAlreadyExistsForThisEdge = isDeviceAlreadyExistsOnCloudForThisEdge(tenantId, edge, device);
+                    if (deviceAlreadyExistsForThisEdge) {
+                        log.info("[{}] Device with name '{}' already exists on the cloud, and related to this edge [{}]. " +
+                                "deviceUpdateMsg [{}], Updating device", tenantId, deviceName, edge.getId(), deviceUpdateMsg);
+                        updateDevice(tenantId, edge, deviceUpdateMsg);
+                    } else {
+                        log.info("[{}] Device with name '{}' already exists on the cloud, but not related to this edge [{}]. deviceUpdateMsg [{}]." +
+                                "Creating a new device with random prefix and relate to this edge", tenantId, deviceName, edge.getId(), deviceUpdateMsg);
+                        String newDeviceName = deviceUpdateMsg.getName() + "_" + RandomStringUtils.randomAlphabetic(15);
+                        Device newDevice;
+                        try {
+                            newDevice = createDevice(tenantId, edge, deviceUpdateMsg, newDeviceName);
+                        } catch (DataValidationException e) {
+                            String errMsg = String.format("[%s] Device update msg can't be processed due to data validation [%s]", tenantId, deviceUpdateMsg);
+                            log.error(errMsg, e);
+                            return Futures.immediateFuture(null);
                         }
-
-                        if (update) {
-                            log.info("[{}] Device with name '{}' already exists on the cloud, and related to this edge [{}]. " +
-                                    "deviceUpdateMsg [{}], Updating device", tenantId, deviceName, edge.getId(), deviceUpdateMsg);
-                            updateDevice(tenantId, edge, deviceUpdateMsg);
-                        } else {
-                            log.info("[{}] Device with name '{}' already exists on the cloud, but not related to this edge [{}]. deviceUpdateMsg [{}]." +
-                                    "Creating a new device with random prefix and relate to this edge", tenantId, deviceName, edge.getId(), deviceUpdateMsg);
-                            String newDeviceName = deviceUpdateMsg.getName() + "_" + RandomStringUtils.randomAlphabetic(15);
-                            Device newDevice = createDevice(tenantId, edge, deviceUpdateMsg, newDeviceName);
-                            ObjectNode body = mapper.createObjectNode();
-                            body.put("conflictName", deviceName);
-                            saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.ENTITY_MERGE_REQUEST, newDevice.getId(), body);
-                            saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.CREDENTIALS_REQUEST, newDevice.getId(), null);
-                        }
-                    } while (pageData != null && pageData.hasNext());
+                        ObjectNode body = mapper.createObjectNode();
+                        body.put("conflictName", deviceName);
+                        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.ENTITY_MERGE_REQUEST, newDevice.getId(), body);
+                        saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.CREDENTIALS_REQUEST, newDevice.getId(), null);
+                    }
                 } else {
                     log.info("[{}] Creating new device and replacing device entity on the edge [{}]", tenantId, deviceUpdateMsg);
-                    device = createDevice(tenantId, edge, deviceUpdateMsg, deviceUpdateMsg.getName());
+                    try {
+                        device = createDevice(tenantId, edge, deviceUpdateMsg, deviceUpdateMsg.getName());
+                    } catch (DataValidationException e) {
+                        String errMsg = String.format("[%s] Device update msg can't be processed due to data validation [%s]", tenantId, deviceUpdateMsg);
+                        log.error(errMsg, e);
+                        return Futures.immediateFuture(null);
+                    }
                     saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE, EdgeEventActionType.CREDENTIALS_REQUEST, device.getId(), null);
                 }
                 break;
@@ -129,6 +129,23 @@ public class DeviceEdgeProcessor extends BaseEdgeProcessor {
                 return Futures.immediateFailedFuture(new RuntimeException("Unsupported msg type " + deviceUpdateMsg.getMsgType()));
         }
         return Futures.immediateFuture(null);
+    }
+
+    private boolean isDeviceAlreadyExistsOnCloudForThisEdge(TenantId tenantId, Edge edge, Device device) {
+        PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
+        PageData<EdgeId> pageData;
+        do {
+            pageData = edgeService.findRelatedEdgeIdsByEntityId(tenantId, device.getId(), pageLink);
+            if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
+                if (pageData.getData().contains(edge.getId())) {
+                    return true;
+                }
+                if (pageData.hasNext()) {
+                    pageLink = pageLink.nextPageLink();
+                }
+            }
+        } while (pageData != null && pageData.hasNext());
+        return false;
     }
 
     public ListenableFuture<Void> processDeviceCredentialsFromEdge(TenantId tenantId, DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg) {
