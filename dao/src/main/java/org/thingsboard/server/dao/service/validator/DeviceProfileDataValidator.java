@@ -17,16 +17,6 @@ package org.thingsboard.server.dao.service.validator;
 
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
-import com.squareup.wire.Syntax;
-import com.squareup.wire.schema.Field;
-import com.squareup.wire.schema.Location;
-import com.squareup.wire.schema.internal.parser.EnumElement;
-import com.squareup.wire.schema.internal.parser.FieldElement;
-import com.squareup.wire.schema.internal.parser.MessageElement;
-import com.squareup.wire.schema.internal.parser.OneOfElement;
-import com.squareup.wire.schema.internal.parser.ProtoFileElement;
-import com.squareup.wire.schema.internal.parser.ProtoParser;
-import com.squareup.wire.schema.internal.parser.TypeElement;
 import org.eclipse.leshan.core.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
