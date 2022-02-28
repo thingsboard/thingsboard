@@ -185,6 +185,12 @@ export function objToBase64(obj: any): string {
     }));
 }
 
+export function base64toString(b64Encoded: string): string {
+  return decodeURIComponent(atob(b64Encoded).split('').map((c) => {
+    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+  }).join(''));
+}
+
 export function objToBase64URI(obj: any): string {
   return encodeURIComponent(objToBase64(obj));
 }

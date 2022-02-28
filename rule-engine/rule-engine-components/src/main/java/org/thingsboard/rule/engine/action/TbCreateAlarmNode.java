@@ -171,6 +171,8 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
                 .status(AlarmStatus.ACTIVE_UNACK)
                 .severity(this.config.isDynamicSeverity() ? processAlarmSeverity(msg) : notDynamicAlarmSeverity)
                 .propagate(config.isPropagate())
+                .propagateToOwner(config.isPropagateToOwner())
+                .propagateToTenant(config.isPropagateToTenant())
                 .type(TbNodeUtils.processPattern(this.config.getAlarmType(), msg))
                 .propagateRelationTypes(relationTypes)
                 .startTs(ts)
