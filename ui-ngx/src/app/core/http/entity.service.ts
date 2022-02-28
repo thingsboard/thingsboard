@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -906,28 +906,12 @@ export class EntityService {
         result.entityFilter = deepClone(filter);
         return of(result);
       case AliasFilterType.relationsQuery:
-        result.stateEntity = filter.rootStateEntity;
-        let rootEntityType;
-        let rootEntityId;
-        if (result.stateEntity && stateEntityId) {
-          rootEntityType = stateEntityId.entityType;
-          rootEntityId = stateEntityId.id;
-        } else if (!result.stateEntity) {
-          rootEntityType = filter.rootEntity.entityType;
-          rootEntityId = filter.rootEntity.id;
-        }
-        if (rootEntityType && rootEntityId) {
-          const relationQueryRootEntityId = this.resolveAliasEntityId(rootEntityType, rootEntityId);
-          result.entityFilter = deepClone(filter);
-          result.entityFilter.rootEntity = relationQueryRootEntityId;
-          return of(result);
-        } else {
-          return of(result);
-        }
       case AliasFilterType.assetSearchQuery:
       case AliasFilterType.deviceSearchQuery:
       case AliasFilterType.edgeSearchQuery:
       case AliasFilterType.entityViewSearchQuery:
+        let rootEntityType;
+        let rootEntityId;
         result.stateEntity = filter.rootStateEntity;
         if (result.stateEntity && stateEntityId) {
           rootEntityType = stateEntityId.entityType;
@@ -937,9 +921,9 @@ export class EntityService {
           rootEntityId = filter.rootEntity.id;
         }
         if (rootEntityType && rootEntityId) {
-          const searchQueryRootEntityId = this.resolveAliasEntityId(rootEntityType, rootEntityId);
+          const queryRootEntityId = this.resolveAliasEntityId(rootEntityType, rootEntityId);
           result.entityFilter = deepClone(filter);
-          result.entityFilter.rootEntity = searchQueryRootEntityId;
+          result.entityFilter.rootEntity = queryRootEntityId;
           return of(result);
         } else {
           return of(result);
@@ -1066,8 +1050,6 @@ export class EntityService {
           additionalInfo: {
             description: edgeEntityData.description
           },
-          edgeLicenseKey: edgeEntityData.edgeLicenseKey,
-          cloudEndpoint: edgeEntityData.cloudEndpoint !== '' ? edgeEntityData.cloudEndpoint : window.location.origin,
           routingKey: edgeEntityData.routingKey !== '' ? edgeEntityData.routingKey : guid(),
           secret: edgeEntityData.secret !== '' ? edgeEntityData.secret : generateSecret(20)
         };
@@ -1115,8 +1097,6 @@ export class EntityService {
         const edgeEntityData: EdgeImportEntityData = entityData as EdgeImportEntityData;
         if (result.label !== edgeEntityData.label ||
           result.type !== edgeEntityData.type ||
-          (edgeEntityData.cloudEndpoint !== '' && result.cloudEndpoint !== edgeEntityData.cloudEndpoint) ||
-          (edgeEntityData.edgeLicenseKey !== '' && result.edgeLicenseKey !== edgeEntityData.edgeLicenseKey) ||
           (edgeEntityData.routingKey !== '' && result.routingKey !== edgeEntityData.routingKey) ||
           (edgeEntityData.secret !== '' && result.secret !== edgeEntityData.secret) ||
           additionalInfo.description !== edgeEntityData.description) {
@@ -1124,12 +1104,6 @@ export class EntityService {
           result.type = edgeEntityData.type;
           result.additionalInfo = additionalInfo;
           result.additionalInfo.description = edgeEntityData.description;
-          if (edgeEntityData.cloudEndpoint !== '') {
-            result.cloudEndpoint = edgeEntityData.cloudEndpoint;
-          }
-          if (edgeEntityData.edgeLicenseKey !== '') {
-            result.edgeLicenseKey = edgeEntityData.edgeLicenseKey;
-          }
           if (edgeEntityData.routingKey !== '') {
             result.routingKey = edgeEntityData.routingKey;
           }

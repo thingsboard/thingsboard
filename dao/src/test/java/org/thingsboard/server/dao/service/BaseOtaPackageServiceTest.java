@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
 public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
@@ -58,7 +59,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     private static final ByteBuffer DATA = ByteBuffer.wrap(new byte[]{(int) DATA_SIZE});
     private static final String URL = "http://firmware.test.org";
 
-    private IdComparator<OtaPackageInfo> idComparator = new IdComparator<>();
+    private final IdComparator<OtaPackageInfo> idComparator = new IdComparator<>();
 
     private TenantId tenantId;
 
@@ -341,7 +342,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     @Test
     public void testSaveFirmwareWithInvalidTenant() {
         OtaPackage firmware = new OtaPackage();
-        firmware.setTenantId(new TenantId(Uuids.timeBased()));
+        firmware.setTenantId(TenantId.fromUUID(Uuids.timeBased()));
         firmware.setDeviceProfileId(deviceProfileId);
         firmware.setType(FIRMWARE);
         firmware.setTitle(TITLE);
@@ -565,7 +566,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         Collections.sort(firmwares, idComparator);
         Collections.sort(loadedFirmwares, idComparator);
 
-        Assert.assertEquals(firmwares, loadedFirmwares);
+        assertThat(firmwares).isEqualTo(loadedFirmwares);
 
         otaPackageService.deleteOtaPackagesByTenantId(tenantId);
 
@@ -620,7 +621,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         Collections.sort(firmwares, idComparator);
         Collections.sort(loadedFirmwares, idComparator);
 
-        Assert.assertEquals(firmwares, loadedFirmwares);
+        assertThat(firmwares).isEqualTo(loadedFirmwares);
 
         otaPackageService.deleteOtaPackagesByTenantId(tenantId);
 

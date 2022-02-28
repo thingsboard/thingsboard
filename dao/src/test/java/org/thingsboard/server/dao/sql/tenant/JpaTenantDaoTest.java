@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,26 @@
 package org.thingsboard.server.dao.sql.tenant;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.github.springtestdbunit.annotation.DatabaseSetup;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
+import org.thingsboard.server.dao.service.BaseTenantProfileServiceTest;
 import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantProfileDao;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -39,40 +46,75 @@ public class JpaTenantDaoTest extends AbstractJpaDaoTest {
     @Autowired
     private TenantDao tenantDao;
 
+    @Autowired
+    private TenantProfileDao tenantProfileDao;
+
+    List<Tenant> createdTenants = new ArrayList<>();
+    TenantProfile tenantProfile;
+
+    @Before
+    public void setUp() throws Exception {
+        tenantProfile = tenantProfileDao.save(TenantId.SYS_TENANT_ID, BaseTenantProfileServiceTest.createTenantProfile("default tenant profile"));
+        assertThat(tenantProfile).as("tenant profile").isNotNull();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        createdTenants.forEach((tenant)-> tenantDao.removeById(TenantId.SYS_TENANT_ID, tenant.getUuidId()));
+        tenantProfileDao.removeById(TenantId.SYS_TENANT_ID, tenantProfile.getUuidId());
+    }
+
     @Test
-    @DatabaseSetup("classpath:dbunit/empty_dataset.xml")
-    public void testFindTenantsByRegion() {
+    //@DatabaseSetup("classpath:dbunit/empty_dataset.xml")
+    public void testFindTenants() {
         createTenants();
-        assertEquals(60, tenantDao.find(AbstractServiceTest.SYSTEM_TENANT_ID).size());
+        assertEquals(30, tenantDao.find(AbstractServiceTest.SYSTEM_TENANT_ID).size());
 
         PageLink pageLink = new PageLink(20, 0, "title");
-        PageData<Tenant> tenants1 = tenantDao.findTenantsByRegion(AbstractServiceTest.SYSTEM_TENANT_ID, "REGION_1", pageLink);
+        PageData<Tenant> tenants1 = tenantDao.findTenants(AbstractServiceTest.SYSTEM_TENANT_ID, pageLink);
         assertEquals(20, tenants1.getData().size());
 
         pageLink = pageLink.nextPageLink();
-        PageData<Tenant> tenants2 = tenantDao.findTenantsByRegion(AbstractServiceTest.SYSTEM_TENANT_ID,"REGION_1",
+        PageData<Tenant> tenants2 = tenantDao.findTenants(AbstractServiceTest.SYSTEM_TENANT_ID,
                 pageLink);
         assertEquals(10, tenants2.getData().size());
 
         pageLink = pageLink.nextPageLink();
-        PageData<Tenant> tenants3 = tenantDao.findTenantsByRegion(AbstractServiceTest.SYSTEM_TENANT_ID,"REGION_1",
+        PageData<Tenant> tenants3 = tenantDao.findTenants(AbstractServiceTest.SYSTEM_TENANT_ID,
                 pageLink);
         assertEquals(0, tenants3.getData().size());
     }
 
     private void createTenants() {
         for (int i = 0; i < 30; i++) {
-            createTenant("REGION_1", "TITLE", i);
-            createTenant("REGION_2", "TITLE", i);
+            createTenant("TITLE", i);
         }
     }
 
-    private void createTenant(String region, String title, int index) {
+    void createTenant(String title, int index) {
         Tenant tenant = new Tenant();
-        tenant.setId(new TenantId(Uuids.timeBased()));
-        tenant.setRegion(region);
+        tenant.setId(TenantId.fromUUID(Uuids.timeBased()));
         tenant.setTitle(title + "_" + index);
-        tenantDao.save(AbstractServiceTest.SYSTEM_TENANT_ID, tenant);
+        tenant.setTenantProfileId(tenantProfile.getId());
+        createdTenants.add(tenantDao.save(TenantId.SYS_TENANT_ID, tenant));
+    }
+
+    @Test
+    //@DatabaseSetup("classpath:dbunit/empty_dataset.xml")
+    public void testIsExistsTenantById() {
+        final UUID uuid = Uuids.timeBased();
+        final TenantId tenantId = new TenantId(uuid);
+        assertThat(tenantDao.existsById(tenantId, uuid)).as("Is tenant exists before save").isFalse();
+
+        final Tenant tenant = new Tenant();
+        tenant.setId(tenantId);
+        tenant.setTitle("Tenant " + uuid);
+        tenant.setTenantProfileId(tenantProfile.getId());
+
+        createdTenants.add(tenantDao.save(TenantId.SYS_TENANT_ID, tenant));
+
+        assertThat(tenantDao.existsById(tenantId, uuid)).as("Is tenant exists after save").isTrue();
+
     }
 
 }

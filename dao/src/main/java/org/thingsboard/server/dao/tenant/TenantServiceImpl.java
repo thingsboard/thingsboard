@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -168,20 +167,20 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
     public PageData<Tenant> findTenants(PageLink pageLink) {
         log.trace("Executing findTenants pageLink [{}]", pageLink);
         Validator.validatePageLink(pageLink);
-        return tenantDao.findTenantsByRegion(new TenantId(EntityId.NULL_UUID), DEFAULT_TENANT_REGION, pageLink);
+        return tenantDao.findTenants(TenantId.SYS_TENANT_ID, pageLink);
     }
 
     @Override
     public PageData<TenantInfo> findTenantInfos(PageLink pageLink) {
         log.trace("Executing findTenantInfos pageLink [{}]", pageLink);
         Validator.validatePageLink(pageLink);
-        return tenantDao.findTenantInfosByRegion(new TenantId(EntityId.NULL_UUID), DEFAULT_TENANT_REGION, pageLink);
+        return tenantDao.findTenantInfos(TenantId.SYS_TENANT_ID, pageLink);
     }
 
     @Override
     public void deleteTenants() {
         log.trace("Executing deleteTenants");
-        tenantsRemover.removeEntities(new TenantId(EntityId.NULL_UUID), DEFAULT_TENANT_REGION);
+        tenantsRemover.removeEntities(TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID);
     }
 
     private DataValidator<Tenant> tenantValidator =
@@ -214,17 +213,17 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
                 }
             };
 
-    private PaginatedRemover<String, Tenant> tenantsRemover =
-            new PaginatedRemover<String, Tenant>() {
+    private PaginatedRemover<TenantId, Tenant> tenantsRemover =
+            new PaginatedRemover<>() {
 
                 @Override
-                protected PageData<Tenant> findEntities(TenantId tenantId, String region, PageLink pageLink) {
-                    return tenantDao.findTenantsByRegion(tenantId, region, pageLink);
+                protected PageData<Tenant> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+                    return tenantDao.findTenants(tenantId, pageLink);
                 }
 
                 @Override
                 protected void removeEntity(TenantId tenantId, Tenant entity) {
-                    deleteTenant(new TenantId(entity.getUuidId()));
+                    deleteTenant(TenantId.fromUUID(entity.getUuidId()));
                 }
             };
 }

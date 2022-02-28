@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,54 +16,47 @@
 package org.thingsboard.server.transport.lwm2m.server.client;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ResourceModel;
+import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mResourceInstance;
+import org.eclipse.leshan.core.node.LwM2mSingleResource;
+import org.eclipse.leshan.core.request.WriteRequest.Mode;
 
-import java.io.Serializable;
-import java.util.stream.Collectors;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
+@Slf4j
 @Data
-public class ResourceValue implements Serializable {
+public class ResourceValue {
 
-    private static final long serialVersionUID = -228268906779089402L;
-
-    private TbLwM2MResource lwM2mResource;
-    private TbResourceModel resourceModel;
+    private LwM2mResource lwM2mResource;
+    private ResourceModel resourceModel;
 
     public ResourceValue(LwM2mResource lwM2mResource, ResourceModel resourceModel) {
-        this.lwM2mResource = toTbLwM2MResource(lwM2mResource);
-        this.resourceModel = toTbResourceModel(resourceModel);
+        this.resourceModel = resourceModel;
+        updateLwM2mResource(lwM2mResource, Mode.UPDATE);
     }
 
-    public void setLwM2mResource(LwM2mResource lwM2mResource) {
-        this.lwM2mResource = toTbLwM2MResource(lwM2mResource);
-    }
-
-    public void setResourceModel(ResourceModel resourceModel) {
-        this.resourceModel = toTbResourceModel(resourceModel);
-    }
-
-    private static TbLwM2MResource toTbLwM2MResource(LwM2mResource lwM2mResource) {
-        if (lwM2mResource.isMultiInstances()) {
-            if ( lwM2mResource.getInstances().values().size() > 0) {
-                TbLwM2MResourceInstance [] instances =  lwM2mResource.getInstances().values().stream().map(ResourceValue::toTbLwM2MResourceInstance).collect(Collectors.toSet()).toArray(new TbLwM2MResourceInstance[0]);
-                return new TbLwM2MMultipleResource(lwM2mResource.getId(), lwM2mResource.getType(), instances);
+    public void updateLwM2mResource(LwM2mResource lwM2mResource, Mode mode) {
+        if (lwM2mResource instanceof LwM2mSingleResource) {
+            this.lwM2mResource = LwM2mSingleResource.newResource(lwM2mResource.getId(), lwM2mResource.getValue(), lwM2mResource.getType());
+        } else if (lwM2mResource instanceof LwM2mMultipleResource) {
+            if (lwM2mResource.getInstances().values().size() > 0) {
+                Set<LwM2mResourceInstance> instancesSet = new HashSet<>(lwM2mResource.getInstances().values());
+                if (Mode.REPLACE.equals(mode) && this.lwM2mResource != null) {
+                    Map<Integer, LwM2mResourceInstance> oldInstances = this.lwM2mResource.getInstances();
+                    oldInstances.values().forEach(v -> {
+                        if (instancesSet.stream().noneMatch(vIns -> v.getId() == vIns.getId())) {
+                            instancesSet.add(v);
+                        }
+                    });
+                }
+                LwM2mResourceInstance[] instances = instancesSet.toArray(new LwM2mResourceInstance[0]);
+                this.lwM2mResource = new LwM2mMultipleResource(lwM2mResource.getId(), lwM2mResource.getType(), instances);
             }
-            else {
-                return new TbLwM2MMultipleResource(lwM2mResource.getId(), lwM2mResource.getType(), new TbLwM2MResourceInstance[0]);
-            }
-        } else  {
-            return new TbLwM2MSingleResource(lwM2mResource.getId(), lwM2mResource.getValue(), lwM2mResource.getType());
         }
-    }
-
-    private static TbLwM2MResourceInstance toTbLwM2MResourceInstance(LwM2mResourceInstance instance) {
-        return new TbLwM2MResourceInstance(instance.getId(), instance.getValue(), instance.getType());
-    }
-
-    private static TbResourceModel toTbResourceModel(ResourceModel resourceModel) {
-        return new TbResourceModel(resourceModel.id, resourceModel.name, resourceModel.operations, resourceModel.multiple,
-                resourceModel.mandatory, resourceModel.type, resourceModel.rangeEnumeration, resourceModel.units, resourceModel.description);
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
-import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportUtil;
+import org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil;
 
 public interface HasVersionedId {
 
     String getVersionedId();
 
     default String getObjectId(){
-        return LwM2mTransportUtil.fromVersionedIdToObjectId(getVersionedId());
+        return LwM2MTransportUtil.fromVersionedIdToObjectId(getVersionedId());
     }
 
 }

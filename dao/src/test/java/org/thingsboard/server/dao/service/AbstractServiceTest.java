@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ public abstract class AbstractServiceTest {
 
     protected ObjectMapper mapper = new ObjectMapper();
 
-    public static final TenantId SYSTEM_TENANT_ID = new TenantId(EntityId.NULL_UUID);
+    public static final TenantId SYSTEM_TENANT_ID = TenantId.SYS_TENANT_ID;
 
     @Autowired
     protected UserService userService;
@@ -173,7 +173,7 @@ public abstract class AbstractServiceTest {
 
     protected Event generateEvent(TenantId tenantId, EntityId entityId, String eventType, String eventUid) throws IOException {
         if (tenantId == null) {
-            tenantId = new TenantId(Uuids.timeBased());
+            tenantId = TenantId.fromUUID(Uuids.timeBased());
         }
         Event event = new Event();
         event.setTenantId(tenantId);
@@ -249,8 +249,6 @@ public abstract class AbstractServiceTest {
         edge.setType(type);
         edge.setSecret(RandomStringUtils.randomAlphanumeric(20));
         edge.setRoutingKey(RandomStringUtils.randomAlphanumeric(20));
-        edge.setEdgeLicenseKey(RandomStringUtils.randomAlphanumeric(20));
-        edge.setCloudEndpoint("http://localhost:8080");
         return edge;
     }
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import { LogoComponent } from '@shared/components/logo.component';
 import { TbSnackBarComponent, ToastDirective } from '@shared/components/toast.directive';
 import { BreadcrumbComponent } from '@shared/components/breadcrumb.component';
 import { FlowInjectionToken, NgxFlowModule } from '@flowjs/ngx-flow';
-import { NgxFlowchartModule } from 'ngx-flowchart/dist/ngx-flowchart';
+import { NgxFlowchartModule } from 'ngx-flowchart';
 import Flow from '@flowjs/flow.js';
 
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
@@ -94,6 +94,7 @@ import { SocialSharePanelComponent } from '@shared/components/socialshare-panel.
 import { RelationTypeAutocompleteComponent } from '@shared/components/relation/relation-type-autocomplete.component';
 import { EntityListSelectComponent } from '@shared/components/entity/entity-list-select.component';
 import { JsonObjectEditComponent } from '@shared/components/json-object-edit.component';
+import { JsonObjectViewComponent, } from '@shared/components/json-object-view.component';
 import { FooterFabButtonsComponent } from '@shared/components/footer-fab-buttons.component';
 import { CircularProgressDirective } from '@shared/components/circular-progress.directive';
 import {
@@ -132,7 +133,7 @@ import { NavTreeComponent } from '@shared/components/nav-tree.component';
 import { LedLightComponent } from '@shared/components/led-light.component';
 import { TbJsonToStringDirective } from '@shared/components/directives/tb-json-to-string.directive';
 import { JsonObjectEditDialogComponent } from '@shared/components/dialog/json-object-edit-dialog.component';
-import { HistorySelectorComponent } from './components/time/history-selector/history-selector.component';
+import { HistorySelectorComponent } from '@shared/components/time/history-selector/history-selector.component';
 import { EntityGatewaySelectComponent } from '@shared/components/entity/entity-gateway-select.component';
 import { DndModule } from 'ngx-drag-drop';
 import { QueueTypeListComponent } from '@shared/components/queue/queue-type-list.component';
@@ -149,13 +150,15 @@ import { TogglePasswordComponent } from '@shared/components/button/toggle-passwo
 import { HelpPopupComponent } from '@shared/components/help-popup.component';
 import { TbPopoverComponent, TbPopoverDirective } from '@shared/components/popover.component';
 import { TbStringTemplateOutletDirective } from '@shared/components/directives/sring-template-outlet.directive';
-import { TbComponentOutletDirective} from '@shared/components/directives/component-outlet.directive';
+import { TbComponentOutletDirective } from '@shared/components/directives/component-outlet.directive';
 import { HelpMarkdownComponent } from '@shared/components/help-markdown.component';
 import { MarkedOptionsService } from '@shared/components/marked-options.service';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { HELP_MARKDOWN_COMPONENT_TOKEN, SHARED_MODULE_TOKEN } from '@shared/components/tokens';
 import { TbMarkdownComponent } from '@shared/components/markdown.component';
-import { ProtobufContentComponent } from './components/protobuf-content.component';
+import { ProtobufContentComponent } from '@shared/components/protobuf-content.component';
+import { CssComponent } from '@shared/components/css.component';
+import { SafePipe } from '@shared/pipe/safe.pipe';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -170,6 +173,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TruncatePipe,
     TbJsonPipe,
     FileSizePipe,
+    SafePipe,
     {
       provide: FlowInjectionToken,
       useValue: Flow
@@ -231,8 +235,10 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
     JsonObjectEditComponent,
+    JsonObjectViewComponent,
     JsonContentComponent,
     JsFuncComponent,
+    CssComponent,
     FabTriggerDirective,
     FabActionsDirective,
     FabToolbarComponent,
@@ -259,6 +265,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TruncatePipe,
     TbJsonPipe,
     FileSizePipe,
+    SafePipe,
     SelectableColumnsPipe,
     KeyboardShortcutPipe,
     TbJsonToStringDirective,
@@ -376,8 +383,10 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
     JsonObjectEditComponent,
+    JsonObjectViewComponent,
     JsonContentComponent,
     JsFuncComponent,
+    CssComponent,
     FabTriggerDirective,
     FabActionsDirective,
     FabToolbarComponent,
@@ -451,7 +460,9 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TbJsonPipe,
     KeyboardShortcutPipe,
     FileSizePipe,
+    SafePipe,
     SelectableColumnsPipe,
+    RouterModule,
     TranslateModule,
     JsonObjectEditDialogComponent,
     HistorySelectorComponent,

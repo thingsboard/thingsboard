@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +16,20 @@
 package org.thingsboard.server.service;
 
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.extensions.cpsuite.ClasspathSuite;
 import org.junit.runner.RunWith;
-import org.thingsboard.server.dao.CustomSqlUnit;
 import org.thingsboard.server.queue.memory.InMemoryStorage;
-
-import java.util.Arrays;
 
 @RunWith(ClasspathSuite.class)
 @ClasspathSuite.ClassnameFilters({
         "org.thingsboard.server.service.resource.sql.*Test",
-        })
+        "org.thingsboard.server.service.sql.*Test"
+})
 public class ServiceSqlTestSuite {
 
-    @ClassRule
-    public static CustomSqlUnit sqlUnit = new CustomSqlUnit(
-            Arrays.asList("sql/schema-types-hsql.sql", "sql/schema-ts-hsql.sql", "sql/schema-entities-hsql.sql", "sql/schema-entities-idx.sql", "sql/system-data.sql"),
-            "sql/hsql/drop-all-tables.sql",
-            "sql-test.properties");
-
     @BeforeClass
-    public static void cleanupInMemStorage(){
+    public static void cleanupInMemStorage() {
         InMemoryStorage.getInstance().cleanup();
     }
+
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,28 +34,12 @@ import java.util.UUID;
 public interface EventDao extends Dao<Event> {
 
     /**
-     * Save or update event object
-     *
-     * @param event the event object
-     * @return saved event object
-     */
-    Event save(TenantId tenantId, Event event);
-
-    /**
      * Save or update event object async
      *
      * @param event the event object
      * @return saved event object future
      */
-    ListenableFuture<Event> saveAsync(Event event);
-
-    /**
-     * Save event object if it is not yet saved
-     *
-     * @param event the event object
-     * @return saved event object
-     */
-    Optional<Event> saveIfNotExists(Event event);
+    ListenableFuture<Void> saveAsync(Event event);
 
     /**
      * Find event by tenantId, entityId and eventUid.
@@ -104,8 +88,10 @@ public interface EventDao extends Dao<Event> {
 
     /**
      * Executes stored procedure to cleanup old events. Uses separate ttl for debug and other events.
-     * @param otherEventsTtl the ttl for events in seconds
-     * @param debugEventsTtl the ttl for debug events in seconds
+     * @param regularEventStartTs the start time of the interval to use to delete non debug events
+     * @param regularEventEndTs the end time of the interval to use to delete non debug events
+     * @param debugEventStartTs the start time of the interval to use to delete debug events
+     * @param debugEventEndTs the end time of the interval to use to delete debug events
      */
-    void cleanupEvents(long otherEventsTtl, long debugEventsTtl);
+    void cleanupEvents(long regularEventStartTs, long regularEventEndTs, long debugEventStartTs, long debugEventEndTs);
 }

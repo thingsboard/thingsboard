@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import { finalize, share } from 'rxjs/operators';
 import { Datasource } from '@app/shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { EntityType, baseDetailsPageByEntityType } from '@shared/models/entity-type.models';
 
 const varsRegex = /\${([^}]*)}/g;
 
@@ -114,6 +115,10 @@ export function isNumeric(value: any): boolean {
   return (value - parseFloat(value) + 1) >= 0;
 }
 
+export function isBoolean(value: any): boolean {
+  return typeof value === 'boolean';
+}
+
 export function isString(value: any): boolean {
   return typeof value === 'string';
 }
@@ -178,6 +183,12 @@ export function objToBase64(obj: any): string {
     function toSolidBytes(match, p1) {
       return String.fromCharCode(Number('0x' + p1));
     }));
+}
+
+export function base64toString(b64Encoded: string): string {
+  return decodeURIComponent(atob(b64Encoded).split('').map((c) => {
+    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+  }).join(''));
 }
 
 export function objToBase64URI(obj: any): string {
@@ -455,4 +466,8 @@ export function randomAlphanumeric(length: number): string {
     result += alphanumericCharacters.charAt(Math.floor(Math.random() * alphanumericCharactersLength));
   }
   return result;
+}
+
+export function getEntityDetailsPageURL(id: string, entityType: EntityType): string {
+  return `${baseDetailsPageByEntityType.get(entityType)}/${id}`;
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, forwardRef, Input, OnDestroy } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -28,20 +28,11 @@ import {
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
   ATTRIBUTE,
-  BingingMode,
-  BingingModeTranslationsMap,
-  DEFAULT_BINDING,
   DEFAULT_EDRX_CYCLE,
   DEFAULT_FW_UPDATE_RESOURCE,
-  DEFAULT_ID_SERVER,
-  DEFAULT_LIFE_TIME,
-  DEFAULT_MIN_PERIOD,
-  DEFAULT_NOTIF_IF_DESIBLED,
   DEFAULT_PAGING_TRANSMISSION_WINDOW,
   DEFAULT_PSM_ACTIVITY_TIMER,
   DEFAULT_SW_UPDATE_RESOURCE,
-  getDefaultBootstrapServerSecurityConfig,
-  getDefaultLwM2MServerSecurityConfig,
   Instance,
   INSTANCES,
   KEY_NAME,
@@ -60,6 +51,9 @@ import { Direction } from '@shared/models/page/sort-order';
 import _ from 'lodash';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { Lwm2mSecurityType } from '@shared/models/lwm2m-security-config.models';
+import { DialogService } from '@core/services/dialog.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-profile-lwm2m-device-transport-configuration',
@@ -79,12 +73,12 @@ import { takeUntil } from 'rxjs/operators';
 })
 export class Lwm2mDeviceProfileTransportConfigurationComponent implements ControlValueAccessor, Validator, OnDestroy {
 
+  public disabled = false;
+  public isTransportWasRunWithBootstrap = true;
+  public isBootstrapServerUpdateEnable: boolean;
   private requiredValue: boolean;
-  private disabled = false;
   private destroy$ = new Subject();
 
-  bindingModeTypes = Object.values(BingingMode);
-  bindingModeTypeNamesMap = BingingModeTranslationsMap;
   lwm2mDeviceProfileFormGroup: FormGroup;
   configurationValue: Lwm2mProfileConfigModels;
   sortFunction: (key: string, value: object) => object;
@@ -98,25 +92,22 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     this.requiredValue = coerceBooleanProperty(value);
   }
 
+  @Input()
+  isAdd: boolean;
+
   private propagateChange = (v: any) => {
   }
 
-  constructor(private fb: FormBuilder,
+  constructor(public translate: TranslateService,
+              private fb: FormBuilder,
+              private cd: ChangeDetectorRef,
+              private dialogService: DialogService,
               private deviceProfileService: DeviceProfileService) {
     this.lwm2mDeviceProfileFormGroup = this.fb.group({
       objectIds: [null],
       observeAttrTelemetry: [null],
-      bootstrap: this.fb.group({
-        servers: this.fb.group({
-          binding: [DEFAULT_BINDING],
-          shortId: [DEFAULT_ID_SERVER, [Validators.required, Validators.min(1), Validators.max(65534), Validators.pattern('[0-9]*')]],
-          lifetime: [DEFAULT_LIFE_TIME, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
-          notifIfDisabled: [DEFAULT_NOTIF_IF_DESIBLED, []],
-          defaultMinPeriod: [DEFAULT_MIN_PERIOD, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
-        }),
-        bootstrapServer: [null, Validators.required],
-        lwm2mServer: [null, Validators.required]
-      }),
+      bootstrapServerUpdateEnable: [false],
+      bootstrap: [[]],
       clientLwM2mSettings: this.fb.group({
         clientOnlyObserveAfterConnect: [1, []],
         fwUpdateStrategy: [1, []],
@@ -130,6 +121,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         compositeOperationsSupport: [false]
       })
     });
+
     this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateStrategy').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((fwStrategy) => {
@@ -141,6 +133,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
           .reset(DEFAULT_FW_UPDATE_RESOURCE, {emitEvent: false});
       }
     });
+
     this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateStrategy').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((swStrategy) => {
@@ -152,6 +145,39 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
           .reset(DEFAULT_SW_UPDATE_RESOURCE, {emitEvent: false});
       }
     });
+
+    this.lwm2mDeviceProfileFormGroup.get('bootstrapServerUpdateEnable').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((value) => {
+      if (!value) {
+        const bootstrap = this.lwm2mDeviceProfileFormGroup.get('bootstrap').value;
+        const bootstrapResultArray = bootstrap.filter(server => server.bootstrapServerIs === true);
+        if (bootstrapResultArray.length) {
+          this.dialogService.confirm(
+            this.translate.instant('device-profile.lwm2m.bootstrap-update-title'),
+            this.translate.instant('device-profile.lwm2m.bootstrap-update-text'),
+            this.translate.instant('action.no'),
+            this.translate.instant('action.yes'),
+          ).pipe(
+            takeUntil(this.destroy$)
+          ).subscribe((result) => {
+            if (result) {
+              this.isBootstrapServerUpdateEnable = value;
+            } else {
+              this.lwm2mDeviceProfileFormGroup.patchValue({
+                bootstrapServerUpdateEnable: true
+              }, {emitEvent: true});
+            }
+            this.cd.markForCheck();
+          });
+        } else {
+          this.isBootstrapServerUpdateEnable = value;
+        }
+      } else {
+        this.isBootstrapServerUpdateEnable = value;
+      }
+    });
+
     this.lwm2mDeviceProfileFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((value) => {
@@ -187,9 +213,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   async writeValue(value: Lwm2mProfileConfigModels | null) {
     if (isDefinedAndNotNull(value) && (value?.clientLwM2mSettings || value?.observeAttr || value?.bootstrap)) {
       this.configurationValue = value;
-      const defaultFormSettings = value.clientLwM2mSettings.fwUpdateStrategy === 1 &&
-        isUndefined(value.clientLwM2mSettings.fwUpdateResource);
-      if (defaultFormSettings) {
+      if (this.isAdd) {
         await this.defaultProfileConfig();
       }
       this.initWriteValue();
@@ -203,23 +227,20 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   private async defaultProfileConfig(): Promise<void> {
-    let bootstrap: ServerSecurityConfig;
     let lwm2m: ServerSecurityConfig;
-    try {
-      [bootstrap, lwm2m] = await Promise.all([
-        this.deviceProfileService.getLwm2mBootstrapSecurityInfoBySecurityType(true).toPromise(),
-        this.deviceProfileService.getLwm2mBootstrapSecurityInfoBySecurityType(false).toPromise()
-      ]);
-    } catch (e) {
-      bootstrap = getDefaultBootstrapServerSecurityConfig();
-      lwm2m = getDefaultLwM2MServerSecurityConfig();
+    let bootstrap: ServerSecurityConfig;
+    [bootstrap, lwm2m] = await Promise.all([
+      this.deviceProfileService.getLwm2mBootstrapSecurityInfoBySecurityType(true).toPromise(),
+      this.deviceProfileService.getLwm2mBootstrapSecurityInfoBySecurityType(false).toPromise(),
+    ]);
+    if (lwm2m) {
+      lwm2m.securityMode = Lwm2mSecurityType.NO_SEC;
     }
-
-    this.configurationValue.bootstrap.bootstrapServer = bootstrap;
-    this.configurationValue.bootstrap.lwm2mServer = lwm2m;
+    this.isTransportWasRunWithBootstrap = !!bootstrap;
+    this.configurationValue.bootstrap = [lwm2m];
     this.lwm2mDeviceProfileFormGroup.patchValue({
       bootstrap: this.configurationValue.bootstrap
-    }, {emitEvent: false});
+    }, {emitEvent: true});
   }
 
   private initWriteValue = (): void => {
@@ -244,6 +265,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         objectIds: value,
         observeAttrTelemetry: this.getObserveAttrTelemetryObjects(value),
         bootstrap: this.configurationValue.bootstrap,
+        bootstrapServerUpdateEnable: this.configurationValue.bootstrapServerUpdateEnable || false,
         clientLwM2mSettings: {
           clientOnlyObserveAfterConnect: this.configurationValue.clientLwM2mSettings.clientOnlyObserveAfterConnect,
           fwUpdateStrategy: this.configurationValue.clientLwM2mSettings.fwUpdateStrategy || 1,
@@ -259,11 +281,13 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         }
       },
       {emitEvent: false});
+    this.isBootstrapServerUpdateEnable = this.configurationValue.bootstrapServerUpdateEnable || false;
     if (!this.disabled) {
       this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.powerMode').updateValueAndValidity({onlySelf: true});
       this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateStrategy').updateValueAndValidity({onlySelf: true});
       this.lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateStrategy').updateValueAndValidity({onlySelf: true});
     }
+    this.cd.markForCheck();
   }
 
   private updateModel = (): void => {
@@ -282,13 +306,12 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   private updateDeviceProfileValue(config): void {
-    if (this.lwm2mDeviceProfileFormGroup.valid) {
+    if (this.lwm2mDeviceProfileFormGroup.valid && config.observeAttrTelemetry) {
       this.updateObserveAttrTelemetryFromGroupToJson(config.observeAttrTelemetry);
     }
-    this.configurationValue.bootstrap.bootstrapServer = config.bootstrap.bootstrapServer;
-    this.configurationValue.bootstrap.lwm2mServer = config.bootstrap.lwm2mServer;
-    this.configurationValue.bootstrap.servers = config.bootstrap.servers;
+    this.configurationValue.bootstrap = config.bootstrap;
     this.configurationValue.clientLwM2mSettings = config.clientLwM2mSettings;
+    this.configurationValue.bootstrapServerUpdateEnable = config.bootstrapServerUpdateEnable;
     this.updateModel();
   }
 

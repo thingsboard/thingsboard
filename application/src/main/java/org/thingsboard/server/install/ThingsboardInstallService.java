@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -210,7 +210,14 @@ public class ThingsboardInstallService {
                             log.info("Upgrading ThingsBoard from version 3.3.0 to 3.3.1 ...");
                         case "3.3.1":
                             log.info("Upgrading ThingsBoard from version 3.3.1 to 3.3.2 ...");
+                        case "3.3.2":
+                            log.info("Upgrading ThingsBoard from version 3.3.2 to 3.3.3 ...");
+                            databaseEntitiesUpgradeService.upgradeDatabase("3.3.2");
+                            dataUpdateService.updateData("3.3.2");
+                        case "3.3.3":
+                            log.info("Upgrading ThingsBoard from version 3.3.3 to 3.3.4 ...");
                             log.info("Updating system data...");
+                            databaseEntitiesUpgradeService.upgradeDatabase("3.3.3");
                             systemDataLoaderService.updateSystemWidgets();
                             break;
 

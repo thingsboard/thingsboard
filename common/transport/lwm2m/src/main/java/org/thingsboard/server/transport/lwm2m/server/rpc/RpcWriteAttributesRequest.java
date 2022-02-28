@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@ package org.thingsboard.server.transport.lwm2m.server.rpc;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.device.data.lwm2m.ObjectAttributes;
+import org.thingsboard.server.common.data.device.profile.lwm2m.ObjectAttributes;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class RpcWriteAttributesRequest extends IdOrKeyRequest {
+public class RpcWriteAttributesRequest extends LwM2MRpcRequestHeader {
 
     private ObjectAttributes attributes;
 

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ export * from './telemetry/telemetry.models';
 export * from './time/time.models';
 export * from './alarm.models';
 export * from './alias.models';
+export * from './asset.models';
 export * from './audit-log.models';
 export * from './authority.enum';
 export * from './base-data';

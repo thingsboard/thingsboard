@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,16 @@
  */
 package org.thingsboard.server.rules.lifecycle;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.DataConstants;
@@ -42,11 +45,16 @@ import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.controller.AbstractRuleEngineControllerTest;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.queue.memory.InMemoryStorage;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.awaitility.Awaitility.await;
+import static org.mockito.Mockito.spy;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -64,8 +72,26 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
     @Autowired
     protected AttributesService attributesService;
 
+    @Autowired
+    protected EventService eventService;
+
     @Before
     public void beforeTest() throws Exception {
+
+        EventService spyEventService = spy(eventService);
+
+        Mockito.doAnswer((Answer<ListenableFuture<Void>>) invocation -> {
+            Object[] args = invocation.getArguments();
+            Event event = (Event) args[0];
+            ListenableFuture<Void> future = eventService.saveAsync(event);
+            try {
+                future.get();
+            } catch (Exception e) {}
+            return future;
+        }).when(spyEventService).saveAsync(Mockito.any(Event.class));
+
+        ReflectionTestUtils.setField(actorSystem, "eventService", spyEventService);
+
         loginSysAdmin();
 
         Tenant tenant = new Tenant();
@@ -132,14 +158,17 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
         attributesService.save(device.getTenantId(), device.getId(), DataConstants.SERVER_SCOPE,
                 Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey", "serverAttributeValue"), System.currentTimeMillis())));
 
+        await("total inMemory queue lag is empty").atMost(30, TimeUnit.SECONDS)
+                .until(() -> InMemoryStorage.getInstance().getLagTotal() == 0);
         Thread.sleep(1000);
 
         TbMsgCallback tbMsgCallback = Mockito.mock(TbMsgCallback.class);
+        Mockito.when(tbMsgCallback.isMsgValid()).thenReturn(true);
         TbMsg tbMsg = TbMsg.newMsg("CUSTOM", device.getId(), new TbMsgMetaData(), "{}", tbMsgCallback);
         QueueToRuleEngineMsg qMsg = new QueueToRuleEngineMsg(savedTenant.getId(), tbMsg, null, null);
         // Pushing Message to the system
         actorSystem.tell(qMsg);
-        Mockito.verify(tbMsgCallback, Mockito.timeout(3000)).onSuccess();
+        Mockito.verify(tbMsgCallback, Mockito.timeout(10000)).onSuccess();
 
 
         PageData<Event> eventsPage = getDebugEvents(savedTenant.getId(), ruleChain.getFirstRuleNodeId(), 1000);

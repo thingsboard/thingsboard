@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.PongMessage;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.adapter.NativeWebSocketSession;
@@ -36,6 +37,7 @@ import org.thingsboard.server.config.WebSocketConfiguration;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
+import org.thingsboard.server.service.telemetry.DefaultTelemetryWebSocketService;
 import org.thingsboard.server.service.telemetry.SessionEvent;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketMsgEndpoint;
 import org.thingsboard.server.service.telemetry.TelemetryWebSocketService;
@@ -56,6 +58,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import static org.thingsboard.server.service.telemetry.DefaultTelemetryWebSocketService.NUMBER_OF_PING_ATTEMPTS;
+
 @Service
 @TbCoreComponent
 @Slf4j
@@ -63,7 +67,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
 
     private static final ConcurrentMap<String, SessionMetaData> internalSessionMap = new ConcurrentHashMap<>();
     private static final ConcurrentMap<String, String> externalSessionMap = new ConcurrentHashMap<>();
-    private static final ByteBuffer PING_MSG = ByteBuffer.wrap(new byte[]{});
+
 
     @Autowired
     private TelemetryWebSocketService webSocketService;
@@ -102,6 +106,22 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
             if (sessionMd != null) {
                 log.trace("[{}][{}] Processing {}", sessionMd.sessionRef.getSecurityCtx().getTenantId(), session.getId(), message.getPayload());
                 webSocketService.handleWebSocketMsg(sessionMd.sessionRef, message.getPayload());
+            } else {
+                log.trace("[{}] Failed to find session", session.getId());
+                session.close(CloseStatus.SERVER_ERROR.withReason("Session not found!"));
+            }
+        } catch (IOException e) {
+            log.warn("IO error", e);
+        }
+    }
+
+    @Override
+    protected void handlePongMessage(WebSocketSession session, PongMessage message) throws Exception {
+        try {
+            SessionMetaData sessionMd = internalSessionMap.get(session.getId());
+            if (sessionMd != null) {
+                log.trace("[{}][{}] Processing pong response {}", sessionMd.sessionRef.getSecurityCtx().getTenantId(), session.getId(), message.getPayload());
+                sessionMd.processPongMessage(System.currentTimeMillis());
             } else {
                 log.trace("[{}] Failed to find session", session.getId());
                 session.close(CloseStatus.SERVER_ERROR.withReason("Session not found!"));
@@ -196,7 +216,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
         private final TelemetryWebSocketSessionRef sessionRef;
 
         private volatile boolean isSending = false;
-        private final Queue<String> msgQueue;
+        private final Queue<TbWebSocketMsg<?>> msgQueue;
 
         private volatile long lastActivityTime;
 
@@ -212,21 +232,36 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
 
         synchronized void sendPing(long currentTime) {
             try {
-                if (currentTime - lastActivityTime >= pingTimeout) {
-                    this.asyncRemote.sendPing(PING_MSG);
-                    lastActivityTime = currentTime;
+                long timeSinceLastActivity = currentTime - lastActivityTime;
+                if (timeSinceLastActivity >= pingTimeout) {
+                    log.warn("[{}] Closing session due to ping timeout", session.getId());
+                    closeSession(CloseStatus.SESSION_NOT_RELIABLE);
+                } else if (timeSinceLastActivity >= pingTimeout / NUMBER_OF_PING_ATTEMPTS) {
+                    sendMsg(TbWebSocketPingMsg.INSTANCE);
                 }
             } catch (Exception e) {
                 log.trace("[{}] Failed to send ping msg", session.getId(), e);
-                try {
-                    close(this.sessionRef, CloseStatus.SESSION_NOT_RELIABLE);
-                } catch (IOException ioe) {
-                    log.trace("[{}] Session transport error", session.getId(), ioe);
-                }
+                closeSession(CloseStatus.SESSION_NOT_RELIABLE);
             }
         }
 
+        private void closeSession(CloseStatus reason) {
+            try {
+                close(this.sessionRef, reason);
+            } catch (IOException ioe) {
+                log.trace("[{}] Session transport error", session.getId(), ioe);
+            }
+        }
+
+        synchronized void processPongMessage(long currentTime) {
+            lastActivityTime = currentTime;
+        }
+
         synchronized void sendMsg(String msg) {
+            sendMsg(new TbWebSocketTextMsg(msg));
+        }
+
+        synchronized void sendMsg(TbWebSocketMsg<?> msg) {
             if (isSending) {
                 try {
                     msgQueue.add(msg);
@@ -236,11 +271,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
                     } else {
                         log.info("[{}][{}] Session closed due to queue error", sessionRef.getSecurityCtx().getTenantId(), session.getId());
                     }
-                    try {
-                        close(sessionRef, CloseStatus.POLICY_VIOLATION.withReason("Max pending updates limit reached!"));
-                    } catch (IOException ioe) {
-                        log.trace("[{}] Session transport error", session.getId(), ioe);
-                    }
+                    closeSession(CloseStatus.POLICY_VIOLATION.withReason("Max pending updates limit reached!"));
                 }
             } else {
                 isSending = true;
@@ -248,16 +279,19 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
             }
         }
 
-        private void sendMsgInternal(String msg) {
+        private void sendMsgInternal(TbWebSocketMsg<?> msg) {
             try {
-                this.asyncRemote.sendText(msg, this);
+                if (TbWebSocketMsgType.TEXT.equals(msg.getType())) {
+                    TbWebSocketTextMsg textMsg = (TbWebSocketTextMsg) msg;
+                    this.asyncRemote.sendText(textMsg.getMsg(), this);
+                } else {
+                    TbWebSocketPingMsg pingMsg = (TbWebSocketPingMsg) msg;
+                    this.asyncRemote.sendPing(pingMsg.getMsg());
+                    processNextMsg();
+                }
             } catch (Exception e) {
                 log.trace("[{}] Failed to send msg", session.getId(), e);
-                try {
-                    close(this.sessionRef, CloseStatus.SESSION_NOT_RELIABLE);
-                } catch (IOException ioe) {
-                    log.trace("[{}] Session transport error", session.getId(), ioe);
-                }
+                closeSession(CloseStatus.SESSION_NOT_RELIABLE);
             }
         }
 
@@ -265,19 +299,18 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements Telemetr
         public void onResult(SendResult result) {
             if (!result.isOK()) {
                 log.trace("[{}] Failed to send msg", session.getId(), result.getException());
-                try {
-                    close(this.sessionRef, CloseStatus.SESSION_NOT_RELIABLE);
-                } catch (IOException ioe) {
-                    log.trace("[{}] Session transport error", session.getId(), ioe);
-                }
+                closeSession(CloseStatus.SESSION_NOT_RELIABLE);
             } else {
-                lastActivityTime = System.currentTimeMillis();
-                String msg = msgQueue.poll();
-                if (msg != null) {
-                    sendMsgInternal(msg);
-                } else {
-                    isSending = false;
-                }
+                processNextMsg();
+            }
+        }
+
+        private void processNextMsg() {
+            TbWebSocketMsg<?> msg = msgQueue.poll();
+            if (msg != null) {
+                sendMsgInternal(msg);
+            } else {
+                isSending = false;
             }
         }
     }

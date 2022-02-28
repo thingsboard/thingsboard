@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 import { Component, forwardRef, OnDestroy } from '@angular/core';
 import {
-  AbstractControl,
   ControlValueAccessor,
   FormBuilder,
   FormGroup,
@@ -28,9 +27,7 @@ import {
 } from '@angular/forms';
 import {
   getDefaultClientSecurityConfig,
-  getDefaultServerSecurityConfig,
-  KEY_REGEXP_HEX_DEC,
-  LEN_MAX_PSK,
+  getDefaultServerSecurityConfig, Lwm2mClientKeyTooltipTranslationsMap,
   Lwm2mSecurityConfigModels,
   Lwm2mSecurityType,
   Lwm2mSecurityTypeTranslationMap
@@ -63,8 +60,7 @@ export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Va
   securityConfigLwM2MType = Lwm2mSecurityType;
   securityConfigLwM2MTypes = Object.keys(Lwm2mSecurityType);
   credentialTypeLwM2MNamesMap = Lwm2mSecurityTypeTranslationMap;
-  lenMaxKeyClient = LEN_MAX_PSK;
-  allowLengthKey = [32, 64, LEN_MAX_PSK];
+  clientKeyTooltipNamesMap = Lwm2mClientKeyTooltipTranslationsMap;
 
   private destroy$ = new Subject();
   private propagateChange = (v: any) => {};
@@ -135,12 +131,10 @@ export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Va
         this.lwm2mConfigFormGroup.get('client.cert').enable({emitEvent: false});
         break;
       case Lwm2mSecurityType.PSK:
-        this.lenMaxKeyClient = LEN_MAX_PSK;
         this.setValidatorsPskRpk(mode);
         this.lwm2mConfigFormGroup.get('client.identity').enable({emitEvent: false});
         break;
       case Lwm2mSecurityType.RPK:
-        this.lenMaxKeyClient = null;
         this.setValidatorsPskRpk(mode);
         this.lwm2mConfigFormGroup.get('client.identity').disable({emitEvent: false});
         break;
@@ -157,26 +151,14 @@ export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Va
   }
 
   private setValidatorsPskRpk = (mode: Lwm2mSecurityType): void => {
-    const keyValidators = [Validators.required, Validators.pattern(KEY_REGEXP_HEX_DEC)];
     if (mode === Lwm2mSecurityType.PSK) {
       this.lwm2mConfigFormGroup.get('client.identity').setValidators([Validators.required]);
-      keyValidators.push(this.maxLength(this.allowLengthKey));
     } else {
       this.lwm2mConfigFormGroup.get('client.identity').clearValidators();
     }
-    this.lwm2mConfigFormGroup.get('client.key').setValidators(keyValidators);
+    this.lwm2mConfigFormGroup.get('client.key').setValidators([Validators.required]);
     this.lwm2mConfigFormGroup.get('client.key').enable({emitEvent: false});
     this.lwm2mConfigFormGroup.get('client.cert').disable({emitEvent: false});
-  }
-
-  private maxLength(keyLengths: number[]) {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const value = control.value;
-      if (keyLengths.some(len => value.length === len)) {
-        return null;
-      }
-      return {length: true};
-    };
   }
 
   private initLwm2mConfigForm = (): FormGroup => {

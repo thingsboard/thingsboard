@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ import {
   validateEntityId
 } from '@core/utils';
 import {
-  IDynamicWidgetComponent, ShowWidgetHeaderActionFunction,
+  IDynamicWidgetComponent, ShowWidgetHeaderActionFunction, updateEntityParams,
   WidgetContext,
   WidgetHeaderAction,
   WidgetInfo,
@@ -107,9 +107,11 @@ import { ComponentType } from '@angular/cdk/portal';
 import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/embed-dashboard-dialog-token';
 import { MobileService } from '@core/services/mobile.service';
 import { DialogService } from '@core/services/dialog.service';
-import { DashboardPageComponent } from '@home/components/dashboard-page/dashboard-page.component';
 import { PopoverPlacement } from '@shared/components/popover.models';
 import { TbPopoverService } from '@shared/components/popover.service';
+import {
+  DASHBOARD_PAGE_COMPONENT_TOKEN
+} from '@home/components/tokens';
 
 @Component({
   selector: 'tb-widget',
@@ -183,6 +185,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               private renderer: Renderer2,
               private popoverService: TbPopoverService,
               @Inject(EMBED_DASHBOARD_DIALOG_TOKEN) private embedDashboardDialogComponent: ComponentType<any>,
+              @Inject(DASHBOARD_PAGE_COMPONENT_TOKEN) private dashboardPageComponent: ComponentType<any>,
               private widgetService: WidgetService,
               private resources: ResourcesService,
               private timeService: TimeService,
@@ -1065,9 +1068,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     switch (type) {
       case WidgetActionType.openDashboardState:
       case WidgetActionType.updateDashboardState:
-        let targetDashboardStateId = descriptor.targetDashboardStateId;
         const params = deepClone(this.widgetContext.stateController.getStateParams());
-        this.updateEntityParams(params, targetEntityParamName, targetEntityId, entityName, entityLabel);
+        updateEntityParams(params, targetEntityParamName, targetEntityId, entityName, entityLabel);
         if (type === WidgetActionType.openDashboardState) {
           if (descriptor.openInPopover) {
             this.openDashboardStateInPopover($event, descriptor.targetDashboardStateId, params,
@@ -1077,20 +1079,19 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             this.openDashboardStateInSeparateDialog(descriptor.targetDashboardStateId, params, descriptor.dialogTitle,
               descriptor.dialogHideDashboardToolbar, descriptor.dialogWidth, descriptor.dialogHeight);
           } else {
-            this.widgetContext.stateController.openState(targetDashboardStateId, params, descriptor.openRightLayout);
+            this.widgetContext.stateController.openState(descriptor.targetDashboardStateId, params, descriptor.openRightLayout);
           }
         } else {
-          this.widgetContext.stateController.updateState(targetDashboardStateId, params, descriptor.openRightLayout);
+          this.widgetContext.stateController.updateState(descriptor.targetDashboardStateId, params, descriptor.openRightLayout);
         }
         break;
       case WidgetActionType.openDashboard:
         const targetDashboardId = descriptor.targetDashboardId;
-        targetDashboardStateId = descriptor.targetDashboardStateId;
         const stateObject: StateObject = {};
         stateObject.params = {};
-        this.updateEntityParams(stateObject.params, targetEntityParamName, targetEntityId, entityName, entityLabel);
-        if (targetDashboardStateId) {
-          stateObject.id = targetDashboardStateId;
+        updateEntityParams(stateObject.params, targetEntityParamName, targetEntityId, entityName, entityLabel);
+        if (descriptor.targetDashboardStateId) {
+          stateObject.id = descriptor.targetDashboardStateId;
         }
         const state = objToBase64URI([ stateObject ]);
         const isSinglePage = this.route.snapshot.data.singlePageMode;
@@ -1354,10 +1355,10 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         ]
       });
       const component = this.popoverService.displayPopover(trigger, this.renderer,
-        this.widgetContentContainer, DashboardPageComponent, preferredPlacement, hideOnClickOutside,
+        this.widgetContentContainer, this.dashboardPageComponent, preferredPlacement, hideOnClickOutside,
         injector,
         {
-          embed: true,
+          embedded: true,
           syncStateWithQueryParam: false,
           hideToolbar: hideDashboardToolbar,
           currentState: objToBase64([stateObject]),
@@ -1436,30 +1437,6 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         const entityName = entityInfo ? entityInfo.entityName : null;
         const entityLabel = entityInfo && entityInfo.entityLabel ? entityInfo.entityLabel : null;
         this.handleWidgetAction($event, descriptor, entityId, entityName, null, entityLabel);
-      }
-    }
-  }
-
-  private updateEntityParams(params: StateParams, targetEntityParamName?: string, targetEntityId?: EntityId,
-                             entityName?: string, entityLabel?: string) {
-    if (targetEntityId) {
-      let targetEntityParams: StateParams;
-      if (targetEntityParamName && targetEntityParamName.length) {
-        targetEntityParams = params[targetEntityParamName];
-        if (!targetEntityParams) {
-          targetEntityParams = {};
-          params[targetEntityParamName] = targetEntityParams;
-          params.targetEntityParamName = targetEntityParamName;
-        }
-      } else {
-        targetEntityParams = params;
-      }
-      targetEntityParams.entityId = targetEntityId;
-      if (entityName) {
-        targetEntityParams.entityName = entityName;
-      }
-      if (entityLabel) {
-        targetEntityParams.entityLabel = entityLabel;
       }
     }
   }

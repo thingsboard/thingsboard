@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -52,11 +52,13 @@ export class AuditLogTableConfig extends EntityTableConfig<AuditLog, TimePageLin
               public entityId: EntityId = null,
               public userId: UserId = null,
               public customerId: CustomerId = null,
-              updateOnInit = true) {
+              updateOnInit = true,
+              pageMode = false) {
     super();
     this.loadDataOnInit = updateOnInit;
     this.tableTitle = '';
     this.useTimePageLink = true;
+    this.pageMode = pageMode;
     this.detailsPanelEnabled = false;
     this.selectionEnabled = false;
     this.searchEnabled = true;

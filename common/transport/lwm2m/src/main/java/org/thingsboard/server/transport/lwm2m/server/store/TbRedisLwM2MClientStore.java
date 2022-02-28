@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.thingsboard.server.transport.lwm2m.server.store;
 
 import lombok.extern.slf4j.Slf4j;
-import org.nustaq.serialization.FSTConfiguration;
 import org.springframework.data.redis.connection.RedisClusterConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.Cursor;
@@ -29,16 +28,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static org.thingsboard.server.transport.lwm2m.server.store.util.LwM2MClientSerDes.deserialize;
+import static org.thingsboard.server.transport.lwm2m.server.store.util.LwM2MClientSerDes.serialize;
+
 @Slf4j
 public class TbRedisLwM2MClientStore implements TbLwM2MClientStore {
 
     private static final String CLIENT_EP = "CLIENT#EP#";
     private final RedisConnectionFactory connectionFactory;
-    private final FSTConfiguration serializer;
 
     public TbRedisLwM2MClientStore(RedisConnectionFactory redisConnectionFactory) {
         this.connectionFactory = redisConnectionFactory;
-        this.serializer = FSTConfiguration.createDefaultConfiguration();
     }
 
     @Override
@@ -48,7 +48,7 @@ public class TbRedisLwM2MClientStore implements TbLwM2MClientStore {
             if (data == null) {
                 return null;
             } else {
-                return (LwM2mClient) serializer.asObject(data);
+                return deserialize(data);
             }
         }
     }
@@ -70,7 +70,7 @@ public class TbRedisLwM2MClientStore implements TbLwM2MClientStore {
             scans.forEach(scan -> {
                 scan.forEachRemaining(key -> {
                     byte[] element = connection.get(key);
-                    clients.add((LwM2mClient) serializer.asObject(element));
+                    clients.add(deserialize(element));
                 });
             });
             return clients;
@@ -82,7 +82,7 @@ public class TbRedisLwM2MClientStore implements TbLwM2MClientStore {
         if (client.getState().equals(LwM2MClientState.UNREGISTERED)) {
             log.error("[{}] Client is in invalid state: {}!", client.getEndpoint(), client.getState(), new Exception());
         } else {
-            byte[] clientSerialized = serializer.asByteArray(client);
+            byte[] clientSerialized = serialize(client);
             try (var connection = connectionFactory.getConnection()) {
                 connection.getSet(getKey(client.getEndpoint()), clientSerialized);
             }

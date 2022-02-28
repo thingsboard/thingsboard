@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.event.EventFilter;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -33,6 +34,7 @@ import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -45,26 +47,10 @@ public class BaseEventService implements EventService {
     public EventDao eventDao;
 
     @Override
-    public Event save(Event event) {
-        eventValidator.validate(event, Event::getTenantId);
-        return eventDao.save(event.getTenantId(), event);
-    }
-
-    @Override
-    public ListenableFuture<Event> saveAsync(Event event) {
+    public ListenableFuture<Void> saveAsync(Event event) {
         eventValidator.validate(event, Event::getTenantId);
         checkAndTruncateDebugEvent(event);
         return eventDao.saveAsync(event);
-    }
-
-    @Override
-    public Optional<Event> saveIfNotExists(Event event) {
-        eventValidator.validate(event, Event::getTenantId);
-        if (StringUtils.isEmpty(event.getUid())) {
-            throw new DataValidationException("Event uid should be specified!.");
-        }
-        checkAndTruncateDebugEvent(event);
-        return eventDao.saveIfNotExists(event);
     }
 
     private void checkAndTruncateDebugEvent(Event event) {
@@ -118,22 +104,29 @@ public class BaseEventService implements EventService {
 
     @Override
     public void removeEvents(TenantId tenantId, EntityId entityId) {
-        PageData<Event> eventPageData;
-        TimePageLink eventPageLink = new TimePageLink(1000);
-        do {
-            eventPageData = findEvents(tenantId, entityId, eventPageLink);
-            for (Event event : eventPageData.getData()) {
-                eventDao.removeById(tenantId, event.getUuidId());
-            }
-            if (eventPageData.hasNext()) {
-                eventPageLink = eventPageLink.nextPageLink();
-            }
-        } while (eventPageData.hasNext());
+        removeEvents(tenantId, entityId, null, null, null);
     }
 
     @Override
-    public void cleanupEvents(long ttl, long debugTtl) {
-        eventDao.cleanupEvents(ttl, debugTtl);
+    public void removeEvents(TenantId tenantId, EntityId entityId, EventFilter eventFilter, Long startTime, Long endTime) {
+        TimePageLink eventsPageLink = new TimePageLink(1000, 0, null, null, startTime, endTime);
+        PageData<Event> eventsPageData;
+        do {
+            if (eventFilter == null) {
+                eventsPageData = findEvents(tenantId, entityId, eventsPageLink);
+            } else {
+                eventsPageData = findEventsByFilter(tenantId, entityId, eventFilter, eventsPageLink);
+            }
+
+            eventDao.removeAllByIds(eventsPageData.getData().stream()
+                    .map(IdBased::getUuidId)
+                    .collect(Collectors.toList()));
+        } while (eventsPageData.hasNext());
+    }
+
+    @Override
+    public void cleanupEvents(long regularEventStartTs, long regularEventEndTs, long debugEventStartTs, long debugEventEndTs) {
+        eventDao.cleanupEvents(regularEventStartTs, regularEventEndTs, debugEventStartTs, debugEventEndTs);
     }
 
     private DataValidator<Event> eventValidator =

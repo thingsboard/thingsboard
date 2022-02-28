@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,15 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningScheduledExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
@@ -52,13 +53,10 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.service.partition.AbstractPartitionBasedService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import javax.annotation.Nonnull;
@@ -68,14 +66,11 @@ import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -94,7 +89,7 @@ import static org.thingsboard.server.common.data.DataConstants.SERVER_SCOPE;
 @Service
 @TbCoreComponent
 @Slf4j
-public class DefaultDeviceStateService extends TbApplicationEventListener<PartitionChangeEvent> implements DeviceStateService {
+public class DefaultDeviceStateService extends AbstractPartitionBasedService<DeviceId> implements DeviceStateService {
 
     public static final String ACTIVITY_STATE = "active";
     public static final String LAST_CONNECT_TIME = "lastConnectTime";
@@ -131,12 +126,9 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
     @Getter
     private int initFetchPackSize;
 
-    private ListeningScheduledExecutorService scheduledExecutor;
     private ExecutorService deviceStateExecutor;
-    private final ConcurrentMap<TopicPartitionInfo, Set<DeviceId>> partitionedDevices = new ConcurrentHashMap<>();
-    final ConcurrentMap<DeviceId, DeviceStateData> deviceStates = new ConcurrentHashMap<>();
 
-    final Queue<Set<TopicPartitionInfo>> subscribeQueue = new ConcurrentLinkedQueue<>();
+    final ConcurrentMap<DeviceId, DeviceStateData> deviceStates = new ConcurrentHashMap<>();
 
     public DefaultDeviceStateService(TenantService tenantService, DeviceService deviceService,
                                      AttributesService attributesService, TimeseriesService tsService,
@@ -156,25 +148,36 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
 
     @PostConstruct
     public void init() {
+        super.init();
         deviceStateExecutor = Executors.newFixedThreadPool(
                 Runtime.getRuntime().availableProcessors(), ThingsBoardThreadFactory.forName("device-state"));
-        // Should be always single threaded due to absence of locks.
-        scheduledExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("device-state-scheduled")));
         scheduledExecutor.scheduleAtFixedRate(this::updateInactivityStateIfExpired, new Random().nextInt(defaultStateCheckIntervalInSec), defaultStateCheckIntervalInSec, TimeUnit.SECONDS);
     }
 
     @PreDestroy
     public void stop() {
+        super.stop();
         if (deviceStateExecutor != null) {
             deviceStateExecutor.shutdownNow();
-        }
-        if (scheduledExecutor != null) {
-            scheduledExecutor.shutdownNow();
         }
     }
 
     @Override
+    protected String getServiceName() {
+        return "Device State";
+    }
+
+
+    @Override
+    protected String getSchedulerExecutorName() {
+        return "device-state-scheduled";
+    }
+
+    @Override
     public void onDeviceConnect(TenantId tenantId, DeviceId deviceId) {
+        if (cleanDeviceStateIfBelongsExternalPartition(tenantId, deviceId)) {
+            return;
+        }
         log.trace("on Device Connect [{}]", deviceId.getId());
         DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
         long ts = System.currentTimeMillis();
@@ -182,17 +185,19 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
         save(deviceId, LAST_CONNECT_TIME, ts);
         pushRuleEngineMessage(stateData, CONNECT_EVENT);
         checkAndUpdateState(deviceId, stateData);
-        cleanDeviceStateIfBelongsExternalPartition(tenantId, deviceId);
+
     }
 
     @Override
     public void onDeviceActivity(TenantId tenantId, DeviceId deviceId, long lastReportedActivity) {
+        if (cleanDeviceStateIfBelongsExternalPartition(tenantId, deviceId)) {
+            return;
+        }
         log.trace("on Device Activity [{}], lastReportedActivity [{}]", deviceId.getId(), lastReportedActivity);
         final DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
         if (lastReportedActivity > 0 && lastReportedActivity > stateData.getState().getLastActivityTime()) {
             updateActivityState(deviceId, stateData, lastReportedActivity);
         }
-        cleanDeviceStateIfBelongsExternalPartition(tenantId, deviceId);
     }
 
     void updateActivityState(DeviceId deviceId, DeviceStateData stateData, long lastReportedActivity) {
@@ -208,18 +213,20 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
             }
         } else {
             log.debug("updateActivityState - fetched state IN NULL for device {}, lastReportedActivity {}", deviceId, lastReportedActivity);
-            cleanUpDeviceStateMap(deviceId);
+            cleanupEntity(deviceId);
         }
     }
 
     @Override
     public void onDeviceDisconnect(TenantId tenantId, DeviceId deviceId) {
+        if (cleanDeviceStateIfBelongsExternalPartition(tenantId, deviceId)) {
+            return;
+        }
         DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
         long ts = System.currentTimeMillis();
         stateData.getState().setLastDisconnectTime(ts);
         save(deviceId, LAST_DISCONNECT_TIME, ts);
         pushRuleEngineMessage(stateData, DISCONNECT_EVENT);
-        cleanDeviceStateIfBelongsExternalPartition(tenantId, deviceId);
     }
 
     @Override
@@ -227,17 +234,20 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
         if (inactivityTimeout <= 0L) {
             return;
         }
+        if (cleanDeviceStateIfBelongsExternalPartition(tenantId, deviceId)) {
+            return;
+        }
         log.trace("on Device Activity Timeout Update device id {} inactivityTimeout {}", deviceId, inactivityTimeout);
         DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
         stateData.getState().setInactivityTimeout(inactivityTimeout);
         checkAndUpdateState(deviceId, stateData);
-        cleanDeviceStateIfBelongsExternalPartition(tenantId, deviceId);
+
     }
 
     @Override
     public void onQueueMsg(TransportProtos.DeviceStateServiceMsgProto proto, TbCallback callback) {
         try {
-            TenantId tenantId = new TenantId(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB()));
+            TenantId tenantId = TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB()));
             DeviceId deviceId = new DeviceId(new UUID(proto.getDeviceIdMSB(), proto.getDeviceIdLSB()));
             if (proto.getDeleted()) {
                 onDeviceDeleted(tenantId, deviceId);
@@ -246,11 +256,11 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
                 Device device = deviceService.findDeviceById(TenantId.SYS_TENANT_ID, deviceId);
                 if (device != null) {
                     if (proto.getAdded()) {
-                        Futures.addCallback(fetchDeviceState(device), new FutureCallback<DeviceStateData>() {
+                        Futures.addCallback(fetchDeviceState(device), new FutureCallback<>() {
                             @Override
                             public void onSuccess(@Nullable DeviceStateData state) {
                                 TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, device.getId());
-                                if (partitionedDevices.containsKey(tpi)) {
+                                if (partitionedEntities.containsKey(tpi)) {
                                     addDeviceUsingState(tpi, state);
                                     save(deviceId, ACTIVITY_STATE, false);
                                     callback.onSuccess();
@@ -286,105 +296,25 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
         }
     }
 
-    /**
-     * DiscoveryService will call this event from the single thread (one-by-one).
-     * Events order is guaranteed by DiscoveryService.
-     * The only concurrency is expected from the [main] thread on Application started.
-     * Async implementation. Locks is not allowed by design.
-     * Any locks or delays in this module will affect DiscoveryService and entire system
-     */
     @Override
-    protected void onTbApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
-        if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceType())) {
-            log.debug("onTbApplicationEvent ServiceType is TB_CORE, processing queue {}", partitionChangeEvent);
-            subscribeQueue.add(partitionChangeEvent.getPartitions());
-            scheduledExecutor.submit(this::pollInitStateFromDB);
-        }
-    }
-
-    void pollInitStateFromDB() {
-        final Set<TopicPartitionInfo> partitions = getLatestPartitionsFromQueue();
-        if (partitions == null) {
-            log.info("Device state service. Nothing to do. partitions is null");
-            return;
-        }
-        initStateFromDB(partitions);
-    }
-
-    // TODO: move to utils
-    Set<TopicPartitionInfo> getLatestPartitionsFromQueue() {
-        log.debug("getLatestPartitionsFromQueue, queue size {}", subscribeQueue.size());
-        Set<TopicPartitionInfo> partitions = null;
-        while (!subscribeQueue.isEmpty()) {
-            partitions = subscribeQueue.poll();
-            log.debug("polled from the queue partitions {}", partitions);
-        }
-        log.debug("getLatestPartitionsFromQueue, partitions {}", partitions);
-        return partitions;
-    }
-
-    private void initStateFromDB(Set<TopicPartitionInfo> partitions) {
-        try {
-            log.info("CURRENT PARTITIONS: {}", partitionedDevices.keySet());
-            log.info("NEW PARTITIONS: {}", partitions);
-
-            Set<TopicPartitionInfo> addedPartitions = new HashSet<>(partitions);
-            addedPartitions.removeAll(partitionedDevices.keySet());
-
-            log.info("ADDED PARTITIONS: {}", addedPartitions);
-
-            Set<TopicPartitionInfo> removedPartitions = new HashSet<>(partitionedDevices.keySet());
-            removedPartitions.removeAll(partitions);
-
-            log.info("REMOVED PARTITIONS: {}", removedPartitions);
-
-            // We no longer manage current partition of devices;
-            removedPartitions.forEach(partition -> {
-                Set<DeviceId> devices = partitionedDevices.remove(partition);
-                devices.forEach(this::cleanUpDeviceStateMap);
-            });
-
-            addedPartitions.forEach(tpi -> partitionedDevices.computeIfAbsent(tpi, key -> ConcurrentHashMap.newKeySet()));
-
-            initPartitions(addedPartitions);
-
-            scheduledExecutor.submit(() -> {
-                log.info("Managing following partitions:");
-                partitionedDevices.forEach((tpi, devices) -> {
-                    log.info("[{}]: {} devices", tpi.getFullTopicName(), devices.size());
-                });
-            });
-        } catch (Throwable t) {
-            log.warn("Failed to init device states from DB", t);
-        }
-    }
-
-    //TODO 3.0: replace this dummy search with new functionality to search by partitions using SQL capabilities.
-    //Adding only entities that are in new partitions
-    boolean initPartitions(Set<TopicPartitionInfo> addedPartitions) {
-        if (addedPartitions.isEmpty()) {
-            return false;
-        }
-
-        List<Tenant> tenants = tenantService.findTenants(new PageLink(Integer.MAX_VALUE)).getData();
-        for (Tenant tenant : tenants) {
+    protected void onAddedPartitions(Set<TopicPartitionInfo> addedPartitions) {
+        PageDataIterable<Tenant> tenantIterator = new PageDataIterable<>(tenantService::findTenants, 1024);
+        for (Tenant tenant : tenantIterator) {
             log.debug("Finding devices for tenant [{}]", tenant.getName());
             final PageLink pageLink = new PageLink(initFetchPackSize);
-            scheduledExecutor.submit(() -> processPageAndSubmitNextPage(addedPartitions, tenant, pageLink, scheduledExecutor));
-
+            processPageAndSubmitNextPage(addedPartitions, tenant, pageLink);
         }
-        return true;
     }
 
-    private void processPageAndSubmitNextPage(final Set<TopicPartitionInfo> addedPartitions, final Tenant tenant, final PageLink pageLink, final ExecutorService executor) {
+    private void processPageAndSubmitNextPage(final Set<TopicPartitionInfo> addedPartitions, final Tenant tenant, final PageLink pageLink) {
         log.trace("[{}] Process page {} from {}", tenant, pageLink.getPage(), pageLink.getPageSize());
         List<ListenableFuture<Void>> fetchFutures = new ArrayList<>();
         PageData<Device> page = deviceService.findDevicesByTenantId(tenant.getId(), pageLink);
         for (Device device : page.getData()) {
             TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenant.getId(), device.getId());
-            if (addedPartitions.contains(tpi)) {
+            if (addedPartitions.contains(tpi) && !deviceStates.containsKey(device.getId())) {
                 log.debug("[{}][{}] Device belong to current partition. tpi [{}]. Fetching state from DB", device.getName(), device.getId(), tpi);
-                ListenableFuture<Void> future = Futures.transform(fetchDeviceState(device), new Function<DeviceStateData, Void>() {
+                ListenableFuture<Void> future = Futures.transform(fetchDeviceState(device), new Function<>() {
                     @Nullable
                     @Override
                     public Void apply(@Nullable DeviceStateData state) {
@@ -403,7 +333,7 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
             }
         }
 
-        Futures.addCallback(Futures.successfulAsList(fetchFutures), new FutureCallback<List<Void>>() {
+        Futures.addCallback(Futures.successfulAsList(fetchFutures), new FutureCallback<>() {
             @Override
             public void onSuccess(List<Void> result) {
                 log.trace("[{}] Success init device state from DB for batch size {}", tenant.getId(), result.size());
@@ -419,7 +349,7 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
         final PageLink nextPageLink = page.hasNext() ? pageLink.nextPageLink() : null;
         if (nextPageLink != null) {
             log.trace("[{}] Submit next page {} from {}", tenant, nextPageLink.getPage(), nextPageLink.getPageSize());
-            executor.submit(() -> processPageAndSubmitNextPage(addedPartitions, tenant, nextPageLink, executor));
+            processPageAndSubmitNextPage(addedPartitions, tenant, nextPageLink);
         }
     }
 
@@ -435,10 +365,10 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
     }
 
     private void addDeviceUsingState(TopicPartitionInfo tpi, DeviceStateData state) {
-        Set<DeviceId> deviceIds = partitionedDevices.get(tpi);
+        Set<DeviceId> deviceIds = partitionedEntities.get(tpi);
         if (deviceIds != null) {
             deviceIds.add(state.getDeviceId());
-            deviceStates.put(state.getDeviceId(), state);
+            deviceStates.putIfAbsent(state.getDeviceId(), state);
         } else {
             log.debug("[{}] Device belongs to external partition {}", state.getDeviceId(), tpi.getFullTopicName());
             throw new RuntimeException("Device belongs to external partition " + tpi.getFullTopicName() + "!");
@@ -447,7 +377,7 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
 
     void updateInactivityStateIfExpired() {
         final long ts = System.currentTimeMillis();
-        partitionedDevices.forEach((tpi, deviceIds) -> {
+        partitionedEntities.forEach((tpi, deviceIds) -> {
             log.debug("Calculating state updates. tpi {} for {} devices", tpi.getFullTopicName(), deviceIds.size());
             for (DeviceId deviceId : deviceIds) {
                 updateInactivityStateIfExpired(ts, deviceId);
@@ -464,16 +394,22 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
         log.trace("Processing state {} for device {}", stateData, deviceId);
         if (stateData != null) {
             DeviceState state = stateData.getState();
-            if (!isActive(ts, state) && (state.getLastInactivityAlarmTime() == 0L || state.getLastInactivityAlarmTime() < state.getLastActivityTime()) && stateData.getDeviceCreationTime() + state.getInactivityTimeout() < ts) {
-                state.setActive(false);
-                state.setLastInactivityAlarmTime(ts);
-                save(deviceId, INACTIVITY_ALARM_TIME, ts);
-                save(deviceId, ACTIVITY_STATE, false);
-                pushRuleEngineMessage(stateData, INACTIVITY_EVENT);
+            if (!isActive(ts, state)
+                    && (state.getLastInactivityAlarmTime() == 0L || state.getLastInactivityAlarmTime() < state.getLastActivityTime())
+                    && stateData.getDeviceCreationTime() + state.getInactivityTimeout() < ts) {
+                if (partitionService.resolve(ServiceType.TB_CORE, stateData.getTenantId(), deviceId).isMyPartition()) {
+                    state.setActive(false);
+                    state.setLastInactivityAlarmTime(ts);
+                    save(deviceId, ACTIVITY_STATE, false);
+                    save(deviceId, INACTIVITY_ALARM_TIME, ts);
+                    pushRuleEngineMessage(stateData, INACTIVITY_EVENT);
+                } else {
+                    cleanupEntity(deviceId);
+                }
             }
         } else {
             log.debug("[{}] Device that belongs to other server is detected and removed.", deviceId);
-            cleanUpDeviceStateMap(deviceId);
+            cleanupEntity(deviceId);
         }
     }
 
@@ -506,25 +442,35 @@ public class DefaultDeviceStateService extends TbApplicationEventListener<Partit
         }
     }
 
-    private void cleanDeviceStateIfBelongsExternalPartition(TenantId tenantId, final DeviceId deviceId) {
+    private boolean cleanDeviceStateIfBelongsExternalPartition(TenantId tenantId, final DeviceId deviceId) {
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId);
-        if (!partitionedDevices.containsKey(tpi)) {
-            cleanUpDeviceStateMap(deviceId);
+        boolean cleanup = !partitionedEntities.containsKey(tpi);
+        if (cleanup) {
+            cleanupEntity(deviceId);
             log.debug("[{}][{}] device belongs to external partition. Probably rebalancing is in progress. Topic: {}"
                     , tenantId, deviceId, tpi.getFullTopicName());
         }
+        return cleanup;
     }
 
     private void onDeviceDeleted(TenantId tenantId, DeviceId deviceId) {
-        cleanUpDeviceStateMap(deviceId);
+        cleanupEntity(deviceId);
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId);
-        Set<DeviceId> deviceIdSet = partitionedDevices.get(tpi);
-        deviceIdSet.remove(deviceId);
+        Set<DeviceId> deviceIdSet = partitionedEntities.get(tpi);
+        if (deviceIdSet != null) {
+            deviceIdSet.remove(deviceId);
+        }
     }
 
-    private void cleanUpDeviceStateMap(DeviceId deviceId) {
+    @Override
+    protected void cleanupEntityOnPartitionRemoval(DeviceId deviceId) {
+        cleanupEntity(deviceId);
+    }
+
+    private void cleanupEntity(DeviceId deviceId) {
         deviceStates.remove(deviceId);
     }
+
 
     private ListenableFuture<DeviceStateData> fetchDeviceState(Device device) {
         ListenableFuture<DeviceStateData> future;

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
-import { CopyDeviceCredentialsComponent } from './copy-device-credentials.component';
-import { DeviceCredentialsComponent } from './device-credentials.component';
-import { DeviceCredentialsLwm2mComponent } from './device-credentials-lwm2m.component';
-import { DeviceCredentialsLwm2mServerComponent } from './device-credentials-lwm2m-server.component';
-import { DeviceCredentialsMqttBasicComponent } from './device-credentials-mqtt-basic.component';
+import { CopyDeviceCredentialsComponent } from '@home/components/device/copy-device-credentials.component';
+import { DeviceCredentialsComponent } from '@home/components/device/device-credentials.component';
+import { DeviceCredentialsLwm2mComponent } from '@home/components/device/device-credentials-lwm2m.component';
+import { DeviceCredentialsLwm2mServerComponent } from '@home/components/device/device-credentials-lwm2m-server.component';
+import { DeviceCredentialsMqttBasicComponent } from '@home/components/device/device-credentials-mqtt-basic.component';
 
 @NgModule({
   declarations: [

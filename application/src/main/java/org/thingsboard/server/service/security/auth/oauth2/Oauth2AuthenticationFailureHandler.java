@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,8 +54,11 @@ public class Oauth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
             throws IOException, ServletException {
         String baseUrl;
         String errorPrefix;
+        String callbackUrlScheme = null;
         OAuth2AuthorizationRequest authorizationRequest = httpCookieOAuth2AuthorizationRequestRepository.loadAuthorizationRequest(request);
-        String callbackUrlScheme = authorizationRequest.getAttribute(TbOAuth2ParameterNames.CALLBACK_URL_SCHEME);
+        if (authorizationRequest != null) {
+            callbackUrlScheme = authorizationRequest.getAttribute(TbOAuth2ParameterNames.CALLBACK_URL_SCHEME);
+        }
         if (!StringUtils.isEmpty(callbackUrlScheme)) {
             baseUrl = callbackUrlScheme + ":";
             errorPrefix = "/?error=";

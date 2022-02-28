@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,7 +153,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
     private String validatePayload(UUID sessionId, Request inbound, boolean isEmptyPayloadAllowed) throws AdaptorException {
         String payload = inbound.getPayloadString();
         if (payload == null) {
-            log.warn("[{}] Payload is empty!", sessionId);
+            log.debug("[{}] Payload is empty!", sessionId);
             if (!isEmptyPayloadAllowed) {
                 throw new AdaptorException(new IllegalArgumentException("Payload is empty!"));
             }

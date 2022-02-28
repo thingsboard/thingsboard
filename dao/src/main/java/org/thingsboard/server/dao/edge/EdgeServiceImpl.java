@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -403,12 +403,6 @@ public class EdgeServiceImpl extends AbstractEntityService implements EdgeServic
                     }
                     if (StringUtils.isEmpty(edge.getRoutingKey())) {
                         throw new DataValidationException("Edge routing key should be specified!");
-                    }
-                    if (StringUtils.isEmpty(edge.getEdgeLicenseKey())) {
-                        throw new DataValidationException("Edge license key should be specified!");
-                    }
-                    if (StringUtils.isEmpty(edge.getCloudEndpoint())) {
-                        throw new DataValidationException("Cloud endpoint should be specified!");
                     }
                     if (edge.getTenantId() == null) {
                         throw new DataValidationException("Edge should be assigned to tenant!");

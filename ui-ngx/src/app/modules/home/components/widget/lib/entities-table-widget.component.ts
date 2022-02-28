@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 import {
   AfterViewInit,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   Injector,
@@ -107,6 +108,8 @@ import { sortItems } from '@shared/models/page/page-link';
 import { entityFields } from '@shared/models/entity.models';
 import { DatePipe } from '@angular/common';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { ResizeObserver } from '@juggle/resize-observer';
+import { hidePageSizePixelValue } from '@shared/models/constants';
 
 interface EntitiesTableWidgetSettings extends TableWidgetSettings {
   entitiesTitle: string;
@@ -140,6 +143,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   public pageLink: EntityDataPageLink;
   public sortOrderProperty: string;
   public textSearchMode = false;
+  public hidePageSize = false;
   public columns: Array<EntityColumn> = [];
   public displayedColumns: string[] = [];
   public entityDatasource: EntityDatasource;
@@ -153,6 +157,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   private settings: EntitiesTableWidgetSettings;
   private widgetConfig: WidgetConfig;
   private subscription: IWidgetSubscription;
+  private widgetResize$: ResizeObserver;
 
   private entitiesTitlePattern: string;
 
@@ -193,7 +198,8 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
               private utils: UtilsService,
               private datePipe: DatePipe,
               private translate: TranslateService,
-              private domSanitizer: DomSanitizer) {
+              private domSanitizer: DomSanitizer,
+              private cd: ChangeDetectorRef) {
     super(store);
     this.pageLink = {
       page: 0,
@@ -211,6 +217,22 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     this.initializeConfig();
     this.updateDatasources();
     this.ctx.updateWidgetParams();
+    if (this.displayPagination) {
+      this.widgetResize$ = new ResizeObserver(() => {
+        const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+        if (showHidePageSize !== this.hidePageSize) {
+          this.hidePageSize = showHidePageSize;
+          this.cd.markForCheck();
+        }
+      });
+      this.widgetResize$.observe(this.elementRef.nativeElement);
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.widgetResize$) {
+      this.widgetResize$.disconnect();
+    }
   }
 
   ngAfterViewInit(): void {
@@ -324,6 +346,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
           label: 'entityName',
           def: 'entityName',
           title: entityNameColumnTitle,
+          sortable: true,
           entityKey: {
             key: 'name',
             type: EntityKeyType.ENTITY_FIELD
@@ -347,6 +370,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
           label: 'entityLabel',
           def: 'entityLabel',
           title: entityLabelColumnTitle,
+          sortable: true,
           entityKey: {
             key: 'label',
             type: EntityKeyType.ENTITY_FIELD
@@ -370,6 +394,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
           label: 'entityType',
           def: 'entityType',
           title: this.translate.instant('entity.entity-type'),
+          sortable: true,
           entityKey: {
             key: 'entityType',
             type: EntityKeyType.ENTITY_FIELD
@@ -403,6 +428,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         dataKey.label = this.utils.customTranslation(dataKey.label, dataKey.label);
         dataKey.title = dataKey.label;
         dataKey.def = 'def' + this.columns.length;
+        dataKey.sortable = !dataKey.usePostProcessing;
         const keySettings: TableWidgetDataKeySettings = dataKey.settings;
         if (dataKey.type === DataKeyType.entityField &&
           !isDefined(keySettings.columnWidth) || keySettings.columnWidth === '0px') {
