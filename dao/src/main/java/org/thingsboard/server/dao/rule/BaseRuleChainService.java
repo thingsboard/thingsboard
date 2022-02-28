@@ -202,17 +202,12 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 for (RuleChainConnectionInfo nodeToRuleChainConnection : ruleChainMetaData.getRuleChainConnections()) {
                     RuleChainId targetRuleChainId = nodeToRuleChainConnection.getTargetRuleChainId();
                     RuleChain targetRuleChain = findRuleChainById(TenantId.SYS_TENANT_ID, targetRuleChainId);
-                    if (targetRuleChain == null) {
-                        log.info("Skip processing of relation for non existing target rule chain: [{}]", targetRuleChainId);
-                        continue;
-                    }
-
                     RuleNode targetNode = new RuleNode();
-                    targetNode.setName(targetRuleChain.getName());
+                    targetNode.setName(targetRuleChain != null ? targetRuleChain.getName() : "Rule Chain Input");
                     targetNode.setRuleChainId(ruleChain.getId());
                     targetNode.setType("org.thingsboard.rule.engine.flow.TbRuleChainInputNode");
                     var configuration = JacksonUtil.newObjectNode();
-                    configuration.put("ruleChainId", targetRuleChain.getId().toString());
+                    configuration.put("ruleChainId", targetRuleChainId.getId().toString());
                     targetNode.setConfiguration(configuration);
                     ObjectNode layout = (ObjectNode) nodeToRuleChainConnection.getAdditionalInfo();
                     layout.remove("description");
