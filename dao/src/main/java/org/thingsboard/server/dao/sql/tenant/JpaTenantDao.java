@@ -16,7 +16,7 @@
 package org.thingsboard.server.dao.sql.tenant;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
@@ -48,7 +48,7 @@ public class JpaTenantDao extends JpaAbstractSearchTextDao<TenantEntity, Tenant>
     }
 
     @Override
-    protected CrudRepository<TenantEntity, UUID> getCrudRepository() {
+    protected JpaRepository<TenantEntity, UUID> getRepository() {
         return tenantRepository;
     }
 
