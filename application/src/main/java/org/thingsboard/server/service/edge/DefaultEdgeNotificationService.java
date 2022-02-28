@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -38,7 +39,6 @@ import org.thingsboard.server.service.edge.rpc.processor.CustomerEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.EdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.EntityEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.RelationEdgeProcessor;
-import org.thingsboard.server.cluster.TbClusterService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -93,7 +93,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     @Override
     public Edge setEdgeRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId) throws IOException {
         edge.setRootRuleChainId(ruleChainId);
-        Edge savedEdge = edgeService.saveEdge(edge, true);
+        Edge savedEdge = edgeService.saveEdge(edge);
         saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.RULE_CHAIN, EdgeEventActionType.UPDATED, ruleChainId, null);
         return savedEdge;
     }
@@ -122,7 +122,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
 
     @Override
     public void pushNotificationToEdge(TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg, TbCallback callback) {
-        log.trace("Pushing notification to edge {}", edgeNotificationMsg);
+        log.debug("Pushing notification to edge {}", edgeNotificationMsg);
         try {
             TenantId tenantId = TenantId.fromUUID(new UUID(edgeNotificationMsg.getTenantIdMSB(), edgeNotificationMsg.getTenantIdLSB()));
             EdgeEventType type = EdgeEventType.valueOf(edgeNotificationMsg.getType());
@@ -153,11 +153,12 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                     relationProcessor.processRelationNotification(tenantId, edgeNotificationMsg);
                     break;
                 default:
-                    log.debug("Edge event type [{}] is not designed to be pushed to edge", type);
+                    log.warn("Edge event type [{}] is not designed to be pushed to edge", type);
             }
         } catch (Exception e) {
             callback.onFailure(e);
-            log.error("Can't push to edge updates, edgeNotificationMsg [{}]", edgeNotificationMsg, e);
+            String errMsg = String.format("Can't push to edge updates, edgeNotificationMsg [%s]", edgeNotificationMsg);
+            log.error(errMsg, e);
         } finally {
             callback.onSuccess();
         }
