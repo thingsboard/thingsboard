@@ -26,6 +26,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -199,11 +200,42 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             }
             if (ruleChainMetaData.getRuleChainConnections() != null) {
                 for (RuleChainConnectionInfo nodeToRuleChainConnection : ruleChainMetaData.getRuleChainConnections()) {
+                    RuleChainId targetRuleChainId = nodeToRuleChainConnection.getTargetRuleChainId();
+                    RuleChain targetRuleChain = findRuleChainById(TenantId.SYS_TENANT_ID, targetRuleChainId);
+                    if (targetRuleChain == null) {
+                        log.info("Skip processing of relation for non existing target rule chain: [{}]", targetRuleChainId);
+                        continue;
+                    }
+
+                    RuleNode targetNode = new RuleNode();
+                    targetNode.setName(targetRuleChain.getName());
+                    targetNode.setRuleChainId(ruleChain.getId());
+                    targetNode.setType("org.thingsboard.rule.engine.flow.TbRuleChainInputNode");
+                    var configuration = JacksonUtil.newObjectNode();
+                    configuration.put("ruleChainId", targetRuleChain.getId().toString());
+                    targetNode.setConfiguration(configuration);
+                    ObjectNode layout = (ObjectNode) nodeToRuleChainConnection.getAdditionalInfo();
+                    layout.remove("description");
+                    layout.remove("ruleChainNodeId");
+                    targetNode.setAdditionalInfo(layout);
+                    targetNode.setDebugMode(false);
+                    targetNode = ruleNodeDao.save(tenantId, targetNode);
+
+                    EntityRelation sourceRuleChainToRuleNode = new EntityRelation();
+                    sourceRuleChainToRuleNode.setFrom(ruleChain.getId());
+                    sourceRuleChainToRuleNode.setTo(targetNode.getId());
+                    sourceRuleChainToRuleNode.setType(EntityRelation.CONTAINS_TYPE);
+                    sourceRuleChainToRuleNode.setTypeGroup(RelationTypeGroup.RULE_CHAIN);
+                    relationService.saveRelation(tenantId, sourceRuleChainToRuleNode);
+
+                    EntityRelation sourceRuleNodeToTargetRuleNode = new EntityRelation();
                     EntityId from = nodes.get(nodeToRuleChainConnection.getFromIndex()).getId();
-                    EntityId to = nodeToRuleChainConnection.getTargetRuleChainId();
-                    String type = nodeToRuleChainConnection.getType();
-                    createRelation(tenantId, new EntityRelation(from, to, type, RelationTypeGroup.RULE_NODE, nodeToRuleChainConnection.getAdditionalInfo()));
-                }
+                    sourceRuleNodeToTargetRuleNode.setFrom(from);
+                    sourceRuleNodeToTargetRuleNode.setTo(targetNode.getId());
+                    sourceRuleNodeToTargetRuleNode.setType(nodeToRuleChainConnection.getType());
+                    sourceRuleNodeToTargetRuleNode.setTypeGroup(RelationTypeGroup.RULE_NODE);
+                    relationService.saveRelation(tenantId, sourceRuleNodeToTargetRuleNode);
+                 }
             }
         }
 
@@ -263,8 +295,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     int toIndex = ruleNodeIndexMap.get(toNodeId);
                     ruleChainMetaData.addConnectionInfo(fromIndex, toIndex, type);
                 } else if (nodeRelation.getTo().getEntityType() == EntityType.RULE_CHAIN) {
-                    RuleChainId targetRuleChainId = new RuleChainId(nodeRelation.getTo().getId());
-                    ruleChainMetaData.addRuleChainConnectionInfo(fromIndex, targetRuleChainId, type, nodeRelation.getAdditionalInfo());
+                    log.warn("[{}][{}] Unsupported node relation: {}", tenantId, ruleChainId, nodeRelation.getTo());
                 }
             }
         }

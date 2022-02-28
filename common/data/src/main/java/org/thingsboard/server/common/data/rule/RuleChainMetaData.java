@@ -59,15 +59,4 @@ public class RuleChainMetaData {
         }
         connections.add(connectionInfo);
     }
-    public void addRuleChainConnectionInfo(int fromIndex, RuleChainId targetRuleChainId, String type, JsonNode additionalInfo) {
-        RuleChainConnectionInfo connectionInfo = new RuleChainConnectionInfo();
-        connectionInfo.setFromIndex(fromIndex);
-        connectionInfo.setTargetRuleChainId(targetRuleChainId);
-        connectionInfo.setType(type);
-        connectionInfo.setAdditionalInfo(additionalInfo);
-        if (ruleChainConnections == null) {
-            ruleChainConnections = new ArrayList<>();
-        }
-        ruleChainConnections.add(connectionInfo);
-    }
 }
