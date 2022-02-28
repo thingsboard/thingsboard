@@ -25,6 +25,7 @@ import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.DataConstants;
@@ -35,6 +36,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
@@ -240,15 +242,26 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
         configuration1.setServerAttributeNames(Collections.singletonList("serverAttributeKey1"));
         ruleNode1.setConfiguration(mapper.valueToTree(configuration1));
 
-        rootMetaData.setNodes(Collections.singletonList(ruleNode1));
+        RuleNode ruleNode12 = new RuleNode();
+        ruleNode12.setName("Simple Rule Node 1");
+        ruleNode12.setType(org.thingsboard.rule.engine.flow.TbRuleChainInputNode.class.getName());
+        ruleNode12.setDebugMode(true);
+        TbRuleChainInputNodeConfiguration configuration12 = new TbRuleChainInputNodeConfiguration();
+        configuration12.setRuleChainId(secondaryRuleChain.getId().getId().toString());
+        ruleNode12.setConfiguration(mapper.valueToTree(configuration12));
+
+        rootMetaData.setNodes(Arrays.asList(ruleNode1, ruleNode12));
         rootMetaData.setFirstNodeIndex(0);
-        rootMetaData.addRuleChainConnectionInfo(0, secondaryRuleChain.getId(), "Success", mapper.createObjectNode());
+        NodeConnectionInfo connection = new NodeConnectionInfo();
+        connection.setFromIndex(0);
+        connection.setToIndex(1);
+        connection.setType("Success");
+        rootMetaData.setConnections(Collections.singletonList(connection));
         rootMetaData = saveRuleChainMetaData(rootMetaData);
         Assert.assertNotNull(rootMetaData);
 
         rootRuleChain = getRuleChain(rootRuleChain.getId());
         Assert.assertNotNull(rootRuleChain.getFirstRuleNodeId());
-
 
         RuleChainMetaData secondaryMetaData = new RuleChainMetaData();
         secondaryMetaData.setRuleChainId(secondaryRuleChain.getId());
