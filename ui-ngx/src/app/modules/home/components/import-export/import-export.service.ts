@@ -62,7 +62,7 @@ import { TenantProfileService } from '@core/http/tenant-profile.service';
 import { DeviceService } from '@core/http/device.service';
 import { AssetService } from '@core/http/asset.service';
 import { EdgeService } from '@core/http/edge.service';
-import {RuleNode} from "@shared/models/rule-node.models";
+import { RuleNode } from '@shared/models/rule-node.models';
 
 // @dynamic
 @Injectable()
