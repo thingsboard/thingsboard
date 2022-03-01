@@ -64,6 +64,7 @@ import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -124,6 +125,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected String username;
 
     protected TenantId tenantId;
+    protected CustomerId customerId;
 
     @SuppressWarnings("rawtypes")
     private HttpMessageConverter mappingJackson2HttpMessageConverter;
@@ -192,6 +194,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         customer.setTitle("Customer");
         customer.setTenantId(tenantId);
         Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+        customerId = savedCustomer.getId();
 
         User customerUser = new User();
         customerUser.setAuthority(Authority.CUSTOMER_USER);

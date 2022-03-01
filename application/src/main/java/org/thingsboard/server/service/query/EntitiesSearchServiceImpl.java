@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,20 +89,20 @@ public class EntitiesSearchServiceImpl implements EntitiesSearchService {
     private final CustomerService customerService;
     private final DefaultDeviceStateService deviceStateService;
 
-    private static final List<EntityKey> entityResponseFields = Stream.of(CREATED_TIME, NAME, TYPE, TENANT_ID, CUSTOMER_ID)
+    public static final List<EntityKey> ENTITY_RESPONSE_FIELDS = Stream.of(CREATED_TIME, NAME, TYPE, TENANT_ID, CUSTOMER_ID)
             .map(field -> new EntityKey(EntityKeyType.ENTITY_FIELD, field))
-            .collect(Collectors.toList());
+            .collect(Collectors.toUnmodifiableList());
 
-    private static final Set<EntityType> searchableEntityTypes = EnumSet.of(
+    public static final Set<EntityType> SEARCHABLE_ENTITY_TYPES = Collections.unmodifiableSet(EnumSet.of(
             TENANT, CUSTOMER, USER, DASHBOARD, ASSET, DEVICE, RULE_CHAIN, ENTITY_VIEW,
             WIDGETS_BUNDLE, TENANT_PROFILE, DEVICE_PROFILE, TB_RESOURCE, OTA_PACKAGE, EDGE
-    );
+    ));
 
     @Override
     public PageData<EntitySearchResult> searchEntities(SecurityUser user, EntitiesSearchRequest request, PageLink pageLink) {
         EntityType entityType = request.getEntityType();
-        if (!searchableEntityTypes.contains(entityType)) {
-            return new PageData<>();
+        if (!SEARCHABLE_ENTITY_TYPES.contains(entityType)) {
+            throw new IllegalArgumentException("Entity type " + entityType + " is not searchable");
         }
 
         EntityDataQuery query = createSearchQuery(request.getSearchQuery(), entityType, pageLink);
@@ -141,11 +141,10 @@ public class EntitiesSearchServiceImpl implements EntitiesSearchService {
         filter.setEntityType(entityType);
         filter.setNameOrId(searchQuery);
 
-        List<EntityKey> entityFields = entityResponseFields;
+        List<EntityKey> entityFields = new ArrayList<>(ENTITY_RESPONSE_FIELDS);
         List<EntityKey> latestValues = Collections.emptyList();
 
         if (entityType == USER) {
-            entityFields = new ArrayList<>(entityFields);
             entityFields.add(new EntityKey(EntityKeyType.ENTITY_FIELD, LAST_ACTIVITY_TIME));
         } else if (entityType == DEVICE) {
             EntityKey lastActivityTimeKey;
@@ -201,7 +200,8 @@ public class EntitiesSearchServiceImpl implements EntitiesSearchService {
             if (!id.equals(EntityId.NULL_UUID)) {
                 return id;
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         return null;
     }
