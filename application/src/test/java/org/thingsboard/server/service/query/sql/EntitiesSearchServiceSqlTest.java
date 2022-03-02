@@ -16,6 +16,8 @@
 package org.thingsboard.server.service.query.sql;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.assertj.core.api.Condition;
+import org.assertj.core.data.Index;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,12 +26,16 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.query.EntitiesSearchRequest;
 import org.thingsboard.server.common.data.query.EntityKey;
+import org.thingsboard.server.common.data.query.EntitySearchResult;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.dashboard.DashboardDao;
@@ -38,8 +44,7 @@ import org.thingsboard.server.dao.rule.RuleChainDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.sql.query.EntityKeyMapping;
 import org.thingsboard.server.dao.tenant.TenantDao;
-import org.thingsboard.server.data.search.EntitiesSearchRequest;
-import org.thingsboard.server.data.search.EntitySearchResult;
+import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.query.EntitiesSearchServiceImpl;
 
 import java.util.List;
@@ -48,6 +53,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertThrows;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
 public class EntitiesSearchServiceSqlTest extends AbstractControllerTest {
@@ -97,12 +104,13 @@ public class EntitiesSearchServiceSqlTest extends AbstractControllerTest {
         Device savedDevice = deviceService.saveDevice(device);
 
         PageData<EntitySearchResult> searchResult = searchEntities(EntityType.DEVICE, searchQuery, "id", "ASC");
-
         validateSearchResult(searchResult, savedDevice, deviceSearchResult -> {
             return deviceSearchResult.getType().equals(savedDevice.getType()) &&
                     deviceSearchResult.getOwnerInfo().getId().equals(savedDevice.getCustomerId()) &&
                     deviceSearchResult.getOwnerInfo().getName().equals(customerDao.findById(TenantId.SYS_TENANT_ID, savedDevice.getCustomerId().getId()).getTitle());
         });
+
+        assertThat(searchEntities(EntityType.DEVICE, "noSuchDevice", "id", "ASC").getTotalElements()).isZero();
     }
 
     @Test
@@ -138,12 +146,55 @@ public class EntitiesSearchServiceSqlTest extends AbstractControllerTest {
         });
     }
 
+    @Test
+    public void testSearchUsers_lastActivityTime() throws Exception {
+        String searchQuery = "qwerty";
+
+        User user = new User();
+        user.setEmail(searchQuery + "@du.ba");
+        user.setAuthority(Authority.TENANT_ADMIN);
+        user.setTenantId(tenantId);
+        String password = "pswrd1231";
+
+        User savedUser1 = createUser(user, password);
+        long logInTime1 = System.currentTimeMillis();
+        login(savedUser1.getEmail(), password);
+
+        loginSysAdmin();
+        user.setEmail(searchQuery + "@ba.du");
+
+        User savedUser2 = createUser(user, password);
+        long logInTime2 = System.currentTimeMillis();
+        login(savedUser2.getEmail(), password);
+
+        loginSysAdmin();
+
+        List<EntitySearchResult> users = searchEntities(EntityType.USER, searchQuery, EntityKeyMapping.LAST_ACTIVITY_TIME, "DESC").getData();
+
+        assertThat(users).hasSize(2);
+        assertThat(users.get(0)).matches(firstItem -> {
+            return firstItem.getId().equals(savedUser2.getId()) && firstItem.getLastActivityTime() >= logInTime2;
+        });
+        assertThat(users.get(1)).matches(secondItem -> {
+            return secondItem.getId().equals(savedUser1.getId()) && secondItem.getLastActivityTime() >= logInTime1;
+        });
+
+    }
+
+    @Test
+    public void testSearchUnsupportedEntityType() {
+        assertThrows(Exception.class, () -> {
+            searchEntities(EntityType.RULE_NODE, "", "id", "ASC");
+        });
+    }
+
 
     private PageData<EntitySearchResult> searchEntities(EntityType entityType, String searchQuery, String sortProperty, String sortOrder) throws Exception {
         EntitiesSearchRequest searchRequest = new EntitiesSearchRequest();
         searchRequest.setEntityType(entityType);
         searchRequest.setSearchQuery(searchQuery);
-        return readResponse(doPost("/api/entities/search?page=0&pageSize=999&sortProperty=" + sortProperty + "&sortOrder=" + sortOrder, searchRequest), new TypeReference<PageData<EntitySearchResult>>() {
+        return readResponse(doPost("/api/entities/search?page=0&pageSize=99999&sortProperty=" + sortProperty + "&sortOrder=" + sortOrder, searchRequest)
+                .andExpect(status().isOk()), new TypeReference<PageData<EntitySearchResult>>() {
         });
     }
 

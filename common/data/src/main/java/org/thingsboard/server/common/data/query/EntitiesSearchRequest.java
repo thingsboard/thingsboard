@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.data.search;
+package org.thingsboard.server.common.data.query;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.EntityType;

@@ -17,8 +17,8 @@ package org.thingsboard.server.service.query;
 
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.data.search.EntitiesSearchRequest;
-import org.thingsboard.server.data.search.EntitySearchResult;
+import org.thingsboard.server.common.data.query.EntitiesSearchRequest;
+import org.thingsboard.server.common.data.query.EntitySearchResult;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface EntitiesSearchService {
