@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,7 +111,11 @@ public abstract class RpcDownlinkRequestCallbackProxy<R, T> implements DownlinkR
     }
 
     protected void sendRpcReplyOnError(Exception e) {
-        reply(LwM2MRpcResponseBody.builder().result(ResponseCode.INTERNAL_SERVER_ERROR.getName()).error(e.getMessage()).build());
+        String error = e.getMessage();
+        if (error == null) {
+            error = e.toString();
+        }
+        reply(LwM2MRpcResponseBody.builder().result(ResponseCode.INTERNAL_SERVER_ERROR.getName()).error(error).build());
     }
 
 }

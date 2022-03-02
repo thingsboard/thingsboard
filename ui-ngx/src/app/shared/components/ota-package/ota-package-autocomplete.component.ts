@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,15 +16,14 @@
 
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Observable, of } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
+import { merge, Observable, of, Subject } from 'rxjs';
+import { catchError, debounceTime, map, share, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType } from '@shared/models/entity-type.models';
-import { BaseData } from '@shared/models/base-data';
 import { EntityService } from '@core/http/entity.service';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { OtaPackageInfo, OtaUpdateTranslation, OtaUpdateType } from '@shared/models/ota-package.models';
@@ -50,11 +49,29 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
 
   modelValue: string | EntityId | null;
 
-  @Input()
-  type = OtaUpdateType.FIRMWARE;
+  private otaUpdateType: OtaUpdateType;
+
+  get type(): OtaUpdateType {
+    return this.otaUpdateType;
+  }
 
   @Input()
-  deviceProfileId: string;
+  set type(value ) {
+    this.otaUpdateType = value ? value : OtaUpdateType.FIRMWARE;
+    this.reset();
+  }
+
+  private deviceProfile: string;
+
+  get deviceProfileId(): string {
+    return this.deviceProfile;
+  }
+
+  @Input()
+  set deviceProfileId(value: string) {
+    this.deviceProfile = value;
+    this.reset();
+  }
 
   @Input()
   labelText: string;
@@ -90,6 +107,7 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
   packageURL: string;
 
   private dirty = false;
+  private cleanFilteredPackages: Subject<Array<OtaPackageInfo>> = new Subject();
 
   private propagateChange = (v: any) => { };
 
@@ -112,7 +130,7 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
   }
 
   ngOnInit() {
-    this.filteredPackages = this.otaPackageFormGroup.get('packageId').valueChanges
+    const getPackages = this.otaPackageFormGroup.get('packageId').valueChanges
       .pipe(
         debounceTime(150),
         tap(value => {
@@ -128,19 +146,25 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
           }
         }),
         map(value => value ? (typeof value === 'string' ? value : value.title) : ''),
-        distinctUntilChanged(),
         switchMap(name => this.fetchPackages(name)),
         share()
       );
+
+    this.filteredPackages = merge(this.cleanFilteredPackages, getPackages);
   }
 
   ngAfterViewInit(): void {
   }
 
-  getCurrentEntity(): BaseData<EntityId> | null {
-    const currentRuleChain = this.otaPackageFormGroup.get('packageId').value;
-    if (currentRuleChain && typeof currentRuleChain !== 'string') {
-      return currentRuleChain as BaseData<EntityId>;
+  ngOnDestroy() {
+    this.cleanFilteredPackages.complete();
+    this.cleanFilteredPackages = null;
+  }
+
+  getCurrentEntity(): OtaPackageInfo | null {
+    const currentPackage = this.otaPackageFormGroup.get('packageId').value;
+    if (currentPackage && typeof currentPackage !== 'string') {
+      return currentPackage as OtaPackageInfo;
     } else {
       return null;
     }
@@ -203,6 +227,7 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
   }
 
   reset() {
+    this.cleanFilteredPackages.next([]);
     this.otaPackageFormGroup.get('packageId').patchValue('', {emitEvent: false});
   }
 
@@ -224,14 +249,14 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
       direction: Direction.ASC
     });
     return this.otaPackageService.getOtaPackagesInfoByDeviceProfileId(pageLink, this.deviceProfileId, this.type,
-                                                                {ignoreLoading: true}).pipe(
+      {ignoreLoading: true}).pipe(
       catchError(() => of(emptyPageData<OtaPackageInfo>())),
       map((data) => data && data.data.length ? data.data : null)
     );
   }
 
   clear() {
-    this.otaPackageFormGroup.get('packageId').patchValue('', {emitEvent: false});
+    this.otaPackageFormGroup.get('packageId').patchValue('');
     setTimeout(() => {
       this.packageInput.nativeElement.blur();
       this.packageInput.nativeElement.focus();

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,8 +52,8 @@ public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegration
         Set actualObjects = ConcurrentHashMap.newKeySet();
         Set actualInstances = ConcurrentHashMap.newKeySet();
         rpcActualValue.forEach(node -> {
-            if (!node.get("url").asText().equals("/")) {
-                LwM2mPath path = new LwM2mPath(node.get("url").asText());
+            if (!node.get("uriReference").asText().equals("/")) {
+                LwM2mPath path = new LwM2mPath(node.get("uriReference").asText());
                 actualObjects.add("/" + path.getObjectId());
                 if (path.isObjectInstance()) {
                     actualInstances.add("/" + path.getObjectId() + "/" + path.getObjectInstanceId());

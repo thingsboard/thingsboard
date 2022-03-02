@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,8 +74,10 @@ public class LwM2mLocation extends BaseInstanceEnabler implements Destroyable {
             }
             this.scaleFactor = scaleFactor;
             timestamp = new Date();
-            executorService.scheduleWithFixedDelay(() ->
-                    fireResourcesChange(0, 1), 10000, 10000, TimeUnit.MILLISECONDS);
+            executorService.scheduleWithFixedDelay(() -> {
+                fireResourceChange(0);
+                fireResourceChange(1);
+            }, 10000, 10000, TimeUnit.MILLISECONDS);
         } catch (Throwable e) {
             log.error("[{}]Throwable", e.toString());
             e.printStackTrace();
@@ -117,13 +119,16 @@ public class LwM2mLocation extends BaseInstanceEnabler implements Destroyable {
     private void moveLatitude(float delta) {
         latitude = latitude + delta * scaleFactor;
         timestamp = new Date();
-        fireResourcesChange(0, 5);
+        fireResourceChange(0);
+        fireResourceChange(5);
     }
 
     private void moveLongitude(float delta) {
         longitude = longitude + delta * scaleFactor;
         timestamp = new Date();
-        fireResourcesChange(1, 5);
+        fireResourceChange(1);
+        fireResourceChange(5);
+
     }
 
     public float getLatitude() {

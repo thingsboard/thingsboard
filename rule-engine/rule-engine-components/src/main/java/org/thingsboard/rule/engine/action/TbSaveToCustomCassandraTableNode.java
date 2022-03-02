@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -195,8 +195,10 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
                         } else {
                             stmtBuilder.setToNull(i.get());
                         }
+                    } else if (dataKeyElement.isJsonObject()) {
+                        stmtBuilder.setString(i.get(), dataKeyElement.getAsJsonObject().toString());
                     } else {
-                        throw new IllegalStateException("Message data key: '" + key + "' with value: '" + value + "' is not a JSON Primitive!");
+                        throw new IllegalStateException("Message data key: '" + key + "' with value: '" + value + "' is not a JSON Object or JSON Primitive!");
                     }
                 } else {
                     throw new RuntimeException("Message data doesn't contain key: " + "'" + key + "'!");

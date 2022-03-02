@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,6 +31,8 @@ import { ActivatedRoute } from '@angular/router';
 import { EntityTabsComponent } from '../../components/entity/entity-tabs.component';
 import { DAY, historyInterval } from '@shared/models/time/time.models';
 import { IEntitiesTableComponent } from '@home/models/entity/entity-table-component.models';
+import { IEntityDetailsPageComponent } from '@home/models/entity/entity-details-page-component.models';
+import { templateJitUrl } from '@angular/compiler';
 
 export type EntityBooleanFunction<T extends BaseData<HasId>> = (entity: T) => boolean;
 export type EntityStringFunction<T extends BaseData<HasId>> = (entity: T) => string;
@@ -136,11 +138,13 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
 
   constructor() {}
 
+  private table: IEntitiesTableComponent = null;
+  private entityDetailsPage: IEntityDetailsPageComponent = null;
+
   componentsData: any = null;
 
   loadDataOnInit = true;
   onLoadAction: (route: ActivatedRoute) => void = null;
-  table: IEntitiesTableComponent = null;
   useTimePageLink = false;
   defaultTimewindowInterval = historyInterval(DAY);
   entityType: EntityType = null;
@@ -189,6 +193,40 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   entityAdded: EntityVoidFunction<T> = () => {};
   entityUpdated: EntityVoidFunction<T> = () => {};
   entitiesDeleted: EntityIdsVoidFunction<T> = () => {};
+
+  getTable(): IEntitiesTableComponent {
+    return this.table;
+  }
+
+  setTable(table: IEntitiesTableComponent) {
+    this.table = table;
+    this.entityDetailsPage = null;
+  }
+
+  getEntityDetailsPage(): IEntityDetailsPageComponent {
+    return this.entityDetailsPage;
+  }
+
+  setEntityDetailsPage(entityDetailsPage: IEntityDetailsPageComponent) {
+    this.entityDetailsPage = entityDetailsPage;
+    this.table = null;
+  }
+
+  updateData(closeDetails = false) {
+    if (this.table) {
+      this.table.updateData(closeDetails);
+    } else if (this.entityDetailsPage) {
+      this.entityDetailsPage.reload();
+    }
+  }
+
+  getActivatedRoute(): ActivatedRoute {
+    if (this.table) {
+      return this.table.route;
+    } else {
+      return null;
+    }
+  }
 }
 
 export function checkBoxCell(value: boolean): string {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -229,18 +229,10 @@ class AlarmRuleState {
         long repeatingTimes = 0;
         AlarmConditionSpec alarmConditionSpec = getSpec();
         AlarmConditionSpecType specType = alarmConditionSpec.getType();
-        if(specType.equals(AlarmConditionSpecType.REPEATING)) {
+        if (specType.equals(AlarmConditionSpecType.REPEATING)) {
             RepeatingAlarmConditionSpec repeating = (RepeatingAlarmConditionSpec) spec;
 
-            repeatingTimes = repeating.getPredicate().getDefaultValue();
-
-            if (repeating.getPredicate().getDynamicValue() != null &&
-                    repeating.getPredicate().getDynamicValue().getSourceAttribute() != null) {
-                EntityKeyValue repeatingKeyValue = getDynamicPredicateValue(data, repeating.getPredicate().getDynamicValue());
-                if (repeatingKeyValue != null) {
-                    repeatingTimes = repeatingKeyValue.getLngValue();
-                }
-            }
+            repeatingTimes = resolveDynamicValue(data, repeating.getPredicate());
         }
         return repeatingTimes;
     }
@@ -249,22 +241,33 @@ class AlarmRuleState {
         long durationTimeInMs = 0;
         AlarmConditionSpec alarmConditionSpec = getSpec();
         AlarmConditionSpecType specType = alarmConditionSpec.getType();
-        if(specType.equals(AlarmConditionSpecType.DURATION)) {
+        if (specType.equals(AlarmConditionSpecType.DURATION)) {
             DurationAlarmConditionSpec duration = (DurationAlarmConditionSpec) spec;
             TimeUnit timeUnit = duration.getUnit();
 
-            durationTimeInMs = timeUnit.toMillis(duration.getPredicate().getDefaultValue());
+            durationTimeInMs = timeUnit.toMillis(resolveDynamicValue(data, duration.getPredicate()));
+        }
+        return durationTimeInMs;
+    }
 
-            if (duration.getPredicate().getDynamicValue() != null &&
-                    duration.getPredicate().getDynamicValue().getSourceAttribute() != null) {
-                EntityKeyValue durationKeyValue = getDynamicPredicateValue(data, duration.getPredicate().getDynamicValue());
-                if (durationKeyValue != null) {
-                    durationTimeInMs = timeUnit.toMillis(durationKeyValue.getLngValue());
-                }
-            }
+    private Long resolveDynamicValue(DataSnapshot data, FilterPredicateValue<? extends Number> predicate) {
+        DynamicValue<?> dynamicValue = predicate.getDynamicValue();
+        Long defaultValue = predicate.getDefaultValue().longValue();
+        if (dynamicValue == null || dynamicValue.getSourceAttribute() == null) {
+            return defaultValue;
         }
 
-        return durationTimeInMs;
+        EntityKeyValue keyValue = getDynamicPredicateValue(data, dynamicValue);
+        if (keyValue == null) {
+            return defaultValue;
+        }
+
+        var longValue = getLongValue(keyValue);
+        if (longValue == null) {
+            String sourceAttribute = dynamicValue.getSourceAttribute();
+            throw new NumericParseException(String.format("Could not convert attribute '%s' with value '%s' to numeric value!", sourceAttribute, getStrValue(keyValue)));
+        }
+        return longValue;
     }
 
     public AlarmEvalResult eval(long ts, DataSnapshot dataSnapshot) {
@@ -545,4 +548,28 @@ class AlarmRuleState {
         }
     }
 
+    private static Long getLongValue(EntityKeyValue ekv) {
+        switch (ekv.getDataType()) {
+            case LONG:
+                return ekv.getLngValue();
+            case DOUBLE:
+                return ekv.getDblValue() != null ? ekv.getDblValue().longValue() : null;
+            case BOOLEAN:
+                return ekv.getBoolValue() != null ? (ekv.getBoolValue() ? 1 : 0L) : null;
+            case STRING:
+                try {
+                    return Long.parseLong(ekv.getStrValue());
+                } catch (RuntimeException e) {
+                    return null;
+                }
+            case JSON:
+                try {
+                    return Long.parseLong(ekv.getJsonValue());
+                } catch (RuntimeException e) {
+                    return null;
+                }
+            default:
+                return null;
+        }
+    }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package org.thingsboard.server.dao.sql.oauth2;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.thingsboard.server.dao.model.sql.OAuth2ClientRegistrationTemplateEntity;
 
 import java.util.UUID;
 
-public interface OAuth2ClientRegistrationTemplateRepository extends CrudRepository<OAuth2ClientRegistrationTemplateEntity, UUID> {
+public interface OAuth2ClientRegistrationTemplateRepository extends JpaRepository<OAuth2ClientRegistrationTemplateEntity, UUID> {
 
     OAuth2ClientRegistrationTemplateEntity findByProviderId(String providerId);
 

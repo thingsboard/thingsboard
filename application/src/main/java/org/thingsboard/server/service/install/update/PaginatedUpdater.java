@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ public abstract class PaginatedUpdater<I, D> {
     private int updated = 0;
 
     public void updateEntities(I id) {
-        log.info("{}: started...", getName());
         updated = 0;
         PageLink pageLink = new PageLink(DEFAULT_LIMIT);
         boolean hasNext = true;

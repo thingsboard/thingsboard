@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,21 +111,7 @@ public class TbMsgTimeseriesNode implements TbNode {
     }
 
     public static long computeTs(TbMsg msg, boolean ignoreMetadataTs) {
-        return ignoreMetadataTs ? System.currentTimeMillis() : getTs(msg);
-    }
-
-    public static long getTs(TbMsg msg) {
-        long ts = -1;
-        String tsStr = msg.getMetaData().getValue("ts");
-        if (!StringUtils.isEmpty(tsStr)) {
-            try {
-                ts = Long.parseLong(tsStr);
-            } catch (NumberFormatException ignored) {
-            }
-        } else {
-            ts = msg.getTs();
-        }
-        return ts;
+        return ignoreMetadataTs ? System.currentTimeMillis() : msg.getMetaDataTs();
     }
 
     @Override

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,14 @@ package org.thingsboard.server.service.install.update;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
@@ -32,6 +33,8 @@ import java.util.Objects;
 public class DefaultCacheCleanupService implements CacheCleanupService {
 
     private final CacheManager cacheManager;
+    private final Optional<RedisTemplate<String, Object>> redisTemplate;
+
 
     /**
      * Cleanup caches that can not deserialize anymore due to schema upgrade or data update using sql scripts.
@@ -59,9 +62,11 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
                 break;
             case "3.3.2":
                 log.info("Clear cache to upgrade from version 3.3.2 to 3.3.3 ...");
-                clearCacheByName("devices");
-                clearCacheByName("deviceProfiles");
-                clearCacheByName("tenantProfiles");
+                clearAll();
+                break;
+            case "3.3.3":
+                log.info("Clear cache to upgrade from version 3.3.3 to 3.3.4 ...");
+                clearAll();
                 break;
             default:
                 //Do nothing, since cache cleanup is optional.
@@ -78,4 +83,8 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
         cache.clear();
     }
 
+    void clearAll() {
+        redisTemplate.ifPresent(rt -> rt.execute(connection ->
+                connection.execute("FLUSHALL"), false));
+    }
 }

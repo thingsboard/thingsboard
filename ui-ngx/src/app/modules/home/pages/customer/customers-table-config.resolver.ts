@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -125,7 +125,7 @@ export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<C
     this.config.loadEntity = id => this.customerService.getCustomer(id.id);
     this.config.saveEntity = customer => this.customerService.saveCustomer(customer);
     this.config.deleteEntity = id => this.customerService.deleteCustomer(id.id);
-    this.config.onEntityAction = action => this.onCustomerAction(action);
+    this.config.onEntityAction = action => this.onCustomerAction(action, this.config);
     this.config.deleteEnabled = (customer) => customer && (!customer.additionalInfo || !customer.additionalInfo.isPublic);
     this.config.entitySelectionEnabled = (customer) => customer && (!customer.additionalInfo || !customer.additionalInfo.isPublic);
     this.config.detailsReadonly = (customer) => customer && customer.additionalInfo && customer.additionalInfo.isPublic;
@@ -137,11 +137,12 @@ export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<C
     return this.config;
   }
 
-  private openCustomer($event: Event, customer: Customer) {
+  private openCustomer($event: Event, customer: Customer, config: EntityTableConfig<Customer>) {
     if ($event) {
       $event.stopPropagation();
     }
-    this.router.navigateByUrl(`${this.router.url}/${customer.id.id}`);
+    const url = this.router.createUrlTree([customer.id.id], {relativeTo: config.getActivatedRoute()});
+    this.router.navigateByUrl(url);
   }
 
   manageCustomerUsers($event: Event, customer: Customer) {
@@ -179,10 +180,10 @@ export class CustomersTableConfigResolver implements Resolve<EntityTableConfig<C
     this.router.navigateByUrl(`customers/${customer.id.id}/edgeInstances`);
   }
 
-  onCustomerAction(action: EntityAction<Customer>): boolean {
+  onCustomerAction(action: EntityAction<Customer>, config: EntityTableConfig<Customer>): boolean {
     switch (action.action) {
       case 'open':
-        this.openCustomer(action.event, action.entity);
+        this.openCustomer(action.event, action.entity, config);
         return true;
       case 'manageUsers':
         this.manageCustomerUsers(action.event, action.entity);

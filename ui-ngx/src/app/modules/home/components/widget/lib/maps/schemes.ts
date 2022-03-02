@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -269,6 +269,11 @@ export const commonMapSettingsSchema =
                 type: 'boolean',
                 default: false
             },
+            disableZoomControl: {
+                title: 'Disable zoom control buttons',
+                type: 'boolean',
+                default: false
+            },
             latKeyName: {
                 title: 'Latitude key name',
                 type: 'string',
@@ -424,6 +429,7 @@ export const commonMapSettingsSchema =
         'mapPageSize',
         'draggableMarker',
         'disableScrollZooming',
+        'disableZoomControl',
         {
             key: 'latKeyName',
             condition: 'model.provider !== "image-map"'
@@ -1329,7 +1335,7 @@ export const editorSettingSchema =
           default: false
         },
         hideAllControlButton: {
-          title: 'Hide all button',
+          title: 'Hide all edit control buttons',
           type: 'boolean',
           default: false
         },

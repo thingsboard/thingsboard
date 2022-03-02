@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -134,6 +134,7 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
   public actionCellButtonAction: PersistentTableWidgetActionDescriptor[] = [];
   public displayedColumns: string[];
   public hidePageSize = false;
+  hasData = false;
 
   constructor(protected store: Store<AppState>,
               private elementRef: ElementRef,
@@ -154,6 +155,7 @@ export class PersistentTableComponent extends PageComponent implements OnInit {
     this.widgetConfig = this.ctx.widgetConfig;
     this.subscription = this.ctx.defaultSubscription;
     this.initializeConfig();
+    this.hasData = this.ctx.defaultSubscription.hasResolvedData;
     this.ctx.updateWidgetParams();
     if (this.displayPagination) {
       this.widgetResize$ = new ResizeObserver(() => {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public class BaseComponentDescriptorService implements ComponentDescriptorServic
 
     @Override
     public ComponentDescriptor saveComponent(TenantId tenantId, ComponentDescriptor component) {
-        componentValidator.validate(component, data -> new TenantId(EntityId.NULL_UUID));
+        componentValidator.validate(component, data -> TenantId.SYS_TENANT_ID);
         Optional<ComponentDescriptor> result = componentDescriptorDao.saveIfNotExist(tenantId, component);
         return result.orElseGet(() -> componentDescriptorDao.findByClazz(tenantId, component.getClazz()));
     }

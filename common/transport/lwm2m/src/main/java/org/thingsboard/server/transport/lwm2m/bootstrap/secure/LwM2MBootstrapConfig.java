@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,7 @@ import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.Abstrac
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBootstrapServerCredential;
 
 import java.io.Serializable;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Data
@@ -97,7 +95,6 @@ public class LwM2MBootstrapConfig implements Serializable {
         byte[] secretKey = new byte[]{};
         byte[] serverPublicKey = new byte[]{};
         serverSecurity.serverId = serverCredential.getShortServerId();
-        log.info("serverId = [{}]", serverSecurity.serverId);
         serverSecurity.securityMode = SecurityMode.valueOf(securityMode.name());
         serverSecurity.bootstrapServer = serverCredential.isBootstrapServerIs();
         if (!LwM2MSecurityMode.NO_SEC.equals(securityMode)) {
@@ -112,22 +109,17 @@ public class LwM2MBootstrapConfig implements Serializable {
             if (LwM2MSecurityMode.PSK.equals(securityMode)) {
                 publicKeyOrId = server.getClientPublicKeyOrId().getBytes();
                 secretKey = Hex.decodeHex(server.getClientSecretKey().toCharArray());
-                log.info("publicKeyOrId  [{}]", new String(publicKeyOrId, StandardCharsets.UTF_8));
             } else {
                 publicKeyOrId = server.getDecodedClientPublicKeyOrId();
                 secretKey = server.getDecodedClientSecretKey();
-                log.info("publicKeyOrId  [{}]", Hex.encodeHexString(publicKeyOrId));
             }
             serverPublicKey = serverCredential.getDecodedCServerPublicKey();
         }
-        log.info("secretKey [{}]", Hex.encodeHexString(secretKey));
         serverUri += (((serverCredential.getHost().equals("0.0.0.0") ? "localhost" : serverCredential.getHost()) + ":" + serverCredential.getPort()));
-        log.info("serverSecurity.uri = [{}]", serverUri);
         serverSecurity.uri = serverUri;
         serverSecurity.publicKeyOrId = publicKeyOrId;
         serverSecurity.secretKey = secretKey;
         serverSecurity.serverPublicKey = serverPublicKey;
-        log.info("server [{}]", Hex.encodeHexString(serverSecurity.serverPublicKey));
         return serverSecurity;
     }
 

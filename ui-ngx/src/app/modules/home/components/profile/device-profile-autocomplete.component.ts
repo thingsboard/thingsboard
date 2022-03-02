@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -233,9 +233,9 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
-      this.selectDeviceProfileFormGroup.disable();
+      this.selectDeviceProfileFormGroup.disable({emitEvent: false});
     } else {
-      this.selectDeviceProfileFormGroup.enable();
+      this.selectDeviceProfileFormGroup.enable({emitEvent: false});
     }
   }
 

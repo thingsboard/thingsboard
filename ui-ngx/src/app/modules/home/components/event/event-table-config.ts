@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ import {
 export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
 
   eventTypeValue: EventType | DebugEventType;
+  hideClearEventAction = false;
 
   private filterParams: FilterEventBody = {};
   private filterColumns: FilterEntityColumn[] = [];
@@ -140,15 +141,30 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     {
       name: this.translate.instant('event.clean-events'),
       icon: 'delete',
-      isEnabled: () => true,
-      onAction: ($event) => {
-        this.eventService.clearEvents(this.entityId, this.eventType, this.filterParams, this.tenantId, this.table.pageLink as TimePageLink).subscribe(
+      isEnabled: () => !this.hideClearEventAction,
+      onAction: $event => this.clearEvents($event)
+    });
+  }
+
+  clearEvents($event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialogService.confirm(
+      this.translate.instant('event.clear-request-title'),
+      this.translate.instant('event.clear-request-text'),
+      this.translate.instant('action.no'),
+      this.translate.instant('action.yes')
+    ).subscribe((res) => {
+      if (res) {
+        this.eventService.clearEvents(this.entityId, this.eventType, this.filterParams,
+          this.tenantId, this.getTable().pageLink as TimePageLink).subscribe(
           () => {
-            this.table.paginator.pageIndex = 0;
-            this.table.updateData();
+            this.getTable().paginator.pageIndex = 0;
+            this.updateData();
           }
         );
-     }
+      }
     });
   }
 
@@ -275,7 +291,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
         break;
     }
     if (updateTableColumns) {
-      this.table.columnsUpdated(true);
+      this.getTable().columnsUpdated(true);
     }
   }
 
@@ -345,8 +361,8 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     }
 
     this.filterParams = {};
-    this.table.paginator.pageIndex = 0;
-    this.table.updateData();
+    this.getTable().paginator.pageIndex = 0;
+    this.updateData();
   }
 
   private editEventFilter($event: MouseEvent) {
@@ -389,8 +405,8 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     componentRef.onDestroy(() => {
       if (componentRef.instance.result && !isEqual(this.filterParams, componentRef.instance.result.filterParams)) {
         this.filterParams = componentRef.instance.result.filterParams;
-        this.table.paginator.pageIndex = 0;
-        this.table.updateData();
+        this.getTable().paginator.pageIndex = 0;
+        this.updateData();
       }
     });
     this.cd.detectChanges();

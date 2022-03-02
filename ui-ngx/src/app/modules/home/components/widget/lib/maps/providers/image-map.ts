@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import { DataSet, DatasourceType, widgetType } from '@shared/models/widget.model
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { isDefinedAndNotNull, isEmptyStr } from '@core/utils';
+import { EntityDataPageLink } from '@shared/models/query/query.models';
 
 const maxZoom = 4; // ?
 
@@ -88,6 +89,7 @@ export class ImageMap extends LeafletMap {
       let isUpdate = false;
       const imageUrlSubscriptionOptions: WidgetSubscriptionOptions = {
         datasources,
+        hasDataPageLink: true,
         useDashboardTimewindow: false,
         type: widgetType.latest,
         callbacks: {
@@ -97,7 +99,15 @@ export class ImageMap extends LeafletMap {
           }
         }
       };
-      this.ctx.subscriptionApi.createSubscription(imageUrlSubscriptionOptions, true).subscribe(() => { });
+      this.ctx.subscriptionApi.createSubscription(imageUrlSubscriptionOptions, true).subscribe((subscription) => {
+        const pageLink: EntityDataPageLink = {
+          page: 0,
+          pageSize: 1,
+          textSearch: null,
+          dynamic: true
+        };
+        subscription.subscribeAllForPaginatedData(pageLink, null);
+      });
       return this.imageFromAlias(result);
     }
 
@@ -154,32 +164,32 @@ export class ImageMap extends LeafletMap {
         const southWest = this.pointToLatLng(-padding, h + padding);
         const northEast = this.pointToLatLng(w + padding, -padding);
         const maxBounds = new L.LatLngBounds(southWest, northEast);
+        (this.map as any)._enforcingBounds = true;
         this.map.setMaxBounds(maxBounds);
         if (lastCenterPos) {
             lastCenterPos.x *= w;
             lastCenterPos.y *= h;
             const center = this.pointToLatLng(lastCenterPos.x, lastCenterPos.y);
-            setTimeout(() => {
-                this.map.panTo(center, { animate: false });
-            }, 0);
+            this.map.panTo(center, { animate: false });
         }
+        (this.map as any)._enforcingBounds = false;
     }
 
     onResize(updateImage?: boolean) {
       let width = this.$container.clientWidth;
       if (width > 0 && this.aspect) {
-        let height = width / this.aspect;
+        let height = Math.round(width / this.aspect);
         const imageMapHeight = this.$container.clientHeight;
         if (imageMapHeight > 0 && height > imageMapHeight) {
           height = imageMapHeight;
-          width = height * this.aspect;
+          width = Math.round(height * this.aspect);
         }
         width *= maxZoom;
         const prevWidth = this.width;
         const prevHeight = this.height;
         if (this.width !== width || updateImage) {
           this.width = width;
-          this.height = width / this.aspect;
+          this.height = Math.round(width / this.aspect);
           if (!this.map) {
             this.initMap(updateImage);
           } else {
@@ -187,7 +197,9 @@ export class ImageMap extends LeafletMap {
             lastCenterPos.x /= prevWidth;
             lastCenterPos.y /= prevHeight;
             this.updateBounds(updateImage, lastCenterPos);
-            this.map.invalidateSize(true);
+            (this.map as any)._enforcingBounds = true;
+            this.map.invalidateSize(false);
+            (this.map as any)._enforcingBounds = false;
             this.updateMarkers(this.markersData);
             if (this.options.draggableMarker && this.addMarkers.length) {
               this.addMarkers.forEach((marker) => {
@@ -217,6 +229,7 @@ export class ImageMap extends LeafletMap {
           maxZoom,
           scrollWheelZoom: !this.options.disableScrollZooming,
           center,
+          zoomControl: !this.options.disableZoomControl,
           zoom: 1,
           crs: L.CRS.Simple,
           attributionControl: false,
@@ -257,7 +270,7 @@ export class ImageMap extends LeafletMap {
         return L.CRS.Simple.pointToLatLng({ x, y } as L.PointExpression, maxZoom - 1);
     }
 
-    latLngToPoint(latLng: LatLngLiteral) {
+    latLngToPoint(latLng: LatLngLiteral): L.Point {
         return L.CRS.Simple.latLngToPoint(latLng, maxZoom - 1);
     }
 

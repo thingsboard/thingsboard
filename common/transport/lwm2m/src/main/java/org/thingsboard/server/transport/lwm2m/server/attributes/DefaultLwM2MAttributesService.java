@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mResourceInstance;
+import org.eclipse.leshan.core.request.WriteRequest;
+import org.eclipse.leshan.core.response.WriteResponse;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.transport.TransportService;
@@ -199,11 +201,9 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
                     // #1.1
                     if (lwM2MClient.getSharedAttributes().containsKey(pathIdVer)) {
                         if (tsKvProto.getTs() > lwM2MClient.getSharedAttributes().get(pathIdVer).getTs()) {
-                            lwM2MClient.getSharedAttributes().put(pathIdVer, tsKvProto);
                             attributesUpdate.put(pathIdVer, tsKvProto);
                         }
                     } else {
-                        lwM2MClient.getSharedAttributes().put(pathIdVer, tsKvProto);
                         attributesUpdate.put(pathIdVer, tsKvProto);
                     }
                 }
@@ -221,11 +221,11 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
             Object newValProto = getValueFromKvProto(tsKvProto.getKv());
             Object oldResourceValue = this.getResourceValueFormatKv(lwM2MClient, pathIdVer);
             if (!resourceModel.multiple || !(newValProto instanceof JsonElement)) {
-                this.pushUpdateToClientIfNeeded(lwM2MClient, oldResourceValue, newValProto, pathIdVer, logFailedUpdateOfNonChangedValue);
+                this.pushUpdateToClientIfNeeded(lwM2MClient, oldResourceValue, newValProto, pathIdVer, tsKvProto, logFailedUpdateOfNonChangedValue);
             } else {
                 try {
                     pushUpdateMultiToClientIfNeeded(lwM2MClient, resourceModel, (JsonElement) newValProto,
-                            (Map<Integer, LwM2mResourceInstance>) oldResourceValue, pathIdVer, logFailedUpdateOfNonChangedValue);
+                            (Map<Integer, LwM2mResourceInstance>) oldResourceValue, pathIdVer, tsKvProto, logFailedUpdateOfNonChangedValue);
                 } catch (Exception e) {
                     log.error("Failed update resource [" + lwM2MClient.getEndpoint() + "] onAttributesUpdate:", e);
                     String logMsg = String.format("%s: Failed update resource onAttributesUpdate %s.",
@@ -237,7 +237,7 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
     }
 
     private void pushUpdateToClientIfNeeded(LwM2mClient lwM2MClient, Object oldValue, Object newValue,
-                                            String versionedId, boolean logFailedUpdateOfNonChangedValue) {
+                                            String versionedId, TransportProtos.TsKvProto tsKvProto, boolean logFailedUpdateOfNonChangedValue) {
         if (newValue == null) {
             String logMsg = String.format("%s: Failed update resource versionedId - %s value - %s. New value is  bad",
                     LOG_LWM2M_ERROR, versionedId, "null");
@@ -245,7 +245,13 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
             log.error("Failed update resource [{}] [{}]", versionedId, "null");
         } else if ((oldValue == null) || !valueEquals(newValue, oldValue)) {
             TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(versionedId).value(newValue).timeout(clientContext.getRequestTimeout(lwM2MClient)).build();
-            downlinkHandler.sendWriteReplaceRequest(lwM2MClient, request, new TbLwM2MWriteResponseCallback(uplinkHandler, logService, lwM2MClient, versionedId));
+            downlinkHandler.sendWriteReplaceRequest(lwM2MClient, request, new TbLwM2MWriteResponseCallback(uplinkHandler, logService, lwM2MClient, versionedId) {
+                @Override
+                public void onSuccess(WriteRequest request, WriteResponse response) {
+                    client.getSharedAttributes().put(versionedId, tsKvProto);
+                    super.onSuccess(request, response);
+                }
+            });
         } else if (logFailedUpdateOfNonChangedValue) {
             String logMsg = String.format("%s: Didn't update the versionedId resource - %s value - %s. Value is not changed",
                     LOG_LWM2M_WARN, versionedId, newValue);
@@ -256,7 +262,7 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
 
     private void pushUpdateMultiToClientIfNeeded(LwM2mClient client, ResourceModel resourceModel, JsonElement newValProto,
                                                  Map<Integer, LwM2mResourceInstance> valueOld, String versionedId,
-                                                 boolean logFailedUpdateOfNonChangedValue) {
+                                                 TransportProtos.TsKvProto tsKvProto, boolean logFailedUpdateOfNonChangedValue) {
         Map<Integer, Object> newValues = convertMultiResourceValuesFromJson(newValProto, resourceModel.type, versionedId);
         if (newValues.size() > 0 && valueOld != null && valueOld.size() > 0) {
             valueOld.values().forEach((v) -> {
@@ -270,7 +276,13 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
 
         if (newValues.size() > 0) {
             TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(versionedId).value(newValues).timeout(this.config.getTimeout()).build();
-            downlinkHandler.sendWriteReplaceRequest(client, request, new TbLwM2MWriteResponseCallback(uplinkHandler, logService, client, versionedId));
+            downlinkHandler.sendWriteReplaceRequest(client, request, new TbLwM2MWriteResponseCallback(uplinkHandler, logService, client, versionedId) {
+                @Override
+                public void onSuccess(WriteRequest request, WriteResponse response) {
+                    client.getSharedAttributes().put(versionedId, tsKvProto);
+                    super.onSuccess(request, response);
+                }
+            });
         } else if (logFailedUpdateOfNonChangedValue) {
             log.warn("Didn't update resource [{}] [{}]", versionedId, newValProto);
             String logMsg = String.format("%s: Didn't update resource versionedId - %s value - %s. Value is not changed",

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -300,14 +300,20 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     resize() {
-        this.map?.invalidateSize();
-        this.map.onResize();
+      this.map.onResize();
+      this.map?.invalidateSize();
     }
 
     destroy() {
       (this.ctx as any).mapInstance = null;
       if (this.map) {
         this.map.remove();
+      }
+      if ($.tooltipster) {
+        const instances = $.tooltipster.instances();
+        instances.forEach((instance) => {
+          instance.destroy();
+        });
       }
     }
 }

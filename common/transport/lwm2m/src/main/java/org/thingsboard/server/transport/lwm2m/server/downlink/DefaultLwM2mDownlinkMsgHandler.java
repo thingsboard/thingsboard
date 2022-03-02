@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package org.thingsboard.server.transport.lwm2m.server.downlink;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.Link;
+import org.eclipse.leshan.core.link.Link;
 import org.eclipse.leshan.core.LwM2m;
 import org.eclipse.leshan.core.attributes.Attribute;
 import org.eclipse.leshan.core.attributes.AttributeSet;
@@ -29,6 +29,7 @@ import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.ObjectLink;
 import org.eclipse.leshan.core.observation.Observation;
+import org.eclipse.leshan.core.observation.SingleObservation;
 import org.eclipse.leshan.core.request.CompositeDownlinkRequest;
 import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.core.request.CreateRequest;
@@ -160,7 +161,8 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             validateVersionedId(client, request);
             LwM2mPath resultIds = new LwM2mPath(request.getObjectId());
             Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
-            if (observations.stream().noneMatch(observation -> observation.getPath().equals(resultIds))) {
+            //TODO: should be able to use CompositeObservation
+            if (observations.stream().noneMatch(observation -> ((SingleObservation)observation).getPath().equals(resultIds))) {
                 ObserveRequest downlink;
                 ContentFormat contentFormat = getReadRequestContentFormat(client, request, modelProvider);
                 if (resultIds.isResource()) {
@@ -183,7 +185,8 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     @Override
     public void sendObserveAllRequest(LwM2mClient client, TbLwM2MObserveAllRequest request, DownlinkRequestCallback<TbLwM2MObserveAllRequest, Set<String>> callback) {
         Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
-        Set<String> paths = observations.stream().map(observation -> observation.getPath().toString()).collect(Collectors.toUnmodifiableSet());
+        //TODO: should be able to use CompositeObservation
+        Set<String> paths = observations.stream().map(observation -> ((SingleObservation)observation).getPath().toString()).collect(Collectors.toUnmodifiableSet());
         callback.onSuccess(request, paths);
     }
 
@@ -620,9 +623,9 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     }
 
     private static ContentFormat getContentFormatForComplex(LwM2mClient client) {
-        if (LwM2m.Version.V1_0.equals(client.getRegistration().getLwM2mVersion())) {
+        if (LwM2m.LwM2mVersion.V1_0.equals(client.getRegistration().getLwM2mVersion())) {
             return ContentFormat.TLV;
-        } else if (LwM2m.Version.V1_1.equals(client.getRegistration().getLwM2mVersion())) {
+        } else if (LwM2m.LwM2mVersion.V1_1.equals(client.getRegistration().getLwM2mVersion())) {
             ContentFormat result = findFirst(client.getClientSupportContentFormats(), null, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON, ContentFormat.TLV, ContentFormat.JSON);
             if (result != null) {
                 return result;

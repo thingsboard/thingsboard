@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
         mergeMap((savedEdge) => this.edgeService.getEdgeInfo(savedEdge.id.id)
         ));
     };
-    this.config.onEntityAction = action => this.onEdgeAction(action);
+    this.config.onEntityAction = action => this.onEdgeAction(action, this.config);
     this.config.detailsReadonly = () => this.config.componentsData.edgeScope === 'customer_user';
     this.config.headerComponent = EdgeTableHeaderComponent;
   }
@@ -318,7 +318,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
           name: this.translate.instant('edge.add-edge-text'),
           icon: 'insert_drive_file',
           isEnabled: () => true,
-          onAction: ($event) => this.config.table.addEntity($event)
+          onAction: ($event) => this.config.getTable().addEntity($event)
         },
         {
           name: this.translate.instant('edge.import'),
@@ -345,7 +345,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
     this.homeDialogs.importEntities(EntityType.EDGE).subscribe((res) => {
       if (res) {
         this.broadcast.broadcast('edgeSaved');
-        this.config.table.updateData();
+        this.config.updateData();
       }
     });
   }
@@ -365,16 +365,17 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
     }).afterClosed()
       .subscribe((res) => {
         if (res) {
-          this.config.table.updateData();
+          this.config.updateData();
         }
       });
   }
 
-  private openEdge($event: Event, edge: Edge) {
+  private openEdge($event: Event, edge: Edge, config: EntityTableConfig<EdgeInfo>) {
     if ($event) {
       $event.stopPropagation();
     }
-    this.router.navigateByUrl(`${this.router.url}/${edge.id.id}`);
+    const url = this.router.createUrlTree([edge.id.id], {relativeTo: config.getActivatedRoute()});
+    this.router.navigateByUrl(url);
   }
 
   makePublic($event: Event, edge: Edge) {
@@ -391,7 +392,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
         if (res) {
           this.edgeService.makeEdgePublic(edge.id.id).subscribe(
             () => {
-              this.config.table.updateData();
+              this.config.updateData();
             }
           );
         }
@@ -442,7 +443,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
     }).afterClosed()
       .subscribe((res) => {
         if (res) {
-          this.config.table.updateData();
+          this.config.updateData();
         }
       });
   }
@@ -471,7 +472,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
         if (res) {
           this.edgeService.unassignEdgeFromCustomer(edge.id.id).subscribe(
             () => {
-              this.config.table.updateData();
+              this.config.updateData(this.config.componentsData.edgeScope !== 'tenant');
             }
           );
         }
@@ -499,7 +500,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
           );
           forkJoin(tasks).subscribe(
             () => {
-              this.config.table.updateData();
+              this.config.updateData();
             }
           );
         }
@@ -525,10 +526,10 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
     );
   }
 
-  onEdgeAction(action: EntityAction<EdgeInfo>): boolean {
+  onEdgeAction(action: EntityAction<EdgeInfo>, config: EntityTableConfig<EdgeInfo>): boolean {
     switch (action.action) {
       case 'open':
-        this.openEdge(action.event, action.entity);
+        this.openEdge(action.event, action.entity, config);
         return true;
       case 'makePublic':
         this.makePublic(action.event, action.entity);

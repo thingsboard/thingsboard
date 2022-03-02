@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package org.thingsboard.server.transport.lwm2m;
 
-import org.eclipse.californium.core.network.config.NetworkConfig;
+import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.leshan.client.object.Security;
 
+import static org.eclipse.californium.core.config.CoapConfig.COAP_PORT;
+import static org.eclipse.californium.core.config.CoapConfig.COAP_SECURE_PORT;
 import static org.eclipse.leshan.client.object.Security.noSec;
 
 public class Lwm2mTestHelper {
@@ -32,10 +34,10 @@ public class Lwm2mTestHelper {
     public static final int SHORT_SERVER_ID = 123;
     public static final int SHORT_SERVER_ID_BS = 111;
 
-    public static final NetworkConfig SECURE_COAP_CONFIG = new NetworkConfig().setString("COAP_SECURE_PORT", Integer.toString(SECURE_PORT));
+    public static final Configuration SECURE_COAP_CONFIG = new Configuration().set(COAP_SECURE_PORT, SECURE_PORT);
     public static final String SECURE_URI = "coaps://" + HOST + ":" + SECURE_PORT;
     public static final Security SECURITY = noSec("coap://"+ HOST +":" + PORT, SHORT_SERVER_ID);
-    public static final NetworkConfig COAP_CONFIG = new NetworkConfig().setString("COAP_PORT", Integer.toString(PORT));
+    public static final Configuration COAP_CONFIG = new Configuration().set(COAP_PORT, PORT);
 
     // Models
     public static final String[] resources = new String[]{"0.xml", "1.xml", "2.xml", "3.xml", "5.xml", "6.xml", "9.xml", "19.xml", "3303.xml"};

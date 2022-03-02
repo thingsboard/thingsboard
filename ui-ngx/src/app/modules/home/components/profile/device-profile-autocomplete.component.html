@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2021 The Thingsboard Authors
+    Copyright © 2016-2022 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -23,7 +23,11 @@
          [required]="required"
          (keydown)="deviceProfileEnter($event)"
          (keypress)="deviceProfileEnter($event)"
-         [matAutocomplete]="deviceProfileAutocomplete">
+         [matAutocomplete]="deviceProfileAutocomplete"
+         [fxShow]="!showDetailsPageLink || !disabled || !selectDeviceProfileFormGroup.get('deviceProfile').value">
+  <a *ngIf="showDetailsPageLink && selectDeviceProfileFormGroup.get('deviceProfile').value && disabled" aria-label="Open tenant profile" [routerLink]=deviceProfileURL>
+    {{ displayDeviceProfileFn(selectDeviceProfileFormGroup.get('deviceProfile').value) }}
+  </a>
   <button *ngIf="selectDeviceProfileFormGroup.get('deviceProfile').value && !disabled"
           type="button"
           matSuffix mat-button mat-icon-button aria-label="Clear"
@@ -37,13 +41,6 @@
           matTooltipPosition="above"
           (click)="editDeviceProfile($event)">
     <mat-icon class="material-icons">edit</mat-icon>
-  </button>
-  <button *ngIf="showDetailsPageLink && selectDeviceProfileFormGroup.get('deviceProfile').value && disabled"
-          type="button"
-          matSuffix mat-button mat-icon-button aria-label="Open device profile">
-    <a [routerLink]=deviceProfileURL>
-      <mat-icon class="material-icons">open_in_new</mat-icon>
-    </a>
   </button>
   <mat-autocomplete
     class="tb-autocomplete"

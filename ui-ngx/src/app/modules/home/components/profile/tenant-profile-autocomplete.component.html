@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2021 The Thingsboard Authors
+    Copyright © 2016-2022 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -23,7 +23,11 @@
          [required]="required"
          (keydown)="tenantProfileEnter($event)"
          (keypress)="tenantProfileEnter($event)"
-         [matAutocomplete]="tenantProfileAutocomplete">
+         [matAutocomplete]="tenantProfileAutocomplete"
+         [fxShow]="!showDetailsPageLink || !disabled || !selectTenantProfileFormGroup.get('tenantProfile').value">
+  <a *ngIf="showDetailsPageLink && selectTenantProfileFormGroup.get('tenantProfile').value && disabled" aria-label="Open tenant profile" [routerLink]=tenantProfileURL>
+    {{ displayTenantProfileFn(selectTenantProfileFormGroup.get('tenantProfile').value) }}
+  </a>
   <button *ngIf="selectTenantProfileFormGroup.get('tenantProfile').value && !disabled"
           type="button"
           matSuffix mat-button mat-icon-button aria-label="Clear"
@@ -37,13 +41,6 @@
           matTooltipPosition="above"
           (click)="editTenantProfile($event)">
     <mat-icon class="material-icons">edit</mat-icon>
-  </button>
-  <button *ngIf="showDetailsPageLink && selectTenantProfileFormGroup.get('tenantProfile').value && disabled"
-          type="button"
-          matSuffix mat-button mat-icon-button aria-label="Open device profile">
-    <a [routerLink]=tenantProfileURL>
-      <mat-icon class="material-icons">open_in_new</mat-icon>
-    </a>
   </button>
   <mat-autocomplete
     class="tb-autocomplete"
