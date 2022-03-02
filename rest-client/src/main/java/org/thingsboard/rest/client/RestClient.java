@@ -116,9 +116,11 @@ import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
+import org.thingsboard.server.common.data.query.EntitiesSearchRequest;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
+import org.thingsboard.server.common.data.query.EntitySearchResult;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationInfo;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
@@ -3084,6 +3086,15 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 throw exception;
             }
         }
+    }
+
+    public PageData<EntitySearchResult> searchEntitiesWithinAllTenants(EntitiesSearchRequest searchRequest, PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+
+        String uri = baseURL + "/api/entities/search?" + getUrlParams(pageLink);
+        return restTemplate.exchange(uri, HttpMethod.POST, new HttpEntity<>(searchRequest),
+                new ParameterizedTypeReference<PageData<EntitySearchResult>>() {}, params).getBody();
     }
 
     private String getTimeUrlParams(TimePageLink pageLink) {
