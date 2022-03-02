@@ -26,10 +26,7 @@ import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.actors.TbEntityActorId;
 import org.thingsboard.server.actors.TbEntityTypeActorIdPredicate;
 import org.thingsboard.server.actors.device.DeviceActorCreator;
-import org.thingsboard.server.actors.device.SessionTimeoutCheckMsg;
-import org.thingsboard.server.actors.ruleChain.RuleChainInputMsg;
 import org.thingsboard.server.actors.ruleChain.RuleChainManagerActor;
-import org.thingsboard.server.actors.ruleChain.RuleChainOutputMsg;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.common.data.ApiUsageState;
@@ -65,7 +62,7 @@ import java.util.Optional;
 @Slf4j
 public class TenantActor extends RuleChainManagerActor {
 
-    private boolean isRuleEngineForCurrentTenant;
+    private boolean isRuleEngine;
     private boolean isCore;
     private ApiUsageState apiUsageState;
 
@@ -78,39 +75,37 @@ public class TenantActor extends RuleChainManagerActor {
     @Override
     public void init(TbActorCtx ctx) throws TbActorException {
         super.init(ctx);
-        log.info("[{}] Starting tenant actor.", tenantId);
+        log.debug("[{}] Starting tenant actor.", tenantId);
         try {
             Tenant tenant = systemContext.getTenantService().findTenantById(tenantId);
             if (tenant == null) {
                 cantFindTenant = true;
                 log.info("[{}] Started tenant actor for missing tenant.", tenantId);
             } else {
-                apiUsageState = new ApiUsageState(systemContext.getApiUsageStateService().getApiUsageState(tenant.getId()));
-
                 // This Service may be started for specific tenant only.
                 Optional<TenantId> isolatedTenantId = systemContext.getServiceInfoProvider().getIsolatedTenant();
 
                 TenantProfile tenantProfile = systemContext.getTenantProfileCache().get(tenant.getTenantProfileId());
 
                 isCore = systemContext.getServiceInfoProvider().isService(ServiceType.TB_CORE);
-                isRuleEngineForCurrentTenant = systemContext.getServiceInfoProvider().isService(ServiceType.TB_RULE_ENGINE);
-                if (isRuleEngineForCurrentTenant) {
+                isRuleEngine = systemContext.getServiceInfoProvider().isService(ServiceType.TB_RULE_ENGINE);
+                if (isRuleEngine) {
                     try {
                         if (isolatedTenantId.map(id -> id.equals(tenantId)).orElseGet(() -> !tenantProfile.isIsolatedTbRuleEngine())) {
-                            if (apiUsageState.isReExecEnabled()) {
-                                log.info("[{}] Going to init rule chains", tenantId);
+                            if (getApiUsageState().isReExecEnabled()) {
+                                log.debug("[{}] Going to init rule chains", tenantId);
                                 initRuleChains();
                             } else {
                                 log.info("[{}] Skip init of the rule chains due to API limits", tenantId);
                             }
                         } else {
-                            isRuleEngineForCurrentTenant = false;
+                            isRuleEngine = false;
                         }
                     } catch (Exception e) {
                         cantFindTenant = true;
                     }
                 }
-                log.info("[{}] Tenant actor started.", tenantId);
+                log.debug("[{}] Tenant actor started.", tenantId);
             }
         } catch (Exception e) {
             log.warn("[{}] Unknown failure", tenantId, e);
@@ -193,12 +188,12 @@ public class TenantActor extends RuleChainManagerActor {
     }
 
     private void onQueueToRuleEngineMsg(QueueToRuleEngineMsg msg) {
-        if (!isRuleEngineForCurrentTenant) {
+        if (!isRuleEngine) {
             log.warn("RECEIVED INVALID MESSAGE: {}", msg);
             return;
         }
         TbMsg tbMsg = msg.getMsg();
-        if (apiUsageState.isReExecEnabled()) {
+        if (getApiUsageState().isReExecEnabled()) {
             if (tbMsg.getRuleChainId() == null) {
                 if (getRootChainActor() != null) {
                     getRootChainActor().tell(msg);
@@ -222,7 +217,7 @@ public class TenantActor extends RuleChainManagerActor {
     }
 
     private void onRuleChainMsg(RuleChainAwareMsg msg) {
-        if (apiUsageState.isReExecEnabled()) {
+        if (getApiUsageState().isReExecEnabled()) {
             getOrCreateActor(msg.getRuleChainId()).tell(msg);
         }
     }
@@ -241,7 +236,7 @@ public class TenantActor extends RuleChainManagerActor {
 
     private void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
         if (msg.getEntityId().getEntityType().equals(EntityType.API_USAGE_STATE)) {
-            ApiUsageState old = apiUsageState;
+            ApiUsageState old = getApiUsageState();
             apiUsageState = new ApiUsageState(systemContext.getApiUsageStateService().getApiUsageState(tenantId));
             if (old.isReExecEnabled() && !apiUsageState.isReExecEnabled()) {
                 log.info("[{}] Received API state update. Going to DISABLE Rule Engine execution.", tenantId);
@@ -261,7 +256,7 @@ public class TenantActor extends RuleChainManagerActor {
                     edgeRpcService.updateEdge(tenantId, edge);
                 }
             }
-        } else if (isRuleEngineForCurrentTenant) {
+        } else if (isRuleEngine) {
             TbActorRef target = getEntityActorRef(msg.getEntityId());
             if (target != null) {
                 if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN) {
@@ -287,6 +282,13 @@ public class TenantActor extends RuleChainManagerActor {
     private void onToEdgeSessionMsg(EdgeEventUpdateMsg msg) {
         log.trace("[{}] onToEdgeSessionMsg [{}]", msg.getTenantId(), msg);
         systemContext.getEdgeRpcService().onEdgeEvent(tenantId, msg.getEdgeId());
+    }
+
+    private ApiUsageState getApiUsageState() {
+        if (apiUsageState == null) {
+            apiUsageState = new ApiUsageState(systemContext.getApiUsageStateService().getApiUsageState(tenantId));
+        }
+        return apiUsageState;
     }
 
     public static class ActorCreator extends ContextBasedCreator {
