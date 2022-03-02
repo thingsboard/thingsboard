@@ -86,10 +86,10 @@ export class GlobalSearchTableHeaderComponent extends EntityTableHeaderComponent
       {type: this.translate.instant(this.globalSearchTypesTranslationMap.get(this.entityFormGroup.get('entityType').value))})
 
   updateTable() {
-    if (this.entitiesTableConfig.table.displayPagination) {
-      this.entitiesTableConfig.table.paginator.pageIndex = 0;
+    if (this.entitiesTableConfig.getTable().displayPagination) {
+      this.entitiesTableConfig.getTable().paginator.pageIndex = 0;
     }
-    this.entitiesTableConfig.table.updateData();
+    this.entitiesTableConfig.getTable().updateData();
   }
 
   clear($event: Event): void {
