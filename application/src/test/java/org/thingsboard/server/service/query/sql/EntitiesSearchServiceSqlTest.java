@@ -16,8 +16,6 @@
 package org.thingsboard.server.service.query.sql;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.assertj.core.api.Condition;
-import org.assertj.core.data.Index;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +42,6 @@ import org.thingsboard.server.dao.rule.RuleChainDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.sql.query.EntityKeyMapping;
 import org.thingsboard.server.dao.tenant.TenantDao;
-import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.query.EntitiesSearchServiceImpl;
 
 import java.util.List;
@@ -53,7 +50,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertThrows;
+import static org.hamcrest.core.StringContains.containsString;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
@@ -182,10 +180,14 @@ public class EntitiesSearchServiceSqlTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testSearchUnsupportedEntityType() {
-        assertThrows(Exception.class, () -> {
-            searchEntities(EntityType.RULE_NODE, "", "id", "ASC");
-        });
+    public void testSearchUnsupportedEntityType() throws Exception {
+        EntitiesSearchRequest searchRequest = new EntitiesSearchRequest();
+        searchRequest.setEntityType(EntityType.RULE_NODE);
+        searchRequest.setSearchQuery("");
+
+        doPost("/api/entities/search?page=0&pageSize=1", searchRequest)
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(containsString("is not searchable")));
     }
 
 
