@@ -135,8 +135,8 @@ public class EntityQueryController extends BaseController {
     }
 
     @ApiOperation(value = "Search entities (searchEntities)", notes = "Search entities with specified entity type by id or name within the whole platform. " +
-            "Searchable entity types are: CUSTOMER, USER, DEVICE, DEVICE_PROFILE, ASSET, ENTITY_VIEW, DASHBOARD, " +
-            "RULE_CHAIN, EDGE, OTA_PACKAGE, TB_RESOURCE, WIDGETS_BUNDLE, TENANT, TENANT_PROFILE." + NEW_LINE +
+            "Searchable entity types are: DEVICE, ASSET, RULE_CHAIN, DASHBOARD, DEVICE_PROFILE, CUSTOMER, USER, ENTITY_VIEW, " +
+            "OTA_PACKAGE, EDGE, TB_RESOURCE, WIDGETS_BUNDLE, TENANT, TENANT_PROFILE." + NEW_LINE +
             "The platform will search for entities, where a name contains the search text (case-insensitively), " +
             "or if the search query is a valid UUID (e.g. 128e4d40-26b3-11ec-aaeb-c7661c54701e) then " +
             "it will also search for an entity where id fully matches the query. If search query is empty " +

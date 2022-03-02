@@ -94,8 +94,8 @@ public class EntitiesSearchServiceImpl implements EntitiesSearchService {
             .collect(Collectors.toUnmodifiableList());
 
     public static final Set<EntityType> SEARCHABLE_ENTITY_TYPES = Collections.unmodifiableSet(EnumSet.of(
-            TENANT, CUSTOMER, USER, DASHBOARD, ASSET, DEVICE, RULE_CHAIN, ENTITY_VIEW,
-            WIDGETS_BUNDLE, TENANT_PROFILE, DEVICE_PROFILE, TB_RESOURCE, OTA_PACKAGE, EDGE
+            DEVICE, ASSET, RULE_CHAIN, DASHBOARD, DEVICE_PROFILE, CUSTOMER, USER, ENTITY_VIEW,
+            OTA_PACKAGE, EDGE, TB_RESOURCE, WIDGETS_BUNDLE, TENANT, TENANT_PROFILE
     ));
 
     @Override
