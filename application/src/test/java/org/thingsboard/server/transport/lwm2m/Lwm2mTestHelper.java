@@ -15,29 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m;
 
-import org.eclipse.californium.elements.config.Configuration;
-import org.eclipse.leshan.client.object.Security;
-
-import static org.eclipse.californium.core.config.CoapConfig.COAP_PORT;
-import static org.eclipse.californium.core.config.CoapConfig.COAP_SECURE_PORT;
-import static org.eclipse.leshan.client.object.Security.noSec;
-
 public class Lwm2mTestHelper {
-
-    // Server
-    public static final int SECURE_PORT = 5686;
-    public static final int SECURE_PORT_BS = 5688;
-    public static final int PORT = 5685;
-    public static final int PORT_BS = 5687;
-    public static final String HOST = "localhost";
-    public static final String HOST_BS = "localhost";
-    public static final int SHORT_SERVER_ID = 123;
-    public static final int SHORT_SERVER_ID_BS = 111;
-
-    public static final Configuration SECURE_COAP_CONFIG = new Configuration().set(COAP_SECURE_PORT, SECURE_PORT);
-    public static final String SECURE_URI = "coaps://" + HOST + ":" + SECURE_PORT;
-    public static final Security SECURITY = noSec("coap://"+ HOST +":" + PORT, SHORT_SERVER_ID);
-    public static final Configuration COAP_CONFIG = new Configuration().set(COAP_PORT, PORT);
 
     // Models
     public static final String[] resources = new String[]{"0.xml", "1.xml", "2.xml", "3.xml", "5.xml", "6.xml", "9.xml", "19.xml", "3303.xml"};
@@ -46,6 +24,7 @@ public class Lwm2mTestHelper {
 
     // Ids in Client
     public static final int OBJECT_ID_0 = 0;
+    public static final int OBJECT_ID_1 = 1;
     public static final int OBJECT_INSTANCE_ID_0 = 0;
     public static final int OBJECT_INSTANCE_ID_1 = 1;
     public static final int OBJECT_INSTANCE_ID_2 = 2;
@@ -67,4 +46,87 @@ public class Lwm2mTestHelper {
     public static final String RESOURCE_ID_NAME_3_14 = "UtfOffset";
     public static final String RESOURCE_ID_NAME_19_0_0 = "dataRead";
     public static final String RESOURCE_ID_NAME_19_1_0 = "dataWrite";
+    public static final String RESOURCE_ID_NAME_19_0_3 = "dataDescription";
+
+    public enum LwM2MClientState {
+
+        ON_INIT(1, "onInit"),
+        ON_BOOTSTRAP_STARTED(1, "onBootstrapStarted"),
+        ON_BOOTSTRAP_SUCCESS(2, "onBootstrapSuccess"),
+        ON_BOOTSTRAP_FAILURE(3, "onBootstrapFailure"),
+        ON_BOOTSTRAP_TIMEOUT(4, "onBootstrapTimeout"),
+        ON_REGISTRATION_STARTED(5, "onRegistrationStarted"),
+        ON_REGISTRATION_SUCCESS(6, "onRegistrationSuccess"),
+        ON_REGISTRATION_FAILURE(7, "onRegistrationFailure"),
+        ON_REGISTRATION_TIMEOUT(7, "onRegistrationTimeout"),
+        ON_UPDATE_STARTED(8, "onUpdateStarted"),
+        ON_UPDATE_SUCCESS(9, "onUpdateSuccess"),
+        ON_UPDATE_FAILURE(10, "onUpdateFailure"),
+        ON_UPDATE_TIMEOUT(11, "onUpdateTimeout"),
+        ON_DEREGISTRATION_STARTED(12, "onDeregistrationStarted"),
+        ON_DEREGISTRATION_SUCCESS(13, "onDeregistrationSuccess"),
+        ON_DEREGISTRATION_FAILURE(14, "onDeregistrationFailure"),
+        ON_DEREGISTRATION_TIMEOUT(15, "onDeregistrationTimeout"),
+        ON_EXPECTED_ERROR(16, "onUnexpectedError");
+
+        public int code;
+        public String type;
+
+        LwM2MClientState(int code, String type) {
+            this.code = code;
+            this.type = type;
+        }
+
+        public static LwM2MClientState fromLwM2MClientStateByType(String type) {
+            for (LwM2MClientState to : LwM2MClientState.values()) {
+                if (to.type.equals(type)) {
+                    return to;
+                }
+            }
+            throw new IllegalArgumentException(String.format("Unsupported Client State type  : %s", type));
+        }
+
+        public static LwM2MClientState fromLwM2MClientStateByCode(int code) {
+            for (LwM2MClientState to : LwM2MClientState.values()) {
+                if (to.code == code) {
+                    return to;
+                }
+            }
+            throw new IllegalArgumentException(String.format("Unsupported Client State code : %s", code));
+        }
+    }
+
+    public enum LwM2MProfileBootstrapConfigType {
+
+        LWM2M_ONLY(1, "only Lwm2m Server"),
+        BOOTSTRAP_ONLY(2, "only Bootstrap Server"),
+        BOTH(3, "Lwm2m Server and Bootstrap Server"),
+        NONE(4, "Without Lwm2m Server and Bootstrap Server");
+
+        public int code;
+        public String type;
+
+        LwM2MProfileBootstrapConfigType(int code, String type) {
+            this.code = code;
+            this.type = type;
+        }
+
+        public static LwM2MProfileBootstrapConfigType fromLwM2MBootstrapConfigByType(String type) {
+            for (LwM2MProfileBootstrapConfigType to : LwM2MProfileBootstrapConfigType.values()) {
+                if (to.type.equals(type)) {
+                    return to;
+                }
+            }
+            throw new IllegalArgumentException(String.format("Unsupported Profile Bootstrap Config type  : %s", type));
+        }
+
+        public static LwM2MProfileBootstrapConfigType fromLwM2MBootstrapConfigByCode(int code) {
+            for (LwM2MProfileBootstrapConfigType to : LwM2MProfileBootstrapConfigType.values()) {
+                if (to.code == code) {
+                    return to;
+                }
+            }
+            throw new IllegalArgumentException(String.format("Unsupported Profile Bootstrap Config code : %s", code));
+        }
+    }
 }

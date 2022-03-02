@@ -13,9 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.client;
+package org.thingsboard.server.dao.cache;
 
-import org.eclipse.leshan.core.node.LwM2mResource;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
 
-public interface TbLwM2MResource extends LwM2mResource {
+public interface EntitiesCacheManager {
+
+    void removeDeviceFromCacheByName(TenantId tenantId, String name);
+
+    void removeDeviceFromCacheById(TenantId tenantId, DeviceId deviceId);
+
+    void removeAssetFromCacheByName(TenantId tenantId, String name);
+
+    void removeEdgeFromCacheByName(TenantId tenantId, String name);
 }

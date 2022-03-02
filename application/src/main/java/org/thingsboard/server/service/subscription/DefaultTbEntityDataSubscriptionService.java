@@ -128,7 +128,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     private int maxEntitiesPerDataSubscription;
     @Value("${server.ws.max_entities_per_alarm_subscription:1000}")
     private int maxEntitiesPerAlarmSubscription;
-    @Value("${server.ws.max_alarm_queries_per_refresh_interval:3}")
+    @Value("${server.ws.dynamic_page_link.max_alarm_queries_per_refresh_interval:10}")
     private int maxAlarmQueriesPerRefreshInterval;
 
     private ExecutorService wsCallBackExecutor;

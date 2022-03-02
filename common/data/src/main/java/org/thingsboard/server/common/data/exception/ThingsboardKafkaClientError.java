@@ -13,18 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server.client;
+package org.thingsboard.server.common.data.exception;
 
-import org.eclipse.leshan.core.model.ResourceModel;
-import org.eclipse.leshan.core.node.LwM2mSingleResource;
+public class ThingsboardKafkaClientError extends Error {
 
-import java.io.Serializable;
-
-public class TbLwM2MSingleResource extends LwM2mSingleResource implements TbLwM2MResource, Serializable {
-
-    private static final long serialVersionUID = -878078368245340809L;
-
-    public TbLwM2MSingleResource(int id, Object value, ResourceModel.Type type) {
-        super(id, value, type);
+    public ThingsboardKafkaClientError(String message) {
+        super(message);
     }
 }

@@ -41,17 +41,17 @@ public class EdgeSyncCursor {
     int currentIdx = 0;
 
     public EdgeSyncCursor(EdgeContextComponent ctx, Edge edge) {
-        fetchers.add(new SystemWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));
-        fetchers.add(new TenantWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));
-        fetchers.add(new DeviceProfilesEdgeEventFetcher(ctx.getDeviceProfileService()));
         fetchers.add(new RuleChainsEdgeEventFetcher(ctx.getRuleChainService()));
+        fetchers.add(new AdminSettingsEdgeEventFetcher(ctx.getAdminSettingsService(), ctx.getFreemarkerConfig()));
+        fetchers.add(new DeviceProfilesEdgeEventFetcher(ctx.getDeviceProfileService()));
         fetchers.add(new TenantAdminUsersEdgeEventFetcher(ctx.getUserService()));
         if (edge.getCustomerId() != null && !EntityId.NULL_UUID.equals(edge.getCustomerId().getId())) {
             fetchers.add(new CustomerEdgeEventFetcher());
             fetchers.add(new CustomerUsersEdgeEventFetcher(ctx.getUserService(), edge.getCustomerId()));
         }
-        fetchers.add(new AdminSettingsEdgeEventFetcher(ctx.getAdminSettingsService(), ctx.getFreemarkerConfig()));
         fetchers.add(new AssetsEdgeEventFetcher(ctx.getAssetService()));
+        fetchers.add(new SystemWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));
+        fetchers.add(new TenantWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));
         fetchers.add(new DashboardsEdgeEventFetcher(ctx.getDashboardService()));
     }
 
