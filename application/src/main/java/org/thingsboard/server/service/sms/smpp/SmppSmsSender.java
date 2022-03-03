@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,9 @@ import java.util.Optional;
 
 @Slf4j
 public class SmppSmsSender extends AbstractSmsSender {
-    private final SmppSmsProviderConfiguration config;
+    protected SmppSmsProviderConfiguration config;
 
-    private Session smppSession;
+    protected Session smppSession;
 
     public SmppSmsSender(SmppSmsProviderConfiguration config) {
         if (config.getBindType() == null) {
@@ -66,8 +66,11 @@ public class SmppSmsSender extends AbstractSmsSender {
         }
 
         this.config = config;
-        initSmppSession();
+        this.smppSession = initSmppSession();
     }
+
+    private SmppSmsSender() {} // for testing purposes
+
 
     @Override
     public int sendSms(String numberTo, String message) throws SmsException {
@@ -93,7 +96,7 @@ public class SmppSmsSender extends AbstractSmsSender {
 
             SubmitSMResp response = smppSession.submit(request);
 
-            log.info("SMPP submit command status: {}", response.getCommandStatus());
+            log.debug("SMPP submit command status: {}", response.getCommandStatus());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -101,13 +104,13 @@ public class SmppSmsSender extends AbstractSmsSender {
         return countMessageSegments(message);
     }
 
-    public synchronized void checkSmppSession() {
-        if (!smppSession.isOpened()) {
+    private synchronized void checkSmppSession() {
+        if (smppSession == null || !smppSession.isOpened()) {
             smppSession = initSmppSession();
         }
     }
 
-    private Session initSmppSession() {
+    protected Session initSmppSession() {
         try {
             Connection connection = new TCPIPConnection(config.getHost(), config.getPort());
             Session session = new Session(connection);
@@ -159,7 +162,7 @@ public class SmppSmsSender extends AbstractSmsSender {
 
             return session;
         } catch (Exception e) {
-            throw new IllegalArgumentException("Failed to establish SMPP session: " + ExceptionUtils.getRootCauseMessage(e));
+            throw new IllegalArgumentException("Failed to establish SMPP session: " + ExceptionUtils.getRootCauseMessage(e), e);
         }
     }
 
