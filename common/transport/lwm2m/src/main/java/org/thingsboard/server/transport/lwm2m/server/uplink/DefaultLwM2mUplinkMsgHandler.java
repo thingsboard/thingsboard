@@ -369,6 +369,12 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
         }
     }
 
+    /**
+     * Sending updated value to thingsboard from SendListener.dataReceived: object, instance, SingleResource or MultipleResource
+     *
+     * @param registration - Registration LwM2M Client
+     * @param sendRequest  - sendRequest
+     */
     @Override
     public void onUpdateValueWithSendRequest(Registration registration, SendRequest sendRequest) {
         Iterator i$ = sendRequest.getNodes().entrySet().iterator();
