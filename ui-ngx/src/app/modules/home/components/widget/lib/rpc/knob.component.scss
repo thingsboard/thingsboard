@@ -31,6 +31,14 @@ $minmax-container-margin-bottom-pct: percentage(.12) !default;
     width: 100%;
     height: 100%;
 
+    .title-container {
+      .knob-title {
+        font-weight: 500;
+        color: #757575;
+        white-space: nowrap;
+      }
+    }
+
     .knob {
       position: relative;
 
@@ -83,21 +91,6 @@ $minmax-container-margin-bottom-pct: percentage(.12) !default;
 
         .knob-error {
           color: #ff3315;
-          white-space: nowrap;
-        }
-      }
-
-      .title-container {
-        position: absolute;
-        right: $title-container-margin-pct;
-        bottom: $title-container-margin-bottom-pct;
-        left: $title-container-margin-pct;
-        z-index: 4;
-        height: $title-height;
-
-        .knob-title {
-          font-weight: 500;
-          color: #757575;
           white-space: nowrap;
         }
       }

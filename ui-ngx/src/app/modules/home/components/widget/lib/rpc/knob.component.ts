@@ -70,6 +70,7 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
   minValue: number;
   maxValue: number;
   newValue = 0;
+  showTitle = false;
 
   private startDeg = -1;
   private currentDeg = 0;
@@ -151,6 +152,7 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
     this.minValue = isDefined(settings.minValue) ? settings.minValue : 0;
     this.maxValue = isDefined(settings.maxValue) ? settings.maxValue : 100;
     this.title = isDefined(settings.title) ? settings.title : '';
+    this.showTitle = !!(this.title && this.title.length);
 
     const levelColors = ['#19ff4b', '#ffff19', '#ff3232'];
 
@@ -169,7 +171,6 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
       donutEndAngle: 9 / 4 * Math.PI,
       animation: false
     };
-
 
     this.knob.on('click', (e) => {
       if (this.moving) {
@@ -206,8 +207,6 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
       this.startDeg = -1;
       this.rpcUpdateValue(this.newValue);
     });
-
-
 
     this.knob.on('mousedown touchstart', (e) => {
       this.moving  = false;
@@ -344,14 +343,18 @@ export class KnobComponent extends PageComponent implements OnInit, OnDestroy {
     const width = this.knobContainer.width();
     const height = this.knobContainer.height();
     const size = Math.min(width, height);
+
     this.knob.css({width: size, height: size});
+    
     if (this.canvasBar) {
       this.canvasBar.update({width: size, height: size} as GenericOptions);
     }
-    this.setFontSize(this.knobTitle, this.title, this.knobTitleContainer.height(), this.knobTitleContainer.width());
+    
+    if (this.ctx.widgetConfig.showTitle) {
+      this.setFontSize(this.knobTitle, this.title, this.knobTitleContainer.height() * 2 / 3, this.knobTitleContainer.width());
+    }
+    
     this.setFontSize(this.knobError, this.error, this.knobErrorContainer.height(), this.knobErrorContainer.width());
-    const minmaxHeight = this.knobMinmaxContainer.height();
-    this.minmaxLabel.css({fontSize: minmaxHeight + 'px', lineHeight: minmaxHeight + 'px'});
     this.checkValueSize();
   }
 
