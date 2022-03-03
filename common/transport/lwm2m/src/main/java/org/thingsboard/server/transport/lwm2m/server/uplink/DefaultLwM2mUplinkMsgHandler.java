@@ -33,11 +33,7 @@ import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mResourceInstance;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.observation.Observation;
-import org.eclipse.leshan.core.request.CreateRequest;
-import org.eclipse.leshan.core.request.ObserveRequest;
-import org.eclipse.leshan.core.request.ReadRequest;
-import org.eclipse.leshan.core.request.WriteCompositeRequest;
-import org.eclipse.leshan.core.request.WriteRequest;
+import org.eclipse.leshan.core.request.*;
 import org.eclipse.leshan.core.request.WriteRequest.Mode;
 import org.eclipse.leshan.core.response.ObserveResponse;
 import org.eclipse.leshan.core.response.ReadCompositeResponse;
@@ -98,16 +94,7 @@ import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -373,6 +360,37 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                 }
             });
             clientContext.update(lwM2MClient);
+            if (clientContext.awake(lwM2MClient)) {
+                // clientContext.awake calls clientContext.update
+                log.debug("[{}] Device is awake", lwM2MClient.getEndpoint());
+            } else {
+                clientContext.update(lwM2MClient);
+            }
+        }
+    }
+
+    @Override
+    public void onUpdateValueWithSendRequest(Registration registration, SendRequest sendRequest) {
+        Iterator i$ = sendRequest.getNodes().entrySet().iterator();
+        if (i$.hasNext()) {
+            Map.Entry<LwM2mPath, LwM2mNode> entry = (Map.Entry) i$.next();
+            LwM2mPath path = (LwM2mPath) entry.getKey();
+            LwM2mNode node = (LwM2mNode) entry.getValue();
+            LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(registration.getEndpoint());
+            String stringPath = convertObjectIdToVersionedId(path.toString(), registration);
+            ObjectModel objectModelVersion = lwM2MClient.getObjectModel(stringPath, modelProvider);
+            if (objectModelVersion != null) {
+                if (node instanceof LwM2mObject) {
+                    LwM2mObject lwM2mObject = (LwM2mObject) node;
+                    this.updateObjectResourceValue(lwM2MClient, lwM2mObject, stringPath, 0);
+                } else if (node instanceof LwM2mObjectInstance) {
+                    LwM2mObjectInstance lwM2mObjectInstance = (LwM2mObjectInstance) node;
+                    this.updateObjectInstanceResourceValue(lwM2MClient, lwM2mObjectInstance, stringPath, 0);
+                } else if (node instanceof LwM2mResource) {
+                    LwM2mResource lwM2mResource = (LwM2mResource) node;
+                    this.updateResourcesValue(lwM2MClient, lwM2mResource, stringPath, Mode.UPDATE, 0);
+                }
+            }
             if (clientContext.awake(lwM2MClient)) {
                 // clientContext.awake calls clientContext.update
                 log.debug("[{}] Device is awake", lwM2MClient.getEndpoint());
