@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.EnumUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -122,40 +123,66 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
     }
 
     private ListenableFuture<TbAlarmResult> createNewAlarm(TbContext ctx, TbMsg msg, Alarm msgAlarm) {
-        ListenableFuture<Alarm> asyncAlarm;
-        if (msgAlarm != null) {
-            asyncAlarm = Futures.immediateFuture(msgAlarm);
-        } else {
+        ListenableFuture<JsonNode> asyncDetails;
+        boolean buildDetails = !config.isUseMessageAlarmData() || config.isOverwriteAlarmDetails();
+        if (buildDetails) {
             ctx.logJsEvalRequest();
-            asyncAlarm = Futures.transform(buildAlarmDetails(ctx, msg, null),
-                    details -> {
-                        ctx.logJsEvalResponse();
-                        return buildAlarm(msg, details, ctx.getTenantId());
-                    }, MoreExecutors.directExecutor());
+            asyncDetails = buildAlarmDetails(ctx, msg, null);
+        } else {
+            asyncDetails = Futures.immediateFuture(null);
         }
+        ListenableFuture<Alarm> asyncAlarm =  Futures.transform(asyncDetails, details -> {
+            if (buildDetails) {
+                ctx.logJsEvalResponse();
+            }
+            Alarm newAlarm;
+            if (msgAlarm != null) {
+                newAlarm = msgAlarm;
+                if (buildDetails) {
+                    newAlarm.setDetails(details);
+                }
+            } else {
+                newAlarm = buildAlarm(msg, details, ctx.getTenantId());
+            }
+            return newAlarm;
+        }, MoreExecutors.directExecutor());
         ListenableFuture<Alarm> asyncCreated = Futures.transform(asyncAlarm,
                 alarm -> ctx.getAlarmService().createOrUpdateAlarm(alarm), ctx.getDbCallbackExecutor());
         return Futures.transform(asyncCreated, alarm -> new TbAlarmResult(true, false, false, alarm), MoreExecutors.directExecutor());
     }
 
     private ListenableFuture<TbAlarmResult> updateAlarm(TbContext ctx, TbMsg msg, Alarm existingAlarm, Alarm msgAlarm) {
-        ctx.logJsEvalRequest();
-        ListenableFuture<Alarm> asyncUpdated = Futures.transform(buildAlarmDetails(ctx, msg, existingAlarm.getDetails()), (Function<JsonNode, Alarm>) details -> {
-            ctx.logJsEvalResponse();
+        ListenableFuture<JsonNode> asyncDetails;
+        boolean buildDetails = !config.isUseMessageAlarmData() || config.isOverwriteAlarmDetails();
+        if (buildDetails) {
+            ctx.logJsEvalRequest();
+            asyncDetails = buildAlarmDetails(ctx, msg, existingAlarm.getDetails());
+        } else {
+            asyncDetails = Futures.immediateFuture(null);
+        }
+        ListenableFuture<Alarm> asyncUpdated = Futures.transform(asyncDetails, (Function<JsonNode, Alarm>) details -> {
+            if (buildDetails) {
+                ctx.logJsEvalResponse();
+            }
             if (msgAlarm != null) {
                 existingAlarm.setSeverity(msgAlarm.getSeverity());
                 existingAlarm.setPropagate(msgAlarm.isPropagate());
                 existingAlarm.setPropagateToOwner(msgAlarm.isPropagateToOwner());
                 existingAlarm.setPropagateToTenant(msgAlarm.isPropagateToTenant());
                 existingAlarm.setPropagateRelationTypes(msgAlarm.getPropagateRelationTypes());
+                if (buildDetails) {
+                    existingAlarm.setDetails(details);
+                } else {
+                    existingAlarm.setDetails(msgAlarm.getDetails());
+                }
             } else {
                 existingAlarm.setSeverity(processAlarmSeverity(msg));
                 existingAlarm.setPropagate(config.isPropagate());
                 existingAlarm.setPropagateToOwner(config.isPropagateToOwner());
                 existingAlarm.setPropagateToTenant(config.isPropagateToTenant());
                 existingAlarm.setPropagateRelationTypes(relationTypes);
+                existingAlarm.setDetails(details);
             }
-            existingAlarm.setDetails(details);
             existingAlarm.setEndTs(System.currentTimeMillis());
             return ctx.getAlarmService().createOrUpdateAlarm(existingAlarm);
         }, ctx.getDbCallbackExecutor());
