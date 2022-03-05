@@ -75,10 +75,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
                     if (!(entity instanceof HasCustomerId)) {
                         return false;
                     }
-                    if (!operation.equals(Operation.CLAIM_DEVICES) && !user.getCustomerId().equals(((HasCustomerId) entity).getCustomerId())) {
-                        return false;
-                    }
-                    return true;
+                    return operation.equals(Operation.CLAIM_DEVICES) || user.getCustomerId().equals(((HasCustomerId) entity).getCustomerId());
                 }
             };
 
@@ -91,10 +88,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
                     if (!super.hasPermission(user, operation, entityId, entity)) {
                         return false;
                     }
-                    if (!user.getCustomerId().equals(entityId)) {
-                        return false;
-                    }
-                    return true;
+                    return user.getCustomerId().equals(entityId);
                 }
 
             };
@@ -111,10 +105,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
                     if (!user.getTenantId().equals(dashboard.getTenantId())) {
                         return false;
                     }
-                    if (!dashboard.isAssignedToCustomer(user.getCustomerId())) {
-                        return false;
-                    }
-                    return true;
+                    return dashboard.isAssignedToCustomer(user.getCustomerId());
                 }
 
             };
@@ -126,10 +117,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
             if (!Authority.CUSTOMER_USER.equals(userEntity.getAuthority())) {
                 return false;
             }
-            if (!user.getId().equals(userId)) {
-                return false;
-            }
-            return true;
+            return user.getId().equals(userId);
         }
 
     };
@@ -145,10 +133,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
             if (entity.getTenantId() == null || entity.getTenantId().isNullUid()) {
                 return true;
             }
-            if (!user.getTenantId().equals(entity.getTenantId())) {
-                return false;
-            }
-            return true;
+            return user.getTenantId().equals(entity.getTenantId());
         }
 
     };
@@ -164,10 +149,7 @@ public class CustomerUserPermissions extends AbstractPermissions {
             if (entity.getTenantId() == null || entity.getTenantId().isNullUid()) {
                 return true;
             }
-            if (!user.getTenantId().equals(entity.getTenantId())) {
-                return false;
-            }
-            return true;
+            return user.getTenantId().equals(entity.getTenantId());
         }
     };
 }
