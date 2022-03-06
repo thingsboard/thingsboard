@@ -261,6 +261,10 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected void loginDifferentTenant() throws Exception {
         loginSysAdmin();
+        if (savedDifferentTenant != null) {
+            deleteDifferentTenant();
+        }
+
         Tenant tenant = new Tenant();
         tenant.setTitle("Different tenant");
         savedDifferentTenant = doPost("/api/tenant", tenant, Tenant.class);
@@ -289,9 +293,11 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected void deleteDifferentTenant() throws Exception {
-        loginSysAdmin();
-        doDelete("/api/tenant/" + savedDifferentTenant.getId().getId().toString())
-                .andExpect(status().isOk());
+        if (savedDifferentTenant != null) {
+            loginSysAdmin();
+            doDelete("/api/tenant/" + savedDifferentTenant.getId().getId().toString())
+                    .andExpect(status().isOk());
+        }
     }
 
     protected User createUserAndLogin(User user, String password) throws Exception {
