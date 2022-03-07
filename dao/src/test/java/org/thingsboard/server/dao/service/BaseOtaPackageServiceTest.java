@@ -488,7 +488,6 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
             otaPackageService.deleteOtaPackage(tenantId, savedFirmware.getId());
         } finally {
             deviceProfileService.deleteDeviceProfile(tenantId, savedDeviceProfile.getId());
-            otaPackageService.deleteOtaPackage(tenantId, savedFirmware.getId());
         }
     }
 
