@@ -166,6 +166,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
             }
             if (msgAlarm != null) {
                 existingAlarm.setSeverity(msgAlarm.getSeverity());
+                updateStatus(existingAlarm, msgAlarm);
                 existingAlarm.setPropagate(msgAlarm.isPropagate());
                 existingAlarm.setPropagateToOwner(msgAlarm.isPropagateToOwner());
                 existingAlarm.setPropagateToTenant(msgAlarm.isPropagateToTenant());
@@ -188,6 +189,24 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
         }, ctx.getDbCallbackExecutor());
 
         return Futures.transform(asyncUpdated, a -> new TbAlarmResult(false, true, false, a), MoreExecutors.directExecutor());
+    }
+
+    private void updateStatus(Alarm existingAlarm, Alarm msgAlarm) {
+        boolean isActive = existingAlarm.getStatus() == AlarmStatus.ACTIVE_ACK
+                || existingAlarm.getStatus() == AlarmStatus.ACTIVE_UNACK;
+
+        boolean acknowledged = existingAlarm.getStatus() == AlarmStatus.ACTIVE_ACK
+                || existingAlarm.getStatus() == AlarmStatus.CLEARED_ACK;
+        boolean shouldBeAcknowledged = msgAlarm.getStatus() == AlarmStatus.ACTIVE_ACK
+                || msgAlarm.getStatus() == AlarmStatus.CLEARED_ACK;
+
+        if (!acknowledged && shouldBeAcknowledged) {
+            if (isActive) {
+                existingAlarm.setStatus(AlarmStatus.ACTIVE_ACK);
+            } else {
+                existingAlarm.setStatus(AlarmStatus.CLEARED_ACK);
+            }
+        }
     }
 
     private Alarm buildAlarm(TbMsg msg, JsonNode details, TenantId tenantId) {
