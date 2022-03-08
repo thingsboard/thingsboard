@@ -14,6 +14,8 @@
 -- limitations under the License.
 --
 
+DELETE from ota_package as op WHERE NOT EXISTS(SELECT * FROM device_profile dp where op.device_profile_id = dp.id);
+
 DO
 $$
     BEGIN
