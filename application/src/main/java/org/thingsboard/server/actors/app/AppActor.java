@@ -146,7 +146,14 @@ public class AppActor extends ContextAwareActor {
                         log.debug("[{}] Creating tenant actor", tenant.getId());
                         getOrCreateTenantActor(tenant.getId());
                         log.debug("[{}] Tenant actor created.", tenant.getId());
+                        
+                        if (isCore || (isRuleEngine && !tenantProfile.isIsolatedTbRuleEngine())) {
+                        log.debug("[{}] Creating tenant actor", tenant.getId());
+                        getOrCreateTenantActor(tenant.getId());
+                        log.debug("[{}] Tenant actor created.", tenant.getId());
                     }
+                    
+                    
                 }
             }
             log.info("Main system actor started.");
