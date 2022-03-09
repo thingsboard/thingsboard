@@ -192,21 +192,22 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
     }
 
     private void updateStatus(Alarm existingAlarm, Alarm msgAlarm) {
-        boolean isActive = existingAlarm.getStatus() == AlarmStatus.ACTIVE_ACK
-                || existingAlarm.getStatus() == AlarmStatus.ACTIVE_UNACK;
-
-        boolean acknowledged = existingAlarm.getStatus() == AlarmStatus.ACTIVE_ACK
-                || existingAlarm.getStatus() == AlarmStatus.CLEARED_ACK;
-        boolean shouldBeAcknowledged = msgAlarm.getStatus() == AlarmStatus.ACTIVE_ACK
-                || msgAlarm.getStatus() == AlarmStatus.CLEARED_ACK;
-
-        if (!acknowledged && shouldBeAcknowledged) {
-            if (isActive) {
-                existingAlarm.setStatus(AlarmStatus.ACTIVE_ACK);
-            } else {
-                existingAlarm.setStatus(AlarmStatus.CLEARED_ACK);
-            }
+        if (!existingAlarm.getStatus().isCleared() && msgAlarm.getStatus().isCleared()) {
+            throw new RuntimeException("The 'Alarm Create' node cannot clear the alarm!");
         }
+        if (existingAlarm.getStatus().isCleared() && !msgAlarm.getStatus().isCleared()) {
+            throw new RuntimeException("An already cleared alarm cannot be made active!");
+        }
+        if (existingAlarm.getStatus().isAck() && !msgAlarm.getStatus().isAck()) {
+            throw new RuntimeException("An already acknowledged alarm cannot be made unacknowledged!");
+        }
+
+        if (existingAlarm.getStatus().isCleared()) {
+            existingAlarm.setStatus(AlarmStatus.CLEARED_ACK);
+        } else {
+            existingAlarm.setStatus(AlarmStatus.ACTIVE_ACK);
+        }
+        existingAlarm.setAckTs(System.currentTimeMillis());
     }
 
     private Alarm buildAlarm(TbMsg msg, JsonNode details, TenantId tenantId) {
