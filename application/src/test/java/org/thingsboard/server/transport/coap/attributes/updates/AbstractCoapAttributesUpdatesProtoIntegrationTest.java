@@ -92,11 +92,11 @@ public abstract class AbstractCoapAttributesUpdatesProtoIntegrationTest extends 
         assertEquals(0, callback.getObserve().intValue());
     }
 
-    protected void validateUpdateAttributesResponse(TestCoapCallback callback) throws InvalidProtocolBufferException {
+    protected void validateUpdateAttributesResponse(TestCoapCallback callback, int expectedObserveCnt) throws InvalidProtocolBufferException {
         assertNotNull(callback.getPayloadBytes());
         assertNotNull(callback.getObserve());
         assertEquals(CoAP.ResponseCode.CONTENT, callback.getResponseCode());
-        assertEquals(1, callback.getObserve().intValue());
+        assertEquals(expectedObserveCnt, callback.getObserve().intValue());
         TransportProtos.AttributeUpdateNotificationMsg.Builder attributeUpdateNotificationMsgBuilder = TransportProtos.AttributeUpdateNotificationMsg.newBuilder();
         List<TransportProtos.TsKvProto> tsKvProtoList = getTsKvProtoList();
         attributeUpdateNotificationMsgBuilder.addAllSharedUpdated(tsKvProtoList);
@@ -112,11 +112,11 @@ public abstract class AbstractCoapAttributesUpdatesProtoIntegrationTest extends 
 
     }
 
-    protected void validateDeleteAttributesResponse(TestCoapCallback callback) throws InvalidProtocolBufferException {
+    protected void validateDeleteAttributesResponse(TestCoapCallback callback, int expectedObserveCnt) throws InvalidProtocolBufferException {
         assertNotNull(callback.getPayloadBytes());
         assertNotNull(callback.getObserve());
         assertEquals(CoAP.ResponseCode.CONTENT, callback.getResponseCode());
-        assertEquals(2, callback.getObserve().intValue());
+        assertEquals(expectedObserveCnt, callback.getObserve().intValue());
         TransportProtos.AttributeUpdateNotificationMsg.Builder attributeUpdateNotificationMsgBuilder = TransportProtos.AttributeUpdateNotificationMsg.newBuilder();
         attributeUpdateNotificationMsgBuilder.addSharedDeleted("attribute5");
 
