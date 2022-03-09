@@ -678,6 +678,7 @@ public class TbAlarmNodeTest {
         actualAlarm = new ObjectMapper().readValue(dataCaptor.getValue().getBytes(), Alarm.class);
         expectedAlarm.setStatus(ACTIVE_ACK);
         expectedAlarm.setEndTs(actualAlarm.getEndTs());
+        expectedAlarm.setAckTs(actualAlarm.getAckTs());
 
         assertEquals(expectedAlarm, actualAlarm);
     }
