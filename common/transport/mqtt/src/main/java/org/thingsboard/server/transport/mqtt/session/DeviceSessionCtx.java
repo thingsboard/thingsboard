@@ -84,6 +84,7 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     private volatile MqttTransportAdaptor adaptor;
     private volatile boolean jsonPayloadFormatCompatibilityEnabled;
     private volatile boolean useJsonPayloadFormatForDefaultDownlinkTopics;
+    private volatile boolean sendPubAckOnValidationException;
 
     @Getter
     @Setter
@@ -113,6 +114,10 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
 
     public boolean isJsonPayloadType() {
         return payloadType.equals(TransportPayloadType.JSON);
+    }
+
+    public boolean isSendPubAckOnValidationException() {
+        return sendPubAckOnValidationException;
     }
 
     public Descriptors.Descriptor getTelemetryDynamicMsgDescriptor() {
@@ -152,6 +157,7 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
             payloadType = transportPayloadTypeConfiguration.getTransportPayloadType();
             telemetryTopicFilter = MqttTopicFilterFactory.toFilter(mqttConfig.getDeviceTelemetryTopic());
             attributesTopicFilter = MqttTopicFilterFactory.toFilter(mqttConfig.getDeviceAttributesTopic());
+            sendPubAckOnValidationException = mqttConfig.isSendPubAckOnValidationException();
             if (TransportPayloadType.PROTOBUF.equals(payloadType)) {
                 ProtoTransportPayloadConfiguration protoTransportPayloadConfig = (ProtoTransportPayloadConfiguration) transportPayloadTypeConfiguration;
                 updateDynamicMessageDescriptors(protoTransportPayloadConfig);
@@ -162,6 +168,7 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
             telemetryTopicFilter = MqttTopicFilterFactory.getDefaultTelemetryFilter();
             attributesTopicFilter = MqttTopicFilterFactory.getDefaultAttributesFilter();
             payloadType = TransportPayloadType.JSON;
+            sendPubAckOnValidationException = false;
         }
         updateAdaptor();
     }

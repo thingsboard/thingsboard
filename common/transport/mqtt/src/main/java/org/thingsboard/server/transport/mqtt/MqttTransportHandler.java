@@ -359,10 +359,10 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             }
         } catch (RuntimeException e) {
             log.warn("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
-            ctx.close();
+            sendPubAckOrCloseSession(ctx, topicName, msgId);
         } catch (AdaptorException e) {
             log.debug("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
-            ctx.close();
+            sendPubAckOrCloseSession(ctx, topicName, msgId);
         }
     }
 
@@ -451,6 +451,15 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             }
         } catch (AdaptorException e) {
             log.debug("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
+            sendPubAckOrCloseSession(ctx, topicName, msgId);
+        }
+    }
+
+    private void sendPubAckOrCloseSession(ChannelHandlerContext ctx, String topicName, int msgId) {
+        if (deviceSessionCtx.isSendPubAckOnValidationException() && msgId > 0) {
+            log.info("[{}] Send pub ack on invalid publish msg [{}][{}]", sessionId, topicName, msgId);
+            ctx.writeAndFlush(createMqttPubAckMsg(msgId));
+        } else {
             log.info("[{}] Closing current session due to invalid publish msg [{}][{}]", sessionId, topicName, msgId);
             ctx.close();
         }
