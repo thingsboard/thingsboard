@@ -46,7 +46,7 @@ public class ConstraintValidator {
                 .distinct()
                 .collect(Collectors.toList());
         if (!validationErrors.isEmpty()) {
-            throw new ValidationException("Validation error: " + String.join(", ", validationErrors));
+            throw new ValidationException(String.join(", ", validationErrors));
         }
     }
 

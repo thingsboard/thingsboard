@@ -101,6 +101,14 @@ public class TbNodeUtils {
         return result;
     }
 
+    public static String processTemplate(String template, Map<String, String> data) {
+        String result = template;
+        for (Map.Entry<String, String> kv : data.entrySet()) {
+            result = processVar(result, kv.getKey(), kv.getValue());
+        }
+        return result;
+    }
+
     private static String processVar(String pattern, String key, String val) {
         return pattern.replace(formatMetadataVarTemplate(key), val);
     }
