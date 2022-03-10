@@ -35,6 +35,7 @@ import org.thingsboard.server.service.security.auth.mfa.config.TwoFactorAuthSett
 import org.thingsboard.server.service.security.auth.mfa.config.account.TotpTwoFactorAuthAccountConfig;
 import org.thingsboard.server.service.security.auth.mfa.config.account.TwoFactorAuthAccountConfig;
 import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProviderType;
+import org.thingsboard.server.service.security.model.JwtTokenPair;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
@@ -123,6 +124,24 @@ public class TwoFactorAuthController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public void saveTwoFactorAuthSettings(@RequestBody TwoFactorAuthSettings twoFactorAuthSettings) throws ThingsboardException {
         twoFactorAuthService.saveTwoFaSettings(getTenantId(), twoFactorAuthSettings);
+    }
+
+
+    @PostMapping("/auth/2fa/verification/check")
+    @PreAuthorize("hasAuthority('PRE_VERIFICATION_TOKEN')")
+    public JwtTokenPair checkTwoFaVerificationCode(@RequestParam String verificationCode) throws ThingsboardException {
+        SecurityUser user = getCurrentUser();
+
+        boolean verificationSuccess = twoFactorAuthService.processByTwoFaProvider(user.getTenantId(), user.getId(),
+                (provider, providerConfig, accountConfig) -> {
+                    return provider.checkVerificationCode(user, verificationCode, accountConfig);
+                });
+
+        if (verificationSuccess) {
+            return tokenFactory.createTokenPair(user);
+        } else {
+            throw new ThingsboardException("Verification code is incorrect", ThingsboardErrorCode.AUTHENTICATION);
+        }
     }
 
 }

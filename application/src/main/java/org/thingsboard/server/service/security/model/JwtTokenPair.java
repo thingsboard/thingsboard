@@ -19,10 +19,12 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @ApiModel(value = "JWT Token Pair")
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class JwtTokenPair {
 
     @ApiModelProperty(position = 1, value = "The JWT Access Token. Used to perform API calls.", example = "AAB254FF67D..")

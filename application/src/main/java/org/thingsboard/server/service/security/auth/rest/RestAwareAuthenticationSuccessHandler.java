@@ -16,15 +16,18 @@
 package org.thingsboard.server.service.security.auth.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.WebAttributes;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.security.model.JwtToken;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
+import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
+import org.thingsboard.server.service.security.auth.mfa.config.account.TwoFactorAuthAccountConfig;
+import org.thingsboard.server.service.security.model.JwtTokenPair;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
@@ -33,37 +36,44 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Optional;
 
 @Component(value = "defaultAuthenticationSuccessHandler")
+@RequiredArgsConstructor
+@Slf4j
 public class RestAwareAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
     private final ObjectMapper mapper;
     private final JwtTokenFactory tokenFactory;
-    private final RefreshTokenRepository refreshTokenRepository;
-
-    @Autowired
-    public RestAwareAuthenticationSuccessHandler(final ObjectMapper mapper, final JwtTokenFactory tokenFactory, final RefreshTokenRepository refreshTokenRepository) {
-        this.mapper = mapper;
-        this.tokenFactory = tokenFactory;
-        this.refreshTokenRepository = refreshTokenRepository;
-    }
+    private final TwoFactorAuthService twoFactorAuthService;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
         SecurityUser securityUser = (SecurityUser) authentication.getPrincipal();
 
-        JwtToken accessToken = tokenFactory.createAccessJwtToken(securityUser);
-        JwtToken refreshToken = refreshTokenRepository.requestRefreshToken(securityUser);
+        JwtTokenPair tokenPair;
 
-        Map<String, String> tokenMap = new HashMap<String, String>();
-        tokenMap.put("token", accessToken.getToken());
-        tokenMap.put("refreshToken", refreshToken.getToken());
+        Optional<TwoFactorAuthAccountConfig> twoFaAccountConfig = twoFactorAuthService.getTwoFaAccountConfig(securityUser.getTenantId(), securityUser.getId());
+        if (twoFaAccountConfig.isPresent()) {
+            try {
+                twoFactorAuthService.processByTwoFaProvider(securityUser.getTenantId(), twoFaAccountConfig.get().getProviderType(),
+                        (provider, providerConfig) -> {
+                            provider.prepareVerificationCode(securityUser, providerConfig, twoFaAccountConfig.get());
+                        });
+                tokenPair = new JwtTokenPair();
+                tokenPair.setToken(tokenFactory.createPreVerificationToken(securityUser).getToken());
+            } catch (Exception e) {
+                log.error("Failed to process 2FA for user {}. Falling back to plain auth", securityUser.getId(), e);
+                tokenPair = tokenFactory.createTokenPair(securityUser);
+            }
+        } else {
+            tokenPair = tokenFactory.createTokenPair(securityUser);
+        }
 
         response.setStatus(HttpStatus.OK.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        mapper.writeValue(response.getWriter(), tokenMap);
+
+        mapper.writeValue(response.getWriter(), tokenPair);
 
         clearAuthenticationAttributes(request);
     }

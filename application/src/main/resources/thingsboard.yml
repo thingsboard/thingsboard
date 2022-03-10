@@ -127,6 +127,8 @@ security:
   jwt:
     tokenExpirationTime: "${JWT_TOKEN_EXPIRATION_TIME:9000}" # Number of seconds (2.5 hours)
     refreshTokenExpTime: "${JWT_REFRESH_TOKEN_EXPIRATION_TIME:604800}" # Number of seconds (1 week)
+    # Number of seconds. Issued when 2FA is being used; valid only for checking 2FA verification code after which usual token pair is issued
+    preVerificationTokenExpirationTime: "${JWT_PRE_VERIFICATION_TOKEN_EXPIRATION_TIME:30}"
     tokenIssuer: "${JWT_TOKEN_ISSUER:thingsboard.io}"
     tokenSigningKey: "${JWT_TOKEN_SIGNING_KEY:thingsboardDefaultSigningKey}"
   # Enable/disable access to Tenant Administrators JWT token by System Administrator or Customer Users JWT token by Tenant Administrator
@@ -425,6 +427,9 @@ caffeine:
     edges:
       timeToLiveInMinutes: "${CACHE_SPECS_EDGES_TTL:1440}"
       maxSize: "${CACHE_SPECS_EDGES_MAX_SIZE:10000}"
+    twoFaVerificationCodes:
+      timeToLiveInMinutes: "1"
+      maxSize: "100000"
 
 redis:
   # standalone or cluster
