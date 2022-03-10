@@ -334,12 +334,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                     this.updateResourcesValue(lwM2MClient, lwM2mResource, path, Mode.UPDATE, responseCode);
                 }
             }
-            if (clientContext.awake(lwM2MClient)) {
-                // clientContext.awake calls clientContext.update
-                log.debug("[{}] Device is awake", lwM2MClient.getEndpoint());
-            } else {
-                clientContext.update(lwM2MClient);
-            }
+            tryAwake(lwM2MClient);
         }
     }
 
@@ -360,12 +355,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                 }
             });
             clientContext.update(lwM2MClient);
-            if (clientContext.awake(lwM2MClient)) {
-                // clientContext.awake calls clientContext.update
-                log.debug("[{}] Device is awake", lwM2MClient.getEndpoint());
-            } else {
-                clientContext.update(lwM2MClient);
-            }
+            tryAwake(lwM2MClient);
         }
     }
 
@@ -377,11 +367,9 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
      */
     @Override
     public void onUpdateValueWithSendRequest(Registration registration, SendRequest sendRequest) {
-        Iterator i$ = sendRequest.getNodes().entrySet().iterator();
-        if (i$.hasNext()) {
-            Map.Entry<LwM2mPath, LwM2mNode> entry = (Map.Entry) i$.next();
-            LwM2mPath path = (LwM2mPath) entry.getKey();
-            LwM2mNode node = (LwM2mNode) entry.getValue();
+        for(var entry : sendRequest.getNodes().entrySet()) {
+            LwM2mPath path = entry.getKey();
+            LwM2mNode node = entry.getValue();
             LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(registration.getEndpoint());
             String stringPath = convertObjectIdToVersionedId(path.toString(), registration);
             ObjectModel objectModelVersion = lwM2MClient.getObjectModel(stringPath, modelProvider);
@@ -397,12 +385,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                     this.updateResourcesValue(lwM2MClient, lwM2mResource, stringPath, Mode.UPDATE, 0);
                 }
             }
-            if (clientContext.awake(lwM2MClient)) {
-                // clientContext.awake calls clientContext.update
-                log.debug("[{}] Device is awake", lwM2MClient.getEndpoint());
-            } else {
-                clientContext.update(lwM2MClient);
-            }
+            tryAwake(lwM2MClient);
         }
     }
 
@@ -1013,4 +996,14 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
             client.unlock();
         }
     }
+
+    private void tryAwake(LwM2mClient lwM2MClient) {
+        if (clientContext.awake(lwM2MClient)) {
+            // clientContext.awake calls clientContext.update
+            log.debug("[{}] Device is awake", lwM2MClient.getEndpoint());
+        } else {
+            clientContext.update(lwM2MClient);
+        }
+    }
+
 }
