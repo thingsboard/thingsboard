@@ -210,10 +210,12 @@ public class TbDeviceProfileNode implements TbNode {
         DeviceState deviceState = deviceStates.get(deviceId);
         if (deviceState != null) {
             DeviceProfileId currentProfileId = deviceState.getProfileId();
-            Device device = JacksonUtil.fromString(deviceJson, Device.class);
-            if (!currentProfileId.equals(device.getDeviceProfileId())) {
-                removeDeviceState(deviceId);
-            }
+            try {
+                Device device = JacksonUtil.fromString(deviceJson, Device.class);
+                if (!currentProfileId.equals(device.getDeviceProfileId())) {
+                    removeDeviceState(deviceId);
+                }
+            } catch (IllegalArgumentException ignored) {}
         }
     }
 
