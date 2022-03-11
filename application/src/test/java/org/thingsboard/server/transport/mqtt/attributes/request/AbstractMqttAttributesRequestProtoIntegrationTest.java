@@ -38,21 +38,21 @@ public abstract class AbstractMqttAttributesRequestProtoIntegrationTest extends 
     @Test
     public void testRequestAttributesValuesFromTheServer() throws Exception {
         super.processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto",
-                TransportPayloadType.PROTOBUF, null, null, null, ATTRIBUTES_SCHEMA_STR, null, null, null, null, DeviceProfileProvisionType.DISABLED, false, false);
+                TransportPayloadType.PROTOBUF, null, null, null, ATTRIBUTES_SCHEMA_STR, null, null, null, null, DeviceProfileProvisionType.DISABLED, false, false, false);
         processProtoTestRequestAttributesValuesFromTheServer(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_TOPIC_PREFIX);
     }
 
     @Test
     public void testRequestAttributesValuesFromTheServerOnShortTopic() throws Exception {
         super.processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto",
-                TransportPayloadType.PROTOBUF, null, null, null, ATTRIBUTES_SCHEMA_STR, null, null, null, null, DeviceProfileProvisionType.DISABLED, false, false);
+                TransportPayloadType.PROTOBUF, null, null, null, ATTRIBUTES_SCHEMA_STR, null, null, null, null, DeviceProfileProvisionType.DISABLED, false, false, false);
         processProtoTestRequestAttributesValuesFromTheServer(MqttTopics.DEVICE_ATTRIBUTES_SHORT_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_SHORT_TOPIC_PREFIX);
     }
 
     @Test
     public void testRequestAttributesValuesFromTheServerOnShortProtoTopic() throws Exception {
         super.processBeforeTest("Test Request attribute values from the server proto", "Gateway Test Request attribute values from the server proto",
-                TransportPayloadType.PROTOBUF, null, null, null, ATTRIBUTES_SCHEMA_STR, null, null, null, null, DeviceProfileProvisionType.DISABLED, false, false);
+                TransportPayloadType.PROTOBUF, null, null, null, ATTRIBUTES_SCHEMA_STR, null, null, null, null, DeviceProfileProvisionType.DISABLED, false, false, false);
         processProtoTestRequestAttributesValuesFromTheServer(MqttTopics.DEVICE_ATTRIBUTES_SHORT_PROTO_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_RESPONSES_SHORT_PROTO_TOPIC, MqttTopics.DEVICE_ATTRIBUTES_REQUEST_SHORT_PROTO_TOPIC_PREFIX);
     }
 

@@ -20,14 +20,15 @@ import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.TransportPayloadType;
-import org.thingsboard.server.common.data.device.profile.MqttTopics;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 @Slf4j
 public abstract class AbstractMqttTimeseriesJsonIntegrationTest extends AbstractMqttTimeseriesIntegrationTest {
@@ -36,7 +37,7 @@ public abstract class AbstractMqttTimeseriesJsonIntegrationTest extends Abstract
 
     @Before
     public void beforeTest() throws Exception {
-        processBeforeTest("Test Post Telemetry device json payload", "Test Post Telemetry gateway json payload", TransportPayloadType.JSON, POST_DATA_TELEMETRY_TOPIC, null);
+        //do nothing, processBeforeTest will be invoked in particular test methods with different parameters
     }
 
     @After
@@ -46,12 +47,14 @@ public abstract class AbstractMqttTimeseriesJsonIntegrationTest extends Abstract
 
     @Test
     public void testPushTelemetry() throws Exception {
+        processBeforeTest("Test Post Telemetry device json payload", "Test Post Telemetry gateway json payload", TransportPayloadType.JSON, POST_DATA_TELEMETRY_TOPIC, null);
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
         processJsonPayloadTelemetryTest(POST_DATA_TELEMETRY_TOPIC, expectedKeys, PAYLOAD_VALUES_STR.getBytes(), false);
     }
 
     @Test
     public void testPushTelemetryWithTs() throws Exception {
+        processBeforeTest("Test Post Telemetry device json payload", "Test Post Telemetry gateway json payload", TransportPayloadType.JSON, POST_DATA_TELEMETRY_TOPIC, null);
         String payloadStr = "{\"ts\": 10000, \"values\": " + PAYLOAD_VALUES_STR + "}";
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
         processJsonPayloadTelemetryTest(POST_DATA_TELEMETRY_TOPIC, expectedKeys, payloadStr.getBytes(), true);
@@ -59,21 +62,50 @@ public abstract class AbstractMqttTimeseriesJsonIntegrationTest extends Abstract
 
     @Test
     public void testPushTelemetryOnShortTopic() throws Exception {
+        processBeforeTest("Test Post Telemetry device json payload", "Test Post Telemetry gateway json payload", TransportPayloadType.JSON, POST_DATA_TELEMETRY_TOPIC, null);
         super.testPushTelemetryOnShortTopic();
     }
 
     @Test
-    public void testPushTelemetryWithTsOnShortJsonTopic() throws Exception {
+    public void testPushTelemetryOnShortJsonTopic() throws Exception {
+        processBeforeTest("Test Post Telemetry device json payload", "Test Post Telemetry gateway json payload", TransportPayloadType.JSON, POST_DATA_TELEMETRY_TOPIC, null);
         super.testPushTelemetryOnShortJsonTopic();
     }
 
     @Test
     public void testPushTelemetryGateway() throws Exception {
+        processBeforeTest("Test Post Telemetry device json payload", "Test Post Telemetry gateway json payload", TransportPayloadType.JSON, POST_DATA_TELEMETRY_TOPIC, null);
         super.testPushTelemetryGateway();
     }
 
     @Test
     public void testGatewayConnect() throws Exception {
+        processBeforeTest("Test Post Telemetry device json payload", "Test Post Telemetry gateway json payload", TransportPayloadType.JSON, POST_DATA_TELEMETRY_TOPIC, null);
         super.testGatewayConnect();
     }
+
+    @Test
+    public void testPushTelemetryWithMalformedPayloadAndSendPubAckOnErrorEnabled() throws Exception {
+        processBeforeTest("Test Post Telemetry device json payload", "Test Post Telemetry gateway json payload", TransportPayloadType.JSON, POST_DATA_TELEMETRY_TOPIC, null, true);
+        CountDownLatch latch = new CountDownLatch(1);
+        MqttAsyncClient client = getMqttAsyncClient(accessToken);
+        TestMqttPublishCallback callback = new TestMqttPublishCallback(latch);
+        client.setCallback(callback);
+        publishMqttMsg(client, MALFORMED_JSON_PAYLOAD.getBytes(), POST_DATA_TELEMETRY_TOPIC);
+        latch.await(3, TimeUnit.SECONDS);
+        assertTrue(callback.isPubAckReceived());
+    }
+
+    @Test
+    public void testPushTelemetryWithMalformedPayloadAndSendPubAckOnErrorDisabled() throws Exception {
+        processBeforeTest("Test Post Telemetry device json payload", "Test Post Telemetry gateway json payload", TransportPayloadType.JSON, POST_DATA_TELEMETRY_TOPIC, null, false);
+        CountDownLatch latch = new CountDownLatch(1);
+        MqttAsyncClient client = getMqttAsyncClient(accessToken);
+        TestMqttPublishCallback callback = new TestMqttPublishCallback(latch);
+        client.setCallback(callback);
+        publishMqttMsg(client, MALFORMED_JSON_PAYLOAD.getBytes(), POST_DATA_TELEMETRY_TOPIC);
+        latch.await(3, TimeUnit.SECONDS);
+        assertFalse(callback.isPubAckReceived());
+    }
+
 }

@@ -23,6 +23,7 @@ import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.internal.wire.MqttWireMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.junit.After;
 import org.junit.Before;
@@ -48,6 +49,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqttIntegrationTest {
 
     protected static final String PAYLOAD_VALUES_STR = "{\"key1\":\"value1\", \"key2\":true, \"key3\": 3.0, \"key4\": 4," +
+            " \"key5\": {\"someNumber\": 42, \"someArray\": [1,2,3], \"someNestedObject\": {\"key\": \"value\"}}}";
+
+    protected static final String MALFORMED_JSON_PAYLOAD = "{\"key1\":, \"key2\":true, \"key3\": 3.0, \"key4\": 4," +
             " \"key5\": {\"someNumber\": 42, \"someArray\": [1,2,3], \"someNestedObject\": {\"key\": \"value\"}}}";
 
     @Before
@@ -365,6 +369,35 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         @Override
         public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
 
+        }
+    }
+
+    public static class TestMqttPublishCallback implements MqttCallback {
+
+        private final CountDownLatch latch;
+        private boolean pubAckReceived;
+
+        public boolean isPubAckReceived() {
+            return pubAckReceived;
+        }
+
+        public TestMqttPublishCallback(CountDownLatch latch) {
+            this.latch = latch;
+        }
+
+        @Override
+        public void connectionLost(Throwable throwable) {
+            latch.countDown();
+        }
+
+        @Override
+        public void messageArrived(String s, MqttMessage mqttMessage) throws Exception {
+        }
+
+        @Override
+        public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
+            pubAckReceived = iMqttDeliveryToken.getResponse().getType() == MqttWireMessage.MESSAGE_TYPE_PUBACK;
+            latch.countDown();
         }
     }
 
