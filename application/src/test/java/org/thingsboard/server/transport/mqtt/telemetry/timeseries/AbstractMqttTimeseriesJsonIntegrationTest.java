@@ -108,4 +108,28 @@ public abstract class AbstractMqttTimeseriesJsonIntegrationTest extends Abstract
         assertFalse(callback.isPubAckReceived());
     }
 
+    @Test
+    public void testPushTelemetryGatewayWithMalformedPayloadAndSendPubAckOnErrorEnabled() throws Exception {
+        processBeforeTest("Test Post Telemetry device json payload", "Test Post Telemetry gateway json payload", TransportPayloadType.JSON, POST_DATA_TELEMETRY_TOPIC, null, true);
+        CountDownLatch latch = new CountDownLatch(1);
+        MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
+        TestMqttPublishCallback callback = new TestMqttPublishCallback(latch);
+        client.setCallback(callback);
+        publishMqttMsg(client, MALFORMED_JSON_PAYLOAD.getBytes(), POST_DATA_TELEMETRY_TOPIC);
+        latch.await(3, TimeUnit.SECONDS);
+        assertTrue(callback.isPubAckReceived());
+    }
+
+    @Test
+    public void testPushTelemetryGatewayWithMalformedPayloadAndSendPubAckOnErrorDisabled() throws Exception {
+        processBeforeTest("Test Post Telemetry device json payload", "Test Post Telemetry gateway json payload", TransportPayloadType.JSON, POST_DATA_TELEMETRY_TOPIC, null, false);
+        CountDownLatch latch = new CountDownLatch(1);
+        MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
+        TestMqttPublishCallback callback = new TestMqttPublishCallback(latch);
+        client.setCallback(callback);
+        publishMqttMsg(client, MALFORMED_JSON_PAYLOAD.getBytes(), POST_DATA_TELEMETRY_TOPIC);
+        latch.await(3, TimeUnit.SECONDS);
+        assertFalse(callback.isPubAckReceived());
+    }
+
 }
