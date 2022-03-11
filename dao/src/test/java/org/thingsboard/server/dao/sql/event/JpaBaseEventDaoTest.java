@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -56,19 +57,6 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
     private EventDao eventDao;
 
     @Test
-    public void testSaveIfNotExists() {
-        UUID eventId = Uuids.timeBased();
-        UUID tenantId = Uuids.timeBased();
-        UUID entityId = Uuids.timeBased();
-        Event event = getEvent(eventId, tenantId, entityId);
-        Optional<Event> optEvent1 = eventDao.saveIfNotExists(event);
-        assertTrue("Optional is expected to be non-empty", optEvent1.isPresent());
-        assertEquals(event, optEvent1.get());
-        Optional<Event> optEvent2 = eventDao.saveIfNotExists(event);
-        assertFalse("Optional is expected to be empty", optEvent2.isPresent());
-    }
-
-    @Test
     @DatabaseSetup("classpath:dbunit/event.xml")
     public void findEvent() {
         UUID tenantId = UUID.fromString("be41c7a0-31f5-11e7-9cfd-2786e6aa2046");
@@ -82,7 +70,7 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
-    public void findEventsByEntityIdAndPageLink() {
+    public void findEventsByEntityIdAndPageLink() throws Exception {
         UUID tenantId = Uuids.timeBased();
         UUID entityId1 = Uuids.timeBased();
         UUID entityId2 = Uuids.timeBased();
@@ -116,7 +104,7 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
-    public void findEventsByEntityIdAndEventTypeAndPageLink() {
+    public void findEventsByEntityIdAndEventTypeAndPageLink() throws Exception {
         UUID tenantId = Uuids.timeBased();
         UUID entityId1 = Uuids.timeBased();
         UUID entityId2 = Uuids.timeBased();
@@ -144,27 +132,27 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
         assertEquals(2, events5.getData().size());
     }
 
-    private long createEventsTwoEntitiesTwoTypes(UUID tenantId, UUID entityId1, UUID entityId2, long startTime, int count) {
+    private long createEventsTwoEntitiesTwoTypes(UUID tenantId, UUID entityId1, UUID entityId2, long startTime, int count) throws Exception {
         for (int i = 0; i < count / 2; i++) {
             String type = i % 2 == 0 ? STATS : ALARM;
             UUID eventId1 = Uuids.timeBased();
             Event event1 = getEvent(eventId1, tenantId, entityId1, type);
-            eventDao.save(TenantId.fromUUID(tenantId), event1);
+            eventDao.saveAsync(event1).get();
             UUID eventId2 = Uuids.timeBased();
             Event event2 = getEvent(eventId2, tenantId, entityId2, type);
-            eventDao.save(TenantId.fromUUID(tenantId), event2);
+            eventDao.saveAsync(event2).get();
         }
         return System.currentTimeMillis();
     }
 
-    private long createEventsTwoEntities(UUID tenantId, UUID entityId1, UUID entityId2, long startTime, int count) {
+    private long createEventsTwoEntities(UUID tenantId, UUID entityId1, UUID entityId2, long startTime, int count) throws Exception {
         for (int i = 0; i < count / 2; i++) {
             UUID eventId1 = Uuids.timeBased();
             Event event1 = getEvent(eventId1, tenantId, entityId1);
-            eventDao.save(TenantId.fromUUID(tenantId), event1);
+            eventDao.saveAsync(event1).get();
             UUID eventId2 = Uuids.timeBased();
             Event event2 = getEvent(eventId2, tenantId, entityId2);
-            eventDao.save(TenantId.fromUUID(tenantId), event2);
+            eventDao.saveAsync(event2).get();
         }
         return System.currentTimeMillis();
     }

@@ -67,9 +67,13 @@ public class LwM2MTransportBootstrapService {
 
     @PreDestroy
     public void shutdown() {
-        log.info("Stopping LwM2M transport bootstrap server!");
-        server.destroy();
-        log.info("LwM2M transport bootstrap server stopped!");
+        try {
+            log.info("Stopping LwM2M transport bootstrap server!");
+            server.destroy();
+            log.info("LwM2M transport bootstrap server stopped!");
+        } catch (Exception e) {
+            log.error("Failed to gracefully stop the LwM2M transport bootstrap server!", e);
+        }
     }
 
     public LeshanBootstrapServer getLhBootstrapServer() {
@@ -118,7 +122,7 @@ public class LwM2MTransportBootstrapService {
         } else {
             /* by default trust all */
             builder.setTrustedCertificates(new X509Certificate[0]);
-            log.info("Unable to load X509 files for BootStrapServer");
+            log.info("Unable to load X509 files for BootStrap Server");
             dtlsConfig.setAsList(DtlsConfig.DTLS_CIPHER_SUITES, PSK_CIPHER_SUITES);
         }
     }

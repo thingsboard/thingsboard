@@ -45,8 +45,6 @@ public enum BulkImportColumnType {
     LWM2M_SERVER_CLIENT_SECRET_KEY("clientSecretKey"),
     IS_GATEWAY,
     DESCRIPTION,
-    EDGE_LICENSE_KEY,
-    CLOUD_ENDPOINT,
     ROUTING_KEY,
     SECRET;
 

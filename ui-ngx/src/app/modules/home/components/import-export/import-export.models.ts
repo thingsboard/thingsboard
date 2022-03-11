@@ -66,8 +66,6 @@ export enum ImportEntityColumnType {
   lwm2mServerClientSecretKey = 'LWM2M_SERVER_CLIENT_SECRET_KEY',
   isGateway = 'IS_GATEWAY',
   description = 'DESCRIPTION',
-  edgeLicenseKey = 'EDGE_LICENSE_KEY',
-  cloudEndpoint = 'CLOUD_ENDPOINT',
   routingKey = 'ROUTING_KEY',
   secret = 'SECRET'
 }
@@ -102,8 +100,6 @@ export const importEntityColumnTypeTranslations = new Map<ImportEntityColumnType
     [ImportEntityColumnType.lwm2mServerClientSecretKey, 'import.column-type.lwm2m.lwm2m-server-secret-key'],
     [ImportEntityColumnType.isGateway, 'import.column-type.isgateway'],
     [ImportEntityColumnType.description, 'import.column-type.description'],
-    [ImportEntityColumnType.edgeLicenseKey, 'import.column-type.edge-license-key'],
-    [ImportEntityColumnType.cloudEndpoint, 'import.column-type.cloud-endpoint'],
     [ImportEntityColumnType.routingKey, 'import.column-type.routing-key'],
     [ImportEntityColumnType.secret, 'import.column-type.secret']
   ]

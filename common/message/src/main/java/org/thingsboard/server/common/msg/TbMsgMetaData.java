@@ -38,7 +38,8 @@ public final class TbMsgMetaData implements Serializable {
     }
 
     public TbMsgMetaData(Map<String, String> data) {
-        this.data = new ConcurrentHashMap<>(data);
+        this.data = new ConcurrentHashMap<>();
+        data.forEach(this::putValue);
     }
 
     /**
@@ -49,20 +50,20 @@ public final class TbMsgMetaData implements Serializable {
     }
 
     public String getValue(String key) {
-        return data.get(key);
+        return this.data.get(key);
     }
 
     public void putValue(String key, String value) {
         if (key != null && value != null) {
-            data.put(key, value);
+            this.data.put(key, value);
         }
     }
 
     public Map<String, String> values() {
-        return new HashMap<>(data);
+        return new HashMap<>(this.data);
     }
 
     public TbMsgMetaData copy() {
-        return new TbMsgMetaData(data);
+        return new TbMsgMetaData(this.data);
     }
 }

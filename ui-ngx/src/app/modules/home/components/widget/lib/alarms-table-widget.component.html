@@ -51,7 +51,7 @@
                 (click)="ackAlarms($event)">
           <mat-icon>done</mat-icon>
         </button>
-        <button mat-button mat-icon-button
+        <button *ngIf="ctx.settings.allowClear" mat-button mat-icon-button
                 [disabled]="isLoading$ | async"
                 matTooltip="{{ 'alarm.clear' | translate }}"
                 matTooltipPosition="above"
