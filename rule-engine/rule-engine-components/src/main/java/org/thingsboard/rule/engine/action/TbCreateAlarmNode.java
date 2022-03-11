@@ -198,8 +198,10 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
         if (existingAlarm.getStatus().isAck() && !msgAlarm.getStatus().isAck()) {
             throw new RuntimeException("An already acknowledged alarm cannot be made unacknowledged!");
         }
-        existingAlarm.setStatus(msgAlarm.getStatus());
-        existingAlarm.setAckTs(System.currentTimeMillis());
+        if (existingAlarm.getStatus() != msgAlarm.getStatus()) {
+            existingAlarm.setStatus(msgAlarm.getStatus());
+            existingAlarm.setAckTs(System.currentTimeMillis());
+        }
     }
 
     private Alarm buildAlarm(TbMsg msg, JsonNode details, TenantId tenantId) {
