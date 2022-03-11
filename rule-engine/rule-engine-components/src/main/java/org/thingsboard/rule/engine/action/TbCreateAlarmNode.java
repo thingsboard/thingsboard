@@ -198,12 +198,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
         if (existingAlarm.getStatus().isAck() && !msgAlarm.getStatus().isAck()) {
             throw new RuntimeException("An already acknowledged alarm cannot be made unacknowledged!");
         }
-
-        if (existingAlarm.getStatus().isCleared()) {
-            existingAlarm.setStatus(AlarmStatus.CLEARED_ACK);
-        } else {
-            existingAlarm.setStatus(AlarmStatus.ACTIVE_ACK);
-        }
+        existingAlarm.setStatus(msgAlarm.getStatus());
         existingAlarm.setAckTs(System.currentTimeMillis());
     }
 
