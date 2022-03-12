@@ -205,7 +205,7 @@ public abstract class AbstractCoapAttributesUpdatesIntegrationTest extends Abstr
                 .pollInterval(10, TimeUnit.MILLISECONDS)
                 .atMost(5, TimeUnit.SECONDS)
                 .until(()->{
-                    log.error("awaiting defaultTransportService.sessions is empty");
+                    log.trace("awaiting defaultTransportService.sessions is empty");
                     return defaultTransportService.sessions.isEmpty();});
     }
 }
