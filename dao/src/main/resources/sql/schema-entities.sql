@@ -213,7 +213,6 @@ CREATE TABLE IF NOT EXISTS ota_package (
     additional_info varchar,
     search_text varchar(255),
     CONSTRAINT ota_package_tenant_title_version_unq_key UNIQUE (tenant_id, title, version)
---     CONSTRAINT fk_device_profile_firmware FOREIGN KEY (device_profile_id) REFERENCES device_profile(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS device_profile (
@@ -242,6 +241,11 @@ CREATE TABLE IF NOT EXISTS device_profile (
     CONSTRAINT fk_firmware_device_profile FOREIGN KEY (firmware_id) REFERENCES ota_package(id),
     CONSTRAINT fk_software_device_profile FOREIGN KEY (software_id) REFERENCES ota_package(id)
 );
+
+ALTER TABLE ota_package
+    ADD CONSTRAINT fk_device_profile_ota_package
+        FOREIGN KEY (device_profile_id) REFERENCES device_profile (id)
+            ON DELETE CASCADE;
 
 -- We will use one-to-many relation in the first release and extend this feature in case of user requests
 -- CREATE TABLE IF NOT EXISTS device_profile_firmware (

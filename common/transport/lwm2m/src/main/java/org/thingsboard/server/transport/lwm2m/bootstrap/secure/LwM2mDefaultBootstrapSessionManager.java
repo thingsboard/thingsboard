@@ -27,6 +27,7 @@ import org.eclipse.leshan.server.bootstrap.BootstrapSession;
 import org.eclipse.leshan.server.bootstrap.BootstrapTaskProvider;
 import org.eclipse.leshan.server.bootstrap.DefaultBootstrapSession;
 import org.eclipse.leshan.server.bootstrap.DefaultBootstrapSessionManager;
+import org.eclipse.leshan.server.bootstrap.InvalidConfigurationException;
 import org.eclipse.leshan.server.model.LwM2mBootstrapModelProvider;
 import org.eclipse.leshan.server.model.StandardBootstrapModelProvider;
 import org.eclipse.leshan.server.security.BootstrapSecurityStore;
@@ -35,6 +36,7 @@ import org.eclipse.leshan.server.security.SecurityInfo;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.transport.lwm2m.bootstrap.store.LwM2MBootstrapConfigStoreTaskProvider;
 import org.thingsboard.server.transport.lwm2m.bootstrap.store.LwM2MBootstrapSecurityStore;
+import org.thingsboard.server.transport.lwm2m.bootstrap.store.LwM2MBootstrapTaskProvider;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2MAuthException;
 
 import java.util.ArrayList;
@@ -48,10 +50,10 @@ import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LO
 @Slf4j
 public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSessionManager {
 
-    private BootstrapSecurityStore bsSecurityStore;
-    private SecurityChecker securityChecker;
-    private BootstrapTaskProvider tasksProvider;
-    private LwM2mBootstrapModelProvider modelProvider;
+    private final BootstrapSecurityStore bsSecurityStore;
+    private final SecurityChecker securityChecker;
+    private final LwM2MBootstrapTaskProvider tasksProvider;
+    private final LwM2mBootstrapModelProvider modelProvider;
     private TransportService transportService;
 
     /**
@@ -73,7 +75,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
      * @param securityChecker used to accept or refuse new {@link BootstrapSession}.
      */
     public LwM2mDefaultBootstrapSessionManager(BootstrapSecurityStore bsSecurityStore, SecurityChecker securityChecker,
-                                               BootstrapTaskProvider tasksProvider, LwM2mBootstrapModelProvider modelProvider) {
+                                               LwM2MBootstrapTaskProvider tasksProvider, LwM2mBootstrapModelProvider modelProvider) {
         super(bsSecurityStore, securityChecker, tasksProvider, modelProvider);
         this.bsSecurityStore = bsSecurityStore;
         this.securityChecker = securityChecker;
@@ -100,7 +102,12 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
         }
         DefaultBootstrapSession session = new DefaultBootstrapSession(request, clientIdentity, authorized);
         if (authorized) {
-            this.sendLogs (request.getEndpointName(),
+            try {
+                this.tasksProvider.put(session.getEndpoint());
+            } catch (InvalidConfigurationException e){
+                log.error("Failed put to lwM2MBootstrapSessionClients by endpoint [{}]", request.getEndpointName(), e);
+            }
+            this.sendLogs(request.getEndpointName(),
                     String.format("%s: Bootstrap session started...", LOG_LWM2M_INFO, request.getEndpointName()));
         }
         return session;
@@ -108,7 +115,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
 
     @Override
     public boolean hasConfigFor(BootstrapSession session) {
-        BootstrapTaskProvider.Tasks firstTasks = tasksProvider.getTasks(session, null);
+        BootstrapTaskProvider.Tasks firstTasks = this.tasksProvider.getTasks(session, null);
         if (firstTasks == null) {
             return false;
         }
@@ -147,7 +154,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
             return requestsToSend.remove(0);
         } else {
             if (session.hasMoreTasks()) {
-                BootstrapTaskProvider.Tasks nextTasks = tasksProvider.getTasks(session, session.getResponses());
+                BootstrapTaskProvider.Tasks nextTasks = this.tasksProvider.getTasks(session, session.getResponses());
                 if (nextTasks == null) {
                     session.setMoreTasks(false);
                     return new BootstrapFinishRequest();
@@ -178,6 +185,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
             // on success for bootstrap finish request we stop the session
             this.sendLogs(bsSession.getEndpoint(),
                     String.format("%s: receives success response for bootstrap finish.", LOG_LWM2M_INFO));
+            this.tasksProvider.remove(bsSession.getEndpoint());
             return BootstrapPolicy.finished();
         }
     }
@@ -199,6 +207,7 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
             // on response error for bootstrap finish request we stop the session
             this.sendLogs(bsSession.getEndpoint(),
                     String.format("%s: error response for request bootstrap finish. Stop the session: %s", LOG_LWM2M_ERROR, bsSession.toString()));
+            this.tasksProvider.remove(bsSession.getEndpoint());
             return BootstrapPolicy.failed();
         }
     }
@@ -215,12 +224,14 @@ public class LwM2mDefaultBootstrapSessionManager extends DefaultBootstrapSession
     @Override
     public void end(BootstrapSession bsSession) {
         this.sendLogs(bsSession.getEndpoint(), String.format("%s: Bootstrap session finished.", LOG_LWM2M_INFO));
+        this.tasksProvider.remove(bsSession.getEndpoint());
     }
 
     @Override
     public void failed(BootstrapSession bsSession, BootstrapFailureCause cause) {
         this.sendLogs(bsSession.getEndpoint(), String.format("%s: Bootstrap session failed because of %s", LOG_LWM2M_ERROR,
                 cause.toString()));
+        this.tasksProvider.remove(bsSession.getEndpoint());
     }
 
     private void sendLogs(String endpointName, String logMsg) {
