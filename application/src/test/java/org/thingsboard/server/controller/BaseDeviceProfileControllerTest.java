@@ -837,7 +837,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
     }
 
     @Test
-    public void testSaveDeviceProfileWithSendPubAckOnValidationException() throws Exception {
+    public void testSaveDeviceProfileWithSendAckOnValidationException() throws Exception {
         JsonTransportPayloadConfiguration jsonTransportPayloadConfiguration = new JsonTransportPayloadConfiguration();
         MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = this.createMqttDeviceProfileTransportConfiguration(jsonTransportPayloadConfiguration, true);
         DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile", mqttDeviceProfileTransportConfiguration);
@@ -846,7 +846,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
         Assert.assertEquals(savedDeviceProfile.getTransportType(), DeviceTransportType.MQTT);
         Assert.assertTrue(savedDeviceProfile.getProfileData().getTransportConfiguration() instanceof MqttDeviceProfileTransportConfiguration);
         MqttDeviceProfileTransportConfiguration transportConfiguration = (MqttDeviceProfileTransportConfiguration) savedDeviceProfile.getProfileData().getTransportConfiguration();
-        Assert.assertTrue(transportConfiguration.isSendPubAckOnValidationException());
+        Assert.assertTrue(transportConfiguration.isSendAckOnValidationException());
         DeviceProfile foundDeviceProfile = doGet("/api/deviceProfile/"+ savedDeviceProfile.getId().getId().toString(), DeviceProfile.class);
         Assert.assertEquals(savedDeviceProfile, foundDeviceProfile);
     }

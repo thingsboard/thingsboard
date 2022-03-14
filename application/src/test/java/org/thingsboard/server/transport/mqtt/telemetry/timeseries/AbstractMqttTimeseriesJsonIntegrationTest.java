@@ -85,7 +85,7 @@ public abstract class AbstractMqttTimeseriesJsonIntegrationTest extends Abstract
     }
 
     @Test
-    public void testPushTelemetryWithMalformedPayloadAndSendPubAckOnErrorEnabled() throws Exception {
+    public void testPushTelemetryWithMalformedPayloadAndSendAckOnErrorEnabled() throws Exception {
         processBeforeTest("Test Post Telemetry device json payload", "Test Post Telemetry gateway json payload", TransportPayloadType.JSON, POST_DATA_TELEMETRY_TOPIC, null, true);
         CountDownLatch latch = new CountDownLatch(1);
         MqttAsyncClient client = getMqttAsyncClient(accessToken);
@@ -97,7 +97,7 @@ public abstract class AbstractMqttTimeseriesJsonIntegrationTest extends Abstract
     }
 
     @Test
-    public void testPushTelemetryWithMalformedPayloadAndSendPubAckOnErrorDisabled() throws Exception {
+    public void testPushTelemetryWithMalformedPayloadAndSendAckOnErrorDisabled() throws Exception {
         processBeforeTest("Test Post Telemetry device json payload", "Test Post Telemetry gateway json payload", TransportPayloadType.JSON, POST_DATA_TELEMETRY_TOPIC, null, false);
         CountDownLatch latch = new CountDownLatch(1);
         MqttAsyncClient client = getMqttAsyncClient(accessToken);
@@ -109,7 +109,7 @@ public abstract class AbstractMqttTimeseriesJsonIntegrationTest extends Abstract
     }
 
     @Test
-    public void testPushTelemetryGatewayWithMalformedPayloadAndSendPubAckOnErrorEnabled() throws Exception {
+    public void testPushTelemetryGatewayWithMalformedPayloadAndSendAckOnErrorEnabled() throws Exception {
         processBeforeTest("Test Post Telemetry device json payload", "Test Post Telemetry gateway json payload", TransportPayloadType.JSON, POST_DATA_TELEMETRY_TOPIC, null, true);
         CountDownLatch latch = new CountDownLatch(1);
         MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
@@ -121,7 +121,7 @@ public abstract class AbstractMqttTimeseriesJsonIntegrationTest extends Abstract
     }
 
     @Test
-    public void testPushTelemetryGatewayWithMalformedPayloadAndSendPubAckOnErrorDisabled() throws Exception {
+    public void testPushTelemetryGatewayWithMalformedPayloadAndSendAckOnErrorDisabled() throws Exception {
         processBeforeTest("Test Post Telemetry device json payload", "Test Post Telemetry gateway json payload", TransportPayloadType.JSON, POST_DATA_TELEMETRY_TOPIC, null, false);
         CountDownLatch latch = new CountDownLatch(1);
         MqttAsyncClient client = getMqttAsyncClient(gatewayAccessToken);
