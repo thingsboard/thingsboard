@@ -151,7 +151,7 @@ public abstract class BaseDeviceProfileControllerTest extends AbstractController
     public void testSetDefaultDeviceProfile() throws Exception {
         DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile 1", null);
         DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
-        DeviceProfile defaultDeviceProfile = doPost("/api/deviceProfile/"+savedDeviceProfile.getId().getId().toString()+"/default", null, DeviceProfile.class);
+        DeviceProfile defaultDeviceProfile = doPost("/api/deviceProfile/"+savedDeviceProfile.getId().getId().toString()+"/default", DeviceProfile.class);
         Assert.assertNotNull(defaultDeviceProfile);
         DeviceProfileInfo foundDefaultDeviceProfile = doGet("/api/deviceProfileInfo/default", DeviceProfileInfo.class);
         Assert.assertNotNull(foundDefaultDeviceProfile);
