@@ -40,6 +40,7 @@ import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.util.concurrent.ListenableFutureCallback;
 import org.springframework.web.client.AsyncRestTemplate;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TbRelationTypes;
@@ -54,6 +55,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.Deque;
@@ -189,8 +191,9 @@ public class TbHttpClient {
             entity = new HttpEntity<>(msg.getData(), headers);
         }
 
+        URI uri = UriComponentsBuilder.fromUriString(endpointUrl).build().encode().toUri();
         ListenableFuture<ResponseEntity<String>> future = httpClient.exchange(
-                endpointUrl, method, entity, String.class);
+                uri, method, entity, String.class);
         future.addCallback(new ListenableFutureCallback<ResponseEntity<String>>() {
             @Override
             public void onFailure(Throwable throwable) {
