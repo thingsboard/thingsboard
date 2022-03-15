@@ -99,7 +99,7 @@ public class TbDeviceProfileNode implements TbNode {
             log.info("[{}] Fetched alarm rule state for {} entities", ctx.getSelfId(), fetchCount);
         }
         if (!config.isPersistAlarmRulesState() && ctx.isLocalEntity(ctx.getSelfId())) {
-            log.info("[{}] Going to cleanup rule node states", ctx.getSelfId());
+            log.debug("[{}] Going to cleanup rule node states", ctx.getSelfId());
             ctx.clearRuleNodeStates();
         }
     }

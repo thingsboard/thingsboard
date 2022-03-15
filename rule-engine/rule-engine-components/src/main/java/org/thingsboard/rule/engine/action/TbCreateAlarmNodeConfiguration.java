@@ -30,6 +30,7 @@ public class TbCreateAlarmNodeConfiguration extends TbAbstractAlarmNodeConfigura
     private boolean propagateToOwner;
     private boolean propagateToTenant;
     private boolean useMessageAlarmData;
+    private boolean overwriteAlarmDetails = true;
     private boolean dynamicSeverity;
 
     private List<String> relationTypes;
@@ -44,8 +45,10 @@ public class TbCreateAlarmNodeConfiguration extends TbAbstractAlarmNodeConfigura
         configuration.setPropagateToOwner(false);
         configuration.setPropagateToTenant(false);
         configuration.setUseMessageAlarmData(false);
+        configuration.setOverwriteAlarmDetails(false);
         configuration.setRelationTypes(Collections.emptyList());
         configuration.setDynamicSeverity(false);
         return configuration;
     }
+
 }

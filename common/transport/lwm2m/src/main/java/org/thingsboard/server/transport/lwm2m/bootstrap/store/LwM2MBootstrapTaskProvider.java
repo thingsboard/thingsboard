@@ -13,24 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile.lwm2m;
+package org.thingsboard.server.transport.lwm2m.bootstrap.store;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.eclipse.leshan.server.bootstrap.BootstrapTaskProvider;
+import org.eclipse.leshan.server.bootstrap.InvalidConfigurationException;
 
-import java.util.Map;
-import java.util.Set;
+public interface LwM2MBootstrapTaskProvider extends BootstrapTaskProvider {
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class TelemetryMappingConfiguration {
+    void put(String endpoint)  throws InvalidConfigurationException;
 
-    private Map<String, String> keyName;
-    private Set<String> observe;
-    private Set<String> attribute;
-    private Set<String> telemetry;
-    private Map<String, ObjectAttributes> attributeLwm2m;
-
+    void remove(String endpoint);
 }

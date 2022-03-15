@@ -13,24 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile.lwm2m;
+package org.thingsboard.server.controller.sql;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.thingsboard.server.controller.BaseAlarmControllerTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
-import java.util.Map;
-import java.util.Set;
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class TelemetryMappingConfiguration {
-
-    private Map<String, String> keyName;
-    private Set<String> observe;
-    private Set<String> attribute;
-    private Set<String> telemetry;
-    private Map<String, ObjectAttributes> attributeLwm2m;
-
+@DaoSqlTest
+public class AlarmControllerSqlTest extends BaseAlarmControllerTest {
 }
