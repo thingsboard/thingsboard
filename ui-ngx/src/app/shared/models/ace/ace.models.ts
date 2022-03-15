@@ -17,61 +17,232 @@
 import { Ace } from 'ace-builds';
 import { Observable } from 'rxjs/internal/Observable';
 import { forkJoin, from, of } from 'rxjs';
-import { map, mergeMap, tap } from 'rxjs/operators';
+import { map, mergeMap, publishReplay, refCount, tap } from 'rxjs/operators';
 
-let aceDependenciesLoaded = false;
 let aceModule: any;
 
-function loadAceDependencies(): Observable<any> {
-  if (aceDependenciesLoaded) {
-    return of(null);
-  } else {
+const aceModes = ['text', 'java', 'html', 'css', 'json', 'javascript', 'markdown', 'protobuf'];
+const aceThemes = ['textmate', 'github'];
+
+export type AceMode = typeof aceModes[number];
+export type AceTheme = typeof aceThemes[number];
+
+let generalAceDependencies$: Observable<any>;
+let textmateAceThemeDependency$: Observable<any>;
+let githubAceThemesDependency$: Observable<any>;
+let textModeAceDependencies$: Observable<any>;
+let javaModeAceDependencies$: Observable<any>;
+let htmlModeAceDependencies$: Observable<any>;
+let cssModeAceDependencies$: Observable<any>;
+let jsonModeAceDependencies$: Observable<any>;
+let javascriptModeAceDependencies$: Observable<any>;
+let markdownModeAceDependencies$: Observable<any>;
+let protobufModeAceDependencies$: Observable<any>;
+
+function loadAceDependencies(modes: AceMode[], themes: AceTheme[]): Observable<any> {
+  const aceObservables: Observable<any>[] = [];
+  aceObservables.push(loadGeneralAceDependencies());
+  aceObservables.push(loadAceThemeDependencies(themes));
+  modes.forEach(mode => {
+    switch (mode) {
+      case 'text':
+        aceObservables.push(loadTextModeAceDependencies());
+        break;
+      case 'java':
+        aceObservables.push(loadJavaModeAceDependencies());
+        break;
+      case 'html':
+        aceObservables.push(loadHtmlModeAceDependencies());
+        break;
+      case 'css':
+        aceObservables.push(loadCssModeAceDependencies());
+        break;
+      case 'json':
+        aceObservables.push(loadJsonModeAceDependencies());
+        break;
+      case 'javascript':
+        aceObservables.push(loadJavascriptModeDependencies());
+        break;
+      case 'markdown':
+        aceObservables.push(loadMarkdownModeDependencies());
+        break;
+      case 'protobuf':
+        aceObservables.push(loadProtobufModeDependencies());
+        break;
+    }
+  });
+  return forkJoin(aceObservables);
+}
+
+function loadGeneralAceDependencies(): Observable<any> {
+  if (!generalAceDependencies$) {
     const aceObservables: Observable<any>[] = [];
     aceObservables.push(from(import('ace-builds/src-noconflict/ext-language_tools')));
     aceObservables.push(from(import('ace-builds/src-noconflict/ext-searchbox')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/mode-java')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/mode-css')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/mode-json')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/mode-javascript')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/mode-text')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/mode-markdown')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/mode-html')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/mode-c_cpp')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/mode-protobuf')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/java')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/css')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/json')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/javascript')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/text')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/markdown')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/html')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/c_cpp')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/protobuf')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/theme-textmate')));
-    aceObservables.push(from(import('ace-builds/src-noconflict/theme-github')));
-    return forkJoin(aceObservables).pipe(
-      tap(() => {
-        aceDependenciesLoaded = true;
-      })
+    generalAceDependencies$ = forkJoin(aceObservables).pipe(
+      publishReplay(1),
+      refCount()
     );
   }
+  return generalAceDependencies$;
 }
 
-export function getAce(): Observable<any> {
-  if (aceModule) {
-    return of(aceModule);
-  } else {
-    return from(import('ace')).pipe(
-      mergeMap((module) => {
-        return loadAceDependencies().pipe(
-         map(() => module)
-        );
-      }),
+function loadAceThemeDependencies(themes: AceTheme[]): Observable<any> {
+  const aceObservables: Observable<any>[] = [];
+  themes.forEach(mode => {
+    switch (mode) {
+      case 'textmate':
+        aceObservables.push(loadTextmateAceThemeDependencies());
+        break;
+      case 'github':
+        aceObservables.push(loadGithubAceThemeDependencies());
+        break;
+    }
+  });
+  return forkJoin(aceObservables);
+}
+
+function loadTextmateAceThemeDependencies(): Observable<any> {
+  if (!textmateAceThemeDependency$) {
+    textmateAceThemeDependency$ = from(import('ace-builds/src-noconflict/theme-textmate')).pipe(
+      publishReplay(1),
+      refCount()
+    );
+  }
+  return textmateAceThemeDependency$;
+}
+
+function loadGithubAceThemeDependencies(): Observable<any> {
+  if (!githubAceThemesDependency$) {
+    githubAceThemesDependency$ = from(import('ace-builds/src-noconflict/theme-github')).pipe(
+      publishReplay(1),
+      refCount()
+    );
+  }
+  return githubAceThemesDependency$;
+}
+
+function loadTextModeAceDependencies(): Observable<any> {
+  if (!textModeAceDependencies$) {
+    const aceObservables: Observable<any>[] = [];
+    aceObservables.push(from(import('ace-builds/src-noconflict/mode-text')));
+    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/text')));
+    textModeAceDependencies$ = forkJoin(aceObservables).pipe(
+      publishReplay(1),
+      refCount()
+    );
+  }
+  return textModeAceDependencies$;
+}
+
+function loadJavaModeAceDependencies(): Observable<any> {
+  if (!javaModeAceDependencies$) {
+    const aceObservables: Observable<any>[] = [];
+    aceObservables.push(from(import('ace-builds/src-noconflict/mode-java')));
+    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/java')));
+    javaModeAceDependencies$ = forkJoin(aceObservables).pipe(
+      publishReplay(1),
+      refCount()
+    );
+  }
+  return javaModeAceDependencies$;
+}
+
+function loadHtmlModeAceDependencies(): Observable<any> {
+  if (!htmlModeAceDependencies$) {
+    const aceObservables: Observable<any>[] = [];
+    aceObservables.push(from(import('ace-builds/src-noconflict/mode-html')));
+    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/html')));
+    htmlModeAceDependencies$ = forkJoin(aceObservables).pipe(
+      publishReplay(1),
+      refCount()
+    );
+  }
+  return htmlModeAceDependencies$;
+}
+
+function loadCssModeAceDependencies(): Observable<any> {
+  if (!cssModeAceDependencies$) {
+    const aceObservables: Observable<any>[] = [];
+    aceObservables.push(from(import('ace-builds/src-noconflict/mode-css')));
+    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/css')));
+    cssModeAceDependencies$ = forkJoin(aceObservables).pipe(
+      publishReplay(1),
+      refCount()
+    );
+  }
+  return cssModeAceDependencies$;
+}
+
+function loadJsonModeAceDependencies(): Observable<any> {
+  if (!jsonModeAceDependencies$) {
+    const aceObservables: Observable<any>[] = [];
+    aceObservables.push(from(import('ace-builds/src-noconflict/mode-json')));
+    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/json')));
+    jsonModeAceDependencies$ = forkJoin(aceObservables).pipe(
+      publishReplay(1),
+      refCount()
+    );
+  }
+  return jsonModeAceDependencies$;
+}
+
+function loadJavascriptModeDependencies(): Observable<any> {
+  if (!javascriptModeAceDependencies$) {
+    const aceObservables: Observable<any>[] = [];
+    aceObservables.push(from(import('ace-builds/src-noconflict/mode-javascript')));
+    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/javascript')));
+    javascriptModeAceDependencies$ = forkJoin(aceObservables).pipe(
+      publishReplay(1),
+      refCount()
+    );
+  }
+  return javascriptModeAceDependencies$;
+}
+
+function loadMarkdownModeDependencies(): Observable<any> {
+  if (!markdownModeAceDependencies$) {
+    const aceObservables: Observable<any>[] = [];
+    aceObservables.push(from(import('ace-builds/src-noconflict/mode-markdown')));
+    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/markdown')));
+    markdownModeAceDependencies$ = forkJoin(aceObservables).pipe(
+      publishReplay(1),
+      refCount()
+    );
+  }
+  return markdownModeAceDependencies$;
+}
+
+function loadProtobufModeDependencies(): Observable<any> {
+  if (!protobufModeAceDependencies$) {
+    const aceObservables: Observable<any>[] = [];
+    aceObservables.push(from(import('ace-builds/src-noconflict/mode-c_cpp')));
+    aceObservables.push(from(import('ace-builds/src-noconflict/mode-protobuf')));
+    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/c_cpp')));
+    aceObservables.push(from(import('ace-builds/src-noconflict/snippets/protobuf')));
+    protobufModeAceDependencies$ = forkJoin(aceObservables).pipe(
+      publishReplay(1),
+      refCount()
+    );
+  }
+  return protobufModeAceDependencies$;
+}
+
+export function getAce(mode?: AceMode|AceMode[], theme?: AceTheme|AceTheme[]): Observable<any> {
+  let aceModule$: Observable<any> = of(null);
+  const modes = Array.isArray(mode) ? mode : (mode ? [mode] : aceModes);
+  const themes = Array.isArray(theme) ? theme : (theme ? [theme] : aceThemes);
+  if (!aceModule) {
+    aceModule$ = from(import('ace')).pipe(
       tap((module) => {
         aceModule = module;
       })
     );
   }
+  return aceModule$.pipe(
+    mergeMap(() => loadAceDependencies(modes, themes)),
+    map(() => aceModule)
+  );
 }
 
 export class Range implements Ace.Range {
@@ -233,33 +404,21 @@ export class Range implements Ace.Range {
 
   inside(row: number, column: number): boolean {
     if (this.compare(row, column) === 0) {
-      if (this.isEnd(row, column) || this.isStart(row, column)) {
-        return false;
-      } else {
-        return true;
-      }
+      return !(this.isEnd(row, column) || this.isStart(row, column));
     }
     return false;
   }
 
   insideEnd(row: number, column: number): boolean {
     if (this.compare(row, column) === 0) {
-      if (this.isStart(row, column)) {
-        return false;
-      } else {
-        return true;
-      }
+      return !this.isStart(row, column);
     }
     return false;
   }
 
   insideStart(row: number, column: number): boolean {
     if (this.compare(row, column) === 0) {
-      if (this.isEnd(row, column)) {
-        return false;
-      } else {
-        return true;
-      }
+      return !this.isEnd(row, column);
     }
     return false;
   }

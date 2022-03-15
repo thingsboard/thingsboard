@@ -39,7 +39,7 @@ import { CustomPrettyActionEditorCompleter } from '@home/components/widget/actio
 import { Observable } from 'rxjs/internal/Observable';
 import { forkJoin, from } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import { getAce } from '@shared/models/ace/ace.models';
+import { AceMode, getAce } from '@shared/models/ace/ace.models';
 import { beautifyCss, beautifyHtml } from '@shared/models/beautify.models';
 
 @Component({
@@ -200,7 +200,7 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
     return forkJoin(editorsObservables);
   }
 
-  private createAceEditor(editorElementRef: ElementRef, mode: string): Observable<Ace.Editor> {
+  private createAceEditor(editorElementRef: ElementRef, mode: AceMode): Observable<Ace.Editor> {
     const editorElement = editorElementRef.nativeElement;
     let editorOptions: Partial<Ace.EditorOptions> = {
       mode: `ace/mode/${mode}`,
@@ -213,7 +213,7 @@ export class CustomActionPrettyResourcesTabsComponent extends PageComponent impl
       enableLiveAutocompletion: true
     };
     editorOptions = {...editorOptions, ...advancedOptions};
-    return getAce().pipe(
+    return getAce(mode, 'textmate').pipe(
       map((ace) => {
         const aceEditor = ace.edit(editorElement, editorOptions);
         aceEditor.session.setUseWrapMode(true);

@@ -159,7 +159,7 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
     };
 
     editorOptions = {...editorOptions, ...advancedOptions};
-    getAce().subscribe(
+    getAce('javascript', 'textmate').subscribe(
       (ace) => {
         this.jsEditor = ace.edit(editorElement, editorOptions);
         this.jsEditor.session.setUseWrapMode(true);

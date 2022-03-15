@@ -139,7 +139,7 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
     };
 
     editorOptions = {...editorOptions, ...advancedOptions};
-    getAce().subscribe(
+    getAce(['json', 'text'], 'textmate').subscribe(
       (ace) => {
         this.jsonEditor = ace.edit(editorElement, editorOptions);
         this.jsonEditor.session.setUseWrapMode(true);

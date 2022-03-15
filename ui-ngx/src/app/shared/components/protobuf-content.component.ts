@@ -14,49 +14,37 @@
 /// limitations under the License.
 ///
 
+import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
-  Component,
-  ElementRef,
-  forwardRef,
-  Input,
-  OnDestroy,
-  OnInit,
-  ViewChild
-} from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Ace } from 'ace-builds';
-import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
-import { ResizeObserver } from '@juggle/resize-observer';
-import { guid } from '@core/utils';
+  ControlValueAccessor,
+  FormBuilder,
+  FormGroup,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  Validator
+} from '@angular/forms';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { getAce } from '@shared/models/ace/ace.models';
-import { beautifyJs } from '@shared/models/beautify.models';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
+// @deprecated
 @Component({
   selector: 'tb-protobuf-content',
   templateUrl: './protobuf-content.component.html',
-  styleUrls: ['./protobuf-content.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => ProtobufContentComponent),
       multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => ProtobufContentComponent),
+      multi: true
     }
   ]
 })
-export class ProtobufContentComponent implements OnInit, ControlValueAccessor, OnDestroy {
-
-  @ViewChild('protobufEditor', {static: true})
-  protobufEditorElmRef: ElementRef;
-
-  private protobufEditor: Ace.Editor;
-  private editorsResizeCaf: CancelAnimationFrame;
-  private editorResize$: ResizeObserver;
-  private ignoreChange = false;
-
-  toastTargetId = `protobufContentEditor-${guid()}`;
+export class ProtobufContentComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
 
   @Input() label: string;
 
@@ -65,8 +53,6 @@ export class ProtobufContentComponent implements OnInit, ControlValueAccessor, O
   @Input() fillHeight: boolean;
 
   @Input() editorStyle: {[klass: string]: any};
-
-  @Input() tbPlaceholder: string;
 
   private readonlyValue: boolean;
   get readonly(): boolean {
@@ -77,117 +63,58 @@ export class ProtobufContentComponent implements OnInit, ControlValueAccessor, O
     this.readonlyValue = coerceBooleanProperty(value);
   }
 
-  fullscreen = false;
-
-  contentBody: string;
-
-  errorShowed = false;
-
   private propagateChange = null;
+  private destroy$ = new Subject();
 
-  constructor(public elementRef: ElementRef,
-              protected store: Store<AppState>,
-              private raf: RafService) {
+  protobufValueFormGroup: FormGroup;
+
+  constructor(private fb: FormBuilder) {
   }
 
-  ngOnInit(): void {
-    const editorElement = this.protobufEditorElmRef.nativeElement;
-    let editorOptions: Partial<Ace.EditorOptions> = {
-      mode: `ace/mode/protobuf`,
-      showGutter: true,
-      showPrintMargin: false,
-      readOnly: this.disabled || this.readonly,
-    };
-
-    const advancedOptions = {
-      enableSnippets: true,
-      enableBasicAutocompletion: true,
-      enableLiveAutocompletion: true
-    };
-
-    editorOptions = {...editorOptions, ...advancedOptions};
-    getAce().subscribe(
-      (ace) => {
-        this.protobufEditor = ace.edit(editorElement, editorOptions);
-        this.protobufEditor.session.setUseWrapMode(true);
-        this.protobufEditor.setValue(this.contentBody ? this.contentBody : '', -1);
-        this.protobufEditor.setReadOnly(this.disabled || this.readonly);
-        this.protobufEditor.on('change', () => {
-          if (!this.ignoreChange) {
-            this.updateView();
-          }
-        });
-        this.editorResize$ = new ResizeObserver(() => {
-          this.onAceEditorResize();
-        });
-        this.editorResize$.observe(editorElement);
-      }
-    );
+  ngOnInit() {
+    this.protobufValueFormGroup = this.fb.group({
+      protobufValue: [null]
+    });
+    this.protobufValueFormGroup.get('protobufValue').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.updateModel();
+    });
   }
 
-  ngOnDestroy(): void {
-    if (this.editorResize$) {
-      this.editorResize$.disconnect();
-    }
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
-  registerOnChange(fn: any): void {
+  registerOnChange(fn: any) {
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: any) {
   }
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
-    if (this.protobufEditor) {
-      this.protobufEditor.setReadOnly(this.disabled || this.readonly);
+    if (isDisabled) {
+      this.protobufValueFormGroup.disable({emitEvent: false});
+    } else {
+      this.protobufValueFormGroup.enable({emitEvent: false});
     }
   }
 
   writeValue(value: string): void {
-    this.contentBody = value;
-    if (this.protobufEditor) {
-      this.ignoreChange = true;
-      this.protobufEditor.setValue(this.contentBody ? this.contentBody : '', -1);
-      this.ignoreChange = false;
-    }
+    this.protobufValueFormGroup.patchValue({ protobufValue: value }, {emitEvent: false});
   }
 
-  updateView() {
-    const editorValue = this.protobufEditor.getValue();
-    if (this.contentBody !== editorValue) {
-      this.contentBody = editorValue;
-      this.propagateChange(this.contentBody);
-    }
+  validate() {
+    return this.protobufValueFormGroup.get('protobufValue').valid ? null : {
+      protobuf: false
+    };
   }
 
-  beautifyProtobuf() {
-    beautifyJs(this.contentBody, {indent_size: 4, wrap_line_length: 60}).subscribe(
-      (res) => {
-        this.protobufEditor.setValue(res ? res : '', -1);
-        this.updateView();
-      }
-    );
+  private updateModel() {
+    const protobufValue: string = this.protobufValueFormGroup.get('protobufValue').value;
+    this.propagateChange(protobufValue);
   }
-
-  onFullscreen() {
-    if (this.protobufEditor) {
-      setTimeout(() => {
-        this.protobufEditor.resize();
-      }, 0);
-    }
-  }
-
-  private onAceEditorResize() {
-    if (this.editorsResizeCaf) {
-      this.editorsResizeCaf();
-      this.editorsResizeCaf = null;
-    }
-    this.editorsResizeCaf = this.raf.raf(() => {
-      this.protobufEditor.resize();
-      this.protobufEditor.renderer.updateFull();
-    });
-  }
-
 }

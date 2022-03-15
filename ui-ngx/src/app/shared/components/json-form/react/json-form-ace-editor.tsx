@@ -28,8 +28,8 @@ import { CircularProgress, IconButton } from '@material-ui/core';
 import { MouseEvent } from 'react';
 import { Help, HelpOutline } from '@material-ui/icons';
 
-const ReactAce = React.lazy(() => {
-  return getAce().pipe(
+const ReactAceMode = mode => React.lazy(() => {
+  return getAce(mode, 'textmate').pipe(
     mergeMap(() => {
       return from(import('react-ace'));
     })
@@ -175,6 +175,7 @@ class ThingsboardAceEditor extends React.Component<ThingsboardAceEditorProps, Th
         if (this.state.isFull) {
             containerClass += ' fullscreen-form-field';
         }
+        const ReactAce = ReactAceMode(this.props.mode);
         const formDom = (
           <div className={containerClass}>
             <label className={labelClass}>{this.props.form.title}</label>

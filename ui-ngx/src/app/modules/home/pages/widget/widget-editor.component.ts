@@ -40,7 +40,7 @@ import { Hotkey } from 'angular2-hotkeys';
 import { TranslateService } from '@ngx-translate/core';
 import { getCurrentIsLoading } from '@app/core/interceptors/load.selectors';
 import { Ace } from 'ace-builds';
-import { getAce, Range } from '@shared/models/ace/ace.models';
+import { AceMode, getAce, Range } from '@shared/models/ace/ace.models';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { WINDOW } from '@core/services/window.service';
 import { WindowMessage } from '@shared/models/window-message.model';
@@ -376,7 +376,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     this.jsEditor.setValue(this.widget.controllerScript ? this.widget.controllerScript : '', -1);
   }
 
-  private createAceEditor(editorElementRef: ElementRef, mode: string): Observable<Ace.Editor> {
+  private createAceEditor(editorElementRef: ElementRef, mode: AceMode): Observable<Ace.Editor> {
     const editorElement = editorElementRef.nativeElement;
     let editorOptions: Partial<Ace.EditorOptions> = {
       mode: `ace/mode/${mode}`,
@@ -389,7 +389,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
       enableLiveAutocompletion: true
     };
     editorOptions = {...editorOptions, ...advancedOptions};
-    return getAce().pipe(
+    return getAce(mode, 'textmate').pipe(
       map((ace) => {
         const aceEditor = ace.edit(editorElement, editorOptions);
         aceEditor.session.setUseWrapMode(true);

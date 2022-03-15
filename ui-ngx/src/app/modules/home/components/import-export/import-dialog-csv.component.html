@@ -128,16 +128,18 @@
           <p class="mat-body-1" style="margin-bottom: 0.8em" *ngIf="this.statistical?.errors">
             {{ translate.instant('import.message.error-entities', {count: this.statistical.errors}) }}
           </p>
-          <mat-expansion-panel class="advanced-logs" [expanded]="false"
-                               *ngIf="this.statistical?.errorsList?.length"
-                               (opened)="initEditor()">
+          <mat-expansion-panel class="advanced-logs" [expanded]="false" *ngIf="errorMsg">
             <mat-expansion-panel-header [collapsedHeight]="'38px'" [expandedHeight]="'38px'">
               <mat-panel-title>
                 <div class="tb-small" translate>import.details</div>
               </mat-panel-title>
             </mat-expansion-panel-header>
             <mat-divider></mat-divider>
-            <div #failureDetailsEditor class="tb-failure-details"></div>
+            <tb-json-object-view [(ngModel)]="errorMsg"
+                                 [ngModelOptions]="{standalone: true}"
+                                 [editorStyle]="editorStyle"
+                                 fillHeight="true" autoHeight>
+            </tb-json-object-view>
           </mat-expansion-panel>
         </div>
         <div fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="20px">

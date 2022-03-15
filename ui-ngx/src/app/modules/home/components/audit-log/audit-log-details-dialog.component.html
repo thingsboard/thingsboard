@@ -25,13 +25,25 @@
   </button>
 </mat-toolbar>
 <div mat-dialog-content fxLayout="column">
-  <label translate class="tb-title no-padding">audit-log.action-data</label>
-  <div #actionDataEditor class="tb-audit-log-action-data">
-  </div>
+  <tb-json-object-view
+    autoHeight
+    autoWidth
+    [editorStyle]="editorStyle"
+    [label]="('audit-log.action-data' | translate)"
+    [ngModel]="actionData">
+  </tb-json-object-view>
   <span style="min-height: 30px;"></span>
-  <label [fxShow]="displayFailureDetails" translate class="tb-title no-padding">audit-log.failure-details</label>
-  <div #failureDetailsEditor [fxShow]="displayFailureDetails" class="tb-audit-log-failure-details">
-  </div>
+  <tb-json-object-view
+    *ngIf="displayFailureDetails"
+    autoHeight
+    autoWidth
+    [editorStyle]="editorStyle"
+    [label]="('audit-log.failure-details' | translate)"
+    [ngModel]="actionFailureDetails">
+  </tb-json-object-view>
+<!--  <label [fxShow]="displayFailureDetails" translate class="tb-title no-padding">audit-log.failure-details</label>-->
+<!--  <div #failureDetailsEditor [fxShow]="displayFailureDetails" class="tb-audit-log-failure-details">-->
+<!--  </div>-->
 </div>
 <div mat-dialog-actions fxLayoutAlign="end center">
   <button mat-button color="primary"

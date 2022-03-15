@@ -62,7 +62,7 @@
   <section formGroupName="transportPayloadTypeConfiguration">
     <fieldset class="fields-group">
       <legend class="group-title" translate>device-profile.mqtt-device-payload-type</legend>
-      <div fxLayoutGap="8px" fxLayout="column">
+      <div fxLayoutGap="8px">
         <mat-form-field class="mat-block">
           <mat-select formControlName="transportPayloadType" required>
             <mat-option *ngFor="let type of transportPayloadTypes" [value]="type">
@@ -85,10 +85,9 @@
             <div class="tb-hint" innerHTML="{{ 'device-profile.mqtt-use-json-format-for-default-downlink-topics-hint' | translate }}"></div>
           </div>
         </div>
-        <div *ngIf="protoPayloadType" fxLayout="column">
+        <div *ngIf="protoPayloadType">
           <ng-container>
             <tb-protobuf-content
-              fxFlex
               formControlName="deviceTelemetryProtoSchema"
               label="{{ 'device-profile.telemetry-proto-schema' | translate }}"
               [fillHeight]="true">
@@ -99,7 +98,6 @@
           </ng-container>
           <ng-container>
             <tb-protobuf-content
-              fxFlex
               formControlName="deviceAttributesProtoSchema"
               label="{{ 'device-profile.attributes-proto-schema' | translate }}"
               [fillHeight]="true">
@@ -110,7 +108,6 @@
           </ng-container>
           <ng-container>
             <tb-protobuf-content
-              fxFlex
               formControlName="deviceRpcRequestProtoSchema"
               label="{{ 'device-profile.rpc-request-proto-schema' | translate }}"
               [fillHeight]="true">
@@ -121,7 +118,6 @@
           </ng-container>
           <ng-container>
             <tb-protobuf-content
-              fxFlex
               formControlName="deviceRpcResponseProtoSchema"
               label="{{ 'device-profile.rpc-response-proto-schema' | translate }}"
               [fillHeight]="true">

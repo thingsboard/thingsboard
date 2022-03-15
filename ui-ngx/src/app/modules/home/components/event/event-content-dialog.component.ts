@@ -114,7 +114,7 @@ export class EventContentDialogComponent extends DialogComponent<EventContentDia
         };
 
         editorOptions = {...editorOptions, ...advancedOptions};
-        getAce().subscribe(
+        getAce(mode, 'github').subscribe(
           (ace) => {
             const editor = ace.edit(editorElement, editorOptions);
             editor.session.setUseWrapMode(false);

@@ -123,7 +123,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
     };
 
     editorOptions = {...editorOptions, ...advancedOptions};
-    getAce().subscribe(
+    getAce('json', 'textmate').subscribe(
       (ace) => {
         this.jsonEditor = ace.edit(editorElement, editorOptions);
         this.jsonEditor.session.setUseWrapMode(false);

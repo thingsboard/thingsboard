@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.tb-css {
+.tb-editor-component {
   position: relative;
 
   &.tb-disabled {
@@ -24,15 +24,15 @@
     height: 100%;
   }
 
-  .tb-css-content-panel {
-    height: calc(100% - 80px);
+  .tb-editor-content-panel {
     margin-left: 15px;
     border: 1px solid #c0c0c0;
 
-    #tb-css-input {
+    #tb-editor-input {
       width: 100%;
       min-width: 200px;
       height: 100%;
+      min-height: 160px;
 
       &:not(.fill-height) {
         min-height: 200px;
@@ -40,7 +40,7 @@
     }
   }
 
-  .tb-css-toolbar {
+  .tb-editor-toolbar {
     & > * {
       &:not(:last-child) {
         margin-right: 4px;

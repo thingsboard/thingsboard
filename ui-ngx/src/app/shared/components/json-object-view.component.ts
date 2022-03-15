@@ -21,7 +21,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { RafService } from '@core/services/raf.service';
-import { isDefinedAndNotNull, isUndefined } from '@core/utils';
+import { isDefinedAndNotNull, isObject, isUndefined } from '@core/utils';
 import { getAce } from '@shared/models/ace/ace.models';
 
 @Component({
@@ -66,15 +66,15 @@ export class JsonObjectViewComponent implements OnInit {
     this.widthValue = coerceBooleanProperty(value);
   }
 
-  private heigthValue: boolean;
+  private heightValue: boolean;
 
   get autoHeight(): boolean {
-    return this.heigthValue;
+    return this.heightValue;
   }
 
   @Input()
   set autoHeight(value: boolean) {
-    this.heigthValue = coerceBooleanProperty(value);
+    this.heightValue = coerceBooleanProperty(value);
   }
 
   constructor(public elementRef: ElementRef,
@@ -100,12 +100,12 @@ export class JsonObjectViewComponent implements OnInit {
     };
 
     editorOptions = {...editorOptions, ...advancedOptions};
-    getAce().subscribe(
+    getAce('java', 'github').subscribe(
       (ace) => {
         this.jsonViewer = ace.edit(this.viewerElement, editorOptions);
         this.jsonViewer.session.setUseWrapMode(false);
         this.jsonViewer.setValue(this.contentValue ? this.contentValue : '', -1);
-        if (this.contentValue && (this.widthValue || this.heigthValue)) {
+        if (this.contentValue && (this.autoWidth || this.autoHeight)) {
           this.updateEditorSize(this.viewerElement, this.contentValue, this.jsonViewer);
         }
       }
@@ -126,10 +126,10 @@ export class JsonObjectViewComponent implements OnInit {
       });
       newWidth = 8 * maxLineLength + 16;
     }
-    if (this.heigthValue) {
+    if (this.autoHeight) {
       this.renderer.setStyle(editorElement, 'height', newHeight.toString() + 'px');
     }
-    if (this.widthValue) {
+    if (this.autoWidth) {
       this.renderer.setStyle(editorElement, 'width', newWidth.toString() + 'px');
     }
     editor.resize();
@@ -143,9 +143,9 @@ export class JsonObjectViewComponent implements OnInit {
 
   writeValue(value: any): void {
     this.modelValue = value;
-    this.contentValue = '';
+    this.contentValue = value;
     try {
-      if (isDefinedAndNotNull(this.modelValue)) {
+      if (isDefinedAndNotNull(this.modelValue) && isObject(this.modelValue)) {
         this.contentValue = JSON.stringify(this.modelValue, isUndefined(this.sort) ? undefined :
           (key, objectValue) => {
             return this.sort(key, objectValue);
@@ -156,7 +156,7 @@ export class JsonObjectViewComponent implements OnInit {
     }
     if (this.jsonViewer) {
       this.jsonViewer.setValue(this.contentValue ? this.contentValue : '', -1);
-      if (this.contentValue && (this.widthValue || this.heigthValue)) {
+      if (this.contentValue && (this.autoWidth || this.autoHeight)) {
         this.updateEditorSize(this.viewerElement, this.contentValue, this.jsonViewer);
       }
     }

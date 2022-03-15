@@ -38,8 +38,6 @@ import {
 } from '@home/components/import-export/import-export.models';
 import { ImportExportService } from '@home/components/import-export/import-export.service';
 import { TableColumnsAssignmentComponent } from '@home/components/import-export/table-columns-assignment.component';
-import { Ace } from 'ace-builds';
-import { getAce } from '@shared/models/ace/ace.models';
 
 export interface ImportDialogCsvData {
   entityType: EntityType;
@@ -90,9 +88,17 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
 
   isImportData = false;
   statistical: BulkImportResult;
+  errorMsg = '';
+  editorStyle: object = {
+    width: '100%',
+    'min-width': '300px',
+    height: '100%',
+    'min-height': '50px',
+    margin: '8px 0',
+    border: 'none'
+  };
 
   private allowAssignColumn: ImportEntityColumnType[];
-  private initEditorComponent = false;
   private parseData: CsvToJsonResult;
 
   constructor(protected store: Store<AppState>,
@@ -226,6 +232,9 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
     this.importExport.bulkImportEntities(entitiesData, this.entityType, {ignoreErrors: true}).subscribe(
       (result) => {
         this.statistical = result;
+        if (result.errorsList?.length) {
+          this.errorMsg = result.errorsList.map(error => error.replace('\n', '')).join('\n');
+        }
         this.isImportData = false;
         this.importStepper.next();
       }
@@ -243,52 +252,6 @@ export class ImportDialogCsvComponent extends DialogComponent<ImportDialogCsvCom
       type: column.type,
       key: allowKeyForTypeColumns.some(type => type === column.type) ? column.key : undefined
     }));
-  }
-
-  initEditor() {
-    if (!this.initEditorComponent) {
-      this.createEditor(this.failureDetailsEditorElmRef, this.statistical.errorsList);
-    }
-  }
-
-  private createEditor(editorElementRef: ElementRef, contents: string[]): void {
-    const editorElement = editorElementRef.nativeElement;
-    let editorOptions: Partial<Ace.EditorOptions> = {
-      mode: 'ace/mode/java',
-      theme: 'ace/theme/github',
-      showGutter: false,
-      showPrintMargin: false,
-      readOnly: true
-    };
-
-    const advancedOptions = {
-      enableSnippets: false,
-      enableBasicAutocompletion: false,
-      enableLiveAutocompletion: false
-    };
-
-    editorOptions = {...editorOptions, ...advancedOptions};
-    const content = contents.map(error => error.replace('\n', '')).join('\n');
-    getAce().subscribe(
-      (ace) => {
-        const editor = ace.edit(editorElement, editorOptions);
-        editor.session.setUseWrapMode(false);
-        editor.setValue(content, -1);
-        this.updateEditorSize(editorElement, content, editor);
-      }
-    );
-  }
-
-  private updateEditorSize(editorElement: any, content: string, editor: Ace.Editor) {
-    let newHeight = 200;
-    if (content && content.length > 0) {
-      const lines = content.split('\n');
-      newHeight = 16 * lines.length + 24;
-    }
-    const minHeight = Math.min(200, newHeight);
-    this.renderer.setStyle(editorElement, 'minHeight', minHeight.toString() + 'px');
-    this.renderer.setStyle(editorElement, 'height', newHeight.toString() + 'px');
-    editor.resize();
   }
 
 }
