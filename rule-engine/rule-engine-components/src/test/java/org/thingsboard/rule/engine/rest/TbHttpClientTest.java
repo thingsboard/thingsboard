@@ -21,13 +21,26 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.credentials.AnonymousCredentials;
+import org.thingsboard.rule.engine.credentials.ClientCredentials;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
+
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.willCallRealMethod;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class TbHttpClientTest {
 
@@ -57,5 +70,24 @@ public class TbHttpClientTest {
     public void givenNull_whenGetEventLoop_ThenReturnShared() {
         eventLoop = client.getSharedOrCreateEventLoopGroup(null);
         assertThat(eventLoop, instanceOf(NioEventLoopGroup.class));
+    }
+
+    @Test
+    public void testProcessMessageWithJsonInUrlVariable() throws Exception{
+        var config = mock(TbRestApiCallNodeConfiguration.class);
+        when(config.getCredentials()).thenReturn(new AnonymousCredentials());
+        when(config.getRequestMethod()).thenReturn("GET");
+        when(config.getRestEndpointUrlPattern())
+                .thenReturn("http://localhost/api?data=[{\\\"test\\\":\\\"test\\\"}]");
+
+        var httpClient = new TbHttpClient(config, eventLoop);
+        var ctx = mock(TbContext.class);
+        var msg = TbMsg.newMsg(
+                "Main", "GET", new DeviceId(EntityId.NULL_UUID),
+                TbMsgMetaData.EMPTY, ""
+        );
+
+
+        httpClient.processMessage(ctx, msg);
     }
 }
