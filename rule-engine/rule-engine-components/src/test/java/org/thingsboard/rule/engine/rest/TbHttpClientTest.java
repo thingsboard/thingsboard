@@ -19,24 +19,32 @@ package org.thingsboard.rule.engine.rest;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.AsyncResult;
+import org.springframework.web.client.AsyncRestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.credentials.AnonymousCredentials;
-import org.thingsboard.rule.engine.credentials.ClientCredentials;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
-import java.util.Map;
+import java.net.URI;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.willCallRealMethod;
-import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -46,6 +54,9 @@ public class TbHttpClientTest {
 
     EventLoopGroup eventLoop;
     TbHttpClient client;
+
+    private final String ENDPOINT_URL = "http://localhost/api?data=[{\\\"test\\\":\\\"test\\\"}]";
+    private final String GET_METHOD = "GET";
 
     @Before
     public void setUp() throws Exception {
@@ -73,21 +84,61 @@ public class TbHttpClientTest {
     }
 
     @Test
-    public void testProcessMessageWithJsonInUrlVariable() throws Exception{
-        var config = mock(TbRestApiCallNodeConfiguration.class);
-        when(config.getCredentials()).thenReturn(new AnonymousCredentials());
-        when(config.getRequestMethod()).thenReturn("GET");
-        when(config.getRestEndpointUrlPattern())
-                .thenReturn("http://localhost/api?data=[{\\\"test\\\":\\\"test\\\"}]");
+    public void testProcessMessageWithJsonInUrlVariable() throws Exception {
+        var config = new TbRestApiCallNodeConfiguration()
+                .defaultConfiguration();
+        config.setRequestMethod(GET_METHOD);
+        config.setRestEndpointUrlPattern(ENDPOINT_URL);
+        config.setUseSimpleClientHttpFactory(true);
 
-        var httpClient = new TbHttpClient(config, eventLoop);
-        var ctx = mock(TbContext.class);
-        var msg = TbMsg.newMsg(
-                "Main", "GET", new DeviceId(EntityId.NULL_UUID),
-                TbMsgMetaData.EMPTY, ""
+        var asyncRestTemplate = mock(AsyncRestTemplate.class);
+        var uriCaptor = ArgumentCaptor.forClass(URI.class);
+
+        var responseEntity = new ResponseEntity<>(
+                "{}",
+                new HttpHeaders(),
+                HttpStatus.OK
         );
 
+        when(asyncRestTemplate.exchange(
+                uriCaptor.capture(),
+                any(),
+                any(),
+                eq(String.class)
+        )).thenReturn(new AsyncResult<>(responseEntity));
+
+        var httpClient = new TbHttpClient(config, eventLoop);
+        httpClient.setHttpClient(asyncRestTemplate);
+
+        var msg = TbMsg.newMsg(
+                "Main", "GET", new DeviceId(EntityId.NULL_UUID),
+                TbMsgMetaData.EMPTY, "{}"
+        );
+        var successMsg = TbMsg.newMsg(
+                "SUCCESS", msg.getOriginator(),
+                msg.getMetaData(), msg.getData()
+        );
+
+        var ctx = mock(TbContext.class);
+        when(ctx.transformMsg(
+                        eq(msg), eq(msg.getType()),
+                        eq(msg.getOriginator()),
+                        eq(msg.getMetaData()),
+                        eq(msg.getData())
+                )).thenReturn(successMsg);
 
         httpClient.processMessage(ctx, msg);
+
+        verify(ctx, times(1)).transformMsg(
+                eq(msg), eq(msg.getType()),
+                eq(msg.getOriginator()),
+                eq(msg.getMetaData()),
+                eq(msg.getData())
+        );
+        verify(ctx, times(1))
+                .tellSuccess(eq(successMsg));
+
+        URI uri = UriComponentsBuilder.fromUriString(ENDPOINT_URL).build().encode().toUri();
+        Assert.assertEquals("URI encoding was not performed!!", uri, uriCaptor.getValue());
     }
 }
