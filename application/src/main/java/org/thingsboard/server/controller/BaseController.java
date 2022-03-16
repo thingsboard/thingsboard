@@ -925,7 +925,7 @@ public abstract class BaseController {
     }
 
     public <E extends HasName & HasId<I> & HasTenantId, I extends EntityId> void onEntityUpdatedOrCreated(User user, E savedEntity, E oldEntity, boolean isNewEntity) {
-        boolean notifyEdge = false;
+        boolean notifyEdgeService = false;
 
         EntityType entityType = savedEntity.getId().getEntityType();
         switch (entityType) {
@@ -949,7 +949,7 @@ public abstract class BaseController {
                 tbClusterService.broadcastEntityStateChangeEvent(deviceProfile.getTenantId(), deviceProfile.getId(),
                         isNewEntity ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
                 otaPackageStateService.update(deviceProfile, isFirmwareChanged, isSoftwareChanged);
-                notifyEdge = true;
+                notifyEdgeService = true;
                 break;
             case RULE_CHAIN: // FIXME: events for rule chain metadata
                 RuleChainType ruleChainType = ((RuleChain) savedEntity).getType();
@@ -959,7 +959,7 @@ public abstract class BaseController {
                 }
                 if (RuleChainType.EDGE.equals(ruleChainType)) {
                     if (!isNewEntity) {
-                        notifyEdge = true;
+                        notifyEdgeService = true;
                     }
                 }
                 break;
@@ -967,7 +967,7 @@ public abstract class BaseController {
             case CUSTOMER:
             case DASHBOARD:
                 if (!isNewEntity) {
-                    notifyEdge = true;
+                    notifyEdgeService = true;
                 }
                 break;
             default:
@@ -976,7 +976,7 @@ public abstract class BaseController {
 
         entityActionService.logEntityAction(user, savedEntity.getId(), savedEntity, savedEntity instanceof HasCustomerId ? ((HasCustomerId) savedEntity).getCustomerId() : null,
                 isNewEntity ? ActionType.ADDED : ActionType.UPDATED, null);
-        if (notifyEdge) {
+        if (notifyEdgeService) {
             sendEntityNotificationMsg(savedEntity.getTenantId(), savedEntity.getId(), isNewEntity ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
         }
     }

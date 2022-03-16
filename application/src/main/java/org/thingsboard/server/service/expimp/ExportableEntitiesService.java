@@ -15,16 +15,12 @@
  */
 package org.thingsboard.server.service.expimp;
 
-import org.thingsboard.server.common.data.export.EntityExportData;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.service.expimp.imp.EntityImportResult;
 
-public interface EntitiesExportImportService extends ExportableEntitiesService {
+public interface ExportableEntitiesService {
 
-    <E extends HasId<I>, I extends EntityId> EntityExportData<E> exportEntity(TenantId tenantId, I entityId);
-
-    <E extends HasId<I>, I extends EntityId, D extends EntityExportData<E>> EntityImportResult<E> importEntity(TenantId tenantId, D exportData);
+    <E extends HasId<I>, I extends EntityId> E findEntityByExternalId(TenantId tenantId, I externalId);
 
 }

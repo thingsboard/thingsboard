@@ -16,57 +16,33 @@
 package org.thingsboard.server.service.expimp.imp.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.thingsboard.server.common.data.EntityType;
+import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.common.data.export.EntityExportData;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.ExportableEntityDao;
+import org.thingsboard.server.service.expimp.ExportableEntitiesService;
 import org.thingsboard.server.service.expimp.imp.EntityImportService;
-
-import java.util.Collection;
-import java.util.EnumMap;
-import java.util.Map;
-import java.util.Optional;
 
 public abstract class AbstractEntityImportService<I extends EntityId, E extends HasId<I>, D extends EntityExportData<E>> implements EntityImportService<I, E, D> {
 
-    private final Map<EntityType, ExportableEntityDao<?>> daos = new EnumMap<>(EntityType.class);
+    @Autowired @Lazy
+    private ExportableEntitiesService exportableEntitiesService;
 
 
-    public final E findByExternalId(TenantId tenantId, I externalId) {
-        return findByExternalOrInternalId(tenantId, externalId);
+    protected final E findByExternalId(TenantId tenantId, I externalId) {
+        return exportableEntitiesService.findEntityByExternalId(tenantId, externalId);
     }
 
     protected final <ID extends EntityId> ID getInternalId(TenantId tenantId, ID externalId) {
         if (externalId == null) {
             return null;
         }
-        HasId<ID> entity = findByExternalOrInternalId(tenantId, externalId);
+        HasId<ID> entity = exportableEntitiesService.findEntityByExternalId(tenantId, externalId);
         if (entity == null) {
             throw new IllegalStateException("Cannot find " + externalId.getEntityType() + " by external id " + externalId);
         }
         return entity.getId();
-    }
-
-    public final <T extends HasId<ID>, ID extends EntityId> T findByExternalOrInternalId(TenantId tenantId, ID externalOrInternalId) {
-        ExportableEntityDao<T> dao = getDao(externalOrInternalId.getEntityType());
-        return Optional.ofNullable(dao.findByTenantIdAndExternalId(tenantId.getId(), externalOrInternalId.getId()))
-                .orElseGet(() -> dao.findByTenantIdAndId(tenantId.getId(), externalOrInternalId.getId()));
-    }
-
-
-    @SuppressWarnings("unchecked")
-    private <T> ExportableEntityDao<T> getDao(EntityType entityType) {
-        return (ExportableEntityDao<T>) daos.get(entityType);
-    }
-
-    @Autowired
-    private void setDaos(Collection<ExportableEntityDao<?>> daos) {
-        daos.forEach(dao -> this.daos.put(dao.getEntityType(), dao));
-        if (!this.daos.containsKey(getEntityType())) {
-            throw new IllegalStateException(getClass().getSimpleName() + " requires ExportableEntityDao for entity type " + getEntityType());
-        }
     }
 
 }
