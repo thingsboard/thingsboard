@@ -302,4 +302,20 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
     }
+
+    @Override
+    public Device findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
+        return DaoUtil.getData(deviceRepository.findByTenantIdAndExternalId(tenantId, externalId));
+    }
+
+    @Override
+    public Device findByTenantIdAndId(UUID tenantId, UUID id) {
+        return findDeviceByTenantIdAndId(TenantId.fromUUID(tenantId), id);
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.DEVICE;
+    }
+
 }

@@ -28,7 +28,6 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainData;
 import org.thingsboard.server.common.data.rule.RuleChainImportResult;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
-import org.thingsboard.server.common.data.rule.RuleChainOutputLabelsUsage;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
 import org.thingsboard.server.common.data.rule.RuleNode;
@@ -93,4 +92,6 @@ public interface RuleChainService {
     List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String name, String toString);
 
     RuleNode saveRuleNode(TenantId tenantId, RuleNode ruleNode);
+
+    void deleteRuleNodes(TenantId tenantId, RuleChainId ruleChainId);
 }

@@ -20,6 +20,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.dao.ExportableEntityDao;
 import org.thingsboard.server.dao.TenantEntityDao;
 
 import java.util.Optional;
@@ -28,7 +29,7 @@ import java.util.UUID;
 /**
  * The Interface CustomerDao.
  */
-public interface CustomerDao extends Dao<Customer>, TenantEntityDao {
+public interface CustomerDao extends Dao<Customer>, TenantEntityDao, ExportableEntityDao<Customer> {
 
     /**
      * Save or update customer object
@@ -37,7 +38,7 @@ public interface CustomerDao extends Dao<Customer>, TenantEntityDao {
      * @return saved customer object
      */
     Customer save(TenantId tenantId, Customer customer);
-    
+
     /**
      * Find customers by tenant id and page link.
      *

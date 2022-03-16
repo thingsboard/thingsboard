@@ -17,14 +17,19 @@ package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.Getter;
+import lombok.Setter;
 import org.thingsboard.server.common.data.id.DashboardId;
 
 public class Dashboard extends DashboardInfo {
 
     private static final long serialVersionUID = 872682138346187503L;
-    
+
     private transient JsonNode configuration;
-    
+
+    @Getter @Setter
+    private DashboardId externalId;
+
     public Dashboard() {
         super();
     }
@@ -40,6 +45,7 @@ public class Dashboard extends DashboardInfo {
     public Dashboard(Dashboard dashboard) {
         super(dashboard);
         this.configuration = dashboard.getConfiguration();
+        this.externalId = dashboard.getExternalId();
     }
 
     @ApiModelProperty(position = 9, value = "JSON object with main configuration of the dashboard: layouts, widgets, aliases, etc. " +

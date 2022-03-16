@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.Getter;
+import lombok.Setter;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
@@ -36,6 +38,9 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId {
     @ApiModelProperty(position = 5, required = true, value = "JSON object with Tenant Id")
     private TenantId tenantId;
 
+    @Getter @Setter
+    private CustomerId externalId; // FIXME: add to hashcode, equals, etc
+
     public Customer() {
         super();
     }
@@ -48,6 +53,7 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId {
         super(customer);
         this.tenantId = customer.getTenantId();
         this.title = customer.getTitle();
+        this.externalId = customer.getExternalId();
     }
 
     public TenantId getTenantId() {

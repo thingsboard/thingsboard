@@ -19,7 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.dashboard.DashboardDao;
 import org.thingsboard.server.dao.model.sql.DashboardEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
@@ -49,4 +51,20 @@ public class JpaDashboardDao extends JpaAbstractSearchTextDao<DashboardEntity, D
     public Long countByTenantId(TenantId tenantId) {
         return dashboardRepository.countByTenantId(tenantId.getId());
     }
+
+    @Override
+    public Dashboard findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
+        return DaoUtil.getData(dashboardRepository.findByTenantIdAndExternalId(tenantId, externalId));
+    }
+
+    @Override
+    public Dashboard findByTenantIdAndId(UUID tenantId, UUID id) {
+        return DaoUtil.getData(dashboardRepository.findByTenantIdAndId(tenantId, id));
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.DASHBOARD;
+    }
+
 }

@@ -59,6 +59,8 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
     @JsonIgnore
     private byte[] configurationBytes;
 
+    private RuleChainId externalId;
+
     public RuleChain() {
         super();
     }
@@ -75,6 +77,7 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
         this.firstRuleNodeId = ruleChain.getFirstRuleNodeId();
         this.root = ruleChain.isRoot();
         this.setConfiguration(ruleChain.getConfiguration());
+        this.setExternalId(ruleChain.getExternalId());
     }
 
     @Override
