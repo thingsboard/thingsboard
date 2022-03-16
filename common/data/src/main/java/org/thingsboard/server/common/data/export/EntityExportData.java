@@ -28,7 +28,6 @@ import org.thingsboard.server.common.data.export.impl.DeviceExportData;
 import org.thingsboard.server.common.data.export.impl.DeviceProfileExportData;
 import org.thingsboard.server.common.data.export.impl.RuleChainExportData;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.HasId;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(property = "entityType", use = JsonTypeInfo.Id.NAME)
@@ -40,7 +39,7 @@ import org.thingsboard.server.common.data.id.HasId;
         @Type(name = "DASHBOARD", value = DashboardExportData.class),
         @Type(name = "CUSTOMER", value = CustomerExportData.class)
 })
-public interface EntityExportData<E extends HasId<? extends EntityId>> {
+public interface EntityExportData<E extends ExportableEntity<? extends EntityId>> {
 
     @JsonIgnore
     E getMainEntity();

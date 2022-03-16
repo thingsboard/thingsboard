@@ -16,11 +16,11 @@
 package org.thingsboard.server.service.expimp.imp;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.export.ExportableEntity;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.HasId;
 
 @Data
-public class EntityImportResult<E extends HasId<? extends EntityId>> {
+public class EntityImportResult<E extends ExportableEntity<? extends EntityId>> {
     private E savedEntity;
     private E oldEntity;
 }

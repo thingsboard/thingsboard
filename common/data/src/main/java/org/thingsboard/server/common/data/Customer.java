@@ -22,12 +22,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
 import lombok.Setter;
+import org.thingsboard.server.common.data.export.ExportableEntity;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-public class Customer extends ContactBased<CustomerId> implements HasTenantId {
+public class Customer extends ContactBased<CustomerId> implements HasTenantId, ExportableEntity<CustomerId> {
 
     private static final long serialVersionUID = -1599722990298929275L;
 

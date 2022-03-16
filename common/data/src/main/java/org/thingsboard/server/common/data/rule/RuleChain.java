@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
+import org.thingsboard.server.common.data.export.ExportableEntity;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -35,7 +36,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> implements HasName, HasTenantId {
+public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> implements HasName, HasTenantId, ExportableEntity<RuleChainId> {
 
     private static final long serialVersionUID = -5656679015121935465L;
 

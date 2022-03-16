@@ -17,11 +17,11 @@ package org.thingsboard.server.service.expimp.exp;
 
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.export.EntityExportData;
+import org.thingsboard.server.common.data.export.ExportableEntity;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-public interface EntityExportService<I extends EntityId, E extends HasId<I>> {
+public interface EntityExportService<I extends EntityId, E extends ExportableEntity<I>> {
 
     // FIXME: export relations
     // FIXME: get rid of boilerplate

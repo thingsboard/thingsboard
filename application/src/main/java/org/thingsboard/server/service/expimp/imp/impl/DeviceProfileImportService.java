@@ -24,7 +24,6 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.expimp.imp.EntityImportResult;
 
 @Service
 @TbCoreComponent
@@ -35,30 +34,13 @@ public class DeviceProfileImportService extends AbstractEntityImportService<Devi
 
 
     @Override
-    public EntityImportResult<DeviceProfile> importEntity(TenantId tenantId, DeviceProfileExportData exportData) {
-        DeviceProfile deviceProfile = exportData.getDeviceProfile();
-        DeviceProfile existingDeviceProfile = findByExternalId(tenantId, deviceProfile.getId());
-
-        deviceProfile.setExternalId(deviceProfile.getId());
-        deviceProfile.setTenantId(tenantId);
-
-        if (existingDeviceProfile == null) {
-            deviceProfile.setId(null);
-        } else {
-            deviceProfile.setId(existingDeviceProfile.getId());
-        }
-
+    protected DeviceProfile prepareAndSaveEntity(TenantId tenantId, DeviceProfile deviceProfile, DeviceProfile existingDeviceProfile, DeviceProfileExportData exportData) {
         deviceProfile.setDefaultRuleChainId(getInternalId(tenantId, deviceProfile.getDefaultRuleChainId()));
         deviceProfile.setDefaultDashboardId(getInternalId(tenantId, deviceProfile.getDefaultDashboardId()));
         deviceProfile.setFirmwareId(getInternalId(tenantId, deviceProfile.getFirmwareId()));
         deviceProfile.setSoftwareId(getInternalId(tenantId, deviceProfile.getSoftwareId()));
 
-        DeviceProfile savedDeviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
-
-        EntityImportResult<DeviceProfile> importResult = new EntityImportResult<>();
-        importResult.setSavedEntity(savedDeviceProfile);
-        importResult.setOldEntity(existingDeviceProfile);
-        return importResult;
+        return deviceProfileService.saveDeviceProfile(deviceProfile);
     }
 
     @Override

@@ -13,18 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.expimp;
+package org.thingsboard.server.common.data.export;
 
-import org.thingsboard.server.common.data.export.EntityExportData;
-import org.thingsboard.server.common.data.export.ExportableEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.springframework.data.annotation.Transient;
+import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.service.expimp.imp.EntityImportResult;
 
-public interface EntitiesExportImportService extends ExportableEntitiesService {
+public interface ExportableEntity<I extends EntityId> extends HasId<I>, HasTenantId, HasName {
 
-    <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportEntity(TenantId tenantId, I entityId);
+    @Transient @JsonIgnore
+    I getId();
+    @Transient @JsonIgnore
+    void setId(I id);
 
-    <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(TenantId tenantId, EntityExportData<E> exportData);
+    I getExternalId();
+    void setExternalId(I externalId);
+
+    TenantId getTenantId();
+    void setTenantId(TenantId tenantId);
 
 }

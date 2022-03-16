@@ -24,7 +24,6 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.expimp.imp.EntityImportResult;
 
 @Service
 @TbCoreComponent
@@ -35,27 +34,14 @@ public class DashboardImportService extends AbstractEntityImportService<Dashboar
 
 
     @Override
-    public EntityImportResult<Dashboard> importEntity(TenantId tenantId, DashboardExportData exportData) {
-        Dashboard dashboard = exportData.getDashboard();
-        Dashboard existingDashboard = findByExternalId(tenantId, dashboard.getId());
-
-        dashboard.setExternalId(dashboard.getId());
-        dashboard.setTenantId(tenantId);
-
+    protected Dashboard prepareAndSaveEntity(TenantId tenantId, Dashboard dashboard, Dashboard existingDashboard, DashboardExportData exportData) {
         if (existingDashboard == null) {
-            dashboard.setId(null);
             dashboard.setAssignedCustomers(null); // FIXME: need to assign dashboard to customers ?
         } else {
-            dashboard.setId(existingDashboard.getId());
-            dashboard.setAssignedCustomers(existingDashboard.getAssignedCustomers()); // we left them untouched (FIXME)
+            dashboard.setAssignedCustomers(existingDashboard.getAssignedCustomers());
         }
 
-        Dashboard savedDashboard = dashboardService.saveDashboard(dashboard);
-
-        EntityImportResult<Dashboard> importResult = new EntityImportResult<>();
-        importResult.setSavedEntity(savedDashboard);
-        importResult.setOldEntity(existingDashboard);
-        return importResult;
+        return dashboardService.saveDashboard(dashboard);
     }
 
     @Override

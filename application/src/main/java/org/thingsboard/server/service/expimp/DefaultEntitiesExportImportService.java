@@ -19,8 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.export.EntityExportData;
+import org.thingsboard.server.common.data.export.ExportableEntity;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.ExportableEntityDao;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -47,7 +47,7 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
     // TODO: export and import of the whole customer ?
     // TODO: relations export and import
     @Override
-    public <E extends HasId<I>, I extends EntityId> EntityExportData<E> exportEntity(TenantId tenantId, I entityId) {
+    public <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportEntity(TenantId tenantId, I entityId) {
         EntityType entityType = entityId.getEntityType();
         EntityExportService<I, E> exportService = getExportService(entityType);
 
@@ -56,16 +56,16 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
 
     // FIXME: somehow validate export data
     @Override
-    public <E extends HasId<I>, I extends EntityId, D extends EntityExportData<E>> EntityImportResult<E> importEntity(TenantId tenantId, D exportData) {
+    public <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(TenantId tenantId, EntityExportData<E> exportData) {
         EntityType entityType = exportData.getEntityType();
-        EntityImportService<I, E, D> importService = getImportService(entityType);
+        EntityImportService<I, E, EntityExportData<E>> importService = getImportService(entityType);
 
         return importService.importEntity(tenantId, exportData);
     }
 
 
     @Override
-    public <E extends HasId<I>, I extends EntityId> E findEntityByExternalId(TenantId tenantId, I externalId) {
+    public <E extends ExportableEntity<I>, I extends EntityId> E findEntityByExternalId(TenantId tenantId, I externalId) {
         ExportableEntityDao<E> dao = getDao(externalId.getEntityType());
         return Optional.ofNullable(dao.findByTenantIdAndExternalId(tenantId.getId(), externalId.getId()))
                 .orElseGet(() -> dao.findByTenantIdAndId(tenantId.getId(), externalId.getId()));
@@ -73,12 +73,12 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
 
 
     @SuppressWarnings("unchecked")
-    private <I extends EntityId, E extends HasId<I>> EntityExportService<I, E> getExportService(EntityType entityType) {
+    private <I extends EntityId, E extends ExportableEntity<I>> EntityExportService<I, E> getExportService(EntityType entityType) {
         return (EntityExportService<I, E>) exportServices.get(entityType);
     }
 
     @SuppressWarnings("unchecked")
-    private <I extends EntityId, E extends HasId<I>, D extends EntityExportData<E>> EntityImportService<I, E, D> getImportService(EntityType entityType) {
+    private <I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> EntityImportService<I, E, D> getImportService(EntityType entityType) {
         return (EntityImportService<I, E, D>) importServices.get(entityType);
     }
 

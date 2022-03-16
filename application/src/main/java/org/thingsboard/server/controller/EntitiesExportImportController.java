@@ -24,13 +24,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.export.EntityExportData;
+import org.thingsboard.server.common.data.export.ExportableEntity;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
-import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.expimp.EntitiesExportImportService;
 import org.thingsboard.server.service.expimp.imp.EntityImportResult;
@@ -88,7 +86,7 @@ public class EntitiesExportImportController extends BaseController {
 
     @PostMapping("/import")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    public <E extends HasId<I> & HasName & HasTenantId, I extends EntityId, D extends EntityExportData<E>> EntityImportResult<E> importEntity(@RequestBody D exportData) throws ThingsboardException {
+    public EntityImportResult<ExportableEntity<EntityId>> importEntity(@RequestBody EntityExportData<ExportableEntity<EntityId>> exportData) throws ThingsboardException {
         try {
             return importEntity(getCurrentUser(), exportData);
         } catch (Exception e) {
@@ -97,20 +95,20 @@ public class EntitiesExportImportController extends BaseController {
     }
 
 
-    private <E extends HasId<I>, I extends EntityId> EntityExportData<HasId<EntityId>> exportEntity(SecurityUser user, I entityId) throws ThingsboardException {
+    private EntityExportData<ExportableEntity<EntityId>> exportEntity(SecurityUser user, EntityId entityId) throws ThingsboardException {
         checkEntityId(entityId, Operation.READ);
         return exportImportService.exportEntity(getTenantId(), entityId);
     }
 
-    private <E extends HasId<I> & HasName & HasTenantId, I extends EntityId, D extends EntityExportData<E>> EntityImportResult<E> importEntity(SecurityUser user, D exportData) throws ThingsboardException {
-        E existingEntity = exportImportService.findEntityByExternalId(user.getTenantId(), exportData.getMainEntity().getId());
+    private EntityImportResult<ExportableEntity<EntityId>> importEntity(SecurityUser user, EntityExportData<ExportableEntity<EntityId>> exportData) throws ThingsboardException {
+        ExportableEntity<?> existingEntity = exportImportService.findEntityByExternalId(user.getTenantId(), exportData.getMainEntity().getId());
         if (existingEntity != null) {
             checkEntityId(existingEntity.getId(), Operation.WRITE); // todo maybe need to extract permission check to BaseController and put there permission checks from other controllers
         } else {
             checkEntity(null, exportData.getMainEntity(), Resource.of(exportData.getEntityType()));
         }
 
-        EntityImportResult<E> importResult = exportImportService.importEntity(getTenantId(), exportData);
+        EntityImportResult<ExportableEntity<EntityId>> importResult = exportImportService.importEntity(getTenantId(), exportData);
         onEntityUpdatedOrCreated(user, importResult.getSavedEntity(), importResult.getOldEntity(), importResult.getOldEntity() == null);
 
         return importResult;

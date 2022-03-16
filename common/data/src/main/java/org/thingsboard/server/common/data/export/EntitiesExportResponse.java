@@ -18,12 +18,11 @@ package org.thingsboard.server.common.data.export;
 import lombok.Data;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.HasId;
 
 import java.util.List;
 import java.util.Map;
 
 @Data
 public class EntitiesExportResponse {
-    private Map<EntityType, List<EntityExportData<HasId<EntityId>>>> exportData;
+    private Map<EntityType, List<EntityExportData<ExportableEntity<EntityId>>>> exportData;
 }

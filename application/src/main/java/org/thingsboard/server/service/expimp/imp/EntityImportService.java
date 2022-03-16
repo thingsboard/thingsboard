@@ -17,13 +17,12 @@ package org.thingsboard.server.service.expimp.imp;
 
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.export.EntityExportData;
+import org.thingsboard.server.common.data.export.ExportableEntity;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-public interface EntityImportService<I extends EntityId, E extends HasId<I>, D extends EntityExportData<E>> {
+public interface EntityImportService<I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> {
 
-    // FIXME: get rid of boilerplate for import result creation and everything else
     EntityImportResult<E> importEntity(TenantId tenantId, D exportData);
 
     EntityType getEntityType();

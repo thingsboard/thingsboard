@@ -24,7 +24,6 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.expimp.imp.EntityImportResult;
 
 @Service
 @TbCoreComponent
@@ -35,25 +34,8 @@ public class CustomerImportService extends AbstractEntityImportService<CustomerI
 
 
     @Override
-    public EntityImportResult<Customer> importEntity(TenantId tenantId, CustomerExportData exportData) {
-        Customer customer = exportData.getCustomer();
-        Customer existingCustomer = findByExternalId(tenantId, customer.getId());
-
-        customer.setExternalId(customer.getId());
-        customer.setTenantId(tenantId);
-
-        if (existingCustomer == null) {
-            customer.setId(null);
-        } else {
-            customer.setId(existingCustomer.getId());
-        }
-
-        Customer savedCustomer = customerService.saveCustomer(customer);
-
-        EntityImportResult<Customer> importResult = new EntityImportResult<>();
-        importResult.setSavedEntity(savedCustomer);
-        importResult.setOldEntity(existingCustomer);
-        return importResult;
+    protected Customer prepareAndSaveEntity(TenantId tenantId, Customer customer, Customer existingCustomer, CustomerExportData exportData) {
+        return customerService.saveCustomer(customer);
     }
 
     @Override

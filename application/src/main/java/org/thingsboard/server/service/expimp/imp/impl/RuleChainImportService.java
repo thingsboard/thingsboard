@@ -26,7 +26,6 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.expimp.imp.EntityImportResult;
 
 @Service
 @TbCoreComponent
@@ -38,27 +37,16 @@ public class RuleChainImportService extends AbstractEntityImportService<RuleChai
 
     @Transactional
     @Override
-    public EntityImportResult<RuleChain> importEntity(TenantId tenantId, RuleChainExportData exportData) {
-        RuleChain ruleChain = exportData.getRuleChain();
-        RuleChain existingRuleChain = findByExternalId(tenantId, ruleChain.getId());
-
-        ruleChain.setExternalId(ruleChain.getId());
-        ruleChain.setTenantId(tenantId);
+    protected RuleChain prepareAndSaveEntity(TenantId tenantId, RuleChain ruleChain, RuleChain existingRuleChain, RuleChainExportData exportData) {
         ruleChain.setFirstRuleNodeId(null); // will be set during metadata persisting
-
-        if (existingRuleChain == null) {
-            ruleChain.setId(null);
-        } else {
-            ruleChain.setId(existingRuleChain.getId());
+        if (existingRuleChain != null) {
+            ruleChainService.deleteRuleNodes(tenantId, existingRuleChain.getId());
         }
 
-        RuleChain savedRuleChain = ruleChainService.saveRuleChain(ruleChain);
+        ruleChain = ruleChainService.saveRuleChain(ruleChain);
 
-        if (ruleChain.getId() != null) {
-            ruleChainService.deleteRuleNodes(tenantId, ruleChain.getId());
-        }
         RuleChainMetaData metaData = exportData.getMetaData();
-        metaData.setRuleChainId(savedRuleChain.getId());
+        metaData.setRuleChainId(ruleChain.getId());
         metaData.getNodes().forEach(ruleNode -> {
             ruleNode.setId(null);
             ruleNode.setRuleChainId(null);
@@ -70,10 +58,7 @@ public class RuleChainImportService extends AbstractEntityImportService<RuleChai
         });
         ruleChainService.saveRuleChainMetaData(tenantId, metaData);
 
-        EntityImportResult<RuleChain> importResult = new EntityImportResult<>();
-        importResult.setSavedEntity(savedRuleChain);
-        importResult.setOldEntity(existingRuleChain);
-        return importResult;
+        return ruleChain;
     }
 
     @Override

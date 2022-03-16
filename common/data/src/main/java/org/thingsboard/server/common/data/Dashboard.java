@@ -19,9 +19,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
 import lombok.Setter;
+import org.thingsboard.server.common.data.export.ExportableEntity;
 import org.thingsboard.server.common.data.id.DashboardId;
 
-public class Dashboard extends DashboardInfo {
+public class Dashboard extends DashboardInfo implements ExportableEntity<DashboardId> {
 
     private static final long serialVersionUID = 872682138346187503L;
 
