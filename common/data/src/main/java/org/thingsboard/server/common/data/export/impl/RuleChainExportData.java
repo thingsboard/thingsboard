@@ -28,6 +28,11 @@ public class RuleChainExportData implements EntityExportData<RuleChain> {
     private RuleChainMetaData metaData;
 
     @Override
+    public RuleChain getMainEntity() {
+        return ruleChain;
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.RULE_CHAIN;
     }

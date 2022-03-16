@@ -13,26 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.export.impl;
+package org.thingsboard.server.service.expimp.imp;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.export.EntityExportData;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 
 @Data
-public class CustomerExportData implements EntityExportData<Customer> {
-
-    private Customer customer;
-
-    @Override
-    public Customer getMainEntity() {
-        return customer;
-    }
-
-    @Override
-    public EntityType getEntityType() {
-        return EntityType.CUSTOMER;
-    }
-
+public class EntityImportResult<E extends HasId<? extends EntityId>> {
+    private E savedEntity;
+    private E oldEntity;
 }

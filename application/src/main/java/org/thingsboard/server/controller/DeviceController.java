@@ -195,7 +195,7 @@ public class DeviceController extends BaseController {
 
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
 
-            onDeviceCreatedOrUpdated(savedDevice, oldDevice, !created, getCurrentUser());
+            onEntityUpdatedOrCreated(getCurrentUser(), savedDevice, oldDevice, created);
 
             return savedDevice;
         } catch (Exception e) {
@@ -224,28 +224,14 @@ public class DeviceController extends BaseController {
             checkEntity(device.getId(), device, Resource.DEVICE);
             Device savedDevice = deviceService.saveDeviceWithCredentials(device, credentials);
             checkNotNull(savedDevice);
-            tbClusterService.onDeviceUpdated(savedDevice, device);
-            logEntityAction(savedDevice.getId(), savedDevice,
-                    savedDevice.getCustomerId(),
-                    device.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
+
+            onEntityUpdatedOrCreated(getCurrentUser(), savedDevice, device, device.getId() == null);
 
             return savedDevice;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.DEVICE), device,
                     null, created ? ActionType.ADDED : ActionType.UPDATED, e);
             throw handleException(e);
-        }
-    }
-
-    private void onDeviceCreatedOrUpdated(Device savedDevice, Device oldDevice, boolean updated, SecurityUser user) {
-        tbClusterService.onDeviceUpdated(savedDevice, oldDevice);
-
-        try {
-            logEntityAction(user, savedDevice.getId(), savedDevice,
-                    savedDevice.getCustomerId(),
-                    updated ? ActionType.UPDATED : ActionType.ADDED, null);
-        } catch (ThingsboardException e) {
-            log.error("Failed to log entity action", e);
         }
     }
 
@@ -1015,7 +1001,7 @@ public class DeviceController extends BaseController {
     public BulkImportResult<Device> processDevicesBulkImport(@RequestBody BulkImportRequest request) throws Exception {
         SecurityUser user = getCurrentUser();
         return deviceBulkImportService.processBulkImport(request, user, importedDeviceInfo -> {
-            onDeviceCreatedOrUpdated(importedDeviceInfo.getEntity(), importedDeviceInfo.getOldEntity(), importedDeviceInfo.isUpdated(), user);
+            onEntityUpdatedOrCreated(user, importedDeviceInfo.getEntity(), importedDeviceInfo.getOldEntity(), !importedDeviceInfo.isUpdated());
         });
     }
 

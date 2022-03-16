@@ -38,7 +38,6 @@ public abstract class AbstractEntityImportService<I extends EntityId, E extends 
         return findByExternalOrInternalId(tenantId, externalId);
     }
 
-
     protected final <ID extends EntityId> ID getInternalId(TenantId tenantId, ID externalId) {
         if (externalId == null) {
             return null;
@@ -50,7 +49,7 @@ public abstract class AbstractEntityImportService<I extends EntityId, E extends 
         return entity.getId();
     }
 
-    private <T extends HasId<ID>, ID extends EntityId> T findByExternalOrInternalId(TenantId tenantId, ID externalOrInternalId) {
+    public final <T extends HasId<ID>, ID extends EntityId> T findByExternalOrInternalId(TenantId tenantId, ID externalOrInternalId) {
         ExportableEntityDao<T> dao = getDao(externalOrInternalId.getEntityType());
         return Optional.ofNullable(dao.findByTenantIdAndExternalId(tenantId.getId(), externalOrInternalId.getId()))
                 .orElseGet(() -> dao.findByTenantIdAndId(tenantId.getId(), externalOrInternalId.getId()));

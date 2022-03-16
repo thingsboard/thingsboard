@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.expimp.imp.EntityImportResult;
 
 @Service
 @TbCoreComponent
@@ -34,7 +35,7 @@ public class AssetImportService extends AbstractEntityImportService<AssetId, Ass
 
 
     @Override
-    public Asset importEntity(TenantId tenantId, AssetExportData exportData) {
+    public EntityImportResult<Asset> importEntity(TenantId tenantId, AssetExportData exportData) {
         Asset asset = exportData.getAsset();
         Asset existingAsset = findByExternalId(tenantId, asset.getId()); // TODO: extract boiler plate to abstract class ...
 
@@ -51,7 +52,10 @@ public class AssetImportService extends AbstractEntityImportService<AssetId, Ass
 
         Asset savedAsset = assetService.saveAsset(asset);
 
-        return savedAsset;
+        EntityImportResult<Asset> importResult = new EntityImportResult<>();
+        importResult.setSavedEntity(savedAsset);
+        importResult.setOldEntity(existingAsset);
+        return importResult;
     }
 
     @Override

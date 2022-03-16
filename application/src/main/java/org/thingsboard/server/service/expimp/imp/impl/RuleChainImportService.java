@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.expimp.imp.EntityImportResult;
 
 @Service
 @TbCoreComponent
@@ -37,7 +38,7 @@ public class RuleChainImportService extends AbstractEntityImportService<RuleChai
 
     @Transactional
     @Override
-    public RuleChain importEntity(TenantId tenantId, RuleChainExportData exportData) {
+    public EntityImportResult<RuleChain> importEntity(TenantId tenantId, RuleChainExportData exportData) {
         RuleChain ruleChain = exportData.getRuleChain();
         RuleChain existingRuleChain = findByExternalId(tenantId, ruleChain.getId());
 
@@ -69,7 +70,10 @@ public class RuleChainImportService extends AbstractEntityImportService<RuleChai
         });
         ruleChainService.saveRuleChainMetaData(tenantId, metaData);
 
-        return savedRuleChain;
+        EntityImportResult<RuleChain> importResult = new EntityImportResult<>();
+        importResult.setSavedEntity(savedRuleChain);
+        importResult.setOldEntity(existingRuleChain);
+        return importResult;
     }
 
     @Override

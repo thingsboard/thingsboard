@@ -26,6 +26,11 @@ public class AssetExportData implements EntityExportData<Asset> {
     private Asset asset;
 
     @Override
+    public Asset getMainEntity() {
+        return asset;
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.ASSET;
     }

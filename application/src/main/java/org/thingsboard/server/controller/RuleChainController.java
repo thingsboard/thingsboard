@@ -78,11 +78,9 @@ import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -254,20 +252,7 @@ public class RuleChainController extends BaseController {
 
             RuleChain savedRuleChain = checkNotNull(ruleChainService.saveRuleChain(ruleChain));
 
-            if (RuleChainType.CORE.equals(savedRuleChain.getType())) {
-                tbClusterService.broadcastEntityStateChangeEvent(ruleChain.getTenantId(), savedRuleChain.getId(),
-                        created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
-            }
-
-            logEntityAction(savedRuleChain.getId(), savedRuleChain,
-                    null,
-                    created ? ActionType.ADDED : ActionType.UPDATED, null);
-
-            if (RuleChainType.EDGE.equals(savedRuleChain.getType())) {
-                if (!created) {
-                    sendEntityNotificationMsg(savedRuleChain.getTenantId(), savedRuleChain.getId(), EdgeEventActionType.UPDATED);
-                }
-            }
+            onEntityUpdatedOrCreated(getCurrentUser(), savedRuleChain, null, created);
 
             return savedRuleChain;
         } catch (Exception e) {
@@ -293,6 +278,7 @@ public class RuleChainController extends BaseController {
             checkParameter(request.getName(), "name");
 
             RuleChain savedRuleChain = installScripts.createDefaultRuleChain(getCurrentUser().getTenantId(), request.getName());
+
 
             tbClusterService.broadcastEntityStateChangeEvent(savedRuleChain.getTenantId(), savedRuleChain.getId(), ComponentLifecycleEvent.CREATED);
 

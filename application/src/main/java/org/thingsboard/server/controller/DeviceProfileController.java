@@ -46,7 +46,6 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_DATA;
@@ -207,32 +206,14 @@ public class DeviceProfileController extends BaseController {
 
             checkEntity(deviceProfile.getId(), deviceProfile, Resource.DEVICE_PROFILE);
 
-            boolean isFirmwareChanged = false;
-            boolean isSoftwareChanged = false;
-
+            DeviceProfile oldDeviceProfile = null;
             if (!created) {
-                DeviceProfile oldDeviceProfile = deviceProfileService.findDeviceProfileById(getTenantId(), deviceProfile.getId());
-                if (!Objects.equals(deviceProfile.getFirmwareId(), oldDeviceProfile.getFirmwareId())) {
-                    isFirmwareChanged = true;
-                }
-                if (!Objects.equals(deviceProfile.getSoftwareId(), oldDeviceProfile.getSoftwareId())) {
-                    isSoftwareChanged = true;
-                }
+                oldDeviceProfile = deviceProfileService.findDeviceProfileById(getTenantId(), deviceProfile.getId());
             }
             DeviceProfile savedDeviceProfile = checkNotNull(deviceProfileService.saveDeviceProfile(deviceProfile));
 
-            tbClusterService.onDeviceProfileChange(savedDeviceProfile, null);
-            tbClusterService.broadcastEntityStateChangeEvent(deviceProfile.getTenantId(), savedDeviceProfile.getId(),
-                    created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+            onEntityUpdatedOrCreated(getCurrentUser(), deviceProfile, oldDeviceProfile, created);
 
-            logEntityAction(savedDeviceProfile.getId(), savedDeviceProfile,
-                    null,
-                    created ? ActionType.ADDED : ActionType.UPDATED, null);
-
-            otaPackageStateService.update(savedDeviceProfile, isFirmwareChanged, isSoftwareChanged);
-
-            sendEntityNotificationMsg(getTenantId(), savedDeviceProfile.getId(),
-                    deviceProfile.getId() == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
             return savedDeviceProfile;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.DEVICE_PROFILE), deviceProfile,

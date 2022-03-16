@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.expimp.imp.EntityImportResult;
 
 @Service
 @TbCoreComponent
@@ -34,7 +35,7 @@ public class DeviceProfileImportService extends AbstractEntityImportService<Devi
 
 
     @Override
-    public DeviceProfile importEntity(TenantId tenantId, DeviceProfileExportData exportData) {
+    public EntityImportResult<DeviceProfile> importEntity(TenantId tenantId, DeviceProfileExportData exportData) {
         DeviceProfile deviceProfile = exportData.getDeviceProfile();
         DeviceProfile existingDeviceProfile = findByExternalId(tenantId, deviceProfile.getId());
 
@@ -54,7 +55,10 @@ public class DeviceProfileImportService extends AbstractEntityImportService<Devi
 
         DeviceProfile savedDeviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
 
-        return savedDeviceProfile;
+        EntityImportResult<DeviceProfile> importResult = new EntityImportResult<>();
+        importResult.setSavedEntity(savedDeviceProfile);
+        importResult.setOldEntity(existingDeviceProfile);
+        return importResult;
     }
 
     @Override

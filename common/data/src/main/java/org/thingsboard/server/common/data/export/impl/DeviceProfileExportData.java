@@ -26,6 +26,11 @@ public class DeviceProfileExportData implements EntityExportData<DeviceProfile> 
     private DeviceProfile deviceProfile;
 
     @Override
+    public DeviceProfile getMainEntity() {
+        return deviceProfile;
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.DEVICE_PROFILE;
     }

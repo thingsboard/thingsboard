@@ -28,6 +28,11 @@ public class DeviceExportData implements EntityExportData<Device> {
     private DeviceCredentials credentials;
 
     @Override
+    public Device getMainEntity() {
+        return device;
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.DEVICE;
     }

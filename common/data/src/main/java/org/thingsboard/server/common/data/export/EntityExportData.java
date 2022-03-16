@@ -43,6 +43,9 @@ import org.thingsboard.server.common.data.id.HasId;
 public interface EntityExportData<E extends HasId<? extends EntityId>> {
 
     @JsonIgnore
-    EntityType getEntityType(); // fixme: maybe remove if not needed, as well as generic
+    E getMainEntity();
+
+    @JsonIgnore
+    EntityType getEntityType(); // fixme: maybe remove if not needed
 
 }

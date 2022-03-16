@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.expimp.imp.EntityImportResult;
 
 @Service
 @TbCoreComponent
@@ -34,7 +35,7 @@ public class DashboardImportService extends AbstractEntityImportService<Dashboar
 
 
     @Override
-    public Dashboard importEntity(TenantId tenantId, DashboardExportData exportData) {
+    public EntityImportResult<Dashboard> importEntity(TenantId tenantId, DashboardExportData exportData) {
         Dashboard dashboard = exportData.getDashboard();
         Dashboard existingDashboard = findByExternalId(tenantId, dashboard.getId());
 
@@ -51,7 +52,10 @@ public class DashboardImportService extends AbstractEntityImportService<Dashboar
 
         Dashboard savedDashboard = dashboardService.saveDashboard(dashboard);
 
-        return savedDashboard;
+        EntityImportResult<Dashboard> importResult = new EntityImportResult<>();
+        importResult.setSavedEntity(savedDashboard);
+        importResult.setOldEntity(existingDashboard);
+        return importResult;
     }
 
     @Override

@@ -26,6 +26,11 @@ public class DashboardExportData implements EntityExportData<Dashboard> {
     private Dashboard dashboard;
 
     @Override
+    public Dashboard getMainEntity() {
+        return dashboard;
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.DASHBOARD;
     }

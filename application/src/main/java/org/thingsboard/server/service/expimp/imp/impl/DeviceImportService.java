@@ -18,7 +18,6 @@ package org.thingsboard.server.service.expimp.imp.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.export.impl.DeviceExportData;
@@ -26,7 +25,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.action.EntityActionService;
+import org.thingsboard.server.service.expimp.imp.EntityImportResult;
 
 @Service
 @TbCoreComponent
@@ -38,7 +37,7 @@ public class DeviceImportService extends AbstractEntityImportService<DeviceId, D
 
     @Transactional
     @Override
-    public Device importEntity(TenantId tenantId, DeviceExportData exportData) {
+    public EntityImportResult<Device> importEntity(TenantId tenantId, DeviceExportData exportData) {
         Device device = exportData.getDevice();
         Device existingDevice = findByExternalId(tenantId, device.getId()); // FIXME: !!!
         // what if exporting and importing back already exported entity ? (save version and then load it back)
@@ -70,7 +69,10 @@ public class DeviceImportService extends AbstractEntityImportService<DeviceId, D
 
         Device savedDevice = deviceService.saveDeviceWithCredentials(device, exportData.getCredentials());
 
-        return savedDevice;
+        EntityImportResult<Device> importResult = new EntityImportResult<>();
+        importResult.setSavedEntity(savedDevice);
+        importResult.setOldEntity(existingDevice);
+        return importResult;
     }
 
     @Override

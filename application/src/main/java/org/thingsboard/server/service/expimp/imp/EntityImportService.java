@@ -23,7 +23,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 public interface EntityImportService<I extends EntityId, E extends HasId<I>, D extends EntityExportData<E>> {
 
-    E importEntity(TenantId tenantId, D exportData);
+    // FIXME: get rid of boilerplate for import result creation and everything else
+    EntityImportResult<E> importEntity(TenantId tenantId, D exportData);
 
     EntityType getEntityType();
 

@@ -24,7 +24,9 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.expimp.exp.EntityExportService;
+import org.thingsboard.server.service.expimp.imp.EntityImportResult;
 import org.thingsboard.server.service.expimp.imp.EntityImportService;
+import org.thingsboard.server.service.expimp.imp.impl.AbstractEntityImportService;
 
 import java.util.Collection;
 import java.util.EnumMap;
@@ -51,16 +53,21 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
     }
 
     // FIXME: somehow validate export data
-    // FIXME: validate permissions for create or update
-    // FIXME: send entity lifecycle event
     @Override
-    public <E extends HasId<I>, I extends EntityId, D extends EntityExportData<E>> E importEntity(TenantId tenantId, D exportData) {
+    public <E extends HasId<I>, I extends EntityId, D extends EntityExportData<E>> EntityImportResult<E> importEntity(TenantId tenantId, D exportData) {
         EntityType entityType = exportData.getEntityType();
         EntityImportService<I, E, D> importService = getImportService(entityType);
 
         return importService.importEntity(tenantId, exportData);
     }
 
+    @Override
+    @SuppressWarnings("unchecked")
+    public <E extends HasId<I>, I extends EntityId> E findEntityByExternalId(TenantId tenantId, I externalId) {
+        return (E) importServices.values().stream().filter(entityImportService -> entityImportService instanceof AbstractEntityImportService)
+                .findFirst().map(entityImportService -> (AbstractEntityImportService) importServices).get()
+                .findByExternalOrInternalId(tenantId, externalId); // FIXME !!!
+    }
 
     @SuppressWarnings("unchecked")
     private <I extends EntityId, E extends HasId<I>> EntityExportService<I, E> getExportService(EntityType entityType) {
