@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFactorAuthSettings;
 import org.thingsboard.server.service.security.auth.mfa.config.account.TotpTwoFactorAuthAccountConfig;
@@ -41,6 +42,9 @@ import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
+
+// FIXME: Swagger documentation
+// FIXME: tests for 2FA
 
 @RestController
 @RequestMapping("/api")
@@ -81,7 +85,7 @@ public class TwoFactorAuthController extends BaseController {
                 MatrixToImageWriter.writeToStream(qr, "PNG", outputStream);
             }
         }
-        response.setHeader("body", JacksonUtil.toString(config));
+        response.setHeader("config", JacksonUtil.toString(config));
     }
 
     @PostMapping("/2fa/account/config/submit")
@@ -91,6 +95,7 @@ public class TwoFactorAuthController extends BaseController {
 
         twoFactorAuthService.processByTwoFaProvider(user.getTenantId(), accountConfig.getProviderType(),
                 (provider, providerConfig) -> {
+                    ConstraintValidator.validateFields(accountConfig);
                     provider.prepareVerificationCode(user, providerConfig, accountConfig);
                 });
     }

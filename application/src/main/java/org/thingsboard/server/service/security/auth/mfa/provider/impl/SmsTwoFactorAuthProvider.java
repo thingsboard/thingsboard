@@ -15,18 +15,16 @@
  */
 package org.thingsboard.server.service.security.auth.mfa.provider.impl;
 
-import lombok.RequiredArgsConstructor;
+import lombok.Data;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.kv.BaseDeleteTsKvQuery;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.StringDataEntry;
-import org.thingsboard.server.dao.service.ConstraintValidator;
-import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.mfa.config.account.SmsTwoFactorAuthAccountConfig;
 import org.thingsboard.server.service.security.auth.mfa.config.provider.SmsTwoFactorAuthProviderConfig;
@@ -34,16 +32,20 @@ import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthPr
 import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProviderType;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-import java.util.Collections;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 @TbCoreComponent
 public class SmsTwoFactorAuthProvider implements TwoFactorAuthProvider<SmsTwoFactorAuthProviderConfig, SmsTwoFactorAuthAccountConfig> {
 
     private final SmsService smsService;
-    private final TimeseriesService timeseriesService;
+    private final Cache verificationCodesCache;
+
+    public SmsTwoFactorAuthProvider(SmsService smsService, CacheManager cacheManager) {
+        this.smsService = smsService;
+        this.verificationCodesCache = cacheManager.getCache(CacheConstants.TWO_FA_VERIFICATION_CODES_CACHE);
+    }
+
 
     @Override
     public SmsTwoFactorAuthAccountConfig generateNewAccountConfig(User user, SmsTwoFactorAuthProviderConfig providerConfig) {
@@ -53,10 +55,8 @@ public class SmsTwoFactorAuthProvider implements TwoFactorAuthProvider<SmsTwoFac
     @Override
     @SneakyThrows // fixme
     public void prepareVerificationCode(SecurityUser user, SmsTwoFactorAuthProviderConfig providerConfig, SmsTwoFactorAuthAccountConfig accountConfig) {
-        ConstraintValidator.validateFields(accountConfig);
-
         String verificationCode = RandomStringUtils.randomNumeric(6);
-        saveVerificationCode(user, verificationCode);
+        verificationCodesCache.put(user.getSessionId(), new VerificationCode(System.currentTimeMillis(), verificationCode));
 
         String phoneNumber = accountConfig.getPhoneNumber();
 
@@ -71,40 +71,25 @@ public class SmsTwoFactorAuthProvider implements TwoFactorAuthProvider<SmsTwoFac
 
     @Override
     public boolean checkVerificationCode(SecurityUser user, String verificationCode, SmsTwoFactorAuthAccountConfig accountConfig) {
-        if (verificationCode.equals(getVerificationCode(user))) {
-            removeVerificationCode(user);
+        VerificationCode correctVerificationCode = verificationCodesCache.get(user.getSessionId(), VerificationCode.class);
+        if (correctVerificationCode != null && verificationCode.equals(correctVerificationCode.getValue())) {
+            verificationCodesCache.evict(user.getSessionId());
             return true;
         } else {
             return false;
         }
     }
 
-
-    @SneakyThrows
-    private void saveVerificationCode(SecurityUser user, String verificationCode) {
-        timeseriesService.save(user.getTenantId(), user.getId(),
-                new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry("twoFaVerificationCode:" + user.getSessionId(), verificationCode))
-        ).get();
-    }
-
-    @SneakyThrows
-    private String getVerificationCode(SecurityUser user) {
-        return timeseriesService.findLatest(user.getTenantId(), user.getId(),
-                Collections.singletonList("twoFaVerificationCode:" + user.getSessionId())).get().stream().findFirst()
-                .map(codeTs -> codeTs.getStrValue().get())
-                .orElse(null);
-    }
-
-    private void removeVerificationCode(SecurityUser user) {
-        timeseriesService.remove(user.getTenantId(), user.getId(), Collections.singletonList(
-                new BaseDeleteTsKvQuery("twoFaVerificationCode:" + user.getSessionId(), 0, System.currentTimeMillis())
-        ));
-    }
-
-
     @Override
     public TwoFactorAuthProviderType getType() {
         return TwoFactorAuthProviderType.SMS;
+    }
+
+
+    @Data
+    private static class VerificationCode {
+        private final long timestamp;
+        private final String value;
     }
 
 }

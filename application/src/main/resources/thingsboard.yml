@@ -428,8 +428,8 @@ caffeine:
       timeToLiveInMinutes: "${CACHE_SPECS_EDGES_TTL:1440}"
       maxSize: "${CACHE_SPECS_EDGES_MAX_SIZE:10000}"
     twoFaVerificationCodes:
-      timeToLiveInMinutes: "1"
-      maxSize: "100000"
+      timeToLiveInMinutes: "${CACHE_SPECS_TWO_FA_VERIFICATION_CODES_TTL:1}"
+      maxSize: "${CACHE_SPECS_TWO_FA_VERIFICATION_CODES_MAX_SIZE:100000}"
 
 redis:
   # standalone or cluster

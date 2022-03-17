@@ -283,11 +283,31 @@ public abstract class BaseController {
     @Getter
     protected boolean edgesEnabled;
 
+    @ExceptionHandler(Exception.class)
+    public void handleControllerException(Exception e, HttpServletResponse response) {
+        ThingsboardException thingsboardException = handleException(e);
+        handleThingsboardException(thingsboardException, response);
+    }
+
     @ExceptionHandler(ThingsboardException.class)
     public void handleThingsboardException(ThingsboardException ex, HttpServletResponse response) {
         errorResponseHandler.handle(ex, response);
     }
 
+    /**
+     * @deprecated Exceptions that are not of {@link ThingsboardException} type
+     * are now caught and mapped to {@link ThingsboardException} by
+     * {@link ExceptionHandler} {@link BaseController#handleControllerException(Exception, HttpServletResponse)}
+     * which basically acts like the following boilerplate:
+     * {@code
+     *  try {
+     *      someExceptionThrowingMethod();
+     *  } catch (Exception e) {
+     *      throw handleException(e);
+     *  }
+     * }
+     * */
+    @Deprecated
     ThingsboardException handleException(Exception exception) {
         return handleException(exception, true);
     }

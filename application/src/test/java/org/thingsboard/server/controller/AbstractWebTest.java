@@ -584,6 +584,10 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return mapper.readerFor(type).readValue(content);
     }
 
+    protected String getErrorMessage(ResultActions result) throws Exception {
+        return readResponse(result, JsonNode.class).get("message").asText();
+    }
+
     public class IdComparator<D extends HasId> implements Comparator<D> {
         @Override
         public int compare(D o1, D o2) {

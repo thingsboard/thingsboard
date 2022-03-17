@@ -46,6 +46,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
@@ -144,7 +145,7 @@ public class TwoFactorAuthService {
     }
 
 
-    @SneakyThrows
+    @SneakyThrows({InterruptedException.class, ExecutionException.class})
     public Optional<TwoFactorAuthSettings> getTwoFaSettings(TenantId tenantId) {
         if (tenantId.equals(TenantId.SYS_TENANT_ID)) {
             return Optional.ofNullable(adminSettingsService.findAdminSettingsByKey(tenantId, TWO_FACTOR_AUTH_SETTINGS_KEY))
@@ -157,7 +158,7 @@ public class TwoFactorAuthService {
         }
     }
 
-    @SneakyThrows
+    @SneakyThrows({InterruptedException.class, ExecutionException.class})
     public void saveTwoFaSettings(TenantId tenantId, TwoFactorAuthSettings twoFactorAuthSettings) {
         ConstraintValidator.validateFields(twoFactorAuthSettings);
         if (tenantId.equals(TenantId.SYS_TENANT_ID)) {

@@ -24,6 +24,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.WebAttributes;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.auth.mfa.config.account.TwoFactorAuthAccountConfig;
@@ -53,6 +54,7 @@ public class RestAwareAuthenticationSuccessHandler implements AuthenticationSucc
 
         JwtTokenPair tokenPair;
 
+        // fixme: check if this handler is not called when token is refreshed
         Optional<TwoFactorAuthAccountConfig> twoFaAccountConfig = twoFactorAuthService.getTwoFaAccountConfig(securityUser.getTenantId(), securityUser.getId());
         if (twoFaAccountConfig.isPresent()) {
             try {
@@ -62,6 +64,7 @@ public class RestAwareAuthenticationSuccessHandler implements AuthenticationSucc
                         });
                 tokenPair = new JwtTokenPair();
                 tokenPair.setToken(tokenFactory.createPreVerificationToken(securityUser).getToken());
+                tokenPair.setScope(Authority.PRE_VERIFICATION_TOKEN);
             } catch (Exception e) {
                 log.error("Failed to process 2FA for user {}. Falling back to plain auth", securityUser.getId(), e);
                 tokenPair = tokenFactory.createTokenPair(securityUser);

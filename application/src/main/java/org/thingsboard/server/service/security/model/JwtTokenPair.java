@@ -20,10 +20,10 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.security.Authority;
 
 @ApiModel(value = "JWT Token Pair")
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
 public class JwtTokenPair {
 
@@ -31,4 +31,12 @@ public class JwtTokenPair {
     private String token;
     @ApiModelProperty(position = 1, value = "The JWT Refresh Token. Used to get new JWT Access Token if old one has expired.", example = "AAB254FF67D..")
     private String refreshToken;
+
+    private Authority scope;
+
+    public JwtTokenPair(String token, String refreshToken) {
+        this.token = token;
+        this.refreshToken = refreshToken;
+    }
+
 }
