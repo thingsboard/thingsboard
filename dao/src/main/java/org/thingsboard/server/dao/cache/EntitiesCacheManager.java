@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge;
+package org.thingsboard.server.dao.cache;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import org.springframework.http.ResponseEntity;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
 
-public interface EdgeLicenseService {
+public interface EntitiesCacheManager {
 
-    ResponseEntity<JsonNode> checkInstance(JsonNode request);
+    void removeDeviceFromCacheByName(TenantId tenantId, String name);
 
-    ResponseEntity<JsonNode> activateInstance(String licenseSecret, String releaseDate);
+    void removeDeviceFromCacheById(TenantId tenantId, DeviceId deviceId);
+
+    void removeAssetFromCacheByName(TenantId tenantId, String name);
+
+    void removeEdgeFromCacheByName(TenantId tenantId, String name);
 }

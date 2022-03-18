@@ -116,8 +116,6 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
         break;
       case EntityType.EDGE:
         this.columnTypes.push(
-          { value: ImportEntityColumnType.edgeLicenseKey },
-          { value: ImportEntityColumnType.cloudEndpoint },
           { value: ImportEntityColumnType.routingKey },
           { value: ImportEntityColumnType.secret }
         );
@@ -145,8 +143,6 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
     const isSelectType = this.columns.findIndex((column) => column.type === ImportEntityColumnType.type) > -1;
     const isSelectLabel = this.columns.findIndex((column) => column.type === ImportEntityColumnType.label) > -1;
     const isSelectDescription = this.columns.findIndex((column) => column.type === ImportEntityColumnType.description) > -1;
-    const isSelectEdgeLicenseKey = this.columns.findIndex((column) => column.type === ImportEntityColumnType.edgeLicenseKey) > -1;
-    const isSelectCloudEndpoint = this.columns.findIndex((column) => column.type === ImportEntityColumnType.cloudEndpoint) > -1;
     const isSelectRoutingKey = this.columns.findIndex((column) => column.type === ImportEntityColumnType.routingKey) > -1;
     const isSelectSecret = this.columns.findIndex((column) => column.type === ImportEntityColumnType.secret) > -1;
     const hasInvalidColumn = this.columns.findIndex((column) => !this.columnValid(column)) > -1;
@@ -171,14 +167,6 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
       });
     }
 
-    const edgeLicenseKeyColumnType = this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.edgeLicenseKey);
-    if (edgeLicenseKeyColumnType) {
-      edgeLicenseKeyColumnType.disabled = isSelectEdgeLicenseKey;
-    }
-    const cloudEndpointColumnType = this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.cloudEndpoint);
-    if (cloudEndpointColumnType) {
-      cloudEndpointColumnType.disabled = isSelectCloudEndpoint;
-    }
     const routingKeyColumnType = this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.routingKey);
     if (routingKeyColumnType) {
       routingKeyColumnType.disabled = isSelectRoutingKey;

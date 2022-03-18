@@ -105,8 +105,6 @@ public abstract class BaseEdgeControllerTest extends AbstractControllerTest {
         Assert.assertNotNull(savedEdge.getCustomerId());
         Assert.assertEquals(NULL_UUID, savedEdge.getCustomerId().getId());
         Assert.assertEquals(edge.getName(), savedEdge.getName());
-        Assert.assertTrue(StringUtils.isNoneBlank(savedEdge.getEdgeLicenseKey()));
-        Assert.assertTrue(StringUtils.isNoneBlank(savedEdge.getCloudEndpoint()));
 
         savedEdge.setName("My new edge");
         doPost("/api/edge", savedEdge, Edge.class);
