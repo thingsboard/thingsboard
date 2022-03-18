@@ -29,6 +29,7 @@ import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNode;
 import org.thingsboard.rule.engine.profile.TbDeviceProfileNodeConfiguration;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -56,10 +57,10 @@ import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.alarm.AlarmService;
+import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
-import org.thingsboard.server.dao.model.sql.RelationEntity;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -107,6 +108,9 @@ public class DefaultDataUpdateService implements DataUpdateService {
     private EntityService entityService;
 
     @Autowired
+    private CustomerDao customerDao;
+
+    @Autowired
     private AlarmDao alarmDao;
 
     @Autowired
@@ -140,6 +144,10 @@ public class DefaultDataUpdateService implements DataUpdateService {
             case "3.3.2":
                 log.info("Updating data from version 3.3.2 to 3.3.3 ...");
                 updateNestedRuleChains();
+                break;
+            case "3.3.4":
+                log.info("Updating data from version 3.3.4 to 3.4.0 ...");
+                tenantCustomersTitleUpdater.updateEntities(null);
                 break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
@@ -545,6 +553,65 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     private void updateOAuth2Params() {
         log.warn("CAUTION: Update of Oauth2 parameters from 3.2.2 to 3.3.0 available only in ThingsBoard versions 3.3.0/3.3.1");
+    }
+
+    private final PaginatedUpdater<String, Tenant> tenantCustomersTitleUpdater =
+            new PaginatedUpdater<>() {
+
+                @Override
+                protected String getName() {
+                    return "Customer title updater";
+                }
+
+                @Override
+                protected PageData<Tenant> findEntities(String id, PageLink pageLink) {
+                    return tenantService.findTenants(pageLink);
+                }
+
+                @Override
+                protected void updateEntity(Tenant entity) {
+                    updateDuplicateCustomersTitle(entity);
+                }
+            };
+
+    private List<Customer> updateDuplicateCustomersTitle(Tenant entity) {
+        customerDao.find(entity.getId());
+        List<Customer> customers = customerDao.find(entity.getId());
+        return updateDuplicateCustomersTitle(customers);
+    }
+
+    protected List<Customer> updateDuplicateCustomersTitle(List<Customer> customers) {
+        if (customers == null || customers.isEmpty()) return customers;
+        sortCustomersByTenantIdAndTitleAndCreatedTime(customers);
+        int countEqualsTitleAndTenantIdBefore = 0;
+        String lastCustomerName = customers.get(0).getName();
+        TenantId lastTenantId = customers.get(0).getTenantId();
+        for (int i = 1; i < customers.size(); i++) {
+            Customer customer = customers.get(i);
+            if (customer.getName().equals(lastCustomerName) && customer.getTenantId().equals(lastTenantId)) {
+                countEqualsTitleAndTenantIdBefore++;
+                customer.setTitle(customer.getName() + "-" + countEqualsTitleAndTenantIdBefore);
+                customers.set(i, updateCustomerTitle(customer.getTenantId(), customer));
+            } else {
+                countEqualsTitleAndTenantIdBefore = 0;
+            }
+            lastCustomerName = customer.getName();
+            lastTenantId = customer.getTenantId();
+        }
+        return customers;
+    }
+
+    protected Customer updateCustomerTitle(TenantId id, Customer customer) {
+        customerDao.removeById(id, customer.getUuidId());
+        return customerDao.save(id, customer);
+    }
+
+    protected void sortCustomersByTenantIdAndTitleAndCreatedTime(List<Customer> customers) {
+        customers.sort((o1, o2) -> {
+            if (!o1.getTenantId().equals(o2.getTenantId())) return o1.getTenantId().toString().compareTo(o2.getTenantId().toString());
+            else if (!o1.getName().equals(o2.getName())) return o1.getName().compareTo(o2.getName());
+            else return Long.compare(o2.getCreatedTime(), o1.getCreatedTime());
+        });
     }
 
 }

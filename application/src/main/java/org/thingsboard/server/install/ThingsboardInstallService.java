@@ -220,7 +220,10 @@ public class ThingsboardInstallService {
                             log.info("Updating system data...");
                             systemDataLoaderService.updateSystemWidgets();
                             break;
-
+                        case "3.3.4":
+                            log.info("Upgrading ThingsBoard from version 3.3.4 to 3.4.0 ...");
+                            dataUpdateService.updateData("3.3.4");
+                            break;
                         //TODO update CacheCleanupService on the next version upgrade
 
                         default:
