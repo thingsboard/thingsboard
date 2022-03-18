@@ -236,17 +236,12 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
                 if (partitionService.resolve(ServiceType.TB_CORE, tenantId, tenantId).isMyPartition()) {
                     return getOrFetchState(tenantId, tenantId).getApiUsageState();
                 } else {
-                    updateLock.lock();
-                    try {
-                        state = otherUsageStates.get(tenantId);
-                        if (state == null) {
-                            state = apiUsageStateService.findTenantApiUsageState(tenantId);
-                            if (state != null) {
-                                otherUsageStates.put(tenantId, state);
-                            }
+                    state = otherUsageStates.get(tenantId);
+                    if (state == null) {
+                        state = apiUsageStateService.findTenantApiUsageState(tenantId);
+                        if (state != null) {
+                            otherUsageStates.put(tenantId, state);
                         }
-                    } finally {
-                        updateLock.unlock();
                     }
                     return state;
                 }

@@ -13,24 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.device.profile.lwm2m;
+package org.thingsboard.server.transport.lwm2m.bootstrap.store;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class TelemetryMappingConfiguration {
+public class LwM2MBootstrapClientInstanceIds {
 
-    private Map<String, String> keyName;
-    private Set<String> observe;
-    private Set<String> attribute;
-    private Set<String> telemetry;
-    private Map<String, ObjectAttributes> attributeLwm2m;
-
+    /**
+     * Map<serverId (shortId), InstanceId>
+     */
+    private Map<Integer, Integer> securityInstances = new HashMap<>();
+    private  Map<Integer, Integer> serverInstances = new HashMap<>();
 }
