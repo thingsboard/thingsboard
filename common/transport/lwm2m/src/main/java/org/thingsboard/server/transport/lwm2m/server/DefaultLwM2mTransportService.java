@@ -34,6 +34,7 @@ import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MAuthorizer;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MDtlsCertificateVerifier;
+import org.thingsboard.server.transport.lwm2m.server.coapResources.LwM2mTransportCoapResource;
 import org.thingsboard.server.transport.lwm2m.server.store.TbSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
@@ -49,6 +50,7 @@ import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_W
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CCM_8;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MNetworkConfig.getCoapConfig;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FIRMWARE_UPDATE_COAP_RESOURCE;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LWM2M_POST_COAP_RESOURCE;
 
 @Slf4j
 @Component
@@ -83,6 +85,9 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
          */
         LwM2mTransportCoapResource otaCoapResource = new LwM2mTransportCoapResource(otaPackageDataCache, FIRMWARE_UPDATE_COAP_RESOURCE);
         this.server.coap().getServer().add(otaCoapResource);
+        LwM2mTransportCoapResource dataPostCoapResource = new LwM2mTransportCoapResource(null, LWM2M_POST_COAP_RESOURCE);
+        this.server.coap().getServer().add(otaCoapResource);
+        this.server.coap().getServer().add(dataPostCoapResource);
         this.context.setServer(server);
         this.startLhServer();
     }

@@ -92,6 +92,7 @@ public class LwM2MTransportUtil {
     public static final String LOG_LWM2M_INFO = "info";
     public static final String LOG_LWM2M_ERROR = "error";
     public static final String LOG_LWM2M_WARN = "warn";
+    public static final String LWM2M_POST_COAP_RESOURCE = "tbpost";
 
     public enum LwM2MClientStrategy {
         CLIENT_STRATEGY_1(1, "Read only resources marked as observation"),
