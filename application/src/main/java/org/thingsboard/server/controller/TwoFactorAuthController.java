@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.dao.service.ConstraintValidator;
+import org.thingsboard.server.service.security.auth.TokenOutdatingService;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFactorAuthSettings;
 import org.thingsboard.server.service.security.auth.mfa.config.account.TotpTwoFactorAuthAccountConfig;
@@ -42,10 +42,25 @@ import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 
-// FIXME: Swagger documentation
-// FIXME: tests for 2FA
-
+/*
+ *
+ * TODO [viacheslav]:
+ *  - 2FA should be mandatory when logging in and must be rolled out to all existing users when 2FA is activated.
+ *  - Rate limits should be implemented to protect against brute force leaked accounts to prevent SMS cost explosion.
+ *  - Configurable softlock after XX (3) attempts: XX (15) mins
+ *  - Configurable hardlock (user blocking) after a total of XX (10) unsuccessful attempts.
+ *  - The OTP token should only be valid for XX (5) minutes.
+ *  - Disable 2FA only possible after successful 2FA auth - it is possible with simple password resest
+ *  - 2FA entries should be secured against code injection by code validation.
+ *  - Email 2FA provider
+ *
+ * FIXME [viacheslav]:
+ *  - Tests for 2FA
+ *  - Swagger documentation
+ *
+ * */
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
@@ -65,7 +80,7 @@ public class TwoFactorAuthController extends BaseController {
 
     @PostMapping("/2fa/account/config/generate")
     @PreAuthorize("isAuthenticated()")
-    public TwoFactorAuthAccountConfig generateTwoFactorAuthAccountConfig(@RequestParam TwoFactorAuthProviderType providerType) throws ThingsboardException {
+    public TwoFactorAuthAccountConfig generateTwoFactorAuthAccountConfig(@RequestParam TwoFactorAuthProviderType providerType) throws Exception {
         SecurityUser user = getCurrentUser();
 
         return twoFactorAuthService.processByTwoFaProvider(user.getTenantId(), providerType,
@@ -90,20 +105,19 @@ public class TwoFactorAuthController extends BaseController {
 
     @PostMapping("/2fa/account/config/submit")
     @PreAuthorize("isAuthenticated()")
-    public void submitTwoFactorAuthAccountConfig(@RequestBody TwoFactorAuthAccountConfig accountConfig) throws ThingsboardException {
+    public void submitTwoFactorAuthAccountConfig(@Valid @RequestBody TwoFactorAuthAccountConfig accountConfig) throws Exception {
         SecurityUser user = getCurrentUser();
 
         twoFactorAuthService.processByTwoFaProvider(user.getTenantId(), accountConfig.getProviderType(),
                 (provider, providerConfig) -> {
-                    ConstraintValidator.validateFields(accountConfig);
                     provider.prepareVerificationCode(user, providerConfig, accountConfig);
                 });
     }
 
     @PostMapping("/2fa/account/config")
     @PreAuthorize("isAuthenticated()")
-    public void verifyAndSaveTwoFactorAuthAccountConfig(@RequestBody TwoFactorAuthAccountConfig accountConfig,
-                                                        @RequestParam String verificationCode) throws ThingsboardException {
+    public void verifyAndSaveTwoFactorAuthAccountConfig(@Valid @RequestBody TwoFactorAuthAccountConfig accountConfig,
+                                                        @RequestParam String verificationCode) throws Exception {
         SecurityUser user = getCurrentUser();
 
         boolean verificationSuccess = twoFactorAuthService.processByTwoFaProvider(user.getTenantId(), accountConfig.getProviderType(),
@@ -127,14 +141,14 @@ public class TwoFactorAuthController extends BaseController {
 
     @PostMapping("/2fa/settings")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    public void saveTwoFactorAuthSettings(@RequestBody TwoFactorAuthSettings twoFactorAuthSettings) throws ThingsboardException {
+    public void saveTwoFactorAuthSettings(@Valid @RequestBody TwoFactorAuthSettings twoFactorAuthSettings) throws ThingsboardException {
         twoFactorAuthService.saveTwoFaSettings(getTenantId(), twoFactorAuthSettings);
     }
 
 
     @PostMapping("/auth/2fa/verification/check")
     @PreAuthorize("hasAuthority('PRE_VERIFICATION_TOKEN')")
-    public JwtTokenPair checkTwoFaVerificationCode(@RequestParam String verificationCode) throws ThingsboardException {
+    public JwtTokenPair checkTwoFaVerificationCode(@RequestParam String verificationCode) throws Exception {
         SecurityUser user = getCurrentUser();
 
         boolean verificationSuccess = twoFactorAuthService.processByTwoFaProvider(user.getTenantId(), user.getId(),
@@ -147,6 +161,17 @@ public class TwoFactorAuthController extends BaseController {
         } else {
             throw new ThingsboardException("Verification code is incorrect", ThingsboardErrorCode.AUTHENTICATION);
         }
+    }
+
+    @PostMapping("/auth/2fa/verification/resend")
+    @PreAuthorize("hasAuthority('PRE_VERIFICATION_TOKEN')")
+    public void resendTwoFaVerificationCode() throws Exception {
+        SecurityUser user = getCurrentUser();
+
+        twoFactorAuthService.processByTwoFaProvider(user.getTenantId(), user.getId(),
+                (provider, providerConfig, accountConfig) -> {
+                    provider.prepareVerificationCode(user, providerConfig, accountConfig);
+                });
     }
 
 }

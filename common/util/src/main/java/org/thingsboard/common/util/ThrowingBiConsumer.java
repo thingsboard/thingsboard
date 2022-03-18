@@ -16,6 +16,6 @@
 package org.thingsboard.common.util;
 
 @FunctionalInterface
-public interface TripleFunction<A, B, C, R> {
-    R apply(A a, B b, C c);
+public interface ThrowingBiConsumer<A, B> {
+    void accept(A a, B b) throws Exception;
 }

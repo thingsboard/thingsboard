@@ -111,6 +111,7 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
                 throw new InsufficientAuthenticationException("User has no authority assigned");
 
             SecurityUser securityUser = new SecurityUser(user, userCredentials.isEnabled(), userPrincipal);
+            // FIXME [viacheslav]: must not yet log login action if 2FA is used !
             logLoginAction(user, authentication, ActionType.LOGIN, null);
             return new UsernamePasswordAuthenticationToken(securityUser, null, securityUser.getAuthorities());
         } catch (Exception e) {

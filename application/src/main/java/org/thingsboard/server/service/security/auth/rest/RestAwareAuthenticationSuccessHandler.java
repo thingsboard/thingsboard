@@ -20,12 +20,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.WebAttributes;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.auth.mfa.config.account.TwoFactorAuthAccountConfig;
 import org.thingsboard.server.service.security.model.JwtTokenPair;
@@ -53,22 +53,9 @@ public class RestAwareAuthenticationSuccessHandler implements AuthenticationSucc
         SecurityUser securityUser = (SecurityUser) authentication.getPrincipal();
 
         JwtTokenPair tokenPair;
-
-        // fixme: check if this handler is not called when token is refreshed
-        Optional<TwoFactorAuthAccountConfig> twoFaAccountConfig = twoFactorAuthService.getTwoFaAccountConfig(securityUser.getTenantId(), securityUser.getId());
-        if (twoFaAccountConfig.isPresent()) {
-            try {
-                twoFactorAuthService.processByTwoFaProvider(securityUser.getTenantId(), twoFaAccountConfig.get().getProviderType(),
-                        (provider, providerConfig) -> {
-                            provider.prepareVerificationCode(securityUser, providerConfig, twoFaAccountConfig.get());
-                        });
-                tokenPair = new JwtTokenPair();
-                tokenPair.setToken(tokenFactory.createPreVerificationToken(securityUser).getToken());
-                tokenPair.setScope(Authority.PRE_VERIFICATION_TOKEN);
-            } catch (Exception e) {
-                log.error("Failed to process 2FA for user {}. Falling back to plain auth", securityUser.getId(), e);
-                tokenPair = tokenFactory.createTokenPair(securityUser);
-            }
+        if (authentication instanceof UsernamePasswordAuthenticationToken) {
+            // TODO [viacheslav]: or maybe create another AuthenticationProvider and put it after rest authentication provider ?
+            tokenPair = processTwoFa(securityUser);
         } else {
             tokenPair = tokenFactory.createTokenPair(securityUser);
         }
@@ -79,6 +66,26 @@ public class RestAwareAuthenticationSuccessHandler implements AuthenticationSucc
         mapper.writeValue(response.getWriter(), tokenPair);
 
         clearAuthenticationAttributes(request);
+    }
+
+    private JwtTokenPair processTwoFa(SecurityUser securityUser) {
+        Optional<TwoFactorAuthAccountConfig> twoFaAccountConfig = twoFactorAuthService.getTwoFaAccountConfig(securityUser.getTenantId(), securityUser.getId());
+        if (twoFaAccountConfig.isPresent()) {
+            try {
+                twoFactorAuthService.processByTwoFaProvider(securityUser.getTenantId(), twoFaAccountConfig.get().getProviderType(),
+                        (provider, providerConfig) -> {
+                            provider.prepareVerificationCode(securityUser, providerConfig, twoFaAccountConfig.get());
+                        });
+                JwtTokenPair tokenPair = new JwtTokenPair();
+                tokenPair.setToken(tokenFactory.createPreVerificationToken(securityUser).getToken());
+                tokenPair.setScope(Authority.PRE_VERIFICATION_TOKEN);
+                return tokenPair;
+            } catch (Exception e) {
+                // TODO [viacheslav]: write audit log
+                log.error("Failed to process 2FA for user {}. Falling back to plain auth", securityUser.getId(), e);
+            }
+        }
+        return tokenFactory.createTokenPair(securityUser);
     }
 
     /**

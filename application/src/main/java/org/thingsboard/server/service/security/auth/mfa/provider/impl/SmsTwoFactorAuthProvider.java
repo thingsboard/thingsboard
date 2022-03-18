@@ -25,6 +25,7 @@ import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.mfa.config.account.SmsTwoFactorAuthAccountConfig;
 import org.thingsboard.server.service.security.auth.mfa.config.provider.SmsTwoFactorAuthProviderConfig;
@@ -53,8 +54,7 @@ public class SmsTwoFactorAuthProvider implements TwoFactorAuthProvider<SmsTwoFac
     }
 
     @Override
-    @SneakyThrows // fixme
-    public void prepareVerificationCode(SecurityUser user, SmsTwoFactorAuthProviderConfig providerConfig, SmsTwoFactorAuthAccountConfig accountConfig) {
+    public void prepareVerificationCode(SecurityUser user, SmsTwoFactorAuthProviderConfig providerConfig, SmsTwoFactorAuthAccountConfig accountConfig) throws ThingsboardException {
         String verificationCode = RandomStringUtils.randomNumeric(6);
         verificationCodesCache.put(user.getSessionId(), new VerificationCode(System.currentTimeMillis(), verificationCode));
 

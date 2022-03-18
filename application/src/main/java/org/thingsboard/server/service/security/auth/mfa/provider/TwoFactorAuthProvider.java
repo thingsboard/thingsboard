@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.security.auth.mfa.provider;
 
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.service.security.auth.mfa.config.account.TwoFactorAuthAccountConfig;
 import org.thingsboard.server.service.security.auth.mfa.config.provider.TwoFactorAuthProviderConfig;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -24,7 +25,7 @@ public interface TwoFactorAuthProvider<C extends TwoFactorAuthProviderConfig, A 
 
     A generateNewAccountConfig(User user, C providerConfig);
 
-    default void prepareVerificationCode(SecurityUser user, C providerConfig, A accountConfig) {}
+    default void prepareVerificationCode(SecurityUser user, C providerConfig, A accountConfig) throws ThingsboardException {}
 
     boolean checkVerificationCode(SecurityUser user, String verificationCode, A accountConfig);
 

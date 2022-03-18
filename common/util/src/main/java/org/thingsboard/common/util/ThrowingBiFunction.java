@@ -13,22 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.auth.mfa.config.provider;
+package org.thingsboard.common.util;
 
-import lombok.Data;
-import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProviderType;
-
-import javax.validation.constraints.NotBlank;
-
-@Data
-public class TotpTwoFactorAuthProviderConfig implements TwoFactorAuthProviderConfig {
-
-    @NotBlank(message = "issuer name must not be blank")
-    private String issuerName;
-
-    @Override
-    public TwoFactorAuthProviderType getProviderType() {
-        return TwoFactorAuthProviderType.TOTP;
-    }
-
+@FunctionalInterface
+public interface ThrowingBiFunction<A, B, R> {
+    R apply(A a, B b) throws Exception;
 }

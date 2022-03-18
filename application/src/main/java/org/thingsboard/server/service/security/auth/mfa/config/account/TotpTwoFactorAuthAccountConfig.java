@@ -19,11 +19,13 @@ import lombok.Data;
 import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProviderType;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
 
 @Data
 public class TotpTwoFactorAuthAccountConfig implements TwoFactorAuthAccountConfig {
 
     @NotBlank
+//    @Pattern(regexp = ) // TODO [viacheslav]: validate otp auth url by pattern
     private String authUrl;
 
     @Override

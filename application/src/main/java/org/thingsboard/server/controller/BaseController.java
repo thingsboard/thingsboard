@@ -23,9 +23,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
@@ -145,6 +147,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_PAGE_SIZE;
 import static org.thingsboard.server.controller.ControllerConstants.INCORRECT_TENANT_ID;
@@ -332,6 +335,18 @@ public abstract class BaseController {
         } else {
             return new ThingsboardException(exception.getMessage(), exception, ThingsboardErrorCode.GENERAL);
         }
+    }
+
+    /**
+     * Handles validation error for controller method arguments annotated with @{@link javax.validation.Valid}
+     * */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public void handleValidationError(MethodArgumentNotValidException e, HttpServletResponse response) {
+        String errorMessage = "Validation error: " + e.getBindingResult().getAllErrors().stream()
+                .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                .collect(Collectors.joining(", "));
+        ThingsboardException thingsboardException = new ThingsboardException(errorMessage, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        handleThingsboardException(thingsboardException, response);
     }
 
     <T> T checkNotNull(T reference) throws ThingsboardException {
