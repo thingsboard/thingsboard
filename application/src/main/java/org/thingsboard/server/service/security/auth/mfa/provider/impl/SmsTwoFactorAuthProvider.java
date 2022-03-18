@@ -15,21 +15,15 @@
  */
 package org.thingsboard.server.service.security.auth.mfa.provider.impl;
 
-import lombok.Data;
-import lombok.SneakyThrows;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.mfa.config.account.SmsTwoFactorAuthAccountConfig;
 import org.thingsboard.server.service.security.auth.mfa.config.provider.SmsTwoFactorAuthProviderConfig;
-import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProvider;
 import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProviderType;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
@@ -37,14 +31,13 @@ import java.util.Map;
 
 @Service
 @TbCoreComponent
-public class SmsTwoFactorAuthProvider implements TwoFactorAuthProvider<SmsTwoFactorAuthProviderConfig, SmsTwoFactorAuthAccountConfig> {
+public class SmsTwoFactorAuthProvider extends OtpBasedTwoFactorAuthProvider<SmsTwoFactorAuthProviderConfig, SmsTwoFactorAuthAccountConfig> {
 
     private final SmsService smsService;
-    private final Cache verificationCodesCache;
 
     public SmsTwoFactorAuthProvider(SmsService smsService, CacheManager cacheManager) {
+        super(cacheManager);
         this.smsService = smsService;
-        this.verificationCodesCache = cacheManager.getCache(CacheConstants.TWO_FA_VERIFICATION_CODES_CACHE);
     }
 
 
@@ -54,42 +47,21 @@ public class SmsTwoFactorAuthProvider implements TwoFactorAuthProvider<SmsTwoFac
     }
 
     @Override
-    public void prepareVerificationCode(SecurityUser user, SmsTwoFactorAuthProviderConfig providerConfig, SmsTwoFactorAuthAccountConfig accountConfig) throws ThingsboardException {
-        String verificationCode = RandomStringUtils.randomNumeric(6);
-        verificationCodesCache.put(user.getSessionId(), new VerificationCode(System.currentTimeMillis(), verificationCode));
-
-        String phoneNumber = accountConfig.getPhoneNumber();
-
-        Map<String, String> data = Map.of(
+    protected void sendVerificationCode(SecurityUser user, String verificationCode, SmsTwoFactorAuthProviderConfig providerConfig, SmsTwoFactorAuthAccountConfig accountConfig) throws ThingsboardException {
+        Map<String, String> messageData = Map.of(
                 "verificationCode", verificationCode,
                 "userEmail", user.getEmail()
         );
-        String message = TbNodeUtils.processTemplate(providerConfig.getSmsVerificationMessageTemplate(), data);
+        String message = TbNodeUtils.processTemplate(providerConfig.getSmsVerificationMessageTemplate(), messageData);
+        String phoneNumber = accountConfig.getPhoneNumber();
 
         smsService.sendSms(user.getTenantId(), user.getCustomerId(), new String[]{phoneNumber}, message);
     }
 
-    @Override
-    public boolean checkVerificationCode(SecurityUser user, String verificationCode, SmsTwoFactorAuthAccountConfig accountConfig) {
-        VerificationCode correctVerificationCode = verificationCodesCache.get(user.getSessionId(), VerificationCode.class);
-        if (correctVerificationCode != null && verificationCode.equals(correctVerificationCode.getValue())) {
-            verificationCodesCache.evict(user.getSessionId());
-            return true;
-        } else {
-            return false;
-        }
-    }
 
     @Override
     public TwoFactorAuthProviderType getType() {
         return TwoFactorAuthProviderType.SMS;
-    }
-
-
-    @Data
-    private static class VerificationCode {
-        private final long timestamp;
-        private final String value;
     }
 
 }

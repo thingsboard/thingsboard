@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.auth.mfa.provider;
+package org.thingsboard.server.service.security.auth.mfa.config.account;
 
-public enum TwoFactorAuthProviderType {
-    TOTP,
-    SMS,
-    EMAIL
+public abstract class OtpBasedTwoFactorAuthAccountConfig implements TwoFactorAuthAccountConfig {
 }

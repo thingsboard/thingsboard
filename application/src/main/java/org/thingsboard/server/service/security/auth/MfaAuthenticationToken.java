@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.auth.mfa.provider;
+package org.thingsboard.server.service.security.auth;
 
-public enum TwoFactorAuthProviderType {
-    TOTP,
-    SMS,
-    EMAIL
+import org.thingsboard.server.service.security.model.SecurityUser;
+
+public class MfaAuthenticationToken extends AbstractJwtAuthenticationToken {
+    public MfaAuthenticationToken(SecurityUser securityUser) {
+        super(securityUser);
+    }
 }

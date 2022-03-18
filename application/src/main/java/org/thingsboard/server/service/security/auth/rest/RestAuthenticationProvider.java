@@ -39,6 +39,8 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.service.security.auth.MfaAuthenticationToken;
+import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
@@ -55,16 +57,19 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
     private final UserService userService;
     private final CustomerService customerService;
     private final AuditLogService auditLogService;
+    private final TwoFactorAuthService twoFactorAuthService;
 
     @Autowired
     public RestAuthenticationProvider(final UserService userService,
                                       final CustomerService customerService,
                                       final SystemSecurityService systemSecurityService,
-                                      final AuditLogService auditLogService) {
+                                      final AuditLogService auditLogService,
+                                      TwoFactorAuthService twoFactorAuthService) {
         this.userService = userService;
         this.customerService = customerService;
         this.systemSecurityService = systemSecurityService;
         this.auditLogService = auditLogService;
+        this.twoFactorAuthService = twoFactorAuthService;
     }
 
     @Override
@@ -77,17 +82,24 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
         }
 
         UserPrincipal userPrincipal =  (UserPrincipal) principal;
+        SecurityUser securityUser;
         if (userPrincipal.getType() == UserPrincipal.Type.USER_NAME) {
             String username = userPrincipal.getValue();
             String password = (String) authentication.getCredentials();
-            return authenticateByUsernameAndPassword(authentication, userPrincipal, username, password);
+            securityUser = authenticateByUsernameAndPassword(authentication, userPrincipal, username, password);
+            if (twoFactorAuthService.getTwoFaAccountConfig(securityUser.getTenantId(), securityUser.getId()).isPresent()) {
+                return new MfaAuthenticationToken(securityUser);
+            }
+            logLoginAction((User) authentication.getPrincipal(), authentication, ActionType.LOGIN, null);
         } else {
             String publicId = userPrincipal.getValue();
-            return authenticateByPublicId(userPrincipal, publicId);
+            securityUser = authenticateByPublicId(userPrincipal, publicId);
         }
+
+        return new UsernamePasswordAuthenticationToken(securityUser, null, securityUser.getAuthorities());
     }
 
-    private Authentication authenticateByUsernameAndPassword(Authentication authentication, UserPrincipal userPrincipal, String username, String password) {
+    private SecurityUser authenticateByUsernameAndPassword(Authentication authentication, UserPrincipal userPrincipal, String username, String password) {
         User user = userService.findUserByEmail(TenantId.SYS_TENANT_ID, username);
         if (user == null) {
             throw new UsernameNotFoundException("User not found: " + username);
@@ -110,17 +122,14 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
             if (user.getAuthority() == null)
                 throw new InsufficientAuthenticationException("User has no authority assigned");
 
-            SecurityUser securityUser = new SecurityUser(user, userCredentials.isEnabled(), userPrincipal);
-            // FIXME [viacheslav]: must not yet log login action if 2FA is used !
-            logLoginAction(user, authentication, ActionType.LOGIN, null);
-            return new UsernamePasswordAuthenticationToken(securityUser, null, securityUser.getAuthorities());
+            return new SecurityUser(user, userCredentials.isEnabled(), userPrincipal);
         } catch (Exception e) {
             logLoginAction(user, authentication, ActionType.LOGIN, e);
             throw e;
         }
     }
 
-    private Authentication authenticateByPublicId(UserPrincipal userPrincipal, String publicId) {
+    private SecurityUser authenticateByPublicId(UserPrincipal userPrincipal, String publicId) {
         CustomerId customerId;
         try {
             customerId = new CustomerId(UUID.fromString(publicId));
@@ -142,9 +151,7 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
         user.setFirstName("Public");
         user.setLastName("Public");
 
-        SecurityUser securityUser = new SecurityUser(user, true, userPrincipal);
-
-        return new UsernamePasswordAuthenticationToken(securityUser, null, securityUser.getAuthorities());
+        return new SecurityUser(user, true, userPrincipal);
     }
 
     @Override

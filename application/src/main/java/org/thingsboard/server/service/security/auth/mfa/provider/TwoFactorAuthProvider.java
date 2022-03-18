@@ -27,7 +27,7 @@ public interface TwoFactorAuthProvider<C extends TwoFactorAuthProviderConfig, A 
 
     default void prepareVerificationCode(SecurityUser user, C providerConfig, A accountConfig) throws ThingsboardException {}
 
-    boolean checkVerificationCode(SecurityUser user, String verificationCode, A accountConfig);
+    boolean checkVerificationCode(SecurityUser user, String verificationCode, C providerConfig, A accountConfig);
 
 
     TwoFactorAuthProviderType getType();

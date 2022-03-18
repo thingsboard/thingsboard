@@ -63,24 +63,6 @@ public class TwoFactorAuthService {
     protected static final String TWO_FACTOR_AUTH_SETTINGS_KEY = "twoFaSettings";
 
 
-    @Autowired
-    private void setProviders(Collection<TwoFactorAuthProvider<?, ?>> providers) {
-        providers.forEach(provider -> {
-            this.providers.put(provider.getType(), provider);
-        });
-    }
-
-    private <A extends TwoFactorAuthAccountConfig, C extends TwoFactorAuthProviderConfig> Optional<TwoFactorAuthProvider<C, A>> getTwoFaProvider(TwoFactorAuthProviderType providerType) {
-        return Optional.of((TwoFactorAuthProvider<C, A>) providers.get(providerType));
-    }
-
-    private <C extends TwoFactorAuthProviderConfig> Optional<C> getTwoFaProviderConfig(TenantId tenantId, TwoFactorAuthProviderType providerType) {
-        return getTwoFaSettings(tenantId)
-                .flatMap(twoFaSettings -> twoFaSettings.getProviderConfig(providerType))
-                .map(providerConfig -> (C) providerConfig);
-    }
-
-
     public <R> R processByTwoFaProvider(TenantId tenantId, TwoFactorAuthProviderType providerType, ThrowingBiFunction<TwoFactorAuthProvider<TwoFactorAuthProviderConfig, TwoFactorAuthAccountConfig>, TwoFactorAuthProviderConfig, R> function) throws Exception {
         TwoFactorAuthProviderConfig providerConfig = getTwoFaProviderConfig(tenantId, providerType)
                 .orElseThrow(() -> new ThingsboardException("2FA provider is not configured", ThingsboardErrorCode.BAD_REQUEST_PARAMS));
@@ -180,6 +162,24 @@ public class TwoFactorAuthService {
                     new BaseAttributeKvEntry(new JsonDataEntry(TWO_FACTOR_AUTH_SETTINGS_KEY, JacksonUtil.toString(twoFactorAuthSettings)), System.currentTimeMillis())
             )).get();
         }
+    }
+
+
+    private <A extends TwoFactorAuthAccountConfig, C extends TwoFactorAuthProviderConfig> Optional<TwoFactorAuthProvider<C, A>> getTwoFaProvider(TwoFactorAuthProviderType providerType) {
+        return Optional.of((TwoFactorAuthProvider<C, A>) providers.get(providerType));
+    }
+
+    private <C extends TwoFactorAuthProviderConfig> Optional<C> getTwoFaProviderConfig(TenantId tenantId, TwoFactorAuthProviderType providerType) {
+        return getTwoFaSettings(tenantId)
+                .flatMap(twoFaSettings -> twoFaSettings.getProviderConfig(providerType))
+                .map(providerConfig -> (C) providerConfig);
+    }
+
+    @Autowired
+    private void setProviders(Collection<TwoFactorAuthProvider<?, ?>> providers) {
+        providers.forEach(provider -> {
+            this.providers.put(provider.getType(), provider);
+        });
     }
 
 }

@@ -28,9 +28,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.service.security.auth.TokenOutdatingService;
+import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFactorAuthSettings;
 import org.thingsboard.server.service.security.auth.mfa.config.account.TotpTwoFactorAuthAccountConfig;
@@ -43,23 +44,29 @@ import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.util.HashMap;
+import java.util.Map;
 
 /*
  *
  * TODO [viacheslav]:
- *  - 2FA should be mandatory when logging in and must be rolled out to all existing users when 2FA is activated.
- *  - Rate limits should be implemented to protect against brute force leaked accounts to prevent SMS cost explosion.
- *  - Configurable softlock after XX (3) attempts: XX (15) mins
- *  - Configurable hardlock (user blocking) after a total of XX (10) unsuccessful attempts.
- *  - The OTP token should only be valid for XX (5) minutes.
- *  - Disable 2FA only possible after successful 2FA auth - it is possible with simple password resest
- *  - 2FA entries should be secured against code injection by code validation.
- *  - Email 2FA provider
+ *  - Configurable softlock after XX (3) attempts: XX (15) mins - on session level
+ *  - Configurable hardlock (user blocking) after a total of XX (10) unsuccessful attempts - on user level
  *
  * FIXME [viacheslav]:
  *  - Tests for 2FA
  *  - Swagger documentation
  *
+ * */
+// TODO [viacheslav]: maybe get rid of sessionId concept..
+
+/*
+ *
+ *
+ * TODO (later):
+ *  - 2FA entries should be secured against code injection by code validation
+ *  - ability to force users to use 2FA (maybe on log in, do not give them token pair but to give temporary
+ *      token to configure 2FA account config); also will need to make users configure 2FA during activation and password setup...
  * */
 @RestController
 @RequestMapping("/api")
@@ -122,7 +129,7 @@ public class TwoFactorAuthController extends BaseController {
 
         boolean verificationSuccess = twoFactorAuthService.processByTwoFaProvider(user.getTenantId(), accountConfig.getProviderType(),
                 (provider, providerConfig) -> {
-                    return provider.checkVerificationCode(user, verificationCode, accountConfig);
+                    return provider.checkVerificationCode(user, verificationCode, providerConfig, accountConfig);
                 });
 
         if (verificationSuccess) {
@@ -146,32 +153,58 @@ public class TwoFactorAuthController extends BaseController {
     }
 
 
-    @PostMapping("/auth/2fa/verification/check")
+    private final Map<String, TbRateLimits> verificationCodeSendRateLimits = new HashMap<>();
+    private final Map<String, TbRateLimits> verificationCodeCheckRateLimits = new HashMap<>();
+
+    @PostMapping("/auth/2fa/verification/send")
     @PreAuthorize("hasAuthority('PRE_VERIFICATION_TOKEN')")
-    public JwtTokenPair checkTwoFaVerificationCode(@RequestParam String verificationCode) throws Exception {
+    public void sendTwoFaVerificationCode() throws Exception {
         SecurityUser user = getCurrentUser();
 
-        boolean verificationSuccess = twoFactorAuthService.processByTwoFaProvider(user.getTenantId(), user.getId(),
-                (provider, providerConfig, accountConfig) -> {
-                    return provider.checkVerificationCode(user, verificationCode, accountConfig);
-                });
-
-        if (verificationSuccess) {
-            return tokenFactory.createTokenPair(user);
-        } else {
-            throw new ThingsboardException("Verification code is incorrect", ThingsboardErrorCode.AUTHENTICATION);
+        TwoFactorAuthSettings twoFaSettings = twoFactorAuthService.getTwoFaSettings(user.getTenantId()).get();
+        if (StringUtils.isNotEmpty(twoFaSettings.getVerificationCodeSendRateLimit())) {
+            TbRateLimits rateLimits = verificationCodeSendRateLimits.computeIfAbsent(user.getSessionId(), sessionId -> {
+                return new TbRateLimits(twoFaSettings.getVerificationCodeSendRateLimit());
+            });
+            if (!rateLimits.tryConsume()) {
+                throw new ThingsboardException(ThingsboardErrorCode.TOO_MANY_REQUESTS);
+            }
         }
-    }
-
-    @PostMapping("/auth/2fa/verification/resend")
-    @PreAuthorize("hasAuthority('PRE_VERIFICATION_TOKEN')")
-    public void resendTwoFaVerificationCode() throws Exception {
-        SecurityUser user = getCurrentUser();
 
         twoFactorAuthService.processByTwoFaProvider(user.getTenantId(), user.getId(),
                 (provider, providerConfig, accountConfig) -> {
                     provider.prepareVerificationCode(user, providerConfig, accountConfig);
                 });
+    }
+
+    @PostMapping("/auth/2fa/verification/check")
+    @PreAuthorize("hasAuthority('PRE_VERIFICATION_TOKEN')")
+    public JwtTokenPair checkTwoFaVerificationCode(@RequestParam String verificationCode) throws Exception {
+        SecurityUser user = getCurrentUser();
+
+
+
+        // FIXME [viacheslav]: rate limits for verification code check
+        boolean verificationSuccess = twoFactorAuthService.processByTwoFaProvider(user.getTenantId(), user.getId(),
+                (provider, providerConfig, accountConfig) -> {
+                    return provider.checkVerificationCode(user, verificationCode, providerConfig, accountConfig);
+                });
+
+
+        if (verificationSuccess) {
+            return tokenFactory.createTokenPair(user);
+        } else {
+            TwoFactorAuthSettings twoFaSettings = twoFactorAuthService.getTwoFaSettings(user.getTenantId()).get();
+            if (StringUtils.isNotEmpty(twoFaSettings.getVerificationCodeSendRateLimit())) {
+                TbRateLimits rateLimits = verificationCodeSendRateLimits.computeIfAbsent(user.getSessionId(), sessionId -> {
+                    return new TbRateLimits(twoFaSettings.getVerificationCodeSendRateLimit());
+                });
+                if (!rateLimits.tryConsume()) {
+                    throw new ThingsboardException(ThingsboardErrorCode.TOO_MANY_REQUESTS);
+                }
+            }
+            throw new ThingsboardException("Verification code is incorrect", ThingsboardErrorCode.AUTHENTICATION);
+        }
     }
 
 }

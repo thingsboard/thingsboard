@@ -13,26 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.auth.mfa.config.provider;
+package org.thingsboard.server.service.security.auth.mfa.config.account;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProviderType;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
-
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class SmsTwoFactorAuthProviderConfig extends OtpBasedTwoFactorAuthProviderConfig {
+public class EmailTwoFactorAuthAccountConfig extends OtpBasedTwoFactorAuthAccountConfig {
 
-    @NotBlank
-    @Pattern(regexp = ".*\\$\\{verificationCode}.*", message = "template must contain verification code")
-    private String smsVerificationMessageTemplate;
+    private boolean useAccountEmail; // TODO [viacheslav]: validate
+    private String email;
 
     @Override
     public TwoFactorAuthProviderType getProviderType() {
-        return TwoFactorAuthProviderType.SMS;
+        return TwoFactorAuthProviderType.EMAIL;
     }
 
 }

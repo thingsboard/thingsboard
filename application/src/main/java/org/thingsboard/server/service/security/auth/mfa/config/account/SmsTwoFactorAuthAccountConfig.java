@@ -16,12 +16,14 @@
 package org.thingsboard.server.service.security.auth.mfa.config.account;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProviderType;
 
 import javax.validation.constraints.NotBlank;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class SmsTwoFactorAuthAccountConfig implements TwoFactorAuthAccountConfig {
+public class SmsTwoFactorAuthAccountConfig extends OtpBasedTwoFactorAuthAccountConfig {
 
     @NotBlank
     private String phoneNumber;
