@@ -24,6 +24,8 @@ import org.eclipse.californium.core.observe.ObserveRelation;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
 import org.eclipse.californium.core.server.resources.ResourceObserver;
+import org.eclipse.leshan.core.node.LwM2mPath;
+import org.eclipse.leshan.core.util.Hex;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 
 import java.util.List;
@@ -34,6 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FIRMWARE_UPDATE_COAP_RESOURCE;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SOFTWARE_UPDATE_COAP_RESOURCE;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LWM2M_POST_COAP_RESOURCE;
 
 @Slf4j
 public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
@@ -82,6 +85,21 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
     @Override
     protected void processHandlePost(CoapExchange exchange) {
         log.debug("processHandlePost [{}]", exchange);
+        try {
+            List<String> uriPath = exchange.getRequestOptions().getUriPath();
+            if (uriPath.size() == 3 && LWM2M_POST_COAP_RESOURCE.equals(uriPath.get(0))) {
+                String endpoint = uriPath.get(1);
+                LwM2mPath lwM2mPath = new LwM2mPath(uriPath.get(2).replaceAll("-", "/"));
+                byte[] payLoadRequest = exchange.getRequestPayload();
+                String payLoadRequestStr = Hex.encodeHexString(exchange.getRequestPayload());
+                this.sendDataToTransport(exchange, lwM2mPath, endpoint, payLoadRequest);
+
+            } else {
+                log.error("Invalid UriPath. Lwm2m coap Post request: {}", uriPath);
+            }
+        } catch (Exception e) {
+            log.error("Invalid Lwm2m coap Post request: [{}]", e.getMessage());
+        }
     }
 
     /**
@@ -159,4 +177,11 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
         return otaPackageDataCache.get(currentId.toString());
     }
 
+    private void sendDataToTransport(CoapExchange exchange, LwM2mPath lwM2mPath, String endpoint, byte[] payLoadRequest) {
+
+        Response response = new Response(CoAP.ResponseCode.CONTENT);
+        String payLoadResponse = lwM2mPath.toString() + ", size = " + exchange.getRequestPayloadSize();
+        response.setPayload(payLoadResponse);
+        exchange.respond(response);
+    }
 }
