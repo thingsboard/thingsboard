@@ -257,7 +257,7 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
     @Test
     public void testCreateTwoCustomerInSameTime() throws InterruptedException {
         final int TIMEOUT = 10;
-        int parallelCount = 4;
+        int parallelCount = 3;
         ExecutorService executorService = Executors.newFixedThreadPool(parallelCount, ThingsBoardThreadFactory.forName(getClass().getSimpleName() + "-test-scope"));
 
         Customer customer = new Customer();
