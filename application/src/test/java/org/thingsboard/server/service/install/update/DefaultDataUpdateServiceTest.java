@@ -54,6 +54,8 @@ class DefaultDataUpdateServiceTest {
     void setUp() {
         willCallRealMethod().given(service).convertDeviceProfileAlarmRulesForVersion330(any());
         willCallRealMethod().given(service).convertDeviceProfileForVersion330(any());
+        willCallRealMethod().given(service).updateDuplicateCustomersTitle(any());
+        willCallRealMethod().given(service).sortCustomersByTenantIdAndTitleAndCreatedTime(any());
     }
 
     JsonNode readFromResource(String resourceName) throws IOException {
