@@ -26,7 +26,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.service.security.auth.MfaAuthenticationToken;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
-import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
+import org.thingsboard.server.service.security.auth.mfa.config.TwoFactorAuthConfigManager;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFactorAuthSettings;
 import org.thingsboard.server.service.security.model.JwtTokenPair;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -44,7 +44,7 @@ import java.io.IOException;
 public class RestAwareAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
     private final ObjectMapper mapper;
     private final JwtTokenFactory tokenFactory;
-    private final TwoFactorAuthService twoFactorAuthService;
+    private final TwoFactorAuthConfigManager twoFactorAuthConfigManager;
     private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
@@ -54,9 +54,9 @@ public class RestAwareAuthenticationSuccessHandler implements AuthenticationSucc
         JwtTokenPair tokenPair = new JwtTokenPair();
 
         if (authentication instanceof MfaAuthenticationToken) {
-            TwoFactorAuthSettings twoFaSettings = twoFactorAuthService.getTwoFaSettings(securityUser.getTenantId()).get();
-            // FIXME [viacheslav]: define the logic: pre-verification token lifetime,
-            tokenPair.setToken(tokenFactory.createTwoFaPreVerificationToken(securityUser, ).getToken());
+            int preVerificationTokenLifetime = twoFactorAuthConfigManager.getTwoFaSettings(securityUser.getTenantId())
+                    .map(TwoFactorAuthSettings::getTotalAllowedTimeForVerification).orElse(30);
+            tokenPair.setToken(tokenFactory.createTwoFaPreVerificationToken(securityUser, preVerificationTokenLifetime).getToken());
             tokenPair.setRefreshToken(null);
         } else {
             tokenPair.setToken(tokenFactory.createAccessJwtToken(securityUser).getToken());

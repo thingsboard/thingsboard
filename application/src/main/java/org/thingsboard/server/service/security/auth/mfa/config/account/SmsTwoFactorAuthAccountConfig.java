@@ -20,12 +20,14 @@ import lombok.EqualsAndHashCode;
 import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProviderType;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class SmsTwoFactorAuthAccountConfig extends OtpBasedTwoFactorAuthAccountConfig {
 
     @NotBlank
+    @Pattern(regexp = "^\\+[1-9]\\d{1,14}$", message = "Phone number is not of E.164 format")
     private String phoneNumber;
 
     @Override

@@ -301,7 +301,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     public void onUserLoginSuccessful(TenantId tenantId, UserId userId) {
         log.trace("Executing onUserLoginSuccessful [{}]", userId);
         User user = findUserById(tenantId, userId);
-        setLastLoginTs(user);
+        setLastLoginTs(user); // FIXME [viacheslav]: move to logLoginAction ?
         resetFailedLoginAttempts(user);
         saveUser(user);
     }

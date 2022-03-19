@@ -15,8 +15,11 @@
  */
 package org.thingsboard.server.config;
 
+import io.github.bucket4j.Bucket4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.Cache;
+import org.springframework.cache.jcache.JCacheCacheManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;

@@ -40,8 +40,7 @@ public abstract class OtpBasedTwoFactorAuthProvider<C extends OtpBasedTwoFactorA
     @Override
     public final void prepareVerificationCode(SecurityUser user, C providerConfig, A accountConfig) throws ThingsboardException {
         String verificationCode = RandomStringUtils.randomNumeric(6);
-        verificationCodesCache.put(user.getSessionId(), new Otp(System.currentTimeMillis(), verificationCode));
-
+        verificationCodesCache.put(user.getSessionId(), new Otp(System.currentTimeMillis(), verificationCode, accountConfig));
         sendVerificationCode(user, verificationCode, providerConfig, accountConfig);
     }
 
@@ -51,8 +50,14 @@ public abstract class OtpBasedTwoFactorAuthProvider<C extends OtpBasedTwoFactorA
     @Override
     public final boolean checkVerificationCode(SecurityUser user, String verificationCode, C providerConfig, A accountConfig) {
         Otp correctVerificationCode = verificationCodesCache.get(user.getSessionId(), Otp.class);
-        if (correctVerificationCode != null && verificationCode.equals(correctVerificationCode.getValue())) {
-            if (System.currentTimeMillis() - correctVerificationCode.getTimestamp() <= TimeUnit.SECONDS.toMillis(providerConfig.getVerificationCodeLifetime())) {
+        if (correctVerificationCode != null) {
+            if (System.currentTimeMillis() - correctVerificationCode.getTimestamp()
+                    > TimeUnit.SECONDS.toMillis(providerConfig.getVerificationCodeLifetime())) {
+                verificationCodesCache.evict(user.getSessionId());
+                return false;
+            }
+            if (verificationCode.equals(correctVerificationCode.getValue())
+                    && correctVerificationCode.getConfig().equals(accountConfig)) {
                 verificationCodesCache.evict(user.getSessionId());
                 return true;
             }
@@ -65,6 +70,7 @@ public abstract class OtpBasedTwoFactorAuthProvider<C extends OtpBasedTwoFactorA
     private static class Otp {
         private final long timestamp;
         private final String value;
+        private final OtpBasedTwoFactorAuthAccountConfig config;
     }
 
 }

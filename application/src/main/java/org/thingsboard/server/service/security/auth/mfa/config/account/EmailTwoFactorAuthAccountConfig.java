@@ -17,18 +17,29 @@ package org.thingsboard.server.service.security.auth.mfa.config.account;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProviderType;
+
+import javax.validation.constraints.AssertTrue;
+import javax.validation.constraints.Email;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class EmailTwoFactorAuthAccountConfig extends OtpBasedTwoFactorAuthAccountConfig {
 
-    private boolean useAccountEmail; // TODO [viacheslav]: validate
+    private boolean useAccountEmail;
+    @Email(message = "Email is not valid")
     private String email;
 
     @Override
     public TwoFactorAuthProviderType getProviderType() {
         return TwoFactorAuthProviderType.EMAIL;
+    }
+
+
+    @AssertTrue(message = "Email must be specified") // TODO [viacheslav]: test !
+    private boolean isValid() {
+        return useAccountEmail || StringUtils.isNotEmpty(email);
     }
 
 }

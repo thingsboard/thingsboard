@@ -15,9 +15,14 @@
  */
 package org.thingsboard.server.service.security.auth.mfa.config.provider;
 
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+
+import javax.validation.constraints.Min;
 
 @Data
 public abstract class OtpBasedTwoFactorAuthProviderConfig implements TwoFactorAuthProviderConfig {
-    private Integer verificationCodeLifetime; // seconds
+    @ApiModelProperty(value = "in seconds", example = "60")
+    @Min(1) // TODO [viacheslav]: test
+    private int verificationCodeLifetime;
 }

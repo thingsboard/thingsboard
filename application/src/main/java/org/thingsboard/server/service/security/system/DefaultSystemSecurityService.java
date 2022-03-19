@@ -37,12 +37,14 @@ import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
@@ -50,7 +52,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.user.UserServiceImpl;
-import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.service.security.auth.mfa.config.TwoFactorAuthSettings;
 import org.thingsboard.server.service.security.exception.UserPasswordExpiredException;
 import org.thingsboard.server.utils.MiscUtils;
 
@@ -59,6 +61,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.common.data.CacheConstants.SECURITY_SETTINGS_CACHE;
@@ -122,17 +125,10 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
     public void validateUserCredentials(TenantId tenantId, UserCredentials userCredentials, String username, String password) throws AuthenticationException {
         if (!encoder.matches(password, userCredentials.getPassword())) {
             int failedLoginAttempts = userService.onUserLoginIncorrectCredentials(tenantId, userCredentials.getUserId());
-            SecuritySettings securitySettings = getSecuritySettings(tenantId);
+            SecuritySettings securitySettings = self.getSecuritySettings(tenantId);
             if (securitySettings.getMaxFailedLoginAttempts() != null && securitySettings.getMaxFailedLoginAttempts() > 0) {
                 if (failedLoginAttempts > securitySettings.getMaxFailedLoginAttempts() && userCredentials.isEnabled()) {
-                    userService.setUserCredentialsEnabled(TenantId.SYS_TENANT_ID, userCredentials.getUserId(), false);
-                    if (StringUtils.isNoneBlank(securitySettings.getUserLockoutNotificationEmail())) {
-                        try {
-                            mailService.sendAccountLockoutEmail(username, securitySettings.getUserLockoutNotificationEmail(), securitySettings.getMaxFailedLoginAttempts());
-                        } catch (ThingsboardException e) {
-                            log.warn("Can't send email regarding user account [{}] lockout to provided email [{}]", username, securitySettings.getUserLockoutNotificationEmail(), e);
-                        }
-                    }
+                    lockAccount(userCredentials.getUserId(), username, securitySettings);
                     throw new LockedException("Authentication Failed. Username was locked due to security policy.");
                 }
             }
@@ -143,6 +139,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
             throw new DisabledException("User is not active");
         }
 
+        // FIXME [viacheslav]: don't do that in case of 2FA. maybe just move underlying setLastLoginTs to logLoginAction ?
         userService.onUserLoginSuccessful(tenantId, userCredentials.getUserId());
 
         SecuritySettings securitySettings = self.getSecuritySettings(tenantId);
@@ -152,6 +149,43 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
                     < System.currentTimeMillis()) {
                 userCredentials = userService.requestExpiredPasswordReset(tenantId, userCredentials.getId());
                 throw new UserPasswordExpiredException("User password expired!", userCredentials.getResetToken());
+            }
+        }
+    }
+
+    @Override
+    public void validateTwoFaVerification(TenantId tenantId, UserId userId, boolean verificationSuccess, TwoFactorAuthSettings twoFaSettings) {
+        User user = userService.findUserById(tenantId, userId);
+        ObjectNode additionalInfo = (ObjectNode) Optional.ofNullable(user.getAdditionalInfo())
+                .filter(jsonNode -> jsonNode instanceof ObjectNode)
+                .orElseGet(JacksonUtil::newObjectNode);
+        // TODO [viacheslav]: test !
+        int failedVerificationAttempts = Optional.ofNullable(additionalInfo.get("failedTwoFaVerificationAttempts"))
+                .map(JsonNode::asInt).orElse(0);
+
+        if (!verificationSuccess) {
+            failedVerificationAttempts++;
+            // TODO [viacheslav]: maybe use userService.onUserLoginIncorrectCredentials()
+        } else {
+            failedVerificationAttempts = 0;
+            // and set last login ts
+        }
+
+        if (twoFaSettings.getMaxCodeVerificationFailuresBeforeUserLockout() > 0
+                && failedVerificationAttempts >= twoFaSettings.getMaxCodeVerificationFailuresBeforeUserLockout()) {
+            userService.setUserCredentialsEnabled(TenantId.SYS_TENANT_ID, userId, false);
+            lockAccount(userId, user.getEmail(), self.getSecuritySettings(tenantId));
+            throw new LockedException("User account was locked due to exceeded 2FA verification attempts");
+        }
+    }
+
+    private void lockAccount(UserId userId, String username, SecuritySettings securitySettings) {
+        userService.setUserCredentialsEnabled(TenantId.SYS_TENANT_ID, userId, false);
+        if (StringUtils.isNoneBlank(securitySettings.getUserLockoutNotificationEmail())) {
+            try {
+                mailService.sendAccountLockoutEmail(username, securitySettings.getUserLockoutNotificationEmail(), securitySettings.getMaxFailedLoginAttempts());
+            } catch (ThingsboardException e) {
+                log.warn("Can't send email regarding user account [{}] lockout to provided email [{}]", username, securitySettings.getUserLockoutNotificationEmail(), e);
             }
         }
     }

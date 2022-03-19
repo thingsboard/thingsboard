@@ -18,9 +18,11 @@ package org.thingsboard.server.service.security.system;
 import org.springframework.security.core.AuthenticationException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
+import org.thingsboard.server.service.security.auth.mfa.config.TwoFactorAuthSettings;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -31,6 +33,8 @@ public interface SystemSecurityService {
     SecuritySettings saveSecuritySettings(TenantId tenantId, SecuritySettings securitySettings);
 
     void validateUserCredentials(TenantId tenantId, UserCredentials userCredentials, String username, String password) throws AuthenticationException;
+
+    void validateTwoFaVerification(TenantId tenantId, UserId userId, boolean verificationSuccess, TwoFactorAuthSettings twoFaSettings);
 
     void validatePassword(TenantId tenantId, String password, UserCredentials userCredentials) throws DataValidationException;
 
