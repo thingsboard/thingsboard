@@ -114,6 +114,9 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
   datakeySettingsSchema: any;
 
   @Input()
+  dataKeySettingsDirective: string;
+
+  @Input()
   callbacks: DataKeysCallbacks;
 
   @Input()
@@ -395,6 +398,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, AfterVie
         data: {
           dataKey: deepClone(key),
           dataKeySettingsSchema: this.datakeySettingsSchema,
+          dataKeySettingsDirective: this.dataKeySettingsDirective,
           entityAliasId: this.entityAliasId,
           showPostProcessing: this.widgetType !== widgetType.alarm,
           callbacks: this.callbacks

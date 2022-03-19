@@ -25,6 +25,14 @@ import { EntityId } from '@shared/models/id/entity-id';
 import * as moment_ from 'moment';
 import { EntityDataPageLink, EntityFilter, KeyFilter } from '@shared/models/query/query.models';
 import { PopoverPlacement } from '@shared/components/popover.models';
+import { PageComponent } from '@shared/components/page.component';
+import { AfterViewInit, Directive, EventEmitter, Inject, OnInit } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { AbstractControl, FormGroup } from '@angular/forms';
+import {RuleChainType} from "@shared/models/rule-chain.models";
+import {Observable} from "rxjs";
+import {RuleNodeConfiguration} from "@shared/models/rule-node.models";
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -143,6 +151,8 @@ export interface WidgetTypeDescriptor {
   controllerScript: string;
   settingsSchema?: string | any;
   dataKeySettingsSchema?: string | any;
+  settingsDirective?: string;
+  dataKeySettingsDirective?: string;
   defaultConfig: string;
   sizeX: number;
   sizeY: number;
@@ -159,6 +169,7 @@ export interface WidgetTypeParameters {
   singleEntity?: boolean;
   warnOnPageDataOverflow?: boolean;
   ignoreDataUpdateOnIntervalTick?: boolean;
+
 }
 
 export interface WidgetControllerDescriptor {
@@ -483,6 +494,10 @@ export interface WidgetComparisonSettings {
   comparisonCustomIntervalValue?: number;
 }
 
+export interface WidgetSettings {
+  [key: string]: any;
+}
+
 export interface WidgetConfig {
   title?: string;
   titleIcon?: string;
@@ -512,7 +527,7 @@ export interface WidgetConfig {
   decimals?: number;
   noDataDisplayMessage?: string;
   actions?: {[actionSourceId: string]: Array<WidgetActionDescriptor>};
-  settings?: any;
+  settings?: WidgetSettings;
   alarmSource?: Datasource;
   alarmStatusList?: AlarmSearchStatus[];
   alarmSeverityList?: AlarmSeverity[];
@@ -569,4 +584,114 @@ export interface WidgetPosition {
 export interface WidgetSize {
   sizeX: number;
   sizeY: number;
+}
+
+export interface IWidgetSettingsComponent {
+  settings: WidgetSettings;
+  settingsChanged: Observable<WidgetSettings>;
+  validate();
+  [key: string]: any;
+}
+
+@Directive()
+// tslint:disable-next-line:directive-class-suffix
+export abstract class WidgetSettingsComponent extends PageComponent implements
+  IWidgetSettingsComponent, OnInit, AfterViewInit {
+
+  settingsValue: WidgetSettings;
+
+  private settingsSet = false;
+
+  set settings(value: WidgetSettings) {
+    this.settingsValue = value;
+    if (!this.settingsSet) {
+      this.settingsSet = true;
+      this.setupSettings(value);
+    } else {
+      this.updateSettings(value);
+    }
+  }
+
+  get settings(): WidgetSettings {
+    return this.settingsValue;
+  }
+
+  settingsChangedEmitter = new EventEmitter<WidgetSettings>();
+  settingsChanged = this.settingsChangedEmitter.asObservable();
+
+  protected constructor(@Inject(Store) protected store: Store<AppState>) {
+    super(store);
+  }
+
+  ngOnInit() {}
+
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      if (!this.validateSettings()) {
+        this.settingsChangedEmitter.emit(null);
+      }
+    }, 0);
+  }
+
+  validate() {
+    this.onValidate();
+  }
+
+  protected setupSettings(settings: WidgetSettings) {
+    this.onSettingsSet(this.prepareInputSettings(settings));
+    this.updateValidators(false);
+    for (const trigger of this.validatorTriggers()) {
+      const path = trigger.split('.');
+      let control: AbstractControl = this.settingsForm();
+      for (const part of path) {
+        control = control.get(part);
+      }
+      control.valueChanges.subscribe(() => {
+        this.updateValidators(true, trigger);
+      });
+    }
+    this.settingsForm().valueChanges.subscribe((updated: WidgetSettings) => {
+      this.onSettingsChanged(updated);
+    });
+  }
+
+  protected updateSettings(settings: WidgetSettings) {
+    this.settingsForm().reset(this.prepareInputSettings(settings), {emitEvent: false});
+    this.updateValidators(false);
+  }
+
+  protected updateValidators(emitEvent: boolean, trigger?: string) {
+  }
+
+  protected validatorTriggers(): string[] {
+    return [];
+  }
+
+  protected onSettingsChanged(updated: WidgetSettings) {
+    this.settingsValue = updated;
+    if (this.validateSettings()) {
+      this.settingsChangedEmitter.emit(this.prepareOutputSettings(updated));
+    } else {
+      this.settingsChangedEmitter.emit(null);
+    }
+  }
+
+  protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
+    return settings;
+  }
+
+  protected prepareOutputSettings(settings: WidgetSettings): WidgetSettings {
+    return settings;
+  }
+
+  protected validateSettings(): boolean {
+    return this.settingsForm().valid;
+  }
+
+  protected onValidate() {}
+
+  protected abstract settingsForm(): FormGroup;
+
+  protected abstract onSettingsSet(settings: WidgetSettings);
+
 }

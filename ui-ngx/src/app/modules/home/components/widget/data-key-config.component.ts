@@ -73,6 +73,9 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
   dataKeySettingsSchema: any;
 
   @Input()
+  dataKeySettingsDirective: string;
+
+  @Input()
   showPostProcessing = true;
 
   @ViewChild('keyInput') keyInput: ElementRef;
@@ -121,11 +124,15 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
         type: DataKeyType.alarm
       });
     }
-    if (this.dataKeySettingsSchema && this.dataKeySettingsSchema.schema) {
+    if (this.dataKeySettingsSchema && this.dataKeySettingsSchema.schema ||
+      this.dataKeySettingsDirective && this.dataKeySettingsDirective.length) {
       this.displayAdvanced = true;
       this.dataKeySettingsData = {
-        schema: this.dataKeySettingsSchema.schema,
-        form: this.dataKeySettingsSchema.form || ['*']
+        schema: this.dataKeySettingsSchema?.schema || {
+          type: 'object',
+          properties: {}
+        },
+        form: this.dataKeySettingsSchema?.form || ['*']
       };
       this.dataKeySettingsFormGroup = this.fb.group({
         settings: [null, []]

@@ -605,7 +605,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       widgetSettingsFormData.schema = deepClone(emptySettingsSchema);
       widgetSettingsFormData.form = deepClone(defaultSettingsForm);
       widgetSettingsFormData.groupInfoes = deepClone(emptySettingsGroupInfoes);
-      widgetSettingsFormData.model = {};
+      widgetSettingsFormData.model = settings || {};
     }
     this.advancedSettings.patchValue({ settings: widgetSettingsFormData }, {emitEvent: false});
   }
@@ -713,7 +713,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   }
 
   public displayAdvanced(): boolean {
-    return !!this.modelValue && !!this.modelValue.settingsSchema && !!this.modelValue.settingsSchema.schema;
+    return !!this.modelValue && (!!this.modelValue.settingsSchema && !!this.modelValue.settingsSchema.schema ||
+        !!this.modelValue.settingsDirective && !!this.modelValue.settingsDirective.length);
   }
 
   public dndDatasourceMoved(index: number) {
@@ -913,7 +914,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
           valid: false
         }
       };
-    } else if (!this.advancedSettings.valid) {
+    } else if (!this.advancedSettings.valid || (this.displayAdvanced() && !this.modelValue.config.settings)) {
       return {
         advancedSettings: {
           valid: false

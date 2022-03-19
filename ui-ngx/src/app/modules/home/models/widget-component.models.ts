@@ -424,6 +424,8 @@ export interface WidgetConfigComponentData {
   isDataEnabled: boolean;
   settingsSchema: JsonSettingsSchema;
   dataKeySettingsSchema: JsonSettingsSchema;
+  settingsDirective: string;
+  dataKeySettingsDirective: string;
 }
 
 export const MissingWidgetType: WidgetInfo = {
@@ -510,6 +512,8 @@ export function toWidgetInfo(widgetTypeEntity: WidgetType): WidgetInfo {
     controllerScript: widgetTypeEntity.descriptor.controllerScript,
     settingsSchema: widgetTypeEntity.descriptor.settingsSchema,
     dataKeySettingsSchema: widgetTypeEntity.descriptor.dataKeySettingsSchema,
+    settingsDirective: widgetTypeEntity.descriptor.settingsDirective,
+    dataKeySettingsDirective: widgetTypeEntity.descriptor.dataKeySettingsDirective,
     defaultConfig: widgetTypeEntity.descriptor.defaultConfig
   };
 }
@@ -536,6 +540,8 @@ export function toWidgetType(widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId:
     controllerScript: widgetInfo.controllerScript,
     settingsSchema: widgetInfo.settingsSchema,
     dataKeySettingsSchema: widgetInfo.dataKeySettingsSchema,
+    settingsDirective: widgetInfo.settingsDirective,
+    dataKeySettingsDirective: widgetInfo.dataKeySettingsDirective,
     defaultConfig: widgetInfo.defaultConfig
   };
   return {

@@ -2985,6 +2985,8 @@
         "widget-settings": "Widget settings",
         "description": "Description",
         "image-preview": "Image preview",
+        "settings-form-selector": "Settings form selector",
+        "data-key-settings-form-selector": "Data key settings form selector",
         "javascript": "Javascript",
         "js": "JS",
         "remove-widget-type-title": "Are you sure you want to remove the widget type '{{widgetName}}'?",
@@ -3151,7 +3153,8 @@
         "icon-size": "Icon size",
         "advanced-settings": "Advanced settings",
         "data-settings": "Data settings",
-        "no-data-display-message": "\"No data to display\" alternative message"
+        "no-data-display-message": "\"No data to display\" alternative message",
+        "settings-component-not-found": "Settings form component not found for selector '{{selector}}'"
     },
     "widget-type": {
         "import": "Import widget type",
@@ -3266,6 +3269,12 @@
             "value": "Value"
         },
         "invalid-qr-code-text": "Invalid input text for QR code. Input should have a string type",
+        "qr-code": {
+            "use-qr-code-text-function": "Use QR code text function",
+            "qr-code-text-pattern": "QR code text pattern (for ex. '${entityName} | ${keyName} - some text.')",
+            "qr-code-text-pattern-required": "QR code text pattern is required.",
+            "qr-code-text-function": "QR code text function"
+        },
         "persistent-table": {
             "rpc-id": "RPC ID",
             "message-type": "Message type",

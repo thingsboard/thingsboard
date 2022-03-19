@@ -190,6 +190,7 @@
                                       [optDataKeys]="modelValue?.typeParameters?.dataKeysOptional"
                                       [aliasController]="aliasController"
                                       [datakeySettingsSchema]="modelValue?.dataKeySettingsSchema"
+                                      [dataKeySettingsDirective]="modelValue?.dataKeySettingsDirective"
                                       [callbacks]="widgetConfigCallbacks"
                                       [entityAliasId]="datasourceControl.get('entityAliasId').value"
                                       [formControl]="datasourceControl.get('dataKeys')">
@@ -283,6 +284,7 @@
                             [datasourceType]="alarmSourceSettings.get('type').value"
                             [aliasController]="aliasController"
                             [datakeySettingsSchema]="modelValue?.dataKeySettingsSchema"
+                            [dataKeySettingsDirective]="modelValue?.dataKeySettingsDirective"
                             [callbacks]="widgetConfigCallbacks"
                             [entityAliasId]="alarmSourceSettings.get('entityAliasId').value"
                             formControlName="dataKeys">
@@ -476,9 +478,10 @@
   <mat-tab *ngIf="displayAdvanced()" label="{{ 'widget-config.advanced' | translate }}">
     <div [formGroup]="advancedSettings" class="mat-content mat-padding tb-advanced-widget-config"
          fxLayout="column">
-        <tb-json-form
+        <tb-widget-settings
+          [settingsDirective]="modelValue.settingsDirective"
           formControlName="settings">
-        </tb-json-form>
+        </tb-widget-settings>
     </div>
   </mat-tab>
   <mat-tab label="{{ 'widget-config.actions' | translate }}" [formGroup]="actionsSettings">

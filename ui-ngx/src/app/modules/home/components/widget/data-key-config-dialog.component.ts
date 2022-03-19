@@ -29,6 +29,7 @@ import { DataKeyConfigComponent } from '@home/components/widget/data-key-config.
 export interface DataKeyConfigDialogData {
   dataKey: DataKey;
   dataKeySettingsSchema: any;
+  dataKeySettingsDirective: string;
   entityAliasId?: string;
   showPostProcessing?: boolean;
   callbacks?: DataKeysCallbacks;
