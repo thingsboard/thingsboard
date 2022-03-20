@@ -34,7 +34,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -136,7 +135,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
             SecuritySettings securitySettings = self.getSecuritySettings(tenantId);
             if (securitySettings.getMaxFailedLoginAttempts() != null && securitySettings.getMaxFailedLoginAttempts() > 0) {
                 if (failedLoginAttempts > securitySettings.getMaxFailedLoginAttempts() && userCredentials.isEnabled()) {
-                    lockAccount(userCredentials.getUserId(), username, securitySettings);
+                    lockAccount(userCredentials.getUserId(), username, securitySettings.getUserLockoutNotificationEmail(), securitySettings.getMaxFailedLoginAttempts());
                     throw new LockedException("Authentication Failed. Username was locked due to security policy.");
                 }
             }
@@ -172,21 +171,22 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
             userService.resetFailedLoginAttempts(tenantId, userId);
         }
 
-        if (twoFaSettings.getMaxCodeVerificationFailuresBeforeUserLockout() > 0
-                && failedVerificationAttempts >= twoFaSettings.getMaxCodeVerificationFailuresBeforeUserLockout()) {
+        if (twoFaSettings.getMaxVerificationFailuresBeforeUserLockout() > 0
+                && failedVerificationAttempts >= twoFaSettings.getMaxVerificationFailuresBeforeUserLockout()) {
             userService.setUserCredentialsEnabled(TenantId.SYS_TENANT_ID, userId, false);
-            lockAccount(userId, securityUser.getEmail(), self.getSecuritySettings(tenantId));
+            SecuritySettings securitySettings = self.getSecuritySettings(tenantId);
+            lockAccount(userId, securityUser.getEmail(), securitySettings.getUserLockoutNotificationEmail(), twoFaSettings.getMaxVerificationFailuresBeforeUserLockout());
             throw new LockedException("User account was locked due to exceeded 2FA verification attempts");
         }
     }
 
-    private void lockAccount(UserId userId, String username, SecuritySettings securitySettings) {
+    private void lockAccount(UserId userId, String username, String userLockoutNotificationEmail, Integer maxFailedLoginAttempts) {
         userService.setUserCredentialsEnabled(TenantId.SYS_TENANT_ID, userId, false);
-        if (StringUtils.isNoneBlank(securitySettings.getUserLockoutNotificationEmail())) {
+        if (StringUtils.isNotBlank(userLockoutNotificationEmail)) {
             try {
-                mailService.sendAccountLockoutEmail(username, securitySettings.getUserLockoutNotificationEmail(), securitySettings.getMaxFailedLoginAttempts());
+                mailService.sendAccountLockoutEmail(username, userLockoutNotificationEmail, maxFailedLoginAttempts);
             } catch (ThingsboardException e) {
-                log.warn("Can't send email regarding user account [{}] lockout to provided email [{}]", username, securitySettings.getUserLockoutNotificationEmail(), e);
+                log.warn("Can't send email regarding user account [{}] lockout to provided email [{}]", username, userLockoutNotificationEmail, e);
             }
         }
     }
@@ -257,23 +257,22 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
     }
 
     @Override
-    public void logLoginAction(User user, Authentication authentication, ActionType actionType, Exception e) {
+    public void logLoginAction(User user, Object authenticationDetails, ActionType actionType, Exception e) {
         String clientAddress = "Unknown";
         String browser = "Unknown";
         String os = "Unknown";
         String device = "Unknown";
-        if (authentication != null && authentication.getDetails() != null) {
-            if (authentication.getDetails() instanceof RestAuthenticationDetails) {
-                RestAuthenticationDetails details = (RestAuthenticationDetails) authentication.getDetails();
-                clientAddress = details.getClientAddress();
-                if (details.getUserAgent() != null) {
-                    Client userAgent = details.getUserAgent();
-                    if (userAgent.userAgent != null) {
-                        browser = userAgent.userAgent.family;
-                        if (userAgent.userAgent.major != null) {
-                            browser += " " + userAgent.userAgent.major;
-                            if (userAgent.userAgent.minor != null) {
-                                browser += "." + userAgent.userAgent.minor;
+        if (authenticationDetails instanceof RestAuthenticationDetails) {
+            RestAuthenticationDetails details = (RestAuthenticationDetails) authenticationDetails;
+            clientAddress = details.getClientAddress();
+            if (details.getUserAgent() != null) {
+                Client userAgent = details.getUserAgent();
+                if (userAgent.userAgent != null) {
+                    browser = userAgent.userAgent.family;
+                    if (userAgent.userAgent.major != null) {
+                        browser += " " + userAgent.userAgent.major;
+                        if (userAgent.userAgent.minor != null) {
+                            browser += "." + userAgent.userAgent.minor;
                                 if (userAgent.userAgent.patch != null) {
                                     browser += "." + userAgent.userAgent.patch;
                                 }
@@ -300,7 +299,6 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
                     }
                 }
             }
-        }
         if (actionType == ActionType.LOGIN && e == null) {
             userService.setLastLoginTs(user.getTenantId(), user.getId());
         }

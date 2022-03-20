@@ -44,8 +44,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-// TODO [viacheslav]: test sessionId
 // TODO [viacheslav]: test validation for all account configs, provider configs and two factor auth settings
+// TODO [viacheslav]: test authentication details, log login action, last login ts, rate limiting, user blocking, etc
 public abstract class TwoFactorAuthTest extends AbstractControllerTest {
 
     @SpyBean

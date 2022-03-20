@@ -41,7 +41,7 @@ public class TwoFactorAuthSettings {
     private String verificationCodeCheckRateLimit;
     @ApiModelProperty(example = "10")
     @Min(0)
-    private int maxCodeVerificationFailuresBeforeUserLockout;
+    private int maxVerificationFailuresBeforeUserLockout;
     @ApiModelProperty(value = "in minutes", example = "60")
     @Min(1)
     private int totalAllowedTimeForVerification;

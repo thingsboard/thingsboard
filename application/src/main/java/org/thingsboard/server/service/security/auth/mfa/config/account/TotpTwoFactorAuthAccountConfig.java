@@ -25,7 +25,7 @@ import javax.validation.constraints.Pattern;
 public class TotpTwoFactorAuthAccountConfig implements TwoFactorAuthAccountConfig {
 
     @NotBlank
-//    @Pattern(regexp = ) // TODO [viacheslav]: validate otp auth url by pattern
+//    @Pattern(regexp = "otpauth://totp/") // FIXME [viacheslav]: validate otp auth url by pattern
     private String authUrl;
 
     @Override

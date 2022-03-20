@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.security.system;
 
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -43,6 +42,6 @@ public interface SystemSecurityService {
 
     String getBaseUrl(TenantId tenantId, CustomerId customerId, HttpServletRequest httpServletRequest);
 
-    void logLoginAction(User user, Authentication authentication, ActionType actionType, Exception e);
+    void logLoginAction(User user, Object authenticationDetails, ActionType actionType, Exception e);
 
 }

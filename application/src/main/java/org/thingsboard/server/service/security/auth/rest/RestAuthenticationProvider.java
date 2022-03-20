@@ -85,7 +85,7 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
             if (twoFactorAuthConfigManager.isTwoFaEnabled(securityUser)) {
                 return new MfaAuthenticationToken(securityUser);
             } else {
-                systemSecurityService.logLoginAction((User) authentication.getPrincipal(), authentication, ActionType.LOGIN, null);
+                systemSecurityService.logLoginAction((User) authentication.getPrincipal(), authentication.getDetails(), ActionType.LOGIN, null);
             }
         } else {
             String publicId = userPrincipal.getValue();
@@ -111,7 +111,7 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
             try {
                 systemSecurityService.validateUserCredentials(user.getTenantId(), userCredentials, username, password);
             } catch (LockedException e) {
-                systemSecurityService.logLoginAction(user, authentication, ActionType.LOCKOUT, null);
+                systemSecurityService.logLoginAction(user, authentication.getDetails(), ActionType.LOCKOUT, null);
                 throw e;
             }
 
@@ -120,7 +120,7 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
 
             return new SecurityUser(user, userCredentials.isEnabled(), userPrincipal);
         } catch (Exception e) {
-            systemSecurityService.logLoginAction(user, authentication, ActionType.LOGIN, e);
+            systemSecurityService.logLoginAction(user, authentication.getDetails(), ActionType.LOGIN, e);
             throw e;
         }
     }

@@ -26,10 +26,13 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
+import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.model.JwtTokenPair;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
+
+import javax.servlet.http.HttpServletRequest;
 
 /*
  * TODO [viacheslav]:
@@ -64,16 +67,15 @@ public class TwoFactorAuthController extends BaseController {
 
     @PostMapping("/verification/check")
     @PreAuthorize("hasAuthority('PRE_VERIFICATION_TOKEN')")
-    public JwtTokenPair checkTwoFaVerificationCode(@RequestParam String verificationCode, Authentication authentication) throws Exception {
+    public JwtTokenPair checkTwoFaVerificationCode(@RequestParam String verificationCode, HttpServletRequest servletRequest) throws Exception {
         SecurityUser user = getCurrentUser();
         boolean verificationSuccess = twoFactorAuthService.checkVerificationCode(user, verificationCode, true);
         if (verificationSuccess) {
-            systemSecurityService.logLoginAction(user, authentication, ActionType.LOGIN, null);
+            systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(servletRequest), ActionType.LOGIN, null);
             return tokenFactory.createTokenPair(user);
         } else {
             ThingsboardException error = new ThingsboardException("Verification code is incorrect", ThingsboardErrorCode.AUTHENTICATION);
-            // FIXME [viacheslav]: log login action: no authentication details
-            systemSecurityService.logLoginAction(user, authentication, ActionType.LOGIN, error);
+            systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(servletRequest), ActionType.LOGIN, error);
             throw error;
         }
     }
