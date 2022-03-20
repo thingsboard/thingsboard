@@ -29,11 +29,7 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
 /*
- *
  * TODO [viacheslav]:
- *  - Configurable hardlock (user blocking) after a total of XX (10) unsuccessful attempts - on user level
- *
- * FIXME [viacheslav]:
  *  - Tests for 2FA
  *  - Swagger documentation
  *

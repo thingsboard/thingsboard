@@ -141,11 +141,10 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
     }
 
     @Autowired
-    private void setProviders(Collection<TwoFactorAuthProvider<TwoFactorAuthProviderConfig, TwoFactorAuthAccountConfig>> providers) {
+    private void setProviders(Collection<TwoFactorAuthProvider> providers) {
         providers.forEach(provider -> {
             this.providers.put(provider.getType(), provider);
         });
     }
 
 }
-

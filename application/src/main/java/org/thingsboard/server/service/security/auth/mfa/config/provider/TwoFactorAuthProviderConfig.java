@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import org.thingsboard.server.service.security.auth.mfa.config.account.EmailTwoFactorAuthAccountConfig;
 import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProviderType;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -29,8 +28,7 @@ import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthPr
         property = "providerType")
 @JsonSubTypes({
         @Type(name = "TOTP", value = TotpTwoFactorAuthProviderConfig.class),
-        @Type(name = "SMS", value = SmsTwoFactorAuthProviderConfig.class),
-        @Type(name = "EMAIL", value = EmailTwoFactorAuthAccountConfig.class)
+        @Type(name = "SMS", value = SmsTwoFactorAuthProviderConfig.class)
 })
 public interface TwoFactorAuthProviderConfig {
 
