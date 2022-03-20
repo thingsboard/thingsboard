@@ -46,8 +46,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
-import javax.script.ScriptException;
-import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
@@ -521,8 +519,7 @@ public class TbAlarmNodeTest {
             config.setAlarmType("SomeType" + i);
             config.setAlarmDetailsBuildJs("DETAILS");
             config.setDynamicSeverity(true);
-            ObjectMapper mapper = new ObjectMapper();
-            TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(mapper.valueToTree(config));
+            TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
             when(ctx.createJsScriptEngine("DETAILS")).thenReturn(detailsJs);
 
@@ -559,7 +556,7 @@ public class TbAlarmNodeTest {
             assertEquals(Boolean.TRUE.toString(), metadataCaptor.getValue().getValue(IS_NEW_ALARM));
             assertNotSame(metaData, metadataCaptor.getValue());
 
-            Alarm actualAlarm = new ObjectMapper().readValue(dataCaptor.getValue().getBytes(), Alarm.class);
+            Alarm actualAlarm =  JacksonUtil.fromBytes(dataCaptor.getValue().getBytes(), Alarm.class);
             Alarm expectedAlarm = Alarm.builder()
                     .startTs(ts)
                     .endTs(ts)

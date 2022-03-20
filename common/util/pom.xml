@@ -88,10 +88,6 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.thingsboard.common</groupId>
-            <artifactId>data</artifactId>
-        </dependency>
     </dependencies>
 
     <build>
