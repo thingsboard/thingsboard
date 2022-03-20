@@ -29,6 +29,8 @@ import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
 import java.util.Arrays;
 
 /**
@@ -47,7 +49,8 @@ public class JacksonUtil {
     }
 
     public static ObjectMapper getNewObjectMapperWithJavaTimeModule() {
-        return new ObjectMapper().registerModule(new JavaTimeModule());
+        return new
+                ObjectMapper().registerModule(new JavaTimeModule());
     }
 
     public static ObjectMapper getObjectMapper() {
@@ -73,6 +76,24 @@ public class JacksonUtil {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("The given object value: "
                     + fromValue + " cannot be converted to " + toValueTypeRef, e);
+        }
+    }
+
+    public static <T> T fromReader(Reader reader, Class<T> clazz) {
+        try {
+            return reader != null ? OBJECT_MAPPER.readValue(reader, clazz) : null;
+        } catch (IOException e) {
+            throw new IllegalArgumentException("The given reader value: "
+                    + reader + " cannot be transformed to Json object", e);
+        }
+    }
+
+    public static <T> void writeValue(Writer writer, T value) {
+        try {
+            OBJECT_MAPPER.writeValue(writer, value);
+        } catch (IOException e) {
+            new IllegalArgumentException("The given writer value: "
+                    + writer + "cannot be wrote", e);
         }
     }
 

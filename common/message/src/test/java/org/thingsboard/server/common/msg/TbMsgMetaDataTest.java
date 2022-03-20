@@ -17,9 +17,9 @@ package org.thingsboard.server.common.msg;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.common.util.JacksonUtil;
 
 import java.util.Map;
 
@@ -27,15 +27,14 @@ import static org.junit.Assert.assertEquals;
 
 public class TbMsgMetaDataTest {
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
     private final String metadataJsonStr = "{\"deviceName\":\"Test Device\",\"deviceType\":\"default\",\"ts\":\"1645112691407\"}";
     private JsonNode metadataJson;
     private Map<String, String> metadataExpected;
 
     @Before
     public void startInit() throws Exception {
-        metadataJson = objectMapper.readValue(metadataJsonStr, JsonNode.class);
-        metadataExpected = objectMapper.convertValue(metadataJson, new TypeReference<>() {
+        metadataJson = JacksonUtil.toJsonNode(metadataJsonStr);
+        metadataExpected = JacksonUtil.convertValue(metadataJson, new TypeReference<>() {
         });
     }
 

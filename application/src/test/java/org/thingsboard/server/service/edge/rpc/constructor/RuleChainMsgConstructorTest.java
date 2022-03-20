@@ -17,13 +17,13 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
@@ -41,8 +41,6 @@ import java.util.UUID;
 @Slf4j
 @RunWith(MockitoJUnitRunner.class)
 public class RuleChainMsgConstructorTest {
-
-    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Test
     public void testConstructRuleChainMetadataUpdatedMsg_V_3_3_3() throws JsonProcessingException {
@@ -253,8 +251,8 @@ public class RuleChainMsgConstructorTest {
         return createRuleNode(ruleChainId,
                 "org.thingsboard.rule.engine.flow.TbRuleChainOutputNode",
                 "Output node",
-                mapper.readTree("{\"version\":0}"),
-                mapper.readTree("{\"description\":\"\",\"layoutX\":178,\"layoutY\":592}"));
+                JacksonUtil.toJsonNode("{\"version\":0}"),
+                JacksonUtil.toJsonNode("{\"description\":\"\",\"layoutX\":178,\"layoutY\":592}"));
     }
 
     @NotNull
@@ -262,8 +260,8 @@ public class RuleChainMsgConstructorTest {
         return createRuleNode(ruleChainId,
                 "org.thingsboard.rule.engine.flow.TbCheckpointNode",
                 "Checkpoint node",
-                mapper.readTree("{\"queueName\":\"HighPriority\"}"),
-                mapper.readTree("{\"description\":\"\",\"layoutX\":178,\"layoutY\":647}"));
+                JacksonUtil.toJsonNode("{\"queueName\":\"HighPriority\"}"),
+                JacksonUtil.toJsonNode("{\"description\":\"\",\"layoutX\":178,\"layoutY\":647}"));
     }
 
     @NotNull
@@ -271,8 +269,8 @@ public class RuleChainMsgConstructorTest {
         return createRuleNode(ruleChainId,
                 "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
                 "Save Timeseries",
-                mapper.readTree("{\"defaultTTL\":0}"),
-                mapper.readTree("{\"layoutX\":823,\"layoutY\":157}"));
+                JacksonUtil.toJsonNode("{\"defaultTTL\":0}"),
+                JacksonUtil.toJsonNode("{\"layoutX\":823,\"layoutY\":157}"));
     }
 
     @NotNull
@@ -280,8 +278,8 @@ public class RuleChainMsgConstructorTest {
         return createRuleNode(ruleChainId,
                 "org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode",
                 "Message Type Switch",
-                mapper.readTree("{\"version\":0}"),
-                mapper.readTree("{\"layoutX\":347,\"layoutY\":149}"));
+                JacksonUtil.toJsonNode("{\"version\":0}"),
+                JacksonUtil.toJsonNode("{\"layoutX\":347,\"layoutY\":149}"));
     }
 
     @NotNull
@@ -289,8 +287,8 @@ public class RuleChainMsgConstructorTest {
         return createRuleNode(ruleChainId,
                 "org.thingsboard.rule.engine.action.TbLogNode",
                 "Log Other",
-                mapper.readTree("{\"jsScript\":\"return '\\\\nIncoming message:\\\\n' + JSON.stringify(msg) + '\\\\nIncoming metadata:\\\\n' + JSON.stringify(metadata);\"}"),
-                mapper.readTree("{\"layoutX\":824,\"layoutY\":378}"));
+                JacksonUtil.toJsonNode("{\"jsScript\":\"return '\\\\nIncoming message:\\\\n' + JSON.stringify(msg) + '\\\\nIncoming metadata:\\\\n' + JSON.stringify(metadata);\"}"),
+                JacksonUtil.toJsonNode("{\"layoutX\":824,\"layoutY\":378}"));
     }
 
     @NotNull
@@ -298,8 +296,8 @@ public class RuleChainMsgConstructorTest {
         return createRuleNode(ruleChainId,
                 "org.thingsboard.rule.engine.edge.TbMsgPushToCloudNode",
                 "Push to cloud",
-                mapper.readTree("{\"scope\":\"SERVER_SCOPE\"}"),
-                mapper.readTree("{\"layoutX\":1129,\"layoutY\":52}"));
+                JacksonUtil.toJsonNode("{\"scope\":\"SERVER_SCOPE\"}"),
+                JacksonUtil.toJsonNode("{\"layoutX\":1129,\"layoutY\":52}"));
     }
 
     @NotNull
@@ -307,8 +305,8 @@ public class RuleChainMsgConstructorTest {
         return createRuleNode(ruleChainId,
                 "org.thingsboard.rule.engine.flow.TbAckNode",
                 "Acknowledge node",
-                mapper.readTree("{\"version\":0}"),
-                mapper.readTree("{\"description\":\"\",\"layoutX\":177,\"layoutY\":703}"));
+                JacksonUtil.toJsonNode("{\"version\":0}"),
+                JacksonUtil.toJsonNode("{\"description\":\"\",\"layoutX\":177,\"layoutY\":703}"));
     }
 
     @NotNull
@@ -316,8 +314,8 @@ public class RuleChainMsgConstructorTest {
         return createRuleNode(ruleChainId,
                 "org.thingsboard.rule.engine.profile.TbDeviceProfileNode",
                 "Device Profile Node",
-                mapper.readTree("{\"persistAlarmRulesState\":false,\"fetchAlarmRulesStateOnStart\":false}"),
-                mapper.readTree("{\"description\":\"Process incoming messages from devices with the alarm rules defined in the device profile. Dispatch all incoming messages with \\\"Success\\\" relation type.\",\"layoutX\":187,\"layoutY\":468}"));
+                JacksonUtil.toJsonNode("{\"persistAlarmRulesState\":false,\"fetchAlarmRulesStateOnStart\":false}"),
+                JacksonUtil.toJsonNode("{\"description\":\"Process incoming messages from devices with the alarm rules defined in the device profile. Dispatch all incoming messages with \\\"Success\\\" relation type.\",\"layoutX\":187,\"layoutY\":468}"));
     }
 
     @NotNull
@@ -325,8 +323,8 @@ public class RuleChainMsgConstructorTest {
         return createRuleNode(ruleChainId,
                 "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
                 "Save Client Attributes",
-                mapper.readTree("{\"scope\":\"CLIENT_SCOPE\"}"),
-                mapper.readTree("{\"layoutX\":824,\"layoutY\":52}"));
+                JacksonUtil.toJsonNode("{\"scope\":\"CLIENT_SCOPE\"}"),
+                JacksonUtil.toJsonNode("{\"layoutX\":824,\"layoutY\":52}"));
     }
 
     @NotNull
@@ -334,8 +332,8 @@ public class RuleChainMsgConstructorTest {
         return createRuleNode(ruleChainId,
                 "org.thingsboard.rule.engine.action.TbLogNode",
                 "Log RPC from Device",
-                mapper.readTree("{\"jsScript\":\"return '\\\\nIncoming message:\\\\n' + JSON.stringify(msg) + '\\\\nIncoming metadata:\\\\n' + JSON.stringify(metadata);\"}"),
-                mapper.readTree("{\"layoutX\":825,\"layoutY\":266}"));
+                JacksonUtil.toJsonNode("{\"jsScript\":\"return '\\\\nIncoming message:\\\\n' + JSON.stringify(msg) + '\\\\nIncoming metadata:\\\\n' + JSON.stringify(metadata);\"}"),
+                JacksonUtil.toJsonNode("{\"layoutX\":825,\"layoutY\":266}"));
     }
 
     @NotNull
@@ -343,8 +341,8 @@ public class RuleChainMsgConstructorTest {
         return createRuleNode(ruleChainId,
                 "org.thingsboard.rule.engine.rpc.TbSendRPCRequestNode",
                 "RPC Call Request",
-                mapper.readTree("{\"timeoutInSeconds\":60}"),
-                mapper.readTree("{\"layoutX\":824,\"layoutY\":466}"));
+                JacksonUtil.toJsonNode("{\"timeoutInSeconds\":60}"),
+                JacksonUtil.toJsonNode("{\"layoutX\":824,\"layoutY\":466}"));
     }
 
     @NotNull
@@ -352,7 +350,7 @@ public class RuleChainMsgConstructorTest {
         return createRuleNode(ruleChainId,
                 "org.thingsboard.rule.engine.flow.TbRuleChainInputNode",
                 "Push to Analytics",
-                mapper.readTree("{\"ruleChainId\":\"af588000-6c7c-11ec-bafd-c9a47a5c8d99\"}"),
-                mapper.readTree("{\"description\":\"\",\"layoutX\":477,\"layoutY\":560}"));
+                JacksonUtil.toJsonNode("{\"ruleChainId\":\"af588000-6c7c-11ec-bafd-c9a47a5c8d99\"}"),
+                JacksonUtil.toJsonNode("{\"description\":\"\",\"layoutX\":477,\"layoutY\":560}"));
     }
 }

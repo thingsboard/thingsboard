@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.security.auth.rest;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpMethod;
@@ -28,7 +27,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.service.security.exception.AuthMethodNotSupportedException;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 
@@ -46,14 +45,11 @@ public class RestLoginProcessingFilter extends AbstractAuthenticationProcessingF
     private final AuthenticationSuccessHandler successHandler;
     private final AuthenticationFailureHandler failureHandler;
 
-    private final ObjectMapper objectMapper;
-
     public RestLoginProcessingFilter(String defaultProcessUrl, AuthenticationSuccessHandler successHandler,
-                                     AuthenticationFailureHandler failureHandler, ObjectMapper mapper) {
+                                     AuthenticationFailureHandler failureHandler) {
         super(defaultProcessUrl);
         this.successHandler = successHandler;
         this.failureHandler = failureHandler;
-        this.objectMapper = mapper;
     }
 
     @Override
@@ -66,12 +62,7 @@ public class RestLoginProcessingFilter extends AbstractAuthenticationProcessingF
             throw new AuthMethodNotSupportedException("Authentication method not supported");
         }
 
-        LoginRequest loginRequest;
-        try {
-            loginRequest = objectMapper.readValue(request.getReader(), LoginRequest.class);
-        } catch (Exception e) {
-            throw new AuthenticationServiceException("Invalid login request payload");
-        }
+        LoginRequest loginRequest = JacksonUtil.fromReader(request.getReader(), LoginRequest.class);
 
         if (StringUtils.isBlank(loginRequest.getUsername()) || StringUtils.isEmpty(loginRequest.getPassword())) {
             throw new AuthenticationServiceException("Username or Password not provided");

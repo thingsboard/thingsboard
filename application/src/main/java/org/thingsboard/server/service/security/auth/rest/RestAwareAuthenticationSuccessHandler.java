@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.security.auth.rest;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -23,6 +22,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.WebAttributes;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.security.model.JwtToken;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -38,13 +38,11 @@ import java.util.Map;
 
 @Component(value = "defaultAuthenticationSuccessHandler")
 public class RestAwareAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
-    private final ObjectMapper mapper;
     private final JwtTokenFactory tokenFactory;
     private final RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
-    public RestAwareAuthenticationSuccessHandler(final ObjectMapper mapper, final JwtTokenFactory tokenFactory, final RefreshTokenRepository refreshTokenRepository) {
-        this.mapper = mapper;
+    public RestAwareAuthenticationSuccessHandler(final JwtTokenFactory tokenFactory, final RefreshTokenRepository refreshTokenRepository) {
         this.tokenFactory = tokenFactory;
         this.refreshTokenRepository = refreshTokenRepository;
     }
@@ -63,7 +61,7 @@ public class RestAwareAuthenticationSuccessHandler implements AuthenticationSucc
 
         response.setStatus(HttpStatus.OK.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        mapper.writeValue(response.getWriter(), tokenMap);
+        JacksonUtil.writeValue(response.getWriter(), tokenMap);
 
         clearAuthenticationAttributes(request);
     }
