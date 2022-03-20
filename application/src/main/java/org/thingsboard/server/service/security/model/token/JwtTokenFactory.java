@@ -60,7 +60,6 @@ public class JwtTokenFactory {
     private static final String IS_PUBLIC = "isPublic";
     private static final String TENANT_ID = "tenantId";
     private static final String CUSTOMER_ID = "customerId";
-    private static final String SESSION_ID = "sessionId";
 
     private final JwtSettings settings;
 
@@ -116,7 +115,6 @@ public class JwtTokenFactory {
         } else if (securityUser.getAuthority() == Authority.SYS_ADMIN) {
             securityUser.setTenantId(TenantId.SYS_TENANT_ID);
         }
-        securityUser.setSessionId(claims.get(SESSION_ID, String.class));
 
         if (securityUser.getAuthority() != Authority.PRE_VERIFICATION_TOKEN) {
             securityUser.setFirstName(claims.get(FIRST_NAME, String.class));
@@ -162,7 +160,6 @@ public class JwtTokenFactory {
         UserPrincipal principal = new UserPrincipal(isPublic ? UserPrincipal.Type.PUBLIC_ID : UserPrincipal.Type.USER_NAME, subject);
         SecurityUser securityUser = new SecurityUser(new UserId(UUID.fromString(claims.get(USER_ID, String.class))));
         securityUser.setUserPrincipal(principal);
-        securityUser.setSessionId(claims.get(SESSION_ID, String.class));
         return securityUser;
     }
 
@@ -183,9 +180,6 @@ public class JwtTokenFactory {
         Claims claims = Jwts.claims().setSubject(principal.getValue());
         claims.put(USER_ID, securityUser.getId().getId().toString());
         claims.put(SCOPES, scopes);
-        if (securityUser.getSessionId() != null) {
-            claims.put(SESSION_ID, securityUser.getSessionId());
-        }
 
         ZonedDateTime currentTime = ZonedDateTime.now();
 

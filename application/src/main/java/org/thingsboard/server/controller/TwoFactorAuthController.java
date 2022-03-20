@@ -17,24 +17,25 @@ package org.thingsboard.server.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.model.JwtTokenPair;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
+import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 /*
  * TODO [viacheslav]:
  *  - Tests for 2FA
  *  - Swagger documentation
- *
  * */
-// TODO [viacheslav]: maybe get rid of sessionId concept..
 
 /*
  *
@@ -51,6 +52,7 @@ public class TwoFactorAuthController extends BaseController {
 
     private final TwoFactorAuthService twoFactorAuthService;
     private final JwtTokenFactory tokenFactory;
+    private final SystemSecurityService systemSecurityService;
 
 
     @PostMapping("/verification/send")
@@ -62,14 +64,17 @@ public class TwoFactorAuthController extends BaseController {
 
     @PostMapping("/verification/check")
     @PreAuthorize("hasAuthority('PRE_VERIFICATION_TOKEN')")
-    public JwtTokenPair checkTwoFaVerificationCode(@RequestParam String verificationCode) throws Exception {
+    public JwtTokenPair checkTwoFaVerificationCode(@RequestParam String verificationCode, Authentication authentication) throws Exception {
         SecurityUser user = getCurrentUser();
         boolean verificationSuccess = twoFactorAuthService.checkVerificationCode(user, verificationCode, true);
         if (verificationSuccess) {
-            // FIXME [viacheslav]: log login action
+            systemSecurityService.logLoginAction(user, authentication, ActionType.LOGIN, null);
             return tokenFactory.createTokenPair(user);
         } else {
-            throw new ThingsboardException("Verification code is incorrect", ThingsboardErrorCode.AUTHENTICATION);
+            ThingsboardException error = new ThingsboardException("Verification code is incorrect", ThingsboardErrorCode.AUTHENTICATION);
+            // FIXME [viacheslav]: log login action: no authentication details
+            systemSecurityService.logLoginAction(user, authentication, ActionType.LOGIN, error);
+            throw error;
         }
     }
 

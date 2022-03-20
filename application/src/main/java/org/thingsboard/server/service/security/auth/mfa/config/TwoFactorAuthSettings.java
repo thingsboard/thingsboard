@@ -17,14 +17,11 @@ package org.thingsboard.server.service.security.auth.mfa.config;
 
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-import org.checkerframework.checker.index.qual.NonNegative;
 import org.thingsboard.server.service.security.auth.mfa.config.provider.TwoFactorAuthProviderConfig;
 import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProviderType;
 
 import javax.validation.Valid;
-import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.util.List;
 import java.util.Optional;
@@ -42,9 +39,10 @@ public class TwoFactorAuthSettings {
     @ApiModelProperty(example = "3:900 (3 requests per 15 minutes)")
     @Pattern(regexp = "[^0]\\d+:[^0]\\d+", message = "Rate limit configuration is invalid")
     private String verificationCodeCheckRateLimit;
+    @ApiModelProperty(example = "10")
     @Min(0)
     private int maxCodeVerificationFailuresBeforeUserLockout;
-    @ApiModelProperty(value = "in seconds")
+    @ApiModelProperty(value = "in minutes", example = "60")
     @Min(1)
     private int totalAllowedTimeForVerification;
 

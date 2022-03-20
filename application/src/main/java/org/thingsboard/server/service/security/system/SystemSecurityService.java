@@ -15,14 +15,17 @@
  */
 package org.thingsboard.server.service.security.system;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserCredentials;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
+import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFactorAuthSettings;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -34,10 +37,12 @@ public interface SystemSecurityService {
 
     void validateUserCredentials(TenantId tenantId, UserCredentials userCredentials, String username, String password) throws AuthenticationException;
 
-    void validateTwoFaVerification(TenantId tenantId, UserId userId, boolean verificationSuccess, TwoFactorAuthSettings twoFaSettings);
+    void validateTwoFaVerification(SecurityUser securityUser, boolean verificationSuccess, TwoFactorAuthSettings twoFaSettings);
 
     void validatePassword(TenantId tenantId, String password, UserCredentials userCredentials) throws DataValidationException;
 
     String getBaseUrl(TenantId tenantId, CustomerId customerId, HttpServletRequest httpServletRequest);
+
+    void logLoginAction(User user, Authentication authentication, ActionType actionType, Exception e);
 
 }

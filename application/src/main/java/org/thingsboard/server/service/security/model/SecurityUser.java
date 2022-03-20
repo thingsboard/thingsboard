@@ -21,7 +21,6 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.UserId;
 
 import java.util.Collection;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -32,7 +31,6 @@ public class SecurityUser extends User {
     private Collection<GrantedAuthority> authorities;
     private boolean enabled;
     private UserPrincipal userPrincipal;
-    private String sessionId;
 
     public SecurityUser() {
         super();
@@ -46,7 +44,6 @@ public class SecurityUser extends User {
         super(user);
         this.enabled = enabled;
         this.userPrincipal = userPrincipal;
-        this.sessionId = UUID.randomUUID().toString();
     }
 
     public Collection<GrantedAuthority> getAuthorities() {
@@ -72,14 +69,6 @@ public class SecurityUser extends User {
 
     public void setUserPrincipal(UserPrincipal userPrincipal) {
         this.userPrincipal = userPrincipal;
-    }
-
-    public String getSessionId() {
-        return sessionId;
-    }
-
-    public void setSessionId(String sessionId) {
-        this.sessionId = sessionId;
     }
 
 }

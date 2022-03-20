@@ -37,6 +37,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 @Component(value = "defaultAuthenticationSuccessHandler")
 @RequiredArgsConstructor
@@ -54,8 +55,8 @@ public class RestAwareAuthenticationSuccessHandler implements AuthenticationSucc
         JwtTokenPair tokenPair = new JwtTokenPair();
 
         if (authentication instanceof MfaAuthenticationToken) {
-            int preVerificationTokenLifetime = twoFactorAuthConfigManager.getTwoFaSettings(securityUser.getTenantId())
-                    .map(TwoFactorAuthSettings::getTotalAllowedTimeForVerification).orElse(30);
+            int preVerificationTokenLifetime = (int) TimeUnit.MINUTES.toSeconds(twoFactorAuthConfigManager.getTwoFaSettings(securityUser.getTenantId())
+                    .map(TwoFactorAuthSettings::getTotalAllowedTimeForVerification).orElse(30));
             tokenPair.setToken(tokenFactory.createTwoFaPreVerificationToken(securityUser, preVerificationTokenLifetime).getToken());
             tokenPair.setRefreshToken(null);
         } else {
