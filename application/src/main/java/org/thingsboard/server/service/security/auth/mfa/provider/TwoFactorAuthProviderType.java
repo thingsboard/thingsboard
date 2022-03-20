@@ -17,6 +17,5 @@ package org.thingsboard.server.service.security.auth.mfa.provider;
 
 public enum TwoFactorAuthProviderType {
     TOTP,
-    SMS,
-    EMAIL
+    SMS
 }

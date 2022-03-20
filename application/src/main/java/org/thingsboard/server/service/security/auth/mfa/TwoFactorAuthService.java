@@ -23,13 +23,13 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface TwoFactorAuthService {
 
-    void prepareVerificationCode(SecurityUser securityUser, boolean rateLimit) throws Exception;
+    void prepareVerificationCode(SecurityUser securityUser, boolean checkLimits) throws Exception;
 
-    void prepareVerificationCode(SecurityUser securityUser, TwoFactorAuthAccountConfig accountConfig, boolean rateLimit) throws ThingsboardException;
+    void prepareVerificationCode(SecurityUser securityUser, TwoFactorAuthAccountConfig accountConfig, boolean checkLimits) throws ThingsboardException;
 
-    boolean checkVerificationCode(SecurityUser securityUser, String verificationCode, boolean rateLimit) throws ThingsboardException;
+    boolean checkVerificationCode(SecurityUser securityUser, String verificationCode, boolean checkLimits) throws ThingsboardException;
 
-    boolean checkVerificationCode(SecurityUser securityUser, String verificationCode, TwoFactorAuthAccountConfig accountConfig, boolean rateLimit) throws ThingsboardException;
+    boolean checkVerificationCode(SecurityUser securityUser, String verificationCode, TwoFactorAuthAccountConfig accountConfig, boolean checkLimits) throws ThingsboardException;
 
     TwoFactorAuthAccountConfig generateNewAccountConfig(User user, TwoFactorAuthProviderType providerType) throws ThingsboardException;
 

@@ -17,13 +17,13 @@ package org.thingsboard.server.service.security.auth.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.WebAttributes;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.service.security.auth.MfaAuthenticationToken;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFactorAuthConfigManager;
@@ -41,7 +41,6 @@ import java.util.concurrent.TimeUnit;
 
 @Component(value = "defaultAuthenticationSuccessHandler")
 @RequiredArgsConstructor
-@Slf4j
 public class RestAwareAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
     private final ObjectMapper mapper;
     private final JwtTokenFactory tokenFactory;
@@ -57,8 +56,9 @@ public class RestAwareAuthenticationSuccessHandler implements AuthenticationSucc
         if (authentication instanceof MfaAuthenticationToken) {
             int preVerificationTokenLifetime = (int) TimeUnit.MINUTES.toSeconds(twoFactorAuthConfigManager.getTwoFaSettings(securityUser.getTenantId())
                     .map(TwoFactorAuthSettings::getTotalAllowedTimeForVerification).orElse(30));
-            tokenPair.setToken(tokenFactory.createTwoFaPreVerificationToken(securityUser, preVerificationTokenLifetime).getToken());
+            tokenPair.setToken(tokenFactory.createPreVerificationToken(securityUser, preVerificationTokenLifetime).getToken());
             tokenPair.setRefreshToken(null);
+            tokenPair.setScope(Authority.PRE_VERIFICATION_TOKEN);
         } else {
             tokenPair.setToken(tokenFactory.createAccessJwtToken(securityUser).getToken());
             tokenPair.setRefreshToken(refreshTokenRepository.requestRefreshToken(securityUser).getToken());

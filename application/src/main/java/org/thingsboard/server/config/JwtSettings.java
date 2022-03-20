@@ -44,10 +44,4 @@ public class JwtSettings {
      */
     private Integer refreshTokenExpTime;
 
-    /**
-    * Issued when 2FA is being used.
-    * Valid only for 2FA verification code checking.
-    * */
-    private Integer preVerificationTokenExpirationTime;
-
 }

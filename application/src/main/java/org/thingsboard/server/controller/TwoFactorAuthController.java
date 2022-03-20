@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.model.JwtTokenPair;
@@ -50,6 +51,7 @@ import javax.servlet.http.HttpServletRequest;
  * */
 @RestController
 @RequestMapping("/api/auth/2fa")
+@TbCoreComponent
 @RequiredArgsConstructor
 public class TwoFactorAuthController extends BaseController {
 

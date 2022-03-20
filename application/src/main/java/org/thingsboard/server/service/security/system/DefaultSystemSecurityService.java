@@ -164,11 +164,12 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
         TenantId tenantId = securityUser.getTenantId();
         UserId userId = securityUser.getId();
 
-        int failedVerificationAttempts = 0;
+        int failedVerificationAttempts;
         if (!verificationSuccess) {
             failedVerificationAttempts = userService.increaseFailedLoginAttempts(tenantId, userId);
         } else {
             userService.resetFailedLoginAttempts(tenantId, userId);
+            return;
         }
 
         if (twoFaSettings.getMaxVerificationFailuresBeforeUserLockout() > 0

@@ -163,7 +163,7 @@ public class JwtTokenFactory {
         return securityUser;
     }
 
-    public JwtToken createTwoFaPreVerificationToken(SecurityUser user, Integer expirationTime) {
+    public JwtToken createPreVerificationToken(SecurityUser user, Integer expirationTime) {
         String token = setUpToken(user, Collections.singletonList(Authority.PRE_VERIFICATION_TOKEN.name()), expirationTime)
                 .claim(TENANT_ID, user.getTenantId().toString())
                 .compact();

@@ -94,11 +94,7 @@ public class TbNodeUtils {
     }
 
     public static String processPattern(String pattern, TbMsgMetaData metaData) {
-        String result = pattern;
-        for (Map.Entry<String, String> keyVal : metaData.values().entrySet()) {
-            result = processVar(result, keyVal.getKey(), keyVal.getValue());
-        }
-        return result;
+        return processTemplate(pattern, metaData.values());
     }
 
     public static String processTemplate(String template, Map<String, String> data) {

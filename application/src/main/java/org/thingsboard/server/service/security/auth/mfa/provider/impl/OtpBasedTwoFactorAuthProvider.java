@@ -57,7 +57,7 @@ public abstract class OtpBasedTwoFactorAuthProvider<C extends OtpBasedTwoFactorA
                 return false;
             }
             if (verificationCode.equals(correctVerificationCode.getValue())
-                    && correctVerificationCode.getConfig().equals(accountConfig)) {
+                    && correctVerificationCode.getAccountConfig().equals(accountConfig)) {
                 verificationCodesCache.evict(securityUser.getId());
                 return true;
             }
@@ -65,12 +65,13 @@ public abstract class OtpBasedTwoFactorAuthProvider<C extends OtpBasedTwoFactorA
         return false;
     }
 
+    // TODO [viacheslav]: periodically clean up codes cache
 
     @Data
     private static class Otp {
         private final long timestamp;
         private final String value;
-        private final OtpBasedTwoFactorAuthAccountConfig config;
+        private final OtpBasedTwoFactorAuthAccountConfig accountConfig;
     }
 
 }

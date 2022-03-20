@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFactorAuthConfigManager;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFactorAuthSettings;
 import org.thingsboard.server.service.security.auth.mfa.config.account.TwoFactorAuthAccountConfig;
@@ -44,6 +45,7 @@ import java.util.concurrent.ConcurrentMap;
 
 @Service
 @RequiredArgsConstructor
+@TbCoreComponent
 public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
 
     private final TwoFactorAuthConfigManager configManager;
@@ -61,17 +63,17 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
 
 
     @Override
-    public void prepareVerificationCode(SecurityUser securityUser, boolean rateLimit) throws Exception {
+    public void prepareVerificationCode(SecurityUser securityUser, boolean checkLimits) throws Exception {
         TwoFactorAuthAccountConfig accountConfig = configManager.getTwoFaAccountConfig(securityUser.getTenantId(), securityUser.getId())
                 .orElseThrow(() -> ACCOUNT_NOT_CONFIGURED_ERROR);
-        prepareVerificationCode(securityUser, accountConfig, rateLimit);
+        prepareVerificationCode(securityUser, accountConfig, checkLimits);
     }
 
     @Override
-    public void prepareVerificationCode(SecurityUser securityUser, TwoFactorAuthAccountConfig accountConfig, boolean rateLimit) throws ThingsboardException {
+    public void prepareVerificationCode(SecurityUser securityUser, TwoFactorAuthAccountConfig accountConfig, boolean checkLimits) throws ThingsboardException {
         TwoFactorAuthSettings twoFaSettings = configManager.getTwoFaSettings(securityUser.getTenantId())
                 .orElseThrow(() -> PROVIDER_NOT_CONFIGURED_ERROR);
-        if (rateLimit) {
+        if (checkLimits) {
             if (StringUtils.isNotEmpty(twoFaSettings.getVerificationCodeSendRateLimit())) {
                 TbRateLimits rateLimits = verificationCodeSendingRateLimits.computeIfAbsent(securityUser.getId(), sessionId -> {
                     return new TbRateLimits(twoFaSettings.getVerificationCodeSendRateLimit());
@@ -88,21 +90,21 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
     }
 
     @Override
-    public boolean checkVerificationCode(SecurityUser securityUser, String verificationCode, boolean rateLimit) throws ThingsboardException {
+    public boolean checkVerificationCode(SecurityUser securityUser, String verificationCode, boolean checkLimits) throws ThingsboardException {
         TwoFactorAuthAccountConfig accountConfig = configManager.getTwoFaAccountConfig(securityUser.getTenantId(), securityUser.getId())
                 .orElseThrow(() -> ACCOUNT_NOT_CONFIGURED_ERROR);
-        return checkVerificationCode(securityUser, verificationCode, accountConfig, rateLimit);
+        return checkVerificationCode(securityUser, verificationCode, accountConfig, checkLimits);
     }
 
     @Override
-    public boolean checkVerificationCode(SecurityUser securityUser, String verificationCode, TwoFactorAuthAccountConfig accountConfig, boolean rateLimit) throws ThingsboardException {
+    public boolean checkVerificationCode(SecurityUser securityUser, String verificationCode, TwoFactorAuthAccountConfig accountConfig, boolean checkLimits) throws ThingsboardException {
         if (!userService.findUserCredentialsByUserId(securityUser.getTenantId(), securityUser.getId()).isEnabled()) {
             throw new ThingsboardException("User is disabled", ThingsboardErrorCode.AUTHENTICATION);
         }
 
         TwoFactorAuthSettings twoFaSettings = configManager.getTwoFaSettings(securityUser.getTenantId())
                 .orElseThrow(() -> PROVIDER_NOT_CONFIGURED_ERROR);
-        if (rateLimit) {
+        if (checkLimits) {
             if (StringUtils.isNotEmpty(twoFaSettings.getVerificationCodeCheckRateLimit())) {
                 TbRateLimits rateLimits = verificationCodeCheckingRateLimits.computeIfAbsent(securityUser.getId(), sessionId -> {
                     return new TbRateLimits(twoFaSettings.getVerificationCodeCheckRateLimit());
@@ -116,7 +118,7 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
         TwoFactorAuthProviderConfig providerConfig = twoFaSettings.getProviderConfig(accountConfig.getProviderType())
                 .orElseThrow(() -> PROVIDER_NOT_CONFIGURED_ERROR);
         boolean verificationSuccess = getTwoFaProvider(accountConfig.getProviderType()).checkVerificationCode(securityUser, verificationCode, providerConfig, accountConfig);
-        if (rateLimit) {
+        if (checkLimits) {
             systemSecurityService.validateTwoFaVerification(securityUser, verificationSuccess, twoFaSettings);
             if (verificationSuccess) {
                 verificationCodeCheckingRateLimits.remove(securityUser.getId());
