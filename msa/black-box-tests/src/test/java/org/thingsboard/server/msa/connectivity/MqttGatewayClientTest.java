@@ -332,14 +332,10 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         serverRpcPayload.addProperty("params", true);
         ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName(getClass().getSimpleName())));
         ListenableFuture<ResponseEntity> future = service.submit(() -> {
-            try {
-                return restClient.getRestTemplate()
-                        .postForEntity(HTTPS_URL + "/api/rpc/twoway/{deviceId}",
-                                JacksonUtil.toJsonNode(serverRpcPayload.toString()), String.class,
-                                createdDevice.getId());
-            } catch (IOException e) {
-                return ResponseEntity.badRequest().build();
-            }
+            return restClient.getRestTemplate()
+                    .postForEntity(HTTPS_URL + "/api/rpc/twoway/{deviceId}",
+                            JacksonUtil.toJsonNode(serverRpcPayload.toString()), String.class,
+                            createdDevice.getId());
         });
 
         // Wait for RPC call from the server and send the response
