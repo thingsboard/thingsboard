@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.security.auth.mfa.config;
 
-import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -25,7 +24,7 @@ import java.util.Optional;
 
 public interface TwoFactorAuthConfigManager {
 
-    boolean isTwoFaEnabled(User user);
+    boolean isTwoFaEnabled(TenantId tenantId, UserId userId);
 
     Optional<TwoFactorAuthAccountConfig> getTwoFaAccountConfig(TenantId tenantId, UserId userId);
 
@@ -34,8 +33,10 @@ public interface TwoFactorAuthConfigManager {
     void deleteTwoFaAccountConfig(TenantId tenantId, UserId userId);
 
 
-    Optional<TwoFactorAuthSettings> getTwoFaSettings(TenantId tenantId);
+    Optional<TwoFactorAuthSettings> getTwoFaSettings(TenantId tenantId, boolean sysadminSettingsAsDefault);
 
     void saveTwoFaSettings(TenantId tenantId, TwoFactorAuthSettings twoFactorAuthSettings);
+
+    void deleteTwoFaSettings(TenantId tenantId);
 
 }

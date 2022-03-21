@@ -37,14 +37,9 @@ import javax.servlet.http.HttpServletRequest;
 
 /*
  * TODO [viacheslav]:
- *  - Tests for 2FA
  *  - Swagger documentation
- * */
-
-/*
  *
- *
- * TODO (later):
+ * TODO [viacheslav] (later):
  *  - 2FA entries should be secured against code injection by code validation
  *  - ability to force users to use 2FA (maybe on log in, do not give them token pair but to give temporary
  *      token to configure 2FA account config); also will need to make users configure 2FA during activation and password setup...

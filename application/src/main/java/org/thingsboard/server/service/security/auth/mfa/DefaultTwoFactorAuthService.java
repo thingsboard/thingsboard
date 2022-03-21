@@ -71,7 +71,7 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
 
     @Override
     public void prepareVerificationCode(SecurityUser securityUser, TwoFactorAuthAccountConfig accountConfig, boolean checkLimits) throws ThingsboardException {
-        TwoFactorAuthSettings twoFaSettings = configManager.getTwoFaSettings(securityUser.getTenantId())
+        TwoFactorAuthSettings twoFaSettings = configManager.getTwoFaSettings(securityUser.getTenantId(), true)
                 .orElseThrow(() -> PROVIDER_NOT_CONFIGURED_ERROR);
         if (checkLimits) {
             if (StringUtils.isNotEmpty(twoFaSettings.getVerificationCodeSendRateLimit())) {
@@ -102,7 +102,7 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
             throw new ThingsboardException("User is disabled", ThingsboardErrorCode.AUTHENTICATION);
         }
 
-        TwoFactorAuthSettings twoFaSettings = configManager.getTwoFaSettings(securityUser.getTenantId())
+        TwoFactorAuthSettings twoFaSettings = configManager.getTwoFaSettings(securityUser.getTenantId(), true)
                 .orElseThrow(() -> PROVIDER_NOT_CONFIGURED_ERROR);
         if (checkLimits) {
             if (StringUtils.isNotEmpty(twoFaSettings.getVerificationCodeCheckRateLimit())) {
@@ -136,7 +136,7 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
 
 
     private TwoFactorAuthProviderConfig getTwoFaProviderConfig(TenantId tenantId, TwoFactorAuthProviderType providerType) throws ThingsboardException {
-        return configManager.getTwoFaSettings(tenantId)
+        return configManager.getTwoFaSettings(tenantId, true)
                 .flatMap(twoFaSettings -> twoFaSettings.getProviderConfig(providerType))
                 .orElseThrow(() -> PROVIDER_NOT_CONFIGURED_ERROR);
     }

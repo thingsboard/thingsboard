@@ -23,6 +23,6 @@ import javax.validation.constraints.Min;
 @Data
 public abstract class OtpBasedTwoFactorAuthProviderConfig implements TwoFactorAuthProviderConfig {
     @ApiModelProperty(value = "in seconds", example = "60")
-    @Min(1) // TODO [viacheslav]: test
+    @Min(value = 1, message = "verification code lifetime is required")
     private int verificationCodeLifetime;
 }

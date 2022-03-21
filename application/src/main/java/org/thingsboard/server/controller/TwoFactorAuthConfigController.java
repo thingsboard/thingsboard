@@ -114,7 +114,7 @@ public class TwoFactorAuthConfigController extends BaseController {
     @GetMapping("/settings")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     public TwoFactorAuthSettings getTwoFactorAuthSettings() throws ThingsboardException {
-        return twoFactorAuthConfigManager.getTwoFaSettings(getTenantId()).orElse(null);
+        return twoFactorAuthConfigManager.getTwoFaSettings(getTenantId(), false).orElse(null);
     }
 
     @PostMapping("/settings")

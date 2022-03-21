@@ -15,5 +15,8 @@
  */
 package org.thingsboard.server.service.security.auth.mfa.config.account;
 
+import lombok.Data;
+
+@Data
 public abstract class OtpBasedTwoFactorAuthAccountConfig implements TwoFactorAuthAccountConfig {
 }

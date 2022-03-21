@@ -13,17 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.controller;
+package org.thingsboard.server.controller.sql;
 
-/*
-* TODO [viacheslav]
-*  check validation of the verification code
-*  test rate limits
-*  test code expiration
-*  test pre-verification token lifetime
-*  test user blocking
-*  test log login action, lastLoginTs, and authentication details
-* */
-public abstract class TwoFactorAuthTest extends AbstractControllerTest {
+import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.controller.TwoFactorAuthConfigTest;
 
+@DaoSqlTest
+public class TwoFactorAuthConfigSqlTest extends TwoFactorAuthConfigTest {
 }

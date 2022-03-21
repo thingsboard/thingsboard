@@ -26,7 +26,7 @@ import javax.validation.constraints.Pattern;
 @Data
 public class SmsTwoFactorAuthProviderConfig extends OtpBasedTwoFactorAuthProviderConfig {
 
-    @NotBlank
+    @NotBlank(message = "verification message template is required")
     @Pattern(regexp = ".*\\$\\{verificationCode}.*", message = "template must contain verification code")
     private String smsVerificationMessageTemplate;
 

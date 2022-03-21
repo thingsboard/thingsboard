@@ -34,17 +34,17 @@ public class TwoFactorAuthSettings {
     private List<TwoFactorAuthProviderConfig> providers;
 
     @ApiModelProperty(example = "1:60 (1 request per minute)")
-    @Pattern(regexp = "[^0]\\d+:[^0]\\d+", message = "Rate limit configuration is invalid")
+    @Pattern(regexp = "[1-9]\\d*:[1-9]\\d*", message = "verification code send rate limit configuration is invalid")
     private String verificationCodeSendRateLimit;
     @ApiModelProperty(example = "3:900 (3 requests per 15 minutes)")
-    @Pattern(regexp = "[^0]\\d+:[^0]\\d+", message = "Rate limit configuration is invalid")
+    @Pattern(regexp = "[1-9]\\d*:[1-9]\\d*", message = "verification code check rate limit configuration is invalid")
     private String verificationCodeCheckRateLimit;
     @ApiModelProperty(example = "10")
-    @Min(0)
+    @Min(value = 0, message = "maximum number of verification failure before user lockout must be positive")
     private int maxVerificationFailuresBeforeUserLockout;
     @ApiModelProperty(value = "in minutes", example = "60")
-    @Min(1)
-    private int totalAllowedTimeForVerification;
+    @Min(value = 1, message = "total amount of time allotted for verification must be greater than 0")
+    private Integer totalAllowedTimeForVerification;
 
 
     public Optional<TwoFactorAuthProviderConfig> getProviderConfig(TwoFactorAuthProviderType providerType) {

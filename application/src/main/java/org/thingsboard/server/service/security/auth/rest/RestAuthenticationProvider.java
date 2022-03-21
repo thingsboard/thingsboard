@@ -82,7 +82,7 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
             String username = userPrincipal.getValue();
             String password = (String) authentication.getCredentials();
             securityUser = authenticateByUsernameAndPassword(authentication, userPrincipal, username, password);
-            if (twoFactorAuthConfigManager.isTwoFaEnabled(securityUser)) {
+            if (twoFactorAuthConfigManager.isTwoFaEnabled(securityUser.getTenantId(), securityUser.getId())) {
                 return new MfaAuthenticationToken(securityUser);
             } else {
                 systemSecurityService.logLoginAction(securityUser, authentication.getDetails(), ActionType.LOGIN, null);

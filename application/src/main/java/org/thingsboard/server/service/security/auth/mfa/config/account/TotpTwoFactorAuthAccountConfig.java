@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.security.auth.mfa.config.account;
 
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProviderType;
 
@@ -24,8 +25,9 @@ import javax.validation.constraints.Pattern;
 @Data
 public class TotpTwoFactorAuthAccountConfig implements TwoFactorAuthAccountConfig {
 
-    @NotBlank
-//    @Pattern(regexp = "otpauth://totp/") // FIXME [viacheslav]: validate otp auth url by pattern
+    @ApiModelProperty(example = "otpauth://totp/ThingsBoard:tenant@thingsboard.org?issuer=ThingsBoard&secret=FUNBIM3CXFNNGQR6ZIPVWHP65PPFWDII")
+    @NotBlank(message = "OTP auth URL cannot be blank")
+    @Pattern(regexp = "otpauth://totp/(\\S+?):(\\S+?)\\?issuer=(\\S+?)&secret=(\\w+?)", message = "OTP auth url is invalid")
     private String authUrl;
 
     @Override

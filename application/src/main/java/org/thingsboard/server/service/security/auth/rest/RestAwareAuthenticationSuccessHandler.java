@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.service.security.auth.MfaAuthenticationToken;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRepository;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFactorAuthConfigManager;
-import org.thingsboard.server.service.security.auth.mfa.config.TwoFactorAuthSettings;
 import org.thingsboard.server.service.security.model.JwtTokenPair;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
@@ -37,6 +36,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Component(value = "defaultAuthenticationSuccessHandler")
@@ -54,8 +54,8 @@ public class RestAwareAuthenticationSuccessHandler implements AuthenticationSucc
         JwtTokenPair tokenPair = new JwtTokenPair();
 
         if (authentication instanceof MfaAuthenticationToken) {
-            int preVerificationTokenLifetime = (int) TimeUnit.MINUTES.toSeconds(twoFactorAuthConfigManager.getTwoFaSettings(securityUser.getTenantId())
-                    .map(TwoFactorAuthSettings::getTotalAllowedTimeForVerification).orElse(30));
+            int preVerificationTokenLifetime = (int) TimeUnit.MINUTES.toSeconds(twoFactorAuthConfigManager.getTwoFaSettings(securityUser.getTenantId(), true)
+                    .flatMap(settings -> Optional.ofNullable(settings.getTotalAllowedTimeForVerification())).orElse(30));
             tokenPair.setToken(tokenFactory.createPreVerificationToken(securityUser, preVerificationTokenLifetime).getToken());
             tokenPair.setRefreshToken(null);
             tokenPair.setScope(Authority.PRE_VERIFICATION_TOKEN);
