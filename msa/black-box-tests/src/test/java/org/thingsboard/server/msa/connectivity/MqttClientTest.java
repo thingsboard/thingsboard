@@ -174,7 +174,7 @@ public class MqttClientTest extends AbstractContainerTest {
         sharedAttributes.addProperty("sharedAttr", sharedAttributeValue);
         ResponseEntity sharedAttributesResponse = restClient.getRestTemplate()
                 .postForEntity(HTTPS_URL + "/api/plugins/telemetry/DEVICE/{deviceId}/SHARED_SCOPE",
-                        JacksonUtil.getObjectMapper().readTree(sharedAttributes.toString()), ResponseEntity.class,
+                        JacksonUtil.toJsonNode(sharedAttributes.toString()), ResponseEntity.class,
                         device.getId());
         Assert.assertTrue(sharedAttributesResponse.getStatusCode().is2xxSuccessful());
 
@@ -190,7 +190,7 @@ public class MqttClientTest extends AbstractContainerTest {
         request.addProperty("sharedKeys", "sharedAttr");
         mqttClient.publish("v1/devices/me/attributes/request/" + new Random().nextInt(100), Unpooled.wrappedBuffer(request.toString().getBytes())).get();
         MqttEvent event = listener.getEvents().poll(10, TimeUnit.SECONDS);
-        AttributesResponse attributes = JacksonUtil.getObjectMapper().readValue(Objects.requireNonNull(event).getMessage(), AttributesResponse.class);
+        AttributesResponse attributes = JacksonUtil.fromString(Objects.requireNonNull(event).getMessage(), AttributesResponse.class);
         log.info("Received telemetry: {}", attributes);
 
         Assert.assertEquals(1, attributes.getClient().size());
@@ -223,13 +223,13 @@ public class MqttClientTest extends AbstractContainerTest {
         sharedAttributes.addProperty(sharedAttributeName, sharedAttributeValue);
         ResponseEntity sharedAttributesResponse = restClient.getRestTemplate()
                 .postForEntity(HTTPS_URL + "/api/plugins/telemetry/DEVICE/{deviceId}/SHARED_SCOPE",
-                        JacksonUtil.getObjectMapper().readTree(sharedAttributes.toString()), ResponseEntity.class,
+                        JacksonUtil.toJsonNode(sharedAttributes.toString()), ResponseEntity.class,
                         device.getId());
         Assert.assertTrue(sharedAttributesResponse.getStatusCode().is2xxSuccessful());
 
         MqttEvent event = listener.getEvents().poll(10, TimeUnit.SECONDS);
         Assert.assertEquals(sharedAttributeValue,
-                JacksonUtil.getObjectMapper().readValue(Objects.requireNonNull(event).getMessage(), JsonNode.class).get(sharedAttributeName).asText());
+                JacksonUtil.toJsonNode(Objects.requireNonNull(event).getMessage()).get(sharedAttributeName).asText());
 
         // Update the shared attribute value
         JsonObject updatedSharedAttributes = new JsonObject();
@@ -237,13 +237,13 @@ public class MqttClientTest extends AbstractContainerTest {
         updatedSharedAttributes.addProperty(sharedAttributeName, updatedSharedAttributeValue);
         ResponseEntity updatedSharedAttributesResponse = restClient.getRestTemplate()
                 .postForEntity(HTTPS_URL + "/api/plugins/telemetry/DEVICE/{deviceId}/SHARED_SCOPE",
-                        JacksonUtil.getObjectMapper().readTree(updatedSharedAttributes.toString()), ResponseEntity.class,
+                        JacksonUtil.toJsonNode(updatedSharedAttributes.toString()), ResponseEntity.class,
                         device.getId());
         Assert.assertTrue(updatedSharedAttributesResponse.getStatusCode().is2xxSuccessful());
 
         event = listener.getEvents().poll(10, TimeUnit.SECONDS);
         Assert.assertEquals(updatedSharedAttributeValue,
-                JacksonUtil.getObjectMapper().readValue(Objects.requireNonNull(event).getMessage(), JsonNode.class).get(sharedAttributeName).asText());
+                JacksonUtil.toJsonNode(Objects.requireNonNull(event).getMessage()).get(sharedAttributeName).asText());
 
         restClient.getRestTemplate().delete(HTTPS_URL + "/api/device/" + device.getId());
     }
@@ -267,14 +267,10 @@ public class MqttClientTest extends AbstractContainerTest {
         serverRpcPayload.addProperty("params", true);
         ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName(getClass().getSimpleName())));
         ListenableFuture<ResponseEntity> future = service.submit(() -> {
-            try {
-                return restClient.getRestTemplate()
-                        .postForEntity(HTTPS_URL + "/api/rpc/twoway/{deviceId}",
-                                JacksonUtil.getObjectMapper().readTree(serverRpcPayload.toString()), String.class,
-                                device.getId());
-            } catch (IOException e) {
-                return ResponseEntity.badRequest().build();
-            }
+            return restClient.getRestTemplate()
+                    .postForEntity(HTTPS_URL + "/api/rpc/twoway/{deviceId}",
+                            JacksonUtil.toJsonNode(serverRpcPayload.toString()), String.class,
+                            device.getId());
         });
 
         // Wait for RPC call from the server and send the response
@@ -325,7 +321,7 @@ public class MqttClientTest extends AbstractContainerTest {
         MqttEvent responseFromServer = listener.getEvents().poll(1, TimeUnit.SECONDS);
         Integer responseId = Integer.valueOf(Objects.requireNonNull(responseFromServer).getTopic().substring("v1/devices/me/rpc/response/".length()));
         Assert.assertEquals(requestId, responseId);
-        Assert.assertEquals("requestReceived", JacksonUtil.getObjectMapper().readTree(responseFromServer.getMessage()).get("response").asText());
+        Assert.assertEquals("requestReceived", JacksonUtil.toJsonNode(responseFromServer.getMessage()).get("response").asText());
 
         // Make the default rule chain a root again
         ResponseEntity<RuleChain> rootRuleChainResponse = restClient.getRestTemplate()
@@ -365,12 +361,12 @@ public class MqttClientTest extends AbstractContainerTest {
         Assert.assertTrue(ruleChainResponse.getStatusCode().is2xxSuccessful());
         RuleChain ruleChain = ruleChainResponse.getBody();
 
-        JsonNode configuration = JacksonUtil.getObjectMapper().readTree(this.getClass().getClassLoader().getResourceAsStream("RpcResponseRuleChainMetadata.json"));
+        JsonNode configuration = JacksonUtil.fromBytes(this.getClass().getClassLoader().getResourceAsStream("RpcResponseRuleChainMetadata.json").readAllBytes());
         RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
         ruleChainMetaData.setRuleChainId(ruleChain.getId());
         ruleChainMetaData.setFirstNodeIndex(configuration.get("firstNodeIndex").asInt());
-        ruleChainMetaData.setNodes(Arrays.asList(JacksonUtil.getObjectMapper().treeToValue(configuration.get("nodes"), RuleNode[].class)));
-        ruleChainMetaData.setConnections(Arrays.asList(JacksonUtil.getObjectMapper().treeToValue(configuration.get("connections"), NodeConnectionInfo[].class)));
+        ruleChainMetaData.setNodes(Arrays.asList(JacksonUtil.treeToValue(configuration.get("nodes"), RuleNode[].class)));
+        ruleChainMetaData.setConnections(Arrays.asList(JacksonUtil.treeToValue(configuration.get("connections"), NodeConnectionInfo[].class)));
 
         ResponseEntity<RuleChainMetaData> ruleChainMetadataResponse = restClient.getRestTemplate()
                 .postForEntity(HTTPS_URL + "/api/ruleChain/metadata",

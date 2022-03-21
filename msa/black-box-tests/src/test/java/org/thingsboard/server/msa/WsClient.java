@@ -22,7 +22,6 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
 
 import javax.net.ssl.SSLParameters;
-import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -49,14 +48,10 @@ public class WsClient extends WebSocketClient {
             firstReplyReceived = true;
             firstReply.countDown();
         } else {
-            try {
-                WsTelemetryResponse response = JacksonUtil.getObjectMapper().readValue(message, WsTelemetryResponse.class);
-                if (!response.getData().isEmpty()) {
-                    this.message = response;
-                    latch.countDown();
-                }
-            } catch (IOException e) {
-                log.error("ws message can't be read");
+            WsTelemetryResponse response = JacksonUtil.fromString(message, WsTelemetryResponse.class);
+            if (!response.getData().isEmpty()) {
+                this.message = response;
+                latch.countDown();
             }
         }
     }
