@@ -4541,13 +4541,13 @@ flatten@^1.0.2:
   resolved "https://registry.yarnpkg.com/flatten/-/flatten-1.0.3.tgz#c1283ac9f27b368abc1e36d1ff7b04501a30356b"
   integrity sha512-dVsPA/UwQ8+2uoFe5GHtiBMu48dWLTdsuEd7CKGlZlD78r1TTWBvDuFaFGKCo/ZfEr95Uk56vZoX86OsHkUeIg==
 
-"flot.curvedlines@git://github.com/MichaelZinsmaier/CurvedLines.git#master":
+"flot.curvedlines@https://github.com/MichaelZinsmaier/CurvedLines.git#master":
   version "1.1.1"
-  resolved "git://github.com/MichaelZinsmaier/CurvedLines.git#22ed1fc2a6ccafc816c2d07b36027cc123825c4b"
+  resolved "https://github.com/MichaelZinsmaier/CurvedLines.git#22ed1fc2a6ccafc816c2d07b36027cc123825c4b"
 
-"flot@git://github.com/thingsboard/flot.git#0.9-work":
+"flot@https://github.com/thingsboard/flot.git#0.9-work":
   version "0.9.0-alpha"
-  resolved "git://github.com/thingsboard/flot.git#0ff0c775db7c74e705f6c3c2bba92080a202ccd4"
+  resolved "https://github.com/thingsboard/flot.git#0ff0c775db7c74e705f6c3c2bba92080a202ccd4"
 
 follow-redirects@^1.0.0:
   version "1.14.5"
@@ -6637,9 +6637,9 @@ ngx-drag-drop@^2.0.0:
   dependencies:
     tslib "^1.9.0"
 
-"ngx-flowchart@git://github.com/thingsboard/ngx-flowchart.git#release/1.0.0":
+"ngx-flowchart@https://github.com/thingsboard/ngx-flowchart.git#release/1.0.0":
   version "0.0.1"
-  resolved "git://github.com/thingsboard/ngx-flowchart.git#aac96f7e0490a386d58864d7819873e7c63cbb48"
+  resolved "https://github.com/thingsboard/ngx-flowchart.git#aac96f7e0490a386d58864d7819873e7c63cbb48"
   dependencies:
     tslib "^2.2.0"
 
