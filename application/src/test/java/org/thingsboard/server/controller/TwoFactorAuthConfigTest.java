@@ -29,7 +29,6 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.CacheConstants;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFactorAuthConfigManager;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFactorAuthSettings;
@@ -100,7 +99,7 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
         twoFaSettings.setVerificationCodeSendRateLimit("1:60");
         twoFaSettings.setVerificationCodeCheckRateLimit("3:900");
         twoFaSettings.setMaxVerificationFailuresBeforeUserLockout(10);
-        twoFaSettings.setTotalAllowedTimeForVerification(60);
+        twoFaSettings.setTotalAllowedTimeForVerification(3600);
 
         doPost("/api/2fa/settings", twoFaSettings).andExpect(status().isOk());
 
@@ -497,9 +496,10 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testIsTwoFaEnabled() throws ThingsboardException {
+    public void testIsTwoFaEnabled() throws Exception {
+        configureSmsTwoFaProvider("${verificationCode}");
         SmsTwoFactorAuthAccountConfig accountConfig = new SmsTwoFactorAuthAccountConfig();
-        accountConfig.setPhoneNumber("+380505050");
+        accountConfig.setPhoneNumber("+38050505050");
         twoFactorAuthConfigManager.saveTwoFaAccountConfig(tenantId, tenantAdminUserId, accountConfig);
 
         assertThat(twoFactorAuthConfigManager.isTwoFaEnabled(tenantId, tenantAdminUserId)).isTrue();
@@ -507,11 +507,13 @@ public abstract class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
     @Test
     public void testDeleteTwoFaAccountConfig() throws Exception {
+        configureSmsTwoFaProvider("${verificationCode}");
         SmsTwoFactorAuthAccountConfig accountConfig = new SmsTwoFactorAuthAccountConfig();
-        accountConfig.setPhoneNumber("+380505050");
-        twoFactorAuthConfigManager.saveTwoFaAccountConfig(tenantId, tenantAdminUserId, accountConfig);
+        accountConfig.setPhoneNumber("+38050505050");
 
         loginTenantAdmin();
+
+        twoFactorAuthConfigManager.saveTwoFaAccountConfig(tenantId, tenantAdminUserId, accountConfig);
 
         TwoFactorAuthAccountConfig savedAccountConfig = readResponse(doGet("/api/2fa/account/config").andExpect(status().isOk()), TwoFactorAuthAccountConfig.class);
         assertThat(savedAccountConfig).isEqualTo(accountConfig);
