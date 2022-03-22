@@ -17,7 +17,6 @@ package org.thingsboard.server.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -25,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
@@ -53,6 +53,7 @@ public class TwoFactorAuthController extends BaseController {
     private final TwoFactorAuthService twoFactorAuthService;
     private final JwtTokenFactory tokenFactory;
     private final SystemSecurityService systemSecurityService;
+    private final UserService userService;
 
 
     @PostMapping("/verification/send")
@@ -69,9 +70,10 @@ public class TwoFactorAuthController extends BaseController {
         boolean verificationSuccess = twoFactorAuthService.checkVerificationCode(user, verificationCode, true);
         if (verificationSuccess) {
             systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(servletRequest), ActionType.LOGIN, null);
+            user = new SecurityUser(userService.findUserById(user.getTenantId(), user.getId()), true, user.getUserPrincipal());
             return tokenFactory.createTokenPair(user);
         } else {
-            ThingsboardException error = new ThingsboardException("Verification code is incorrect", ThingsboardErrorCode.AUTHENTICATION);
+            ThingsboardException error = new ThingsboardException("Verification code is incorrect", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
             systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(servletRequest), ActionType.LOGIN, error);
             throw error;
         }

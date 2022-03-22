@@ -323,6 +323,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         }
         ((ObjectNode) additionalInfo).put(LAST_LOGIN_TS, System.currentTimeMillis());
         user.setAdditionalInfo(additionalInfo);
+        saveUser(user);
     }
 
     @Override

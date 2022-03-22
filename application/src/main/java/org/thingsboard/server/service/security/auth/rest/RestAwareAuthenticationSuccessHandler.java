@@ -54,8 +54,8 @@ public class RestAwareAuthenticationSuccessHandler implements AuthenticationSucc
         JwtTokenPair tokenPair = new JwtTokenPair();
 
         if (authentication instanceof MfaAuthenticationToken) {
-            int preVerificationTokenLifetime = (int) TimeUnit.MINUTES.toSeconds(twoFactorAuthConfigManager.getTwoFaSettings(securityUser.getTenantId(), true)
-                    .flatMap(settings -> Optional.ofNullable(settings.getTotalAllowedTimeForVerification())).orElse(30));
+            int preVerificationTokenLifetime = twoFactorAuthConfigManager.getTwoFaSettings(securityUser.getTenantId(), true)
+                    .flatMap(settings -> Optional.ofNullable(settings.getTotalAllowedTimeForVerification())).orElse((int) TimeUnit.MINUTES.toSeconds(30));
             tokenPair.setToken(tokenFactory.createPreVerificationToken(securityUser, preVerificationTokenLifetime).getToken());
             tokenPair.setRefreshToken(null);
             tokenPair.setScope(Authority.PRE_VERIFICATION_TOKEN);

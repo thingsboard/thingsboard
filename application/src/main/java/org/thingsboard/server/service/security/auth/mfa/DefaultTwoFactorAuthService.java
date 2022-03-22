@@ -16,9 +16,10 @@
 package org.thingsboard.server.service.security.auth.mfa;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -76,7 +77,7 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
         if (checkLimits) {
             if (StringUtils.isNotEmpty(twoFaSettings.getVerificationCodeSendRateLimit())) {
                 TbRateLimits rateLimits = verificationCodeSendingRateLimits.computeIfAbsent(securityUser.getId(), sessionId -> {
-                    return new TbRateLimits(twoFaSettings.getVerificationCodeSendRateLimit());
+                    return new TbRateLimits(twoFaSettings.getVerificationCodeSendRateLimit(), true);
                 });
                 if (!rateLimits.tryConsume()) {
                     throw new ThingsboardException("Too many verification code sending requests", ThingsboardErrorCode.TOO_MANY_REQUESTS);
@@ -107,19 +108,30 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
         if (checkLimits) {
             if (StringUtils.isNotEmpty(twoFaSettings.getVerificationCodeCheckRateLimit())) {
                 TbRateLimits rateLimits = verificationCodeCheckingRateLimits.computeIfAbsent(securityUser.getId(), sessionId -> {
-                    return new TbRateLimits(twoFaSettings.getVerificationCodeCheckRateLimit());
+                    return new TbRateLimits(twoFaSettings.getVerificationCodeCheckRateLimit(), true);
                 });
                 if (!rateLimits.tryConsume()) {
                     throw new ThingsboardException("Too many verification code checking requests", ThingsboardErrorCode.TOO_MANY_REQUESTS);
                 }
             }
         }
-
         TwoFactorAuthProviderConfig providerConfig = twoFaSettings.getProviderConfig(accountConfig.getProviderType())
                 .orElseThrow(() -> PROVIDER_NOT_CONFIGURED_ERROR);
-        boolean verificationSuccess = getTwoFaProvider(accountConfig.getProviderType()).checkVerificationCode(securityUser, verificationCode, providerConfig, accountConfig);
+
+        boolean verificationSuccess;
+        if (StringUtils.isNumeric(verificationCode) && verificationCode.length() == 6) {
+            verificationSuccess = getTwoFaProvider(accountConfig.getProviderType()).checkVerificationCode(securityUser, verificationCode, providerConfig, accountConfig);
+        } else {
+            verificationSuccess = false;
+        }
         if (checkLimits) {
-            systemSecurityService.validateTwoFaVerification(securityUser, verificationSuccess, twoFaSettings);
+            try {
+                systemSecurityService.validateTwoFaVerification(securityUser, verificationSuccess, twoFaSettings);
+            } catch (LockedException e) {
+                verificationCodeCheckingRateLimits.remove(securityUser.getId());
+                verificationCodeSendingRateLimits.remove(securityUser.getId());
+                throw new ThingsboardException(e.getMessage(), ThingsboardErrorCode.AUTHENTICATION);
+            }
             if (verificationSuccess) {
                 verificationCodeCheckingRateLimits.remove(securityUser.getId());
                 verificationCodeSendingRateLimits.remove(securityUser.getId());

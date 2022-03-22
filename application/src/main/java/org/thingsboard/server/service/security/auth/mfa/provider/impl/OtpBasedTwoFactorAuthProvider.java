@@ -65,7 +65,6 @@ public abstract class OtpBasedTwoFactorAuthProvider<C extends OtpBasedTwoFactorA
         return false;
     }
 
-    // FIXME [viacheslav]: periodically clean up codes cache
 
     @Data
     public static class Otp {

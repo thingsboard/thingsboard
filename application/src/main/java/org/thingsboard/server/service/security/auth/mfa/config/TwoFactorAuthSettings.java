@@ -42,7 +42,7 @@ public class TwoFactorAuthSettings {
     @ApiModelProperty(example = "10")
     @Min(value = 0, message = "maximum number of verification failure before user lockout must be positive")
     private int maxVerificationFailuresBeforeUserLockout;
-    @ApiModelProperty(value = "in minutes", example = "60")
+    @ApiModelProperty(value = "in seconds", example = "3600 (60 minutes)")
     @Min(value = 1, message = "total amount of time allotted for verification must be greater than 0")
     private Integer totalAllowedTimeForVerification;
 

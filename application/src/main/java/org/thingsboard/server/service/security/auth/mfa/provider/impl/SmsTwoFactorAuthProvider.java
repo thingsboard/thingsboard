@@ -35,7 +35,7 @@ public class SmsTwoFactorAuthProvider extends OtpBasedTwoFactorAuthProvider<SmsT
 
     private final SmsService smsService;
 
-    public SmsTwoFactorAuthProvider(SmsService smsService, CacheManager cacheManager) {
+    public SmsTwoFactorAuthProvider(CacheManager cacheManager, SmsService smsService) {
         super(cacheManager);
         this.smsService = smsService;
     }
