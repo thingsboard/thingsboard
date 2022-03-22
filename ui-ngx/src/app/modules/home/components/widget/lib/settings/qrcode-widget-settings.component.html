@@ -28,7 +28,8 @@
   </mat-form-field>
   <section fxLayout="column" [fxShow]="qrCodeWidgetSettingsForm.get('useQrCodeTextFunction').value === true">
     <label translate class="tb-title no-padding">widgets.qr-code.qr-code-text-function</label>
-    <tb-js-func formControlName="qrCodeTextFunction"
+    <tb-js-func #qrCodeTextFunctionComponent
+                formControlName="qrCodeTextFunction"
                 [functionArgs]="['data']"
                 helpId="widget/lib/qrcode/qrcode_text_fn">
     </tb-js-func>

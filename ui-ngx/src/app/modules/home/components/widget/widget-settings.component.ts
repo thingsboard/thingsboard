@@ -40,8 +40,9 @@ import { deepClone } from '@core/utils';
 import { RuleChainType } from '@shared/models/rule-chain.models';
 import { JsonFormComponent } from '@shared/components/json-form/json-form.component';
 import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
-import { IWidgetSettingsComponent, WidgetSettings } from '@shared/models/widget.models';
+import { IWidgetSettingsComponent, Widget, WidgetSettings } from '@shared/models/widget.models';
 import { widgetSettingsComponentsMap } from '@home/components/widget/lib/settings/widget-settings.module';
+import { Dashboard } from '@shared/models/dashboard.models';
 
 @Component({
   selector: 'tb-widget-settings',
@@ -61,6 +62,12 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  dashboard: Dashboard;
+
+  @Input()
+  widget: Widget;
 
   settingsDirectiveValue: string;
 
@@ -134,6 +141,8 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
       this.changeSubscription = null;
     }
     if (this.definedSettingsComponent) {
+      this.definedSettingsComponent.dashboard = this.dashboard;
+      this.definedSettingsComponent.widget = this.widget;
       this.definedSettingsComponent.settings = this.widgetSettingsFormData.model;
       this.changeSubscription = this.definedSettingsComponent.settingsChanged.subscribe((settings) => {
         this.updateModel(settings);
@@ -185,7 +194,8 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
         const factory = this.cfr.resolveComponentFactory(componentType);
         this.definedSettingsComponentRef = this.definedSettingsContainer.createComponent(factory);
         this.definedSettingsComponent = this.definedSettingsComponentRef.instance;
-        this.definedSettingsComponent.settings = this.widgetSettingsFormData?.model;
+        this.definedSettingsComponent.dashboard = this.dashboard;
+        this.definedSettingsComponent.widget = this.widget;
         this.changeSubscription = this.definedSettingsComponent.settingsChanged.subscribe((settings) => {
           this.updateModel(settings);
         });

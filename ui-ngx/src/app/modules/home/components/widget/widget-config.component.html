@@ -191,6 +191,8 @@
                                       [aliasController]="aliasController"
                                       [datakeySettingsSchema]="modelValue?.dataKeySettingsSchema"
                                       [dataKeySettingsDirective]="modelValue?.dataKeySettingsDirective"
+                                      [dashboard]="dashboard"
+                                      [widget]="widget"
                                       [callbacks]="widgetConfigCallbacks"
                                       [entityAliasId]="datasourceControl.get('entityAliasId').value"
                                       [formControl]="datasourceControl.get('dataKeys')">
@@ -285,6 +287,8 @@
                             [aliasController]="aliasController"
                             [datakeySettingsSchema]="modelValue?.dataKeySettingsSchema"
                             [dataKeySettingsDirective]="modelValue?.dataKeySettingsDirective"
+                            [dashboard]="dashboard"
+                            [widget]="widget"
                             [callbacks]="widgetConfigCallbacks"
                             [entityAliasId]="alarmSourceSettings.get('entityAliasId').value"
                             formControlName="dataKeys">
@@ -480,6 +484,8 @@
          fxLayout="column">
         <tb-widget-settings
           [settingsDirective]="modelValue.settingsDirective"
+          [dashboard]="dashboard"
+          [widget]="widget"
           formControlName="settings">
         </tb-widget-settings>
     </div>

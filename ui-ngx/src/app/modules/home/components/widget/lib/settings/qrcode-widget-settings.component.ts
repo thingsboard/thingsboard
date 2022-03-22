@@ -14,12 +14,12 @@
 /// limitations under the License.
 ///
 
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-
+import { JsFuncComponent } from '@shared/components/js-func.component';
 
 @Component({
   selector: 'tb-qrcode-widget-settings',
@@ -27,6 +27,8 @@ import { AppState } from '@core/core.state';
   styleUrls: []
 })
 export class QrCodeWidgetSettingsComponent extends WidgetSettingsComponent {
+
+  @ViewChild('qrCodeTextFunctionComponent', {static: true}) qrCodeTextFunctionComponent: JsFuncComponent;
 
   qrCodeWidgetSettingsForm: FormGroup;
 
@@ -39,11 +41,19 @@ export class QrCodeWidgetSettingsComponent extends WidgetSettingsComponent {
     return this.qrCodeWidgetSettingsForm;
   }
 
+  protected defaultSettings(): WidgetSettings {
+    return {
+      qrCodeTextPattern: '${entityName}',
+      useQrCodeTextFunction: false,
+      qrCodeTextFunction: 'return data[0][\'entityName\'];'
+    };
+  }
+
   protected onSettingsSet(settings: WidgetSettings) {
     this.qrCodeWidgetSettingsForm = this.fb.group({
-      qrCodeTextPattern: [settings ? settings.qrCodeTextPattern : '${entityName}', []],
-      useQrCodeTextFunction: [settings ? settings.useQrCodeTextFunction : false, []],
-      qrCodeTextFunction: [settings ? settings.qrCodeTextFunction : 'return data[0][\'entityName\'];', []]
+      qrCodeTextPattern: [settings.qrCodeTextPattern, []],
+      useQrCodeTextFunction: [settings.useQrCodeTextFunction, []],
+      qrCodeTextFunction: [settings.qrCodeTextFunction, []]
     });
   }
 
@@ -55,7 +65,9 @@ export class QrCodeWidgetSettingsComponent extends WidgetSettingsComponent {
     const useQrCodeTextFunction: boolean = this.qrCodeWidgetSettingsForm.get('useQrCodeTextFunction').value;
     if (useQrCodeTextFunction) {
       this.qrCodeWidgetSettingsForm.get('qrCodeTextPattern').setValidators([]);
-      this.qrCodeWidgetSettingsForm.get('qrCodeTextFunction').setValidators([Validators.required]);
+      this.qrCodeWidgetSettingsForm.get('qrCodeTextFunction').setValidators([Validators.required,
+        (control: AbstractControl) => this.qrCodeTextFunctionComponent.validate(control as FormControl)
+      ]);
     } else {
       this.qrCodeWidgetSettingsForm.get('qrCodeTextPattern').setValidators([Validators.required]);
       this.qrCodeWidgetSettingsForm.get('qrCodeTextFunction').setValidators([]);

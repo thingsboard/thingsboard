@@ -25,7 +25,7 @@ import {
   datasourceTypeTranslationMap,
   defaultLegendConfig,
   GroupInfo,
-  JsonSchema,
+  JsonSchema, Widget,
   widgetType
 } from '@shared/models/widget.models';
 import {
@@ -65,7 +65,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { EntityService } from '@core/http/entity.service';
 import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
 import { WidgetActionsData } from './action/manage-widget-actions.component.models';
-import { DashboardState } from '@shared/models/dashboard.models';
+import { Dashboard, DashboardState } from '@shared/models/dashboard.models';
 import { entityFields } from '@shared/models/entity.models';
 import { Filter, Filters } from '@shared/models/query/query.models';
 import { FilterDialogComponent, FilterDialogData } from '@home/components/filter/filter-dialog.component';
@@ -126,16 +126,13 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   aliasController: IAliasController;
 
   @Input()
-  entityAliases: EntityAliases;
+  dashboard: Dashboard;
 
   @Input()
-  filters: Filters;
+  widget: Widget;
 
   @Input()
   functionsOnly: boolean;
-
-  @Input()
-  dashboardStates: {[id: string]: DashboardState };
 
   @Input() disabled: boolean;
 
@@ -831,14 +828,14 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       data: {
         isAdd: true,
         allowedEntityTypes,
-        entityAliases: this.entityAliases,
+        entityAliases: this.dashboard.configuration.entityAliases,
         alias: singleEntityAlias
       }
     }).afterClosed().pipe(
       tap((entityAlias) => {
         if (entityAlias) {
-          this.entityAliases[entityAlias.id] = entityAlias;
-          this.aliasController.updateEntityAliases(this.entityAliases);
+          this.dashboard.configuration.entityAliases[entityAlias.id] = entityAlias;
+          this.aliasController.updateEntityAliases(this.dashboard.configuration.entityAliases);
         }
       })
     );
@@ -852,14 +849,14 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         isAdd: true,
-        filters: this.filters,
+        filters: this.dashboard.configuration.filters,
         filter: singleFilter
       }
     }).afterClosed().pipe(
       tap((result) => {
         if (result) {
-          this.filters[result.id] = result;
-          this.aliasController.updateFilters(this.filters);
+          this.dashboard.configuration.filters[result.id] = result;
+          this.aliasController.updateFilters(this.dashboard.configuration.filters);
         }
       })
     );
@@ -881,7 +878,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
   }
 
   private fetchDashboardStates(query: string): Array<string> {
-    const stateIds = Object.keys(this.dashboardStates);
+    const stateIds = Object.keys(this.dashboard.configuration.states);
     const result = query ? stateIds.filter(this.createFilterForDashboardState(query)) : stateIds;
     if (result && result.length) {
       return result;

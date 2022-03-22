@@ -33,6 +33,7 @@ import { AbstractControl, FormGroup } from '@angular/forms';
 import {RuleChainType} from "@shared/models/rule-chain.models";
 import {Observable} from "rxjs";
 import {RuleNodeConfiguration} from "@shared/models/rule-node.models";
+import { Dashboard } from '@shared/models/dashboard.models';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -587,6 +588,8 @@ export interface WidgetSize {
 }
 
 export interface IWidgetSettingsComponent {
+  dashboard: Dashboard;
+  widget: Widget;
   settings: WidgetSettings;
   settingsChanged: Observable<WidgetSettings>;
   validate();
@@ -598,17 +601,21 @@ export interface IWidgetSettingsComponent {
 export abstract class WidgetSettingsComponent extends PageComponent implements
   IWidgetSettingsComponent, OnInit, AfterViewInit {
 
+  dashboard: Dashboard;
+
+  widget: Widget;
+
   settingsValue: WidgetSettings;
 
   private settingsSet = false;
 
   set settings(value: WidgetSettings) {
-    this.settingsValue = value;
+    this.settingsValue = value || this.defaultSettings();
     if (!this.settingsSet) {
       this.settingsSet = true;
-      this.setupSettings(value);
+      this.setupSettings(this.settingsValue);
     } else {
-      this.updateSettings(value);
+      this.updateSettings(this.settingsValue);
     }
   }
 
@@ -693,5 +700,9 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
   protected abstract settingsForm(): FormGroup;
 
   protected abstract onSettingsSet(settings: WidgetSettings);
+
+  protected defaultSettings(): WidgetSettings {
+    return {};
+  }
 
 }
