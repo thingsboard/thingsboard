@@ -32,12 +32,12 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFactorAuthConfigManager;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFactorAuthSettings;
 import org.thingsboard.server.service.security.auth.mfa.config.account.TotpTwoFactorAuthAccountConfig;
 import org.thingsboard.server.service.security.auth.mfa.config.account.TwoFactorAuthAccountConfig;
 import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProviderType;
-import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import javax.servlet.ServletOutputStream;
@@ -55,14 +55,14 @@ public class TwoFactorAuthConfigController extends BaseController {
 
 
     @GetMapping("/account/config")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public TwoFactorAuthAccountConfig getTwoFaAccountConfig() throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         return twoFactorAuthConfigManager.getTwoFaAccountConfig(user.getTenantId(), user.getId()).orElse(null);
     }
 
     @PostMapping("/account/config/generate")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public TwoFactorAuthAccountConfig generateTwoFaAccountConfig(@RequestParam TwoFactorAuthProviderType providerType) throws Exception {
         SecurityUser user = getCurrentUser();
         return twoFactorAuthService.generateNewAccountConfig(user, providerType);
@@ -70,7 +70,7 @@ public class TwoFactorAuthConfigController extends BaseController {
 
     /* TMP */
     @PostMapping("/account/config/generate/qr")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public void generateTwoFaAccountConfigWithQr(@RequestParam TwoFactorAuthProviderType providerType, HttpServletResponse response) throws Exception {
         TwoFactorAuthAccountConfig config = generateTwoFaAccountConfig(providerType);
         if (providerType == TwoFactorAuthProviderType.TOTP) {
@@ -84,14 +84,14 @@ public class TwoFactorAuthConfigController extends BaseController {
     /* TMP */
 
     @PostMapping("/account/config/submit")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public void submitTwoFaAccountConfig(@Valid @RequestBody TwoFactorAuthAccountConfig accountConfig) throws Exception {
         SecurityUser user = getCurrentUser();
         twoFactorAuthService.prepareVerificationCode(user, accountConfig, false);
     }
 
     @PostMapping("/account/config")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public void verifyAndSaveTwoFaAccountConfig(@Valid @RequestBody TwoFactorAuthAccountConfig accountConfig,
                                                 @RequestParam String verificationCode) throws Exception {
         SecurityUser user = getCurrentUser();
@@ -104,7 +104,7 @@ public class TwoFactorAuthConfigController extends BaseController {
     }
 
     @DeleteMapping("/account/config")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     public void deleteTwoFactorAuthAccountConfig() throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         twoFactorAuthConfigManager.deleteTwoFaAccountConfig(user.getTenantId(), user.getId());
