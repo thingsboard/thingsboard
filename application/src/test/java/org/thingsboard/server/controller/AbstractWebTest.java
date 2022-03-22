@@ -64,6 +64,7 @@ import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -126,6 +127,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected TenantId tenantId;
     protected UserId tenantAdminUserId;
+    protected CustomerId customerId;
 
     @SuppressWarnings("rawtypes")
     private HttpMessageConverter mappingJackson2HttpMessageConverter;
@@ -195,6 +197,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         customer.setTitle("Customer");
         customer.setTenantId(tenantId);
         Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+        customerId = savedCustomer.getId();
 
         User customerUser = new User();
         customerUser.setAuthority(Authority.CUSTOMER_USER);
@@ -257,9 +260,14 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     private Tenant savedDifferentTenant;
+    private Customer savedDifferentCustomer;
 
     protected void loginDifferentTenant() throws Exception {
         loginSysAdmin();
+        if (savedDifferentTenant != null) {
+            deleteDifferentTenant();
+        }
+
         Tenant tenant = new Tenant();
         tenant.setTitle("Different tenant");
         savedDifferentTenant = doPost("/api/tenant", tenant, Tenant.class);
@@ -272,10 +280,27 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         createUserAndLogin(differentTenantAdmin, "testPassword");
     }
 
+    protected void loginDifferentCustomer() throws Exception {
+        loginTenantAdmin();
+        Customer customer = new Customer();
+        customer.setTitle("Different customer");
+        savedDifferentCustomer = doPost("/api/customer", customer, Customer.class);
+        Assert.assertNotNull(savedDifferentCustomer);
+        User differentCustomerUser = new User();
+        differentCustomerUser.setAuthority(Authority.CUSTOMER_USER);
+        differentCustomerUser.setTenantId(tenantId);
+        differentCustomerUser.setCustomerId(savedDifferentCustomer.getId());
+        differentCustomerUser.setEmail("different_customer@thingsboard.org");
+
+        createUserAndLogin(differentCustomerUser, "testPassword");
+    }
+
     protected void deleteDifferentTenant() throws Exception {
-        loginSysAdmin();
-        doDelete("/api/tenant/" + savedDifferentTenant.getId().getId().toString())
-                .andExpect(status().isOk());
+        if (savedDifferentTenant != null) {
+            loginSysAdmin();
+            doDelete("/api/tenant/" + savedDifferentTenant.getId().getId().toString())
+                    .andExpect(status().isOk());
+        }
     }
 
     protected User createUserAndLogin(User user, String password) throws Exception {
@@ -613,8 +638,6 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         edge.setType(type);
         edge.setSecret(RandomStringUtils.randomAlphanumeric(20));
         edge.setRoutingKey(RandomStringUtils.randomAlphanumeric(20));
-        edge.setEdgeLicenseKey(RandomStringUtils.randomAlphanumeric(20));
-        edge.setCloudEndpoint("http://localhost:8080");
         return edge;
     }
 }

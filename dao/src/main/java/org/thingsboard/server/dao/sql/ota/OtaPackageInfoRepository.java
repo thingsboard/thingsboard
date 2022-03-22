@@ -17,15 +17,15 @@ package org.thingsboard.server.dao.sql.ota;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.dao.model.sql.OtaPackageInfoEntity;
 
 import java.util.UUID;
 
-public interface OtaPackageInfoRepository extends CrudRepository<OtaPackageInfoEntity, UUID> {
+public interface OtaPackageInfoRepository extends JpaRepository<OtaPackageInfoEntity, UUID> {
     @Query("SELECT new OtaPackageInfoEntity(f.id, f.createdTime, f.tenantId, f.deviceProfileId, f.type, f.title, f.version, f.tag, f.url, f.fileName, f.contentType, f.checksumAlgorithm, f.checksum, f.dataSize, f.additionalInfo, CASE WHEN (f.data IS NOT NULL OR f.url IS NOT NULL)  THEN true ELSE false END) FROM OtaPackageEntity f WHERE " +
             "f.tenantId = :tenantId " +
             "AND LOWER(f.searchText) LIKE LOWER(CONCAT('%', :searchText, '%'))")

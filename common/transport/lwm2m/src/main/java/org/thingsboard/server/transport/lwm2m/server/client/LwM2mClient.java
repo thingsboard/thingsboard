@@ -42,9 +42,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.transport.lwm2m.config.TbLwM2mVersion;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -72,15 +69,14 @@ import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.ge
 @Slf4j
 @EqualsAndHashCode(of = {"endpoint"})
 @ToString(of = "endpoint")
-public class LwM2mClient implements Serializable {
+public class LwM2mClient {
 
-    private static final long serialVersionUID = 8793482946289222623L;
-
+    @Getter
     private final String nodeId;
     @Getter
     private final String endpoint;
 
-    private transient Lock lock;
+    private final Lock lock;
 
     @Getter
     private final Map<String, ResourceValue> resources;
@@ -109,7 +105,7 @@ public class LwM2mClient implements Serializable {
     @Getter
     private Long edrxCycle;
     @Getter
-    private transient Registration registration;
+    private Registration registration;
     @Getter
     @Setter
     private boolean asleep;
@@ -117,14 +113,14 @@ public class LwM2mClient implements Serializable {
     private long lastUplinkTime;
     @Getter
     @Setter
-    private transient Future<Void> sleepTask;
+    private Future<Void> sleepTask;
 
     private boolean firstEdrxDownlink = true;
 
     @Getter
-    private transient Set<ContentFormat> clientSupportContentFormats;
+    private Set<ContentFormat> clientSupportContentFormats;
     @Getter
-    private transient ContentFormat defaultContentFormat;
+    private ContentFormat defaultContentFormat;
     @Getter
     private final AtomicInteger retryAttempts;
 
@@ -228,25 +224,19 @@ public class LwM2mClient implements Serializable {
     }
 
     public boolean saveResourceValue(String pathRezIdVer, LwM2mResource resource, LwM2mModelProvider modelProvider, Mode mode) {
-        if (this.resources.get(pathRezIdVer) != null && this.resources.get(pathRezIdVer).getResourceModel() != null &&
-                resourceEqualsModel(resource, this.resources.get(pathRezIdVer).getResourceModel())) {
+        if (this.resources.get(pathRezIdVer) != null && this.resources.get(pathRezIdVer).getResourceModel() != null) {
             this.resources.get(pathRezIdVer).updateLwM2mResource(resource, mode);
             return true;
         } else {
             LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRezIdVer));
             ResourceModel resourceModel = modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
-            if (resourceModel != null && resourceEqualsModel(resource, resourceModel)) {
+            if (resourceModel != null) {
                 this.resources.put(pathRezIdVer, new ResourceValue(resource, resourceModel));
                 return true;
             } else {
                 return false;
             }
         }
-    }
-
-    private boolean resourceEqualsModel(LwM2mResource resource, ResourceModel resourceModel) {
-        return ((!resourceModel.multiple && resource instanceof LwM2mSingleResource) ||
-                (resourceModel.multiple && resource instanceof LwM2mMultipleResource));
     }
 
     public Object getResourceValue(String pathRezIdVer, String pathRezId) {
@@ -297,11 +287,22 @@ public class LwM2mClient implements Serializable {
     }
 
     public ObjectModel getObjectModel(String pathIdVer, LwM2mModelProvider modelProvider) {
-        LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer));
-        String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
-        String verRez = getVerFromPathIdVerOrId(pathIdVer);
-        return verRez != null && verRez.equals(verSupportedObject) ? modelProvider.getObjectModel(registration)
-                .getObjectModel(pathIds.getObjectId()) : null;
+        try {
+            LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer));
+            String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
+            String verRez = getVerFromPathIdVerOrId(pathIdVer);
+            return verRez != null && verRez.equals(verSupportedObject) ? modelProvider.getObjectModel(registration)
+                    .getObjectModel(pathIds.getObjectId()) : null;
+        } catch (Exception e) {
+            if (registration == null) {
+                log.error("[{}] Failed Registration is null, GetObjectModelRegistration. ", this.endpoint, e);
+            } else if (registration.getSupportedObject() == null) {
+                log.error("[{}] Failed SupportedObject in Registration, GetObjectModelRegistration.", this.endpoint, e);
+            } else {
+                log.error("[{}] Failed ModelProvider.getObjectModel [{}] in Registration. ", this.endpoint, registration.getSupportedObject(), e);
+            }
+            return null;
+        }
     }
 
 
@@ -423,15 +424,18 @@ public class LwM2mClient implements Serializable {
     private ContentFormat calculateDefaultContentFormat(Registration registration) {
         if (registration == null) {
             return ContentFormat.DEFAULT;
-        } else{
+        } else {
             return TbLwM2mVersion.fromVersion(registration.getLwM2mVersion()).getContentFormat();
         }
     }
 
-    static private Set<ContentFormat> clientSupportContentFormat(Registration registration) {
+    private static Set<ContentFormat> clientSupportContentFormat(Registration registration) {
         Set<ContentFormat> contentFormats = new HashSet<>();
         contentFormats.add(ContentFormat.DEFAULT);
-        LinkParamValue ct = Arrays.stream(registration.getObjectLinks()).filter(link -> link.getUriReference().equals("/")).findFirst().get().getLinkParams().get("ct");
+        LinkParamValue ct = Arrays.stream(registration.getObjectLinks())
+                .filter(link -> link.getUriReference().equals("/"))
+                .findFirst()
+                .map(link -> link.getLinkParams().get("ct")).orElse(null);
         if (ct != null) {
             Set<ContentFormat> codes = Stream.of(ct.getUnquoted().replaceAll("\"", "").split(" ", -1))
                     .map(String::trim)
@@ -441,11 +445,6 @@ public class LwM2mClient implements Serializable {
             contentFormats.addAll(codes);
         }
         return contentFormats;
-    }
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        this.lock = new ReentrantLock();
     }
 
     public long updateLastUplinkTime() {

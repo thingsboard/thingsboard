@@ -32,16 +32,6 @@ public class LwM2MNetworkConfig {
         coapConfig.set(CoapConfig.COAP_PORT, serverPortNoSec);
         coapConfig.set(CoapConfig.COAP_SECURE_PORT, serverSecurePort);
         /**
-         Example:Property for large packet:
-         #NetworkConfig config = new NetworkConfig();
-         #config.setInt(CoapConfig.MAX_MESSAGE_SIZE,32);
-         #config.setInt(CoapConfig.PREFERRED_BLOCK_SIZE,32);
-         #config.setInt(CoapConfig.MAX_RESOURCE_BODY_SIZE,2048);
-         #config.setInt(CoapConfig.MAX_RETRANSMIT,3);
-         #config.setInt(CoapConfig.MAX_TRANSMIT_WAIT,120000);
-         */
-
-        /**
          Property to indicate if the response should always include the Block2 option \
          when client request early blockwise negociation but the response can be sent on one packet.
          - value of false indicate that the server will respond without block2 option if no further blocks are required.

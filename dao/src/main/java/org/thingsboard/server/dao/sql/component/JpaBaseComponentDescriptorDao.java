@@ -17,7 +17,7 @@ package org.thingsboard.server.dao.sql.component;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.id.ComponentDescriptorId;
@@ -55,7 +55,7 @@ public class JpaBaseComponentDescriptorDao extends JpaAbstractSearchTextDao<Comp
     }
 
     @Override
-    protected CrudRepository<ComponentDescriptorEntity, UUID> getCrudRepository() {
+    protected JpaRepository<ComponentDescriptorEntity, UUID> getRepository() {
         return componentDescriptorRepository;
     }
 

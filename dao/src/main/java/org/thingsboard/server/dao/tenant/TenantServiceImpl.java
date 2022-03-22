@@ -17,14 +17,11 @@ package org.thingsboard.server.dao.tenant;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -35,7 +32,6 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rpc.RpcService;
@@ -55,9 +51,6 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
 
     private static final String DEFAULT_TENANT_REGION = "Global";
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
-
-    @Value("${zk.enabled}")
-    private Boolean zkEnabled;
 
     @Autowired
     private TenantDao tenantDao;
@@ -103,6 +96,9 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
 
     @Autowired
     private RpcService rpcService;
+
+    @Autowired
+    private DataValidator<Tenant> tenantValidator;
 
     @Override
     public Tenant findTenantById(TenantId tenantId) {
@@ -168,58 +164,28 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
     public PageData<Tenant> findTenants(PageLink pageLink) {
         log.trace("Executing findTenants pageLink [{}]", pageLink);
         Validator.validatePageLink(pageLink);
-        return tenantDao.findTenantsByRegion(TenantId.SYS_TENANT_ID, DEFAULT_TENANT_REGION, pageLink);
+        return tenantDao.findTenants(TenantId.SYS_TENANT_ID, pageLink);
     }
 
     @Override
     public PageData<TenantInfo> findTenantInfos(PageLink pageLink) {
         log.trace("Executing findTenantInfos pageLink [{}]", pageLink);
         Validator.validatePageLink(pageLink);
-        return tenantDao.findTenantInfosByRegion(TenantId.SYS_TENANT_ID, DEFAULT_TENANT_REGION, pageLink);
+        return tenantDao.findTenantInfos(TenantId.SYS_TENANT_ID, pageLink);
     }
 
     @Override
     public void deleteTenants() {
         log.trace("Executing deleteTenants");
-        tenantsRemover.removeEntities(TenantId.SYS_TENANT_ID, DEFAULT_TENANT_REGION);
+        tenantsRemover.removeEntities(TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID);
     }
 
-    private DataValidator<Tenant> tenantValidator =
-            new DataValidator<Tenant>() {
-                @Override
-                protected void validateDataImpl(TenantId tenantId, Tenant tenant) {
-                    if (StringUtils.isEmpty(tenant.getTitle())) {
-                        throw new DataValidationException("Tenant title should be specified!");
-                    }
-                    if (!StringUtils.isEmpty(tenant.getEmail())) {
-                        validateEmail(tenant.getEmail());
-                    }
-                    validateTenantProfile(tenantId, tenant);
-                }
+    private PaginatedRemover<TenantId, Tenant> tenantsRemover =
+            new PaginatedRemover<>() {
 
                 @Override
-                protected void validateUpdate(TenantId tenantId, Tenant tenant) {
-                    Tenant old = tenantDao.findById(TenantId.SYS_TENANT_ID, tenantId.getId());
-                    if (old == null) {
-                        throw new DataValidationException("Can't update non existing tenant!");
-                    }
-                    validateTenantProfile(tenantId, tenant);
-                }
-
-                private void validateTenantProfile(TenantId tenantId, Tenant tenant) {
-                    TenantProfile tenantProfileById = tenantProfileService.findTenantProfileById(tenantId, tenant.getTenantProfileId());
-                    if (!zkEnabled && (tenantProfileById.isIsolatedTbCore() || tenantProfileById.isIsolatedTbRuleEngine())) {
-                        throw new DataValidationException("Can't use isolated tenant profiles in monolith setup!");
-                    }
-                }
-            };
-
-    private PaginatedRemover<String, Tenant> tenantsRemover =
-            new PaginatedRemover<String, Tenant>() {
-
-                @Override
-                protected PageData<Tenant> findEntities(TenantId tenantId, String region, PageLink pageLink) {
-                    return tenantDao.findTenantsByRegion(tenantId, region, pageLink);
+                protected PageData<Tenant> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+                    return tenantDao.findTenants(tenantId, pageLink);
                 }
 
                 @Override

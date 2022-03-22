@@ -15,13 +15,16 @@
  */
 package org.thingsboard.server.rules.lifecycle;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.DataConstants;
@@ -42,6 +45,7 @@ import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.controller.AbstractRuleEngineControllerTest;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.queue.memory.InMemoryStorage;
 
 import java.util.Collections;
@@ -50,6 +54,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.awaitility.Awaitility.await;
+import static org.mockito.Mockito.spy;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -67,8 +72,26 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
     @Autowired
     protected AttributesService attributesService;
 
+    @Autowired
+    protected EventService eventService;
+
     @Before
     public void beforeTest() throws Exception {
+
+        EventService spyEventService = spy(eventService);
+
+        Mockito.doAnswer((Answer<ListenableFuture<Void>>) invocation -> {
+            Object[] args = invocation.getArguments();
+            Event event = (Event) args[0];
+            ListenableFuture<Void> future = eventService.saveAsync(event);
+            try {
+                future.get();
+            } catch (Exception e) {}
+            return future;
+        }).when(spyEventService).saveAsync(Mockito.any(Event.class));
+
+        ReflectionTestUtils.setField(actorSystem, "eventService", spyEventService);
+
         loginSysAdmin();
 
         Tenant tenant = new Tenant();

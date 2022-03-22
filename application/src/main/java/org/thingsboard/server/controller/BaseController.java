@@ -125,7 +125,6 @@ import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
-import org.thingsboard.server.service.edge.EdgeLicenseService;
 import org.thingsboard.server.service.edge.EdgeNotificationService;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
@@ -271,9 +270,6 @@ public abstract class BaseController {
 
     @Autowired(required = false)
     protected EdgeRpcService edgeGrpcService;
-
-    @Autowired(required = false)
-    protected EdgeLicenseService edgeLicenseService;
 
     @Autowired
     protected EntityActionService entityActionService;

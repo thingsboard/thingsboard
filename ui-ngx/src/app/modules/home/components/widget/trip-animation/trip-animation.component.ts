@@ -140,6 +140,7 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
         }
       }
       this.mapWidget.map.map?.invalidateSize();
+      this.mapWidget.map.setLoading(false);
       this.cd.detectChanges();
     };
   }
