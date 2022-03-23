@@ -15,14 +15,19 @@
  */
 package org.thingsboard.server.service.security.auth.mfa.config.provider;
 
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProviderType;
 
 import javax.validation.constraints.NotBlank;
 
+@ApiModel
 @Data
 public class TotpTwoFactorAuthProviderConfig implements TwoFactorAuthProviderConfig {
 
+    @ApiModelProperty(value = "Issuer name that will be displayed in an authenticator app near a username. " +
+            "Must not be blank.", example = "ThingsBoard", required = true)
     @NotBlank(message = "issuer name must not be blank")
     private String issuerName;
 
