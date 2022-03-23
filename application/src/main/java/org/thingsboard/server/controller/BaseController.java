@@ -285,7 +285,13 @@ public abstract class BaseController {
     @ExceptionHandler(Exception.class)
     public void handleControllerException(Exception e, HttpServletResponse response) {
         ThingsboardException thingsboardException = handleException(e);
-        handleThingsboardException(thingsboardException, response);
+        if (thingsboardException.getErrorCode() == ThingsboardErrorCode.GENERAL && thingsboardException.getCause() instanceof Exception
+                && StringUtils.equals(thingsboardException.getCause().getMessage(), thingsboardException.getMessage())) {
+            e = (Exception) thingsboardException.getCause();
+        } else {
+            e = thingsboardException;
+        }
+        errorResponseHandler.handle(e, response);
     }
 
     @ExceptionHandler(ThingsboardException.class)

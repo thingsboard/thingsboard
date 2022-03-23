@@ -25,7 +25,6 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
-import javax.validation.ValidationException;
 import javax.validation.Validator;
 import java.util.List;
 import java.util.Set;
