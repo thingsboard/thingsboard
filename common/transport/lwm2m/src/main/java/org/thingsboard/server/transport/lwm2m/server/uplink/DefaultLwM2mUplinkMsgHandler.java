@@ -38,6 +38,7 @@ import org.eclipse.leshan.core.request.WriteRequest.Mode;
 import org.eclipse.leshan.core.response.ObserveResponse;
 import org.eclipse.leshan.core.response.ReadCompositeResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
+import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.registration.RegistrationStore;
 import org.springframework.context.annotation.Lazy;
@@ -70,6 +71,7 @@ import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.client.ParametersAnalyzeResult;
 import org.thingsboard.server.transport.lwm2m.server.client.ResultsAddKeyValueProto;
+import org.thingsboard.server.transport.lwm2m.server.coapresource.LwM2MCoapRequestPost;
 import org.thingsboard.server.transport.lwm2m.server.common.LwM2MExecutorAwareService;
 import org.thingsboard.server.transport.lwm2m.server.downlink.DownlinkRequestCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.LwM2mDownlinkMsgHandler;
@@ -94,7 +96,17 @@ import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -116,6 +128,7 @@ import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaU
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_ERROR;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_INFO;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_WARN;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertByteArrayToTypeEquals;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertObjectIdToVersionedId;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertOtaUpdateValueToString;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fromVersionedIdToObjectId;
@@ -338,6 +351,46 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
         }
     }
 
+    public boolean onUpdateResourceValueAfterCoapRequestPost(LwM2MCoapRequestPost coapRequestPost) {
+        LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(coapRequestPost.getEndpoint());
+        if (lwM2MClient != null) {
+            String verSupportedObject = lwM2MClient.getRegistration().getSupportedObject().get(coapRequestPost.getLwM2mPath().getObjectId());
+            String objectIdVer = "/" + coapRequestPost.getLwM2mPath().getObjectId() + "_" + verSupportedObject + "/" + coapRequestPost.getLwM2mPath().getObjectInstanceId() + "/" + coapRequestPost.getLwM2mPath().getResourceId();
+            ResourceModel resourceModel = lwM2MClient.getResourceModel(objectIdVer, modelProvider);
+            if (resourceModel != null) {
+                Object value = convertByteArrayToTypeEquals(resourceModel.type, coapRequestPost.getExchange().getRequestPayload());
+                if (value == null) {
+                    return false;
+                }
+                LwM2mResource lwM2mResource;
+                if (coapRequestPost.getLwM2mPath().isResourceInstance()) {
+                    Map<Integer, Object> valResourceInstance = new HashMap<>();
+                    valResourceInstance.put(coapRequestPost.getLwM2mPath().getResourceInstanceId(), value);
+                    lwM2mResource = LwM2mMultipleResource.newResource(coapRequestPost.getLwM2mPath().getResourceId(), valResourceInstance, resourceModel.type);
+                    this.updateResourcesValue(lwM2MClient, lwM2mResource, objectIdVer, Mode.REPLACE, ResponseCode.CHANGED.getCode());
+                } else {
+                    lwM2mResource = LwM2mSingleResource.newResource(coapRequestPost.getLwM2mPath().getResourceId(), value);
+                    this.updateResourcesValue(lwM2MClient, lwM2mResource, coapRequestPost.getLwM2mPath().toString(), Mode.UPDATE, ResponseCode.CHANGED.getCode());
+                }
+                String valueStr = null;
+                if (ResourceModel.Type.OPAQUE.equals(resourceModel.type)) {
+                    int len = ((byte [])value).length;
+                    if (len > 0) {
+                        valueStr = len + "Bytes, " + Hex.encodeHexString((byte [])value);
+                    }
+                } else {
+                    valueStr = value.toString();
+                }
+                if (coapRequestPost.getLwM2mPath().isResourceInstance()) {
+                    objectIdVer = objectIdVer +  "/" + coapRequestPost.getLwM2mPath().getResourceInstanceId();
+                }
+                logService.log(lwM2MClient, String.format("Updated Resource After CoapRequestPost: [%s][%s]", objectIdVer, valueStr));
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void onUpdateValueAfterReadCompositeResponse(Registration registration, ReadCompositeResponse response) {
         log.trace("ReadCompositeResponse: [{}]", response);
         if (response.getContent() != null) {
@@ -367,7 +420,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
      */
     @Override
     public void onUpdateValueWithSendRequest(Registration registration, SendRequest sendRequest) {
-        for(var entry : sendRequest.getNodes().entrySet()) {
+        for (var entry : sendRequest.getNodes().entrySet()) {
             LwM2mPath path = entry.getKey();
             LwM2mNode node = entry.getValue();
             LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(registration.getEndpoint());

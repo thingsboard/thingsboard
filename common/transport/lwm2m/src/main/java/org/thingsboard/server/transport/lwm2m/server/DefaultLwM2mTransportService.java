@@ -20,15 +20,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.scandium.config.DtlsConfig;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.californium.scandium.dtls.cipher.CipherSuite;
-import org.eclipse.leshan.core.node.LwM2mNode;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mDecoder;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mEncoder;
-import org.eclipse.leshan.core.request.SendRequest;
 import org.eclipse.leshan.server.californium.LeshanServer;
 import org.eclipse.leshan.server.californium.LeshanServerBuilder;
 import org.eclipse.leshan.server.californium.registration.CaliforniumRegistrationStore;
-import org.eclipse.leshan.server.registration.Registration;
-import org.eclipse.leshan.server.send.SendListener;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.common.data.DataConstants;
@@ -38,13 +34,14 @@ import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MAuthorizer;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MDtlsCertificateVerifier;
+import org.thingsboard.server.transport.lwm2m.server.coapresource.LwM2mTransportCoapResource;
 import org.thingsboard.server.transport.lwm2m.server.store.TbSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import javax.annotation.PreDestroy;
 import java.security.cert.X509Certificate;
-import java.util.Map;
 
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CURVES_ONLY;
@@ -74,6 +71,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
     private final TbLwM2MDtlsCertificateVerifier certificateVerifier;
     private final TbLwM2MAuthorizer authorizer;
     private final LwM2mVersionedModelProvider modelProvider;
+    private final LwM2mUplinkMsgHandler service;
 
     private LeshanServer server;
 
@@ -87,9 +85,9 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
          * nameFile = "BC68JAR01A09_TO_BC68JAR01A10.bin"
          * "coap://host:port/{path}/{token}/{nameFile}"
          */
-        LwM2mTransportCoapResource otaCoapResource = new LwM2mTransportCoapResource(otaPackageDataCache, FIRMWARE_UPDATE_COAP_RESOURCE);
+        LwM2mTransportCoapResource otaCoapResource = new LwM2mTransportCoapResource(otaPackageDataCache, FIRMWARE_UPDATE_COAP_RESOURCE, service);
         this.server.coap().getServer().add(otaCoapResource);
-        LwM2mTransportCoapResource dataPostCoapResource = new LwM2mTransportCoapResource(null, LWM2M_POST_COAP_RESOURCE);
+        LwM2mTransportCoapResource dataPostCoapResource = new LwM2mTransportCoapResource(null, LWM2M_POST_COAP_RESOURCE, service);
         this.server.coap().getServer().add(dataPostCoapResource);
         this.context.setServer(server);
         this.startLhServer();

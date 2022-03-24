@@ -30,6 +30,7 @@ import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
+import org.eclipse.leshan.core.node.ObjectLink;
 import org.eclipse.leshan.core.node.codec.CodecException;
 import org.eclipse.leshan.core.request.SimpleDownlinkRequest;
 import org.eclipse.leshan.core.request.WriteAttributesRequest;
@@ -54,6 +55,7 @@ import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdate
 import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateState;
 import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -353,9 +355,9 @@ public class LwM2MTransportUtil {
     }
 
     public static Map<Integer, Object> convertMultiResourceValuesFromRpcBody(Object value, ResourceModel.Type type, String versionedId) throws Exception {
-            String valueJsonStr = JacksonUtil.toString(value);
-            JsonElement element = JsonUtils.parse(valueJsonStr);
-            return convertMultiResourceValuesFromJson(element, type, versionedId);
+        String valueJsonStr = JacksonUtil.toString(value);
+        JsonElement element = JsonUtils.parse(valueJsonStr);
+        return convertMultiResourceValuesFromJson(element, type, versionedId);
     }
 
     public static Map<Integer, Object> convertMultiResourceValuesFromJson(JsonElement newValProto, ResourceModel.Type type, String versionedId) {
@@ -520,5 +522,33 @@ public class LwM2MTransportUtil {
             newValueStr = newValue.toString();
         }
         return newValueStr.equals(oldValueStr);
+    }
+
+    public static Object convertByteArrayToTypeEquals(ResourceModel.Type resourceType, byte[] bytes) {
+        switch (resourceType) {
+            case STRING:
+                return new String(bytes);
+            case TIME:  // in seconds
+                long valueLong = new BigInteger(bytes).longValue();
+                return new Date(((Number) valueLong).longValue() * 1000L);
+            case OBJLNK:
+                return ObjectLink.fromPath(new String(bytes));
+            case BOOLEAN:
+                return bytes[0] == -1;
+            case INTEGER:
+            case UNSIGNED_INTEGER:
+                return new BigInteger(bytes).longValue();
+            case FLOAT:
+                long valueLongForFloat = new BigInteger(bytes).longValue();
+                Double floatValue = ((Long) valueLongForFloat).doubleValue();
+                if (valueLongForFloat == floatValue.longValue()) {
+                    return floatValue;
+                }
+                return null;
+            case OPAQUE:
+                return bytes;
+            default:
+                return null;
+        }
     }
 }

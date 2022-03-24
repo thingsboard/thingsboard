@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.server;
+package org.thingsboard.server.transport.lwm2m.server.coapresource;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
@@ -24,9 +24,9 @@ import org.eclipse.californium.core.observe.ObserveRelation;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
 import org.eclipse.californium.core.server.resources.ResourceObserver;
-import org.eclipse.leshan.core.node.LwM2mPath;
-import org.eclipse.leshan.core.util.Hex;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
+import org.thingsboard.server.transport.lwm2m.server.AbstractLwM2mTransportResource;
+import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
 import java.util.List;
 import java.util.UUID;
@@ -43,12 +43,14 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
     private final ConcurrentMap<String, ObserveRelation> tokenToObserveRelationMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, AtomicInteger> tokenToObserveNotificationSeqMap = new ConcurrentHashMap<>();
     private final OtaPackageDataCache otaPackageDataCache;
+    private final LwM2mUplinkMsgHandler service;
 
-    public LwM2mTransportCoapResource(OtaPackageDataCache otaPackageDataCache, String name) {
+    public LwM2mTransportCoapResource(OtaPackageDataCache otaPackageDataCache, String name, LwM2mUplinkMsgHandler service) {
         super(name);
         this.otaPackageDataCache = otaPackageDataCache;
         this.setObservable(true); // enable observing
         this.addObserver(new CoapResourceObserver());
+        this.service = service;
     }
 
 
@@ -85,20 +87,10 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
     @Override
     protected void processHandlePost(CoapExchange exchange) {
         log.debug("processHandlePost [{}]", exchange);
-        try {
-            List<String> uriPath = exchange.getRequestOptions().getUriPath();
-            if (uriPath.size() == 3 && LWM2M_POST_COAP_RESOURCE.equals(uriPath.get(0))) {
-                String endpoint = uriPath.get(1);
-                LwM2mPath lwM2mPath = new LwM2mPath(uriPath.get(2).replaceAll("-", "/"));
-                byte[] payLoadRequest = exchange.getRequestPayload();
-                String payLoadRequestStr = Hex.encodeHexString(exchange.getRequestPayload());
-                this.sendDataToTransport(exchange, lwM2mPath, endpoint, payLoadRequest);
-
-            } else {
-                log.error("Invalid UriPath. Lwm2m coap Post request: {}", uriPath);
-            }
-        } catch (Exception e) {
-            log.error("Invalid Lwm2m coap Post request: [{}]", e.getMessage());
+        List<String> uriPath = exchange.getRequestOptions().getUriPath();
+        LwM2MCoapRequestPost coapRequest = this.validateParamsRequest(exchange, uriPath);
+        if (coapRequest != null) {
+            this.sendDataToTransport(coapRequest);
         }
     }
 
@@ -177,11 +169,40 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
         return otaPackageDataCache.get(currentId.toString());
     }
 
-    private void sendDataToTransport(CoapExchange exchange, LwM2mPath lwM2mPath, String endpoint, byte[] payLoadRequest) {
+    private void sendDataToTransport(LwM2MCoapRequestPost coapRequest) {
+        String payLoadResponse = coapRequest.getLwM2mPath().toString() + ", size = " + coapRequest.getExchange().getRequestPayloadSize();
+        if (service.onUpdateResourceValueAfterCoapRequestPost(coapRequest)) {
+            this.sendResponse(coapRequest.getExchange(), CoAP.ResponseCode.CONTENT, payLoadResponse);
+        } else {
+            this.sendResponse(coapRequest.getExchange(), CoAP.ResponseCode.UNAUTHORIZED, payLoadResponse);
+            log.error(String.format("Invalid registration, endpoint [%s] %s", coapRequest.getEndpoint(), payLoadResponse));
+        }
+    }
 
-        Response response = new Response(CoAP.ResponseCode.CONTENT);
-        String payLoadResponse = lwM2mPath.toString() + ", size = " + exchange.getRequestPayloadSize();
+    private void sendResponse(CoapExchange exchange, CoAP.ResponseCode code, String payLoadResponse) {
+        Response response = new Response(code);
         response.setPayload(payLoadResponse);
         exchange.respond(response);
+    }
+
+    /**
+     * @param uriPath  [LWM2M_POST_COAP_RESOURCE, {endpoint}, {lwM2mPath}]
+     */
+    private LwM2MCoapRequestPost validateParamsRequest(CoapExchange exchange, List<String> uriPath) {
+        if (uriPath.size() >= 3 && LWM2M_POST_COAP_RESOURCE.equals(uriPath.get(0))) {
+            LwM2MCoapRequestPost coapRequest = new LwM2MCoapRequestPost();
+            coapRequest.setExchange(exchange);
+            coapRequest.setUriPath(uriPath);
+            if (coapRequest.validateParamsRequest()) {
+                return coapRequest;
+            } else {
+                this.sendResponse(exchange, CoAP.ResponseCode.BAD_REQUEST, coapRequest.getPayLoadResponse());
+            }
+        } else {
+            String payLoadResponse = String.format("Invalid UriPath. Lwm2m coap Post request: %s", uriPath);
+            log.error(payLoadResponse);
+            this.sendResponse(exchange, CoAP.ResponseCode.BAD_OPTION, payLoadResponse);
+        }
+        return null;
     }
 }
