@@ -19,6 +19,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -29,6 +30,9 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
+import org.thingsboard.server.service.security.auth.mfa.config.TwoFactorAuthConfigManager;
+import org.thingsboard.server.service.security.auth.mfa.config.account.TwoFactorAuthAccountConfig;
+import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProviderType;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.model.JwtTokenPair;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -46,6 +50,7 @@ import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 public class TwoFactorAuthController extends BaseController {
 
     private final TwoFactorAuthService twoFactorAuthService;
+    private final TwoFactorAuthConfigManager twoFactorAuthConfigManager;
     private final JwtTokenFactory tokenFactory;
     private final SystemSecurityService systemSecurityService;
     private final UserService userService;
@@ -86,6 +91,15 @@ public class TwoFactorAuthController extends BaseController {
             systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(servletRequest), ActionType.LOGIN, error);
             throw error;
         }
+    }
+
+    @ApiOperation(value = "Get currently used 2FA provider type (getCurrentlyUsedTwoFaProviderType)")
+    @GetMapping("/provider/type")
+    @PreAuthorize("hasAuthority('PRE_VERIFICATION_TOKEN')")
+    public TwoFactorAuthProviderType getCurrentlyUsedTwoFaProviderType() throws ThingsboardException {
+        SecurityUser user = getCurrentUser();
+        return twoFactorAuthConfigManager.getTwoFaAccountConfig(user.getTenantId(), user.getId())
+                .map(TwoFactorAuthAccountConfig::getProviderType).orElse(null);
     }
 
 }
