@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.coapresource.LwM2MCoapRequestPost;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -44,6 +45,8 @@ public interface LwM2mUplinkMsgHandler {
     void onSleepingDev(Registration registration);
 
     void onUpdateValueAfterReadResponse(Registration registration, String path, ReadResponse response);
+
+    boolean onUpdateResourceValueAfterCoapRequestPost(LwM2MCoapRequestPost coapRequestPost);
 
     void onUpdateValueAfterReadCompositeResponse(Registration registration, ReadCompositeResponse response);
 
