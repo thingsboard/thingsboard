@@ -15,31 +15,20 @@
  */
 package org.thingsboard.server.service.expimp.exp.impl;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.export.EntityExportData;
 import org.thingsboard.server.common.data.export.impl.AssetExportData;
 import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.expimp.exp.EntityExportService;
 
 @Service
 @TbCoreComponent
-@RequiredArgsConstructor
-public class AssetExportService implements EntityExportService<AssetId, Asset> {
-
-    private final AssetService assetService;
-
+public class AssetExportService extends AbstractEntityExportService<AssetId, Asset, AssetExportData> {
 
     @Override
-    public EntityExportData<Asset> getExportData(TenantId tenantId, AssetId assetId) {
-        AssetExportData exportData = new AssetExportData();
-        exportData.setAsset(assetService.findAssetById(tenantId, assetId));
-        return exportData;
+    protected AssetExportData newExportData() {
+        return new AssetExportData();
     }
 
     @Override

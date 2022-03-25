@@ -21,11 +21,9 @@ import org.thingsboard.server.common.data.export.ExportableEntity;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-public interface EntityExportService<I extends EntityId, E extends ExportableEntity<I>> {
+public interface EntityExportService<I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> {
 
-    // FIXME: export relations
-    // FIXME: get rid of boilerplate
-    EntityExportData<E> getExportData(TenantId tenantId, I entityId);
+    D getExportData(TenantId tenantId, I entityId, EntityExportSettings exportSettings);
 
     EntityType getEntityType();
 

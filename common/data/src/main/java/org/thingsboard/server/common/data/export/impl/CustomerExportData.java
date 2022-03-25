@@ -16,19 +16,14 @@
 package org.thingsboard.server.common.data.export.impl;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.export.EntityExportData;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class CustomerExportData implements EntityExportData<Customer> {
-
-    private Customer customer;
-
-    @Override
-    public Customer getMainEntity() {
-        return customer;
-    }
+public class CustomerExportData extends EntityExportData<Customer> {
 
     @Override
     public EntityType getEntityType() {

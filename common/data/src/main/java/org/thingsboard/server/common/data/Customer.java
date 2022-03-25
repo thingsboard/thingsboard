@@ -40,7 +40,7 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId, E
     private TenantId tenantId;
 
     @Getter @Setter
-    private CustomerId externalId; // FIXME: add to hashcode, equals, etc
+    private CustomerId externalId; // FIXME [viacheslav]: add to hashcode, equals, etc
 
     public Customer() {
         super();

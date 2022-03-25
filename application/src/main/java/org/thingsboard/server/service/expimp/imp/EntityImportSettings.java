@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.export;
+package org.thingsboard.server.service.expimp.imp;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.EntityId;
-
-import java.util.List;
-import java.util.Map;
+import lombok.NoArgsConstructor;
 
 @Data
-public class EntitiesExportRequest {
-    // todo: should be processed in a specific order, e.g. device profiles, then devices, then relations, etc.
-    private Map<EntityType, List<EntityId>> entities;
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class EntityImportSettings {
+    private boolean importInboundRelations;
 }

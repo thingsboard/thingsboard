@@ -16,21 +16,17 @@
 package org.thingsboard.server.common.data.export.impl;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.export.EntityExportData;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class DeviceExportData implements EntityExportData<Device> {
+public class DeviceExportData extends EntityExportData<Device> {
 
-    private Device device;
     private DeviceCredentials credentials;
-
-    @Override
-    public Device getMainEntity() {
-        return device;
-    }
 
     @Override
     public EntityType getEntityType() {

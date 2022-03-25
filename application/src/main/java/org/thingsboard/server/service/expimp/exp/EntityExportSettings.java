@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.export;
+package org.thingsboard.server.service.expimp.exp;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.EntityId;
-
-import java.util.List;
-import java.util.Map;
+import lombok.NoArgsConstructor;
 
 @Data
-public class EntitiesExportResponse {
-    private Map<EntityType, List<EntityExportData<ExportableEntity<EntityId>>>> exportData;
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class EntityExportSettings {
+    private boolean exportInboundRelations;
 }

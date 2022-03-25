@@ -18,29 +18,29 @@ package org.thingsboard.server.service.expimp.exp.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.export.EntityExportData;
 import org.thingsboard.server.common.data.export.impl.RuleChainExportData;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.expimp.exp.EntityExportService;
 
 @Service
 @TbCoreComponent
 @RequiredArgsConstructor
-public class RuleChainExportService implements EntityExportService<RuleChainId, RuleChain> {
+public class RuleChainExportService extends AbstractEntityExportService<RuleChainId, RuleChain, RuleChainExportData> {
 
     private final RuleChainService ruleChainService;
 
 
     @Override
-    public EntityExportData<RuleChain> getExportData(TenantId tenantId, RuleChainId ruleChainId) {
-        RuleChainExportData exportData = new RuleChainExportData();
-        exportData.setRuleChain(ruleChainService.findRuleChainById(tenantId, ruleChainId));
-        exportData.setMetaData(ruleChainService.loadRuleChainMetaData(tenantId, ruleChainId));
-        return exportData;
+    protected void setRelatedEntities(TenantId tenantId, RuleChain ruleChain, RuleChainExportData exportData) {
+        exportData.setMetaData(ruleChainService.loadRuleChainMetaData(tenantId, ruleChain.getId()));
+    }
+
+    @Override
+    protected RuleChainExportData newExportData() {
+        return new RuleChainExportData();
     }
 
     @Override

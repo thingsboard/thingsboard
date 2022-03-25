@@ -16,19 +16,14 @@
 package org.thingsboard.server.common.data.export.impl;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.export.EntityExportData;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class DeviceProfileExportData implements EntityExportData<DeviceProfile> {
-
-    private DeviceProfile deviceProfile;
-
-    @Override
-    public DeviceProfile getMainEntity() {
-        return deviceProfile;
-    }
+public class DeviceProfileExportData extends EntityExportData<DeviceProfile> {
 
     @Override
     public EntityType getEntityType() {

@@ -15,31 +15,20 @@
  */
 package org.thingsboard.server.service.expimp.exp.impl;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.export.EntityExportData;
 import org.thingsboard.server.common.data.export.impl.CustomerExportData;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.expimp.exp.EntityExportService;
 
 @Service
 @TbCoreComponent
-@RequiredArgsConstructor
-public class CustomerExportService implements EntityExportService<CustomerId, Customer> {
-
-    private final CustomerService customerService;
-
+public class CustomerExportService extends AbstractEntityExportService<CustomerId, Customer, CustomerExportData> {
 
     @Override
-    public EntityExportData<Customer> getExportData(TenantId tenantId, CustomerId customerId) {
-        CustomerExportData exportData = new CustomerExportData();
-        exportData.setCustomer(customerService.findCustomerById(tenantId, customerId));
-        return exportData;
+    protected CustomerExportData newExportData() {
+        return new CustomerExportData();
     }
 
     @Override

@@ -15,31 +15,20 @@
  */
 package org.thingsboard.server.service.expimp.exp.impl;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.export.EntityExportData;
 import org.thingsboard.server.common.data.export.impl.DeviceProfileExportData;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.expimp.exp.EntityExportService;
 
 @Service
 @TbCoreComponent
-@RequiredArgsConstructor
-public class DeviceProfileExportService implements EntityExportService<DeviceProfileId, DeviceProfile> {
-
-    private final DeviceProfileService deviceProfileService;
-
+public class DeviceProfileExportService extends AbstractEntityExportService<DeviceProfileId, DeviceProfile, DeviceProfileExportData> {
 
     @Override
-    public EntityExportData<DeviceProfile> getExportData(TenantId tenantId, DeviceProfileId deviceProfileId) {
-        DeviceProfileExportData exportData = new DeviceProfileExportData();
-        exportData.setDeviceProfile(deviceProfileService.findDeviceProfileById(tenantId, deviceProfileId));
-        return exportData;
+    protected DeviceProfileExportData newExportData() {
+        return new DeviceProfileExportData();
     }
 
     @Override

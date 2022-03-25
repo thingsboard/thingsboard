@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.expimp.imp.EntityImportSettings;
 
 @Service
 @TbCoreComponent
@@ -34,9 +35,9 @@ public class DashboardImportService extends AbstractEntityImportService<Dashboar
 
 
     @Override
-    protected Dashboard prepareAndSaveEntity(TenantId tenantId, Dashboard dashboard, Dashboard existingDashboard, DashboardExportData exportData) {
+    protected Dashboard prepareAndSaveEntity(TenantId tenantId, Dashboard dashboard, Dashboard existingDashboard, DashboardExportData exportData, EntityImportSettings importSettings) {
         if (existingDashboard == null) {
-            dashboard.setAssignedCustomers(null); // FIXME: need to assign dashboard to customers ?
+            dashboard.setAssignedCustomers(null); // FIXME [viacheslav]: need to assign dashboard to customers ?
         } else {
             dashboard.setAssignedCustomers(existingDashboard.getAssignedCustomers());
         }

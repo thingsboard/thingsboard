@@ -24,7 +24,7 @@ public interface ExportableEntityDao<T> {
     T findByTenantIdAndExternalId(UUID tenantId, UUID externalId);
 
     T findByTenantIdAndId(UUID tenantId, UUID id);
-    // fixme: get rid of boilerplate ?
+    // fixme [viacheslav]: get rid of boilerplate ?
 
     EntityType getEntityType();
 

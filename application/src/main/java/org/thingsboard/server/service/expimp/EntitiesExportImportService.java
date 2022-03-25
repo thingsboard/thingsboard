@@ -19,12 +19,14 @@ import org.thingsboard.server.common.data.export.EntityExportData;
 import org.thingsboard.server.common.data.export.ExportableEntity;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.service.expimp.exp.EntityExportSettings;
 import org.thingsboard.server.service.expimp.imp.EntityImportResult;
+import org.thingsboard.server.service.expimp.imp.EntityImportSettings;
 
 public interface EntitiesExportImportService extends ExportableEntitiesService {
 
-    <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportEntity(TenantId tenantId, I entityId);
+    <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportEntity(TenantId tenantId, I entityId, EntityExportSettings exportSettings);
 
-    <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(TenantId tenantId, EntityExportData<E> exportData);
+    <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(TenantId tenantId, EntityExportData<E> exportData, EntityImportSettings importSettings);
 
 }

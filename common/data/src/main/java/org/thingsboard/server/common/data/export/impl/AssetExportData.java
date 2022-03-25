@@ -16,19 +16,14 @@
 package org.thingsboard.server.common.data.export.impl;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.export.EntityExportData;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class AssetExportData implements EntityExportData<Asset> {
-
-    private Asset asset;
-
-    @Override
-    public Asset getMainEntity() {
-        return asset;
-    }
+public class AssetExportData extends EntityExportData<Asset> {
 
     @Override
     public EntityType getEntityType() {

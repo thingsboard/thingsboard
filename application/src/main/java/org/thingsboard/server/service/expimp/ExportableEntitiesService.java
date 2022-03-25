@@ -21,6 +21,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 public interface ExportableEntitiesService {
 
+    <E extends ExportableEntity<I>, I extends EntityId> E findEntityById(TenantId tenantId, I id);
+
     <E extends ExportableEntity<I>, I extends EntityId> E findEntityByExternalId(TenantId tenantId, I externalId);
 
 }

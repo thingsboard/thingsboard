@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import lombok.Data;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.export.impl.AssetExportData;
 import org.thingsboard.server.common.data.export.impl.CustomerExportData;
@@ -28,6 +29,9 @@ import org.thingsboard.server.common.data.export.impl.DeviceExportData;
 import org.thingsboard.server.common.data.export.impl.DeviceProfileExportData;
 import org.thingsboard.server.common.data.export.impl.RuleChainExportData;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+
+import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(property = "entityType", use = JsonTypeInfo.Id.NAME)
@@ -39,12 +43,13 @@ import org.thingsboard.server.common.data.id.EntityId;
         @Type(name = "DASHBOARD", value = DashboardExportData.class),
         @Type(name = "CUSTOMER", value = CustomerExportData.class)
 })
-public interface EntityExportData<E extends ExportableEntity<? extends EntityId>> {
+@Data
+public abstract class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
+
+    private E mainEntity;
+    private List<EntityRelation> inboundRelations;
 
     @JsonIgnore
-    E getMainEntity();
-
-    @JsonIgnore
-    EntityType getEntityType(); // fixme: maybe remove if not needed
+    public abstract EntityType getEntityType();
 
 }

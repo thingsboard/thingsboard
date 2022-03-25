@@ -17,11 +17,13 @@ package org.thingsboard.server.controller;
 
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -29,14 +31,18 @@ import org.thingsboard.server.common.data.export.EntityExportData;
 import org.thingsboard.server.common.data.export.ExportableEntity;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.expimp.EntitiesExportImportService;
+import org.thingsboard.server.service.expimp.exp.EntityExportSettings;
 import org.thingsboard.server.service.expimp.imp.EntityImportResult;
+import org.thingsboard.server.service.expimp.imp.EntityImportSettings;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/entities")
@@ -49,66 +55,60 @@ public class EntitiesExportImportController extends BaseController {
 
     @PostMapping("/export/{entityType}/{entityId}")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    public EntityExportData<?> exportEntity(@ApiParam(allowableValues = "DEVICE, DEVICE_PROFILE, ASSET, RULE_CHAIN, DASHBOARD, CUSTOMER") @PathVariable EntityType entityType,
-                                            @PathVariable("entityId") UUID entityUuid) throws ThingsboardException {
+    public EntityExportData<?> exportEntity(@ApiParam(allowableValues = "DEVICE, DEVICE_PROFILE, ASSET, RULE_CHAIN, DASHBOARD, CUSTOMER")
+                                            @PathVariable EntityType entityType,
+                                            @PathVariable("entityId") UUID entityUuid,
+                                            @RequestParam(defaultValue = "false") boolean exportInboundRelations) throws ThingsboardException {
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, entityUuid);
+        EntityExportSettings exportSettings = EntityExportSettings.builder()
+                .exportInboundRelations(exportInboundRelations)
+                .build();
         try {
-            return exportEntity(getCurrentUser(), entityId);
+            return exportEntity(getCurrentUser(), entityId, exportSettings);
         } catch (Exception e) {
             throw handleException(e);
         }
     }
-
-
-//    @PostMapping("/export/batch")
-//    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-//    public EntitiesExportResponse exportEntities(@RequestBody EntitiesExportRequest exportRequest) throws ThingsboardException {
-//        TenantId tenantId = getTenantId();
-//
-//        EntitiesExportResponse exportResponse = new EntitiesExportResponse();
-//
-//        Map<EntityType, List<EntityExportData<HasId<EntityId>>>> result = new HashMap<>();
-//        exportRequest.getEntities().forEach((entityType, entityIds) -> {
-//            List<EntityExportData<HasId<EntityId>>> exportDataForEntityType = new LinkedList<>();
-//            entityIds.forEach(entityId -> {
-//                EntityExportData<HasId<EntityId>> exportData = exportImportService.exportEntity(tenantId, entityId);
-//                exportDataForEntityType.add(exportData);
-//            });
-//            result.put(entityType, exportDataForEntityType);
-//        });
-//
-//        exportResponse.setExportData(result);
-//        return exportResponse;
-//    }
-    // TODO: export and import of batches
-    // TODO: api to export and import whole customer, whole tenant
 
 
     @PostMapping("/import")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    public EntityImportResult<ExportableEntity<EntityId>> importEntity(@RequestBody EntityExportData<ExportableEntity<EntityId>> exportData) throws ThingsboardException {
+    public EntityImportResult<ExportableEntity<EntityId>> importEntity(@RequestBody EntityExportData<ExportableEntity<EntityId>> exportData,
+                                                                       @RequestParam(defaultValue = "false") boolean importInboundRelations) throws ThingsboardException {
+        EntityImportSettings importSettings = EntityImportSettings.builder()
+                .importInboundRelations(importInboundRelations)
+                .build();
         try {
-            return importEntity(getCurrentUser(), exportData);
+            return importEntity(getCurrentUser(), exportData, importSettings);
         } catch (Exception e) {
             throw handleException(e);
         }
     }
 
 
-    private EntityExportData<ExportableEntity<EntityId>> exportEntity(SecurityUser user, EntityId entityId) throws ThingsboardException {
+    // TODO [viacheslav]: export and import of batches
+    // TODO [viacheslav]: api to export and import whole customer, whole tenant
+
+    private EntityExportData<ExportableEntity<EntityId>> exportEntity(SecurityUser user, EntityId entityId, EntityExportSettings exportSettings) throws ThingsboardException {
         checkEntityId(entityId, Operation.READ);
-        return exportImportService.exportEntity(getTenantId(), entityId);
+        return exportImportService.exportEntity(user.getTenantId(), entityId, exportSettings);
     }
 
-    private EntityImportResult<ExportableEntity<EntityId>> importEntity(SecurityUser user, EntityExportData<ExportableEntity<EntityId>> exportData) throws ThingsboardException {
+    private EntityImportResult<ExportableEntity<EntityId>> importEntity(SecurityUser user, EntityExportData<ExportableEntity<EntityId>> exportData, EntityImportSettings importSettings) throws ThingsboardException {
         ExportableEntity<?> existingEntity = exportImportService.findEntityByExternalId(user.getTenantId(), exportData.getMainEntity().getId());
-        if (existingEntity != null) {
-            checkEntityId(existingEntity.getId(), Operation.WRITE); // todo maybe need to extract permission check to BaseController and put there permission checks from other controllers
+        if (existingEntity != null) {// todo [viacheslav] maybe need to extract permission check to BaseController and put there permission checks from other controllers
+            checkEntityId(existingEntity.getId(), Operation.WRITE);
+            if (importSettings.isImportInboundRelations() && CollectionUtils.isNotEmpty(exportData.getInboundRelations())) {
+                for (EntityId fromId : exportData.getInboundRelations().stream().map(EntityRelation::getFrom).collect(Collectors.toSet())) {
+                    // FIXME [viacheslav]: fromId is external
+//                    checkEntityId(fromId, Operation.WRITE);
+                }
+            }
         } else {
             checkEntity(null, exportData.getMainEntity(), Resource.of(exportData.getEntityType()));
         }
 
-        EntityImportResult<ExportableEntity<EntityId>> importResult = exportImportService.importEntity(getTenantId(), exportData);
+        EntityImportResult<ExportableEntity<EntityId>> importResult = exportImportService.importEntity(getTenantId(), exportData, importSettings);
         onEntityUpdatedOrCreated(user, importResult.getSavedEntity(), importResult.getOldEntity(), importResult.getOldEntity() == null);
 
         return importResult;

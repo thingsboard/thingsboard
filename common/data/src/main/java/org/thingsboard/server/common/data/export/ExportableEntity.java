@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.common.data.export;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.springframework.data.annotation.Transient;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -25,9 +23,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 public interface ExportableEntity<I extends EntityId> extends HasId<I>, HasTenantId, HasName {
 
-    @Transient @JsonIgnore
     I getId();
-    @Transient @JsonIgnore
     void setId(I id);
 
     I getExternalId();

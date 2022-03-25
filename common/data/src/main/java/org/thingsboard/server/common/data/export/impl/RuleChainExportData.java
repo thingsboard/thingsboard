@@ -16,21 +16,17 @@
 package org.thingsboard.server.common.data.export.impl;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.export.EntityExportData;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class RuleChainExportData implements EntityExportData<RuleChain> {
+public class RuleChainExportData extends EntityExportData<RuleChain> {
 
-    private RuleChain ruleChain;
     private RuleChainMetaData metaData;
-
-    @Override
-    public RuleChain getMainEntity() {
-        return ruleChain;
-    }
 
     @Override
     public EntityType getEntityType() {

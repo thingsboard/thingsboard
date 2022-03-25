@@ -19,30 +19,28 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.export.EntityExportData;
 import org.thingsboard.server.common.data.export.impl.DeviceExportData;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
-import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.expimp.exp.EntityExportService;
 
 @Service
 @TbCoreComponent
 @RequiredArgsConstructor
-public class DeviceExportService implements EntityExportService<DeviceId, Device> {
+public class DeviceExportService extends AbstractEntityExportService<DeviceId, Device, DeviceExportData> {
 
-    private final DeviceService deviceService;
     private final DeviceCredentialsService deviceCredentialsService;
 
 
     @Override
-    public EntityExportData<Device> getExportData(TenantId tenantId, DeviceId deviceId) {
-        DeviceExportData exportData = new DeviceExportData();
-        exportData.setDevice(deviceService.findDeviceById(tenantId, deviceId));
-        exportData.setCredentials(deviceCredentialsService.findDeviceCredentialsByDeviceId(TenantId.SYS_TENANT_ID, deviceId));
-        return exportData;
+    protected void setRelatedEntities(TenantId tenantId, Device device, DeviceExportData exportData) {
+        exportData.setCredentials(deviceCredentialsService.findDeviceCredentialsByDeviceId(TenantId.SYS_TENANT_ID, device.getId()));
+    }
+
+    @Override
+    protected DeviceExportData newExportData() {
+        return new DeviceExportData();
     }
 
     @Override

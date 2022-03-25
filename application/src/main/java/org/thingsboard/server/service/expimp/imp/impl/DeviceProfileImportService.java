@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.expimp.imp.EntityImportSettings;
 
 @Service
 @TbCoreComponent
@@ -34,7 +35,7 @@ public class DeviceProfileImportService extends AbstractEntityImportService<Devi
 
 
     @Override
-    protected DeviceProfile prepareAndSaveEntity(TenantId tenantId, DeviceProfile deviceProfile, DeviceProfile existingDeviceProfile, DeviceProfileExportData exportData) {
+    protected DeviceProfile prepareAndSaveEntity(TenantId tenantId, DeviceProfile deviceProfile, DeviceProfile existingDeviceProfile, DeviceProfileExportData exportData, EntityImportSettings importSettings) {
         deviceProfile.setDefaultRuleChainId(getInternalId(tenantId, deviceProfile.getDefaultRuleChainId()));
         deviceProfile.setDefaultDashboardId(getInternalId(tenantId, deviceProfile.getDefaultDashboardId()));
         deviceProfile.setFirmwareId(getInternalId(tenantId, deviceProfile.getFirmwareId()));

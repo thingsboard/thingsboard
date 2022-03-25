@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.expimp.imp.impl;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.common.data.export.EntityExportData;
@@ -22,23 +23,22 @@ import org.thingsboard.server.common.data.export.ExportableEntity;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.service.expimp.ExportableEntitiesService;
 import org.thingsboard.server.service.expimp.imp.EntityImportResult;
 import org.thingsboard.server.service.expimp.imp.EntityImportService;
+import org.thingsboard.server.service.expimp.imp.EntityImportSettings;
 
 public abstract class AbstractEntityImportService<I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> implements EntityImportService<I, E, D> {
 
     @Autowired @Lazy
     private ExportableEntitiesService exportableEntitiesService;
+    @Autowired
+    private RelationService relationService;
 
-    // FIXME what if exporting and importing back already exported entity ? (save version and then load it back)
-    /*
-     * export entity -> id from env1 -> import this entity -> ...
-     *
-     * maybe find not only by external id but by internal too ? but then what if we will try
-     * */
+
     @Override
-    public final EntityImportResult<E> importEntity(TenantId tenantId, D exportData) {
+    public final EntityImportResult<E> importEntity(TenantId tenantId, D exportData, EntityImportSettings importSettings) {
         E entity = exportData.getMainEntity();
         E existingEntity = findByExternalId(tenantId, entity.getId());
 
@@ -51,7 +51,18 @@ public abstract class AbstractEntityImportService<I extends EntityId, E extends 
             entity.setId(existingEntity.getId());
         }
 
-        E savedEntity = prepareAndSaveEntity(tenantId, entity, existingEntity, exportData);
+        E savedEntity = prepareAndSaveEntity(tenantId, entity, existingEntity, exportData, importSettings);
+
+        if (importSettings.isImportInboundRelations() && CollectionUtils.isNotEmpty(exportData.getInboundRelations())) {
+            if (existingEntity != null) {
+                relationService.deleteEntityRelations(tenantId, savedEntity.getId());
+            }
+            exportData.getInboundRelations().forEach(relation -> {
+                relation.setTo(savedEntity.getId());
+                relation.setFrom(getInternalId(tenantId, relation.getFrom()));
+                relationService.saveRelation(tenantId, relation);
+            });
+        }
 
         EntityImportResult<E> importResult = new EntityImportResult<>();
         importResult.setSavedEntity(savedEntity);
@@ -59,17 +70,14 @@ public abstract class AbstractEntityImportService<I extends EntityId, E extends 
         return importResult;
     }
 
-    protected abstract E prepareAndSaveEntity(TenantId tenantId, E entity, E existingEntity, D exportData);
+    protected abstract E prepareAndSaveEntity(TenantId tenantId, E entity, E existingEntity, D exportData, EntityImportSettings importSettings);
 
 
     private E findByExternalId(TenantId tenantId, I externalId) {
         return exportableEntitiesService.findEntityByExternalId(tenantId, externalId);
     }
 
-    // TODO or maybe set as additional config whether to update related entities when device already exists ?
-    // TODO: or also whether to ignore not found internal ids
-
-    // FIXME: review use cases for version controlling: in the same tenant, between tenants, between environments and different tenants
+    // FIXME [viacheslav]: review use cases for version controlling: in the same tenant, between tenants, between environments and different tenants
     protected final <ID extends EntityId> ID getInternalId(TenantId tenantId, ID externalId) {
         if (externalId == null) {
             return null;

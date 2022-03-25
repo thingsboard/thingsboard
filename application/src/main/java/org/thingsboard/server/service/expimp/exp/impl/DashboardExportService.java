@@ -15,31 +15,20 @@
  */
 package org.thingsboard.server.service.expimp.exp.impl;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.export.EntityExportData;
 import org.thingsboard.server.common.data.export.impl.DashboardExportData;
 import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.expimp.exp.EntityExportService;
 
 @Service
 @TbCoreComponent
-@RequiredArgsConstructor
-public class DashboardExportService implements EntityExportService<DashboardId, Dashboard> {
-
-    private final DashboardService dashboardService;
-
+public class DashboardExportService extends AbstractEntityExportService<DashboardId, Dashboard, DashboardExportData> {
 
     @Override
-    public EntityExportData<Dashboard> getExportData(TenantId tenantId, DashboardId dashboardId) {
-        DashboardExportData exportData = new DashboardExportData();
-        exportData.setDashboard(dashboardService.findDashboardById(tenantId, dashboardId));
-        return exportData;
+    protected DashboardExportData newExportData() {
+        return new DashboardExportData();
     }
 
     @Override

@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.expimp.imp.EntityImportSettings;
 
 @Service
 @TbCoreComponent
@@ -37,7 +38,7 @@ public class RuleChainImportService extends AbstractEntityImportService<RuleChai
 
     @Transactional
     @Override
-    protected RuleChain prepareAndSaveEntity(TenantId tenantId, RuleChain ruleChain, RuleChain existingRuleChain, RuleChainExportData exportData) {
+    protected RuleChain prepareAndSaveEntity(TenantId tenantId, RuleChain ruleChain, RuleChain existingRuleChain, RuleChainExportData exportData, EntityImportSettings importSettings) {
         ruleChain.setFirstRuleNodeId(null); // will be set during metadata persisting
         if (existingRuleChain != null) {
             ruleChainService.deleteRuleNodes(tenantId, existingRuleChain.getId());
@@ -53,8 +54,8 @@ public class RuleChainImportService extends AbstractEntityImportService<RuleChai
         });
         metaData.getRuleChainConnections().forEach(ruleChainConnectionInfo -> {
 //            ruleChainConnectionInfo.setTargetRuleChainId();
-            // TODO: check if this thing is needed for "Other Rule Chain Node"
-            // TODO: and check import of tenant rule chains
+            // TODO [viacheslav]: check if this thing is needed for "Other Rule Chain Node"
+            // TODO [viacheslav]: and check import of tenant rule chains
         });
         ruleChainService.saveRuleChainMetaData(tenantId, metaData);
 
