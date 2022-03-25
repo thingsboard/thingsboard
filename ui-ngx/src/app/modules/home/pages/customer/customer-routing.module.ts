@@ -178,7 +178,8 @@ const routes: Routes = [
                 icon: 'domain'
               } as BreadCrumbConfig<EntityDetailsPageComponent>,
               auth: [Authority.TENANT_ADMIN],
-              title: 'customer.assets'
+              title: 'customer.assets',
+              assetsType: 'customer'
             },
             resolve: {
               entitiesTableConfig: AssetsTableConfigResolver
