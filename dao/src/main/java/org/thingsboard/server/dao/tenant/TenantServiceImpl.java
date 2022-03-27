@@ -142,6 +142,10 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
         if (tenant.getId() == null) {
             deviceProfileService.createDefaultDeviceProfile(savedTenant.getId());
             apiUsageStateService.createDefaultApiUsageState(savedTenant.getId(), null);
+            TenantProfile tenantProfile = tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, savedTenant.getTenantProfileId());
+            if(tenantProfile.isIsolatedTbRuleEngine()) {
+                queueService.createDefaultMainQueue(tenantProfile, savedTenant.getTenantId());
+            }
         }
         return savedTenant;
     }
