@@ -48,7 +48,7 @@ import {
   formattedDataFormDatasourceData,
   isDefinedAndNotNull,
   isNotEmptyStr,
-  isString, safeExecute
+  isString, mergeFormattedData, safeExecute
 } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -644,13 +644,25 @@ export default abstract class LeafletMap {
     }
 
     updateData(drawRoutes: boolean, showPolygon: boolean) {
+      const data = this.ctx.data;
+      let formattedData = formattedDataFormDatasourceData(data);
+      if (this.ctx.latestData && this.ctx.latestData.length) {
+        const formattedLatestData = formattedDataFormDatasourceData(this.ctx.latestData);
+        formattedData = mergeFormattedData(formattedData, formattedLatestData);
+      }
+      let polyData: FormattedData[][] = null;
+      if (drawRoutes) {
+        polyData = formattedDataArrayFromDatasourceData(data);
+      }
+      this.updateFromData(drawRoutes, showPolygon, formattedData, polyData);
+    }
+
+    updateFromData(drawRoutes: boolean, showPolygon: boolean, formattedData: FormattedData[],
+                   polyData: FormattedData[][], markerClickCallback?: any) {
       this.drawRoutes = drawRoutes;
       this.showPolygon = showPolygon;
       if (this.map) {
-        const data = this.ctx.data;
-        const formattedData = formattedDataFormDatasourceData(data);
         if (drawRoutes) {
-          const polyData = formattedDataArrayFromDatasourceData(data);
           this.updatePolylines(polyData, formattedData, false);
         }
         if (showPolygon) {
@@ -659,7 +671,7 @@ export default abstract class LeafletMap {
         if (this.options.showCircle) {
           this.updateCircle(formattedData, false);
         }
-        this.updateMarkers(formattedData, false);
+        this.updateMarkers(formattedData, false, markerClickCallback);
         this.updateBoundsInternal();
         if (this.options.draggableMarker || this.editPolygons || this.editCircle) {
           let foundEntityWithLocation = false;

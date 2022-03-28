@@ -221,7 +221,7 @@ export interface MapImage {
     update?: boolean;
 }
 
-export interface TripAnimationSettings extends PolygonSettings {
+export interface TripAnimationSettings extends PolygonSettings, CircleSettings {
     showPoints: boolean;
     pointColor: string;
     pointSize: number;

@@ -226,8 +226,12 @@ export class MapWidgetController implements MapWidgetInterface {
         id: e.$datasource.entityId
       };
 
+      let dataKeys = e.$datasource.dataKeys;
+      if (e.$datasource.latestDataKeys) {
+        dataKeys = dataKeys.concat(e.$datasource.latestDataKeys);
+      }
       for (const dataKeyName of Object.keys(values)) {
-        for (const key of e.$datasource.dataKeys) {
+        for (const key of dataKeys) {
           if (dataKeyName === key.name) {
             const value = {
               key: key.name,
@@ -315,6 +319,10 @@ export class MapWidgetController implements MapWidgetInterface {
     update() {
         this.map.updateData(this.drawRoutes, this.settings.showPolygon);
         this.map.setLoading(false);
+    }
+
+    latestDataUpdate() {
+      this.map.updateData(this.drawRoutes, this.settings.showPolygon);
     }
 
     resize() {

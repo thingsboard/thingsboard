@@ -471,6 +471,19 @@ export function flatFormattedData(input: FormattedData[]): FormattedData {
   return result;
 }
 
+export function mergeFormattedData(first: FormattedData[], second: FormattedData[]): FormattedData[] {
+  const merged = first.concat(second);
+  return _(merged).groupBy(el => el.$datasource)
+    .values().value().map((formattedDataArray, i) => {
+      let res = formattedDataArray[0];
+      if (formattedDataArray.length > 1) {
+        const toMerge = formattedDataArray[1];
+        res = {...res, ...toMerge};
+      }
+      return res;
+    });
+}
+
 export function processDataPattern(pattern: string, data: FormattedData): Array<ReplaceInfo> {
   const replaceInfo: Array<ReplaceInfo> = [];
   try {
