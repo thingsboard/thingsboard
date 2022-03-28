@@ -24,6 +24,7 @@ import org.eclipse.californium.core.observe.ObserveRelation;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
 import org.eclipse.californium.core.server.resources.ResourceObserver;
+import org.eclipse.leshan.core.util.Hex;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
 import org.thingsboard.server.transport.lwm2m.server.AbstractLwM2mTransportResource;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
@@ -37,6 +38,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FIRMWARE_UPDATE_COAP_RESOURCE;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SOFTWARE_UPDATE_COAP_RESOURCE;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LWM2M_POST_COAP_RESOURCE;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.VALUE_SUB_LWM2M_POST_COAP_RESPONSE;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.setValueStr1024;
 
 @Slf4j
 public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
@@ -170,10 +173,12 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
     }
 
     private void sendDataToTransport(LwM2MCoapRequestPost coapRequest) {
-        String payLoadResponse = coapRequest.getLwM2mPath().toString() + ", size = " + coapRequest.getExchange().getRequestPayloadSize();
+        String payLoadResponse = coapRequest.getLwM2mPath().toString()  + ", " + VALUE_SUB_LWM2M_POST_COAP_RESPONSE;
         if (service.onUpdateResourceValueAfterCoapRequestPost(coapRequest)) {
+            payLoadResponse += coapRequest.getValueStr();
             this.sendResponse(coapRequest.getExchange(), CoAP.ResponseCode.CONTENT, payLoadResponse);
         } else {
+            payLoadResponse += Hex.encodeHexString(coapRequest.getExchange().advanced().getRequest().getPayload());
             this.sendResponse(coapRequest.getExchange(), CoAP.ResponseCode.UNAUTHORIZED, payLoadResponse);
             log.error(String.format("Invalid registration, endpoint [%s] %s", coapRequest.getEndpoint(), payLoadResponse));
         }
@@ -181,7 +186,7 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
 
     private void sendResponse(CoapExchange exchange, CoAP.ResponseCode code, String payLoadResponse) {
         Response response = new Response(code);
-        response.setPayload(payLoadResponse);
+        response.setPayload(setValueStr1024(payLoadResponse));
         exchange.respond(response);
     }
 

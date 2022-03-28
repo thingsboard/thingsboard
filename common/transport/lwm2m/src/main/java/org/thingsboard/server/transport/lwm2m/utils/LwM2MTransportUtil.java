@@ -96,6 +96,7 @@ public class LwM2MTransportUtil {
     public static final String LOG_LWM2M_WARN = "warn";
     public static final int BOOTSTRAP_DEFAULT_SHORT_ID = 0;
     public static final String LWM2M_POST_COAP_RESOURCE = "tbpost";
+    public static final String VALUE_SUB_LWM2M_POST_COAP_RESPONSE =  "value: ";
 
     public enum LwM2MClientStrategy {
         CLIENT_STRATEGY_1(1, "Read only resources marked as observation"),
@@ -550,5 +551,13 @@ public class LwM2MTransportUtil {
             default:
                 return null;
         }
+    }
+
+    public static String setValueStr1024(String str) {
+        String valueStr = str;
+        if (str != null && str.length() > 1024) {
+            valueStr =  str.substring(0, 1024);
+        }
+        return valueStr;
     }
 }

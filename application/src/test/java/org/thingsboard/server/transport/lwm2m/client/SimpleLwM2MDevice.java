@@ -25,10 +25,10 @@ import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.response.ExecuteResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.core.response.WriteResponse;
-
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +47,7 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
     private static final int max = 50;
     private static final  PrimitiveIterator.OfInt randomIterator = new Random().ints(min,max + 1).iterator();
     private static final List<Integer> supportedResources = Arrays.asList(0, 1, 2, 3, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21);
+    private Date currentTime;
 
 
     public SimpleLwM2MDevice() {
@@ -86,6 +87,8 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
                 Map<Integer, Long> errorCodes = new HashMap<>();
                 errorCodes.put(0, getErrorCode());
                 return ReadResponse.success(resourceId, errorCodes, ResourceModel.Type.INTEGER);
+            case 13:
+                return ReadResponse.success(resourceId, getCurrentTime());
             case 14:
                 return ReadResponse.success(resourceId, getUtcOffset());
             case 15:
@@ -123,7 +126,9 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
 
         switch (resourceId) {
             case 13:
-                return WriteResponse.notFound();
+                setCurrentTime((Date) value.getValue());
+                fireResourceChange(resourceId);
+                return WriteResponse.success();
             case 14:
                 setUtcOffset((String) value.getValue());
                 fireResourceChange(resourceId);
@@ -167,6 +172,19 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
     }
 
     private String utcOffset = new SimpleDateFormat("X").format(Calendar.getInstance().getTime());
+
+    private Date getCurrentTime() {
+        try {
+            this.currentTime = currentTime == null ? currentTime = new Date() : currentTime;
+         } catch (Exception e) {
+            log.error("", e);
+        }
+        return currentTime;
+    }
+
+    private Date setCurrentTime(Date date) {
+        return currentTime = date;
+    }
 
     private String getUtcOffset() {
         return utcOffset;
