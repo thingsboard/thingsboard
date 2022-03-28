@@ -17,16 +17,15 @@ package org.thingsboard.server.dao.service.install.sql;
 
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -34,50 +33,40 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 @DaoSqlTest
 public class EntitiesSchemaSqlTest extends AbstractServiceTest {
 
-    @Value("${spring.datasource.url}")
-    private String dbUrl;
-    @Value("${spring.datasource.username}")
-    private String dbUserName;
-    @Value("${spring.datasource.password}")
-    private String dbPassword;
-
     @Value("${classpath:sql/schema-entities.sql}")
     private Path installScriptPath;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Test
     public void testRepeatedInstall() throws IOException {
         String installScript = Files.readString(installScriptPath);
-        try (Connection connection = getConnection()) {
+        try {
             for (int i = 1; i <= 2; i++) {
-                connection.createStatement().execute(installScript);
+                jdbcTemplate.execute(installScript);
             }
-        } catch (SQLException e) {
+        } catch (Exception e) {
             Assertions.fail("Failed to execute reinstall", e);
         }
     }
 
     @Test
-    public void testRepeatedInstall_badScript() throws SQLException {
+    public void testRepeatedInstall_badScript() {
         String illegalInstallScript = "CREATE TABLE IF NOT EXISTS qwerty ();\n" +
                 "ALTER TABLE qwerty ADD COLUMN first VARCHAR(10);";
 
-        Connection connection = getConnection();
+        assertDoesNotThrow(() -> {
+            jdbcTemplate.execute(illegalInstallScript);
+        });
+
         try {
-            assertDoesNotThrow(() -> {
-                connection.createStatement().execute(illegalInstallScript);
-            });
-
             assertThatThrownBy(() -> {
-                connection.createStatement().execute(illegalInstallScript);
-            }).hasMessageContaining("column").hasMessageContaining("already exists");
+                jdbcTemplate.execute(illegalInstallScript);
+            }).getCause().hasMessageContaining("column").hasMessageContaining("already exists");
         } finally {
-            connection.createStatement().execute("DROP TABLE qwerty;");
-            connection.close();
+            jdbcTemplate.execute("DROP TABLE qwerty;");
         }
-    }
-
-    private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(dbUrl, dbUserName, dbPassword);
     }
 
 }
