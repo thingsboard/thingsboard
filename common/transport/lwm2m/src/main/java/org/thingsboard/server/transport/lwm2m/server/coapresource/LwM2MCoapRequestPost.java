@@ -19,7 +19,9 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.californium.core.server.resources.CoapExchange;
+import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mPath;
+
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -28,11 +30,13 @@ import java.util.stream.IntStream;
 @Data
 public class LwM2MCoapRequestPost {
 
-    CoapExchange exchange;
-    List<String> uriPath;
-    String endpoint;
-    LwM2mPath lwM2mPath;
-    String payLoadResponse;
+    private CoapExchange exchange;
+    private List<String> uriPath;
+    private String endpoint;
+    private LwM2mPath lwM2mPath;
+    private String payLoadResponse;
+    private ResourceModel.Type type;
+    private String valueStr;
 
     public boolean validateParamsRequest() {
         try {
@@ -47,7 +51,7 @@ public class LwM2MCoapRequestPost {
                 if (this.lwM2mPath.isResourceInstance() || this.lwM2mPath.isResource()) {
                     return true;
                 } else {
-                    this.payLoadResponse = String.format("Invalid LwM2mPath resource, must be LwM2mResourceInstance or  LwM2mSingleResource. Lwm2m coap Post request: %s", uriPath);
+                    this.payLoadResponse = String.format("Invalid LwM2mPath resource, must be LwM2mResourceInstance or LwM2mSingleResource. Lwm2m coap Post request: %s", uriPath);
                     log.error(payLoadResponse);
                 }
             } else {

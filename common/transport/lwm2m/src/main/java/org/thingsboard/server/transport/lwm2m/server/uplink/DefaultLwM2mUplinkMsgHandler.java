@@ -132,6 +132,7 @@ import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.co
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertObjectIdToVersionedId;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertOtaUpdateValueToString;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fromVersionedIdToObjectId;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.setValueStr1024;
 
 
 @Slf4j
@@ -352,12 +353,13 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     }
 
     public boolean onUpdateResourceValueAfterCoapRequestPost(LwM2MCoapRequestPost coapRequestPost) {
-        LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(coapRequestPost.getEndpoint());
-        if (lwM2MClient != null) {
-            String verSupportedObject = lwM2MClient.getRegistration().getSupportedObject().get(coapRequestPost.getLwM2mPath().getObjectId());
+        Optional<LwM2mClient> lwM2mClientOptional = clientContext.getLwM2mClients().stream().filter(client -> coapRequestPost.getEndpoint().equals(client.getEndpoint())).findFirst();
+        if (lwM2mClientOptional.isPresent()) {
+            String verSupportedObject = lwM2mClientOptional.get().getRegistration().getSupportedObject().get(coapRequestPost.getLwM2mPath().getObjectId());
             String objectIdVer = "/" + coapRequestPost.getLwM2mPath().getObjectId() + "_" + verSupportedObject + "/" + coapRequestPost.getLwM2mPath().getObjectInstanceId() + "/" + coapRequestPost.getLwM2mPath().getResourceId();
-            ResourceModel resourceModel = lwM2MClient.getResourceModel(objectIdVer, modelProvider);
+            ResourceModel resourceModel = lwM2mClientOptional.get().getResourceModel(objectIdVer, modelProvider);
             if (resourceModel != null) {
+                coapRequestPost.setType(resourceModel.type);
                 Object value = convertByteArrayToTypeEquals(resourceModel.type, coapRequestPost.getExchange().getRequestPayload());
                 if (value == null) {
                     return false;
@@ -367,16 +369,16 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                     Map<Integer, Object> valResourceInstance = new HashMap<>();
                     valResourceInstance.put(coapRequestPost.getLwM2mPath().getResourceInstanceId(), value);
                     lwM2mResource = LwM2mMultipleResource.newResource(coapRequestPost.getLwM2mPath().getResourceId(), valResourceInstance, resourceModel.type);
-                    this.updateResourcesValue(lwM2MClient, lwM2mResource, objectIdVer, Mode.REPLACE, ResponseCode.CHANGED.getCode());
+                    this.updateResourcesValue(lwM2mClientOptional.get(), lwM2mResource, objectIdVer, Mode.REPLACE, ResponseCode.CHANGED.getCode());
                 } else {
                     lwM2mResource = LwM2mSingleResource.newResource(coapRequestPost.getLwM2mPath().getResourceId(), value);
-                    this.updateResourcesValue(lwM2MClient, lwM2mResource, coapRequestPost.getLwM2mPath().toString(), Mode.UPDATE, ResponseCode.CHANGED.getCode());
+                    this.updateResourcesValue(lwM2mClientOptional.get(), lwM2mResource, coapRequestPost.getLwM2mPath().toString(), Mode.UPDATE, ResponseCode.CHANGED.getCode());
                 }
                 String valueStr = null;
                 if (ResourceModel.Type.OPAQUE.equals(resourceModel.type)) {
                     int len = ((byte [])value).length;
                     if (len > 0) {
-                        valueStr = len + "Bytes, " + Hex.encodeHexString((byte [])value);
+                        valueStr = len + " Bytes, " + Hex.encodeHexString((byte [])value);
                     }
                 } else {
                     valueStr = value.toString();
@@ -384,7 +386,8 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                 if (coapRequestPost.getLwM2mPath().isResourceInstance()) {
                     objectIdVer = objectIdVer +  "/" + coapRequestPost.getLwM2mPath().getResourceInstanceId();
                 }
-                logService.log(lwM2MClient, String.format("Updated Resource After CoapRequestPost: [%s][%s]", objectIdVer, valueStr));
+                coapRequestPost.setValueStr(setValueStr1024(valueStr));
+                logService.log(lwM2mClientOptional.get(), String.format("Updated Resource After CoapRequestPost: [%s][%s]", objectIdVer, valueStr));
                 return true;
             }
         }
