@@ -21,5 +21,5 @@ public interface TbQueueAdmin {
 
     void destroy();
 
-    default void deleteTopic(String topic) {    }
+    void deleteTopic(String topic);
 }
