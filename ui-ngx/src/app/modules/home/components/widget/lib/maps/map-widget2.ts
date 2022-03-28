@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { defaultSettings, FormattedData, hereProviders, MapProviders, UnitedMapSettings } from './map-models';
+import { defaultSettings, hereProviders, MapProviders, UnitedMapSettings } from './map-models';
 import LeafletMap from './leaflet-map';
 import {
   commonMapSettingsSchema,
@@ -28,13 +28,19 @@ import {
 import { MapWidgetInterface, MapWidgetStaticInterface } from './map-widget.interface';
 import { addCondition, addGroupInfo, addToSchema, initSchema, mergeSchemes } from '@core/schema-utils';
 import { WidgetContext } from '@app/modules/home/models/widget-component.models';
-import { getDefCenterPosition, getProviderSchema, parseFunction, parseWithTranslation } from './common-maps-utils';
-import { Datasource, DatasourceData, JsonSettingsSchema, WidgetActionDescriptor } from '@shared/models/widget.models';
+import { getDefCenterPosition, getProviderSchema, parseWithTranslation } from './common-maps-utils';
+import {
+  Datasource,
+  DatasourceData,
+  FormattedData,
+  JsonSettingsSchema,
+  WidgetActionDescriptor
+} from '@shared/models/widget.models';
 import { TranslateService } from '@ngx-translate/core';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
 import { providerClass } from '@home/components/widget/lib/maps/providers';
-import { isDefined } from '@core/utils';
+import { isDefined, parseFunction } from '@core/utils';
 import L from 'leaflet';
 import { forkJoin, Observable, of } from 'rxjs';
 import { AttributeService } from '@core/http/attribute.service';

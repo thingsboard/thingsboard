@@ -23,14 +23,12 @@ import '@geoman-io/leaflet-geoman-free';
 import {
   CircleData,
   defaultSettings,
-  FormattedData,
   MapSettings,
   MarkerIconInfo,
   MarkerImageInfo,
   MarkerSettings,
   PolygonSettings,
   PolylineSettings,
-  ReplaceInfo,
   UnitedMapSettings
 } from './map-models';
 import { Marker } from './markers';
@@ -41,13 +39,17 @@ import { Circle } from './circle';
 import { createTooltip, isCutPolygon, isJSON } from '@home/components/widget/lib/maps/maps-utils';
 import {
   checkLngLat,
-  createLoadingDiv,
-  parseArray,
-  parseData,
-  safeExecute
+  createLoadingDiv
 } from '@home/components/widget/lib/maps/common-maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { deepClone, isDefinedAndNotNull, isNotEmptyStr, isString } from '@core/utils';
+import {
+  deepClone,
+  formattedDataArrayFromDatasourceData,
+  formattedDataFormDatasourceData,
+  isDefinedAndNotNull,
+  isNotEmptyStr,
+  isString, safeExecute
+} from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import {
   SelectEntityDialogComponent,
@@ -55,6 +57,7 @@ import {
 } from '@home/components/widget/lib/maps/dialogs/select-entity-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
+import { FormattedData, ReplaceInfo } from '@shared/models/widget.models';
 
 export default abstract class LeafletMap {
 
@@ -645,9 +648,9 @@ export default abstract class LeafletMap {
       this.showPolygon = showPolygon;
       if (this.map) {
         const data = this.ctx.data;
-        const formattedData = parseData(data);
+        const formattedData = formattedDataFormDatasourceData(data);
         if (drawRoutes) {
-          const polyData = parseArray(data);
+          const polyData = formattedDataArrayFromDatasourceData(data);
           this.updatePolylines(polyData, formattedData, false);
         }
         if (showPolygon) {

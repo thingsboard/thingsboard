@@ -27,7 +27,7 @@ import {
   SecurityContext,
   ViewChild
 } from '@angular/core';
-import { FormattedData, MapProviders, TripAnimationSettings } from '@home/components/widget/lib/maps/map-models';
+import { MapProviders, TripAnimationSettings } from '@home/components/widget/lib/maps/map-models';
 import { addCondition, addGroupInfo, addToSchema, initSchema } from '@app/core/schema-utils';
 import {
   mapPolygonSchema,
@@ -42,14 +42,18 @@ import {
   getProviderSchema,
   getRatio,
   interpolateOnLineSegment,
-  parseArray,
-  parseFunction,
-  parseWithTranslation,
-  safeExecute
+  parseWithTranslation
 } from '@home/components/widget/lib/maps/common-maps-utils';
-import { JsonSettingsSchema, WidgetConfig } from '@shared/models/widget.models';
+import { FormattedData, JsonSettingsSchema, WidgetConfig } from '@shared/models/widget.models';
 import moment from 'moment';
-import { deepClone, isDefined, isUndefined } from '@core/utils';
+import {
+  deepClone,
+  formattedDataArrayFromDatasourceData,
+  isDefined,
+  isUndefined,
+  parseFunction,
+  safeExecute
+} from '@core/utils';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { MapWidgetInterface } from '@home/components/widget/lib/maps/map-widget.interface';
 
@@ -127,7 +131,8 @@ export class TripAnimationComponent implements OnInit, AfterViewInit, OnDestroy 
     this.normalizationStep = this.settings.normalizationStep;
     const subscription = this.ctx.defaultSubscription;
     subscription.callbacks.onDataUpdated = () => {
-      this.historicalData = parseArray(this.ctx.data).map(item => this.clearIncorrectFirsLastDatapoint(item)).filter(arr => arr.length);
+      this.historicalData = formattedDataArrayFromDatasourceData(this.ctx.data).map(
+        item => this.clearIncorrectFirsLastDatapoint(item)).filter(arr => arr.length);
       this.interpolatedTimeData.length = 0;
       this.formattedInterpolatedTimeData.length = 0;
       if (this.historicalData.length) {

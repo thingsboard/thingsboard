@@ -235,6 +235,12 @@ export interface TbFlotKeySettings {
   comparisonSettings: TbFlotKeyComparisonSettings;
 }
 
+export interface TbFlotLatestKeySettings {
+  useAsThreshold: boolean;
+  thresholdLineWidth: number;
+  thresholdColor: string;
+}
+
 export function flotSettingsSchema(chartType: ChartType): JsonSettingsSchema {
 
   const schema: JsonSettingsSchema = {
@@ -1124,3 +1130,37 @@ export function flotDatakeySettingsSchema(defaultShowLines: boolean, chartType: 
 
   return schema;
 }
+
+export const flotLatestDatakeySettingsSchema: JsonSettingsSchema = {
+    schema: {
+      type: 'object',
+      title: 'LatestDataKeySettings',
+      properties: {
+        useAsThreshold: {
+          title: 'Use key value as threshold',
+          type: 'boolean',
+          default: false
+        },
+        thresholdLineWidth: {
+          title: 'Threshold line width',
+          type: 'number'
+        },
+        thresholdColor: {
+          title: 'Threshold color',
+          type: 'string'
+        }
+      }
+    },
+    form: [
+      'useAsThreshold',
+      {
+        key: 'thresholdLineWidth',
+        condition: 'model.useAsThreshold === true'
+      },
+      {
+        key: 'thresholdColor',
+        type: 'color',
+        condition: 'model.useAsThreshold === true'
+      },
+    ]
+};

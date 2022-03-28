@@ -17,13 +17,12 @@
 import L, { LatLngExpression, LeafletMouseEvent } from 'leaflet';
 import { createTooltip, isCutPolygon } from './maps-utils';
 import {
-  fillPattern,
   functionValueCalculator,
-  parseWithTranslation,
-  processPattern,
-  safeExecute
+  parseWithTranslation
 } from './common-maps-utils';
-import { FormattedData, PolygonSettings, UnitedMapSettings } from './map-models';
+import { PolygonSettings, UnitedMapSettings } from './map-models';
+import { FormattedData } from '@shared/models/widget.models';
+import { fillDataPattern, processDataPattern, safeExecute } from '@core/utils';
 
 export class Polygon {
 
@@ -104,9 +103,9 @@ export class Polygon {
                 const pattern = settings.usePolygonLabelFunction ?
                   safeExecute(settings.polygonLabelFunction, [this.data, this.dataSources, this.data.dsIndex]) : settings.polygonLabel;
                 this.map.polygonLabelText = parseWithTranslation.prepareProcessPattern(pattern, true);
-                this.map.replaceInfoLabelPolygon = processPattern(this.map.polygonLabelText, this.data);
+                this.map.replaceInfoLabelPolygon = processDataPattern(this.map.polygonLabelText, this.data);
             }
-            const polygonLabelText = fillPattern(this.map.polygonLabelText, this.map.replaceInfoLabelPolygon, this.data);
+            const polygonLabelText = fillDataPattern(this.map.polygonLabelText, this.map.replaceInfoLabelPolygon, this.data);
             this.leafletPoly.bindTooltip(`<div style="color: ${settings.polygonLabelColor};"><b>${polygonLabelText}</b></div>`,
               { className: 'tb-polygon-label', permanent: true, sticky: true, direction: 'center' })
               .openTooltip(this.leafletPoly.getBounds().getCenter());
