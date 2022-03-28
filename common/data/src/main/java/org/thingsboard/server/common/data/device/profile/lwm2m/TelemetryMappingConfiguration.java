@@ -15,13 +15,16 @@
  */
 package org.thingsboard.server.common.data.device.profile.lwm2m;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.thingsboard.server.common.data.device.profile.lwm2m.ObjectAttributes;
+import lombok.NoArgsConstructor;
 
 import java.util.Map;
 import java.util.Set;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class TelemetryMappingConfiguration {
 
     private Map<String, String> keyName;

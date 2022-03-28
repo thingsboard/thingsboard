@@ -45,6 +45,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
 public abstract class BaseDeviceProfileServiceTest extends AbstractServiceTest {
@@ -250,6 +251,22 @@ public abstract class BaseDeviceProfileServiceTest extends AbstractServiceTest {
         device.setDeviceProfileId(savedDeviceProfile.getId());
         deviceService.saveDevice(device);
         deviceProfileService.deleteDeviceProfile(tenantId, savedDeviceProfile.getId());
+    }
+
+    @Test
+    public void testDeleteDeviceProfileWithExistingOta_cascadeDelete() {
+        DeviceProfile deviceProfile = this.createDeviceProfile(tenantId, "Device Profile");
+        deviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
+        OtaPackage otaPackage = constructDefaultOtaPackage(tenantId, deviceProfile.getId());
+        otaPackage = otaPackageService.saveOtaPackage(otaPackage);
+
+        assertThat(deviceProfileService.findDeviceProfileById(tenantId, deviceProfile.getId())).isNotNull();
+        assertThat(otaPackageService.findOtaPackageById(tenantId, otaPackage.getId())).isNotNull();
+
+        deviceProfileService.deleteDeviceProfile(tenantId, deviceProfile.getId());
+
+        assertThat(deviceProfileService.findDeviceProfileById(tenantId, deviceProfile.getId())).isNull();
+        assertThat(otaPackageService.findOtaPackageById(tenantId, otaPackage.getId())).isNull();
     }
 
     @Test

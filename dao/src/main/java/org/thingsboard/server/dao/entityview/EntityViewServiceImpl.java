@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -29,12 +28,10 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -47,12 +44,10 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
-import org.thingsboard.server.dao.tenant.TenantDao;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -65,7 +60,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.CacheConstants.ENTITY_VIEW_CACHE;
-import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 import static org.thingsboard.server.dao.service.Validator.validateString;
@@ -87,13 +81,10 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     private EntityViewDao entityViewDao;
 
     @Autowired
-    private TenantDao tenantDao;
-
-    @Autowired
-    private CustomerDao customerDao;
-
-    @Autowired
     private CacheManager cacheManager;
+
+    @Autowired
+    private DataValidator<EntityView> entityViewValidator;
 
     @Caching(evict = {
             @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityView.tenantId, #entityView.entityId}"),
@@ -103,8 +94,7 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
     public EntityView saveEntityView(EntityView entityView) {
         log.trace("Executing save entity view [{}]", entityView);
         entityViewValidator.validate(entityView, EntityView::getTenantId);
-        EntityView savedEntityView = entityViewDao.save(entityView.getTenantId(), entityView);
-        return savedEntityView;
+        return entityViewDao.save(entityView.getTenantId(), entityView);
     }
 
     @CacheEvict(cacheNames = ENTITY_VIEW_CACHE, key = "{#entityViewId}")
@@ -399,57 +389,6 @@ public class EntityViewServiceImpl extends AbstractEntityService implements Enti
         validatePageLink(pageLink);
         return entityViewDao.findEntityViewsByTenantIdAndEdgeIdAndType(tenantId.getId(), edgeId.getId(), type, pageLink);
     }
-
-    private DataValidator<EntityView> entityViewValidator =
-            new DataValidator<EntityView>() {
-
-                @Override
-                protected void validateCreate(TenantId tenantId, EntityView entityView) {
-                    entityViewDao.findEntityViewByTenantIdAndName(entityView.getTenantId().getId(), entityView.getName())
-                            .ifPresent(e -> {
-                                throw new DataValidationException("Entity view with such name already exists!");
-                            });
-                }
-
-                @Override
-                protected void validateUpdate(TenantId tenantId, EntityView entityView) {
-                    entityViewDao.findEntityViewByTenantIdAndName(entityView.getTenantId().getId(), entityView.getName())
-                            .ifPresent(e -> {
-                                if (!e.getUuidId().equals(entityView.getUuidId())) {
-                                    throw new DataValidationException("Entity view with such name already exists!");
-                                }
-                            });
-                }
-
-                @Override
-                protected void validateDataImpl(TenantId tenantId, EntityView entityView) {
-                    if (StringUtils.isEmpty(entityView.getType())) {
-                        throw new DataValidationException("Entity View type should be specified!");
-                    }
-                    if (StringUtils.isEmpty(entityView.getName())) {
-                        throw new DataValidationException("Entity view name should be specified!");
-                    }
-                    if (entityView.getTenantId() == null) {
-                        throw new DataValidationException("Entity view should be assigned to tenant!");
-                    } else {
-                        Tenant tenant = tenantDao.findById(tenantId, entityView.getTenantId().getId());
-                        if (tenant == null) {
-                            throw new DataValidationException("Entity view is referencing to non-existent tenant!");
-                        }
-                    }
-                    if (entityView.getCustomerId() == null) {
-                        entityView.setCustomerId(new CustomerId(NULL_UUID));
-                    } else if (!entityView.getCustomerId().getId().equals(NULL_UUID)) {
-                        Customer customer = customerDao.findById(tenantId, entityView.getCustomerId().getId());
-                        if (customer == null) {
-                            throw new DataValidationException("Can't assign entity view to non-existent customer!");
-                        }
-                        if (!customer.getTenantId().getId().equals(entityView.getTenantId().getId())) {
-                            throw new DataValidationException("Can't assign entity view to customer from different tenant!");
-                        }
-                    }
-                }
-            };
 
     private PaginatedRemover<TenantId, EntityView> tenantEntityViewRemover = new PaginatedRemover<TenantId, EntityView>() {
         @Override
