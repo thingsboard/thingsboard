@@ -13,10 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.auth.mfa.config.account;
+package org.thingsboard.server.dao.user;
 
-import lombok.Data;
+import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.security.UserAuthSettings;
+import org.thingsboard.server.dao.Dao;
 
-@Data
-public abstract class OtpBasedTwoFactorAuthAccountConfig implements TwoFactorAuthAccountConfig {
+public interface UserAuthSettingsDao extends Dao<UserAuthSettings> {
+
+    UserAuthSettings findByUserId(UserId userId);
+
+    void removeByUserId(UserId userId);
+
 }

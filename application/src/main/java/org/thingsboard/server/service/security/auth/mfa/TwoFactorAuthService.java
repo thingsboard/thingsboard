@@ -17,8 +17,8 @@ package org.thingsboard.server.service.security.auth.mfa;
 
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.service.security.auth.mfa.config.account.TwoFactorAuthAccountConfig;
-import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProviderType;
+import org.thingsboard.server.common.data.security.model.mfa.account.TwoFactorAuthAccountConfig;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFactorAuthProviderType;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface TwoFactorAuthService {

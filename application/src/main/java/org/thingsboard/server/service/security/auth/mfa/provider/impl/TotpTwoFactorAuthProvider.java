@@ -24,11 +24,11 @@ import org.jboss.aerogear.security.otp.api.Base32;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFactorAuthProviderType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.auth.mfa.config.account.TotpTwoFactorAuthAccountConfig;
-import org.thingsboard.server.service.security.auth.mfa.config.provider.TotpTwoFactorAuthProviderConfig;
+import org.thingsboard.server.common.data.security.model.mfa.account.TotpTwoFactorAuthAccountConfig;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TotpTwoFactorAuthProviderConfig;
 import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProvider;
-import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProviderType;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 @Service

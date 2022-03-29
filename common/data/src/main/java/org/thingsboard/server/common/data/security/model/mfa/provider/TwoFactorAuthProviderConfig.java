@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.auth.mfa.config.account;
+package org.thingsboard.server.common.data.security.model.mfa.provider;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProviderType;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         property = "providerType")
 @JsonSubTypes({
-        @Type(name = "TOTP", value = TotpTwoFactorAuthAccountConfig.class),
-        @Type(name = "SMS", value = SmsTwoFactorAuthAccountConfig.class)
+        @Type(name = "TOTP", value = TotpTwoFactorAuthProviderConfig.class),
+        @Type(name = "SMS", value = SmsTwoFactorAuthProviderConfig.class)
 })
-public interface TwoFactorAuthAccountConfig {
+public interface TwoFactorAuthProviderConfig {
 
     @JsonIgnore
     TwoFactorAuthProviderType getProviderType();

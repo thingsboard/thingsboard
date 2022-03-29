@@ -21,10 +21,10 @@ import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.security.model.mfa.account.SmsTwoFactorAuthAccountConfig;
+import org.thingsboard.server.common.data.security.model.mfa.provider.SmsTwoFactorAuthProviderConfig;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFactorAuthProviderType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.auth.mfa.config.account.SmsTwoFactorAuthAccountConfig;
-import org.thingsboard.server.service.security.auth.mfa.config.provider.SmsTwoFactorAuthProviderConfig;
-import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProviderType;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.Map;

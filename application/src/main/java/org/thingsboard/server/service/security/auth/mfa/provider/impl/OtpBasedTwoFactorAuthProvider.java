@@ -21,8 +21,8 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.service.security.auth.mfa.config.account.OtpBasedTwoFactorAuthAccountConfig;
-import org.thingsboard.server.service.security.auth.mfa.config.provider.OtpBasedTwoFactorAuthProviderConfig;
+import org.thingsboard.server.common.data.security.model.mfa.account.OtpBasedTwoFactorAuthAccountConfig;
+import org.thingsboard.server.common.data.security.model.mfa.provider.OtpBasedTwoFactorAuthProviderConfig;
 import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProvider;
 import org.thingsboard.server.service.security.model.SecurityUser;
 

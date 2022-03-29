@@ -13,29 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.auth.mfa.config.account;
+package org.thingsboard.server.common.data.security.model.mfa.provider;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProviderType;
+import lombok.EqualsAndHashCode;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 
-@ApiModel
+@ApiModel(parent = OtpBasedTwoFactorAuthProviderConfig.class)
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class TotpTwoFactorAuthAccountConfig implements TwoFactorAuthAccountConfig {
+public class SmsTwoFactorAuthProviderConfig extends OtpBasedTwoFactorAuthProviderConfig {
 
-    @ApiModelProperty(value = "OTP auth URL used to generate a QR code to scan with an authenticator app. Must not be blank and must follow specific pattern.",
-            example = "otpauth://totp/ThingsBoard:tenant@thingsboard.org?issuer=ThingsBoard&secret=FUNBIM3CXFNNGQR6ZIPVWHP65PPFWDII", required = true)
-    @NotBlank(message = "OTP auth URL cannot be blank")
-    @Pattern(regexp = "otpauth://totp/(\\S+?):(\\S+?)\\?issuer=(\\S+?)&secret=(\\w+?)", message = "OTP auth url is invalid")
-    private String authUrl;
+    @ApiModelProperty(value = "SMS verification message template. Available template variables are ${verificationCode} and ${userEmail}. " +
+            "It must not be blank and must contain verification code variable.",
+            example = "Here is your verification code: ${verificationCode}", required = true)
+    @NotBlank(message = "verification message template is required")
+    @Pattern(regexp = ".*\\$\\{verificationCode}.*", message = "template must contain verification code")
+    private String smsVerificationMessageTemplate;
 
     @Override
     public TwoFactorAuthProviderType getProviderType() {
-        return TwoFactorAuthProviderType.TOTP;
+        return TwoFactorAuthProviderType.SMS;
     }
 
 }

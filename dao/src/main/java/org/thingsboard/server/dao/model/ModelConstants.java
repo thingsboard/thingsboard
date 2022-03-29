@@ -560,6 +560,13 @@ public class ModelConstants {
     public static final String EDGE_EVENT_BY_ID_VIEW_NAME = "edge_event_by_id";
 
     /**
+     * User auth settings constants.
+     * */
+    public static final String USER_AUTH_SETTINGS_COLUMN_FAMILY_NAME = "user_auth_settings";
+    public static final String USER_AUTH_SETTINGS_USER_ID_PROPERTY = USER_ID_PROPERTY;
+    public static final String USER_AUTH_SETTINGS_TWO_FA_ACCOUNT_CONFIG_PROPERTY = "mfa_account_config";
+
+    /**
      * Cassandra attributes and timeseries constants.
      */
     public static final String ATTRIBUTES_KV_CF = "attributes_kv_cf";

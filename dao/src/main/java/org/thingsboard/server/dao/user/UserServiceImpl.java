@@ -19,7 +19,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -69,17 +68,20 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
 
     private final UserDao userDao;
     private final UserCredentialsDao userCredentialsDao;
+    private final UserAuthSettingsDao userAuthSettingsDao;
     private final DataValidator<User> userValidator;
     private final DataValidator<UserCredentials> userCredentialsValidator;
     private final ApplicationEventPublisher eventPublisher;
 
     public UserServiceImpl(UserDao userDao,
                            UserCredentialsDao userCredentialsDao,
+                           UserAuthSettingsDao userAuthSettingsDao,
                            DataValidator<User> userValidator,
                            DataValidator<UserCredentials> userCredentialsValidator,
                            ApplicationEventPublisher eventPublisher) {
         this.userDao = userDao;
         this.userCredentialsDao = userCredentialsDao;
+        this.userAuthSettingsDao = userAuthSettingsDao;
         this.userValidator = userValidator;
         this.userCredentialsValidator = userCredentialsValidator;
         this.eventPublisher = eventPublisher;
@@ -216,6 +218,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         validateId(userId, INCORRECT_USER_ID + userId);
         UserCredentials userCredentials = userCredentialsDao.findByUserId(tenantId, userId.getId());
         userCredentialsDao.removeById(tenantId, userCredentials.getUuidId());
+        userAuthSettingsDao.removeByUserId(userId);
         deleteEntityRelations(tenantId, userId);
         userDao.removeById(tenantId, userId.getId());
         eventPublisher.publishEvent(new UserAuthDataChangedEvent(userId));

@@ -13,28 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.auth.mfa.config.provider;
+package org.thingsboard.server.common.data.security.model.mfa.account;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProviderType;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFactorAuthProviderType;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 
-@ApiModel(parent = OtpBasedTwoFactorAuthProviderConfig.class)
+@ApiModel
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class SmsTwoFactorAuthProviderConfig extends OtpBasedTwoFactorAuthProviderConfig {
+public class SmsTwoFactorAuthAccountConfig extends OtpBasedTwoFactorAuthAccountConfig {
 
-    @ApiModelProperty(value = "SMS verification message template. Available template variables are ${verificationCode} and ${userEmail}. " +
-            "It must not be blank and must contain verification code variable.",
-            example = "Here is your verification code: ${verificationCode}", required = true)
-    @NotBlank(message = "verification message template is required")
-    @Pattern(regexp = ".*\\$\\{verificationCode}.*", message = "template must contain verification code")
-    private String smsVerificationMessageTemplate;
+    @ApiModelProperty(value = "Phone number to use for 2FA. Must no be blank and must be of E.164 number format.", required = true)
+    @NotBlank(message = "phone number cannot be blank")
+    @Pattern(regexp = "^\\+[1-9]\\d{1,14}$", message = "phone number is not of E.164 format")
+    private String phoneNumber;
 
     @Override
     public TwoFactorAuthProviderType getProviderType() {

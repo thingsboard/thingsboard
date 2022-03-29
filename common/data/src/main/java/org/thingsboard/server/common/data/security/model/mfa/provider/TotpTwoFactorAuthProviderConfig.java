@@ -13,30 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.auth.mfa.config.account;
+package org.thingsboard.server.common.data.security.model.mfa.provider;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProviderType;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
 
 @ApiModel
-@EqualsAndHashCode(callSuper = true)
 @Data
-public class SmsTwoFactorAuthAccountConfig extends OtpBasedTwoFactorAuthAccountConfig {
+public class TotpTwoFactorAuthProviderConfig implements TwoFactorAuthProviderConfig {
 
-    @ApiModelProperty(value = "Phone number to use for 2FA. Must no be blank and must be of E.164 number format.", required = true)
-    @NotBlank(message = "phone number cannot be blank")
-    @Pattern(regexp = "^\\+[1-9]\\d{1,14}$", message = "phone number is not of E.164 format")
-    private String phoneNumber;
+    @ApiModelProperty(value = "Issuer name that will be displayed in an authenticator app near a username. " +
+            "Must not be blank.", example = "ThingsBoard", required = true)
+    @NotBlank(message = "issuer name must not be blank")
+    private String issuerName;
 
     @Override
     public TwoFactorAuthProviderType getProviderType() {
-        return TwoFactorAuthProviderType.SMS;
+        return TwoFactorAuthProviderType.TOTP;
     }
 
 }

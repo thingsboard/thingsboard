@@ -36,10 +36,10 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFactorAuthConfigManager;
-import org.thingsboard.server.service.security.auth.mfa.config.TwoFactorAuthSettings;
-import org.thingsboard.server.service.security.auth.mfa.config.account.TotpTwoFactorAuthAccountConfig;
-import org.thingsboard.server.service.security.auth.mfa.config.account.TwoFactorAuthAccountConfig;
-import org.thingsboard.server.service.security.auth.mfa.provider.TwoFactorAuthProviderType;
+import org.thingsboard.server.common.data.security.model.mfa.TwoFactorAuthSettings;
+import org.thingsboard.server.common.data.security.model.mfa.account.TotpTwoFactorAuthAccountConfig;
+import org.thingsboard.server.common.data.security.model.mfa.account.TwoFactorAuthAccountConfig;
+import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFactorAuthProviderType;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import javax.servlet.ServletOutputStream;

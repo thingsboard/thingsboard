@@ -13,9 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.auth.mfa.provider;
+package org.thingsboard.server.dao.sql.user;
 
-public enum TwoFactorAuthProviderType {
-    TOTP,
-    SMS
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.server.dao.model.sql.UserAuthSettingsEntity;
+
+import java.util.UUID;
+
+@Repository
+public interface UserAuthSettingsRepository extends JpaRepository<UserAuthSettingsEntity, UUID> {
+
+    UserAuthSettingsEntity findByUserId(UUID userId);
+
+    @Transactional
+    void deleteByUserId(UUID userId);
+
 }

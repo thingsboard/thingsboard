@@ -18,7 +18,8 @@ package org.thingsboard.server.service.security.auth.mfa.config;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.service.security.auth.mfa.config.account.TwoFactorAuthAccountConfig;
+import org.thingsboard.server.common.data.security.model.mfa.TwoFactorAuthSettings;
+import org.thingsboard.server.common.data.security.model.mfa.account.TwoFactorAuthAccountConfig;
 
 import java.util.Optional;
 
