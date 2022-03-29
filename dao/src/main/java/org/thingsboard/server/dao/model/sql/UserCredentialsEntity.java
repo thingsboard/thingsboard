@@ -15,14 +15,18 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.util.mapping.JsonStringType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -31,6 +35,7 @@ import java.util.UUID;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
+@TypeDef(name = "json", typeClass = JsonStringType.class)
 @Entity
 @Table(name = ModelConstants.USER_CREDENTIALS_COLUMN_FAMILY_NAME)
 public final class UserCredentialsEntity extends BaseSqlEntity<UserCredentials> implements BaseEntity<UserCredentials> {
@@ -50,6 +55,10 @@ public final class UserCredentialsEntity extends BaseSqlEntity<UserCredentials> 
     @Column(name = ModelConstants.USER_CREDENTIALS_RESET_TOKEN_PROPERTY, unique = true)
     private String resetToken;
 
+    @Type(type = "json")
+    @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY)
+    private JsonNode additionalInfo;
+
     public UserCredentialsEntity() {
         super();
     }
@@ -66,6 +75,7 @@ public final class UserCredentialsEntity extends BaseSqlEntity<UserCredentials> 
         this.password = userCredentials.getPassword();
         this.activateToken = userCredentials.getActivateToken();
         this.resetToken = userCredentials.getResetToken();
+        this.additionalInfo = userCredentials.getAdditionalInfo();
     }
 
     @Override
@@ -79,6 +89,7 @@ public final class UserCredentialsEntity extends BaseSqlEntity<UserCredentials> 
         userCredentials.setPassword(password);
         userCredentials.setActivateToken(activateToken);
         userCredentials.setResetToken(resetToken);
+        userCredentials.setAdditionalInfo(additionalInfo);
         return userCredentials;
     }
 

@@ -16,12 +16,12 @@
 package org.thingsboard.server.common.data.security;
 
 import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
 
 @EqualsAndHashCode(callSuper = true)
-public class UserCredentials extends BaseData<UserCredentialsId> {
+public class UserCredentials extends SearchTextBasedWithAdditionalInfo<UserCredentialsId> {
 
     private static final long serialVersionUID = -2108436378880529163L;
 
@@ -86,6 +86,11 @@ public class UserCredentials extends BaseData<UserCredentialsId> {
 
     public void setResetToken(String resetToken) {
         this.resetToken = resetToken;
+    }
+    
+    @Override
+    public String getSearchText() {
+        return null;
     }
 
     @Override
