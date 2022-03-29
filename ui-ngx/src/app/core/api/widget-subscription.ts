@@ -52,7 +52,14 @@ import {
 import { forkJoin, Observable, of, ReplaySubject, Subject, throwError, timer } from 'rxjs';
 import { CancelAnimationFrame } from '@core/services/raf.service';
 import { EntityType } from '@shared/models/entity-type.models';
-import { createLabelFromDatasource, deepClone, isDefined, isDefinedAndNotNull, isEqual } from '@core/utils';
+import {
+  createLabelFromDatasource, createLabelFromPattern,
+  deepClone, flatFormattedData,
+  formattedDataFormDatasourceData,
+  isDefined,
+  isDefinedAndNotNull,
+  isEqual
+} from '@core/utils';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import * as moment_ from 'moment';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
@@ -99,6 +106,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   configuredDatasources: Array<Datasource>;
 
   data: Array<DatasourceData>;
+  latestData: Array<DatasourceData>;
   datasources: Array<Datasource>;
   hiddenData: Array<DataSetHolder>;
   legendData: LegendData;
@@ -140,6 +148,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   executingSubjects: Array<Subject<any>>;
 
   subscribed = false;
+  hasLatestData = false;
   widgetTimewindowChangedSubject: Subject<WidgetTimewindow> = new ReplaySubject<WidgetTimewindow>();
 
   widgetTimewindowChanged$ = this.widgetTimewindowChangedSubject.asObservable().pipe(
@@ -205,7 +214,9 @@ export class WidgetSubscription implements IWidgetSubscription {
       });
     } else {
       this.callbacks.onDataUpdated = this.callbacks.onDataUpdated || (() => {});
+      this.callbacks.onLatestDataUpdated = this.callbacks.onLatestDataUpdated || (() => {});
       this.callbacks.onDataUpdateError = this.callbacks.onDataUpdateError || (() => {});
+      this.callbacks.onLatestDataUpdateError = this.callbacks.onLatestDataUpdateError || (() => {});
       this.callbacks.onSubscriptionMessage = this.callbacks.onSubscriptionMessage || (() => {});
       this.callbacks.onInitialPageDataChanged = this.callbacks.onInitialPageDataChanged || (() => {});
       this.callbacks.forceReInit = this.callbacks.forceReInit || (() => {});
@@ -224,6 +235,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.datasources = [];
       this.dataPages = [];
       this.data = [];
+      this.latestData = [];
       this.hiddenData = [];
       this.originalTimewindow = null;
       this.timeWindow = {};
@@ -366,6 +378,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     const initDataSubscriptionSubject = new ReplaySubject(1);
     this.loadStDiff().subscribe(() => {
       if (!this.ctx.aliasController) {
+        this.configuredDatasources = deepClone(this.configuredDatasources);
         this.hasResolvedData = true;
         this.prepareDataSubscriptions().subscribe(
           () => {
@@ -455,18 +468,25 @@ export class WidgetSubscription implements IWidgetSubscription {
         this.updateDataTimewindow();
         this.notifyDataLoaded();
         this.onDataUpdated(true);
+        if (this.hasLatestData) {
+          this.onLatestDataUpdated(true);
+        }
       })
     );
   }
 
   private resetData() {
     this.data.length = 0;
+    this.latestData.length = 0;
     this.hiddenData.length = 0;
     if (this.displayLegend) {
       this.legendData.keys.length = 0;
       this.legendData.data.length = 0;
     }
     this.onDataUpdated();
+    if (this.hasLatestData) {
+      this.onLatestDataUpdated();
+    }
   }
 
   getFirstEntityInfo(): SubscriptionEntityInfo {
@@ -572,6 +592,20 @@ export class WidgetSubscription implements IWidgetSubscription {
         this.callbacks.onDataUpdated(this, detectChanges);
       } catch (e) {
         this.callbacks.onDataUpdateError(this, e);
+      }
+    });
+  }
+
+  private onLatestDataUpdated(detectChanges?: boolean) {
+    if (this.cafs.latestDataUpdated) {
+      this.cafs.latestDataUpdated();
+      this.cafs.latestDataUpdated = null;
+    }
+    this.cafs.latestDataUpdated = this.ctx.raf.raf(() => {
+      try {
+        this.callbacks.onLatestDataUpdated(this, detectChanges);
+      } catch (e) {
+        this.callbacks.onLatestDataUpdateError(this, e);
       }
     });
   }
@@ -1090,6 +1124,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   private updateDataSubscriptions() {
     this.configuredDatasources = this.ctx.utils.validateDatasources(this.options.datasources);
     if (!this.ctx.aliasController) {
+      this.configuredDatasources = deepClone(this.configuredDatasources);
       this.hasResolvedData = true;
       this.prepareDataSubscriptions().subscribe(
         () => {
@@ -1249,21 +1284,28 @@ export class WidgetSubscription implements IWidgetSubscription {
     if (isUpdate) {
       this.configureLoadedData();
       this.onDataUpdated(true);
+      if (this.hasLatestData) {
+        this.onLatestDataUpdated(true);
+      }
     }
   }
 
   private configureLoadedData() {
     this.datasources.length = 0;
     this.data.length = 0;
+    this.latestData.length = 0;
     this.hiddenData.length = 0;
+    this.hasLatestData = false;
     if (this.displayLegend) {
       this.legendData.keys.length = 0;
       this.legendData.data.length = 0;
     }
 
     let dataKeyIndex = 0;
+    let latestDataKeyIndex = 0;
     this.configuredDatasources.forEach((configuredDatasource, datasourceIndex) => {
         configuredDatasource.dataKeyStartIndex = dataKeyIndex;
+        configuredDatasource.latestDataKeyStartIndex = latestDataKeyIndex;
         const datasourcesPage = this.datasourcePages[datasourceIndex];
         const datasourceDataPage = this.dataPages[datasourceIndex];
         if (datasourcesPage) {
@@ -1289,6 +1331,15 @@ export class WidgetSubscription implements IWidgetSubscription {
               }
               dataKeyIndex++;
             });
+            if (datasource.latestDataKeys && datasource.latestDataKeys.length) {
+              this.hasLatestData = true;
+              datasource.latestDataKeys.forEach((dataKey, currentLatestDataKeyIndex) => {
+                const currentDataKeyIndex = datasource.dataKeys.length + currentLatestDataKeyIndex;
+                const datasourceData = datasourceDataPage.data[currentDatasourceIndex][currentDataKeyIndex];
+                this.latestData.push(datasourceData);
+                latestDataKeyIndex++;
+              });
+            }
             this.datasources.push(datasource);
           });
         }
@@ -1303,6 +1354,15 @@ export class WidgetSubscription implements IWidgetSubscription {
         }
         index++;
       });
+      if (datasource.latestDataKeys) {
+        datasource.latestDataKeys.forEach((dataKey) => {
+          if (datasource.generated || datasource.isAdditional) {
+            dataKey._hash = Math.random();
+            // dataKey.color = this.ctx.utils.getMaterialColor(index);
+          }
+          // index++;
+        });
+      }
     });
     if (this.comparisonEnabled) {
       this.datasourcePages.forEach(datasourcePage => {
@@ -1329,19 +1389,11 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   private entityDataToDatasourceData(datasource: Datasource, data: Array<DataSetHolder>): Array<DatasourceData> {
-    return datasource.dataKeys.map((dataKey, keyIndex) => {
+    let datasourceDataArray: Array<DatasourceData> = [];
+    datasourceDataArray = datasourceDataArray.concat(datasource.dataKeys.map((dataKey, keyIndex) => {
       dataKey.hidden = !!dataKey.settings.hideDataByDefault;
       dataKey.inLegend = !dataKey.settings.removeFromLegend;
       dataKey.label = this.ctx.utils.customTranslation(dataKey.label, dataKey.label);
-      if (this.comparisonEnabled && dataKey.isAdditional && dataKey.settings.comparisonSettings.comparisonValuesLabel) {
-         dataKey.label = createLabelFromDatasource(datasource, dataKey.settings.comparisonSettings.comparisonValuesLabel);
-      } else {
-        if (this.comparisonEnabled && dataKey.isAdditional) {
-          dataKey.label = dataKey.label + ' ' + this.ctx.translate.instant('legend.comparison-time-ago.' + this.timeForComparison);
-        }
-        dataKey.pattern = dataKey.label;
-        dataKey.label = createLabelFromDatasource(datasource, dataKey.pattern);
-      }
       const datasourceData: DatasourceData = {
         datasource,
         dataKey,
@@ -1351,7 +1403,38 @@ export class WidgetSubscription implements IWidgetSubscription {
         datasourceData.data = data[keyIndex].data;
       }
       return datasourceData;
+    }));
+    if (datasource.latestDataKeys) {
+      datasourceDataArray = datasourceDataArray.concat(datasource.latestDataKeys.map((dataKey, latestKeyIndex) => {
+        const datasourceData: DatasourceData = {
+          datasource,
+          dataKey,
+          data: []
+        };
+        const keyIndex = datasource.dataKeys.length + latestKeyIndex;
+        if (data && data[keyIndex] && data[keyIndex].data) {
+          datasourceData.data = data[keyIndex].data;
+        }
+        return datasourceData;
+      }));
+    }
+
+    const formattedDataArray = formattedDataFormDatasourceData(datasourceDataArray);
+    const formattedData = flatFormattedData(formattedDataArray);
+
+    datasource.dataKeys.forEach((dataKey) => {
+      if (this.comparisonEnabled && dataKey.isAdditional && dataKey.settings.comparisonSettings.comparisonValuesLabel) {
+        dataKey.label = createLabelFromPattern(dataKey.settings.comparisonSettings.comparisonValuesLabel, formattedData);
+      } else {
+        if (this.comparisonEnabled && dataKey.isAdditional) {
+          dataKey.label = dataKey.label + ' ' + this.ctx.translate.instant('legend.comparison-time-ago.' + this.timeForComparison);
+        }
+        dataKey.pattern = dataKey.label;
+        dataKey.label = createLabelFromPattern(dataKey.pattern, formattedData);
+      }
     });
+
+    return datasourceDataArray;
   }
 
   private entityDataToDatasource(configDatasource: Datasource, entityData: EntityData, index: number): Datasource {
@@ -1362,7 +1445,17 @@ export class WidgetSubscription implements IWidgetSubscription {
     return newDatasource;
   }
 
-  private dataUpdated(data: DataSetHolder, datasourceIndex: number, dataIndex: number, dataKeyIndex: number, detectChanges: boolean) {
+  private dataUpdated(data: DataSetHolder, datasourceIndex: number, dataIndex: number, dataKeyIndex: number,
+                      detectChanges: boolean, isLatest: boolean) {
+    if (isLatest) {
+      this.processLatestDataUpdated(data, datasourceIndex, dataIndex, dataKeyIndex, detectChanges);
+    } else {
+      this.processDataUpdated(data, datasourceIndex, dataIndex, dataKeyIndex, detectChanges);
+    }
+  }
+
+  private processDataUpdated(data: DataSetHolder, datasourceIndex: number, dataIndex: number,
+                             dataKeyIndex: number, detectChanges: boolean) {
     const configuredDatasource = this.configuredDatasources[datasourceIndex];
     const startIndex = configuredDatasource.dataKeyStartIndex;
     const dataKeysCount = configuredDatasource.dataKeys.length;
@@ -1399,6 +1492,30 @@ export class WidgetSubscription implements IWidgetSubscription {
       }
       this.notifyDataLoaded();
       this.onDataUpdated(detectChanges);
+    }
+  }
+
+  private processLatestDataUpdated(data: DataSetHolder, datasourceIndex: number, dataIndex: number,
+                                   dataKeyIndex: number, detectChanges: boolean) {
+    const configuredDatasource = this.configuredDatasources[datasourceIndex];
+    const startIndex = configuredDatasource.latestDataKeyStartIndex;
+    const dataKeysCount = configuredDatasource.latestDataKeys.length;
+    const index = startIndex + dataIndex * dataKeysCount + dataKeyIndex - configuredDatasource.dataKeys.length;
+    let update = true;
+    const currentData = this.latestData[index];
+    const prevData = currentData.data;
+    if (!data.data.length) {
+      update = false;
+    } else if (prevData && prevData[0] && prevData[0].length > 1 && data.data.length > 0) {
+      const prevTs = prevData[0][0];
+      const prevValue = prevData[0][1];
+      if (prevTs === data.data[0][0] && prevValue === data.data[0][1]) {
+        update = false;
+      }
+    }
+    if (update) {
+      currentData.data = data.data;
+      this.onLatestDataUpdated(detectChanges);
     }
   }
 
