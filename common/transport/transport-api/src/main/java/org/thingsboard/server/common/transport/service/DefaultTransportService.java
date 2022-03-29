@@ -180,7 +180,7 @@ public class DefaultTransportService implements TransportService {
     protected ExecutorService transportCallbackExecutor;
     private ExecutorService mainConsumerExecutor;
 
-    private final ConcurrentMap<UUID, SessionMetaData> sessions = new ConcurrentHashMap<>();
+    public final ConcurrentMap<UUID, SessionMetaData> sessions = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, SessionActivityData> sessionsActivity = new ConcurrentHashMap<>();
     private final Map<String, RpcRequestMetadata> toServerRpcPendingMap = new ConcurrentHashMap<>();
 
