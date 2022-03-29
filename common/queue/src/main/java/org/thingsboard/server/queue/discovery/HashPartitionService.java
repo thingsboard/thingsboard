@@ -214,20 +214,6 @@ public class HashPartitionService implements PartitionService {
     }
 
     @Override
-    public TopicPartitionInfo getNotificationsTopic(ServiceType serviceType, String serviceId) {
-        switch (serviceType) {
-            case TB_CORE:
-                return tbCoreNotificationTopics.computeIfAbsent(serviceId,
-                        id -> buildNotificationsTopicPartitionInfo(serviceType, serviceId));
-            case TB_RULE_ENGINE:
-                return tbRuleEngineNotificationTopics.computeIfAbsent(serviceId,
-                        id -> buildNotificationsTopicPartitionInfo(serviceType, serviceId));
-            default:
-                return buildNotificationsTopicPartitionInfo(serviceType, serviceId);
-        }
-    }
-
-    @Override
     public int resolvePartitionIndex(UUID entityId, int partitions) {
         int hash = hashFunction.newHasher()
                 .putLong(entityId.getMostSignificantBits())

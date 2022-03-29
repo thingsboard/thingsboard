@@ -39,6 +39,7 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.queue.TbQueueAdmin;
+import org.thingsboard.server.queue.TbQueueClusterService;
 
 import java.util.List;
 
@@ -56,8 +57,8 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     @Autowired(required = false)
     private TbQueueAdmin tbQueueAdmin;
 
-//    @Autowired(required = false)
-//    private TbQueueClusterService queueClusterService;
+    @Autowired(required = false)
+    private TbQueueClusterService queueClusterService;
 
 //    @Autowired
 //    private QueueStatsService queueStatsService;
@@ -99,7 +100,7 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
 
         //TODO: remove if partitions can't be deleted.
         if (currentPartitions != oldPartitions && tbQueueAdmin != null) {
-//            queueClusterService.onQueueDelete(queue, null);
+            queueClusterService.onQueueDelete(queue, null);
             if (currentPartitions > oldPartitions) {
                 log.info("Added [{}] new partitions to [{}] queue", currentPartitions - oldPartitions, queue.getName());
                 for (int i = oldPartitions; i < currentPartitions; i++) {
@@ -121,9 +122,9 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     public void deleteQueue(TenantId tenantId, QueueId queueId) {
         log.trace("Executing deleteQueue, queueId: [{}]", queueId);
         Queue queue = findQueueById(tenantId, queueId);
-//        if (queueClusterService != null) {
-//            queueClusterService.onQueueDelete(queue, null);
-//        }
+        if (queueClusterService != null) {
+            queueClusterService.onQueueDelete(queue, null);
+        }
 //        queueStatsService.deleteQueueStatsByQueueId(tenantId, queueId);
         boolean result = queueDao.removeById(tenantId, queueId.getId());
         if (result && tbQueueAdmin != null) {
