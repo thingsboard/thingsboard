@@ -17,10 +17,12 @@ package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.thingsboard.server.common.data.id.DashboardId;
 
+@EqualsAndHashCode(callSuper = false)
 public class Dashboard extends DashboardInfo implements ExportableEntity<DashboardId> {
 
     private static final long serialVersionUID = 872682138346187503L;
@@ -58,31 +60,6 @@ public class Dashboard extends DashboardInfo implements ExportableEntity<Dashboa
 
     public void setConfiguration(JsonNode configuration) {
         this.configuration = configuration;
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + ((configuration == null) ? 0 : configuration.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (!super.equals(obj))
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        Dashboard other = (Dashboard) obj;
-        if (configuration == null) {
-            if (other.configuration != null)
-                return false;
-        } else if (!configuration.equals(other.configuration))
-            return false;
-        return true;
     }
 
     @Override

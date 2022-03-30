@@ -24,13 +24,8 @@ public interface ExportableEntityDao<T> {
     T findByTenantIdAndExternalId(UUID tenantId, UUID externalId);
 
     T findByTenantIdAndId(UUID tenantId, UUID id);
-    // fixme [viacheslav]: get rid of boilerplate ?
+
 
     EntityType getEntityType();
-
-    /*
-     * default <D extends BaseEntity<T>> ExportableEntityRepository<D> getExportableEntityRepository() {
-     * ((ExportableEntityRepository) getJpaRepository).find...
-     * */
 
 }

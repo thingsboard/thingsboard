@@ -23,10 +23,14 @@ import org.thingsboard.server.service.exportimport.exporting.data.EntityExportDa
 import org.thingsboard.server.service.exportimport.importing.EntityImportResult;
 import org.thingsboard.server.service.exportimport.importing.EntityImportSettings;
 
+import java.util.List;
+
 public interface EntitiesExportImportService extends ExportableEntitiesService {
 
     <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportEntity(TenantId tenantId, I entityId, EntityExportSettings exportSettings);
 
     <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(TenantId tenantId, EntityExportData<E> exportData, EntityImportSettings importSettings);
+
+    <E extends ExportableEntity<I>, I extends EntityId> List<EntityImportResult<E>> importEntities(TenantId tenantId, List<EntityExportData<E>> exportDataList, EntityImportSettings importSettings);
 
 }

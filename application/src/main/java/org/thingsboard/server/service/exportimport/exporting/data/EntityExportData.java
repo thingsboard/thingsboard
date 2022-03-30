@@ -17,6 +17,7 @@ package org.thingsboard.server.service.exportimport.exporting.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -42,6 +43,7 @@ import java.util.List;
 public abstract class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
 
     private E mainEntity;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<EntityRelation> inboundRelations;
 
     @JsonIgnore

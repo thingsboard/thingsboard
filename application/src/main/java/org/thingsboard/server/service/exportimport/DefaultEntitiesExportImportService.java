@@ -17,6 +17,7 @@ package org.thingsboard.server.service.exportimport;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -31,9 +32,12 @@ import org.thingsboard.server.service.exportimport.importing.EntityImportService
 import org.thingsboard.server.service.exportimport.importing.EntityImportSettings;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 // FIXME [viacheslav]: review packages and classes naming
 @Service
@@ -43,6 +47,11 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
     private final Map<EntityType, EntityExportService<?, ?, ?>> exportServices = new HashMap<>();
     private final Map<EntityType, EntityImportService<?, ?, ?>> importServices = new HashMap<>();
     private final Map<EntityType, ExportableEntityDao<?>> daos = new HashMap<>();
+
+    protected static final List<EntityType> SUPPORTED_ENTITY_TYPES = List.of(
+            EntityType.CUSTOMER, EntityType.ASSET, EntityType.RULE_CHAIN,
+            EntityType.DEVICE_PROFILE, EntityType.DEVICE, EntityType.DASHBOARD
+    );
 
 
     // TODO [viacheslav]: export and import of the whole tenant
@@ -55,13 +64,24 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
         return exportService.getExportData(tenantId, entityId, exportSettings);
     }
 
+
     // FIXME [viacheslav]: somehow validate export data
+    @Transactional
     @Override
     public <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(TenantId tenantId, EntityExportData<E> exportData, EntityImportSettings importSettings) {
         EntityType entityType = exportData.getEntityType();
         EntityImportService<I, E, EntityExportData<E>> importService = getImportService(entityType);
 
         return importService.importEntity(tenantId, exportData, importSettings);
+    }
+
+    @Transactional
+    @Override
+    public <E extends ExportableEntity<I>, I extends EntityId> List<EntityImportResult<E>> importEntities(TenantId tenantId, List<EntityExportData<E>> exportDataList, EntityImportSettings importSettings) {
+        return exportDataList.stream()
+                .sorted(Comparator.comparing(exportData -> SUPPORTED_ENTITY_TYPES.indexOf(exportData.getEntityType())))
+                .map(exportData -> importEntity(tenantId, exportData, importSettings))
+                .collect(Collectors.toList());
     }
 
 
@@ -81,11 +101,17 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
 
     @SuppressWarnings("unchecked")
     private <I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> EntityExportService<I, E, D> getExportService(EntityType entityType) {
+        if (!SUPPORTED_ENTITY_TYPES.contains(entityType)) {
+            throw new IllegalArgumentException("Export for entity type " + entityType + " is not supported");
+        }
         return (EntityExportService<I, E, D>) exportServices.get(entityType);
     }
 
     @SuppressWarnings("unchecked")
     private <I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> EntityImportService<I, E, D> getImportService(EntityType entityType) {
+        if (!SUPPORTED_ENTITY_TYPES.contains(entityType)) {
+            throw new IllegalArgumentException("Import for entity type " + entityType + " is not supported");
+        }
         return (EntityImportService<I, E, D>) importServices.get(entityType);
     }
 
