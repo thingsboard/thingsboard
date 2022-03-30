@@ -68,6 +68,7 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
 
     const rawSettingsSchema = widgetInfo.typeSettingsSchema || widgetInfo.settingsSchema;
     const rawDataKeySettingsSchema = widgetInfo.typeDataKeySettingsSchema || widgetInfo.dataKeySettingsSchema;
+    const rawLatestDataKeySettingsSchema = widgetInfo.typeLatestDataKeySettingsSchema || widgetInfo.latestDataKeySettingsSchema;
     const typeParameters = widgetInfo.typeParameters;
     const actionSources = widgetInfo.actionSources;
     const isDataEnabled = isDefined(widgetInfo.typeParameters) ? !widgetInfo.typeParameters.useCustomDatasources : true;
@@ -83,6 +84,13 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
     } else {
       dataKeySettingsSchema = isString(rawDataKeySettingsSchema) ? JSON.parse(rawDataKeySettingsSchema) : rawDataKeySettingsSchema;
     }
+    let latestDataKeySettingsSchema;
+    if (!rawLatestDataKeySettingsSchema || rawLatestDataKeySettingsSchema === '') {
+      latestDataKeySettingsSchema = {};
+    } else {
+      latestDataKeySettingsSchema = isString(rawLatestDataKeySettingsSchema) ?
+        JSON.parse(rawLatestDataKeySettingsSchema) : rawLatestDataKeySettingsSchema;
+    }
     const widgetConfig: WidgetConfigComponentData = {
       config: this.widget.config,
       layout: {},
@@ -92,8 +100,10 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
       isDataEnabled,
       settingsSchema,
       dataKeySettingsSchema,
+      latestDataKeySettingsSchema,
       settingsDirective: widgetInfo.settingsDirective,
-      dataKeySettingsDirective: widgetInfo.dataKeySettingsDirective
+      dataKeySettingsDirective: widgetInfo.dataKeySettingsDirective,
+      latestDataKeySettingsDirective: widgetInfo.latestDataKeySettingsDirective
     };
 
     this.widgetFormGroup = this.fb.group({

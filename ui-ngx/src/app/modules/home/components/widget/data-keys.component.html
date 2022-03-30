@@ -73,7 +73,7 @@
         <mat-icon matChipRemove *ngIf="!disabled && !isEntityCountDatasource">close</mat-icon>
       </div>
     </mat-chip>
-    <input matInput type="text" placeholder="{{ !disabled ? placeholder : '' }}"
+    <input matInput type="text" placeholder="{{ !disabled ? (keys.length ? secondaryPlaceholder : placeholder) : '' }}"
            style="max-width: 200px;"
            #keyInput
            formControlName="key"

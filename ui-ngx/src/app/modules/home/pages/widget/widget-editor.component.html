@@ -221,6 +221,22 @@
                   <div #dataKeySettingsJsonInput></div>
                 </div>
               </mat-tab>
+              <mat-tab [aria-labelledby]="widget.type !== widgetTypes.timeseries ? 'hidden': ''" label="{{ 'widget.latest-datakey-settings-schema' | translate }}">
+                <div class="tb-resize-container" tb-fullscreen [fullscreen]="jsonLatestDataKeySettingsFullscreen">
+                  <div class="tb-editor-area-title-panel">
+                    <button mat-button (click)="beautifyLatestDataKeyJson()">
+                      {{ 'widget.tidy' | translate }}
+                    </button>
+                    <button mat-icon-button class="tb-mat-32"
+                            (click)="jsonLatestDataKeySettingsFullscreen = !jsonLatestDataKeySettingsFullscreen"
+                            matTooltip="{{(jsonLatestDataKeySettingsFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
+                            matTooltipPosition="above">
+                      <mat-icon>{{ jsonLatestDataKeySettingsFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+                    </button>
+                  </div>
+                  <div #latestDataKeySettingsJsonInput></div>
+                </div>
+              </mat-tab>
               <mat-tab label="{{ 'widget.widget-settings' | translate }}">
                 <div class="tb-resize-container" style="background-color: #fff;">
                   <div class="mat-padding">

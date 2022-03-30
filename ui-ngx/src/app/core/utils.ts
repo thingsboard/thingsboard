@@ -17,7 +17,7 @@
 import _ from 'lodash';
 import { Observable, Subject } from 'rxjs';
 import { finalize, share } from 'rxjs/operators';
-import { Datasource } from '@app/shared/models/widget.models';
+import { Datasource, DatasourceData, FormattedData, ReplaceInfo } from '@app/shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { EntityType, baseDetailsPageByEntityType } from '@shared/models/entity-type.models';
@@ -386,6 +386,195 @@ export function createLabelFromDatasource(datasource: Datasource, pattern: strin
     match = varsRegex.exec(pattern);
   }
   return label;
+}
+
+export function formattedDataFormDatasourceData(input: DatasourceData[], dataIndex?: number): FormattedData[] {
+  return _(input).groupBy(el => el.datasource.entityName + el.datasource.entityType)
+    .values().value().map((entityArray, i) => {
+      const datasource = entityArray[0].datasource;
+      const obj = formattedDataFromDatasource(datasource, i);
+      entityArray.filter(el => el.data.length).forEach(el => {
+        const index = isDefined(dataIndex) ? dataIndex : el.data.length - 1;
+        if (!obj.hasOwnProperty(el.dataKey.label) || el.data[index][1] !== '') {
+          obj[el.dataKey.label] = el.data[index][1];
+          obj[el.dataKey.label + '|ts'] = el.data[index][0];
+          if (el.dataKey.label.toLowerCase() === 'type') {
+            obj.deviceType = el.data[index][1];
+          }
+        }
+      });
+      return obj;
+    });
+}
+
+export function formattedDataArrayFromDatasourceData(input: DatasourceData[]): FormattedData[][] {
+  return _(input).groupBy(el => el.datasource.entityName)
+    .values().value().map((entityArray, dsIndex) => {
+      const timeDataMap: {[time: number]: FormattedData} = {};
+      entityArray.filter(e => e.data.length).forEach(entity => {
+        entity.data.forEach(tsData => {
+          const time = tsData[0];
+          const value = tsData[1];
+          let data = timeDataMap[time];
+          if (!data) {
+            const datasource = entity.datasource;
+            data = formattedDataFromDatasource(datasource, dsIndex);
+            data.time = time;
+            timeDataMap[time] = data;
+          }
+          data[entity.dataKey.label] = value;
+          data[entity.dataKey.label + '|ts'] = time;
+          if (entity.dataKey.label.toLowerCase() === 'type') {
+            data.deviceType = value;
+          }
+        });
+      });
+      return _.values(timeDataMap);
+    });
+}
+
+export function formattedDataFromDatasource(datasource: Datasource, dsIndex: number): FormattedData {
+  return {
+    entityName: datasource.entityName,
+    deviceName: datasource.entityName,
+    entityId: datasource.entityId,
+    entityType: datasource.entityType,
+    entityLabel: datasource.entityLabel || datasource.entityName,
+    entityDescription: datasource.entityDescription,
+    aliasName: datasource.aliasName,
+    $datasource: datasource,
+    dsIndex,
+    dsName: datasource.name,
+    deviceType: null
+  };
+}
+
+export function flatFormattedData(input: FormattedData[]): FormattedData {
+  let result: FormattedData = {} as FormattedData;
+  if (input.length) {
+    for (const toMerge of input) {
+      result = {...result, ...toMerge};
+    }
+    const sourceData = input[0];
+    result.entityName =  sourceData.entityName;
+    result.deviceName = sourceData.deviceName;
+    result.entityId =  sourceData.entityId;
+    result.entityType =  sourceData.entityType;
+    result.entityLabel = sourceData.entityLabel;
+    result.entityDescription = sourceData.entityDescription;
+    result.aliasName = sourceData.aliasName;
+    result.$datasource =  sourceData.$datasource;
+    result.dsIndex =  sourceData.dsIndex;
+    result.dsName = sourceData.dsName;
+    result.deviceType =  sourceData.deviceType;
+  }
+  return result;
+}
+
+export function mergeFormattedData(first: FormattedData[], second: FormattedData[]): FormattedData[] {
+  const merged = first.concat(second);
+  return _(merged).groupBy(el => el.$datasource)
+    .values().value().map((formattedDataArray, i) => {
+      let res = formattedDataArray[0];
+      if (formattedDataArray.length > 1) {
+        const toMerge = formattedDataArray[1];
+        res = {...res, ...toMerge};
+      }
+      return res;
+    });
+}
+
+export function processDataPattern(pattern: string, data: FormattedData): Array<ReplaceInfo> {
+  const replaceInfo: Array<ReplaceInfo> = [];
+  try {
+    const reg = /\${([^}]*)}/g;
+    let match = reg.exec(pattern);
+    while (match !== null) {
+      const variableInfo: ReplaceInfo = {
+        dataKeyName: '',
+        valDec: 2,
+        variable: ''
+      };
+      const variable = match[0];
+      let label = match[1];
+      let valDec = 2;
+      const splitValues = label.split(':');
+      if (splitValues.length > 1) {
+        label = splitValues[0];
+        valDec = parseFloat(splitValues[1]);
+      }
+
+      variableInfo.variable = variable;
+      variableInfo.valDec = valDec;
+
+      if (label.startsWith('#')) {
+        const keyIndexStr = label.substring(1);
+        const n = Math.floor(Number(keyIndexStr));
+        if (String(n) === keyIndexStr && n >= 0) {
+          variableInfo.dataKeyName = data.$datasource.dataKeys[n].label;
+        }
+      } else {
+        variableInfo.dataKeyName = label;
+      }
+      replaceInfo.push(variableInfo);
+
+      match = reg.exec(pattern);
+    }
+  } catch (ex) {
+    console.log(ex, pattern);
+  }
+  return replaceInfo;
+}
+
+export function fillDataPattern(pattern: string, replaceInfo: Array<ReplaceInfo>, data: FormattedData) {
+  let text = createLabelFromDatasource(data.$datasource, pattern);
+  if (replaceInfo) {
+    for (const variableInfo of replaceInfo) {
+      let txtVal = '';
+      if (variableInfo.dataKeyName && isDefinedAndNotNull(data[variableInfo.dataKeyName])) {
+        const varData = data[variableInfo.dataKeyName];
+        if (isNumber(varData)) {
+          txtVal = padValue(varData, variableInfo.valDec);
+        } else {
+          txtVal = varData;
+        }
+      }
+      text = text.replace(variableInfo.variable, txtVal);
+    }
+  }
+  return text;
+}
+
+export function createLabelFromPattern(pattern: string, data: FormattedData): string {
+  const replaceInfo = processDataPattern(pattern, data);
+  return fillDataPattern(pattern, replaceInfo, data);
+}
+
+export function parseFunction(source: any, params: string[] = ['def']): (...args: any[]) => any {
+  let res = null;
+  if (source?.length) {
+    try {
+      res = new Function(...params, source);
+    }
+    catch (err) {
+      res = null;
+    }
+  }
+  return res;
+}
+
+export function safeExecute(func: (...args: any[]) => any, params = []) {
+  let res = null;
+  if (func && typeof (func) === 'function') {
+    try {
+      res = func(...params);
+    }
+    catch (err) {
+      console.log('error in external function:', err);
+      res = null;
+    }
+  }
+  return res;
 }
 
 export function padValue(val: any, dec: number): string {
