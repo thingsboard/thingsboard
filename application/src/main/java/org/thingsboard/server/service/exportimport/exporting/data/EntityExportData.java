@@ -39,12 +39,13 @@ import java.util.List;
         @Type(name = "DASHBOARD", value = DashboardExportData.class),
         @Type(name = "CUSTOMER", value = CustomerExportData.class)
 })
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Data
 public abstract class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
 
     private E mainEntity;
-    @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<EntityRelation> inboundRelations;
+    private List<EntityRelation> outboundRelations;
 
     @JsonIgnore
     public abstract EntityType getEntityType();

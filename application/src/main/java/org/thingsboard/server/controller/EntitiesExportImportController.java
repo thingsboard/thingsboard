@@ -72,9 +72,28 @@ public class EntitiesExportImportController extends BaseController {
     // TODO [viacheslav]: api to export and import whole customer, whole tenant
 
 
+    @PostMapping("/export/{entityType}/{entityId}")
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    public EntityExportData<?> exportEntity(@ApiParam(allowableValues = "DEVICE, DEVICE_PROFILE, ASSET, RULE_CHAIN, DASHBOARD, CUSTOMER")
+                                            @PathVariable EntityType entityType,
+                                            @PathVariable("entityId") UUID entityUuid,
+                                            @RequestParam(defaultValue = "false") boolean exportInboundRelations) throws ThingsboardException {
+        EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, entityUuid);
+        checkEntityId(entityId, Operation.READ);
+
+        SecurityUser user = getCurrentUser();
+        EntityExportSettings exportSettings = toExportSettings(exportInboundRelations);
+
+        try { // FIXME [viacheslav]: check read permission for relation fromId
+            return exportImportService.exportEntity(user.getTenantId(), entityId, exportSettings);
+        } catch (Exception e) {
+            throw handleException(e);
+        }
+    }
+
     @PostMapping("/exportByFilter")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    public List<EntityExportData<?>> exportEntitiesByFilter(@RequestBody EntityFilter filter,
+    public List<EntityExportData<?>> exportEntitiesByFilter(@RequestBody EntityFilter filter, // TODO [viacheslav]: exportInboundRelations, exportOutboundRelations
                                                             @RequestParam(defaultValue = "false") boolean exportInboundRelations,
                                                             @RequestParam(defaultValue = "0") int page,
                                                             @RequestParam(defaultValue = "100") int pageSize) throws ThingsboardException {
@@ -118,25 +137,6 @@ public class EntitiesExportImportController extends BaseController {
         }
     }
 
-    @PostMapping("/export/{entityType}/{entityId}")
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    public EntityExportData<?> exportEntity(@ApiParam(allowableValues = "DEVICE, DEVICE_PROFILE, ASSET, RULE_CHAIN, DASHBOARD, CUSTOMER")
-                                            @PathVariable EntityType entityType,
-                                            @PathVariable("entityId") UUID entityUuid,
-                                            @RequestParam(defaultValue = "false") boolean exportInboundRelations) throws ThingsboardException {
-        EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, entityUuid);
-        checkEntityId(entityId, Operation.READ);
-
-        SecurityUser user = getCurrentUser();
-        EntityExportSettings exportSettings = toExportSettings(exportInboundRelations);
-
-        try { // FIXME [viacheslav]: check read permission for relation fromId
-            return exportImportService.exportEntity(user.getTenantId(), entityId, exportSettings);
-        } catch (Exception e) {
-            throw handleException(e);
-        }
-    }
-
 
     @PostMapping("/import")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
@@ -150,7 +150,11 @@ public class EntitiesExportImportController extends BaseController {
         }
 
         try {
-            return exportImportService.importEntities(user.getTenantId(), exportDataList, importSettings);
+            List<EntityImportResult<ExportableEntity<EntityId>>> importResultList = exportImportService.importEntities(user.getTenantId(), exportDataList, importSettings);
+            importResultList.forEach(entityImportResult -> {
+                onEntityUpdatedOrCreated(user, entityImportResult.getSavedEntity(), entityImportResult.getOldEntity(), entityImportResult.getOldEntity() == null);
+            });
+            return importResultList;
         } catch (Exception e) {
             throw handleException(e);
         }
@@ -188,10 +192,9 @@ public class EntitiesExportImportController extends BaseController {
 
 
     private EntityImportSettings toImportSettings(boolean importInboundRelations) {
-        EntityImportSettings importSettings = EntityImportSettings.builder()
+        return EntityImportSettings.builder()
                 .importInboundRelations(importInboundRelations)
                 .build();
-        return importSettings;
     }
 
     private EntityExportSettings toExportSettings(boolean exportInboundRelations) {

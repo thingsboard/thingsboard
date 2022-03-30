@@ -18,16 +18,24 @@ package org.thingsboard.server.service.exportimport.importing.impl;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.service.exportimport.ExportableEntitiesService;
 import org.thingsboard.server.service.exportimport.exporting.data.EntityExportData;
 import org.thingsboard.server.service.exportimport.importing.EntityImportResult;
 import org.thingsboard.server.service.exportimport.importing.EntityImportService;
 import org.thingsboard.server.service.exportimport.importing.EntityImportSettings;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public abstract class AbstractEntityImportService<I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> implements EntityImportService<I, E, D> {
 
@@ -36,11 +44,11 @@ public abstract class AbstractEntityImportService<I extends EntityId, E extends 
     @Autowired
     private RelationService relationService;
 
-
+    @Transactional
     @Override
-    public final EntityImportResult<E> importEntity(TenantId tenantId, D exportData, EntityImportSettings importSettings) {
+    public EntityImportResult<E> importEntity(TenantId tenantId, D exportData, EntityImportSettings importSettings) {
         E entity = exportData.getMainEntity();
-        E existingEntity = findByExternalId(tenantId, entity.getId());
+        E existingEntity = exportableEntitiesService.findEntityByExternalId(tenantId, entity.getId());
 
         entity.setExternalId(entity.getId());
         entity.setTenantId(tenantId);
@@ -51,18 +59,19 @@ public abstract class AbstractEntityImportService<I extends EntityId, E extends 
             entity.setId(existingEntity.getId());
         }
 
-        E savedEntity = prepareAndSaveEntity(tenantId, entity, existingEntity, exportData, importSettings);
-
-        if (importSettings.isImportInboundRelations() && CollectionUtils.isNotEmpty(exportData.getInboundRelations())) {
-            if (existingEntity != null) {
-                relationService.deleteEntityRelations(tenantId, savedEntity.getId());
+        setLinkedEntitiesIds(tenantId, entity, new IdProvider<E>() {
+            @Override
+            public <ID extends EntityId> ID get(TenantId tenantId, Function<E, ID> idExtractor) {
+                if (existingEntity == null || importSettings.isUpdateReferencesToOtherEntities()) {
+                    return getInternalId(tenantId, idExtractor.apply(entity));
+                } else {
+                    return idExtractor.apply(existingEntity);
+                }
             }
-            exportData.getInboundRelations().forEach(relation -> {
-                relation.setTo(savedEntity.getId());
-                relation.setFrom(getInternalId(tenantId, relation.getFrom()));
-                relationService.saveRelation(tenantId, relation);
-            });
-        }
+        });
+
+        E savedEntity = saveEntity(tenantId, entity, existingEntity, exportData);
+        importRelations(tenantId, savedEntity, existingEntity, exportData, importSettings);
 
         EntityImportResult<E> importResult = new EntityImportResult<>();
         importResult.setSavedEntity(savedEntity);
@@ -70,16 +79,46 @@ public abstract class AbstractEntityImportService<I extends EntityId, E extends 
         return importResult;
     }
 
-    protected abstract E prepareAndSaveEntity(TenantId tenantId, E entity, E existingEntity, D exportData, EntityImportSettings importSettings);
+    protected void setLinkedEntitiesIds(TenantId tenantId, E entity, IdProvider<E> idProvider) {}
+
+    protected abstract E saveEntity(TenantId tenantId, E entity, E existingEntity, D exportData);
 
 
-    private E findByExternalId(TenantId tenantId, I externalId) {
-        return exportableEntitiesService.findEntityByExternalId(tenantId, externalId);
+    private void importRelations(TenantId tenantId, E savedEntity, E existingEntity, D exportData, EntityImportSettings importSettings) {
+        List<EntityRelation> newRelations = new LinkedList<>();
+
+        if (importSettings.isImportInboundRelations() && CollectionUtils.isNotEmpty(exportData.getInboundRelations())) {
+            newRelations.addAll(exportData.getInboundRelations().stream()
+                    .peek(relation -> {
+                        relation.setTo(savedEntity.getId());
+                        relation.setFrom(getInternalId(tenantId, relation.getFrom()));
+                    })
+                    .collect(Collectors.toList()));
+            if (importSettings.isRemoveExistingRelationsAndSaveNew() && existingEntity != null) {
+                relationService.findByTo(tenantId, savedEntity.getId(), RelationTypeGroup.COMMON).forEach(existingRelation -> {
+                    relationService.deleteRelation(tenantId, existingRelation);
+                });
+            }
+        }
+        if (importSettings.isImportOutboundRelations() && CollectionUtils.isNotEmpty(exportData.getOutboundRelations())) {
+            newRelations.addAll(exportData.getOutboundRelations().stream()
+                    .peek(relation -> {
+                        relation.setTo(getInternalId(tenantId, relation.getTo()));
+                        relation.setFrom(savedEntity.getId());
+                    })
+                    .collect(Collectors.toList()));
+            if (importSettings.isRemoveExistingRelationsAndSaveNew() && existingEntity != null) {
+                relationService.findByFrom(tenantId, savedEntity.getId(), RelationTypeGroup.COMMON).forEach(existingRelation -> {
+                    relationService.deleteRelation(tenantId, existingRelation);
+                });
+            }
+        }
+
+        newRelations.forEach(relation -> relationService.saveRelation(tenantId, relation));
     }
 
-    // FIXME [viacheslav]: review use cases for version controlling: in the same tenant, between tenants, between environments and different tenants
-    protected final <ID extends EntityId> ID getInternalId(TenantId tenantId, ID externalId) {
-        if (externalId == null) {
+    private <ID extends EntityId> ID getInternalId(TenantId tenantId, ID externalId) {
+        if (externalId == null || externalId.isNullUid()) {
             return null;
         }
         HasId<ID> entity = exportableEntitiesService.findEntityByExternalId(tenantId, externalId);
@@ -87,6 +126,10 @@ public abstract class AbstractEntityImportService<I extends EntityId, E extends 
             throw new IllegalStateException("Cannot find " + externalId.getEntityType() + " by external id " + externalId);
         }
         return entity.getId();
+    }
+
+    protected interface IdProvider<E> {
+        <I extends EntityId> I get(TenantId tenantId, Function<E, I> idExtractor);
     }
 
 }

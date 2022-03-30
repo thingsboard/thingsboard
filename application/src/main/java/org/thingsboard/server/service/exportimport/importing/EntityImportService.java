@@ -23,12 +23,6 @@ import org.thingsboard.server.service.exportimport.exporting.data.EntityExportDa
 
 public interface EntityImportService<I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> {
 
-    /*
-     * TODO [viacheslav]: should be as options:
-     *  to update related entities e.g. firmware or device profile if entity already exists
-     *  to delete current relations when importing new
-     *  to ignore when cannot find linked entity by external id
-     * */
     EntityImportResult<E> importEntity(TenantId tenantId, D exportData, EntityImportSettings importSettings);
 
     EntityType getEntityType();

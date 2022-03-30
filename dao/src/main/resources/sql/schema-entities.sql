@@ -72,19 +72,18 @@ CREATE TABLE IF NOT EXISTS entity_alarm (
     CONSTRAINT fk_entity_alarm_id FOREIGN KEY (alarm_id) REFERENCES alarm(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS asset(
-                                    id              uuid   NOT NULL
-                                        CONSTRAINT asset_pkey PRIMARY KEY,
-                                    created_time    bigint NOT NULL,
-                                    additional_info varchar,
-                                    customer_id     uuid,
-                                    name            varchar(255),
-                                    label           varchar(255),
-                                    search_text     varchar(255),
-                                    tenant_id       uuid,
-                                    type            varchar(255),
-                                    external_id     uuid,
-                                    CONSTRAINT asset_name_unq_key UNIQUE (tenant_id, name)
+CREATE TABLE IF NOT EXISTS asset (
+    id uuid NOT NULL CONSTRAINT asset_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    additional_info varchar,
+    customer_id uuid,
+    name varchar(255),
+    label varchar(255),
+    search_text varchar(255),
+    tenant_id uuid,
+    type varchar(255),
+    external_id uuid,
+    CONSTRAINT asset_name_unq_key UNIQUE (tenant_id, name)
 );
 
 CREATE TABLE IF NOT EXISTS audit_log (
@@ -130,53 +129,50 @@ CREATE TABLE IF NOT EXISTS component_descriptor (
 );
 
 CREATE TABLE IF NOT EXISTS customer (
-                                        id              uuid NOT NULL CONSTRAINT customer_pkey PRIMARY KEY,
-                                        created_time    bigint NOT NULL,
-                                        additional_info varchar,
-                                        address         varchar,
-                                        address2        varchar,
-                                        city            varchar(255),
-                                        country         varchar(255),
-                                        email           varchar(255),
-                                        phone           varchar(255),
-                                        search_text     varchar(255),
-                                        state           varchar(255),
-                                        tenant_id       uuid,
-                                        title           varchar(255),
-                                        zip             varchar(255),
-                                        external_id     uuid
+    id uuid NOT NULL CONSTRAINT customer_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    additional_info varchar,
+    address varchar,
+    address2 varchar,
+    city varchar(255),
+    country varchar(255),
+    email varchar(255),
+    phone varchar(255),
+    search_text varchar(255),
+    state varchar(255),
+    tenant_id uuid,
+    title varchar(255),
+    zip varchar(255),
+    external_id uuid
 );
 
-CREATE TABLE IF NOT EXISTS dashboard
-(
-    id                 uuid   NOT NULL
-        CONSTRAINT dashboard_pkey PRIMARY KEY,
-    created_time       bigint NOT NULL,
-    configuration      varchar,
+CREATE TABLE IF NOT EXISTS dashboard (
+    id uuid NOT NULL CONSTRAINT dashboard_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    configuration varchar,
     assigned_customers varchar(1000000),
-    search_text        varchar(255),
-    tenant_id          uuid,
-    title              varchar(255),
-    mobile_hide        boolean DEFAULT false,
-    mobile_order       int,
-    image              varchar(1000000),
-    external_id        uuid
+    search_text varchar(255),
+    tenant_id uuid,
+    title varchar(255),
+    mobile_hide boolean DEFAULT false,
+    mobile_order int,
+    image varchar(1000000),
+    external_id uuid
 );
 
 CREATE TABLE IF NOT EXISTS rule_chain (
-                                          id                 uuid   NOT NULL
-                                              CONSTRAINT rule_chain_pkey PRIMARY KEY,
-                                          created_time       bigint NOT NULL,
-                                          additional_info    varchar,
-                                          configuration      varchar(10000000),
-                                          name               varchar(255),
-                                          type               varchar(255),
-                                          first_rule_node_id uuid,
-                                          root               boolean,
-                                          debug_mode         boolean,
-                                          search_text        varchar(255),
-                                          tenant_id          uuid,
-                                          external_id        uuid
+    id uuid NOT NULL CONSTRAINT rule_chain_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    additional_info varchar,
+    configuration varchar(10000000),
+    name varchar(255),
+    type varchar(255),
+    first_rule_node_id uuid,
+    root boolean,
+    debug_mode boolean,
+    search_text varchar(255),
+    tenant_id uuid,
+    external_id uuid
 );
 
 CREATE TABLE IF NOT EXISTS rule_node (
@@ -224,31 +220,31 @@ CREATE TABLE IF NOT EXISTS ota_package (
 );
 
 CREATE TABLE IF NOT EXISTS device_profile (
-                                              id                    uuid NOT NULL CONSTRAINT device_profile_pkey PRIMARY KEY,
-                                              created_time          bigint NOT NULL,
-                                              name                  varchar(255),
-                                              type                  varchar(255),
-                                              image                 varchar(1000000),
-                                              transport_type        varchar(255),
-                                              provision_type        varchar(255),
-                                              profile_data          jsonb,
-                                              description           varchar,
-                                              search_text           varchar(255),
-                                              is_default            boolean,
-                                              tenant_id             uuid,
-                                              firmware_id           uuid,
-                                              software_id           uuid,
-                                              default_rule_chain_id uuid,
-                                              default_dashboard_id  uuid,
-                                              default_queue_name    varchar(255),
-                                              provision_device_key  varchar,
-                                              external_id           uuid,
-                                              CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name),
-                                              CONSTRAINT device_provision_key_unq_key UNIQUE (provision_device_key),
-                                              CONSTRAINT fk_default_rule_chain_device_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain (id),
-                                              CONSTRAINT fk_default_dashboard_device_profile FOREIGN KEY (default_dashboard_id) REFERENCES dashboard (id),
-                                              CONSTRAINT fk_firmware_device_profile FOREIGN KEY (firmware_id) REFERENCES ota_package (id),
-                                              CONSTRAINT fk_software_device_profile FOREIGN KEY (software_id) REFERENCES ota_package (id)
+    id uuid NOT NULL CONSTRAINT device_profile_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    name varchar(255),
+    type varchar(255),
+    image varchar(1000000),
+    transport_type varchar(255),
+    provision_type varchar(255),
+    profile_data jsonb,
+    description varchar,
+    search_text varchar(255),
+    is_default boolean,
+    tenant_id uuid,
+    firmware_id uuid,
+    software_id uuid,
+    default_rule_chain_id uuid,
+    default_dashboard_id uuid,
+    default_queue_name varchar(255),
+    provision_device_key varchar,
+    external_id uuid,
+    CONSTRAINT device_profile_name_unq_key UNIQUE (tenant_id, name),
+    CONSTRAINT device_provision_key_unq_key UNIQUE (provision_device_key),
+    CONSTRAINT fk_default_rule_chain_device_profile FOREIGN KEY (default_rule_chain_id) REFERENCES rule_chain(id),
+    CONSTRAINT fk_default_dashboard_device_profile FOREIGN KEY (default_dashboard_id) REFERENCES dashboard(id),
+    CONSTRAINT fk_firmware_device_profile FOREIGN KEY (firmware_id) REFERENCES ota_package(id),
+    CONSTRAINT fk_software_device_profile FOREIGN KEY (software_id) REFERENCES ota_package(id)
 );
 
 ALTER TABLE ota_package
@@ -266,24 +262,24 @@ ALTER TABLE ota_package
 -- );
 
 CREATE TABLE IF NOT EXISTS device (
-                                      id                uuid NOT NULL CONSTRAINT device_pkey PRIMARY KEY,
-                                      created_time      bigint NOT NULL,
-                                      additional_info   varchar,
-                                      customer_id       uuid,
-                                      device_profile_id uuid NOT NULL,
-                                      device_data       jsonb,
-                                      type              varchar(255),
-                                      name              varchar(255),
-                                      label             varchar(255),
-                                      search_text       varchar(255),
-                                      tenant_id         uuid,
-                                      firmware_id       uuid,
-                                      software_id       uuid,
-                                      external_id       uuid,
-                                      CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name),
-                                      CONSTRAINT fk_device_profile FOREIGN KEY (device_profile_id) REFERENCES device_profile (id),
-                                      CONSTRAINT fk_firmware_device FOREIGN KEY (firmware_id) REFERENCES ota_package (id),
-                                      CONSTRAINT fk_software_device FOREIGN KEY (software_id) REFERENCES ota_package (id)
+    id uuid NOT NULL CONSTRAINT device_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    additional_info varchar,
+    customer_id uuid,
+    device_profile_id uuid NOT NULL,
+    device_data jsonb,
+    type varchar(255),
+    name varchar(255),
+    label varchar(255),
+    search_text varchar(255),
+    tenant_id uuid,
+    firmware_id uuid,
+    software_id uuid,
+    external_id uuid,
+    CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name),
+    CONSTRAINT fk_device_profile FOREIGN KEY (device_profile_id) REFERENCES device_profile(id),
+    CONSTRAINT fk_firmware_device FOREIGN KEY (firmware_id) REFERENCES ota_package(id),
+    CONSTRAINT fk_software_device FOREIGN KEY (software_id) REFERENCES ota_package(id)
 );
 
 CREATE TABLE IF NOT EXISTS device_credentials (

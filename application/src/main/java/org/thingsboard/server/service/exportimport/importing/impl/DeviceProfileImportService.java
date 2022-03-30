@@ -24,7 +24,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.exportimport.exporting.data.DeviceProfileExportData;
-import org.thingsboard.server.service.exportimport.importing.EntityImportSettings;
 
 @Service
 @TbCoreComponent
@@ -33,14 +32,16 @@ public class DeviceProfileImportService extends AbstractEntityImportService<Devi
 
     private final DeviceProfileService deviceProfileService;
 
+    @Override
+    protected void setLinkedEntitiesIds(TenantId tenantId, DeviceProfile deviceProfile, IdProvider<DeviceProfile> idProvider) {
+        deviceProfile.setDefaultRuleChainId(idProvider.get(tenantId, DeviceProfile::getDefaultRuleChainId));
+        deviceProfile.setDefaultDashboardId(idProvider.get(tenantId, DeviceProfile::getDefaultDashboardId));
+        deviceProfile.setFirmwareId(idProvider.get(tenantId, DeviceProfile::getFirmwareId));
+        deviceProfile.setSoftwareId(idProvider.get(tenantId, DeviceProfile::getSoftwareId));
+    }
 
     @Override
-    protected DeviceProfile prepareAndSaveEntity(TenantId tenantId, DeviceProfile deviceProfile, DeviceProfile existingDeviceProfile, DeviceProfileExportData exportData, EntityImportSettings importSettings) {
-        deviceProfile.setDefaultRuleChainId(getInternalId(tenantId, deviceProfile.getDefaultRuleChainId()));
-        deviceProfile.setDefaultDashboardId(getInternalId(tenantId, deviceProfile.getDefaultDashboardId()));
-        deviceProfile.setFirmwareId(getInternalId(tenantId, deviceProfile.getFirmwareId()));
-        deviceProfile.setSoftwareId(getInternalId(tenantId, deviceProfile.getSoftwareId()));
-
+    protected DeviceProfile saveEntity(TenantId tenantId, DeviceProfile deviceProfile, DeviceProfile existingDeviceProfile, DeviceProfileExportData exportData) {
         return deviceProfileService.saveDeviceProfile(deviceProfile);
     }
 

@@ -924,7 +924,7 @@ public abstract class BaseController {
         }
     }
 
-    public <E extends HasName & HasId<I> & HasTenantId, I extends EntityId> void onEntityUpdatedOrCreated(User user, E savedEntity, E oldEntity, boolean isNewEntity) {
+    protected  <E extends HasName & HasId<I> & HasTenantId, I extends EntityId> void onEntityUpdatedOrCreated(User user, E savedEntity, E oldEntity, boolean isNewEntity) {
         boolean notifyEdgeService = false;
 
         EntityType entityType = savedEntity.getId().getEntityType();

@@ -45,15 +45,17 @@ public abstract class AbstractEntityExportService<I extends EntityId, E extends 
         E mainEntity = exportableEntitiesService.findEntityById(tenantId, entityId);
         exportData.setMainEntity(mainEntity);
         setRelatedEntities(tenantId, mainEntity, exportData);
+
         if (exportSettings.isExportInboundRelations()) {
-            exportData.setInboundRelations(getInboundRelations(tenantId, entityId));
+            List<EntityRelation> inboundRelations = relationService.findByTo(tenantId, entityId, RelationTypeGroup.COMMON);
+            exportData.setInboundRelations(inboundRelations);
+        }
+        if (exportSettings.isExportOutboundRelations()) {
+            List<EntityRelation> outboundRelations = relationService.findByFrom(tenantId, entityId, RelationTypeGroup.COMMON);
+            exportData.setOutboundRelations(outboundRelations);
         }
 
         return exportData;
-    }
-
-    protected List<EntityRelation> getInboundRelations(TenantId tenantId, I entityId) {
-        return relationService.findByTo(tenantId, entityId, RelationTypeGroup.COMMON); // FIXME [viacheslav]: RelationTypeGroup
     }
 
     protected void setRelatedEntities(TenantId tenantId, E mainEntity, D exportData) {}

@@ -26,4 +26,5 @@ import lombok.NoArgsConstructor;
 @Builder
 public class EntityExportSettings {
     private boolean exportInboundRelations;
+    private boolean exportOutboundRelations;
 }

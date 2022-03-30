@@ -24,7 +24,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.exportimport.exporting.data.AssetExportData;
-import org.thingsboard.server.service.exportimport.importing.EntityImportSettings;
 
 @Service
 @TbCoreComponent
@@ -33,11 +32,13 @@ public class AssetImportService extends AbstractEntityImportService<AssetId, Ass
 
     private final AssetService assetService;
 
+    @Override
+    protected void setLinkedEntitiesIds(TenantId tenantId, Asset asset, IdProvider<Asset> idProvider) {
+        asset.setCustomerId(idProvider.get(tenantId, Asset::getCustomerId));
+    }
 
     @Override
-    protected Asset prepareAndSaveEntity(TenantId tenantId, Asset asset, Asset existingAsset, AssetExportData exportData, EntityImportSettings importSettings) {
-        asset.setCustomerId(getInternalId(tenantId, asset.getCustomerId()));
-
+    protected Asset saveEntity(TenantId tenantId, Asset asset, Asset existingAsset, AssetExportData exportData) {
         return assetService.saveAsset(asset);
     }
 

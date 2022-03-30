@@ -17,7 +17,6 @@ package org.thingsboard.server.service.exportimport.importing.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -26,7 +25,6 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.exportimport.exporting.data.RuleChainExportData;
-import org.thingsboard.server.service.exportimport.importing.EntityImportSettings;
 
 @Service
 @TbCoreComponent
@@ -35,10 +33,12 @@ public class RuleChainImportService extends AbstractEntityImportService<RuleChai
 
     private final RuleChainService ruleChainService;
 
-
-    @Transactional
     @Override
-    protected RuleChain prepareAndSaveEntity(TenantId tenantId, RuleChain ruleChain, RuleChain existingRuleChain, RuleChainExportData exportData, EntityImportSettings importSettings) {
+    protected void setLinkedEntitiesIds(TenantId tenantId, RuleChain ruleChain, IdProvider<RuleChain> idProvider) {
+    }
+
+    @Override
+    protected RuleChain saveEntity(TenantId tenantId, RuleChain ruleChain, RuleChain existingRuleChain, RuleChainExportData exportData) {
         ruleChain.setFirstRuleNodeId(null); // will be set during metadata persisting
         if (existingRuleChain != null) {
             ruleChainService.deleteRuleNodes(tenantId, existingRuleChain.getId());

@@ -24,7 +24,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.exportimport.exporting.data.DeviceExportData;
-import org.thingsboard.server.service.exportimport.importing.EntityImportSettings;
 
 @Service
 @TbCoreComponent
@@ -33,14 +32,16 @@ public class DeviceImportService extends AbstractEntityImportService<DeviceId, D
 
     private final DeviceService deviceService;
 
+    @Override
+    protected void setLinkedEntitiesIds(TenantId tenantId, Device device, IdProvider<Device> idProvider) {
+        device.setCustomerId(idProvider.get(tenantId, Device::getCustomerId));
+        device.setDeviceProfileId(idProvider.get(tenantId, Device::getDeviceProfileId));
+        device.setFirmwareId(idProvider.get(tenantId, Device::getFirmwareId));
+        device.setSoftwareId(idProvider.get(tenantId, Device::getSoftwareId));
+    }
 
     @Override
-    protected Device prepareAndSaveEntity(TenantId tenantId, Device device, Device existingDevice, DeviceExportData exportData, EntityImportSettings importSettings) {
-        device.setCustomerId(getInternalId(tenantId, device.getCustomerId()));
-        device.setDeviceProfileId(getInternalId(tenantId, device.getDeviceProfileId()));
-        device.setFirmwareId(getInternalId(tenantId, device.getFirmwareId()));
-        device.setSoftwareId(getInternalId(tenantId, device.getSoftwareId()));
-
+    protected Device saveEntity(TenantId tenantId, Device device, Device existingDevice, DeviceExportData exportData) {
         return deviceService.saveDeviceWithCredentials(device, exportData.getCredentials());
     }
 
