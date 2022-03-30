@@ -26,11 +26,9 @@ public class RateLimitsTest {
 
     @Test
     public void testRateLimits_greedyRefill() {
-        for (int period = 1; period <= 5; period++) {
-            for (int capacity = 1; capacity <= 5; capacity++) {
-                testRateLimitWithGreedyRefill(capacity, period);
-            }
-        }
+        testRateLimitWithGreedyRefill(3, 10);
+        testRateLimitWithGreedyRefill(3, 3);
+        testRateLimitWithGreedyRefill(4, 2);
     }
 
     private void testRateLimitWithGreedyRefill(int capacity, int period) {
@@ -56,11 +54,9 @@ public class RateLimitsTest {
 
     @Test
     public void testRateLimits_intervalRefill() {
-        for (int period = 1; period <= 3; period++) {
-            for (int capacity = 1; capacity <= 3; capacity++) {
-                testRateLimitWithIntervalRefill(capacity, period);
-            }
-        }
+        testRateLimitWithIntervalRefill(10, 5);
+        testRateLimitWithIntervalRefill(3, 3);
+        testRateLimitWithIntervalRefill(4, 2);
     }
 
     private void testRateLimitWithIntervalRefill(int capacity, int period) {
