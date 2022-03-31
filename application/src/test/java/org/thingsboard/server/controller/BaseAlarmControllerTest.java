@@ -15,14 +15,23 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.page.PageData;
+
+import java.util.LinkedList;
+import java.util.List;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -57,14 +66,12 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
     public void testCreateAlarmViaCustomer() throws Exception {
         loginCustomerUser();
         createAlarm(TEST_ALARM_TYPE);
-        logout();
     }
 
     @Test
     public void testCreateAlarmViaTenant() throws Exception {
         loginTenantAdmin();
         createAlarm(TEST_ALARM_TYPE);
-        logout();
     }
 
     @Test
@@ -75,7 +82,6 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         Alarm updatedAlarm = doPost("/api/alarm", alarm, Alarm.class);
         Assert.assertNotNull(updatedAlarm);
         Assert.assertEquals(AlarmSeverity.MAJOR, updatedAlarm.getSeverity());
-        logout();
     }
 
     @Test
@@ -86,7 +92,6 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         Alarm updatedAlarm = doPost("/api/alarm", alarm, Alarm.class);
         Assert.assertNotNull(updatedAlarm);
         Assert.assertEquals(AlarmSeverity.MAJOR, updatedAlarm.getSeverity());
-        logout();
     }
 
     @Test
@@ -96,7 +101,6 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         alarm.setSeverity(AlarmSeverity.MAJOR);
         loginDifferentTenant();
         doPost("/api/alarm", alarm).andExpect(status().isForbidden());
-        logout();
     }
 
     @Test
@@ -106,7 +110,6 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         loginDifferentCustomer();
         alarm.setSeverity(AlarmSeverity.MAJOR);
         doPost("/api/alarm", alarm).andExpect(status().isForbidden());
-        logout();
     }
 
     @Test
@@ -114,7 +117,6 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         loginCustomerUser();
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
         doDelete("/api/alarm/" + alarm.getId()).andExpect(status().isOk());
-        logout();
     }
 
     @Test
@@ -122,7 +124,6 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         loginTenantAdmin();
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
         doDelete("/api/alarm/" + alarm.getId()).andExpect(status().isOk());
-        logout();
     }
 
     @Test
@@ -131,16 +132,14 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
         loginDifferentTenant();
         doDelete("/api/alarm/" + alarm.getId()).andExpect(status().isForbidden());
-        logout();
     }
 
     @Test
-    public void testDeleteAlarmViaAnotherCustomer() throws Exception {
+    public void testDeleteAlarmViaDifferentCustomer() throws Exception {
         loginCustomerUser();
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
         loginDifferentCustomer();
         doDelete("/api/alarm/" + alarm.getId()).andExpect(status().isForbidden());
-        logout();
     }
 
     @Test
@@ -151,7 +150,6 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         Alarm foundAlarm = doGet("/api/alarm/" + alarm.getId(), Alarm.class);
         Assert.assertNotNull(foundAlarm);
         Assert.assertEquals(AlarmStatus.CLEARED_UNACK, foundAlarm.getStatus());
-        logout();
     }
 
     @Test
@@ -162,7 +160,6 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         Alarm foundAlarm = doGet("/api/alarm/" + alarm.getId(), Alarm.class);
         Assert.assertNotNull(foundAlarm);
         Assert.assertEquals(AlarmStatus.CLEARED_UNACK, foundAlarm.getStatus());
-        logout();
     }
 
     @Test
@@ -173,7 +170,6 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         Alarm foundAlarm = doGet("/api/alarm/" + alarm.getId(), Alarm.class);
         Assert.assertNotNull(foundAlarm);
         Assert.assertEquals(AlarmStatus.ACTIVE_ACK, foundAlarm.getStatus());
-        logout();
     }
 
     @Test
@@ -182,7 +178,6 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
         loginDifferentCustomer();
         doPost("/api/alarm/" + alarm.getId() + "/clear").andExpect(status().isForbidden());
-        logout();
     }
 
     @Test
@@ -191,7 +186,6 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
         loginDifferentTenant();
         doPost("/api/alarm/" + alarm.getId() + "/clear").andExpect(status().isForbidden());
-        logout();
     }
 
     @Test
@@ -200,7 +194,6 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
         loginDifferentCustomer();
         doPost("/api/alarm/" + alarm.getId() + "/ack").andExpect(status().isForbidden());
-        logout();
     }
 
     @Test
@@ -209,7 +202,96 @@ public abstract class BaseAlarmControllerTest extends AbstractControllerTest {
         Alarm alarm = createAlarm(TEST_ALARM_TYPE);
         loginDifferentTenant();
         doPost("/api/alarm/" + alarm.getId() + "/ack").andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void testFindAlarmsViaCustomerUser() throws Exception {
+        loginCustomerUser();
+
+        List<Alarm> createdAlarms = new LinkedList<>();
+
+        final int size = 10;
+        for (int i = 0; i < size; i++) {
+            createdAlarms.add(
+                    createAlarm(TEST_ALARM_TYPE + i)
+            );
+        }
+
+        var response = doGetTyped(
+                "/api/alarm/" + EntityType.DEVICE + "/"
+                        + customerDevice.getUuidId() + "?page=0&pageSize=" + size,
+                new TypeReference<PageData<AlarmInfo>>() {}
+        );
+        var foundAlarmInfos = response.getData();
+        Assert.assertNotNull("Found pageData is null", foundAlarmInfos);
+        Assert.assertNotEquals(
+                "Expected alarms are not found!",
+                0, foundAlarmInfos.size()
+        );
+
+        boolean allMatch = createdAlarms.stream()
+                .allMatch(alarm -> foundAlarmInfos.stream()
+                        .map(Alarm::getType)
+                        .anyMatch(type -> alarm.getType().equals(type))
+                );
+        Assert.assertTrue("Created alarm doesn't match any found!", allMatch);
+    }
+
+    @Test
+    public void testFindAlarmsViaDifferentCustomerUser() throws Exception {
+        loginCustomerUser();
+
+        final int size = 10;
+        for (int i = 0; i < size; i++) {
+            createAlarm(TEST_ALARM_TYPE + i);
+        }
+
+        loginDifferentCustomer();
+        doGet("/api/alarm/" + EntityType.DEVICE + "/"
+                + customerDevice.getUuidId() + "?page=0&pageSize=" + size)
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void testFindAlarmsViaPublicCustomer() throws Exception {
+        loginTenantAdmin();
+
+        Device device = new Device();
+        device.setName("Test Public Device");
+        device.setLabel("Label");
+        device.setCustomerId(customerId);
+        device = doPost("/api/device", device, Device.class);
+        device = doPost("/api/customer/public/device/" + device.getUuidId(), Device.class);
+
+        String publicId = device.getCustomerId().toString();
+
+        Alarm alarm = Alarm.builder()
+                .originator(device.getId())
+                .status(AlarmStatus.ACTIVE_UNACK)
+                .severity(AlarmSeverity.CRITICAL)
+                .type("Test")
+                .build();
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+        Assert.assertNotNull("Saved alarm is null!", alarm);
+
         logout();
+
+
+        JsonNode publicLoginRequest = JacksonUtil.toJsonNode("{\"publicId\": \"" + publicId + "\"}");
+        JsonNode tokens = doPost("/api/auth/login/public", publicLoginRequest, JsonNode.class);
+        this.token = tokens.get("token").asText();
+
+
+        PageData<AlarmInfo> pageData = doGetTyped(
+                "/api/alarm/DEVICE/" + device.getUuidId() + "?page=0&pageSize=1", new TypeReference<PageData<AlarmInfo>>() {}
+        );
+
+        Assert.assertNotNull("Found pageData is null", pageData);
+        Assert.assertNotEquals("Expected alarms are not found!", 0, pageData.getTotalElements());
+
+        AlarmInfo alarmInfo = pageData.getData().get(0);
+        boolean equals = alarm.getId().equals(alarmInfo.getId()) && alarm.getType().equals(alarmInfo.getType());
+        Assert.assertTrue("Created alarm doesn't match the found one!", equals);
     }
 
     private Alarm createAlarm(String type) throws Exception {
