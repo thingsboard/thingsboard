@@ -25,7 +25,7 @@ import org.thingsboard.server.service.exportimport.importing.EntityImportSetting
 
 import java.util.List;
 
-public interface EntitiesExportImportService extends ExportableEntitiesService {
+public interface EntitiesExportImportService {
 
     <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportEntity(TenantId tenantId, I entityId, EntityExportSettings exportSettings);
 

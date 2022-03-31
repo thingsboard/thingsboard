@@ -28,10 +28,9 @@ import org.thingsboard.server.service.exportimport.exporting.data.DeviceExportDa
 @Service
 @TbCoreComponent
 @RequiredArgsConstructor
-public class DeviceExportService extends AbstractEntityExportService<DeviceId, Device, DeviceExportData> {
+public class DeviceExportService extends BaseEntityExportService<DeviceId, Device, DeviceExportData> {
 
     private final DeviceCredentialsService deviceCredentialsService;
-
 
     @Override
     protected void setRelatedEntities(TenantId tenantId, Device device, DeviceExportData exportData) {

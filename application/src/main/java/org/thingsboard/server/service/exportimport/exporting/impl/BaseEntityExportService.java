@@ -30,13 +30,12 @@ import org.thingsboard.server.service.exportimport.exporting.data.EntityExportDa
 
 import java.util.List;
 
-public abstract class AbstractEntityExportService<I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> implements EntityExportService<I, E, D> {
+public abstract class BaseEntityExportService<I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> implements EntityExportService<I, E, D> {
 
     @Autowired @Lazy
     private ExportableEntitiesService exportableEntitiesService;
     @Autowired
     private RelationService relationService;
-
 
     @Override
     public final D getExportData(TenantId tenantId, I entityId, EntityExportSettings exportSettings) {

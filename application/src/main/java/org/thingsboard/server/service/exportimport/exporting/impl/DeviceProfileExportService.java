@@ -24,7 +24,7 @@ import org.thingsboard.server.service.exportimport.exporting.data.DeviceProfileE
 
 @Service
 @TbCoreComponent
-public class DeviceProfileExportService extends AbstractEntityExportService<DeviceProfileId, DeviceProfile, DeviceProfileExportData> {
+public class DeviceProfileExportService extends BaseEntityExportService<DeviceProfileId, DeviceProfile, DeviceProfileExportData> {
 
     @Override
     protected DeviceProfileExportData newExportData() {

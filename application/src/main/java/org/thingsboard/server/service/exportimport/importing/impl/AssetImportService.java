@@ -28,17 +28,13 @@ import org.thingsboard.server.service.exportimport.exporting.data.AssetExportDat
 @Service
 @TbCoreComponent
 @RequiredArgsConstructor
-public class AssetImportService extends AbstractEntityImportService<AssetId, Asset, AssetExportData> {
+public class AssetImportService extends BaseEntityImportService<AssetId, Asset, AssetExportData> {
 
     private final AssetService assetService;
 
     @Override
-    protected void setLinkedEntitiesIds(TenantId tenantId, Asset asset, IdProvider<Asset> idProvider) {
+    protected Asset prepareAndSave(TenantId tenantId, Asset asset, AssetExportData exportData, NewIdProvider idProvider) {
         asset.setCustomerId(idProvider.get(tenantId, Asset::getCustomerId));
-    }
-
-    @Override
-    protected Asset saveEntity(TenantId tenantId, Asset asset, Asset existingAsset, AssetExportData exportData) {
         return assetService.saveAsset(asset);
     }
 

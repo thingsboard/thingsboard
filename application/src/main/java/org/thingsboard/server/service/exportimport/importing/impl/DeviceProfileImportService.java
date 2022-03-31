@@ -28,20 +28,16 @@ import org.thingsboard.server.service.exportimport.exporting.data.DeviceProfileE
 @Service
 @TbCoreComponent
 @RequiredArgsConstructor
-public class DeviceProfileImportService extends AbstractEntityImportService<DeviceProfileId, DeviceProfile, DeviceProfileExportData> {
+public class DeviceProfileImportService extends BaseEntityImportService<DeviceProfileId, DeviceProfile, DeviceProfileExportData> {
 
     private final DeviceProfileService deviceProfileService;
 
     @Override
-    protected void setLinkedEntitiesIds(TenantId tenantId, DeviceProfile deviceProfile, IdProvider<DeviceProfile> idProvider) {
+    protected DeviceProfile prepareAndSave(TenantId tenantId, DeviceProfile deviceProfile, DeviceProfileExportData exportData, NewIdProvider idProvider) {
         deviceProfile.setDefaultRuleChainId(idProvider.get(tenantId, DeviceProfile::getDefaultRuleChainId));
         deviceProfile.setDefaultDashboardId(idProvider.get(tenantId, DeviceProfile::getDefaultDashboardId));
         deviceProfile.setFirmwareId(idProvider.get(tenantId, DeviceProfile::getFirmwareId));
         deviceProfile.setSoftwareId(idProvider.get(tenantId, DeviceProfile::getSoftwareId));
-    }
-
-    @Override
-    protected DeviceProfile saveEntity(TenantId tenantId, DeviceProfile deviceProfile, DeviceProfile existingDeviceProfile, DeviceProfileExportData exportData) {
         return deviceProfileService.saveDeviceProfile(deviceProfile);
     }
 

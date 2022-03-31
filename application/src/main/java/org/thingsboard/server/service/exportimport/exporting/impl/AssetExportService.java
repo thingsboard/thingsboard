@@ -24,7 +24,7 @@ import org.thingsboard.server.service.exportimport.exporting.data.AssetExportDat
 
 @Service
 @TbCoreComponent
-public class AssetExportService extends AbstractEntityExportService<AssetId, Asset, AssetExportData> {
+public class AssetExportService extends BaseEntityExportService<AssetId, Asset, AssetExportData> {
 
     @Override
     protected AssetExportData newExportData() {

@@ -28,10 +28,9 @@ import org.thingsboard.server.service.exportimport.exporting.data.RuleChainExpor
 @Service
 @TbCoreComponent
 @RequiredArgsConstructor
-public class RuleChainExportService extends AbstractEntityExportService<RuleChainId, RuleChain, RuleChainExportData> {
+public class RuleChainExportService extends BaseEntityExportService<RuleChainId, RuleChain, RuleChainExportData> {
 
     private final RuleChainService ruleChainService;
-
 
     @Override
     protected void setRelatedEntities(TenantId tenantId, RuleChain ruleChain, RuleChainExportData exportData) {

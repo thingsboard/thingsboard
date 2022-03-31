@@ -39,10 +39,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-// FIXME [viacheslav]: review packages and classes naming
 @Service
 @TbCoreComponent
-public class DefaultEntitiesExportImportService implements EntitiesExportImportService {
+public class DefaultEntitiesExportImportService implements EntitiesExportImportService, ExportableEntitiesService {
 
     private final Map<EntityType, EntityExportService<?, ?, ?>> exportServices = new HashMap<>();
     private final Map<EntityType, EntityImportService<?, ?, ?>> importServices = new HashMap<>();
@@ -54,8 +53,6 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
     );
 
 
-    // TODO [viacheslav]: export and import of the whole tenant
-    // TODO [viacheslav]: export and import of the whole customer ?
     @Override
     public <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportEntity(TenantId tenantId, I entityId, EntityExportSettings exportSettings) {
         EntityType entityType = entityId.getEntityType();
@@ -65,7 +62,7 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
     }
 
 
-    // FIXME [viacheslav]: somehow validate export data
+    // TODO [viacheslav]: validate export data
     @Transactional
     @Override
     public <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(TenantId tenantId, EntityExportData<E> exportData, EntityImportSettings importSettings) {
@@ -80,6 +77,7 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
     public <E extends ExportableEntity<I>, I extends EntityId> List<EntityImportResult<E>> importEntities(TenantId tenantId, List<EntityExportData<E>> exportDataList, EntityImportSettings importSettings) {
         return exportDataList.stream()
                 .sorted(Comparator.comparing(exportData -> SUPPORTED_ENTITY_TYPES.indexOf(exportData.getEntityType())))
+                // TODO [viacheslav]: order for rule chains (depending on references)
                 .map(exportData -> importEntity(tenantId, exportData, importSettings))
                 .collect(Collectors.toList());
     }

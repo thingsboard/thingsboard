@@ -28,12 +28,12 @@ import org.thingsboard.server.service.exportimport.exporting.data.CustomerExport
 @Service
 @TbCoreComponent
 @RequiredArgsConstructor
-public class CustomerImportService extends AbstractEntityImportService<CustomerId, Customer, CustomerExportData> {
+public class CustomerImportService extends BaseEntityImportService<CustomerId, Customer, CustomerExportData> {
 
     private final CustomerService customerService;
 
     @Override
-    protected Customer saveEntity(TenantId tenantId, Customer customer, Customer existingCustomer, CustomerExportData exportData) {
+    protected Customer prepareAndSave(TenantId tenantId, Customer customer, CustomerExportData exportData, NewIdProvider idProvider) {
         return customerService.saveCustomer(customer);
     }
 

@@ -24,7 +24,7 @@ import org.thingsboard.server.service.exportimport.exporting.data.CustomerExport
 
 @Service
 @TbCoreComponent
-public class CustomerExportService extends AbstractEntityExportService<CustomerId, Customer, CustomerExportData> {
+public class CustomerExportService extends BaseEntityExportService<CustomerId, Customer, CustomerExportData> {
 
     @Override
     protected CustomerExportData newExportData() {

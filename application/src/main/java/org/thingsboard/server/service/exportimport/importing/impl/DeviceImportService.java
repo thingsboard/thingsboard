@@ -28,20 +28,16 @@ import org.thingsboard.server.service.exportimport.exporting.data.DeviceExportDa
 @Service
 @TbCoreComponent
 @RequiredArgsConstructor
-public class DeviceImportService extends AbstractEntityImportService<DeviceId, Device, DeviceExportData> {
+public class DeviceImportService extends BaseEntityImportService<DeviceId, Device, DeviceExportData> {
 
     private final DeviceService deviceService;
 
     @Override
-    protected void setLinkedEntitiesIds(TenantId tenantId, Device device, IdProvider<Device> idProvider) {
+    protected Device prepareAndSave(TenantId tenantId, Device device, DeviceExportData exportData, NewIdProvider idProvider) {
         device.setCustomerId(idProvider.get(tenantId, Device::getCustomerId));
         device.setDeviceProfileId(idProvider.get(tenantId, Device::getDeviceProfileId));
         device.setFirmwareId(idProvider.get(tenantId, Device::getFirmwareId));
         device.setSoftwareId(idProvider.get(tenantId, Device::getSoftwareId));
-    }
-
-    @Override
-    protected Device saveEntity(TenantId tenantId, Device device, Device existingDevice, DeviceExportData exportData) {
         return deviceService.saveDeviceWithCredentials(device, exportData.getCredentials());
     }
 

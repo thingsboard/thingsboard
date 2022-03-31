@@ -19,31 +19,55 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ShortCustomerInfo;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.exportimport.exporting.data.DashboardExportData;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Service
 @TbCoreComponent
 @RequiredArgsConstructor
-public class DashboardImportService extends AbstractEntityImportService<DashboardId, Dashboard, DashboardExportData> {
+public class DashboardImportService extends BaseEntityImportService<DashboardId, Dashboard, DashboardExportData> {
 
     private final DashboardService dashboardService;
 
+    // TODO [viacheslav]: improve the code
     @Override
-    protected void setLinkedEntitiesIds(TenantId tenantId, Dashboard dashboard, IdProvider<Dashboard> idProvider) {
-//        if (existingDashboard == null) {
-//            dashboard.setAssignedCustomers(null); // FIXME [viacheslav]: need to assign dashboard to customers ?
-//        } else {
-//            dashboard.setAssignedCustomers(existingDashboard.getAssignedCustomers());
-//        }
-    }
+    protected Dashboard prepareAndSave(TenantId tenantId, Dashboard dashboard, DashboardExportData exportData, NewIdProvider idProvider) {
+        if (dashboard.getId() == null) {
+            Set<ShortCustomerInfo> assignedCustomers = idProvider.get(tenantId, Dashboard::getAssignedCustomers, ShortCustomerInfo::getCustomerId, ShortCustomerInfo::setCustomerId);
+            dashboard.setAssignedCustomers(null);
+            dashboard = dashboardService.saveDashboard(dashboard);
+            for (ShortCustomerInfo customerInfo : assignedCustomers) {
+                dashboardService.assignDashboardToCustomer(tenantId, dashboard.getId(), customerInfo.getCustomerId());
+            }
+        } else {
+            Set<CustomerId> existingAssignedCustomers = dashboardService.findDashboardById(tenantId, dashboard.getId()).getAssignedCustomers().stream()
+                    .map(ShortCustomerInfo::getCustomerId).collect(Collectors.toSet());
+            Set<CustomerId> newAssignedCustomers = idProvider.get(tenantId, Dashboard::getAssignedCustomers, ShortCustomerInfo::getCustomerId, ShortCustomerInfo::setCustomerId).stream()
+                    .map(ShortCustomerInfo::getCustomerId).collect(Collectors.toSet());
 
-    @Override
-    protected Dashboard saveEntity(TenantId tenantId, Dashboard dashboard, Dashboard existingDashboard, DashboardExportData exportData) {
-        return dashboardService.saveDashboard(dashboard);
+            Set<CustomerId> toUnassign = new HashSet<>(existingAssignedCustomers);
+            toUnassign.removeAll(newAssignedCustomers);
+            for (CustomerId customerId : toUnassign) {
+                dashboardService.unassignDashboardFromCustomer(tenantId, dashboard.getId(), customerId);
+            }
+            Set<CustomerId> toAssign = new HashSet<>(newAssignedCustomers);
+            toAssign.removeAll(existingAssignedCustomers);
+            for (CustomerId customerId : toAssign) {
+                dashboardService.assignDashboardToCustomer(tenantId, dashboard.getId(), customerId);
+            }
+            dashboard.setAssignedCustomers(dashboardService.findDashboardById(tenantId, dashboard.getId()).getAssignedCustomers());
+            dashboard = dashboardService.saveDashboard(dashboard);
+        }
+        return dashboard;
     }
 
     @Override

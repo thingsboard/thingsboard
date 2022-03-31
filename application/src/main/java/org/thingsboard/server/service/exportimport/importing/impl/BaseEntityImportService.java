@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.service.exportimport.importing.impl;
 
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -32,12 +34,16 @@ import org.thingsboard.server.service.exportimport.importing.EntityImportResult;
 import org.thingsboard.server.service.exportimport.importing.EntityImportService;
 import org.thingsboard.server.service.exportimport.importing.EntityImportSettings;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public abstract class AbstractEntityImportService<I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> implements EntityImportService<I, E, D> {
+public abstract class BaseEntityImportService<I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> implements EntityImportService<I, E, D> {
 
     @Autowired @Lazy
     private ExportableEntitiesService exportableEntitiesService;
@@ -59,18 +65,7 @@ public abstract class AbstractEntityImportService<I extends EntityId, E extends 
             entity.setId(existingEntity.getId());
         }
 
-        setLinkedEntitiesIds(tenantId, entity, new IdProvider<E>() {
-            @Override
-            public <ID extends EntityId> ID get(TenantId tenantId, Function<E, ID> idExtractor) {
-                if (existingEntity == null || importSettings.isUpdateReferencesToOtherEntities()) {
-                    return getInternalId(tenantId, idExtractor.apply(entity));
-                } else {
-                    return idExtractor.apply(existingEntity);
-                }
-            }
-        });
-
-        E savedEntity = saveEntity(tenantId, entity, existingEntity, exportData);
+        E savedEntity = prepareAndSave(tenantId, entity, exportData, new NewIdProvider(entity, existingEntity, importSettings));
         importRelations(tenantId, savedEntity, existingEntity, exportData, importSettings);
 
         EntityImportResult<E> importResult = new EntityImportResult<>();
@@ -79,9 +74,7 @@ public abstract class AbstractEntityImportService<I extends EntityId, E extends 
         return importResult;
     }
 
-    protected void setLinkedEntitiesIds(TenantId tenantId, E entity, IdProvider<E> idProvider) {}
-
-    protected abstract E saveEntity(TenantId tenantId, E entity, E existingEntity, D exportData);
+    protected abstract E prepareAndSave(TenantId tenantId, E entity, D exportData, NewIdProvider idProvider);
 
 
     private void importRelations(TenantId tenantId, E savedEntity, E existingEntity, D exportData, EntityImportSettings importSettings) {
@@ -94,7 +87,7 @@ public abstract class AbstractEntityImportService<I extends EntityId, E extends 
                         relation.setFrom(getInternalId(tenantId, relation.getFrom()));
                     })
                     .collect(Collectors.toList()));
-            if (importSettings.isRemoveExistingRelationsAndSaveNew() && existingEntity != null) {
+            if (importSettings.isRemoveExistingRelations() && existingEntity != null) {
                 relationService.findByTo(tenantId, savedEntity.getId(), RelationTypeGroup.COMMON).forEach(existingRelation -> {
                     relationService.deleteRelation(tenantId, existingRelation);
                 });
@@ -107,14 +100,16 @@ public abstract class AbstractEntityImportService<I extends EntityId, E extends 
                         relation.setFrom(savedEntity.getId());
                     })
                     .collect(Collectors.toList()));
-            if (importSettings.isRemoveExistingRelationsAndSaveNew() && existingEntity != null) {
+            if (importSettings.isRemoveExistingRelations() && existingEntity != null) {
                 relationService.findByFrom(tenantId, savedEntity.getId(), RelationTypeGroup.COMMON).forEach(existingRelation -> {
                     relationService.deleteRelation(tenantId, existingRelation);
                 });
             }
         }
 
-        newRelations.forEach(relation -> relationService.saveRelation(tenantId, relation));
+        newRelations.forEach(relation -> {
+            relationService.saveRelation(tenantId, relation);
+        });
     }
 
     private <ID extends EntityId> ID getInternalId(TenantId tenantId, ID externalId) {
@@ -128,8 +123,36 @@ public abstract class AbstractEntityImportService<I extends EntityId, E extends 
         return entity.getId();
     }
 
-    protected interface IdProvider<E> {
-        <I extends EntityId> I get(TenantId tenantId, Function<E, I> idExtractor);
+    @RequiredArgsConstructor
+    protected class NewIdProvider {
+        private final E entity;
+        private final E existingEntity;
+        private final EntityImportSettings importSettings;
+
+        private final Set<EntityType> ALWAYS_UPDATE_REFERENCED_IDS = Set.of(
+                EntityType.RULE_CHAIN
+        );
+
+        public <ID extends EntityId> ID get(TenantId tenantId, Function<E, ID> idExtractor) {
+            if (existingEntity == null || importSettings.isUpdateReferencesToOtherEntities()
+                    || ALWAYS_UPDATE_REFERENCED_IDS.contains(getEntityType())) {
+                return getInternalId(tenantId, idExtractor.apply(entity));
+            } else {
+                return idExtractor.apply(existingEntity);
+            }
+        }
+
+        public <ID extends EntityId, T> Set<T> get(TenantId tenantId, Function<E, Set<T>> listExtractor, Function<T, ID> idGetter, BiConsumer<T, ID> idSetter) {
+            if (existingEntity == null || importSettings.isUpdateReferencesToOtherEntities()) {
+                return Optional.ofNullable(listExtractor.apply(entity)).orElse(Collections.emptySet()).stream()
+                        .peek(t -> {
+                            idSetter.accept(t, getInternalId(tenantId, idGetter.apply(t)));
+                        })
+                        .collect(Collectors.toSet());
+            } else {
+                return listExtractor.apply(existingEntity);
+            }
+        }
     }
 
 }

@@ -24,7 +24,7 @@ import org.thingsboard.server.service.exportimport.exporting.data.DashboardExpor
 
 @Service
 @TbCoreComponent
-public class DashboardExportService extends AbstractEntityExportService<DashboardId, Dashboard, DashboardExportData> {
+public class DashboardExportService extends BaseEntityExportService<DashboardId, Dashboard, DashboardExportData> {
 
     @Override
     protected DashboardExportData newExportData() {
