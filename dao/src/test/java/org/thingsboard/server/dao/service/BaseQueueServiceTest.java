@@ -38,7 +38,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class BaseQueueServiceTest extends AbstractServiceTest {
+public abstract class BaseQueueServiceTest extends AbstractServiceTest {
 
     private IdComparator<Queue> idComparator = new IdComparator<>();
 
