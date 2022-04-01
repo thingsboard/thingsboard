@@ -72,8 +72,6 @@ public class HashPartitionService implements PartitionService {
     private ConcurrentMap<ServiceQueueKey, List<Integer>> myPartitions = new ConcurrentHashMap<>();
     private ConcurrentMap<TopicPartitionInfoKey, TopicPartitionInfo> tpiCache = new ConcurrentHashMap<>();
 
-    private Map<String, TopicPartitionInfo> tbCoreNotificationTopics = new HashMap<>();
-    private Map<String, TopicPartitionInfo> tbRuleEngineNotificationTopics = new HashMap<>();
     private Map<String, List<ServiceInfo>> tbTransportServicesByType = new HashMap<>();
     private List<ServiceInfo> currentOtherServices;
 
