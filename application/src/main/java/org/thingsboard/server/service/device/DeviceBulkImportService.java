@@ -49,8 +49,8 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.importing.AbstractBulkImportService;
-import org.thingsboard.server.service.importing.BulkImportColumnType;
+import org.thingsboard.server.service.sync.importing.csv.AbstractBulkImportService;
+import org.thingsboard.server.service.sync.importing.csv.BulkImportColumnType;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.Collection;

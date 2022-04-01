@@ -13,18 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao;
+package org.thingsboard.server.service.sync.importing.csv;
 
-import org.thingsboard.server.common.data.EntityType;
+import lombok.Data;
 
-import java.util.UUID;
-
-public interface ExportableEntityDao<T> {
-
-    T findByTenantIdAndExternalId(UUID tenantId, UUID externalId);
-
-    T findByTenantIdAndId(UUID tenantId, UUID id);
-
-    EntityType getEntityType();
-
+@Data
+public class ImportedEntityInfo<E> {
+    private E entity;
+    private boolean isUpdated;
+    private E oldEntity;
 }

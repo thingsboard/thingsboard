@@ -94,4 +94,5 @@ public interface RuleChainService {
     RuleNode saveRuleNode(TenantId tenantId, RuleNode ruleNode);
 
     void deleteRuleNodes(TenantId tenantId, RuleChainId ruleChainId);
+
 }

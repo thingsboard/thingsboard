@@ -57,10 +57,10 @@ public class RuleChain extends SearchTextBasedWithAdditionalInfo<RuleChainId> im
     @ApiModelProperty(position = 9, value = "Reserved for future usage. The actual list of rule nodes and their relations is stored in the database separately.")
     private transient JsonNode configuration;
 
+    private RuleChainId externalId;
+
     @JsonIgnore
     private byte[] configurationBytes;
-
-    private RuleChainId externalId;
 
     public RuleChain() {
         super();

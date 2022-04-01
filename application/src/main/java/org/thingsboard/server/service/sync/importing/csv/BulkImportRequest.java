@@ -13,18 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao;
+package org.thingsboard.server.service.sync.importing.csv;
 
-import org.thingsboard.server.common.data.EntityType;
+import lombok.Data;
 
-import java.util.UUID;
+import java.util.List;
 
-public interface ExportableEntityDao<T> {
+@Data
+public class BulkImportRequest {
+    private String file;
+    private Mapping mapping;
 
-    T findByTenantIdAndExternalId(UUID tenantId, UUID externalId);
+    @Data
+    public static class Mapping {
+        private List<ColumnMapping> columns;
+        private Character delimiter;
+        private Boolean update;
+        private Boolean header;
+    }
 
-    T findByTenantIdAndId(UUID tenantId, UUID id);
-
-    EntityType getEntityType();
+    @Data
+    public static class ColumnMapping {
+        private BulkImportColumnType type;
+        private String key;
+    }
 
 }

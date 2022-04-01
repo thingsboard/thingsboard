@@ -924,7 +924,7 @@ public abstract class BaseController {
         }
     }
 
-    protected  <E extends HasName & HasId<I> & HasTenantId, I extends EntityId> void onEntityUpdatedOrCreated(User user, E savedEntity, E oldEntity, boolean isNewEntity) {
+    protected <E extends HasName & HasId<I> & HasTenantId, I extends EntityId> void onEntityUpdatedOrCreated(User user, E savedEntity, E oldEntity, boolean isNewEntity) {
         boolean notifyEdgeService = false;
 
         EntityType entityType = savedEntity.getId().getEntityType();
@@ -951,7 +951,7 @@ public abstract class BaseController {
                 otaPackageStateService.update(deviceProfile, isFirmwareChanged, isSoftwareChanged);
                 notifyEdgeService = true;
                 break;
-            case RULE_CHAIN: // FIXME: events for rule chain metadata
+            case RULE_CHAIN:
                 RuleChainType ruleChainType = ((RuleChain) savedEntity).getType();
                 if (RuleChainType.CORE.equals(ruleChainType)) {
                     tbClusterService.broadcastEntityStateChangeEvent(savedEntity.getTenantId(), savedEntity.getId(),
@@ -974,8 +974,12 @@ public abstract class BaseController {
                 throw new UnsupportedOperationException();
         }
 
-        entityActionService.logEntityAction(user, savedEntity.getId(), savedEntity, savedEntity instanceof HasCustomerId ? ((HasCustomerId) savedEntity).getCustomerId() : null,
-                isNewEntity ? ActionType.ADDED : ActionType.UPDATED, null);
+        try {
+            logEntityAction(user, savedEntity.getId(), savedEntity, savedEntity instanceof HasCustomerId ? ((HasCustomerId) savedEntity).getCustomerId() : null,
+                    isNewEntity ? ActionType.ADDED : ActionType.UPDATED, null);
+        } catch (ThingsboardException e) {
+            log.error("Failed to log entity action", e);
+        }
         if (notifyEdgeService) {
             sendEntityNotificationMsg(savedEntity.getTenantId(), savedEntity.getId(), isNewEntity ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
         }

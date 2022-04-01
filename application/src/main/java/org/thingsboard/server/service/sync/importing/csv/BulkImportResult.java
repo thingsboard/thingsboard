@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao;
+package org.thingsboard.server.service.sync.importing.csv;
 
-import org.thingsboard.server.common.data.EntityType;
+import lombok.Data;
 
-import java.util.UUID;
+import java.util.Collection;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public interface ExportableEntityDao<T> {
-
-    T findByTenantIdAndExternalId(UUID tenantId, UUID externalId);
-
-    T findByTenantIdAndId(UUID tenantId, UUID id);
-
-    EntityType getEntityType();
-
+@Data
+public class BulkImportResult<E> {
+    private AtomicInteger created = new AtomicInteger();
+    private AtomicInteger updated = new AtomicInteger();
+    private AtomicInteger errors = new AtomicInteger();
+    private Collection<String> errorsList = new ConcurrentLinkedDeque<>();
 }

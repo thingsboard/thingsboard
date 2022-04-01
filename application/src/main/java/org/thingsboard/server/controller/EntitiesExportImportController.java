@@ -42,12 +42,12 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.exportimport.EntitiesExportImportService;
-import org.thingsboard.server.service.exportimport.ExportableEntitiesService;
-import org.thingsboard.server.service.exportimport.exporting.EntityExportSettings;
-import org.thingsboard.server.service.exportimport.exporting.data.EntityExportData;
-import org.thingsboard.server.service.exportimport.importing.EntityImportResult;
-import org.thingsboard.server.service.exportimport.importing.EntityImportSettings;
+import org.thingsboard.server.service.sync.EntitiesExportImportService;
+import org.thingsboard.server.service.sync.exporting.ExportableEntitiesService;
+import org.thingsboard.server.service.sync.exporting.EntityExportSettings;
+import org.thingsboard.server.service.sync.exporting.data.EntityExportData;
+import org.thingsboard.server.service.sync.importing.EntityImportResult;
+import org.thingsboard.server.service.sync.importing.EntityImportSettings;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -103,12 +103,12 @@ public class EntitiesExportImportController extends BaseController {
         }
     }
 
-    @PostMapping(value = "/export/{entityType}", params = "ids")
-    public List<EntityExportData<ExportableEntity<EntityId>>> exportAllEntitiesByEntityType(@PathVariable EntityType entityType,
-                                                                                            @RequestParam Map<String, String> exportSettingsParams,
-                                                                                            @RequestParam(defaultValue = "0") int page,
-                                                                                            @RequestParam(defaultValue = "2147483647") int pageSize,
-                                                                                            @RequestParam(name = "customerId", required = false) UUID customerUuid) throws ThingsboardException {
+    @PostMapping(value = "/export/{entityType}")
+    public List<EntityExportData<ExportableEntity<EntityId>>> exportEntitiesByEntityType(@PathVariable EntityType entityType,
+                                                                                         @RequestParam Map<String, String> exportSettingsParams,
+                                                                                         @RequestParam(defaultValue = "0") int page,
+                                                                                         @RequestParam(defaultValue = "2147483647") int pageSize,
+                                                                                         @RequestParam(name = "customerId", required = false) UUID customerUuid) throws ThingsboardException {
         TenantId tenantId = getTenantId();
         CustomerId customerId = toCustomerId(customerUuid);
 
@@ -236,11 +236,12 @@ public class EntitiesExportImportController extends BaseController {
 
     public List<EntityImportResult<ExportableEntity<EntityId>>> importEntities(SecurityUser user, List<EntityExportData<ExportableEntity<EntityId>>> exportDataList, EntityImportSettings importSettings) throws ThingsboardException {
         for (EntityExportData<ExportableEntity<EntityId>> exportData : exportDataList) {
-            ExportableEntity<EntityId> existingEntity = exportableEntitiesService.findEntityByExternalId(user.getTenantId(), exportData.getMainEntity().getId());
+            ExportableEntity<EntityId> existingEntity = exportableEntitiesService.findEntityByExternalId(user.getTenantId(), exportData.getEntity().getId());
             if (existingEntity != null) {
-                checkEntityId(existingEntity.getId(), Operation.WRITE);
+                accessControlService.checkPermission(user, Resource.of(exportData.getEntityType()), Operation.WRITE, existingEntity.getId(), existingEntity);
             } else {
-                accessControlService.checkPermission(user, Resource.of(exportData.getEntityType()), Operation.CREATE);
+                exportData.getEntity().setTenantId(user.getTenantId());
+                accessControlService.checkPermission(user, Resource.of(exportData.getEntityType()), Operation.CREATE, null, exportData.getEntity());
             }
 
             List<EntityRelation> relations = new LinkedList<>();
@@ -252,9 +253,9 @@ public class EntitiesExportImportController extends BaseController {
             }
             for (EntityRelation relation : relations) {
                 EntityId otherEntityId = null;
-                if (!relation.getFrom().equals(exportData.getMainEntity().getId())) {
+                if (!relation.getFrom().equals(exportData.getEntity().getId())) {
                     otherEntityId = relation.getFrom();
-                } else if (!relation.getTo().equals(exportData.getMainEntity().getId())) {
+                } else if (!relation.getTo().equals(exportData.getEntity().getId())) {
                     otherEntityId = relation.getTo();
                 }
                 if (otherEntityId != null) {

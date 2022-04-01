@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao;
+package org.thingsboard.server.service.sync.importing;
 
-import org.thingsboard.server.common.data.EntityType;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.UUID;
-
-public interface ExportableEntityDao<T> {
-
-    T findByTenantIdAndExternalId(UUID tenantId, UUID externalId);
-
-    T findByTenantIdAndId(UUID tenantId, UUID id);
-
-    EntityType getEntityType();
-
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class EntityImportSettings {
+    private boolean importInboundRelations;
+    private boolean importOutboundRelations;
+    private boolean removeExistingRelations;
+    private boolean updateReferencesToOtherEntities;
 }

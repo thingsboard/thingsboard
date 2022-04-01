@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao;
+package org.thingsboard.server.service.sync.exporting.data;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityType;
 
-import java.util.UUID;
+@EqualsAndHashCode(callSuper = true)
+@Data
+public class DashboardExportData extends EntityExportData<Dashboard> {
 
-public interface ExportableEntityDao<T> {
-
-    T findByTenantIdAndExternalId(UUID tenantId, UUID externalId);
-
-    T findByTenantIdAndId(UUID tenantId, UUID id);
-
-    EntityType getEntityType();
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.DASHBOARD;
+    }
 
 }

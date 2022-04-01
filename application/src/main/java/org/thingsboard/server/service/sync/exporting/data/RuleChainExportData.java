@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao;
+package org.thingsboard.server.service.sync.exporting.data;
 
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 
-import java.util.UUID;
+@EqualsAndHashCode(callSuper = true)
+@Data
+public class RuleChainExportData extends EntityExportData<RuleChain> {
 
-public interface ExportableEntityDao<T> {
+    private RuleChainMetaData metaData;
 
-    T findByTenantIdAndExternalId(UUID tenantId, UUID externalId);
-
-    T findByTenantIdAndId(UUID tenantId, UUID id);
-
-    EntityType getEntityType();
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.RULE_CHAIN;
+    }
 
 }
