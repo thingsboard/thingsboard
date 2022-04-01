@@ -29,13 +29,17 @@ import {
 import {
   TimeseriesTableLatestKeySettingsComponent
 } from '@home/components/widget/lib/settings/timeseries-table-latest-key-settings.component';
+import {
+  MarkdownWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/markdown-widget-settings.component';
 
 @NgModule({
   declarations: [
     QrCodeWidgetSettingsComponent,
     TimeseriesTableWidgetSettingsComponent,
     TimeseriesTableKeySettingsComponent,
-    TimeseriesTableLatestKeySettingsComponent
+    TimeseriesTableLatestKeySettingsComponent,
+    MarkdownWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -46,7 +50,8 @@ import {
     QrCodeWidgetSettingsComponent,
     TimeseriesTableWidgetSettingsComponent,
     TimeseriesTableKeySettingsComponent,
-    TimeseriesTableLatestKeySettingsComponent
+    TimeseriesTableLatestKeySettingsComponent,
+    MarkdownWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -56,5 +61,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-qrcode-widget-settings': QrCodeWidgetSettingsComponent,
   'tb-timeseries-table-widget-settings': TimeseriesTableWidgetSettingsComponent,
   'tb-timeseries-table-key-settings': TimeseriesTableKeySettingsComponent,
-  'tb-timeseries-table-latest-key-settings': TimeseriesTableLatestKeySettingsComponent
+  'tb-timeseries-table-latest-key-settings': TimeseriesTableLatestKeySettingsComponent,
+  'tb-markdown-widget-settings': MarkdownWidgetSettingsComponent
 };

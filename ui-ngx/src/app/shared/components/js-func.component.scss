@@ -24,13 +24,21 @@
     height: 100%;
   }
 
+  &:not(.tb-js-func-title) {
+    .tb-js-func-panel {
+      margin-left: 15px;
+    }
+  }
+
+  &.tb-js-func-title {
+    .tb-js-func-panel {
+      height: calc(100% - 40px);
+    }
+  }
+
   .tb-js-func-panel {
     height: calc(100% - 80px);
     border: 1px solid #c0c0c0;
-
-    &:not(.tb-js-func-title) {
-      margin-left: 15px;
-    }
 
     #tb-javascript-input {
       width: 100%;
@@ -40,6 +48,12 @@
       &:not(.fill-height) {
         min-height: 200px;
       }
+    }
+  }
+
+  &:not(.tb-fullscreen) {
+    &.tb-js-func-title {
+      padding-bottom: 15px;
     }
   }
 

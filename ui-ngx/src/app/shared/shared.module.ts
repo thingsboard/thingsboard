@@ -79,6 +79,7 @@ import { EnumToArrayPipe } from '@shared/pipe/enum-to-array.pipe';
 import { ClipboardModule } from 'ngx-clipboard';
 import { ValueInputComponent } from '@shared/components/value-input.component';
 import { MarkdownModule, MarkedOptions } from 'ngx-markdown';
+import { MarkdownEditorComponent } from '@shared/components/markdown-editor.component';
 import { FullscreenDirective } from '@shared/components/fullscreen.directive';
 import { HighlightPipe } from '@shared/pipe/highlight.pipe';
 import { DashboardAutocompleteComponent } from '@shared/components/dashboard-autocomplete.component';
@@ -258,6 +259,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     KeyValMapComponent,
     NavTreeComponent,
     LedLightComponent,
+    MarkdownEditorComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -452,6 +454,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     KeyValMapComponent,
     NavTreeComponent,
     LedLightComponent,
+    MarkdownEditorComponent,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,

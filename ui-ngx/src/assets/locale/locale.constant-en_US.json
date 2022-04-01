@@ -2390,6 +2390,8 @@
         "error": "Login error"
     },
     "markdown": {
+        "edit": "Edit",
+        "preview": "Preview",
         "copy-code": "Click to copy",
         "copied": "Copied!"
     },
@@ -3367,6 +3369,12 @@
                 "drawCircleMarkerButton": "Create circle marker",
                 "rotateButton": "Rotate polygon"
             }
+        },
+        "markdown": {
+          "use-markdown-text-function": "Use markdown/HTML value function",
+          "markdown-text-function": "Markdown/HTML value function",
+          "markdown-text-pattern": "Markdown/HTML pattern (markdown or HTML with variables, for ex. '${entityName} or ${keyName} - some text.')",
+          "markdown-css": "Markdown/HTML CSS"
         },
         "table": {
           "common-table-settings": "Common Table Settings",
