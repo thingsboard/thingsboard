@@ -15,22 +15,22 @@
     limitations under the License.
 
 -->
-<section [formGroup]="qrCodeWidgetSettingsForm" fxLayout="column">
-  <mat-checkbox formControlName="useQrCodeTextFunction" style="padding-bottom: 16px;">
+<section class="tb-widget-settings" [formGroup]="qrCodeWidgetSettingsForm" fxLayout="column">
+  <mat-slide-toggle class="mat-slide" formControlName="useQrCodeTextFunction">
     {{ 'widgets.qr-code.use-qr-code-text-function' | translate }}
-  </mat-checkbox>
-  <mat-form-field [fxShow]="qrCodeWidgetSettingsForm.get('useQrCodeTextFunction').value === false">
+  </mat-slide-toggle>
+  <mat-form-field [fxShow]="!qrCodeWidgetSettingsForm.get('useQrCodeTextFunction').value">
     <mat-label translate>widgets.qr-code.qr-code-text-pattern</mat-label>
     <input required matInput formControlName="qrCodeTextPattern">
     <mat-error *ngIf="qrCodeWidgetSettingsForm.get('qrCodeTextPattern').hasError('required')">
       {{ 'widgets.qr-code.qr-code-text-pattern-required' | translate }}
     </mat-error>
   </mat-form-field>
-  <section fxLayout="column" [fxShow]="qrCodeWidgetSettingsForm.get('useQrCodeTextFunction').value === true">
-    <label translate class="tb-title no-padding">widgets.qr-code.qr-code-text-function</label>
-    <tb-js-func #qrCodeTextFunctionComponent
-                formControlName="qrCodeTextFunction"
+  <section fxLayout="column" [fxShow]="qrCodeWidgetSettingsForm.get('useQrCodeTextFunction').value">
+    <tb-js-func formControlName="qrCodeTextFunction"
+                [globalVariables]="functionScopeVariables"
                 [functionArgs]="['data']"
+                functionTitle="{{ 'widgets.qr-code.qr-code-text-function' | translate }}"
                 helpId="widget/lib/qrcode/qrcode_text_fn">
     </tb-js-func>
   </section>

@@ -69,6 +69,8 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
 
   toastTargetId = `jsFuncEditor-${guid()}`;
 
+  @Input() functionTitle: string;
+
   @Input() functionName: string;
 
   @Input() functionArgs: Array<string>;

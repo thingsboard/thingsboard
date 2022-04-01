@@ -43,6 +43,7 @@ import { JsonFormComponentData } from '@shared/components/json-form/json-form-co
 import { IWidgetSettingsComponent, Widget, WidgetSettings } from '@shared/models/widget.models';
 import { widgetSettingsComponentsMap } from '@home/components/widget/lib/settings/widget-settings.module';
 import { Dashboard } from '@shared/models/dashboard.models';
+import { WidgetService } from '@core/http/widget.service';
 
 @Component({
   selector: 'tb-widget-settings',
@@ -100,6 +101,7 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
 
   constructor(private translate: TranslateService,
               private cfr: ComponentFactoryResolver,
+              private widgetService: WidgetService,
               private fb: FormBuilder) {
     this.widgetSettingsFormGroup = this.fb.group({
       settings: [null, Validators.required]
@@ -143,6 +145,7 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
     if (this.definedSettingsComponent) {
       this.definedSettingsComponent.dashboard = this.dashboard;
       this.definedSettingsComponent.widget = this.widget;
+      this.definedSettingsComponent.functionScopeVariables = this.widgetService.getWidgetScopeVariables();
       this.definedSettingsComponent.settings = this.widgetSettingsFormData.model;
       this.changeSubscription = this.definedSettingsComponent.settingsChanged.subscribe((settings) => {
         this.updateModel(settings);
@@ -196,6 +199,7 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
         this.definedSettingsComponent = this.definedSettingsComponentRef.instance;
         this.definedSettingsComponent.dashboard = this.dashboard;
         this.definedSettingsComponent.widget = this.widget;
+        this.definedSettingsComponent.functionScopeVariables = this.widgetService.getWidgetScopeVariables();
         this.changeSubscription = this.definedSettingsComponent.settingsChanged.subscribe((settings) => {
           this.updateModel(settings);
         });

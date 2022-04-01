@@ -14,21 +14,18 @@
 /// limitations under the License.
 ///
 
-import { Component, ViewChild } from '@angular/core';
+import { Component } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
-import { AbstractControl, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { JsFuncComponent } from '@shared/components/js-func.component';
 
 @Component({
   selector: 'tb-qrcode-widget-settings',
   templateUrl: './qrcode-widget-settings.component.html',
-  styleUrls: []
+  styleUrls: ['./widget-settings.scss']
 })
 export class QrCodeWidgetSettingsComponent extends WidgetSettingsComponent {
-
-  @ViewChild('qrCodeTextFunctionComponent', {static: true}) qrCodeTextFunctionComponent: JsFuncComponent;
 
   qrCodeWidgetSettingsForm: FormGroup;
 
@@ -51,8 +48,8 @@ export class QrCodeWidgetSettingsComponent extends WidgetSettingsComponent {
 
   protected onSettingsSet(settings: WidgetSettings) {
     this.qrCodeWidgetSettingsForm = this.fb.group({
-      qrCodeTextPattern: [settings.qrCodeTextPattern, []],
-      useQrCodeTextFunction: [settings.useQrCodeTextFunction, []],
+      qrCodeTextPattern: [settings.qrCodeTextPattern, [Validators.required]],
+      useQrCodeTextFunction: [settings.useQrCodeTextFunction, [Validators.required]],
       qrCodeTextFunction: [settings.qrCodeTextFunction, []]
     });
   }
@@ -64,13 +61,11 @@ export class QrCodeWidgetSettingsComponent extends WidgetSettingsComponent {
   protected updateValidators(emitEvent: boolean) {
     const useQrCodeTextFunction: boolean = this.qrCodeWidgetSettingsForm.get('useQrCodeTextFunction').value;
     if (useQrCodeTextFunction) {
-      this.qrCodeWidgetSettingsForm.get('qrCodeTextPattern').setValidators([]);
-      this.qrCodeWidgetSettingsForm.get('qrCodeTextFunction').setValidators([Validators.required,
-        (control: AbstractControl) => this.qrCodeTextFunctionComponent.validate(control as FormControl)
-      ]);
+      this.qrCodeWidgetSettingsForm.get('qrCodeTextPattern').disable();
+      this.qrCodeWidgetSettingsForm.get('qrCodeTextFunction').enable();
     } else {
-      this.qrCodeWidgetSettingsForm.get('qrCodeTextPattern').setValidators([Validators.required]);
-      this.qrCodeWidgetSettingsForm.get('qrCodeTextFunction').setValidators([]);
+      this.qrCodeWidgetSettingsForm.get('qrCodeTextPattern').enable();
+      this.qrCodeWidgetSettingsForm.get('qrCodeTextFunction').disable();
     }
     this.qrCodeWidgetSettingsForm.get('qrCodeTextPattern').updateValueAndValidity({emitEvent});
     this.qrCodeWidgetSettingsForm.get('qrCodeTextFunction').updateValueAndValidity({emitEvent});

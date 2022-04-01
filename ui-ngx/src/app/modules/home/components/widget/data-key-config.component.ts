@@ -287,7 +287,7 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
         }
       };
     }
-    if (this.displayAdvanced && !this.dataKeySettingsFormGroup.valid) {
+    if (this.displayAdvanced && (!this.dataKeySettingsFormGroup.valid || !this.modelValue.settings)) {
       return {
         dataKeySettings: {
           valid: false

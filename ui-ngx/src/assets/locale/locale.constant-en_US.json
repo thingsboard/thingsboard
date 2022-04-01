@@ -3001,6 +3001,7 @@
         "image-preview": "Image preview",
         "settings-form-selector": "Settings form selector",
         "data-key-settings-form-selector": "Data key settings form selector",
+        "latest-data-key-settings-form-selector": "Latest data key settings form selector",
         "javascript": "Javascript",
         "js": "JS",
         "remove-widget-type-title": "Are you sure you want to remove the widget type '{{widgetName}}'?",
@@ -3366,6 +3367,32 @@
                 "drawCircleMarkerButton": "Create circle marker",
                 "rotateButton": "Rotate polygon"
             }
+        },
+        "table": {
+          "common-table-settings": "Common Table Settings",
+          "enable-search": "Enable search",
+          "enable-sticky-header": "Always display header",
+          "enable-sticky-action": "Always display actions column",
+          "hidden-cell-button-display-mode": "Hidden cell button actions display mode",
+          "show-empty-space-hidden-action": "Show empty space instead of hidden cell button action",
+          "dont-reserve-space-hidden-action": "Don't reserve space for hidden action buttons",
+          "display-timestamp": "Display timestamp column",
+          "display-milliseconds": "Display timestamp milliseconds",
+          "display-pagination": "Display pagination",
+          "default-page-size": "Default page size",
+          "use-entity-label-tab-name": "Use entity label in tab name",
+          "hide-empty-lines": "Hide empty lines",
+          "row-style": "Row style",
+          "use-row-style-function": "Use row style function",
+          "row-style-function": "Row style function",
+          "cell-style": "Cell style",
+          "use-cell-style-function": "Use cell style function",
+          "cell-style-function": "Cell style function",
+          "cell-content": "Cell content",
+          "use-cell-content-function": "Use cell content function",
+          "cell-content-function": "Cell content function",
+          "show-latest-data-column": "Show latest data column",
+          "latest-data-column-order": "Latest data column order"
         }
     },
     "icon": {

@@ -265,6 +265,12 @@
                              [(ngModel)]="widget.dataKeySettingsDirective"
                              (ngModelChange)="isDirty = true"/>
                     </mat-form-field>
+                    <mat-form-field *ngIf="widget.type === widgetTypes.timeseries" class="mat-block">
+                      <mat-label translate>widget.latest-data-key-settings-form-selector</mat-label>
+                      <input matInput
+                             [(ngModel)]="widget.latestDataKeySettingsDirective"
+                             (ngModelChange)="isDirty = true"/>
+                    </mat-form-field>
                   </div>
                 </div>
               </mat-tab>

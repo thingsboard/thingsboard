@@ -26,8 +26,11 @@
 
   .tb-js-func-panel {
     height: calc(100% - 80px);
-    margin-left: 15px;
     border: 1px solid #c0c0c0;
+
+    &:not(.tb-js-func-title) {
+      margin-left: 15px;
+    }
 
     #tb-javascript-input {
       width: 100%;

@@ -615,6 +615,7 @@ export interface WidgetSize {
 export interface IWidgetSettingsComponent {
   dashboard: Dashboard;
   widget: Widget;
+  functionScopeVariables: string[];
   settings: WidgetSettings;
   settingsChanged: Observable<WidgetSettings>;
   validate();
@@ -630,12 +631,18 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
 
   widget: Widget;
 
+  functionScopeVariables: string[];
+
   settingsValue: WidgetSettings;
 
   private settingsSet = false;
 
   set settings(value: WidgetSettings) {
-    this.settingsValue = value || this.defaultSettings();
+    if (!value) {
+      this.settingsValue = this.defaultSettings();
+    } else {
+      this.settingsValue = {...this.defaultSettings(), ...value};
+    }
     if (!this.settingsSet) {
       this.settingsSet = true;
       this.setupSettings(this.settingsValue);

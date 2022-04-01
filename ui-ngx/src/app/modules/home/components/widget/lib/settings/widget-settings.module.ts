@@ -20,10 +20,22 @@ import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
 import { IWidgetSettingsComponent } from '@shared/models/widget.models';
+import {
+  TimeseriesTableWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/timeseries-table-widget-settings.component';
+import {
+  TimeseriesTableKeySettingsComponent
+} from '@home/components/widget/lib/settings/timeseries-table-key-settings.component';
+import {
+  TimeseriesTableLatestKeySettingsComponent
+} from '@home/components/widget/lib/settings/timeseries-table-latest-key-settings.component';
 
 @NgModule({
   declarations: [
-    QrCodeWidgetSettingsComponent
+    QrCodeWidgetSettingsComponent,
+    TimeseriesTableWidgetSettingsComponent,
+    TimeseriesTableKeySettingsComponent,
+    TimeseriesTableLatestKeySettingsComponent
   ],
   imports: [
     CommonModule,
@@ -31,12 +43,18 @@ import { IWidgetSettingsComponent } from '@shared/models/widget.models';
     SharedHomeComponentsModule
   ],
   exports: [
-    QrCodeWidgetSettingsComponent
+    QrCodeWidgetSettingsComponent,
+    TimeseriesTableWidgetSettingsComponent,
+    TimeseriesTableKeySettingsComponent,
+    TimeseriesTableLatestKeySettingsComponent
   ]
 })
 export class WidgetSettingsModule {
 }
 
 export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsComponent>} = {
-  'tb-qrcode-widget-settings': QrCodeWidgetSettingsComponent
+  'tb-qrcode-widget-settings': QrCodeWidgetSettingsComponent,
+  'tb-timeseries-table-widget-settings': TimeseriesTableWidgetSettingsComponent,
+  'tb-timeseries-table-key-settings': TimeseriesTableKeySettingsComponent,
+  'tb-timeseries-table-latest-key-settings': TimeseriesTableLatestKeySettingsComponent
 };
