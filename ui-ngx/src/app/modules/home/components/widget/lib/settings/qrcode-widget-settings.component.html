@@ -26,12 +26,11 @@
       {{ 'widgets.qr-code.qr-code-text-pattern-required' | translate }}
     </mat-error>
   </mat-form-field>
-  <section fxLayout="column" [fxShow]="qrCodeWidgetSettingsForm.get('useQrCodeTextFunction').value">
-    <tb-js-func formControlName="qrCodeTextFunction"
-                [globalVariables]="functionScopeVariables"
-                [functionArgs]="['data']"
-                functionTitle="{{ 'widgets.qr-code.qr-code-text-function' | translate }}"
-                helpId="widget/lib/qrcode/qrcode_text_fn">
-    </tb-js-func>
-  </section>
+  <tb-js-func [fxShow]="qrCodeWidgetSettingsForm.get('useQrCodeTextFunction').value"
+              formControlName="qrCodeTextFunction"
+              [globalVariables]="functionScopeVariables"
+              [functionArgs]="['data']"
+              functionTitle="{{ 'widgets.qr-code.qr-code-text-function' | translate }}"
+              helpId="widget/lib/qrcode/qrcode_text_fn">
+  </tb-js-func>
 </section>

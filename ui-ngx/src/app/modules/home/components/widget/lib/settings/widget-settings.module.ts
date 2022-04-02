@@ -32,6 +32,9 @@ import {
 import {
   MarkdownWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/markdown-widget-settings.component';
+import { LabelWidgetFontComponent } from '@home/components/widget/lib/settings/label-widget-font.component';
+import { LabelWidgetLabelComponent } from '@home/components/widget/lib/settings/label-widget-label.component';
+import { LabelWidgetSettingsComponent } from '@home/components/widget/lib/settings/label-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -39,7 +42,10 @@ import {
     TimeseriesTableWidgetSettingsComponent,
     TimeseriesTableKeySettingsComponent,
     TimeseriesTableLatestKeySettingsComponent,
-    MarkdownWidgetSettingsComponent
+    MarkdownWidgetSettingsComponent,
+    LabelWidgetFontComponent,
+    LabelWidgetLabelComponent,
+    LabelWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -51,7 +57,10 @@ import {
     TimeseriesTableWidgetSettingsComponent,
     TimeseriesTableKeySettingsComponent,
     TimeseriesTableLatestKeySettingsComponent,
-    MarkdownWidgetSettingsComponent
+    MarkdownWidgetSettingsComponent,
+    LabelWidgetFontComponent,
+    LabelWidgetLabelComponent,
+    LabelWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -62,5 +71,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-timeseries-table-widget-settings': TimeseriesTableWidgetSettingsComponent,
   'tb-timeseries-table-key-settings': TimeseriesTableKeySettingsComponent,
   'tb-timeseries-table-latest-key-settings': TimeseriesTableLatestKeySettingsComponent,
-  'tb-markdown-widget-settings': MarkdownWidgetSettingsComponent
+  'tb-markdown-widget-settings': MarkdownWidgetSettingsComponent,
+  'tb-label-widget-settings': LabelWidgetSettingsComponent
 };

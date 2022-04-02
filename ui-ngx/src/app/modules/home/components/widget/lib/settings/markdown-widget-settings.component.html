@@ -19,19 +19,17 @@
   <mat-slide-toggle class="mat-slide" formControlName="useMarkdownTextFunction">
     {{ 'widgets.markdown.use-markdown-text-function' | translate }}
   </mat-slide-toggle>
-  <section fxLayout="column" [fxShow]="markdownWidgetSettingsForm.get('useMarkdownTextFunction').value">
-    <tb-js-func formControlName="markdownTextFunction"
-                [globalVariables]="functionScopeVariables"
-                [functionArgs]="['data']"
-                functionTitle="{{ 'widgets.markdown.markdown-text-function' | translate }}"
-                helpId="widget/lib/markdown/markdown_text_fn">
-    </tb-js-func>
-  </section>
-  <section fxLayout="column" [fxShow]="!markdownWidgetSettingsForm.get('useMarkdownTextFunction').value">
-    <tb-markdown-editor formControlName="markdownTextPattern"
-                        label="{{ 'widgets.markdown.markdown-text-pattern' | translate }}">
-    </tb-markdown-editor>
-  </section>
+  <tb-js-func [fxShow]="markdownWidgetSettingsForm.get('useMarkdownTextFunction').value"
+              formControlName="markdownTextFunction"
+              [globalVariables]="functionScopeVariables"
+              [functionArgs]="['data']"
+              functionTitle="{{ 'widgets.markdown.markdown-text-function' | translate }}"
+              helpId="widget/lib/markdown/markdown_text_fn">
+  </tb-js-func>
+  <tb-markdown-editor [fxShow]="!markdownWidgetSettingsForm.get('useMarkdownTextFunction').value"
+                      formControlName="markdownTextPattern"
+                      label="{{ 'widgets.markdown.markdown-text-pattern' | translate }}">
+  </tb-markdown-editor>
   <tb-css formControlName="markdownCss"
           label="{{ 'widgets.markdown.markdown-css' | translate }}">
   </tb-css>
