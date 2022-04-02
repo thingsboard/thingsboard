@@ -38,6 +38,9 @@ import { LabelWidgetSettingsComponent } from '@home/components/widget/lib/settin
 import {
   SimpleCardWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/simple-card-widget-settings.component';
+import {
+  DashboardStateWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/dashboard-state-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -49,7 +52,8 @@ import {
     LabelWidgetFontComponent,
     LabelWidgetLabelComponent,
     LabelWidgetSettingsComponent,
-    SimpleCardWidgetSettingsComponent
+    SimpleCardWidgetSettingsComponent,
+    DashboardStateWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -65,7 +69,8 @@ import {
     LabelWidgetFontComponent,
     LabelWidgetLabelComponent,
     LabelWidgetSettingsComponent,
-    SimpleCardWidgetSettingsComponent
+    SimpleCardWidgetSettingsComponent,
+    DashboardStateWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -78,5 +83,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-timeseries-table-latest-key-settings': TimeseriesTableLatestKeySettingsComponent,
   'tb-markdown-widget-settings': MarkdownWidgetSettingsComponent,
   'tb-label-widget-settings': LabelWidgetSettingsComponent,
-  'tb-simple-card-widget-settings': SimpleCardWidgetSettingsComponent
+  'tb-simple-card-widget-settings': SimpleCardWidgetSettingsComponent,
+  'tb-dashboard-state-widget-settings': DashboardStateWidgetSettingsComponent
 };
