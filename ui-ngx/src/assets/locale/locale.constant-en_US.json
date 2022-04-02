@@ -3247,6 +3247,19 @@
                 "Ok": "Ok"
             }
         },
+        "entities-hierarchy": {
+          "hierarchy-data-settings": "Hierarchy data settings",
+          "relations-query-function": "Node relations query function",
+          "has-children-function": "Node has children function",
+          "node-state-settings": "Node state settings",
+          "node-opened-function": "Default node opened function",
+          "node-disabled-function": "Node disabled function",
+          "display-settings": "Display settings",
+          "node-icon-function": "Node icon function",
+          "node-text-function": "Node text function",
+          "sort-settings": "Sort settings",
+          "nodes-sort-function": "Nodes sort function"
+        },
         "input-widgets": {
             "attribute-not-allowed": "Attribute parameter cannot be used in this widget",
             "blocked-location": "Geolocation is blocked in your browser",
