@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
@@ -46,6 +47,8 @@ import org.thingsboard.server.utils.git.Repository;
 import org.thingsboard.server.utils.git.data.Commit;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -54,7 +57,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 @Service
@@ -72,8 +77,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     private static final String SETTINGS_KEY = "vc";
 
     private Repository repository;
-    private final ReentrantLock fetchLock = new ReentrantLock();
-    private final Lock writeLock = new ReentrantLock();
+    private final Lock fetchLock = new ReentrantLock();
+    private final ReadWriteLock repositoryLock = new ReentrantReadWriteLock();
 
     @AfterStartUp
     public void init() throws Exception {
@@ -89,17 +94,9 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
 
     @Scheduled(initialDelay = 10 * 1000, fixedDelay = 10 * 1000)
-    public void fetch() throws Exception {
+    private void fetch() throws Exception {
         if (repository == null) return;
-
-        if (fetchLock.tryLock()) {
-            try {
-                log.info("Fetching remote repository");
-                repository.fetch();
-            } finally {
-                fetchLock.unlock();
-            }
-        }
+        tryFetch();
     }
 
 
@@ -118,20 +115,12 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 .exportOutboundRelations(false)
                 .build();
         List<EntityExportData<ExportableEntity<EntityId>>> entityDataList = entitiesIds.stream()
-                .map(entityId -> {
-                    return exportImportService.exportEntity(tenantId, entityId, exportSettings);
-                })
+                .map(entityId -> exportImportService.exportEntity(tenantId, entityId, exportSettings))
                 .collect(Collectors.toList());
 
-        if (fetchLock.tryLock()) {
-            try {
-                repository.fetch();
-            } finally {
-                fetchLock.unlock();
-            }
-        }
+        tryFetch();
 
-        writeLock.lock();
+        repositoryLock.writeLock().lock();
         try {
             if (repository.listBranches().contains(branch)) {
                 repository.checkout(branch);
@@ -148,9 +137,9 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
             Commit commit = repository.commit(versionName, ".", "Tenant " + tenantId);
             repository.push();
-            return new EntityVersion(commit.getId(), commit.getMessage(), commit.getAuthorName());
+            return toVersion(commit);
         } finally {
-            writeLock.unlock();
+            repositoryLock.writeLock().unlock();
         }
     }
 
@@ -158,38 +147,72 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
     @Override
     public List<EntityVersion> listEntityVersions(TenantId tenantId, EntityId entityId, String branch, int limit) throws Exception {
-        checkRepository();
-        checkBranch(tenantId, branch);
-
-        return repository.listCommits(branch, getRelativePathForEntity(entityId), limit).stream()
-                .map(commit -> new EntityVersion(commit.getId(), commit.getMessage(), commit.getAuthorName()))
-                .collect(Collectors.toList());
+        return listVersions(tenantId, branch, getRelativePathForEntity(entityId), limit);
     }
 
     @Override
     public List<EntityVersion> listEntityTypeVersions(TenantId tenantId, EntityType entityType, String branch, int limit) throws Exception {
-        checkRepository();
-        checkBranch(tenantId, branch);
+        return listVersions(tenantId, getRelativePathForEntityType(entityType), limit);
+    }
 
-        return repository.listCommits(branch, getRelativePathForEntityType(entityType), limit).stream()
-                .map(commit -> new EntityVersion(commit.getId(), commit.getMessage(), commit.getAuthorName()))
-                .collect(Collectors.toList());
+    @Override
+    public List<EntityVersion> listVersions(TenantId tenantId, String branch, int limit) throws Exception {
+        return listVersions(tenantId, branch, null, limit);
+    }
+
+    private List<EntityVersion> listVersions(TenantId tenantId, String branch, String path, int limit) throws Exception {
+        repositoryLock.readLock().lock();
+        try {
+            checkRepository();
+            checkBranch(tenantId, branch);
+
+            return repository.listCommits(branch, path, limit).stream()
+                    .map(this::toVersion)
+                    .collect(Collectors.toList());
+
+        } finally {
+            repositoryLock.readLock().unlock();
+        }
     }
 
 
 
     @Override
-    public <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> getEntityAtVersion(TenantId tenantId, I entityId, String versionId) throws Exception {
-        checkRepository();
-        // FIXME [viacheslav]: validate access
-
-        String entityDataJson = repository.getFileContentAtCommit(getRelativePathForEntity(entityId), versionId);
-        return JacksonUtil.fromString(entityDataJson, new TypeReference<EntityExportData<E>>() {});
+    public List<String> listFilesAtVersion(TenantId tenantId, String branch, String versionId) throws Exception {
+        repositoryLock.readLock().lock();
+        try {
+            if (listVersions(tenantId, branch, Integer.MAX_VALUE).stream()
+                    .noneMatch(version -> version.getId().equals(versionId))) {
+                throw new IllegalArgumentException("Unknown version");
+            }
+            return repository.listFilesAtCommit(versionId);
+        } finally {
+            repositoryLock.readLock().unlock();
+        }
     }
 
+
+
     @Override
-    public <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> loadEntityVersion(TenantId tenantId, I entityId, String versionId) throws Exception {
-        EntityExportData<E> entityData = getEntityAtVersion(tenantId, entityId, versionId);
+    public <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> getEntityAtVersion(TenantId tenantId, I entityId, String branch, String versionId) throws Exception {
+        repositoryLock.readLock().lock();
+        try {
+            if (listEntityVersions(tenantId, entityId, branch, Integer.MAX_VALUE).stream()
+                    .noneMatch(version -> version.getId().equals(versionId))) {
+                throw new IllegalArgumentException("Unknown version");
+            }
+
+            String entityDataJson = repository.getFileContentAtCommit(getRelativePathForEntity(entityId), versionId);
+            return parseEntityData(entityDataJson);
+        } finally {
+            repositoryLock.readLock().unlock();
+        }
+    }
+
+
+    @Override
+    public <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> loadEntityVersion(TenantId tenantId, I entityId, String branch, String versionId) throws Exception {
+        EntityExportData<E> entityData = getEntityAtVersion(tenantId, entityId, branch, versionId);
         return exportImportService.importEntity(tenantId, entityData, EntityImportSettings.builder()
                 .importInboundRelations(false)
                 .importOutboundRelations(false)
@@ -197,6 +220,47 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 .build());
     }
 
+    @Override
+    public List<EntityImportResult<ExportableEntity<EntityId>>> loadAllAtVersion(TenantId tenantId, String branch, String versionId) throws Exception {
+        repositoryLock.readLock().lock();
+        try {
+            List<EntityExportData<ExportableEntity<EntityId>>> entityDataList = listFilesAtVersion(tenantId, branch, versionId).stream()
+                    .map(entityDataFilePath -> {
+                        String entityDataJson;
+                        try {
+                            entityDataJson = repository.getFileContentAtCommit(entityDataFilePath, versionId);
+                        } catch (IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
+                        return parseEntityData(entityDataJson);
+                    })
+                    .collect(Collectors.toList());
+
+            return exportImportService.importEntities(tenantId, entityDataList, EntityImportSettings.builder()
+                    .importInboundRelations(false)
+                    .importOutboundRelations(false)
+                    .updateReferencesToOtherEntities(true)
+                    .build());
+        } finally {
+            repositoryLock.readLock().unlock();
+        }
+    }
+
+    private void tryFetch() throws GitAPIException {
+        repositoryLock.readLock().lock();
+        try {
+            if (fetchLock.tryLock()) {
+                try {
+                    log.info("Fetching remote repository");
+                    repository.fetch();
+                } finally {
+                    fetchLock.unlock();
+                }
+            }
+        } finally {
+            repositoryLock.readLock().unlock();
+        }
+    }
 
 
     private String getRelativePathForEntity(EntityId entityId) {
@@ -210,6 +274,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
 
     private void checkBranch(TenantId tenantId, String branch) {
+        // TODO [viacheslav]: all branches are available by default?
         if (!getAllowedBranches(tenantId).contains(branch)) {
             throw new IllegalArgumentException("Tenant does not have access to this branch");
         }
@@ -222,9 +287,24 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 .orElse(Collections.emptySet());
     }
 
+    private EntityVersion toVersion(Commit commit) {
+        return new EntityVersion(commit.getId(), commit.getMessage(), commit.getAuthorName());
+    }
+
+    private <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> parseEntityData(String entityDataJson) {
+        return JacksonUtil.fromString(entityDataJson, new TypeReference<EntityExportData<E>>() {});
+    }
+
+
+
     @Override
     public void saveSettings(EntitiesVersionControlSettings settings) throws Exception {
-        this.repository = initRepository(settings.getGitSettings());
+        repositoryLock.writeLock().lock();
+        try {
+            this.repository = initRepository(settings.getGitSettings());
+        } finally {
+            repositoryLock.writeLock().unlock();
+        }
 
         AdminSettings adminSettings = Optional.ofNullable(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, SETTINGS_KEY))
                 .orElseGet(() -> {
@@ -242,7 +322,6 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 .map(adminSettings -> JacksonUtil.treeToValue(adminSettings.getJsonValue(), EntitiesVersionControlSettings.class))
                 .orElse(null);
     }
-
 
 
     private void checkRepository() {
@@ -263,12 +342,17 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     public void resetRepository() throws Exception {
-        if (this.repository != null) {
-            FileUtils.deleteDirectory(new File(repository.getDirectory()));
-            this.repository = null;
+        repositoryLock.writeLock().lock();
+        try {
+            if (this.repository != null) {
+                FileUtils.deleteDirectory(new File(repository.getDirectory()));
+                this.repository = null;
+            }
+            EntitiesVersionControlSettings settings = getSettings();
+            this.repository = initRepository(settings.getGitSettings());
+        } finally {
+            repositoryLock.writeLock().unlock();
         }
-        EntitiesVersionControlSettings settings = getSettings();
-        this.repository = initRepository(settings.getGitSettings());
     }
 
 }

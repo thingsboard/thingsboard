@@ -37,10 +37,17 @@ public interface EntitiesVersionControlService {
 
     List<EntityVersion> listEntityTypeVersions(TenantId tenantId, EntityType entityType, String branch, int limit) throws Exception;
 
+    List<EntityVersion> listVersions(TenantId tenantId, String branch, int limit) throws Exception;
 
-    <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> getEntityAtVersion(TenantId tenantId, I entityId, String versionId) throws Exception;
 
-    <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> loadEntityVersion(TenantId tenantId, I entityId, String versionId) throws Exception;
+    List<String> listFilesAtVersion(TenantId tenantId, String branch, String versionId) throws Exception;
+
+
+    <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> getEntityAtVersion(TenantId tenantId, I entityId, String branch, String versionId) throws Exception;
+
+    <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> loadEntityVersion(TenantId tenantId, I entityId, String branch, String versionId) throws Exception;
+
+    List<EntityImportResult<ExportableEntity<EntityId>>> loadAllAtVersion(TenantId tenantId, String branch, String versionId) throws Exception;
 
 
     void saveSettings(EntitiesVersionControlSettings settings) throws Exception;

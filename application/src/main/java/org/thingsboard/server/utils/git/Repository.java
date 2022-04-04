@@ -113,13 +113,13 @@ public class Repository {
     }
 
 
-    public List<String> listFilesAtCommit(Commit commit) throws IOException {
-        return listFilesAtCommit(commit, null);
+    public List<String> listFilesAtCommit(String commitId) throws IOException {
+        return listFilesAtCommit(commitId, null);
     }
 
-    public List<String> listFilesAtCommit(Commit commit, String path) throws IOException {
+    public List<String> listFilesAtCommit(String commitId, String path) throws IOException {
         List<String> files = new ArrayList<>();
-        RevCommit revCommit = resolveCommit(commit.getId());
+        RevCommit revCommit = resolveCommit(commitId);
         try (TreeWalk treeWalk = new TreeWalk(git.getRepository())) {
             treeWalk.reset(revCommit.getTree().getId());
             if (StringUtils.isNotEmpty(path)) {
