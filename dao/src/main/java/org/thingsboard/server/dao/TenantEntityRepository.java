@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.sync.exporting;
+package org.thingsboard.server.dao;
 
-import org.thingsboard.server.common.data.ExportableEntity;
-import org.thingsboard.server.common.data.HasTenantId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.HasId;
-import org.thingsboard.server.common.data.id.TenantId;
+import java.util.UUID;
 
-public interface ExportableEntitiesService extends TenantEntitiesService {
+public interface TenantEntityRepository<D> {
 
-    <E extends ExportableEntity<I>, I extends EntityId> E findEntityByExternalId(TenantId tenantId, I externalId);
+    D findByTenantIdAndId(UUID tenantId, UUID id);
+
+    Long countByTenantId(UUID tenantId);
 
 }

@@ -15,16 +15,12 @@
  */
 package org.thingsboard.server.dao;
 
-import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ExportableEntity;
 
 import java.util.UUID;
 
-public interface ExportableEntityDao<T> {
+public interface ExportableEntityDao<T extends ExportableEntity<?>> extends TenantEntityDao<T> {
 
     T findByTenantIdAndExternalId(UUID tenantId, UUID externalId);
-
-    T findByTenantIdAndId(UUID tenantId, UUID id);
-
-    EntityType getEntityType();
 
 }

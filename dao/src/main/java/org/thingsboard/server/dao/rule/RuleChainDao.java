@@ -30,7 +30,7 @@ import java.util.UUID;
 /**
  * Created by igor on 3/12/18.
  */
-public interface RuleChainDao extends Dao<RuleChain>, TenantEntityDao, ExportableEntityDao<RuleChain> {
+public interface RuleChainDao extends Dao<RuleChain>, ExportableEntityDao<RuleChain> {
 
     /**
      * Find rule chains by tenantId and page link.

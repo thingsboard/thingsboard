@@ -20,9 +20,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.ExportableEntityDao;
+import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.exporting.EntityExportService;
 import org.thingsboard.server.service.sync.exporting.EntityExportSettings;
@@ -37,7 +40,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -46,7 +48,7 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
 
     private final Map<EntityType, EntityExportService<?, ?, ?>> exportServices = new HashMap<>();
     private final Map<EntityType, EntityImportService<?, ?, ?>> importServices = new HashMap<>();
-    private final Map<EntityType, ExportableEntityDao<?>> daos = new HashMap<>();
+    private final Map<EntityType, TenantEntityDao<?>> daos = new HashMap<>();
 
     protected static final List<EntityType> SUPPORTED_ENTITY_TYPES = List.of(
             EntityType.CUSTOMER, EntityType.ASSET, EntityType.RULE_CHAIN,
@@ -85,16 +87,22 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
 
 
     @Override
-    public <E extends ExportableEntity<I>, I extends EntityId> E findEntityById(TenantId tenantId, I id) {
-        ExportableEntityDao<E> dao = getDao(id.getEntityType());
+    public <E extends HasId<I> & HasTenantId, I extends EntityId> E findEntityById(TenantId tenantId, I id) {
+        TenantEntityDao<E> dao = (TenantEntityDao<E>) getDao(id.getEntityType());
         return dao.findByTenantIdAndId(tenantId.getId(), id.getId());
     }
 
     @Override
     public <E extends ExportableEntity<I>, I extends EntityId> E findEntityByExternalId(TenantId tenantId, I externalId) {
-        ExportableEntityDao<E> dao = getDao(externalId.getEntityType());
-        return Optional.ofNullable(dao.findByTenantIdAndExternalId(tenantId.getId(), externalId.getId()))
-                .orElseGet(() -> findEntityById(tenantId, externalId));
+        EntityType entityType = externalId.getEntityType();
+        if (SUPPORTED_ENTITY_TYPES.contains(entityType)) {
+            ExportableEntityDao<E> dao = (ExportableEntityDao<E>) getDao(entityType);
+            E entity = dao.findByTenantIdAndExternalId(tenantId.getId(), externalId.getId());
+            if (entity != null) {
+                return entity;
+            }
+        }
+        return findEntityById(tenantId, externalId);
     }
 
 
@@ -114,15 +122,14 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
         return (EntityImportService<I, E, D>) importServices.get(entityType);
     }
 
-    @SuppressWarnings("unchecked")
-    private <E> ExportableEntityDao<E> getDao(EntityType entityType) {
-        return (ExportableEntityDao<E>) daos.get(entityType);
+    private TenantEntityDao<?> getDao(EntityType entityType) {
+        return daos.get(entityType);
     }
 
     @Autowired
     private void setServices(Collection<EntityExportService<?, ?, ?>> exportServices,
                              Collection<EntityImportService<?, ?, ?>> importServices,
-                             Collection<ExportableEntityDao<?>> daos) {
+                             Collection<TenantEntityDao<?>> daos) {
         exportServices.forEach(entityExportService -> {
             this.exportServices.put(entityExportService.getEntityType(), entityExportService);
         });

@@ -27,7 +27,9 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.exporting.data.DashboardExportData;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -49,8 +51,8 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
                 dashboardService.assignDashboardToCustomer(tenantId, dashboard.getId(), customerInfo.getCustomerId());
             }
         } else {
-            Set<CustomerId> existingAssignedCustomers = dashboardService.findDashboardById(tenantId, dashboard.getId()).getAssignedCustomers().stream()
-                    .map(ShortCustomerInfo::getCustomerId).collect(Collectors.toSet());
+            Set<CustomerId> existingAssignedCustomers = Optional.ofNullable(dashboardService.findDashboardById(tenantId, dashboard.getId()).getAssignedCustomers())
+                    .orElse(Collections.emptySet()).stream().map(ShortCustomerInfo::getCustomerId).collect(Collectors.toSet());
             Set<CustomerId> newAssignedCustomers = idProvider.get(tenantId, Dashboard::getAssignedCustomers, ShortCustomerInfo::getCustomerId, ShortCustomerInfo::setCustomerId).stream()
                     .map(ShortCustomerInfo::getCustomerId).collect(Collectors.toSet());
 

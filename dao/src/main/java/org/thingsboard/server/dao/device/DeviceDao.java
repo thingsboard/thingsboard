@@ -36,7 +36,7 @@ import java.util.UUID;
  * The Interface DeviceDao.
  *
  */
-public interface DeviceDao extends Dao<Device>, TenantEntityDao, ExportableEntityDao<Device> {
+public interface DeviceDao extends Dao<Device>, ExportableEntityDao<Device> {
 
     /**
      * Find device info by id.

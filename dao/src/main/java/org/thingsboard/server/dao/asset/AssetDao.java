@@ -34,7 +34,7 @@ import java.util.UUID;
  * The Interface AssetDao.
  *
  */
-public interface AssetDao extends Dao<Asset>, TenantEntityDao, ExportableEntityDao<Asset> {
+public interface AssetDao extends Dao<Asset>, ExportableEntityDao<Asset> {
 
     /**
      * Find asset info by id.

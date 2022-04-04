@@ -24,7 +24,7 @@ import org.thingsboard.server.dao.TenantEntityDao;
 /**
  * The Interface DashboardDao.
  */
-public interface DashboardDao extends Dao<Dashboard>, TenantEntityDao, ExportableEntityDao<Dashboard> {
+public interface DashboardDao extends Dao<Dashboard>, ExportableEntityDao<Dashboard> {
 
     /**
      * Save or update dashboard object

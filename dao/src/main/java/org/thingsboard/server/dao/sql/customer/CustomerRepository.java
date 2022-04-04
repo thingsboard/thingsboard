@@ -38,5 +38,4 @@ public interface CustomerRepository extends JpaRepository<CustomerEntity, UUID>,
 
     CustomerEntity findByTenantIdAndTitle(UUID tenantId, String title);
 
-    Long countByTenantId(UUID tenantId);
 }

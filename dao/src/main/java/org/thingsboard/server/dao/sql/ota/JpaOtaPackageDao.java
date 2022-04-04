@@ -19,8 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.ota.OtaPackageDao;
 import org.thingsboard.server.dao.model.sql.OtaPackageEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
@@ -48,4 +50,20 @@ public class JpaOtaPackageDao extends JpaAbstractSearchTextDao<OtaPackageEntity,
     public Long sumDataSizeByTenantId(TenantId tenantId) {
         return otaPackageRepository.sumDataSizeByTenantId(tenantId.getId());
     }
+
+    @Override
+    public Long countByTenantId(TenantId tenantId) {
+        return otaPackageRepository.countByTenantId(tenantId.getId());
+    }
+
+    @Override
+    public OtaPackage findByTenantIdAndId(UUID tenantId, UUID id) {
+        return DaoUtil.getData(otaPackageRepository.findByTenantIdAndId(tenantId, id));
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.OTA_PACKAGE;
+    }
+
 }

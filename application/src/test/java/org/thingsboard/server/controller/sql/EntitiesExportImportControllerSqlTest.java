@@ -31,7 +31,8 @@ import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -50,8 +51,8 @@ import org.thingsboard.server.service.sync.exporting.data.RuleChainExportData;
 import org.thingsboard.server.service.sync.importing.EntityImportResult;
 
 import java.util.List;
-import java.util.function.Consumer;
 
+import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -100,105 +101,278 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
         tenantService.deleteTenant(tenantId2);
     }
 
+
     @Test
-    public void testExportImport_singleEntityOneByOne_betweenTenants() throws Exception {
-        Asset asset = createAsset(tenantId1, null, "AB", "Asset of tenant 1");
-        testExportImportBetweenTenants(asset, importedAsset -> {
-            assertThat(importedAsset.getName()).isEqualTo(asset.getName());
-            assertThat(importedAsset.getType()).isEqualTo(asset.getType());
-            assertThat(importedAsset.getLabel()).isEqualTo(asset.getLabel());
-            assertThat(importedAsset.getAdditionalInfo()).isEqualTo(asset.getAdditionalInfo());
-        });
-
-        Customer customer = createCustomer(tenantId1, "Customer of tenant 1");
-        testExportImportBetweenTenants(customer, importedCustomer -> {
-            assertThat(importedCustomer.getTitle()).isEqualTo(customer.getTitle());
-            assertThat(importedCustomer.getCountry()).isEqualTo(customer.getCountry());
-            assertThat(importedCustomer.getAddress()).isEqualTo(customer.getAddress());
-            assertThat(importedCustomer.getEmail()).isEqualTo(customer.getEmail());
-        });
-
-        DeviceProfile deviceProfile = createDeviceProfile(tenantId1, "Device profile of tenant 1");
-        DeviceProfileId importedDeviceProfileId = testExportImportBetweenTenants(deviceProfile, importedDeviceProfile -> {
-            assertThat(importedDeviceProfile.getName()).isEqualTo(deviceProfile.getName());
-            assertThat(importedDeviceProfile.getType()).isEqualTo(deviceProfile.getType());
-            assertThat(importedDeviceProfile.getTransportType()).isEqualTo(deviceProfile.getTransportType());
-            assertThat(importedDeviceProfile.getProfileData()).isEqualTo(deviceProfile.getProfileData());
-            assertThat(importedDeviceProfile.getDescription()).isEqualTo(deviceProfile.getDescription());
-        }).getSavedEntity().getId();
-
-        Device device = createDevice(tenantId1, null, deviceProfile.getId(), "Device of tenant 1");
-        DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId1, device.getId());
-        this.<Device, DeviceExportData>testExportImportBetweenTenants(device, deviceExportData -> {
-            assertThat(deviceExportData.getCredentials()).isEqualTo(credentials);
-        }, importedDevice -> {
-            assertThat(importedDevice.getName()).isEqualTo(device.getName());
-            assertThat(importedDevice.getType()).isEqualTo(device.getType());
-            assertThat(importedDevice.getDeviceData()).isEqualTo(device.getDeviceData());
-            assertThat(importedDevice.getDeviceProfileId()).isEqualTo(importedDeviceProfileId);
-            assertThat(importedDevice.getLabel()).isEqualTo(device.getLabel());
-
-            DeviceCredentials importedCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId2, importedDevice.getId());
-            assertThat(importedCredentials.getCredentialsId()).isEqualTo(credentials.getCredentialsId());
-            assertThat(importedCredentials.getCredentialsValue()).isEqualTo(credentials.getCredentialsValue());
-            assertThat(importedCredentials.getCredentialsType()).isEqualTo(credentials.getCredentialsType());
-        });
-
-        RuleChain ruleChain = createRuleChain(tenantId1, "Rule chain of tenant 1");
-        RuleChainMetaData metaData = ruleChainService.loadRuleChainMetaData(tenantId1, ruleChain.getId());
-        this.<RuleChain, RuleChainExportData>testExportImportBetweenTenants(ruleChain, ruleChainExportData -> {
-            assertThat(ruleChainExportData.getMetaData()).isEqualTo(metaData);
-        }, importedRuleChain -> {
-            assertThat(importedRuleChain.getType()).isEqualTo(ruleChain.getType());
-            assertThat(importedRuleChain.getName()).isEqualTo(ruleChain.getName());
-            assertThat(importedRuleChain.isDebugMode()).isEqualTo(ruleChain.isDebugMode());
-            assertThat(importedRuleChain.getConfiguration()).isEqualTo(ruleChain.getConfiguration());
-            RuleChainMetaData importedMetaData = ruleChainService.loadRuleChainMetaData(tenantId2, importedRuleChain.getId());
-            assertThat(importedMetaData.getConnections()).isEqualTo(metaData.getConnections());
-            assertThat(importedMetaData.getFirstNodeIndex()).isEqualTo(metaData.getFirstNodeIndex());
-            for (int i = 0; i < metaData.getNodes().size(); i++) {
-                RuleNode initialNode = metaData.getNodes().get(i);
-                RuleNode importedNode = importedMetaData.getNodes().get(i);
-                assertThat(importedNode.getName()).isEqualTo(initialNode.getName());
-                assertThat(importedNode.getType()).isEqualTo(initialNode.getType());
-                assertThat(importedNode.getConfiguration()).isEqualTo(initialNode.getConfiguration());
-                assertThat(importedNode.getAdditionalInfo()).isEqualTo(initialNode.getAdditionalInfo());
-            }
-        });
-
-        Dashboard dashboard = createDashboard(tenantId1, null, "Dashboard of tenant 1");
-        testExportImportBetweenTenants(dashboard, importedDashboard -> {
-            assertThat(importedDashboard.getTitle()).isEqualTo(dashboard.getTitle());
-            assertThat(importedDashboard.getConfiguration()).isEqualTo(dashboard.getConfiguration());
-            assertThat(importedDashboard.getImage()).isEqualTo(dashboard.getImage());
-            assertThat(importedDashboard.isMobileHide()).isEqualTo(dashboard.isMobileHide());
-        });
-    }
-
-    private <E extends ExportableEntity<?>, D extends EntityExportData<E>> EntityImportResult<E> testExportImportBetweenTenants(E entity, Consumer<D> exportDataRequirements, Consumer<E> importedEntityRequirements) throws Exception {
+    public void testExportImportSingleAsset_betweenTenants() throws Exception {
         logInAsTenantAdmin1();
-        D exportData = readResponse(doPost("/api/entities/export/" + entity.getId().getEntityType() + "/" + entity.getId())
-                .andExpect(status().isOk()), new TypeReference<D>() {});
-        assertThat(exportData.getEntity()).isEqualTo(entity);
-        exportDataRequirements.accept(exportData);
+        Asset asset = createAsset(tenantId1, null, "AB", "Asset of tenant 1");
+        EntityExportData<Asset> exportData = exportSingleEntity(asset.getId());
+        assertThat(exportData.getEntity()).isEqualTo(asset);
 
         logInAsTenantAdmin2();
-        EntityImportResult<E> importResult = importEntities(List.of(exportData)).get(0);
+        EntityImportResult<Asset> importResult = importEntities(List.of(exportData)).get(0);
 
-        E importedEntity = (E) exportableEntitiesService.findEntityById(tenantId2, importResult.getSavedEntity().getId());
-        assertThat(importedEntity).isNotNull();
-        assertThat(importResult.getSavedEntity()).isEqualTo(importedEntity);
-        assertThat(importResult.getOldEntity()).isNull();
-
-        assertThat(importedEntity.getId()).isNotEqualTo(entity.getId());
-        assertThat(importedEntity.getExternalId()).isEqualTo(entity.getId());
-        assertThat(importedEntity.getTenantId()).isEqualTo(tenantId2);
-        importedEntityRequirements.accept(importedEntity);
-        return importResult;
+        checkImportedEntity(tenantId1, asset, tenantId2, importResult);
+        checkImportedAssetData(asset, importResult.getSavedEntity());
     }
 
-    private <E extends ExportableEntity<?>> EntityImportResult<E> testExportImportBetweenTenants(E entity, Consumer<E> importedEntityRequirements) throws Exception {
-        return testExportImportBetweenTenants(entity, exportData -> {}, importedEntityRequirements);
+    @Test
+    public void testExportImportSingleAsset_sameTenant() throws Exception {
+        logInAsTenantAdmin1();
+        Asset asset = createAsset(tenantId1, null, "AB", "Asset v1.0");
+        EntityExportData<Asset> exportData = exportSingleEntity(asset.getId());
+
+        EntityImportResult<Asset> importResult = importEntities(List.of(exportData)).get(0);
+
+        checkImportedEntity(tenantId1, asset, tenantId1, importResult);
+        checkImportedAssetData(asset, importResult.getSavedEntity());
+    }
+
+    @Test
+    public void testExportImportAsset_withCustomer_betweenTenants() throws Exception {
+        logInAsTenantAdmin1();
+        Customer customer = createCustomer(tenantId1, "My customer");
+        Asset asset = createAsset(tenantId1, customer.getId(), "AB", "My asset");
+
+        EntityExportData<Customer> customerExportData = exportSingleEntity(customer.getId());
+        EntityExportData<Asset> assetExportData = exportSingleEntity(asset.getId());
+
+        logInAsTenantAdmin2();
+        Customer importedCustomer = importEntities(List.of(customerExportData)).get(0).getSavedEntity();
+        Asset importedAsset = importEntities(List.of(assetExportData)).get(0).getSavedEntity();
+
+        assertThat(importedAsset.getCustomerId()).isEqualTo(importedCustomer.getId());
+    }
+
+    @Test
+    public void testExportImportAsset_withCustomer_sameTenant() throws Exception {
+        logInAsTenantAdmin1();
+        Customer customer = createCustomer(tenantId1, "My customer");
+        Asset asset = createAsset(tenantId1, customer.getId(), "AB", "My asset");
+
+        Asset importedAsset = this.<Asset>importEntities(List.of(exportSingleEntity(asset.getId()))).get(0).getSavedEntity();
+
+        assertThat(importedAsset.getCustomerId()).isEqualTo(asset.getCustomerId());
+    }
+
+    private void checkImportedAssetData(Asset initialAsset, Asset importedAsset) {
+        assertThat(importedAsset.getName()).isEqualTo(initialAsset.getName());
+        assertThat(importedAsset.getType()).isEqualTo(initialAsset.getType());
+        assertThat(importedAsset.getLabel()).isEqualTo(initialAsset.getLabel());
+        assertThat(importedAsset.getAdditionalInfo()).isEqualTo(initialAsset.getAdditionalInfo());
+    }
+
+
+    @Test
+    public void testExportImportSingleCustomer_betweenTenants() throws Exception {
+        logInAsTenantAdmin1();
+        Customer customer = createCustomer(tenantAdmin1.getTenantId(), "Customer of tenant 1");
+        EntityExportData<Customer> exportData = exportSingleEntity(customer.getId());
+        assertThat(exportData.getEntity()).isEqualTo(customer);
+
+        logInAsTenantAdmin2();
+        EntityImportResult<Customer> importResult = importEntities(List.of(exportData)).get(0);
+
+        checkImportedEntity(tenantId1, customer, tenantId2, importResult);
+        checkImportedCustomerData(customer, importResult.getSavedEntity());
+    }
+
+    @Test
+    public void testExportImportSingleCustomer_sameTenant() throws Exception {
+        logInAsTenantAdmin1();
+        Customer customer = createCustomer(tenantAdmin1.getTenantId(), "Customer v1.0");
+        EntityExportData<Customer> exportData = exportSingleEntity(customer.getId());
+
+        EntityImportResult<Customer> importResult = importEntities(List.of(exportData)).get(0);
+
+        checkImportedEntity(tenantId1, customer, tenantId1, importResult);
+        checkImportedCustomerData(customer, importResult.getSavedEntity());
+    }
+
+    private void checkImportedCustomerData(Customer initialCustomer, Customer importedCustomer) {
+        assertThat(importedCustomer.getTitle()).isEqualTo(initialCustomer.getTitle());
+        assertThat(importedCustomer.getCountry()).isEqualTo(initialCustomer.getCountry());
+        assertThat(importedCustomer.getAddress()).isEqualTo(initialCustomer.getAddress());
+        assertThat(importedCustomer.getEmail()).isEqualTo(initialCustomer.getEmail());
+    }
+
+
+    @Test
+    public void testExportImportDeviceWithProfile_betweenTenants() throws Exception {
+        logInAsTenantAdmin1();
+        DeviceProfile deviceProfile = createDeviceProfile(tenantId1, "Device profile of tenant 1");
+        Device device = createDevice(tenantId1, null, deviceProfile.getId(), "Device of tenant 1");
+        DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId1, device.getId());
+
+        EntityExportData<DeviceProfile> profileExportData = exportSingleEntity(deviceProfile.getId());
+        assertThat(profileExportData.getEntity()).isEqualTo(deviceProfile);
+
+        EntityExportData<Device> deviceExportData = exportSingleEntity(device.getId());
+        assertThat(deviceExportData.getEntity()).isEqualTo(device);
+        assertThat(((DeviceExportData) deviceExportData).getCredentials()).isEqualTo(credentials);
+        DeviceCredentials exportedCredentials = ((DeviceExportData) deviceExportData).getCredentials();
+        exportedCredentials.setCredentialsId(credentials.getCredentialsId() + "a");
+
+        logInAsTenantAdmin2();
+        EntityImportResult<DeviceProfile> profileImportResult = importEntities(List.of(profileExportData)).get(0);
+        checkImportedEntity(tenantId1, deviceProfile, tenantId2, profileImportResult);
+        checkImportedDeviceProfileData(deviceProfile, profileImportResult.getSavedEntity());
+
+
+        EntityImportResult<Device> deviceImportResult = importEntities(List.of(deviceExportData)).get(0);
+        Device importedDevice = deviceImportResult.getSavedEntity();
+        checkImportedEntity(tenantId1, device, tenantId2, deviceImportResult);
+        checkImportedDeviceData(device, importedDevice);
+
+        assertThat(importedDevice.getDeviceProfileId()).isEqualTo(profileImportResult.getSavedEntity().getId());
+
+        DeviceCredentials importedCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId2, importedDevice.getId());
+        assertThat(importedCredentials.getId()).isNotEqualTo(credentials.getId());
+        assertThat(importedCredentials.getCredentialsId()).isEqualTo(exportedCredentials.getCredentialsId());
+        assertThat(importedCredentials.getCredentialsValue()).isEqualTo(credentials.getCredentialsValue());
+        assertThat(importedCredentials.getCredentialsType()).isEqualTo(credentials.getCredentialsType());
+    }
+
+    @Test
+    public void testExportImportDevice_sameTenant() throws Exception {
+        logInAsTenantAdmin1();
+        DeviceProfile deviceProfile = createDeviceProfile(tenantId1, "Device profile v1.0");
+        Device device = createDevice(tenantId1, null, deviceProfile.getId(), "Device v1.0");
+        DeviceCredentials credentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId1, device.getId());
+
+        EntityExportData<Device> deviceExportData = exportSingleEntity(device.getId());
+
+        EntityImportResult<Device> importResult = importEntities(List.of(deviceExportData)).get(0);
+        Device importedDevice = importResult.getSavedEntity();
+
+        checkImportedEntity(tenantId1, device, tenantId1, importResult);
+        assertThat(importedDevice.getDeviceProfileId()).isEqualTo(device.getDeviceProfileId());
+        assertThat(deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId1, device.getId())).isEqualTo(credentials);
+    }
+
+    private void checkImportedDeviceProfileData(DeviceProfile initialProfile, DeviceProfile importedProfile) {
+        assertThat(initialProfile.getName()).isEqualTo(importedProfile.getName());
+        assertThat(initialProfile.getType()).isEqualTo(importedProfile.getType());
+        assertThat(initialProfile.getTransportType()).isEqualTo(importedProfile.getTransportType());
+        assertThat(initialProfile.getProfileData()).isEqualTo(importedProfile.getProfileData());
+        assertThat(initialProfile.getDescription()).isEqualTo(importedProfile.getDescription());
+    }
+
+    private void checkImportedDeviceData(Device initialDevice, Device importedDevice) {
+        assertThat(importedDevice.getName()).isEqualTo(initialDevice.getName());
+        assertThat(importedDevice.getType()).isEqualTo(initialDevice.getType());
+        assertThat(importedDevice.getDeviceData()).isEqualTo(initialDevice.getDeviceData());
+        assertThat(importedDevice.getLabel()).isEqualTo(initialDevice.getLabel());
+    }
+
+
+    @Test
+    public void testExportImportSingleRuleChain_betweenTenants() throws Exception {
+        logInAsTenantAdmin1();
+        RuleChain ruleChain = createRuleChain(tenantId1, "Rule chain of tenant 1");
+        RuleChainMetaData metaData = ruleChainService.loadRuleChainMetaData(tenantId1, ruleChain.getId());
+
+        EntityExportData<RuleChain> exportData = exportSingleEntity(ruleChain.getId());
+        assertThat(exportData.getEntity()).isEqualTo(ruleChain);
+        assertThat(((RuleChainExportData) exportData).getMetaData()).isEqualTo(metaData);
+
+        logInAsTenantAdmin2();
+        EntityImportResult<RuleChain> importResult = importEntities(List.of(exportData)).get(0);
+        RuleChain importedRuleChain = importResult.getSavedEntity();
+        RuleChainMetaData importedMetaData = ruleChainService.loadRuleChainMetaData(tenantId2, importedRuleChain.getId());
+
+        checkImportedEntity(tenantId1, ruleChain, tenantId2, importResult);
+        checkImportedRuleChainData(ruleChain, metaData, importedRuleChain, importedMetaData);
+    }
+
+    @Test
+    public void testExportImportSingleRuleChain_sameTenant() throws Exception {
+        logInAsTenantAdmin1();
+        RuleChain ruleChain = createRuleChain(tenantId1, "Rule chain v1.0");
+        RuleChainMetaData metaData = ruleChainService.loadRuleChainMetaData(tenantId1, ruleChain.getId());
+
+        EntityExportData<RuleChain> exportData = exportSingleEntity(ruleChain.getId());
+
+        EntityImportResult<RuleChain> importResult = importEntities(List.of(exportData)).get(0);
+        RuleChain importedRuleChain = importResult.getSavedEntity();
+        RuleChainMetaData importedMetaData = ruleChainService.loadRuleChainMetaData(tenantId1, importedRuleChain.getId());
+
+        checkImportedEntity(tenantId1, ruleChain, tenantId1, importResult);
+        checkImportedRuleChainData(ruleChain, metaData, importedRuleChain, importedMetaData);
+    }
+
+    private void checkImportedRuleChainData(RuleChain initialRuleChain, RuleChainMetaData initialMetaData, RuleChain importedRuleChain, RuleChainMetaData importedMetaData) {
+        assertThat(importedRuleChain.getType()).isEqualTo(initialRuleChain.getType());
+        assertThat(importedRuleChain.getName()).isEqualTo(initialRuleChain.getName());
+        assertThat(importedRuleChain.isDebugMode()).isEqualTo(initialRuleChain.isDebugMode());
+        assertThat(importedRuleChain.getConfiguration()).isEqualTo(initialRuleChain.getConfiguration());
+
+        assertThat(importedMetaData.getConnections()).isEqualTo(initialMetaData.getConnections());
+        assertThat(importedMetaData.getFirstNodeIndex()).isEqualTo(initialMetaData.getFirstNodeIndex());
+        for (int i = 0; i < initialMetaData.getNodes().size(); i++) {
+            RuleNode initialNode = initialMetaData.getNodes().get(i);
+            RuleNode importedNode = importedMetaData.getNodes().get(i);
+            assertThat(importedNode.getRuleChainId()).isEqualTo(importedRuleChain.getId());
+            assertThat(importedNode.getName()).isEqualTo(initialNode.getName());
+            assertThat(importedNode.getType()).isEqualTo(initialNode.getType());
+            assertThat(importedNode.getConfiguration()).isEqualTo(initialNode.getConfiguration());
+            assertThat(importedNode.getAdditionalInfo()).isEqualTo(initialNode.getAdditionalInfo());
+        }
+    }
+
+
+    @Test
+    public void testExportImportSingleDashboard_betweenTenants() throws Exception {
+        logInAsTenantAdmin1();
+        Dashboard dashboard = createDashboard(tenantAdmin1.getTenantId(), null, "Dashboard of tenant 1");
+
+        EntityExportData<Dashboard> exportData = exportSingleEntity(dashboard.getId());
+        assertThat(exportData.getEntity()).isEqualTo(dashboard);
+
+        logInAsTenantAdmin2();
+        EntityImportResult<Dashboard> importResult = importEntities(List.of(exportData)).get(0);
+        checkImportedEntity(tenantId1, dashboard, tenantId2, importResult);
+        checkImportedDashboardData(dashboard, importResult.getSavedEntity());
+    }
+
+    @Test
+    public void testExportImportSingleDashboard_sameTenant() throws Exception {
+        logInAsTenantAdmin1();
+        Dashboard dashboard = createDashboard(tenantAdmin1.getTenantId(), null, "Dashboard v1.0");
+
+        EntityExportData<Dashboard> exportData = exportSingleEntity(dashboard.getId());
+
+        EntityImportResult<Dashboard> importResult = importEntities(List.of(exportData)).get(0);
+        checkImportedEntity(tenantId1, dashboard, tenantId1, importResult);
+        checkImportedDashboardData(dashboard, importResult.getSavedEntity());
+    }
+
+    private void checkImportedDashboardData(Dashboard initialDashboard, Dashboard importedDashboard) {
+        assertThat(importedDashboard.getTitle()).isEqualTo(initialDashboard.getTitle());
+        assertThat(importedDashboard.getConfiguration()).isEqualTo(initialDashboard.getConfiguration());
+        assertThat(importedDashboard.getImage()).isEqualTo(initialDashboard.getImage());
+        assertThat(importedDashboard.isMobileHide()).isEqualTo(initialDashboard.isMobileHide());
+        if (initialDashboard.getAssignedCustomers() != null) {
+            assertThat(importedDashboard.getAssignedCustomers()).containsAll(initialDashboard.getAssignedCustomers());
+        }
+    }
+
+
+    private <E extends ExportableEntity<?>> void checkImportedEntity(TenantId tenantId1, E initialEntity, TenantId tenantId2, EntityImportResult<E> importResult) {
+        E importedEntity = importResult.getSavedEntity();
+
+        assertThat(initialEntity.getTenantId()).isEqualTo(tenantId1);
+        assertThat(importedEntity.getTenantId()).isEqualTo(tenantId2);
+
+        assertThat(importedEntity.getExternalId()).isEqualTo(initialEntity.getId());
+
+        boolean sameTenant = tenantId1.equals(tenantId2);
+        if (!sameTenant) {
+            assertThat(importedEntity.getId()).isNotEqualTo(initialEntity.getId());
+        } else {
+            assertThat(importedEntity.getId()).isEqualTo(initialEntity.getId());
+            assertThat(importResult.getOldEntity()).isEqualTo(initialEntity);
+        }
     }
 
 
@@ -216,6 +390,12 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
             throw new AssertionError(readResponse(resultActions, String.class), e);
         }
     }
+
+    private <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportSingleEntity(I entityId) throws Exception {
+        return readResponse(doPost("/api/entities/export/" + entityId.getEntityType() + "/" + entityId.getId().toString())
+                .andExpect(status().isOk()), new TypeReference<EntityExportData<E>>() {});
+    }
+
 
     private void logInAsTenantAdmin1() throws Exception {
         login(tenantAdmin1.getEmail(), "12345678");
