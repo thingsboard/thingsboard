@@ -50,7 +50,7 @@ export class QrCodeWidgetSettingsComponent extends WidgetSettingsComponent {
     this.qrCodeWidgetSettingsForm = this.fb.group({
       qrCodeTextPattern: [settings.qrCodeTextPattern, [Validators.required]],
       useQrCodeTextFunction: [settings.useQrCodeTextFunction, [Validators.required]],
-      qrCodeTextFunction: [settings.qrCodeTextFunction, []]
+      qrCodeTextFunction: [settings.qrCodeTextFunction, [Validators.required]]
     });
   }
 

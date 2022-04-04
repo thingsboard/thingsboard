@@ -26,7 +26,8 @@
       {{ 'widgets.qr-code.qr-code-text-pattern-required' | translate }}
     </mat-error>
   </mat-form-field>
-  <tb-js-func [fxShow]="qrCodeWidgetSettingsForm.get('useQrCodeTextFunction').value"
+  <tb-js-func required
+              [fxShow]="qrCodeWidgetSettingsForm.get('useQrCodeTextFunction').value"
               formControlName="qrCodeTextFunction"
               [globalVariables]="functionScopeVariables"
               [functionArgs]="['data']"

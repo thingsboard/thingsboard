@@ -44,6 +44,9 @@ import {
 import {
   EntitiesHierarchyWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/entities-hierarchy-widget-settings.component';
+import {
+  HtmlCardWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/html-card-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -57,7 +60,8 @@ import {
     LabelWidgetSettingsComponent,
     SimpleCardWidgetSettingsComponent,
     DashboardStateWidgetSettingsComponent,
-    EntitiesHierarchyWidgetSettingsComponent
+    EntitiesHierarchyWidgetSettingsComponent,
+    HtmlCardWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -75,7 +79,8 @@ import {
     LabelWidgetSettingsComponent,
     SimpleCardWidgetSettingsComponent,
     DashboardStateWidgetSettingsComponent,
-    EntitiesHierarchyWidgetSettingsComponent
+    EntitiesHierarchyWidgetSettingsComponent,
+    HtmlCardWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -90,5 +95,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-label-widget-settings': LabelWidgetSettingsComponent,
   'tb-simple-card-widget-settings': SimpleCardWidgetSettingsComponent,
   'tb-dashboard-state-widget-settings': DashboardStateWidgetSettingsComponent,
-  'tb-entities-hierarchy-widget-settings': EntitiesHierarchyWidgetSettingsComponent
+  'tb-entities-hierarchy-widget-settings': EntitiesHierarchyWidgetSettingsComponent,
+  'tb-html-card-widget-settings': HtmlCardWidgetSettingsComponent
 };

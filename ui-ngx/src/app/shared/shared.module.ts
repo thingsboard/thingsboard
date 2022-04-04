@@ -159,6 +159,7 @@ import { HELP_MARKDOWN_COMPONENT_TOKEN, SHARED_MODULE_TOKEN } from '@shared/comp
 import { TbMarkdownComponent } from '@shared/components/markdown.component';
 import { ProtobufContentComponent } from '@shared/components/protobuf-content.component';
 import { CssComponent } from '@shared/components/css.component';
+import { HtmlComponent } from '@shared/components/html.component';
 import { SafePipe } from '@shared/pipe/safe.pipe';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
@@ -240,6 +241,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     JsonContentComponent,
     JsFuncComponent,
     CssComponent,
+    HtmlComponent,
     FabTriggerDirective,
     FabActionsDirective,
     FabToolbarComponent,
@@ -389,6 +391,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     JsonContentComponent,
     JsFuncComponent,
     CssComponent,
+    HtmlComponent,
     FabTriggerDirective,
     FabActionsDirective,
     FabToolbarComponent,

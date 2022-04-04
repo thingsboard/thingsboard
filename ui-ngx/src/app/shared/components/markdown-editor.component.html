@@ -18,7 +18,7 @@
 <div class="markdown-content" [ngClass]="{'tb-edit-mode': !readonly}"
      tb-fullscreen [fullscreen]="fullscreen" (fullscreenChanged)="onFullscreen()">
   <div *ngIf="label" fxLayout="row" fxLayoutAlign="start center" style="height: 40px;">
-    <label class="tb-title no-padding" [ngClass]="{'tb-required': required}">{{ label }}</label>
+    <label class="tb-title no-padding" [ngClass]="{'tb-error': required && !markdownValue, 'tb-required': required}">{{ label }}</label>
   </div>
   <div [fxShow]="!readonly && !disabled" class="markdown-content-editor">
     <div class="buttons-panel">

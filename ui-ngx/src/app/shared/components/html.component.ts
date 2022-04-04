@@ -35,32 +35,32 @@ import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { ResizeObserver } from '@juggle/resize-observer';
-import { beautifyCss } from '@shared/models/beautify.models';
+import { beautifyHtml } from '@shared/models/beautify.models';
 
 @Component({
-  selector: 'tb-css',
-  templateUrl: './css.component.html',
-  styleUrls: ['./css.component.scss'],
+  selector: 'tb-html',
+  templateUrl: './html.component.html',
+  styleUrls: ['./html.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CssComponent),
+      useExisting: forwardRef(() => HtmlComponent),
       multi: true
     },
     {
       provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => CssComponent),
+      useExisting: forwardRef(() => HtmlComponent),
       multi: true,
     }
   ],
   encapsulation: ViewEncapsulation.None
 })
-export class CssComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
+export class HtmlComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
 
-  @ViewChild('cssEditor', {static: true})
-  cssEditorElmRef: ElementRef;
+  @ViewChild('htmlEditor', {static: true})
+  htmlEditorElmRef: ElementRef;
 
-  private cssEditor: Ace.Editor;
+  private htmlEditor: Ace.Editor;
   private editorsResizeCaf: CancelAnimationFrame;
   private editorResize$: ResizeObserver;
   private ignoreChange = false;
@@ -97,9 +97,9 @@ export class CssComponent implements OnInit, OnDestroy, ControlValueAccessor, Va
   }
 
   ngOnInit(): void {
-    const editorElement = this.cssEditorElmRef.nativeElement;
+    const editorElement = this.htmlEditorElmRef.nativeElement;
     let editorOptions: Partial<Ace.EditorOptions> = {
-      mode: 'ace/mode/css',
+      mode: 'ace/mode/html',
       showGutter: true,
       showPrintMargin: true,
       readOnly: this.disabled
@@ -114,18 +114,18 @@ export class CssComponent implements OnInit, OnDestroy, ControlValueAccessor, Va
     editorOptions = {...editorOptions, ...advancedOptions};
     getAce().subscribe(
       (ace) => {
-        this.cssEditor = ace.edit(editorElement, editorOptions);
-        this.cssEditor.session.setUseWrapMode(true);
-        this.cssEditor.setValue(this.modelValue ? this.modelValue : '', -1);
-        this.cssEditor.setReadOnly(this.disabled);
-        this.cssEditor.on('change', () => {
+        this.htmlEditor = ace.edit(editorElement, editorOptions);
+        this.htmlEditor.session.setUseWrapMode(true);
+        this.htmlEditor.setValue(this.modelValue ? this.modelValue : '', -1);
+        this.htmlEditor.setReadOnly(this.disabled);
+        this.htmlEditor.on('change', () => {
           if (!this.ignoreChange) {
             this.updateView();
           }
         });
         // @ts-ignore
-        this.cssEditor.session.on('changeAnnotation', () => {
-          const annotations = this.cssEditor.session.getAnnotations();
+        this.htmlEditor.session.on('changeAnnotation', () => {
+          const annotations = this.htmlEditor.session.getAnnotations();
           const hasErrors = annotations.filter(annotation => annotation.type === 'error').length > 0;
           if (this.hasErrors !== hasErrors) {
             this.hasErrors = hasErrors;
@@ -153,8 +153,8 @@ export class CssComponent implements OnInit, OnDestroy, ControlValueAccessor, Va
       this.editorsResizeCaf = null;
     }
     this.editorsResizeCaf = this.raf.raf(() => {
-      this.cssEditor.resize();
-      this.cssEditor.renderer.updateFull();
+      this.htmlEditor.resize();
+      this.htmlEditor.renderer.updateFull();
     });
   }
 
@@ -167,24 +167,24 @@ export class CssComponent implements OnInit, OnDestroy, ControlValueAccessor, Va
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
-    if (this.cssEditor) {
-      this.cssEditor.setReadOnly(this.disabled);
+    if (this.htmlEditor) {
+      this.htmlEditor.setReadOnly(this.disabled);
     }
   }
 
   public validate(c: FormControl) {
     return (!this.hasErrors) ? null : {
-      css: {
+      html: {
         valid: false,
       },
     };
   }
 
-  beautifyCss() {
-    beautifyCss(this.modelValue, {indent_size: 4}).subscribe(
+  beautifyHtml() {
+    beautifyHtml(this.modelValue, {indent_size: 4}).subscribe(
       (res) => {
         if (this.modelValue !== res) {
-          this.cssEditor.setValue(res ? res : '', -1);
+          this.htmlEditor.setValue(res ? res : '', -1);
           this.updateView();
         }
       }
@@ -193,15 +193,15 @@ export class CssComponent implements OnInit, OnDestroy, ControlValueAccessor, Va
 
   writeValue(value: string): void {
     this.modelValue = value;
-    if (this.cssEditor) {
+    if (this.htmlEditor) {
       this.ignoreChange = true;
-      this.cssEditor.setValue(this.modelValue ? this.modelValue : '', -1);
+      this.htmlEditor.setValue(this.modelValue ? this.modelValue : '', -1);
       this.ignoreChange = false;
     }
   }
 
   updateView() {
-    const editorValue = this.cssEditor.getValue();
+    const editorValue = this.htmlEditor.getValue();
     if (this.modelValue !== editorValue) {
       this.modelValue = editorValue;
       this.propagateChange(this.modelValue);

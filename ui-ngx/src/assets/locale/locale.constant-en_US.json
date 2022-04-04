@@ -3260,6 +3260,10 @@
           "sort-settings": "Sort settings",
           "nodes-sort-function": "Nodes sort function"
         },
+        "html-card": {
+          "html": "HTML",
+          "css": "CSS"
+        },
         "input-widgets": {
             "attribute-not-allowed": "Attribute parameter cannot be used in this widget",
             "blocked-location": "Geolocation is blocked in your browser",
