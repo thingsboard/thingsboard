@@ -53,6 +53,12 @@ import {
 import {
   EntitiesTableKeySettingsComponent
 } from '@home/components/widget/lib/settings/cards/entities-table-key-settings.component';
+import {
+  AlarmsTableWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/alarm/alarms-table-widget-settings.component';
+import {
+  AlarmsTableKeySettingsComponent
+} from '@home/components/widget/lib/settings/alarm/alarms-table-key-settings.component';
 
 @NgModule({
   declarations: [
@@ -69,7 +75,9 @@ import {
     EntitiesHierarchyWidgetSettingsComponent,
     HtmlCardWidgetSettingsComponent,
     EntitiesTableWidgetSettingsComponent,
-    EntitiesTableKeySettingsComponent
+    EntitiesTableKeySettingsComponent,
+    AlarmsTableWidgetSettingsComponent,
+    AlarmsTableKeySettingsComponent
   ],
   imports: [
     CommonModule,
@@ -90,7 +98,9 @@ import {
     EntitiesHierarchyWidgetSettingsComponent,
     HtmlCardWidgetSettingsComponent,
     EntitiesTableWidgetSettingsComponent,
-    EntitiesTableKeySettingsComponent
+    EntitiesTableKeySettingsComponent,
+    AlarmsTableWidgetSettingsComponent,
+    AlarmsTableKeySettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -108,5 +118,7 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-entities-hierarchy-widget-settings': EntitiesHierarchyWidgetSettingsComponent,
   'tb-html-card-widget-settings': HtmlCardWidgetSettingsComponent,
   'tb-entities-table-widget-settings': EntitiesTableWidgetSettingsComponent,
-  'tb-entities-table-key-settings': EntitiesTableKeySettingsComponent
+  'tb-entities-table-key-settings': EntitiesTableKeySettingsComponent,
+  'tb-alarms-table-widget-settings': AlarmsTableWidgetSettingsComponent,
+  'tb-alarms-table-key-settings': AlarmsTableKeySettingsComponent
 };

@@ -3471,7 +3471,14 @@
           "column-visibility-hidden": "Hidden",
           "column-selection-to-display": "Column selection in 'Columns to Display'",
           "column-selection-to-display-enabled": "Enabled",
-          "column-selection-to-display-disabled": "Disabled"
+          "column-selection-to-display-disabled": "Disabled",
+          "alarms-table-title": "Alarms table title",
+          "enable-alarms-selection": "Enable alarms selection",
+          "enable-alarms-search": "Enable alarms search",
+          "enable-alarm-filter": "Enable alarm filter",
+          "display-alarm-details": "Display alarm details",
+          "allow-alarms-ack": "Allow alarms acknowledgment",
+          "allow-alarms-clear": "Allow alarms clear"
         }
     },
     "icon": {
