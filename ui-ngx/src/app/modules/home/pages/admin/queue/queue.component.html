@@ -56,6 +56,16 @@
           {{ 'queue.partitions-min-value' | translate }}
         </mat-error>
       </mat-form-field>
+
+<!--        <tb-checkbox formControlName="consumerPerPartition" style="display: block; padding-bottom: 16px;">-->
+<!--          {{ 'queue.consumer-per-partition' | translate }}-->
+<!--        </tb-checkbox>-->
+
+      <mat-checkbox class="hinted-checkbox" formControlName="consumerPerPartition">
+        <div>{{ 'queue.consumer-per-partition' | translate }}</div>
+        <div class="tb-hint">{{'queue.consumer-per-partition-hint' | translate}}</div>
+      </mat-checkbox>
+
       <mat-form-field class="mat-block">
         <mat-label translate>queue.processing-timeout</mat-label>
         <input type="number" matInput formControlName="packProcessingTimeout" required>
@@ -69,7 +79,6 @@
       </mat-form-field>
 
       <div class="mat-accordion-container">
-
         <mat-accordion [multi]="true">
           <mat-expansion-panel #panel1 hideToggle>
             <mat-expansion-panel-header>

@@ -45,6 +45,7 @@ export enum QueueProcessingStrategyTypes {
 export interface QueueInfo extends BaseData<QueueId> {
   packProcessingTimeout: number;
   partitions: number;
+  consumerPerPartition: boolean,
   pollInterval: number;
   processingStrategy: {
     type: QueueProcessingStrategyTypes,

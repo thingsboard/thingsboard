@@ -150,7 +150,7 @@ public abstract class BaseQueueServiceTest extends AbstractServiceTest {
     }
 
     @Test(expected = DataValidationException.class)
-    public void testSaveQueueWithEmptyPoolInterval() {
+    public void testSaveQueueWithEmptyPollInterval() {
         Queue queue = new Queue();
         queue.setTenantId(tenantId);
         queue.setName("Test");

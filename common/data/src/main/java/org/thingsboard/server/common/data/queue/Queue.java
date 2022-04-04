@@ -29,6 +29,7 @@ public class Queue extends BaseData<QueueId> implements HasName, HasTenantId {
     private String topic;
     private int pollInterval;
     private int partitions;
+    private boolean consumerPerPartition;
     private long packProcessingTimeout;
     private SubmitStrategy submitStrategy;
     private ProcessingStrategy processingStrategy;

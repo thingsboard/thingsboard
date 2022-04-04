@@ -642,6 +642,7 @@ CREATE TABLE IF NOT EXISTS queue(
     topic varchar(255),
     poll_interval int,
     partitions int,
+    consumer_per_partition boolean,
     pack_processing_timeout bigint,
     submit_strategy varchar(255),
     processing_strategy varchar(255)

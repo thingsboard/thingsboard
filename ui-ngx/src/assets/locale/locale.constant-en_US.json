@@ -2714,6 +2714,8 @@
         "processing-strategy": "Processing Strategy",
         "poll-interval": "Poll interval",
         "partitions": "Partitions",
+        "consumer-per-partition": "Consumer per partition",
+        "consumer-per-partition-hint": "Enable separate consumer(s) per each partition",
         "processing-timeout": "Processing timeout",
         "batch-size": "Batch size",
         "retries": "Retries (0 - unlimited)",

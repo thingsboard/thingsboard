@@ -59,6 +59,9 @@ public class QueueEntity extends BaseSqlEntity<Queue> {
     @Column(name = ModelConstants.QUEUE_PARTITIONS_PROPERTY)
     private int partitions;
 
+    @Column(name = ModelConstants.QUEUE_CONSUMER_PER_PARTITION)
+    private boolean consumerPerPartition;
+
     @Column(name = ModelConstants.QUEUE_PACK_PROCESSING_TIMEOUT_PROPERTY)
     private long packProcessingTimeout;
 
@@ -83,6 +86,7 @@ public class QueueEntity extends BaseSqlEntity<Queue> {
         this.topic = queue.getTopic();
         this.pollInterval = queue.getPollInterval();
         this.partitions = queue.getPartitions();
+        this.consumerPerPartition = queue.isConsumerPerPartition();
         this.packProcessingTimeout = queue.getPackProcessingTimeout();
         this.submitStrategy = mapper.valueToTree(queue.getSubmitStrategy());
         this.processingStrategy = mapper.valueToTree(queue.getProcessingStrategy());
@@ -97,6 +101,7 @@ public class QueueEntity extends BaseSqlEntity<Queue> {
         queue.setTopic(topic);
         queue.setPollInterval(pollInterval);
         queue.setPartitions(partitions);
+        queue.setConsumerPerPartition(consumerPerPartition);
         queue.setPackProcessingTimeout(packProcessingTimeout);
         queue.setSubmitStrategy(mapper.convertValue(this.submitStrategy, SubmitStrategy.class));
         queue.setProcessingStrategy(mapper.convertValue(this.processingStrategy, ProcessingStrategy.class));

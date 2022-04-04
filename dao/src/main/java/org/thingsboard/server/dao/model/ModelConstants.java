@@ -592,6 +592,7 @@ public class ModelConstants {
     public static final String QUEUE_TOPIC_PROPERTY = "topic";
     public static final String QUEUE_POLL_INTERVAL_PROPERTY = "poll_interval";
     public static final String QUEUE_PARTITIONS_PROPERTY = "partitions";
+    public static final String QUEUE_CONSUMER_PER_PARTITION = "consumer_per_partition";
     public static final String QUEUE_PACK_PROCESSING_TIMEOUT_PROPERTY = "pack_processing_timeout";
     public static final String QUEUE_SUBMIT_STRATEGY_PROPERTY = "submit_strategy";
     public static final String QUEUE_PROCESSING_STRATEGY_PROPERTY = "processing_strategy";

@@ -71,6 +71,7 @@ export class QueueComponent extends EntityComponent<QueueInfo> {
           entity && entity.partitions ? entity.partitions : 10,
           [Validators.min(1), Validators.required]
         ],
+        consumerPerPartition: [entity ? entity.consumerPerPartition : false, []],
         packProcessingTimeout: [
           entity && entity.packProcessingTimeout ? entity.packProcessingTimeout : 2000,
           [Validators.min(1), Validators.required]
@@ -118,6 +119,7 @@ export class QueueComponent extends EntityComponent<QueueInfo> {
       name: entity.name,
       pollInterval: entity.pollInterval,
       partitions: entity.partitions,
+      consumerPerPartition: entity.consumerPerPartition,
       packProcessingTimeout: entity.packProcessingTimeout,
       submitStrategy: {
         type: entity.submitStrategy?.type,
