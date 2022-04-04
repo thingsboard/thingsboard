@@ -3456,7 +3456,22 @@
           "use-cell-content-function": "Use cell content function",
           "cell-content-function": "Cell content function",
           "show-latest-data-column": "Show latest data column",
-          "latest-data-column-order": "Latest data column order"
+          "latest-data-column-order": "Latest data column order",
+          "entities-table-title": "Entities table title",
+          "enable-select-column-display": "Enable select columns to display",
+          "display-entity-name": "Display entity name column",
+          "entity-name-column-title": "Entity name column title",
+          "display-entity-label": "Display entity label column",
+          "entity-label-column-title": "Entity label column title",
+          "display-entity-type": "Display entity type column",
+          "default-sort-order": "Default sort order",
+          "column-width": "Column width (px or %)",
+          "default-column-visibility": "Default column visibility",
+          "column-visibility-visible": "Visible",
+          "column-visibility-hidden": "Hidden",
+          "column-selection-to-display": "Column selection in 'Columns to Display'",
+          "column-selection-to-display-enabled": "Enabled",
+          "column-selection-to-display-disabled": "Disabled"
         }
     },
     "icon": {

@@ -15,13 +15,20 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="timeseriesTableWidgetSettingsForm" fxLayout="column">
+<section class="tb-widget-settings" [formGroup]="entitiesTableWidgetSettingsForm" fxLayout="column">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.table.common-table-settings</legend>
+    <mat-form-field fxFlex class="mat-block">
+      <mat-label translate>widgets.table.entities-table-title</mat-label>
+      <input matInput formControlName="entitiesTitle">
+    </mat-form-field>
     <section fxLayout="column" fxLayout.gt-sm="row" fxLayoutGap="8px">
       <section fxLayout="column" fxFlex>
         <mat-checkbox formControlName="enableSearch" style="margin-bottom: 16px;">
           {{ 'widgets.table.enable-search' | translate }}
+        </mat-checkbox>
+        <mat-checkbox formControlName="enableSelectColumnDisplay" style="margin-bottom: 16px;">
+          {{ 'widgets.table.enable-select-column-display' | translate }}
         </mat-checkbox>
       </section>
       <section fxLayout="column" fxFlex>
@@ -45,11 +52,26 @@
       </mat-select>
     </mat-form-field>
     <section fxLayout="column" fxLayoutGap="8px">
-      <mat-slide-toggle formControlName="showTimestamp">
-        {{ 'widgets.table.display-timestamp' | translate }}
-      </mat-slide-toggle>
-      <mat-slide-toggle formControlName="showMilliseconds">
-        {{ 'widgets.table.display-milliseconds' | translate }}
+      <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+        <mat-slide-toggle fxFlex formControlName="displayEntityName">
+          {{ 'widgets.table.display-entity-name' | translate }}
+        </mat-slide-toggle>
+        <mat-form-field fxFlex class="mat-block">
+          <mat-label translate>widgets.table.entity-name-column-title</mat-label>
+          <input matInput formControlName="entityNameColumnTitle">
+        </mat-form-field>
+      </section>
+      <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+        <mat-slide-toggle fxFlex formControlName="displayEntityLabel">
+          {{ 'widgets.table.display-entity-label' | translate }}
+        </mat-slide-toggle>
+        <mat-form-field fxFlex class="mat-block">
+          <mat-label translate>widgets.table.entity-label-column-title</mat-label>
+          <input matInput formControlName="entityLabelColumnTitle">
+        </mat-form-field>
+      </section>
+      <mat-slide-toggle formControlName="displayEntityType">
+        {{ 'widgets.table.display-entity-type' | translate }}
       </mat-slide-toggle>
       <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
         <mat-slide-toggle fxFlex formControlName="displayPagination">
@@ -60,17 +82,15 @@
           <input matInput type="number" min="1" step="1" formControlName="defaultPageSize">
         </mat-form-field>
       </section>
-      <mat-slide-toggle formControlName="useEntityLabel">
-        {{ 'widgets.table.use-entity-label-tab-name' | translate }}
-      </mat-slide-toggle>
-      <mat-slide-toggle formControlName="hideEmptyLines">
-        {{ 'widgets.table.hide-empty-lines' | translate }}
-      </mat-slide-toggle>
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.table.default-sort-order</mat-label>
+        <input matInput formControlName="defaultSortOrder">
+      </mat-form-field>
     </section>
   </fieldset>
   <fieldset class="fields-group fields-group-slider">
     <legend class="group-title" translate>widgets.table.row-style</legend>
-    <mat-expansion-panel class="tb-settings" [expanded]="timeseriesTableWidgetSettingsForm.get('useRowStyleFunction').value">
+    <mat-expansion-panel class="tb-settings" [expanded]="entitiesTableWidgetSettingsForm.get('useRowStyleFunction').value">
       <mat-expansion-panel-header fxLayout="row wrap">
         <mat-panel-title>
           <mat-slide-toggle formControlName="useRowStyleFunction" (click)="$event.stopPropagation()"
@@ -86,9 +106,9 @@
         <tb-js-func required
                     formControlName="rowStyleFunction"
                     [globalVariables]="functionScopeVariables"
-                    [functionArgs]="['rowData', 'ctx']"
+                    [functionArgs]="['entity', 'ctx']"
                     functionTitle="{{ 'widgets.table.row-style-function' | translate }}"
-                    helpId="widget/lib/timeseries/row_style_fn">
+                    helpId="widget/lib/entity/row_style_fn">
         </tb-js-func>
       </ng-template>
     </mat-expansion-panel>

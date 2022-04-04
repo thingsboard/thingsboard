@@ -31,7 +31,8 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <tb-js-func formControlName="cellStyleFunction"
+        <tb-js-func required
+                    formControlName="cellStyleFunction"
                     [globalVariables]="functionScopeVariables"
                     [functionArgs]="['value', 'rowData', 'ctx']"
                     functionTitle="{{ 'widgets.table.cell-style-function' | translate }}"
@@ -55,7 +56,8 @@
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <tb-js-func formControlName="cellContentFunction"
+        <tb-js-func required
+                    formControlName="cellContentFunction"
                     [globalVariables]="functionScopeVariables"
                     [functionArgs]="['value', 'rowData', 'ctx']"
                     functionTitle="{{ 'widgets.table.cell-content-function' | translate }}"
