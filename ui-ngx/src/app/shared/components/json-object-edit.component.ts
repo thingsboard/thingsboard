@@ -14,17 +14,16 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator } from '@angular/forms';
 import { Ace } from 'ace-builds';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { ActionNotificationHide, ActionNotificationShow } from '@core/notification/notification.actions';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
-import { guid, isDefinedAndNotNull, isLiteralObject, isUndefined } from '@core/utils';
-import { ResizeObserver } from '@juggle/resize-observer';
-import { getAce } from '@shared/models/ace/ace.models';
+import { RafService } from '@core/services/raf.service';
+import { isDefinedAndNotNull, isLiteralObject, isUndefined } from '@core/utils';
+import { EditorAce } from '@shared/models/ace/editor-ace.models';
 
 @Component({
   selector: 'tb-json-object-edit',
@@ -43,16 +42,10 @@ import { getAce } from '@shared/models/ace/ace.models';
     }
   ]
 })
-export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Validator, OnDestroy {
+export class JsonObjectEditComponent extends EditorAce implements OnInit, ControlValueAccessor, Validator {
 
   @ViewChild('jsonEditor', {static: true})
-  jsonEditorElmRef: ElementRef;
-
-  private jsonEditor: Ace.Editor;
-  private editorsResizeCaf: CancelAnimationFrame;
-  private editorResize$: ResizeObserver;
-
-  toastTargetId = `jsonObjectEditor-${guid()}`;
+  editorElementRef: ElementRef;
 
   @Input() label: string;
 
@@ -88,9 +81,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
 
   fullscreen = false;
 
-  modelValue: any;
-
-  contentValue: string;
+  modelValue: string;
 
   objectValid: boolean;
 
@@ -98,17 +89,15 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
 
   errorShowed = false;
 
-  ignoreChange = false;
-
   private propagateChange = null;
 
   constructor(public elementRef: ElementRef,
-              protected store: Store<AppState>,
-              private raf: RafService) {
+              private store: Store<AppState>,
+              protected raf: RafService) {
+    super(raf);
   }
 
   ngOnInit(): void {
-    const editorElement = this.jsonEditorElmRef.nativeElement;
     let editorOptions: Partial<Ace.EditorOptions> = {
       mode: 'ace/mode/json',
       showGutter: true,
@@ -123,41 +112,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
     };
 
     editorOptions = {...editorOptions, ...advancedOptions};
-    getAce('json', 'textmate').subscribe(
-      (ace) => {
-        this.jsonEditor = ace.edit(editorElement, editorOptions);
-        this.jsonEditor.session.setUseWrapMode(false);
-        this.jsonEditor.setValue(this.contentValue ? this.contentValue : '', -1);
-        this.jsonEditor.setReadOnly(this.disabled || this.readonly);
-        this.jsonEditor.on('change', () => {
-          if (!this.ignoreChange) {
-            this.cleanupJsonErrors();
-            this.updateView();
-          }
-        });
-        this.editorResize$ = new ResizeObserver(() => {
-          this.onAceEditorResize();
-        });
-        this.editorResize$.observe(editorElement);
-      }
-    );
-  }
-
-  ngOnDestroy(): void {
-    if (this.editorResize$) {
-      this.editorResize$.disconnect();
-    }
-  }
-
-  private onAceEditorResize() {
-    if (this.editorsResizeCaf) {
-      this.editorsResizeCaf();
-      this.editorsResizeCaf = null;
-    }
-    this.editorsResizeCaf = this.raf.raf(() => {
-      this.jsonEditor.resize();
-      this.jsonEditor.renderer.updateFull();
-    });
+    super.initEditor('json', 'textmate', editorOptions, false, this.modelValue);
   }
 
   registerOnChange(fn: any): void {
@@ -168,10 +123,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
-    if (this.jsonEditor) {
-      this.jsonEditor.setReadOnly(this.disabled || this.readonly);
-    }
+    super.setDisabled(isDisabled);
   }
 
   public validate(c: FormControl) {
@@ -184,7 +136,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
 
   validateOnSubmit(): void {
     if (!this.disabled && !this.readonly) {
-      this.cleanupJsonErrors();
+      this.cleanupErrors();
       if (!this.objectValid) {
         this.store.dispatch(new ActionNotificationShow(
           {
@@ -199,7 +151,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
     }
   }
 
-  cleanupJsonErrors(): void {
+  cleanupErrors(): void {
     if (this.errorShowed) {
       this.store.dispatch(new ActionNotificationHide(
         {
@@ -210,28 +162,27 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
   }
 
   beautifyJSON() {
-    if (this.jsonEditor && this.objectValid) {
+    if (this.editor && this.objectValid) {
       const res = JSON.stringify(this.modelValue, null, 2);
-      this.jsonEditor.setValue(res ? res : '', -1);
+      this.editor.setValue(res ? res : '', -1);
       this.updateView();
     }
   }
 
   minifyJSON() {
-    if (this.jsonEditor && this.objectValid) {
+    if (this.editor && this.objectValid) {
       const res = JSON.stringify(this.modelValue);
-      this.jsonEditor.setValue(res ? res : '', -1);
+      this.editor.setValue(res ? res : '', -1);
       this.updateView();
     }
   }
 
   writeValue(value: any): void {
-    this.modelValue = value;
-    this.contentValue = '';
+    let content = '';
     this.objectValid = false;
     try {
-      if (isDefinedAndNotNull(this.modelValue)) {
-        this.contentValue = JSON.stringify(this.modelValue, isUndefined(this.sort) ? undefined :
+      if (isDefinedAndNotNull(value)) {
+        content = JSON.stringify(value, isUndefined(this.sort) ? undefined :
           (key, objectValue) => {
             return this.sort(key, objectValue);
           }, 2);
@@ -243,22 +194,18 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
     } catch (e) {
       //
     }
-    if (this.jsonEditor) {
-      this.ignoreChange = true;
-      this.jsonEditor.setValue(this.contentValue ? this.contentValue : '', -1);
-      this.ignoreChange = false;
-    }
+    super.setValue(content);
   }
 
   updateView() {
-    const editorValue = this.jsonEditor.getValue();
-    if (this.contentValue !== editorValue) {
-      this.contentValue = editorValue;
+    const editorValue = this.editor.getValue();
+    if (this.modelValue !== editorValue) {
+      this.modelValue = editorValue;
       let data = null;
       this.objectValid = false;
-      if (this.contentValue && this.contentValue.length > 0) {
+      if (this.modelValue && this.modelValue.length > 0) {
         try {
-          data = JSON.parse(this.contentValue);
+          data = JSON.parse(this.modelValue);
           if (!isLiteralObject(data)) {
             throw new TypeError(`Value is not a valid JSON`);
           }
@@ -278,17 +225,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
         this.objectValid = !this.required;
         this.validationError = this.required ? 'Json object is required.' : '';
       }
-      this.modelValue = data;
       this.propagateChange(data);
     }
   }
-
-  onFullscreen() {
-    if (this.jsonEditor) {
-      setTimeout(() => {
-        this.jsonEditor.resize();
-      }, 0);
-    }
-  }
-
 }

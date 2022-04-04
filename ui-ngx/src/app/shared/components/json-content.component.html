@@ -16,8 +16,7 @@
 
 -->
 <div style="background: #fff;" [ngClass]="{'fill-height': fillHeight}"
-     tb-fullscreen
-     [fullscreen]="fullscreen" (fullscreenChanged)="onFullscreen()" fxLayout="column">
+     tb-fullscreen [fullscreen]="fullscreen" fxLayout="column">
   <div fxLayout="row" fxLayoutAlign="start center" style="height: 40px;" class="tb-json-content-toolbar">
     <label class="tb-title no-padding" [ngClass]="{'tb-error': !contentValid}">{{ label }}</label>
     <span fxFlex></span>

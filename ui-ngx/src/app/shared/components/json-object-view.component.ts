@@ -18,8 +18,6 @@ import { Component, ElementRef, forwardRef, Input, OnInit, Renderer2, ViewChild 
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Ace } from 'ace-builds';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
 import { RafService } from '@core/services/raf.service';
 import { isDefinedAndNotNull, isObject, isUndefined } from '@core/utils';
 import { getAce } from '@shared/models/ace/ace.models';
@@ -44,7 +42,6 @@ export class JsonObjectViewComponent implements OnInit {
   private jsonViewer: Ace.Editor;
   private viewerElement: Ace.Editor;
   private propagateChange = null;
-  private modelValue: any;
   private contentValue: string;
 
   @Input() label: string;
@@ -78,7 +75,6 @@ export class JsonObjectViewComponent implements OnInit {
   }
 
   constructor(public elementRef: ElementRef,
-              protected store: Store<AppState>,
               private raf: RafService,
               private renderer: Renderer2) {
   }
@@ -142,11 +138,10 @@ export class JsonObjectViewComponent implements OnInit {
   }
 
   writeValue(value: any): void {
-    this.modelValue = value;
     this.contentValue = value;
     try {
-      if (isDefinedAndNotNull(this.modelValue) && isObject(this.modelValue)) {
-        this.contentValue = JSON.stringify(this.modelValue, isUndefined(this.sort) ? undefined :
+      if (isDefinedAndNotNull(value) && isObject(value)) {
+        this.contentValue = JSON.stringify(value, isUndefined(this.sort) ? undefined :
           (key, objectValue) => {
             return this.sort(key, objectValue);
           }, 2);

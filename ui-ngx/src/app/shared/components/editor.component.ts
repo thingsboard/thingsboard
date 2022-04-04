@@ -14,28 +14,15 @@
 /// limitations under the License.
 ///
 
-import {
-  Component,
-  ElementRef,
-  forwardRef,
-  Input,
-  OnDestroy,
-  OnInit,
-  ViewChild,
-  ViewEncapsulation
-} from '@angular/core';
+import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Ace } from 'ace-builds';
-import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
-import { ResizeObserver } from '@juggle/resize-observer';
+import { RafService } from '@core/services/raf.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { UtilsService } from '@core/services/utils.service';
-import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { AceMode, getAce } from '@shared/models/ace/ace.models';
+import { AceMode } from '@shared/models/ace/ace.models';
 import { ControlValueAccessor, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator } from '@angular/forms';
 import { beautifyCss, beautifyJs } from '@shared/models/beautify.models';
 import { Observable, of } from 'rxjs';
+import { EditorAce } from '@shared/models/ace/editor-ace.models';
 
 @Component({
   selector: 'tb-editor',
@@ -55,14 +42,9 @@ import { Observable, of } from 'rxjs';
   ],
   encapsulation: ViewEncapsulation.None
 })
-export class EditorComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
+export class EditorComponent extends EditorAce implements OnInit, ControlValueAccessor, Validator {
 
-  @ViewChild('editor', {static: true}) editorElmRef: ElementRef;
-
-  private editor: Ace.Editor;
-  private editorsResizeCaf: CancelAnimationFrame;
-  private editorResize$: ResizeObserver;
-  private ignoreChange = false;
+  @ViewChild('editor', {static: true}) editorElementRef: ElementRef;
 
   @Input() label: string;
 
@@ -73,14 +55,6 @@ export class EditorComponent implements OnInit, OnDestroy, ControlValueAccessor,
   @Input() fillHeight: boolean;
 
   @Input() placeholder: string;
-
-  @Input() functionName: string;
-
-  @Input() functionArgs: Array<string>;
-
-  @Input() validationArgs: Array<any>;
-
-  @Input() resultType: string;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -118,19 +92,17 @@ export class EditorComponent implements OnInit, OnDestroy, ControlValueAccessor,
   private propagateChange = null;
 
   constructor(public elementRef: ElementRef,
-              private utils: UtilsService,
-              private translate: TranslateService,
-              protected store: Store<AppState>,
-              private raf: RafService) {
+              protected raf: RafService) {
+    super(raf);
   }
 
   ngOnInit(): void {
-    const editorElement = this.editorElmRef.nativeElement;
     let editorOptions: Partial<Ace.EditorOptions> = {
       mode: `ace/mode/${this.mode}`,
       showGutter: true,
       showPrintMargin: this.showPrintMargin,
       readOnly: this.disabled || this.readonly,
+      placeholder: this.placeholder
     };
 
     const advancedOptions = {
@@ -140,48 +112,18 @@ export class EditorComponent implements OnInit, OnDestroy, ControlValueAccessor,
     };
 
     editorOptions = {...editorOptions, ...advancedOptions};
-    getAce(this.mode, 'textmate').subscribe(
-      (ace) => {
-        this.editor = ace.edit(editorElement, editorOptions);
-        this.editor.session.setUseWrapMode(true);
-        this.editor.setValue(this.modelValue ? this.modelValue : '', -1);
-        this.editor.setReadOnly(this.disabled);
-        this.editor.on('change', () => {
-          if (!this.ignoreChange) {
-            this.updateView();
-          }
-        });
-        // @ts-ignore
-        this.editor.session.on('changeAnnotation', () => {
-          const annotations = this.editor.session.getAnnotations();
-          const hasErrors = annotations.filter(annotation => annotation.type === 'error').length > 0;
-          if (this.hasErrors !== hasErrors) {
-            this.hasErrors = hasErrors;
-            this.propagateChange(this.modelValue);
-          }
-        });
-        this.editorResize$ = new ResizeObserver(() => {
-          this.onAceEditorResize();
-        });
-        this.editorResize$.observe(editorElement);
+    super.initEditor(this.mode, 'textmate', editorOptions, true, this.modelValue);
+  }
+
+  setAdvancedEditorSetting() {
+    // @ts-ignore
+    this.editor.session.on('changeAnnotation', () => {
+      const annotations = this.editor.session.getAnnotations();
+      const hasErrors = annotations.filter(annotation => annotation.type === 'error').length > 0;
+      if (this.hasErrors !== hasErrors) {
+        this.hasErrors = hasErrors;
+        this.propagateChange(this.modelValue);
       }
-    );
-  }
-
-  ngOnDestroy(): void {
-    if (this.editorResize$) {
-      this.editorResize$.disconnect();
-    }
-  }
-
-  private onAceEditorResize() {
-    if (this.editorsResizeCaf) {
-      this.editorsResizeCaf();
-      this.editorsResizeCaf = null;
-    }
-    this.editorsResizeCaf = this.raf.raf(() => {
-      this.editor.resize();
-      this.editor.renderer.updateFull();
     });
   }
 
@@ -193,10 +135,7 @@ export class EditorComponent implements OnInit, OnDestroy, ControlValueAccessor,
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
-    if (this.editor) {
-      this.editor.setReadOnly(this.disabled);
-    }
+    super.setDisabled(isDisabled);
   }
 
   public validate(c: FormControl) {
@@ -228,12 +167,7 @@ export class EditorComponent implements OnInit, OnDestroy, ControlValueAccessor,
   }
 
   writeValue(value: string): void {
-    this.modelValue = value;
-    if (this.editor) {
-      this.ignoreChange = true;
-      this.editor.setValue(this.modelValue ? this.modelValue : '', -1);
-      this.ignoreChange = false;
-    }
+    super.setValue(value);
   }
 
   updateView() {
