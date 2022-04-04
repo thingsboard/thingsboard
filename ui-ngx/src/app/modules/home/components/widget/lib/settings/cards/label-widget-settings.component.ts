@@ -19,12 +19,12 @@ import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.m
 import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { LabelWidgetLabel } from '@home/components/widget/lib/settings/label-widget-label.component';
+import { LabelWidgetLabel } from '@home/components/widget/lib/settings/cards/label-widget-label.component';
 
 @Component({
   selector: 'tb-label-widget-settings',
   templateUrl: './label-widget-settings.component.html',
-  styleUrls: ['./label-widget-settings.component.scss', './widget-settings.scss']
+  styleUrls: ['./label-widget-settings.component.scss', './../widget-settings.scss']
 })
 export class LabelWidgetSettingsComponent extends WidgetSettingsComponent {
 

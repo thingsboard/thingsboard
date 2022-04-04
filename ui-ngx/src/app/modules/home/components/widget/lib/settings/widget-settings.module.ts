@@ -15,44 +15,44 @@
 ///
 
 import { NgModule, Type } from '@angular/core';
-import { QrCodeWidgetSettingsComponent } from '@home/components/widget/lib/settings/qrcode-widget-settings.component';
+import { QrCodeWidgetSettingsComponent } from '@home/components/widget/lib/settings/cards/qrcode-widget-settings.component';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
 import { IWidgetSettingsComponent } from '@shared/models/widget.models';
 import {
   TimeseriesTableWidgetSettingsComponent
-} from '@home/components/widget/lib/settings/timeseries-table-widget-settings.component';
+} from '@home/components/widget/lib/settings/cards/timeseries-table-widget-settings.component';
 import {
   TimeseriesTableKeySettingsComponent
-} from '@home/components/widget/lib/settings/timeseries-table-key-settings.component';
+} from '@home/components/widget/lib/settings/cards/timeseries-table-key-settings.component';
 import {
   TimeseriesTableLatestKeySettingsComponent
-} from '@home/components/widget/lib/settings/timeseries-table-latest-key-settings.component';
+} from '@home/components/widget/lib/settings/cards/timeseries-table-latest-key-settings.component';
 import {
   MarkdownWidgetSettingsComponent
-} from '@home/components/widget/lib/settings/markdown-widget-settings.component';
-import { LabelWidgetFontComponent } from '@home/components/widget/lib/settings/label-widget-font.component';
-import { LabelWidgetLabelComponent } from '@home/components/widget/lib/settings/label-widget-label.component';
-import { LabelWidgetSettingsComponent } from '@home/components/widget/lib/settings/label-widget-settings.component';
+} from '@home/components/widget/lib/settings/cards/markdown-widget-settings.component';
+import { LabelWidgetFontComponent } from '@home/components/widget/lib/settings/cards/label-widget-font.component';
+import { LabelWidgetLabelComponent } from '@home/components/widget/lib/settings/cards/label-widget-label.component';
+import { LabelWidgetSettingsComponent } from '@home/components/widget/lib/settings/cards/label-widget-settings.component';
 import {
   SimpleCardWidgetSettingsComponent
-} from '@home/components/widget/lib/settings/simple-card-widget-settings.component';
+} from '@home/components/widget/lib/settings/cards/simple-card-widget-settings.component';
 import {
   DashboardStateWidgetSettingsComponent
-} from '@home/components/widget/lib/settings/dashboard-state-widget-settings.component';
+} from '@home/components/widget/lib/settings/cards/dashboard-state-widget-settings.component';
 import {
   EntitiesHierarchyWidgetSettingsComponent
-} from '@home/components/widget/lib/settings/entities-hierarchy-widget-settings.component';
+} from '@home/components/widget/lib/settings/cards/entities-hierarchy-widget-settings.component';
 import {
   HtmlCardWidgetSettingsComponent
-} from '@home/components/widget/lib/settings/html-card-widget-settings.component';
+} from '@home/components/widget/lib/settings/cards/html-card-widget-settings.component';
 import {
   EntitiesTableWidgetSettingsComponent
-} from '@home/components/widget/lib/settings/entities-table-widget-settings.component';
+} from '@home/components/widget/lib/settings/cards/entities-table-widget-settings.component';
 import {
   EntitiesTableKeySettingsComponent
-} from '@home/components/widget/lib/settings/entities-table-key-settings.component';
+} from '@home/components/widget/lib/settings/cards/entities-table-key-settings.component';
 
 @NgModule({
   declarations: [

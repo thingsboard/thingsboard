@@ -21,13 +21,13 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
 @Component({
-  selector: 'tb-timeseries-table-key-settings',
-  templateUrl: './timeseries-table-key-settings.component.html',
-  styleUrls: ['./widget-settings.scss']
+  selector: 'tb-entities-table-key-settings',
+  templateUrl: './entities-table-key-settings.component.html',
+  styleUrls: ['./../widget-settings.scss']
 })
-export class TimeseriesTableKeySettingsComponent extends WidgetSettingsComponent {
+export class EntitiesTableKeySettingsComponent extends WidgetSettingsComponent {
 
-  timeseriesTableKeySettingsForm: FormGroup;
+  entitiesTableKeySettingsForm: FormGroup;
 
   constructor(protected store: Store<AppState>,
               private fb: FormBuilder) {
@@ -35,24 +35,30 @@ export class TimeseriesTableKeySettingsComponent extends WidgetSettingsComponent
   }
 
   protected settingsForm(): FormGroup {
-    return this.timeseriesTableKeySettingsForm;
+    return this.entitiesTableKeySettingsForm;
   }
 
   protected defaultSettings(): WidgetSettings {
     return {
+      columnWidth: '0px',
       useCellStyleFunction: false,
       cellStyleFunction: '',
       useCellContentFunction: false,
-      cellContentFunction: ''
+      cellContentFunction: '',
+      defaultColumnVisibility: 'visible',
+      columnSelectionToDisplay: 'enabled'
     };
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
-    this.timeseriesTableKeySettingsForm = this.fb.group({
+    this.entitiesTableKeySettingsForm = this.fb.group({
+      columnWidth: [settings.columnWidth, []],
       useCellStyleFunction: [settings.useCellStyleFunction, []],
       cellStyleFunction: [settings.cellStyleFunction, [Validators.required]],
       useCellContentFunction: [settings.useCellContentFunction, []],
       cellContentFunction: [settings.cellContentFunction, [Validators.required]],
+      defaultColumnVisibility: [settings.defaultColumnVisibility, []],
+      columnSelectionToDisplay: [settings.columnSelectionToDisplay, []],
     });
   }
 
@@ -61,20 +67,20 @@ export class TimeseriesTableKeySettingsComponent extends WidgetSettingsComponent
   }
 
   protected updateValidators(emitEvent: boolean) {
-    const useCellStyleFunction: boolean = this.timeseriesTableKeySettingsForm.get('useCellStyleFunction').value;
-    const useCellContentFunction: boolean = this.timeseriesTableKeySettingsForm.get('useCellContentFunction').value;
+    const useCellStyleFunction: boolean = this.entitiesTableKeySettingsForm.get('useCellStyleFunction').value;
+    const useCellContentFunction: boolean = this.entitiesTableKeySettingsForm.get('useCellContentFunction').value;
     if (useCellStyleFunction) {
-      this.timeseriesTableKeySettingsForm.get('cellStyleFunction').enable();
+      this.entitiesTableKeySettingsForm.get('cellStyleFunction').enable();
     } else {
-      this.timeseriesTableKeySettingsForm.get('cellStyleFunction').disable();
+      this.entitiesTableKeySettingsForm.get('cellStyleFunction').disable();
     }
     if (useCellContentFunction) {
-      this.timeseriesTableKeySettingsForm.get('cellContentFunction').enable();
+      this.entitiesTableKeySettingsForm.get('cellContentFunction').enable();
     } else {
-      this.timeseriesTableKeySettingsForm.get('cellContentFunction').disable();
+      this.entitiesTableKeySettingsForm.get('cellContentFunction').disable();
     }
-    this.timeseriesTableKeySettingsForm.get('cellStyleFunction').updateValueAndValidity({emitEvent});
-    this.timeseriesTableKeySettingsForm.get('cellContentFunction').updateValueAndValidity({emitEvent});
+    this.entitiesTableKeySettingsForm.get('cellStyleFunction').updateValueAndValidity({emitEvent});
+    this.entitiesTableKeySettingsForm.get('cellContentFunction').updateValueAndValidity({emitEvent});
   }
 
 }

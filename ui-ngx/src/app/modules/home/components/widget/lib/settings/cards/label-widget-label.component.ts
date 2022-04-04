@@ -20,7 +20,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
-import { LabelWidgetFont } from '@home/components/widget/lib/settings/label-widget-font.component';
+import { LabelWidgetFont } from '@home/components/widget/lib/settings/cards/label-widget-font.component';
 
 export interface LabelWidgetLabel {
   pattern: string;
@@ -33,7 +33,7 @@ export interface LabelWidgetLabel {
 @Component({
   selector: 'tb-label-widget-label',
   templateUrl: './label-widget-label.component.html',
-  styleUrls: ['./label-widget-label.component.scss', './widget-settings.scss'],
+  styleUrls: ['./label-widget-label.component.scss', './../widget-settings.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
