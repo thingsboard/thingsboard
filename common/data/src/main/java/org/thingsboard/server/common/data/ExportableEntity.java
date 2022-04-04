@@ -17,17 +17,13 @@ package org.thingsboard.server.common.data;
 
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
-import org.thingsboard.server.common.data.id.TenantId;
 
-public interface ExportableEntity<I extends EntityId> extends HasId<I>, HasTenantId, HasName {
+public interface ExportableEntity<I extends EntityId> extends HasId<I>, HasName {
 
     I getId();
     void setId(I id);
 
     I getExternalId();
     void setExternalId(I externalId);
-
-    TenantId getTenantId();
-    void setTenantId(TenantId tenantId);
 
 }

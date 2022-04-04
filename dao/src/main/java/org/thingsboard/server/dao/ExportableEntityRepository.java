@@ -17,7 +17,7 @@ package org.thingsboard.server.dao;
 
 import java.util.UUID;
 
-public interface ExportableEntityRepository<D> extends TenantEntityRepository<D> {
+public interface ExportableEntityRepository<D> {
 
     D findByTenantIdAndExternalId(UUID tenantId, UUID externalId);
 

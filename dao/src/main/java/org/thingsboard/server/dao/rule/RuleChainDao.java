@@ -30,7 +30,7 @@ import java.util.UUID;
 /**
  * Created by igor on 3/12/18.
  */
-public interface RuleChainDao extends Dao<RuleChain>, ExportableEntityDao<RuleChain> {
+public interface RuleChainDao extends Dao<RuleChain>, TenantEntityDao, ExportableEntityDao<RuleChain> {
 
     /**
      * Find rule chains by tenantId and page link.
@@ -79,7 +79,5 @@ public interface RuleChainDao extends Dao<RuleChain>, ExportableEntityDao<RuleCh
     PageData<RuleChain> findAutoAssignToEdgeRuleChainsByTenantId(UUID tenantId, PageLink pageLink);
 
     Collection<RuleChain> findByTenantIdAndTypeAndName(TenantId tenantId, RuleChainType type, String name);
-
-    RuleChain findByTenantIdAndExternalId(UUID tenantId, UUID externalId);
 
 }

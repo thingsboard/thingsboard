@@ -24,7 +24,7 @@ import org.thingsboard.server.dao.TenantEntityDao;
 
 import java.util.UUID;
 
-public interface UserDao extends Dao<User>, TenantEntityDao<User> {
+public interface UserDao extends Dao<User>, TenantEntityDao {
 
     /**
      * Save or update user object

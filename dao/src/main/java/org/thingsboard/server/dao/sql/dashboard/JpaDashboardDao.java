@@ -58,11 +58,6 @@ public class JpaDashboardDao extends JpaAbstractSearchTextDao<DashboardEntity, D
     }
 
     @Override
-    public Dashboard findByTenantIdAndId(UUID tenantId, UUID id) {
-        return DaoUtil.getData(dashboardRepository.findByTenantIdAndId(tenantId, id));
-    }
-
-    @Override
     public EntityType getEntityType() {
         return EntityType.DASHBOARD;
     }

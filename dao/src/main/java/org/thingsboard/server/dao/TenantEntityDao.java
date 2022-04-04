@@ -15,18 +15,9 @@
  */
 package org.thingsboard.server.dao;
 
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.UUID;
-
-public interface TenantEntityDao<T extends HasTenantId> {
+public interface TenantEntityDao {
 
     Long countByTenantId(TenantId tenantId);
-
-    T findByTenantIdAndId(UUID tenantId, UUID id);
-
-    EntityType getEntityType();
-
 }

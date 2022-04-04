@@ -28,11 +28,10 @@ import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -52,7 +51,6 @@ import org.thingsboard.server.service.sync.importing.EntityImportResult;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -358,7 +356,7 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
     }
 
 
-    private <E extends ExportableEntity<?>> void checkImportedEntity(TenantId tenantId1, E initialEntity, TenantId tenantId2, EntityImportResult<E> importResult) {
+    private <E extends ExportableEntity<?> & HasTenantId> void checkImportedEntity(TenantId tenantId1, E initialEntity, TenantId tenantId2, EntityImportResult<E> importResult) {
         E importedEntity = importResult.getSavedEntity();
 
         assertThat(initialEntity.getTenantId()).isEqualTo(tenantId1);

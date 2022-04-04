@@ -42,6 +42,7 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
 
     @Override
     protected RuleChain prepareAndSave(TenantId tenantId, RuleChain ruleChain, RuleChainExportData exportData, NewIdProvider idProvider) {
+        ruleChain.setTenantId(tenantId);
         RuleChainMetaData metaData = exportData.getMetaData();
         Optional.ofNullable(metaData.getNodes()).orElse(Collections.emptyList())
                 .forEach(ruleNode -> {

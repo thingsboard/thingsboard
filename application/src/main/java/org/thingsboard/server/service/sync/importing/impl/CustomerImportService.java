@@ -34,6 +34,7 @@ public class CustomerImportService extends BaseEntityImportService<CustomerId, C
 
     @Override
     protected Customer prepareAndSave(TenantId tenantId, Customer customer, CustomerExportData exportData, NewIdProvider idProvider) {
+        customer.setTenantId(tenantId);
         return customerService.saveCustomer(customer);
     }
 

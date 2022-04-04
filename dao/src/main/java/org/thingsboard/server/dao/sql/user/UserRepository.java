@@ -21,8 +21,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.dao.TenantEntityDao;
-import org.thingsboard.server.dao.TenantEntityRepository;
 import org.thingsboard.server.dao.model.sql.UserEntity;
 
 import java.util.UUID;
@@ -30,7 +28,7 @@ import java.util.UUID;
 /**
  * @author Valerii Sosliuk
  */
-public interface UserRepository extends JpaRepository<UserEntity, UUID>, TenantEntityRepository<UserEntity> {
+public interface UserRepository extends JpaRepository<UserEntity, UUID> {
 
     UserEntity findByEmail(String email);
 
@@ -49,4 +47,5 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID>, TenantE
                                     @Param("searchText") String searchText,
                                     Pageable pageable);
 
+    Long countByTenantId(UUID tenantId);
 }

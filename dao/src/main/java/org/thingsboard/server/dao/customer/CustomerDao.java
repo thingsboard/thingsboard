@@ -29,7 +29,7 @@ import java.util.UUID;
 /**
  * The Interface CustomerDao.
  */
-public interface CustomerDao extends Dao<Customer>, ExportableEntityDao<Customer> {
+public interface CustomerDao extends Dao<Customer>, TenantEntityDao, ExportableEntityDao<Customer> {
 
     /**
      * Save or update customer object

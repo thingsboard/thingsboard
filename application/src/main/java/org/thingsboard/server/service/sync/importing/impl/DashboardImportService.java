@@ -43,6 +43,7 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
     // TODO [viacheslav]: improve the code
     @Override
     protected Dashboard prepareAndSave(TenantId tenantId, Dashboard dashboard, DashboardExportData exportData, NewIdProvider idProvider) {
+        dashboard.setTenantId(tenantId);
         if (dashboard.getId() == null) {
             Set<ShortCustomerInfo> assignedCustomers = idProvider.get(tenantId, Dashboard::getAssignedCustomers, ShortCustomerInfo::getCustomerId, ShortCustomerInfo::setCustomerId);
             dashboard.setAssignedCustomers(null);

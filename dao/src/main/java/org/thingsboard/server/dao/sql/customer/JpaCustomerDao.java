@@ -76,11 +76,6 @@ public class JpaCustomerDao extends JpaAbstractSearchTextDao<CustomerEntity, Cus
     }
 
     @Override
-    public Customer findByTenantIdAndId(UUID tenantId, UUID id) {
-        return DaoUtil.getData(customerRepository.findByTenantIdAndId(tenantId, id));
-    }
-
-    @Override
     public EntityType getEntityType() {
         return EntityType.CUSTOMER;
     }

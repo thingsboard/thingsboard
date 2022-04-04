@@ -34,6 +34,7 @@ public class DeviceImportService extends BaseEntityImportService<DeviceId, Devic
 
     @Override
     protected Device prepareAndSave(TenantId tenantId, Device device, DeviceExportData exportData, NewIdProvider idProvider) {
+        device.setTenantId(tenantId);
         device.setCustomerId(idProvider.get(tenantId, Device::getCustomerId));
         device.setDeviceProfileId(idProvider.get(tenantId, Device::getDeviceProfileId));
         device.setFirmwareId(idProvider.get(tenantId, Device::getFirmwareId));

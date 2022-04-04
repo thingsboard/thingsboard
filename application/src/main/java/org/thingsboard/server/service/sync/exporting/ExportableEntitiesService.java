@@ -16,13 +16,14 @@
 package org.thingsboard.server.service.sync.exporting;
 
 import org.thingsboard.server.common.data.ExportableEntity;
-import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-public interface ExportableEntitiesService extends TenantEntitiesService {
+public interface ExportableEntitiesService {
 
     <E extends ExportableEntity<I>, I extends EntityId> E findEntityByExternalId(TenantId tenantId, I externalId);
+
+    <E extends HasId<I>, I extends EntityId> E findEntityById(TenantId tenantId, I id);
 
 }

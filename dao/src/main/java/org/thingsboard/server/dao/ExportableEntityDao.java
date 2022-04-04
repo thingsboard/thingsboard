@@ -19,7 +19,7 @@ import org.thingsboard.server.common.data.ExportableEntity;
 
 import java.util.UUID;
 
-public interface ExportableEntityDao<T extends ExportableEntity<?>> extends TenantEntityDao<T> {
+public interface ExportableEntityDao<T extends ExportableEntity<?>> extends Dao<T> {
 
     T findByTenantIdAndExternalId(UUID tenantId, UUID externalId);
 

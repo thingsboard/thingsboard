@@ -924,7 +924,7 @@ public abstract class BaseController {
         }
     }
 
-    protected <E extends HasName & HasId<I> & HasTenantId, I extends EntityId> void onEntityUpdatedOrCreated(User user, E savedEntity, E oldEntity, boolean isNewEntity) {
+    protected <E extends HasName & HasId<I>, I extends EntityId> void onEntityUpdatedOrCreated(User user, E savedEntity, E oldEntity, boolean isNewEntity) {
         boolean notifyEdgeService = false;
 
         EntityType entityType = savedEntity.getId().getEntityType();
@@ -954,7 +954,7 @@ public abstract class BaseController {
             case RULE_CHAIN:
                 RuleChainType ruleChainType = ((RuleChain) savedEntity).getType();
                 if (RuleChainType.CORE.equals(ruleChainType)) {
-                    tbClusterService.broadcastEntityStateChangeEvent(savedEntity.getTenantId(), savedEntity.getId(),
+                    tbClusterService.broadcastEntityStateChangeEvent(user.getTenantId(), savedEntity.getId(),
                             isNewEntity ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
                 }
                 if (RuleChainType.EDGE.equals(ruleChainType)) {
@@ -981,7 +981,7 @@ public abstract class BaseController {
             log.error("Failed to log entity action", e);
         }
         if (notifyEdgeService) {
-            sendEntityNotificationMsg(savedEntity.getTenantId(), savedEntity.getId(), isNewEntity ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
+            sendEntityNotificationMsg(user.getTenantId(), savedEntity.getId(), isNewEntity ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
         }
     }
 

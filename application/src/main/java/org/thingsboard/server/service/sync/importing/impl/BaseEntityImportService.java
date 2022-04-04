@@ -57,7 +57,6 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
         E existingEntity = exportableEntitiesService.findEntityByExternalId(tenantId, entity.getId());
 
         entity.setExternalId(entity.getId());
-        entity.setTenantId(tenantId);
 
         if (existingEntity == null) {
             entity.setId(null);

@@ -34,6 +34,7 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
 
     @Override
     protected DeviceProfile prepareAndSave(TenantId tenantId, DeviceProfile deviceProfile, DeviceProfileExportData exportData, NewIdProvider idProvider) {
+        deviceProfile.setTenantId(tenantId);
         deviceProfile.setDefaultRuleChainId(idProvider.get(tenantId, DeviceProfile::getDefaultRuleChainId));
         deviceProfile.setDefaultDashboardId(idProvider.get(tenantId, DeviceProfile::getDefaultDashboardId));
         deviceProfile.setFirmwareId(idProvider.get(tenantId, DeviceProfile::getFirmwareId));
