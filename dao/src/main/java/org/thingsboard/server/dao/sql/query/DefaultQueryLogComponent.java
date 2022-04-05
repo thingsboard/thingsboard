@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.sql.query;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.core.namedparam.NamedParameterUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -33,7 +34,12 @@ public class DefaultQueryLogComponent implements QueryLogComponent {
     @Override
     public void logQuery(QueryContext ctx, String query, long duration) {
         if (logSqlQueries && duration > logQueriesThreshold) {
+
+            String sqlToUse = NamedParameterUtils.substituteNamedParameters(query, ctx);
+
             log.info("QUERY: {} took {} ms", query, duration);
+            log.info("QUERY SQL TO USE: {} took {} ms", sqlToUse, duration);
+
             Arrays.asList(ctx.getParameterNames()).forEach(param -> log.info("QUERY PARAM: {} -> {}", param, ctx.getValue(param)));
         }
     }
