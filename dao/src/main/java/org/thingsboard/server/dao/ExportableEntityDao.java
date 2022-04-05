@@ -23,4 +23,6 @@ public interface ExportableEntityDao<T extends ExportableEntity<?>> extends Dao<
 
     T findByTenantIdAndExternalId(UUID tenantId, UUID externalId);
 
+    T findFirstByTenantIdAndName(UUID tenantId, String name);
+
 }

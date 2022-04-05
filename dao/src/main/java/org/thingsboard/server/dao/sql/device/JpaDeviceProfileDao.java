@@ -117,6 +117,11 @@ public class JpaDeviceProfileDao extends JpaAbstractSearchTextDao<DeviceProfileE
     }
 
     @Override
+    public DeviceProfile findFirstByTenantIdAndName(UUID tenantId, String name) {
+        return DaoUtil.getData(deviceProfileRepository.findByTenantIdAndName(tenantId, name));
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.DEVICE_PROFILE;
     }

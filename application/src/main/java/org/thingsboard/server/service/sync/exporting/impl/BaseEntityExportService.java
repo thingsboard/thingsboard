@@ -44,8 +44,11 @@ public abstract class BaseEntityExportService<I extends EntityId, E extends Expo
     public final D getExportData(SecurityUser user, I entityId, EntityExportSettings exportSettings) throws ThingsboardException {
         D exportData = newExportData();
 
-        E entity = exportableEntitiesService.findEntityById(user, entityId);
-        exportableEntitiesService.checkPermission(user, entity, Operation.READ);
+        E entity = exportableEntitiesService.findEntityByTenantIdAndId(user.getTenantId(), entityId);
+        if (entity == null) {
+            throw new IllegalArgumentException("Entity not found");
+        }
+        exportableEntitiesService.checkPermission(user, entity, getEntityType(), Operation.READ);
 
         exportData.setEntity(entity);
         setRelatedEntities(user.getTenantId(), entity, exportData);

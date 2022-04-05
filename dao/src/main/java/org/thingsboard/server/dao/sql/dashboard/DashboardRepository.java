@@ -28,4 +28,6 @@ public interface DashboardRepository extends JpaRepository<DashboardEntity, UUID
 
     Long countByTenantId(UUID tenantId);
 
+    DashboardEntity findFirstByTenantIdAndTitle(UUID tenantId, String title);
+
 }

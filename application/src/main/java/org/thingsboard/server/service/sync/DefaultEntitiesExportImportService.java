@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ExportableEntityDao;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -41,14 +42,11 @@ import org.thingsboard.server.service.sync.importing.EntityImportService;
 import org.thingsboard.server.service.sync.importing.EntityImportSettings;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @TbCoreComponent
@@ -100,35 +98,46 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
 
 
     @Override
-    public <E extends ExportableEntity<I>, I extends EntityId> E findEntityByExternalId(SecurityUser user, I externalId) {
+    public <E extends ExportableEntity<I>, I extends EntityId> E findEntityByTenantIdAndExternalId(TenantId tenantId, I externalId) {
         EntityType entityType = externalId.getEntityType();
         if (SUPPORTED_ENTITY_TYPES.contains(entityType)) {
             ExportableEntityDao<E> dao = (ExportableEntityDao<E>) getDao(entityType);
-            return dao.findByTenantIdAndExternalId(user.getTenantId().getId(), externalId.getId());
+            return dao.findByTenantIdAndExternalId(tenantId.getId(), externalId.getId());
+        } else {
+            return null;
         }
-        return findEntityById(user, externalId);
     }
 
     @Override
-    public <E extends HasId<I>, I extends EntityId> E findEntityById(SecurityUser user, I id) {
+    public <E extends HasId<I>, I extends EntityId> E findEntityByTenantIdAndId(TenantId tenantId, I id) {
         Dao<E> dao = (Dao<E>) getDao(id.getEntityType());
-        return dao.findById(user.getTenantId(), id.getId());
+        E entity = dao.findById(tenantId, id.getId());
+        if (entity instanceof HasTenantId && !((HasTenantId) entity).getTenantId().equals(tenantId)) {
+            return null;
+        }
+        return entity;
+    }
+
+    @Override
+    public <E extends ExportableEntity<I>, I extends EntityId> E findEntityByTenantIdAndName(TenantId tenantId, EntityType entityType, String name) {
+        ExportableEntityDao<E> dao = (ExportableEntityDao<E>) getDao(entityType);
+        return dao.findFirstByTenantIdAndName(tenantId.getId(), name);
     }
 
 
     @Override
-    public void checkPermission(SecurityUser user, HasId<? extends EntityId> entity, Operation operation) throws ThingsboardException {
+    public void checkPermission(SecurityUser user, HasId<? extends EntityId> entity, EntityType entityType, Operation operation) throws ThingsboardException {
         if (entity instanceof HasTenantId) {
-            accessControlService.checkPermission(user, Resource.of(entity.getId().getEntityType()), operation, entity.getId(), (HasTenantId) entity);
+            accessControlService.checkPermission(user, Resource.of(entityType), operation, entity.getId(), (HasTenantId) entity);
         } else if (entity != null) {
-            accessControlService.checkPermission(user, Resource.of(entity.getId().getEntityType()), operation);
+            accessControlService.checkPermission(user, Resource.of(entityType), operation);
         }
     }
 
     @Override
     public void checkPermission(SecurityUser user, EntityId entityId, Operation operation) throws ThingsboardException {
-        HasId<EntityId> entity = findEntityById(user, entityId);
-        checkPermission(user, entity, operation);
+        HasId<EntityId> entity = findEntityByTenantIdAndId(user.getTenantId(), entityId);
+        checkPermission(user, entity, entityId.getEntityType(), operation);
     }
 
 

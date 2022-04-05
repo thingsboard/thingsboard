@@ -57,7 +57,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     @Override
     public EntityImportResult<E> importEntity(SecurityUser user, D exportData, EntityImportSettings importSettings) throws ThingsboardException {
         E entity = exportData.getEntity();
-        E existingEntity = exportableEntitiesService.findEntityByExternalId(user, entity.getId());
+        E existingEntity = findExistingEntity(user.getTenantId(), entity, importSettings);
 
         entity.setExternalId(entity.getId());
 
@@ -65,10 +65,10 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
         setOwner(user.getTenantId(), entity, idProvider);
         if (existingEntity == null) {
             entity.setId(null);
-            exportableEntitiesService.checkPermission(user, entity, Operation.CREATE);
+            exportableEntitiesService.checkPermission(user, entity, getEntityType(), Operation.CREATE);
         } else {
             entity.setId(existingEntity.getId());
-            exportableEntitiesService.checkPermission(user, existingEntity, Operation.WRITE);
+            exportableEntitiesService.checkPermission(user, existingEntity, getEntityType(), Operation.WRITE);
         }
 
         E savedEntity = prepareAndSave(user.getTenantId(), entity, exportData, idProvider);
@@ -83,6 +83,28 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     protected abstract void setOwner(TenantId tenantId, E entity, NewIdProvider idProvider);
 
     protected abstract E prepareAndSave(TenantId tenantId, E entity, D exportData, NewIdProvider idProvider);
+
+
+    private E findExistingEntity(TenantId tenantId, E entity, EntityImportSettings importSettings) {
+        return (E) Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndExternalId(tenantId, entity.getId()))
+                .or(() -> Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndId(tenantId, entity.getId())))
+                .or(() -> {
+                    if (importSettings.isFindExistingByName()) {
+                        return Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndName(tenantId, getEntityType(), entity.getName()));
+                    } else {
+                        return Optional.empty();
+                    }
+                })
+                .orElse(null);
+    }
+
+    private <ID extends EntityId> HasId<ID> findInternalEntity(TenantId tenantId, ID externalId) {
+        if (externalId == null || externalId.isNullUid()) return null;
+
+        return (HasId<ID>) Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndExternalId(tenantId, externalId))
+                .or(() -> Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndId(tenantId, externalId)))
+                .orElseThrow(() -> new IllegalArgumentException("Cannot find " + externalId.getEntityType() + " by external id " + externalId));
+    }
 
 
     private void importRelations(SecurityUser user, E savedEntity, E existingEntity, D exportData, EntityImportSettings importSettings) throws ThingsboardException {
@@ -116,31 +138,21 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
         for (EntityRelation relation : newRelations) {
             HasId<EntityId> otherEntity = null;
             if (!relation.getTo().equals(savedEntity.getId())) {
-                otherEntity = findInternalEntity(user, relation.getTo());
+                otherEntity = findInternalEntity(user.getTenantId(), relation.getTo());
                 relation.setTo(otherEntity.getId());
             }
             if (!relation.getFrom().equals(savedEntity.getId())) {
-                otherEntity = findInternalEntity(user, relation.getFrom());
+                otherEntity = findInternalEntity(user.getTenantId(), relation.getFrom());
                 relation.setFrom(otherEntity.getId());
             }
             if (otherEntity != null) {
-                exportableEntitiesService.checkPermission(user, otherEntity, Operation.WRITE);
+                exportableEntitiesService.checkPermission(user, otherEntity, otherEntity.getId().getEntityType(), Operation.WRITE);
             }
 
             relationService.saveRelation(user.getTenantId(), relation);
         }
     }
 
-    private <IE extends HasId<ID>, ID extends EntityId> IE findInternalEntity(SecurityUser user, ID externalId) {
-        if (externalId == null || externalId.isNullUid()) {
-            return null;
-        }
-        IE entity = exportableEntitiesService.findEntityByExternalId(user, externalId);
-        if (entity == null) {
-            throw new IllegalArgumentException("Cannot find " + externalId.getEntityType() + " by external id " + externalId);
-        }
-        return entity;
-    }
 
     @RequiredArgsConstructor
     protected class NewIdProvider {
@@ -175,12 +187,16 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
         }
 
         private <ID extends EntityId> ID getInternalId(ID externalId) {
-            try {
-                HasId<ID> entity = findInternalEntity(user, externalId);
-                exportableEntitiesService.checkPermission(user, entity, Operation.READ);
+            HasId<ID> entity = findInternalEntity(user.getTenantId(), externalId);
+            if (entity != null) {
+                try {
+                    exportableEntitiesService.checkPermission(user, entity, entity.getId().getEntityType(), Operation.READ);
+                } catch (ThingsboardException e) {
+                    throw new IllegalArgumentException(e.getMessage(), e);
+                }
                 return entity.getId();
-            } catch (ThingsboardException e) {
-                throw new IllegalArgumentException(e.getMessage(), e);
+            } else {
+                return null;
             }
         }
 

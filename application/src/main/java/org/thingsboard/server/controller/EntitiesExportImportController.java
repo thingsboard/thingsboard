@@ -29,7 +29,6 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
@@ -38,23 +37,18 @@ import org.thingsboard.server.common.data.query.EntityFilter;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.EntityTypeFilter;
-import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.EntitiesExportImportService;
-import org.thingsboard.server.service.sync.exporting.ExportableEntitiesService;
 import org.thingsboard.server.service.sync.exporting.EntityExportSettings;
 import org.thingsboard.server.service.sync.exporting.data.EntityExportData;
 import org.thingsboard.server.service.sync.importing.EntityImportResult;
 import org.thingsboard.server.service.sync.importing.EntityImportSettings;
-import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -72,7 +66,6 @@ import static org.thingsboard.server.dao.sql.query.EntityKeyMapping.CREATED_TIME
 public class EntitiesExportImportController extends BaseController {
 
     private final EntitiesExportImportService exportImportService;
-    private final ExportableEntitiesService exportableEntitiesService;
     private final EntityService entityService;
 
 
@@ -201,8 +194,8 @@ public class EntitiesExportImportController extends BaseController {
 
 
     @PostMapping("/import")
-    public List<EntityImportResult<ExportableEntity<EntityId>>> importEntity(@RequestBody List<EntityExportData<ExportableEntity<EntityId>>> exportDataList,
-                                                                             @RequestParam Map<String, String> importSettingsParams) throws ThingsboardException {
+    public List<EntityImportResult<ExportableEntity<EntityId>>> importEntities(@RequestBody List<EntityExportData<ExportableEntity<EntityId>>> exportDataList,
+                                                                               @RequestParam Map<String, String> importSettingsParams) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         EntityImportSettings importSettings = toImportSettings(importSettingsParams);
 
@@ -225,25 +218,31 @@ public class EntitiesExportImportController extends BaseController {
 
     private EntityExportSettings toExportSettings(Map<String, String> exportSettingsParams) {
         return EntityExportSettings.builder()
-                .exportInboundRelations(getParam(exportSettingsParams, "exportInboundRelations", false, Boolean::parseBoolean))
-                .exportOutboundRelations(getParam(exportSettingsParams, "exportOutboundRelations", false, Boolean::parseBoolean))
+                .exportInboundRelations(getBooleanParam(exportSettingsParams, "exportInboundRelations", false))
+                .exportOutboundRelations(getBooleanParam(exportSettingsParams, "exportOutboundRelations", false))
                 .build();
     }
 
     private EntityImportSettings toImportSettings(Map<String, String> importSettingsParams) {
         return EntityImportSettings.builder()
-                .importInboundRelations(getParam(importSettingsParams, "importInboundRelations", false, Boolean::parseBoolean))
-                .importOutboundRelations(getParam(importSettingsParams, "importOutboundRelations", false, Boolean::parseBoolean))
-                .removeExistingRelations(getParam(importSettingsParams, "removeExistingRelations", true, Boolean::parseBoolean))
-                .updateReferencesToOtherEntities(getParam(importSettingsParams, "updateReferencesToOtherEntities", true, Boolean::parseBoolean))
+                .findExistingByName(getBooleanParam(importSettingsParams, "findExistingByName", false))
+                .importInboundRelations(getBooleanParam(importSettingsParams, "importInboundRelations", false))
+                .importOutboundRelations(getBooleanParam(importSettingsParams, "importOutboundRelations", false))
+                .removeExistingRelations(getBooleanParam(importSettingsParams, "removeExistingRelations", true))
+                .updateReferencesToOtherEntities(getBooleanParam(importSettingsParams, "updateReferencesToOtherEntities", true))
                 .build();
     }
 
-    protected <T> T getParam(Map<String, String> requestParams, String key, T defaultValue, Function<String, T> parsingFunction) {
+
+    protected static boolean getBooleanParam(Map<String, String> requestParams, String key, boolean defaultValue) {
+        return getParam(requestParams, key, defaultValue, Boolean::parseBoolean);
+    }
+
+    protected static <T> T getParam(Map<String, String> requestParams, String key, T defaultValue, Function<String, T> parsingFunction) {
         return parsingFunction.apply(requestParams.getOrDefault(key, defaultValue.toString()));
     }
 
-    private CustomerId toCustomerId(UUID customerUuid) {
+    private static CustomerId toCustomerId(UUID customerUuid) {
         return new CustomerId(Optional.ofNullable(customerUuid).orElse(EntityId.NULL_UUID));
     }
 
