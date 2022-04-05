@@ -15,15 +15,22 @@
  */
 package org.thingsboard.server.service.sync.importing.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.query.EntityFilter;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.sql.query.DefaultEntityQueryRepository;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.exporting.data.DashboardExportData;
 
@@ -31,6 +38,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,14 +49,36 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
 
     private final DashboardService dashboardService;
 
+    private static final Pattern UUID_PATTERN = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
+
     @Override
     protected void setOwner(TenantId tenantId, Dashboard dashboard, NewIdProvider idProvider) {
         dashboard.setTenantId(tenantId);
     }
 
-    // TODO [viacheslav]: improve the code
     @Override
     protected Dashboard prepareAndSave(TenantId tenantId, Dashboard dashboard, DashboardExportData exportData, NewIdProvider idProvider) {
+        Optional.ofNullable(dashboard.getConfiguration())
+                .flatMap(configuration -> Optional.ofNullable(configuration.get("entityAliases")))
+                .filter(JsonNode::isObject)
+                .ifPresent(entityAliases -> entityAliases.forEach(entityAlias -> {
+                    Optional.ofNullable(entityAlias.get("filter"))
+                            .filter(JsonNode::isObject)
+                            .ifPresent(filter -> {
+                                EntityFilter entityFilter = JacksonUtil.treeToValue(filter, EntityFilter.class);
+                                EntityType entityType = DefaultEntityQueryRepository.resolveEntityType(entityFilter);
+
+                                String filterJson = filter.toString();
+                                String newFilterJson = UUID_PATTERN.matcher(filterJson).replaceAll(matchResult -> {
+                                    String uuid = matchResult.group();
+                                    EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, uuid);
+                                    return idProvider.get(d -> entityId).toString();
+                                });
+                                ((ObjectNode) entityAlias).set("filter", JacksonUtil.toJsonNode(newFilterJson));
+                            });
+                }));
+
+        // TODO [viacheslav]: improve the code below
         if (dashboard.getId() == null) {
             Set<ShortCustomerInfo> assignedCustomers = idProvider.get(Dashboard::getAssignedCustomers, ShortCustomerInfo::getCustomerId, ShortCustomerInfo::setCustomerId);
             dashboard.setAssignedCustomers(null);

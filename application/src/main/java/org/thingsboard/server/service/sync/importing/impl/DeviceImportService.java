@@ -47,7 +47,7 @@ public class DeviceImportService extends BaseEntityImportService<DeviceId, Devic
             exportData.getCredentials().setId(null);
             exportData.getCredentials().setDeviceId(null);
             return deviceService.saveDeviceWithCredentials(device, exportData.getCredentials());
-        } else { // TODO [viacheslav]: add option not to export device credentials
+        } else {
             return deviceService.saveDevice(device);
         }
     }

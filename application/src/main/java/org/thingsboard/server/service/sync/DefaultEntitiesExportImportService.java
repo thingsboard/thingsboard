@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ExportableEntityDao;
+import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
@@ -74,13 +75,17 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
     }
 
 
-    // TODO [viacheslav]: validate export data
     @Transactional(rollbackFor = Exception.class)
     @Override
     public <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(SecurityUser user, EntityExportData<E> exportData, EntityImportSettings importSettings) throws ThingsboardException {
+        if (exportData.getEntity() == null || exportData.getEntity().getId() == null) {
+            throw new DataValidationException("Invalid entity data");
+        }
+
         EntityType entityType = exportData.getEntityType();
         EntityImportService<I, E, EntityExportData<E>> importService = getImportService(entityType);
 
+        // TODO [viacheslav]: might throw DataIntegrityViolationException with cause of ConstraintViolationException: need to give normal error
         return importService.importEntity(user, exportData, importSettings);
     }
 
