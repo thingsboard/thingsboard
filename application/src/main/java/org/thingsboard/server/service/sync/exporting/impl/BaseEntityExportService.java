@@ -18,14 +18,17 @@ package org.thingsboard.server.service.sync.exporting.impl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.relation.RelationService;
-import org.thingsboard.server.service.sync.exporting.ExportableEntitiesService;
+import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.sync.exporting.EntityExportService;
 import org.thingsboard.server.service.sync.exporting.EntityExportSettings;
+import org.thingsboard.server.service.sync.exporting.ExportableEntitiesService;
 import org.thingsboard.server.service.sync.exporting.data.EntityExportData;
 
 import java.util.List;
@@ -38,19 +41,31 @@ public abstract class BaseEntityExportService<I extends EntityId, E extends Expo
     private RelationService relationService;
 
     @Override
-    public final D getExportData(TenantId tenantId, I entityId, EntityExportSettings exportSettings) {
+    public final D getExportData(SecurityUser user, I entityId, EntityExportSettings exportSettings) throws ThingsboardException {
         D exportData = newExportData();
 
-        E entity = exportableEntitiesService.findEntityById(tenantId, entityId);
+        E entity = exportableEntitiesService.findEntityById(user, entityId);
+        exportableEntitiesService.checkPermission(user, entity, Operation.READ);
+
         exportData.setEntity(entity);
-        setRelatedEntities(tenantId, entity, exportData);
+        setRelatedEntities(user.getTenantId(), entity, exportData);
 
         if (exportSettings.isExportInboundRelations()) {
-            List<EntityRelation> inboundRelations = relationService.findByTo(tenantId, entityId, RelationTypeGroup.COMMON);
+            List<EntityRelation> inboundRelations = relationService.findByTo(user.getTenantId(), entityId, RelationTypeGroup.COMMON);
+            if (inboundRelations != null) {
+                for (EntityRelation relation : inboundRelations) {
+                    exportableEntitiesService.checkPermission(user, relation.getFrom(), Operation.READ);
+                }
+            }
             exportData.setInboundRelations(inboundRelations);
         }
         if (exportSettings.isExportOutboundRelations()) {
-            List<EntityRelation> outboundRelations = relationService.findByFrom(tenantId, entityId, RelationTypeGroup.COMMON);
+            List<EntityRelation> outboundRelations = relationService.findByFrom(user.getTenantId(), entityId, RelationTypeGroup.COMMON);
+            if (outboundRelations != null) {
+                for (EntityRelation relation : outboundRelations) {
+                    exportableEntitiesService.checkPermission(user, relation.getTo(), Operation.READ);
+                }
+            }
             exportData.setOutboundRelations(outboundRelations);
         }
 

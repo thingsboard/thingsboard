@@ -17,13 +17,14 @@ package org.thingsboard.server.service.sync.importing;
 
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.exporting.data.EntityExportData;
 
 public interface EntityImportService<I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> {
 
-    EntityImportResult<E> importEntity(TenantId tenantId, D exportData, EntityImportSettings importSettings);
+    EntityImportResult<E> importEntity(SecurityUser user, D exportData, EntityImportSettings importSettings) throws ThingsboardException;
 
     EntityType getEntityType();
 

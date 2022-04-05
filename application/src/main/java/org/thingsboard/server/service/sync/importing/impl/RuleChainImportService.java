@@ -41,8 +41,12 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
     private final RuleChainService ruleChainService;
 
     @Override
-    protected RuleChain prepareAndSave(TenantId tenantId, RuleChain ruleChain, RuleChainExportData exportData, NewIdProvider idProvider) {
+    protected void setOwner(TenantId tenantId, RuleChain ruleChain, NewIdProvider idProvider) {
         ruleChain.setTenantId(tenantId);
+    }
+
+    @Override
+    protected RuleChain prepareAndSave(TenantId tenantId, RuleChain ruleChain, RuleChainExportData exportData, NewIdProvider idProvider) {
         RuleChainMetaData metaData = exportData.getMetaData();
         Optional.ofNullable(metaData.getNodes()).orElse(Collections.emptyList())
                 .forEach(ruleNode -> {
@@ -54,18 +58,19 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
                             .map(JsonNode::asText).map(UUID::fromString)
                             .ifPresent(otherRuleChainUuid -> {
                                 ((ObjectNode) ruleNodeConfig).set("ruleChainId", new TextNode(
-                                        idProvider.get(tenantId, rc -> new RuleChainId(otherRuleChainUuid)).toString()
+                                        idProvider.get(rc -> new RuleChainId(otherRuleChainUuid)).toString()
                                 ));
                                 ruleNode.setConfiguration(ruleNodeConfig);
                             });
                 });
         Optional.ofNullable(metaData.getRuleChainConnections()).orElse(Collections.emptyList())
                 .forEach(ruleChainConnectionInfo -> {
-                    ruleChainConnectionInfo.setTargetRuleChainId(idProvider.get(tenantId, rc -> ruleChainConnectionInfo.getTargetRuleChainId()));
+                    ruleChainConnectionInfo.setTargetRuleChainId(idProvider.get(rc -> ruleChainConnectionInfo.getTargetRuleChainId()));
                 });
         ruleChain.setFirstRuleNodeId(null);
 
         if (ruleChain.getId() != null) {
+            // FIXME [viacheslav]: maybe no need to delete
             ruleChainService.deleteRuleNodes(tenantId, ruleChain.getId());
         }
         ruleChain = ruleChainService.saveRuleChain(ruleChain);

@@ -40,12 +40,16 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
 
     private final DashboardService dashboardService;
 
+    @Override
+    protected void setOwner(TenantId tenantId, Dashboard dashboard, NewIdProvider idProvider) {
+        dashboard.setTenantId(tenantId);
+    }
+
     // TODO [viacheslav]: improve the code
     @Override
     protected Dashboard prepareAndSave(TenantId tenantId, Dashboard dashboard, DashboardExportData exportData, NewIdProvider idProvider) {
-        dashboard.setTenantId(tenantId);
         if (dashboard.getId() == null) {
-            Set<ShortCustomerInfo> assignedCustomers = idProvider.get(tenantId, Dashboard::getAssignedCustomers, ShortCustomerInfo::getCustomerId, ShortCustomerInfo::setCustomerId);
+            Set<ShortCustomerInfo> assignedCustomers = idProvider.get(Dashboard::getAssignedCustomers, ShortCustomerInfo::getCustomerId, ShortCustomerInfo::setCustomerId);
             dashboard.setAssignedCustomers(null);
             dashboard = dashboardService.saveDashboard(dashboard);
             for (ShortCustomerInfo customerInfo : assignedCustomers) {
@@ -54,7 +58,7 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
         } else {
             Set<CustomerId> existingAssignedCustomers = Optional.ofNullable(dashboardService.findDashboardById(tenantId, dashboard.getId()).getAssignedCustomers())
                     .orElse(Collections.emptySet()).stream().map(ShortCustomerInfo::getCustomerId).collect(Collectors.toSet());
-            Set<CustomerId> newAssignedCustomers = idProvider.get(tenantId, Dashboard::getAssignedCustomers, ShortCustomerInfo::getCustomerId, ShortCustomerInfo::setCustomerId).stream()
+            Set<CustomerId> newAssignedCustomers = idProvider.get(Dashboard::getAssignedCustomers, ShortCustomerInfo::getCustomerId, ShortCustomerInfo::setCustomerId).stream()
                     .map(ShortCustomerInfo::getCustomerId).collect(Collectors.toSet());
 
             Set<CustomerId> toUnassign = new HashSet<>(existingAssignedCustomers);

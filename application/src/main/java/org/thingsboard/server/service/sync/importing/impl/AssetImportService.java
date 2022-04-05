@@ -33,9 +33,13 @@ public class AssetImportService extends BaseEntityImportService<AssetId, Asset, 
     private final AssetService assetService;
 
     @Override
-    protected Asset prepareAndSave(TenantId tenantId, Asset asset, AssetExportData exportData, NewIdProvider idProvider) {
+    protected void setOwner(TenantId tenantId, Asset asset, NewIdProvider idProvider) {
         asset.setTenantId(tenantId);
-        asset.setCustomerId(idProvider.get(tenantId, Asset::getCustomerId));
+        asset.setCustomerId(idProvider.get(Asset::getCustomerId));
+    }
+
+    @Override
+    protected Asset prepareAndSave(TenantId tenantId, Asset asset, AssetExportData exportData, NewIdProvider idProvider) {
         return assetService.saveAsset(asset);
     }
 

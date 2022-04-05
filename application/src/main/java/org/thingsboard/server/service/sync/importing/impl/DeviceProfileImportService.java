@@ -33,12 +33,16 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
     private final DeviceProfileService deviceProfileService;
 
     @Override
-    protected DeviceProfile prepareAndSave(TenantId tenantId, DeviceProfile deviceProfile, DeviceProfileExportData exportData, NewIdProvider idProvider) {
+    protected void setOwner(TenantId tenantId, DeviceProfile deviceProfile, NewIdProvider idProvider) {
         deviceProfile.setTenantId(tenantId);
-        deviceProfile.setDefaultRuleChainId(idProvider.get(tenantId, DeviceProfile::getDefaultRuleChainId));
-        deviceProfile.setDefaultDashboardId(idProvider.get(tenantId, DeviceProfile::getDefaultDashboardId));
-        deviceProfile.setFirmwareId(idProvider.get(tenantId, DeviceProfile::getFirmwareId));
-        deviceProfile.setSoftwareId(idProvider.get(tenantId, DeviceProfile::getSoftwareId));
+    }
+
+    @Override
+    protected DeviceProfile prepareAndSave(TenantId tenantId, DeviceProfile deviceProfile, DeviceProfileExportData exportData, NewIdProvider idProvider) {
+        deviceProfile.setDefaultRuleChainId(idProvider.get(DeviceProfile::getDefaultRuleChainId));
+        deviceProfile.setDefaultDashboardId(idProvider.get(DeviceProfile::getDefaultDashboardId));
+        deviceProfile.setFirmwareId(idProvider.get(DeviceProfile::getFirmwareId));
+        deviceProfile.setSoftwareId(idProvider.get(DeviceProfile::getSoftwareId));
         return deviceProfileService.saveDeviceProfile(deviceProfile);
     }
 

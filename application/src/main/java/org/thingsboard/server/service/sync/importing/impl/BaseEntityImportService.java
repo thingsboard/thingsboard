@@ -22,12 +22,15 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.sync.exporting.ExportableEntitiesService;
 import org.thingsboard.server.service.sync.exporting.data.EntityExportData;
 import org.thingsboard.server.service.sync.importing.EntityImportResult;
@@ -50,22 +53,26 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     @Autowired
     private RelationService relationService;
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @Override
-    public EntityImportResult<E> importEntity(TenantId tenantId, D exportData, EntityImportSettings importSettings) {
+    public EntityImportResult<E> importEntity(SecurityUser user, D exportData, EntityImportSettings importSettings) throws ThingsboardException {
         E entity = exportData.getEntity();
-        E existingEntity = exportableEntitiesService.findEntityByExternalId(tenantId, entity.getId());
+        E existingEntity = exportableEntitiesService.findEntityByExternalId(user, entity.getId());
 
         entity.setExternalId(entity.getId());
 
+        NewIdProvider idProvider = new NewIdProvider(user, entity, existingEntity, importSettings);
+        setOwner(user.getTenantId(), entity, idProvider);
         if (existingEntity == null) {
             entity.setId(null);
+            exportableEntitiesService.checkPermission(user, entity, Operation.CREATE);
         } else {
             entity.setId(existingEntity.getId());
+            exportableEntitiesService.checkPermission(user, existingEntity, Operation.WRITE);
         }
 
-        E savedEntity = prepareAndSave(tenantId, entity, exportData, new NewIdProvider(entity, existingEntity, importSettings));
-        importRelations(tenantId, savedEntity, existingEntity, exportData, importSettings);
+        E savedEntity = prepareAndSave(user.getTenantId(), entity, exportData, idProvider);
+        importRelations(user, savedEntity, existingEntity, exportData, importSettings);
 
         EntityImportResult<E> importResult = new EntityImportResult<>();
         importResult.setSavedEntity(savedEntity);
@@ -73,57 +80,71 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
         return importResult;
     }
 
+    protected abstract void setOwner(TenantId tenantId, E entity, NewIdProvider idProvider);
+
     protected abstract E prepareAndSave(TenantId tenantId, E entity, D exportData, NewIdProvider idProvider);
 
 
-    private void importRelations(TenantId tenantId, E savedEntity, E existingEntity, D exportData, EntityImportSettings importSettings) {
+    private void importRelations(SecurityUser user, E savedEntity, E existingEntity, D exportData, EntityImportSettings importSettings) throws ThingsboardException {
         List<EntityRelation> newRelations = new LinkedList<>();
 
         if (importSettings.isImportInboundRelations() && CollectionUtils.isNotEmpty(exportData.getInboundRelations())) {
             newRelations.addAll(exportData.getInboundRelations().stream()
-                    .peek(relation -> {
-                        relation.setTo(savedEntity.getId());
-                        relation.setFrom(getInternalId(tenantId, relation.getFrom()));
-                    })
+                    .peek(relation -> relation.setTo(savedEntity.getId()))
                     .collect(Collectors.toList()));
+
             if (importSettings.isRemoveExistingRelations() && existingEntity != null) {
-                relationService.findByTo(tenantId, savedEntity.getId(), RelationTypeGroup.COMMON).forEach(existingRelation -> {
-                    relationService.deleteRelation(tenantId, existingRelation);
-                });
+                for (EntityRelation existingRelation : relationService.findByTo(user.getTenantId(), savedEntity.getId(), RelationTypeGroup.COMMON)) {
+                    exportableEntitiesService.checkPermission(user, existingRelation.getFrom(), Operation.WRITE);
+                    relationService.deleteRelation(user.getTenantId(), existingRelation);
+                }
             }
         }
         if (importSettings.isImportOutboundRelations() && CollectionUtils.isNotEmpty(exportData.getOutboundRelations())) {
             newRelations.addAll(exportData.getOutboundRelations().stream()
-                    .peek(relation -> {
-                        relation.setTo(getInternalId(tenantId, relation.getTo()));
-                        relation.setFrom(savedEntity.getId());
-                    })
+                    .peek(relation -> relation.setFrom(savedEntity.getId()))
                     .collect(Collectors.toList()));
+
             if (importSettings.isRemoveExistingRelations() && existingEntity != null) {
-                relationService.findByFrom(tenantId, savedEntity.getId(), RelationTypeGroup.COMMON).forEach(existingRelation -> {
-                    relationService.deleteRelation(tenantId, existingRelation);
-                });
+                for (EntityRelation existingRelation : relationService.findByFrom(user.getTenantId(), savedEntity.getId(), RelationTypeGroup.COMMON)) {
+                    exportableEntitiesService.checkPermission(user, existingRelation.getTo(), Operation.WRITE);
+                    relationService.deleteRelation(user.getTenantId(), existingRelation);
+                }
             }
         }
 
-        newRelations.forEach(relation -> {
-            relationService.saveRelation(tenantId, relation);
-        });
+        for (EntityRelation relation : newRelations) {
+            HasId<EntityId> otherEntity = null;
+            if (!relation.getTo().equals(savedEntity.getId())) {
+                otherEntity = findInternalEntity(user, relation.getTo());
+                relation.setTo(otherEntity.getId());
+            }
+            if (!relation.getFrom().equals(savedEntity.getId())) {
+                otherEntity = findInternalEntity(user, relation.getFrom());
+                relation.setFrom(otherEntity.getId());
+            }
+            if (otherEntity != null) {
+                exportableEntitiesService.checkPermission(user, otherEntity, Operation.WRITE);
+            }
+
+            relationService.saveRelation(user.getTenantId(), relation);
+        }
     }
 
-    private <ID extends EntityId> ID getInternalId(TenantId tenantId, ID externalId) {
+    private <IE extends HasId<ID>, ID extends EntityId> IE findInternalEntity(SecurityUser user, ID externalId) {
         if (externalId == null || externalId.isNullUid()) {
             return null;
         }
-        HasId<ID> entity = exportableEntitiesService.findEntityByExternalId(tenantId, externalId);
+        IE entity = exportableEntitiesService.findEntityByExternalId(user, externalId);
         if (entity == null) {
             throw new IllegalArgumentException("Cannot find " + externalId.getEntityType() + " by external id " + externalId);
         }
-        return entity.getId();
+        return entity;
     }
 
     @RequiredArgsConstructor
     protected class NewIdProvider {
+        private final SecurityUser user;
         private final E entity;
         private final E existingEntity;
         private final EntityImportSettings importSettings;
@@ -132,26 +153,37 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                 EntityType.RULE_CHAIN
         );
 
-        public <ID extends EntityId> ID get(TenantId tenantId, Function<E, ID> idExtractor) {
+        public <ID extends EntityId> ID get(Function<E, ID> idExtractor) {
             if (existingEntity == null || importSettings.isUpdateReferencesToOtherEntities()
                     || ALWAYS_UPDATE_REFERENCED_IDS.contains(getEntityType())) {
-                return getInternalId(tenantId, idExtractor.apply(entity));
+                return getInternalId(idExtractor.apply(this.entity));
             } else {
                 return idExtractor.apply(existingEntity);
             }
         }
 
-        public <ID extends EntityId, T> Set<T> get(TenantId tenantId, Function<E, Set<T>> listExtractor, Function<T, ID> idGetter, BiConsumer<T, ID> idSetter) {
+        public <ID extends EntityId, T> Set<T> get(Function<E, Set<T>> listExtractor, Function<T, ID> idGetter, BiConsumer<T, ID> idSetter) {
             if (existingEntity == null || importSettings.isUpdateReferencesToOtherEntities()) {
                 return Optional.ofNullable(listExtractor.apply(entity)).orElse(Collections.emptySet()).stream()
                         .peek(t -> {
-                            idSetter.accept(t, getInternalId(tenantId, idGetter.apply(t)));
+                            idSetter.accept(t, getInternalId(idGetter.apply(t)));
                         })
                         .collect(Collectors.toSet());
             } else {
                 return listExtractor.apply(existingEntity);
             }
         }
+
+        private <ID extends EntityId> ID getInternalId(ID externalId) {
+            try {
+                HasId<ID> entity = findInternalEntity(user, externalId);
+                exportableEntitiesService.checkPermission(user, entity, Operation.READ);
+                return entity.getId();
+            } catch (ThingsboardException e) {
+                throw new IllegalArgumentException(e.getMessage(), e);
+            }
+        }
+
     }
 
 }
