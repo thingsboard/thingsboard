@@ -191,7 +191,7 @@ public class TbHttpClient {
             entity = new HttpEntity<>(msg.getData(), headers);
         }
 
-        URI uri = UriComponentsBuilder.fromUriString(endpointUrl).build().encode().toUri();
+        URI uri = buildEncodedUri(endpointUrl);
         ListenableFuture<ResponseEntity<String>> future = httpClient.exchange(
                 uri, method, entity, String.class);
         future.addCallback(new ListenableFutureCallback<ResponseEntity<String>>() {
@@ -215,6 +215,28 @@ public class TbHttpClient {
         if (pendingFutures != null) {
             processParallelRequests(future);
         }
+    }
+
+    public URI buildEncodedUri(String endpointUrl) {
+        if (endpointUrl == null) {
+            throw new RuntimeException("Url string cannot be null!");
+        }
+        if (endpointUrl.isEmpty()) {
+            throw new RuntimeException("Url string cannot be empty!");
+        }
+
+        URI uri = UriComponentsBuilder.fromUriString(endpointUrl).build().encode().toUri();
+        if (uri.getScheme() == null || uri.getScheme().isEmpty()) {
+            throw new RuntimeException("Transport scheme(protocol) must be provided!");
+        }
+
+        boolean authorityNotValid = uri.getAuthority() == null || uri.getAuthority().isEmpty();
+        boolean hostNotValid = uri.getHost() == null || uri.getHost().isEmpty();
+        if (authorityNotValid || hostNotValid) {
+            throw new RuntimeException("Url string is invalid!");
+        }
+
+        return uri;
     }
 
     private TbMsg processResponse(TbContext ctx, TbMsg origMsg, ResponseEntity<String> response) {

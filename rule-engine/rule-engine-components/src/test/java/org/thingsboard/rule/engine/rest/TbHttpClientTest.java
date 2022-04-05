@@ -18,19 +18,15 @@ package org.thingsboard.rule.engine.rest;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.AsyncResult;
+import org.mockito.Mockito;
+import org.mockserver.integration.ClientAndServer;
 import org.springframework.web.client.AsyncRestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -38,7 +34,9 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.net.URI;
+import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
@@ -49,14 +47,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockserver.integration.ClientAndServer.startClientAndServer;
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
 
 public class TbHttpClientTest {
 
     EventLoopGroup eventLoop;
     TbHttpClient client;
-
-    private final String ENDPOINT_URL = "http://localhost/api?data=[{\\\"test\\\":\\\"test\\\"}]";
-    private final String GET_METHOD = "GET";
 
     @Before
     public void setUp() throws Exception {
@@ -84,28 +82,60 @@ public class TbHttpClientTest {
     }
 
     @Test
+    public void testBuildSimpleUri() {
+        Mockito.when(client.buildEncodedUri(any())).thenCallRealMethod();
+        String url = "http://localhost:8080/";
+        URI uri = client.buildEncodedUri(url);
+        Assert.assertEquals(url, uri.toString());
+    }
+
+    @Test
+    public void testBuildUriWithoutProtocol() {
+        Mockito.when(client.buildEncodedUri(any())).thenCallRealMethod();
+        String url = "localhost:8080/";
+        assertThatThrownBy(() -> client.buildEncodedUri(url));
+    }
+
+    @Test
+    public void testBuildInvalidUri() {
+        Mockito.when(client.buildEncodedUri(any())).thenCallRealMethod();
+        String url = "aaa";
+        assertThatThrownBy(() -> client.buildEncodedUri(url));
+    }
+
+    @Test
+    public void testBuildUriWithSpecialSymbols() {
+        Mockito.when(client.buildEncodedUri(any())).thenCallRealMethod();
+        String url = "http://192.168.1.1/data?d={\"a\": 12}";
+        String expected = "http://192.168.1.1/data?d=%7B%22a%22:%2012%7D";
+        URI uri = client.buildEncodedUri(url);
+        Assert.assertEquals(expected, uri.toString());
+    }
+
+    @Test
     public void testProcessMessageWithJsonInUrlVariable() throws Exception {
+        String host = "localhost";
+        String path = "/api";
+        String paramKey = "data";
+        String paramVal = "[{\"test\":\"test\"}]";
+        String successResponseBody = "SUCCESS";
+
+        var server = setUpDummyServer(host, path, paramKey, paramVal, successResponseBody);
+
+        String endpointUrl = String.format(
+                "http://%s:%d%s?%s=%s",
+                host, server.getPort(), path, paramKey, paramVal
+        );
+        String method = "GET";
+
+
         var config = new TbRestApiCallNodeConfiguration()
                 .defaultConfiguration();
-        config.setRequestMethod(GET_METHOD);
-        config.setRestEndpointUrlPattern(ENDPOINT_URL);
+        config.setRequestMethod(method);
+        config.setRestEndpointUrlPattern(endpointUrl);
         config.setUseSimpleClientHttpFactory(true);
 
-        var asyncRestTemplate = mock(AsyncRestTemplate.class);
-        var uriCaptor = ArgumentCaptor.forClass(URI.class);
-
-        var responseEntity = new ResponseEntity<>(
-                "{}",
-                new HttpHeaders(),
-                HttpStatus.OK
-        );
-
-        when(asyncRestTemplate.exchange(
-                uriCaptor.capture(),
-                any(),
-                any(),
-                eq(String.class)
-        )).thenReturn(new AsyncResult<>(responseEntity));
+        var asyncRestTemplate = new AsyncRestTemplate();
 
         var httpClient = new TbHttpClient(config, eventLoop);
         httpClient.setHttpClient(asyncRestTemplate);
@@ -121,24 +151,57 @@ public class TbHttpClientTest {
 
         var ctx = mock(TbContext.class);
         when(ctx.transformMsg(
-                        eq(msg), eq(msg.getType()),
-                        eq(msg.getOriginator()),
-                        eq(msg.getMetaData()),
-                        eq(msg.getData())
-                )).thenReturn(successMsg);
-
-        httpClient.processMessage(ctx, msg);
-
-        verify(ctx, times(1)).transformMsg(
                 eq(msg), eq(msg.getType()),
                 eq(msg.getOriginator()),
                 eq(msg.getMetaData()),
                 eq(msg.getData())
-        );
-        verify(ctx, times(1))
-                .tellSuccess(eq(successMsg));
+        )).thenReturn(successMsg);
 
-        URI uri = UriComponentsBuilder.fromUriString(ENDPOINT_URL).build().encode().toUri();
-        Assert.assertEquals("URI encoding was not performed!!", uri, uriCaptor.getValue());
+        var capturedData = ArgumentCaptor.forClass(String.class);
+
+        when(ctx.transformMsg(
+                eq(msg), eq(msg.getType()),
+                eq(msg.getOriginator()),
+                any(),
+                capturedData.capture()
+        )).thenReturn(successMsg);
+
+        httpClient.processMessage(ctx, msg);
+
+        Awaitility.await()
+                .atMost(30, TimeUnit.SECONDS)
+                .until(() -> {
+                    try {
+                        verify(ctx, times(1)).tellSuccess(any());
+                        return true;
+                    } catch (Exception e) {
+                        return false;
+                    }
+                });
+
+        verify(ctx, times(1)).tellSuccess(any());
+        verify(ctx, times(0)).tellFailure(any(), any());
+        Assert.assertEquals(successResponseBody, capturedData.getValue());
     }
+
+    private ClientAndServer setUpDummyServer(String host, String path, String paramKey, String paramVal, String successResponseBody) {
+        var server = startClientAndServer(host, 1080);
+        createGetMethodExpectations(server, path, paramKey, paramVal, successResponseBody);
+        return server;
+    }
+
+    private void createGetMethodExpectations(ClientAndServer server, String path, String paramKey, String paramVal, String successResponseBody) {
+        server.when(
+                request()
+                        .withMethod("GET")
+                        .withPath(path)
+                        .withQueryStringParameter(paramKey, paramVal)
+        ).respond(
+                response()
+                        .withStatusCode(200)
+                        .withBody(successResponseBody)
+        );
+    }
+
+
 }
