@@ -52,9 +52,16 @@ public abstract class BaseEntityExportService<I extends EntityId, E extends Expo
 
         exportData.setEntity(entity);
         setRelatedEntities(user.getTenantId(), entity, exportData);
+        setAdditionalExportData(user, entity, exportData, exportSettings);
 
+        return exportData;
+    }
+
+    protected void setRelatedEntities(TenantId tenantId, E mainEntity, D exportData) {}
+
+    protected void setAdditionalExportData(SecurityUser user, E entity, D exportData, EntityExportSettings exportSettings) throws ThingsboardException {
         if (exportSettings.isExportInboundRelations()) {
-            List<EntityRelation> inboundRelations = relationService.findByTo(user.getTenantId(), entityId, RelationTypeGroup.COMMON);
+            List<EntityRelation> inboundRelations = relationService.findByTo(user.getTenantId(), entity.getId(), RelationTypeGroup.COMMON);
             if (inboundRelations != null) {
                 for (EntityRelation relation : inboundRelations) {
                     exportableEntitiesService.checkPermission(user, relation.getFrom(), Operation.READ);
@@ -63,7 +70,7 @@ public abstract class BaseEntityExportService<I extends EntityId, E extends Expo
             exportData.setInboundRelations(inboundRelations);
         }
         if (exportSettings.isExportOutboundRelations()) {
-            List<EntityRelation> outboundRelations = relationService.findByFrom(user.getTenantId(), entityId, RelationTypeGroup.COMMON);
+            List<EntityRelation> outboundRelations = relationService.findByFrom(user.getTenantId(), entity.getId(), RelationTypeGroup.COMMON);
             if (outboundRelations != null) {
                 for (EntityRelation relation : outboundRelations) {
                     exportableEntitiesService.checkPermission(user, relation.getTo(), Operation.READ);
@@ -71,11 +78,7 @@ public abstract class BaseEntityExportService<I extends EntityId, E extends Expo
             }
             exportData.setOutboundRelations(outboundRelations);
         }
-
-        return exportData;
     }
-
-    protected void setRelatedEntities(TenantId tenantId, E mainEntity, D exportData) {}
 
     protected abstract D newExportData();
 

@@ -23,7 +23,9 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.exporting.data.AssetExportData;
+import org.thingsboard.server.utils.ThrowingRunnable;
 
 @Service
 @TbCoreComponent
@@ -41,6 +43,13 @@ public class AssetImportService extends BaseEntityImportService<AssetId, Asset, 
     @Override
     protected Asset prepareAndSave(TenantId tenantId, Asset asset, AssetExportData exportData, NewIdProvider idProvider) {
         return assetService.saveAsset(asset);
+    }
+
+    @Override
+    protected ThrowingRunnable getCallback(SecurityUser user, Asset savedAsset, Asset oldAsset) {
+        return () -> {
+            entityActionService.onAssetCreatedOrUpdated(user, savedAsset, oldAsset == null);
+        };
     }
 
     @Override

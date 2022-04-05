@@ -23,7 +23,9 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.exporting.data.DeviceProfileExportData;
+import org.thingsboard.server.utils.ThrowingRunnable;
 
 @Service
 @TbCoreComponent
@@ -44,6 +46,13 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
         deviceProfile.setFirmwareId(idProvider.get(DeviceProfile::getFirmwareId));
         deviceProfile.setSoftwareId(idProvider.get(DeviceProfile::getSoftwareId));
         return deviceProfileService.saveDeviceProfile(deviceProfile);
+    }
+
+    @Override
+    protected ThrowingRunnable getCallback(SecurityUser user, DeviceProfile savedDeviceProfile, DeviceProfile oldDeviceProfile) {
+        return () -> {
+
+        };
     }
 
     @Override

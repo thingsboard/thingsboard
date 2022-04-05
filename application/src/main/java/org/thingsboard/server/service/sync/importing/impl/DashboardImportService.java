@@ -23,6 +23,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -32,7 +33,10 @@ import org.thingsboard.server.common.data.query.EntityFilter;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.sql.query.DefaultEntityQueryRepository;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.exporting.data.DashboardExportData;
+import org.thingsboard.server.service.sync.importing.EntityImportSettings;
+import org.thingsboard.server.utils.ThrowingRunnable;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -106,6 +110,13 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
             dashboard = dashboardService.saveDashboard(dashboard);
         }
         return dashboard;
+    }
+
+    @Override
+    protected ThrowingRunnable getCallback(SecurityUser user, Dashboard savedDashboard, Dashboard oldDashboard) {
+        return () -> {
+            entityActionService.onDashboardCreatedOrUpdated(user, savedDashboard, oldDashboard == null);
+        };
     }
 
     @Override

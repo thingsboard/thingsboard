@@ -19,11 +19,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.exporting.data.CustomerExportData;
+import org.thingsboard.server.service.sync.importing.EntityImportSettings;
+import org.thingsboard.server.utils.ThrowingRunnable;
 
 @Service
 @TbCoreComponent
@@ -40,6 +44,13 @@ public class CustomerImportService extends BaseEntityImportService<CustomerId, C
     @Override
     protected Customer prepareAndSave(TenantId tenantId, Customer customer, CustomerExportData exportData, NewIdProvider idProvider) {
         return customerService.saveCustomer(customer);
+    }
+
+    @Override
+    protected ThrowingRunnable getCallback(SecurityUser user, Customer savedCustomer, Customer oldCustomer) {
+        return () -> {
+            entityActionService.onCustomerCreatedOrUpdated(user, savedCustomer);
+        };
     }
 
     @Override

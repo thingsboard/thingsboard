@@ -78,9 +78,11 @@ import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -247,12 +249,10 @@ public class RuleChainController extends BaseController {
         try {
             boolean created = ruleChain.getId() == null;
             ruleChain.setTenantId(getCurrentUser().getTenantId());
-
             checkEntity(ruleChain.getId(), ruleChain, Resource.RULE_CHAIN);
 
             RuleChain savedRuleChain = checkNotNull(ruleChainService.saveRuleChain(ruleChain));
-
-            onEntityUpdatedOrCreated(getCurrentUser(), savedRuleChain, null, created);
+            entityActionService.onRuleChainCreatedOrUpdated(getCurrentUser(), savedRuleChain, created);
 
             return savedRuleChain;
         } catch (Exception e) {

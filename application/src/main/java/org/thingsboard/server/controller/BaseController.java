@@ -37,7 +37,6 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
-import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.OtaPackage;
@@ -69,7 +68,6 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
-import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -85,7 +83,6 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.rpc.Rpc;
@@ -144,7 +141,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -923,66 +919,4 @@ public abstract class BaseController {
             return MediaType.APPLICATION_OCTET_STREAM;
         }
     }
-
-    protected <E extends HasName & HasId<I>, I extends EntityId> void onEntityUpdatedOrCreated(User user, E savedEntity, E oldEntity, boolean isNewEntity) {
-        boolean notifyEdgeService = false;
-
-        EntityType entityType = savedEntity.getId().getEntityType();
-        switch (entityType) {
-            case DEVICE:
-                tbClusterService.onDeviceUpdated((Device) savedEntity, (Device) oldEntity);
-                break;
-            case DEVICE_PROFILE:
-                DeviceProfile deviceProfile = (DeviceProfile) savedEntity;
-                DeviceProfile oldDeviceProfile = (DeviceProfile) oldEntity;
-                boolean isFirmwareChanged = false;
-                boolean isSoftwareChanged = false;
-                if (!isNewEntity) {
-                    if (!Objects.equals(deviceProfile.getFirmwareId(), oldDeviceProfile.getFirmwareId())) {
-                        isFirmwareChanged = true;
-                    }
-                    if (!Objects.equals(deviceProfile.getSoftwareId(), oldDeviceProfile.getSoftwareId())) {
-                        isSoftwareChanged = true;
-                    }
-                }
-                tbClusterService.onDeviceProfileChange(deviceProfile, null);
-                tbClusterService.broadcastEntityStateChangeEvent(deviceProfile.getTenantId(), deviceProfile.getId(),
-                        isNewEntity ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
-                otaPackageStateService.update(deviceProfile, isFirmwareChanged, isSoftwareChanged);
-                notifyEdgeService = true;
-                break;
-            case RULE_CHAIN:
-                RuleChainType ruleChainType = ((RuleChain) savedEntity).getType();
-                if (RuleChainType.CORE.equals(ruleChainType)) {
-                    tbClusterService.broadcastEntityStateChangeEvent(user.getTenantId(), savedEntity.getId(),
-                            isNewEntity ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
-                }
-                if (RuleChainType.EDGE.equals(ruleChainType)) {
-                    if (!isNewEntity) {
-                        notifyEdgeService = true;
-                    }
-                }
-                break;
-            case ASSET:
-            case CUSTOMER:
-            case DASHBOARD:
-                if (!isNewEntity) {
-                    notifyEdgeService = true;
-                }
-                break;
-            default:
-                throw new UnsupportedOperationException();
-        }
-
-        try {
-            logEntityAction(user, savedEntity.getId(), savedEntity, savedEntity instanceof HasCustomerId ? ((HasCustomerId) savedEntity).getCustomerId() : null,
-                    isNewEntity ? ActionType.ADDED : ActionType.UPDATED, null);
-        } catch (ThingsboardException e) {
-            log.error("Failed to log entity action", e);
-        }
-        if (notifyEdgeService) {
-            sendEntityNotificationMsg(user.getTenantId(), savedEntity.getId(), isNewEntity ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
-        }
-    }
-
 }

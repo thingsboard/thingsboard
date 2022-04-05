@@ -200,11 +200,13 @@ public class EntitiesExportImportController extends BaseController {
         EntityImportSettings importSettings = toImportSettings(importSettingsParams);
 
         try {
-            return importEntities(user, exportDataList, importSettings)
-                    .stream().peek(entityImportResult -> {
-                        onEntityUpdatedOrCreated(user, entityImportResult.getSavedEntity(), entityImportResult.getOldEntity(), entityImportResult.getOldEntity() == null);
-                    })
-                    .collect(Collectors.toList());
+            List<EntityImportResult<ExportableEntity<EntityId>>> importResults = importEntities(user, exportDataList, importSettings);
+            for (EntityImportResult<ExportableEntity<EntityId>> entityImportResult : importResults) {
+                if (entityImportResult.getCallback() != null) {
+                    entityImportResult.getCallback().run();
+                }
+            }
+            return importResults;
         } catch (Exception e) {
             throw handleException(e);
         }

@@ -27,7 +27,9 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.exporting.data.RuleChainExportData;
+import org.thingsboard.server.utils.ThrowingRunnable;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -77,6 +79,13 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
         exportData.getMetaData().setRuleChainId(ruleChain.getId());
         ruleChainService.saveRuleChainMetaData(tenantId, exportData.getMetaData());
         return ruleChainService.findRuleChainById(tenantId, ruleChain.getId());
+    }
+
+    @Override
+    protected ThrowingRunnable getCallback(SecurityUser user, RuleChain savedRuleChain, RuleChain oldRuleChain) {
+        return () -> {
+
+        };
     }
 
     @Override

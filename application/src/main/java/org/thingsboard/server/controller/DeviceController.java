@@ -74,11 +74,11 @@ import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.device.DeviceBulkImportService;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
-import org.thingsboard.server.service.sync.importing.csv.BulkImportRequest;
-import org.thingsboard.server.service.sync.importing.csv.BulkImportResult;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
+import org.thingsboard.server.service.sync.importing.csv.BulkImportRequest;
+import org.thingsboard.server.service.sync.importing.csv.BulkImportResult;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -194,9 +194,7 @@ public class DeviceController extends BaseController {
             }
 
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
-
-            onEntityUpdatedOrCreated(getCurrentUser(), savedDevice, oldDevice, created);
-
+            entityActionService.onDeviceCreatedOrUpdated(getCurrentUser(), savedDevice, oldDevice, created);
             return savedDevice;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.DEVICE), device,
@@ -224,9 +222,7 @@ public class DeviceController extends BaseController {
             checkEntity(device.getId(), device, Resource.DEVICE);
             Device savedDevice = deviceService.saveDeviceWithCredentials(device, credentials);
             checkNotNull(savedDevice);
-
-            onEntityUpdatedOrCreated(getCurrentUser(), savedDevice, device, device.getId() == null);
-
+            entityActionService.onDeviceCreatedOrUpdated(getCurrentUser(), savedDevice, device, created);
             return savedDevice;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.DEVICE), device,
@@ -1001,7 +997,7 @@ public class DeviceController extends BaseController {
     public BulkImportResult<Device> processDevicesBulkImport(@RequestBody BulkImportRequest request) throws Exception {
         SecurityUser user = getCurrentUser();
         return deviceBulkImportService.processBulkImport(request, user, importedDeviceInfo -> {
-            onEntityUpdatedOrCreated(user, importedDeviceInfo.getEntity(), importedDeviceInfo.getOldEntity(), !importedDeviceInfo.isUpdated());
+            entityActionService.onDeviceCreatedOrUpdated(user, importedDeviceInfo.getEntity(), importedDeviceInfo.getOldEntity(), !importedDeviceInfo.isUpdated());
         });
     }
 

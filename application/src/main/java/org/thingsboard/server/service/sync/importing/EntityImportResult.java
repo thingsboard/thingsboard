@@ -15,12 +15,17 @@
  */
 package org.thingsboard.server.service.sync.importing;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.utils.ThrowingRunnable;
 
 @Data
 public class EntityImportResult<E extends ExportableEntity<? extends EntityId>> {
     private E savedEntity;
     private E oldEntity;
+    @JsonIgnore
+    private transient ThrowingRunnable callback; // to call when entity is successfully saved and transaction is committed
 }

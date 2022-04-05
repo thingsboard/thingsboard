@@ -17,13 +17,18 @@ package org.thingsboard.server.service.sync.importing.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.exporting.data.DeviceExportData;
+import org.thingsboard.server.service.sync.importing.EntityImportSettings;
+import org.thingsboard.server.utils.ThrowingRunnable;
 
 @Service
 @TbCoreComponent
@@ -31,6 +36,7 @@ import org.thingsboard.server.service.sync.exporting.data.DeviceExportData;
 public class DeviceImportService extends BaseEntityImportService<DeviceId, Device, DeviceExportData> {
 
     private final DeviceService deviceService;
+    private final TbClusterService clusterService;
 
     @Override
     protected void setOwner(TenantId tenantId, Device device, NewIdProvider idProvider) {
@@ -50,6 +56,13 @@ public class DeviceImportService extends BaseEntityImportService<DeviceId, Devic
         } else {
             return deviceService.saveDevice(device);
         }
+    }
+
+    @Override
+    protected ThrowingRunnable getCallback(SecurityUser user, Device savedDevice, Device oldDevice) {
+        return () -> {
+            clusterService.onDeviceUpdated(savedDevice, oldDevice);
+        };
     }
 
     @Override

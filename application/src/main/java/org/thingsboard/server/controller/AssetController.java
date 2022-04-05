@@ -155,9 +155,7 @@ public class AssetController extends BaseController {
             checkEntity(asset.getId(), asset, Resource.ASSET);
 
             Asset savedAsset = checkNotNull(assetService.saveAsset(asset));
-
-            onEntityUpdatedOrCreated(getCurrentUser(), savedAsset, null, asset.getId() == null);
-
+            entityActionService.onAssetCreatedOrUpdated(getCurrentUser(), savedAsset, asset.getId() == null);
             return savedAsset;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.ASSET), asset,
@@ -667,7 +665,7 @@ public class AssetController extends BaseController {
     public BulkImportResult<Asset> processAssetsBulkImport(@RequestBody BulkImportRequest request) throws Exception {
         SecurityUser user = getCurrentUser();
         return assetBulkImportService.processBulkImport(request, user, importedAssetInfo -> {
-            onEntityUpdatedOrCreated(user, importedAssetInfo.getEntity(), importedAssetInfo.getOldEntity(), !importedAssetInfo.isUpdated());
+            entityActionService.onAssetCreatedOrUpdated(user, importedAssetInfo.getEntity(), !importedAssetInfo.isUpdated());
         });
     }
 

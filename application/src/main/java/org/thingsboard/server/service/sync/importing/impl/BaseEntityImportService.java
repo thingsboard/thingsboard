@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.sync.exporting.ExportableEntitiesService;
@@ -36,6 +37,7 @@ import org.thingsboard.server.service.sync.exporting.data.EntityExportData;
 import org.thingsboard.server.service.sync.importing.EntityImportResult;
 import org.thingsboard.server.service.sync.importing.EntityImportService;
 import org.thingsboard.server.service.sync.importing.EntityImportSettings;
+import org.thingsboard.server.utils.ThrowingRunnable;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -52,6 +54,8 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     private ExportableEntitiesService exportableEntitiesService;
     @Autowired
     private RelationService relationService;
+    @Autowired
+    protected EntityActionService entityActionService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -72,11 +76,12 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
         }
 
         E savedEntity = prepareAndSave(user.getTenantId(), entity, exportData, idProvider);
-        importRelations(user, savedEntity, existingEntity, exportData, importSettings);
+        ThrowingRunnable callback = processAfterSavedAndGetCallback(user, savedEntity, existingEntity, exportData, importSettings, idProvider);
 
         EntityImportResult<E> importResult = new EntityImportResult<>();
         importResult.setSavedEntity(savedEntity);
         importResult.setOldEntity(existingEntity);
+        importResult.setCallback(callback);
         return importResult;
     }
 
@@ -84,30 +89,8 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
 
     protected abstract E prepareAndSave(TenantId tenantId, E entity, D exportData, NewIdProvider idProvider);
 
-
-    private E findExistingEntity(TenantId tenantId, E entity, EntityImportSettings importSettings) {
-        return (E) Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndExternalId(tenantId, entity.getId()))
-                .or(() -> Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndId(tenantId, entity.getId())))
-                .or(() -> {
-                    if (importSettings.isFindExistingByName()) {
-                        return Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndName(tenantId, getEntityType(), entity.getName()));
-                    } else {
-                        return Optional.empty();
-                    }
-                })
-                .orElse(null);
-    }
-
-    private <ID extends EntityId> HasId<ID> findInternalEntity(TenantId tenantId, ID externalId) {
-        if (externalId == null || externalId.isNullUid()) return null;
-
-        return (HasId<ID>) Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndExternalId(tenantId, externalId))
-                .or(() -> Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndId(tenantId, externalId)))
-                .orElseThrow(() -> new IllegalArgumentException("Cannot find " + externalId.getEntityType() + " by external id " + externalId));
-    }
-
-
-    private void importRelations(SecurityUser user, E savedEntity, E existingEntity, D exportData, EntityImportSettings importSettings) throws ThingsboardException {
+    protected ThrowingRunnable processAfterSavedAndGetCallback(SecurityUser user, E savedEntity, E oldEntity, D exportData,
+                                                               EntityImportSettings importSettings, NewIdProvider idProvider) throws ThingsboardException {
         List<EntityRelation> newRelations = new LinkedList<>();
 
         if (importSettings.isImportInboundRelations() && CollectionUtils.isNotEmpty(exportData.getInboundRelations())) {
@@ -115,7 +98,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                     .peek(relation -> relation.setTo(savedEntity.getId()))
                     .collect(Collectors.toList()));
 
-            if (importSettings.isRemoveExistingRelations() && existingEntity != null) {
+            if (importSettings.isRemoveExistingRelations() && oldEntity != null) {
                 for (EntityRelation existingRelation : relationService.findByTo(user.getTenantId(), savedEntity.getId(), RelationTypeGroup.COMMON)) {
                     exportableEntitiesService.checkPermission(user, existingRelation.getFrom(), Operation.WRITE);
                     relationService.deleteRelation(user.getTenantId(), existingRelation);
@@ -127,7 +110,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                     .peek(relation -> relation.setFrom(savedEntity.getId()))
                     .collect(Collectors.toList()));
 
-            if (importSettings.isRemoveExistingRelations() && existingEntity != null) {
+            if (importSettings.isRemoveExistingRelations() && oldEntity != null) {
                 for (EntityRelation existingRelation : relationService.findByFrom(user.getTenantId(), savedEntity.getId(), RelationTypeGroup.COMMON)) {
                     exportableEntitiesService.checkPermission(user, existingRelation.getTo(), Operation.WRITE);
                     relationService.deleteRelation(user.getTenantId(), existingRelation);
@@ -151,6 +134,34 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
 
             relationService.saveRelation(user.getTenantId(), relation);
         }
+
+        return getCallback(user, savedEntity, oldEntity);
+    }
+
+    protected ThrowingRunnable getCallback(SecurityUser user, E savedEntity, E oldEntity) {
+        return () -> {};
+    }
+
+
+    private E findExistingEntity(TenantId tenantId, E entity, EntityImportSettings importSettings) {
+        return (E) Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndExternalId(tenantId, entity.getId()))
+                .or(() -> Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndId(tenantId, entity.getId())))
+                .or(() -> {
+                    if (importSettings.isFindExistingByName()) {
+                        return Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndName(tenantId, getEntityType(), entity.getName()));
+                    } else {
+                        return Optional.empty();
+                    }
+                })
+                .orElse(null);
+    }
+
+    private <ID extends EntityId> HasId<ID> findInternalEntity(TenantId tenantId, ID externalId) {
+        if (externalId == null || externalId.isNullUid()) return null;
+
+        return (HasId<ID>) Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndExternalId(tenantId, externalId))
+                .or(() -> Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndId(tenantId, externalId)))
+                .orElseThrow(() -> new IllegalArgumentException("Cannot find " + externalId.getEntityType() + " by external id " + externalId));
     }
 
 
