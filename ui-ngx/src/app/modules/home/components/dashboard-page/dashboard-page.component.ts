@@ -653,15 +653,15 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   public mainLayoutWidth(): string {
-    if (this.isEditingWidget && this.editingLayoutCtx.id === 'main') {
+    if (this.isEditingWidget && this.editingLayoutCtx.id === LaouytType.MAIN) {
       return '100%';
     } else {
-      return this.layouts.right.show && !this.isMobile ? this.calculateWidth('main') : '100%';
+      return this.layouts.right.show && !this.isMobile ? this.calculateWidth(LaouytType.MAIN) : '100%';
     }
   }
 
   public mainLayoutHeight(): string {
-    if (!this.isEditingWidget || this.editingLayoutCtx.id === 'main') {
+    if (!this.isEditingWidget || this.editingLayoutCtx.id === LaouytType.MAIN) {
       return '100%';
     } else {
       return '0px';
@@ -669,7 +669,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   public rightLayoutWidth(): string {
-    if (this.isEditingWidget && this.editingLayoutCtx.id === 'right') {
+    if (this.isEditingWidget && this.editingLayoutCtx.id === LaouytType.RIGHT) {
       return '100%';
     } else {
       return this.isMobile ? '100%' : this.calculateWidth(LaouytType.RIGHT);
