@@ -2348,11 +2348,11 @@
         "select": "Select target layout",
         "percentage-width": "Percentage width (%)",
         "fixed-width": "Fixed width (px)",
-        "left-width": "Left width (%)",
-        "right-width": "Right width (%)",
+        "left-width": "Left column (%)",
+        "right-width": "Right column (%)",
         "pick-fixed-side": "Fixed side: ",
         "layout-fixed-width": "Fixed width (px)",
-        "layout-min-max": "Width should not be lower then {{min}} and higher then {{max}}"
+        "layout-min-max": "Minimum width: {{min}}{{units}}, maximum width: {{max}}{{units}}"
     },
     "legend": {
         "direction": "Legend direction",
