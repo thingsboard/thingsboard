@@ -76,9 +76,9 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
       }
     );
 
-    if(this.layouts.layoutDimension) {
+    if (this.layouts.layoutDimension) {
       this.layoutsFormGroup.get('type').setValue(this.layouts.layoutDimension.type);
-      if(this.layouts.layoutDimension.type === LayoutWidthType.FIXED) {
+      if (this.layouts.layoutDimension.type === LayoutWidthType.FIXED) {
         this.layoutsFormGroup.get('fixedWidth').setValue(this.layouts.layoutDimension.fixedWidth);
         this.layoutsFormGroup.get('fixedLayout').setValue(this.layouts.layoutDimension.fixedLayout);
       } else {
@@ -86,10 +86,10 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
       }
     }
 
-    if(!this.layouts[LaouytType.MAIN]) {
+    if (!this.layouts[LaouytType.MAIN]) {
       this.layouts[LaouytType.MAIN] = this.dashboardUtils.createDefaultLayoutData();
     }
-    if(!this.layouts[LaouytType.RIGHT]) {
+    if (!this.layouts[LaouytType.RIGHT]) {
       this.layouts[LaouytType.RIGHT] = this.dashboardUtils.createDefaultLayoutData();
     }
   }
@@ -133,13 +133,13 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
         delete this.layouts[l];
       }
     }
-    if(this.layoutsFormGroup.value.right) {
+    if (this.layoutsFormGroup.value.right) {
       const formValues = this.layoutsFormGroup.value;
       const widthType = formValues.type;
       (this.layouts.layoutDimension as any) = {
         type: widthType
       }
-      if(widthType === LayoutWidthType.PERCENTAGE) {
+      if (widthType === LayoutWidthType.PERCENTAGE) {
         this.layouts.layoutDimension.leftWidthPercentage = formValues.leftWidthPercentage;
       } else {
         this.layouts.layoutDimension.fixedWidth = formValues.fixedWidth;
@@ -150,7 +150,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
   }
 
   buttonStyle(layout: DashboardLayoutId): { maxWidth: string } {
-    if(this.layoutsFormGroup.value.type && this.layoutsFormGroup.value.right) {
+    if (this.layoutsFormGroup.value.type && this.layoutsFormGroup.value.right) {
       if (this.layoutsFormGroup.value.type !== LayoutWidthType.FIXED) {
         if (layout === LaouytType.MAIN) {
           return { maxWidth: this.layoutsFormGroup.value.leftWidthPercentage + "%" };
@@ -164,7 +164,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
   }
 
   layoutValue(layout:DashboardLayoutId): number {
-    if(layout === LaouytType.MAIN) {
+    if (layout === LaouytType.MAIN) {
       return this.layoutsFormGroup.value.leftWidthPercentage;
     } else {
       return (100 - this.layoutsFormGroup.value.leftWidthPercentage);
@@ -173,14 +173,14 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
   layoutValueChange($event: Event, layout:DashboardLayoutId): void {
     let widthValue: number;
-    if(Number(($event.target as any).value) > 90) {
+    if (Number(($event.target as any).value) > 90) {
       widthValue = 90;
     } else if (Number(($event.target as any).value) < 10) {
       widthValue = 10;
     } else {
       widthValue = Number(($event.target as any).value);
     }
-    if(layout === LaouytType.MAIN) {
+    if (layout === LaouytType.MAIN) {
       this.layoutsFormGroup.get('leftWidthPercentage').setValue(widthValue);
     } else {
       this.layoutsFormGroup.get('leftWidthPercentage').setValue(100 - widthValue);

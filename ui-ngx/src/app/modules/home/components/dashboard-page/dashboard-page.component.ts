@@ -135,6 +135,7 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import cssjs from '@core/css/css';
 import { DOCUMENT } from '@angular/common';
 import { IAliasController } from '@core/api/widget-api.models';
+import { LaouytType, LayoutWidthType } from "@home/components/dashboard-page/layout/layout.models";
 
 // @dynamic
 @Component({
@@ -671,15 +672,15 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     if (this.isEditingWidget && this.editingLayoutCtx.id === 'right') {
       return '100%';
     } else {
-      return this.isMobile ? '100%' : this.calculateWidth('right');
+      return this.isMobile ? '100%' : this.calculateWidth(LaouytType.RIGHT);
     }
   }
 
-  private calculateWidth(layout: string): string {
+  private calculateWidth(layout: DashboardLayoutId): string {
       const layoutDimension = this.dashboard.configuration.states[this.dashboardCtx.state].layouts.layoutDimension;
       if (layoutDimension) {
-        if (layoutDimension.type === 'percentage') {
-          if(layout === 'right') {
+        if (layoutDimension.type === LayoutWidthType.PERCENTAGE) {
+          if (layout === LaouytType.RIGHT) {
             return (100 - layoutDimension.leftWidthPercentage) + '%';
           } else {
             return layoutDimension.leftWidthPercentage + '%';
