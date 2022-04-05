@@ -34,7 +34,7 @@
     <button mat-button *ngIf="isEdit && !widgetEditMode" class="tb-add-new-widget"
             (click)="addWidget($event)">
       <mat-icon class="tb-mat-96">add</mat-icon>
-      {{ 'dashboard.add-widget' | translate }}
+      <span>{{ 'dashboard.add-widget' | translate }}</span>
     </button>
   </section>
   <tb-dashboard #dashboard [dashboardStyle]="dashboardStyle"

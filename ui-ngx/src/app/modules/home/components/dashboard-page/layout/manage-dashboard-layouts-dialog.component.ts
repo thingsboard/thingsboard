@@ -19,7 +19,7 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { UtilsService } from '@core/services/utils.service';
@@ -31,6 +31,8 @@ import {
   DashboardSettingsDialogComponent,
   DashboardSettingsDialogData
 } from '@home/components/dashboard-page/dashboard-settings-dialog.component';
+import { MatSliderChange } from "@angular/material/slider";
+import { LaouytType, LayoutWidthType } from "@home/components/dashboard-page/layout/layout.models";
 
 export interface ManageDashboardLayoutsDialogData {
   layouts: DashboardStateLayouts;
@@ -40,7 +42,7 @@ export interface ManageDashboardLayoutsDialogData {
   selector: 'tb-manage-dashboard-layouts-dialog',
   templateUrl: './manage-dashboard-layouts-dialog.component.html',
   providers: [{provide: ErrorStateMatcher, useExisting: ManageDashboardLayoutsDialogComponent}],
-  styleUrls: ['../../../components/dashboard/layout-button.scss']
+  styleUrls: ['./manage-dashboard-layouts-dialog.component.scss', '../../../components/dashboard/layout-button.scss']
 })
 export class ManageDashboardLayoutsDialogComponent extends DialogComponent<ManageDashboardLayoutsDialogComponent, DashboardStateLayouts>
   implements OnInit, ErrorStateMatcher {
@@ -67,13 +69,28 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
     this.layoutsFormGroup = this.fb.group({
         main:  [{value: isDefined(this.layouts.main), disabled: true}, []],
         right: [isDefined(this.layouts.right), []],
+        leftWidthPercentage: [50, [Validators.min(10), Validators.max(90)]],
+        type: [LayoutWidthType.PERCENTAGE, []],
+        fixedWidth: [150, [Validators.min(150), Validators.max(1700)]],
+        fixedLayout: [LaouytType.MAIN, []]
       }
     );
-    for (const l of Object.keys(this.layoutsFormGroup.controls)) {
-      const control = this.layoutsFormGroup.controls[l];
-      if (!this.layouts[l]) {
-        this.layouts[l] = this.dashboardUtils.createDefaultLayoutData();
+
+    if(this.layouts.layoutDimension) {
+      this.layoutsFormGroup.get('type').setValue(this.layouts.layoutDimension.type);
+      if(this.layouts.layoutDimension.type === LayoutWidthType.FIXED) {
+        this.layoutsFormGroup.get('fixedWidth').setValue(this.layouts.layoutDimension.fixedWidth);
+        this.layoutsFormGroup.get('fixedLayout').setValue(this.layouts.layoutDimension.fixedLayout);
+      } else {
+        this.layoutsFormGroup.get('leftWidthPercentage').setValue(this.layouts.layoutDimension.leftWidthPercentage);
       }
+    }
+
+    if(!this.layouts[LaouytType.MAIN]) {
+      this.layouts[LaouytType.MAIN] = this.dashboardUtils.createDefaultLayoutData();
+    }
+    if(!this.layouts[LaouytType.RIGHT]) {
+      this.layouts[LaouytType.RIGHT] = this.dashboardUtils.createDefaultLayoutData();
     }
   }
 
@@ -116,6 +133,66 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
         delete this.layouts[l];
       }
     }
+    if(this.layoutsFormGroup.value.right) {
+      const formValues = this.layoutsFormGroup.value;
+      const widthType = formValues.type;
+      (this.layouts.layoutDimension as any) = {
+        type: widthType
+      }
+      if(widthType === LayoutWidthType.PERCENTAGE) {
+        this.layouts.layoutDimension.leftWidthPercentage = formValues.leftWidthPercentage;
+      } else {
+        this.layouts.layoutDimension.fixedWidth = formValues.fixedWidth;
+        this.layouts.layoutDimension.fixedLayout = formValues.fixedLayout;
+      }
+    }
     this.dialogRef.close(this.layouts);
+  }
+
+  buttonStyle(layout: DashboardLayoutId): { maxWidth: string } {
+    if(this.layoutsFormGroup.value.type && this.layoutsFormGroup.value.right) {
+      if (this.layoutsFormGroup.value.type !== LayoutWidthType.FIXED) {
+        if (layout === LaouytType.MAIN) {
+          return { maxWidth: this.layoutsFormGroup.value.leftWidthPercentage + "%" };
+        } else {
+          return { maxWidth: (100 - this.layoutsFormGroup.value.leftWidthPercentage) + "%" };
+        }
+      } else {
+        return { maxWidth: '100%' };
+      }
+    }
+  }
+
+  layoutValue(layout:DashboardLayoutId): number {
+    if(layout === LaouytType.MAIN) {
+      return this.layoutsFormGroup.value.leftWidthPercentage;
+    } else {
+      return (100 - this.layoutsFormGroup.value.leftWidthPercentage);
+    }
+  }
+
+  layoutValueChange($event: Event, layout:DashboardLayoutId): void {
+    let widthValue: number;
+    if(Number(($event.target as any).value) > 90) {
+      widthValue = 90;
+    } else if (Number(($event.target as any).value) < 10) {
+      widthValue = 10;
+    } else {
+      widthValue = Number(($event.target as any).value);
+    }
+    if(layout === LaouytType.MAIN) {
+      this.layoutsFormGroup.get('leftWidthPercentage').setValue(widthValue);
+    } else {
+      this.layoutsFormGroup.get('leftWidthPercentage').setValue(100 - widthValue);
+    }
+    this.layoutsFormGroup.markAsDirty();
+  }
+
+  formatSliderTooltipLabel(value: number):string {
+    return `${value}|${100 - value}`;
+  }
+
+  sliderChange($event: MatSliderChange) {
+    this.layoutsFormGroup.get('leftWidthPercentage').setValue($event.value);
   }
 }

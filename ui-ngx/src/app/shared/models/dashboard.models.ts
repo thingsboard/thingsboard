@@ -69,9 +69,18 @@ export interface DashboardLayoutInfo {
   gridSettings?: GridSettings;
 }
 
+export interface LayoutDimension {
+  type?: LayoutType,
+  fixedWidth?: number,
+  fixedLayout?: DashboardLayoutId,
+  leftWidthPercentage?: number
+}
+
 export declare type DashboardLayoutId = 'main' | 'right';
 
-export declare type DashboardStateLayouts = {[key in DashboardLayoutId]?: DashboardLayout};
+export declare type LayoutType = 'percentage' | 'fixed';
+
+export declare type DashboardStateLayouts = {[key in DashboardLayoutId | 'layoutDimension']?: DashboardLayout & LayoutDimension };
 
 export declare type DashboardLayoutsInfo = {[key in DashboardLayoutId]?: DashboardLayoutInfo};
 

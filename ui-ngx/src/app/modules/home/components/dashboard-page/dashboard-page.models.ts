@@ -14,7 +14,13 @@
 /// limitations under the License.
 ///
 
-import { Dashboard, DashboardLayoutId, GridSettings, WidgetLayouts } from '@app/shared/models/dashboard.models';
+import {
+  Dashboard,
+  DashboardLayoutId,
+  GridSettings,
+  LayoutDimension,
+  WidgetLayouts
+} from '@app/shared/models/dashboard.models';
 import { Widget, WidgetPosition } from '@app/shared/models/widget.models';
 import { Timewindow } from '@shared/models/time/time.models';
 import { IAliasController, IStateController } from '@core/api/widget-api.models';
@@ -68,7 +74,7 @@ export interface DashboardPageLayout {
   layoutCtx: DashboardPageLayoutContext;
 }
 
-export declare type DashboardPageLayouts = {[key in DashboardLayoutId]: DashboardPageLayout};
+export declare type DashboardPageLayouts = {[key in DashboardLayoutId | 'layoutDimension']: DashboardPageLayout & LayoutDimension};
 
 export class LayoutWidgetsArray implements Iterable<Widget> {
 

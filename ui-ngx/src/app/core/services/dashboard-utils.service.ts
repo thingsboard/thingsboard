@@ -287,12 +287,12 @@ export class DashboardUtilsService {
     let addedCount = 0;
     let removedCount = 0;
     for (const l of Object.keys(state.layouts)) {
-      if (!newLayouts[l]) {
+      if (!newLayouts[l] && l !== 'layoutDimension') {
         removedCount++;
       }
     }
-    for (const l of Object.keys(newLayouts)) {
-      if (!state.layouts[l]) {
+    for (const l of Object.keys(newLayouts) ) {
+      if (!state.layouts[l] && l !== 'layoutDimension') {
         addedCount++;
       }
     }
@@ -301,17 +301,21 @@ export class DashboardUtilsService {
     let newColumns;
     if (addedCount) {
       for (const l of Object.keys(state.layouts)) {
-        newColumns = state.layouts[l].gridSettings.columns * (layoutsCount - addedCount) / layoutsCount;
-        if (newColumns > 0) {
-          state.layouts[l].gridSettings.columns = newColumns;
+        if(l !== 'layoutDimension') {
+          newColumns = state.layouts[l].gridSettings.columns * (layoutsCount - addedCount) / layoutsCount;
+          if (newColumns > 0) {
+            state.layouts[l].gridSettings.columns = newColumns;
+          }
         }
       }
     }
     if (removedCount) {
       for (const l of Object.keys(state.layouts)) {
-        newColumns = state.layouts[l].gridSettings.columns * (layoutsCount + removedCount) / layoutsCount;
-        if (newColumns > 0) {
-          state.layouts[l].gridSettings.columns = newColumns;
+        if(l !== 'layoutDimension') {
+          newColumns = state.layouts[l].gridSettings.columns * (layoutsCount + removedCount) / layoutsCount;
+          if (newColumns > 0) {
+            state.layouts[l].gridSettings.columns = newColumns;
+          }
         }
       }
     }
@@ -335,18 +339,20 @@ export class DashboardUtilsService {
     if (state) {
       const result: DashboardLayoutsInfo = {};
       for (const l of Object.keys(state.layouts)) {
-        const layout: DashboardLayout = state.layouts[l];
-        if (layout) {
-          result[l] = {
-            widgetIds: [],
-            widgetLayouts: {},
-            gridSettings: {}
-          } as DashboardLayoutInfo;
-          for (const id of Object.keys(layout.widgets)) {
-            result[l].widgetIds.push(id);
+        if(l !== 'layoutDimension') {
+          const layout: DashboardLayout = state.layouts[l];
+          if (layout) {
+            result[l] = {
+              widgetIds: [],
+              widgetLayouts: {},
+              gridSettings: {}
+            } as DashboardLayoutInfo;
+            for (const id of Object.keys(layout.widgets)) {
+              result[l].widgetIds.push(id);
+            }
+            result[l].widgetLayouts = layout.widgets;
+            result[l].gridSettings = layout.gridSettings;
           }
-          result[l].widgetLayouts = layout.widgets;
-          result[l].gridSettings = layout.gridSettings;
         }
       }
       return result;

@@ -2344,7 +2344,15 @@
         "color": "Color",
         "main": "Main",
         "right": "Right",
-        "select": "Select target layout"
+        "left": "Left",
+        "select": "Select target layout",
+        "percentage-width": "Percentage width (%)",
+        "fixed-width": "Fixed width (px)",
+        "left-width": "Left width (%)",
+        "right-width": "Right width (%)",
+        "pick-fixed-side": "Fixed side: ",
+        "layout-fixed-width": "Fixed width (px)",
+        "layout-min-max": "Width should not be lower then {{min}} and higher then {{max}}"
     },
     "legend": {
         "direction": "Legend direction",

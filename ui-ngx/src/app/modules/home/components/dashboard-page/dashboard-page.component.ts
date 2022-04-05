@@ -266,7 +266,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         ctrl: null,
         dashboardCtrl: this
       }
-    }
+    },
+    layoutDimension: null
   };
 
   addWidgetFabButtons: FooterFabButtons = {
@@ -654,7 +655,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     if (this.isEditingWidget && this.editingLayoutCtx.id === 'main') {
       return '100%';
     } else {
-      return this.layouts.right.show && !this.isMobile ? '50%' : '100%';
+      return this.layouts.right.show && !this.isMobile ? this.calculateWidth('main') : '100%';
     }
   }
 
@@ -670,8 +671,30 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     if (this.isEditingWidget && this.editingLayoutCtx.id === 'right') {
       return '100%';
     } else {
-      return this.isMobile ? '100%' : '50%';
+      return this.isMobile ? '100%' : this.calculateWidth('right');
     }
+  }
+
+  private calculateWidth(layout: string): string {
+      const layoutDimension = this.dashboard.configuration.states[this.dashboardCtx.state].layouts.layoutDimension;
+      if (layoutDimension) {
+        if (layoutDimension.type === 'percentage') {
+          if(layout === 'right') {
+            return (100 - layoutDimension.leftWidthPercentage) + '%';
+          } else {
+            return layoutDimension.leftWidthPercentage + '%';
+          }
+        } else {
+          if (layoutDimension.fixedLayout === layout) {
+            return layoutDimension.fixedWidth + 'px';
+          } else {
+            const layoutWidth = this.dashboardContainer.nativeElement.getBoundingClientRect().width - layoutDimension.fixedWidth;
+            return layoutWidth + 'px';
+          }
+        }
+      } else {
+        return '50%';
+      }
   }
 
   public rightLayoutHeight(): string {
@@ -887,13 +910,15 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     }
     for (const l of Object.keys(this.layouts)) {
       const layout: DashboardPageLayout = this.layouts[l];
-      if (layoutsData[l]) {
-        layout.show = true;
-        const layoutInfo: DashboardLayoutInfo = layoutsData[l];
-        this.updateLayout(layout, layoutInfo);
-      } else {
-        layout.show = false;
-        this.updateLayout(layout, {widgetIds: [], widgetLayouts: {}, gridSettings: null});
+      if(l !== 'layoutDimension') {
+        if (layoutsData[l]) {
+          layout.show = true;
+          const layoutInfo: DashboardLayoutInfo = layoutsData[l];
+          this.updateLayout(layout, layoutInfo);
+        } else {
+          layout.show = false;
+          this.updateLayout(layout, {widgetIds: [], widgetLayouts: {}, gridSettings: null});
+        }
       }
     }
   }
@@ -942,9 +967,11 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   private resetHighlight() {
     for (const l of Object.keys(this.layouts)) {
-      if (this.layouts[l].layoutCtx) {
-        if (this.layouts[l].layoutCtx.ctrl) {
-          this.layouts[l].layoutCtx.ctrl.resetHighlight();
+      if(l !== 'layoutDimension' ) {
+        if (this.layouts[l].layoutCtx) {
+          if (this.layouts[l].layoutCtx.ctrl) {
+            this.layouts[l].layoutCtx.ctrl.resetHighlight();
+          }
         }
       }
     }
