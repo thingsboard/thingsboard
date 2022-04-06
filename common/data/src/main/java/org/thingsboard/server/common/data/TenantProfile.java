@@ -28,7 +28,6 @@ import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-import java.io.ByteArrayInputStream;
 import java.util.Optional;
 
 @ApiModel
@@ -107,7 +106,12 @@ public class TenantProfile extends SearchTextBased<TenantProfileId> implements H
             return profileData;
         } else {
             if (profileDataBytes != null) {
-                profileData = JacksonUtil.fromBytes(profileDataBytes, TenantProfileData.class);
+                try {
+                    profileData = JacksonUtil.fromBytes(profileDataBytes, TenantProfileData.class);
+                } catch (IllegalStateException e) {
+                    log.warn("Can't deserialize tenant profile data: ", e);
+                    return createDefaultTenantProfileData();
+                }
                 return profileData;
             } else {
                 return createDefaultTenantProfileData();

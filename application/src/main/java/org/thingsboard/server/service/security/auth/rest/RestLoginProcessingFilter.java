@@ -62,7 +62,13 @@ public class RestLoginProcessingFilter extends AbstractAuthenticationProcessingF
             throw new AuthMethodNotSupportedException("Authentication method not supported");
         }
 
-        LoginRequest loginRequest = JacksonUtil.fromReader(request.getReader(), LoginRequest.class);
+        LoginRequest loginRequest;
+
+        try {
+            loginRequest = JacksonUtil.fromReader(request.getReader(), LoginRequest.class);
+        } catch (Exception e) {
+            throw new AuthenticationServiceException("Invalid login request payload");
+        }
 
         if (StringUtils.isBlank(loginRequest.getUsername()) || StringUtils.isEmpty(loginRequest.getPassword())) {
             throw new AuthenticationServiceException("Username or Password not provided");

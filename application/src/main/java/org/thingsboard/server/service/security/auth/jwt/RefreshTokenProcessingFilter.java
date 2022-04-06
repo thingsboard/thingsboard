@@ -59,7 +59,12 @@ public class RefreshTokenProcessingFilter extends AbstractAuthenticationProcessi
             throw new AuthMethodNotSupportedException("Authentication method not supported");
         }
 
-        RefreshTokenRequest refreshTokenRequest = JacksonUtil.fromReader(request.getReader(), RefreshTokenRequest.class);
+        RefreshTokenRequest refreshTokenRequest;
+        try {
+            refreshTokenRequest = JacksonUtil.fromReader(request.getReader(), RefreshTokenRequest.class);
+        } catch (Exception e) {
+            throw new AuthenticationServiceException("Invalid refresh token request payload");
+        }
 
         if (StringUtils.isBlank(refreshTokenRequest.getRefreshToken())) {
             throw new AuthenticationServiceException("Refresh token is not provided");

@@ -83,8 +83,7 @@ public class JacksonUtil {
         try {
             return reader != null ? OBJECT_MAPPER.readValue(reader, clazz) : null;
         } catch (IOException e) {
-            throw new IllegalArgumentException("The given reader value: "
-                    + reader + " cannot be transformed to Json object", e);
+            throw new IllegalArgumentException("Invalid request payload", e);
         }
     }
 

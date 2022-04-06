@@ -59,7 +59,13 @@ public class RestPublicLoginProcessingFilter extends AbstractAuthenticationProce
             throw new AuthMethodNotSupportedException("Authentication method not supported");
         }
 
-        PublicLoginRequest loginRequest = JacksonUtil.fromReader(request.getReader(), PublicLoginRequest.class);
+        PublicLoginRequest loginRequest;
+
+        try {
+            loginRequest = JacksonUtil.fromReader(request.getReader(), PublicLoginRequest.class);
+        } catch (Exception e) {
+            throw new AuthenticationServiceException("Invalid public login request payload");
+        }
 
         if (StringUtils.isBlank(loginRequest.getPublicId())) {
             throw new AuthenticationServiceException("Public Id is not provided");

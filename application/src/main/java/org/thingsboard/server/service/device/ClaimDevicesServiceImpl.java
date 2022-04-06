@@ -129,8 +129,12 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
             Optional<AttributeKvEntry> claimDataAttr = attributesService.find(device.getTenantId(), device.getId(),
                     DataConstants.SERVER_SCOPE, CLAIM_DATA_ATTRIBUTE_NAME).get();
             if (claimDataAttr.isPresent()) {
-                ClaimData claimDataFromAttribute = JacksonUtil.fromString(claimDataAttr.get().getValueAsString(), ClaimData.class);
-                return new ClaimDataInfo(false, key, claimDataFromAttribute);
+                try {
+                    ClaimData claimDataFromAttribute = JacksonUtil.fromString(claimDataAttr.get().getValueAsString(), ClaimData.class);
+                    return new ClaimDataInfo(false, key, claimDataFromAttribute);
+                } catch (IllegalStateException e) {
+                    log.warn("Failed to read Claim Data [{}] from attribute!", claimDataAttr, e);
+                }
             }
         }
         return null;

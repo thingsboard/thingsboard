@@ -28,14 +28,9 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Created by igor on 2/27/18.
@@ -77,13 +72,17 @@ public class DatabaseHelper {
                 DashboardId dashboardId = new DashboardId(toUUID(record.get(ID), sql));
                 List<CustomerId> customerIds = new ArrayList<>();
                 if (!StringUtils.isEmpty(assignedCustomersString)) {
-                    Set<ShortCustomerInfo> assignedCustomers = JacksonUtil.fromString(assignedCustomersString, assignedCustomersType);
-                    assignedCustomers.forEach((customerInfo) -> {
-                        CustomerId customerId = customerInfo.getCustomerId();
-                        if (!customerId.isNullUid()) {
-                            customerIds.add(customerId);
-                        }
-                    });
+                    try {
+                        Set<ShortCustomerInfo> assignedCustomers = JacksonUtil.fromString(assignedCustomersString, assignedCustomersType);
+                        assignedCustomers.forEach((customerInfo) -> {
+                            CustomerId customerId = customerInfo.getCustomerId();
+                            if (!customerId.isNullUid()) {
+                                customerIds.add(customerId);
+                            }
+                        });
+                    } catch (IllegalStateException e) {
+                        log.error("Unable to parse assigned customers field", e);
+                    }
                 }
                 if (!StringUtils.isEmpty(customerIdString)) {
                     CustomerId customerId = new CustomerId(toUUID(customerIdString, sql));

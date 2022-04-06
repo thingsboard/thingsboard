@@ -27,10 +27,8 @@ import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.junit.*;
-import org.junit.rules.TestRule;
-import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
+import org.junit.Assert;
+import org.junit.Test;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -52,9 +50,11 @@ import org.thingsboard.server.msa.WsClient;
 import org.thingsboard.server.msa.mapper.AttributesResponse;
 import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.*;
 
 @Slf4j
@@ -267,10 +267,14 @@ public class MqttClientTest extends AbstractContainerTest {
         serverRpcPayload.addProperty("params", true);
         ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName(getClass().getSimpleName())));
         ListenableFuture<ResponseEntity> future = service.submit(() -> {
-            return restClient.getRestTemplate()
-                    .postForEntity(HTTPS_URL + "/api/rpc/twoway/{deviceId}",
-                            JacksonUtil.toJsonNode(serverRpcPayload.toString()), String.class,
-                            device.getId());
+            try {
+                return restClient.getRestTemplate()
+                        .postForEntity(HTTPS_URL + "/api/rpc/twoway/{deviceId}",
+                                JacksonUtil.toJsonNode(serverRpcPayload.toString()), String.class,
+                                device.getId());
+            } catch (IllegalStateException e) {
+                return ResponseEntity.badRequest().build();
+            }
         });
 
         // Wait for RPC call from the server and send the response

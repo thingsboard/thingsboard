@@ -141,7 +141,12 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
             return profileData;
         } else {
             if (profileDataBytes != null) {
-                profileData = JacksonUtil.fromBytes(profileDataBytes, DeviceProfileData.class);
+                try {
+                    profileData = JacksonUtil.fromBytes(profileDataBytes, DeviceProfileData.class);
+                } catch (IllegalStateException e) {
+                    log.warn("Can't deserialize device profile data: ", e);
+                    return null;
+                }
                 return profileData;
             } else {
                 return null;

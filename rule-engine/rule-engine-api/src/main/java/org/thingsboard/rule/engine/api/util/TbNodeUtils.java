@@ -39,7 +39,11 @@ public class TbNodeUtils {
     private static final Pattern DATA_PATTERN = Pattern.compile("(\\$\\[)(.*?)(])");
 
     public static <T> T convert(TbNodeConfiguration configuration, Class<T> clazz) throws TbNodeException {
-        return JacksonUtil.treeToValue(configuration.getData(), clazz);
+        try {
+            return JacksonUtil.treeToValue(configuration.getData(), clazz);
+        } catch (IllegalStateException e) {
+            throw new TbNodeException(e);
+        }
     }
 
     public static List<String> processPatterns(List<String> patterns, TbMsg tbMsg) {

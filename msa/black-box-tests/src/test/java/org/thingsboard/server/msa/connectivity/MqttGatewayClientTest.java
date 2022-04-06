@@ -48,17 +48,12 @@ import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.WsClient;
 import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 @Slf4j
 public class MqttGatewayClientTest extends AbstractContainerTest {
@@ -332,10 +327,14 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         serverRpcPayload.addProperty("params", true);
         ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName(getClass().getSimpleName())));
         ListenableFuture<ResponseEntity> future = service.submit(() -> {
-            return restClient.getRestTemplate()
-                    .postForEntity(HTTPS_URL + "/api/rpc/twoway/{deviceId}",
-                            JacksonUtil.toJsonNode(serverRpcPayload.toString()), String.class,
-                            createdDevice.getId());
+            try {
+                return restClient.getRestTemplate()
+                        .postForEntity(HTTPS_URL + "/api/rpc/twoway/{deviceId}",
+                                JacksonUtil.toJsonNode(serverRpcPayload.toString()), String.class,
+                                createdDevice.getId());
+            } catch (IllegalStateException e) {
+                return ResponseEntity.badRequest().build();
+            }
         });
 
         // Wait for RPC call from the server and send the response

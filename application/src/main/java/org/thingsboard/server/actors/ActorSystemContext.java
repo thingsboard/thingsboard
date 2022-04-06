@@ -522,44 +522,48 @@ public class ActorSystemContext {
 
     private void persistDebugAsync(TenantId tenantId, EntityId entityId, String type, TbMsg tbMsg, String relationType, Throwable error, String failureMessage) {
         if (checkLimits(tenantId, tbMsg, error)) {
-            Event event = new Event();
-            event.setTenantId(tenantId);
-            event.setEntityId(entityId);
-            event.setType(DataConstants.DEBUG_RULE_NODE);
+            try {
+                Event event = new Event();
+                event.setTenantId(tenantId);
+                event.setEntityId(entityId);
+                event.setType(DataConstants.DEBUG_RULE_NODE);
 
-            String metadata = JacksonUtil.toString(tbMsg.getMetaData().getData());
+                String metadata = JacksonUtil.toString(tbMsg.getMetaData().getData());
 
-            ObjectNode node = JacksonUtil.newObjectNode()
-                    .put("type", type)
-                    .put("server", getServiceId())
-                    .put("entityId", tbMsg.getOriginator().getId().toString())
-                    .put("entityName", tbMsg.getOriginator().getEntityType().name())
-                    .put("msgId", tbMsg.getId().toString())
-                    .put("msgType", tbMsg.getType())
-                    .put("dataType", tbMsg.getDataType().name())
-                    .put("relationType", relationType)
-                    .put("data", tbMsg.getData())
-                    .put("metadata", metadata);
+                ObjectNode node = JacksonUtil.newObjectNode()
+                        .put("type", type)
+                        .put("server", getServiceId())
+                        .put("entityId", tbMsg.getOriginator().getId().toString())
+                        .put("entityName", tbMsg.getOriginator().getEntityType().name())
+                        .put("msgId", tbMsg.getId().toString())
+                        .put("msgType", tbMsg.getType())
+                        .put("dataType", tbMsg.getDataType().name())
+                        .put("relationType", relationType)
+                        .put("data", tbMsg.getData())
+                        .put("metadata", metadata);
 
-            if (error != null) {
-                node = node.put("error", toString(error));
-            } else if (failureMessage != null) {
-                node = node.put("error", failureMessage);
+                if (error != null) {
+                    node = node.put("error", toString(error));
+                } else if (failureMessage != null) {
+                    node = node.put("error", failureMessage);
+                }
+
+                event.setBody(node);
+                ListenableFuture<Void> future = eventService.saveAsync(event);
+                Futures.addCallback(future, new FutureCallback<Void>() {
+                    @Override
+                    public void onSuccess(@Nullable Void event) {
+
+                    }
+
+                    @Override
+                    public void onFailure(Throwable th) {
+                        log.error("Could not save debug Event for Node", th);
+                    }
+                }, MoreExecutors.directExecutor());
+            } catch (IllegalStateException ex) {
+                log.warn("Failed to persist rule node debug message", ex);
             }
-
-            event.setBody(node);
-            ListenableFuture<Void> future = eventService.saveAsync(event);
-            Futures.addCallback(future, new FutureCallback<Void>() {
-                @Override
-                public void onSuccess(@Nullable Void event) {
-
-                }
-
-                @Override
-                public void onFailure(Throwable th) {
-                    log.error("Could not save debug Event for Node", th);
-                }
-            }, MoreExecutors.directExecutor());
         }
     }
 
