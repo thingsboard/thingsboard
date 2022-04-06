@@ -33,14 +33,11 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.event.EventDao;
 
-import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.thingsboard.server.common.data.DataConstants.ALARM;
 import static org.thingsboard.server.common.data.DataConstants.STATS;
 
