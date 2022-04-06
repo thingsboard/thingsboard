@@ -37,8 +37,10 @@ import { AttributeService } from '@core/http/attribute.service';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { Observable } from 'rxjs';
-import { isString } from '@core/utils';
+import { isNotEmptyStr, isString } from '@core/utils';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { EntityDataPageLink } from '@shared/models/query/query.models';
+import { TranslateService } from '@ngx-translate/core';
 
 interface PhotoCameraInputWidgetSettings {
   widgetTitle: string;
@@ -64,7 +66,8 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
               private overlay: Overlay,
               private utils: UtilsService,
               private attributeService: AttributeService,
-              private sanitizer: DomSanitizer
+              private sanitizer: DomSanitizer,
+              private translate: TranslateService
   ) {
     super(store);
   }
@@ -118,6 +121,7 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
   previewPhoto: SafeUrl;
   lastPhoto: SafeUrl;
   datasourceDetected = false;
+  noDataMessage: string;
 
   private static hasGetUserMedia(): boolean {
     return !!(window.navigator.mediaDevices && window.navigator.mediaDevices.getUserMedia);
@@ -139,7 +143,13 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
     this.ctx.$scope.photoCameraInputWidget = this;
     this.isLoading = true;
     this.settings = this.ctx.settings;
-    this.datasource = this.ctx.datasources[0];
+
+    const noDataDisplayMessage = this.ctx.widgetConfig.noDataDisplayMessage;
+    if (isNotEmptyStr(noDataDisplayMessage)) {
+      this.noDataMessage = this.utils.customTranslation(noDataDisplayMessage, noDataDisplayMessage);
+    } else {
+      this.noDataMessage = this.translate.instant('widgets.input-widgets.no-entity-selected');
+    }
 
     if (this.settings.widgetTitle && this.settings.widgetTitle.length) {
       this.ctx.widgetTitle = this.utils.customTranslation(this.settings.widgetTitle, this.settings.widgetTitle);
@@ -147,8 +157,27 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
       this.ctx.widgetTitle = this.ctx.widgetConfig.title;
     }
 
+    const pageLink: EntityDataPageLink = {
+      page: 0,
+      pageSize: 16384,
+      textSearch: null,
+      dynamic: true
+    };
+
+    this.ctx.defaultSubscription.subscribeAllForPaginatedData(pageLink, null);
+
     this.width = this.settings.maxWidth ? this.settings.maxWidth : 640;
     this.height = this.settings.maxHeight ? this.settings.maxWidth : 480;
+
+    this.detectAvailableDevices();
+  }
+
+  ngOnDestroy(): void {
+    this.stopMediaTracks();
+  }
+
+  private updateWidgetData(data: Array<DatasourceData>) {
+    this.datasource = this.ctx.datasources[0];
     this.datasourceDetected = this.ctx.datasources?.length !== 0;
     if (this.datasourceDetected) {
       if (this.datasource.type === DatasourceType.entity) {
@@ -159,18 +188,18 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
       if (this.datasource.dataKeys.length) {
         this.dataKeyDetected = true;
       }
+    } else {
+      this.isEntityDetected = false;
+      this.dataKeyDetected = false;
     }
-    this.detectAvailableDevices();
-  }
-
-  ngOnDestroy(): void {
-    this.stopMediaTracks();
-  }
-
-  private updateWidgetData(data: Array<DatasourceData>) {
-    const keyData = data[0].data;
-    if (keyData?.length && isString(keyData[0][1]) && keyData[0][1].startsWith('data:image/')) {
-      this.lastPhoto = this.sanitizer.bypassSecurityTrustUrl(keyData[0][1]);
+    if (this.dataKeyDetected) {
+      const keyData = data[0].data;
+      if (keyData?.length && isString(keyData[0][1]) && keyData[0][1].startsWith('data:image/')) {
+        this.lastPhoto = this.sanitizer.bypassSecurityTrustUrl(keyData[0][1]);
+      } else {
+        this.previewPhoto = null;
+        this.lastPhoto = null;
+      }
     }
   }
 
@@ -312,9 +341,6 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
     }
     if (!this.isCameraSupport) {
       return 'widgets.input-widgets.no-support-web-camera';
-    }
-    if (!this.isEntityDetected) {
-      return 'widgets.input-widgets.no-entity-selected';
     }
     if (!this.dataKeyDetected) {
       return 'widgets.input-widgets.no-datakey-selected';

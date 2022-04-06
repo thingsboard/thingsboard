@@ -28,8 +28,9 @@ import { AttributeService } from '@core/http/attribute.service';
 import { AttributeData, AttributeScope, DataKeyType, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType } from '@shared/models/entity-type.models';
-import { createLabelFromDatasource, isDefinedAndNotNull } from '@core/utils';
+import { createLabelFromDatasource, isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
 import { Observable } from 'rxjs';
+import { EntityDataPageLink } from '@shared/models/query/query.models';
 
 enum JsonInputWidgetMode {
   ATTRIBUTE = 'ATTRIBUTE',
@@ -64,7 +65,9 @@ export class JsonInputWidgetComponent extends PageComponent implements OnInit {
   labelValue: string;
 
   datasourceDetected = false;
+  entityDetected = false;
   errorMessage: string;
+  noDataMessage: string;
 
   isFocused: boolean;
   originalValue: any;
@@ -85,14 +88,21 @@ export class JsonInputWidgetComponent extends PageComponent implements OnInit {
     this.settings = this.ctx.settings;
     this.widgetConfig = this.ctx.widgetConfig;
     this.subscription = this.ctx.defaultSubscription;
-    this.datasource = this.subscription.datasources[0];
     this.initializeConfig();
-    this.validateDatasources();
     this.buildForm();
     this.ctx.updateWidgetParams();
   }
 
   private initializeConfig() {
+    const pageLink: EntityDataPageLink = {
+      page: 0,
+      pageSize: 16384,
+      textSearch: null,
+      dynamic: true
+    };
+
+    this.ctx.defaultSubscription.subscribeAllForPaginatedData(pageLink, null);
+
     if (this.settings.widgetTitle && this.settings.widgetTitle.length) {
       const title = createLabelFromDatasource(this.datasource, this.settings.widgetTitle);
       this.ctx.widgetTitle = this.utils.customTranslation(title, title);
@@ -106,29 +116,38 @@ export class JsonInputWidgetComponent extends PageComponent implements OnInit {
     } else {
       this.labelValue = this.translate.instant('widgets.input-widgets.value');
     }
+
+    const noDataDisplayMessage = this.ctx.widgetConfig.noDataDisplayMessage;
+    if (isNotEmptyStr(noDataDisplayMessage)) {
+      this.noDataMessage = this.utils.customTranslation(noDataDisplayMessage, noDataDisplayMessage);
+    } else {
+      this.noDataMessage = this.translate.instant('widgets.input-widgets.no-entity-selected');
+    }
   }
 
   private validateDatasources() {
     this.datasourceDetected = isDefinedAndNotNull(this.datasource);
-    if (!this.datasourceDetected) {
-      return;
-    }
-    if (this.datasource.type === DatasourceType.entity) {
-      if (this.settings.widgetMode === JsonInputWidgetMode.ATTRIBUTE) {
-        if (this.datasource.dataKeys[0].type === DataKeyType.attribute) {
-          if (this.settings.attributeScope !== AttributeScope.SERVER_SCOPE && this.datasource.entityType !== EntityType.DEVICE) {
-            this.errorMessage = 'widgets.input-widgets.not-allowed-entity';
+    if (this.datasourceDetected) {
+      if (this.datasource.type === DatasourceType.entity) {
+        this.entityDetected = true;
+        if (this.settings.widgetMode === JsonInputWidgetMode.ATTRIBUTE) {
+          if (this.datasource.dataKeys[0].type === DataKeyType.attribute) {
+            if (this.settings.attributeScope !== AttributeScope.SERVER_SCOPE && this.datasource.entityType !== EntityType.DEVICE) {
+              this.errorMessage = 'widgets.input-widgets.not-allowed-entity';
+            }
+          } else {
+            this.errorMessage = 'widgets.input-widgets.no-attribute-selected';
           }
         } else {
-          this.errorMessage = 'widgets.input-widgets.no-attribute-selected';
+          if (this.datasource.dataKeys[0].type !== DataKeyType.timeseries) {
+            this.errorMessage = 'widgets.input-widgets.no-timeseries-selected';
+          }
         }
       } else {
-        if (this.datasource.dataKeys[0].type !== DataKeyType.timeseries) {
-          this.errorMessage = 'widgets.input-widgets.no-timeseries-selected';
-        }
+        this.entityDetected = false;
       }
     } else {
-      this.errorMessage = 'widgets.input-widgets.no-entity-selected';
+      this.entityDetected = false;
     }
   }
 
@@ -146,7 +165,7 @@ export class JsonInputWidgetComponent extends PageComponent implements OnInit {
   }
 
   private updateWidgetData(data: Array<DatasourceData>) {
-    if (!this.errorMessage) {
+    if (!this.errorMessage && this.datasourceDetected && this.entityDetected) {
       let value = {};
       if (data[0].data[0][1] !== '') {
         try {
@@ -158,13 +177,15 @@ export class JsonInputWidgetComponent extends PageComponent implements OnInit {
       this.originalValue = value;
       if (!this.isFocused) {
         this.attributeUpdateFormGroup.get('currentValue').patchValue(this.originalValue);
-        this.ctx.detectChanges();
       }
     }
   }
 
   public onDataUpdated() {
+    this.datasource = this.subscription.datasources[0];
+    this.validateDatasources();
     this.updateWidgetData(this.subscription.data);
+    this.ctx.detectChanges();
   }
 
   public save() {

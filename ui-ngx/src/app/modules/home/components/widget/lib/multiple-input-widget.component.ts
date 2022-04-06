@@ -26,7 +26,8 @@ import { DataKey, Datasource, DatasourceData, DatasourceType, WidgetConfig } fro
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import {
   createLabelFromDatasource,
-  isBoolean, isDefined,
+  isBoolean,
+  isDefined,
   isDefinedAndNotNull,
   isEqual,
   isNotEmptyStr,
@@ -43,6 +44,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { takeUntil } from 'rxjs/operators';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { EntityDataPageLink } from '@shared/models/query/query.models';
 
 type FieldAlignment = 'row' | 'column';
 
@@ -143,6 +145,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   changeAlignment: boolean;
   saveButtonLabel: string;
   resetButtonLabel: string;
+  noDataMessage: string;
 
   entityDetected = false;
   datasourceDetected = false;
@@ -170,9 +173,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
     this.settings = this.ctx.settings;
     this.widgetConfig = this.ctx.widgetConfig;
     this.subscription = this.ctx.defaultSubscription;
-    this.datasources = this.subscription.datasources;
     this.initializeConfig();
-    this.updateDatasources();
     this.buildForm();
     this.ctx.updateWidgetParams();
     this.formResize$ = new ResizeObserver(() => {
@@ -191,11 +192,27 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
 
   private initializeConfig() {
 
+    const pageLink: EntityDataPageLink = {
+      page: 0,
+      pageSize: 16384,
+      textSearch: null,
+      dynamic: true
+    };
+
+    this.ctx.defaultSubscription.subscribeAllForPaginatedData(pageLink, null);
+
     if (this.settings.widgetTitle && this.settings.widgetTitle.length) {
       const titlePatternText = this.utils.customTranslation(this.settings.widgetTitle, this.settings.widgetTitle);
       this.ctx.widgetTitle = createLabelFromDatasource(this.datasources[0], titlePatternText);
     } else {
       this.ctx.widgetTitle = this.ctx.widgetConfig.title;
+    }
+
+    const noDataDisplayMessage = this.ctx.widgetConfig.noDataDisplayMessage;
+    if (isNotEmptyStr(noDataDisplayMessage)) {
+      this.noDataMessage = this.utils.customTranslation(noDataDisplayMessage, noDataDisplayMessage);
+    } else {
+      this.noDataMessage = this.translate.instant('widgets.input-widgets.no-entity-selected');
     }
 
     this.settings.groupTitle = this.settings.groupTitle || '${entityName}';
@@ -233,9 +250,9 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   }
 
   private updateDatasources() {
+    this.sources = [];
     this.datasourceDetected = this.datasources?.length !== 0;
     if (this.datasourceDetected) {
-      this.entityDetected = true;
       let keyIndex = 0;
       this.datasources.forEach((datasource) => {
         const source: MultipleInputWidgetSource = {
@@ -243,6 +260,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
           keys: []
         };
         if (datasource.type === DatasourceType.entity) {
+          this.entityDetected = true;
           datasource.dataKeys.forEach((dataKey: MultipleInputWidgetDataKey) => {
             if ((datasource.entityType !== EntityType.DEVICE) && (dataKey.settings.dataKeyType === 'shared')) {
               this.isAllParametersValid = false;
@@ -322,6 +340,8 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
         }
         this.sources.push(source);
       });
+    } else {
+      this.entityDetected = false;
     }
   }
 
@@ -387,79 +407,81 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   }
 
   private updateWidgetData(data: Array<DatasourceData>) {
-    let dataIndex = 0;
-    this.sources.forEach((source) => {
-      source.keys.forEach((key) => {
-        const keyData = data[dataIndex].data;
-        if (keyData && keyData.length) {
-          let value = keyData[0][1];
-          const keyValue = this.getKeyValue(value, key.settings);
-          switch (key.settings.dataKeyValueType) {
-            case 'dateTime':
-            case 'date':
-              if (isDefinedAndNotNull(keyValue) && keyValue !== '') {
+    if (this.datasourceDetected && this.entityDetected) {
+      let dataIndex = 0;
+      this.sources.forEach((source) => {
+        source.keys.forEach((key) => {
+          const keyData = data[dataIndex].data;
+          if (keyData && keyData.length) {
+            let value = keyData[0][1];
+            const keyValue = this.getKeyValue(value, key.settings);
+            switch (key.settings.dataKeyValueType) {
+              case 'dateTime':
+              case 'date':
+                if (isDefinedAndNotNull(keyValue) && keyValue !== '') {
+                  if (keyValue instanceof Date) {
+                    value = keyValue;
+                  } else {
+                    value = _moment(keyValue).toDate();
+                  }
+                } else {
+                  value = null;
+                }
+                break;
+              case 'time':
                 if (keyValue instanceof Date) {
                   value = keyValue;
                 } else {
-                  value = _moment(keyValue).toDate();
+                  value = _moment().startOf('day').add(keyValue, 'ms').toDate();
                 }
-              } else {
-                value = null;
-              }
-              break;
-            case 'time':
-              if (keyValue instanceof Date) {
+                break;
+              case 'booleanCheckbox':
+              case 'booleanSwitch':
+                if (isBoolean(keyValue)) {
+                  value = keyValue;
+                } else {
+                  value = (keyValue === 'true');
+                }
+                break;
+              case 'select':
+                value = keyValue !== null ? keyValue.toString() : null;
+                break;
+              default:
                 value = keyValue;
-              } else {
-                value = _moment().startOf('day').add(keyValue, 'ms').toDate();
-              }
-              break;
-            case 'booleanCheckbox':
-            case 'booleanSwitch':
-              if (isBoolean(keyValue)) {
-                value = keyValue;
-              } else {
-                value = (keyValue === 'true');
-              }
-              break;
-            case 'select':
-              value = keyValue !== null ? keyValue.toString() : null;
-              break;
-            default:
-              value = keyValue;
+            }
+            key.value = value;
           }
-          key.value = value;
-        }
 
-        if (key.settings.isEditable === 'editable' && key.settings.disabledOnDataKey) {
-          const conditions = data.filter((item) => {
-            return source.datasource === item.datasource && item.dataKey.name === key.settings.disabledOnDataKey;
-          });
-          if (conditions && conditions.length) {
-            if (conditions[0].data.length) {
-              if (conditions[0].data[0][1] === 'false') {
-                key.settings.disabledOnCondition = true;
-              } else {
-                key.settings.disabledOnCondition = !conditions[0].data[0][1];
+          if (key.settings.isEditable === 'editable' && key.settings.disabledOnDataKey) {
+            const conditions = data.filter((item) => {
+              return source.datasource === item.datasource && item.dataKey.name === key.settings.disabledOnDataKey;
+            });
+            if (conditions && conditions.length) {
+              if (conditions[0].data.length) {
+                if (conditions[0].data[0][1] === 'false') {
+                  key.settings.disabledOnCondition = true;
+                } else {
+                  key.settings.disabledOnCondition = !conditions[0].data[0][1];
+                }
               }
             }
           }
-        }
 
-        if (!key.settings.dataKeyHidden) {
-          if (key.settings.isEditable === 'disabled' || key.settings.disabledOnCondition) {
-            this.multipleInputFormGroup.get(key.formId).disable({emitEvent: false});
-          } else {
-            this.multipleInputFormGroup.get(key.formId).enable({emitEvent: false});
+          if (!key.settings.dataKeyHidden) {
+            if (key.settings.isEditable === 'disabled' || key.settings.disabledOnCondition) {
+              this.multipleInputFormGroup.get(key.formId).disable({emitEvent: false});
+            } else {
+              this.multipleInputFormGroup.get(key.formId).enable({emitEvent: false});
+            }
+            const dirty = this.multipleInputFormGroup.get(key.formId).dirty;
+            if (!key.isFocused && !dirty) {
+              this.multipleInputFormGroup.get(key.formId).patchValue(key.value, {emitEvent: false});
+            }
           }
-          const dirty = this.multipleInputFormGroup.get(key.formId).dirty;
-          if (!key.isFocused && !dirty) {
-            this.multipleInputFormGroup.get(key.formId).patchValue(key.value, {emitEvent: false});
-          }
-        }
-        dataIndex++;
+          dataIndex++;
+        });
       });
-    });
+    }
   }
 
   private getKeyValue(data: any, keySetting: MultipleInputWidgetDataKeySettings) {
@@ -479,6 +501,9 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
   }
 
   public onDataUpdated() {
+    this.datasources = this.subscription.datasources;
+    this.updateDatasources();
+    this.buildForm();
     this.updateWidgetData(this.subscription.data);
     this.ctx.detectChanges();
   }

@@ -156,10 +156,9 @@
       </button>
     </div>
   </div>
-  <div class="tb-multiple-input__errors" fxLayout="column" fxLayoutAlign="center center" style="height: 100%;"
-       *ngIf="(!entityDetected || !isAllParametersValid) && datasourceDetected">
+  <div class="tb-multiple-input__errors" fxLayout="column" fxLayoutAlign="center center" style="height: 100%;">
     <div style="text-align: center; font-size: 18px; color: #a0a0a0;" [fxHide]="entityDetected">
-      {{ 'widgets.input-widgets.no-entity-selected' | translate }}
+      {{ noDataMessage }}
     </div>
     <div style="text-align: center; font-size: 18px; color: #a0a0a0;"
          [fxShow]="entityDetected && !isAllParametersValid">
