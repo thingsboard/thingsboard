@@ -15,16 +15,15 @@
 ///
 
 import L, { LeafletMouseEvent } from 'leaflet';
-import { CircleData, FormattedData, UnitedMapSettings } from '@home/components/widget/lib/maps/map-models';
+import { CircleData, UnitedMapSettings } from '@home/components/widget/lib/maps/map-models';
 import {
-  fillPattern,
   functionValueCalculator,
-  parseWithTranslation,
-  processPattern,
-  safeExecute
+  parseWithTranslation
 } from '@home/components/widget/lib/maps/common-maps-utils';
 import LeafletMap from '@home/components/widget/lib/maps/leaflet-map';
 import { createTooltip } from '@home/components/widget/lib/maps/maps-utils';
+import { FormattedData } from '@shared/models/widget.models';
+import { fillDataPattern, processDataPattern, safeExecute } from '@core/utils';
 
 export class Circle {
 
@@ -96,9 +95,9 @@ export class Circle {
         const pattern = this.settings.useCircleLabelFunction ?
           safeExecute(this.settings.circleLabelFunction, [this.data, this.dataSources, this.data.dsIndex]) : this.settings.circleLabel;
         this.map.circleLabelText = parseWithTranslation.prepareProcessPattern(pattern, true);
-        this.map.replaceInfoTooltipCircle = processPattern(this.map.circleLabelText, this.data);
+        this.map.replaceInfoTooltipCircle = processDataPattern(this.map.circleLabelText, this.data);
       }
-      const circleLabelText = fillPattern(this.map.circleLabelText, this.map.replaceInfoTooltipCircle, this.data);
+      const circleLabelText = fillDataPattern(this.map.circleLabelText, this.map.replaceInfoTooltipCircle, this.data);
       this.leafletCircle.bindTooltip(`<div style="color: ${this.settings.labelColor};"><b>${circleLabelText}</b></div>`,
         { className: 'tb-polygon-label', permanent: true, sticky: true, direction: 'center'})
         .openTooltip(this.leafletCircle.getLatLng());

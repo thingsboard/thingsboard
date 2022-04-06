@@ -219,10 +219,13 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             @Override
             public void onSuccess(@Nullable TbEntityDataSubCtx theCtx) {
                 try {
-                    if (cmd.getLatestCmd() != null) {
-                        handleLatestCmd(theCtx, cmd.getLatestCmd());
-                    } else if (cmd.getTsCmd() != null) {
-                        handleTimeSeriesCmd(theCtx, cmd.getTsCmd());
+                    if (cmd.getLatestCmd() != null || cmd.getTsCmd() != null) {
+                        if (cmd.getLatestCmd() != null) {
+                            handleLatestCmd(theCtx, cmd.getLatestCmd());
+                        }
+                        if (cmd.getTsCmd() != null) {
+                            handleTimeSeriesCmd(theCtx, cmd.getTsCmd());
+                        }
                     } else if (!theCtx.isInitialDataSent()) {
                         EntityDataUpdate update = new EntityDataUpdate(theCtx.getCmdId(), theCtx.getData(), null, theCtx.getMaxEntitiesPerDataSubscription());
                         wsService.sendWsMsg(theCtx.getSessionId(), update);

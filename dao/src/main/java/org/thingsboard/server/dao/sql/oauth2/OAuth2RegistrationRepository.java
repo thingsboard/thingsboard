@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.dao.sql.oauth2;
 
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.oauth2.SchemeType;
 import org.thingsboard.server.dao.model.sql.OAuth2RegistrationEntity;
@@ -24,7 +24,7 @@ import org.thingsboard.server.dao.model.sql.OAuth2RegistrationEntity;
 import java.util.List;
 import java.util.UUID;
 
-public interface OAuth2RegistrationRepository extends CrudRepository<OAuth2RegistrationEntity, UUID> {
+public interface OAuth2RegistrationRepository extends JpaRepository<OAuth2RegistrationEntity, UUID> {
 
     @Query("SELECT reg " +
             "FROM OAuth2RegistrationEntity reg " +

@@ -91,6 +91,13 @@ tb-widget-editor {
     width: 100%;
     height: 100%;
   }
+
+  .mat-tab-label[aria-labelledby='hidden'] {
+    width: 0px !important;
+    min-width: 0px;
+    padding:  0px;
+  }
+
 }
 
 .tb-split-vertical {
