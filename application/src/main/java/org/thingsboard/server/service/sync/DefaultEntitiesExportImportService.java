@@ -35,7 +35,7 @@ import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.sync.exporting.EntityExportService;
-import org.thingsboard.server.service.sync.exporting.EntityExportSettings;
+import org.thingsboard.server.service.sync.exporting.data.request.EntityExportSettings;
 import org.thingsboard.server.service.sync.exporting.ExportableEntitiesService;
 import org.thingsboard.server.service.sync.exporting.data.EntityExportData;
 import org.thingsboard.server.service.sync.importing.EntityImportResult;

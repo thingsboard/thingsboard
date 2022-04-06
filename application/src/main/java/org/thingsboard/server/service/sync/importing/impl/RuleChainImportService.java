@@ -21,10 +21,13 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -83,9 +86,14 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
 
     @Override
     protected ThrowingRunnable getCallback(SecurityUser user, RuleChain savedRuleChain, RuleChain oldRuleChain) {
-        return () -> {
-
-        };
+        return super.getCallback(user, savedRuleChain, oldRuleChain).andThen(() -> {
+            if (savedRuleChain.getType() == RuleChainType.CORE) {
+                clusterService.broadcastEntityStateChangeEvent(user.getTenantId(), savedRuleChain.getId(),
+                        oldRuleChain == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+            } else if (savedRuleChain.getType() == RuleChainType.EDGE && oldRuleChain != null) {
+                entityActionService.sendEntityNotificationMsgToEdgeService(user.getTenantId(), savedRuleChain.getId(), EdgeEventActionType.UPDATED);
+            }
+        });
     }
 
     @Override

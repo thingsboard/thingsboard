@@ -19,13 +19,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.exporting.data.DeviceProfileExportData;
 import org.thingsboard.server.utils.ThrowingRunnable;
+
+import java.util.Objects;
 
 @Service
 @TbCoreComponent
@@ -33,6 +38,7 @@ import org.thingsboard.server.utils.ThrowingRunnable;
 public class DeviceProfileImportService extends BaseEntityImportService<DeviceProfileId, DeviceProfile, DeviceProfileExportData> {
 
     private final DeviceProfileService deviceProfileService;
+    private final OtaPackageStateService otaPackageStateService;
 
     @Override
     protected void setOwner(TenantId tenantId, DeviceProfile deviceProfile, NewIdProvider idProvider) {
@@ -50,9 +56,16 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
 
     @Override
     protected ThrowingRunnable getCallback(SecurityUser user, DeviceProfile savedDeviceProfile, DeviceProfile oldDeviceProfile) {
-        return () -> {
-
-        };
+        return super.getCallback(user, savedDeviceProfile, oldDeviceProfile).andThen(() -> {
+            clusterService.onDeviceProfileChange(savedDeviceProfile, null);
+            clusterService.broadcastEntityStateChangeEvent(user.getTenantId(), savedDeviceProfile.getId(),
+                    oldDeviceProfile == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+            entityActionService.sendEntityNotificationMsgToEdgeService(user.getTenantId(), savedDeviceProfile.getId(),
+                    oldDeviceProfile == null ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED);
+            otaPackageStateService.update(savedDeviceProfile,
+                    oldDeviceProfile != null && !Objects.equals(oldDeviceProfile.getFirmwareId(), savedDeviceProfile.getFirmwareId()),
+                    oldDeviceProfile != null && !Objects.equals(oldDeviceProfile.getSoftwareId(), savedDeviceProfile.getSoftwareId()));
+        });
     }
 
     @Override

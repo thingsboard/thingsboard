@@ -13,18 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.sync.exporting;
+package org.thingsboard.server.service.sync.exporting.data.request;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.query.EntityFilter;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-public class EntityExportSettings {
-    private boolean exportInboundRelations;
-    private boolean exportOutboundRelations;
+public class EntityFilterExportRequest extends ExportRequest {
+
+    private EntityFilter filter;
+    private int page;
+    private int pageSize;
+    private CustomerId customerId;
+
+    @Override
+    public ExportRequestType getType() {
+        return ExportRequestType.ENTITY_FILTER;
+    }
+
 }

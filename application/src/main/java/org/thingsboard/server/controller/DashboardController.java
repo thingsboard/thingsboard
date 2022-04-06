@@ -186,7 +186,15 @@ public class DashboardController extends BaseController {
             checkEntity(dashboard.getId(), dashboard, Resource.DASHBOARD);
 
             Dashboard savedDashboard = checkNotNull(dashboardService.saveDashboard(dashboard));
-            entityActionService.onDashboardCreatedOrUpdated(getCurrentUser(), savedDashboard, dashboard.getId() == null);
+
+            logEntityAction(savedDashboard.getId(), savedDashboard,
+                    null,
+                    dashboard.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
+
+            if (dashboard.getId() != null) {
+                sendEntityNotificationMsg(savedDashboard.getTenantId(), savedDashboard.getId(), EdgeEventActionType.UPDATED);
+            }
+
             return savedDashboard;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.DASHBOARD), dashboard,

@@ -13,19 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.utils;
+package org.thingsboard.server.service.sync.exporting.data.request;
 
-import org.thingsboard.server.common.data.exception.ThingsboardException;
+import lombok.Data;
 
-public interface ThrowingRunnable {
-
-    void run() throws ThingsboardException;
-
-    default ThrowingRunnable andThen(ThrowingRunnable after) {
-        return () -> {
-            this.run();
-            after.run();
-        };
-    }
-
+@Data
+public class EntityExportSettings {
+    private boolean exportInboundRelations;
+    private boolean exportOutboundRelations;
 }

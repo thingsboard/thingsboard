@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.utils;
+package org.thingsboard.server.service.sync.exporting.data.request;
 
-import org.thingsboard.server.common.data.exception.ThingsboardException;
+public enum ExportRequestType {
+    SINGLE_ENTITY,
+    ENTITY_LIST,
+    ENTITY_TYPE,
 
-public interface ThrowingRunnable {
-
-    void run() throws ThingsboardException;
-
-    default ThrowingRunnable andThen(ThrowingRunnable after) {
-        return () -> {
-            this.run();
-            after.run();
-        };
-    }
-
+    ENTITY_FILTER,
+    ENTITY_QUERY
 }

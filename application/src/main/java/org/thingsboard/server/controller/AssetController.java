@@ -155,12 +155,28 @@ public class AssetController extends BaseController {
             checkEntity(asset.getId(), asset, Resource.ASSET);
 
             Asset savedAsset = checkNotNull(assetService.saveAsset(asset));
-            entityActionService.onAssetCreatedOrUpdated(getCurrentUser(), savedAsset, asset.getId() == null);
+
+            onAssetCreatedOrUpdated(savedAsset, asset.getId() != null, getCurrentUser());
+
             return savedAsset;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.ASSET), asset,
                     null, asset.getId() == null ? ActionType.ADDED : ActionType.UPDATED, e);
             throw handleException(e);
+        }
+    }
+
+    private void onAssetCreatedOrUpdated(Asset asset, boolean updated, SecurityUser user) {
+        try {
+            logEntityAction(user, asset.getId(), asset,
+                    asset.getCustomerId(),
+                    updated ? ActionType.UPDATED : ActionType.ADDED, null);
+        } catch (ThingsboardException e) {
+            log.error("Failed to log entity action", e);
+        }
+
+        if (updated) {
+            sendEntityNotificationMsg(asset.getTenantId(), asset.getId(), EdgeEventActionType.UPDATED);
         }
     }
 
@@ -665,7 +681,7 @@ public class AssetController extends BaseController {
     public BulkImportResult<Asset> processAssetsBulkImport(@RequestBody BulkImportRequest request) throws Exception {
         SecurityUser user = getCurrentUser();
         return assetBulkImportService.processBulkImport(request, user, importedAssetInfo -> {
-            entityActionService.onAssetCreatedOrUpdated(user, importedAssetInfo.getEntity(), !importedAssetInfo.isUpdated());
+            onAssetCreatedOrUpdated(importedAssetInfo.getEntity(), importedAssetInfo.isUpdated(), user);
         });
     }
 

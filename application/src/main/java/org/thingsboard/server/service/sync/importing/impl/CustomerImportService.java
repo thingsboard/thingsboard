@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -48,9 +49,11 @@ public class CustomerImportService extends BaseEntityImportService<CustomerId, C
 
     @Override
     protected ThrowingRunnable getCallback(SecurityUser user, Customer savedCustomer, Customer oldCustomer) {
-        return () -> {
-            entityActionService.onCustomerCreatedOrUpdated(user, savedCustomer);
-        };
+        return super.getCallback(user, savedCustomer, oldCustomer).andThen(() -> {
+            if (oldCustomer != null) {
+                entityActionService.sendEntityNotificationMsgToEdgeService(user.getTenantId(), savedCustomer.getId(), EdgeEventActionType.UPDATED);
+            }
+        });
     }
 
     @Override

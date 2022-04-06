@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.utils;
+package org.thingsboard.server.service.sync.importing.data.request;
 
-import org.thingsboard.server.common.data.exception.ThingsboardException;
+import lombok.Data;
+import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.service.sync.exporting.data.EntityExportData;
+import org.thingsboard.server.service.sync.importing.EntityImportSettings;
 
-public interface ThrowingRunnable {
+import java.util.List;
 
-    void run() throws ThingsboardException;
+@Data
+public class ImportRequest {
 
-    default ThrowingRunnable andThen(ThrowingRunnable after) {
-        return () -> {
-            this.run();
-            after.run();
-        };
-    }
+    private List<EntityExportData<ExportableEntity<EntityId>>> exportDataList;
+    private EntityImportSettings importSettings;
 
 }

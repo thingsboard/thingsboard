@@ -13,19 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.utils;
+package org.thingsboard.server.service.sync.exporting.data.request;
 
-import org.thingsboard.server.common.data.exception.ThingsboardException;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.id.EntityId;
 
-public interface ThrowingRunnable {
+@EqualsAndHashCode(callSuper = true)
+@Data
+public class SingleEntityExportRequest extends ExportRequest {
 
-    void run() throws ThingsboardException;
+    private EntityId entityId;
 
-    default ThrowingRunnable andThen(ThrowingRunnable after) {
-        return () -> {
-            this.run();
-            after.run();
-        };
+    @Override
+    public ExportRequestType getType() {
+        return ExportRequestType.SINGLE_ENTITY;
     }
 
 }

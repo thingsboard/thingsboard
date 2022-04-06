@@ -20,8 +20,11 @@ import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.HasCustomerId;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -56,6 +59,8 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     private RelationService relationService;
     @Autowired
     protected EntityActionService entityActionService;
+    @Autowired
+    protected TbClusterService clusterService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -139,7 +144,10 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     }
 
     protected ThrowingRunnable getCallback(SecurityUser user, E savedEntity, E oldEntity) {
-        return () -> {};
+        return () -> {
+            entityActionService.logEntityAction(user, savedEntity.getId(), savedEntity, savedEntity instanceof HasCustomerId ? ((HasCustomerId) savedEntity).getCustomerId() : user.getCustomerId(),
+                    oldEntity == null ? ActionType.ADDED : ActionType.UPDATED, null);
+        };
     }
 
 

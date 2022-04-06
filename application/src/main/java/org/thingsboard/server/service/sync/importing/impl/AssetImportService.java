@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -47,9 +48,11 @@ public class AssetImportService extends BaseEntityImportService<AssetId, Asset, 
 
     @Override
     protected ThrowingRunnable getCallback(SecurityUser user, Asset savedAsset, Asset oldAsset) {
-        return () -> {
-            entityActionService.onAssetCreatedOrUpdated(user, savedAsset, oldAsset == null);
-        };
+        return super.getCallback(user, savedAsset, oldAsset).andThen(() -> {
+            if (oldAsset != null) {
+                entityActionService.sendEntityNotificationMsgToEdgeService(user.getTenantId(), savedAsset.getId(), EdgeEventActionType.UPDATED);
+            }
+        });
     }
 
     @Override

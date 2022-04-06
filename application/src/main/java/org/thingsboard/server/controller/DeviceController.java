@@ -74,11 +74,11 @@ import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.device.DeviceBulkImportService;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
+import org.thingsboard.server.service.sync.importing.csv.BulkImportRequest;
+import org.thingsboard.server.service.sync.importing.csv.BulkImportResult;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
-import org.thingsboard.server.service.sync.importing.csv.BulkImportRequest;
-import org.thingsboard.server.service.sync.importing.csv.BulkImportResult;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -194,7 +194,9 @@ public class DeviceController extends BaseController {
             }
 
             Device savedDevice = checkNotNull(deviceService.saveDeviceWithAccessToken(device, accessToken));
-            entityActionService.onDeviceCreatedOrUpdated(getCurrentUser(), savedDevice, oldDevice, created);
+
+            onDeviceCreatedOrUpdated(savedDevice, oldDevice, !created, getCurrentUser());
+
             return savedDevice;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.DEVICE), device,
@@ -222,12 +224,28 @@ public class DeviceController extends BaseController {
             checkEntity(device.getId(), device, Resource.DEVICE);
             Device savedDevice = deviceService.saveDeviceWithCredentials(device, credentials);
             checkNotNull(savedDevice);
-            entityActionService.onDeviceCreatedOrUpdated(getCurrentUser(), savedDevice, device, created);
+            tbClusterService.onDeviceUpdated(savedDevice, device);
+            logEntityAction(savedDevice.getId(), savedDevice,
+                    savedDevice.getCustomerId(),
+                    device.getId() == null ? ActionType.ADDED : ActionType.UPDATED, null);
+
             return savedDevice;
         } catch (Exception e) {
             logEntityAction(emptyId(EntityType.DEVICE), device,
                     null, created ? ActionType.ADDED : ActionType.UPDATED, e);
             throw handleException(e);
+        }
+    }
+
+    private void onDeviceCreatedOrUpdated(Device savedDevice, Device oldDevice, boolean updated, SecurityUser user) {
+        tbClusterService.onDeviceUpdated(savedDevice, oldDevice);
+
+        try {
+            logEntityAction(user, savedDevice.getId(), savedDevice,
+                    savedDevice.getCustomerId(),
+                    updated ? ActionType.UPDATED : ActionType.ADDED, null);
+        } catch (ThingsboardException e) {
+            log.error("Failed to log entity action", e);
         }
     }
 
@@ -997,7 +1015,7 @@ public class DeviceController extends BaseController {
     public BulkImportResult<Device> processDevicesBulkImport(@RequestBody BulkImportRequest request) throws Exception {
         SecurityUser user = getCurrentUser();
         return deviceBulkImportService.processBulkImport(request, user, importedDeviceInfo -> {
-            entityActionService.onDeviceCreatedOrUpdated(user, importedDeviceInfo.getEntity(), importedDeviceInfo.getOldEntity(), !importedDeviceInfo.isUpdated());
+            onDeviceCreatedOrUpdated(importedDeviceInfo.getEntity(), importedDeviceInfo.getOldEntity(), importedDeviceInfo.isUpdated(), user);
         });
     }
 

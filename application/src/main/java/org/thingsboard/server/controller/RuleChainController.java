@@ -249,10 +249,25 @@ public class RuleChainController extends BaseController {
         try {
             boolean created = ruleChain.getId() == null;
             ruleChain.setTenantId(getCurrentUser().getTenantId());
+
             checkEntity(ruleChain.getId(), ruleChain, Resource.RULE_CHAIN);
 
             RuleChain savedRuleChain = checkNotNull(ruleChainService.saveRuleChain(ruleChain));
-            entityActionService.onRuleChainCreatedOrUpdated(getCurrentUser(), savedRuleChain, created);
+
+            if (RuleChainType.CORE.equals(savedRuleChain.getType())) {
+                tbClusterService.broadcastEntityStateChangeEvent(ruleChain.getTenantId(), savedRuleChain.getId(),
+                        created ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+            }
+
+            logEntityAction(savedRuleChain.getId(), savedRuleChain,
+                    null,
+                    created ? ActionType.ADDED : ActionType.UPDATED, null);
+
+            if (RuleChainType.EDGE.equals(savedRuleChain.getType())) {
+                if (!created) {
+                    sendEntityNotificationMsg(savedRuleChain.getTenantId(), savedRuleChain.getId(), EdgeEventActionType.UPDATED);
+                }
+            }
 
             return savedRuleChain;
         } catch (Exception e) {

@@ -27,7 +27,7 @@ import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.sync.exporting.EntityExportService;
-import org.thingsboard.server.service.sync.exporting.EntityExportSettings;
+import org.thingsboard.server.service.sync.exporting.data.request.EntityExportSettings;
 import org.thingsboard.server.service.sync.exporting.ExportableEntitiesService;
 import org.thingsboard.server.service.sync.exporting.data.EntityExportData;
 
