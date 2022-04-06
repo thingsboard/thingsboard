@@ -32,7 +32,7 @@ import {
 import {
   MarkdownWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/cards/markdown-widget-settings.component';
-import { LabelWidgetFontComponent } from '@home/components/widget/lib/settings/cards/label-widget-font.component';
+import { WidgetFontComponent } from '@home/components/widget/lib/settings/common/widget-font.component';
 import { LabelWidgetLabelComponent } from '@home/components/widget/lib/settings/cards/label-widget-label.component';
 import { LabelWidgetSettingsComponent } from '@home/components/widget/lib/settings/cards/label-widget-settings.component';
 import {
@@ -59,6 +59,16 @@ import {
 import {
   AlarmsTableKeySettingsComponent
 } from '@home/components/widget/lib/settings/alarm/alarms-table-key-settings.component';
+import { GaugeHighlightComponent } from '@home/components/widget/lib/settings/gauge/gauge-highlight.component';
+import {
+  AnalogueRadialGaugeWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/gauge/analogue-radial-gauge-widget-settings.component';
+import {
+  AnalogueLinearGaugeWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/gauge/analogue-linear-gauge-widget-settings.component';
+import {
+  AnalogueCompassWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/gauge/analogue-compass-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -67,7 +77,7 @@ import {
     TimeseriesTableKeySettingsComponent,
     TimeseriesTableLatestKeySettingsComponent,
     MarkdownWidgetSettingsComponent,
-    LabelWidgetFontComponent,
+    WidgetFontComponent,
     LabelWidgetLabelComponent,
     LabelWidgetSettingsComponent,
     SimpleCardWidgetSettingsComponent,
@@ -77,7 +87,11 @@ import {
     EntitiesTableWidgetSettingsComponent,
     EntitiesTableKeySettingsComponent,
     AlarmsTableWidgetSettingsComponent,
-    AlarmsTableKeySettingsComponent
+    AlarmsTableKeySettingsComponent,
+    GaugeHighlightComponent,
+    AnalogueRadialGaugeWidgetSettingsComponent,
+    AnalogueLinearGaugeWidgetSettingsComponent,
+    AnalogueCompassWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -90,7 +104,7 @@ import {
     TimeseriesTableKeySettingsComponent,
     TimeseriesTableLatestKeySettingsComponent,
     MarkdownWidgetSettingsComponent,
-    LabelWidgetFontComponent,
+    WidgetFontComponent,
     LabelWidgetLabelComponent,
     LabelWidgetSettingsComponent,
     SimpleCardWidgetSettingsComponent,
@@ -100,7 +114,11 @@ import {
     EntitiesTableWidgetSettingsComponent,
     EntitiesTableKeySettingsComponent,
     AlarmsTableWidgetSettingsComponent,
-    AlarmsTableKeySettingsComponent
+    AlarmsTableKeySettingsComponent,
+    GaugeHighlightComponent,
+    AnalogueRadialGaugeWidgetSettingsComponent,
+    AnalogueLinearGaugeWidgetSettingsComponent,
+    AnalogueCompassWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -120,5 +138,8 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-entities-table-widget-settings': EntitiesTableWidgetSettingsComponent,
   'tb-entities-table-key-settings': EntitiesTableKeySettingsComponent,
   'tb-alarms-table-widget-settings': AlarmsTableWidgetSettingsComponent,
-  'tb-alarms-table-key-settings': AlarmsTableKeySettingsComponent
+  'tb-alarms-table-key-settings': AlarmsTableKeySettingsComponent,
+  'tb-analogue-radial-gauge-widget-settings': AnalogueRadialGaugeWidgetSettingsComponent,
+  'tb-analogue-linear-gauge-widget-settings': AnalogueLinearGaugeWidgetSettingsComponent,
+  'tb-analogue-compass-widget-settings': AnalogueCompassWidgetSettingsComponent
 };

@@ -73,7 +73,7 @@ import { Filter, Filters } from '@shared/models/query/query.models';
 import { FilterDialogComponent, FilterDialogData } from '@home/components/filter/filter-dialog.component';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { MatChipInputEvent } from '@angular/material/chips';
-import { DndDropEvent } from 'ngx-drag-drop';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 const emptySettingsSchema: JsonSchema = {
   type: 'object',
@@ -730,18 +730,11 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, Cont
         !!this.modelValue.settingsDirective && !!this.modelValue.settingsDirective.length);
   }
 
-  public dndDatasourceMoved(index: number) {
-    this.datasourcesFormArray().removeAt(index);
-  }
-
-  public onDatasourceDrop(event: DndDropEvent) {
-    let index = event.index;
-    if (isUndefined(index)) {
-      index = this.datasourcesFormArray().length;
-    }
-    this.datasourcesFormArray().insert(index,
-      this.buildDatasourceForm(event.data)
-    );
+  public onDatasourceDrop(event: CdkDragDrop<string[]>) {
+    const datasourcesFormArray = this.datasourcesFormArray();
+    const datasourceForm = datasourcesFormArray.at(event.previousIndex);
+    datasourcesFormArray.removeAt(event.previousIndex);
+    datasourcesFormArray.insert(event.currentIndex, datasourceForm);
   }
 
   public removeDatasource(index: number) {

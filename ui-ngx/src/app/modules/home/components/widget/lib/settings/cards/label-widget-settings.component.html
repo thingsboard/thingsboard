@@ -23,12 +23,13 @@
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.label-widget.labels</legend>
     <div fxLayout="column">
-      <div class="tb-label-widget-labels">
-        <div *ngFor="let labelControl of labelsFormArray().controls; trackBy: trackByLabel;
+      <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
+           (cdkDropListDropped)="labelDrop($event)">
+        <div cdkDrag class="tb-draggable" *ngFor="let labelControl of labelsFormArray().controls; trackBy: trackByLabel;
                  let $index = index; last as isLast;"
              fxLayout="column" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
           <tb-label-widget-label [formControl]="labelControl"
-                                 [expanded]="$index === 0"
+                                 [expanded]="labelControl.new"
                                  (removeLabel)="removeLabel($index)">
           </tb-label-widget-label>
         </div>

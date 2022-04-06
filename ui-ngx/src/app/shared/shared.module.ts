@@ -136,7 +136,6 @@ import { TbJsonToStringDirective } from '@shared/components/directives/tb-json-t
 import { JsonObjectEditDialogComponent } from '@shared/components/dialog/json-object-edit-dialog.component';
 import { HistorySelectorComponent } from '@shared/components/time/history-selector/history-selector.component';
 import { EntityGatewaySelectComponent } from '@shared/components/entity/entity-gateway-select.component';
-import { DndModule } from 'ngx-drag-drop';
 import { QueueTypeListComponent } from '@shared/components/queue/queue-type-list.component';
 import { ContactComponent } from '@shared/components/contact.component';
 import { TimezoneSelectComponent } from '@shared/components/time/timezone-select.component';
@@ -161,6 +160,7 @@ import { ProtobufContentComponent } from '@shared/components/protobuf-content.co
 import { CssComponent } from '@shared/components/css.component';
 import { HtmlComponent } from '@shared/components/html.component';
 import { SafePipe } from '@shared/pipe/safe.pipe';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -319,6 +319,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     MatAutocompleteModule,
     MatChipsModule,
     MatListModule,
+    DragDropModule,
     GridsterModule,
     ClipboardModule,
     FlexLayoutModule.withConfig({addFlexToParent: false}),
@@ -329,7 +330,6 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     HotkeyModule,
     ColorPickerModule,
     NgxHmCarouselModule,
-    DndModule,
     NgxFlowModule,
     NgxFlowchartModule,
     // ngx-markdown
@@ -429,6 +429,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     MatAutocompleteModule,
     MatChipsModule,
     MatListModule,
+    DragDropModule,
     GridsterModule,
     ClipboardModule,
     FlexLayoutModule,
@@ -439,7 +440,6 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     HotkeyModule,
     ColorPickerModule,
     NgxHmCarouselModule,
-    DndModule,
     NgxFlowchartModule,
     MarkdownModule,
     ConfirmDialogComponent,

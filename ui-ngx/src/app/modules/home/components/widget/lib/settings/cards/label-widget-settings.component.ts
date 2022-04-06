@@ -20,11 +20,12 @@ import { AbstractControl, FormArray, FormBuilder, FormGroup, Validators } from '
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { LabelWidgetLabel } from '@home/components/widget/lib/settings/cards/label-widget-label.component';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'tb-label-widget-settings',
   templateUrl: './label-widget-settings.component.html',
-  styleUrls: ['./label-widget-settings.component.scss', './../widget-settings.scss']
+  styleUrls: ['./../widget-settings.scss']
 })
 export class LabelWidgetSettingsComponent extends WidgetSettingsComponent {
 
@@ -63,8 +64,9 @@ export class LabelWidgetSettingsComponent extends WidgetSettingsComponent {
     return this.labelWidgetSettingsForm.get('labels') as FormArray;
   }
 
-  public trackByLabel(index: number, labelControl: AbstractControl): number {
-    return index;
+  public trackByLabel(index: number, labelControl: AbstractControl): any {
+    const label: LabelWidgetLabel = labelControl.value;
+    return label;
   }
 
   public removeLabel(index: number) {
@@ -86,7 +88,16 @@ export class LabelWidgetSettingsComponent extends WidgetSettingsComponent {
       }
     };
     const labelsArray = this.labelWidgetSettingsForm.get('labels') as FormArray;
-    labelsArray.push(this.fb.control(label, [Validators.required]));
+    const labelControl = this.fb.control(label, [Validators.required]);
+    (labelControl as any).new = true;
+    labelsArray.push(labelControl);
     this.labelWidgetSettingsForm.updateValueAndValidity();
+  }
+
+  labelDrop(event: CdkDragDrop<string[]>) {
+    const labelsArray = this.labelWidgetSettingsForm.get('labels') as FormArray;
+    const label = labelsArray.at(event.previousIndex);
+    labelsArray.removeAt(event.previousIndex);
+    labelsArray.insert(event.currentIndex, label);
   }
 }

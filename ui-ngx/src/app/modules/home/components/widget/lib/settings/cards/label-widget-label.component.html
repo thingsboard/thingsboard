@@ -50,11 +50,11 @@
           <section fxLayout="column" fxLayout.gt-sm="row" fxLayoutGap="8px">
             <mat-form-field fxFlex>
               <mat-label translate>widgets.label-widget.x-pos</mat-label>
-              <input matInput type="number" min="0" max="100" step="1" formControlName="x">
+              <input matInput type="number" min="0" max="100" formControlName="x">
             </mat-form-field>
             <mat-form-field fxFlex>
               <mat-label translate>widgets.label-widget.y-pos</mat-label>
-              <input matInput type="number" min="0" max="100" step="1" formControlName="y">
+              <input matInput type="number" min="0" max="100" formControlName="y">
             </mat-form-field>
           </section>
         </fieldset>
@@ -64,7 +64,7 @@
         </tb-color-input>
         <fieldset class="fields-group">
           <legend class="group-title" translate>widgets.label-widget.font-settings</legend>
-          <tb-label-widget-font formControlName="font"></tb-label-widget-font>
+          <tb-widget-font formControlName="font" sizeTitle="widgets.widget-font.relative-font-size"></tb-widget-font>
         </fieldset>
       </section>
     </div>

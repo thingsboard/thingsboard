@@ -21,38 +21,45 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 
-export interface LabelWidgetFont {
+export interface WidgetFont {
   family: string;
   size: number;
   style: 'normal' | 'italic' | 'oblique';
   weight: 'normal' | 'bold' | 'bolder' | 'lighter' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900';
   color: string;
+  shadowColor?: string;
 }
 
 @Component({
-  selector: 'tb-label-widget-font',
-  templateUrl: './label-widget-font.component.html',
+  selector: 'tb-widget-font',
+  templateUrl: './widget-font.component.html',
   styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => LabelWidgetFontComponent),
+      useExisting: forwardRef(() => WidgetFontComponent),
       multi: true
     }
   ]
 })
-export class LabelWidgetFontComponent extends PageComponent implements OnInit, ControlValueAccessor {
+export class WidgetFontComponent extends PageComponent implements OnInit, ControlValueAccessor {
 
   @HostBinding('style.display') display = 'block';
 
   @Input()
   disabled: boolean;
 
-  private modelValue: LabelWidgetFont;
+  @Input()
+  hasShadowColor = false;
+
+  @Input()
+  sizeTitle = 'widgets.widget-font.size';
+
+  private modelValue: WidgetFont;
 
   private propagateChange = null;
 
-  public labelWidgetFontFormGroup: FormGroup;
+  public widgetFontFormGroup: FormGroup;
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
@@ -61,14 +68,17 @@ export class LabelWidgetFontComponent extends PageComponent implements OnInit, C
   }
 
   ngOnInit(): void {
-    this.labelWidgetFontFormGroup = this.fb.group({
+    this.widgetFontFormGroup = this.fb.group({
       family: [null, []],
       size: [null, [Validators.min(1)]],
       style: [null, []],
       weight: [null, []],
       color: [null, []]
     });
-    this.labelWidgetFontFormGroup.valueChanges.subscribe(() => {
+    if (this.hasShadowColor) {
+      this.widgetFontFormGroup.addControl('shadowColor', this.fb.control(null, []));
+    }
+    this.widgetFontFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
   }
@@ -83,21 +93,21 @@ export class LabelWidgetFontComponent extends PageComponent implements OnInit, C
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (isDisabled) {
-      this.labelWidgetFontFormGroup.disable({emitEvent: false});
+      this.widgetFontFormGroup.disable({emitEvent: false});
     } else {
-      this.labelWidgetFontFormGroup.enable({emitEvent: false});
+      this.widgetFontFormGroup.enable({emitEvent: false});
     }
   }
 
-  writeValue(value: LabelWidgetFont): void {
+  writeValue(value: WidgetFont): void {
     this.modelValue = value;
-    this.labelWidgetFontFormGroup.patchValue(
+    this.widgetFontFormGroup.patchValue(
       value, {emitEvent: false}
     );
   }
 
   private updateModel() {
-    const value: LabelWidgetFont = this.labelWidgetFontFormGroup.value;
+    const value: WidgetFont = this.widgetFontFormGroup.value;
     this.modelValue = value;
     this.propagateChange(this.modelValue);
   }

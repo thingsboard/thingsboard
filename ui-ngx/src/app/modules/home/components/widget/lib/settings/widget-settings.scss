@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@import '../../../../../../../scss/constants';
+
 :host {
   .tb-widget-settings {
     .fields-group {
@@ -27,6 +30,7 @@
       }
 
       legend + * {
+        display: block;
         margin-top: 16px;
       }
 
@@ -42,6 +46,20 @@
           padding: 0 16px 8px;
         }
       }
+    }
+
+    .tb-control-list {
+      overflow-y: auto;
+      &.mat-padding {
+        padding: 8px;
+        @media #{$mat-gt-sm} {
+          padding: 16px;
+        }
+      }
+    }
+
+    .tb-prompt{
+      margin: 30px 0;
     }
   }
 }
@@ -109,5 +127,6 @@
     .mat-slide-toggle-content {
       white-space: normal;
     }
+
   }
 }

@@ -110,23 +110,21 @@
               </div>
             </div>
             <div style="overflow: auto; padding-bottom: 15px;">
-              <mat-list dndDropzone dndEffectAllowed="move"
-                        (dndDrop)="onDatasourceDrop($event)"
-                        [dndDisableIf]="disabled" formArrayName="datasources">
-                <mat-list-item dndPlaceholderRef
-                               class="dndPlaceholder">
-                </mat-list-item>
+              <mat-list class="tb-drop-list"
+                        cdkDropList
+                        cdkDropListOrientation="vertical"
+                        (cdkDropListDropped)="onDatasourceDrop($event)"
+                        [cdkDropListDisabled]="disabled"
+                        formArrayName="datasources">
                 <mat-list-item *ngFor="let datasourceControl of datasourcesFormArray().controls; let $index = index;"
-                               [dndDraggable]="datasourceControl.value"
-                               (dndMoved)="dndDatasourceMoved($index)"
-                               [dndDisableIf]="disabled"
-                               dndEffectAllowed="move">
+                               class="tb-datasource-list-item tb-draggable" cdkDrag
+                               [cdkDragDisabled]="disabled">
                   <div fxFlex fxLayout="row" fxLayoutAlign="start center">
                     <div style="width: 60px;">
                       <button *ngIf="!disabled" mat-icon-button color="primary"
                               class="handle"
                               style="min-width: 40px; margin: 0"
-                              dndHandle
+                              cdkDragHandle
                               matTooltip="{{ 'action.drag' | translate }}"
                               matTooltipPosition="above">
                         <mat-icon>drag_handle</mat-icon>

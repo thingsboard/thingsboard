@@ -15,43 +15,43 @@
     limitations under the License.
 
 -->
-<section [formGroup]="labelWidgetFontFormGroup" fxLayout="column">
+<section [formGroup]="widgetFontFormGroup" fxLayout="column">
   <mat-form-field fxFlex class="mat-block">
-    <mat-label translate>widgets.label-widget.font-family</mat-label>
+    <mat-label translate>widgets.widget-font.font-family</mat-label>
     <input matInput formControlName="family">
   </mat-form-field>
   <mat-form-field fxFlex class="mat-block">
-    <mat-label translate>widgets.label-widget.relative-font-size</mat-label>
+    <mat-label translate>{{ sizeTitle }}</mat-label>
     <input matInput type="number" min="1" step="1" formControlName="size">
   </mat-form-field>
   <mat-form-field fxFlex class="mat-block">
-    <mat-label translate>widgets.label-widget.font-style</mat-label>
+    <mat-label translate>widgets.widget-font.font-style</mat-label>
     <mat-select formControlName="style">
       <mat-option [value]="'normal'">
-        {{ 'widgets.label-widget.font-style-normal' | translate }}
+        {{ 'widgets.widget-font.font-style-normal' | translate }}
       </mat-option>
       <mat-option [value]="'italic'">
-        {{ 'widgets.label-widget.font-style-italic' | translate }}
+        {{ 'widgets.widget-font.font-style-italic' | translate }}
       </mat-option>
       <mat-option [value]="'oblique'">
-        {{ 'widgets.label-widget.font-style-oblique' | translate }}
+        {{ 'widgets.widget-font.font-style-oblique' | translate }}
       </mat-option>
     </mat-select>
   </mat-form-field>
   <mat-form-field fxFlex class="mat-block">
-    <mat-label translate>widgets.label-widget.font-weight</mat-label>
+    <mat-label translate>widgets.widget-font.font-weight</mat-label>
     <mat-select formControlName="weight">
       <mat-option [value]="'normal'">
-        {{ 'widgets.label-widget.font-weight-normal' | translate }}
+        {{ 'widgets.widget-font.font-weight-normal' | translate }}
       </mat-option>
       <mat-option [value]="'bold'">
-        {{ 'widgets.label-widget.font-weight-bold' | translate }}
+        {{ 'widgets.widget-font.font-weight-bold' | translate }}
       </mat-option>
       <mat-option [value]="'bolder'">
-        {{ 'widgets.label-widget.font-weight-bolder' | translate }}
+        {{ 'widgets.widget-font.font-weight-bolder' | translate }}
       </mat-option>
       <mat-option [value]="'lighter'">
-        {{ 'widgets.label-widget.font-weight-lighter' | translate }}
+        {{ 'widgets.widget-font.font-weight-lighter' | translate }}
       </mat-option>
       <mat-option [value]="'100'">100</mat-option>
       <mat-option [value]="'200'">200</mat-option>
@@ -66,6 +66,10 @@
   </mat-form-field>
   <tb-color-input
     formControlName="color"
-    label="{{ 'widgets.label-widget.color' | translate }}">
+    label="{{ 'widgets.widget-font.color' | translate }}">
+  </tb-color-input>
+  <tb-color-input *ngIf="hasShadowColor"
+    formControlName="shadowColor"
+    label="{{ 'widgets.widget-font.shadow-color' | translate }}">
   </tb-color-input>
 </section>
