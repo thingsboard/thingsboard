@@ -82,6 +82,12 @@
             <mat-hint innerHTML="{{ 'device-profile.alarm-rule-relation-types-list-hint' | translate }}"></mat-hint>
           </mat-form-field>
         </section>
+        <mat-checkbox formControlName="propagateToOwner" style="display: block; padding-bottom: 16px;">
+          {{ 'device-profile.propagate-alarm-to-owner' | translate }}
+        </mat-checkbox>
+        <mat-checkbox formControlName="propagateToTenant" style="display: block; padding-bottom: 16px;">
+          {{ 'device-profile.propagate-alarm-to-tenant' | translate }}
+        </mat-checkbox>
       </ng-template>
     </mat-expansion-panel>
     <div fxFlex fxLayout="column">

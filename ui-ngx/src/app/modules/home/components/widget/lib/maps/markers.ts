@@ -16,20 +16,23 @@
 
 import L, { LeafletMouseEvent } from 'leaflet';
 import {
-  FormattedData,
   MarkerIconInfo,
   MarkerIconReadyFunction,
   MarkerImageInfo,
   MarkerSettings,
   UnitedMapSettings
 } from './map-models';
-import { bindPopupActions, createTooltip, } from './maps-utils';
-import { aspectCache, fillPattern, parseWithTranslation, processPattern, safeExecute } from './common-maps-utils';
+import { bindPopupActions, createTooltip } from './maps-utils';
+import { aspectCache, parseWithTranslation } from './common-maps-utils';
 import tinycolor from 'tinycolor2';
-import { isDefined, isDefinedAndNotNull } from '@core/utils';
+import { fillDataPattern, isDefined, isDefinedAndNotNull, processDataPattern, safeExecute } from '@core/utils';
 import LeafletMap from './leaflet-map';
+import { FormattedData } from '@shared/models/widget.models';
 
 export class Marker {
+
+    private editing = false;
+
     leafletMarker: L.Marker;
     labelOffset: L.LatLngTuple;
     tooltipOffset: L.LatLngTuple;
@@ -59,22 +62,33 @@ export class Marker {
         this.updateMarkerIcon(settings);
 
         if (settings.showTooltip) {
-            this.tooltip = createTooltip(this.leafletMarker, settings, data.$datasource);
+            this.tooltip = createTooltip(this.leafletMarker, settings, data.$datasource,
+              settings.autocloseTooltip, settings.showTooltipAction);
             this.updateMarkerTooltip(data);
         }
 
         if (this.settings.markerClick) {
             this.leafletMarker.on('click', (event: LeafletMouseEvent) => {
-                for (const action in this.settings.markerClick) {
-                    if (typeof (this.settings.markerClick[action]) === 'function') {
-                        this.settings.markerClick[action](event.originalEvent, this.data.$datasource);
-                    }
+              for (const action in this.settings.markerClick) {
+                if (typeof (this.settings.markerClick[action]) === 'function') {
+                  this.settings.markerClick[action](event.originalEvent, this.data.$datasource);
                 }
+              }
             });
         }
 
         if (settings.draggableMarker && onDragendListener) {
-          this.leafletMarker.on('pm:dragend', (e) => onDragendListener(e, this.data));
+          this.leafletMarker.on('pm:dragstart', (e) => {
+            (this.leafletMarker.dragging as any)._draggable = { _moved: true };
+            (this.leafletMarker.dragging as any)._enabled = true;
+            this.editing = true;
+          });
+          this.leafletMarker.on('pm:dragend', (e) => {
+            onDragendListener(e, this.data);
+            delete (this.leafletMarker.dragging as any)._draggable;
+            delete (this.leafletMarker.dragging as any)._enabled;
+            this.editing = false;
+          });
         }
     }
 
@@ -88,16 +102,16 @@ export class Marker {
         const pattern = this.settings.useTooltipFunction ?
           safeExecute(this.settings.tooltipFunction, [this.data, this.dataSources, this.data.dsIndex]) : this.settings.tooltipPattern;
         this.map.markerTooltipText = parseWithTranslation.prepareProcessPattern(pattern, true);
-        this.map.replaceInfoTooltipMarker = processPattern(this.map.markerTooltipText, data);
+        this.map.replaceInfoTooltipMarker = processDataPattern(this.map.markerTooltipText, data);
       }
-      this.tooltip.setContent(fillPattern(this.map.markerTooltipText, this.map.replaceInfoTooltipMarker, data));
+      this.tooltip.setContent(fillDataPattern(this.map.markerTooltipText, this.map.replaceInfoTooltipMarker, data));
       if (this.tooltip.isOpen() && this.tooltip.getElement()) {
         bindPopupActions(this.tooltip, this.settings, data.$datasource);
       }
     }
 
     updateMarkerPosition(position: L.LatLng) {
-      if (!this.leafletMarker.getLatLng().equals(position)) {
+      if (!this.leafletMarker.getLatLng().equals(position) && !this.editing) {
         this.location = position;
         this.leafletMarker.setLatLng(position);
       }
@@ -110,9 +124,9 @@ export class Marker {
               const pattern = settings.useLabelFunction ?
                 safeExecute(settings.labelFunction, [this.data, this.dataSources, this.data.dsIndex]) : settings.label;
               this.map.markerLabelText = parseWithTranslation.prepareProcessPattern(pattern, true);
-              this.map.replaceInfoLabelMarker = processPattern(this.map.markerLabelText, this.data);
+              this.map.replaceInfoLabelMarker = processDataPattern(this.map.markerLabelText, this.data);
             }
-            settings.labelText = fillPattern(this.map.markerLabelText, this.map.replaceInfoLabelMarker, this.data);
+            settings.labelText = fillDataPattern(this.map.markerLabelText, this.map.replaceInfoLabelMarker, this.data);
             this.leafletMarker.bindTooltip(`<div style="color: ${settings.labelColor};"><b>${settings.labelText}</b></div>`,
                 { className: 'tb-marker-label', permanent: true, direction: 'top', offset: this.labelOffset });
         }

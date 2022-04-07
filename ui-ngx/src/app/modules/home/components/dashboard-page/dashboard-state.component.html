@@ -21,7 +21,8 @@
   [hideToolbar]="true"
   [currentState]="currentState"
   [dashboard]="dashboard"
-  [parentDashboard]="parentDashboard">
+  [parentDashboard]="parentDashboard"
+  [parentAliasController]="parentAliasController">
 </tb-dashboard-page>
 <div class="tb-absolute-fill tb-widget-error" *ngIf="!stateExists">
   <span>{{ 'dashboard.non-existent-dashboard-state-error' | translate:{stateId} }}</span>

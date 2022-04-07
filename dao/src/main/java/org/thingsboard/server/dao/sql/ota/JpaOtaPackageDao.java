@@ -17,7 +17,7 @@ package org.thingsboard.server.dao.sql.ota;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -40,7 +40,7 @@ public class JpaOtaPackageDao extends JpaAbstractSearchTextDao<OtaPackageEntity,
     }
 
     @Override
-    protected CrudRepository<OtaPackageEntity, UUID> getCrudRepository() {
+    protected JpaRepository<OtaPackageEntity, UUID> getRepository() {
         return otaPackageRepository;
     }
 

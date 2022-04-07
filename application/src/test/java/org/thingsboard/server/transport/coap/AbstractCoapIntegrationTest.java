@@ -52,6 +52,8 @@ import static org.junit.Assert.assertNotNull;
 @Slf4j
 public abstract class AbstractCoapIntegrationTest extends AbstractTransportIntegrationTest {
 
+    protected final byte[] EMPTY_PAYLOAD = new byte[0];
+
     protected CoapClient client;
 
     @Override

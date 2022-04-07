@@ -14,8 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Datasource } from '@app/shared/models/widget.models';
-import { EntityType } from '@shared/models/entity-type.models';
+import { Datasource, FormattedData } from '@app/shared/models/widget.models';
 import tinycolor from 'tinycolor2';
 import { BaseIconOptions, Icon } from 'leaflet';
 
@@ -122,22 +121,6 @@ export type MarkerSettings = {
     tooltipOffsetY: number;
 };
 
-export interface FormattedData {
-    $datasource: Datasource;
-    entityName: string;
-    entityId: string;
-    entityType: EntityType;
-    dsIndex: number;
-    deviceType: string;
-    [key: string]: any;
-}
-
-export interface ReplaceInfo {
-  variable: string;
-  valDec?: number;
-  dataKeyName: string;
-}
-
 export type PolygonSettings = {
     showPolygon: boolean;
     polygonKeyName: string;
@@ -153,8 +136,8 @@ export type PolygonSettings = {
     polygonLabelText: string;
     usePolygonLabelFunction: boolean;
     showPolygonTooltip: boolean;
-    autocloseTooltip: boolean;
-    showTooltipAction: string;
+    autoClosePolygonTooltip: boolean;
+    showPolygonTooltipAction: string;
     tooltipAction: { [name: string]: actionsHandler };
     polygonTooltipPattern: string;
     usePolygonTooltipFunction: boolean;
@@ -167,6 +150,32 @@ export type PolygonSettings = {
     polygonLabelFunction?: GenericFunction;
     editablePolygon: boolean;
 };
+
+export interface CircleSettings {
+  showCircle: boolean;
+  circleKeyName: string;
+  editableCircle: boolean;
+  showCircleLabel: boolean;
+  useCircleLabelFunction: boolean;
+  circleLabel: string;
+  circleLabelFunction?: GenericFunction;
+  circleFillColor: string;
+  useCircleFillColorFunction: boolean;
+  circleFillColorFunction?: GenericFunction;
+  circleFillColorOpacity: number;
+  circleStrokeColor: string;
+  useCircleStrokeColorFunction: boolean;
+  circleStrokeColorFunction: GenericFunction;
+  circleStrokeOpacity: number;
+  circleStrokeWeight: number;
+  showCircleTooltip: boolean;
+  showCircleTooltipAction: string;
+  autoCloseCircleTooltip: boolean;
+  useCircleTooltipFunction: boolean;
+  circleTooltipPattern: string;
+  circleTooltipFunction?: GenericFunction;
+  circleClick?: { [name: string]: actionsHandler };
+}
 
 export type PolylineSettings = {
     usePolylineDecorator: any;
@@ -212,7 +221,7 @@ export interface MapImage {
     update?: boolean;
 }
 
-export interface TripAnimationSettings extends PolygonSettings {
+export interface TripAnimationSettings extends PolygonSettings, CircleSettings {
     showPoints: boolean;
     pointColor: string;
     pointSize: number;
@@ -241,9 +250,10 @@ export interface TripAnimationSettings extends PolygonSettings {
 
 export type actionsHandler = ($event: Event, datasource: Datasource) => void;
 
-export type UnitedMapSettings = MapSettings & PolygonSettings & MarkerSettings & PolylineSettings & TripAnimationSettings & EditorSettings;
+export type UnitedMapSettings = MapSettings & PolygonSettings & MarkerSettings & PolylineSettings
+  & CircleSettings & TripAnimationSettings & EditorSettings;
 
-export const defaultSettings: any = {
+export const defaultSettings: Partial<UnitedMapSettings> = {
     xPosKeyName: 'xPos',
     yPosKeyName: 'yPos',
     markerOffsetX: 0.5,
@@ -252,7 +262,7 @@ export const defaultSettings: any = {
     tooltipOffsetY: -1,
     latKeyName: 'latitude',
     lngKeyName: 'longitude',
-    polygonKeyName: 'coordinates',
+    polygonKeyName: 'perimeter',
     showLabel: false,
     label: '${entityName}',
     showTooltip: false,
@@ -263,17 +273,18 @@ export const defaultSettings: any = {
     labelColor: '#000000',
     color: '#FE7569',
     showPolygonLabel: false,
-    polygonColor: '#0000ff',
-    polygonStrokeColor: '#fe0001',
+    polygonColor: '#3388ff',
+    polygonStrokeColor: '#3388ff',
     polygonLabelColor: '#000000',
-    polygonOpacity: 0.5,
+    polygonOpacity: 0.2,
     polygonStrokeOpacity: 1,
-    polygonStrokeWeight: 1,
+    polygonStrokeWeight: 3,
+    showPolygonTooltipAction: 'click',
+    autoClosePolygonTooltip: true,
     useLabelFunction: false,
     markerImages: [],
     strokeWeight: 2,
     strokeOpacity: 1.0,
-    initCallback: () => { },
     disableScrollZooming: false,
     minZoomLevel: 16,
     credentials: '',
@@ -287,8 +298,33 @@ export const defaultSettings: any = {
     hideAllControlButton: false,
     hideDrawControlButton: false,
     hideEditControlButton: false,
-    hideRemoveControlButton: false
+    hideRemoveControlButton: false,
+    showCircle: true,
+    circleKeyName: 'perimeter',
+    editableCircle: false,
+    showCircleLabel: false,
+    useCircleLabelFunction: false,
+    circleLabel: '${entityName}',
+    circleFillColor: '#3388ff',
+    useCircleFillColorFunction: false,
+    circleFillColorOpacity: 0.2,
+    circleStrokeColor: '#3388ff',
+    useCircleStrokeColorFunction: false,
+    circleStrokeOpacity: 1,
+    circleStrokeWeight: 3,
+    showCircleTooltip: false,
+    showCircleTooltipAction: 'click',
+    autoCloseCircleTooltip: true,
+    useCircleTooltipFunction: false
 };
+
+export interface CircleData {
+  latitude: number;
+  longitude: number;
+  radius: number;
+}
+
+export const circleDataKeys: Array<keyof CircleData> = ['latitude', 'longitude', 'radius'];
 
 export const hereProviders = [
     'HERE.normalDay',

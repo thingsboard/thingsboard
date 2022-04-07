@@ -128,7 +128,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     private int maxEntitiesPerDataSubscription;
     @Value("${server.ws.max_entities_per_alarm_subscription:1000}")
     private int maxEntitiesPerAlarmSubscription;
-    @Value("${server.ws.max_alarm_queries_per_refresh_interval:3}")
+    @Value("${server.ws.dynamic_page_link.max_alarm_queries_per_refresh_interval:10}")
     private int maxAlarmQueriesPerRefreshInterval;
 
     private ExecutorService wsCallBackExecutor;
@@ -219,10 +219,13 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
             @Override
             public void onSuccess(@Nullable TbEntityDataSubCtx theCtx) {
                 try {
-                    if (cmd.getLatestCmd() != null) {
-                        handleLatestCmd(theCtx, cmd.getLatestCmd());
-                    } else if (cmd.getTsCmd() != null) {
-                        handleTimeSeriesCmd(theCtx, cmd.getTsCmd());
+                    if (cmd.getLatestCmd() != null || cmd.getTsCmd() != null) {
+                        if (cmd.getLatestCmd() != null) {
+                            handleLatestCmd(theCtx, cmd.getLatestCmd());
+                        }
+                        if (cmd.getTsCmd() != null) {
+                            handleTimeSeriesCmd(theCtx, cmd.getTsCmd());
+                        }
                     } else if (!theCtx.isInitialDataSent()) {
                         EntityDataUpdate update = new EntityDataUpdate(theCtx.getCmdId(), theCtx.getData(), null, theCtx.getMaxEntitiesPerDataSubscription());
                         wsService.sendWsMsg(theCtx.getSessionId(), update);

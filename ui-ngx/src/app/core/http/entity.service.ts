@@ -1050,8 +1050,6 @@ export class EntityService {
           additionalInfo: {
             description: edgeEntityData.description
           },
-          edgeLicenseKey: edgeEntityData.edgeLicenseKey,
-          cloudEndpoint: edgeEntityData.cloudEndpoint !== '' ? edgeEntityData.cloudEndpoint : window.location.origin,
           routingKey: edgeEntityData.routingKey !== '' ? edgeEntityData.routingKey : guid(),
           secret: edgeEntityData.secret !== '' ? edgeEntityData.secret : generateSecret(20)
         };
@@ -1099,8 +1097,6 @@ export class EntityService {
         const edgeEntityData: EdgeImportEntityData = entityData as EdgeImportEntityData;
         if (result.label !== edgeEntityData.label ||
           result.type !== edgeEntityData.type ||
-          (edgeEntityData.cloudEndpoint !== '' && result.cloudEndpoint !== edgeEntityData.cloudEndpoint) ||
-          (edgeEntityData.edgeLicenseKey !== '' && result.edgeLicenseKey !== edgeEntityData.edgeLicenseKey) ||
           (edgeEntityData.routingKey !== '' && result.routingKey !== edgeEntityData.routingKey) ||
           (edgeEntityData.secret !== '' && result.secret !== edgeEntityData.secret) ||
           additionalInfo.description !== edgeEntityData.description) {
@@ -1108,12 +1104,6 @@ export class EntityService {
           result.type = edgeEntityData.type;
           result.additionalInfo = additionalInfo;
           result.additionalInfo.description = edgeEntityData.description;
-          if (edgeEntityData.cloudEndpoint !== '') {
-            result.cloudEndpoint = edgeEntityData.cloudEndpoint;
-          }
-          if (edgeEntityData.edgeLicenseKey !== '') {
-            result.edgeLicenseKey = edgeEntityData.edgeLicenseKey;
-          }
           if (edgeEntityData.routingKey !== '') {
             result.routingKey = edgeEntityData.routingKey;
           }

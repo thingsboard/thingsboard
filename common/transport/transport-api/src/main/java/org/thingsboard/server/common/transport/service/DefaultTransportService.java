@@ -91,6 +91,7 @@ import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.provider.TbTransportQueueFactory;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
+import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 
 import javax.annotation.PostConstruct;
@@ -179,7 +180,7 @@ public class DefaultTransportService implements TransportService {
     protected ExecutorService transportCallbackExecutor;
     private ExecutorService mainConsumerExecutor;
 
-    private final ConcurrentMap<UUID, SessionMetaData> sessions = new ConcurrentHashMap<>();
+    public final ConcurrentMap<UUID, SessionMetaData> sessions = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, SessionActivityData> sessionsActivity = new ConcurrentHashMap<>();
     private final Map<String, RpcRequestMetadata> toServerRpcPendingMap = new ConcurrentHashMap<>();
 
@@ -227,6 +228,10 @@ public class DefaultTransportService implements TransportService {
         transportNotificationsConsumer.subscribe(Collections.singleton(tpi));
         transportApiRequestTemplate.init();
         mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("transport-consumer"));
+    }
+
+    @AfterStartUp
+    private void start() {
         mainConsumerExecutor.execute(() -> {
             while (!stopped) {
                 try {
@@ -510,6 +515,16 @@ public class DefaultTransportService implements TransportService {
     public void process(TransportToDeviceActorMsg msg, TransportServiceCallback<Void> callback) {
         TransportProtos.SessionInfoProto sessionInfo = msg.getSessionInfo();
         if (checkLimits(sessionInfo, msg, callback)) {
+            SessionMetaData sessionMetaData = sessions.get(toSessionId(sessionInfo));
+            if (sessionMetaData != null) {
+                if (msg.hasSubscribeToAttributes()) {
+                    sessionMetaData.setSubscribedToAttributes(true);
+                }
+                if (msg.hasSubscribeToRPC()) {
+                    sessionMetaData.setSubscribedToRPC(true);
+                }
+            }
+
             reportActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, msg, callback);
         }
