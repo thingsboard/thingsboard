@@ -260,42 +260,46 @@ public abstract class BaseCustomerServiceTest extends AbstractServiceTest {
         int parallelCount = 3;
         ExecutorService executorService = Executors.newFixedThreadPool(parallelCount, ThingsBoardThreadFactory.forName(getClass().getSimpleName() + "-test-scope"));
 
-        Customer customer = new Customer();
-        customer.setTitle("TEST" + RandomStringUtils.randomAlphanumeric(7));
-        customer.setTenantId(tenantId);
-        AtomicInteger cntSaved = new AtomicInteger(0);
-        AtomicInteger cntError = new AtomicInteger(0);
-        final CountDownLatch readyLatch = new CountDownLatch(parallelCount);
-        final CountDownLatch startLatch = new CountDownLatch(1);
-        final CountDownLatch finishLatch = new CountDownLatch(parallelCount);
-        for (int i = 0; i < parallelCount; i++) {
-            executorService.submit(() -> {
-                readyLatch.countDown();
-                try {
-                    startLatch.await();
-                } catch (InterruptedException e) {
-                    Assert.fail("failed to await");
-                }
-                try {
-                    Customer savedCustomer = customerService.saveCustomer(customer);
-                    if (savedCustomer != null &&
-                            savedCustomer.getTitle().equals(customer.getTitle()) &&
-                            savedCustomer.getTenantId().equals(customer.getTenantId())) cntSaved.getAndIncrement();
-                } catch (Exception t) {
-                    if (t.getMessage().equals("Customer with " + customer.getName() + "  name already exists!")) {
-                        cntError.getAndIncrement();
+        try {
+            Customer customer = new Customer();
+            customer.setTitle("TEST" + RandomStringUtils.randomAlphanumeric(7));
+            customer.setTenantId(tenantId);
+            AtomicInteger cntSaved = new AtomicInteger(0);
+            AtomicInteger cntError = new AtomicInteger(0);
+            final CountDownLatch readyLatch = new CountDownLatch(parallelCount);
+            final CountDownLatch startLatch = new CountDownLatch(1);
+            final CountDownLatch finishLatch = new CountDownLatch(parallelCount);
+            for (int i = 0; i < parallelCount; i++) {
+                executorService.submit(() -> {
+                    readyLatch.countDown();
+                    try {
+                        startLatch.await();
+                    } catch (InterruptedException e) {
+                        Assert.fail("failed to await");
                     }
-                }
-                finishLatch.countDown();
-            });
+                    try {
+                        Customer savedCustomer = customerService.saveCustomer(customer);
+                        if (savedCustomer != null &&
+                                savedCustomer.getTitle().equals(customer.getTitle()) &&
+                                savedCustomer.getTenantId().equals(customer.getTenantId())) cntSaved.getAndIncrement();
+                    } catch (Exception t) {
+                        if (t.getMessage().equals("Customer with " + customer.getName() + "  name already exists!")) {
+                            cntError.getAndIncrement();
+                        }
+                    }
+                    finishLatch.countDown();
+                });
+            }
+            assertTrue(readyLatch.await(TIMEOUT, TimeUnit.SECONDS));
+            Thread.yield();
+            startLatch.countDown(); //run all-at-once submitted tasks
+            assertTrue(finishLatch.await(TIMEOUT, TimeUnit.SECONDS));
+            Assert.assertEquals("Save count equals 1", cntSaved.get(), 1);
+            Assert.assertEquals("Saved count equals by " + cntSaved + ", errors  count equals by " + cntError +
+                            ". But we have saved count equals by 1, error count equals by " + (parallelCount - 1) + "!",
+                    cntError.get(), parallelCount - cntSaved.get());
+        } finally {
+            executorService.shutdown();
         }
-        assertTrue(readyLatch.await(TIMEOUT, TimeUnit.SECONDS));
-        Thread.yield();
-        startLatch.countDown(); //run all-at-once submitted tasks
-        assertTrue(finishLatch.await(TIMEOUT, TimeUnit.SECONDS));
-        Assert.assertEquals("Saved count not equals  1", cntSaved.get(), 1);
-        Assert.assertEquals("Saved count equals by " + cntSaved + ", errors  count equals by " + cntError +
-                ". But we have saved count equals by 1, error count equals by " + (parallelCount - 1) + "!",
-                cntError.get(), parallelCount - cntSaved.get());
     }
 }

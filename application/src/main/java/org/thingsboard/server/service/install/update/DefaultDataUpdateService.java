@@ -83,6 +83,8 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 @Slf4j
 public class DefaultDataUpdateService implements DataUpdateService {
 
+    private static final int DEFAULT_LIMIT = 100;
+
     @Autowired
     private TenantService tenantService;
 
@@ -575,8 +577,18 @@ public class DefaultDataUpdateService implements DataUpdateService {
             };
 
     private List<Customer> updateDuplicateCustomersTitle(Tenant entity) {
-        customerDao.find(entity.getId());
-        List<Customer> customers = customerDao.find(entity.getId());
+        PageLink pageLink = new PageLink(DEFAULT_LIMIT);
+        boolean hasNext = true;
+        List<Customer> customers = new ArrayList<>();
+        while (hasNext) {
+            PageData<Customer> entities = customerDao.findCustomersByTenantId(entity.getUuidId(), pageLink);
+            customers.addAll(entities.getData());
+
+            hasNext = entities.hasNext();
+            if (hasNext) {
+                pageLink = pageLink.nextPageLink();
+            }
+        }
         return updateDuplicateCustomersTitle(customers);
     }
 
@@ -585,10 +597,9 @@ public class DefaultDataUpdateService implements DataUpdateService {
         sortCustomersByTenantIdAndTitleAndCreatedTime(customers);
         int countEqualsTitleAndTenantIdBefore = 0;
         String lastCustomerName = customers.get(0).getName();
-        TenantId lastTenantId = customers.get(0).getTenantId();
         for (int i = 1; i < customers.size(); i++) {
             Customer customer = customers.get(i);
-            if (customer.getName().equals(lastCustomerName) && customer.getTenantId().equals(lastTenantId)) {
+            if (customer.getName().equals(lastCustomerName)) {
                 countEqualsTitleAndTenantIdBefore++;
                 customer.setTitle(customer.getName() + "-" + countEqualsTitleAndTenantIdBefore);
                 customers.set(i, updateCustomerTitle(customer.getTenantId(), customer));
@@ -596,13 +607,11 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 countEqualsTitleAndTenantIdBefore = 0;
             }
             lastCustomerName = customer.getName();
-            lastTenantId = customer.getTenantId();
         }
         return customers;
     }
 
     protected Customer updateCustomerTitle(TenantId id, Customer customer) {
-        customerDao.removeById(id, customer.getUuidId());
         return customerDao.save(id, customer);
     }
 
