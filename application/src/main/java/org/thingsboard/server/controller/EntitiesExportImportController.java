@@ -46,16 +46,13 @@ import org.thingsboard.server.service.sync.exporting.data.request.EntityQueryExp
 import org.thingsboard.server.service.sync.exporting.data.request.EntityTypeExportRequest;
 import org.thingsboard.server.service.sync.exporting.data.request.ExportRequest;
 import org.thingsboard.server.service.sync.exporting.data.request.SingleEntityExportRequest;
-import org.thingsboard.server.service.sync.importing.EntityImportResult;
+import org.thingsboard.server.service.sync.importing.data.EntityImportResult;
 import org.thingsboard.server.service.sync.importing.data.request.ImportRequest;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.sql.query.EntityKeyMapping.CREATED_TIME;
@@ -163,15 +160,7 @@ public class EntitiesExportImportController extends BaseController {
     public List<EntityImportResult<ExportableEntity<EntityId>>> importEntities(@RequestBody ImportRequest importRequest) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         try {
-            List<EntityImportResult<ExportableEntity<EntityId>>> importResults = exportImportService.importEntities(user,
-                    importRequest.getExportDataList(), importRequest.getImportSettings());
-
-            for (EntityImportResult<ExportableEntity<EntityId>> entityImportResult : importResults) {
-                if (entityImportResult.getCallback() != null) {
-                    entityImportResult.getCallback().run();
-                }
-            }
-            return importResults;
+            return exportImportService.importEntities(user, importRequest.getExportDataList(), importRequest.getImportSettings());
         } catch (Exception e) {
             throw handleException(e);
         }

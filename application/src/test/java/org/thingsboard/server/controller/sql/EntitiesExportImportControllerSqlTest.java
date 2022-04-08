@@ -48,7 +48,7 @@ import org.thingsboard.server.service.sync.exporting.ExportableEntitiesService;
 import org.thingsboard.server.service.sync.exporting.data.DeviceExportData;
 import org.thingsboard.server.service.sync.exporting.data.EntityExportData;
 import org.thingsboard.server.service.sync.exporting.data.RuleChainExportData;
-import org.thingsboard.server.service.sync.importing.EntityImportResult;
+import org.thingsboard.server.service.sync.importing.data.EntityImportResult;
 
 import java.util.List;
 

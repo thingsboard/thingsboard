@@ -13,19 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.sync.importing;
+package org.thingsboard.server.service.sync.importing.data;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.ExportableEntity;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.utils.ThrowingRunnable;
+import lombok.NoArgsConstructor;
 
 @Data
-public class EntityImportResult<E extends ExportableEntity<? extends EntityId>> {
-    private E savedEntity;
-    private E oldEntity;
-    @JsonIgnore
-    private transient ThrowingRunnable callback; // to call when entity is successfully saved and transaction is committed
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class EntityImportSettings {
+    private boolean findExistingByName;
+    private boolean importInboundRelations;
+    private boolean importOutboundRelations;
+    private boolean removeExistingRelations;
+    private boolean updateReferencesToOtherEntities;
 }

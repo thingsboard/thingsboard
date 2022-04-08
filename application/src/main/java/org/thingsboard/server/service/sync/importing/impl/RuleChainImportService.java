@@ -32,7 +32,6 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.exporting.data.RuleChainExportData;
-import org.thingsboard.server.utils.ThrowingRunnable;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -85,15 +84,14 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
     }
 
     @Override
-    protected ThrowingRunnable getCallback(SecurityUser user, RuleChain savedRuleChain, RuleChain oldRuleChain) {
-        return super.getCallback(user, savedRuleChain, oldRuleChain).andThen(() -> {
-            if (savedRuleChain.getType() == RuleChainType.CORE) {
-                clusterService.broadcastEntityStateChangeEvent(user.getTenantId(), savedRuleChain.getId(),
-                        oldRuleChain == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
-            } else if (savedRuleChain.getType() == RuleChainType.EDGE && oldRuleChain != null) {
-                entityActionService.sendEntityNotificationMsgToEdgeService(user.getTenantId(), savedRuleChain.getId(), EdgeEventActionType.UPDATED);
-            }
-        });
+    protected void onEntitySaved(SecurityUser user, RuleChain savedRuleChain, RuleChain oldRuleChain) {
+        super.onEntitySaved(user, savedRuleChain, oldRuleChain);
+        if (savedRuleChain.getType() == RuleChainType.CORE) {
+            clusterService.broadcastEntityStateChangeEvent(user.getTenantId(), savedRuleChain.getId(),
+                    oldRuleChain == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
+        } else if (savedRuleChain.getType() == RuleChainType.EDGE && oldRuleChain != null) {
+            entityActionService.sendEntityNotificationMsgToEdgeService(user.getTenantId(), savedRuleChain.getId(), EdgeEventActionType.UPDATED);
+        }
     }
 
     @Override

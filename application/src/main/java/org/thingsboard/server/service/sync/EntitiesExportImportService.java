@@ -19,18 +19,16 @@ import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.sync.exporting.data.request.EntityExportSettings;
 import org.thingsboard.server.service.sync.exporting.data.EntityExportData;
-import org.thingsboard.server.service.sync.importing.EntityImportResult;
-import org.thingsboard.server.service.sync.importing.EntityImportSettings;
+import org.thingsboard.server.service.sync.exporting.data.request.EntityExportSettings;
+import org.thingsboard.server.service.sync.importing.data.EntityImportResult;
+import org.thingsboard.server.service.sync.importing.data.EntityImportSettings;
 
 import java.util.List;
 
 public interface EntitiesExportImportService {
 
     <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportEntity(SecurityUser user, I entityId, EntityExportSettings exportSettings) throws ThingsboardException;
-
-    <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(SecurityUser user, EntityExportData<E> exportData, EntityImportSettings importSettings) throws ThingsboardException;
 
     List<EntityImportResult<ExportableEntity<EntityId>>> importEntities(SecurityUser user, List<EntityExportData<ExportableEntity<EntityId>>> exportDataList, EntityImportSettings importSettings) throws ThingsboardException;
 

@@ -25,7 +25,6 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.exporting.data.DeviceExportData;
-import org.thingsboard.server.utils.ThrowingRunnable;
 
 @Service
 @TbCoreComponent
@@ -55,10 +54,9 @@ public class DeviceImportService extends BaseEntityImportService<DeviceId, Devic
     }
 
     @Override
-    protected ThrowingRunnable getCallback(SecurityUser user, Device savedDevice, Device oldDevice) {
-        return super.getCallback(user, savedDevice, oldDevice).andThen(() -> {
-            clusterService.onDeviceUpdated(savedDevice, oldDevice);
-        });
+    protected void onEntitySaved(SecurityUser user, Device savedDevice, Device oldDevice) {
+        super.onEntitySaved(user, savedDevice, oldDevice);
+        clusterService.onDeviceUpdated(savedDevice, oldDevice);
     }
 
     @Override

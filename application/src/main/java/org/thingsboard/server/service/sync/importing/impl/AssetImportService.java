@@ -26,7 +26,6 @@ import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.exporting.data.AssetExportData;
-import org.thingsboard.server.utils.ThrowingRunnable;
 
 @Service
 @TbCoreComponent
@@ -47,12 +46,11 @@ public class AssetImportService extends BaseEntityImportService<AssetId, Asset, 
     }
 
     @Override
-    protected ThrowingRunnable getCallback(SecurityUser user, Asset savedAsset, Asset oldAsset) {
-        return super.getCallback(user, savedAsset, oldAsset).andThen(() -> {
-            if (oldAsset != null) {
-                entityActionService.sendEntityNotificationMsgToEdgeService(user.getTenantId(), savedAsset.getId(), EdgeEventActionType.UPDATED);
-            }
-        });
+    protected void onEntitySaved(SecurityUser user, Asset savedAsset, Asset oldAsset) {
+        super.onEntitySaved(user, savedAsset, oldAsset);
+        if (oldAsset != null) {
+            entityActionService.sendEntityNotificationMsgToEdgeService(user.getTenantId(), savedAsset.getId(), EdgeEventActionType.UPDATED);
+        }
     }
 
     @Override

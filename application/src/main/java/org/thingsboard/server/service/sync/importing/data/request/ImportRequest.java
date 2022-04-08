@@ -19,7 +19,7 @@ import lombok.Data;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.sync.exporting.data.EntityExportData;
-import org.thingsboard.server.service.sync.importing.EntityImportSettings;
+import org.thingsboard.server.service.sync.importing.data.EntityImportSettings;
 
 import java.util.List;
 

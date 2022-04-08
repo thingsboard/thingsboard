@@ -117,7 +117,7 @@ public class BaseAssetService extends AbstractEntityService implements AssetServ
         assetValidator.validate(asset, Asset::getTenantId);
         Asset savedAsset;
         try {
-            savedAsset = assetDao.save(asset.getTenantId(), asset);
+            savedAsset = assetDao.saveAndFlush(asset.getTenantId(), asset);
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("asset_name_unq_key")) {
