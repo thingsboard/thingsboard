@@ -42,15 +42,14 @@ public class JacksonUtil {
     private static final ObjectMapper OBJECT_MAPPER_WITH_UNQUOTED_FIELD_NAMES;
 
     static {
-        OBJECT_MAPPER = getNewObjectMapperWithJavaTimeModule();
-        OBJECT_MAPPER_WITH_UNQUOTED_FIELD_NAMES = getNewObjectMapperWithJavaTimeModule().
+        OBJECT_MAPPER = getNewObjectMapper();
+        OBJECT_MAPPER_WITH_UNQUOTED_FIELD_NAMES = getNewObjectMapper().
                 configure(JsonWriteFeature.QUOTE_FIELD_NAMES.mappedFeature(), false).
                 configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
     }
 
-    public static ObjectMapper getNewObjectMapperWithJavaTimeModule() {
-        return new
-                ObjectMapper().registerModule(new JavaTimeModule());
+    public static ObjectMapper getNewObjectMapper() {
+        return new ObjectMapper().registerModule(new JavaTimeModule());
     }
 
     public static ObjectMapper getObjectMapper() {
@@ -91,7 +90,7 @@ public class JacksonUtil {
         try {
             OBJECT_MAPPER.writeValue(writer, value);
         } catch (IOException e) {
-            new IllegalArgumentException("The given writer value: "
+            throw new IllegalArgumentException("The given writer value: "
                     + writer + "cannot be wrote", e);
         }
     }
@@ -210,7 +209,7 @@ public class JacksonUtil {
         return OBJECT_MAPPER_WITH_UNQUOTED_FIELD_NAMES.createArrayNode();
     }
 
-    public static JavaType constructCollectionType(Class collectionClass, Class elementClass) {
+    public static JavaType constructCollectionType(Class collectionClass, Class<?> elementClass) {
         return OBJECT_MAPPER.getTypeFactory().constructCollectionType(collectionClass, elementClass);
     }
 

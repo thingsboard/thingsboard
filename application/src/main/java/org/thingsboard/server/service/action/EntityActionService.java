@@ -22,13 +22,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -41,7 +41,6 @@ import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.cluster.TbClusterService;
 
 import java.util.List;
 import java.util.Map;
@@ -157,7 +156,7 @@ public class EntityActionService {
                 }
                 ObjectNode entityNode;
                 if (entity != null) {
-                    entityNode = JacksonUtil.valueToTree(entity).deepCopy();
+                    entityNode = (ObjectNode) JacksonUtil.valueToTree(entity);
                     if (entityId.getEntityType() == EntityType.DASHBOARD) {
                         entityNode.put("configuration", "");
                     }

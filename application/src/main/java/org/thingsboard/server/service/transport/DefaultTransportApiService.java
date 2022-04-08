@@ -299,7 +299,7 @@ public class DefaultTransportApiService implements TransportApiService {
                     metaData.putValue("gatewayId", gatewayId.toString());
 
                     DeviceId deviceId = device.getId();
-                    ObjectNode entityNode = JacksonUtil.valueToTree(device).deepCopy();
+                    ObjectNode entityNode = (ObjectNode) JacksonUtil.valueToTree(device);
                     TbMsg tbMsg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, deviceId, customerId, metaData, TbMsgDataType.JSON, JacksonUtil.toString(entityNode));
                     tbClusterService.pushMsgToRuleEngine(tenantId, deviceId, tbMsg, null);
                 } else {

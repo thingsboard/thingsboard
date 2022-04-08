@@ -23,6 +23,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -50,7 +51,6 @@ import org.thingsboard.server.dao.device.provision.ProvisionFailedException;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.device.provision.ProvisionResponse;
 import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
@@ -231,7 +231,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
 
     private void pushDeviceCreatedEventToRuleEngine(Device device) {
         try {
-            ObjectNode entityNode = JacksonUtil.valueToTree(device).deepCopy();
+            ObjectNode entityNode = (ObjectNode) JacksonUtil.valueToTree(device);
             TbMsg msg = TbMsg.newMsg(DataConstants.ENTITY_CREATED, device.getId(), device.getCustomerId(), createTbMsgMetaData(device), JacksonUtil.toString(entityNode));
             sendToRuleEngine(device.getTenantId(), msg, null);
         } catch (IllegalArgumentException e) {
