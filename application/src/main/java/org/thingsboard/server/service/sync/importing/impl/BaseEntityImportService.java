@@ -84,6 +84,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
         EntityImportResult<E> importResult = new EntityImportResult<>();
         importResult.setSavedEntity(savedEntity);
         importResult.setOldEntity(existingEntity);
+        importResult.setEntityType(getEntityType());
 
         processAfterSaved(user, importResult, exportData, idProvider, importSettings);
 
@@ -150,7 +151,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
         });
     }
 
-    protected void onEntitySaved(SecurityUser user, E savedEntity, E oldEntity) {
+    protected void onEntitySaved(SecurityUser user, E savedEntity, E oldEntity) throws ThingsboardException {
         entityActionService.logEntityAction(user, savedEntity.getId(), savedEntity,
                 savedEntity instanceof HasCustomerId ? ((HasCustomerId) savedEntity).getCustomerId() : user.getCustomerId(),
                 oldEntity == null ? ActionType.ADDED : ActionType.UPDATED, null);

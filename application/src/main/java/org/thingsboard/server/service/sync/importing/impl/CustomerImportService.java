@@ -20,17 +20,18 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.sync.exporting.data.CustomerExportData;
+import org.thingsboard.server.service.sync.exporting.data.EntityExportData;
 
 @Service
 @TbCoreComponent
 @RequiredArgsConstructor
-public class CustomerImportService extends BaseEntityImportService<CustomerId, Customer, CustomerExportData> {
+public class CustomerImportService extends BaseEntityImportService<CustomerId, Customer, EntityExportData<Customer>> {
 
     private final CustomerService customerService;
 
@@ -40,12 +41,12 @@ public class CustomerImportService extends BaseEntityImportService<CustomerId, C
     }
 
     @Override
-    protected Customer prepareAndSave(TenantId tenantId, Customer customer, CustomerExportData exportData, NewIdProvider idProvider) {
+    protected Customer prepareAndSave(TenantId tenantId, Customer customer, EntityExportData<Customer> exportData, NewIdProvider idProvider) {
         return customerService.saveCustomer(customer);
     }
 
     @Override
-    protected void onEntitySaved(SecurityUser user, Customer savedCustomer, Customer oldCustomer) {
+    protected void onEntitySaved(SecurityUser user, Customer savedCustomer, Customer oldCustomer) throws ThingsboardException {
         super.onEntitySaved(user, savedCustomer, oldCustomer);
         if (oldCustomer != null) {
             entityActionService.sendEntityNotificationMsgToEdgeService(user.getTenantId(), savedCustomer.getId(), EdgeEventActionType.UPDATED);

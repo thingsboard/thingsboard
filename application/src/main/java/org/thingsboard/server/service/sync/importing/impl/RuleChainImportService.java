@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -84,7 +85,7 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
     }
 
     @Override
-    protected void onEntitySaved(SecurityUser user, RuleChain savedRuleChain, RuleChain oldRuleChain) {
+    protected void onEntitySaved(SecurityUser user, RuleChain savedRuleChain, RuleChain oldRuleChain) throws ThingsboardException {
         super.onEntitySaved(user, savedRuleChain, oldRuleChain);
         if (savedRuleChain.getType() == RuleChainType.CORE) {
             clusterService.broadcastEntityStateChangeEvent(user.getTenantId(), savedRuleChain.getId(),

@@ -15,71 +15,29 @@
  */
 package org.thingsboard.server.service.sync.exporting.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.permission.Operation;
-import org.thingsboard.server.service.sync.exporting.EntityExportService;
-import org.thingsboard.server.service.sync.exporting.data.request.EntityExportSettings;
-import org.thingsboard.server.service.sync.exporting.ExportableEntitiesService;
 import org.thingsboard.server.service.sync.exporting.data.EntityExportData;
+import org.thingsboard.server.service.sync.exporting.data.request.EntityExportSettings;
 
-import java.util.List;
+import java.util.Set;
 
-public abstract class BaseEntityExportService<I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> implements EntityExportService<I, E, D> {
-
-    @Autowired @Lazy
-    private ExportableEntitiesService exportableEntitiesService;
-    @Autowired
-    private RelationService relationService;
+public abstract class BaseEntityExportService<I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> extends DefaultEntityExportService<I, E, D> {
 
     @Override
-    public final D getExportData(SecurityUser user, I entityId, EntityExportSettings exportSettings) throws ThingsboardException {
-        D exportData = newExportData();
-
-        E entity = exportableEntitiesService.findEntityByTenantIdAndId(user.getTenantId(), entityId);
-        if (entity == null) {
-            throw new IllegalArgumentException("Entity not found");
-        }
-        exportableEntitiesService.checkPermission(user, entity, getEntityType(), Operation.READ);
-
-        exportData.setEntity(entity);
-        setRelatedEntities(user.getTenantId(), entity, exportData);
-        setAdditionalExportData(user, entity, exportData, exportSettings);
-
-        return exportData;
+    protected void setAdditionalExportData(SecurityUser user, E entity, D exportData, EntityExportSettings exportSettings) throws ThingsboardException {
+        setRelatedEntities(user.getTenantId(), entity, (D) exportData);
+        super.setAdditionalExportData(user, entity, exportData, exportSettings);
     }
 
     protected void setRelatedEntities(TenantId tenantId, E mainEntity, D exportData) {}
 
-    protected void setAdditionalExportData(SecurityUser user, E entity, D exportData, EntityExportSettings exportSettings) throws ThingsboardException {
-        if (exportSettings.isExportInboundRelations()) {
-            List<EntityRelation> inboundRelations = relationService.findByTo(user.getTenantId(), entity.getId(), RelationTypeGroup.COMMON);
-            if (inboundRelations != null) {
-                for (EntityRelation relation : inboundRelations) {
-                    exportableEntitiesService.checkPermission(user, relation.getFrom(), Operation.READ);
-                }
-            }
-            exportData.setInboundRelations(inboundRelations);
-        }
-        if (exportSettings.isExportOutboundRelations()) {
-            List<EntityRelation> outboundRelations = relationService.findByFrom(user.getTenantId(), entity.getId(), RelationTypeGroup.COMMON);
-            if (outboundRelations != null) {
-                for (EntityRelation relation : outboundRelations) {
-                    exportableEntitiesService.checkPermission(user, relation.getTo(), Operation.READ);
-                }
-            }
-            exportData.setOutboundRelations(outboundRelations);
-        }
-    }
-
     protected abstract D newExportData();
+
+    public abstract Set<EntityType> getSupportedEntityTypes();
 
 }

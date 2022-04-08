@@ -18,6 +18,7 @@ package org.thingsboard.server.service.sync.importing.data;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.utils.ThrowingRunnable;
@@ -27,6 +28,8 @@ public class EntityImportResult<E extends ExportableEntity<? extends EntityId>> 
     private E savedEntity;
     @Getter @Setter
     private E oldEntity;
+    @Getter @Setter
+    private EntityType entityType;
 
     @Getter @JsonIgnore
     private ThrowingRunnable saveReferencesCallback = () -> {};

@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -52,6 +53,7 @@ import org.thingsboard.server.service.sync.importing.data.request.ImportRequest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -61,6 +63,7 @@ import static org.thingsboard.server.dao.sql.query.EntityKeyMapping.CREATED_TIME
 @RequestMapping("/api/entities")
 @TbCoreComponent
 @RequiredArgsConstructor
+@Slf4j
 public class EntitiesExportImportController extends BaseController {
 
     private final EntitiesExportImportService exportImportService;
@@ -160,7 +163,20 @@ public class EntitiesExportImportController extends BaseController {
     public List<EntityImportResult<ExportableEntity<EntityId>>> importEntities(@RequestBody ImportRequest importRequest) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         try {
-            return exportImportService.importEntities(user, importRequest.getExportDataList(), importRequest.getImportSettings());
+            List<EntityImportResult<ExportableEntity<EntityId>>> importResults = exportImportService.importEntities(user, importRequest.getExportDataList(), importRequest.getImportSettings());
+
+            importResults.stream()
+                    .map(EntityImportResult::getPushEventsCallback)
+                    .filter(Objects::nonNull)
+                    .forEach(pushEventsCallback -> {
+                        try {
+                            pushEventsCallback.run();
+                        } catch (Exception e) {
+                            log.error("Failed to send event for entity", e);
+                        }
+                    });
+
+            return importResults;
         } catch (Exception e) {
             throw handleException(e);
         }

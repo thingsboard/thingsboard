@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.sync.exporting;
 
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -26,7 +25,5 @@ import org.thingsboard.server.service.sync.exporting.data.request.EntityExportSe
 public interface EntityExportService<I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> {
 
     D getExportData(SecurityUser user, I entityId, EntityExportSettings exportSettings) throws ThingsboardException;
-
-    EntityType getEntityType();
 
 }

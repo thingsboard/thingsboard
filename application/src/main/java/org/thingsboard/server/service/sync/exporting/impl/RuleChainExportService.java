@@ -25,6 +25,8 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.exporting.data.RuleChainExportData;
 
+import java.util.Set;
+
 @Service
 @TbCoreComponent
 @RequiredArgsConstructor
@@ -43,8 +45,8 @@ public class RuleChainExportService extends BaseEntityExportService<RuleChainId,
     }
 
     @Override
-    public EntityType getEntityType() {
-        return EntityType.RULE_CHAIN;
+    public Set<EntityType> getSupportedEntityTypes() {
+        return Set.of(EntityType.RULE_CHAIN);
     }
 
 }

@@ -15,15 +15,10 @@
  */
 package org.thingsboard.server.controller.sql;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JavaType;
-import lombok.SneakyThrows;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
@@ -33,7 +28,7 @@ import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
@@ -50,12 +45,8 @@ import org.thingsboard.server.service.sync.exporting.data.EntityExportData;
 import org.thingsboard.server.service.sync.exporting.data.RuleChainExportData;
 import org.thingsboard.server.service.sync.importing.data.EntityImportResult;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Ignore
 @DaoSqlTest
 public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImportControllerTest {
 
@@ -110,7 +101,7 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
         assertThat(exportData.getEntity()).isEqualTo(asset);
 
         logInAsTenantAdmin2();
-        EntityImportResult<Asset> importResult = importEntities(List.of(exportData)).get(0);
+        EntityImportResult<Asset> importResult = importEntity(exportData);
 
         checkImportedEntity(tenantId1, asset, tenantId2, importResult);
         checkImportedAssetData(asset, importResult.getSavedEntity());
@@ -122,7 +113,7 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
         Asset asset = createAsset(tenantId1, null, "AB", "Asset v1.0");
         EntityExportData<Asset> exportData = exportSingleEntity(asset.getId());
 
-        EntityImportResult<Asset> importResult = importEntities(List.of(exportData)).get(0);
+        EntityImportResult<Asset> importResult = importEntity(exportData);
 
         checkImportedEntity(tenantId1, asset, tenantId1, importResult);
         checkImportedAssetData(asset, importResult.getSavedEntity());
@@ -138,8 +129,8 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
         EntityExportData<Asset> assetExportData = exportSingleEntity(asset.getId());
 
         logInAsTenantAdmin2();
-        Customer importedCustomer = importEntities(List.of(customerExportData)).get(0).getSavedEntity();
-        Asset importedAsset = importEntities(List.of(assetExportData)).get(0).getSavedEntity();
+        Customer importedCustomer = importEntity(customerExportData).getSavedEntity();
+        Asset importedAsset = importEntity(assetExportData).getSavedEntity();
 
         assertThat(importedAsset.getCustomerId()).isEqualTo(importedCustomer.getId());
     }
@@ -150,7 +141,7 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
         Customer customer = createCustomer(tenantId1, "My customer");
         Asset asset = createAsset(tenantId1, customer.getId(), "AB", "My asset");
 
-        Asset importedAsset = this.<Asset>importEntities(List.of(exportSingleEntity(asset.getId()))).get(0).getSavedEntity();
+        Asset importedAsset = importEntity(this.<Asset, AssetId>exportSingleEntity(asset.getId())).getSavedEntity();
 
         assertThat(importedAsset.getCustomerId()).isEqualTo(asset.getCustomerId());
     }
@@ -171,7 +162,7 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
         assertThat(exportData.getEntity()).isEqualTo(customer);
 
         logInAsTenantAdmin2();
-        EntityImportResult<Customer> importResult = importEntities(List.of(exportData)).get(0);
+        EntityImportResult<Customer> importResult = importEntity(exportData);
 
         checkImportedEntity(tenantId1, customer, tenantId2, importResult);
         checkImportedCustomerData(customer, importResult.getSavedEntity());
@@ -183,7 +174,7 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
         Customer customer = createCustomer(tenantAdmin1.getTenantId(), "Customer v1.0");
         EntityExportData<Customer> exportData = exportSingleEntity(customer.getId());
 
-        EntityImportResult<Customer> importResult = importEntities(List.of(exportData)).get(0);
+        EntityImportResult<Customer> importResult = importEntity(exportData);
 
         checkImportedEntity(tenantId1, customer, tenantId1, importResult);
         checkImportedCustomerData(customer, importResult.getSavedEntity());
@@ -214,12 +205,12 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
         exportedCredentials.setCredentialsId(credentials.getCredentialsId() + "a");
 
         logInAsTenantAdmin2();
-        EntityImportResult<DeviceProfile> profileImportResult = importEntities(List.of(profileExportData)).get(0);
+        EntityImportResult<DeviceProfile> profileImportResult = importEntity(profileExportData);
         checkImportedEntity(tenantId1, deviceProfile, tenantId2, profileImportResult);
         checkImportedDeviceProfileData(deviceProfile, profileImportResult.getSavedEntity());
 
 
-        EntityImportResult<Device> deviceImportResult = importEntities(List.of(deviceExportData)).get(0);
+        EntityImportResult<Device> deviceImportResult = importEntity(deviceExportData);
         Device importedDevice = deviceImportResult.getSavedEntity();
         checkImportedEntity(tenantId1, device, tenantId2, deviceImportResult);
         checkImportedDeviceData(device, importedDevice);
@@ -242,7 +233,7 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
 
         EntityExportData<Device> deviceExportData = exportSingleEntity(device.getId());
 
-        EntityImportResult<Device> importResult = importEntities(List.of(deviceExportData)).get(0);
+        EntityImportResult<Device> importResult = importEntity(deviceExportData);
         Device importedDevice = importResult.getSavedEntity();
 
         checkImportedEntity(tenantId1, device, tenantId1, importResult);
@@ -277,7 +268,7 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
         assertThat(((RuleChainExportData) exportData).getMetaData()).isEqualTo(metaData);
 
         logInAsTenantAdmin2();
-        EntityImportResult<RuleChain> importResult = importEntities(List.of(exportData)).get(0);
+        EntityImportResult<RuleChain> importResult = importEntity(exportData);
         RuleChain importedRuleChain = importResult.getSavedEntity();
         RuleChainMetaData importedMetaData = ruleChainService.loadRuleChainMetaData(tenantId2, importedRuleChain.getId());
 
@@ -293,7 +284,7 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
 
         EntityExportData<RuleChain> exportData = exportSingleEntity(ruleChain.getId());
 
-        EntityImportResult<RuleChain> importResult = importEntities(List.of(exportData)).get(0);
+        EntityImportResult<RuleChain> importResult = importEntity(exportData);
         RuleChain importedRuleChain = importResult.getSavedEntity();
         RuleChainMetaData importedMetaData = ruleChainService.loadRuleChainMetaData(tenantId1, importedRuleChain.getId());
 
@@ -330,7 +321,7 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
         assertThat(exportData.getEntity()).isEqualTo(dashboard);
 
         logInAsTenantAdmin2();
-        EntityImportResult<Dashboard> importResult = importEntities(List.of(exportData)).get(0);
+        EntityImportResult<Dashboard> importResult = importEntity(exportData);
         checkImportedEntity(tenantId1, dashboard, tenantId2, importResult);
         checkImportedDashboardData(dashboard, importResult.getSavedEntity());
     }
@@ -342,7 +333,7 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
 
         EntityExportData<Dashboard> exportData = exportSingleEntity(dashboard.getId());
 
-        EntityImportResult<Dashboard> importResult = importEntities(List.of(exportData)).get(0);
+        EntityImportResult<Dashboard> importResult = importEntity(exportData);
         checkImportedEntity(tenantId1, dashboard, tenantId1, importResult);
         checkImportedDashboardData(dashboard, importResult.getSavedEntity());
     }
@@ -373,27 +364,6 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
             assertThat(importedEntity.getId()).isEqualTo(initialEntity.getId());
             assertThat(importResult.getOldEntity()).isEqualTo(initialEntity);
         }
-    }
-
-
-    @SneakyThrows
-    private <E extends ExportableEntity<? extends EntityId>> List<EntityImportResult<E>> importEntities(List<EntityExportData<E>> exportDataList) {
-        String requestJson = mapper.writerFor(new TypeReference<List<EntityExportData<E>>>() {}).writeValueAsString(exportDataList);
-        ResultActions resultActions = doPost("/api/entities/import", (Object) requestJson);
-
-        try {
-            String responseJson = resultActions.andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-            JavaType type = mapper.getTypeFactory().constructCollectionType(List.class,
-                    mapper.getTypeFactory().constructParametricType(EntityImportResult.class, exportDataList.get(0).getEntity().getClass()));
-            return mapper.readValue(responseJson, type);
-        } catch (AssertionError e) {
-            throw new AssertionError(readResponse(resultActions, String.class), e);
-        }
-    }
-
-    private <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportSingleEntity(I entityId) throws Exception {
-        return readResponse(doPost("/api/entities/export/" + entityId.getEntityType() + "/" + entityId.getId().toString())
-                .andExpect(status().isOk()), new TypeReference<EntityExportData<E>>() {});
     }
 
 

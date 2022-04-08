@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.sync;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +38,8 @@ import org.thingsboard.server.service.sync.exporting.EntityExportService;
 import org.thingsboard.server.service.sync.exporting.ExportableEntitiesService;
 import org.thingsboard.server.service.sync.exporting.data.EntityExportData;
 import org.thingsboard.server.service.sync.exporting.data.request.EntityExportSettings;
+import org.thingsboard.server.service.sync.exporting.impl.BaseEntityExportService;
+import org.thingsboard.server.service.sync.exporting.impl.DefaultEntityExportService;
 import org.thingsboard.server.service.sync.importing.EntityImportService;
 import org.thingsboard.server.service.sync.importing.data.EntityImportResult;
 import org.thingsboard.server.service.sync.importing.data.EntityImportSettings;
@@ -56,7 +57,6 @@ import java.util.stream.Collectors;
 @Service
 @TbCoreComponent
 @RequiredArgsConstructor
-@Slf4j
 public class DefaultEntitiesExportImportService implements EntitiesExportImportService, ExportableEntitiesService {
 
     private final Map<EntityType, EntityExportService<?, ?, ?>> exportServices = new HashMap<>();
@@ -97,17 +97,6 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
                 .collect(Collectors.toList())) {
             saveReferencesCallback.run();
         }
-
-        importResults.stream()
-                .map(EntityImportResult::getPushEventsCallback)
-                .filter(Objects::nonNull)
-                .forEach(pushEventsCallback -> {
-                    try {
-                        pushEventsCallback.run();
-                    } catch (Exception e) {
-                        log.error("Failed to send event for entity", e);
-                    }
-                });
 
         return importResults;
     }
@@ -188,16 +177,31 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
         return daos.get(entityType);
     }
 
+
     @Autowired
-    private void setServices(Collection<EntityExportService<?, ?, ?>> exportServices,
-                             Collection<EntityImportService<?, ?, ?>> importServices,
-                             Collection<Dao<?>> daos) {
-        exportServices.forEach(entityExportService -> {
-            this.exportServices.put(entityExportService.getEntityType(), entityExportService);
+    private void setExportServices(DefaultEntityExportService<?, ?, ?> defaultExportService,
+                                   Collection<BaseEntityExportService<?, ?, ?>> exportServices) {
+        exportServices.stream()
+                .sorted(Comparator.comparing(exportService -> exportService.getSupportedEntityTypes().size(), Comparator.reverseOrder()))
+                .forEach(exportService -> {
+                    exportService.getSupportedEntityTypes().forEach(entityType -> {
+                        this.exportServices.put(entityType, exportService);
+                    });
+                });
+        SUPPORTED_ENTITY_TYPES.forEach(entityType -> {
+            this.exportServices.putIfAbsent(entityType, defaultExportService);
         });
+    }
+
+    @Autowired
+    private void setImportServices(Collection<EntityImportService<?, ?, ?>> importServices) {
         importServices.forEach(entityImportService -> {
             this.importServices.put(entityImportService.getEntityType(), entityImportService);
         });
+    }
+
+    @Autowired
+    private void setDaos(Collection<Dao<?>> daos) {
         daos.forEach(dao -> {
             if (dao.getEntityType() != null) {
                 this.daos.put(dao.getEntityType(), dao);

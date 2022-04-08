@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -34,7 +35,7 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.sql.query.DefaultEntityQueryRepository;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.sync.exporting.data.DashboardExportData;
+import org.thingsboard.server.service.sync.exporting.data.EntityExportData;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -46,7 +47,7 @@ import java.util.stream.Collectors;
 @Service
 @TbCoreComponent
 @RequiredArgsConstructor
-public class DashboardImportService extends BaseEntityImportService<DashboardId, Dashboard, DashboardExportData> {
+public class DashboardImportService extends BaseEntityImportService<DashboardId, Dashboard, EntityExportData<Dashboard>> {
 
     private final DashboardService dashboardService;
 
@@ -58,7 +59,7 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
     }
 
     @Override
-    protected Dashboard prepareAndSave(TenantId tenantId, Dashboard dashboard, DashboardExportData exportData, NewIdProvider idProvider) {
+    protected Dashboard prepareAndSave(TenantId tenantId, Dashboard dashboard, EntityExportData<Dashboard> exportData, NewIdProvider idProvider) {
         Optional.ofNullable(dashboard.getConfiguration())
                 .flatMap(configuration -> Optional.ofNullable(configuration.get("entityAliases")))
                 .filter(JsonNode::isObject)
@@ -110,7 +111,7 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
     }
 
     @Override
-    protected void onEntitySaved(SecurityUser user, Dashboard savedDashboard, Dashboard oldDashboard) {
+    protected void onEntitySaved(SecurityUser user, Dashboard savedDashboard, Dashboard oldDashboard) throws ThingsboardException {
         super.onEntitySaved(user, savedDashboard, oldDashboard);
         if (oldDashboard != null) {
             entityActionService.sendEntityNotificationMsgToEdgeService(user.getTenantId(), savedDashboard.getId(), EdgeEventActionType.UPDATED);

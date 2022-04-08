@@ -20,17 +20,18 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.sync.exporting.data.AssetExportData;
+import org.thingsboard.server.service.sync.exporting.data.EntityExportData;
 
 @Service
 @TbCoreComponent
 @RequiredArgsConstructor
-public class AssetImportService extends BaseEntityImportService<AssetId, Asset, AssetExportData> {
+public class AssetImportService extends BaseEntityImportService<AssetId, Asset, EntityExportData<Asset>> {
 
     private final AssetService assetService;
 
@@ -41,12 +42,12 @@ public class AssetImportService extends BaseEntityImportService<AssetId, Asset, 
     }
 
     @Override
-    protected Asset prepareAndSave(TenantId tenantId, Asset asset, AssetExportData exportData, NewIdProvider idProvider) {
+    protected Asset prepareAndSave(TenantId tenantId, Asset asset, EntityExportData<Asset> exportData, NewIdProvider idProvider) {
         return assetService.saveAsset(asset);
     }
 
     @Override
-    protected void onEntitySaved(SecurityUser user, Asset savedAsset, Asset oldAsset) {
+    protected void onEntitySaved(SecurityUser user, Asset savedAsset, Asset oldAsset) throws ThingsboardException {
         super.onEntitySaved(user, savedAsset, oldAsset);
         if (oldAsset != null) {
             entityActionService.sendEntityNotificationMsgToEdgeService(user.getTenantId(), savedAsset.getId(), EdgeEventActionType.UPDATED);

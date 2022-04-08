@@ -15,8 +15,10 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
 import org.thingsboard.server.common.data.Customer;
@@ -25,6 +27,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
@@ -33,6 +36,7 @@ import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTra
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
@@ -44,9 +48,20 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.service.sync.exporting.data.EntityExportData;
+import org.thingsboard.server.service.sync.exporting.data.request.EntityExportSettings;
+import org.thingsboard.server.service.sync.exporting.data.request.ExportRequest;
+import org.thingsboard.server.service.sync.exporting.data.request.SingleEntityExportRequest;
+import org.thingsboard.server.service.sync.importing.data.EntityImportResult;
+import org.thingsboard.server.service.sync.importing.data.EntityImportSettings;
+import org.thingsboard.server.service.sync.importing.data.request.ImportRequest;
 
+import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public abstract class BaseEntitiesExportImportControllerTest extends AbstractControllerTest {
 
@@ -161,6 +176,51 @@ public abstract class BaseEntitiesExportImportControllerTest extends AbstractCon
         ruleChainService.saveRuleChainMetaData(tenantId, metaData);
 
         return ruleChainService.findRuleChainById(tenantId, ruleChain.getId());
+    }
+
+
+    protected <E extends ExportableEntity<I>, I extends EntityId> EntityExportData<E> exportSingleEntity(I entityId) throws Exception {
+        SingleEntityExportRequest exportRequest = new SingleEntityExportRequest();
+        exportRequest.setEntityId(entityId);
+        exportRequest.setExportSettings(new EntityExportSettings());
+        return (EntityExportData<E>) exportEntities(exportRequest).get(0);
+    }
+
+    protected List<EntityExportData<ExportableEntity<EntityId>>> exportEntities(ExportRequest exportRequest) throws Exception {
+        return getResponse(doPost("/api/entities/export", exportRequest), new TypeReference<List<EntityExportData<ExportableEntity<EntityId>>>>() {});
+    }
+
+    protected List<EntityExportData<ExportableEntity<EntityId>>> exportEntities(List<ExportRequest> exportRequests) throws Exception {
+        return getResponse(doPost("/api/entities/export?multiple", exportRequests), new TypeReference<List<EntityExportData<ExportableEntity<EntityId>>>>() {});
+    }
+
+
+    protected <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(EntityExportData<E> exportData) throws Exception {
+        return (EntityImportResult<E>) importEntities(List.of((EntityExportData<ExportableEntity<EntityId>>)exportData)).get(0);
+    }
+
+    protected List<EntityImportResult<ExportableEntity<EntityId>>> importEntities(List<EntityExportData<ExportableEntity<EntityId>>> exportDataList) throws Exception {
+        ImportRequest importRequest = new ImportRequest();
+        importRequest.setImportSettings(EntityImportSettings.builder()
+                .updateReferencesToOtherEntities(true)
+                .build());
+        importRequest.setExportDataList(exportDataList);
+        return getResponse(doPost("/api/entities/import", importRequest), new TypeReference<List<EntityImportResult<ExportableEntity<EntityId>>>>() {
+            @Override
+            public Type getType() {
+                return mapper.getTypeFactory().constructCollectionType(List.class,
+                        mapper.getTypeFactory().constructParametricType(EntityImportResult.class,
+                                exportDataList.get(0).getEntity().getClass()));
+            }
+        });
+    }
+
+    protected <T> T getResponse(ResultActions resultActions, TypeReference<T> typeReference) throws Exception {
+        try {
+            return readResponse(resultActions.andExpect(status().isOk()), typeReference);
+        } catch (AssertionError e) {
+            throw new AssertionError(readResponse(resultActions, String.class), e);
+        }
     }
 
 }
