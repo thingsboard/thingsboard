@@ -17,10 +17,16 @@ package org.thingsboard.server.dao.sql.query;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.core.SqlParameter;
+import org.springframework.jdbc.core.SqlParameterValue;
 import org.springframework.jdbc.core.namedparam.NamedParameterUtils;
+import org.springframework.jdbc.core.namedparam.ParsedSql;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 
 @Component
 @Slf4j
@@ -35,12 +41,78 @@ public class DefaultQueryLogComponent implements QueryLogComponent {
     public void logQuery(QueryContext ctx, String query, long duration) {
         if (logSqlQueries && duration > logQueriesThreshold) {
 
-            String sqlToUse = NamedParameterUtils.substituteNamedParameters(query, ctx);
+            String sqlToUse = substituteParametersInSqlString(query, ctx);
 
             log.info("QUERY: {} took {} ms", query, duration);
             log.info("QUERY SQL TO USE: {} took {} ms", sqlToUse, duration);
 
             Arrays.asList(ctx.getParameterNames()).forEach(param -> log.info("QUERY PARAM: {} -> {}", param, ctx.getValue(param)));
         }
+    }
+
+    String substituteParametersInSqlString(String sql, SqlParameterSource paramSource) {
+
+        ParsedSql parsedSql = NamedParameterUtils.parseSqlStatement(sql);
+        List<SqlParameter> declaredParams = NamedParameterUtils.buildSqlParameterList(parsedSql, paramSource);
+        StringBuilder actualSql = new StringBuilder(parsedSql.toString());
+
+        if (declaredParams.isEmpty()) {
+            return sql;
+        }
+
+        for (SqlParameter parSQL: declaredParams) {
+            String paramName = parSQL.getName();
+            if (!paramSource.hasValue(paramName)) {
+                continue;
+            }
+
+            Object value = paramSource.getValue(paramName);
+            if (value instanceof SqlParameterValue) {
+                value = ((SqlParameterValue)value).getValue();
+            }
+
+            if (!(value instanceof Iterable)) {
+
+                String ValueForSQLQuery = getValueForSQLQuery(value);
+                String sqlTemp = sql.replace(":" + paramName, ValueForSQLQuery);
+                sql = sqlTemp;
+                continue;
+            }
+
+            //Iterable
+            int count = 0;
+            String valueArrayStr = "";
+
+            for (Object valueTemp: (Iterable)value) {
+
+                if (count > 0) {
+                    valueArrayStr+=", ";
+                }
+
+                String ValueForSQLQuery = getValueForSQLQuery(valueTemp);
+                valueArrayStr += ValueForSQLQuery;
+                ++count;
+            }
+
+            if (!valueArrayStr.isEmpty()){
+                String sqlTemp = sql.replace(":" + paramName, valueArrayStr);
+                sql = sqlTemp;
+            }
+        }
+
+        return sql;
+    }
+
+    String getValueForSQLQuery(Object valueParameter) {
+
+        if (valueParameter instanceof String) {
+            return "'" + valueParameter + "'";
+        }
+
+        if (valueParameter instanceof UUID) {
+            return "'" + valueParameter.toString() + "'";
+        }
+
+        return valueParameter.toString();
     }
 }
