@@ -594,7 +594,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     protected List<Customer> updateDuplicateCustomersTitle(List<Customer> customers) {
         if (customers == null || customers.isEmpty()) return customers;
-        sortCustomersByTenantIdAndTitleAndCreatedTime(customers);
+        sortCustomersByTitleAndCreatedTime(customers);
         int countEqualsTitleAndTenantIdBefore = 0;
         String lastCustomerName = customers.get(0).getName();
         for (int i = 1; i < customers.size(); i++) {
@@ -615,10 +615,9 @@ public class DefaultDataUpdateService implements DataUpdateService {
         return customerDao.save(id, customer);
     }
 
-    protected void sortCustomersByTenantIdAndTitleAndCreatedTime(List<Customer> customers) {
+    protected void sortCustomersByTitleAndCreatedTime(List<Customer> customers) {
         customers.sort((o1, o2) -> {
-            if (!o1.getTenantId().equals(o2.getTenantId())) return o1.getTenantId().toString().compareTo(o2.getTenantId().toString());
-            else if (!o1.getName().equals(o2.getName())) return o1.getName().compareTo(o2.getName());
+            if (!o1.getName().equals(o2.getName())) return o1.getName().compareTo(o2.getName());
             else return Long.compare(o2.getCreatedTime(), o1.getCreatedTime());
         });
     }

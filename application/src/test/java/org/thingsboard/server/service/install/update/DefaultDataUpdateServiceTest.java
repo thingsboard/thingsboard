@@ -55,7 +55,7 @@ class DefaultDataUpdateServiceTest {
         willCallRealMethod().given(service).convertDeviceProfileAlarmRulesForVersion330(any());
         willCallRealMethod().given(service).convertDeviceProfileForVersion330(any());
         willCallRealMethod().given(service).updateDuplicateCustomersTitle(any());
-        willCallRealMethod().given(service).sortCustomersByTenantIdAndTitleAndCreatedTime(any());
+        willCallRealMethod().given(service).sortCustomersByTitleAndCreatedTime(any());
     }
 
     JsonNode readFromResource(String resourceName) throws IOException {
@@ -122,7 +122,7 @@ class DefaultDataUpdateServiceTest {
             }
             resultCustomers.add(customer);
         }
-        service.sortCustomersByTenantIdAndTitleAndCreatedTime(resultCustomers);
+        service.sortCustomersByTitleAndCreatedTime(resultCustomers);
         List<Customer> updatedCustomers = service.updateDuplicateCustomersTitle(customers);
         Assertions.assertEquals(updatedCustomers, resultCustomers);
     }
@@ -142,7 +142,7 @@ class DefaultDataUpdateServiceTest {
             }
             resultCustomers.add(customer);
         }
-        service.sortCustomersByTenantIdAndTitleAndCreatedTime(resultCustomers);
+        service.sortCustomersByTitleAndCreatedTime(resultCustomers);
         List<Customer> updatedCustomers = service.updateDuplicateCustomersTitle(customers);
         Assertions.assertEquals(updatedCustomers, resultCustomers);
     }
@@ -160,7 +160,7 @@ class DefaultDataUpdateServiceTest {
             }
             resultCustomers.add(customer);
         }
-        service.sortCustomersByTenantIdAndTitleAndCreatedTime(resultCustomers);
+        service.sortCustomersByTitleAndCreatedTime(resultCustomers);
         List<Customer> updatedCustomers = service.updateDuplicateCustomersTitle(customers);
         Assertions.assertEquals(updatedCustomers, resultCustomers);
     }
