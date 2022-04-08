@@ -476,6 +476,8 @@ updates:
   # Enable/disable updates checking.
   enabled: "${UPDATES_ENABLED:true}"
 
+spring.main.allow-circular-references: "true"
+
 # spring freemarker configuration
 spring.freemarker.checkTemplateLocation: "false"
 
