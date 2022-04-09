@@ -32,6 +32,7 @@ import { AppState } from '@core/core.state';
 import { AbstractControl, FormGroup } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { Dashboard } from '@shared/models/dashboard.models';
+import { IAliasController } from '@core/api/widget-api.models';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -613,6 +614,7 @@ export interface WidgetSize {
 }
 
 export interface IWidgetSettingsComponent {
+  aliasController: IAliasController;
   dashboard: Dashboard;
   widget: Widget;
   functionScopeVariables: string[];
@@ -626,6 +628,8 @@ export interface IWidgetSettingsComponent {
 // tslint:disable-next-line:directive-class-suffix
 export abstract class WidgetSettingsComponent extends PageComponent implements
   IWidgetSettingsComponent, OnInit, AfterViewInit {
+
+  aliasController: IAliasController;
 
   dashboard: Dashboard;
 

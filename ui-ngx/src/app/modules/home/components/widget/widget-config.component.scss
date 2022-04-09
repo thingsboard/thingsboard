@@ -139,8 +139,10 @@
         .mat-expansion-panel-header-description {
           align-items: center;
         }
-        .mat-expansion-panel-body{
-          padding: 0;
+        > .mat-expansion-panel-content {
+          > .mat-expansion-panel-body {
+            padding: 0;
+          }
         }
         .tb-json-object-panel, .tb-css-content-panel {
           margin: 0 0 8px;

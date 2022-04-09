@@ -26,7 +26,7 @@
   </ng-container>
   <tb-color-input
     formControlName="defaultColor"
-    label="{{ 'widgets.gauge.default-color' | translate }}">
+    label="{{ 'widgets.gauge.default-color' | translate }}" openOnInput colorClearButton>
   </tb-color-input>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.gauge.ticks-settings</legend>
@@ -47,7 +47,7 @@
       </mat-form-field>
       <tb-color-input fxFlex
                       formControlName="colorMajorTicks"
-                      label="{{ 'widgets.gauge.major-ticks-color' | translate }}">
+                      label="{{ 'widgets.gauge.major-ticks-color' | translate }}" openOnInput colorClearButton>
       </tb-color-input>
     </section>
     <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
@@ -57,7 +57,7 @@
       </mat-form-field>
       <tb-color-input fxFlex
                       formControlName="colorMinorTicks"
-                      label="{{ 'widgets.gauge.minor-ticks-color' | translate }}">
+                      label="{{ 'widgets.gauge.minor-ticks-color' | translate }}" openOnInput colorClearButton>
       </tb-color-input>
     </section>
     <fieldset class="fields-group">
@@ -127,21 +127,21 @@
           <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
             <tb-color-input fxFlex
                             formControlName="colorValueBoxRect"
-                            label="{{ 'widgets.gauge.value-box-rect-stroke-color' | translate }}">
+                            label="{{ 'widgets.gauge.value-box-rect-stroke-color' | translate }}" openOnInput colorClearButton>
             </tb-color-input>
             <tb-color-input fxFlex
                             formControlName="colorValueBoxRectEnd"
-                            label="{{ 'widgets.gauge.value-box-rect-stroke-color-end' | translate }}">
+                            label="{{ 'widgets.gauge.value-box-rect-stroke-color-end' | translate }}" openOnInput colorClearButton>
             </tb-color-input>
           </section>
           <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
             <tb-color-input fxFlex
                             formControlName="colorValueBoxBackground"
-                            label="{{ 'widgets.gauge.value-box-background-color' | translate }}">
+                            label="{{ 'widgets.gauge.value-box-background-color' | translate }}" openOnInput colorClearButton>
             </tb-color-input>
             <tb-color-input fxFlex
                             formControlName="colorValueBoxShadow"
-                            label="{{ 'widgets.gauge.value-box-shadow-color' | translate }}">
+                            label="{{ 'widgets.gauge.value-box-shadow-color' | translate }}" openOnInput colorClearButton>
             </tb-color-input>
           </section>
         </section>
@@ -152,7 +152,7 @@
     <legend class="group-title" translate>widgets.gauge.plate-settings</legend>
     <tb-color-input fxFlex
                     formControlName="colorPlate"
-                    label="{{ 'widgets.gauge.plate-color' | translate }}">
+                    label="{{ 'widgets.gauge.plate-color' | translate }}" openOnInput colorClearButton>
     </tb-color-input>
     <mat-slide-toggle formControlName="showBorder">
       {{ 'widgets.gauge.show-plate-border' | translate }}
@@ -163,21 +163,21 @@
     <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
       <tb-color-input fxFlex
                       formControlName="colorNeedle"
-                      label="{{ 'widgets.gauge.needle-color' | translate }}">
+                      label="{{ 'widgets.gauge.needle-color' | translate }}" openOnInput colorClearButton>
       </tb-color-input>
       <tb-color-input fxFlex
                       formControlName="colorNeedleEnd"
-                      label="{{ 'widgets.gauge.needle-color-end' | translate }}">
+                      label="{{ 'widgets.gauge.needle-color-end' | translate }}" openOnInput colorClearButton>
       </tb-color-input>
     </section>
     <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
       <tb-color-input fxFlex
                       formControlName="colorNeedleShadowUp"
-                      label="{{ 'widgets.gauge.needle-color-shadow-up' | translate }}">
+                      label="{{ 'widgets.gauge.needle-color-shadow-up' | translate }}" openOnInput colorClearButton>
       </tb-color-input>
       <tb-color-input fxFlex
                       formControlName="colorNeedleShadowDown"
-                      label="{{ 'widgets.gauge.needle-color-shadow-down' | translate }}">
+                      label="{{ 'widgets.gauge.needle-color-shadow-down' | translate }}" openOnInput colorClearButton>
       </tb-color-input>
     </section>
   </fieldset>
@@ -309,27 +309,27 @@
       </mat-form-field>
       <tb-color-input fxFlex
                       formControlName="colorBarStroke"
-                      label="{{ 'widgets.gauge.bar-stroke-color' | translate }}">
+                      label="{{ 'widgets.gauge.bar-stroke-color' | translate }}" openOnInput colorClearButton>
       </tb-color-input>
     </section>
     <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
       <tb-color-input fxFlex
                       formControlName="colorBar"
-                      label="{{ 'widgets.gauge.bar-background-color' | translate }}">
+                      label="{{ 'widgets.gauge.bar-background-color' | translate }}" openOnInput colorClearButton>
       </tb-color-input>
       <tb-color-input fxFlex
                       formControlName="colorBarEnd"
-                      label="{{ 'widgets.gauge.bar-background-color-end' | translate }}">
+                      label="{{ 'widgets.gauge.bar-background-color-end' | translate }}" openOnInput colorClearButton>
       </tb-color-input>
     </section>
     <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
       <tb-color-input fxFlex
                       formControlName="colorBarProgress"
-                      label="{{ 'widgets.gauge.progress-bar-color' | translate }}">
+                      label="{{ 'widgets.gauge.progress-bar-color' | translate }}" openOnInput colorClearButton>
       </tb-color-input>
       <tb-color-input fxFlex
                       formControlName="colorBarProgressEnd"
-                      label="{{ 'widgets.gauge.progress-bar-color-end' | translate }}">
+                      label="{{ 'widgets.gauge.progress-bar-color-end' | translate }}" openOnInput colorClearButton>
       </tb-color-input>
     </section>
   </fieldset>

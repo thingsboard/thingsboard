@@ -44,6 +44,7 @@ import { IWidgetSettingsComponent, Widget, WidgetSettings } from '@shared/models
 import { widgetSettingsComponentsMap } from '@home/components/widget/lib/settings/widget-settings.module';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { WidgetService } from '@core/http/widget.service';
+import { IAliasController } from '@core/api/widget-api.models';
 
 @Component({
   selector: 'tb-widget-settings',
@@ -63,6 +64,9 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  aliasController: IAliasController;
 
   @Input()
   dashboard: Dashboard;
@@ -143,6 +147,7 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
       this.changeSubscription = null;
     }
     if (this.definedSettingsComponent) {
+      this.definedSettingsComponent.aliasController = this.aliasController;
       this.definedSettingsComponent.dashboard = this.dashboard;
       this.definedSettingsComponent.widget = this.widget;
       this.definedSettingsComponent.functionScopeVariables = this.widgetService.getWidgetScopeVariables();
@@ -197,6 +202,7 @@ export class WidgetSettingsComponent implements ControlValueAccessor, OnInit, On
         const factory = this.cfr.resolveComponentFactory(componentType);
         this.definedSettingsComponentRef = this.definedSettingsContainer.createComponent(factory);
         this.definedSettingsComponent = this.definedSettingsComponentRef.instance;
+        this.definedSettingsComponent.aliasController = this.aliasController;
         this.definedSettingsComponent.dashboard = this.dashboard;
         this.definedSettingsComponent.widget = this.widget;
         this.definedSettingsComponent.functionScopeVariables = this.widgetService.getWidgetScopeVariables();

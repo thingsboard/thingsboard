@@ -1453,4 +1453,11 @@ mat-label {
       }
     }
   }
+
+  .tb-drag-handle {
+    cursor: move;
+    mat-icon {
+      pointer-events: none;
+    }
+  }
 }

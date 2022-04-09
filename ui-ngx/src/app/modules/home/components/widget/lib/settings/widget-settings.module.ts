@@ -69,6 +69,12 @@ import {
 import {
   AnalogueCompassWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/gauge/analogue-compass-widget-settings.component';
+import {
+  DigitalGaugeWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/gauge/digital-gauge-widget-settings.component';
+import { ValueSourceComponent } from '@home/components/widget/lib/settings/common/value-source.component';
+import { FixedColorLevelComponent } from '@home/components/widget/lib/settings/gauge/fixed-color-level.component';
+import { TickValueComponent } from '@home/components/widget/lib/settings/gauge/tick-value.component';
 
 @NgModule({
   declarations: [
@@ -91,7 +97,11 @@ import {
     GaugeHighlightComponent,
     AnalogueRadialGaugeWidgetSettingsComponent,
     AnalogueLinearGaugeWidgetSettingsComponent,
-    AnalogueCompassWidgetSettingsComponent
+    AnalogueCompassWidgetSettingsComponent,
+    DigitalGaugeWidgetSettingsComponent,
+    ValueSourceComponent,
+    FixedColorLevelComponent,
+    TickValueComponent
   ],
   imports: [
     CommonModule,
@@ -118,7 +128,11 @@ import {
     GaugeHighlightComponent,
     AnalogueRadialGaugeWidgetSettingsComponent,
     AnalogueLinearGaugeWidgetSettingsComponent,
-    AnalogueCompassWidgetSettingsComponent
+    AnalogueCompassWidgetSettingsComponent,
+    DigitalGaugeWidgetSettingsComponent,
+    ValueSourceComponent,
+    FixedColorLevelComponent,
+    TickValueComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -141,5 +155,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-alarms-table-key-settings': AlarmsTableKeySettingsComponent,
   'tb-analogue-radial-gauge-widget-settings': AnalogueRadialGaugeWidgetSettingsComponent,
   'tb-analogue-linear-gauge-widget-settings': AnalogueLinearGaugeWidgetSettingsComponent,
-  'tb-analogue-compass-widget-settings': AnalogueCompassWidgetSettingsComponent
+  'tb-analogue-compass-widget-settings': AnalogueCompassWidgetSettingsComponent,
+  'tb-digital-gauge-widget-settings': DigitalGaugeWidgetSettingsComponent
 };

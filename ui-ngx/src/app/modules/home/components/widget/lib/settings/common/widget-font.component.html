@@ -66,10 +66,10 @@
   </mat-form-field>
   <tb-color-input
     formControlName="color"
-    label="{{ 'widgets.widget-font.color' | translate }}">
+    label="{{ 'widgets.widget-font.color' | translate }}" openOnInput colorClearButton>
   </tb-color-input>
   <tb-color-input *ngIf="hasShadowColor"
     formControlName="shadowColor"
-    label="{{ 'widgets.widget-font.shadow-color' | translate }}">
+    label="{{ 'widgets.widget-font.shadow-color' | translate }}" openOnInput colorClearButton>
   </tb-color-input>
 </section>

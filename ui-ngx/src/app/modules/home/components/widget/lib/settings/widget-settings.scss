@@ -94,8 +94,10 @@
           align-items: center;
         }
 
-        .mat-expansion-panel-body {
-          padding: 0;
+        > .mat-expansion-panel-content {
+          > .mat-expansion-panel-body {
+            padding: 0;
+          }
         }
 
         .mat-checkbox-layout {
