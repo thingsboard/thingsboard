@@ -87,8 +87,8 @@ public class DefaultQueryLogComponent implements QueryLogComponent {
                     valueArrayStr+=", ";
                 }
 
-                String ValueForSQLQuery = getValueForSQLQuery(valueTemp);
-                valueArrayStr += ValueForSQLQuery;
+                String valueForSQLQuery = getValueForSQLQuery(valueTemp);
+                valueArrayStr += valueForSQLQuery;
                 ++count;
             }
 
