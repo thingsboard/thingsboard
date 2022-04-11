@@ -18,6 +18,7 @@ package org.thingsboard.server.service.install.update;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,11 +26,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -42,10 +43,10 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(classes = DefaultDataUpdateService.class)
 class DefaultDataUpdateServiceTest {
 
+    public static final int CUSTOMER_COUNT = 10;
     ObjectMapper mapper = new ObjectMapper();
 
-    TenantId tenantId1 = TenantId.fromUUID(UUID.randomUUID());
-    TenantId tenantId2 = TenantId.fromUUID(UUID.randomUUID());
+    TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
 
     @MockBean
     DefaultDataUpdateService service;
@@ -108,68 +109,74 @@ class DefaultDataUpdateServiceTest {
     }
 
     @Test
-    void testUpdateDuplicateCustomersTitleWhereAllCustomersHaveEqualsTitleAndEqualsTenantId() {
-        Tenant tenant = new Tenant();
-        tenant.setId(tenantId1);
+    void testUpdateDuplicateCustomersTitleWhereAllCustomersHaveEqualsTitle() {
         List<Customer> customers = new ArrayList<>();
         List<Customer> resultCustomers = new ArrayList<>();
-        for (int i=0; i<10; i++) {
-            Customer customer = createCustomer("Customer A", tenant.getId());
+        for (int i = 0; i < CUSTOMER_COUNT; i++) {
+
+            // Set created time "CUSTOMER_COUNT - i", for mock. For check sort function before call main tested method we shuffle customers
+            Customer customer = createCustomer("Customer A", tenantId, CUSTOMER_COUNT - i);
             customers.add(customer);
+            Customer updatedCustomer = getCopyCustomer(customer);
             if (i > 0) {
-                customer.setTitle(customer.getTitle() + "-" + i);
+                updatedCustomer.setTitle(updatedCustomer.getTitle() + "-" + i);
                 when(service.updateCustomerTitle(customer.getTenantId(), customer)).thenReturn(customer);
             }
             resultCustomers.add(customer);
         }
-        service.sortCustomersByTitleAndCreatedTime(resultCustomers);
-        List<Customer> updatedCustomers = service.updateDuplicateCustomersTitle(customers);
-        Assertions.assertEquals(updatedCustomers, resultCustomers);
+        testUpdateCustomerMethod(customers, resultCustomers);
     }
 
     @Test
-    void testUpdateDuplicateCustomersTitleWhereAllCustomersHaveTwoTitleAndEqualsTenantId() {
-        Tenant tenant = new Tenant();
-        tenant.setId(tenantId1);
+    void testUpdateDuplicateCustomersTitleWhereAllCustomersContainsTwoDifferentTitle() {
         List<Customer> customers = new ArrayList<>();
         List<Customer> resultCustomers = new ArrayList<>();
-        for (int i=0; i<10; i++) {
-            Customer customer = createCustomer("Customer " + (i % 2 == 0 ? "A" : "B"), tenant.getId());
+        for (int i = 0; i< CUSTOMER_COUNT; i++) {
+
+            // Set created time "CUSTOMER_COUNT - i", for mock. For check sort function before call main tested method we shuffle customers
+            Customer customer = createCustomer("Customer " + (i % 2 == 0 ? "A" : "B"), tenantId, CUSTOMER_COUNT - i);
             customers.add(customer);
+            Customer updatedCustomer = getCopyCustomer(customer);
             if (i > 1) {
-                customer.setTitle(customer.getTitle() + "-" + (i / 2));
-                when(service.updateCustomerTitle(customer.getTenantId(), customer)).thenReturn(customer);
+                updatedCustomer.setTitle(updatedCustomer.getTitle() + "-" + (i / 2));
             }
-            resultCustomers.add(customer);
+            resultCustomers.add(updatedCustomer);
         }
+        testUpdateCustomerMethod(customers, resultCustomers);
+    }
+
+    void testUpdateCustomerMethod(List<Customer> customers, List<Customer> resultCustomers) {
         service.sortCustomersByTitleAndCreatedTime(resultCustomers);
+//        resultCustomers = service.sortCustomersByTitleAndCreatedTime(resultCustomers);
+        mockUpdateCustomerTitleMethod(resultCustomers);
+
+        // Shuffle customers for check sort function
+        Collections.shuffle(customers);
+
         List<Customer> updatedCustomers = service.updateDuplicateCustomersTitle(customers);
         Assertions.assertEquals(updatedCustomers, resultCustomers);
     }
 
-    @Test
-    void testUpdateDuplicateCustomersTitleWhereAllCustomersHaveEqualsTitleAndTwoTenantId() {
-        List<Customer> customers = new ArrayList<>();
-        List<Customer> resultCustomers = new ArrayList<>();
-        for (int i=0; i<10; i++) {
-            Customer customer = createCustomer("Customer A", i % 2 == 0 ? tenantId1 : tenantId2);
-            customers.add(customer);
-            if (i>1) {
-                customer.setTitle(customer.getTitle() + "-" + (i / 2));
-                when(service.updateCustomerTitle(i % 2 == 0 ? tenantId1 : tenantId2, customer)).thenReturn(customer);
-            }
-            resultCustomers.add(customer);
+    void mockUpdateCustomerTitleMethod(List<Customer> resultCustomers) {
+        for (Customer customer : resultCustomers) {
+            when(service.updateCustomerTitle(customer.getTenantId(), customer)).thenReturn(customer);
         }
-        service.sortCustomersByTitleAndCreatedTime(resultCustomers);
-        List<Customer> updatedCustomers = service.updateDuplicateCustomersTitle(customers);
-        Assertions.assertEquals(updatedCustomers, resultCustomers);
     }
 
-    Customer createCustomer(String title, TenantId tenantId) {
+    @NotNull
+    Customer getCopyCustomer(Customer customer) {
+        Customer updatedCustomer = new Customer();
+        updatedCustomer.setTitle(customer.getTitle());
+        updatedCustomer.setTenantId(customer.getTenantId());
+        updatedCustomer.setCreatedTime(customer.getCreatedTime());
+        return updatedCustomer;
+    }
+
+    Customer createCustomer(String title, TenantId tenantId, int createdTime) {
         Customer customer = new Customer();
         customer.setTitle(title);
         customer.setTenantId(tenantId);
-        customer.setCreatedTime(System.currentTimeMillis());
+        customer.setCreatedTime(createdTime);
         return customer;
     }
 }
