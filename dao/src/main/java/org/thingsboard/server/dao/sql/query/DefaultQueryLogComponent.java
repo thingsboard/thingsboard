@@ -54,7 +54,6 @@ public class DefaultQueryLogComponent implements QueryLogComponent {
 
         ParsedSql parsedSql = NamedParameterUtils.parseSqlStatement(sql);
         List<SqlParameter> declaredParams = NamedParameterUtils.buildSqlParameterList(parsedSql, paramSource);
-        StringBuilder actualSql = new StringBuilder(parsedSql.toString());
 
         if (declaredParams.isEmpty()) {
             return sql;
@@ -74,8 +73,7 @@ public class DefaultQueryLogComponent implements QueryLogComponent {
             if (!(value instanceof Iterable)) {
 
                 String ValueForSQLQuery = getValueForSQLQuery(value);
-                String sqlTemp = sql.replace(":" + paramName, ValueForSQLQuery);
-                sql = sqlTemp;
+                sql = sql.replace(":" + paramName, ValueForSQLQuery);
                 continue;
             }
 
@@ -94,10 +92,8 @@ public class DefaultQueryLogComponent implements QueryLogComponent {
                 ++count;
             }
 
-            if (!valueArrayStr.isEmpty()){
-                String sqlTemp = sql.replace(":" + paramName, valueArrayStr);
-                sql = sqlTemp;
-            }
+            sql = sql.replace(":" + paramName, valueArrayStr);
+
         }
 
         return sql;
@@ -106,11 +102,11 @@ public class DefaultQueryLogComponent implements QueryLogComponent {
     String getValueForSQLQuery(Object valueParameter) {
 
         if (valueParameter instanceof String) {
-            return "'" + valueParameter + "'";
+            return "'" + ((String) valueParameter).replaceAll("'", "''") + "'";
         }
 
         if (valueParameter instanceof UUID) {
-            return "'" + valueParameter.toString() + "'";
+            return "'" + valueParameter + "'";
         }
 
         return valueParameter.toString();
