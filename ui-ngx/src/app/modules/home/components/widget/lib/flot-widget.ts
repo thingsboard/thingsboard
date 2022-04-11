@@ -179,7 +179,7 @@ export class TbFlot {
         autoHighlight: this.tooltipIndividual === true,
         markings: []
       },
-      selection : { mode : 'x' },
+      selection : { mode : this.getSelectionMode() },
       legend : {
         show: false
       }
@@ -1147,7 +1147,7 @@ export class TbFlot {
   private enableMouseEvents() {
     this.$element.css('pointer-events', '');
     this.$element.addClass('mouse-events');
-    this.options.selection = { mode : 'x' };
+    this.options.selection = { mode : this.getSelectionMode() };
     this.$element.bind('plothover', this.flotHoverHandler);
     this.$element.bind('plotselected', this.flotSelectHandler);
     this.$element.bind('dblclick', this.dblclickHandler);
@@ -1475,6 +1475,10 @@ export class TbFlot {
       const entityLabel = entityInfo ? entityInfo.entityLabel : null;
       this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, item, entityLabel);
     }
+  }
+
+  private getSelectionMode(): JQueryPlotSelectionMode {
+    return this.utils.isMobileDevice() ? null : 'x';
   }
 
 }

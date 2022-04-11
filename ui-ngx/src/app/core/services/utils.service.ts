@@ -88,6 +88,7 @@ export class UtilsService {
 
   iframeMode = false;
   widgetEditMode = false;
+  isMobile:boolean = null;
   editWidgetInfo: WidgetInfo = null;
 
   defaultDataKey: DataKey = {
@@ -473,5 +474,12 @@ export class UtilsService {
     } else {
       return defaultValue;
     }
+  }
+
+  public isMobileDevice(): boolean {
+    if (this.isMobile === null) {
+       this.isMobile = this.window.matchMedia('only screen and (max-width: 768px)').matches;
+    }
+    return this.isMobile;
   }
 }
