@@ -31,7 +31,6 @@ import {
   DashboardSettingsDialogComponent,
   DashboardSettingsDialogData
 } from '@home/components/dashboard-page/dashboard-settings-dialog.component';
-import { MatSliderChange } from "@angular/material/slider";
 import { LaouytType, LayoutWidthType } from "@home/components/dashboard-page/layout/layout.models";
 
 export interface ManageDashboardLayoutsDialogData {
@@ -70,6 +69,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
         main:  [{value: isDefined(this.layouts.main), disabled: true}, []],
         right: [isDefined(this.layouts.right), []],
         leftWidthPercentage: [50, [Validators.min(10), Validators.max(90)]],
+        rightWidthPercentage: [50, [Validators.min(10), Validators.max(90)]],
         type: [LayoutWidthType.PERCENTAGE, []],
         fixedWidth: [150, [Validators.min(150), Validators.max(1700)]],
         fixedLayout: [LaouytType.MAIN, []]
@@ -83,6 +83,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
         this.layoutsFormGroup.get('fixedLayout').setValue(this.layouts.layoutDimension.fixedLayout);
       } else {
         this.layoutsFormGroup.get('leftWidthPercentage').setValue(this.layouts.layoutDimension.leftWidthPercentage);
+        this.layoutsFormGroup.get('rightWidthPercentage').setValue(100 - Number(this.layouts.layoutDimension.leftWidthPercentage));
       }
     }
 
@@ -92,6 +93,10 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
     if (!this.layouts[LaouytType.RIGHT]) {
       this.layouts[LaouytType.RIGHT] = this.dashboardUtils.createDefaultLayoutData();
     }
+
+    this.layoutsFormGroup.get('leftWidthPercentage').valueChanges.subscribe((value) => {
+      this.layoutsFormGroup.get('rightWidthPercentage').setValue(100 - Number(value));
+    });
   }
 
   ngOnInit(): void {
@@ -163,36 +168,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
     }
   }
 
-  layoutValue(layout:DashboardLayoutId): number {
-    if (layout === LaouytType.MAIN) {
-      return this.layoutsFormGroup.value.leftWidthPercentage;
-    } else {
-      return (100 - this.layoutsFormGroup.value.leftWidthPercentage);
-    }
-  }
-
-  layoutValueChange($event: Event, layout:DashboardLayoutId): void {
-    let widthValue: number;
-    if (Number(($event.target as any).value) > 90) {
-      widthValue = 90;
-    } else if (Number(($event.target as any).value) < 10) {
-      widthValue = 10;
-    } else {
-      widthValue = Number(($event.target as any).value);
-    }
-    if (layout === LaouytType.MAIN) {
-      this.layoutsFormGroup.get('leftWidthPercentage').setValue(widthValue);
-    } else {
-      this.layoutsFormGroup.get('leftWidthPercentage').setValue(100 - widthValue);
-    }
-    this.layoutsFormGroup.markAsDirty();
-  }
-
   formatSliderTooltipLabel(value: number):string {
     return `${value}|${100 - value}`;
-  }
-
-  sliderChange($event: MatSliderChange) {
-    this.layoutsFormGroup.get('leftWidthPercentage').setValue($event.value);
   }
 }

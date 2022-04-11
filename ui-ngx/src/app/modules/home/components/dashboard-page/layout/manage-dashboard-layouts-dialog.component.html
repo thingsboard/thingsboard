@@ -81,9 +81,9 @@
                           step="1"
                           style="width: 100%;"
                           max="90"
-                          (input)="sliderChange($event)"
                           formControlName="leftWidthPercentage"
                           thumbLabel
+                          [value]="layoutsFormGroup.value.leftWidthPercentage"
                           [displayWith]="formatSliderTooltipLabel"
               ></mat-slider>
             </div>
@@ -92,8 +92,8 @@
                 <mat-form-field class="mat-block">
                   <mat-label>{{ 'layout.left-width' | translate }}</mat-label>
                   <input matInput
-                         [value]="layoutValue('main')"
-                         (input)="layoutValueChange($event, 'main')"
+                         formControlName="leftWidthPercentage"
+                         [value]="layoutsFormGroup.value.leftWidthPercentage"
                          type="number"
                          step="any"
                          min="10"
@@ -102,8 +102,7 @@
                 <mat-form-field fxFlex class="mat-block">
                   <mat-label>{{ 'layout.right-width' | translate }}</mat-label>
                   <input matInput
-                         [value]="layoutValue('right')"
-                         (input)="layoutValueChange($event, 'right')"
+                         formControlName="rightWidthPercentage"
                          type="number"
                          step="any"
                          min="10"
