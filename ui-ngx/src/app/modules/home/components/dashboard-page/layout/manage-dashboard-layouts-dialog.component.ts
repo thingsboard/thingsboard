@@ -94,9 +94,8 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
       this.layouts[LaouytType.RIGHT] = this.dashboardUtils.createDefaultLayoutData();
     }
 
-    this.layoutsFormGroup.get('leftWidthPercentage').valueChanges.subscribe((value) => {
-      this.layoutsFormGroup.get('rightWidthPercentage').setValue(100 - Number(value));
-    });
+    this.layoutsFormGroup.get('leftWidthPercentage').valueChanges.subscribe((value) => this.layoutControlChange('rightWidthPercentage', value));
+    this.layoutsFormGroup.get('rightWidthPercentage').valueChanges.subscribe((value) => this.layoutControlChange('leftWidthPercentage', value));
   }
 
   ngOnInit(): void {
@@ -170,5 +169,13 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
   formatSliderTooltipLabel(value: number):string {
     return `${value}|${100 - value}`;
+  }
+
+  layoutControlChange(key: string, value) {
+    const previousValue = this.layoutsFormGroup.get(key).value;
+    const valueToSet = 100 - Number(value);
+    if (previousValue !== valueToSet) {
+      this.layoutsFormGroup.get(key).setValue(100 - Number(value));
+    }
   }
 }
