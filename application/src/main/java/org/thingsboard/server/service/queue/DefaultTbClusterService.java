@@ -96,11 +96,17 @@ public class DefaultTbClusterService implements TbClusterService {
     @Lazy
     private PartitionService partitionService;
 
-    private final TbQueueProducerProvider producerProvider;
+    @Autowired
+    @Lazy
+    private TbQueueProducerProvider producerProvider;
+
+    @Autowired
+    @Lazy
+    private OtaPackageStateService otaPackageStateService;
+
     private final NotificationsTopicService notificationsTopicService;
     private final DataDecodingEncodingService encodingService;
     private final TbDeviceProfileCache deviceProfileCache;
-    private final OtaPackageStateService otaPackageStateService;
     private final GatewayNotificationsService gatewayNotificationsService;
 
     @Override
@@ -486,88 +492,81 @@ public class DefaultTbClusterService implements TbClusterService {
     public void onQueueChange(Queue queue, TbQueueCallback callback) {
         log.trace("[{}][{}] Processing queue change [{}] event", queue.getTenantId(), queue.getId(), queue.getName());
 
-//        TransportProtos.QueueUpdateMsg queueUpdateMsg = TransportProtos.QueueUpdateMsg.newBuilder()
-//                .setTenantIdMSB(queue.getTenantId().getId().getMostSignificantBits())
-//                .setTenantIdLSB(queue.getTenantId().getId().getLeastSignificantBits())
-//                .setQueueName(queue.getName())
-//                .setQueueTopic(queue.getTopic())
-//                .setPartitions(queue.getPartitions())
-//                .build();
-//
-//        if ("Main".equals(queue.getName())) {
-//            Set<TransportProtos.ServiceInfo> tbTransportServices = partitionService.getAllServices(ServiceType.TB_TRANSPORT);
-//            ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setQueueUpdateMsg(queueUpdateMsg).build();
-//            for (TransportProtos.ServiceInfo transportService : tbTransportServices) {
-//                TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, transportService.getServiceId());
-//                producerProvider.getTransportNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), transportMsg), callback);
-//                toTransportNfs.incrementAndGet();
-//            }
-//
-//            Set<TransportProtos.ServiceInfo> tbCoreServices = partitionService.getAllServices(ServiceType.TB_CORE);
-//            ToCoreNotificationMsg coreMsg = ToCoreNotificationMsg.newBuilder().setQueueUpdateMsg(queueUpdateMsg).build();
-//            for (TransportProtos.ServiceInfo coreService : tbCoreServices) {
-//                TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, coreService.getServiceId());
-//                producerProvider.getTbCoreNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), coreMsg), callback);
-//                toCoreNfs.incrementAndGet();
-//            }
-//        } else {
-//            Set<TransportProtos.ServiceInfo> tbRuleEngineServices = partitionService.getAllServices(ServiceType.TB_RULE_ENGINE);
-//            ToRuleEngineNotificationMsg ruleEngineMsg = ToRuleEngineNotificationMsg.newBuilder().setQueueUpdateMsg(queueUpdateMsg).build();
-//            for (TransportProtos.ServiceInfo ruleEngineService : tbRuleEngineServices) {
-//                TenantId tenantId = new TenantId(new UUID(ruleEngineService.getTenantIdMSB(), ruleEngineService.getTenantIdLSB()));
-//                if (tenantId.equals(queue.getTenantId())) {
-//                    TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, ruleEngineService.getServiceId());
-//                    producerProvider.getRuleEngineNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), ruleEngineMsg), callback);
-//                    toRuleEngineNfs.incrementAndGet();
-//                }
-//            }
-//        }
+        TransportProtos.QueueUpdateMsg queueUpdateMsg = TransportProtos.QueueUpdateMsg.newBuilder()
+                .setTenantIdMSB(queue.getTenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(queue.getTenantId().getId().getLeastSignificantBits())
+                .setQueueName(queue.getName())
+                .setQueueTopic(queue.getTopic())
+                .setPartitions(queue.getPartitions())
+                .build();
+
+        if ("Main".equals(queue.getName())) {
+            Set<TransportProtos.ServiceInfo> tbTransportServices = partitionService.getAllServices(ServiceType.TB_TRANSPORT);
+            ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setQueueUpdateMsg(queueUpdateMsg).build();
+            for (TransportProtos.ServiceInfo transportService : tbTransportServices) {
+                TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, transportService.getServiceId());
+                producerProvider.getTransportNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), transportMsg), callback);
+                toTransportNfs.incrementAndGet();
+            }
+
+            Set<TransportProtos.ServiceInfo> tbCoreServices = partitionService.getAllServices(ServiceType.TB_CORE);
+            ToCoreNotificationMsg coreMsg = ToCoreNotificationMsg.newBuilder().setQueueUpdateMsg(queueUpdateMsg).build();
+            for (TransportProtos.ServiceInfo coreService : tbCoreServices) {
+                TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, coreService.getServiceId());
+                producerProvider.getTbCoreNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), coreMsg), callback);
+                toCoreNfs.incrementAndGet();
+            }
+        } else {
+            Set<TransportProtos.ServiceInfo> tbRuleEngineServices = partitionService.getAllServices(ServiceType.TB_RULE_ENGINE);
+            ToRuleEngineNotificationMsg ruleEngineMsg = ToRuleEngineNotificationMsg.newBuilder().setQueueUpdateMsg(queueUpdateMsg).build();
+            for (TransportProtos.ServiceInfo ruleEngineService : tbRuleEngineServices) {
+                TenantId tenantId = new TenantId(new UUID(ruleEngineService.getTenantIdMSB(), ruleEngineService.getTenantIdLSB()));
+                if (tenantId.equals(queue.getTenantId())) {
+                    TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, ruleEngineService.getServiceId());
+                    producerProvider.getRuleEngineNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), ruleEngineMsg), callback);
+                    toRuleEngineNfs.incrementAndGet();
+                }
+            }
+        }
     }
 
     @Override
     public void onQueueDelete(Queue queue, TbQueueCallback callback) {
         log.trace("[{}][{}] Processing queue delete [{}] event", queue.getTenantId(), queue.getId(), queue.getName());
 
-//        TransportProtos.QueueDeleteMsg queueDeleteMsg = TransportProtos.QueueDeleteMsg.newBuilder()
-//                .setTenantIdMSB(queue.getTenantId().getId().getMostSignificantBits())
-//                .setTenantIdLSB(queue.getTenantId().getId().getLeastSignificantBits())
-//                .setQueueName(queue.getName())
-//                .build();
-//
-//        if ("Main".equals(queue.getName())) {
-//            Set<TransportProtos.ServiceInfo> tbTransportServices = partitionService.getAllServices(ServiceType.TB_TRANSPORT);
-//            ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setQueueDeleteMsg(queueDeleteMsg).build();
-//            for (TransportProtos.ServiceInfo transportService : tbTransportServices) {
-//                TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, transportService.getServiceId());
-//                producerProvider.getTransportNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), transportMsg), callback);
-//                toTransportNfs.incrementAndGet();
-//            }
-//
-//            Set<TransportProtos.ServiceInfo> tbCoreServices = partitionService.getAllServices(ServiceType.TB_CORE);
-//            ToCoreNotificationMsg coreMsg = ToCoreNotificationMsg.newBuilder().setQueueDeleteMsg(queueDeleteMsg).build();
-//            for (TransportProtos.ServiceInfo coreService : tbCoreServices) {
-//                TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, coreService.getServiceId());
-//                producerProvider.getTbCoreNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), coreMsg), callback);
-//                toCoreNfs.incrementAndGet();
-//            }
-//        } else {
-//            //TODO: 3.2 should be changed with smth like TransportApiRequestTemplate and get responses from all RE's
-//            Set<TransportProtos.ServiceInfo> tbRuleEngineServices = partitionService.getAllServices(ServiceType.TB_RULE_ENGINE);
-//            ToRuleEngineNotificationMsg ruleEngineMsg = ToRuleEngineNotificationMsg.newBuilder().setQueueDeleteMsg(queueDeleteMsg).build();
-//            for (TransportProtos.ServiceInfo ruleEngineService : tbRuleEngineServices) {
-//                TenantId tenantId = new TenantId(new UUID(ruleEngineService.getTenantIdMSB(), ruleEngineService.getTenantIdLSB()));
-//                if (tenantId.equals(queue.getTenantId())) {
-//                    TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, ruleEngineService.getServiceId());
-//                    log.info("Send notification about deleting queue [{}] to Rule Engine [{}]", queue.getName(), tpi.getFullTopicName());
-//                    producerProvider.getRuleEngineNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), ruleEngineMsg), callback);
-//                    toRuleEngineNfs.incrementAndGet();
-//                }
-//            }
-//            try {
-//                Thread.sleep(3000);
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//        }
+        TransportProtos.QueueDeleteMsg queueDeleteMsg = TransportProtos.QueueDeleteMsg.newBuilder()
+                .setTenantIdMSB(queue.getTenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(queue.getTenantId().getId().getLeastSignificantBits())
+                .setQueueName(queue.getName())
+                .build();
+
+        if ("Main".equals(queue.getName())) {
+            Set<TransportProtos.ServiceInfo> tbTransportServices = partitionService.getAllServices(ServiceType.TB_TRANSPORT);
+            ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setQueueDeleteMsg(queueDeleteMsg).build();
+            for (TransportProtos.ServiceInfo transportService : tbTransportServices) {
+                TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, transportService.getServiceId());
+                producerProvider.getTransportNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), transportMsg), callback);
+                toTransportNfs.incrementAndGet();
+            }
+
+            Set<TransportProtos.ServiceInfo> tbCoreServices = partitionService.getAllServices(ServiceType.TB_CORE);
+            ToCoreNotificationMsg coreMsg = ToCoreNotificationMsg.newBuilder().setQueueDeleteMsg(queueDeleteMsg).build();
+            for (TransportProtos.ServiceInfo coreService : tbCoreServices) {
+                TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, coreService.getServiceId());
+                producerProvider.getTbCoreNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), coreMsg), callback);
+                toCoreNfs.incrementAndGet();
+            }
+        } else {
+            Set<TransportProtos.ServiceInfo> tbRuleEngineServices = partitionService.getAllServices(ServiceType.TB_RULE_ENGINE);
+            ToRuleEngineNotificationMsg ruleEngineMsg = ToRuleEngineNotificationMsg.newBuilder().setQueueDeleteMsg(queueDeleteMsg).build();
+            for (TransportProtos.ServiceInfo ruleEngineService : tbRuleEngineServices) {
+                TenantId tenantId = new TenantId(new UUID(ruleEngineService.getTenantIdMSB(), ruleEngineService.getTenantIdLSB()));
+                if (tenantId.equals(queue.getTenantId())) {
+                    TopicPartitionInfo tpi = notificationsTopicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, ruleEngineService.getServiceId());
+                    producerProvider.getRuleEngineNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), ruleEngineMsg), callback);
+                    toRuleEngineNfs.incrementAndGet();
+                }
+            }
+        }
     }
 }

@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.queue;
 
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,7 +65,6 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
 //    private QueueStatsService queueStatsService;
 
     @Override
-    @Transactional
     public Queue saveQueue(Queue queue) {
         log.trace("Executing createOrUpdateQueue [{}]", queue);
         queueValidator.validate(queue, Queue::getTenantId);
@@ -75,9 +75,6 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
             savedQueue = updateQueue(queue);
         }
 
-//        if (queueClusterService != null) {
-//            queueClusterService.onQueueChange(savedQueue, null);
-//        }
         return savedQueue;
     }
 
@@ -88,6 +85,11 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
                 tbQueueAdmin.createTopicIfNotExists(new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
             }
         }
+
+        if (queueClusterService != null) {
+            queueClusterService.onQueueChange(createdQueue, null);
+        }
+
         return createdQueue;
     }
 
@@ -98,32 +100,39 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
         int oldPartitions = oldQueue.getPartitions();
         int currentPartitions = queue.getPartitions();
 
-        //TODO: remove if partitions can't be deleted.
         if (currentPartitions != oldPartitions && tbQueueAdmin != null) {
-            queueClusterService.onQueueDelete(queue, null);
             if (currentPartitions > oldPartitions) {
                 log.info("Added [{}] new partitions to [{}] queue", currentPartitions - oldPartitions, queue.getName());
                 for (int i = oldPartitions; i < currentPartitions; i++) {
                     tbQueueAdmin.createTopicIfNotExists(new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
                 }
+                if (queueClusterService != null) {
+                    queueClusterService.onQueueChange(updatedQueue, null);
+                }
             } else {
                 log.info("Removed [{}] partitions from [{}] queue", oldPartitions - currentPartitions, queue.getName());
+                if (queueClusterService != null) {
+                    queueClusterService.onQueueChange(updatedQueue, null);
+                }
+                await();
                 for (int i = currentPartitions; i < oldPartitions; i++) {
                     tbQueueAdmin.deleteTopic(new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
                 }
             }
+        } else if (!oldQueue.equals(queue) && queueClusterService != null) {
+            queueClusterService.onQueueChange(updatedQueue, null);
         }
 
         return updatedQueue;
     }
 
     @Override
-    @Transactional
     public void deleteQueue(TenantId tenantId, QueueId queueId) {
         log.trace("Executing deleteQueue, queueId: [{}]", queueId);
         Queue queue = findQueueById(tenantId, queueId);
         if (queueClusterService != null) {
             queueClusterService.onQueueDelete(queue, null);
+            await();
         }
 //        queueStatsService.deleteQueueStatsByQueueId(tenantId, queueId);
         boolean result = queueDao.removeById(tenantId, queueId.getId());
@@ -138,6 +147,11 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
                 }
             }
         }
+    }
+
+    @SneakyThrows
+    private void await() {
+        Thread.sleep(3000);
     }
 
     @Override

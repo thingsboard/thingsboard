@@ -33,13 +33,14 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.queue.TbQueueService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.QUEUE_SERVICE_TYPE_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.QUEUE_SERVICE_TYPE_DESCRIPTION;
@@ -51,8 +52,6 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHO
 @RequiredArgsConstructor
 public class QueueController extends BaseController {
 
-    private final TbQueueService tbQueueService;
-
     @ApiOperation(value = "Get queue names (getTenantQueuesByServiceType)",
             notes = "Returns a set of unique queue names based on service type. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
@@ -62,8 +61,13 @@ public class QueueController extends BaseController {
                                                     @RequestParam String serviceType) throws ThingsboardException {
         checkParameter("serviceType", serviceType);
         try {
-            //TODO: replace for using new QueueService
-            return tbQueueService.getQueuesByServiceType(ServiceType.valueOf(serviceType));
+            ServiceType type = ServiceType.valueOf(serviceType);
+            switch (type) {
+                case TB_RULE_ENGINE:
+                    return queueService.findQueuesByTenantId(getTenantId()).stream().map(Queue::getName).collect(Collectors.toSet());
+                default:
+                    return Collections.emptySet();
+            }
         } catch (Exception e) {
             throw handleException(e);
         }

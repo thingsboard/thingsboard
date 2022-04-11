@@ -26,14 +26,13 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.queue.TbQueueService;
-import org.thingsboard.server.queue.discovery.HashPartitionService;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.discovery.HashPartitionService;
+import org.thingsboard.server.queue.discovery.QueueRoutingInfoService;
+import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.discovery.TenantRoutingInfoService;
-import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,7 +43,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @Slf4j
 @RunWith(MockitoJUnitRunner.class)
@@ -57,26 +55,20 @@ public class HashPartitionServiceTest {
     private TbServiceInfoProvider discoveryService;
     private TenantRoutingInfoService routingInfoService;
     private ApplicationEventPublisher applicationEventPublisher;
-    private TbQueueRuleEngineSettings ruleEngineSettings;
-    private TbQueueService queueService;
+    private QueueRoutingInfoService queueRoutingInfoService;
 
     private String hashFunctionName = "sha256";
-
 
     @Before
     public void setup() throws Exception {
         discoveryService = mock(TbServiceInfoProvider.class);
         applicationEventPublisher = mock(ApplicationEventPublisher.class);
         routingInfoService = mock(TenantRoutingInfoService.class);
-        ruleEngineSettings = mock(TbQueueRuleEngineSettings.class);
-        queueService = mock(TbQueueService.class);
+        queueRoutingInfoService = mock(QueueRoutingInfoService.class);
         clusterRoutingService = new HashPartitionService(discoveryService,
                 routingInfoService,
                 applicationEventPublisher,
-                ruleEngineSettings,
-                queueService
-        );
-        when(ruleEngineSettings.getQueues()).thenReturn(Collections.emptyList());
+                queueRoutingInfoService);
         ReflectionTestUtils.setField(clusterRoutingService, "coreTopic", "tb.core");
         ReflectionTestUtils.setField(clusterRoutingService, "corePartitions", 10);
         ReflectionTestUtils.setField(clusterRoutingService, "hashFunctionName", hashFunctionName);

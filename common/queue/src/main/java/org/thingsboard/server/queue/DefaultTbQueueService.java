@@ -29,7 +29,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Service
+//@Service
 @RequiredArgsConstructor
 public class DefaultTbQueueService implements TbQueueService {
 

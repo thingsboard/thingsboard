@@ -25,10 +25,8 @@ import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.TbTransportService;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
-import org.thingsboard.server.queue.settings.TbRuleEngineQueueConfiguration;
 import org.thingsboard.server.queue.util.AfterContextReady;
 
 import javax.annotation.PostConstruct;
@@ -94,16 +92,6 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
         }
         builder.setTenantIdMSB(tenantId.getMostSignificantBits());
         builder.setTenantIdLSB(tenantId.getLeastSignificantBits());
-
-        if (serviceTypes.contains(ServiceType.TB_RULE_ENGINE) && ruleEngineSettings != null) {
-            for (TbRuleEngineQueueConfiguration queue : ruleEngineSettings.getQueues()) {
-                TransportProtos.QueueInfo queueInfo = TransportProtos.QueueInfo.newBuilder()
-                        .setName(queue.getName())
-                        .setTopic(queue.getTopic())
-                        .setPartitions(queue.getPartitions()).build();
-                builder.addRuleEngineQueues(queueInfo);
-            }
-        }
 
         serviceInfo = builder.build();
     }

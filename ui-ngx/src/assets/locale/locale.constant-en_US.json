@@ -2677,6 +2677,8 @@
       "browser-time": "Browser Time"
     },
     "queue": {
+        "queue-name": "Queue Name",
+        "no-queues-matching": "No queues matching '{{queue}}' were found.",
         "select-name": "Select queue name",
         "name": "Name",
         "name-required": "Queue name is required!",

@@ -36,13 +36,9 @@ import java.util.stream.Collectors;
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport'")
 public class TransportQueueRoutingInfoService implements QueueRoutingInfoService {
 
-    private TransportService transportService;
-
     @Lazy
     @Autowired
-    public void setTransportService(TransportService transportService) {
-        this.transportService = transportService;
-    }
+    private TransportService transportService;
 
     @Override
     public List<QueueRoutingInfo> getAllQueuesRoutingInfo() {

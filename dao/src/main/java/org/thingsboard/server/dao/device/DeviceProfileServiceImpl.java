@@ -29,7 +29,6 @@ import com.squareup.wire.schema.internal.parser.ProtoParser;
 import com.squareup.wire.schema.internal.parser.TypeElement;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.util.SecurityUtil;
-import org.thingsboard.server.common.data.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
@@ -45,6 +44,7 @@ import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.OtaPackage;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
@@ -61,28 +61,28 @@ import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransp
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.AbstractLwM2MBootstrapServerCredential;
-import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.RPKLwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.LwM2MBootstrapServerCredential;
+import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.RPKLwM2MBootstrapServerCredential;
 import org.thingsboard.server.common.data.device.profile.lwm2m.bootstrap.X509LwM2MBootstrapServerCredential;
-import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.msg.EncryptionUtil;
-import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.tenant.TenantDao;
-import org.thingsboard.server.queue.TbQueueService;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -115,7 +115,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
     }
 
     @Autowired(required = false)
-    private TbQueueService queueService;
+    private QueueService queueService;
 
     @Autowired
     private DeviceProfileDao deviceProfileDao;
@@ -386,8 +386,13 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                             throw new DataValidationException("Another default device profile is present in scope of current tenant!");
                         }
                     }
-                    if (!StringUtils.isEmpty(deviceProfile.getDefaultQueueName()) && queueService != null){
-                        if(!queueService.getQueuesByServiceType(ServiceType.TB_RULE_ENGINE).contains(deviceProfile.getDefaultQueueName())){
+                    if (!StringUtils.isEmpty(deviceProfile.getDefaultQueueName()) && queueService != null) {
+                        //TODO: Yevhen replace queue name to queue id
+                        if (!queueService.findQueuesByTenantId(tenantId)
+                                .stream()
+                                .map(Queue::getName)
+                                .collect(Collectors.toSet())
+                                .contains(deviceProfile.getDefaultQueueName())) {
                             throw new DataValidationException("Device profile is referencing to non-existent queue!");
                         }
                     }
@@ -748,7 +753,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
             case PSK:
                 break;
             case RPK:
-                RPKLwM2MBootstrapServerCredential rpkServerCredentials = (RPKLwM2MBootstrapServerCredential)  bootstrapServerConfig;
+                RPKLwM2MBootstrapServerCredential rpkServerCredentials = (RPKLwM2MBootstrapServerCredential) bootstrapServerConfig;
                 server = rpkServerCredentials.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";
                 if (StringUtils.isEmpty(rpkServerCredentials.getServerPublicKey())) {
                     throw new DeviceCredentialsValidationException(server + " RPK public key must be specified!");

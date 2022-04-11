@@ -49,7 +49,15 @@ public interface PartitionService {
      */
     Set<String> getAllServiceIds(ServiceType serviceType);
 
+    Set<TransportProtos.ServiceInfo> getAllServices(ServiceType serviceType);
+
+    Set<TransportProtos.ServiceInfo> getOtherServices(ServiceType serviceType);
+
     int resolvePartitionIndex(UUID entityId, int partitions);
 
     int countTransportsByType(String type);
+
+    void updateQueue(TransportProtos.QueueUpdateMsg queueUpdateMsg);
+
+    void removeQueue(TransportProtos.QueueDeleteMsg queueDeleteMsg);
 }
