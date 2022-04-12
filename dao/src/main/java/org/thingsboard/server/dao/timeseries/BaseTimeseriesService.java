@@ -134,6 +134,11 @@ public class BaseTimeseriesService implements TimeseriesService {
     }
 
     @Override
+    public void cleanup(long systemTtl, List<String> excludedKeys) {
+        timeseriesDao.cleanup(systemTtl, excludedKeys);
+    }
+
+    @Override
     public ListenableFuture<Integer> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry) {
         validate(entityId);
         if (tsKvEntry == null) {

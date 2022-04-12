@@ -328,11 +328,11 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         params.put("entityType", entityId.getEntityType().name());
         params.put("entityId", entityId.getId().toString());
         params.put("fetchOriginator", String.valueOf(fetchOriginator));
-        if(searchStatus != null) {
+        if (searchStatus != null) {
             params.put("searchStatus", searchStatus.name());
             urlSecondPart += "&searchStatus={searchStatus}";
         }
-        if(status != null) {
+        if (status != null) {
             params.put("status", status.name());
             urlSecondPart += "&status={status}";
         }
@@ -340,7 +340,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         addTimePageLinkToParam(params, pageLink);
 
         return restTemplate.exchange(
-                baseURL +  urlSecondPart + "&" + getTimeUrlParams(pageLink),
+                baseURL + urlSecondPart + "&" + getTimeUrlParams(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<AlarmInfo>>() {
@@ -2904,7 +2904,8 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 baseURL + "/api/resource/{resourceId}/download",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<>() {},
+                new ParameterizedTypeReference<>() {
+                },
                 params
         );
     }
@@ -2917,7 +2918,8 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 baseURL + "/api/resource/info/{resourceId}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<TbResourceInfo>() {},
+                new ParameterizedTypeReference<TbResourceInfo>() {
+                },
                 params
         ).getBody();
     }
@@ -2930,7 +2932,8 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 baseURL + "/api/resource/{resourceId}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<TbResource>() {},
+                new ParameterizedTypeReference<TbResource>() {
+                },
                 params
         ).getBody();
     }
@@ -2950,7 +2953,8 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 baseURL + "/api/resource?" + getUrlParams(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<PageData<TbResourceInfo>>() {},
+                new ParameterizedTypeReference<PageData<TbResourceInfo>>() {
+                },
                 params
         ).getBody();
     }
@@ -2967,7 +2971,8 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 baseURL + "/api/otaPackage/{otaPackageId}/download",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<>() {},
+                new ParameterizedTypeReference<>() {
+                },
                 params
         );
     }
@@ -2980,7 +2985,8 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 baseURL + "/api/otaPackage/info/{otaPackageId}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<OtaPackageInfo>() {},
+                new ParameterizedTypeReference<OtaPackageInfo>() {
+                },
                 params
         ).getBody();
     }
@@ -2993,7 +2999,8 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 baseURL + "/api/otaPackage/{otaPackageId}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<OtaPackage>() {},
+                new ParameterizedTypeReference<OtaPackage>() {
+                },
                 params
         ).getBody();
     }
@@ -3021,7 +3028,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         params.put("checksumAlgorithm", checksumAlgorithm.name());
         String url = "/api/otaPackage/{otaPackageId}?checksumAlgorithm={checksumAlgorithm}";
 
-        if(checkSum != null) {
+        if (checkSum != null) {
             url += "&checkSum={checkSum}";
         }
 

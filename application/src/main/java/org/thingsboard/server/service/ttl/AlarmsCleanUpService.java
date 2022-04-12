@@ -30,7 +30,6 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.alarm.AlarmService;
-import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.queue.discovery.PartitionService;
@@ -53,7 +52,6 @@ public class AlarmsCleanUpService {
     private final TenantDao tenantDao;
     private final AlarmDao alarmDao;
     private final AlarmService alarmService;
-    private final RelationService relationService;
     private final EntityActionService entityActionService;
     private final PartitionService partitionService;
     private final TbTenantProfileCache tenantProfileCache;
@@ -61,7 +59,7 @@ public class AlarmsCleanUpService {
     @Scheduled(initialDelayString = "#{T(org.apache.commons.lang3.RandomUtils).nextLong(0, ${sql.ttl.alarms.checking_interval})}", fixedDelayString = "${sql.ttl.alarms.checking_interval}")
     public void cleanUp() {
         PageLink tenantsBatchRequest = new PageLink(10_000, 0);
-        PageLink removalBatchRequest = new PageLink(removalBatchSize, 0 );
+        PageLink removalBatchRequest = new PageLink(removalBatchSize, 0);
         PageData<TenantId> tenantsIds;
         do {
             tenantsIds = tenantDao.findTenantsIds(tenantsBatchRequest);
@@ -82,7 +80,6 @@ public class AlarmsCleanUpService {
                 while (true) {
                     PageData<AlarmId> toRemove = alarmDao.findAlarmsIdsByEndTsBeforeAndTenantId(expirationTime, tenantId, removalBatchRequest);
                     toRemove.getData().forEach(alarmId -> {
-                        relationService.deleteEntityRelations(tenantId, alarmId);
                         Alarm alarm = alarmService.deleteAlarm(tenantId, alarmId).getAlarm();
                         entityActionService.pushEntityActionToRuleEngine(alarm.getOriginator(), alarm, tenantId, null, ActionType.ALARM_DELETE, null);
                     });

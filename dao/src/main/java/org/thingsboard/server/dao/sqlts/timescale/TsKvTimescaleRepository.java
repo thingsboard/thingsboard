@@ -50,4 +50,10 @@ public interface TsKvTimescaleRepository extends JpaRepository<TimescaleTsKvEnti
                 @Param("startTs") long startTs,
                 @Param("endTs") long endTs);
 
+    @Transactional(timeout = 3600) // 1h in sec
+    @Query(value = "WITH deleted AS (DELETE FROM ts_kv WHERE (key NOT IN :keys AND ts < :expirationTime) RETURNING *) SELECT count(*) FROM deleted",
+            nativeQuery = true)
+    Long cleanup(@Param("expirationTime") long expirationTime,
+                 @Param("keys") List<Integer> keys);
+
 }

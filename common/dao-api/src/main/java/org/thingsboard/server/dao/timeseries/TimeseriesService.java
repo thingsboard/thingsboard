@@ -57,4 +57,6 @@ public interface TimeseriesService {
     List<String> findAllKeysByEntityIds(TenantId tenantId, List<EntityId> entityIds);
 
     void cleanup(long systemTtl);
+
+    void cleanup(long systemTtl, List<String> excludedKeys);
 }

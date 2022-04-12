@@ -296,6 +296,11 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         //Cleanup by TTL is native for Cassandra
     }
 
+    @Override
+    public void cleanup(long systemTtl, List<String> excludedKeys) {
+        //Cleanup by TTL is native for Cassandra
+    }
+
     private ListenableFuture<List<TsKvEntry>> findAllAsyncWithLimit(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
         long minPartition = toPartitionTs(query.getStartTs());
         long maxPartition = toPartitionTs(query.getEndTs());
