@@ -601,7 +601,6 @@ public class DefaultDataUpdateService implements DataUpdateService {
             Customer customer = customers.get(i);
             if (customer.getName().equals(lastCustomerName)) {
                 countEqualsTitleAndTenantIdBefore++;
-                lastCustomerName = customer.getName();
                 customer.setTitle(customer.getName() + "-" + countEqualsTitleAndTenantIdBefore);
                 customers.set(i, updateCustomerTitle(customer.getTenantId(), customer));
             } else {

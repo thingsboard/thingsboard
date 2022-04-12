@@ -120,9 +120,9 @@ class DefaultDataUpdateServiceTest {
             Customer updatedCustomer = getCopyCustomer(customer);
             if (i > 0) {
                 updatedCustomer.setTitle(updatedCustomer.getTitle() + "-" + i);
-                when(service.updateCustomerTitle(customer.getTenantId(), customer)).thenReturn(customer);
+                when(service.updateCustomerTitle(customer.getTenantId(), updatedCustomer)).thenReturn(updatedCustomer);
             }
-            resultCustomers.add(customer);
+            resultCustomers.add(updatedCustomer);
         }
         testUpdateCustomerMethod(customers, resultCustomers);
     }
@@ -139,6 +139,7 @@ class DefaultDataUpdateServiceTest {
             Customer updatedCustomer = getCopyCustomer(customer);
             if (i > 1) {
                 updatedCustomer.setTitle(updatedCustomer.getTitle() + "-" + (i / 2));
+                when(service.updateCustomerTitle(customer.getTenantId(), updatedCustomer)).thenReturn(updatedCustomer);
             }
             resultCustomers.add(updatedCustomer);
         }
@@ -147,20 +148,12 @@ class DefaultDataUpdateServiceTest {
 
     void testUpdateCustomerMethod(List<Customer> customers, List<Customer> resultCustomers) {
         service.sortCustomersByTitleAndCreatedTime(resultCustomers);
-//        resultCustomers = service.sortCustomersByTitleAndCreatedTime(resultCustomers);
-        mockUpdateCustomerTitleMethod(resultCustomers);
 
         // Shuffle customers for check sort function
         Collections.shuffle(customers);
 
-        List<Customer> updatedCustomers = service.updateDuplicateCustomersTitle(customers);
-        Assertions.assertEquals(updatedCustomers, resultCustomers);
-    }
-
-    void mockUpdateCustomerTitleMethod(List<Customer> resultCustomers) {
-        for (Customer customer : resultCustomers) {
-            when(service.updateCustomerTitle(customer.getTenantId(), customer)).thenReturn(customer);
-        }
+        customers = service.updateDuplicateCustomersTitle(customers);
+        Assertions.assertEquals(customers, resultCustomers);
     }
 
     @NotNull
