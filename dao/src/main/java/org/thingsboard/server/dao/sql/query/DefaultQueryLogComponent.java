@@ -42,10 +42,7 @@ public class DefaultQueryLogComponent implements QueryLogComponent {
         if (logSqlQueries && duration > logQueriesThreshold) {
 
             String sqlToUse = substituteParametersInSqlString(query, ctx);
-
-            log.info("QUERY: {} took {} ms", query, duration);
-            log.info("QUERY SQL TO USE: {} took {} ms", sqlToUse, duration);
-
+            log.warn("SLOW QUERY took {} ms: {}", sqlToUse, duration);
             Arrays.asList(ctx.getParameterNames()).forEach(param -> log.info("QUERY PARAM: {} -> {}", param, ctx.getValue(param)));
         }
     }
