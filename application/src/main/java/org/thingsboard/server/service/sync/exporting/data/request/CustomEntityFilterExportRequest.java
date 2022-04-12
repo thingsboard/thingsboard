@@ -22,7 +22,7 @@ import org.thingsboard.server.common.data.query.EntityFilter;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class EntityFilterExportRequest extends ExportRequest {
+public class CustomEntityFilterExportRequest extends ExportRequest {
 
     private EntityFilter filter;
     private int page;
@@ -31,7 +31,7 @@ public class EntityFilterExportRequest extends ExportRequest {
 
     @Override
     public ExportRequestType getType() {
-        return ExportRequestType.ENTITY_FILTER;
+        return ExportRequestType.CUSTOM_ENTITY_FILTER;
     }
 
 }

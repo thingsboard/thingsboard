@@ -67,7 +67,7 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
 
     protected static final List<EntityType> SUPPORTED_ENTITY_TYPES = List.of(
             EntityType.CUSTOMER, EntityType.ASSET, EntityType.RULE_CHAIN,
-            EntityType.DEVICE_PROFILE, EntityType.DEVICE, EntityType.DASHBOARD
+            EntityType.DASHBOARD, EntityType.DEVICE_PROFILE, EntityType.DEVICE
     );
 
 
@@ -82,12 +82,12 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public List<EntityImportResult<ExportableEntity<EntityId>>> importEntities(SecurityUser user, List<EntityExportData<ExportableEntity<EntityId>>> exportDataList, EntityImportSettings importSettings) throws ThingsboardException {
+    public List<EntityImportResult<?>> importEntities(SecurityUser user, List<EntityExportData<?>> exportDataList, EntityImportSettings importSettings) throws ThingsboardException {
         exportDataList.sort(Comparator.comparing(exportData -> SUPPORTED_ENTITY_TYPES.indexOf(exportData.getEntityType())));
-        List<EntityImportResult<ExportableEntity<EntityId>>> importResults = new ArrayList<>();
+        List<EntityImportResult<?>> importResults = new ArrayList<>();
 
-        for (EntityExportData<ExportableEntity<EntityId>> exportData : exportDataList) {
-            EntityImportResult<ExportableEntity<EntityId>> importResult = importEntity(user, exportData, importSettings);
+        for (EntityExportData exportData : exportDataList) {
+            EntityImportResult<?> importResult = importEntity(user, exportData, importSettings);
             importResults.add(importResult);
         }
 

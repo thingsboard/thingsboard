@@ -20,6 +20,6 @@ public enum ExportRequestType {
     ENTITY_LIST,
     ENTITY_TYPE,
 
-    ENTITY_FILTER,
-    ENTITY_QUERY
+    CUSTOM_ENTITY_FILTER,
+    CUSTOM_ENTITY_QUERY
 }

@@ -22,14 +22,14 @@ import org.thingsboard.server.common.data.query.EntityDataQuery;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class EntityQueryExportRequest extends ExportRequest {
+public class CustomEntityQueryExportRequest extends ExportRequest {
 
     private EntityDataQuery query;
     private CustomerId customerId;
 
     @Override
     public ExportRequestType getType() {
-        return ExportRequestType.ENTITY_QUERY;
+        return ExportRequestType.CUSTOM_ENTITY_QUERY;
     }
 
 }

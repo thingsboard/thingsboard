@@ -16,32 +16,33 @@
 package org.thingsboard.server.service.sync.importing.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.utils.JsonTbEntity;
 import org.thingsboard.server.utils.ThrowingRunnable;
 
+@Data
 public class EntityImportResult<E extends ExportableEntity<? extends EntityId>> {
-    @Getter @Setter
+
+    @JsonTbEntity
     private E savedEntity;
-    @Getter @Setter
+    @JsonTbEntity
     private E oldEntity;
-    @Getter @Setter
     private EntityType entityType;
 
-    @Getter @JsonIgnore
+    @JsonIgnore
     private ThrowingRunnable saveReferencesCallback = () -> {};
-    @Getter @JsonIgnore
-    private ThrowingRunnable pushEventsCallback = () -> {};
+    @JsonIgnore
+    private ThrowingRunnable sendEventsCallback = () -> {};
 
     public void addSaveReferencesCallback(ThrowingRunnable callback) {
         this.saveReferencesCallback = this.saveReferencesCallback.andThen(callback);
     }
 
-    public void addPushEventsCallback(ThrowingRunnable callback) {
-        this.pushEventsCallback = this.pushEventsCallback.andThen(callback);
+    public void addSendEventsCallback(ThrowingRunnable callback) {
+        this.sendEventsCallback = this.sendEventsCallback.andThen(callback);
     }
 
 }

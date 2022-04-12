@@ -63,14 +63,14 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
                             .map(JsonNode::asText).map(UUID::fromString)
                             .ifPresent(otherRuleChainUuid -> {
                                 ((ObjectNode) ruleNodeConfig).set("ruleChainId", new TextNode(
-                                        idProvider.get(rc -> new RuleChainId(otherRuleChainUuid)).toString()
+                                        idProvider.getInternal(new RuleChainId(otherRuleChainUuid)).toString()
                                 ));
                                 ruleNode.setConfiguration(ruleNodeConfig);
                             });
                 });
         Optional.ofNullable(metaData.getRuleChainConnections()).orElse(Collections.emptyList())
                 .forEach(ruleChainConnectionInfo -> {
-                    ruleChainConnectionInfo.setTargetRuleChainId(idProvider.get(rc -> ruleChainConnectionInfo.getTargetRuleChainId()));
+                    ruleChainConnectionInfo.setTargetRuleChainId(idProvider.getInternal(ruleChainConnectionInfo.getTargetRuleChainId()));
                 });
         ruleChain.setFirstRuleNodeId(null);
 

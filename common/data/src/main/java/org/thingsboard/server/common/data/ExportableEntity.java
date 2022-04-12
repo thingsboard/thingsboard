@@ -26,4 +26,7 @@ public interface ExportableEntity<I extends EntityId> extends HasId<I>, HasName 
     I getExternalId();
     void setExternalId(I externalId);
 
+    long getCreatedTime();
+    void setCreatedTime(long createdTime);
+
 }

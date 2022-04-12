@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.sync.exporting.data.request;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -27,15 +26,14 @@ import lombok.Data;
         @Type(name = "SINGLE_ENTITY", value = SingleEntityExportRequest.class),
         @Type(name = "ENTITY_LIST", value = EntityListExportRequest.class),
         @Type(name = "ENTITY_TYPE", value = EntityTypeExportRequest.class),
-        @Type(name = "ENTITY_FILTER", value = EntityFilterExportRequest.class),
-        @Type(name = "ENTITY_QUERY", value = EntityQueryExportRequest.class)
+        @Type(name = "CUSTOM_ENTITY_FILTER", value = CustomEntityFilterExportRequest.class),
+        @Type(name = "CUSTOM_ENTITY_QUERY", value = CustomEntityQueryExportRequest.class)
 })
 @Data
 public abstract class ExportRequest {
 
     private EntityExportSettings exportSettings;
 
-    @JsonIgnore
     public abstract ExportRequestType getType();
 
 }
