@@ -105,6 +105,6 @@ public class DefaultQueryLogComponent implements QueryLogComponent {
             return "'" + valueParameter + "'";
         }
 
-        return valueParameter.toString();
+        return String.valueOf(valueParameter);
     }
 }
