@@ -40,6 +40,7 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbActorMsg;
@@ -63,6 +64,7 @@ import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.nosql.CassandraBufferedRateReadExecutor;
 import org.thingsboard.server.dao.nosql.CassandraBufferedRateWriteExecutor;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -330,6 +332,11 @@ public class ActorSystemContext {
     @Getter
     private TbRpcService tbRpcService;
 
+    @Lazy
+    @Autowired(required = false)
+    @Getter
+    private QueueService queueService;
+
     @Value("${actors.session.max_concurrent_sessions_per_device:1}")
     @Getter
     private long maxConcurrentSessionsPerDevice;
@@ -495,8 +502,8 @@ public class ActorSystemContext {
         return partitionService.resolve(serviceType, tenantId, entityId);
     }
 
-    public TopicPartitionInfo resolve(ServiceType serviceType, String queueName, TenantId tenantId, EntityId entityId) {
-        return partitionService.resolve(serviceType, queueName, tenantId, entityId);
+    public TopicPartitionInfo resolve(ServiceType serviceType, QueueId queueId, TenantId tenantId, EntityId entityId) {
+        return partitionService.resolve(serviceType, queueId, tenantId, entityId);
     }
 
     public String getServiceId() {

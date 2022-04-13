@@ -16,7 +16,6 @@
 package org.thingsboard.server.common.data.id;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.thingsboard.server.common.data.EntityType;
 
@@ -35,7 +34,6 @@ public class QueueId extends UUIDBased implements EntityId {
         return new QueueId(UUID.fromString(queueId));
     }
 
-    @JsonIgnore
     @Override
     public EntityType getEntityType() {
         return EntityType.QUEUE;

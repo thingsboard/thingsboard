@@ -197,37 +197,35 @@ message GetEntityProfileRequestMsg {
   int64 entityIdLSB = 3;
 }
 
-message GetAllMainQueueRoutingInfoRequestMsg {
-}
-
 message GetAllQueueRoutingInfoRequestMsg {
-}
-
-message GetTenantQueueRoutingInfoRequestMsg {
-  int64 tenantIdMSB = 1;
-  int64 tenantIdLSB = 2;
 }
 
 message GetQueueRoutingInfoResponseMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
-  string queueName = 3;
-  string queueTopic = 4;
-  int32 partitions = 5;
+  int64 queueIdMSB = 3;
+  int64 queueIdLSB = 4;
+  string queueName = 5;
+  string queueTopic = 6;
+  int32 partitions = 7;
 }
 
 message QueueUpdateMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
-  string queueName = 3;
-  string queueTopic = 4;
-  int32 partitions = 5;
+  int64 queueIdMSB = 3;
+  int64 queueIdLSB = 4;
+  string queueName = 5;
+  string queueTopic = 6;
+  int32 partitions = 7;
 }
 
 message QueueDeleteMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
-  string queueName = 3;
+  int64 queueIdMSB = 3;
+  int64 queueIdLSB = 4;
+  string queueName = 5;
 }
 
 message LwM2MRegistrationRequestMsg {
@@ -706,9 +704,7 @@ message TransportApiRequestMsg {
   GetSnmpDevicesRequestMsg snmpDevicesRequestMsg = 11;
   GetDeviceRequestMsg deviceRequestMsg = 12;
   GetDeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 13;
-  GetAllMainQueueRoutingInfoRequestMsg GetAllMainQueueRoutingInfoRequestMsg = 14;
-  GetTenantQueueRoutingInfoRequestMsg getTenantQueueRoutingInfoRequestMsg = 15;
-  GetAllQueueRoutingInfoRequestMsg getAllQueueRoutingInfoRequestMsg = 16;
+  GetAllQueueRoutingInfoRequestMsg getAllQueueRoutingInfoRequestMsg = 14;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */

@@ -180,10 +180,6 @@ public class DefaultTransportApiService implements TransportApiService {
             result = handle(transportApiRequestMsg.getDeviceCredentialsRequestMsg());
         } else if (transportApiRequestMsg.hasOtaPackageRequestMsg()) {
             result = handle(transportApiRequestMsg.getOtaPackageRequestMsg());
-        } else if (transportApiRequestMsg.hasGetAllMainQueueRoutingInfoRequestMsg()) {
-            return Futures.transform(handle(transportApiRequestMsg.getGetAllMainQueueRoutingInfoRequestMsg()), value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
-        } else if (transportApiRequestMsg.hasGetTenantQueueRoutingInfoRequestMsg()) {
-            return Futures.transform(handle(transportApiRequestMsg.getGetTenantQueueRoutingInfoRequestMsg()), value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
         } else if (transportApiRequestMsg.hasGetAllQueueRoutingInfoRequestMsg()) {
             return Futures.transform(handle(transportApiRequestMsg.getGetAllQueueRoutingInfoRequestMsg()), value -> new TbProtoQueueMsg<>(tbProtoQueueMsg.getKey(), value, tbProtoQueueMsg.getHeaders()), MoreExecutors.directExecutor());
         }
@@ -646,17 +642,8 @@ public class DefaultTransportApiService implements TransportApiService {
         }
     }
 
-    private ListenableFuture<TransportApiResponseMsg> handle(TransportProtos.GetAllMainQueueRoutingInfoRequestMsg requestMsg) {
-        return queuesToTransportApiResponseMsg(queueService.findAllMainQueues());
-    }
-
     private ListenableFuture<TransportApiResponseMsg> handle(TransportProtos.GetAllQueueRoutingInfoRequestMsg requestMsg) {
         return queuesToTransportApiResponseMsg(queueService.findAllQueues());
-    }
-
-    private ListenableFuture<TransportApiResponseMsg> handle(TransportProtos.GetTenantQueueRoutingInfoRequestMsg requestMsg) {
-        TenantId tenantId = new TenantId(new UUID(requestMsg.getTenantIdMSB(), requestMsg.getTenantIdLSB()));
-        return queuesToTransportApiResponseMsg(queueService.findQueuesByTenantId(tenantId));
     }
 
     private ListenableFuture<TransportApiResponseMsg> queuesToTransportApiResponseMsg(List<Queue> queues) {
@@ -665,6 +652,8 @@ public class DefaultTransportApiService implements TransportApiService {
                         .map(queue -> TransportProtos.GetQueueRoutingInfoResponseMsg.newBuilder()
                                 .setTenantIdMSB(queue.getTenantId().getId().getMostSignificantBits())
                                 .setTenantIdLSB(queue.getTenantId().getId().getLeastSignificantBits())
+                                .setQueueIdMSB(queue.getId().getId().getMostSignificantBits())
+                                .setQueueIdLSB(queue.getId().getId().getLeastSignificantBits())
                                 .setQueueName(queue.getName())
                                 .setQueueTopic(queue.getTopic())
                                 .setPartitions(queue.getPartitions())

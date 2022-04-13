@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
+import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
@@ -76,7 +77,7 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
     @ApiModelProperty(position = 8, value = "Reference to the rule engine queue. " +
             "If present, the specified queue will be used to store all unprocessed messages related to device, including telemetry, attribute updates, etc. " +
             "Otherwise, the 'Main' queue will be used to store those messages.")
-    private String defaultQueueName;
+    private QueueId defaultQueueId;
     @Valid
     private transient DeviceProfileData profileData;
     @JsonIgnore
@@ -107,7 +108,7 @@ public class DeviceProfile extends SearchTextBased<DeviceProfileId> implements H
         this.isDefault = deviceProfile.isDefault();
         this.defaultRuleChainId = deviceProfile.getDefaultRuleChainId();
         this.defaultDashboardId = deviceProfile.getDefaultDashboardId();
-        this.defaultQueueName = deviceProfile.getDefaultQueueName();
+        this.defaultQueueId = deviceProfile.getDefaultQueueId();
         this.setProfileData(deviceProfile.getProfileData());
         this.provisionDeviceKey = deviceProfile.getProvisionDeviceKey();
         this.firmwareId = deviceProfile.getFirmwareId();

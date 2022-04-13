@@ -29,6 +29,7 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.data.ApiUsageState;
@@ -169,7 +170,7 @@ public class DefaultTbClusterService implements TbClusterService {
                 tbMsg = transformMsg(tbMsg, deviceProfileCache.get(tenantId, new DeviceProfileId(entityId.getId())));
             }
         }
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tbMsg.getQueueName(), tenantId, entityId);
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tbMsg.getQueueId(), tenantId, entityId);
         log.trace("PUSHING msg: {} to:{}", tbMsg, tpi);
         ToRuleEngineMsg msg = ToRuleEngineMsg.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
@@ -182,16 +183,16 @@ public class DefaultTbClusterService implements TbClusterService {
     private TbMsg transformMsg(TbMsg tbMsg, DeviceProfile deviceProfile) {
         if (deviceProfile != null) {
             RuleChainId targetRuleChainId = deviceProfile.getDefaultRuleChainId();
-            String targetQueueName = deviceProfile.getDefaultQueueName();
+            QueueId targetQueueId = deviceProfile.getDefaultQueueId();
             boolean isRuleChainTransform = targetRuleChainId != null && !targetRuleChainId.equals(tbMsg.getRuleChainId());
-            boolean isQueueTransform = targetQueueName != null && !targetQueueName.equals(tbMsg.getQueueName());
+            boolean isQueueTransform = targetQueueId != null && !targetQueueId.equals(tbMsg.getQueueId());
 
             if (isRuleChainTransform && isQueueTransform) {
-                tbMsg = TbMsg.transformMsg(tbMsg, targetRuleChainId, targetQueueName);
+                tbMsg = TbMsg.transformMsg(tbMsg, targetRuleChainId, targetQueueId);
             } else if (isRuleChainTransform) {
                 tbMsg = TbMsg.transformMsg(tbMsg, targetRuleChainId);
             } else if (isQueueTransform) {
-                tbMsg = TbMsg.transformMsg(tbMsg, targetQueueName);
+                tbMsg = TbMsg.transformMsg(tbMsg, targetQueueId);
             }
         }
         return tbMsg;
@@ -495,6 +496,8 @@ public class DefaultTbClusterService implements TbClusterService {
         TransportProtos.QueueUpdateMsg queueUpdateMsg = TransportProtos.QueueUpdateMsg.newBuilder()
                 .setTenantIdMSB(queue.getTenantId().getId().getMostSignificantBits())
                 .setTenantIdLSB(queue.getTenantId().getId().getLeastSignificantBits())
+                .setQueueIdMSB(queue.getId().getId().getMostSignificantBits())
+                .setQueueIdLSB(queue.getId().getId().getLeastSignificantBits())
                 .setQueueName(queue.getName())
                 .setQueueTopic(queue.getTopic())
                 .setPartitions(queue.getPartitions())
@@ -537,6 +540,8 @@ public class DefaultTbClusterService implements TbClusterService {
         TransportProtos.QueueDeleteMsg queueDeleteMsg = TransportProtos.QueueDeleteMsg.newBuilder()
                 .setTenantIdMSB(queue.getTenantId().getId().getMostSignificantBits())
                 .setTenantIdLSB(queue.getTenantId().getId().getLeastSignificantBits())
+                .setQueueIdMSB(queue.getId().getId().getMostSignificantBits())
+                .setQueueIdLSB(queue.getId().getId().getLeastSignificantBits())
                 .setQueueName(queue.getName())
                 .build();
 

@@ -36,8 +36,8 @@ export class QueueService {
       defaultHttpOptionsFromConfig(config));
   }
 
-  public getQueueById(queueId: string): Observable<QueueInfo> {
-    return this.http.get<QueueInfo>(`/api/tenant/queues/${queueId}`);
+  public getQueueById(queueId: string, config?: RequestConfig): Observable<QueueInfo> {
+    return this.http.get<QueueInfo>(`/api/tenant/queues/${queueId}`, defaultHttpOptionsFromConfig(config));
   }
 
   public getTenantQueuesByServiceType(pageLink: PageLink,

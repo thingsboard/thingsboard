@@ -44,13 +44,13 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.queue.ServiceQueue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
@@ -314,30 +314,6 @@ public class DefaultTransportService implements TransportService {
     public List<TransportProtos.GetQueueRoutingInfoResponseMsg> getQueueRoutingInfo(TransportProtos.GetAllQueueRoutingInfoRequestMsg msg) {
         TbProtoQueueMsg<TransportProtos.TransportApiRequestMsg> protoMsg =
                 new TbProtoQueueMsg<>(UUID.randomUUID(), TransportProtos.TransportApiRequestMsg.newBuilder().setGetAllQueueRoutingInfoRequestMsg(msg).build());
-        try {
-            TbProtoQueueMsg<TransportApiResponseMsg> response = transportApiRequestTemplate.send(protoMsg).get();
-            return response.getValue().getGetQueueRoutingInfoResponseMsgsList();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public List<TransportProtos.GetQueueRoutingInfoResponseMsg> getQueueRoutingInfo(TransportProtos.GetAllMainQueueRoutingInfoRequestMsg msg) {
-        TbProtoQueueMsg<TransportProtos.TransportApiRequestMsg> protoMsg =
-                new TbProtoQueueMsg<>(UUID.randomUUID(), TransportProtos.TransportApiRequestMsg.newBuilder().setGetAllMainQueueRoutingInfoRequestMsg(msg).build());
-        try {
-            TbProtoQueueMsg<TransportApiResponseMsg> response = transportApiRequestTemplate.send(protoMsg).get();
-            return response.getValue().getGetQueueRoutingInfoResponseMsgsList();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public List<TransportProtos.GetQueueRoutingInfoResponseMsg> getQueueRoutingInfo(TransportProtos.GetTenantQueueRoutingInfoRequestMsg msg) {
-        TbProtoQueueMsg<TransportProtos.TransportApiRequestMsg> protoMsg =
-                new TbProtoQueueMsg<>(UUID.randomUUID(), TransportProtos.TransportApiRequestMsg.newBuilder().setGetTenantQueueRoutingInfoRequestMsg(msg).build());
         try {
             TbProtoQueueMsg<TransportApiResponseMsg> response = transportApiRequestTemplate.send(protoMsg).get();
             return response.getValue().getGetQueueRoutingInfoResponseMsgsList();
@@ -1112,7 +1088,7 @@ public class DefaultTransportService implements TransportService {
     }
 
     private void sendToRuleEngine(TenantId tenantId, TbMsg tbMsg, TbQueueCallback callback) {
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tbMsg.getQueueName(), tenantId, tbMsg.getOriginator());
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tbMsg.getQueueId(), tenantId, tbMsg.getOriginator());
         if (log.isTraceEnabled()) {
             log.trace("[{}][{}] Pushing to topic {} message {}", tenantId, tbMsg.getOriginator(), tpi.getFullTopicName(), tbMsg);
         }
@@ -1129,19 +1105,18 @@ public class DefaultTransportService implements TransportService {
         DeviceProfileId deviceProfileId = new DeviceProfileId(new UUID(sessionInfo.getDeviceProfileIdMSB(), sessionInfo.getDeviceProfileIdLSB()));
         DeviceProfile deviceProfile = deviceProfileCache.get(deviceProfileId);
         RuleChainId ruleChainId;
-        String queueName;
+        QueueId queueId;
 
         if (deviceProfile == null) {
             log.warn("[{}] Device profile is null!", deviceProfileId);
             ruleChainId = null;
-            queueName = ServiceQueue.MAIN;
+            queueId = null;
         } else {
             ruleChainId = deviceProfile.getDefaultRuleChainId();
-            String defaultQueueName = deviceProfile.getDefaultQueueName();
-            queueName = defaultQueueName != null ? defaultQueueName : ServiceQueue.MAIN;
+            queueId = deviceProfile.getDefaultQueueId();
         }
 
-        TbMsg tbMsg = TbMsg.newMsg(queueName, sessionMsgType.name(), deviceId, customerId, metaData, gson.toJson(json), ruleChainId, null);
+        TbMsg tbMsg = TbMsg.newMsg(queueId, sessionMsgType.name(), deviceId, customerId, metaData, gson.toJson(json), ruleChainId, null);
         sendToRuleEngine(tenantId, tbMsg, callback);
     }
 

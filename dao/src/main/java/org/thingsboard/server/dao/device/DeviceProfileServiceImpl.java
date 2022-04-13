@@ -114,7 +114,7 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
         return "[Transport Configuration] invalid " + schemaName + " provided!";
     }
 
-    @Autowired(required = false)
+    @Autowired
     private QueueService queueService;
 
     @Autowired
@@ -386,13 +386,9 @@ public class DeviceProfileServiceImpl extends AbstractEntityService implements D
                             throw new DataValidationException("Another default device profile is present in scope of current tenant!");
                         }
                     }
-                    if (!StringUtils.isEmpty(deviceProfile.getDefaultQueueName()) && queueService != null) {
-                        //TODO: Yevhen replace queue name to queue id
-                        if (!queueService.findQueuesByTenantId(tenantId)
-                                .stream()
-                                .map(Queue::getName)
-                                .collect(Collectors.toSet())
-                                .contains(deviceProfile.getDefaultQueueName())) {
+                    if (deviceProfile.getDefaultQueueId() != null) {
+                        Queue queue = queueService.findQueueById(tenantId, deviceProfile.getDefaultQueueId());
+                        if (queue == null) {
                             throw new DataValidationException("Device profile is referencing to non-existent queue!");
                         }
                     }

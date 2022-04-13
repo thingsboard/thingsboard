@@ -18,7 +18,6 @@ package org.thingsboard.server.service.queue;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.queue.discovery.QueueRoutingInfo;
 import org.thingsboard.server.queue.discovery.QueueRoutingInfoService;
@@ -42,13 +41,4 @@ public class DefaultQueueRoutingInfoService implements QueueRoutingInfoService {
         return queueService.findAllQueues().stream().map(QueueRoutingInfo::new).collect(Collectors.toList());
     }
 
-    @Override
-    public List<QueueRoutingInfo> getMainQueuesRoutingInfo() {
-        return queueService.findAllMainQueues().stream().map(QueueRoutingInfo::new).collect(Collectors.toList());
-    }
-
-    @Override
-    public List<QueueRoutingInfo> getQueuesRoutingInfo(TenantId tenantId) {
-        return queueService.findQueuesByTenantId(tenantId).stream().map(QueueRoutingInfo::new).collect(Collectors.toList());
-    }
 }

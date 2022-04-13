@@ -68,10 +68,6 @@ public interface TransportService {
 
     GetEntityProfileResponseMsg getEntityProfile(GetEntityProfileRequestMsg msg);
 
-    List<TransportProtos.GetQueueRoutingInfoResponseMsg> getQueueRoutingInfo(TransportProtos.GetAllMainQueueRoutingInfoRequestMsg msg);
-
-    List<TransportProtos.GetQueueRoutingInfoResponseMsg> getQueueRoutingInfo(TransportProtos.GetTenantQueueRoutingInfoRequestMsg msg);
-
     List<TransportProtos.GetQueueRoutingInfoResponseMsg> getQueueRoutingInfo(TransportProtos.GetAllQueueRoutingInfoRequestMsg msg);
 
     GetResourceResponseMsg getResource(GetResourceRequestMsg msg);

@@ -137,6 +137,7 @@ import { HistorySelectorComponent } from '@shared/components/time/history-select
 import { EntityGatewaySelectComponent } from '@shared/components/entity/entity-gateway-select.component';
 import { DndModule } from 'ngx-drag-drop';
 import { QueueTypeListComponent } from '@shared/components/queue/queue-type-list.component';
+import { QueueAutocompleteComponent } from '@shared/components/queue/queue-autocomplete.component';
 import { ContactComponent } from '@shared/components/contact.component';
 import { TimezoneSelectComponent } from '@shared/components/time/timezone-select.component';
 import { FileSizePipe } from '@shared/pipe/file-size.pipe';
@@ -232,6 +233,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     EntityListSelectComponent,
     EntityTypeListComponent,
     QueueTypeListComponent,
+    QueueAutocompleteComponent,
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
     JsonObjectEditComponent,
@@ -380,6 +382,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     EntityListSelectComponent,
     EntityTypeListComponent,
     QueueTypeListComponent,
+    QueueAutocompleteComponent,
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
     JsonObjectEditComponent,
