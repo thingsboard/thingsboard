@@ -100,8 +100,8 @@ export interface TbFlotGridSettings {
   outlineWidth: number;
   verticalLines: boolean;
   horizontalLines: boolean;
-  minBorderMargin: number;
-  margin: number;
+  minBorderMargin?: number;
+  margin?: number;
 }
 
 export interface TbFlotXAxisSettings {

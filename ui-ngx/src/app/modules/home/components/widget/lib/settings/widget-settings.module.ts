@@ -75,6 +75,14 @@ import {
 import { ValueSourceComponent } from '@home/components/widget/lib/settings/common/value-source.component';
 import { FixedColorLevelComponent } from '@home/components/widget/lib/settings/gauge/fixed-color-level.component';
 import { TickValueComponent } from '@home/components/widget/lib/settings/gauge/tick-value.component';
+import { FlotWidgetSettingsComponent } from '@home/components/widget/lib/settings/chart/flot-widget-settings.component';
+import {
+  FlotLineWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/flot-line-widget-settings.component';
+import { LabelDataKeyComponent } from '@home/components/widget/lib/settings/chart/label-data-key.component';
+import {
+  FlotBarWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/flot-bar-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -101,7 +109,11 @@ import { TickValueComponent } from '@home/components/widget/lib/settings/gauge/t
     DigitalGaugeWidgetSettingsComponent,
     ValueSourceComponent,
     FixedColorLevelComponent,
-    TickValueComponent
+    TickValueComponent,
+    FlotWidgetSettingsComponent,
+    LabelDataKeyComponent,
+    FlotLineWidgetSettingsComponent,
+    FlotBarWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -132,7 +144,11 @@ import { TickValueComponent } from '@home/components/widget/lib/settings/gauge/t
     DigitalGaugeWidgetSettingsComponent,
     ValueSourceComponent,
     FixedColorLevelComponent,
-    TickValueComponent
+    TickValueComponent,
+    FlotWidgetSettingsComponent,
+    LabelDataKeyComponent,
+    FlotLineWidgetSettingsComponent,
+    FlotBarWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -156,5 +172,7 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-analogue-radial-gauge-widget-settings': AnalogueRadialGaugeWidgetSettingsComponent,
   'tb-analogue-linear-gauge-widget-settings': AnalogueLinearGaugeWidgetSettingsComponent,
   'tb-analogue-compass-widget-settings': AnalogueCompassWidgetSettingsComponent,
-  'tb-digital-gauge-widget-settings': DigitalGaugeWidgetSettingsComponent
+  'tb-digital-gauge-widget-settings': DigitalGaugeWidgetSettingsComponent,
+  'tb-flot-line-widget-settings': FlotLineWidgetSettingsComponent,
+  'tb-flot-bar-widget-settings': FlotBarWidgetSettingsComponent
 };

@@ -693,8 +693,8 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
         this.updateValidators(true, trigger);
       });
     }
-    this.settingsForm().valueChanges.subscribe((updated: WidgetSettings) => {
-      this.onSettingsChanged(updated);
+    this.settingsForm().valueChanges.subscribe((updated: any) => {
+      this.onSettingsChanged(this.prepareOutputSettings(updated));
     });
   }
 
@@ -713,7 +713,7 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
   protected onSettingsChanged(updated: WidgetSettings) {
     this.settingsValue = updated;
     if (this.validateSettings()) {
-      this.settingsChangedEmitter.emit(this.prepareOutputSettings(updated));
+      this.settingsChangedEmitter.emit(updated);
     } else {
       this.settingsChangedEmitter.emit(null);
     }
@@ -723,7 +723,7 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
     return settings;
   }
 
-  protected prepareOutputSettings(settings: WidgetSettings): WidgetSettings {
+  protected prepareOutputSettings(settings: any): WidgetSettings {
     return settings;
   }
 
