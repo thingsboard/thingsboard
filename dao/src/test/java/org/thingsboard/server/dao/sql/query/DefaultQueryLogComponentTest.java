@@ -62,7 +62,6 @@ public class DefaultQueryLogComponentTest {
     @Test
     public void logQuery() {
 
-        BDDMockito.willCallRealMethod().given(queryLog).logQuery(ctx, "", 3000);
         BDDMockito.willReturn("").given(queryLog).substituteParametersInSqlString("", ctx);
         queryLog.logQuery(ctx, "", 3000);
 
