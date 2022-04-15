@@ -15,17 +15,15 @@
  */
 package org.thingsboard.server.queue.memory;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.queue.TbQueueMsg;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-public class InMemoryStorageTest {
+public class DefaultInMemoryStorageTest {
 
-    InMemoryStorage storage = new InMemoryStorage();
+    InMemoryStorage storage = new DefaultInMemoryStorage();
 
     @Test
     public void givenStorage_whenGetLagTotal_thenReturnInteger() throws InterruptedException {
