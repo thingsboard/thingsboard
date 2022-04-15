@@ -38,10 +38,8 @@ import {
 } from '@app/shared/models/widget.models';
 import {
   ChartType,
-  flotDatakeySettingsSchema, flotLatestDatakeySettingsSchema,
   flotPieDatakeySettingsSchema,
   flotPieSettingsSchema,
-  flotSettingsSchema,
   TbFlotAxisOptions,
   TbFlotHoverInfo,
   TbFlotKeySettings, TbFlotLatestKeySettings,
@@ -69,7 +67,6 @@ const moment = moment_;
 
 const flotPieSettingsSchemaValue = flotPieSettingsSchema;
 const flotPieDatakeySettingsSchemaValue = flotPieDatakeySettingsSchema;
-const latestDatakeySettingsSchemaValue = flotLatestDatakeySettingsSchema;
 
 export class TbFlot {
 
@@ -139,18 +136,6 @@ export class TbFlot {
 
   static pieDatakeySettingsSchema(): JsonSettingsSchema {
     return flotPieDatakeySettingsSchemaValue;
-  }
-
-  static settingsSchema(chartType: ChartType): JsonSettingsSchema {
-    return flotSettingsSchema(chartType);
-  }
-
-  static datakeySettingsSchema(defaultShowLines: boolean, chartType: ChartType): JsonSettingsSchema {
-    return flotDatakeySettingsSchema(defaultShowLines, chartType);
-  }
-
-  static latestDatakeySettingsSchema(): JsonSettingsSchema {
-    return latestDatakeySettingsSchemaValue;
   }
 
   constructor(private ctx: WidgetContext, private readonly chartType: ChartType) {

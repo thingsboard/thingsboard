@@ -83,6 +83,17 @@ import { LabelDataKeyComponent } from '@home/components/widget/lib/settings/char
 import {
   FlotBarWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/chart/flot-bar-widget-settings.component';
+import { FlotThresholdComponent } from '@home/components/widget/lib/settings/chart/flot-threshold.component';
+import { FlotKeySettingsComponent } from '@home/components/widget/lib/settings/chart/flot-key-settings.component';
+import {
+  FlotLineKeySettingsComponent
+} from '@home/components/widget/lib/settings/chart/flot-line-key-settings.component';
+import {
+  FlotBarKeySettingsComponent
+} from '@home/components/widget/lib/settings/chart/flot-bar-key-settings.component';
+import {
+  FlotLatestKeySettingsComponent
+} from '@home/components/widget/lib/settings/chart/flot-latest-key-settings.component';
 
 @NgModule({
   declarations: [
@@ -113,7 +124,12 @@ import {
     FlotWidgetSettingsComponent,
     LabelDataKeyComponent,
     FlotLineWidgetSettingsComponent,
-    FlotBarWidgetSettingsComponent
+    FlotBarWidgetSettingsComponent,
+    FlotThresholdComponent,
+    FlotKeySettingsComponent,
+    FlotLineKeySettingsComponent,
+    FlotBarKeySettingsComponent,
+    FlotLatestKeySettingsComponent
   ],
   imports: [
     CommonModule,
@@ -148,7 +164,12 @@ import {
     FlotWidgetSettingsComponent,
     LabelDataKeyComponent,
     FlotLineWidgetSettingsComponent,
-    FlotBarWidgetSettingsComponent
+    FlotBarWidgetSettingsComponent,
+    FlotThresholdComponent,
+    FlotKeySettingsComponent,
+    FlotLineKeySettingsComponent,
+    FlotBarKeySettingsComponent,
+    FlotLatestKeySettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -174,5 +195,8 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-analogue-compass-widget-settings': AnalogueCompassWidgetSettingsComponent,
   'tb-digital-gauge-widget-settings': DigitalGaugeWidgetSettingsComponent,
   'tb-flot-line-widget-settings': FlotLineWidgetSettingsComponent,
-  'tb-flot-bar-widget-settings': FlotBarWidgetSettingsComponent
+  'tb-flot-bar-widget-settings': FlotBarWidgetSettingsComponent,
+  'tb-flot-line-key-settings': FlotLineKeySettingsComponent,
+  'tb-flot-bar-key-settings': FlotBarKeySettingsComponent,
+  'tb-flot-latest-key-settings': FlotLatestKeySettingsComponent
 };

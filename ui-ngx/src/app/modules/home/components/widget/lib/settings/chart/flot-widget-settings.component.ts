@@ -34,7 +34,6 @@ import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { ComparisonDuration } from '@shared/models/time/time.models';
 import { WidgetService } from '@core/http/widget.service';
-import { fixedColorLevelValidator } from '@home/components/widget/lib/settings/gauge/fixed-color-level.component';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import {
   LabelDataKey,
