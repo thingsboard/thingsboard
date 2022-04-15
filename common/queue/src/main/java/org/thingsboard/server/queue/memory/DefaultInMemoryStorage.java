@@ -67,26 +67,22 @@ public final class DefaultInMemoryStorage implements InMemoryStorage {
         return storage.computeIfAbsent(topic, (t) -> new LinkedBlockingQueue<>()).add(msg);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T extends TbQueueMsg> List<T> get(String topic) throws InterruptedException {
-        if (storage.containsKey(topic)) {
-            List<T> entities;
-            @SuppressWarnings("unchecked")
-            T first = (T) storage.get(topic).poll();
-            if (first != null) {
-                entities = new ArrayList<>();
-                entities.add(first);
-                List<TbQueueMsg> otherList = new ArrayList<>();
-                storage.get(topic).drainTo(otherList, 999);
-                for (TbQueueMsg other : otherList) {
-                    @SuppressWarnings("unchecked")
-                    T entity = (T) other;
-                    entities.add(entity);
+        final BlockingQueue<TbQueueMsg> queue = storage.get(topic);
+        if (queue != null) {
+            final TbQueueMsg firstMsg = queue.poll();
+            if (firstMsg != null) {
+                final int queueSize = queue.size();
+                if (queueSize > 0) {
+                    final List<TbQueueMsg> entities = new ArrayList<>(Math.min(queueSize, 999) + 1);
+                    entities.add(firstMsg);
+                    queue.drainTo(entities, 999);
+                    return (List<T>) entities;
                 }
-            } else {
-                entities = Collections.emptyList();
+                return Collections.singletonList((T) firstMsg);
             }
-            return entities;
         }
         return Collections.emptyList();
     }
