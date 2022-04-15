@@ -26,8 +26,4 @@ import org.thingsboard.server.queue.memory.InMemoryStorage;
 })
 public class EdgeSqlTestSuite {
 
-    @BeforeClass
-    public static void cleanupInMemStorage() {
-        InMemoryStorage.getInstance().cleanup();
-    }
 }
