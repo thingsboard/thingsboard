@@ -25,6 +25,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
@@ -171,8 +172,8 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
     }
 
     @Override
-    public long doCleanup(long expirationTime, List<Integer> keyIds) {
-        return tsKvRepository.cleanup(expirationTime, keyIds);
+    public long doCleanup(long expirationTime, List<Integer> keyIds, TenantId tenantId, CustomerId customerId) {
+        return tsKvRepository.cleanUp(expirationTime, keyIds, tenantId.getId(), customerId.getId());
     }
 
     private ListenableFuture<List<TsKvEntry>> findAllAsyncWithLimit(EntityId entityId, ReadTsKvQuery query) {

@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -112,9 +113,10 @@ public class JpaPsqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDa
     }
 
     @Override
-    public long doCleanup(long expirationTime, List<Integer> keyIds) {
-        return tsKvRepository.cleanup(expirationTime, keyIds);
+    public long doCleanup(long expirationTime, List<Integer> keyIds, TenantId tenantId, CustomerId customerId) {
+        return tsKvRepository.cleanUp(expirationTime, keyIds, tenantId.getId(), customerId.getId());
     }
+
 
     private void cleanupPartitions(long systemTtl) {
         log.info("Going to cleanup old timeseries data partitions using partition type: {} and ttl: {}s", partitioning, systemTtl);

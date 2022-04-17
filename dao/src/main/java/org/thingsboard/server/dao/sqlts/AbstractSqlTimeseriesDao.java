@@ -16,17 +16,28 @@
 package org.thingsboard.server.dao.sqlts;
 
 import com.google.common.base.Function;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.attributes.AttributesDao;
+import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
+import org.thingsboard.server.dao.tenant.TenantDao;
 
 import javax.annotation.Nullable;
 import java.sql.Connection;
@@ -35,6 +46,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -42,9 +54,20 @@ import java.util.stream.Collectors;
 public abstract class AbstractSqlTimeseriesDao extends BaseAbstractSqlTimeseriesDao implements AggregationTimeseriesDao {
 
     protected static final long SECONDS_IN_DAY = TimeUnit.DAYS.toSeconds(1);
+    public static final String TTL = "TTL";
+    public static final int PAGE_SIZE = 10_000;
 
     @Autowired
     protected ScheduledLogExecutorComponent logExecutor;
+
+    @Autowired
+    private TenantDao tenantDao;
+
+    @Autowired
+    private CustomerDao customerDao;
+
+    @Autowired
+    private AttributesDao attributesDao;
 
     @Value("${sql.ts.batch_size:1000}")
     protected int tsBatchSize;
@@ -87,18 +110,70 @@ public abstract class AbstractSqlTimeseriesDao extends BaseAbstractSqlTimeseries
     }
 
     public void cleanup(long systemTtl, List<String> excludedKeys) {
-        log.info("Going to cleanup old timeseries data using ttl: {}s without keys {}", systemTtl, excludedKeys);
+        PageLink tenantsBatchRequest = new PageLink(PAGE_SIZE, 0);
+        PageData<TenantId> tenantsIds;
+        do {
+            tenantsIds = tenantDao.findTenantsIds(tenantsBatchRequest);
+
+            for (TenantId tenantId : tenantsIds.getData()) {
+                long tenantTtl = getTtl(systemTtl, tenantId, tenantId);
+                cleanup(tenantTtl, excludedKeys, tenantId, new CustomerId(CustomerId.NULL_UUID));
+
+                PageLink customersBatchRequest = new PageLink(PAGE_SIZE, 0);
+                PageData<Customer> customersIds;
+                do {
+                    customersIds = customerDao.findCustomersByTenantId(tenantId.getId(), customersBatchRequest);
+
+                    for (Customer customer : customersIds.getData()) {
+                        long customerTtl = getTtl(tenantTtl, tenantId, customer.getId());
+                        cleanup(customerTtl, excludedKeys, tenantId, customer.getId());
+                    }
+                    customersBatchRequest = customersBatchRequest.nextPageLink();
+
+                } while (customersIds.hasNext());
+            }
+
+            tenantsBatchRequest = tenantsBatchRequest.nextPageLink();
+        } while (tenantsIds.hasNext());
+    }
+
+    private long getTtl(long standardTtl, TenantId tenantId, EntityId entityId) {
+        //TODO: improve this method. I can not set in long value from onSuccess method
+        final Long[] resultTtl = {standardTtl};
+        ListenableFuture<Optional<AttributeKvEntry>> ttl = attributesDao.find(tenantId, entityId, DataConstants.SERVER_SCOPE, TTL);
+        Futures.addCallback(ttl, new FutureCallback<>() {
+            @Override
+            public void onSuccess(@Nullable Optional<AttributeKvEntry> attributeKvEntry) {
+                if (attributeKvEntry != null && attributeKvEntry.isPresent() && attributeKvEntry.get().getLongValue().isPresent()) {
+                    resultTtl[0] = attributeKvEntry.get().getLongValue().get();
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable throwable) {
+
+            }
+        }, MoreExecutors.directExecutor());
+        return resultTtl[0];
+    }
+
+    private void cleanup(long ttl, List<String> excludedKeys, TenantId tenantId, CustomerId customerId) {
         List<Integer> keyIds = excludedKeys.stream().map(this::getOrSaveKeyId).collect(Collectors.toList());
-        long expirationTime = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(systemTtl);
+        EntityId entityId = customerId.getId().equals(CustomerId.NULL_UUID) ? tenantId : customerId;
+        log.info("Going to cleanup old timeseries data for entityId {} using ttl: {}s without keys {}", entityId, ttl, excludedKeys);
         try {
-            long totalRemoved = doCleanup(expirationTime, keyIds);
+            long totalRemoved = doCleanup(getExpirationTime(ttl), keyIds, tenantId, customerId);
             log.info("Total telemetry removed stats by TTL without keys {} for entities: [{}]", excludedKeys, totalRemoved);
         } catch (Exception e) {
-            log.error("Failed to execute cleanup using ttl: {} without keys {} due to: [{}]", systemTtl, excludedKeys, e.getMessage());
+            log.info("Failed to execute cleanup using ttl: {} without keys {} due to: [{}]", ttl, excludedKeys, e.getMessage());
         }
     }
 
-    public abstract long doCleanup(long expirationTime, List<Integer> keyIds);
+    private long getExpirationTime(long ttl) {
+        return System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(ttl);
+    }
+
+    public abstract long doCleanup(long expirationTime, List<Integer> keyIds, TenantId entityId, CustomerId customerId);
 
     protected ListenableFuture<List<TsKvEntry>> processFindAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
         List<ListenableFuture<List<TsKvEntry>>> futures = queries

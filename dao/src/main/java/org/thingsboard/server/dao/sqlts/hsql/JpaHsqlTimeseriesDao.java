@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -67,7 +68,7 @@ public class JpaHsqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDa
     }
 
     @Override
-    public long doCleanup(long expirationTime, List<Integer> keyIds) {
+    public long doCleanup(long expirationTime, List<Integer> keyIds, TenantId tenantId, CustomerId customerId) {
         return 0;
     }
 
