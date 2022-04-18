@@ -16,10 +16,8 @@
 package org.thingsboard.server.dao.sqlts;
 
 import com.google.common.base.Function;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -138,23 +136,14 @@ public abstract class AbstractSqlTimeseriesDao extends BaseAbstractSqlTimeseries
     }
 
     private long getTtl(long standardTtl, TenantId tenantId, EntityId entityId) {
-        //TODO: improve this method. I can not set in long value from onSuccess method
-        final Long[] resultTtl = {standardTtl};
-        ListenableFuture<Optional<AttributeKvEntry>> ttl = attributesDao.find(tenantId, entityId, DataConstants.SERVER_SCOPE, TTL);
-        Futures.addCallback(ttl, new FutureCallback<>() {
-            @Override
-            public void onSuccess(@Nullable Optional<AttributeKvEntry> attributeKvEntry) {
-                if (attributeKvEntry != null && attributeKvEntry.isPresent() && attributeKvEntry.get().getLongValue().isPresent()) {
-                    resultTtl[0] = attributeKvEntry.get().getLongValue().get();
-                }
-            }
+        Optional<AttributeKvEntry> ttl;
+        try {
+            ttl = attributesDao.find(tenantId, entityId, DataConstants.SERVER_SCOPE, TTL).get(30, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            throw new IllegalStateException("Cannot get server scope attribute TTL for entity[" + entityId + "], error: " + e);
+        }
 
-            @Override
-            public void onFailure(Throwable throwable) {
-
-            }
-        }, MoreExecutors.directExecutor());
-        return resultTtl[0];
+        return ttl != null && ttl.isPresent() && ttl.get().getLongValue().isPresent() ? ttl.get().getLongValue().get() : standardTtl;
     }
 
     private void cleanup(long ttl, List<String> excludedKeys, TenantId tenantId, CustomerId customerId) {

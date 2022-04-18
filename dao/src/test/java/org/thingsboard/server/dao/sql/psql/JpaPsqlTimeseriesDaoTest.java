@@ -22,13 +22,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.DeviceProfileType;
-import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.*;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
@@ -36,13 +30,10 @@ import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
-import org.thingsboard.server.common.data.kv.StringDataEntry;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.kv.*;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.asset.AssetDao;
+import org.thingsboard.server.dao.attributes.AttributesDao;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.device.DeviceProfileDao;
@@ -72,6 +63,9 @@ public class JpaPsqlTimeseriesDaoTest extends AbstractJpaDaoTest {
 
     @Autowired
     TimeseriesDao timeseriesDao;
+
+    @Autowired
+    AttributesDao attributesDao;
 
     @Autowired
     TenantProfileDao tenantProfileDao;
@@ -140,6 +134,21 @@ public class JpaPsqlTimeseriesDaoTest extends AbstractJpaDaoTest {
 
     }
 
+    @Test
+    public void testCleanupTsForTenantsDeviceWithCustomTtl() throws ExecutionException, InterruptedException, TimeoutException {
+        saveTtlAttribute(tenant.getTenantId(), tenant.getId(), System.currentTimeMillis());
+
+        Device device = createDevice(tenant.getUuidId(), CustomerId.NULL_UUID, "device");
+
+        saveTimeseries(device.getTenantId(), device.getId());
+
+        long beforeCleanup = checkSavedTs(device.getTenantId(), device.getId());
+        psqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
+        long afterCleanup = checkSavedTs(device.getTenantId(), device.getId());
+
+        Assert.assertEquals(beforeCleanup, afterCleanup);
+    }
+
 
     @Test
     public void testCleanupTsForTenantAsset() throws ExecutionException, InterruptedException, TimeoutException {
@@ -175,6 +184,58 @@ public class JpaPsqlTimeseriesDaoTest extends AbstractJpaDaoTest {
     @Test
     public void testCleanupTsForCustomerDevice() throws ExecutionException, InterruptedException, TimeoutException {
         customer = createCustomer(tenant.getId());
+
+        Device device = createDevice(tenant.getUuidId(), customer.getUuidId(), "device");
+
+        saveTimeseries(device.getTenantId(), device.getId());
+
+        long beforeCleanup = checkSavedTs(device.getTenantId(), device.getId());
+        psqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
+        long afterCleanup = checkSavedTs(device.getTenantId(), device.getId());
+
+        Assert.assertEquals(beforeCleanup, afterCleanup + DIFF_AFTER_CLEANUP_FOR_ONE_ENTITY);
+    }
+
+    @Test
+    public void testCleanupTsForCustomerDeviceWithCustomCustomerTtl() throws ExecutionException, InterruptedException, TimeoutException {
+        customer = createCustomer(tenant.getId());
+
+        saveTtlAttribute(customer.getTenantId(), customer.getId(), System.currentTimeMillis());
+
+        Device device = createDevice(tenant.getUuidId(), customer.getUuidId(), "device");
+
+        saveTimeseries(device.getTenantId(), device.getId());
+
+        long beforeCleanup = checkSavedTs(device.getTenantId(), device.getId());
+        psqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
+        long afterCleanup = checkSavedTs(device.getTenantId(), device.getId());
+
+        Assert.assertEquals(beforeCleanup, afterCleanup);
+    }
+
+    @Test
+    public void testCleanupTsForCustomerDeviceWithCustomTenantTtl() throws ExecutionException, InterruptedException, TimeoutException {
+        saveTtlAttribute(tenant.getTenantId(), tenant.getId(), System.currentTimeMillis());
+
+        customer = createCustomer(tenant.getId());
+
+        Device device = createDevice(tenant.getUuidId(), customer.getUuidId(), "device");
+
+        saveTimeseries(device.getTenantId(), device.getId());
+
+        long beforeCleanup = checkSavedTs(device.getTenantId(), device.getId());
+        psqlTimeseriesDao.cleanup(TTL, List.of("TESTED_TELEMETRY"));
+        long afterCleanup = checkSavedTs(device.getTenantId(), device.getId());
+
+        Assert.assertEquals(beforeCleanup, afterCleanup);
+    }
+
+    @Test
+    public void testCleanupTsForCustomerDeviceWithCustomTenantAndCustomerTtl() throws ExecutionException, InterruptedException, TimeoutException {
+        saveTtlAttribute(tenant.getTenantId(), tenant.getId(), System.currentTimeMillis());
+
+        customer = createCustomer(tenant.getId());
+        saveTtlAttribute(customer.getTenantId(), customer.getId(), TTL);
 
         Device device = createDevice(tenant.getUuidId(), customer.getUuidId(), "device");
 
@@ -276,6 +337,11 @@ public class JpaPsqlTimeseriesDaoTest extends AbstractJpaDaoTest {
 
         TsKvEntry tsKvEntryForCleanup = new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(KEY_FOR_CLEANUP, "VALUE_CLEANUP"));
         timeseriesDao.save(tenantId, entityId, tsKvEntryForCleanup, 0).get(TIMEOUT, TimeUnit.SECONDS);
+    }
+
+    void saveTtlAttribute(TenantId tenantId, EntityId entityId, long ttl) {
+        AttributeKvEntry attributeKvEntry = new BaseAttributeKvEntry(System.currentTimeMillis(), new LongDataEntry("TTL", ttl));
+        attributesDao.save(tenantId, entityId, DataConstants.SERVER_SCOPE, attributeKvEntry);
     }
 
     long checkSavedTs(TenantId tenantId, EntityId entityId) throws InterruptedException, ExecutionException, TimeoutException {
