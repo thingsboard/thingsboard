@@ -64,7 +64,7 @@ public class TbMsgPushToCloudNode extends AbstractTbMsgPushNode<TbMsgPushToCloud
     // Implementation of this node is done on the Edge
 
     @Override
-    Object buildEvent(TenantId tenantId, EdgeEventActionType edgeEventAction, UUID entityId, Object edgeEventType, JsonNode entityBody) {
+    Object buildEvent(TenantId tenantId, EdgeEventActionType eventAction, UUID entityId, Object eventType, JsonNode entityBody) {
         return null;
     }
 

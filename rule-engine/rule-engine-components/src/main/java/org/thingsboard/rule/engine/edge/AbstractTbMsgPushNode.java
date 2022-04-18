@@ -111,7 +111,7 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
         }
     }
 
-    abstract S buildEvent(TenantId tenantId, EdgeEventActionType edgeEventAction, UUID entityId, U edgeEventType, JsonNode entityBody);
+    abstract S buildEvent(TenantId tenantId, EdgeEventActionType eventAction, UUID entityId, U eventType, JsonNode entityBody);
 
     abstract U getEventTypeByEntityType(EntityType entityType);
 
@@ -139,7 +139,8 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
 
     protected EdgeEventActionType getEdgeEventActionTypeByMsgType(String msgType) {
         EdgeEventActionType actionType;
-        if (SessionMsgType.POST_TELEMETRY_REQUEST.name().equals(msgType)) {
+        if (SessionMsgType.POST_TELEMETRY_REQUEST.name().equals(msgType)
+                || DataConstants.TIMESERIES_UPDATED.equals(msgType)) {
             actionType = EdgeEventActionType.TIMESERIES_UPDATED;
         } else if (DataConstants.ATTRIBUTES_UPDATED.equals(msgType)) {
             actionType = EdgeEventActionType.ATTRIBUTES_UPDATED;
