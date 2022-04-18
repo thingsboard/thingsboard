@@ -40,13 +40,9 @@ import org.thingsboard.server.service.sync.importing.EntityImportService;
 import org.thingsboard.server.service.sync.importing.data.EntityImportResult;
 import org.thingsboard.server.service.sync.importing.data.EntityImportSettings;
 
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public abstract class BaseEntityImportService<I extends EntityId, E extends ExportableEntity<I>, D extends EntityExportData<E>> implements EntityImportService<I, E, D> {
@@ -68,7 +64,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
 
         entity.setExternalId(entity.getId());
 
-        NewIdProvider idProvider = new NewIdProvider(user, entity, existingEntity, importSettings);
+        IdProvider idProvider = new IdProvider(user);
         setOwner(user.getTenantId(), entity, idProvider);
         if (existingEntity == null) {
             entity.setId(null);
@@ -91,12 +87,12 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
         return importResult;
     }
 
-    protected abstract void setOwner(TenantId tenantId, E entity, NewIdProvider idProvider);
+    protected abstract void setOwner(TenantId tenantId, E entity, IdProvider idProvider);
 
-    protected abstract E prepareAndSave(TenantId tenantId, E entity, D exportData, NewIdProvider idProvider);
+    protected abstract E prepareAndSave(TenantId tenantId, E entity, D exportData, IdProvider idProvider);
 
     protected void processAfterSaved(SecurityUser user, EntityImportResult<E> importResult, D exportData,
-                                     NewIdProvider idProvider, EntityImportSettings importSettings) throws ThingsboardException {
+                                     IdProvider idProvider, EntityImportSettings importSettings) throws ThingsboardException {
         E savedEntity = importResult.getSavedEntity();
         E oldEntity = importResult.getOldEntity();
 
@@ -179,37 +175,10 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
 
 
     @RequiredArgsConstructor
-    protected class NewIdProvider {
+    protected class IdProvider {
         private final SecurityUser user;
-        private final E entity;
-        private final E existingEntity;
-        private final EntityImportSettings importSettings;
 
-        public <ID extends EntityId> ID get(Function<E, ID> idExtractor) {
-            if (existingEntity == null || importSettings.isUpdateReferencesToOtherEntities()) {
-                return getInternalId(idExtractor.apply(this.entity));
-            } else {
-                return idExtractor.apply(existingEntity);
-            }
-        }
-
-        public <ID extends EntityId> ID getInternal(ID externalId) {
-            return getInternalId(externalId);
-        }
-
-        public <ID extends EntityId, T> Set<T> get(Function<E, Set<T>> listExtractor, Function<T, ID> idGetter, BiConsumer<T, ID> idSetter) {
-            if (existingEntity == null || importSettings.isUpdateReferencesToOtherEntities()) {
-                return Optional.ofNullable(listExtractor.apply(entity)).orElse(Collections.emptySet()).stream()
-                        .peek(t -> {
-                            idSetter.accept(t, getInternalId(idGetter.apply(t)));
-                        })
-                        .collect(Collectors.toSet());
-            } else {
-                return listExtractor.apply(existingEntity);
-            }
-        }
-
-        private <ID extends EntityId> ID getInternalId(ID externalId) {
+        public <ID extends EntityId> ID getInternalId(ID externalId) {
             if (externalId == null || externalId.isNullUid()) return null;
 
             HasId<ID> entity = findInternalEntity(user.getTenantId(), externalId);

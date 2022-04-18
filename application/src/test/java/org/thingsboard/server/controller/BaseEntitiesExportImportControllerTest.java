@@ -360,9 +360,7 @@ public abstract class BaseEntitiesExportImportControllerTest extends AbstractCon
 
     protected List<EntityImportResult<?>> importEntities(List<EntityExportData<?>> exportDataList) throws Exception {
         ImportRequest importRequest = new ImportRequest();
-        importRequest.setImportSettings(EntityImportSettings.builder()
-                .updateReferencesToOtherEntities(true)
-                .build());
+        importRequest.setImportSettings(new EntityImportSettings());
         importRequest.setExportDataList(exportDataList);
         return importEntities(importRequest);
     }

@@ -376,9 +376,7 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
 
         logInAsTenantAdmin2();
         ImportRequest importRequest = new ImportRequest();
-        importRequest.setImportSettings(EntityImportSettings.builder()
-                .updateReferencesToOtherEntities(true)
-                .build());
+        importRequest.setImportSettings(new EntityImportSettings());
         importRequest.setExportDataList(exportDataList);
         Map<EntityType, EntityImportResult<?>> importResults = importEntities(importRequest).stream()
                 .collect(Collectors.toMap(EntityImportResult::getEntityType, r -> r));
@@ -583,7 +581,6 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
         importRequest.setExportDataList(exportDataList);
         importRequest.setImportSettings(EntityImportSettings.builder()
                 .findExistingByName(false)
-                .updateReferencesToOtherEntities(true)
                 .build());
         assertThatThrownBy(() -> {
             importEntities(importRequest);
@@ -592,48 +589,6 @@ public class EntitiesExportImportControllerSqlTest extends BaseEntitiesExportImp
         importRequest.getImportSettings().setFindExistingByName(true);
         importEntities(importRequest);
         checkImportedEntity(tenantId1, defaultDeviceProfile, tenantId2, deviceProfileService.findDefaultDeviceProfile(tenantId2));
-    }
-
-    @Test
-    public void testExportImportDashboard_betweenTenants_doNotUpdateReferencesToOtherEntities() throws Exception {
-        logInAsTenantAdmin1();
-        Customer customer = createCustomer(tenantId1, "Customer 1");
-        Dashboard dashboard = createDashboard(tenantId1, customer.getId(), "Dashboard 1");
-
-        EntityListExportRequest exportRequest = new EntityListExportRequest();
-        exportRequest.setEntitiesIds(List.of(customer.getId(), dashboard.getId()));
-        exportRequest.setExportSettings(new EntityExportSettings());
-        List<EntityExportData<?>> exportDataList = exportEntities(exportRequest);
-
-        logInAsTenantAdmin2();
-        Map<EntityType, EntityImportResult<?>> importResults = importEntities(exportDataList).stream().collect(Collectors.toMap(EntityImportResult::getEntityType, r -> r));
-
-        Customer importedCustomer = (Customer) importResults.get(EntityType.CUSTOMER).getSavedEntity();
-        Dashboard importedDashboard = (Dashboard) importResults.get(EntityType.DASHBOARD).getSavedEntity();
-        assertThat(importedDashboard.getAssignedCustomers()).hasOnlyOneElementSatisfying(customerInfo -> {
-            assertThat(customerInfo.getCustomerId()).isEqualTo(importedCustomer.getId());
-        });
-        assertThat(importedDashboard.getConfiguration()).isEqualTo(dashboard.getConfiguration());
-
-        logInAsTenantAdmin1();
-        dashboard.setConfiguration(JacksonUtil.newObjectNode().set("aaa", new TextNode("bbb")));
-        dashboard = dashboardService.saveDashboard(dashboard);
-        dashboard = dashboardService.unassignDashboardFromCustomer(tenantId1, dashboard.getId(), customer.getId());
-        EntityExportData<Dashboard> updatedDashboardExportData = exportSingleEntity(dashboard.getId());
-        assertThat(updatedDashboardExportData.getEntity().getAssignedCustomers()).isNullOrEmpty();
-
-        logInAsTenantAdmin2();
-        ImportRequest importRequest = new ImportRequest();
-        importRequest.setExportDataList(List.of(updatedDashboardExportData));
-        importRequest.setImportSettings(EntityImportSettings.builder()
-                .updateReferencesToOtherEntities(false)
-                .build());
-        importedDashboard = (Dashboard) importEntities(importRequest).get(0).getSavedEntity();
-
-        assertThat(importedDashboard.getConfiguration()).isEqualTo(dashboard.getConfiguration());
-        assertThat(importedDashboard.getAssignedCustomers()).hasOnlyOneElementSatisfying(customerInfo -> {
-            assertThat(customerInfo.getCustomerId()).isEqualTo(importedCustomer.getId());
-        });
     }
 
 

@@ -55,7 +55,7 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
     private static final Pattern UUID_PATTERN = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
 
     @Override
-    protected void setOwner(TenantId tenantId, Dashboard dashboard, NewIdProvider idProvider) {
+    protected void setOwner(TenantId tenantId, Dashboard dashboard, IdProvider idProvider) {
         dashboard.setTenantId(tenantId);
     }
 
@@ -69,7 +69,7 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
     }
 
     @Override
-    protected Dashboard prepareAndSave(TenantId tenantId, Dashboard dashboard, EntityExportData<Dashboard> exportData, NewIdProvider idProvider) {
+    protected Dashboard prepareAndSave(TenantId tenantId, Dashboard dashboard, EntityExportData<Dashboard> exportData, IdProvider idProvider) {
         Optional.ofNullable(dashboard.getConfiguration())
                 .flatMap(configuration -> Optional.ofNullable(configuration.get("entityAliases")))
                 .filter(JsonNode::isObject)
@@ -84,15 +84,17 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
                                 String newFilterJson = UUID_PATTERN.matcher(filterJson).replaceAll(matchResult -> {
                                     String uuid = matchResult.group();
                                     EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, uuid);
-                                    return idProvider.getInternal(entityId).toString();
+                                    return idProvider.getInternalId(entityId).toString();
                                 });
                                 ((ObjectNode) entityAlias).set("filter", JacksonUtil.toJsonNode(newFilterJson));
                             });
                 }));
 
-        // TODO [viacheslav]: improve the code below
+        Set<ShortCustomerInfo> assignedCustomers = Optional.ofNullable(dashboard.getAssignedCustomers()).orElse(Collections.emptySet()).stream()
+                .peek(customerInfo -> customerInfo.setCustomerId(idProvider.getInternalId(customerInfo.getCustomerId())))
+                .collect(Collectors.toSet());
+
         if (dashboard.getId() == null) {
-            Set<ShortCustomerInfo> assignedCustomers = idProvider.get(Dashboard::getAssignedCustomers, ShortCustomerInfo::getCustomerId, ShortCustomerInfo::setCustomerId);
             dashboard.setAssignedCustomers(null);
             dashboard = dashboardService.saveDashboard(dashboard);
             for (ShortCustomerInfo customerInfo : assignedCustomers) {
@@ -101,20 +103,21 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
         } else {
             Set<CustomerId> existingAssignedCustomers = Optional.ofNullable(dashboardService.findDashboardById(tenantId, dashboard.getId()).getAssignedCustomers())
                     .orElse(Collections.emptySet()).stream().map(ShortCustomerInfo::getCustomerId).collect(Collectors.toSet());
-            Set<CustomerId> newAssignedCustomers = idProvider.get(Dashboard::getAssignedCustomers, ShortCustomerInfo::getCustomerId, ShortCustomerInfo::setCustomerId).stream()
-                    .map(ShortCustomerInfo::getCustomerId).collect(Collectors.toSet());
+            Set<CustomerId> newAssignedCustomers = assignedCustomers.stream().map(ShortCustomerInfo::getCustomerId).collect(Collectors.toSet());
 
             Set<CustomerId> toUnassign = new HashSet<>(existingAssignedCustomers);
             toUnassign.removeAll(newAssignedCustomers);
             for (CustomerId customerId : toUnassign) {
-                dashboardService.unassignDashboardFromCustomer(tenantId, dashboard.getId(), customerId);
+                assignedCustomers = dashboardService.unassignDashboardFromCustomer(tenantId, dashboard.getId(), customerId).getAssignedCustomers();
             }
+
             Set<CustomerId> toAssign = new HashSet<>(newAssignedCustomers);
             toAssign.removeAll(existingAssignedCustomers);
             for (CustomerId customerId : toAssign) {
-                dashboardService.assignDashboardToCustomer(tenantId, dashboard.getId(), customerId);
+                assignedCustomers = dashboardService.assignDashboardToCustomer(tenantId, dashboard.getId(), customerId).getAssignedCustomers();
             }
-            dashboard.setAssignedCustomers(dashboardService.findDashboardById(tenantId, dashboard.getId()).getAssignedCustomers());
+
+            dashboard.setAssignedCustomers(assignedCustomers);
             dashboard = dashboardService.saveDashboard(dashboard);
         }
         return dashboard;

@@ -47,7 +47,7 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
     private final RuleChainService ruleChainService;
 
     @Override
-    protected void setOwner(TenantId tenantId, RuleChain ruleChain, NewIdProvider idProvider) {
+    protected void setOwner(TenantId tenantId, RuleChain ruleChain, IdProvider idProvider) {
         ruleChain.setTenantId(tenantId);
     }
 
@@ -61,7 +61,7 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
     }
 
     @Override
-    protected RuleChain prepareAndSave(TenantId tenantId, RuleChain ruleChain, RuleChainExportData exportData, NewIdProvider idProvider) {
+    protected RuleChain prepareAndSave(TenantId tenantId, RuleChain ruleChain, RuleChainExportData exportData, IdProvider idProvider) {
         RuleChainMetaData metaData = exportData.getMetaData();
         Optional.ofNullable(metaData.getNodes()).orElse(Collections.emptyList())
                 .forEach(ruleNode -> {
@@ -73,14 +73,14 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
                             .map(JsonNode::asText).map(UUID::fromString)
                             .ifPresent(otherRuleChainUuid -> {
                                 ((ObjectNode) ruleNodeConfig).set("ruleChainId", new TextNode(
-                                        idProvider.getInternal(new RuleChainId(otherRuleChainUuid)).toString()
+                                        idProvider.getInternalId(new RuleChainId(otherRuleChainUuid)).toString()
                                 ));
                                 ruleNode.setConfiguration(ruleNodeConfig);
                             });
                 });
         Optional.ofNullable(metaData.getRuleChainConnections()).orElse(Collections.emptyList())
                 .forEach(ruleChainConnectionInfo -> {
-                    ruleChainConnectionInfo.setTargetRuleChainId(idProvider.getInternal(ruleChainConnectionInfo.getTargetRuleChainId()));
+                    ruleChainConnectionInfo.setTargetRuleChainId(idProvider.getInternalId(ruleChainConnectionInfo.getTargetRuleChainId()));
                 });
         ruleChain.setFirstRuleNodeId(null);
 

@@ -30,6 +30,4 @@ public class EntityImportSettings {
     private boolean importInboundRelations;
     private boolean importOutboundRelations;
     private boolean removeExistingRelations;
-
-    private boolean updateReferencesToOtherEntities;
 }

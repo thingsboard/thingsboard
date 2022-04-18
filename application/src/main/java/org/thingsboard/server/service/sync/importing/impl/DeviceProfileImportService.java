@@ -41,16 +41,16 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
     private final OtaPackageStateService otaPackageStateService;
 
     @Override
-    protected void setOwner(TenantId tenantId, DeviceProfile deviceProfile, NewIdProvider idProvider) {
+    protected void setOwner(TenantId tenantId, DeviceProfile deviceProfile, IdProvider idProvider) {
         deviceProfile.setTenantId(tenantId);
     }
 
     @Override
-    protected DeviceProfile prepareAndSave(TenantId tenantId, DeviceProfile deviceProfile, EntityExportData<DeviceProfile> exportData, NewIdProvider idProvider) {
-        deviceProfile.setDefaultRuleChainId(idProvider.get(DeviceProfile::getDefaultRuleChainId));
-        deviceProfile.setDefaultDashboardId(idProvider.get(DeviceProfile::getDefaultDashboardId));
-        deviceProfile.setFirmwareId(idProvider.get(DeviceProfile::getFirmwareId));
-        deviceProfile.setSoftwareId(idProvider.get(DeviceProfile::getSoftwareId));
+    protected DeviceProfile prepareAndSave(TenantId tenantId, DeviceProfile deviceProfile, EntityExportData<DeviceProfile> exportData, IdProvider idProvider) {
+        deviceProfile.setDefaultRuleChainId(idProvider.getInternalId(deviceProfile.getDefaultRuleChainId()));
+        deviceProfile.setDefaultDashboardId(idProvider.getInternalId(deviceProfile.getDefaultDashboardId()));
+        deviceProfile.setFirmwareId(idProvider.getInternalId(deviceProfile.getFirmwareId()));
+        deviceProfile.setSoftwareId(idProvider.getInternalId(deviceProfile.getSoftwareId()));
         return deviceProfileService.saveDeviceProfile(deviceProfile);
     }
 
