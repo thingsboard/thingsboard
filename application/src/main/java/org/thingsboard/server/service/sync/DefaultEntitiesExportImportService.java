@@ -83,7 +83,7 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
     @Transactional(rollbackFor = Exception.class)
     @Override
     public List<EntityImportResult<?>> importEntities(SecurityUser user, List<EntityExportData<?>> exportDataList, EntityImportSettings importSettings) throws ThingsboardException {
-        exportDataList.sort(Comparator.comparing(exportData -> SUPPORTED_ENTITY_TYPES.indexOf(exportData.getEntityType())));
+        fixOrder(exportDataList);
         List<EntityImportResult<?>> importResults = new ArrayList<>();
 
         for (EntityExportData exportData : exportDataList) {
@@ -99,6 +99,10 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
         }
 
         return importResults;
+    }
+
+    private void fixOrder(List<EntityExportData<?>> exportDataList) {
+        exportDataList.sort(Comparator.comparing(exportData -> SUPPORTED_ENTITY_TYPES.indexOf(exportData.getEntityType())));
     }
 
     private <E extends ExportableEntity<I>, I extends EntityId> EntityImportResult<E> importEntity(SecurityUser user, EntityExportData<E> exportData, EntityImportSettings importSettings) throws ThingsboardException {
@@ -137,7 +141,11 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
     @Override
     public <E extends ExportableEntity<I>, I extends EntityId> E findEntityByTenantIdAndName(TenantId tenantId, EntityType entityType, String name) {
         ExportableEntityDao<E> dao = (ExportableEntityDao<E>) getDao(entityType);
-        return dao.findFirstByTenantIdAndName(tenantId.getId(), name);
+        try {
+            return dao.findByTenantIdAndName(tenantId.getId(), name);
+        } catch (UnsupportedOperationException e) {
+            return null;
+        }
     }
 
 

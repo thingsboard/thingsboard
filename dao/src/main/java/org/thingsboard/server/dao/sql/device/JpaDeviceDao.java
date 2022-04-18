@@ -309,7 +309,7 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
     }
 
     @Override
-    public Device findFirstByTenantIdAndName(UUID tenantId, String name) {
+    public Device findByTenantIdAndName(UUID tenantId, String name) {
         return findDeviceByTenantIdAndName(tenantId, name).orElse(null);
     }
 

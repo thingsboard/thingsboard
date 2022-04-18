@@ -20,7 +20,6 @@ import org.thingsboard.server.common.data.id.HasId;
 
 public interface ExportableEntity<I extends EntityId> extends HasId<I>, HasName {
 
-    I getId();
     void setId(I id);
 
     I getExternalId();

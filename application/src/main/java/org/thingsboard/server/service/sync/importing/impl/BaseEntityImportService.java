@@ -158,7 +158,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     }
 
 
-    private E findExistingEntity(TenantId tenantId, E entity, EntityImportSettings importSettings) {
+    protected E findExistingEntity(TenantId tenantId, E entity, EntityImportSettings importSettings) {
         return (E) Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndExternalId(tenantId, entity.getId()))
                 .or(() -> Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndId(tenantId, entity.getId())))
                 .or(() -> {

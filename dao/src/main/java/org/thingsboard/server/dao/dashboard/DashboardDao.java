@@ -21,6 +21,9 @@ import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ExportableEntityDao;
 import org.thingsboard.server.dao.TenantEntityDao;
 
+import java.util.List;
+import java.util.UUID;
+
 /**
  * The Interface DashboardDao.
  */
@@ -33,4 +36,7 @@ public interface DashboardDao extends Dao<Dashboard>, TenantEntityDao, Exportabl
      * @return saved dashboard object
      */
     Dashboard save(TenantId tenantId, Dashboard dashboard);
+
+    List<Dashboard> findByTenantIdAndTitle(UUID tenantId, String title);
+
 }

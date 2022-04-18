@@ -26,6 +26,7 @@ import org.thingsboard.server.dao.dashboard.DashboardDao;
 import org.thingsboard.server.dao.model.sql.DashboardEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -58,8 +59,8 @@ public class JpaDashboardDao extends JpaAbstractSearchTextDao<DashboardEntity, D
     }
 
     @Override
-    public Dashboard findFirstByTenantIdAndName(UUID tenantId, String name) {
-        return DaoUtil.getData(dashboardRepository.findFirstByTenantIdAndTitle(tenantId, name));
+    public List<Dashboard> findByTenantIdAndTitle(UUID tenantId, String title) {
+        return DaoUtil.convertDataList(dashboardRepository.findByTenantIdAndTitle(tenantId, title));
     }
 
     @Override

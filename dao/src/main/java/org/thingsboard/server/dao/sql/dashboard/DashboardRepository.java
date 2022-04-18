@@ -19,6 +19,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.DashboardEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -28,6 +29,6 @@ public interface DashboardRepository extends JpaRepository<DashboardEntity, UUID
 
     Long countByTenantId(UUID tenantId);
 
-    DashboardEntity findFirstByTenantIdAndTitle(UUID tenantId, String title);
+    List<DashboardEntity> findByTenantIdAndTitle(UUID tenantId, String title);
 
 }

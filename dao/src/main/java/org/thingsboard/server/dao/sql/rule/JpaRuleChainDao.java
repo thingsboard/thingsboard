@@ -115,11 +115,6 @@ public class JpaRuleChainDao extends JpaAbstractSearchTextDao<RuleChainEntity, R
     }
 
     @Override
-    public RuleChain findFirstByTenantIdAndName(UUID tenantId, String name) {
-        return DaoUtil.getData(ruleChainRepository.findFirstByTenantIdAndName(tenantId, name));
-    }
-
-    @Override
     public EntityType getEntityType() {
         return EntityType.RULE_CHAIN;
     }

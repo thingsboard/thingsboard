@@ -33,6 +33,7 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.sync.exporting.data.RuleChainExportData;
+import org.thingsboard.server.service.sync.importing.data.EntityImportSettings;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -48,6 +49,15 @@ public class RuleChainImportService extends BaseEntityImportService<RuleChainId,
     @Override
     protected void setOwner(TenantId tenantId, RuleChain ruleChain, NewIdProvider idProvider) {
         ruleChain.setTenantId(tenantId);
+    }
+
+    @Override
+    protected RuleChain findExistingEntity(TenantId tenantId, RuleChain ruleChain, EntityImportSettings importSettings) {
+        RuleChain existingRuleChain = super.findExistingEntity(tenantId, ruleChain, importSettings);
+        if (existingRuleChain == null && importSettings.isFindExistingByName()) {
+            existingRuleChain = ruleChainService.findTenantRuleChainsByTypeAndName(tenantId, ruleChain.getType(), ruleChain.getName()).stream().findFirst().orElse(null);
+        }
+        return existingRuleChain;
     }
 
     @Override
