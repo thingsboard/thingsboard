@@ -16,16 +16,17 @@
 package org.thingsboard.rule.engine.edge;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.server.common.data.DataConstants;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
-public class TbMsgPushToCloudNodeConfiguration extends BaseTbMsgPushNodeConfiguration {
+public class BaseTbMsgPushNodeConfiguration implements NodeConfiguration<BaseTbMsgPushNodeConfiguration> {
+
+    private String scope;
 
     @Override
-    public TbMsgPushToCloudNodeConfiguration defaultConfiguration() {
-        TbMsgPushToCloudNodeConfiguration configuration = new TbMsgPushToCloudNodeConfiguration();
+    public BaseTbMsgPushNodeConfiguration defaultConfiguration() {
+        BaseTbMsgPushNodeConfiguration configuration = new BaseTbMsgPushNodeConfiguration();
         configuration.setScope(DataConstants.SERVER_SCOPE);
         return configuration;
     }
