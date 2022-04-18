@@ -16,47 +16,68 @@
 
 import { Component } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { flotDefaultSettings } from '@home/components/widget/lib/settings/chart/flot-widget-settings.component';
+import { switchRpcDefaultSettings } from '@home/components/widget/lib/settings/control/switch-rpc-settings.component';
 import { deepClone } from '@core/utils';
 
 @Component({
-  selector: 'tb-flot-line-widget-settings',
-  templateUrl: './flot-line-widget-settings.component.html',
-  styleUrls: []
+  selector: 'tb-switch-control-widget-settings',
+  templateUrl: './switch-control-widget-settings.component.html',
+  styleUrls: ['./../widget-settings.scss']
 })
-export class FlotLineWidgetSettingsComponent extends WidgetSettingsComponent {
+export class SwitchControlWidgetSettingsComponent extends WidgetSettingsComponent {
 
-  flotLineWidgetSettingsForm: FormGroup;
+  switchControlWidgetSettingsForm: FormGroup;
 
   constructor(protected store: Store<AppState>,
               private fb: FormBuilder) {
     super(store);
   }
 
+  get targetDeviceAliasId(): string {
+    const aliasIds = this.widget.config.targetDeviceAliasIds;
+    if (aliasIds && aliasIds.length) {
+      return aliasIds[0];
+    }
+    return null;
+  }
+
   protected settingsForm(): FormGroup {
-    return this.flotLineWidgetSettingsForm;
+    return this.switchControlWidgetSettingsForm;
   }
 
   protected defaultSettings(): WidgetSettings {
-    return flotDefaultSettings('graph');
+    return {
+      title: '',
+      showOnOffLabels: true,
+      ...switchRpcDefaultSettings()
+    };
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
-    this.flotLineWidgetSettingsForm = this.fb.group({
-      flotSettings: [settings.flotSettings, []]
+    this.switchControlWidgetSettingsForm = this.fb.group({
+      title: [settings.title, []],
+      showOnOffLabels: [settings.showOnOffLabels, []],
+      switchRpcSettings: [settings.switchRpcSettings, []]
     });
   }
 
   protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
+    const switchRpcSettings = deepClone(settings, ['title', 'showOnOffLabels']);
     return {
-      flotSettings: settings
+      title: settings.title,
+      showOnOffLabels: settings.showOnOffLabels,
+      switchRpcSettings
     };
   }
 
   protected prepareOutputSettings(settings: any): WidgetSettings {
-    return settings.flotSettings;
+    return {
+      title: settings.title,
+      showOnOffLabels: settings.showOnOffLabels,
+      ...settings.switchRpcSettings
+    };
   }
 }

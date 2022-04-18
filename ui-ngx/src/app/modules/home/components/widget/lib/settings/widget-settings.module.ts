@@ -106,6 +106,16 @@ import {
 import {
   DoughnutChartWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/chart/doughnut-chart-widget-settings.component';
+import { SwitchRpcSettingsComponent } from '@home/components/widget/lib/settings/control/switch-rpc-settings.component';
+import {
+  RoundSwitchWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/control/round-switch-widget-settings.component';
+import {
+  SwitchControlWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/control/switch-control-widget-settings.component';
+import {
+  SlideToggleWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/control/slide-toggle-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -145,7 +155,11 @@ import {
     FlotPieWidgetSettingsComponent,
     FlotPieKeySettingsComponent,
     ChartWidgetSettingsComponent,
-    DoughnutChartWidgetSettingsComponent
+    DoughnutChartWidgetSettingsComponent,
+    SwitchRpcSettingsComponent,
+    RoundSwitchWidgetSettingsComponent,
+    SwitchControlWidgetSettingsComponent,
+    SlideToggleWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -189,7 +203,11 @@ import {
     FlotPieWidgetSettingsComponent,
     FlotPieKeySettingsComponent,
     ChartWidgetSettingsComponent,
-    DoughnutChartWidgetSettingsComponent
+    DoughnutChartWidgetSettingsComponent,
+    SwitchRpcSettingsComponent,
+    RoundSwitchWidgetSettingsComponent,
+    SwitchControlWidgetSettingsComponent,
+    SlideToggleWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -222,5 +240,8 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-flot-pie-widget-settings': FlotPieWidgetSettingsComponent,
   'tb-flot-pie-key-settings': FlotPieKeySettingsComponent,
   'tb-chart-widget-settings': ChartWidgetSettingsComponent,
-  'tb-doughnut-chart-widget-settings': DoughnutChartWidgetSettingsComponent
+  'tb-doughnut-chart-widget-settings': DoughnutChartWidgetSettingsComponent,
+  'tb-round-switch-widget-settings': RoundSwitchWidgetSettingsComponent,
+  'tb-switch-control-widget-settings': SwitchControlWidgetSettingsComponent,
+  'tb-slide-toggle-widget-settings': SlideToggleWidgetSettingsComponent
 };

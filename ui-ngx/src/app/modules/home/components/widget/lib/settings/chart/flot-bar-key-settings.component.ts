@@ -45,8 +45,14 @@ export class FlotBarKeySettingsComponent extends WidgetSettingsComponent {
 
   protected onSettingsSet(settings: WidgetSettings) {
     this.flotBarKeySettingsForm = this.fb.group({
-      flotKeySettings: [settings, []]
+      flotKeySettings: [settings.flotKeySettings, []]
     });
+  }
+
+  protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
+    return {
+      flotKeySettings: settings
+    };
   }
 
   protected prepareOutputSettings(settings: any): WidgetSettings {

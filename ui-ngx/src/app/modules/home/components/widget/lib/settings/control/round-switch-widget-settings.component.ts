@@ -16,46 +16,64 @@
 
 import { Component } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { flotDataKeyDefaultSettings } from '@home/components/widget/lib/settings/chart/flot-key-settings.component';
+import { switchRpcDefaultSettings } from '@home/components/widget/lib/settings/control/switch-rpc-settings.component';
+import { deepClone } from '@core/utils';
 
 @Component({
-  selector: 'tb-flot-line-key-settings',
-  templateUrl: './flot-line-key-settings.component.html',
-  styleUrls: []
+  selector: 'tb-round-switch-widget-settings',
+  templateUrl: './round-switch-widget-settings.component.html',
+  styleUrls: ['./../widget-settings.scss']
 })
-export class FlotLineKeySettingsComponent extends WidgetSettingsComponent {
+export class RoundSwitchWidgetSettingsComponent extends WidgetSettingsComponent {
 
-  flotLineKeySettingsForm: FormGroup;
+  roundSwitchWidgetSettingsForm: FormGroup;
 
   constructor(protected store: Store<AppState>,
               private fb: FormBuilder) {
     super(store);
   }
 
+  get targetDeviceAliasId(): string {
+    const aliasIds = this.widget.config.targetDeviceAliasIds;
+    if (aliasIds && aliasIds.length) {
+      return aliasIds[0];
+    }
+    return null;
+  }
+
   protected settingsForm(): FormGroup {
-    return this.flotLineKeySettingsForm;
+    return this.roundSwitchWidgetSettingsForm;
   }
 
   protected defaultSettings(): WidgetSettings {
-    return flotDataKeyDefaultSettings('graph');
+    return {
+      title: '',
+      ...switchRpcDefaultSettings()
+    };
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
-    this.flotLineKeySettingsForm = this.fb.group({
-      flotKeySettings: [settings.flotKeySettings, []]
+    this.roundSwitchWidgetSettingsForm = this.fb.group({
+      title: [settings.title, []],
+      switchRpcSettings: [settings.switchRpcSettings, []]
     });
   }
 
   protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
+    const switchRpcSettings = deepClone(settings, ['title']);
     return {
-      flotKeySettings: settings
+      title: settings.title,
+      switchRpcSettings
     };
   }
 
   protected prepareOutputSettings(settings: any): WidgetSettings {
-    return settings.flotKeySettings;
+    return {
+      title: settings.title,
+      ...settings.switchRpcSettings
+    };
   }
 }
