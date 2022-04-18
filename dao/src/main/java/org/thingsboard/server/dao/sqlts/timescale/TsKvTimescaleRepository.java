@@ -51,12 +51,6 @@ public interface TsKvTimescaleRepository extends JpaRepository<TimescaleTsKvEnti
                 @Param("endTs") long endTs);
 
     @Transactional(timeout = 3600) // 1h in sec
-    @Query(value = "WITH deleted AS (DELETE FROM ts_kv WHERE (key NOT IN :keys AND ts < :expirationTime) RETURNING *) SELECT count(*) FROM deleted",
-            nativeQuery = true)
-    Long cleanup(@Param("expirationTime") long expirationTime,
-                 @Param("keys") List<Integer> keys);
-
-    @Transactional(timeout = 3600) // 1h in sec
     @Query(value = "WITH deleted AS (DELETE FROM ts_kv WHERE (key NOT IN :keys AND ts < :expirationTime AND entity_id IN (" +
             "(SELECT device.id as entity_id FROM device WHERE device.tenant_id = :tenantId and device.customer_id = :customerId) UNION ALL " +
             "(SELECT asset.id as entity_id FROM asset WHERE asset.tenant_id = :tenantId and asset.customer_id = :customerId) UNION ALL " +
