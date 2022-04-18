@@ -94,6 +94,18 @@ import {
 import {
   FlotLatestKeySettingsComponent
 } from '@home/components/widget/lib/settings/chart/flot-latest-key-settings.component';
+import {
+  FlotPieWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/flot-pie-widget-settings.component';
+import {
+  FlotPieKeySettingsComponent
+} from '@home/components/widget/lib/settings/chart/flot-pie-key-settings.component';
+import {
+  ChartWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/chart-widget-settings.component';
+import {
+  DoughnutChartWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/doughnut-chart-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -129,7 +141,11 @@ import {
     FlotKeySettingsComponent,
     FlotLineKeySettingsComponent,
     FlotBarKeySettingsComponent,
-    FlotLatestKeySettingsComponent
+    FlotLatestKeySettingsComponent,
+    FlotPieWidgetSettingsComponent,
+    FlotPieKeySettingsComponent,
+    ChartWidgetSettingsComponent,
+    DoughnutChartWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -169,7 +185,11 @@ import {
     FlotKeySettingsComponent,
     FlotLineKeySettingsComponent,
     FlotBarKeySettingsComponent,
-    FlotLatestKeySettingsComponent
+    FlotLatestKeySettingsComponent,
+    FlotPieWidgetSettingsComponent,
+    FlotPieKeySettingsComponent,
+    ChartWidgetSettingsComponent,
+    DoughnutChartWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -198,5 +218,9 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-flot-bar-widget-settings': FlotBarWidgetSettingsComponent,
   'tb-flot-line-key-settings': FlotLineKeySettingsComponent,
   'tb-flot-bar-key-settings': FlotBarKeySettingsComponent,
-  'tb-flot-latest-key-settings': FlotLatestKeySettingsComponent
+  'tb-flot-latest-key-settings': FlotLatestKeySettingsComponent,
+  'tb-flot-pie-widget-settings': FlotPieWidgetSettingsComponent,
+  'tb-flot-pie-key-settings': FlotPieKeySettingsComponent,
+  'tb-chart-widget-settings': ChartWidgetSettingsComponent,
+  'tb-doughnut-chart-widget-settings': DoughnutChartWidgetSettingsComponent
 };

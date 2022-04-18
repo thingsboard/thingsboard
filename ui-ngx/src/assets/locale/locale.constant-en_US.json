@@ -3275,7 +3275,22 @@
             "threshold-settings": "Threshold settings",
             "use-as-threshold": "Use key value as threshold",
             "threshold-line-width": "Threshold line width",
-            "threshold-color": "Threshold color"
+            "threshold-color": "Threshold color",
+            "common-pie-settings": "Common pie settings",
+            "radius": "Radius",
+            "inner-radius": "Inner radius",
+            "tilt": "Tilt",
+            "stroke-settings": "Stroke settings",
+            "width-pixels": "Width (pixels)",
+            "show-labels": "Show labels",
+            "animation-settings": "Animation settings",
+            "animated-pie": "Enable pie animation (experimental)",
+            "border-settings": "Border settings",
+            "border-width": "Border width",
+            "border-color": "Border color",
+            "legend-settings": "Legend settings",
+            "display-legend": "Display legend",
+            "labels-font-color": "Labels font color"
         },
         "dashboard-state": {
             "dashboard-state-settings": "Dashboard state settings",

@@ -39,6 +39,7 @@
     </mat-form-field>
     <tb-color-input fxFlex
                     formControlName="colorMajorTicks"
+                    icon="format_color_fill"
                     label="{{ 'widgets.gauge.major-ticks-color' | translate }}" openOnInput colorClearButton>
     </tb-color-input>
     <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
@@ -48,6 +49,7 @@
       </mat-form-field>
       <tb-color-input fxFlex
                       formControlName="colorMinorTicks"
+                      icon="format_color_fill"
                       label="{{ 'widgets.gauge.minor-ticks-color' | translate }}" openOnInput colorClearButton>
       </tb-color-input>
     </section>
@@ -63,6 +65,7 @@
     <legend class="group-title" translate>widgets.gauge.plate-settings</legend>
     <tb-color-input fxFlex
                     formControlName="colorPlate"
+                    icon="format_color_fill"
                     label="{{ 'widgets.gauge.plate-color' | translate }}" openOnInput colorClearButton>
     </tb-color-input>
     <mat-slide-toggle formControlName="showBorder" class="slide-block">
@@ -71,6 +74,7 @@
     <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
       <tb-color-input fxFlex
                       formControlName="colorBorder"
+                      icon="format_color_fill"
                       label="{{ 'widgets.gauge.border-color' | translate }}" openOnInput colorClearButton>
       </tb-color-input>
       <mat-form-field fxFlex class="mat-block">
@@ -88,10 +92,12 @@
     <section fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
       <tb-color-input fxFlex
                       formControlName="colorNeedle"
+                      icon="format_color_fill"
                       label="{{ 'widgets.gauge.needle-color' | translate }}" openOnInput colorClearButton>
       </tb-color-input>
       <tb-color-input fxFlex
                       formControlName="colorNeedleCircle"
+                      icon="format_color_fill"
                       label="{{ 'widgets.gauge.needle-circle-color' | translate }}" openOnInput colorClearButton>
       </tb-color-input>
     </section>

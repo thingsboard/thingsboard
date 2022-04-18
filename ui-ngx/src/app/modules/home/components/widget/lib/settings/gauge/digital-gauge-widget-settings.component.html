@@ -51,6 +51,7 @@
     </mat-form-field>
     <tb-color-input
       formControlName="defaultColor"
+      icon="format_color_fill"
       label="{{ 'widgets.gauge.default-color' | translate }}" openOnInput colorClearButton>
     </tb-color-input>
   </fieldset>
@@ -77,6 +78,7 @@
       <legend class="group-title" translate>widgets.gauge.bar-color-settings</legend>
       <tb-color-input
         formControlName="gaugeColor"
+        icon="format_color_fill"
         label="{{ 'widgets.gauge.bar-background-color' | translate }}" openOnInput colorClearButton>
       </tb-color-input>
       <mat-slide-toggle class="slide-block" formControlName="useFixedLevelColor">
@@ -95,6 +97,7 @@
               </div>
               <tb-color-input fxFlex
                 [formControl]="levelColorControl"
+                icon="format_color_fill"
                 label="{{ 'widgets.gauge.color' | translate }}" openOnInput colorClearButton>
               </tb-color-input>
               <button mat-icon-button style="min-width: 40px;"
@@ -278,6 +281,7 @@
           </mat-form-field>
           <tb-color-input
             formControlName="colorTicks"
+            icon="format_color_fill"
             label="{{ 'widgets.gauge.tick-color' | translate }}" openOnInput colorClearButton>
           </tb-color-input>
           <fieldset class="fields-group">

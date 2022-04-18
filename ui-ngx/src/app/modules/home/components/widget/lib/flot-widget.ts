@@ -38,8 +38,6 @@ import {
 } from '@app/shared/models/widget.models';
 import {
   ChartType,
-  flotPieDatakeySettingsSchema,
-  flotPieSettingsSchema,
   TbFlotAxisOptions,
   TbFlotHoverInfo,
   TbFlotKeySettings, TbFlotLatestKeySettings,
@@ -64,9 +62,6 @@ import Timeout = NodeJS.Timeout;
 
 const tinycolor = tinycolor_;
 const moment = moment_;
-
-const flotPieSettingsSchemaValue = flotPieSettingsSchema;
-const flotPieDatakeySettingsSchemaValue = flotPieDatakeySettingsSchema;
 
 export class TbFlot {
 
@@ -129,14 +124,6 @@ export class TbFlot {
   private pieAnimationStartTime: number;
   private pieAnimationLastTime: number;
   private pieAnimationCaf: CancelAnimationFrame;
-
-  static pieSettingsSchema(): JsonSettingsSchema {
-    return flotPieSettingsSchemaValue;
-  }
-
-  static pieDatakeySettingsSchema(): JsonSettingsSchema {
-    return flotPieDatakeySettingsSchemaValue;
-  }
 
   constructor(private ctx: WidgetContext, private readonly chartType: ChartType) {
     this.chartType = this.chartType || 'line';
