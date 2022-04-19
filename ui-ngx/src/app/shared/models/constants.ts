@@ -200,7 +200,7 @@ export const valueTypesMap = new Map<ValueType, ValueTypeData>(
       ValueType.JSON,
       {
         name: 'value.json',
-        icon: 'mdi:json'
+        icon: 'mdi:code-json'
       }
     ]
   ]
