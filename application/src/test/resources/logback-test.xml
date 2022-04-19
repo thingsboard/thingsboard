@@ -16,6 +16,9 @@
     <logger name="org.cassandraunit" level="INFO"/>
     <logger name="org.eclipse.leshan" level="INFO"/>
 
+    <logger name="org.thingsboard.server.actors.service.ContextAwareActor" level="TRACE"/>
+    <logger name="org.thingsboard.server.service.queue.processing.BurstTbRuleEngineSubmitStrategy" level="TRACE"/>
+    <logger name="org.thingsboard.server.service.queue.TbMsgPackCallback" level="TRACE"/>
 
     <root level="WARN">
         <appender-ref ref="console"/>

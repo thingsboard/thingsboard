@@ -141,6 +141,7 @@ public final class TbActorMailbox implements TbActorCtx {
                     log.debug("[{}] Going to process message: {}", selfId, msg);
                     actor.process(msg);
                 } catch (TbRuleNodeUpdateException updateException) {
+                    log.debug("[{}] INIT_FAILED: {} {}", selfId, msg, updateException);
                     stopReason = TbActorStopReason.INIT_FAILED;
                     destroy();
                 } catch (Throwable t) {
@@ -154,6 +155,12 @@ public final class TbActorMailbox implements TbActorCtx {
                 noMoreElements = true;
                 break;
             }
+        }
+        if (noMoreElements && (!normalPriorityMsgs.isEmpty() || !highPriorityMsgs.isEmpty())) {
+            log.error("noMoreElements=true, but mailbox is not empty!");
+        }
+        if (noMoreElements == false && (normalPriorityMsgs.isEmpty() && highPriorityMsgs.isEmpty())) {
+            log.error("noMoreElements=false, but mailbox is empty!");
         }
         if (noMoreElements) {
             busy.set(FREE);

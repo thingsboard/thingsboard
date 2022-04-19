@@ -33,6 +33,7 @@ public class BurstTbRuleEngineSubmitStrategy extends AbstractTbRuleEngineSubmitS
     public void submitAttempt(BiConsumer<UUID, TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> msgConsumer) {
         if (log.isDebugEnabled()) {
             log.debug("[{}] submitting [{}] messages to rule engine", queueName, orderedMsgList.size());
+            orderedMsgList.forEach((pair)->log.trace("submitted uuid {}, msg {}", pair.uuid, pair.msg));
         }
         orderedMsgList.forEach(pair -> msgConsumer.accept(pair.uuid, pair.msg));
     }
