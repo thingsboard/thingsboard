@@ -26,7 +26,7 @@ import {
   Validator
 } from '@angular/forms';
 import { ErrorStateMatcher } from '@angular/material/core';
-import {isObject} from "@core/utils";
+import { isObject } from "@core/utils";
 
 @Directive({
   selector: '[tb-json-to-string]',
