@@ -64,6 +64,9 @@ public class InMemoryTbQueueConsumer<T extends TbQueueMsg> implements TbQueueCon
 
     @Override
     public List<T> poll(long durationInMillis) {
+        if (topic.contains("main")){
+            log.warn("poll {} {}", topic, durationInMillis);
+        }
         if (subscribed) {
             @SuppressWarnings("unchecked")
             List<T> messages = partitions

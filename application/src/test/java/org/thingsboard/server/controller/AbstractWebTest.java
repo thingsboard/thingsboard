@@ -503,16 +503,24 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return readResponse(doGet(urlTemplate, vars).andExpect(status().isOk()), responseType);
     }
 
-    protected <T> T doPost(String urlTemplate, Class<T> responseClass, String... params) throws Exception {
-        return readResponse(doPost(urlTemplate, params).andExpect(status().isOk()), responseClass);
+    protected <T> T doPost(String urlTemplate, Class<T> responseClass, String... params) {
+        try {
+            return readResponse(doPost(urlTemplate, params).andExpect(status().isOk()), responseClass);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     protected <T> T doPost(String urlTemplate, T content, Class<T> responseClass, ResultMatcher resultMatcher, String... params) throws Exception {
         return readResponse(doPost(urlTemplate, content, params).andExpect(resultMatcher), responseClass);
     }
 
-    protected <T> T doPost(String urlTemplate, T content, Class<T> responseClass, String... params) throws Exception {
-        return readResponse(doPost(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
+    protected <T> T doPost(String urlTemplate, T content, Class<T> responseClass, String... params) {
+        try {
+            return readResponse(doPost(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     protected <T, R> R doPostWithResponse(String urlTemplate, T content, Class<R> responseClass, String... params) throws Exception {
