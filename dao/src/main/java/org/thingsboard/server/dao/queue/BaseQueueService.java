@@ -87,7 +87,7 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
         }
 
         if (queueClusterService != null) {
-            queueClusterService.onQueueChange(createdQueue, null);
+            queueClusterService.onQueueChange(createdQueue);
         }
 
         return createdQueue;
@@ -107,12 +107,12 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
                     tbQueueAdmin.createTopicIfNotExists(new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName());
                 }
                 if (queueClusterService != null) {
-                    queueClusterService.onQueueChange(updatedQueue, null);
+                    queueClusterService.onQueueChange(updatedQueue);
                 }
             } else {
                 log.info("Removed [{}] partitions from [{}] queue", oldPartitions - currentPartitions, queue.getName());
                 if (queueClusterService != null) {
-                    queueClusterService.onQueueChange(updatedQueue, null);
+                    queueClusterService.onQueueChange(updatedQueue);
                 }
                 await();
                 for (int i = currentPartitions; i < oldPartitions; i++) {
@@ -120,7 +120,7 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
                 }
             }
         } else if (!oldQueue.equals(queue) && queueClusterService != null) {
-            queueClusterService.onQueueChange(updatedQueue, null);
+            queueClusterService.onQueueChange(updatedQueue);
         }
 
         return updatedQueue;
@@ -130,12 +130,23 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     public void deleteQueue(TenantId tenantId, QueueId queueId) {
         log.trace("Executing deleteQueue, queueId: [{}]", queueId);
         Queue queue = findQueueById(tenantId, queueId);
+        doDelete(tenantId, queue);
+    }
+
+    @Override
+    public void deleteQueueByQueueName(TenantId tenantId, String queueName) {
+        log.trace("Executing deleteQueueByQueueName, name: [{}]", queueName);
+        Queue queue = findQueueByTenantIdAndName(tenantId, queueName);
+        doDelete(tenantId, queue);
+    }
+
+    private void doDelete(TenantId tenantId, Queue queue) {
         if (queueClusterService != null) {
-            queueClusterService.onQueueDelete(queue, null);
+            queueClusterService.onQueueDelete(queue);
             await();
         }
 //        queueStatsService.deleteQueueStatsByQueueId(tenantId, queueId);
-        boolean result = queueDao.removeById(tenantId, queueId.getId());
+        boolean result = queueDao.removeById(tenantId, queue.getUuidId());
         if (result && tbQueueAdmin != null) {
             for (int i = 0; i < queue.getPartitions(); i++) {
                 String fullTopicName = new TopicPartitionInfo(queue.getTopic(), queue.getTenantId(), i, false).getFullTopicName();
@@ -165,12 +176,6 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
         log.trace("Executing findQueues pageLink [{}]", pageLink);
         Validator.validatePageLink(pageLink);
         return queueDao.findQueuesByTenantId(getSystemOrIsolatedTenantId(tenantId), pageLink);
-    }
-
-    @Override
-    public List<Queue> findAllMainQueues() {
-        log.trace("Executing findAllMainQueues");
-        return queueDao.findAllMainQueues();
     }
 
     @Override

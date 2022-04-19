@@ -98,6 +98,7 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
 
 export interface TenantProfileData {
   configuration: TenantProfileConfiguration;
+  queueConfiguration?: any;
 }
 
 export interface TenantProfile extends BaseData<TenantProfileId> {

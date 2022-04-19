@@ -24,10 +24,11 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -47,6 +48,12 @@ import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -138,16 +145,88 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
             tenant.setTenantProfileId(tenantProfile.getId());
         }
         tenantValidator.validate(tenant, Tenant::getId);
+
+        Tenant oldTenant = tenant.getId() != null ? tenantDao.findById(tenant.getId(), tenant.getUuidId()) : null;
+
         Tenant savedTenant = tenantDao.save(tenant.getId(), tenant);
         if (tenant.getId() == null) {
             deviceProfileService.createDefaultDeviceProfile(savedTenant.getId());
             apiUsageStateService.createDefaultApiUsageState(savedTenant.getId(), null);
-            TenantProfile tenantProfile = tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, savedTenant.getTenantProfileId());
-            if(tenantProfile.isIsolatedTbRuleEngine()) {
-                queueService.createDefaultMainQueue(tenantProfile, savedTenant.getTenantId());
+        }
+
+        updateQueuesForTenant(oldTenant, savedTenant);
+
+        return savedTenant;
+    }
+
+    private void updateQueuesForTenant(Tenant oldTenant, Tenant newTenant) {
+        TenantProfile oldTenantProfile = oldTenant != null ? tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, oldTenant.getTenantProfileId()) : null;
+        TenantProfile newTenantProfile = tenantProfileService.findTenantProfileById(TenantId.SYS_TENANT_ID, newTenant.getTenantProfileId());
+
+        TenantId tenantId = newTenant.getId();
+
+        boolean oldIsolated = oldTenantProfile != null && oldTenantProfile.isIsolatedTbRuleEngine();
+        boolean newIsolated = newTenantProfile.isIsolatedTbRuleEngine();
+
+        if (!oldIsolated && !newIsolated) {
+            return;
+        }
+
+        if (newTenantProfile.equals(oldTenantProfile)) {
+            return;
+        }
+
+        Map<String, TenantProfileQueueConfiguration> oldQueues;
+        Map<String, TenantProfileQueueConfiguration> newQueues;
+
+        if (oldIsolated) {
+            oldQueues = oldTenantProfile.getProfileData().getQueueConfiguration().stream()
+                    .collect(Collectors.toMap(TenantProfileQueueConfiguration::getName, q -> q));
+        } else {
+            oldQueues = Collections.emptyMap();
+        }
+
+        if (newIsolated) {
+            newQueues = newTenantProfile.getProfileData().getQueueConfiguration().stream()
+                    .collect(Collectors.toMap(TenantProfileQueueConfiguration::getName, q -> q));
+        } else {
+            newQueues = Collections.emptyMap();
+        }
+
+        List<String> toRemove = new ArrayList<>();
+        List<String> toCreate = new ArrayList<>();
+        List<String> toUpdate = new ArrayList<>();
+
+        for (String oldQueue : oldQueues.keySet()) {
+            if (!newQueues.containsKey(oldQueue)) {
+                toRemove.add(oldQueue);
             }
         }
-        return savedTenant;
+
+        for (String newQueue : newQueues.keySet()) {
+            if (oldQueues.containsKey(newQueue)) {
+                toUpdate.add(newQueue);
+            } else {
+                toCreate.add(newQueue);
+            }
+        }
+
+        toRemove.forEach(q -> queueService.deleteQueueByQueueName(tenantId, q));
+
+        toCreate.forEach(key -> queueService.saveQueue(new Queue(tenantId, newQueues.get(key))));
+
+        toUpdate.forEach(key -> {
+            Queue queueToUpdate = new Queue(tenantId, newQueues.get(key));
+            Queue foundQueue = queueService.findQueueByTenantIdAndName(tenantId, key);
+            queueToUpdate.setId(foundQueue.getId());
+            queueToUpdate.setCreatedTime(foundQueue.getCreatedTime());
+
+            if (queueToUpdate.equals(foundQueue)) {
+                //Queue not changed
+            } else {
+                queueService.saveQueue(queueToUpdate);
+            }
+        });
     }
 
     @Override
@@ -218,7 +297,7 @@ public class TenantServiceImpl extends AbstractEntityService implements TenantSe
                 private void validateTenantProfile(TenantId tenantId, Tenant tenant) {
                     TenantProfile tenantProfileById = tenantProfileService.findTenantProfileById(tenantId, tenant.getTenantProfileId());
                     if (!zkEnabled && (tenantProfileById.isIsolatedTbCore() || tenantProfileById.isIsolatedTbRuleEngine())) {
-                        throw new DataValidationException("Can't use isolated tenant profiles in monolith setup!");
+//                        throw new DataValidationException("Can't use isolated tenant profiles in monolith setup!");
                     }
                 }
             };

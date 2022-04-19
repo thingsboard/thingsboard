@@ -23,10 +23,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.thingsboard.server.common.data.TbTransportService;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
-import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.util.AfterContextReady;
 
 import javax.annotation.PostConstruct;
@@ -36,8 +34,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -56,14 +52,11 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
     @Value("${service.tenant_id:}")
     private String tenantIdStr;
 
-    @Autowired(required = false)
-    private TbQueueRuleEngineSettings ruleEngineSettings;
     @Autowired
     private ApplicationContext applicationContext;
 
     private List<ServiceType> serviceTypes;
     private ServiceInfo serviceInfo;
-    private TenantId isolatedTenant;
 
     @PostConstruct
     public void init() {
@@ -83,15 +76,6 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
         ServiceInfo.Builder builder = ServiceInfo.newBuilder()
                 .setServiceId(serviceId)
                 .addAllServiceTypes(serviceTypes.stream().map(ServiceType::name).collect(Collectors.toList()));
-        UUID tenantId;
-        if (!StringUtils.isEmpty(tenantIdStr)) {
-            tenantId = UUID.fromString(tenantIdStr);
-            isolatedTenant = TenantId.fromUUID(tenantId);
-        } else {
-            tenantId = TenantId.NULL_UUID;
-        }
-        builder.setTenantIdMSB(tenantId.getMostSignificantBits());
-        builder.setTenantIdLSB(tenantId.getLeastSignificantBits());
 
         serviceInfo = builder.build();
     }
@@ -119,8 +103,4 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
         return serviceTypes.contains(serviceType);
     }
 
-    @Override
-    public Optional<TenantId> getIsolatedTenant() {
-        return Optional.ofNullable(isolatedTenant);
-    }
 }

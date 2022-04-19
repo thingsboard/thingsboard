@@ -48,6 +48,11 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
 
+  ngOnInit() {
+    this.showQueueParams();
+    this.entityForm.get('isolatedTbRuleEngine').valueChanges.subscribe(() => this.showQueueParams());
+  }
+
   hideDelete() {
     if (this.entitiesTableConfig) {
       return !this.entitiesTableConfig.deleteEnabled(this.entity);
@@ -87,11 +92,11 @@ export class TenantProfileComponent extends EntityComponent<TenantProfile> {
   showQueueParams(): boolean {
     let isolatedTbRuleEngine: boolean = this.entityForm.get('isolatedTbRuleEngine').value;
     if (isolatedTbRuleEngine) {
-      this.entityForm.controls['maxNumberOfQueues'].enable();
-      this.entityForm.controls['maxNumberOfPartitionsPerQueue'].enable();
+      this.entityForm.get('maxNumberOfQueues').enable();
+      this.entityForm.get('maxNumberOfPartitionsPerQueue').enable();
     } else {
-      this.entityForm.controls['maxNumberOfQueues'].disable();
-      this.entityForm.controls['maxNumberOfPartitionsPerQueue'].disable();
+      this.entityForm.get('maxNumberOfQueues').disable();
+      this.entityForm.get('maxNumberOfPartitionsPerQueue').disable();
     }
     return isolatedTbRuleEngine;
   }

@@ -34,7 +34,6 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
-import org.thingsboard.server.common.msg.queue.ServiceQueue;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;

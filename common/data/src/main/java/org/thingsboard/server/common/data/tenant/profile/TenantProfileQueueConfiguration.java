@@ -13,12 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue;
+package org.thingsboard.server.common.data.tenant.profile;
 
-import org.thingsboard.server.common.data.queue.Queue;
+import lombok.Data;
+import org.thingsboard.server.common.data.queue.ProcessingStrategy;
+import org.thingsboard.server.common.data.queue.SubmitStrategy;
 
-public interface TbQueueClusterService {
-    void onQueueChange(Queue queue);
-
-    void onQueueDelete(Queue queue);
+@Data
+public class TenantProfileQueueConfiguration {
+    private String name;
+    private String topic;
+    private int pollInterval;
+    private int partitions;
+    private boolean consumerPerPartition;
+    private long packProcessingTimeout;
+    private SubmitStrategy submitStrategy;
+    private ProcessingStrategy processingStrategy;
 }

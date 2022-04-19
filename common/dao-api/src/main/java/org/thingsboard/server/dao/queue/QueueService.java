@@ -30,11 +30,11 @@ public interface QueueService {
 
     void deleteQueue(TenantId tenantId, QueueId queueId);
 
+    void deleteQueueByQueueName(TenantId tenantId, String queueName);
+
     List<Queue> findQueuesByTenantId(TenantId tenantId);
 
     PageData<Queue> findQueuesByTenantId(TenantId tenantId, PageLink pageLink);
-
-    List<Queue> findAllMainQueues();
 
     List<Queue> findAllQueues();
 

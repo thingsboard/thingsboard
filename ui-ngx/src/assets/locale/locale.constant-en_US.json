@@ -259,7 +259,8 @@
         "queues": "Queues",
         "queue-partitions": "Partitions",
         "queue-submit-strategy": "Submit strategy",
-        "queue-processing-strategy": "Processing strategy"
+        "queue-processing-strategy": "Processing strategy",
+        "queue-configuration": "Queue configuration"
       },
     "alarm": {
         "alarm": "Alarm",

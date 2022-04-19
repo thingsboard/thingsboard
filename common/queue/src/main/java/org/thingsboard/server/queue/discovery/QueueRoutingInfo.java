@@ -20,6 +20,7 @@ import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.gen.transport.TransportProtos.GetQueueRoutingInfoResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.QueueUpdateMsg;
 
 import java.util.UUID;
 
@@ -47,5 +48,13 @@ public class QueueRoutingInfo {
         this.queueName = routingInfo.getQueueName();
         this.queueTopic = routingInfo.getQueueTopic();
         this.partitions = routingInfo.getPartitions();
+    }
+
+    public QueueRoutingInfo(QueueUpdateMsg queueUpdateMsg) {
+        this.tenantId = new TenantId(new UUID(queueUpdateMsg.getTenantIdMSB(), queueUpdateMsg.getQueueIdLSB()));
+        this.queueId = new QueueId(new UUID(queueUpdateMsg.getQueueIdMSB(), queueUpdateMsg.getQueueIdLSB()));
+        this.queueName = queueUpdateMsg.getQueueName();
+        this.queueTopic = queueUpdateMsg.getQueueTopic();
+        this.partitions = queueUpdateMsg.getPartitions();
     }
 }
