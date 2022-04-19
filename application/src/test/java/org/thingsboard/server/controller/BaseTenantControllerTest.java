@@ -34,9 +34,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,7 +48,6 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
     static final TypeReference<PageData<TenantInfo>> PAGE_DATA_TENANT_INFO_TYPE_REF = new TypeReference<>(){};
     static final int TIMEOUT = 30;
 
-    List<ListenableFuture<Boolean>> createFutures = new ArrayList<>();
     List<ListenableFuture<ResultActions>> deleteFutures = new ArrayList<>();
     ListeningExecutorService executor;
 
@@ -76,10 +73,10 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         Assert.assertEquals(tenant.getTitle(), savedTenant.getTitle());
         savedTenant.setTitle("My new tenant");
         doPost("/api/tenant", savedTenant, Tenant.class);
-        Tenant foundTenant = doGet("/api/tenant/"+savedTenant.getId().getId().toString(), Tenant.class);
+        Tenant foundTenant = doGet("/api/tenant/" + savedTenant.getId().getId().toString(), Tenant.class);
         Assert.assertEquals(foundTenant.getTitle(), savedTenant.getTitle());
-        doDelete("/api/tenant/"+savedTenant.getId().getId().toString())
-        .andExpect(status().isOk());
+        doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -96,11 +93,11 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
         Tenant savedTenant = doPost("/api/tenant", tenant, Tenant.class);
-        Tenant foundTenant = doGet("/api/tenant/"+savedTenant.getId().getId().toString(), Tenant.class);
+        Tenant foundTenant = doGet("/api/tenant/" + savedTenant.getId().getId().toString(), Tenant.class);
         Assert.assertNotNull(foundTenant);
         Assert.assertEquals(savedTenant, foundTenant);
-        doDelete("/api/tenant/"+savedTenant.getId().getId().toString())
-        .andExpect(status().isOk());
+        doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -109,10 +106,10 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
         Tenant savedTenant = doPost("/api/tenant", tenant, Tenant.class);
-        TenantInfo foundTenant = doGet("/api/tenant/info/"+savedTenant.getId().getId().toString(), TenantInfo.class);
+        TenantInfo foundTenant = doGet("/api/tenant/info/" + savedTenant.getId().getId().toString(), TenantInfo.class);
         Assert.assertNotNull(foundTenant);
         Assert.assertEquals(new TenantInfo(savedTenant, "Default"), foundTenant);
-        doDelete("/api/tenant/"+savedTenant.getId().getId().toString())
+        doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
                 .andExpect(status().isOk());
     }
 
@@ -121,8 +118,8 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         loginSysAdmin();
         Tenant tenant = new Tenant();
         doPost("/api/tenant", tenant)
-        .andExpect(status().isBadRequest())
-        .andExpect(statusReason(containsString("Tenant title should be specified")));
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Tenant title should be specified")));
     }
 
     @Test
@@ -132,8 +129,8 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         tenant.setTitle("My tenant");
         tenant.setEmail("invalid@mail");
         doPost("/api/tenant", tenant)
-        .andExpect(status().isBadRequest())
-        .andExpect(statusReason(containsString("Invalid email address format")));
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Invalid email address format")));
     }
 
     @Test
@@ -142,29 +139,30 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
         Tenant savedTenant = doPost("/api/tenant", tenant, Tenant.class);
-        doDelete("/api/tenant/"+savedTenant.getId().getId().toString())
-        .andExpect(status().isOk());
-        doGet("/api/tenant/"+savedTenant.getId().getId().toString())
-        .andExpect(status().isNotFound());
+        doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
+                .andExpect(status().isOk());
+        doGet("/api/tenant/" + savedTenant.getId().getId().toString())
+                .andExpect(status().isNotFound());
     }
 
     @Test
     public void testFindTenants() throws Exception {
         loginSysAdmin();
-        Collection<Tenant> tenants = new ConcurrentLinkedQueue<>();
+        List<Tenant> tenants = new ArrayList<>();
         PageLink pageLink = new PageLink(17);
         PageData<Tenant> pageData = doGetTypedWithPageLink("/api/tenants?", PAGE_DATA_TENANT_TYPE_REF, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(1, pageData.getData().size());
         tenants.addAll(pageData.getData());
 
-        for (int i=0;i<56;i++) {
+        List<ListenableFuture<Tenant>> createFutures = new ArrayList<>(56);
+        for (int i = 0; i < 56; i++) {
             Tenant tenant = new Tenant();
-            tenant.setTitle("Tenant"+i);
+            tenant.setTitle("Tenant" + i);
             createFutures.add(executor.submit(() ->
-                    tenants.add(doPost("/api/tenant", tenant, Tenant.class))));
+                    doPost("/api/tenant", tenant, Tenant.class)));
         }
-        Futures.allAsList(createFutures).get(TIMEOUT, TimeUnit.SECONDS);
+        tenants.addAll(Futures.allAsList(createFutures).get(TIMEOUT, TimeUnit.SECONDS));
 
         List<Tenant> loadedTenants = new ArrayList<>();
         pageLink = new PageLink(17);
@@ -180,15 +178,15 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
 
         for (Tenant tenant : loadedTenants) {
             if (!tenant.getTitle().equals(TEST_TENANT_NAME)) {
-                deleteFutures.add(executor.submit(()->
-                        doDelete("/api/tenant/"+tenant.getId().getId().toString())
+                deleteFutures.add(executor.submit(() ->
+                        doDelete("/api/tenant/" + tenant.getId().getId().toString())
                                 .andExpect(status().isOk())));
             }
         }
         Futures.allAsList(deleteFutures).get(TIMEOUT, TimeUnit.SECONDS);
 
         pageLink = new PageLink(17);
-        pageData =  doGetTypedWithPageLink("/api/tenants?", PAGE_DATA_TENANT_TYPE_REF, pageLink);
+        pageData = doGetTypedWithPageLink("/api/tenants?", PAGE_DATA_TENANT_TYPE_REF, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(1, pageData.getData().size());
     }
@@ -199,39 +197,36 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         loginSysAdmin();
         log.debug("test started");
         String title1 = "Tenant title 1";
-        Collection<Tenant> tenantsTitle1 = new ConcurrentLinkedQueue<>();
-        createFutures.clear();
-        for (int i=0;i<134;i++) {
+        List<ListenableFuture<Tenant>> createFutures = new ArrayList<>(134);
+        for (int i = 0; i < 134; i++) {
             Tenant tenant = new Tenant();
-            String suffix = RandomStringUtils.randomAlphanumeric((int)(5 + Math.random()*10));
-            String title = title1+suffix;
+            String suffix = RandomStringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
+            String title = title1 + suffix;
             title = i % 2 == 0 ? title.toLowerCase() : title.toUpperCase();
             tenant.setTitle(title);
-
             createFutures.add(executor.submit(() ->
-                    tenantsTitle1.add(doPost("/api/tenant", tenant, Tenant.class))));
+                    doPost("/api/tenant", tenant, Tenant.class)));
         }
 
-        Futures.allAsList(createFutures).get(TIMEOUT, TimeUnit.SECONDS);
-        log.debug("saved '{}', qty {}", title1, 134);
+        List<Tenant> tenantsTitle1 = Futures.allAsList(createFutures).get(TIMEOUT, TimeUnit.SECONDS);
+        log.debug("saved '{}', qty {}", title1, tenantsTitle1.size());
 
         String title2 = "Tenant title 2";
-        Collection<Tenant> tenantsTitle2 = new ConcurrentLinkedQueue<>();
-        createFutures.clear();
-        for (int i=0;i<127;i++) {
+        createFutures = new ArrayList<>(127);
+        for (int i = 0; i < 127; i++) {
             Tenant tenant = new Tenant();
-            String suffix = RandomStringUtils.randomAlphanumeric((int)(5 + Math.random()*10));
-            String title = title2+suffix;
+            String suffix = RandomStringUtils.randomAlphanumeric((int) (5 + Math.random() * 10));
+            String title = title2 + suffix;
             title = i % 2 == 0 ? title.toLowerCase() : title.toUpperCase();
             tenant.setTitle(title);
             createFutures.add(executor.submit(() ->
-                    tenantsTitle2.add(doPost("/api/tenant", tenant, Tenant.class))));
+                    doPost("/api/tenant", tenant, Tenant.class)));
         }
 
-        Futures.allAsList(createFutures).get(TIMEOUT, TimeUnit.SECONDS);
-        log.debug("saved '{}', qty {}", title2, 127);
+        List<Tenant> tenantsTitle2 = Futures.allAsList(createFutures).get(TIMEOUT, TimeUnit.SECONDS);
+        log.debug("saved '{}', qty {}", title2, tenantsTitle2.size());
 
-        List<Tenant> loadedTenantsTitle1 = new ArrayList<>();
+        List<Tenant> loadedTenantsTitle1 = new ArrayList<>(134);
         PageLink pageLink = new PageLink(15, 0, title1);
         PageData<Tenant> pageData = null;
         do {
@@ -247,7 +242,7 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
         assertThat(tenantsTitle1).as(title1).containsExactlyInAnyOrderElementsOf(loadedTenantsTitle1);
         log.debug("asserted");
 
-        List<Tenant> loadedTenantsTitle2 = new ArrayList<>();
+        List<Tenant> loadedTenantsTitle2 = new ArrayList<>(127);
         pageLink = new PageLink(4, 0, title2);
         do {
             pageData = doGetTypedWithPageLink("/api/tenants?", PAGE_DATA_TENANT_TYPE_REF, pageLink);
@@ -263,8 +258,8 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
 
         deleteFutures.clear();
         for (Tenant tenant : loadedTenantsTitle1) {
-            deleteFutures.add(executor.submit(()->
-                    doDelete("/api/tenant/"+tenant.getId().getId().toString())
+            deleteFutures.add(executor.submit(() ->
+                    doDelete("/api/tenant/" + tenant.getId().getId().toString())
                             .andExpect(status().isOk())));
         }
 
@@ -280,8 +275,8 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
 
         deleteFutures.clear();
         for (Tenant tenant : loadedTenantsTitle2) {
-            deleteFutures.add(executor.submit(()->
-                    doDelete("/api/tenant/"+tenant.getId().getId().toString())
+            deleteFutures.add(executor.submit(() ->
+                    doDelete("/api/tenant/" + tenant.getId().getId().toString())
                             .andExpect(status().isOk())));
         }
 
@@ -298,20 +293,21 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
     @Test
     public void testFindTenantInfos() throws Exception {
         loginSysAdmin();
-        Collection<TenantInfo> tenants = new ConcurrentLinkedQueue<>();
+        List<TenantInfo> tenants = new ArrayList<>();
         PageLink pageLink = new PageLink(17);
         PageData<TenantInfo> pageData = doGetTypedWithPageLink("/api/tenantInfos?", PAGE_DATA_TENANT_INFO_TYPE_REF, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(1, pageData.getData().size());
         tenants.addAll(pageData.getData());
 
-        for (int i=0;i<56;i++) {
+        List<ListenableFuture<TenantInfo>> createFutures = new ArrayList<>(56);
+        for (int i = 0; i < 56; i++) {
             Tenant tenant = new Tenant();
-            tenant.setTitle("Tenant"+i);
+            tenant.setTitle("Tenant" + i);
             createFutures.add(executor.submit(() ->
-                    tenants.add(new TenantInfo(doPost("/api/tenant", tenant, Tenant.class), "Default"))));
+                    new TenantInfo(doPost("/api/tenant", tenant, Tenant.class), "Default")));
         }
-        Futures.allAsList(createFutures).get(TIMEOUT, TimeUnit.SECONDS);
+        tenants.addAll(Futures.allAsList(createFutures).get(TIMEOUT, TimeUnit.SECONDS));
 
         List<TenantInfo> loadedTenants = new ArrayList<>();
         pageLink = new PageLink(17);
@@ -322,20 +318,20 @@ public abstract class BaseTenantControllerTest extends AbstractControllerTest {
                 pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
-        
+
         assertThat(tenants).containsExactlyInAnyOrderElementsOf(loadedTenants);
 
         for (TenantInfo tenant : loadedTenants) {
             if (!tenant.getTitle().equals(TEST_TENANT_NAME)) {
-                deleteFutures.add(executor.submit(()->
-                        doDelete("/api/tenant/"+tenant.getId().getId().toString())
+                deleteFutures.add(executor.submit(() ->
+                        doDelete("/api/tenant/" + tenant.getId().getId().toString())
                                 .andExpect(status().isOk())));
             }
         }
         Futures.allAsList(deleteFutures).get(TIMEOUT, TimeUnit.SECONDS);
-        
+
         pageLink = new PageLink(17);
-        pageData =  doGetTypedWithPageLink("/api/tenantInfos?", PAGE_DATA_TENANT_INFO_TYPE_REF, pageLink);
+        pageData = doGetTypedWithPageLink("/api/tenantInfos?", PAGE_DATA_TENANT_INFO_TYPE_REF, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(1, pageData.getData().size());
     }
