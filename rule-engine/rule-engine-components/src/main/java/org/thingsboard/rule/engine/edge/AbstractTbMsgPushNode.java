@@ -93,7 +93,7 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
                 case POST_ATTRIBUTES:
                     entityBody.put("kv", dataJson);
                     entityBody.put(SCOPE, getScope(metadata));
-                    if (SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msgType)) {
+                    if (EdgeEventActionType.POST_ATTRIBUTES.equals(actionType)) {
                         entityBody.put("isPostAttributes", true);
                     }
                     break;
@@ -104,7 +104,7 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
                     break;
                 case TIMESERIES_UPDATED:
                     entityBody.put("data", dataJson);
-                    entityBody.put("ts", metadata.get("ts"));
+                    entityBody.put("ts", msg.getMetaDataTs());
                     break;
             }
             return buildEvent(ctx.getTenantId(), actionType, msg.getOriginator().getId(), eventTypeByEntityType, JacksonUtil.valueToTree(entityBody));
