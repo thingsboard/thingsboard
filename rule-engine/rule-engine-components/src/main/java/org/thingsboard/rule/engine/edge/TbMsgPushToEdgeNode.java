@@ -15,23 +15,13 @@
  */
 package org.thingsboard.rule.engine.edge;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
-import org.thingsboard.rule.engine.api.TbNodeConfiguration;
-import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
@@ -42,12 +32,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 
-import javax.annotation.Nullable;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
@@ -84,59 +69,66 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
         icon = "cloud_download",
         ruleChainTypes = RuleChainType.CORE
 )
-public class TbMsgPushToEdgeNode implements TbNode {
+public class TbMsgPushToEdgeNode extends AbstractTbMsgPushNode<TbMsgPushToEdgeNodeConfiguration, EdgeEvent, EdgeEventType> {
 
-    private TbMsgPushToEdgeNodeConfiguration config;
-
-    private static final String SCOPE = "scope";
-
-    private static final int DEFAULT_PAGE_SIZE = 1000;
+    static final int DEFAULT_PAGE_SIZE = 100;
 
     @Override
-    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbMsgPushToEdgeNodeConfiguration.class);
+    EdgeEvent buildEvent(TenantId tenantId, EdgeEventActionType eventAction, UUID entityId,
+                         EdgeEventType eventType, JsonNode entityBody) {
+        EdgeEvent edgeEvent = new EdgeEvent();
+        edgeEvent.setTenantId(tenantId);
+        edgeEvent.setAction(eventAction);
+        edgeEvent.setEntityId(entityId);
+        edgeEvent.setType(eventType);
+        edgeEvent.setBody(entityBody);
+        return edgeEvent;
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) {
-        if (DataConstants.EDGE_MSG_SOURCE.equalsIgnoreCase(msg.getMetaData().getValue(DataConstants.MSG_SOURCE_KEY))) {
-            log.debug("Ignoring msg from the cloud, msg [{}]", msg);
-            ctx.ack(msg);
-            return;
-        }
-        if (isSupportedOriginator(msg.getOriginator().getEntityType())) {
-            if (isSupportedMsgType(msg.getType())) {
-                processMsg(ctx, msg);
-            } else {
-                log.debug("Unsupported msg type {}", msg.getType());
-                ctx.tellFailure(msg, new RuntimeException("Unsupported msg type '" + msg.getType() + "'"));
-            }
-        } else {
-            log.debug("Unsupported originator type {}", msg.getOriginator().getEntityType());
-            ctx.tellFailure(msg, new RuntimeException("Unsupported originator type '" + msg.getOriginator().getEntityType() + "'"));
-        }
+    EdgeEventType getEventTypeByEntityType(EntityType entityType) {
+        return EdgeUtils.getEdgeEventTypeByEntityType(entityType);
     }
 
-    private void processMsg(TbContext ctx, TbMsg msg) {
+    @Override
+    EdgeEventType getAlarmEventType() {
+        return EdgeEventType.ALARM;
+    }
+
+    @Override
+    String getIgnoredMessageSource() {
+        return DataConstants.EDGE_MSG_SOURCE;
+    }
+
+    @Override
+    protected Class<TbMsgPushToEdgeNodeConfiguration> getConfigClazz() {
+        return TbMsgPushToEdgeNodeConfiguration.class;
+    }
+
+    @Override
+    protected void processMsg(TbContext ctx, TbMsg msg) {
         if (EntityType.EDGE.equals(msg.getOriginator().getEntityType())) {
-            EdgeEvent edgeEvent = buildEdgeEvent(msg, ctx);
+            EdgeEvent edgeEvent = buildEvent(msg, ctx);
             if (edgeEvent != null) {
                 EdgeId edgeId = new EdgeId(msg.getOriginator().getId());
                 notifyEdge(ctx, msg, edgeEvent, edgeId);
+            } else {
+                tellFailure(ctx, msg);
             }
         } else {
             PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
             PageData<EdgeId> pageData;
+            boolean edgeNotified = false;
             do {
                 pageData = ctx.getEdgeService().findRelatedEdgeIdsByEntityId(ctx.getTenantId(), msg.getOriginator(), pageLink);
                 if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
                     for (EdgeId edgeId : pageData.getData()) {
-                        EdgeEvent edgeEvent = buildEdgeEvent(msg, ctx);
-                        if (edgeEvent == null) {
-                            log.debug("Edge event type is null. Entity Type {}", msg.getOriginator().getEntityType());
-                            ctx.tellFailure(msg, new RuntimeException("Edge event type is null. Entity Type '" + msg.getOriginator().getEntityType() + "'"));
-                        } else {
+                        EdgeEvent edgeEvent = buildEvent(msg, ctx);
+                        if (edgeEvent != null) {
                             notifyEdge(ctx, msg, edgeEvent, edgeId);
+                            edgeNotified = true;
+                        } else {
+                            tellFailure(ctx, msg);
                         }
                     }
                     if (pageData.hasNext()) {
@@ -144,7 +136,18 @@ public class TbMsgPushToEdgeNode implements TbNode {
                     }
                 }
             } while (pageData != null && pageData.hasNext());
+
+            if (!edgeNotified) {
+                // ack in case no edges are related to provided entity
+                ctx.ack(msg);
+            }
         }
+    }
+
+    private void tellFailure(TbContext ctx, TbMsg msg) {
+        String errMsg = String.format("Edge event type is null. Entity Type %s", msg.getOriginator().getEntityType());
+        log.warn(errMsg);
+        ctx.tellFailure(msg, new RuntimeException(errMsg));
     }
 
     private void notifyEdge(TbContext ctx, TbMsg msg, EdgeEvent edgeEvent, EdgeId edgeId) {
@@ -152,105 +155,6 @@ public class TbMsgPushToEdgeNode implements TbNode {
         ctx.getEdgeEventService().save(edgeEvent);
         ctx.tellNext(msg, SUCCESS);
         ctx.onEdgeEventUpdate(ctx.getTenantId(), edgeId);
-    }
-
-    private EdgeEvent buildEdgeEvent(TbMsg msg, TbContext ctx) {
-        String msgType = msg.getType();
-        if (DataConstants.ALARM.equals(msgType)) {
-            return buildEdgeEvent(ctx.getTenantId(), EdgeEventActionType.ADDED, getUUIDFromMsgData(msg), EdgeEventType.ALARM, null);
-        } else {
-            EdgeEventType edgeEventTypeByEntityType = EdgeUtils.getEdgeEventTypeByEntityType(msg.getOriginator().getEntityType());
-            if (edgeEventTypeByEntityType == null) {
-                return null;
-            }
-            EdgeEventActionType actionType = getEdgeEventActionTypeByMsgType(msgType);
-            Map<String, Object> entityBody = new HashMap<>();
-            Map<String, String> metadata = msg.getMetaData().getData();
-            JsonNode dataJson = JacksonUtil.toJsonNode(msg.getData());
-            switch (actionType) {
-                case ATTRIBUTES_UPDATED:
-                case POST_ATTRIBUTES:
-                    entityBody.put("kv", dataJson);
-                    entityBody.put(SCOPE, getScope(metadata));
-                    break;
-                case ATTRIBUTES_DELETED:
-                    List<String> keys = JacksonUtil.convertValue(dataJson.get("attributes"), new TypeReference<>() {
-                    });
-                    entityBody.put("keys", keys);
-                    entityBody.put(SCOPE, getScope(metadata));
-                    break;
-                case TIMESERIES_UPDATED:
-                    entityBody.put("data", dataJson);
-                    entityBody.put("ts", metadata.get("ts"));
-                    break;
-            }
-            return buildEdgeEvent(ctx.getTenantId(), actionType, msg.getOriginator().getId(), edgeEventTypeByEntityType, JacksonUtil.valueToTree(entityBody));
-        }
-    }
-
-    private String getScope(Map<String, String> metadata) {
-        String scope = metadata.get(SCOPE);
-        if (StringUtils.isEmpty(scope)) {
-            scope = config.getScope();
-        }
-        return scope;
-    }
-
-    private EdgeEvent buildEdgeEvent(TenantId tenantId, EdgeEventActionType edgeEventAction, UUID entityId, EdgeEventType edgeEventType, JsonNode entityBody) {
-        EdgeEvent edgeEvent = new EdgeEvent();
-        edgeEvent.setTenantId(tenantId);
-        edgeEvent.setAction(edgeEventAction);
-        edgeEvent.setEntityId(entityId);
-        edgeEvent.setType(edgeEventType);
-        edgeEvent.setBody(entityBody);
-        return edgeEvent;
-    }
-
-    private UUID getUUIDFromMsgData(TbMsg msg) {
-        JsonNode data = JacksonUtil.toJsonNode(msg.getData()).get("id");
-        String id = JacksonUtil.convertValue(data.get("id"), String.class);
-        return UUID.fromString(id);
-    }
-
-    private EdgeEventActionType getEdgeEventActionTypeByMsgType(String msgType) {
-        EdgeEventActionType actionType;
-        if (SessionMsgType.POST_TELEMETRY_REQUEST.name().equals(msgType)) {
-            actionType = EdgeEventActionType.TIMESERIES_UPDATED;
-        } else if (DataConstants.ATTRIBUTES_UPDATED.equals(msgType)) {
-            actionType = EdgeEventActionType.ATTRIBUTES_UPDATED;
-        } else if (SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msgType)) {
-            actionType = EdgeEventActionType.POST_ATTRIBUTES;
-        } else {
-            actionType = EdgeEventActionType.ATTRIBUTES_DELETED;
-        }
-        return actionType;
-    }
-
-    private boolean isSupportedOriginator(EntityType entityType) {
-        switch (entityType) {
-            case DEVICE:
-            case ASSET:
-            case ENTITY_VIEW:
-            case DASHBOARD:
-            case TENANT:
-            case CUSTOMER:
-            case EDGE:
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    private boolean isSupportedMsgType(String msgType) {
-        return SessionMsgType.POST_TELEMETRY_REQUEST.name().equals(msgType)
-                || SessionMsgType.POST_ATTRIBUTES_REQUEST.name().equals(msgType)
-                || DataConstants.ATTRIBUTES_UPDATED.equals(msgType)
-                || DataConstants.ATTRIBUTES_DELETED.equals(msgType)
-                || DataConstants.ALARM.equals(msgType);
-    }
-
-    @Override
-    public void destroy() {
     }
 
 }
