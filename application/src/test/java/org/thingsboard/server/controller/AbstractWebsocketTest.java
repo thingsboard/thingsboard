@@ -16,7 +16,8 @@
 package org.thingsboard.server.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Assert;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootContextLoader;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,8 +28,12 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
+
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ActiveProfiles("test")
 @RunWith(SpringRunner.class)
@@ -39,15 +44,43 @@ import java.net.URISyntaxException;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Slf4j
 public abstract class AbstractWebsocketTest extends AbstractWebTest {
-
-    protected static final String WS_URL = "ws://localhost:";
+    public static final String WS_URL = "ws://localhost:";
 
     @LocalServerPort
     protected int wsPort;
 
-    protected TbTestWebSocketClient buildAndConnectWebSocketClient() throws URISyntaxException, InterruptedException {
+    private TbTestWebSocketClient wsClient; // lazy
+
+    public TbTestWebSocketClient getWsClient() {
+        if (wsClient == null) {
+            synchronized (this) {
+                try {
+                    if (wsClient == null) {
+                        wsClient = buildAndConnectWebSocketClient();
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        return wsClient;
+    }
+
+    @Before
+    public void beforeWsTest() throws Exception {
+        // placeholder
+    }
+
+    @After
+    public void afterWsTest() throws Exception {
+        if (wsClient != null) {
+            wsClient.close();
+        }
+    }
+
+    private TbTestWebSocketClient buildAndConnectWebSocketClient() throws URISyntaxException, InterruptedException {
         TbTestWebSocketClient wsClient = new TbTestWebSocketClient(new URI(WS_URL + wsPort + "/api/ws/plugins/telemetry?token=" + token));
-        Assert.assertTrue(wsClient.connectBlocking());
+        assertThat(wsClient.connectBlocking(TIMEOUT, TimeUnit.SECONDS)).isTrue();
         return wsClient;
     }
 

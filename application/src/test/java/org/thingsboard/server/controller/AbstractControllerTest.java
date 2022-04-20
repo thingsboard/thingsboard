@@ -36,6 +36,6 @@ import org.springframework.test.context.web.WebAppConfiguration;
 @WebAppConfiguration
 @SpringBootTest()
 @Slf4j
-public abstract class AbstractControllerTest extends AbstractWebTest  {
+public abstract class AbstractControllerTest extends AbstractWebsocketTest  {
 
 }

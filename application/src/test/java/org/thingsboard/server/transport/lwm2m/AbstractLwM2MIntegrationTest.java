@@ -176,7 +176,6 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationBsSuccess = new HashSet<>(Arrays.asList(ON_INIT, ON_BOOTSTRAP_STARTED, ON_BOOTSTRAP_SUCCESS, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
     protected DeviceProfile deviceProfile;
     protected ScheduledExecutorService executor;
-    protected TbTestWebSocketClient wsClient;
     protected LwM2MTestClient lwM2MTestClient;
     private String[] resources;
 
@@ -187,7 +186,6 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
 
     @After
     public void after() {
-        wsClient.close();
         clientDestroy();
         executor.shutdownNow();
     }
@@ -212,7 +210,6 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
             });
             Assert.assertNotNull(lwModel);
         }
-        wsClient = buildAndConnectWebSocketClient();
     }
 
     public void basicTestConnectionObserveTelemetry(Security security,
@@ -234,12 +231,12 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         TelemetryPluginCmdsWrapper wrapper = new TelemetryPluginCmdsWrapper();
         wrapper.setEntityDataCmds(Collections.singletonList(cmd));
 
-        wsClient.send(mapper.writeValueAsString(wrapper));
-        wsClient.waitForReply();
+        getWsClient().send(mapper.writeValueAsString(wrapper));
+        getWsClient().waitForReply();
 
-        wsClient.registerWaitForUpdate();
+        getWsClient().registerWaitForUpdate();
         createNewClient(security, coapConfig, false, endpoint, false, null);
-        String msg = wsClient.waitForUpdate();
+        String msg = getWsClient().waitForUpdate();
 
         EntityDataUpdate update = mapper.readValue(msg, EntityDataUpdate.class);
         Assert.assertEquals(1, update.getCmdId());

@@ -97,6 +97,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 
 @Slf4j
 public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
+    public static final int TIMEOUT = 30;
 
     protected ObjectMapper mapper = new ObjectMapper();
 
