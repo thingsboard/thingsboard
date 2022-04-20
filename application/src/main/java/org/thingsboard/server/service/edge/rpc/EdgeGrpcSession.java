@@ -399,13 +399,9 @@ public final class EdgeGrpcSession implements Closeable {
         Runnable sendDownlinkMsgsTask = () -> {
             try {
                 if (isConnected() && sessionState.getPendingMsgsMap().values().size() > 0) {
-                    List<DownlinkMsg> copy = null;
+                    List<DownlinkMsg> copy = new ArrayList<>(sessionState.getPendingMsgsMap().values());
                     if (!firstRun) {
-                        copy = new ArrayList<>(sessionState.getPendingMsgsMap().values());
                         log.warn("[{}] Failed to deliver the batch: {}", this.sessionId, copy);
-                    }
-                    if (copy == null) {
-                        copy = new ArrayList<>(sessionState.getPendingMsgsMap().values());
                     }
                     log.trace("[{}] [{}] downlink msg(s) are going to be send.", this.sessionId, copy.size());
                     for (DownlinkMsg downlinkMsg : copy) {
