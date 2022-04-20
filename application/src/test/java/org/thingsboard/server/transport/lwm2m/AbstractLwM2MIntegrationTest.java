@@ -60,8 +60,7 @@ import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
-import org.thingsboard.server.controller.AbstractWebsocketTest;
-import org.thingsboard.server.controller.TbTestWebSocketClient;
+import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.telemetry.cmd.TelemetryPluginCmdsWrapper;
 import org.thingsboard.server.service.telemetry.cmd.v2.EntityDataCmd;
@@ -104,7 +103,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfil
 })
 @Slf4j
 @DaoSqlTest
-public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest {
+public abstract class AbstractLwM2MIntegrationTest extends AbstractControllerTest {
 
     @SpyBean
     DefaultLwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandlerTest;
@@ -191,11 +190,11 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
     }
 
     @AfterClass
-    public static void afterClass () {
+    public static void afterClass() {
         awaitServersDestroy();
     }
 
-    private void init () throws Exception {
+    private void init() throws Exception {
         executor = Executors.newScheduledThreadPool(10, ThingsBoardThreadFactory.forName("test-lwm2m-scheduled"));
         loginTenantAdmin();
         for (String resourceName : this.resources) {
@@ -368,7 +367,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         return credentials;
     }
 
-    private static void awaitServersDestroy()  {
+    private static void awaitServersDestroy() {
         await("One of servers ports number is not free")
                 .atMost(3000, TimeUnit.MILLISECONDS)
                 .until(() -> isServerPortsAvailable() == null);
@@ -387,7 +386,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractWebsocketTest
         return null;
     }
 
-    private static void awaitClientDestroy(LeshanClient leshanClient)  {
+    private static void awaitClientDestroy(LeshanClient leshanClient) {
         await("Destroy LeshanClient: delete All is registered Servers.")
                 .atMost(2000, TimeUnit.MILLISECONDS)
                 .until(() -> leshanClient.getRegisteredServers().size() == 0);
