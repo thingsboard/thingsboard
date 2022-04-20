@@ -186,7 +186,6 @@ public class OtaPackageController extends BaseController {
                                              @RequestPart MultipartFile file) throws ThingsboardException {
         checkParameter(OTA_PACKAGE_ID, strOtaPackageId);
         checkParameter(CHECKSUM_ALGORITHM, checksumAlgorithmStr);
-        checkNotNullBadRequest(file, "Parameter file can't be empty!");
         try {
             OtaPackageId otaPackageId = new OtaPackageId(toUUID(strOtaPackageId));
             OtaPackageInfo info = checkOtaPackageInfoId(otaPackageId, Operation.READ);
@@ -204,7 +203,6 @@ public class OtaPackageController extends BaseController {
             ChecksumAlgorithm checksumAlgorithm = ChecksumAlgorithm.valueOf(checksumAlgorithmStr.toUpperCase());
 
             byte[] bytes = file.getBytes();
-            checkNotNullBadRequest(bytes, "Parameter file can't be empty!");
             if (StringUtils.isEmpty(checksum)) {
                 checksum = otaPackageService.generateChecksum(checksumAlgorithm, ByteBuffer.wrap(bytes));
             }
