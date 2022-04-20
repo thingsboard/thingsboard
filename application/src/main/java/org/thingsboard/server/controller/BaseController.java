@@ -321,6 +321,15 @@ public abstract class BaseController {
         return reference;
     }
 
+    <T> T checkNotNullBadRequest(T reference, String badRequestMessage) throws ThingsboardException {
+        if (reference == null) {
+            throw new ThingsboardException(badRequestMessage, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        } else if (reference instanceof byte[] && ((byte[])reference).length == 0) {
+            throw new ThingsboardException(badRequestMessage, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+        return reference;
+    }
+
     <T> T checkNotNull(Optional<T> reference) throws ThingsboardException {
         return checkNotNull(reference, "Requested item wasn't found!");
     }
