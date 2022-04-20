@@ -80,10 +80,6 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
         if (DataConstants.ALARM.equals(msgType)) {
             return buildEvent(ctx.getTenantId(), EdgeEventActionType.ADDED, getUUIDFromMsgData(msg), getAlarmEventType(), null);
         } else {
-            U eventTypeByEntityType = getEventTypeByEntityType(msg.getOriginator().getEntityType());
-            if (eventTypeByEntityType == null) {
-                return null;
-            }
             EdgeEventActionType actionType = getEdgeEventActionTypeByMsgType(msgType);
             Map<String, Object> entityBody = new HashMap<>();
             Map<String, String> metadata = msg.getMetaData().getData();
@@ -107,7 +103,11 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
                     entityBody.put("ts", msg.getMetaDataTs());
                     break;
             }
-            return buildEvent(ctx.getTenantId(), actionType, msg.getOriginator().getId(), eventTypeByEntityType, JacksonUtil.valueToTree(entityBody));
+            return buildEvent(ctx.getTenantId(),
+                    actionType,
+                    msg.getOriginator().getId(),
+                    getEventTypeByEntityType(msg.getOriginator().getEntityType()),
+                    JacksonUtil.valueToTree(entityBody));
         }
     }
 

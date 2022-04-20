@@ -16,11 +16,15 @@
 package org.thingsboard.server.service.edge;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -76,17 +80,17 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     @Autowired
     private CustomerEdgeProcessor customerProcessor;
 
-    private ExecutorService tsCallBackExecutor;
+    private ExecutorService dbCallBackExecutor;
 
     @PostConstruct
     public void initExecutor() {
-        tsCallBackExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("edge-notifications"));
+        dbCallBackExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("edge-notifications"));
     }
 
     @PreDestroy
     public void shutdownExecutor() {
-        if (tsCallBackExecutor != null) {
-            tsCallBackExecutor.shutdownNow();
+        if (dbCallBackExecutor != null) {
+            dbCallBackExecutor.shutdownNow();
         }
     }
 
@@ -107,17 +111,20 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
         log.debug("Pushing edge event to edge queue. tenantId [{}], edgeId [{}], type [{}], action[{}], entityId [{}], body [{}]",
                 tenantId, edgeId, type, action, entityId, body);
 
-        EdgeEvent edgeEvent = new EdgeEvent();
-        edgeEvent.setEdgeId(edgeId);
-        edgeEvent.setTenantId(tenantId);
-        edgeEvent.setType(type);
-        edgeEvent.setAction(action);
-        if (entityId != null) {
-            edgeEvent.setEntityId(entityId.getId());
-        }
-        edgeEvent.setBody(body);
-        edgeEventService.save(edgeEvent);
-        clusterService.onEdgeEventUpdate(tenantId, edgeId);
+        EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(tenantId, edgeId, type, action, entityId, body);
+
+        Futures.addCallback(edgeEventService.saveAsync(edgeEvent), new FutureCallback<>() {
+            @Override
+            public void onSuccess(@Nullable Void unused) {
+                clusterService.onEdgeEventUpdate(tenantId, edgeId);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                String errMsg = String.format("Failed to save edge event. edge event [%s]", edgeEvent);
+                log.warn(errMsg, t);
+            }
+        }, dbCallBackExecutor);
     }
 
     @Override

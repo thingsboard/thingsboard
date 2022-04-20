@@ -17,10 +17,14 @@ package org.thingsboard.server.service.edge.rpc.processor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -189,17 +193,20 @@ public abstract class BaseEdgeProcessor {
                         "action [{}], entityId [{}], body [{}]",
                 tenantId, edgeId, type, action, entityId, body);
 
-        EdgeEvent edgeEvent = new EdgeEvent();
-        edgeEvent.setTenantId(tenantId);
-        edgeEvent.setEdgeId(edgeId);
-        edgeEvent.setType(type);
-        edgeEvent.setAction(action);
-        if (entityId != null) {
-            edgeEvent.setEntityId(entityId.getId());
-        }
-        edgeEvent.setBody(body);
-        edgeEventService.save(edgeEvent);
-        tbClusterService.onEdgeEventUpdate(tenantId, edgeId);
+        EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(tenantId, edgeId, type, action, entityId, body);
+
+        Futures.addCallback(edgeEventService.saveAsync(edgeEvent), new FutureCallback<>() {
+            @Override
+            public void onSuccess(@Nullable Void unused) {
+                tbClusterService.onEdgeEventUpdate(tenantId, edgeId);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                String errMsg = String.format("Failed to save edge event. edge event [%s]", edgeEvent);
+                log.warn(errMsg, t);
+            }
+        }, dbCallbackExecutorService);
     }
 
     protected CustomerId getCustomerIdIfEdgeAssignedToCustomer(HasCustomerId hasCustomerIdEntity, Edge edge) {

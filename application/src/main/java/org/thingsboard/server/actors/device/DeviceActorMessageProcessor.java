@@ -35,6 +35,7 @@ import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -97,7 +98,6 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -811,12 +811,6 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
     }
 
     private void saveRpcRequestToEdgeQueue(ToDeviceRpcRequest msg, Integer requestId) {
-        EdgeEvent edgeEvent = new EdgeEvent();
-        edgeEvent.setTenantId(tenantId);
-        edgeEvent.setAction(EdgeEventActionType.RPC_CALL);
-        edgeEvent.setEntityId(deviceId.getId());
-        edgeEvent.setType(EdgeEventType.DEVICE);
-
         ObjectNode body = mapper.createObjectNode();
         body.put("requestId", requestId);
         body.put("requestUUID", msg.getId().toString());
@@ -824,11 +818,21 @@ class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
         body.put("expirationTime", msg.getExpirationTime());
         body.put("method", msg.getBody().getMethod());
         body.put("params", msg.getBody().getParams());
-        edgeEvent.setBody(body);
 
-        edgeEvent.setEdgeId(edgeId);
-        systemContext.getEdgeEventService().save(edgeEvent);
-        systemContext.getClusterService().onEdgeEventUpdate(tenantId, edgeId);
+        EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(tenantId, edgeId, EdgeEventType.DEVICE, EdgeEventActionType.RPC_CALL, deviceId, body);
+
+        Futures.addCallback(systemContext.getEdgeEventService().saveAsync(edgeEvent), new FutureCallback<>() {
+            @Override
+            public void onSuccess(Void unused) {
+                systemContext.getClusterService().onEdgeEventUpdate(tenantId, edgeId);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                String errMsg = String.format("Failed to save edge event. msg [%s], edge event [%s]", msg, edgeEvent);
+                log.warn(errMsg, t);
+            }
+        }, systemContext.getDbCallbackExecutor());
     }
 
     private List<TsKvProto> toTsKvProtos(@Nullable List<AttributeKvEntry> result) {
