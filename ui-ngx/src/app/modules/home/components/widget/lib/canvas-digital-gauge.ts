@@ -86,6 +86,9 @@ export interface CanvasDigitalGaugeOptions extends GenericOptions {
   colorTicks?: string;
   tickWidth?: number;
 
+  labelTimestamp?: string
+  unitTitle?: string;
+  showUnitTitle?: boolean;
   showTimestamp?: boolean;
 }
 
@@ -362,7 +365,7 @@ export class CanvasDigitalGauge extends BaseGauge {
       const options = this.options as CanvasDigitalGaugeOptions;
       const elementClone = canvas.elementClone as HTMLCanvasElementClone;
       if (!elementClone.initialized) {
-        const context = canvas.contextClone;
+        let context = canvas.contextClone;
 
         // clear the cache
         context.clearRect(x, y, w, h);
@@ -378,8 +381,9 @@ export class CanvasDigitalGauge extends BaseGauge {
 
         drawDigitalTitle(context, options);
 
-        if (!options.showTimestamp) {
-          drawDigitalLabel(context, options);
+        if (options.showUnitTitle) {
+          drawDigitalLabel(context, options, options.unitTitle);
+          context['barDimensions'].labelY += 20;
         }
 
         drawDigitalMinMax(context, options);
@@ -406,7 +410,7 @@ export class CanvasDigitalGauge extends BaseGauge {
         drawDigitalValue(context, options, this.elementValueClone.renderedValue);
 
         if (options.showTimestamp) {
-          drawDigitalLabel(context, options);
+          drawDigitalLabel(context, options, options.labelTimestamp);
           this.elementValueClone.renderedTimestamp = this.timestamp;
         }
 
@@ -751,8 +755,8 @@ function drawDigitalTitle(context: DigitalGaugeCanvasRenderingContext2D, options
   context.restore();
 }
 
-function drawDigitalLabel(context: DigitalGaugeCanvasRenderingContext2D, options: CanvasDigitalGaugeOptions) {
-  if (!options.label || options.label === '') {
+function drawDigitalLabel(context: DigitalGaugeCanvasRenderingContext2D, options: CanvasDigitalGaugeOptions, text: string) {
+  if (!text || text === '') {
     return;
   }
 
@@ -766,7 +770,7 @@ function drawDigitalLabel(context: DigitalGaugeCanvasRenderingContext2D, options
   context.textAlign = 'center';
   context.font = Drawings.font(options, 'Label', fontSizeFactor);
   context.lineWidth = 0;
-  drawText(context, options, 'Label', options.label, textX, textY);
+  drawText(context, options, 'Label', text, textX, textY);
   context.restore();
 }
 
