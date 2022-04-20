@@ -41,8 +41,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
-
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
