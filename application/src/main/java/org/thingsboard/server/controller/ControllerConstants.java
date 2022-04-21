@@ -21,12 +21,24 @@ public class ControllerConstants {
     protected static final String UUID_WIKI_LINK = "[time-based UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_(date-time_and_MAC_address)). ";
     protected static final int DEFAULT_PAGE_SIZE = 1000;
     protected static final String ENTITY_TYPE = "entityType";
-    protected static final String CUSTOMER_ID = "customerId";
-    protected static final String TENANT_ID = "tenantId";
-    protected static final String DEVICE_ID = "deviceId";
     protected static final String EDGE_ID = "edgeId";
     protected static final String RPC_ID = "rpcId";
     protected static final String ENTITY_ID = "entityId";
+    protected static final String CUSTOMER_ID = "customerId";
+    protected static final String TENANT_ID = "tenantId";
+    protected static final String DEVICE_ID = "deviceId";
+    protected static final String DEVICE_PROFILE_ID = "deviceProfileId";
+    protected static final String ASSET_ID = "assetId";
+    protected static final String DASHBOARD_ID = "dashboardId";
+    protected static final String RULE_CHAIN_ID = "ruleChainId";
+    protected static final String RULE_NODE_ID = "ruleNodeId";
+    protected static final String USER_ID = "userId";
+    protected static final String CLIENT_REGISTRATION_TEMPLATE_ID = "clientRegistrationTemplateId";
+    protected static final String OTA_PACKAGE_ID = "otaPackageId";
+    protected static final String RESOURCE_ID = "resourceId";
+    protected static final String WIDGETS_BUNDLE_ID = "widgetsBundleId";
+    protected static final String WIDGET_TYPE_ID = "widgetTypeId";
+
     protected static final String PAGE_DATA_PARAMETERS = "You can specify parameters to filter the results. " +
             "The result is wrapped with PageData object that allows you to iterate over result set using pagination. " +
             "See the 'Model' tab of the Response Class for more details. ";
@@ -1403,8 +1415,6 @@ public class ControllerConstants {
 
     protected static final String DEVICE_PROFILE_DATA = DEVICE_PROFILE_DATA_DEFINITION + ALARM_SCHEDULE + ALARM_CONDITION_TYPE +
             KEY_FILTERS_DESCRIPTION + PROVISION_CONFIGURATION + TRANSPORT_CONFIGURATION;
-
-    protected static final String DEVICE_PROFILE_ID = "deviceProfileId";
 
     protected static final String MODEL_DESCRIPTION = "See the 'Model' tab for more details.";
     protected static final String ENTITY_VIEW_DESCRIPTION = "Entity Views limit the degree of exposure of the Device or Asset telemetry and attributes to the Customers. " +

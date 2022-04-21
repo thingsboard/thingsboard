@@ -58,8 +58,6 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
-import org.thingsboard.server.dao.exception.IncorrectParameterException;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -106,7 +104,7 @@ import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 @TbCoreComponent
 @RequestMapping("/api")
 @Slf4j
-public class EntityViewController extends BaseController {
+public class EntityViewController extends DefaultEntityBaseController {
 
     public static final String ENTITY_VIEW_ID = "entityViewId";
 
@@ -402,25 +400,8 @@ public class EntityViewController extends BaseController {
             @ApiParam(value = ENTITY_VIEW_ID_PARAM_DESCRIPTION)
             @PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
         checkParameter(ENTITY_VIEW_ID, strEntityViewId);
-        try {
-            EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
-            EntityView entityView = checkEntityViewId(entityViewId, Operation.DELETE);
-
-            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(getTenantId(), entityViewId);
-
-            entityViewService.deleteEntityView(getTenantId(), entityViewId);
-            logEntityAction(entityViewId, entityView, entityView.getCustomerId(),
-                    ActionType.DELETED, null, strEntityViewId);
-
-            sendDeleteNotificationMsg(getTenantId(), entityViewId, relatedEdgeIds);
-        } catch (Exception e) {
-            logEntityAction(emptyId(EntityType.ENTITY_VIEW),
-                    null,
-                    null,
-                    ActionType.DELETED, e, strEntityViewId);
-            throw handleException(e);
-        }
-    }
+        entityDeleteService.deleteEntity(getTenantId(), new EntityViewId(toUUID(strEntityViewId)));
+     }
 
     @ApiOperation(value = "Get Entity View by name (getTenantEntityView)",
             notes = "Fetch the Entity View object based on the tenant id and entity view name. " + TENANT_AUTHORITY_PARAGRAPH,
@@ -484,29 +465,8 @@ public class EntityViewController extends BaseController {
             @ApiParam(value = ENTITY_VIEW_ID_PARAM_DESCRIPTION)
             @PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
         checkParameter(ENTITY_VIEW_ID, strEntityViewId);
-        try {
-            EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
-            EntityView entityView = checkEntityViewId(entityViewId, Operation.UNASSIGN_FROM_CUSTOMER);
-            if (entityView.getCustomerId() == null || entityView.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-                throw new IncorrectParameterException("Entity View isn't assigned to any customer!");
-            }
-            Customer customer = checkCustomerId(entityView.getCustomerId(), Operation.READ);
-            EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromCustomer(getTenantId(), entityViewId));
-            logEntityAction(entityViewId, entityView,
-                    entityView.getCustomerId(),
-                    ActionType.UNASSIGNED_FROM_CUSTOMER, null, strEntityViewId, customer.getId().toString(), customer.getName());
-
-            sendEntityAssignToCustomerNotificationMsg(savedEntityView.getTenantId(), savedEntityView.getId(),
-                    customer.getId(), EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER);
-
-            return savedEntityView;
-        } catch (Exception e) {
-            logEntityAction(emptyId(EntityType.ENTITY_VIEW), null,
-                    null,
-                    ActionType.UNASSIGNED_FROM_CUSTOMER, e, strEntityViewId);
-            throw handleException(e);
-        }
-    }
+        return entityDeleteService.deleteUnassignEntityView(new EntityViewId(toUUID(strEntityViewId)));
+     }
 
     @ApiOperation(value = "Get Customer Entity Views (getCustomerEntityViews)",
             notes = "Returns a page of Entity View objects assigned to customer. " +
@@ -775,27 +735,7 @@ public class EntityViewController extends BaseController {
                                                  @PathVariable(ENTITY_VIEW_ID) String strEntityViewId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
         checkParameter(ENTITY_VIEW_ID, strEntityViewId);
-        try {
-            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-            Edge edge = checkEdgeId(edgeId, Operation.READ);
-
-            EntityViewId entityViewId = new EntityViewId(toUUID(strEntityViewId));
-            EntityView entityView = checkEntityViewId(entityViewId, Operation.READ);
-
-            EntityView savedEntityView = checkNotNull(entityViewService.unassignEntityViewFromEdge(getTenantId(), entityViewId, edgeId));
-            logEntityAction(entityViewId, entityView,
-                    entityView.getCustomerId(),
-                    ActionType.UNASSIGNED_FROM_EDGE, null, strEntityViewId, strEdgeId, edge.getName());
-
-            sendEntityAssignToEdgeNotificationMsg(getTenantId(), edgeId, savedEntityView.getId(), EdgeEventActionType.UNASSIGNED_FROM_EDGE);
-
-            return savedEntityView;
-        } catch (Exception e) {
-            logEntityAction(emptyId(EntityType.ENTITY_VIEW), null,
-                    null,
-                    ActionType.UNASSIGNED_FROM_EDGE, e, strEntityViewId, strEdgeId);
-            throw handleException(e);
-        }
+        return entityDeleteService.deleteUnassignEntityView(new EntityViewId(toUUID(strEntityViewId)), new EdgeId(toUUID(strEdgeId)));
     }
 
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")

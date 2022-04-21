@@ -68,9 +68,6 @@ import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.device.claim.ClaimResponse;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
-import org.thingsboard.server.dao.device.claim.ReclaimResult;
-import org.thingsboard.server.dao.exception.IncorrectParameterException;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.device.DeviceBulkImportService;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
@@ -120,7 +117,7 @@ import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 @RequestMapping("/api")
 @RequiredArgsConstructor
 @Slf4j
-public class DeviceController extends BaseController {
+public class DeviceController extends DefaultEntityBaseController {
 
     protected static final String DEVICE_ID = "deviceId";
     protected static final String DEVICE_NAME = "deviceName";
@@ -257,30 +254,8 @@ public class DeviceController extends BaseController {
     public void deleteDevice(@ApiParam(value = DEVICE_ID_PARAM_DESCRIPTION)
                              @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
         checkParameter(DEVICE_ID, strDeviceId);
-        try {
-            DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-            Device device = checkDeviceId(deviceId, Operation.DELETE);
-
-            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(getTenantId(), deviceId);
-
-            deviceService.deleteDevice(getCurrentUser().getTenantId(), deviceId);
-
-            gatewayNotificationsService.onDeviceDeleted(device);
-            tbClusterService.onDeviceDeleted(device, null);
-
-            logEntityAction(deviceId, device,
-                    device.getCustomerId(),
-                    ActionType.DELETED, null, strDeviceId);
-
-            sendDeleteNotificationMsg(getTenantId(), deviceId, relatedEdgeIds);
-        } catch (Exception e) {
-            logEntityAction(emptyId(EntityType.DEVICE),
-                    null,
-                    null,
-                    ActionType.DELETED, e, strDeviceId);
-            throw handleException(e);
-        }
-    }
+        entityDeleteService.deleteEntity(getTenantId(), new DeviceId(toUUID(strDeviceId)));
+     }
 
     @ApiOperation(value = "Assign device to customer (assignDeviceToCustomer)",
             notes = "Creates assignment of the device to customer. Customer will be able to query device afterwards." + TENANT_AUTHORITY_PARAGRAPH)
@@ -326,31 +301,8 @@ public class DeviceController extends BaseController {
     public Device unassignDeviceFromCustomer(@ApiParam(value = DEVICE_ID_PARAM_DESCRIPTION)
                                              @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
         checkParameter(DEVICE_ID, strDeviceId);
-        try {
-            DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-            Device device = checkDeviceId(deviceId, Operation.UNASSIGN_FROM_CUSTOMER);
-            if (device.getCustomerId() == null || device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-                throw new IncorrectParameterException("Device isn't assigned to any customer!");
-            }
-            Customer customer = checkCustomerId(device.getCustomerId(), Operation.READ);
-
-            Device savedDevice = checkNotNull(deviceService.unassignDeviceFromCustomer(getCurrentUser().getTenantId(), deviceId));
-
-            logEntityAction(deviceId, device,
-                    device.getCustomerId(),
-                    ActionType.UNASSIGNED_FROM_CUSTOMER, null, strDeviceId, customer.getId().toString(), customer.getName());
-
-            sendEntityAssignToCustomerNotificationMsg(savedDevice.getTenantId(), savedDevice.getId(),
-                    customer.getId(), EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER);
-
-            return savedDevice;
-        } catch (Exception e) {
-            logEntityAction(emptyId(EntityType.DEVICE), null,
-                    null,
-                    ActionType.UNASSIGNED_FROM_CUSTOMER, e, strDeviceId);
-            throw handleException(e);
-        }
-    }
+        return entityDeleteService.deleteUnassignDevice(new DeviceId(toUUID(strDeviceId)));
+     }
 
     @ApiOperation(value = "Make device publicly available (assignDeviceToPublicCustomer)",
             notes = "Device will be available for non-authorized (not logged-in) users. " +
@@ -749,42 +701,7 @@ public class DeviceController extends BaseController {
     public DeferredResult<ResponseEntity> reClaimDevice(@ApiParam(value = "Unique name of the device which is going to be reclaimed")
                                                         @PathVariable(DEVICE_NAME) String deviceName) throws ThingsboardException {
         checkParameter(DEVICE_NAME, deviceName);
-        try {
-            final DeferredResult<ResponseEntity> deferredResult = new DeferredResult<>();
-
-            SecurityUser user = getCurrentUser();
-            TenantId tenantId = user.getTenantId();
-
-            Device device = checkNotNull(deviceService.findDeviceByTenantIdAndName(tenantId, deviceName));
-            accessControlService.checkPermission(user, Resource.DEVICE, Operation.CLAIM_DEVICES,
-                    device.getId(), device);
-
-            ListenableFuture<ReclaimResult> result = claimDevicesService.reClaimDevice(tenantId, device);
-            Futures.addCallback(result, new FutureCallback<>() {
-                @Override
-                public void onSuccess(ReclaimResult reclaimResult) {
-                    deferredResult.setResult(new ResponseEntity(HttpStatus.OK));
-
-                    Customer unassignedCustomer = reclaimResult.getUnassignedCustomer();
-                    if (unassignedCustomer != null) {
-                        try {
-                            logEntityAction(user, device.getId(), device, device.getCustomerId(), ActionType.UNASSIGNED_FROM_CUSTOMER, null,
-                                    device.getId().toString(), unassignedCustomer.getId().toString(), unassignedCustomer.getName());
-                        } catch (ThingsboardException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    deferredResult.setErrorResult(t);
-                }
-            }, MoreExecutors.directExecutor());
-            return deferredResult;
-        } catch (Exception e) {
-            throw handleException(e);
-        }
+        return entityDeleteService.deleteReClaimDevice(deviceName);
     }
 
     private String getSecretKey(ClaimRequest claimRequest) throws IOException {
@@ -905,28 +822,7 @@ public class DeviceController extends BaseController {
                                          @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
         checkParameter(DEVICE_ID, strDeviceId);
-        try {
-            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-            Edge edge = checkEdgeId(edgeId, Operation.READ);
-
-            DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
-            Device device = checkDeviceId(deviceId, Operation.READ);
-
-            Device savedDevice = checkNotNull(deviceService.unassignDeviceFromEdge(getCurrentUser().getTenantId(), deviceId, edgeId));
-
-            logEntityAction(deviceId, device,
-                    device.getCustomerId(),
-                    ActionType.UNASSIGNED_FROM_EDGE, null, strDeviceId, strEdgeId, edge.getName());
-
-            sendEntityAssignToEdgeNotificationMsg(getTenantId(), edgeId, savedDevice.getId(), EdgeEventActionType.UNASSIGNED_FROM_EDGE);
-
-            return savedDevice;
-        } catch (Exception e) {
-            logEntityAction(emptyId(EntityType.DEVICE), null,
-                    null,
-                    ActionType.UNASSIGNED_FROM_EDGE, e, strDeviceId, strEdgeId);
-            throw handleException(e);
-        }
+        return entityDeleteService.deleteUnassignDevice(new DeviceId(toUUID(strDeviceId)), new EdgeId(toUUID(strEdgeId)));
     }
 
     @ApiOperation(value = "Get devices assigned to edge (getEdgeDevices)",

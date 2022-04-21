@@ -50,8 +50,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
-import org.thingsboard.server.dao.exception.IncorrectParameterException;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.asset.AssetBulkImportService;
 import org.thingsboard.server.service.importing.BulkImportRequest;
@@ -64,6 +62,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.controller.ControllerConstants.ASSET_ID;
 import static org.thingsboard.server.controller.ControllerConstants.ASSET_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ASSET_INFO_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ASSET_NAME_DESCRIPTION;
@@ -93,10 +92,8 @@ import static org.thingsboard.server.dao.asset.BaseAssetService.TB_SERVICE_QUEUE
 @RequestMapping("/api")
 @RequiredArgsConstructor
 @Slf4j
-public class AssetController extends BaseController {
+public class AssetController extends DefaultEntityBaseController {
     private final AssetBulkImportService assetBulkImportService;
-
-    public static final String ASSET_ID = "assetId";
 
     @ApiOperation(value = "Get Asset (getAssetById)",
             notes = "Fetch the Asset object based on the provided Asset Id. " +
@@ -187,26 +184,7 @@ public class AssetController extends BaseController {
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteAsset(@ApiParam(value = ASSET_ID_PARAM_DESCRIPTION) @PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
         checkParameter(ASSET_ID, strAssetId);
-        try {
-            AssetId assetId = new AssetId(toUUID(strAssetId));
-            Asset asset = checkAssetId(assetId, Operation.DELETE);
-
-            List<EdgeId> relatedEdgeIds = findRelatedEdgeIds(getTenantId(), assetId);
-
-            assetService.deleteAsset(getTenantId(), assetId);
-
-            logEntityAction(assetId, asset,
-                    asset.getCustomerId(),
-                    ActionType.DELETED, null, strAssetId);
-
-            sendDeleteNotificationMsg(getTenantId(), assetId, relatedEdgeIds);
-        } catch (Exception e) {
-            logEntityAction(emptyId(EntityType.ASSET),
-                    null,
-                    null,
-                    ActionType.DELETED, e, strAssetId);
-            throw handleException(e);
-        }
+        entityDeleteService.deleteEntity(getTenantId(), new AssetId(toUUID(strAssetId)));
     }
 
     @ApiOperation(value = "Assign asset to customer (assignAssetToCustomer)",
@@ -252,33 +230,7 @@ public class AssetController extends BaseController {
     @ResponseBody
     public Asset unassignAssetFromCustomer(@ApiParam(value = ASSET_ID_PARAM_DESCRIPTION) @PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
         checkParameter(ASSET_ID, strAssetId);
-        try {
-            AssetId assetId = new AssetId(toUUID(strAssetId));
-            Asset asset = checkAssetId(assetId, Operation.UNASSIGN_FROM_CUSTOMER);
-            if (asset.getCustomerId() == null || asset.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
-                throw new IncorrectParameterException("Asset isn't assigned to any customer!");
-            }
-
-            Customer customer = checkCustomerId(asset.getCustomerId(), Operation.READ);
-
-            Asset savedAsset = checkNotNull(assetService.unassignAssetFromCustomer(getTenantId(), assetId));
-
-            logEntityAction(assetId, asset,
-                    asset.getCustomerId(),
-                    ActionType.UNASSIGNED_FROM_CUSTOMER, null, strAssetId, customer.getId().toString(), customer.getName());
-
-            sendEntityAssignToCustomerNotificationMsg(savedAsset.getTenantId(), savedAsset.getId(),
-                    customer.getId(), EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER);
-
-            return savedAsset;
-        } catch (Exception e) {
-
-            logEntityAction(emptyId(EntityType.ASSET), null,
-                    null,
-                    ActionType.UNASSIGNED_FROM_CUSTOMER, e, strAssetId);
-
-            throw handleException(e);
-        }
+        return entityDeleteService.deleteUnassignAsset(new AssetId(toUUID(strAssetId)));
     }
 
     @ApiOperation(value = "Make asset publicly available (assignAssetToPublicCustomer)",
@@ -593,30 +545,7 @@ public class AssetController extends BaseController {
                                        @ApiParam(value = ASSET_ID_PARAM_DESCRIPTION) @PathVariable(ASSET_ID) String strAssetId) throws ThingsboardException {
         checkParameter(EDGE_ID, strEdgeId);
         checkParameter(ASSET_ID, strAssetId);
-        try {
-            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
-            Edge edge = checkEdgeId(edgeId, Operation.READ);
-
-            AssetId assetId = new AssetId(toUUID(strAssetId));
-            Asset asset = checkAssetId(assetId, Operation.READ);
-
-            Asset savedAsset = checkNotNull(assetService.unassignAssetFromEdge(getTenantId(), assetId, edgeId));
-
-            logEntityAction(assetId, asset,
-                    asset.getCustomerId(),
-                    ActionType.UNASSIGNED_FROM_EDGE, null, strAssetId, strEdgeId, edge.getName());
-
-            sendEntityAssignToEdgeNotificationMsg(getTenantId(), edgeId, savedAsset.getId(), EdgeEventActionType.UNASSIGNED_FROM_EDGE);
-
-            return savedAsset;
-        } catch (Exception e) {
-
-            logEntityAction(emptyId(EntityType.ASSET), null,
-                    null,
-                    ActionType.UNASSIGNED_FROM_EDGE, e, strAssetId, strEdgeId);
-
-            throw handleException(e);
-        }
+        return entityDeleteService.deleteUnassignAsset(new AssetId(toUUID(strAssetId)), new EdgeId(toUUID(strEdgeId)));
     }
 
     @ApiOperation(value = "Get assets assigned to edge (getEdgeAssets)",

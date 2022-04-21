@@ -46,7 +46,7 @@ import static org.thingsboard.server.controller.ControllerConstants.ENTITY_DATA_
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
-public class EntityQueryController extends BaseController {
+public class EntityQueryController extends DefaultEntityBaseController {
 
     @Autowired
     private EntityQueryService entityQueryService;
