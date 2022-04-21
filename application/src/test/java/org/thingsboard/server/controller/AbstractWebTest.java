@@ -18,6 +18,9 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwt;
@@ -67,6 +70,7 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -642,4 +646,15 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         edge.setRoutingKey(RandomStringUtils.randomAlphanumeric(20));
         return edge;
     }
+
+    protected <T extends HasId<? extends UUIDBased>> ListenableFuture<List<ResultActions>> deleteEntitiesAsync(String urlTemplate, List<T> entities, ListeningExecutorService executor) {
+        List<ListenableFuture<ResultActions>> futures = new ArrayList<>(entities.size());
+        for (T entity : entities) {
+            futures.add(executor.submit(() ->
+                    doDelete(urlTemplate + entity.getId().getId())
+                            .andExpect(status().isOk())));
+        }
+        return Futures.allAsList(futures);
+    }
+
 }
